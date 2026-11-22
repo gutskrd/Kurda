@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, type ReactNode, type RefObject
 import { Animated, StyleSheet, useWindowDimensions, type View } from 'react-native';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo } from './animate';
+import { layout } from './tokens';
 
 /**
  * Motion that shows where a page came from: a page opened by a press grows out of what was pressed, so the eye
@@ -103,7 +104,10 @@ export function usePressOrigin(): { ref: RefObject<View | null>; note: () => voi
  */
 export function Arrive({ routeKey, grows, children }: { routeKey: string; grows: boolean; children: ReactNode }): React.JSX.Element {
   const reduce = useReducedMotion();
-  const { width } = useWindowDimensions();
+  const window = useWindowDimensions();
+  // Presses are measured on the window; the page stands in the centred column (pageWidth.ts), this far from its edge.
+  const width = Math.min(window.width, layout.page);
+  const inset = (window.width - width) / 2;
   const origin = useMemo(() => (grows && !reduce ? originOf(routeKey) : null), [grows, reduce, routeKey]);
   useEffect(() => () => forgetOrigin(routeKey), [routeKey]);
 
@@ -117,7 +121,7 @@ export function Arrive({ routeKey, grows, children }: { routeKey: string; grows:
 
   if (!origin) return <>{children}</>;
 
-  const from = startPlace(origin, width);
+  const from = startPlace({ ...origin, x: origin.x - inset }, width);
   return (
     <Animated.View
       style={[

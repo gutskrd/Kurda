@@ -323,7 +323,7 @@ function ThreadSkeleton(): React.JSX.Element {
     <View style={styles.skeleton} accessibilityLabel={t('common.loading')} testID="letters-thread-loading">
       <View style={[styles.who, { flexDirection: dir.row }]}>
         <Skeleton width={52} height={52} radius={radii.pill} />
-        <SkeletonText size={typography.sizes.xl} width="40%" align={start} style={styles.flex} />
+        <SkeletonText size={typography.sizes.title} width="40%" align={start} style={styles.flex} />
       </View>
       <Skeleton height={260} radius={radii.xs} />
     </View>
@@ -335,12 +335,12 @@ const styles = StyleSheet.create({
   skeleton: { gap: spacing.lg },
   content: { padding: layout.gutter, paddingBottom: spacing.xxl, gap: spacing.lg },
   who: { alignItems: 'center', gap: spacing.md - 4 },
-  name: { flex: 1, ...display(typography.sizes.xl) },
+  name: { flex: 1, ...display(typography.sizes.title) },
   list: { gap: spacing.md },
   earlier: { alignItems: 'center', gap: spacing.sm },
   earlierButton: { alignSelf: 'center' },
   centred: { textAlign: 'center' },
-  widgetError: { fontSize: typography.sizes.sm, lineHeight: 19 },
-  note: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', padding: spacing.md - 2, borderRadius: radii.lg, overflow: 'hidden' },
+  widgetError: { fontSize: typography.sizes.text, lineHeight: 22 },
+  note: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center', padding: spacing.md - 2, borderRadius: radii.lg, overflow: 'hidden' },
   heldNote: { padding: spacing.md - 2, borderRadius: radii.lg },
 });

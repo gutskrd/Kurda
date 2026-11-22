@@ -29,6 +29,7 @@ import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { ReportSheet } from '../reports/ReportSheet';
 import { pressedDim } from '../theme/motion';
 import { HeldNote } from '../pictures/PictureReview';
+import { usePageWidth } from '../theme/pageWidth';
 
 /** The author's avatar: big enough to recognise, small enough for one line. */
 const AUTHOR = 32;
@@ -140,7 +141,8 @@ export function PostActions({
       <ReachGroup gap={spacing.sm} rowGap={ACTIONS_ABOVE}>
         <Action
           icon={e.liked ? 'heart-fill' : 'heart'}
-          tint={e.liked ? colors.danger : undefined}
+          tint={e.liked ? colors.like : undefined}
+          inkCount
           on={e.liked}
           label={e.liked ? t('feed.unlike') : t('feed.like')}
           count={count(e.likes)}
@@ -163,6 +165,8 @@ export function PostActions({
         {held ? null : <Action icon="share" label={t('share.post')} onPress={() => setSharing(true)} />}
         <Action
           icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
+          tint={e.bookmarked ? colors.saved : undefined}
+          edge={e.bookmarked ? colors.savedEdge : undefined}
           on={e.bookmarked}
           label={e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')}
           onPress={() => engage.act('bookmark')}
@@ -381,7 +385,7 @@ function Bloom({ fired, children }: { fired: number; children: React.ReactNode }
       {children}
       <View pointerEvents="none" style={styles.bloomLayer} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Animated.View style={{ opacity, transform: [{ scale }] }}>
-          <Icon name="heart-fill" size={92} color={colors.danger} />
+          <Icon name="heart-fill" size={92} color={colors.like} />
         </Animated.View>
       </View>
     </View>
@@ -399,7 +403,7 @@ export function FeedCardSkeleton({ titled = true, lines = 2 }: { titled?: boolea
       <View style={styles.head}>
         <Skeleton width={AUTHOR} height={AUTHOR} radius={radii.pill} />
         <View style={styles.byline}>
-          <SkeletonText size={typography.sizes.sm} width="46%" />
+          <SkeletonText size={typography.sizes.text} width="46%" />
         </View>
       </View>
       <View style={styles.words}>
@@ -407,7 +411,7 @@ export function FeedCardSkeleton({ titled = true, lines = 2 }: { titled?: boolea
         {/* One paragraph, its lines with nothing between them. */}
         <View>
           {Array.from({ length: lines }, (_, i) => (
-            <SkeletonText key={i} size={typography.sizes.md} width={i === lines - 1 ? '64%' : '94%'} />
+            <SkeletonText key={i} size={typography.sizes.text} width={i === lines - 1 ? '64%' : '94%'} />
           ))}
         </View>
       </View>
@@ -424,7 +428,8 @@ export function FeedCardSkeleton({ titled = true, lines = 2 }: { titled?: boolea
 
 /** As many posts as reach the foot of the screen, the way the wall lays them out. */
 export function FeedSkeleton({ style }: { style?: StyleProp<ViewStyle> }): React.JSX.Element {
-  const { height, width } = useWindowDimensions();
+  const { height } = useWindowDimensions();
+  const width = usePageWidth();
   const { t } = useI18n();
   const count = Math.max(2, Math.ceil(height / 200));
   // A few lines of a post run to two on a phone and fit on one across a tablet.
@@ -441,7 +446,7 @@ export function FeedSkeleton({ style }: { style?: StyleProp<ViewStyle> }): React
 /** Past this a short paragraph fits on one line. */
 const WIDE = 600;
 /** A title is bold and a size up from what is under it, in the face the rest of the post is in. */
-const TITLE_SIZE = 19;
+const TITLE_SIZE = typography.sizes.text;
 const TITLE_LINE = 25;
 /**
  * A pill's height and a round pill's width: drawn at 36 and reaching 48 up and down; across, the row's 8 gap is
@@ -459,7 +464,7 @@ const NAME_LINE = 18;
 
 /**
  * One soft pill under a post: a 20 pt glyph and its count, or a round button of the same height without one.
- * Filled, not framed, and no different when on; the glyph shows that (a red heart, a green repost, a filled
+ * Filled, not framed, and no different when on; the glyph shows that (a red heart, a green repost, a yellow
  * bookmark). The label says what pressing does, never the count, since a screen reader would otherwise announce
  * the number as its name.
  */
@@ -469,6 +474,8 @@ function Action({
   count,
   on = false,
   tint,
+  edge,
+  inkCount = false,
   burst,
   onPress,
 }: {
@@ -476,15 +483,19 @@ function Action({
   label: string;
   count?: number;
   on?: boolean;
-  /** The colour while on, when it is not the ink (a red heart, a green repost). */
+  /** The colour while on, when it is not the ink (a red heart, a green repost, a yellow bookmark). */
   tint?: string;
+  /** The on glyph's hairline, where its colour alone is faint on the page. */
+  edge?: string;
+  /** The count stays in the ink while the glyph is tinted: the heart says it, the number counts it. */
+  inkCount?: boolean;
   /** Goes up each time the icon should pop with a burst (a like). */
   burst?: number;
   onPress: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const colour = tint ?? colors.textPrimary;
-  const glyph = <Icon name={icon} size={20} color={colour} />;
+  const glyph = <Icon name={icon} size={20} color={colour} edge={edge} />;
   return (
     <Pressable
       onPress={onPress}
@@ -494,13 +505,13 @@ function Action({
       style={({ pressed }) => [styles.pill, count ? styles.pillWide : null, { backgroundColor: colors.controlTrack }, pressed && styles.pressed]}
     >
       {burst !== undefined ? (
-        <HeartBurst fired={burst} color={colors.danger} size={20}>
+        <HeartBurst fired={burst} color={colors.like} size={20}>
           {glyph}
         </HeartBurst>
       ) : (
         glyph
       )}
-      {count ? <TickCount value={count} color={tint ?? colors.textPrimary} /> : null}
+      {count ? <TickCount value={count} color={inkCount ? colors.textPrimary : (tint ?? colors.textPrimary)} /> : null}
     </Pressable>
   );
 }
@@ -565,13 +576,13 @@ const styles = StyleSheet.create({
   /* Author, kind and time on one line where they fit; otherwise kind and time wrap under the name rather than truncating it. */
   byline: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6 },
   whoLink: { flexShrink: 1 },
-  who: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  meta: { flexShrink: 1, fontSize: typography.sizes.sm },
+  who: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  meta: { flexShrink: 1, fontSize: typography.sizes.text },
   more: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginVertical: -6, marginEnd: -spacing.sm - 2 },
   // The 12 between a post's content and its pills is split between them, so the pills reach into a gap of their own (ACTIONS_ABOVE).
   words: { paddingHorizontal: layout.gutter, gap: 6, paddingBottom: spacing.xs + 2 },
   title: { fontSize: TITLE_SIZE, lineHeight: TITLE_LINE, fontWeight: typography.weights.bold },
-  excerpt: { fontSize: typography.sizes.md, lineHeight: 23 },
+  excerpt: { fontSize: typography.sizes.text, lineHeight: 23 },
   pictures: { paddingHorizontal: layout.gutter, paddingBottom: spacing.xs + 2 },
   held: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },
   bloomLayer: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
@@ -580,7 +591,7 @@ const styles = StyleSheet.create({
   pill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minWidth: PILL, height: PILL, borderRadius: radii.pill },
   pillWide: { paddingHorizontal: spacing.sm + 4 },
   pressed: { opacity: pressedDim },
-  count: { fontSize: typography.sizes.sm, lineHeight: COUNT_LINE, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
+  count: { fontSize: typography.sizes.text, lineHeight: COUNT_LINE, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   // The count's window: one line tall, so a number sliding out is gone at its edge.
   tick: { height: COUNT_LINE, overflow: 'hidden', justifyContent: 'center' },
   tickOld: { position: 'absolute', left: 0, right: 0 },

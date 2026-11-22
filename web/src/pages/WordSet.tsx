@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import '@fontsource-variable/vazirmatn';
 import {
   NEWROZ,
   RELATIVE_DAYS,

@@ -65,5 +65,5 @@ const styles = StyleSheet.create({
   bars: { flex: 1, gap: spacing.xs },
   bar: { flex: 1, height: 4, borderRadius: radii.pill, overflow: 'hidden' },
   fill: { flex: 1 },
-  word: { fontSize: typography.sizes.xs, fontWeight: typography.weights.medium, minWidth: 48, textAlign: 'right' },
+  word: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium, minWidth: 48, textAlign: 'right' },
 });

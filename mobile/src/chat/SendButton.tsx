@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: 11,
     paddingBottom: 11,
-    fontSize: typography.sizes.md,
+    fontSize: typography.sizes.text,
     lineHeight: 22,
     textAlignVertical: 'center',
     // The pill wears the ring (above); the browser's own ignores a width and must be told there is none.

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Animated, Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { PressableScale, heldDim } from '../theme/MotionParts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +22,7 @@ import { bucket, type RailFriend, type SocialRailData } from './rail';
 import { elapsed, lastSeen } from './time';
 import { Loading } from '../theme/Loading';
 import { useDirection } from '../reports/direction';
+import { pageWidth } from '../theme/pageWidth';
 
 const WIDTH_RATIO = 0.86;
 
@@ -48,7 +49,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
   const [data, setData] = useState<SocialRailData | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const width = Math.round(Dimensions.get('window').width * WIDTH_RATIO);
+  const width = Math.round(pageWidth() * WIDTH_RATIO);
   // How far it is from open towards its edge: 0 is open, `width` is gone.
   const { away, panHandlers } = useEdgePanel({ open, onClose, width, sign });
 
@@ -251,7 +252,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                   >
                     {/* A group in its rounded square, as Messages draws it, so it is never mistaken for a person of
                        that name. */}
-                    <GroupAvatar name={g.name} id={g.id} size={34} photoUrl={g.photoUrl ?? null} />
+                    <GroupAvatar name={g.name} size={34} photoUrl={g.photoUrl ?? null} />
                     <View style={styles.rowMain}>
                       <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>{g.name}</Text>
                       <Text style={[styles.detail, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -305,7 +306,7 @@ const styles = StyleSheet.create({
   ticketBadge: { position: 'absolute', bottom: -4 },
   ticketBadgeRight: { right: -5 },
   ticketBadgeLeft: { left: -5 },
-  note: { fontSize: typography.sizes.sm },
+  note: { fontSize: typography.sizes.text },
   head: {
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -313,19 +314,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     minHeight: MIN_TOUCH_TARGET,
   },
-  title: { flex: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  title: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   body: { padding: spacing.lg, gap: spacing.lg },
   group: { gap: spacing.xs },
   heading: { ...sectionLabel },
   row: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },
   rowMain: { flex: 1 },
-  name: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  detail: { fontSize: typography.sizes.sm },
+  name: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  detail: { fontSize: typography.sizes.text },
   unread: { minWidth: 22, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radii.pill, alignItems: 'center' },
-  unreadText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
+  unreadText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   empty: { gap: spacing.xs, alignItems: 'center', marginTop: spacing.lg },
-  emptyText: { fontSize: typography.sizes.md, textAlign: 'center' },
-  emptyLink: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  emptyText: { fontSize: typography.sizes.text, textAlign: 'center' },
+  emptyLink: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });
 
 /*

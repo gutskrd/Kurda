@@ -1,5 +1,6 @@
 import { useId, useMemo } from 'react';
 import { impostorCategorySvg, impostorEmblemSvg, impostorWaySvg, type ImpostorEmblem, type ImpostorWay } from '@kurda/shared';
+import './art.css';
 
 /**
  * Impostor's pictures (categories, ways to play and the emblem) from shared/src/art/impostor.ts, decorative and hidden
@@ -23,7 +24,7 @@ export function WayArt({ way, size = 72 }: { way: ImpostorWay; size?: number }):
   return <span className="imp-art" aria-hidden="true" dangerouslySetInnerHTML={markup} />;
 }
 
-/** The game's emblem: the hand of cards for its start, the mask for a card's back. */
+/** The game's emblem: the hand of cards for its start, the back every card shows, and the wolf and the deer on a card's face. */
 export function EmblemArt({ emblem, size = 120 }: { emblem: ImpostorEmblem; size?: number }): React.JSX.Element {
   const idPrefix = useArtId();
   const markup = useMemo(() => ({ __html: impostorEmblemSvg({ emblem, size, idPrefix }) }), [emblem, size, idPrefix]);

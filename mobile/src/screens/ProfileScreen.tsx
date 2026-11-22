@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
-import { ActivityIndicator, Image, RefreshControl, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, Share, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { Pressable, ReachGroup } from '../theme/Pressable';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
@@ -12,9 +12,10 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, ErrorRetry, GlassCard, GradientBackground } from '../theme/glass';
 import { display } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
-import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { Icon } from '../theme/Icon';
+import { Skeleton } from '../theme/Skeleton';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarScroll } from '../navigation/tabBarScroll';
 import { TabHeader } from '../navigation/TopBar';
 import { useOpenMenu } from '../navigation/SideMenu';
 import { HeaderButton } from '../navigation/HeaderButton';
@@ -22,11 +23,9 @@ import { useDirection } from '../reports/direction';
 import { useUnread } from '../messages/unread';
 import { SITE_ORIGIN } from '../feed/api';
 import { Avatar, ownAvatarUrl } from '../profile/Avatar';
-import { Horizon } from '../profile/Horizon';
-import { CosmeticBackground, FavoriteRow, GiftedNote, IconOverlay, PremiumPill, flagUrl } from '../profile/cosmetic-parts';
+import { Flag, GiftedNote, IconOverlay } from '../profile/cosmetic-parts';
 import type { ProfileCosmetics } from '../profile/types';
 import {
-  SEASON_FRAME_INNER,
   countryName,
   fireLevel,
   type PendingPicture,
@@ -35,14 +34,14 @@ import {
   type ShowcaseBadge,
   type TreeGlimpse,
 } from '@kurda/shared';
-import { LevelBar, OnlyYou, ProfileFacts, type ProfileFact } from '../profile/ProfileFacts';
-import { ProgressShowcase } from '../profile/ProgressShowcase';
-import { ProfileTree } from '../tree/ProfileTree';
-import { Framed } from '../ranks/art';
+import { OnlyYou, ProfileFacts, type ProfileFact } from '../profile/ProfileFacts';
+import { FACE, FRAMED, ProfileHead } from '../profile/ProfileHead';
+import { ProfileHighlights } from '../profile/ProfileHighlights';
+import { Framed, frameTierOf } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
 import { VISIBILITY_LABEL } from '../social/format';
 import { useFreshBadges } from '../badges/BadgeCelebrationHost';
-import { ProfileActivity } from '../profile/ProfileActivity';
+import { ActivityGrid, ActivityTabs, nearEnd, useProfileActivity } from '../profile/ProfileActivity';
 import { uploadProfilePhoto } from '../profile/photoUpload';
 import { PendingPhoto, PictureRefusal } from '../pictures/PictureReview';
 import { pendingOf } from '../pictures/review';
@@ -53,20 +52,16 @@ import { learningStats, type Streak } from '../streak/format';
 import { freezeSlots } from '../streak/kept';
 import { DailySheet } from '../daily/DailySheet';
 import { useToday } from '../daily/today';
-import { formatNumber } from '../i18n/format';
+import { formatCompact, formatNumber } from '../i18n/format';
 import { Fire } from '../theme/Fire';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
 import type { Visibility } from '../social/format';
+import type { ProfileSections } from '../profile/sections';
+import { usePageWidth } from '../theme/pageWidth';
 
-/** The avatar's size: the largest thing on the screen. */
-const AVATAR = 96;
-/** The avatar with a season frame: the ring sits outside the avatar, which keeps its size. */
-const FRAMED = Math.round(AVATAR / SEASON_FRAME_INNER);
-/** The ring of page colour that lifts the avatar off the banner it overlaps. */
-const RING = 4;
-/** The banner behind the avatar: the worn background, or the learner's own horizon until they wear one. */
-const BANNER = 124;
+/** A guest's avatar, the size of an account's. */
+const AVATAR = FACE;
 
 /** The parts of `/me` a profile shows. `ProfileCosmetics` is declared the same way as on the website, from the same endpoint. */
 interface Me extends ProfileCosmetics {
@@ -144,12 +139,13 @@ function AccountProfile() {
   const { user, client, refreshUser } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
-  const { width: windowWidth } = useWindowDimensions();
+  const windowWidth = usePageWidth();
   const tabBarInset = useTabBarInset();
   const openMenu = useOpenMenu();
   const { counts } = useUnread();
   const dir = useDirection();
   const scrollRef = useRef<ScrollView>(null);
+  const tabScroll = useTabBarScroll();
   // Tapping the Profile tab while on it scrolls to the top.
   useScrollToTop(scrollRef);
   const [streak, setStreak] = useState<Streak | null>(null);
@@ -172,6 +168,8 @@ function AccountProfile() {
     tree: TreeGlimpse | null | undefined;
     /** Badges earned (and the legacy tournament win), as the public profile counts them; `/me` does not send this. */
     achievements: number | null;
+    /** Which activity sections others see, so the ones you hid are marked on your own tabs. */
+    sections: ProfileSections | null;
   } | null>(null);
   const [iconsOwned, setIconsOwned] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -229,6 +227,7 @@ function AccountProfile() {
             frameUrl?: string | null;
             tree?: TreeGlimpse | null;
             achievements?: number;
+            sections?: ProfileSections | null;
           }>(`/users/${id}`);
           if (active && p.ok) {
             setProgress({
@@ -238,6 +237,7 @@ function AccountProfile() {
               frameUrl: p.data.frameUrl ?? null,
               tree: p.data.tree,
               achievements: p.data.achievements ?? null,
+              sections: p.data.sections ?? null,
             });
           }
         }
@@ -299,30 +299,27 @@ function AccountProfile() {
   const joined = me?.createdAt ? new Date(me.createdAt) : null;
   const joinedYear = joined && !Number.isNaN(joined.getTime()) ? joined.getFullYear() : null;
   const username = me?.username ?? user?.username ?? '';
-  /*
-   * Handle and year joined share a line where they fit; otherwise the year moves to its own line rather than being
-   * cut off. The year's words stay together and the dot stays with the handle, so that is the only break.
-   */
-  const handleLine = joinedYear
-    ? `@${username} ·  ${t('profile.joined', { year: joinedYear }).replace(/ /g, ' ')}`
-    : `@${username}`;
+  const handleLine = `@${username}`;
 
   const number = (n: number | null | undefined): string | null => (n == null ? null : formatNumber(n, locale));
+  // The figures beside the face are shortened (5230 → 5.2K) so all three fit; a screen reader hears the whole number.
+  const short = (n: number | null | undefined): string | null => (n == null ? null : formatCompact(n, locale));
+  const whole = (n: number | null | undefined): string | undefined => (n == null || short(n) === number(n) ? undefined : (number(n) ?? undefined));
   const streakDays = streak?.current ?? 0;
-  // The four figures the website shows. The streak opens its sheet; friends and badges open their pages.
+  const xp = me?.level?.xp ?? me?.xp ?? 0;
+  // The three figures the website shows; how many badges sits on the badge case in the highlights. The streak opens its
+  // sheet and friends their page.
   const facts: ProfileFact[] = [
     {
       key: 'streak',
       label: t('profile.stat.streak'),
-      value: settled ? number(streakDays) : null,
+      value: settled ? short(streakDays) : null,
       art: <Fire size={18} level={fireLevel(streakDays)} />,
       spoken: t(streakDays === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: formatNumber(streakDays, locale) }),
       onPress: streak ? () => setStreakOpen(true) : undefined,
     },
-    { key: 'xp', label: t('profile.stat.xp'), value: settled ? number(me?.level?.xp ?? me?.xp ?? 0) : null },
-    { key: 'friends', label: t('nav.friends'), value: settled ? (number(friends) ?? '—') : null, onPress: () => navigation.navigate('Friends') },
-    // The count arrives with the public profile, after the first answers.
-    { key: 'badges', label: t('profile.badges'), value: progressSettled ? (number(progress?.achievements) ?? '—') : null, onPress: () => navigation.navigate('Badges') },
+    { key: 'xp', label: t('profile.stat.xp'), value: settled ? short(xp) : null, whole: whole(xp) },
+    { key: 'friends', label: t('nav.friends'), value: settled ? (short(friends) ?? '—') : null, whole: whole(friends), onPress: () => navigation.navigate('Friends') },
   ];
   const stats = streak ? learningStats(streak) : null;
   // A Hevalo+ member has room for a second freeze, and the hint says how many rather than "one".
@@ -338,12 +335,33 @@ function AccountProfile() {
   ];
   const visibility = me?.profileVisibility ? VISIBILITY_LABEL[me.profileVisibility] : null;
 
+  // What you posted, played, liked, reposted and saved; a pull asks for it again.
+  const activity = useProfileActivity({ userId: me?.id ?? user?.id, sections: progress?.sections, own: true, reload: reloadKey });
+
   const face = (
-    <>
-      <Avatar name={user?.displayName ?? user?.username ?? ''} size={AVATAR} photoUrl={photoUrl ?? me?.avatarUrl ?? ownAvatarUrl(user)} />
-      {me?.icon ? <IconOverlay icon={me.icon} size={AVATAR} /> : null}
-    </>
+    <Pressable
+      onPress={changePhoto}
+      accessibilityRole="button"
+      accessibilityLabel={t('profile.changePhoto')}
+      style={({ pressed }) => pressed && heldDim}
+    >
+      {/* The frame rings the avatar; the avatar and its icon keep their size inside it. */}
+      <Framed sku={progress?.frameSku} url={progress?.frameUrl} size={FRAMED} label={(tier) => t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}>
+        <Avatar name={user?.displayName ?? user?.username ?? ''} size={FACE} photoUrl={photoUrl ?? me?.avatarUrl ?? ownAvatarUrl(user)} />
+        {me?.icon ? <IconOverlay icon={me.icon} size={FACE} /> : null}
+      </Framed>
+      {uploading ? (
+        <View style={[styles.avatarOverlay, { backgroundColor: colors.scrim }]}>
+          <ActivityIndicator color={colors.textOnScrim} />
+        </View>
+      ) : null}
+    </Pressable>
   );
+  const seed = me?.id ?? user?.id ?? '';
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>): void => {
+    tabScroll(e);
+    if (nearEnd(e)) activity.more();
+  };
 
   return (
     <GradientBackground>
@@ -362,6 +380,10 @@ function AccountProfile() {
       />
       <ScrollView
         ref={scrollRef}
+        onScroll={onScroll}
+        scrollEventThrottle={64}
+        // The tabs over your posts stay under the top bar while the grid scrolls.
+        stickyHeaderIndices={[1]}
         contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -375,166 +397,155 @@ function AccountProfile() {
           />
         }
       >
-
-        {/* The banner: the worn background, or the learner's horizon until they wear one. Nothing is written over it. */}
-        <View style={[styles.banner, { backgroundColor: colors.controlTrack }]}>
-          {/* The horizon stays underneath, so a background still loading, or a video the phone does not play, leaves it showing. */}
-          {(me?.id ?? user?.id) ? <Horizon seed={me?.id ?? user?.id ?? ''} width={windowWidth - layout.gutter * 2} height={BANNER} /> : null}
-          {me?.background ? <CosmeticBackground background={me.background} style={StyleSheet.absoluteFill} /> : null}
-        </View>
-
-        {/* The avatar on its stage over the banner's lower edge, then name, handle, year, location and bio. */}
-        <View style={[styles.hero, styles.heroOverBanner]}>
-          <Pressable
-            onPress={changePhoto}
-            accessibilityRole="button"
-            accessibilityLabel={t('profile.changePhoto')}
-            style={({ pressed }) => [styles.face, { borderColor: colors.background, backgroundColor: colors.background }, pressed && heldDim]}
+        <View style={styles.top}>
+          <ProfileHead
+            seed={seed}
+            width={windowWidth}
+            background={me?.background}
+            face={face}
+            framed={!!frameTierOf(progress?.frameSku) || !!(progress?.frameSku && progress.frameUrl)}
+            stats={<ProfileFacts facts={facts} head testID="profile-facts" />}
+            name={me?.displayName ?? user?.displayName ?? user?.username ?? ''}
+            level={me?.level}
+            premium={me?.premium}
+            handle={handleLine}
+            actions={
+              /*
+                Edit and Share side by side, and the find-friends button. The buttons are text only, each label on one
+                line: where the three do not fit (Soranî, German), a button moves to a second row and both rows fill the
+                width, rather than a label wrapping inside its pill. Each reaches at most half the gap toward the next.
+              */
+              <View style={[styles.actions, { flexDirection: dir.row }]}>
+                <ReachGroup gap={spacing.sm}>
+                  <Pressable
+                    onPress={() => navigation.navigate('EditProfile')}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('profile.edit')}
+                    testID="profile-edit"
+                    style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+                  >
+                    <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {t('profile.edit')}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={share}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('profile.share')}
+                    testID="profile-share"
+                    style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+                  >
+                    <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {t('profile.share')}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => navigation.navigate('Friends')}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('profile.addFriends')}
+                    testID="profile-add-friends"
+                    style={({ pressed }) => [styles.actionIcon, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+                  >
+                    <Icon name="user-plus" size={20} />
+                  </Pressable>
+                </ReachGroup>
+              </View>
+            }
           >
-            {/* The frame rings the avatar; the avatar and its icon keep their size inside it. */}
-            <Framed sku={progress?.frameSku} url={progress?.frameUrl} size={FRAMED} label={(tier) => t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}>
-              {face}
-            </Framed>
-            {uploading ? (
-              <View style={[styles.avatarOverlay, { backgroundColor: colors.scrim }]}>
-                <ActivityIndicator color={colors.textOnScrim} />
+            {/* Where they are from and since when, on one row that wraps, as on the website. */}
+            {country || joinedYear ? (
+              <View style={[styles.aboutRow, { flexDirection: dir.row }]}>
+                {country ? (
+                  <View style={[styles.about, { flexDirection: dir.row }]} testID="profile-country">
+                    <Flag code={me!.country!} />
+                    <Text style={[styles.aboutText, { color: colors.textSecondary }]}>{country}</Text>
+                  </View>
+                ) : null}
+                {joinedYear ? (
+                  <View style={[styles.about, { flexDirection: dir.row }]}>
+                    <Icon name="calendar" size={15} tone="secondary" />
+                    <Text style={[styles.aboutText, { color: colors.textSecondary }]}>{t('profile.joined', { year: joinedYear })}</Text>
+                  </View>
+                ) : null}
               </View>
             ) : null}
-          </Pressable>
-          <View style={[styles.nameRow, { flexDirection: dir.row }]}>
-            {/* A long name wraps to a second line rather than being cut. */}
-            <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={2}>
-              {me?.displayName ?? user?.displayName ?? user?.username}
-            </Text>
-            {me?.premium ? <PremiumPill /> : null}
-          </View>
-          <Text style={[styles.handle, { color: colors.textSecondary }]} numberOfLines={2}>
-            {handleLine}
-          </Text>
-          {country ? (
-            <View style={[styles.country, { flexDirection: dir.row }]}>
-              <Image source={{ uri: flagUrl(me!.country!) }} style={styles.flag} resizeMode="contain" accessibilityElementsHidden />
-              <Text style={[styles.countryName, { color: colors.textSecondary }]}>{country}</Text>
+            {/* Who can open this page, said on the page itself, and one tap from where it is changed. */}
+            {visibility ? (
+              <Pressable
+                onPress={() => navigation.navigate('SettingsPage', { page: 'visibility' })}
+                accessibilityRole="link"
+                // A line of small text, reached for as a finger-sized target.
+                reachSize={{ height: 20 }}
+                style={({ pressed }) => [styles.about, { flexDirection: dir.row }, pressed && heldDim]}
+                testID="profile-seen-by"
+              >
+                <Icon name="eye" size={15} tone="secondary" />
+                <Text style={[styles.seenText, { color: colors.textSecondary }]}>{t('profile.seenBy', { who: t(visibility) })}</Text>
+              </Pressable>
+            ) : null}
+            <GiftedNote background={me?.background} icon={me?.icon} />
+            {me?.bio ? (
+              <Text style={[styles.bio, dir.text, { color: colors.textPrimary }]}>{me.bio}</Text>
+            ) : me ? (
+              <Pressable
+                onPress={() => navigation.navigate('EditProfile')}
+                accessibilityRole="link"
+                reachSize={{ height: 24 }}
+                style={({ pressed }) => [styles.addBioWrap, { alignSelf: dir.row === 'row' ? 'flex-start' : 'flex-end' }, pressed && heldDim]}
+                testID="profile-add-bio"
+              >
+                <Text style={[styles.addBio, { color: colors.textPrimary }]}>{t('profile.addBio')}</Text>
+              </Pressable>
+            ) : null}
+            {pending ? <PendingPhoto pending={pending.photo} body="picture.held.profile" testID="profile-photo-pending" /> : null}
+            {refusal ? <PictureRefusal rejection={refusal} testID="profile-photo-refused" /> : null}
+            {settled && !me ? <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} /> : null}
+
+            {me ? (
+              <OnlyYou title={t('profile.yourProgress')}>
+                <ProfileFacts facts={yours} />
+                <ProfileFacts facts={yoursMore} />
+                {stats ? (
+                  <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>
+                    {freezeRoom > 1
+                      ? t('profile.freezeHintPlus', { count: stats.sessionsPerFreeze, max: formatNumber(freezeRoom, locale) })
+                      : t('profile.freezeHint', { count: stats.sessionsPerFreeze })}
+                  </Text>
+                ) : null}
+                {iconsOwned ? (
+                  <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{`${t('profile.stat.icons')} · ${formatNumber(iconsOwned, locale)}`}</Text>
+                ) : null}
+              </OnlyYou>
+            ) : null}
+          </ProfileHead>
+
+          {/* The badge case, tree, league and favourites; until the public profile answers, the row's shape in grey. */}
+          {progress ? (
+            <ProfileHighlights
+              own
+              tree={progress.tree}
+              badges={progress.badges}
+              earned={progress.achievements}
+              league={progress.league}
+              favPoem={me?.favoritePoem}
+              favStory={me?.favoriteStory}
+              fresh={fresh}
+            />
+          ) : !progressSettled ? (
+            <View style={[styles.highlightsSkeleton, { flexDirection: dir.row }]}>
+              {[0, 1, 2].map((i) => (
+                <Skeleton key={i} width={68} height={68} radius={radii.pill} />
+              ))}
             </View>
           ) : null}
-          {/* Who can open this page, said on the page itself, and one tap from where it is changed. */}
-          {visibility ? (
-            <Pressable
-              onPress={() => navigation.navigate('SettingsPage', { page: 'visibility' })}
-              accessibilityRole="link"
-              style={({ pressed }) => [styles.seen, { flexDirection: dir.row }, pressed && heldDim]}
-              testID="profile-seen-by"
-            >
-              <Icon name="eye" size={15} tone="secondary" />
-              <Text style={[styles.seenText, { color: colors.textSecondary }]}>{t('profile.seenBy', { who: t(visibility) })}</Text>
-            </Pressable>
-          ) : null}
-          {me?.bio ? (
-            <Text style={[styles.bio, dir.text, { color: colors.textPrimary }]}>{me.bio}</Text>
-          ) : me ? (
-            <Pressable onPress={() => navigation.navigate('EditProfile')} accessibilityRole="link" style={({ pressed }) => pressed && heldDim} testID="profile-add-bio">
-              <Text style={[styles.addBio, { color: colors.primary }]}>{t('profile.addBio')}</Text>
-            </Pressable>
-          ) : null}
         </View>
 
-        {pending ? <PendingPhoto pending={pending.photo} body="picture.held.profile" testID="profile-photo-pending" /> : null}
-        {refusal ? <PictureRefusal rejection={refusal} testID="profile-photo-refused" /> : null}
-
-        {/*
-          Edit and Share side by side, and the find-friends button. The buttons are text only, each label on one line:
-          where the three do not fit (Soranî, German), a button moves to a second row and both rows fill the width,
-          rather than a label wrapping inside its pill. Each reaches at most half the gap toward the next, so a tap
-          between goes to the nearer one.
-        */}
-        <View style={[styles.actions, { flexDirection: dir.row }]}>
-          <ReachGroup gap={spacing.sm}>
-            <Pressable
-              onPress={() => navigation.navigate('EditProfile')}
-              accessibilityRole="button"
-              accessibilityLabel={t('profile.edit')}
-              testID="profile-edit"
-              style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
-            >
-              <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
-                {t('profile.edit')}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={share}
-              accessibilityRole="button"
-              accessibilityLabel={t('profile.share')}
-              testID="profile-share"
-              style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
-            >
-              <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
-                {t('profile.share')}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => navigation.navigate('Friends')}
-              accessibilityRole="button"
-              accessibilityLabel={t('profile.addFriends')}
-              testID="profile-add-friends"
-              style={({ pressed }) => [styles.actionIcon, { backgroundColor: colors.primary, opacity: pressed ? pressedDim : 1 }]}
-            >
-              <Icon name="user-plus" size={20} tone="onPrimary" />
-            </Pressable>
-          </ReachGroup>
+        <View style={styles.bleed}>
+          <ActivityTabs activity={activity} width={windowWidth} />
         </View>
-
-        {me?.level ? (
-          <View style={styles.level}>
-            <LevelBar level={me.level} />
-          </View>
-        ) : null}
-        <ProfileFacts facts={facts} testID="profile-facts" />
-        {settled && !me ? <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} /> : null}
-
-        <GiftedNote background={me?.background} icon={me?.icon} />
-
-        {/* The three showcased badges, each game's rank, and the league. */}
-        {!progress && !progressSettled ? (
-          // Your own profile always has the badges row, chosen or not.
-          <View style={styles.showcaseSkeleton}>
-            <SkeletonText size={typography.sizes.xs} width={64} />
-            <Skeleton height={MIN_TOUCH_TARGET} radius={radii.md} />
-          </View>
-        ) : null}
-        {progress ? <ProfileTree tree={progress.tree} onOpen={() => navigation.navigate('Tree')} /> : null}
-        {progress ? (
-          <ProgressShowcase
-            own
-            league={progress.league}
-            badges={progress.badges}
-            fresh={fresh}
-            onBadges={() => navigation.navigate('Badges')}
-            onLeague={() => navigation.navigate('League')}
-          />
-        ) : null}
-
-        {/* Only where there is one. */}
-        {me?.favoritePoem ? <FavoriteRow label={t('profile.favoritePoem')} title={me.favoritePoem.title} /> : null}
-        {me?.favoriteStory ? <FavoriteRow label={t('profile.favoriteStory')} title={me.favoriteStory.title} /> : null}
-
-        {me ? (
-          <OnlyYou title={t('profile.yourProgress')}>
-            <ProfileFacts facts={yours} />
-            <ProfileFacts facts={yoursMore} />
-            {stats ? (
-              <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>
-                {freezeRoom > 1
-                  ? t('profile.freezeHintPlus', { count: stats.sessionsPerFreeze, max: formatNumber(freezeRoom, locale) })
-                  : t('profile.freezeHint', { count: stats.sessionsPerFreeze })}
-              </Text>
-            ) : null}
-            {iconsOwned ? (
-              <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{`${t('profile.stat.icons')} · ${formatNumber(iconsOwned, locale)}`}</Text>
-            ) : null}
-          </OnlyYou>
-        ) : null}
-
-        {user?.id ? <ProfileActivity key={reloadKey} userId={user.id} own /> : null}
+        <View style={styles.bleed}>
+          <ActivityGrid activity={activity} width={windowWidth} />
+        </View>
       </ScrollView>
       <DailySheet visible={streakOpen} onClose={() => setStreakOpen(false)} today={today} onStreak={setStreak} />
     </GradientBackground>
@@ -542,49 +553,25 @@ function AccountProfile() {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: layout.gutter, gap: spacing.sm },
-  // Clipped to its own corners.
-  banner: { alignSelf: 'stretch', height: BANNER, borderRadius: radii.lg, overflow: 'hidden' },
-
-
-  // The avatar centred, with everything about who this is under it.
-  hero: { alignSelf: 'stretch', alignItems: 'center', gap: 4, marginTop: spacing.xs },
-  // Half the avatar overlaps the banner's lower edge, less the column's gap.
-  heroOverBanner: { marginTop: -(FRAMED / 2 + RING + spacing.sm) },
-  // Ringed in the page's colour, so the avatar stands off the banner.
-  face: { borderRadius: radii.pill, borderWidth: RING },
-  // The upload spinner covers the avatar alone, not the stage.
-  avatarOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-
-  nameRow: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
-  name: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
-  handle: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  country: { alignItems: 'center', gap: spacing.xs, marginTop: 2 },
-  // A plain 22x16 image, as on the website; a radius this small would be a rounding error.
-  flag: { width: 22, height: 16 },
-  countryName: { fontSize: typography.sizes.sm },
-  bio: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
-  level: { alignSelf: 'stretch', marginTop: spacing.sm },
-  seen: { alignItems: 'center', gap: spacing.xs, marginTop: 2 },
-  seenText: { fontSize: typography.sizes.sm, textDecorationLine: 'underline' },
-  addBio: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
-  hint: { fontSize: typography.sizes.sm, lineHeight: 20 },
-  showcaseSkeleton: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
+  content: { paddingHorizontal: layout.gutter },
+  top: { gap: spacing.sm },
+  // The tabs and the grid run to the screen's edges.
+  bleed: { marginHorizontal: -layout.gutter },
+  // The upload spinner covers the avatar alone.
+  avatarOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  aboutRow: { flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.md, rowGap: spacing.xs },
+  about: { alignItems: 'center', gap: spacing.xs },
+  aboutText: { fontSize: typography.sizes.text },
+  seenText: { fontSize: typography.sizes.text, textDecorationLine: 'underline' },
+  bio: { fontSize: typography.sizes.text, lineHeight: 21 },
+  addBioWrap: { paddingVertical: 2 },
+  addBio: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  hint: { fontSize: typography.sizes.text, lineHeight: 20 },
+  highlightsSkeleton: { gap: spacing.md - 2, paddingVertical: spacing.sm },
 
   // The buttons wrap to a second row where they do not fit, and each row's buttons share its width.
-  actions: { alignSelf: 'stretch', alignItems: 'stretch', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
-  // Drawn a full fingertip tall: a 36pt button with hit slop looked smaller than its target. As wide as its label to
-  // begin with, then a share of what its row leaves.
+  actions: { alignSelf: 'stretch', alignItems: 'stretch', flexWrap: 'wrap', gap: spacing.sm },
+  // Drawn a full fingertip tall; as wide as its label to begin with, then a share of what its row leaves.
   action: {
     flexGrow: 1,
     flexBasis: 'auto',
@@ -596,16 +583,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm + spacing.xs,
     paddingVertical: spacing.xs,
   },
-  actionText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  // Find friends: the one filled control of the three, round, and at least as tall as its neighbours.
+  actionText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  // Find friends: a circle the height of its neighbours.
   actionIcon: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignSelf: 'center', borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
 
   // A guest's card: their avatar, the offer, and what an account keeps.
   guestCard: { marginTop: spacing.md },
   guestInner: { gap: spacing.md },
   guestHead: { alignItems: 'center', gap: spacing.sm },
-  guestName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  guestTitle: { ...display(typography.sizes.lg), textAlign: 'center', marginTop: spacing.xs },
-  guestBody: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
+  guestName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  guestTitle: { ...display(typography.sizes.text), textAlign: 'center', marginTop: spacing.xs },
+  guestBody: { fontSize: typography.sizes.text, lineHeight: 21, textAlign: 'center' },
   guestActions: { gap: spacing.sm },
 });

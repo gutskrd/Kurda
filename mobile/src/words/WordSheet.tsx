@@ -109,7 +109,7 @@ function Card({ word, dialect, audio, player }: { word: SetWord; dialect: Alphab
     <View style={styles.headWord} accessible accessibilityRole="header" accessibilityLabel={t('words.tileLabel', { word: wordIn(word, dialect), meaning: meaning.text })}>
       {word.set === 'colours' ? <Swatch hex={word.hex} size={big ? SWATCH_STAGED : SWATCH} /> : null}
       {word.set === 'numbers' ? <Digits value={word.value} dialect={dialect} size={big ? DIGITS_STAGED : DIGITS} /> : null}
-      <Said word={word} dialect={dialect} size={word.set === 'colours' || word.set === 'numbers' ? typography.sizes.xl : big ? WORD_STAGED : WORD} align="center" />
+      <Said word={word} dialect={dialect} size={word.set === 'colours' || word.set === 'numbers' ? typography.sizes.title : big ? WORD_STAGED : WORD} align="center" />
     </View>
   );
   const listen = <PlayButton src={sound} label={t('alphabet.listen')} player={player} size="large" />;
@@ -145,12 +145,12 @@ function Card({ word, dialect, audio, player }: { word: SetWord; dialect: Alphab
       ) : null}
 
       <Row label={t(other === 'ckb' ? 'alphabet.inSorani' : 'alphabet.inKurmanci')}>
-        <Said word={word} dialect={other} size={typography.sizes.xl} align="start" />
+        <Said word={word} dialect={other} size={typography.sizes.title} align="start" />
       </Row>
 
       {word.set === 'colours' ? (
         <Row label={t('words.inPhrase')}>
-          <WordText word={word.example} dialect={dialect} size={typography.sizes.lg} align="start" />
+          <WordText word={word.example} dialect={dialect} size={typography.sizes.text} align="start" />
           <Text style={[styles.gloss, glossLocale === locale ? dir.text : scriptText(glossLocale === 'ckb' ? 'ckb' : 'kmr'), { color: colors.textSecondary }]}>
             {glossIn(word.example, glossLocale)}
           </Text>
@@ -246,7 +246,7 @@ function MakeNumber({ dialect }: { dialect: AlphabetScript }): React.JSX.Element
       <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{hint}</Text>
       {spelled ? (
         <View accessibilityLiveRegion="polite">
-          <WordText word={spelled} dialect={dialect} size={typography.sizes.lg} align="start" />
+          <WordText word={spelled} dialect={dialect} size={typography.sizes.text} align="start" />
         </View>
       ) : null}
     </View>
@@ -295,10 +295,10 @@ function Stepper({ onStep }: { onStep: (by: number) => void }): React.JSX.Elemen
 
 const SWATCH = 72;
 const SWATCH_STAGED = 96;
-const DIGITS = 56;
-const DIGITS_STAGED = 72;
-const WORD = 34;
-const WORD_STAGED = 40;
+const DIGITS = typography.sizes.title;
+const DIGITS_STAGED = typography.sizes.title;
+const WORD = typography.sizes.title;
+const WORD_STAGED = typography.sizes.title;
 
 const styles = StyleSheet.create({
   // The gutter is the scroll view's own, so the card scrolls edge to edge.
@@ -310,36 +310,36 @@ const styles = StyleSheet.create({
   head: { alignItems: 'center', gap: spacing.md },
   headWord: { alignItems: 'center', gap: spacing.sm },
   staged: { alignItems: 'center', gap: spacing.sm },
-  latin: { fontSize: typography.sizes.sm, writingDirection: 'ltr' },
+  latin: { fontSize: typography.sizes.text, writingDirection: 'ltr' },
 
   row: { gap: spacing.xs + 2, paddingTop: spacing.md - 2, borderTopWidth: StyleSheet.hairlineWidth },
-  meaning: { ...display(typography.sizes.lg), lineHeight: Math.round(typography.sizes.lg * 1.3) },
-  gloss: { fontSize: typography.sizes.sm },
-  note: { fontSize: typography.sizes.sm, lineHeight: 21 },
-  voiceNote: { fontSize: typography.sizes.xs },
-  also: { ...display(typography.sizes.xl), lineHeight: Math.round(typography.sizes.xl * 1.2) },
+  meaning: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.3) },
+  gloss: { fontSize: typography.sizes.text },
+  note: { fontSize: typography.sizes.text, lineHeight: 21 },
+  voiceNote: { fontSize: typography.sizes.text },
+  also: { ...display(typography.sizes.title), lineHeight: Math.round(typography.sizes.title * 1.2) },
 
   make: { alignSelf: 'stretch', gap: spacing.xs + 2 },
   input: {
     minHeight: MIN_TOUCH_TARGET + 4,
     borderRadius: radii.md,
     paddingHorizontal: spacing.md,
-    fontSize: typography.sizes.xl,
+    fontSize: typography.sizes.title,
     fontVariant: ['tabular-nums'],
   },
-  hint: { fontSize: typography.sizes.xs },
+  hint: { fontSize: typography.sizes.text },
 
   relative: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, paddingVertical: 2 },
   relativeWhen: { flexShrink: 1 },
-  relativeWord: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  relativeGloss: { fontSize: typography.sizes.xs },
-  relativeDay: { ...display(typography.sizes.lg), lineHeight: Math.round(typography.sizes.lg * 1.2) },
-  relativeDayArabic: { fontSize: typography.sizes.lg, lineHeight: Math.round(typography.sizes.lg * 1.5) },
+  relativeWord: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  relativeGloss: { fontSize: typography.sizes.text },
+  relativeDay: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.2) },
+  relativeDayArabic: { fontSize: typography.sizes.text, lineHeight: Math.round(typography.sizes.text * 1.5) },
 
   season: { alignItems: 'center', gap: spacing.sm },
   seasonDot: { width: 12, height: 12, borderRadius: radii.pill },
-  seasonWord: { ...display(typography.sizes.lg), lineHeight: Math.round(typography.sizes.lg * 1.3) },
-  seasonWordArabic: { fontSize: typography.sizes.lg, lineHeight: Math.round(typography.sizes.lg * 1.5) },
+  seasonWord: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.3) },
+  seasonWordArabic: { fontSize: typography.sizes.text, lineHeight: Math.round(typography.sizes.text * 1.5) },
 
   stepper: { justifyContent: 'space-between', marginTop: spacing.xs },
   step: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },

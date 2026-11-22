@@ -35,11 +35,15 @@ describe('the stories’ colours', () => {
     expect(level).toMatch(/color:\s*var\(--ink-3\)/);
   });
 
-  it('draw a bookmark, a saved word and a read chapter’s tick that are on in the violet, in the library, the reader and the dictionary', () => {
-    for (const on of ['.story-card-bookmark.is-on', '.story-overview-bookmark.is-on', '.story-save.is-on', '.story-contents-mark']) {
+  it('draw a saved word’s button and a read chapter’s tick in the violet, in the reader and the dictionary', () => {
+    for (const on of ['.story-save.is-on', '.story-contents-mark']) {
       expect(declared(stories, on), on).toMatch(/color:\s*var\(--primary\)/);
     }
     expect(declared(pages, '.dict-save.is-on')).toMatch(/color:\s*var\(--primary\)/);
+  });
+
+  it('fill every bookmark that is on in the saved yellow, as a saved post’s is', () => {
+    expect(declared(sheet('ui.css'), '.saved-mark')).toMatch(/color:\s*var\(--saved\)/);
   });
 
   it('draw how far the reading has come in the violet: the ring, a card’s hairline, the chapters read', () => {

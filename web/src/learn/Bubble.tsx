@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import type { PromptToken } from '@kurda/shared';
 import { SpeakerIcon } from '../components/icons';
 import { onPlaying, play } from '../lib/sound';
+import { useAutoplay } from './useAutoplay';
 import { useT } from '../i18n/I18nProvider';
 import type { LineToken } from './asks';
 
@@ -95,9 +96,13 @@ export function LineWords({
   );
 }
 
-/** A line's recording at the start of its bubble: a round red play button, with a 0.75× chip under it (`PlayButton`). */
-export function LinePlay({ src }: { src: string }): React.JSX.Element {
+/**
+ * A line's recording at the start of its bubble: a round red play button, with a 0.75× chip under it (`PlayButton`).
+ * `auto` plays it by itself as the exercise appears (`useAutoplay`).
+ */
+export function LinePlay({ src, auto = false }: { src: string; auto?: boolean }): React.JSX.Element {
   const t = useT();
+  useAutoplay(src, auto);
   const [rate, setRate] = useState<number | null>(null);
   useEffect(() => onPlaying((now, speed) => setRate(now === src ? speed : null)), [src]);
   const label = t('lesson.listen.slow');

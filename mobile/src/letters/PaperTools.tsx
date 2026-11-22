@@ -289,11 +289,11 @@ export function Glyph({ kind, color, size = 17 }: { kind: 'draw' | 'undo' | 'red
 const styles = StyleSheet.create({
   bar: { borderRadius: radii.md, padding: BAR_PAD, gap: BAR_GAP },
   barItem: { flex: 1, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: radii.sm, paddingHorizontal: 2, paddingVertical: 4 },
-  barText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.medium },
+  barText: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
   barTextOn: { fontWeight: typography.weights.semibold },
   locked: { opacity: 0.45 },
   rowBlock: { gap: 2 },
-  rowLabel: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  rowLabel: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   row: { alignItems: 'center', gap: 2, paddingVertical: 2 },
   choice: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', padding: 2, borderWidth: 2, borderRadius: radii.md },
   action: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', borderRadius: radii.md },

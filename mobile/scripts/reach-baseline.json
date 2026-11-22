@@ -65,9 +65,6 @@
   "lore/RiddlesScreen.tsx": {
     "hitSlop": 1
   },
-  "profile/ProfileFriends.tsx": {
-    "scroller": 1
-  },
   "push/ReminderNudge.tsx": {
     "hitSlop": 1
   },

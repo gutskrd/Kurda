@@ -124,7 +124,7 @@ export function JumpTestScreen({
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
   loading: { flex: 1, gap: spacing.lg, padding: spacing.xl, paddingTop: spacing.xxl },
-  title: { ...display(typography.sizes.xl), textAlign: 'center' },
-  detail: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
+  title: { ...display(typography.sizes.title), textAlign: 'center' },
+  detail: { fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center' },
   actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.sm },
 });

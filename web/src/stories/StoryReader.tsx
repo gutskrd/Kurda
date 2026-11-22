@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // Soranî in a face made for Arabic script, fetched only when a story page opens.
-import '@fontsource-variable/vazirmatn';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   PAID_STORY_REPEATS_PER_DAY,
@@ -292,7 +291,7 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
                 aria-label={bookmarked ? t('stories.library.unbookmark', { title: story.title }) : t('stories.library.bookmark', { title: story.title })}
                 onClick={toggleBookmark}
               >
-                <BookmarkIcon size={18} weight={bookmarked ? 'fill' : 'regular'} />
+                <BookmarkIcon size={18} weight={bookmarked ? 'fill' : 'regular'} className={bookmarked ? 'saved-mark' : undefined} />
                 <span>{bookmarked ? t('stories.overview.bookmarked') : t('stories.overview.bookmark')}</span>
               </button>
             )}

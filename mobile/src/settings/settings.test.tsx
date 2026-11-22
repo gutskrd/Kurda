@@ -248,16 +248,15 @@ describe('Settings pages', () => {
     expect(screen.getByRole('switch', { name: 'Event themes' })).toBeTruthy();
   });
 
-  it('ticks the chosen answer in violet, the colour everything chosen wears', () => {
+  it('ticks the chosen answer in the ink, never the main button’s violet', () => {
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsPageScreen page="theme" onExit={() => undefined} />);
     const group = screen.getByRole('radiogroup', { name: 'Appearance' });
     fireEvent.click(within(group).getByRole('radio', { name: 'Light' }));
     const tick = within(group).getByRole('radio', { name: 'Light' }).querySelector('svg');
     expect(tick).toBeTruthy();
-    // The palette's violet, not the ink the rest of the row is drawn in.
     const drawn = tick!.outerHTML.toLowerCase();
-    expect([LIGHT.primary, DARK.primary].some((violet) => drawn.includes(violet.toLowerCase()))).toBe(true);
-    expect(drawn.includes(LIGHT.textPrimary.toLowerCase())).toBe(false);
+    expect([LIGHT.primary, DARK.primary].some((ink) => drawn.includes(ink.toLowerCase()))).toBe(true);
+    expect([LIGHT.accent, DARK.accent].some((violet) => drawn.includes(violet.toLowerCase()))).toBe(false);
   });
 });

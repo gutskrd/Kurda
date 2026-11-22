@@ -1,18 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { compactCount, gameEmblemNamed } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ActivityEntry, FeedItem, ProfileSection, ProfileSections } from '../lib/types';
-import { FeedCard } from '../feed/FeedCard';
-import { ActivityRowsSkeleton, FeedSkeleton } from '../components/skeletons';
 import { PROFILE_SECTIONS } from '../lib/types';
-import { BookmarkIcon, GameIcon, HeartIcon, RepostIcon, WallIcon } from '../components/icons';
-import { useT } from '../i18n/I18nProvider';
+import { BookIcon, BookmarkIcon, EyeIcon, FeatherIcon, GameIcon, HeartIcon, LockIcon, RepostIcon, StatementIcon, TilesIcon, WallIcon } from '../components/icons';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { CARD_LABEL_KEY, cardKind } from '../feed/postKinds';
+import { GameArt } from '../games/GameArt';
 
 const PAGE = 12;
 
-/** What each tab is called, and the icon that stands in for an empty one. */
+/** What each tab is called, said for its icon. */
 const LABEL_KEY: Record<ProfileSection, MessageKey> = {
   posts: 'profile.tab.posts',
   games: 'nav.games',
@@ -21,7 +22,7 @@ const LABEL_KEY: Record<ProfileSection, MessageKey> = {
   saved: 'saved.title',
 };
 
-function SectionGlyph({ kind, size = 22 }: { kind: ProfileSection; size?: number }): React.JSX.Element {
+function SectionGlyph({ kind, size = 24 }: { kind: ProfileSection; size?: number }): React.JSX.Element {
   if (kind === 'posts') return <WallIcon size={size} />;
   if (kind === 'likes') return <HeartIcon size={size} />;
   if (kind === 'reposts') return <RepostIcon size={size} />;
@@ -29,17 +30,27 @@ function SectionGlyph({ kind, size = 22 }: { kind: ProfileSection; size?: number
   return <GameIcon size={size} />;
 }
 
-/** "3 Sep" / "3 Sep 2024" — a year only when it is not the current one. */
-function when(iso: string): string {
+/** The mark a post of words wears in its corner, so a poem, a story and a saying tell apart at a glance. */
+function WordsMark({ kind }: { kind: string }): React.JSX.Element | null {
+  if (kind === 'poem') return <FeatherIcon size={16} />;
+  if (kind === 'story') return <BookIcon size={16} />;
+  if (kind === 'gotin') return <StatementIcon size={16} />;
+  return null;
+}
+
+/** "3 Sep" / "3 Sep 2024": a year only when it is not this one. */
+function when(iso: string, locale: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
   const sameYear = d.getFullYear() === new Date().getFullYear();
-  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) });
+  return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) });
 }
 
 /**
- * What someone has posted and played. Tabs come from the profile's `sections`, so hidden ones never appear, and each
- * tab fetches when first opened. The owner sees every tab, with hidden ones marked.
+ * What someone has posted, played, liked, reposted and saved, as a row of icon tabs over a grid of tiles. The tabs stay
+ * under the top bar while the grid scrolls, and a line slides under the open one. Tabs come from the profile's
+ * `sections`, so hidden ones never appear to others; the owner sees every tab, a hidden one marked with a lock. Each tab
+ * fetches when first opened, and the grid asks for more as its end comes into view.
  */
 export function ProfileActivity({
   userId,
@@ -48,7 +59,7 @@ export function ProfileActivity({
 }: {
   userId: string;
   sections?: ProfileSections | null;
-  /** viewing your own profile: show hidden sections too, labelled */
+  /** viewing your own profile: show hidden sections too, marked */
   own?: boolean;
 }): React.JSX.Element | null {
   const t = useT();
@@ -59,38 +70,45 @@ export function ProfileActivity({
   const active = tab && shown.includes(tab) ? tab : (shown[0] ?? null);
 
   if (!sections || shown.length === 0 || !active) return null;
+  const at = shown.indexOf(active);
 
   return (
-    <div className="mkp-showcase-block">
-      <div className="mkp-showcase-label">{t('profile.activity')}</div>
-      <div className="mkp-showcase mkp-activity">
-        <div className="mkp-tabs" role="tablist" aria-label={t('profile.activityOf')}>
-          {shown.map((s) => (
+    <section className="pg" aria-label={t('profile.activityOf')}>
+      <div className="pg-tabs" role="tablist" aria-label={t('profile.activityOf')} style={{ '--n': shown.length, '--at': at } as React.CSSProperties}>
+        {shown.map((s) => {
+          const hidden = sections[s] === false;
+          return (
             <button
               key={s}
               type="button"
               role="tab"
-              id={`mkp-tab-${s}`}
+              id={`pg-tab-${s}`}
               aria-selected={s === active}
-              aria-controls={`mkp-panel-${s}`}
-              className={`mkp-tab${s === active ? ' is-active' : ''}`}
+              aria-controls={`pg-panel-${s}`}
+              aria-label={hidden ? `${t(LABEL_KEY[s])}, ${t('profile.hidden')}` : t(LABEL_KEY[s])}
+              title={t(LABEL_KEY[s])}
+              className={`pg-tab${s === active ? ' is-active' : ''}`}
               onClick={() => setTab(s)}
             >
-              <SectionGlyph kind={s} size={16} />
-              <span>{t(LABEL_KEY[s])}</span>
-              {sections[s] === false && <span className="mkp-tab-hidden">{t('profile.hidden')}</span>}
+              <SectionGlyph kind={s} />
+              {hidden && (
+                <span className="pg-tab-lock" aria-hidden="true">
+                  <LockIcon size={12} />
+                </span>
+              )}
             </button>
-          ))}
-        </div>
-
-        {/* Keyed so a tab switch starts a fresh list rather than showing the previous tab’s entries. */}
-        <ActivityPanel key={active} userId={userId} kind={active} />
+          );
+        })}
+        <span className="pg-ink" aria-hidden="true" />
       </div>
-    </div>
+
+      {/* Keyed so a tab switch starts a fresh grid rather than showing the previous tab's tiles. */}
+      <ActivityPanel key={active} userId={userId} kind={active} />
+    </section>
   );
 }
 
-/** One tab's list, paged with Show more: posts as feed cards, games as history rows. */
+/** One tab's grid, paged: posts as tiles of their picture or words, games as tiles of their cover. */
 function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
@@ -99,13 +117,15 @@ function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection 
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [more, setMore] = useState(false);
-  const asCards = kind !== 'games';
+  const fetching = useRef(false);
+  const games = kind === 'games';
 
   const load = useCallback(
     async (offset: number): Promise<void> => {
-      const res = await client.get<{ entries?: ActivityEntry[]; items?: FeedItem[] }>(
-        `/users/${userId}/activity?kind=${kind}&limit=${PAGE}&offset=${offset}`,
-      );
+      if (fetching.current) return;
+      fetching.current = true;
+      const res = await client.get<{ entries?: ActivityEntry[]; items?: FeedItem[] }>(`/users/${userId}/activity?kind=${kind}&limit=${PAGE}&offset=${offset}`);
+      fetching.current = false;
       if (!res.ok) {
         setError(describeError(res.error, t));
         setState('error');
@@ -119,56 +139,67 @@ function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection 
       setMore((rows.length || posts.length) === PAGE);
       setState('ready');
     },
-    [client, userId, kind],
+    [client, userId, kind, t],
   );
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      await load(0);
-      if (cancelled) return;
-    })();
-    return () => {
-      cancelled = true;
-    };
+    void load(0);
   }, [load]);
 
-  /** Keep a card's own list in step when its like or bookmark is toggled. */
-  const changed = useCallback((next: FeedItem): void => {
-    setItems((prev) => prev.map((i) => (i.key === next.key ? next : i)));
-  }, []);
-  const removed = useCallback((gone: FeedItem): void => {
-    setItems((prev) => prev.filter((i) => i.key !== gone.key));
-  }, []);
+  const count = games ? entries.length : items.length;
 
-  const shown = asCards ? items.length : entries.length;
+  // The next page as the grid's end comes into view; where nothing can watch for that, a button asks for it.
+  const end = useRef<HTMLDivElement>(null);
+  const canWatch = typeof IntersectionObserver === 'function';
+  useEffect(() => {
+    const el = end.current;
+    if (!el || !more || !canWatch) return;
+    const watcher = new IntersectionObserver((seen) => {
+      if (seen.some((e) => e.isIntersecting)) void load(count);
+    }, { rootMargin: '0px 0px 100% 0px' });
+    watcher.observe(el);
+    return () => watcher.disconnect();
+  }, [more, canWatch, load, count]);
 
   if (state === 'loading') {
-    return asCards ? <FeedSkeleton count={2} className="mkp-activity-feed" /> : <ActivityRowsSkeleton />;
+    return (
+      <div className="pg-grid" aria-hidden="true">
+        {Array.from({ length: 6 }, (_, i) => (
+          <span key={i} className="pg-tile skeleton" />
+        ))}
+      </div>
+    );
   }
-  if (state === 'error') return <p className="muted mkp-activity-note">{error}</p>;
-  if (shown === 0) return <p className="muted mkp-activity-note">{t('profile.nothingHere')}</p>;
+  if (state === 'error') return <p className="muted pg-note">{error}</p>;
+  if (count === 0) {
+    return (
+      <div className="pg-empty">
+        <span className="pg-empty-mark" aria-hidden="true">
+          <SectionGlyph kind={kind} size={34} />
+        </span>
+        <p className="pg-empty-title">{t('profile.nothingHere')}</p>
+      </div>
+    );
+  }
 
   return (
-    <div id={`mkp-panel-${kind}`} role="tabpanel" aria-labelledby={`mkp-tab-${kind}`}>
-      {asCards ? (
-        <div className="feed mkp-activity-feed">
-          {items.map((item) => (
-            <FeedCard key={item.key} item={item} onChanged={changed} onRemoved={removed} />
-          ))}
-        </div>
-      ) : (
-        <ul className="mkp-activity-list">
-          {entries.map((e) => (
-            <li key={e.id}>
-              <ActivityRow entry={e} />
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {more && (
-        <button type="button" className="mkp-more" onClick={() => void load(shown)}>
+    <div id={`pg-panel-${kind}`} role="tabpanel" aria-labelledby={`pg-tab-${kind}`}>
+      <ul className="pg-grid">
+        {games
+          ? entries.map((e) => (
+              <li key={e.id}>
+                <GameTile entry={e} />
+              </li>
+            ))
+          : items.map((item) => (
+              <li key={item.key}>
+                <PostTile item={item} />
+              </li>
+            ))}
+      </ul>
+      <div ref={end} />
+      {more && !canWatch && (
+        <button type="button" className="mkp-more" onClick={() => void load(count)}>
           {t('common.showMore')}
         </button>
       )}
@@ -176,25 +207,72 @@ function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection 
   );
 }
 
-/** A row is a link when the thing has a page, and plain text when it does not. */
-function ActivityRow({ entry }: { entry: ActivityEntry }): React.JSX.Element {
+/** A post as a tile: its first picture, or its title and opening words, with how often it was seen. */
+function PostTile({ item }: { item: FeedItem }): React.JSX.Element {
+  const t = useT();
+  const locale = useLocale();
+  const kind = cardKind(item);
+  const label = CARD_LABEL_KEY[kind] ? t(CARD_LABEL_KEY[kind]!) : kind;
+  const picture = item.images?.[0]?.url ?? item.imageUrl;
+  const several = (item.images?.length ?? 0) > 1;
+  const name = item.title || item.excerpt || label;
+  return (
+    <Link to={item.href} className={`pg-tile${picture ? '' : ' is-words'}${item.review === 'held' ? ' is-held' : ''}`} aria-label={`${label}: ${name}`}>
+      {picture ? (
+        <img className="pg-tile-img" src={picture} alt="" loading="lazy" decoding="async" />
+      ) : (
+        <span className="pg-tile-words" dir="auto">
+          {item.title && <span className="pg-tile-title">{item.title}</span>}
+          {item.excerpt && <span className="pg-tile-excerpt">{item.excerpt}</span>}
+        </span>
+      )}
+      {several ? (
+        <span className="pg-tile-mark" aria-hidden="true">
+          <TilesIcon size={18} />
+        </span>
+      ) : !picture ? (
+        <span className="pg-tile-mark is-words" aria-hidden="true">
+          <WordsMark kind={kind} />
+        </span>
+      ) : null}
+      {item.viewCount > 0 && (
+        <span className="pg-tile-foot" aria-hidden="true">
+          <EyeIcon size={15} />
+          {compactCount(item.viewCount, locale)}
+        </span>
+      )}
+    </Link>
+  );
+}
+
+/** A game played, as its cover with the result under it. */
+function GameTile({ entry }: { entry: ActivityEntry }): React.JSX.Element {
+  const locale = useLocale();
+  const emblem = gameEmblemNamed(entry.title);
+  const date = when(entry.at, locale);
+  const said = [entry.title, entry.detail, date].filter(Boolean).join(', ');
   const inner = (
     <>
-      {entry.imageUrl ? (
-        <img className="mkp-activity-shot" src={entry.imageUrl} alt="" loading="lazy" />
+      {emblem ? (
+        <GameArt game={emblem} size={160} />
       ) : (
-        <span className="mkp-activity-glyph" aria-hidden="true"><SectionGlyph kind={entry.kind} /></span>
+        <span className="pg-tile-glyph" aria-hidden="true">
+          <GameIcon size={32} />
+        </span>
       )}
-      <span className="mkp-activity-meta">
-        <span className="mkp-activity-title">{entry.title}</span>
-        {entry.detail && <span className="mkp-activity-detail">{entry.detail}</span>}
+      <span className="pg-tile-foot is-game" aria-hidden="true">
+        <span className="pg-tile-game">{entry.detail ?? entry.title}</span>
+        <time dateTime={entry.at}>{date}</time>
       </span>
-      <time className="mkp-activity-when" dateTime={entry.at}>{when(entry.at)}</time>
     </>
   );
   return entry.href ? (
-    <Link to={entry.href} className="mkp-activity-row">{inner}</Link>
+    <Link to={entry.href} className="pg-tile is-game" aria-label={said}>
+      {inner}
+    </Link>
   ) : (
-    <div className="mkp-activity-row">{inner}</div>
+    <div className="pg-tile is-game" role="img" aria-label={said}>
+      {inner}
+    </div>
   );
 }

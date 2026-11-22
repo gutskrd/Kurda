@@ -5,7 +5,7 @@ import { hueSteps, storyHeadingTitle, type HueScheme, type StoryDetail, type Sto
 import { MIN_TOUCH_TARGET, REACH_OPEN, reachSlop } from '../a11y/a11y';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { display, displayFont, sectionLabel } from '../theme/fonts';
+import { display, sectionLabel } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { CHARACTER_SIZE } from '../characters/voice';
@@ -16,7 +16,7 @@ import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
 
 /** The reader's body size before the text-size control and Dynamic Type. */
-export const STORY_BODY_SIZE = 18;
+export const STORY_BODY_SIZE = typography.sizes.text;
 
 /** Line height for a body size: the design's generous 1.65. React Native applies the system text size to it already. */
 export function storyLineHeight(fontSize: number): number {
@@ -124,14 +124,14 @@ export function StoryText({
               <Text
                 {...textProps}
                 accessibilityRole="header"
-                style={[display(Math.round(fontSize * 1.3)), { lineHeight: Math.round(fontSize * 1.3 * 1.25), color: colors.textPrimary }, textStyle, styles.centred]}
+                style={[display(typography.sizes.title), { lineHeight: Math.round(typography.sizes.title * 1.25), color: colors.textPrimary }, textStyle, styles.centred]}
               >
                 {heading}
               </Text>
               {under && under !== heading ? (
                 <Text
                   {...(translationEnglish ? ENGLISH_TEXT_PROPS : {})}
-                  style={[styles.chapterTranslation, { fontSize: Math.round(fontSize * 0.85), color: colors.textSecondary }, translationEnglish ? ENGLISH_TEXT_STYLE : null, styles.centred]}
+                  style={[{ fontSize, color: colors.textSecondary }, translationEnglish ? ENGLISH_TEXT_STYLE : null, styles.centred]}
                 >
                   {under}
                 </Text>
@@ -212,7 +212,7 @@ export function StoryText({
                 {showTranslation ? (
                   <Text
                     {...(translationEnglish ? ENGLISH_TEXT_PROPS : {})}
-                    style={[styles.translation, { fontSize: Math.round(fontSize * 0.88), lineHeight: Math.round(fontSize * 0.88 * 1.5), color: colors.textSecondary }, translationEnglish ? ENGLISH_TEXT_STYLE : null]}
+                    style={[styles.translation, { fontSize, lineHeight: Math.round(fontSize * 1.5), color: colors.textSecondary }, translationEnglish ? ENGLISH_TEXT_STYLE : null]}
                   >
                     {translatedText}
                   </Text>
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   wrap: { gap: spacing.lg },
   paragraph: { gap: spacing.xs, borderRadius: radii.sm },
   // The serif at book weight: the headings' face without their heaviness.
-  body: { fontFamily: displayFont, fontWeight: typography.weights.regular },
+  body: { fontWeight: typography.weights.regular },
   listenRow: { alignItems: 'center', gap: spacing.sm },
   voicedRow: { minHeight: CHARACTER_SIZE.row },
   listen: {
@@ -264,17 +264,16 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     paddingHorizontal: spacing.md,
   },
-  listenText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  listenText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   gloss: { textDecorationLine: 'underline', textDecorationStyle: 'dotted' },
   translationRow: { gap: spacing.xs },
-  translation: { fontFamily: displayFont, fontStyle: 'italic' },
+  translation: { fontStyle: 'italic' },
   chapter: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md },
   // A chapter starts a little further from what precedes it than a paragraph does.
   chapterAfter: { marginTop: spacing.md },
   // The page's quiet ink, softened to about 2:1 on the paper in both schemes; the separator colour was too faint.
   rule: { width: 32, height: 2, borderRadius: radii.pill, marginBottom: spacing.lg, opacity: 0.4 },
-  chapterTranslation: { fontFamily: displayFont },
   centred: { textAlign: 'center' },
   translationToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: TRANSLATION_TOGGLE_HEIGHT, paddingHorizontal: spacing.xs },
-  translationToggleText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  translationToggleText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

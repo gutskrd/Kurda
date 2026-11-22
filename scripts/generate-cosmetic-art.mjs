@@ -377,9 +377,15 @@ function dieCut(cv, d, edge = 26) {
   cv.add(`<path d="${d}" fill="#ffffff" stroke="#ffffff" stroke-width="${edge * 2}" stroke-linejoin="round"/>`);
 }
 
-/** The sun of the Kurdistan flag: a disc and twenty-one rays. */
+/** The sun of the Kurdistan flag: twenty-one rays, one straight up, their tips `r` out and the notches between them half as far. */
 function flagSun(cx, cy, r, colour) {
-  return `<path d="${sunRays(cx, cy, r * 0.5, r, 21, 0.085)}" fill="${colour}"/><circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r * 0.56)}" fill="${colour}"/>`;
+  const points = [];
+  for (let k = 0; k < 42; k++) {
+    const a = (k * Math.PI) / 21 - Math.PI / 2;
+    const out = r * (k % 2 === 0 ? 1 : 0.51);
+    points.push(`${n(cx + Math.cos(a) * out)} ${n(cy + Math.sin(a) * out)}`);
+  }
+  return `<path d="M${points.join(' L')} Z" fill="${colour}"/>`;
 }
 
 /** A pill-shaped badge with a word on it. */
@@ -411,7 +417,8 @@ export const STICKERS = [
       dieCut(cv, shield, 22);
       const clip = cv.id('shield');
       cv.def(`<clipPath id="${clip}"><path d="${shield}"/></clipPath>`);
-      cv.add(`<g clip-path="url(#${clip})"><rect x="0" y="0" width="512" height="200" fill="${FLAG.red}"/><rect x="0" y="200" width="512" height="130" fill="${FLAG.white}"/><rect x="0" y="330" width="512" height="200" fill="${FLAG.green}"/>${flagSun(256, 265, 92, FLAG.sun)}</g>`);
+      // the shield's height in three equal bands, and the sun half as tall as the shield, as on the flag
+      cv.add(`<g clip-path="url(#${clip})"><rect x="0" y="0" width="512" height="186" fill="${FLAG.red}"/><rect x="0" y="186" width="512" height="146" fill="${FLAG.white}"/><rect x="0" y="332" width="512" height="180" fill="${FLAG.green}"/>${flagSun(256, 259, 110, FLAG.sun)}</g>`);
       cv.add(`<path d="${shield}" fill="none" stroke="${C.plum}" stroke-width="8" stroke-linejoin="round"/>`);
       const sheen = cv.id('sheen');
       cv.def(linear(sheen, [[0, '#ffffff', 0.35], [0.5, '#ffffff', 0]], 0, 0, 1, 1));
@@ -561,7 +568,7 @@ export const OVERLAY = { size: 1024, maxBytes: 90 * 1024, scale: 0.74, tilt: -34
 export async function renderFlagOverlay() {
   const FW = 1200;
   const FH = 800;
-  const flat = doc(FW, FH, '', `<rect width="${FW}" height="${FH}" fill="${FLAG.red}"/><rect y="${FH / 3}" width="${FW}" height="${FH / 3}" fill="${FLAG.white}"/><rect y="${(FH * 2) / 3}" width="${FW}" height="${FH / 3}" fill="${FLAG.green}"/>${flagSun(FW / 2, FH / 2, FH * 0.19, FLAG.sun)}`);
+  const flat = doc(FW, FH, '', `<rect width="${FW}" height="${FH}" fill="${FLAG.red}"/><rect y="${FH / 3}" width="${FW}" height="${FH / 3}" fill="${FLAG.white}"/><rect y="${(FH * 2) / 3}" width="${FW}" height="${FH / 3}" fill="${FLAG.green}"/>${flagSun(FW / 2, FH / 2, FH * 0.25, FLAG.sun)}`);
   const src = await sharp(Buffer.from(flat)).ensureAlpha().raw().toBuffer();
   const pad = 140;
   const H = FH + pad * 2;

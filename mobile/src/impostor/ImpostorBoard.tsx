@@ -23,11 +23,11 @@ import type { TranslationKey } from '../i18n/translations';
 import { multiSeatName } from '../play/GameRoom';
 import { PartyComposer, PartyTimer, waitLeft } from '../party/Composer';
 import { SLIP_KEY, partyTextError } from '../party/text';
-import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { PULSE_MS, pressedDim } from '../theme/motion';
 import { timing, turnCard } from '../theme/animate';
+import { EmblemArt } from './art';
 
 export type ImpostorView = MultiView<ImpostorBoard | null>;
 type Move = (body: unknown) => Promise<ApiResult<MultiMoveAnswer<ImpostorBoard | null, ImpostorOutcome>>>;
@@ -178,15 +178,18 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
             </Text>
             {board.hand?.role === 'player' ? (
               <>
+                <View style={styles.cardArt}>
+                  <EmblemArt emblem="deer" size={76} />
+                </View>
                 <Text style={[styles.cardWord, { color: colors.textPrimary, writingDirection: script.writingDirection }]}>{board.hand.word}</Text>
                 <Text style={[styles.cardMeaning, { color: colors.textSecondary }]}>{meaningIn(board.hand.meanings, locale)}</Text>
               </>
             ) : board.hand?.role === 'impostor' ? (
               <>
-                <View style={styles.impostorLine}>
-                  <Icon name="eye-off" size={20} color={colors.danger} />
-                  <Text style={[styles.impostorText, { color: colors.danger }]}>{t('games.impostor.youAreImpostor')}</Text>
+                <View style={styles.cardArt}>
+                  <EmblemArt emblem="wolf" size={76} />
                 </View>
+                <Text style={[styles.impostorText, { color: colors.danger }]}>{t('games.impostor.youAreImpostor')}</Text>
                 <Text style={[styles.cardMeaning, { color: colors.textSecondary }]}>{t('games.impostor.blendIn')}</Text>
               </>
             ) : null}
@@ -385,8 +388,8 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
                 accessibilityLabel={`${name(s.seat)}: ${isImpostor ? t('games.impostor.impostorTag') : reveal.word}`}
                 style={[styles.flip, { borderColor: isImpostor ? colors.danger : colors.clayBorder, backgroundColor: colors.glassFill, transform: [{ scaleX }] }]}
               >
-                <Animated.View style={{ opacity: face, alignItems: 'center' }}>
-                  {isImpostor ? <Icon name="eye-off" size={18} color={colors.danger} /> : null}
+                <Animated.View style={{ opacity: face, alignItems: 'center', gap: 2 }}>
+                  <EmblemArt emblem={isImpostor ? 'wolf' : 'deer'} size={38} />
                   <Text style={[styles.flipText, { color: isImpostor ? colors.danger : colors.textPrimary }]} numberOfLines={2}>
                     {isImpostor ? t('games.impostor.impostorTag') : reveal.word}
                   </Text>
@@ -452,44 +455,44 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
 const styles = StyleSheet.create({
   board: { gap: spacing.md },
   status: { gap: 2 },
-  phase: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
-  whose: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  caught: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  phase: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
+  whose: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  caught: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   table: { gap: spacing.sm },
   seats: { flexDirection: 'row', justifyContent: 'center', gap: spacing.xs },
   seat: { flex: 1, maxWidth: 96, alignItems: 'center', gap: 2, paddingVertical: spacing.xs, minHeight: MIN_TOUCH_TARGET },
   light: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.lg },
   disc: { width: 38, height: 38, borderRadius: radii.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  discText: { fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
-  seatName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, maxWidth: '100%' },
-  seatTag: { fontSize: typography.sizes.xs },
+  discText: { fontWeight: typography.weights.bold, fontSize: typography.sizes.text },
+  seatName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, maxWidth: '100%' },
+  seatTag: { fontSize: typography.sizes.text },
   tabletop: { borderWidth: 1, borderRadius: radii.pill, padding: spacing.md, alignItems: 'center' },
   card: { alignSelf: 'center', width: '100%', maxWidth: 300, alignItems: 'center', gap: 2, padding: spacing.md, borderWidth: 1.5, borderRadius: radii.md },
-  cardLabel: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
-  cardHint: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  cardWord: { fontSize: 28, fontWeight: typography.weights.bold, marginTop: spacing.xs, textAlign: 'center' },
-  cardMeaning: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  impostorLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.xs },
-  impostorText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  cardLabel: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
+  cardHint: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  cardArt: { marginTop: spacing.sm },
+  cardWord: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, marginTop: spacing.xs, textAlign: 'center' },
+  cardMeaning: { fontSize: typography.sizes.text, textAlign: 'center' },
+  impostorText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, marginTop: spacing.xs },
   section: { gap: spacing.xs },
-  sectionTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  muted: { fontSize: typography.sizes.sm },
+  sectionTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  muted: { fontSize: typography.sizes.text },
   clue: { borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: 12, gap: 2 },
-  clueBy: { fontSize: typography.sizes.xs },
-  clueText: { fontSize: 18, fontWeight: typography.weights.semibold },
-  noClue: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
+  clueBy: { fontSize: typography.sizes.text },
+  clueText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  noClue: { fontSize: typography.sizes.text, fontStyle: 'italic' },
   options: { gap: spacing.sm },
   option: { minHeight: 48, borderWidth: 1.5, borderRadius: radii.md, paddingHorizontal: spacing.md, justifyContent: 'center' },
-  optionText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  optionText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
   unsure: { borderStyle: 'dashed', backgroundColor: 'transparent' },
-  guessText: { fontSize: 20, fontWeight: typography.weights.bold, textAlign: 'center' },
-  cast: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  guessText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
+  cast: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   reveal: { alignSelf: 'stretch', gap: spacing.md },
   flips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
   flipWrap: { width: 78, alignItems: 'center', gap: 4 },
   flip: { width: 72, height: 92, borderWidth: 1.5, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', padding: 4 },
-  flipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
-  flipName: { fontSize: typography.sizes.xs },
+  flipText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
+  flipName: { fontSize: typography.sizes.text },
   revealWord: { alignItems: 'center', gap: 2, padding: spacing.md, borderRadius: radii.lg },
-  whoWas: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
+  whoWas: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
 });

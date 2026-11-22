@@ -206,16 +206,13 @@ describe('the five places', () => {
     expect(within(main).getByRole('link', { name: 'Find people' })).toHaveAttribute('href', '/app/search');
   });
 
-  it('lets a visitor into Learn: the tools are open, and the courses ask for an account in place', async () => {
+  it('lets a visitor into Learn: the letters and the dictionary open, and the courses ask for an account in place', async () => {
     serve();
     visit('/app/learn');
     expect(await screen.findByRole('heading', { level: 1, name: 'Learn' })).toBeInTheDocument();
-    // The letters and the words after them, one tile, open too.
-    expect(screen.queryByRole('link', { name: /The Kurdish alphabet/ })).toBeNull();
-    expect(screen.getByRole('link', { name: /Letters and words/ })).toHaveAttribute('href', '/app/learn/words');
-    expect(screen.getByRole('link', { name: /Letters and words/ })).toHaveTextContent('Letters, colours, numbers, days, months');
-    // The published dictionary, which needs no account.
-    expect(screen.getByRole('link', { name: /Dictionary/ })).toHaveAttribute('href', '/dictionary/');
+    // Two buttons at the head of Learn: the letters and the words after them, and the published dictionary.
+    expect(screen.getByRole('link', { name: 'Letters and words' })).toHaveAttribute('href', '/app/learn/words');
+    expect(screen.getByRole('link', { name: 'Dictionary' })).toHaveAttribute('href', '/dictionary/');
     expect(screen.getByRole('link', { name: 'Create an account' })).toHaveAttribute('href', '/register');
   });
 

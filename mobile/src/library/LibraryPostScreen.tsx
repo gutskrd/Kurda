@@ -315,25 +315,25 @@ function PostSkeleton(): React.JSX.Element {
   const widths = ['96%', '92%', '98%', '88%', '94%', '72%'] as const;
   return (
     <View style={styles.body} accessibilityLabel={t('common.loading')}>
-      <SkeletonText size={typography.sizes.xl} lineHeight={TITLE_LINE} width="64%" />
+      <SkeletonText size={typography.sizes.title} lineHeight={TITLE_LINE} width="64%" />
       <View>
         {Array.from({ length: 12 }, (_, i) => (
-          <SkeletonText key={i} size={typography.sizes.md} lineHeight={BODY_LINE} width={widths[i % widths.length]} />
+          <SkeletonText key={i} size={typography.sizes.text} lineHeight={BODY_LINE} width={widths[i % widths.length]} />
         ))}
       </View>
       {/* "Report this post", under it on anybody else's. */}
       <View>
         <Skeleton width={14} height={14} radius={radii.xs} />
-        <SkeletonText size={typography.sizes.sm} width={112} />
+        <SkeletonText size={typography.sizes.text} width={112} />
       </View>
-      <SkeletonText size={typography.sizes.sm} width={96} style={styles.commentsTitleSkeleton} />
+      <SkeletonText size={typography.sizes.text} width={96} style={styles.commentsTitleSkeleton} />
       <CommentsSkeleton />
     </View>
   );
 }
 
 /** display(28) sets 1.12. */
-const TITLE_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
+const TITLE_LINE = Math.round(typography.sizes.title * typography.displayLineHeight);
 const BODY_LINE = 24;
 
 /** The face in the byline: as big as the wall's. */
@@ -345,18 +345,18 @@ const REPORT_LINE = { height: 20 };
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   byline: { alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
-  author: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  when: { fontSize: typography.sizes.sm },
+  author: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  when: { fontSize: typography.sizes.text },
   reportRow: { alignItems: 'center', gap: spacing.xs },
   reads: { alignItems: 'center', gap: spacing.xs },
-  readsText: { fontSize: typography.sizes.sm },
+  readsText: { fontSize: typography.sizes.text },
   // The row runs to the page's edges as on the wall, whose pills keep their own gutter.
   actions: { marginHorizontal: -layout.gutter },
   screen: { flex: 1, paddingHorizontal: layout.gutter },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
-  title: { ...display(typography.sizes.xl) },
-  postBody: { fontSize: typography.sizes.md, lineHeight: BODY_LINE },
-  commentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.sm },
+  title: { ...display(typography.sizes.title) },
+  postBody: { fontSize: typography.sizes.text, lineHeight: BODY_LINE },
+  commentsTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, marginTop: spacing.sm },
   commentsTitleSkeleton: { marginTop: spacing.sm },
-  report: { fontSize: typography.sizes.sm },
+  report: { fontSize: typography.sizes.text },
 });

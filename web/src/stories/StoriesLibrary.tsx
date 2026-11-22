@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 // Soranî titles in a face made for Arabic script.
-import '@fontsource-variable/vazirmatn';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   isStoryDialect,
@@ -26,6 +25,7 @@ import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { describeError } from '../lib/api';
 import { LearnHeader } from '../learn/LearnHeader';
+import { BookCard } from '../learn/BookCard';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import { STORIES_LIBRARY, gamePath, storyError } from './api';
 import { useStoryList } from './catalogue';
@@ -66,6 +66,8 @@ export function StoriesLibrary(): React.JSX.Element {
     <div className="container learn-page story-library">
       <LearnHeader view="stories" />
       <ShelfSwitch here="stories" />
+      {/* The course on paper, once a chapter is online. */}
+      <BookCard />
       <Library />
     </div>
   );

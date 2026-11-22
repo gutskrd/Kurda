@@ -1,35 +1,42 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Animated, Image, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { gameEmblemNamed } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { FeedCard, FeedCardSkeleton } from '../feed/FeedCard';
-import { SkeletonText } from '../theme/Skeleton';
-import type { FeedItem } from '../feed/types';
+import { useReducedMotion } from '../a11y/useReducedMotion';
 import { onPostDeleted, samePost, useDeleting } from '../composer/postDeleted';
-import { radii, spacing, typography } from '../theme/tokens';
-import { sectionLabel } from '../theme/fonts';
-import { Icon, type IconName } from '../theme/Icon';
-import { useTheme } from '../theme/ThemeProvider';
+import { CARD_LABEL_KEY, feedImages, type FeedItem } from '../feed/types';
+import { GameArt } from '../games/GameArt';
 import { useI18n } from '../i18n/I18nContext';
-import type { TranslationKey } from '../i18n/translations';
-
-import { PROFILE_SECTIONS, type ProfileSection, type ProfileSections } from './sections';
-import { EmptyState } from '../theme/EmptyState';
-import { heldDim } from '../theme/MotionParts';
+import { formatCompact } from '../i18n/format';
+import type { RootNavigation } from '../navigation/rootStack';
 import { useDirection } from '../reports/direction';
-import { reachRoom } from '../a11y/a11y';
+import { timing } from '../theme/animate';
+import { Icon, type IconName } from '../theme/Icon';
+import { duration } from '../theme/motion';
+import { PressableScale } from '../theme/MotionParts';
+import { Pressable } from '../theme/Pressable';
+import { Skeleton } from '../theme/Skeleton';
+import { useTheme } from '../theme/ThemeProvider';
+import { radii, spacing, typography } from '../theme/tokens';
+import { PROFILE_SECTIONS, type ProfileSection, type ProfileSections } from './sections';
 
-/** A tab's height, and the track's inset round the tabs. */
-const TAB_HEIGHT = 50;
-const TRACK_PAD = 3;
+/** How many tiles a page brings. */
+const PAGE = 12;
+/** The hairline between tiles. */
+const GAP = 2;
+const TAB_HEIGHT = 48;
+/** How near the end of the page, in points, the next page is asked for. */
+const NEAR_END = 600;
 
-const LABEL: Record<ProfileSection, TranslationKey> = {
+const LABEL = {
   posts: 'profile.tab.posts',
   games: 'nav.games',
   likes: 'profile.tab.likes',
   reposts: 'repost.tab',
   saved: 'saved.title',
-};
+} as const;
 
 const GLYPH: Record<ProfileSection, IconName> = {
   posts: 'wall',
@@ -39,7 +46,10 @@ const GLYPH: Record<ProfileSection, IconName> = {
   saved: 'bookmark',
 };
 
-/** A game, which stays a row: a line in a history rather than a post. */
+/** The mark a post of words wears in its corner, so a poem, a story and a saying tell apart at a glance. */
+const WORDS_MARK: Record<string, IconName> = { poem: 'quotes', story: 'story', gotin: 'statement' };
+
+/** A game played, which the route answers as a line in a history rather than a post. */
 interface ActivityEntry {
   id: string;
   title: string;
@@ -48,210 +58,343 @@ interface ActivityEntry {
 }
 
 interface ActivityPage {
+  entries?: ActivityEntry[];
+  items?: FeedItem[];
+}
+
+/** One profile's tabs and the grid under them; the screen places both, so the tabs can stay under the top bar. */
+export interface ProfileActivityState {
+  shown: ProfileSection[];
+  active: ProfileSection | null;
+  choose: (s: ProfileSection) => void;
+  /** Sections the owner hid from others; only the owner is shown them. */
+  hidden: (s: ProfileSection) => boolean;
   entries: ActivityEntry[];
   items: FeedItem[];
+  loading: boolean;
+  /** Asks for the next page, when there is one and none is on its way. */
+  more: () => void;
+}
+
+/** True when a scroll has come near enough to the end of the page that the next tiles should be on their way. */
+export function nearEnd(e: NativeSyntheticEvent<NativeScrollEvent>): boolean {
+  const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+  return layoutMeasurement.height + contentOffset.y >= contentSize.height - NEAR_END;
 }
 
 /**
- * What somebody has been doing, under their profile. The server answers in two shapes from one route: posts, likes and
- * reposts as whole feed items, drawn with the wall's own card so a profile shows the posts themselves; games stay a
- * row.
+ * What somebody posted, played, liked, reposted and saved, a tab at a time and a page at a time. A section the owner
+ * turned off is not offered to anybody else; on your own profile it stays, marked, so turning it off does not hide it
+ * from you.
  */
-export function ProfileActivity({
+export function useProfileActivity({
   userId,
   sections,
   own = false,
+  reload = 0,
 }: {
-  userId: string;
+  userId: string | null | undefined;
   /** What the owner lets people see; null when the profile is private. */
   sections?: ProfileSections | null;
-  /** Your own profile: the hidden ones are still yours to look at, labelled. */
   own?: boolean;
-}): React.JSX.Element | null {
+  /** Changed by a pull to refresh, which asks for the open tab again. */
+  reload?: number;
+}): ProfileActivityState {
   const { client } = useAuth();
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const dir = useDirection();
-
-  /*
-   * A section the owner turned off is not offered to anybody else; on your own profile it stays, marked, so turning it
-   * off does not hide it from you.
-   */
-  const shown = PROFILE_SECTIONS.filter((key) => own || sections?.[key] !== false);
-  const [section, setSection] = useState<ProfileSection>(shown[0] ?? 'posts');
-  // Recomputed rather than stored, so a tab that disappears is replaced instead of leaving an empty panel.
-  const active = shown.includes(section) ? section : (shown[0] ?? null);
-  const [page, setPage] = useState<ActivityPage | null>(null);
-  const strip = useRef<ScrollView>(null);
-  const rr = reachRoom(TRACK_PAD);
+  const shown = userId && (own || sections) ? PROFILE_SECTIONS.filter((key) => own || sections?.[key] !== false) : [];
+  const [section, setSection] = useState<ProfileSection | null>(null);
+  // Recomputed rather than stored, so a tab that disappears is replaced instead of leaving an empty grid.
+  const active = section && shown.includes(section) ? section : (shown[0] ?? null);
+  const [entries, setEntries] = useState<ActivityEntry[]>([]);
+  const [items, setItems] = useState<FeedItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
+  // The request that is still wanted; an answer for a tab left meanwhile is dropped.
+  const asked = useRef(0);
+  const fetching = useRef(false);
 
   const load = useCallback(
-    (kind: ProfileSection) => {
-      setPage(null);
-      void client.get<ActivityPage>(`/users/${userId}/activity?kind=${kind}&limit=12`).then((res) => {
-        // A section that will not load shows as empty rather than as an error: the profile above it is still worth
-        // reading.
-        setPage(res.ok ? res.data : { entries: [], items: [] });
+    (kind: ProfileSection, offset: number) => {
+      if (!userId) return;
+      const ticket = offset === 0 ? ++asked.current : asked.current;
+      fetching.current = true;
+      if (offset === 0) setLoading(true);
+      void client.get<ActivityPage>(`/users/${userId}/activity?kind=${kind}&limit=${PAGE}${offset ? `&offset=${offset}` : ''}`).then((res) => {
+        if (ticket !== asked.current) return;
+        fetching.current = false;
+        // A section that will not load shows as empty rather than as an error: the profile above it is still worth reading.
+        const rows = res.ok ? (res.data.entries ?? []) : [];
+        const posts = res.ok ? (res.data.items ?? []) : [];
+        setEntries((prev) => (offset === 0 ? rows : [...prev, ...rows]));
+        setItems((prev) => (offset === 0 ? posts : [...prev, ...posts]));
+        // A short page means the end; asking again would return nothing.
+        setHasMore(res.ok && (rows.length || posts.length) === PAGE);
+        setLoading(false);
       });
     },
     [client, userId],
   );
 
   useEffect(() => {
-    if (active) load(active);
-  }, [load, active]);
+    if (active) load(active, 0);
+  }, [load, active, reload]);
 
-  // This list loads once, so a post deleted from its own page is taken off it here.
-  useEffect(
-    () => onPostDeleted((gone) => setPage((prev) => prev && { ...prev, items: prev.items.filter((i) => !samePost(i, gone)) })),
-    [],
-  );
+  // The grid loads a page at a time, so a post deleted from its own page is taken off it here.
+  useEffect(() => onPostDeleted((gone) => setItems((prev) => prev.filter((i) => !samePost(i, gone)))), []);
   const deleting = useDeleting();
 
-  if (active === null) return null;
+  const count = active === 'games' ? entries.length : items.length;
+  const more = useCallback(() => {
+    if (!active || !hasMore || fetching.current || loading) return;
+    load(active, count);
+  }, [active, hasMore, loading, load, count]);
 
-  // A post being deleted is gone at once; the last one gone leaves the empty state.
-  const items = (page?.items ?? []).filter((item) => !deleting(item));
-  const entries = page?.entries ?? [];
-  const empty = page !== null && items.length === 0 && entries.length === 0;
-
-  return (
-    <View style={styles.wrap}>
-      <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
-        {t('profile.activity')}
-      </Text>
-
-      {/* One row, the glyph above the word: each tab is as wide as its word and they share what is left, and where
-         five whole words do not fit (Soranî, German) the row scrolls rather than wrapping or cutting them. The chosen
-         tab is solid violet, and right to left the first tab is on the right.
-
-         On your own profile a section hidden from others is still here, marked with the closed eye and named
-         "Hidden" to a screen reader. */}
-      <View style={[styles.tabs, { backgroundColor: colors.controlTrack }]}>
-        <ScrollView
-          ref={strip}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          onContentSizeChange={() => {
-            if (dir.row === 'row-reverse') strip.current?.scrollToEnd({ animated: false });
-          }}
-          accessibilityRole="tablist"
-          style={rr.scroller}
-          contentContainerStyle={[rr.content, styles.tabRow, { flexDirection: dir.row }]}
-        >
-          {shown.map((s) => {
-            const on = s === active;
-            const ink = on ? colors.textOnPrimary : colors.textSecondary;
-            const hidden = own && sections?.[s] === false;
-            return (
-              <Pressable
-                key={s}
-                onPress={() => setSection(s)}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: on }}
-                accessibilityLabel={hidden ? `${t(LABEL[s])}, ${t('profile.hidden')}` : t(LABEL[s])}
-                style={({ pressed }) => [styles.tab, on ? { backgroundColor: colors.primary } : null, pressed && heldDim]}
-              >
-                <Icon name={GLYPH[s]} size={18} color={ink} />
-                <View style={[styles.tabLabel, { flexDirection: dir.row }]}>
-                  <Text style={[styles.tabText, { color: ink }]} numberOfLines={1}>
-                    {t(LABEL[s])}
-                  </Text>
-                  {hidden ? <Icon name="eye-off" size={12} color={ink} /> : null}
-                </View>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      {page === null ? (
-        <ActivitySkeleton games={active === 'games'} />
-      ) : empty ? (
-        <EmptyState title={t('profile.nothingHere')} body={t('profile.nothingHere.body')} />
-      ) : (
-        <View style={styles.list}>
-          {items.map((item) => (
-            <FeedCard key={item.key} item={item} />
-          ))}
-          {entries.map((e) => (
-            <View
-              key={e.id}
-              style={[styles.row, { backgroundColor: colors.glassFill }]}
-            >
-              <Text style={[styles.rowTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                {e.title}
-              </Text>
-              {e.detail ? (
-                <Text style={[styles.rowDetail, { color: colors.textSecondary }]} numberOfLines={1}>
-                  {e.detail}
-                </Text>
-              ) : null}
-            </View>
-          ))}
-        </View>
-      )}
-    </View>
-  );
+  return {
+    shown,
+    active,
+    choose: setSection,
+    hidden: (s) => own && sections?.[s] === false,
+    entries,
+    // A post being deleted is gone at once; the last one gone leaves the empty state.
+    items: items.filter((item) => !deleting(item)),
+    loading,
+    more,
+  };
 }
 
-/** The whole section in grey, for a profile still loading: the heading, the tab strip, and the first posts. */
-export function ProfileActivitySkeleton(): React.JSX.Element {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.wrap}>
-      <SkeletonText size={typography.sizes.xs} width={72} />
-      <View style={[styles.tabs, styles.tabsSkeleton, { backgroundColor: colors.controlTrack }]} />
-      <ActivitySkeleton games={false} />
-    </View>
-  );
-}
-
-/** A section while it loads: the posts as the cards they will be, or the games as rows, not a spinner. */
-function ActivitySkeleton({ games }: { games: boolean }): React.JSX.Element {
+/**
+ * The row of icon tabs: one icon each, named to a screen reader, with a line that slides under the open one. It stands
+ * on the page's colour, so the grid scrolls under it while it stays below the top bar.
+ */
+export function ActivityTabs({ activity, width }: { activity: ProfileActivityState; width: number }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
+  const reduce = useReducedMotion();
+  const { shown, active } = activity;
+  const n = Math.max(1, shown.length);
+  const tab = width / n;
+  const at = active ? shown.indexOf(active) : 0;
+  // Right to left, the first tab is on the right, and so is its line.
+  const x = (dir.row === 'row-reverse' ? n - 1 - at : at) * tab;
+  const ink = useRef(new Animated.Value(x)).current;
+  useEffect(() => {
+    if (reduce) ink.setValue(x);
+    else timing(ink, x, duration.slow).start();
+  }, [ink, x, reduce]);
+
+  if (!active) return null;
   return (
-    <View style={styles.list} accessibilityLabel={t('common.loading')}>
-      {games
-        ? [0, 1, 2].map((i) => (
-            <View key={i} style={[styles.row, { backgroundColor: colors.glassFill }]}>
-              <SkeletonText size={typography.sizes.md} width={i % 2 ? '40%' : '52%'} />
-              <SkeletonText size={typography.sizes.sm} width="30%" />
-            </View>
-          ))
-        : [0, 1].map((i) => <FeedCardSkeleton key={i} titled={i > 0} />)}
+    <View style={[styles.tabs, { width, backgroundColor: colors.background, borderBottomColor: colors.separator, flexDirection: dir.row }]} accessibilityRole="tablist">
+      {shown.map((s) => {
+        const on = s === active;
+        const hidden = activity.hidden(s);
+        return (
+          <Pressable
+            key={s}
+            onPress={() => activity.choose(s)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: on }}
+            accessibilityLabel={hidden ? `${t(LABEL[s])}, ${t('profile.hidden')}` : t(LABEL[s])}
+            style={styles.tab}
+          >
+            <Icon name={GLYPH[s]} size={24} color={on ? colors.textPrimary : colors.textSecondary} />
+            {hidden ? (
+              <View style={[styles.lock, { backgroundColor: colors.controlTrack }]}>
+                <Icon name="lock" size={11} tone="secondary" />
+              </View>
+            ) : null}
+          </Pressable>
+        );
+      })}
+      <Animated.View pointerEvents="none" style={[styles.ink, { width: tab, backgroundColor: colors.textPrimary, transform: [{ translateX: ink }] }]} />
     </View>
   );
+}
+
+/** The open tab's tiles, three to a row: posts as their picture or their words, games as their cover. */
+export function ActivityGrid({ activity, width }: { activity: ProfileActivityState; width: number }): React.JSX.Element | null {
+  const { t } = useI18n();
+  const dir = useDirection();
+  const { colors } = useTheme();
+  const tile = Math.floor((width - 2 * GAP) / 3);
+  const size = { width: tile, height: Math.round(tile * 1.25) };
+  if (!activity.active) return null;
+
+  if (activity.loading) return <TileSkeletons size={size} width={width} />;
+  const games = activity.active === 'games';
+  const count = games ? activity.entries.length : activity.items.length;
+  if (count === 0) {
+    return (
+      <View style={styles.empty}>
+        <View style={[styles.emptyMark, { borderColor: colors.textPrimary }]}>
+          <Icon name={GLYPH[activity.active]} size={34} color={colors.textPrimary} />
+        </View>
+        <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('profile.nothingHere')}</Text>
+      </View>
+    );
+  }
+  return (
+    <View style={[styles.grid, { width, flexDirection: dir.row }]} testID="profile-grid">
+      {games ? activity.entries.map((e) => <GameTile key={e.id} entry={e} size={size} />) : activity.items.map((item) => <PostTile key={item.key} item={item} size={size} />)}
+    </View>
+  );
+}
+
+/** The tabs and a screenful of grey tiles, for a profile still loading. */
+export function ProfileActivitySkeleton({ width }: { width: number }): React.JSX.Element {
+  const { colors } = useTheme();
+  const tile = Math.floor((width - 2 * GAP) / 3);
+  return (
+    <View>
+      <View style={[styles.tabs, { width, borderBottomColor: colors.separator }]} />
+      <TileSkeletons size={{ width: tile, height: Math.round(tile * 1.25) }} width={width} />
+    </View>
+  );
+}
+
+function TileSkeletons({ size, width }: { size: { width: number; height: number }; width: number }): React.JSX.Element {
+  const { t } = useI18n();
+  return (
+    <View style={[styles.grid, { width }]} accessibilityLabel={t('common.loading')}>
+      {Array.from({ length: 6 }, (_, i) => (
+        <Skeleton key={i} width={size.width} height={size.height} radius={radii.none} />
+      ))}
+    </View>
+  );
+}
+
+/** A post as a tile: its first picture, or its title and opening words, with how often it was seen. */
+function PostTile({ item, size }: { item: FeedItem; size: { width: number; height: number } }): React.JSX.Element {
+  const navigation = useNavigation<RootNavigation>();
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const dir = useDirection();
+  const pictures = feedImages(item);
+  const picture = pictures[0]?.url ?? null;
+  const labelKey = CARD_LABEL_KEY[item.kind];
+  const label = labelKey ? t(labelKey) : item.kind;
+  const name = item.title || item.excerpt || label;
+  const mark = picture ? (pictures.length > 1 ? 'tiles' : null) : (WORDS_MARK[item.kind] ?? null);
+  return (
+    <PressableScale
+      onPress={() => (item.targetType === 'library' ? navigation.navigate('LibraryPost', { postId: item.id }) : navigation.navigate('MemeDetail', { postId: item.id }))}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${name}`}
+      style={[styles.tile, size, { backgroundColor: colors.controlTrack }]}
+    >
+      {picture ? (
+        <Image source={{ uri: picture }} style={[styles.fill, item.review === 'held' ? styles.held : null]} resizeMode="cover" accessibilityIgnoresInvertColors />
+      ) : (
+        // Clipped to its own box, clear of the mark above and the count below.
+        <View style={styles.words}>
+          {item.title ? (
+            <Text style={[styles.wordsTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={3}>
+              {item.title}
+            </Text>
+          ) : null}
+          {item.excerpt ? (
+            <Text style={[styles.wordsBody, dir.text, { color: colors.textSecondary }]} numberOfLines={item.title ? 3 : 5}>
+              {item.excerpt}
+            </Text>
+          ) : null}
+        </View>
+      )}
+      {mark ? (
+        <View style={[styles.mark, picture ? styles.markOnArt : null]} pointerEvents="none">
+          <Icon name={mark} size={16} color={picture ? colors.textOnScrim : colors.textSecondary} />
+        </View>
+      ) : null}
+      {item.viewCount > 0 ? (
+        <Foot onArt={!!picture}>
+          <Icon name="eye" size={14} color={picture ? colors.textOnScrim : colors.textSecondary} />
+          <Text style={[styles.footText, { color: picture ? colors.textOnScrim : colors.textSecondary }]} numberOfLines={1}>
+            {formatCompact(item.viewCount, locale)}
+          </Text>
+        </Foot>
+      ) : null}
+    </PressableScale>
+  );
+}
+
+/** A game played, as its cover with the result and the day under it. */
+function GameTile({ entry, size }: { entry: ActivityEntry; size: { width: number; height: number } }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { locale } = useI18n();
+  const emblem = gameEmblemNamed(entry.title);
+  const date = when(entry.at, locale);
+  return (
+    <View
+      style={[styles.tile, size, { backgroundColor: colors.controlTrack }]}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={[entry.title, entry.detail, date].filter(Boolean).join(', ')}
+    >
+      {emblem ? (
+        // The square cover as tall as the tile, centred, its sides running past the tile's edges.
+        <View style={[styles.cover, { left: (size.width - size.height) / 2 }]}>
+          <GameArt game={emblem} size={size.height} />
+        </View>
+      ) : (
+        <View style={styles.centre}>
+          <Icon name="play" size={32} tone="secondary" />
+        </View>
+      )}
+      <Foot onArt>
+        <View style={styles.footStack}>
+          <Text style={[styles.footText, { color: colors.textOnScrim }]} numberOfLines={1}>
+            {entry.detail ?? entry.title}
+          </Text>
+          <Text style={[styles.footDate, { color: colors.textOnScrim }]} numberOfLines={1}>
+            {date}
+          </Text>
+        </View>
+      </Foot>
+    </View>
+  );
+}
+
+/** The tile's foot: over a picture, on a soft shade so it reads on a pale one as on a dark one. */
+function Foot({ onArt, children }: { onArt: boolean; children: React.ReactNode }): React.JSX.Element {
+  const dir = useDirection();
+  const row = [styles.foot, { flexDirection: dir.row }];
+  if (!onArt) return <View style={row} pointerEvents="none">{children}</View>;
+  return (
+    <LinearGradient colors={['transparent', 'rgba(0,0,0,0.72)']} style={row} pointerEvents="none">
+      {children}
+    </LinearGradient>
+  );
+}
+
+/** "3 Sep" / "3 Sep 2024": a year only when it is not this one. */
+function when(iso: string, locale: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) });
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.sm },
-  heading: { ...sectionLabel },
-  tabs: { borderRadius: radii.lg, overflow: 'hidden', paddingVertical: TRACK_PAD },
-  // The row fills the track when the tabs fit, so they share what is left.
-  tabRow: { flexGrow: 1, paddingHorizontal: TRACK_PAD, gap: 2 },
-  // The strip's own height: a tab is 50pt, inside the track's inset.
-  tabsSkeleton: { height: TAB_HEIGHT + TRACK_PAD * 2 },
-  // As wide as its word to begin with, then a share of what is left in the row.
-  tab: {
-    flexGrow: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-    minHeight: TAB_HEIGHT,
-    paddingVertical: 6,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radii.md,
-  },
-  tabLabel: { alignItems: 'center', gap: 3 },
-  tabText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  list: { gap: spacing.md },
-  row: {
-    borderRadius: radii.md,
-    padding: spacing.md,
-    gap: 2,
-  },
-  rowTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  rowDetail: { fontSize: typography.sizes.sm },
+  tabs: { height: TAB_HEIGHT, borderBottomWidth: StyleSheet.hairlineWidth },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  lock: { position: 'absolute', top: 6, start: '50%', marginStart: 6, width: 18, height: 18, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  ink: { position: 'absolute', bottom: -StyleSheet.hairlineWidth, left: 0, height: 2 },
+  grid: { flexWrap: 'wrap', gap: GAP, marginTop: GAP },
+  tile: { overflow: 'hidden' },
+  fill: { width: '100%', height: '100%' },
+  held: { opacity: 0.55 },
+  words: { position: 'absolute', top: 10, left: 10, right: 10, bottom: 30, overflow: 'hidden', gap: 4 },
+  wordsTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, lineHeight: 20, paddingEnd: 18 },
+  wordsBody: { fontSize: typography.sizes.text, lineHeight: 21 },
+  mark: { position: 'absolute', top: 8, end: 8 },
+  markOnArt: { shadowColor: '#000000', shadowOpacity: 0.45, shadowRadius: 3, shadowOffset: { width: 0, height: 0 } },
+  foot: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', gap: 4, paddingTop: 28, paddingBottom: 6, paddingHorizontal: spacing.sm },
+  footStack: { flex: 1, minWidth: 0 },
+  footText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
+  footDate: { fontSize: typography.sizes.text, opacity: 0.85 },
+  cover: { position: 'absolute', top: 0 },
+  centre: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  empty: { alignItems: 'center', gap: spacing.md - 4, paddingTop: spacing.xl + 8, paddingBottom: spacing.lg, paddingHorizontal: spacing.md },
+  emptyMark: { width: 72, height: 72, borderWidth: 2, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  emptyTitle: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, textAlign: 'center' },
 });

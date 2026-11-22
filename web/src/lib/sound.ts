@@ -69,6 +69,50 @@ function placeAt(el: HTMLAudioElement, src: string, ms: number): void {
   el.addEventListener('loadedmetadata', again, { once: true });
 }
 
+/** A tenth of a second of silence as a WAV, for `unlockOnFirstTap`; the media policy allows blob: sources. */
+function silence(): string {
+  const samples = 800;
+  const bytes = new DataView(new ArrayBuffer(44 + samples));
+  const text = (at: number, word: string): void => [...word].forEach((ch, i) => bytes.setUint8(at + i, ch.charCodeAt(0)));
+  text(0, 'RIFF');
+  bytes.setUint32(4, 36 + samples, true);
+  text(8, 'WAVEfmt ');
+  bytes.setUint32(16, 16, true);
+  bytes.setUint16(20, 1, true);
+  bytes.setUint16(22, 1, true);
+  bytes.setUint32(24, 8000, true);
+  bytes.setUint32(28, 8000, true);
+  bytes.setUint16(32, 1, true);
+  bytes.setUint16(34, 8, true);
+  text(36, 'data');
+  bytes.setUint32(40, samples, true);
+  for (let i = 0; i < samples; i++) bytes.setUint8(44 + i, 128);
+  return URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
+}
+
+/**
+ * Lets a lesson's line play by itself later. Safari plays a clip without a tap only on an element a tap has started
+ * before, so the first tap or key press anywhere starts the shared player on a moment of silence. Called once at start.
+ */
+export function unlockOnFirstTap(): void {
+  if (typeof document === 'undefined') return;
+  const go = (): void => {
+    document.removeEventListener('pointerdown', go, true);
+    document.removeEventListener('keydown', go, true);
+    const el = made();
+    // A tap that is itself playing something has already done it.
+    if (current !== null) return;
+    try {
+      el.src = silence();
+      (el.play() as Promise<void> | undefined)?.catch(() => undefined);
+    } catch {
+      // Nothing to unlock where media cannot play at all.
+    }
+  };
+  document.addEventListener('pointerdown', go, true);
+  document.addEventListener('keydown', go, true);
+}
+
 /** Play `src` from its start, or from `fromMs` into it, at `rate` and `volume` (0–1). */
 export function play(src: string, rate = 1, fromMs = 0, volume = 1): void {
   const el = made();

@@ -128,7 +128,7 @@ describe('each place a held account would post, message, upload, write or join',
     testAuth.client = fakeClient({ 'GET /chat/u2/messages': ok({ messages: [] }), 'POST /chat/u2/read': ok({ ok: true }) });
     renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
     expect(await screen.findByText(HELD_SENTENCE)).toBeTruthy();
-    expect(screen.queryByLabelText('Write a message…')).toBeNull();
+    expect(screen.queryByLabelText('Message')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Send a gift' })).toBeNull();
   });
 
@@ -141,7 +141,7 @@ describe('each place a held account would post, message, upload, write or join',
       'POST /chat/u2/messages': fail(refusal),
     });
     renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
-    fireEvent.change(await screen.findByLabelText('Write a message…'), { target: { value: 'Silav' } });
+    fireEvent.change(await screen.findByLabelText('Message'), { target: { value: 'Silav' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     expect(await screen.findByText(HELD_SENTENCE)).toBeTruthy();
     expect(screen.queryByText(refusal.message)).toBeNull();

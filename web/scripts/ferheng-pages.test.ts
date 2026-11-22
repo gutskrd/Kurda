@@ -615,10 +615,11 @@ describe('what the dictionary copies from the app', () => {
     expect(STYLE).not.toMatch(/\.nav-toggle-state:[\w-]+ ~ \.nav-toggle\b/);
   });
 
-  /** Headings in the display serif is most of why a page looks like Hevalo. */
+  /** One face for every word, headings included, as in the app. */
   it('sets headings in the same family the app sets them in', () => {
-    expect(read('base.css')).toMatch(/h1,\s*h2,\s*h3,\s*h4\s*\{[^}]*--font-display/);
-    expect(STYLE).toMatch(/h1,\s*h2,\s*h3,\s*h4\s*\{[^}]*--font-display/);
+    expect(read('base.css')).toMatch(/h1,\s*h2,\s*h3,\s*h4\s*\{[^}]*--font-sans/);
+    expect(STYLE).toMatch(/h1,\s*h2,\s*h3,\s*h4\s*\{[^}]*--font-sans/);
+    expect(STYLE).not.toMatch(/font-display|@font-face/);
   });
 });
 

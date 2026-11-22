@@ -1,11 +1,13 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Animated, Dimensions, Easing, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Animated, BackHandler, Easing, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 import { Pressable } from '../theme/Pressable';
 import {
   PATH_GEOMETRY,
   PATH_MOTION,
   PATH_RETURN,
+  chapterBannerSvg,
   lean,
   lessonPath,
   mascotSpot,
@@ -16,7 +18,6 @@ import {
   type PathChanges,
   type PathSection,
   type PathSnapshot,
-  type PathStop,
   type PathUnit,
   type PlacedStop,
 } from '@kurda/shared';
@@ -35,18 +36,20 @@ import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography, wash } from '../theme/tokens';
 import { JumpSheet } from './JumpSheet';
-import { REST, TONES, levelWords, stopLabel, type ToneColors } from './path';
+import { REST, UNIT_INK, levelWords, stopLabel, type ToneColors } from './path';
 import { MASCOT_MIN_WIDTH, PathMascot } from './PathMascot';
-import { LearnerToken, UnitLand, UpcomingSign, type RailSection } from './PathWorld';
+import { UnitLandmark, UpcomingSign, type RailSection } from './PathWorld';
 import { SkillNodeView, type StopChange } from './SkillNodeView';
-import { StopSheet } from './StopSheet';
+import { StopCard, type StopActions } from './StopCard';
 import { UnitGuide } from './UnitGuide';
 import type { CourseMap, SkillNode } from './types';
+import { pageWidth } from '../theme/pageWidth';
 
 const { node: NODE, step: STEP } = PATH_GEOMETRY;
 const PHONE_WIDTH = 390;
+/** How far under its stop's button a card begins: the stop's base and a little air, as on the website. */
+const CARD_BELOW = 26;
 
-type Stop = PathStop<SkillNode>;
 type Unit = PathUnit<SkillNode>;
 type Section = PathSection<SkillNode>;
 
@@ -58,8 +61,6 @@ const LAST_DRAWN = new Map<string, PathSnapshot>();
 
 /** Units whose stops have already risen into place, by course; each rises once per app run. */
 const RISEN = new Set<string>();
-
-const NO_STOPS: ReadonlySet<string> = new Set();
 
 /** What a return from a lesson changed, and where the learner was before it. */
 interface Return {
@@ -73,7 +74,8 @@ interface Return {
  * `lessonPath`). Earlier sections collapse to a card that reopens them; later ones are shut cards that may offer a
  * jump test (JumpSheet). A course without levels is one section with no cards.
  *
- * In the open section each unit's stops follow one winding line over its own land (PathWorld). The first unit sits
+ * In the open section each unit's stops follow one winding line beside its landmark (PathWorld). A tapped stop opens
+ * its card under it (StopCard), and a tap anywhere else on the road closes it. The first unit sits
  * under a heading with its guide and the unit map; later units start at a divider. The pinned header (PinnedUnit)
  * repeats the heading once it scrolls away.
  *
@@ -84,8 +86,8 @@ interface Return {
  * drawn and nothing waits.
  *
  * Returning from a lesson, the path animates the changes before moving on (shared `PATH_RETURN`): rings fill,
- * topics turn gold and earn stars, padlocks open and prizes burst, then the bubble, page, learner and Hevalo move
- * to the new current skill. Until then the focus stays where the learner was. Under Reduce Motion the path is drawn
+ * topics turn gold and earn stars, padlocks open and prizes burst, then the bubble, page and Hevalo move to the
+ * new current skill. Until then the focus stays where the learner was. Under Reduce Motion the path is drawn
  * as it now is.
  */
 export interface PathFocus {
@@ -119,6 +121,7 @@ export interface UnitPlace {
 export const LessonPath = memo(function LessonPath({
   map,
   due,
+  openReview = null,
   onFocus,
   onUnits,
   onCourse,
@@ -128,9 +131,12 @@ export const LessonPath = memo(function LessonPath({
   onOpenRail,
   reveal,
   onReveal,
+  onCard,
 }: {
   map: CourseMap;
   due: number;
+  /** A review left part-way through, which the review stop picks up rather than starting another beside it. */
+  openReview?: string | null;
   onFocus: (focus: PathFocus | null) => void;
   /** Where each unit of the open section lies, once laid out, for the pinned header. */
   onUnits?: (units: UnitPlace[]) => void;
@@ -148,6 +154,8 @@ export const LessonPath = memo(function LessonPath({
   reveal?: { unitId: string; at: number } | null;
   /** Where the requested unit (or its shut section's card) sits, from the top of the path. */
   onReveal?: (y: number) => void;
+  /** Where an open stop's card spans, from its stop's top to its own foot, from the top of the path, to scroll it into view. */
+  onCard?: (top: number, bottom: number) => void;
 }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { scheme } = useTheme();
@@ -208,8 +216,16 @@ export const LessonPath = memo(function LessonPath({
   const named = path.sections.length > 1;
 
   // The screen width less gutters until the path is measured, so it draws at once.
-  const [width, setWidth] = useState(() => (Dimensions.get('window').width || PHONE_WIDTH) - 2 * layout.gutter);
-  const [sheet, setSheet] = useState<{ stop: Stop; unit: Unit } | null>(null);
+  const [width, setWidth] = useState(() => (pageWidth() || PHONE_WIDTH) - 2 * layout.gutter);
+  // The stop whose card is open, by key, so the card follows the stop through a redraw.
+  const [card, setCard] = useState<{ key: string; unitId: string } | null>(null);
+  // A layout that moves while a card is open moves the card with it.
+  const [, setCardMoved] = useState(0);
+  const cardOpen = useRef(false);
+  cardOpen.current = card !== null;
+  const moveCard = useCallback(() => {
+    if (cardOpen.current) setCardMoved((n) => n + 1);
+  }, []);
   const [guide, setGuide] = useState<{ title: string; skills: SkillNode[] } | null>(null);
   const [jumpTo, setJumpTo] = useState<Unit | null>(null);
   // Where each unit, and the path under its heading, sit, to find the focus stop.
@@ -290,7 +306,7 @@ export const LessonPath = memo(function LessonPath({
         bottom: s + top + height,
         number: unit.number,
         title: unit.title,
-        tone: TONES[scheme][unit.tone],
+        tone: UNIT_INK[scheme],
         section: named ? unit.section : null,
         done: unit.done,
         total: unit.total,
@@ -311,7 +327,7 @@ export const LessonPath = memo(function LessonPath({
           unitId: u.unitId,
           number: u.number,
           title: u.title,
-          tone: TONES[scheme][u.tone],
+          tone: UNIT_INK[scheme],
           done: u.done,
           total: u.total,
           here: u.stops.some((p) => p.stop.key === path.current),
@@ -321,24 +337,22 @@ export const LessonPath = memo(function LessonPath({
   }, [onCourse, path, scheme, named]);
 
   const lesson = (lessonId: string) => {
-    setSheet(null);
+    setCard(null);
     navigation.navigate('Lesson', { lessonId, courseId: map.course.id });
   };
   const review = () => {
-    setSheet(null);
-    navigation.navigate('Practice');
+    setCard(null);
+    if (openReview) navigation.navigate('Practice', { sessionId: openReview });
+    else navigation.navigate('Practice');
   };
 
   // One stable object per stop for the whole return, so each stop plays its change once.
   const stopChanges = useMemo(() => (back ? changesByStop(back, path.units) : {}), [back, path.units]);
-  // The line into the new current skill was walked in this lesson, so it fills in as the path moves on.
-  const freshTrail = useMemo(() => (back && back.was !== null && back.changes.current ? new Set([back.changes.current]) : NO_STOPS), [back]);
   // Hevalo stands by the previous skill until the path moves on, and only when there is room for him.
   const mascotAt = path.current && width >= MASCOT_MIN_WIDTH ? (waiting ? back.was : path.current) : null;
   const cheer = moved !== null && moved === back && (back.changes.finished.length > 0 || back.changes.opened.length > 0);
-  // The learner stands where Hevalo does, and hops over from the finished stop once the path moves on.
-  const tokenAt = path.current ? (waiting ? back.was : path.current) : null;
-  const hopFrom = moved !== null && moved === back && back.was !== null && back.changes.current !== null ? back.was : null;
+  // The stop that bobs: the one to do now, or the previous one until the path moves on.
+  const bobAt = path.current ? (waiting ? back.was : path.current) : null;
   const unitOfCurrent = path.units.find((u) => u.stops.some((p) => p.stop.key === path.current))?.unitId ?? null;
 
   // Units drawn in full: those the screen reports as near, or before it does, those round the current stop.
@@ -352,7 +366,7 @@ export const LessonPath = memo(function LessonPath({
   );
   const moving = (unitId: string): boolean => live && (inView === undefined || inView === unitId);
 
-  // The current stop and the learner on it bob while its unit is in view.
+  // The current stop bobs while its unit is in view.
   const bob = useRef(new Animated.Value(0)).current;
   const bobbing = live && !waiting && unitOfCurrent !== null && (inView === undefined || inView === unitOfCurrent);
   useEffect(() => {
@@ -396,6 +410,45 @@ export const LessonPath = memo(function LessonPath({
     }
   }, [seen, reduce, openUnits, courseId, rises]);
 
+  // The open card's stop, found afresh on every draw, and where its card goes.
+  const opened = (() => {
+    if (!card || !shown) return null;
+    const unit = openUnits.find((u) => u.unitId === card.unitId);
+    const placed = unit?.stops.find((p) => p.stop.key === card.key);
+    if (!unit || !placed) return null;
+    // A stop is laid out before it can be tapped; until then, the road's top.
+    const stopTop = (sectionTop.current[shown.key] ?? 0) + (unitTop.current[card.unitId] ?? 0) + (pathTop.current[card.unitId] ?? 0) + placed.y - NODE / 2;
+    return { unit, stop: placed.stop, stopTop, top: stopTop + NODE + CARD_BELOW, pointAt: width / 2 + sign * placed.x };
+  })();
+  const [cardHeight, setCardHeight] = useState(0);
+  const [roadEnd, setRoadEnd] = useState(0);
+  // Android's back button closes an open card before it leaves the screen.
+  useEffect(() => {
+    if (!card) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setCard(null);
+      return true;
+    });
+    return () => sub.remove();
+  }, [card]);
+  const actions: StopActions = {
+    onLesson: lesson,
+    onReview: review,
+    reviewOpen: Boolean(openReview),
+    onPractise: (unitId) => {
+      setCard(null);
+      navigation.navigate('Practice', { mode: 'unit', unitId });
+    },
+    onTips: (skill) => {
+      setCard(null);
+      setGuide({ title: t('coursemap.path.tipsFor', { skill: skill.title }), skills: [skill] });
+    },
+    onStory: (slug) => {
+      setCard(null);
+      navigation.navigate('StoryReader', { slug });
+    },
+  };
+
   const guideOf = (unit: Unit) => (unit.guide.length > 0 ? () => setGuide({ title: t('coursemap.path.guideFor', { unit: unit.title }), skills: unit.guide }) : undefined);
 
   return (
@@ -412,7 +465,10 @@ export const LessonPath = memo(function LessonPath({
             <SectionCard
               section={section}
               here={s === path.section}
-              onOpen={() => setPicked(s)}
+              onOpen={() => {
+                setCard(null);
+                setPicked(s);
+              }}
               onJump={section.jumpTo ? () => setJumpTo(section.jumpTo) : undefined}
             />
           </View>
@@ -424,16 +480,15 @@ export const LessonPath = memo(function LessonPath({
               sectionTop.current[section.key] = e.nativeEvent.layout.y;
               report();
               placeUnits();
+              moveCard();
             }}
           >
             {section.units.map((unit, i) => {
-              const tone = TONES[scheme][unit.tone];
+              const tone = UNIT_INK[scheme];
               const land = pathLand(unit.number - 1);
               const full = drawn.has(unit.unitId);
               const rise = riseOf(unit);
               const riseTotal = PATH_MOTION.riseMs + PATH_MOTION.riseEach * unit.stops.length;
-              const tokenHere = unit.stops.find((p) => p.stop.key === tokenAt) ?? null;
-              const fromHere = hopFrom ? (unit.stops.find((p) => p.stop.key === hopFrom) ?? null) : null;
               const cx = (x: number): number => width / 2 + sign * x;
               return (
                 <View
@@ -444,13 +499,13 @@ export const LessonPath = memo(function LessonPath({
                     unitHeight.current[unit.unitId] = e.nativeEvent.layout.height;
                     report();
                     placeUnits();
+                    moveCard();
                   }}
                 >
                   {i === 0 ? (
                     <UnitFace
                       number={unit.number}
                       title={unit.title}
-                      tone={tone}
                       section={named ? unit.section : null}
                       openGuide={guideOf(unit)}
                       onRail={onOpenRail}
@@ -468,11 +523,12 @@ export const LessonPath = memo(function LessonPath({
                         setWidth(e.nativeEvent.layout.width);
                         report();
                         placeUnits();
+                        moveCard();
                       }}
                     >
                       {width > 0 ? (
                         <>
-                          <UnitLand unit={unit} land={land} width={width} sign={sign} near={full} live={moving(unit.unitId)} fresh={freshTrail} />
+                          <UnitLandmark land={land} width={width} sign={sign} near={full} live={moving(unit.unitId)} />
                           {unit.stops.map((placed, k) => {
                             const jumpHere = unit.jumpKey === placed.stop.key;
                             const from = (k * PATH_MOTION.riseEach) / riseTotal;
@@ -487,24 +543,15 @@ export const LessonPath = memo(function LessonPath({
                                 change={stopChanges[placed.stop.key] ?? null}
                                 jump={jumpHere}
                                 near={full}
-                                bob={placed.stop.key === tokenAt && !waiting ? bob : null}
+                                bob={placed.stop.key === bobAt && !waiting ? bob : null}
                                 bobbing={bobbing && placed.stop.key === path.current}
                                 rise={rise ? rise.interpolate({ inputRange: [0, from, to, 1], outputRange: [0, 0, 1, 1] }) : null}
-                                onOpen={() => (jumpHere ? setJumpTo(unit) : setSheet({ stop: placed.stop, unit }))}
+                                onOpen={() => (jumpHere ? setJumpTo(unit) : setCard((was) => (was?.key === placed.stop.key ? null : { key: placed.stop.key, unitId: unit.unitId })))}
+                                expanded={!jumpHere && card?.key === placed.stop.key}
                                 onStart={lesson}
                               />
                             );
                           })}
-                          {tokenHere ? (
-                            <LearnerToken
-                              // A new place remounts it, so the hop plays from the old one.
-                              key={tokenHere.stop.key}
-                              at={{ x: cx(tokenHere.x), y: tokenHere.y }}
-                              from={hopFrom ? (fromHere ? { x: cx(fromHere.x), y: fromHere.y } : { x: cx(tokenHere.x), y: tokenHere.y - 2 * PATH_GEOMETRY.step }) : null}
-                              tone={tone}
-                              bob={waiting ? null : bob}
-                            />
-                          ) : null}
                           {unit.stops
                             .filter((placed) => placed.stop.key === mascotAt)
                             .map((placed) => {
@@ -518,7 +565,7 @@ export const LessonPath = memo(function LessonPath({
                                   stopY={placed.y}
                                   flip={x > cx(placed.x)}
                                   cheer={cheer}
-                                  onPress={() => setSheet({ stop: placed.stop, unit })}
+                                  onPress={() => setCard({ key: placed.stop.key, unitId: unit.unitId })}
                                 />
                               );
                             })}
@@ -533,29 +580,36 @@ export const LessonPath = memo(function LessonPath({
         ),
       )}
       {map.upcoming ? <UpcomingSign upcoming={map.upcoming} live={live} /> : null}
-      <StopSheet
-        open={sheet}
-        tone={sheet ? TONES[scheme][sheet.unit.tone] : null}
-        onClose={() => setSheet(null)}
-        onLesson={lesson}
-        onReview={review}
-        onPractise={(unitId) => {
-          setSheet(null);
-          navigation.navigate('Practice', { mode: 'unit', unitId });
-        }}
-        onTips={(skill) => {
-          setSheet(null);
-          setGuide({ title: t('coursemap.path.tipsFor', { skill: skill.title }), skills: [skill] });
-        }}
-        onStory={(slug) => {
-          setSheet(null);
-          navigation.navigate('StoryReader', { slug });
-        }}
+      {opened ? (
+        <>
+          {/* A tap anywhere else on the road closes the card. */}
+          <Pressable style={styles.cardShade} onPress={() => setCard(null)} accessibilityRole="button" accessibilityLabel={t('common.close')} testID="lp-card-close" />
+          <StopCard
+            key={opened.stop.key}
+            stop={opened.stop}
+            unit={opened.unit}
+            tone={UNIT_INK[scheme]}
+            top={opened.top}
+            left={-layout.gutter}
+            width={width}
+            pointAt={opened.pointAt}
+            onSize={(height) => {
+              setCardHeight(height);
+              onCard?.(opened.stopTop, opened.top + height);
+            }}
+            actions={actions}
+          />
+        </>
+      ) : null}
+      {/* Where the road ends, and room past it for a card under its last stop, laid over the road rather than in it. */}
+      <View
+        style={[styles.roadEnd, { height: opened ? Math.max(0, opened.top + cardHeight - roadEnd) : 0 }]}
+        onLayout={(e: LayoutChangeEvent) => setRoadEnd(e.nativeEvent.layout.y)}
       />
       <UnitGuide guide={guide} onClose={() => setGuide(null)} />
       <JumpSheet
         unit={jumpTo}
-        tone={jumpTo ? TONES[scheme][jumpTo.tone] : null}
+        tone={jumpTo ? UNIT_INK[scheme] : null}
         onClose={() => setJumpTo(null)}
         onStart={() => {
           if (!jumpTo) return;
@@ -612,6 +666,7 @@ function PathStopView({
   bob,
   bobbing,
   rise,
+  expanded,
   onOpen,
   onStart,
 }: {
@@ -625,6 +680,7 @@ function PathStopView({
   bob: Animated.Value | null;
   bobbing: boolean;
   rise: Animated.AnimatedInterpolation<number> | null;
+  expanded: boolean;
   onOpen: () => void;
   onStart: (lessonId: string) => void;
 }): React.JSX.Element {
@@ -651,6 +707,7 @@ function PathStopView({
       bob={bob}
       bobbing={bobbing}
       rise={rise}
+      expanded={jump ? undefined : expanded}
       onPress={onOpen}
       onStart={current?.launch ? () => onStart(current.launch!) : undefined}
     />
@@ -682,14 +739,14 @@ function unitHeading(number: string, title: string, section?: string | null): st
 }
 
 /**
- * A unit's heading in its colour: "Section 1 · Chapter 2" over its name (no section in a single-section course),
- * with the guide's book button where the unit has notes and the unit map beside it. PinnedUnit and Learn's next-step
- * card wear the same face.
+ * A unit's heading on its own painted horizon (@kurda/shared's chapterBannerSvg): the chapter's hills and ground under a
+ * day sky, or a starry night in dark mode, with "Section 1 · Chapter 2" over its name on the open sky (no section in a
+ * single-section course). Where the guide's book and the unit map stand at the far end the landmark is left out, since
+ * the road below shows it; Learn's next-step card shows it. PinnedUnit wears the same face.
  */
 export function UnitFace({
   number,
   title,
-  tone,
   section,
   openGuide,
   onRail,
@@ -697,34 +754,69 @@ export function UnitFace({
 }: {
   number: number;
   title: string;
-  tone: ToneColors;
   section: number | null;
   openGuide?: () => void;
   onRail?: () => void;
   testID?: string;
 }): React.JSX.Element {
   const { t, locale } = useI18n();
+  const { colors, scheme } = useTheme();
   const dir = useDirection();
+  const [box, setBox] = useState<{ width: number; height: number } | null>(null);
   const chapter = t('coursemap.path.unit', { n: formatNumber(number, locale) });
   const eyebrow = section !== null ? t('coursemap.path.sectionUnit', { section: formatNumber(section, locale), unit: formatNumber(number, locale) }) : chapter;
   const sectionWords = section !== null ? t('coursemap.path.section', { n: formatNumber(section, locale) }) : null;
+  const land = pathLand(number - 1);
+  const buttons = Boolean(openGuide || onRail);
+  const art = useMemo(
+    () =>
+      // A hidden screen can be laid out at no size at all; the art waits for a real one.
+      box && box.width > 0 && box.height > 0
+        ? chapterBannerSvg({
+            ground: land.ground,
+            landmark: buttons ? undefined : land.landmark,
+            width: box.width,
+            height: box.height,
+            dark: scheme === 'dark',
+            rtl: dir.rtl,
+            idPrefix: `unitface${number}${scheme}${buttons ? 'b' : 'l'}`,
+          })
+        : null,
+    [box, land, buttons, scheme, dir.rtl, number],
+  );
   return (
-    <View style={[styles.pinLip, { backgroundColor: tone.lip }]} testID={testID}>
-      <View style={[styles.pin, { flexDirection: dir.row, backgroundColor: tone.fill }]}>
-        <View style={styles.pinWords} accessible accessibilityRole="header" accessibilityLabel={unitHeading(chapter, title, sectionWords)}>
-          {/* Both wrap: "Abschnitt 1 · Kapitel 2" is long beside two buttons on a narrow phone. */}
-          <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]}>{eyebrow}</Text>
-          <Text style={[styles.pinTitle, dir.free, { color: tone.ink }]}>{title}</Text>
+    <View
+      style={styles.banner}
+      testID={testID}
+      onLayout={(e: LayoutChangeEvent) => {
+        const { width, height } = e.nativeEvent.layout;
+        setBox((was) => (was && Math.round(was.width) === Math.round(width) && Math.round(was.height) === Math.round(height) ? was : { width, height }));
+      }}
+    >
+      {art && box ? <SvgXml xml={art} width={box.width} height={box.height} style={StyleSheet.absoluteFill} /> : null}
+      <View style={styles.pin}>
+        <View
+          style={styles.pinWords}
+          accessible
+          accessibilityRole="header"
+          accessibilityLabel={unitHeading(chapter, title, sectionWords)}
+        >
+          {/* Both may wrap, though with the buttons below on the hills "Abschnitt 1 · Kapitel 2" has the whole width. */}
+          <Text style={[styles.eyebrow, dir.text, { color: colors.textPrimary }]}>{eyebrow}</Text>
+          <Text style={[styles.pinTitle, dir.free, buttons ? null : styles.pinTitleBesideLandmark, { color: colors.textPrimary }]}>{title}</Text>
         </View>
+      </View>
+      {/* On the hills in the far corner, so the words have the whole width of the sky. */}
+      <View style={[styles.pinActions, { flexDirection: dir.row }, dir.rtl ? { left: spacing.sm } : { right: spacing.sm }]}>
         {openGuide ? (
           <Pressable
             onPress={openGuide}
             accessibilityRole="button"
             accessibilityLabel={t('coursemap.path.guideFor', { unit: title })}
             testID="lp-unit-guide"
-            style={({ pressed }) => [styles.pinButton, { backgroundColor: wash(tone.ink), opacity: pressed ? pressedDim : 1 }]}
+            style={({ pressed }) => [styles.pinButton, { backgroundColor: colors.onArt, opacity: pressed ? pressedDim : 1 }]}
           >
-            <Icon name="book" size={20} color={tone.ink} />
+            <Icon name="book" size={20} color={colors.textPrimary} />
           </Pressable>
         ) : null}
         {onRail ? (
@@ -733,9 +825,9 @@ export function UnitFace({
             accessibilityRole="button"
             accessibilityLabel={t('learn.map.title')}
             testID="lp-unit-rail"
-            style={({ pressed }) => [styles.pinButton, { backgroundColor: wash(tone.ink), opacity: pressed ? pressedDim : 1 }]}
+            style={({ pressed }) => [styles.pinButton, { backgroundColor: colors.onArt, opacity: pressed ? pressedDim : 1 }]}
           >
-            <Icon name="flag" size={20} color={tone.ink} />
+            <Icon name="flag" size={20} color={colors.textPrimary} />
           </Pressable>
         ) : null}
       </View>
@@ -865,7 +957,7 @@ export function PinnedUnit({ unit, onRail }: { unit: UnitPlace; onRail?: () => v
     // Only a new unit turns it, not a new object for the same one.
   }, [unit.unitId, reduce]);
   const face = (u: UnitPlace, rail?: () => void) => (
-    <UnitFace number={u.number} title={u.title} tone={u.tone} section={u.section} openGuide={u.openGuide} onRail={rail} />
+    <UnitFace number={u.number} title={u.title} section={u.section} openGuide={u.openGuide} onRail={rail} />
   );
   return (
     <Animated.View testID="lp-pinned-unit" style={dropIn}>
@@ -886,7 +978,7 @@ const PIN_DROP = 6;
 export function LessonPathSkeleton({ stops = 4 }: { stops?: number }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
-  const [width, setWidth] = useState(() => (Dimensions.get('window').width || PHONE_WIDTH) - 2 * layout.gutter);
+  const [width, setWidth] = useState(() => (pageWidth() || PHONE_WIDTH) - 2 * layout.gutter);
   const sign = dir.row === 'row-reverse' ? -1 : 1;
   const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
   return (
@@ -895,8 +987,8 @@ export function LessonPathSkeleton({ stops = 4 }: { stops?: number }): React.JSX
         <View style={[styles.pinLip, { backgroundColor: colors.surface }]}>
           <View style={[styles.pin, { flexDirection: dir.row, backgroundColor: colors.surface }]}>
             <View style={styles.pinWords}>
-              <SkeletonText size={typography.sizes.xs} width={112} style={start} />
-              <SkeletonText size={typography.sizes.md} width="48%" style={start} />
+              <SkeletonText size={typography.sizes.text} width={112} style={start} />
+              <SkeletonText size={typography.sizes.text} width="48%" style={start} />
             </View>
             <Skeleton width={MIN_TOUCH_TARGET} height={MIN_TOUCH_TARGET} radius={radii.pill} />
           </View>
@@ -926,25 +1018,34 @@ const styles = StyleSheet.create({
   // The words wrap within their share of the line rather than pushing the hairlines off it.
   dividerWords: { flexShrink: 1, maxWidth: '72%', alignItems: 'center', gap: 2 },
   dividerEyebrow: { ...sectionLabel, textAlign: 'center' },
-  dividerTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
+  dividerTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
   // The land runs under the page's gutters to the screen's edges.
   path: { position: 'relative', marginHorizontal: -layout.gutter },
   // And a little under the heading above.
   pathUnderHead: { marginTop: -spacing.md },
-  eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },
+  eyebrow: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },
   pinLip: { borderRadius: radii.lg, paddingBottom: 4, zIndex: 2 },
-  pin: { alignItems: 'center', gap: spacing.xs, borderRadius: radii.lg, paddingVertical: spacing.sm, paddingStart: spacing.md, paddingEnd: spacing.xs },
+  // The painted horizon: tall enough for its hills under the words, clipped to the card's corner.
+  banner: { borderRadius: radii.lg, overflow: 'hidden', zIndex: 2, minHeight: 112 },
+  pin: { borderRadius: radii.lg, paddingTop: spacing.md, paddingBottom: 60, paddingHorizontal: spacing.md },
+  pinActions: { position: 'absolute', bottom: spacing.sm, gap: spacing.xs },
+  // Over the whole road, gutters too, under the open card (StopCard's zIndex and elevation are one higher).
+  // Takes back the gap before it, so the road ends where it did.
+  roadEnd: { marginTop: -spacing.sm },
+  cardShade: { position: 'absolute', top: 0, bottom: 0, left: -layout.gutter, right: -layout.gutter, zIndex: 10, elevation: 7 },
   pinWords: { flex: 1, gap: 2 },
-  pinTitle: { ...display(typography.sizes.md + 2) },
+  pinTitle: { ...display(typography.sizes.title) },
+  // The name keeps clear of the landmark at the far end, which stands below the line above it.
+  pinTitleBesideLandmark: { paddingEnd: 96 },
   pinButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm + 4 },
   cardRow: { alignItems: 'center', gap: spacing.sm + 4 },
   cardBadge: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  cardBadgeNumber: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  cardBadgeNumber: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   cardWords: { flex: 1, gap: 2 },
   cardEyebrow: { ...sectionLabel },
-  cardTitle: { ...display(typography.sizes.lg) },
-  cardLine: { fontSize: typography.sizes.sm },
+  cardTitle: { ...display(typography.sizes.text) },
+  cardLine: { fontSize: typography.sizes.text },
   cardJump: {
     alignSelf: 'flex-start',
     alignItems: 'center',
@@ -955,5 +1056,5 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   cardJumpEnd: { alignSelf: 'flex-end' },
-  cardJumpText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  cardJumpText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

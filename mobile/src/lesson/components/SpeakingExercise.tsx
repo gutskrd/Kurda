@@ -9,6 +9,8 @@ import { haptic } from '../../feedback/haptics';
 import { MAX_TAKE_MS, recordingRejection, type Take } from '../recording';
 import type { Exercise, SelfRating } from '../types';
 import { useAudio } from '../useAudio';
+import { useAutoplayOnce } from '../useAutoplay';
+import { autoplayOn } from '../../feedback/autoplayPref';
 import { useRecorder } from '../useRecorder';
 import { useI18n } from '../../i18n/I18nContext';
 import type { TranslationKey } from '../../i18n/translations';
@@ -62,6 +64,8 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
   const stoppedByHand = useRef(false);
   const ownAudio = useAudio(recorder.result?.uri || undefined);
   const model = useAudio(exercise.modelAudioUrl);
+  // Heard on its turn, before it is said back, unless Settings keeps recordings to a tap.
+  useAutoplayOnce(model, autoplayOn());
   const dir = useDirection();
   // Who says the native model, when an editor chose someone.
   const voice = knownVoice(exercise.modelAudioVoice);
@@ -210,14 +214,14 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
-  detail: { fontSize: typography.sizes.sm, textAlign: 'center' },
+  detail: { fontSize: typography.sizes.text, textAlign: 'center' },
   recordingBox: { alignItems: 'center', gap: spacing.sm },
   row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
   waveform: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 36 },
   bar: { width: 4, borderRadius: radii.pill },
-  dur: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  dur: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   track: { width: 160, height: 4, borderRadius: radii.pill, overflow: 'hidden' },
   used: { height: '100%', borderRadius: radii.pill },
   stop: { paddingVertical: spacing.sm, paddingHorizontal: spacing.xl, borderRadius: radii.md },
-  stopText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  stopText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

@@ -13,8 +13,8 @@ interface WordOfDay {
 }
 
 /**
- * Today's word among Learn's practice tools: the word where another tool has its icon, then the card's name and the
- * word's meaning, opening its dictionary entry. It holds its place while loading and gives it up when there is no word.
+ * Today's word on the dictionary page, before anything is searched: the word, the card's name and the word's meaning,
+ * opening its entry. It holds its place while loading and gives it up when there is no word.
  */
 export function WordOfDayTool(): React.JSX.Element | null {
   const t = useT();

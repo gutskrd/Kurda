@@ -795,10 +795,6 @@ export type TranslationKey =
   | 'profile.addFriends'
   | 'profile.stat.xp'
   | 'badges.new'
-  | 'profile.showcase'
-  | 'profile.showcaseA11y'
-  | 'profile.showcaseChoose'
-  | 'profile.progress'
   | 'profile.rankBest'
   | 'notifications.pref.progress'
   | 'notifications.badge.title'
@@ -1852,7 +1848,6 @@ export type TranslationKey =
   | 'practice.hub.noneTitle'
   | 'practice.hub.noneBody'
   | 'practice.hub.toLessons'
-  | 'practice.open.body'
   | 'practice.open.continue'
   | 'practice.hub.mistakes'
   | 'practice.hub.mistakesCount'
@@ -1937,7 +1932,6 @@ export type TranslationKey =
   | 'settings.credits.title'
   | 'settings.kvk'
   | 'settings.credits.lead'
-  | 'settings.credits.fonts'
   | 'settings.credits.icons'
   | 'settings.credits.emoji'
   | 'settings.credits.art'
@@ -2602,7 +2596,6 @@ export type TranslationKey =
   | 'profile.addBio'
   | 'profile.stat.streak'
   | 'profile.offline'
-  | 'profile.activity'
   | 'profile.tab.posts'
   | 'profile.tab.likes'
   | 'repost.tab'
@@ -2717,7 +2710,6 @@ export type TranslationKey =
   | 'profile.stat.icons'
   | 'civak.empty.body'
   | 'inbox.empty.body'
-  | 'profile.nothingHere.body'
   | 'friends.sent'
   | 'friends.cancel'
   | 'friends.cancelRequest'
@@ -2971,9 +2963,6 @@ export type TranslationKey =
   | 'learn.view.lessons'
   | 'learn.view.games'
   | 'learn.continue.button'
-  | 'learn.continue.start'
-  | 'learn.continue.allDone'
-  | 'learn.continue.progress'
   | 'learn.today.title'
   | 'learn.today.goal'
   | 'learn.today.goalShort'
@@ -2988,7 +2977,6 @@ export type TranslationKey =
   | 'learn.tools.due'
   | 'learn.tools.dueOne'
   | 'learn.tools.dueNone'
-  | 'learn.tools.dictionaryHint'
   | 'learn.tools.sentenceHint'
   | 'learn.tools.hearHint'
   | 'learn.map.title'
@@ -3195,6 +3183,7 @@ export type TranslationKey =
   | 'coursemap.path.state.strong'
   | 'coursemap.path.state.refresh'
   | 'coursemap.path.lessonsDone'
+  | 'coursemap.path.lessonOf'
   | 'coursemap.path.start'
   | 'coursemap.path.again'
   | 'coursemap.path.refreshWhy'
@@ -3382,7 +3371,6 @@ export type TranslationKey =
   | 'nav.alphabet'
   | 'learn.tools.alphabetHint'
   | 'words.title'
-  | 'words.toolHint'
   | 'words.fromAlphabet'
   | 'words.lead'
   | 'words.setLead'
@@ -3577,7 +3565,6 @@ export type TranslationKey =
   | 'practice.hub.xp'
   | 'quests.monthly.title'
   | 'quests.monthly.soFar'
-  | 'learn.more.title'
   | 'coursemap.xp.first'
   | 'coursemap.xp.again'
   // --- Hevalo offline for a while (maintenance/) ---
@@ -3785,11 +3772,6 @@ export type TranslationKey =
   | 'book.card.subOne'
   | 'book.card.sub'
   | 'tree.card.plant'
-  | 'tree.card.plantSub'
-  | 'tree.card.hasWater'
-  | 'tree.card.thirstyWater'
-  | 'tree.card.well'
-  | 'tree.card.thirsty'
   | 'tree.profile.title'
   | 'tree.results.water'
   // --- Riddles and proverbs (lore/) ---
@@ -5272,7 +5254,6 @@ const en: Catalog = {
   'practice.hub.noneTitle': 'Practice starts with a lesson',
   'practice.hub.noneBody': 'Finish a lesson, and what you learned comes back here to practise.',
   'practice.hub.toLessons': 'Go to lessons',
-  'practice.open.body': 'You left a review part-way through. Your answers so far are saved.',
   'practice.open.continue': 'Continue review',
   'practice.hub.mistakes': 'Mistakes',
   'practice.hub.mistakesCount': '{count} to put right',
@@ -5357,14 +5338,13 @@ const en: Catalog = {
   'settings.credits.title': 'Credits & licences',
   'settings.kvk': 'KvK number',
   'settings.credits.lead': 'Hevalo also uses other people’s work, under these licences:',
-  'settings.credits.fonts': 'The Vazirmatn typeface, on hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Noto Emoji images by Google, in the photo editor on hevalo.app, resized and re-encoded — Apache License 2.0',
   'settings.credits.art': 'The shop’s backgrounds and icons, and the photo stickers, are made by Hevalo.',
   'tags.automatic': 'Automatic',
   'username.current': 'Current',
   'coursemap.lockedBadge': 'Locked',
-  'chat.messagePlaceholder': 'Write a message…',
+  'chat.messagePlaceholder': 'Message',
   'lesson.accuracy': 'Accuracy',
   'lesson.correct': 'Correct',
   'lesson.skipped': 'Skipped this time: {count}. Skipped exercises don’t count towards your score.',
@@ -6055,7 +6035,6 @@ const en: Catalog = {
   'profile.addBio': 'Add a few words about yourself',
   'profile.stat.streak': 'Streak',
   'profile.offline': 'Offline',
-  'profile.activity': 'Activity',
   'profile.tab.posts': 'Posts',
   'profile.tab.likes': 'Likes',
   'repost.tab': 'Reposts',
@@ -6145,7 +6124,6 @@ const en: Catalog = {
   'profile.stat.icons': 'Icons',
   'civak.empty.body': 'Stories, poems and pictures from everyone show up here.',
   'inbox.empty.body': 'Friend requests, messages and notifications arrive here.',
-  'profile.nothingHere.body': 'What you post and play shows up here.',
   'friends.sent': 'Sent',
   'friends.cancel': 'Cancel',
   'friends.cancelRequest': 'Cancel your request to {name}',
@@ -6354,10 +6332,6 @@ const en: Catalog = {
   'profile.addFriends': 'Add friends',
   'profile.stat.xp': 'XP',
   'badges.new': 'New',
-  'profile.showcase': 'Badges',
-  'profile.showcaseA11y': 'Badges: {badges}',
-  'profile.showcaseChoose': 'Choose badges for your profile',
-  'profile.progress': 'Ranks and league',
   'profile.rankBest': 'Best: {rank}',
   'notifications.pref.progress': 'Leagues and badges',
   'notifications.badge.title': 'A new badge',
@@ -6879,9 +6853,6 @@ const en: Catalog = {
   'learn.view.lessons': 'Lessons',
   'learn.view.games': 'Games',
   'learn.continue.button': 'Continue',
-  'learn.continue.start': 'Start your first lesson',
-  'learn.continue.allDone': 'You have finished every lesson open to you',
-  'learn.continue.progress': '{done} of {total} skills done',
   'learn.today.title': 'Today',
   'learn.today.goal': '{xp} of {goal} XP today',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -6896,7 +6867,6 @@ const en: Catalog = {
   'learn.tools.due': '{count} words due',
   'learn.tools.dueOne': '1 word due',
   'learn.tools.dueNone': 'Nothing due right now',
-  'learn.tools.dictionaryHint': 'Look up any word',
   'learn.tools.sentenceHint': 'Put the words in order',
   'learn.tools.hearHint': 'Find what you heard',
   'learn.map.title': 'Course map',
@@ -7102,6 +7072,7 @@ const en: Catalog = {
   'coursemap.path.state.strong': 'done, and strong',
   'coursemap.path.state.refresh': 'done, ready for a refresh',
   'coursemap.path.lessonsDone': '{done} of {total} lessons done',
+  'coursemap.path.lessonOf': 'Lesson {n} of {total}',
   'coursemap.path.start': 'Start',
   'coursemap.path.again': 'Practise again',
   'coursemap.path.refreshWhy': 'Your reviews say some of this has not stuck yet.',
@@ -7291,7 +7262,6 @@ const en: Catalog = {
   'nav.alphabet': 'Alphabet',
   'learn.tools.alphabetHint': 'Every letter, and how it sounds',
   'words.title': 'Letters and words',
-  'words.toolHint': 'Letters, colours, numbers, days, months',
   'words.fromAlphabet': 'Learn colours, numbers, days and months',
   'words.lead': 'Start with the letters, then the first words. Tap a letter or a word to hear it.',
   'words.setLead': 'Tap a word to hear it.',
@@ -7362,7 +7332,7 @@ const en: Catalog = {
   'maintenance.checkEvery': 'We check again every {seconds} seconds.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Play pronunciations automatically',
-  'settings.sounds.autoplayHint': 'After each answer, hear it said.',
+  'settings.sounds.autoplayHint': 'Hear each Kurdish line as it appears, and again after you answer.',
   'settings.sounds.characterVoices': 'Character voices',
   'settings.sounds.characterVoicesHint': 'Hevalo and Xezo say a short word in Kurmancî at moments worth marking, never over a lesson’s own audio. Silent while Sounds is off.',
   'reactions.says': '{name} says “{line}”',
@@ -7490,7 +7460,6 @@ const en: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'This month',
   'quests.monthly.soFar': '{done} of {possible} so far this month',
-  'learn.more.title': 'More for today',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP, played again',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -7692,11 +7661,6 @@ const en: Catalog = {
   'book.card.subOne': 'Chapter 1 of the road, to keep or print: Hamo’s story, the words and the grammar. Open the PDF.',
   'book.card.sub': '{count} chapters of the road, to keep or print: Hamo’s stories, the words and the grammar. Open the PDF.',
   'tree.card.plant': 'Plant your tree',
-  'tree.card.plantSub': 'Grow it with the water your lessons earn.',
-  'tree.card.hasWater': 'You have water to pour.',
-  'tree.card.thirstyWater': '{health}. You have water for it.',
-  'tree.card.well': 'Doing well.',
-  'tree.card.thirsty': '{health}. A lesson earns water.',
   'tree.profile.title': 'Tree',
   'tree.results.water': '+{count} water for your tree',
   // --- Riddles and proverbs (lore/) ---
@@ -9178,7 +9142,6 @@ const ku: Catalog = {
   'practice.hub.noneTitle': 'Rahênan bi waneyekê dest pê dike',
   'practice.hub.noneBody': 'Waneyekê biqedîne, û tiştê ku te hîn kir li vir ji bo rahênanê vedigere.',
   'practice.hub.toLessons': 'Here waneyan',
-  'practice.open.body': 'Te dubarekirinek di nîvî de hiştiye. Bersivên te yên heta niha tomarkirî ne.',
   'practice.open.continue': 'Dubarekirinê bidomîne',
   'practice.hub.mistakes': 'Şaşî',
   'practice.hub.mistakesCount': '{count} ji bo rastkirinê',
@@ -9263,14 +9226,13 @@ const ku: Catalog = {
   'settings.credits.title': 'Spas û lîsans',
   'settings.kvk': 'Hejmara KvK-ê',
   'settings.credits.lead': 'Hevalo karê kesên din jî bi kar tîne, bi van lîsansan:',
-  'settings.credits.fonts': 'Tîpa Vazirmatn, li ser hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Wêneyên Noto Emoji yên Google, di edîtora wêneyan a hevalo.app de, mezinahî û format guhertî — Apache License 2.0',
   'settings.credits.art': 'Paşxane û îkonên Firoşgehê û stickerên wêneyan ji aliyê Hevalo ve hatine çêkirin.',
   'tags.automatic': 'Otomatîk',
   'username.current': 'Niha',
   'coursemap.lockedBadge': 'Girtî',
-  'chat.messagePlaceholder': 'Peyamekê binivîse…',
+  'chat.messagePlaceholder': 'Peyam',
   'lesson.accuracy': 'Rastbûn',
   'lesson.correct': 'Rast',
   'lesson.skipped': 'Vê carê derbaskirî: {count}. Rahênanên derbaskirî di encamê de nayên hejmartin.',
@@ -9960,7 +9922,6 @@ const ku: Catalog = {
   'profile.addBio': 'Çend peyvan li ser xwe binivîse',
   'profile.stat.streak': 'Rêze',
   'profile.offline': 'Derhêl',
-  'profile.activity': 'Çalakî',
   'profile.tab.posts': 'Şandî',
   'profile.tab.likes': 'Ecibandin',
   'repost.tab': 'Ji nû ve weşandin',
@@ -10050,7 +10011,6 @@ const ku: Catalog = {
   'profile.stat.icons': 'Îkon',
   'civak.empty.body': 'Çîrok, helbest û wêneyên ji her kesî li vir xuya dibin.',
   'inbox.empty.body': 'Daxwazên hevaltiyê, peyam û agahdarî li vir tên.',
-  'profile.nothingHere.body': 'Tiştên ku tu diweşînî û dilîzî li vir xuya dibin.',
   'friends.sent': 'Şandin',
   'friends.cancel': 'Betal bike',
   'friends.cancelRequest': 'Daxwaza xwe ya ji {name} betal bike',
@@ -10259,10 +10219,6 @@ const ku: Catalog = {
   'profile.addFriends': 'Hevalan zêde bike',
   'profile.stat.xp': 'XP',
   'badges.new': 'Nû',
-  'profile.showcase': 'Nîşan',
-  'profile.showcaseA11y': 'Nîşan: {badges}',
-  'profile.showcaseChoose': 'Ji bo profîla xwe nîşanan hilbijêre',
-  'profile.progress': 'Rêz û lîg',
   'profile.rankBest': 'Ya herî baş: {rank}',
   'notifications.pref.progress': 'Lîg û nîşan',
   'notifications.badge.title': 'Nîşaneke nû',
@@ -10784,9 +10740,6 @@ const ku: Catalog = {
   'learn.view.lessons': 'Wane',
   'learn.view.games': 'Lîstik',
   'learn.continue.button': 'Bidomîne',
-  'learn.continue.start': 'Waneya xwe ya yekem dest pê bike',
-  'learn.continue.allDone': 'Te hemû waneyên vekirî qedandin',
-  'learn.continue.progress': '{done} ji {total} mijaran qediyan',
   'learn.today.title': 'Îro',
   'learn.today.goal': 'Îro {xp} ji {goal} XP',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -10801,7 +10754,6 @@ const ku: Catalog = {
   'learn.tools.due': '{count} peyv li benda dubarekirinê ne',
   'learn.tools.dueOne': '1 peyv li benda dubarekirinê ye',
   'learn.tools.dueNone': 'Niha tiştek li bendê tune',
-  'learn.tools.dictionaryHint': 'Li her peyvê bigere',
   'learn.tools.sentenceHint': 'Peyvan bi rêz bike',
   'learn.tools.hearHint': 'Ya ku te bihîst bibîne',
   'learn.map.title': 'Nexşeya kursê',
@@ -11007,6 +10959,7 @@ const ku: Catalog = {
   'coursemap.path.state.strong': 'qediya, û xurt e',
   'coursemap.path.state.refresh': 'qediya, ji bo nûkirinê amade',
   'coursemap.path.lessonsDone': '{done} ji {total} waneyan qediyan',
+  'coursemap.path.lessonOf': 'Wane {n} ji {total}',
   'coursemap.path.start': 'Dest pê bike',
   'coursemap.path.again': 'Dîsa biceribîne',
   'coursemap.path.refreshWhy': 'Dubarekirinên te nîşan didin ku hinek ji vê hê di bîra te de neman.',
@@ -11196,7 +11149,6 @@ const ku: Catalog = {
   'nav.alphabet': 'Alfabe',
   'learn.tools.alphabetHint': 'Her tîp û dengê wê',
   'words.title': 'Tîp û peyv',
-  'words.toolHint': 'Tîp, reng, hejmar, roj, meh',
   'words.fromAlphabet': 'Reng, hejmar, roj û mehan hîn bibe',
   'words.lead': 'Bi tîpan dest pê bike, paşê bi peyvên pêşîn. Li tîpekê an peyvekê bitikîne da ku bibihîzî.',
   'words.setLead': 'Li peyvekê bitikîne da ku bibihîzî.',
@@ -11267,7 +11219,7 @@ const ku: Catalog = {
   'maintenance.checkEvery': 'Em her {seconds} çirkeyan carekê dîsa kontrol dikin.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Bilêvkirinan bixweber lê bide',
-  'settings.sounds.autoplayHint': 'Piştî her bersivê, bibihîze ka çawa tê gotin.',
+  'settings.sounds.autoplayHint': 'Her hevokeke kurdî gava xuya dibe bibihîze, û dîsa piştî bersiva xwe.',
   'settings.sounds.characterVoices': 'Dengê karakteran',
   'settings.sounds.characterVoicesHint': 'Hevalo û Xezo di demên taybet de gotineke kurt a kurmancî dibêjin, qet ne li ser dengê waneyê. Dema Deng girtî be, bêdeng in.',
   'reactions.says': '{name} dibêje: “{line}”',
@@ -11395,7 +11347,6 @@ const ku: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Ev meh',
   'quests.monthly.soFar': '{done} ji {possible} heta niha di vê mehê de',
-  'learn.more.title': 'Ji bo îro zêdetir',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP, dîsa',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -11597,11 +11548,6 @@ const ku: Catalog = {
   'book.card.subOne': 'Beşa 1ê ya rêyê, ji bo hilanînê an çapkirinê: çîroka Hamo, peyv û rêziman. PDF’ê veke.',
   'book.card.sub': '{count} beşên rêyê, ji bo hilanînê an çapkirinê: çîrokên Hamo, peyv û rêziman. PDF’ê veke.',
   'tree.card.plant': 'Dara xwe biçîne',
-  'tree.card.plantSub': 'Bi ava ku waneyên te didin wê mezin bike.',
-  'tree.card.hasWater': 'Ava te heye ku birijînî.',
-  'tree.card.thirstyWater': '{health}. Ava te ji bo wê heye.',
-  'tree.card.well': 'Baş e.',
-  'tree.card.thirsty': '{health}. Waneyek avê dide.',
   'tree.profile.title': 'Dar',
   'tree.results.water': '+{count} av ji bo dara te',
   // --- Riddles and proverbs (lore/) ---
@@ -13083,7 +13029,6 @@ const de: Catalog = {
   'practice.hub.noneTitle': 'Üben beginnt mit einer Lektion',
   'practice.hub.noneBody': 'Schließ eine Lektion ab, dann kommt das Gelernte hier zum Üben zurück.',
   'practice.hub.toLessons': 'Zu den Lektionen',
-  'practice.open.body': 'Du hast eine Wiederholung mittendrin verlassen. Deine bisherigen Antworten sind gespeichert.',
   'practice.open.continue': 'Wiederholung fortsetzen',
   'practice.hub.mistakes': 'Fehler',
   'practice.hub.mistakesCount': '{count} zum Ausbessern',
@@ -13168,14 +13113,13 @@ const de: Catalog = {
   'settings.credits.title': 'Danksagungen und Lizenzen',
   'settings.kvk': 'KvK-Nummer',
   'settings.credits.lead': 'Hevalo nutzt auch die Arbeit anderer, unter diesen Lizenzen:',
-  'settings.credits.fonts': 'Die Schrift Vazirmatn, auf hevalo.app – SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Noto-Emoji-Bilder von Google, im Foto-Editor auf hevalo.app, verkleinert und neu kodiert – Apache License 2.0',
   'settings.credits.art': 'Die Hintergründe und Symbole im Shop und die Foto-Sticker macht Hevalo selbst.',
   'tags.automatic': 'Automatisch',
   'username.current': 'Aktuell',
   'coursemap.lockedBadge': 'Gesperrt',
-  'chat.messagePlaceholder': 'Schreib eine Nachricht…',
+  'chat.messagePlaceholder': 'Nachricht',
   'lesson.accuracy': 'Genauigkeit',
   'lesson.correct': 'Richtig',
   'lesson.skipped': 'Diesmal übersprungen: {count}. Übersprungene Übungen zählen nicht für dein Ergebnis.',
@@ -13865,7 +13809,6 @@ const de: Catalog = {
   'profile.addBio': 'Schreib ein paar Worte über dich',
   'profile.stat.streak': 'Serie',
   'profile.offline': 'Offline',
-  'profile.activity': 'Aktivität',
   'profile.tab.posts': 'Beiträge',
   'profile.tab.likes': 'Gefällt mir',
   'repost.tab': 'Reposts',
@@ -13955,7 +13898,6 @@ const de: Catalog = {
   'profile.stat.icons': 'Symbole',
   'civak.empty.body': 'Geschichten, Gedichte und Bilder von allen erscheinen hier.',
   'inbox.empty.body': 'Freundschaftsanfragen, Nachrichten und Mitteilungen landen hier.',
-  'profile.nothingHere.body': 'Was du veröffentlichst und spielst, erscheint hier.',
   'friends.sent': 'Gesendet',
   'friends.cancel': 'Abbrechen',
   'friends.cancelRequest': 'Deine Anfrage an {name} zurückziehen',
@@ -14164,10 +14106,6 @@ const de: Catalog = {
   'profile.addFriends': 'Freunde hinzufügen',
   'profile.stat.xp': 'XP',
   'badges.new': 'Neu',
-  'profile.showcase': 'Abzeichen',
-  'profile.showcaseA11y': 'Abzeichen: {badges}',
-  'profile.showcaseChoose': 'Abzeichen für dein Profil wählen',
-  'profile.progress': 'Ränge und Liga',
   'profile.rankBest': 'Bester Rang: {rank}',
   'notifications.pref.progress': 'Ligen und Abzeichen',
   'notifications.badge.title': 'Ein neues Abzeichen',
@@ -14689,9 +14627,6 @@ const de: Catalog = {
   'learn.view.lessons': 'Lektionen',
   'learn.view.games': 'Spiele',
   'learn.continue.button': 'Weiter',
-  'learn.continue.start': 'Erste Lektion starten',
-  'learn.continue.allDone': 'Du hast alle offenen Lektionen geschafft',
-  'learn.continue.progress': '{done} von {total} Themen geschafft',
   'learn.today.title': 'Heute',
   'learn.today.goal': 'Heute {xp} von {goal} XP',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -14706,7 +14641,6 @@ const de: Catalog = {
   'learn.tools.due': '{count} Wörter fällig',
   'learn.tools.dueOne': '1 Wort fällig',
   'learn.tools.dueNone': 'Gerade nichts fällig',
-  'learn.tools.dictionaryHint': 'Jedes Wort nachschlagen',
   'learn.tools.sentenceHint': 'Ordne die Wörter',
   'learn.tools.hearHint': 'Finde, was du gehört hast',
   'learn.map.title': 'Kursübersicht',
@@ -14912,6 +14846,7 @@ const de: Catalog = {
   'coursemap.path.state.strong': 'fertig und gefestigt',
   'coursemap.path.state.refresh': 'fertig, bereit zum Auffrischen',
   'coursemap.path.lessonsDone': '{done} von {total} Lektionen fertig',
+  'coursemap.path.lessonOf': 'Lektion {n} von {total}',
   'coursemap.path.start': 'Starten',
   'coursemap.path.again': 'Noch einmal üben',
   'coursemap.path.refreshWhy': 'Deine Wiederholungen zeigen: Einiges davon sitzt noch nicht.',
@@ -15101,7 +15036,6 @@ const de: Catalog = {
   'nav.alphabet': 'Alphabet',
   'learn.tools.alphabetHint': 'Jeder Buchstabe und sein Klang',
   'words.title': 'Buchstaben und Wörter',
-  'words.toolHint': 'Buchstaben, Farben, Zahlen, Tage, Monate',
   'words.fromAlphabet': 'Farben, Zahlen, Tage und Monate lernen',
   'words.lead': 'Fang mit den Buchstaben an, dann kommen die ersten Wörter. Tippe auf einen Buchstaben oder ein Wort, um es zu hören.',
   'words.setLead': 'Tippe auf ein Wort, um es zu hören.',
@@ -15172,7 +15106,7 @@ const de: Catalog = {
   'maintenance.checkEvery': 'Wir sehen alle {seconds} Sekunden wieder nach.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Aussprache automatisch abspielen',
-  'settings.sounds.autoplayHint': 'Nach jeder Antwort hörst du, wie sie gesagt wird.',
+  'settings.sounds.autoplayHint': 'Hör jeden kurdischen Satz, sobald er erscheint, und noch einmal nach deiner Antwort.',
   'settings.sounds.characterVoices': 'Stimmen der Figuren',
   'settings.sounds.characterVoicesHint': 'Hevalo und Xezo sagen in besonderen Momenten ein kurzes Wort auf Kurmancî, nie über den Ton der Lektion hinweg. Still, solange „Töne“ aus ist.',
   'reactions.says': '{name} sagt „{line}“',
@@ -15300,7 +15234,6 @@ const de: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Diesen Monat',
   'quests.monthly.soFar': '{done} von {possible} bisher in diesem Monat',
-  'learn.more.title': 'Mehr für heute',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP bei Wiederholung',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -15502,11 +15435,6 @@ const de: Catalog = {
   'book.card.subOne': 'Kapitel 1 des Weges zum Behalten oder Ausdrucken: Hamos Geschichte, die Wörter und die Grammatik. Öffne das PDF.',
   'book.card.sub': '{count} Kapitel des Weges zum Behalten oder Ausdrucken: Hamos Geschichten, die Wörter und die Grammatik. Öffne das PDF.',
   'tree.card.plant': 'Pflanze deinen Baum',
-  'tree.card.plantSub': 'Lass ihn mit dem Wasser wachsen, das deine Lektionen bringen.',
-  'tree.card.hasWater': 'Du hast Wasser zum Gießen.',
-  'tree.card.thirstyWater': '{health}. Du hast Wasser für ihn.',
-  'tree.card.well': 'Es geht ihm gut.',
-  'tree.card.thirsty': '{health}. Eine Lektion bringt Wasser.',
   'tree.profile.title': 'Baum',
   'tree.results.water': '+{count} Wasser für deinen Baum',
   // --- Riddles and proverbs (lore/) ---
@@ -16988,7 +16916,6 @@ const es: Catalog = {
   'practice.hub.noneTitle': 'La práctica empieza con una lección',
   'practice.hub.noneBody': 'Termina una lección y lo que aprendiste volverá aquí para practicarlo.',
   'practice.hub.toLessons': 'Ir a las lecciones',
-  'practice.open.body': 'Dejaste un repaso a medias. Tus respuestas hasta ahora están guardadas.',
   'practice.open.continue': 'Seguir con el repaso',
   'practice.hub.mistakes': 'Errores',
   'practice.hub.mistakesCount': '{count} por corregir',
@@ -17073,14 +17000,13 @@ const es: Catalog = {
   'settings.credits.title': 'Créditos y licencias',
   'settings.kvk': 'Número KvK',
   'settings.credits.lead': 'Hevalo también usa el trabajo de otras personas, con estas licencias:',
-  'settings.credits.fonts': 'La tipografía Vazirmatn, en hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Las imágenes de Noto Emoji de Google, en el editor de fotos de hevalo.app, redimensionadas y recodificadas — Apache License 2.0',
   'settings.credits.art': 'Los fondos e iconos de la tienda y las pegatinas de fotos los hace Hevalo.',
   'tags.automatic': 'Automáticas',
   'username.current': 'Actual',
   'coursemap.lockedBadge': 'Bloqueado',
-  'chat.messagePlaceholder': 'Escribe un mensaje…',
+  'chat.messagePlaceholder': 'Mensaje',
   'lesson.accuracy': 'Precisión',
   'lesson.correct': 'Correcto',
   'lesson.skipped': 'Saltados esta vez: {count}. Los ejercicios saltados no cuentan para tu puntuación.',
@@ -17770,7 +17696,6 @@ const es: Catalog = {
   'profile.addBio': 'Añade unas palabras sobre ti',
   'profile.stat.streak': 'Racha',
   'profile.offline': 'Desconectado',
-  'profile.activity': 'Actividad',
   'profile.tab.posts': 'Publicaciones',
   'profile.tab.likes': 'Me gusta',
   'repost.tab': 'Republicados',
@@ -17860,7 +17785,6 @@ const es: Catalog = {
   'profile.stat.icons': 'Iconos',
   'civak.empty.body': 'Aquí aparecen relatos, poemas e imágenes de todos.',
   'inbox.empty.body': 'Aquí llegan las solicitudes de amistad, los mensajes y las notificaciones.',
-  'profile.nothingHere.body': 'Lo que publicas y juegas aparece aquí.',
   'friends.sent': 'Enviadas',
   'friends.cancel': 'Cancelar',
   'friends.cancelRequest': 'Cancelar tu solicitud a {name}',
@@ -18069,10 +17993,6 @@ const es: Catalog = {
   'profile.addFriends': 'Añadir amigos',
   'profile.stat.xp': 'XP',
   'badges.new': 'Nueva',
-  'profile.showcase': 'Insignias',
-  'profile.showcaseA11y': 'Insignias: {badges}',
-  'profile.showcaseChoose': 'Elige insignias para tu perfil',
-  'profile.progress': 'Rangos y liga',
   'profile.rankBest': 'Mejor: {rank}',
   'notifications.pref.progress': 'Ligas e insignias',
   'notifications.badge.title': 'Una insignia nueva',
@@ -18594,9 +18514,6 @@ const es: Catalog = {
   'learn.view.lessons': 'Lecciones',
   'learn.view.games': 'Juegos',
   'learn.continue.button': 'Continuar',
-  'learn.continue.start': 'Empieza tu primera lección',
-  'learn.continue.allDone': 'Has terminado todas las lecciones disponibles',
-  'learn.continue.progress': '{done} de {total} temas completados',
   'learn.today.title': 'Hoy',
   'learn.today.goal': '{xp} de {goal} XP hoy',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -18611,7 +18528,6 @@ const es: Catalog = {
   'learn.tools.due': '{count} palabras para repasar',
   'learn.tools.dueOne': '1 palabra para repasar',
   'learn.tools.dueNone': 'Nada pendiente ahora',
-  'learn.tools.dictionaryHint': 'Busca cualquier palabra',
   'learn.tools.sentenceHint': 'Ordena las palabras',
   'learn.tools.hearHint': 'Encuentra lo que oíste',
   'learn.map.title': 'Mapa del curso',
@@ -18817,6 +18733,7 @@ const es: Catalog = {
   'coursemap.path.state.strong': 'hecha y afianzada',
   'coursemap.path.state.refresh': 'hecha, lista para repasar',
   'coursemap.path.lessonsDone': '{done} de {total} lecciones hechas',
+  'coursemap.path.lessonOf': 'Lección {n} de {total}',
   'coursemap.path.start': 'Empezar',
   'coursemap.path.again': 'Practicar de nuevo',
   'coursemap.path.refreshWhy': 'Tus repasos indican que parte de esto aún no se ha afianzado.',
@@ -19006,7 +18923,6 @@ const es: Catalog = {
   'nav.alphabet': 'Alfabeto',
   'learn.tools.alphabetHint': 'Cada letra y cómo suena',
   'words.title': 'Letras y palabras',
-  'words.toolHint': 'Letras, colores, números, días, meses',
   'words.fromAlphabet': 'Aprende colores, números, días y meses',
   'words.lead': 'Empieza por las letras y sigue con las primeras palabras. Toca una letra o una palabra para oírla.',
   'words.setLead': 'Toca una palabra para oírla.',
@@ -19077,7 +18993,7 @@ const es: Catalog = {
   'maintenance.checkEvery': 'Lo volvemos a comprobar cada {seconds} segundos.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Reproducir las pronunciaciones automáticamente',
-  'settings.sounds.autoplayHint': 'Después de cada respuesta, escucha cómo se dice.',
+  'settings.sounds.autoplayHint': 'Escucha cada frase en kurdo cuando aparece, y otra vez después de responder.',
   'settings.sounds.characterVoices': 'Voces de los personajes',
   'settings.sounds.characterVoicesHint': 'Hevalo y Xezo dicen una palabra corta en kurmancî en los momentos especiales, nunca encima del audio de la lección. En silencio mientras «Sonidos» esté desactivado.',
   'reactions.says': '{name} dice «{line}»',
@@ -19205,7 +19121,6 @@ const es: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Este mes',
   'quests.monthly.soFar': '{done} de {possible} hasta ahora este mes',
-  'learn.more.title': 'Más para hoy',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP al repetir',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -19407,11 +19322,6 @@ const es: Catalog = {
   'book.card.subOne': 'El capítulo 1 del camino, para guardar o imprimir: la historia de Hamo, las palabras y la gramática. Abre el PDF.',
   'book.card.sub': '{count} capítulos del camino, para guardar o imprimir: las historias de Hamo, las palabras y la gramática. Abre el PDF.',
   'tree.card.plant': 'Planta tu árbol',
-  'tree.card.plantSub': 'Hazlo crecer con el agua que te dan tus lecciones.',
-  'tree.card.hasWater': 'Tienes agua para regar.',
-  'tree.card.thirstyWater': '{health}. Tienes agua para él.',
-  'tree.card.well': 'Está bien.',
-  'tree.card.thirsty': '{health}. Una lección da agua.',
   'tree.profile.title': 'Árbol',
   'tree.results.water': '+{count} de agua para tu árbol',
   // --- Riddles and proverbs (lore/) ---
@@ -20893,7 +20803,6 @@ const tr: Catalog = {
   'practice.hub.noneTitle': 'Alıştırma bir dersle başlar',
   'practice.hub.noneBody': 'Bir ders bitir; öğrendiklerin alıştırma için buraya gelir.',
   'practice.hub.toLessons': 'Derslere git',
-  'practice.open.body': 'Bir tekrarı yarıda bıraktın. Şimdiye kadarki yanıtların kayıtlı.',
   'practice.open.continue': 'Tekrara devam et',
   'practice.hub.mistakes': 'Hatalar',
   'practice.hub.mistakesCount': 'Düzeltilecek {count} hata',
@@ -20978,14 +20887,13 @@ const tr: Catalog = {
   'settings.credits.title': 'Teşekkürler ve lisanslar',
   'settings.kvk': 'KvK numarası',
   'settings.credits.lead': 'Hevalo başkalarının emeğini de bu lisanslarla kullanıyor:',
-  'settings.credits.fonts': 'Vazirmatn yazı tipi, hevalo.app’te — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Google’ın Noto Emoji görselleri, hevalo.app’in fotoğraf düzenleyicisinde, yeniden boyutlandırılıp yeniden kodlandı — Apache License 2.0',
   'settings.credits.art': 'Mağazadaki arka planları ve simgeleri, fotoğraf çıkartmalarını Hevalo kendisi yapıyor.',
   'tags.automatic': 'Otomatik',
   'username.current': 'Mevcut',
   'coursemap.lockedBadge': 'Kilitli',
-  'chat.messagePlaceholder': 'Bir mesaj yaz…',
+  'chat.messagePlaceholder': 'Mesaj',
   'lesson.accuracy': 'Doğruluk',
   'lesson.correct': 'Doğru',
   'lesson.skipped': 'Bu kez atlanan: {count}. Atlanan alıştırmalar puanına dâhil edilmez.',
@@ -21675,7 +21583,6 @@ const tr: Catalog = {
   'profile.addBio': 'Kendin hakkında birkaç söz ekle',
   'profile.stat.streak': 'Seri',
   'profile.offline': 'Çevrimdışı',
-  'profile.activity': 'Etkinlik',
   'profile.tab.posts': 'Gönderiler',
   'profile.tab.likes': 'Beğeniler',
   'repost.tab': 'Yeniden paylaşılanlar',
@@ -21765,7 +21672,6 @@ const tr: Catalog = {
   'profile.stat.icons': 'Simgeler',
   'civak.empty.body': 'Herkesin hikâyeleri, şiirleri ve resimleri burada görünür.',
   'inbox.empty.body': 'Arkadaşlık istekleri, mesajlar ve bildirimler buraya gelir.',
-  'profile.nothingHere.body': 'Paylaştıkların ve oynadıkların burada görünür.',
   'friends.sent': 'Gönderilen',
   'friends.cancel': 'Vazgeç',
   'friends.cancelRequest': '{name} kişisine gönderdiğin isteği geri al',
@@ -21974,10 +21880,6 @@ const tr: Catalog = {
   'profile.addFriends': 'Arkadaş ekle',
   'profile.stat.xp': 'XP',
   'badges.new': 'Yeni',
-  'profile.showcase': 'Rozetler',
-  'profile.showcaseA11y': 'Rozetler: {badges}',
-  'profile.showcaseChoose': 'Profilin için rozet seç',
-  'profile.progress': 'Rütbeler ve lig',
   'profile.rankBest': 'En iyi: {rank}',
   'notifications.pref.progress': 'Ligler ve rozetler',
   'notifications.badge.title': 'Yeni bir rozet',
@@ -22499,9 +22401,6 @@ const tr: Catalog = {
   'learn.view.lessons': 'Dersler',
   'learn.view.games': 'Oyunlar',
   'learn.continue.button': 'Devam et',
-  'learn.continue.start': 'İlk dersine başla',
-  'learn.continue.allDone': 'Açık olan tüm dersleri bitirdin',
-  'learn.continue.progress': '{total} konudan {done} tanesi bitti',
   'learn.today.title': 'Bugün',
   'learn.today.goal': 'Bugün {xp} / {goal} XP',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -22516,7 +22415,6 @@ const tr: Catalog = {
   'learn.tools.due': '{count} kelime tekrar bekliyor',
   'learn.tools.dueOne': '1 kelime tekrar bekliyor',
   'learn.tools.dueNone': 'Şu an bekleyen yok',
-  'learn.tools.dictionaryHint': 'İstediğin kelimeyi ara',
   'learn.tools.sentenceHint': 'Kelimeleri sıraya koy',
   'learn.tools.hearHint': 'Duyduğunu bul',
   'learn.map.title': 'Kurs haritası',
@@ -22722,6 +22620,7 @@ const tr: Catalog = {
   'coursemap.path.state.strong': 'bitti ve sağlam',
   'coursemap.path.state.refresh': 'bitti, tazelemeye hazır',
   'coursemap.path.lessonsDone': '{total} dersten {done} tanesi bitti',
+  'coursemap.path.lessonOf': 'Ders {n}/{total}',
   'coursemap.path.start': 'Başla',
   'coursemap.path.again': 'Yeniden alıştırma yap',
   'coursemap.path.refreshWhy': 'Tekrarların bunun bir kısmının henüz oturmadığını gösteriyor.',
@@ -22911,7 +22810,6 @@ const tr: Catalog = {
   'nav.alphabet': 'Alfabe',
   'learn.tools.alphabetHint': 'Her harf ve nasıl okunduğu',
   'words.title': 'Harfler ve kelimeler',
-  'words.toolHint': 'Harfler, renkler, sayılar, günler, aylar',
   'words.fromAlphabet': 'Renkleri, sayıları, günleri ve ayları öğren',
   'words.lead': 'Harflerle başla, ardından ilk kelimelere geç. Duymak için bir harfe ya da kelimeye dokun.',
   'words.setLead': 'Duymak için bir kelimeye dokun.',
@@ -22982,7 +22880,7 @@ const tr: Catalog = {
   'maintenance.checkEvery': 'Her {seconds} saniyede bir yeniden kontrol ediyoruz.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Telaffuzları otomatik oynat',
-  'settings.sounds.autoplayHint': 'Her yanıttan sonra nasıl söylendiğini dinle.',
+  'settings.sounds.autoplayHint': 'Her Kürtçe cümleyi ekrana gelince ve cevabından sonra bir kez daha dinle.',
   'settings.sounds.characterVoices': 'Karakter sesleri',
   'settings.sounds.characterVoicesHint': 'Hevalo ve Xezo önemli anlarda Kurmancî kısa bir söz söyler, asla dersin kendi sesinin üstüne değil. Sesler kapalıyken sessizdir.',
   'reactions.says': '{name} diyor ki: “{line}”',
@@ -23110,7 +23008,6 @@ const tr: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Bu ay',
   'quests.monthly.soFar': 'Bu ay şimdiye kadar {done} / {possible}',
-  'learn.more.title': 'Bugün için daha fazlası',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': 'Tekrarda +{min}–{max} XP',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -23312,11 +23209,6 @@ const tr: Catalog = {
   'book.card.subOne': 'Yolun 1. bölümü, saklamak ya da yazdırmak için: Hamo’nun hikâyesi, kelimeler ve dil bilgisi. PDF’yi aç.',
   'book.card.sub': 'Yolun {count} bölümü, saklamak ya da yazdırmak için: Hamo’nun hikâyeleri, kelimeler ve dil bilgisi. PDF’yi aç.',
   'tree.card.plant': 'Ağacını dik',
-  'tree.card.plantSub': 'Derslerinin kazandırdığı suyla büyüt.',
-  'tree.card.hasWater': 'Dökecek suyun var.',
-  'tree.card.thirstyWater': '{health}. Onun için suyun var.',
-  'tree.card.well': 'İyi durumda.',
-  'tree.card.thirsty': '{health}. Bir ders su kazandırır.',
   'tree.profile.title': 'Ağaç',
   'tree.results.water': 'Ağacın için +{count} su',
   // --- Riddles and proverbs (lore/) ---
@@ -24798,7 +24690,6 @@ const ar: Catalog = {
   'practice.hub.noneTitle': 'التدريب يبدأ بدرس',
   'practice.hub.noneBody': 'أنهِ درسًا، وسيعود ما تعلّمته إلى هنا لتتدرّب عليه.',
   'practice.hub.toLessons': 'إلى الدروس',
-  'practice.open.body': 'تركت مراجعة في منتصفها. إجاباتك حتى الآن محفوظة.',
   'practice.open.continue': 'تابِع المراجعة',
   'practice.hub.mistakes': 'الأخطاء',
   'practice.hub.mistakesCount': '{count} للتصحيح',
@@ -24883,14 +24774,13 @@ const ar: Catalog = {
   'settings.credits.title': 'الشكر والتراخيص',
   'settings.kvk': 'رقم السجل التجاري (KvK)',
   'settings.credits.lead': 'يستخدم Hevalo أيضًا أعمال آخرين، بموجب هذه التراخيص:',
-  'settings.credits.fonts': 'خط Vazirmatn، على hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'صور Noto Emoji من Google، في محرر الصور على hevalo.app، بعد تغيير حجمها وترميزها — Apache License 2.0',
   'settings.credits.art': 'خلفيات المتجر وأيقوناته وملصقات الصور يصنعها Hevalo بنفسه.',
   'tags.automatic': 'تلقائي',
   'username.current': 'الحالي',
   'coursemap.lockedBadge': 'مقفل',
-  'chat.messagePlaceholder': 'اكتب رسالة…',
+  'chat.messagePlaceholder': 'رسالة',
   'lesson.accuracy': 'الدقة',
   'lesson.correct': 'صحيح',
   'lesson.skipped': 'تخطّيت هذه المرة: {count}. التمارين التي تتخطّاها لا تُحسب في نتيجتك.',
@@ -25580,7 +25470,6 @@ const ar: Catalog = {
   'profile.addBio': 'أضف بضع كلمات عن نفسك',
   'profile.stat.streak': 'السلسلة',
   'profile.offline': 'غير متصل',
-  'profile.activity': 'النشاط',
   'profile.tab.posts': 'المنشورات',
   'profile.tab.likes': 'الإعجابات',
   'repost.tab': 'المعاد نشرها',
@@ -25670,7 +25559,6 @@ const ar: Catalog = {
   'profile.stat.icons': 'الأيقونات',
   'civak.empty.body': 'تظهر هنا القصص والقصائد والصور من الجميع.',
   'inbox.empty.body': 'تصل هنا طلبات الصداقة والرسائل والإشعارات.',
-  'profile.nothingHere.body': 'يظهر هنا ما تنشره وما تلعبه.',
   'friends.sent': 'المُرسَلة',
   'friends.cancel': 'إلغاء',
   'friends.cancelRequest': 'إلغاء طلبك إلى {name}',
@@ -25879,10 +25767,6 @@ const ar: Catalog = {
   'profile.addFriends': 'إضافة أصدقاء',
   'profile.stat.xp': 'XP',
   'badges.new': 'جديد',
-  'profile.showcase': 'الشارات',
-  'profile.showcaseA11y': 'الشارات: {badges}',
-  'profile.showcaseChoose': 'اختر شارات لملفك الشخصي',
-  'profile.progress': 'الرتب والدوري',
   'profile.rankBest': 'الأفضل: {rank}',
   'notifications.pref.progress': 'الدوريات والشارات',
   'notifications.badge.title': 'شارة جديدة',
@@ -26404,9 +26288,6 @@ const ar: Catalog = {
   'learn.view.lessons': 'دروس',
   'learn.view.games': 'ألعاب',
   'learn.continue.button': 'تابع',
-  'learn.continue.start': 'ابدأ درسك الأول',
-  'learn.continue.allDone': 'أنهيت كل الدروس المتاحة لك',
-  'learn.continue.progress': 'المهارات المنجزة: {done} من {total}',
   'learn.today.title': 'اليوم',
   'learn.today.goal': '{xp} من {goal} XP اليوم',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -26421,7 +26302,6 @@ const ar: Catalog = {
   'learn.tools.due': 'كلمات للمراجعة: {count}',
   'learn.tools.dueOne': 'كلمة واحدة للمراجعة',
   'learn.tools.dueNone': 'لا شيء للمراجعة الآن',
-  'learn.tools.dictionaryHint': 'ابحث عن أي كلمة',
   'learn.tools.sentenceHint': 'رتّب الكلمات',
   'learn.tools.hearHint': 'جِد ما سمعت',
   'learn.map.title': 'خريطة الدورة',
@@ -26627,6 +26507,7 @@ const ar: Catalog = {
   'coursemap.path.state.strong': 'مكتملة وراسخة',
   'coursemap.path.state.refresh': 'مكتملة، جاهزة للمراجعة',
   'coursemap.path.lessonsDone': '{done} من {total} دروس مكتملة',
+  'coursemap.path.lessonOf': 'الدرس {n} من {total}',
   'coursemap.path.start': 'ابدأ',
   'coursemap.path.again': 'تدرّب مرة أخرى',
   'coursemap.path.refreshWhy': 'تقول مراجعاتك إن بعض هذا لم يرسخ بعد.',
@@ -26816,7 +26697,6 @@ const ar: Catalog = {
   'nav.alphabet': 'الأبجدية',
   'learn.tools.alphabetHint': 'كل حرف وكيف يُنطق',
   'words.title': 'الحروف والكلمات',
-  'words.toolHint': 'الحروف والألوان والأرقام والأيام والأشهر',
   'words.fromAlphabet': 'تعلّم الألوان والأرقام والأيام والأشهر',
   'words.lead': 'ابدأ بالحروف ثم بأولى الكلمات. اضغط على حرف أو كلمة لتسمعها.',
   'words.setLead': 'اضغط على كلمة لتسمعها.',
@@ -26887,7 +26767,7 @@ const ar: Catalog = {
   'maintenance.checkEvery': 'نتحقق مجددًا كل {seconds} ثانية.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'تشغيل النطق تلقائيًا',
-  'settings.sounds.autoplayHint': 'بعد كل إجابة، استمع إلى نطقها.',
+  'settings.sounds.autoplayHint': 'استمع إلى كل جملة كردية عند ظهورها، ومرة أخرى بعد إجابتك.',
   'settings.sounds.characterVoices': 'أصوات الشخصيات',
   'settings.sounds.characterVoicesHint': 'يقول Hevalo وXezo كلمة قصيرة بالكرمانجية في اللحظات المهمة، ولا يعلو صوتهما أبدًا على صوت الدرس. يصمتان ما دامت «الأصوات» متوقفة.',
   'reactions.says': '{name}: «{line}»',
@@ -27015,7 +26895,6 @@ const ar: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'هذا الشهر',
   'quests.monthly.soFar': '{done} من {possible} حتى الآن هذا الشهر',
-  'learn.more.title': 'المزيد لليوم',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP عند الإعادة',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -27217,11 +27096,6 @@ const ar: Catalog = {
   'book.card.subOne': 'الفصل الأول من الطريق، لتحتفظ به أو تطبعه: قصة حمو والكلمات والقواعد. افتح ملف PDF.',
   'book.card.sub': '{count} فصول من الطريق، لتحتفظ بها أو تطبعها: قصص حمو والكلمات والقواعد. افتح ملف PDF.',
   'tree.card.plant': 'ازرع شجرتك',
-  'tree.card.plantSub': 'نمِّها بالماء الذي تكسبه دروسك.',
-  'tree.card.hasWater': 'لديك ماء لتسكبه.',
-  'tree.card.thirstyWater': '{health}. لديك ماء لها.',
-  'tree.card.well': 'بخير.',
-  'tree.card.thirsty': '{health}. درس واحد يكسبك ماءً.',
   'tree.profile.title': 'الشجرة',
   'tree.results.water': '+{count} ماء لشجرتك',
   // --- Riddles and proverbs (lore/) ---
@@ -28703,7 +28577,6 @@ const fr: Catalog = {
   'practice.hub.noneTitle': 'L’entraînement commence par une leçon',
   'practice.hub.noneBody': 'Termine une leçon, et ce que tu as appris reviendra ici pour t’entraîner.',
   'practice.hub.toLessons': 'Aller aux leçons',
-  'practice.open.body': 'Tu as laissé une révision en cours. Tes réponses données jusqu’ici sont enregistrées.',
   'practice.open.continue': 'Reprendre la révision',
   'practice.hub.mistakes': 'Erreurs',
   'practice.hub.mistakesCount': '{count} à corriger',
@@ -28788,14 +28661,13 @@ const fr: Catalog = {
   'settings.credits.title': 'Crédits et licences',
   'settings.kvk': 'Numéro KvK',
   'settings.credits.lead': 'Hevalo utilise aussi le travail d’autres personnes, sous ces licences :',
-  'settings.credits.fonts': 'La police Vazirmatn, sur hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Les images Noto Emoji de Google, dans l’éditeur photo de hevalo.app, redimensionnées et réencodées — Apache License 2.0',
   'settings.credits.art': 'Les arrière-plans et icônes de la boutique et les stickers photo sont créés par Hevalo.',
   'tags.automatic': 'Automatique',
   'username.current': 'Actuel',
   'coursemap.lockedBadge': 'Verrouillé',
-  'chat.messagePlaceholder': 'Écris un message…',
+  'chat.messagePlaceholder': 'Message',
   'lesson.accuracy': 'Précision',
   'lesson.correct': 'Correct',
   'lesson.skipped': 'Passés cette fois : {count}. Les exercices passés ne comptent pas dans ton score.',
@@ -29485,7 +29357,6 @@ const fr: Catalog = {
   'profile.addBio': 'Ajoute quelques mots sur toi',
   'profile.stat.streak': 'Série',
   'profile.offline': 'Hors ligne',
-  'profile.activity': 'Activité',
   'profile.tab.posts': 'Publications',
   'profile.tab.likes': 'J’aime',
   'repost.tab': 'Republications',
@@ -29575,7 +29446,6 @@ const fr: Catalog = {
   'profile.stat.icons': 'Icônes',
   'civak.empty.body': 'Les récits, poèmes et images de tout le monde apparaissent ici.',
   'inbox.empty.body': 'Les demandes d’ami, les messages et les notifications arrivent ici.',
-  'profile.nothingHere.body': 'Tes publications et tes parties apparaissent ici.',
   'friends.sent': 'Envoyées',
   'friends.cancel': 'Annuler',
   'friends.cancelRequest': 'Annuler ta demande à {name}',
@@ -29784,10 +29654,6 @@ const fr: Catalog = {
   'profile.addFriends': 'Ajouter des amis',
   'profile.stat.xp': 'XP',
   'badges.new': 'Nouveau',
-  'profile.showcase': 'Badges',
-  'profile.showcaseA11y': 'Badges : {badges}',
-  'profile.showcaseChoose': 'Choisir des badges pour ton profil',
-  'profile.progress': 'Rangs et ligue',
   'profile.rankBest': 'Record : {rank}',
   'notifications.pref.progress': 'Ligues et badges',
   'notifications.badge.title': 'Un nouveau badge',
@@ -30309,9 +30175,6 @@ const fr: Catalog = {
   'learn.view.lessons': 'Leçons',
   'learn.view.games': 'Jeux',
   'learn.continue.button': 'Continuer',
-  'learn.continue.start': 'Commencer ta première leçon',
-  'learn.continue.allDone': 'Tu as terminé toutes les leçons ouvertes',
-  'learn.continue.progress': '{done} sur {total} thèmes terminés',
   'learn.today.title': 'Aujourd’hui',
   'learn.today.goal': '{xp} sur {goal} XP aujourd’hui',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -30326,7 +30189,6 @@ const fr: Catalog = {
   'learn.tools.due': '{count} mots à réviser',
   'learn.tools.dueOne': '1 mot à réviser',
   'learn.tools.dueNone': 'Rien à réviser pour l’instant',
-  'learn.tools.dictionaryHint': 'Cherche n’importe quel mot',
   'learn.tools.sentenceHint': 'Remets les mots dans l’ordre',
   'learn.tools.hearHint': 'Trouve ce que tu as entendu',
   'learn.map.title': 'Plan du cours',
@@ -30532,6 +30394,7 @@ const fr: Catalog = {
   'coursemap.path.state.strong': 'terminée, et solide',
   'coursemap.path.state.refresh': 'terminée, prête à être révisée',
   'coursemap.path.lessonsDone': '{done} leçons sur {total} terminées',
+  'coursemap.path.lessonOf': 'Leçon {n} sur {total}',
   'coursemap.path.start': 'Commencer',
   'coursemap.path.again': 'S’entraîner encore',
   'coursemap.path.refreshWhy': 'Tes révisions montrent qu’une partie n’est pas encore acquise.',
@@ -30721,7 +30584,6 @@ const fr: Catalog = {
   'nav.alphabet': 'Alphabet',
   'learn.tools.alphabetHint': 'Chaque lettre et comment elle se prononce',
   'words.title': 'Lettres et mots',
-  'words.toolHint': 'Lettres, couleurs, nombres, jours, mois',
   'words.fromAlphabet': 'Apprendre couleurs, nombres, jours et mois',
   'words.lead': 'Commence par les lettres, puis les premiers mots. Touche une lettre ou un mot pour l’entendre.',
   'words.setLead': 'Touche un mot pour l’entendre.',
@@ -30792,7 +30654,7 @@ const fr: Catalog = {
   'maintenance.checkEvery': 'Nous vérifions à nouveau toutes les {seconds} secondes.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Lire les prononciations automatiquement',
-  'settings.sounds.autoplayHint': 'Après chaque réponse, écoute comment elle se dit.',
+  'settings.sounds.autoplayHint': 'Écoute chaque phrase en kurde dès qu’elle apparaît, puis de nouveau après ta réponse.',
   'settings.sounds.characterVoices': 'Voix des personnages',
   'settings.sounds.characterVoicesHint': 'Hevalo et Xezo disent un petit mot en kurmancî aux moments qui comptent, jamais par-dessus l’audio de la leçon. Muets tant que « Sons » est désactivé.',
   'reactions.says': '{name} dit « {line} »',
@@ -30920,7 +30782,6 @@ const fr: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Ce mois-ci',
   'quests.monthly.soFar': '{done} sur {possible} jusqu’ici ce mois-ci',
-  'learn.more.title': 'Aussi pour aujourd’hui',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP en la refaisant',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -31122,11 +30983,6 @@ const fr: Catalog = {
   'book.card.subOne': 'Le chapitre 1 de la route, à garder ou à imprimer : l’histoire de Hamo, les mots et la grammaire. Ouvre le PDF.',
   'book.card.sub': '{count} chapitres de la route, à garder ou à imprimer : les histoires de Hamo, les mots et la grammaire. Ouvre le PDF.',
   'tree.card.plant': 'Plante ton arbre',
-  'tree.card.plantSub': 'Fais-le grandir avec l’eau que rapportent tes leçons.',
-  'tree.card.hasWater': 'Tu as de l’eau à verser.',
-  'tree.card.thirstyWater': '{health}. Tu as de l’eau pour lui.',
-  'tree.card.well': 'Il va bien.',
-  'tree.card.thirsty': '{health}. Une leçon donne de l’eau.',
   'tree.profile.title': 'Arbre',
   'tree.results.water': '+{count} eau pour ton arbre',
   // --- Riddles and proverbs (lore/) ---
@@ -32608,7 +32464,6 @@ const nl: Catalog = {
   'practice.hub.noneTitle': 'Oefenen begint met een les',
   'practice.hub.noneBody': 'Rond een les af, dan komt wat je leerde hier terug om te oefenen.',
   'practice.hub.toLessons': 'Naar de lessen',
-  'practice.open.body': 'Je bent halverwege een herhaling gestopt. Je antwoorden tot nu toe zijn bewaard.',
   'practice.open.continue': 'Verder met herhalen',
   'practice.hub.mistakes': 'Fouten',
   'practice.hub.mistakesCount': '{count} om te verbeteren',
@@ -32693,14 +32548,13 @@ const nl: Catalog = {
   'settings.credits.title': 'Bronvermelding en licenties',
   'settings.kvk': 'KvK-nummer',
   'settings.credits.lead': 'Hevalo gebruikt ook werk van anderen, onder deze licenties:',
-  'settings.credits.fonts': 'Het lettertype Vazirmatn, op hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Noto Emoji-afbeeldingen van Google, in de foto-editor op hevalo.app, verkleind en opnieuw gecodeerd — Apache License 2.0',
   'settings.credits.art': 'De achtergronden en iconen in de winkel en de fotostickers maakt Hevalo zelf.',
   'tags.automatic': 'Automatisch',
   'username.current': 'Huidig',
   'coursemap.lockedBadge': 'Vergrendeld',
-  'chat.messagePlaceholder': 'Schrijf een bericht…',
+  'chat.messagePlaceholder': 'Bericht',
   'lesson.accuracy': 'Nauwkeurigheid',
   'lesson.correct': 'Correct',
   'lesson.skipped': 'Deze keer overgeslagen: {count}. Overgeslagen oefeningen tellen niet mee voor je score.',
@@ -33390,7 +33244,6 @@ const nl: Catalog = {
   'profile.addBio': 'Schrijf een paar woorden over jezelf',
   'profile.stat.streak': 'Reeks',
   'profile.offline': 'Offline',
-  'profile.activity': 'Activiteit',
   'profile.tab.posts': 'Berichten',
   'profile.tab.likes': 'Likes',
   'repost.tab': 'Opnieuw geplaatst',
@@ -33480,7 +33333,6 @@ const nl: Catalog = {
   'profile.stat.icons': 'Iconen',
   'civak.empty.body': 'Verhalen, gedichten en afbeeldingen van iedereen verschijnen hier.',
   'inbox.empty.body': 'Vriendschapsverzoeken, berichten en meldingen komen hier binnen.',
-  'profile.nothingHere.body': 'Wat je plaatst en speelt verschijnt hier.',
   'friends.sent': 'Verzonden',
   'friends.cancel': 'Annuleren',
   'friends.cancelRequest': 'Je verzoek aan {name} annuleren',
@@ -33689,10 +33541,6 @@ const nl: Catalog = {
   'profile.addFriends': 'Vrienden toevoegen',
   'profile.stat.xp': 'XP',
   'badges.new': 'Nieuw',
-  'profile.showcase': 'Badges',
-  'profile.showcaseA11y': 'Badges: {badges}',
-  'profile.showcaseChoose': 'Kies badges voor je profiel',
-  'profile.progress': 'Rangen en competitie',
   'profile.rankBest': 'Beste: {rank}',
   'notifications.pref.progress': 'Competities en badges',
   'notifications.badge.title': 'Een nieuwe badge',
@@ -34214,9 +34062,6 @@ const nl: Catalog = {
   'learn.view.lessons': 'Lessen',
   'learn.view.games': 'Spellen',
   'learn.continue.button': 'Doorgaan',
-  'learn.continue.start': 'Begin je eerste les',
-  'learn.continue.allDone': 'Je hebt alle open lessen afgerond',
-  'learn.continue.progress': '{done} van {total} onderdelen klaar',
   'learn.today.title': 'Vandaag',
   'learn.today.goal': 'Vandaag {xp} van {goal} XP',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -34231,7 +34076,6 @@ const nl: Catalog = {
   'learn.tools.due': '{count} woorden te herhalen',
   'learn.tools.dueOne': '1 woord te herhalen',
   'learn.tools.dueNone': 'Nu niets te herhalen',
-  'learn.tools.dictionaryHint': 'Zoek elk woord op',
   'learn.tools.sentenceHint': 'Zet de woorden op volgorde',
   'learn.tools.hearHint': 'Vind wat je hoorde',
   'learn.map.title': 'Cursuskaart',
@@ -34437,6 +34281,7 @@ const nl: Catalog = {
   'coursemap.path.state.strong': 'klaar, en stevig',
   'coursemap.path.state.refresh': 'klaar, toe aan herhaling',
   'coursemap.path.lessonsDone': '{done} van {total} lessen klaar',
+  'coursemap.path.lessonOf': 'Les {n} van {total}',
   'coursemap.path.start': 'Beginnen',
   'coursemap.path.again': 'Nog eens oefenen',
   'coursemap.path.refreshWhy': 'Je herhalingen laten zien dat een deel nog niet blijft hangen.',
@@ -34626,7 +34471,6 @@ const nl: Catalog = {
   'nav.alphabet': 'Alfabet',
   'learn.tools.alphabetHint': 'Elke letter en hoe hij klinkt',
   'words.title': 'Letters en woorden',
-  'words.toolHint': 'Letters, kleuren, getallen, dagen, maanden',
   'words.fromAlphabet': 'Leer kleuren, getallen, dagen en maanden',
   'words.lead': 'Begin met de letters, daarna de eerste woorden. Tik op een letter of woord om het te horen.',
   'words.setLead': 'Tik op een woord om het te horen.',
@@ -34697,7 +34541,7 @@ const nl: Catalog = {
   'maintenance.checkEvery': 'We kijken elke {seconds} seconden opnieuw.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Uitspraak automatisch afspelen',
-  'settings.sounds.autoplayHint': 'Hoor na elk antwoord hoe het wordt uitgesproken.',
+  'settings.sounds.autoplayHint': 'Hoor elke Koerdische zin zodra hij verschijnt, en nog eens na je antwoord.',
   'settings.sounds.characterVoices': 'Stemmen van de personages',
   'settings.sounds.characterVoicesHint': 'Hevalo en Xezo zeggen op mooie momenten een kort woordje Kurmancî, nooit door het geluid van de les heen. Stil zolang Geluiden uit staat.',
   'reactions.says': '{name} zegt ‘{line}’',
@@ -34825,7 +34669,6 @@ const nl: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Deze maand',
   'quests.monthly.soFar': '{done} van {possible} tot nu toe deze maand',
-  'learn.more.title': 'Meer voor vandaag',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP bij herhalen',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -35027,11 +34870,6 @@ const nl: Catalog = {
   'book.card.subOne': 'Hoofdstuk 1 van de route, om te bewaren of te printen: Hamo’s verhaal, de woorden en de grammatica. Open de pdf.',
   'book.card.sub': '{count} hoofdstukken van de route, om te bewaren of te printen: Hamo’s verhalen, de woorden en de grammatica. Open de pdf.',
   'tree.card.plant': 'Plant je boom',
-  'tree.card.plantSub': 'Laat hem groeien met het water dat je lessen opleveren.',
-  'tree.card.hasWater': 'Je hebt water om te geven.',
-  'tree.card.thirstyWater': '{health}. Je hebt water voor hem.',
-  'tree.card.well': 'Het gaat goed.',
-  'tree.card.thirsty': '{health}. Een les levert water op.',
   'tree.profile.title': 'Boom',
   'tree.results.water': '+{count} water voor je boom',
   // --- Riddles and proverbs (lore/) ---
@@ -36514,7 +36352,6 @@ const ckb: Catalog = {
   'practice.hub.noneTitle': 'ڕاهێنان بە وانەیەک دەست پێ دەکات',
   'practice.hub.noneBody': 'وانەیەک تەواو بکە، ئەوەی فێری بوویت دەگەڕێتەوە ئێرە بۆ ڕاهێنان.',
   'practice.hub.toLessons': 'بڕۆ بۆ وانەکان',
-  'practice.open.body': 'پێداچوونەوەیەکت لە نیوەدا جێهێشتووە. وەڵامەکانت تا ئێستا پاشەکەوت کراون.',
   'practice.open.continue': 'درێژە بە پێداچوونەوە بدە',
   'practice.hub.mistakes': 'هەڵەکان',
   'practice.hub.mistakesCount': '{count} بۆ ڕاستکردنەوە',
@@ -36599,14 +36436,13 @@ const ckb: Catalog = {
   'settings.credits.title': 'سوپاس و مۆڵەتەکان',
   'settings.kvk': 'ژمارەی KvK',
   'settings.credits.lead': 'Hevalo کاری کەسانی تریش بەکاردەهێنێت، بەم مۆڵەتانە:',
-  'settings.credits.fonts': 'فۆنتی Vazirmatn، لە hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'وێنەکانی Noto Emoji لە Google، لە دەستکاریکەری وێنەی hevalo.app، قەبارە و فۆرماتیان گۆڕدراوە — Apache License 2.0',
   'settings.credits.art': 'پاشبنەما و ئایکۆنەکانی فرۆشگا و ستیکەرەکانی وێنە، Hevalo خۆی دروستیان دەکات.',
   'tags.automatic': 'خۆکار',
   'username.current': 'ئێستا',
   'coursemap.lockedBadge': 'داخراو',
-  'chat.messagePlaceholder': 'نامەیەک بنووسە…',
+  'chat.messagePlaceholder': 'نامە',
   'lesson.accuracy': 'وردی',
   'lesson.correct': 'ڕاست',
   'lesson.skipped': 'ئەمجارە تێپەڕێنراو: {count}. ڕاهێنانە تێپەڕێنراوەکان لە ئەنجامەکەدا هەژمار ناکرێن.',
@@ -37296,7 +37132,6 @@ const ckb: Catalog = {
   'profile.addBio': 'چەند وشەیەک دەربارەی خۆت بنووسە',
   'profile.stat.streak': 'زنجیرە',
   'profile.offline': 'دەرهێڵ',
-  'profile.activity': 'چالاکی',
   'profile.tab.posts': 'پۆستەکان',
   'profile.tab.likes': 'بەدڵبووەکان',
   'repost.tab': 'دووبارە بڵاوکراوەکان',
@@ -37386,7 +37221,6 @@ const ckb: Catalog = {
   'profile.stat.icons': 'ئایکۆنەکان',
   'civak.empty.body': 'چیرۆک و هۆنراوە و وێنەی هەمووان لێرە دەردەکەون.',
   'inbox.empty.body': 'داواکاری هاوڕێیەتی و نامە و ئاگادارکردنەوەکان لێرە دەگەن.',
-  'profile.nothingHere.body': 'ئەوەی بڵاوی دەکەیتەوە و یاری دەکەیت لێرە دەردەکەوێت.',
   'friends.sent': 'نێردراو',
   'friends.cancel': 'پاشگەزبوونەوە',
   'friends.cancelRequest': 'داواکارییەکەت بۆ {name} هەڵبوەشێنەوە',
@@ -37595,10 +37429,6 @@ const ckb: Catalog = {
   'profile.addFriends': 'هاوڕێ زیاد بکە',
   'profile.stat.xp': 'XP',
   'badges.new': 'نوێ',
-  'profile.showcase': 'نیشانەکان',
-  'profile.showcaseA11y': 'نیشانەکان: {badges}',
-  'profile.showcaseChoose': 'نیشانە بۆ پرۆفایلەکەت هەڵبژێرە',
-  'profile.progress': 'پلە و لیگ',
   'profile.rankBest': 'باشترین: {rank}',
   'notifications.pref.progress': 'لیگ و نیشانەکان',
   'notifications.badge.title': 'نیشانەیەکی نوێ',
@@ -38120,9 +37950,6 @@ const ckb: Catalog = {
   'learn.view.lessons': 'وانەکان',
   'learn.view.games': 'یارییەکان',
   'learn.continue.button': 'بەردەوام بە',
-  'learn.continue.start': 'یەکەم وانەکەت دەست پێ بکە',
-  'learn.continue.allDone': 'هەموو وانە کراوەکانت تەواو کرد',
-  'learn.continue.progress': '{done} لە {total} بابەت تەواو بوون',
   'learn.today.title': 'ئەمڕۆ',
   'learn.today.goal': 'ئەمڕۆ {xp} لە {goal} XP',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -38137,7 +37964,6 @@ const ckb: Catalog = {
   'learn.tools.due': '{count} وشە چاوەڕێی پێداچوونەوەن',
   'learn.tools.dueOne': '1 وشە چاوەڕێی پێداچوونەوەیە',
   'learn.tools.dueNone': 'ئێستا هیچ شتێک چاوەڕێ نییە',
-  'learn.tools.dictionaryHint': 'بەدوای هەر وشەیەکدا بگەڕێ',
   'learn.tools.sentenceHint': 'وشەکان ڕیز بکە',
   'learn.tools.hearHint': 'ئەوەی بیستت بیدۆزەرەوە',
   'learn.map.title': 'نەخشەی خول',
@@ -38343,6 +38169,7 @@ const ckb: Catalog = {
   'coursemap.path.state.strong': 'تەواو، و بەهێز',
   'coursemap.path.state.refresh': 'تەواو، ئامادە بۆ نوێکردنەوە',
   'coursemap.path.lessonsDone': '{done} لە {total} وانە تەواو بوون',
+  'coursemap.path.lessonOf': 'وانەی {n} لە {total}',
   'coursemap.path.start': 'دەست پێ بکە',
   'coursemap.path.again': 'دووبارە ڕاهێنان بکە',
   'coursemap.path.refreshWhy': 'پێداچوونەوەکانت دەڵێن هەندێکی هێشتا لە بیرت نەماوە.',
@@ -38532,7 +38359,6 @@ const ckb: Catalog = {
   'nav.alphabet': 'ئەلفوبێ',
   'learn.tools.alphabetHint': 'هەموو پیتێک و دەنگەکەی',
   'words.title': 'پیت و وشە',
-  'words.toolHint': 'پیت، ڕەنگ، ژمارە، ڕۆژ، مانگ',
   'words.fromAlphabet': 'ڕەنگ و ژمارە و ڕۆژ و مانگەکان فێربە',
   'words.lead': 'بە پیتەکان دەست پێ بکە، پاشان یەکەم وشەکان. کرتە لە پیتێک یان وشەیەک بکە بۆ ئەوەی گوێت لێی بێت.',
   'words.setLead': 'کرتە لە وشەیەک بکە بۆ ئەوەی گوێت لێی بێت.',
@@ -38603,7 +38429,7 @@ const ckb: Catalog = {
   'maintenance.checkEvery': 'هەموو {seconds} چرکە جارێک دووبارە دەپشکنین.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'دەربڕینەکان بە شێوەی خۆکار لێبدە',
-  'settings.sounds.autoplayHint': 'دوای هەر وەڵامێک، گوێ لە دەربڕینەکەی بگرە.',
+  'settings.sounds.autoplayHint': 'هەر ڕستەیەکی کوردی کاتێک دەردەکەوێت ببیستە، و دووبارە دوای وەڵامدانەوەکەت.',
   'settings.sounds.characterVoices': 'دەنگی کارەکتەرەکان',
   'settings.sounds.characterVoicesHint': 'Hevalo و Xezo لە ساتە تایبەتەکاندا وشەیەکی کورتی کورمانجی دەڵێن، هەرگیز بەسەر دەنگی وانەکەدا نا. کاتێک «دەنگەکان» کوژاوەتەوە، بێدەنگن.',
   'reactions.says': '{name} دەڵێت: «{line}»',
@@ -38731,7 +38557,6 @@ const ckb: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'ئەم مانگە',
   'quests.monthly.soFar': '{done} لە {possible} تا ئێستا لەم مانگە',
-  'learn.more.title': 'زیاتر بۆ ئەمڕۆ',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP، دووبارە',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -38933,11 +38758,6 @@ const ckb: Catalog = {
   'book.card.subOne': 'بەشی یەکەمی ڕێگاکە، بۆ هەڵگرتن یان چاپکردن: چیرۆکی حەمۆ، وشەکان و ڕێزمان. PDFەکە بکەرەوە.',
   'book.card.sub': '{count} بەشی ڕێگاکە، بۆ هەڵگرتن یان چاپکردن: چیرۆکەکانی حەمۆ، وشەکان و ڕێزمان. PDFەکە بکەرەوە.',
   'tree.card.plant': 'دارەکەت بچێنە',
-  'tree.card.plantSub': 'بەو ئاوەی وانەکانت دەیدەن گەورەی بکە.',
-  'tree.card.hasWater': 'ئاوت هەیە بیڕژێنیت.',
-  'tree.card.thirstyWater': '{health}. ئاوت بۆی هەیە.',
-  'tree.card.well': 'باشە.',
-  'tree.card.thirsty': '{health}. وانەیەک ئاو دەدات.',
   'tree.profile.title': 'دار',
   'tree.results.water': '+{count} ئاو بۆ دارەکەت',
   // --- Riddles and proverbs (lore/) ---

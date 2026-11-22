@@ -10,7 +10,7 @@ import { Icon } from '../theme/Icon';
 import { heldDim } from '../theme/MotionParts';
 import { Pressable } from '../theme/Pressable';
 import { useTheme } from '../theme/ThemeProvider';
-import { displayFont, sectionLabel } from '../theme/fonts';
+import { sectionLabel } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { noteIn, reflectionIn } from './legend';
 import { storyTextProps, storyTextStyle } from './storyText';
@@ -162,22 +162,22 @@ export function StorySources({ story }: { story: Story }): React.JSX.Element | n
 
 const styles = StyleSheet.create({
   part: { gap: spacing.sm },
-  line: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  line: { fontSize: typography.sizes.text, lineHeight: 20 },
   list: { gap: spacing.md, marginTop: spacing.xs },
   reflection: { alignItems: 'flex-start', gap: spacing.md },
   number: { width: 28, height: 28, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  numberText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  numberText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   flex: { flex: 1, gap: 2 },
   // The story's serif at book weight: a question to think over, not a heading.
-  reflectionText: { fontFamily: displayFont, fontWeight: typography.weights.regular, fontSize: typography.sizes.md, lineHeight: Math.round(typography.sizes.md * 1.5) },
-  translation: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  reflectionText: { fontWeight: typography.weights.regular, fontSize: typography.sizes.text, lineHeight: Math.round(typography.sizes.text * 1.5) },
+  translation: { fontSize: typography.sizes.text, lineHeight: 21 },
   note: { gap: spacing.xs, marginTop: spacing.xs },
-  noteTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  noteTitleTr: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  body: { fontSize: typography.sizes.md, lineHeight: 25 },
+  noteTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  noteTitleTr: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  body: { fontSize: typography.sizes.text, lineHeight: 25 },
   sources: { gap: spacing.xs },
   source: { alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, paddingVertical: spacing.xs },
-  sourceType: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
-  sourceTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, lineHeight: 20 },
-  sourceMeta: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  sourceType: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
+  sourceTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, lineHeight: 20 },
+  sourceMeta: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

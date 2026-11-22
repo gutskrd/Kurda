@@ -241,7 +241,7 @@ export function useEngagement(item: FeedItem, onChanged: ((next: FeedItem) => vo
 
 /**
  * The row under a post: like, comment and repost as pills with counts at the start, share and save as round buttons
- * at the end. The heart turns red once liked, a repost turns green and a saved bookmark fills.
+ * at the end. The heart turns red once liked, a repost turns green and a saved bookmark turns yellow.
  */
 export function PostActions({
   item,
@@ -335,7 +335,7 @@ export function PostActions({
         title={signedIn ? (e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')) : t('feed.signInToSave')}
         onClick={() => toggle('bookmark')}
       >
-        <BookmarkIcon size={20} weight={e.bookmarked ? 'fill' : 'regular'} />
+        <BookmarkIcon size={20} weight={e.bookmarked ? 'fill' : 'regular'} className={e.bookmarked ? 'saved-mark' : undefined} />
       </button>
     </footer>
   );

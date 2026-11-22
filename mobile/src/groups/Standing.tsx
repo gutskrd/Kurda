@@ -232,13 +232,13 @@ function AskSheet({
 }
 
 const styles = StyleSheet.create({
-  heading: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center', lineHeight: 23 },
-  line: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
+  heading: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center', lineHeight: 23 },
+  line: { fontSize: typography.sizes.text, lineHeight: 21, textAlign: 'center' },
   state: { marginTop: spacing.sm },
   action: { alignSelf: 'stretch', marginTop: spacing.sm },
   fieldTop: { justifyContent: 'space-between', alignItems: 'baseline' },
-  label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  count: { fontSize: typography.sizes.xs, fontVariant: ['tabular-nums'] },
-  input: { minHeight: 96, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md, textAlignVertical: 'top' },
-  hint: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  label: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  count: { fontSize: typography.sizes.text, fontVariant: ['tabular-nums'] },
+  input: { minHeight: 96, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.text, textAlignVertical: 'top' },
+  hint: { fontSize: typography.sizes.text, lineHeight: 20 },
 });

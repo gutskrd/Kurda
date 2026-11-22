@@ -128,21 +128,27 @@ describe('the lesson path', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Lesson', { lessonId: 'f2', courseId: 'c1' });
   });
 
-  it('opens a sheet on a stop: its lessons as ways in, how far along, and one thing to do', () => {
+  it('opens a violet card under the stop to do now: its name, which lesson is next, and one button that says what it pays', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
-    fireEvent.click(button('Family, you are here, 1 of 3 lessons done'));
-    expect(screen.getByText('Chapter 2 · Family & Food')).toBeTruthy();
-    expect(screen.getByText('1 of 3 lessons done')).toBeTruthy();
-    // The XP its lesson pays, in the server's numbers.
-    expect(screen.getByText('+10–20 XP')).toBeTruthy();
-    // A finished lesson can be replayed on its own; a locked one cannot be opened.
-    fireEvent.click(button('Dê û bav, done'));
-    expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'f1', courseId: 'c1' });
-    fireEvent.click(button('Family, you are here, 1 of 3 lessons done'));
-    expect(screen.queryByRole('button', { name: 'Malbat, not open yet' })).toBeNull();
-    fireEvent.click(button('Continue'));
+    const stop = button('Family, you are here, 1 of 3 lessons done');
+    expect(stop.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(stop);
+    expect(stop.getAttribute('aria-expanded')).toBe('true');
+    const card = screen.getByTestId('lp-card-go');
+    expect(within(card).getByRole('heading', { name: 'Family' })).toBeTruthy();
+    expect(within(card).getByText('Lesson 2 of 3')).toBeTruthy();
+    // A tap anywhere else on the road closes it, as does its stop again.
+    fireEvent.click(screen.getByTestId('lp-card-close'));
+    expect(screen.queryByTestId('lp-card-go')).toBeNull();
+    fireEvent.click(stop);
+    fireEvent.click(stop);
+    expect(screen.queryByTestId('lp-card-go')).toBeNull();
+    // Its one button, with the XP the lesson pays in the server's numbers.
+    fireEvent.click(stop);
+    fireEvent.click(within(screen.getByTestId('lp-card-go')).getByRole('button', { name: 'Continue, +10–20 XP' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'f2', courseId: 'c1' });
+    expect(screen.queryByTestId('lp-card-go')).toBeNull();
   });
 
   it('ends each chapter with Hamo’s story as its prize, shut until the chapter is done, and names the chapter on its way', () => {
@@ -183,13 +189,13 @@ describe('the lesson path', () => {
     expect(screen.getByText('+3–5 XP, played again')).toBeTruthy();
   });
 
-  it('has Hevalo beside the current skill, opening its sheet when he is tapped', () => {
+  it('has Hevalo beside the current skill, opening its card when he is tapped', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
     const mascot = screen.getByTestId('lp-mascot');
     expect(screen.getAllByTestId('lp-mascot')).toHaveLength(1);
     fireEvent.click(within(mascot).getByRole('img'));
-    expect(screen.getByText('Chapter 2 · Family & Food')).toBeTruthy();
+    expect(within(screen.getByTestId('lp-card-go')).getByRole('heading', { name: 'Family' })).toBeTruthy();
   });
 
   it('says kindly what opens a locked skill, and sends a rusty one to review', () => {
@@ -197,11 +203,19 @@ describe('the lesson path', () => {
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
     fireEvent.click(button('Food, locked, 0 of 1 lessons done'));
     expect(screen.getByText('Finish “Family” to open this one.')).toBeTruthy();
-    // The sheet's close button, after the dimmed backdrop's.
-    fireEvent.click(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     fireEvent.click(button('Numbers, done, ready for a refresh, round 2 of 3, 0 of 1 lessons'));
     fireEvent.click(button('Start a review'));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Practice');
+  });
+
+  /* A review left part-way is carried on from the road, in its own session rather than a new one beside it. */
+  it('carries on a review left part-way from its stop', () => {
+    client();
+    renderWithProviders(<LessonPath map={MAP} due={3} openReview="p9" onFocus={() => undefined} />);
+    fireEvent.click(button('Review, words ready: 3'));
+    fireEvent.click(button('Continue review'));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('Practice', { sessionId: 'p9' });
   });
 
   it('opens a unit’s guide from the book on its heading, fetching each note once', async () => {
@@ -219,15 +233,16 @@ describe('the lesson path', () => {
    * Each unit stands on its own land: the first has its landmark beside the road, and the learner stands once on the
    * current stop. No course characters stand on the map, and the pictures are hidden from screen readers.
    */
-  it('stands each unit on its own land, with its landmark and the learner on today’s stop, and no figures pasted on the map', () => {
+  it('stands each unit on its own land, with its landmark, and no figures pasted on the map', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
     expect(screen.getAllByTestId('lp-land')).toHaveLength(2);
     expect(screen.getByTestId('lp-landmark-gate')).toBeTruthy();
     expect(screen.getByTestId('lp-landmark-teahouse')).toBeTruthy();
-    expect(screen.getAllByTestId('lp-learner')).toHaveLength(1);
+    // The stop to do now says where the learner is; no figure stands on it.
+    expect(screen.queryByTestId('lp-learner')).toBeNull();
     expect(screen.queryByTestId('lp-host-hamo')).toBeNull();
-    for (const id of ['lp-learner', 'lp-landmark-gate']) expect(screen.getByTestId(id).closest('[aria-hidden="true"]')).toBeTruthy();
+    expect(screen.getByTestId('lp-landmark-gate').closest('[aria-hidden="true"]')).toBeTruthy();
   });
 
   it('draws only the units it is told are near in full, and the rest as their ground alone', () => {
@@ -404,18 +419,17 @@ describe('the path’s sections', () => {
 });
 
 describe('a topic’s ring and stars', () => {
-  it('rings every topic with a piece for each lesson, and stands a star on a finished one’s coin for each round', () => {
+  it('rings the topic to do now with a piece for each lesson, and stands a star on a finished one’s coin for each round', () => {
     client();
     renderWithProviders(<LessonPath map={levelled()} due={0} onFocus={() => undefined} />);
-    // Topic c has three rounds, d none yet, e is locked; review and the story have no ring.
-    expect(screen.getAllByTestId('lp-ring')).toHaveLength(3);
+    // Only d, the topic to do now, wears its ring; c has three rounds on its coin instead.
+    expect(screen.getAllByTestId('lp-ring')).toHaveLength(1);
     expect(screen.getByTestId('lp-stars-3')).toBeTruthy();
     expect(button('Topic c, done, and strong, all 3 rounds done')).toBeTruthy();
-    // Its sheet shows its stars and that all three rounds are played.
+    // Its card shows its stars and that all three rounds are played.
     fireEvent.click(button('Topic c, done, and strong, all 3 rounds done'));
-    expect(screen.getByTestId('lp-sheet-stars-3')).toBeTruthy();
+    expect(screen.getByTestId('lp-card-stars-3')).toBeTruthy();
     expect(screen.getByText('All 3 rounds done')).toBeTruthy();
-    expect(screen.getByText('Three stars: every lesson here played three times.')).toBeTruthy();
   });
 
   it('says the round a gold topic is in, and plays it again from the lesson finished fewest times', () => {
@@ -426,8 +440,7 @@ describe('a topic’s ring and stars', () => {
     expect(screen.getAllByTestId('lp-stars-1')).toHaveLength(2);
     fireEvent.click(button('Topic b, done, and strong, round 2 of 3, 1 of 2 lessons'));
     expect(screen.getByText('Round 2 of 3 · 1 of 2 lessons')).toBeTruthy();
-    expect(screen.getByText('Play its lessons again to fill the ring once more. Each full ring earns a star, up to three.')).toBeTruthy();
-    fireEvent.click(button('Practise again'));
+    fireEvent.click(button('Practise again, +3–5 XP, played again'));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'b2', courseId: 'c2' });
   });
 

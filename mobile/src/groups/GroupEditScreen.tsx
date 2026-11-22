@@ -175,7 +175,7 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
                 accessibilityLabel={photoUrl ? t('groups.photo.change') : t('groups.photo.add')}
                 style={({ pressed }) => pressed && heldDim}
               >
-                <GroupAvatar name={trimmed || detail.name} id={detail.id} size={PHOTO} photoUrl={photoUrl} />
+                <GroupAvatar name={trimmed || detail.name} size={PHOTO} photoUrl={photoUrl} />
                 {uploading ? (
                   <View style={[styles.uploading, { backgroundColor: colors.scrim }]}>
                     <ActivityIndicator color={colors.textOnScrim} />
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   page: { paddingHorizontal: layout.gutter, paddingBottom: spacing.xxl, gap: spacing.lg },
   loading: { marginTop: spacing.xl },
   save: { minWidth: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xs },
-  saveText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  saveText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   photo: { alignItems: 'center', gap: spacing.sm + 4, paddingTop: spacing.md },
   uploading: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: Math.round(PHOTO * 0.22), alignItems: 'center', justifyContent: 'center' },
   // A small camera badge at the picture's corner: the picture is the button.
@@ -295,13 +295,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   photoLinkHit: { minHeight: 32, justifyContent: 'center' },
-  photoLink: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  photoLink: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   field: { gap: spacing.xs },
   fieldTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  count: { fontSize: typography.sizes.xs, fontVariant: ['tabular-nums'] },
-  input: { minHeight: MIN_TOUCH_TARGET + 4, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
+  label: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  count: { fontSize: typography.sizes.text, fontVariant: ['tabular-nums'] },
+  input: { minHeight: MIN_TOUCH_TARGET + 4, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.text },
   multiline: { minHeight: 110, textAlignVertical: 'top' },
-  error: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center' },
-  note: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  error: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center' },
+  note: { fontSize: typography.sizes.text, lineHeight: 20 },
 });

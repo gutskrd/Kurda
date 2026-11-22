@@ -32,7 +32,7 @@ export function GroupWelcome({
 
   return (
     <div className="gwelcome">
-      <GroupAvatar id={group.id} name={group.name} photoUrl={group.photoUrl} size={88} />
+      <GroupAvatar name={group.name} photoUrl={group.photoUrl} size={88} />
       <h2 className="gwelcome-name" dir="auto">
         {group.name}
       </h2>

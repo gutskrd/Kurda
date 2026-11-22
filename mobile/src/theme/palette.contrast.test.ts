@@ -47,11 +47,11 @@ for (const p of [LIGHT, DARK]) {
       expect(contrastRatio(p.textPrimary, p.background)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
-    it('button label on the primary button meets AA (4.5:1)', () => {
-      expect(contrastRatio(p.textOnPrimary, p.primary)).toBeGreaterThanOrEqual(AA_NORMAL);
+    it('button label on the main button, in the accent, meets AA (4.5:1)', () => {
+      expect(contrastRatio(p.textOnPrimary, p.accent)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
-    // A chosen chip, tab or segment is solid violet on the grey track the others sit on: its word reads as a button's
+    // A chosen chip, tab or segment is solid ink on the grey track the others sit on: its word reads as a button's
     // does, and the chip itself stands out from the track as a control must (WCAG 1.4.11).
     it('a chosen chip stands 3:1 off the track, on the page and on a card, with its word at AA', () => {
       for (const surface of [p.background, p.surface]) {
@@ -117,20 +117,22 @@ describe('palette — the values the design settled on', () => {
     expect(DARK.background).toBe('#100E1D');
     expect(DARK.surface).toBe('#1B192B');
     expect(DARK.surfaceRaised).toBe('#27243A');
-    expect(DARK.gold).toBe('#F0C24A');
+    expect(DARK.gold).toBe(DARK.textPrimary);
   });
 
-  it('keeps the light page a white with a breath of violet, with white surfaces and a darker gold for words', () => {
+  it('keeps the light page a white with a breath of violet, with white surfaces, and what is earned in the ink', () => {
     expect(LIGHT.background).toBe('#F6F4FD');
     expect(LIGHT.surface).toBe('#FFFFFF');
-    expect(LIGHT.goldText).toBe('#8A6400');
-    expect(LIGHT.gold).toBe('#EBA905');
+    expect(LIGHT.goldText).toBe(LIGHT.textPrimary);
+    expect(LIGHT.gold).toBe(LIGHT.textPrimary);
   });
 
-  it('keeps the brand the icon’s violet, deep by day and lifted by night, and writes in indigo ink', () => {
-    expect(LIGHT.primary).toBe('#862BE2');
-    expect(DARK.primary).toBe('#BF9BFE');
+  it('keeps one accent, the icon’s violet, deep by day and lifted by night, and draws everything else pressable in indigo ink', () => {
+    expect(LIGHT.accent).toBe('#862BE2');
+    expect(DARK.accent).toBe('#BF9BFE');
     expect(LIGHT.textPrimary).toBe('#14112E');
+    expect(LIGHT.primary).toBe(LIGHT.textPrimary);
+    expect(DARK.primary).toBe(DARK.textPrimary);
     expect(DARK.textOnPrimary).toBe(LIGHT.textPrimary);
   });
 });

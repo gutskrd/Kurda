@@ -312,7 +312,7 @@ export function SaveWordButton({ entryId, className }: { entryId: string; classN
   return (
     <>
       <button type="button" className={`story-save${saved ? ' is-on' : ''}${className ? ` ${className}` : ''}`} aria-pressed={saved} onClick={toggle}>
-        <BookmarkIcon size={14} weight={saved ? 'fill' : 'regular'} />
+        <BookmarkIcon size={14} weight={saved ? 'fill' : 'regular'} className={saved ? 'saved-mark' : undefined} />
         {saved ? t('stories.reader.savedWord') : t('stories.reader.saveWord')}
       </button>
       {problem && (

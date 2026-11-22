@@ -39,5 +39,5 @@ const CHIP_MARK = 15;
 
 const styles = StyleSheet.create({
   chip: { width: CHIP, height: CHIP, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  chipText: { fontSize: 12, fontWeight: typography.weights.bold },
+  chipText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

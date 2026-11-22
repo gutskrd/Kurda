@@ -70,5 +70,5 @@ const styles = StyleSheet.create({
   list: { borderRadius: radii.lg, paddingVertical: spacing.xs, overflow: 'hidden' },
   // A list row's height and text size.
   row: { minHeight: Math.max(MIN_TOUCH_TARGET, 52), justifyContent: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  label: { fontSize: typography.ios.row, fontWeight: typography.weights.regular },
+  label: { fontSize: typography.sizes.text, fontWeight: typography.weights.regular },
 });

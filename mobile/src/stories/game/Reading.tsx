@@ -108,9 +108,9 @@ export function Reading({
 }
 
 const styles = StyleSheet.create({
-  title: { ...display(typography.sizes.xl) },
+  title: { ...display(typography.sizes.title) },
   card: { gap: spacing.sm },
-  count: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  note: { fontSize: typography.sizes.sm, textAlign: 'center', lineHeight: 20 },
-  waiting: { fontSize: typography.sizes.md, textAlign: 'center', fontWeight: typography.weights.semibold },
+  count: { fontSize: typography.sizes.text, textAlign: 'center' },
+  note: { fontSize: typography.sizes.text, textAlign: 'center', lineHeight: 20 },
+  waiting: { fontSize: typography.sizes.text, textAlign: 'center', fontWeight: typography.weights.semibold },
 });

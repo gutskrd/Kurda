@@ -75,7 +75,7 @@ export function LearnScreen({
 
   return (
     <GradientBackground>
-      {/* Today's status at the reading edge, where other tabs show their name: the tab bar already says "Learn". */}
+      {/* Today's status at the reading edge, where other tabs show their name: the tab bar's book already marks Learn. */}
       <TabHeader lead={<LearnBar reloadKey={barKey} onStreak={setStreak} />} />
       <View style={styles.head}>
         <Segmented options={VIEWS} value={view} onChange={setView} labelOf={(v) => t(VIEW_LABEL[v])} size="large" />

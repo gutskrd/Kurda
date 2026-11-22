@@ -785,7 +785,7 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
         >
           {!shown ? (
             <View style={styles.cardBack}>
-              <EmblemArt emblem="mask" size={132} />
+              <EmblemArt emblem="back" size={132} />
             </View>
           ) : (
             <>
@@ -804,6 +804,7 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
               <View style={styles.cardMain}>
                 {hand.role === 'player' ? (
                   <>
+                    <EmblemArt emblem="deer" size={112} />
                     <Text style={[styles.cardWord, { color: TABLE.paperInk, writingDirection: script.writingDirection }]} adjustsFontSizeToFit numberOfLines={2}>
                       {hand.word}
                     </Text>
@@ -811,7 +812,7 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
                   </>
                 ) : (
                   <>
-                    <EmblemArt emblem="mask" size={72} />
+                    <EmblemArt emblem="wolf" size={112} />
                     <Text style={styles.impostorText}>{t('games.impostor.youAreImpostor')}</Text>
                     <Text style={[styles.cardMeaning, { color: TABLE.inkSoft }]}>{t('games.impostor.blendIn')}</Text>
                   </>
@@ -1190,7 +1191,7 @@ function Reveal({
                 style={[styles.flip, { borderColor: hidden ? colors.danger : 'transparent', backgroundColor: colors.glassFill, transform: [{ scaleX }] }]}
               >
                 <Animated.View style={[styles.flipFace, { opacity: face }]}>
-                  {hidden ? <Icon name="eye-off" size={18} color={colors.danger} /> : null}
+                  <EmblemArt emblem={hidden ? 'wolf' : 'deer'} size={38} />
                   <Text style={[hidden ? styles.flipTag : styles.flipText, { color: hidden ? colors.danger : colors.textPrimary }]} numberOfLines={2}>
                     {hidden ? t('games.impostor.impostorTag') : reveal.word}
                   </Text>
@@ -1309,35 +1310,35 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   loading: { marginTop: spacing.xl },
   centered: { alignItems: 'center', gap: spacing.sm },
-  blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 22 },
+  blurb: { fontSize: typography.sizes.text, textAlign: 'center', lineHeight: 22 },
   countPill: { alignSelf: 'center', paddingHorizontal: 12, paddingVertical: 4, borderRadius: radii.pill },
-  count: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.8, textTransform: 'uppercase', textAlign: 'center' },
+  count: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.8, textTransform: 'uppercase', textAlign: 'center' },
   form: { gap: spacing.md },
   names: { gap: spacing.sm },
   field: { gap: spacing.sm },
-  note: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  note: { fontSize: typography.sizes.text, lineHeight: 20 },
   center: { textAlign: 'center' },
   stretch: { alignSelf: 'stretch' },
   nameRow: { alignItems: 'center', gap: spacing.sm },
   nameN: { width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  nameNText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  nameNText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   // A text field is as wide as its text unless allowed to shrink; without it the row runs off the card.
-  nameInput: { flex: 1, minWidth: 0, minHeight: 48, fontSize: typography.sizes.md, borderRadius: radii.md, paddingHorizontal: 12 },
+  nameInput: { flex: 1, minWidth: 0, minHeight: 48, fontSize: typography.sizes.text, borderRadius: radii.md, paddingHorizontal: 12 },
   nameRemove: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   rulesHead: { minHeight: MIN_TOUCH_TARGET, alignItems: 'center', gap: spacing.sm },
-  rulesTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  rulesTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   rulesNow: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 6 },
   rulesChip: { paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radii.pill },
-  rulesChipText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  rulesChipText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   turned: { transform: [{ rotate: '180deg' }] },
   // The screen's one divider: what scrolls ends here, and what is always in reach begins.
   go: { gap: spacing.sm, paddingTop: spacing.sm, paddingHorizontal: spacing.lg, borderTopWidth: StyleSheet.hairlineWidth },
-  goNote: { fontSize: typography.sizes.xs, textAlign: 'center' },
+  goNote: { fontSize: typography.sizes.text, textAlign: 'center' },
   pass: { alignItems: 'center', gap: spacing.lg, paddingVertical: spacing.xl, paddingHorizontal: spacing.lg },
   passHalo: { width: 140, height: 140, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: `${TABLE.gold}26` },
   passDisc: { width: 108, height: 108, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: TABLE.gold },
-  passDiscText: { fontSize: 50, fontWeight: typography.weights.bold, color: TABLE.goldInk },
-  passTitle: { fontSize: typography.sizes.xl, lineHeight: 34, fontWeight: typography.weights.bold, textAlign: 'center', color: TABLE.ink },
+  passDiscText: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, color: TABLE.goldInk },
+  passTitle: { fontSize: typography.sizes.title, lineHeight: 34, fontWeight: typography.weights.bold, textAlign: 'center', color: TABLE.ink },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   dot: { width: 22, height: 6, borderRadius: radii.pill },
   // The card lifts off the screen with a shadow round its own shape.
@@ -1357,11 +1358,11 @@ const styles = StyleSheet.create({
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   cardTopText: { flex: 1, gap: 2 },
   cardMain: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6 },
-  cardLabel: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.8, textTransform: 'uppercase' },
-  cardHint: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  cardWord: { fontSize: 44, fontWeight: typography.weights.bold, textAlign: 'center' },
-  cardMeaning: { fontSize: typography.sizes.md, textAlign: 'center' },
-  impostorText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center', color: TABLE.goldSoft },
+  cardLabel: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.8, textTransform: 'uppercase' },
+  cardHint: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  cardWord: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, textAlign: 'center' },
+  cardMeaning: { fontSize: typography.sizes.text, textAlign: 'center' },
+  impostorText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center', color: TABLE.goldSoft },
   paper: { alignItems: 'center', gap: 4, paddingVertical: spacing.lg, paddingHorizontal: spacing.md, borderRadius: radii.xl, backgroundColor: TABLE.paper },
   after: { alignItems: 'center', gap: spacing.xs },
   hold: {
@@ -1374,17 +1375,17 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     paddingHorizontal: spacing.md,
   },
-  holdText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  holdText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   stage: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg, paddingHorizontal: spacing.lg },
   list: { gap: spacing.xs },
-  phase: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.8, textTransform: 'uppercase' },
-  speaker: { fontSize: typography.sizes.xl, lineHeight: 34, fontWeight: typography.weights.bold, textAlign: 'center' },
+  phase: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.8, textTransform: 'uppercase' },
+  speaker: { fontSize: typography.sizes.title, lineHeight: 34, fontWeight: typography.weights.bold, textAlign: 'center' },
   clock: { alignSelf: 'stretch', alignItems: 'stretch', gap: spacing.xs },
-  clockLeft: { fontSize: 56, fontWeight: typography.weights.bold, textAlign: 'center', fontVariant: ['tabular-nums'] },
-  clockSmall: { fontSize: 40 },
+  clockLeft: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  clockSmall: { fontSize: typography.sizes.title },
   // The second vote's clock sits above whoever has the phone, smaller than a turn's own stage.
   secondClock: { alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.md, paddingHorizontal: spacing.lg },
-  secondTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.sm },
+  secondTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, marginTop: spacing.sm },
   // The way back from a tap: a quiet button, and the line that runs out under it.
   undo: { alignSelf: 'center', alignItems: 'stretch', gap: 6, width: 200, maxWidth: '100%' },
   undoButton: {
@@ -1396,7 +1397,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     paddingHorizontal: spacing.md,
   },
-  undoText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  undoText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   undoTrack: { height: 3, borderRadius: radii.pill, overflow: 'hidden' },
   undoTime: { flex: 1, borderRadius: radii.pill },
   // A tap waiting out its moment: what was chosen, on the cloth, with the way back.
@@ -1404,29 +1405,29 @@ const styles = StyleSheet.create({
   confirmWord: { fontWeight: typography.weights.bold },
   order: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.xs },
   orderChip: { maxWidth: 140, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.pill },
-  orderText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  orderText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   choices: { gap: spacing.sm },
   choice: { minHeight: 56, borderWidth: 1.5, borderRadius: radii.md, paddingHorizontal: spacing.md, justifyContent: 'center' },
-  choiceText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  choiceWord: { fontSize: 22, fontWeight: typography.weights.bold, textAlign: 'center' },
+  choiceText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  choiceWord: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
   flips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
   flipWrap: { width: 78, alignItems: 'center', gap: 4 },
   flip: { width: 72, height: 92, borderWidth: 1.5, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', padding: 4 },
-  flipFace: { alignItems: 'center' },
-  flipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
+  flipFace: { alignItems: 'center', gap: 2 },
+  flipText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
   // The tag is longer than most cards' words in several languages, so a size down keeps it off the card's edge.
-  flipTag: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, textAlign: 'center' },
-  flipName: { fontSize: typography.sizes.xs },
-  whoWas: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
+  flipTag: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
+  flipName: { fontSize: typography.sizes.text },
+  whoWas: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
   // The score's rows sit against each other with a rule between, so the table reads as one thing.
   score: { gap: 0 },
   scoreRow: { alignItems: 'center', gap: spacing.sm, minHeight: 40 },
   scoreRule: { borderTopWidth: StyleSheet.hairlineWidth },
-  scoreHead: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.4, textTransform: 'uppercase' },
+  scoreHead: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.4, textTransform: 'uppercase' },
   scoreName: { flex: 1 },
   scoreWho: { alignItems: 'center', gap: spacing.xs },
   flexText: { flexShrink: 1 },
   scoreN: { width: 72, textAlign: 'center' },
-  scoreText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  scoreTotal: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  scoreText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  scoreTotal: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

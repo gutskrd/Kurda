@@ -92,7 +92,7 @@ export function WordAnswer({
           // One 20-point line (its style says so), answered at a fingertip's reach above and below it.
           style={({ pressed }) => [styles.saveRow, { flexDirection: dir.row }, pressed && heldDim]}
         >
-          <Icon name={save.saved ? 'bookmark-fill' : 'bookmark'} size={16} color={colors.primary} />
+          <Icon name={save.saved ? 'bookmark-fill' : 'bookmark'} size={16} color={save.saved ? colors.saved : colors.primary} edge={save.saved ? colors.savedEdge : undefined} />
           <Text style={[styles.saveText, { color: colors.primary }]}>{save.saved ? t('dictionary.savedWord') : t('dictionary.saveWord')}</Text>
         </Pressable>
       ) : null}
@@ -171,18 +171,18 @@ const SAVE_LINE = 20;
 
 const styles = StyleSheet.create({
   answer: { borderRadius: radii.md, padding: spacing.md, gap: spacing.xs, marginTop: spacing.sm, alignItems: 'center' },
-  word: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
-  meaning: { fontSize: typography.sizes.md, lineHeight: 20, textAlign: 'center' },
+  word: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, textAlign: 'center' },
+  meaning: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center' },
   saveRow: { alignItems: 'center', gap: spacing.xs, marginTop: spacing.xs, minHeight: SAVE_LINE },
   // A long label wraps under itself, centred, rather than running past the card.
-  saveText: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
-  error: { fontSize: typography.sizes.sm, lineHeight: 18, textAlign: 'center' },
-  meaningLine: { fontSize: typography.sizes.md, lineHeight: 20, textAlign: 'center' },
+  saveText: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
+  error: { fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center' },
+  meaningLine: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center' },
   missed: { gap: spacing.xs, alignSelf: 'stretch', marginTop: spacing.sm },
   missedTitle: { ...sectionLabel, marginBottom: spacing.xs },
   missedRow: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
   // Inside a card the rows are its lines, the card's own ground showing through.
   missedRowCard: { paddingHorizontal: 0 },
-  missedWord: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  missedMeaning: { flexShrink: 1, fontSize: typography.sizes.sm },
+  missedWord: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  missedMeaning: { flexShrink: 1, fontSize: typography.sizes.text },
 });

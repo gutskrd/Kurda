@@ -289,5 +289,5 @@ const styles = StyleSheet.create({
   // The chips sit a little closer to the search than the sections below do.
   chips: { marginTop: -spacing.sm, alignItems: 'center' },
   clearAll: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.xs },
-  clearAllText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  clearAllText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

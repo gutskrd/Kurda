@@ -103,8 +103,8 @@ export function waitLeft(startedAt: string | null | undefined, endsAt: string | 
 
 const styles = StyleSheet.create({
   compose: { gap: spacing.sm },
-  input: { minHeight: 48, fontSize: 19, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: 12 },
-  hint: { fontSize: typography.sizes.sm },
+  input: { minHeight: 48, fontSize: typography.sizes.text, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: 12 },
+  hint: { fontSize: typography.sizes.text },
   track: { height: 8, borderRadius: radii.pill, overflow: 'hidden', minWidth: MIN_TOUCH_TARGET },
   fill: { height: 8, borderRadius: radii.pill },
 });

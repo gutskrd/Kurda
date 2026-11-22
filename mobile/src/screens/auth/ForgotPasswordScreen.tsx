@@ -106,5 +106,5 @@ export function ForgotPasswordForm({
 
 const styles = StyleSheet.create({
   sent: { gap: spacing.md },
-  lead: { fontSize: typography.sizes.md, lineHeight: 22, marginTop: -spacing.sm },
+  lead: { fontSize: typography.sizes.text, lineHeight: 22, marginTop: -spacing.sm },
 });

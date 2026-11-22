@@ -15,6 +15,8 @@ import { fontScaleCap, radii, spacing, typography } from '../../theme/tokens';
 import { lineIsEnglish } from '../asks';
 import type { Exercise } from '../types';
 import type { AudioControls } from '../useAudio';
+import { useAutoplayOnce } from '../useAutoplay';
+import { autoplayOn } from '../../feedback/autoplayPref';
 import { useValley } from '../ValleyScope';
 import { PlayDisc } from './ModelButton';
 import { PromptScene, saidStyle } from './SpeechBubble';
@@ -32,7 +34,7 @@ const SPEAKER = 32;
 const PICTURE_WORD = display(32);
 
 /** An English line to put into Kurdish: the reading face, a step under the Kurdish line's size. */
-const ENGLISH: TextStyle = { fontSize: typography.sizes.md + 2, lineHeight: 25, fontWeight: typography.weights.semibold, writingDirection: 'ltr' };
+const ENGLISH: TextStyle = { fontSize: typography.sizes.text, lineHeight: 25, fontWeight: typography.weights.semibold, writingDirection: 'ltr' };
 
 /** A gap's state: waiting, holding the chosen or typed word, or graded. */
 export type GapState = 'empty' | 'filled' | 'right' | 'wrong';
@@ -69,6 +71,8 @@ export function AskScene({
   useEffect(() => {
     if (!playing) setSlow(false);
   }, [playing]);
+  // Said on its turn, as the exercise appears, unless Settings keeps recordings to a tap.
+  useAutoplayOnce(model, playable && autoplayOn());
   const say = (): void => {
     setSlow(false);
     play(1);
@@ -234,12 +238,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm + 4,
     borderRadius: radii.pill,
   },
-  slowText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.3 },
+  slowText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.3 },
   cue: { flexShrink: 1, paddingVertical: spacing.xs, paddingHorizontal: spacing.sm + 4, borderRadius: radii.pill },
-  cueText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.medium },
+  cueText: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
   gap: { minWidth: GAP_WIDTH, alignItems: 'center' },
   gapWord: { paddingHorizontal: 2 },
   rule: { alignSelf: 'stretch', height: 2.5, borderRadius: radii.pill, marginTop: -1 },
   badge: { height: BADGE, alignItems: 'center', gap: spacing.xs + 1, paddingHorizontal: spacing.sm + 2, borderRadius: radii.pill },
-  badgeText: { fontSize: 11, lineHeight: 15, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },
+  badgeText: { fontSize: typography.sizes.text, lineHeight: 22, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },
 });

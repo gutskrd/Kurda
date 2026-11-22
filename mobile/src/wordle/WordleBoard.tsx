@@ -118,7 +118,7 @@ function Cell({ cell, size, turn, pop }: { cell: BoardCell; size: number; turn: 
   const { t } = useI18n();
   const letter = cell.letter.toUpperCase();
   const box = { width: size, height: size };
-  const text = { fontSize: size * 0.42 };
+  const text = { fontSize: size >= 44 ? typography.sizes.title : typography.sizes.text };
   // An empty square has the quiet edge of a tile waiting to be chosen, visible on the day's pale page.
   const typedFace = { backgroundColor: 'transparent', borderColor: cell.letter ? colors.primary : tileTone(colors, 'idle').edge };
   const fill = feedbackColor(cell.feedback, colors);

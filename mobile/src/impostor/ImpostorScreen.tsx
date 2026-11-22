@@ -91,5 +91,5 @@ function Room({ id, onNew, onOpen }: { id: string; onNew: () => void; onOpen: (i
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
-  note: { fontSize: typography.sizes.sm, textAlign: 'center' },
+  note: { fontSize: typography.sizes.text, textAlign: 'center' },
 });

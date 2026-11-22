@@ -395,7 +395,7 @@ export function GroupThread({
         {outside ? (
           // out of the group there is no page of it to open: its name, when the reader may know it, and nothing to press
           <div className="ghead is-plain">
-            {!(missing && !gone) && <GroupAvatar id={groupId} name={name} photoUrl={detail?.photoUrl} size={36} />}
+            {!(missing && !gone) && <GroupAvatar name={name} photoUrl={detail?.photoUrl} size={36} />}
             <span className="ghead-text">
               <span className="ghead-name" dir="auto" aria-current="page">
                 {missing && !gone ? t('groups.title') : name}
@@ -405,7 +405,7 @@ export function GroupThread({
         ) : (
           // the group's picture and name open its page: who is in it, adding friends, and for the owner and admins, changing it
           <button type="button" className="ghead" aria-haspopup="dialog" title={t('groups.info')} onClick={() => setShowInfo(true)}>
-            <GroupAvatar id={groupId} name={name} photoUrl={detail?.photoUrl} size={36} />
+            <GroupAvatar name={name} photoUrl={detail?.photoUrl} size={36} />
             <span className="ghead-text">
               <span className="ghead-name" dir="auto" aria-current="page">
                 {name}

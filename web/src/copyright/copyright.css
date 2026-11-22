@@ -10,7 +10,7 @@
 .cr-receipt-title {
   margin: 0 0 6px;
   font-family: var(--font-sans);
-  font-size: 1.05rem;
+  font-size: var(--text);
   font-weight: 650;
   color: var(--ink);
 }
@@ -28,7 +28,7 @@
   width: 100%;
   margin: 0 0 12px;
   padding: 0;
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -52,7 +52,7 @@
   border-color: var(--danger);
 }
 .cr-problem {
-  font-size: 0.82rem;
+  font-size: var(--text);
   color: var(--danger);
 }
 .cr-choice,
@@ -63,7 +63,7 @@
   min-height: 44px;
   padding: 10px 0;
   color: var(--ink-2);
-  font-size: 0.93rem;
+  font-size: var(--text);
   line-height: 1.45;
   cursor: pointer;
 }
@@ -92,7 +92,7 @@
 .cr-fineprint {
   margin: 14px 0 16px;
   color: var(--ink-3);
-  font-size: 0.86rem;
+  font-size: var(--text);
   line-height: 1.5;
 }
 .cr-actions {
@@ -113,8 +113,8 @@
   margin: 0 0 10px;
 }
 .cr-reference {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.95em;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   letter-spacing: 0.04em;
   color: var(--gold-ink);
 }
@@ -150,7 +150,7 @@
   border: 1px solid var(--border-strong);
   border-radius: 50%;
   color: var(--ink);
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-weight: 650;
 }
 
@@ -173,7 +173,7 @@
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
   color: var(--ink-3);
-  font-size: 0.76rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .cr-status-actioned {
@@ -189,7 +189,7 @@
 }
 .doc-section .cr-notice-note {
   margin: 12px 0 0;
-  font-size: 0.86rem;
+  font-size: var(--text);
 }
 /* A minor's notices: how a parent or guardian answers instead of the form. */
 .cr-guardian-why {
@@ -221,7 +221,7 @@
 }
 .cr-facts dt {
   color: var(--ink-3);
-  font-size: 0.88rem;
+  font-size: var(--text);
 }
 .cr-facts dd {
   margin: 0;
@@ -233,7 +233,7 @@
   grid-template-columns: minmax(96px, max-content) minmax(0, 1fr);
   gap: 6px 16px;
   margin: 0;
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 .cr-notice-facts dt {
   color: var(--ink-3);
@@ -246,7 +246,7 @@
 .cr-langs {
   display: block;
   color: var(--ink-3);
-  font-size: 0.85rem;
+  font-size: var(--text);
 }
 /* A detail the owner has not filled in yet: visible, and plainly a placeholder. */
 .cr-placeholder {
@@ -255,7 +255,7 @@
   border: 1px dashed rgba(240, 194, 74, 0.45);
   border-radius: var(--r-xs);
   color: var(--gold-ink);
-  font-size: 0.92em;
+  font-size: var(--text);
 }
 .doc-section .cr-facts + p {
   margin-top: 14px;
@@ -283,7 +283,7 @@
 }
 .cr-summary h2 {
   margin: 0 0 10px;
-  font-size: 1.1rem;
+  font-size: var(--text);
 }
 .cr-summary .doc-list li {
   color: var(--ink-2);

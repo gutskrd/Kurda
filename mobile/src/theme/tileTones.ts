@@ -97,13 +97,13 @@ export function tileTone(colors: Palette, state: TileState): TileTone {
   }
 }
 
-/** A lesson button's colours: filled in its tone on a lip; flat quiet grey while there is nothing to press. */
+/** A lesson button's colours: Check, the lesson's main button, in the one accent, a verdict's Continue in its own; flat quiet grey while there is nothing to press. */
 export function tileButtonTone(colors: Palette, tone: TileButtonTone, enabled: boolean): TileTone {
   if (!enabled) {
     const face = blend(colors.textPrimary, colors.surface, colors.scheme === 'dark' ? 0.12 : 0.08);
     return { face, edge: face, lip: null, ink: readableOn(colors.textSecondary, face) };
   }
-  const fill = tone === 'success' ? colors.success : tone === 'danger' ? colors.danger : colors.primary;
+  const fill = tone === 'success' ? colors.success : tone === 'danger' ? colors.danger : colors.accent;
   return { face: fill, edge: fill, lip: lipOf(fill, colors), ink: readableOn(colors.textOnPrimary, fill) };
 }
 

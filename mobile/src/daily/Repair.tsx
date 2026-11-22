@@ -134,7 +134,7 @@ export function Restored({ streak }: { streak: Streak }): React.JSX.Element {
         <SoftGlow colour={colors.gold} size={BACK_STAGE} id="streak-back-glow" />
         {moment.plan.travel ? <GlowRing progress={moment.ring} colour={colors.gold} size={BACK_STAGE * 0.62} /> : null}
         {moment.plan.travel ? (
-          <ConfettiBurst progress={moment.burst} count={10} seed={streak.current} colours={[colors.gold, colors.accent, colors.primary]} reach={BACK_STAGE * 0.6} testID="streak-restored-burst" />
+          <ConfettiBurst progress={moment.burst} count={10} seed={streak.current} colours={[colors.primary, colors.textSecondary]} reach={BACK_STAGE * 0.6} testID="streak-restored-burst" />
         ) : null}
         <Animated.View style={{ opacity, transform: [{ scale }] }}>
           <Fire size={fireSizeToFit(level.stage, BACK_FIRE, BACK_FIRE)} level={level} framed />
@@ -150,13 +150,13 @@ export function Restored({ streak }: { streak: Streak }): React.JSX.Element {
 
 const styles = StyleSheet.create({
   offer: { gap: spacing.sm + 2, padding: spacing.md, borderRadius: radii.lg },
-  offerText: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  offerText: { fontSize: typography.sizes.text, lineHeight: 21 },
   shortLines: { gap: 2 },
   balance: { alignItems: 'center', gap: spacing.xs + 2 },
-  balanceText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
-  hint: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  balanceText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
+  hint: { fontSize: typography.sizes.text, lineHeight: 22 },
   back: { alignItems: 'center', gap: spacing.xs },
   backStage: { width: BACK_STAGE, height: BACK_STAGE, alignItems: 'center', justifyContent: 'center' },
-  backTitle: { ...display(typography.sizes.lg), textAlign: 'center' },
-  backLine: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
+  backTitle: { ...display(typography.sizes.text), textAlign: 'center' },
+  backLine: { fontSize: typography.sizes.text, lineHeight: 21, textAlign: 'center' },
 });

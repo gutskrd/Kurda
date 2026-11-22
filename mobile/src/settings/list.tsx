@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useFontScale } from '../a11y/useFontScale';
@@ -12,6 +12,7 @@ import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { ToggleRow } from '../theme/Toggle';
 import { layout, radii, spacing, typography } from '../theme/tokens';
+import { usePageWidth } from '../theme/pageWidth';
 
 /**
  * Settings and the app's other lists of rows. Each row shows an icon, a name, the current value and a chevron when a
@@ -87,7 +88,7 @@ const LETTER = 0.6;
  */
 export function titleRoom(title: string, fontScale: number, rowWidth: number): number {
   const longest = Math.max(0, ...title.split(/\s+/).map((word) => [...word].length));
-  return Math.min(Math.ceil(longest * typography.sizes.md * LETTER * fontScale), Math.floor(rowWidth * 0.6));
+  return Math.min(Math.ceil(longest * typography.sizes.text * LETTER * fontScale), Math.floor(rowWidth * 0.6));
 }
 
 /** A row's inset inside its card, and the room between its icon, words and end: a little under the page's gutter, so names keep their line. */
@@ -98,7 +99,7 @@ function RowBody({ icon, title, subtitle, value, destructive, attention, end }: 
   const { colors } = useTheme();
   const dir = useDirection();
   const fontScale = useFontScale();
-  const { width } = useWindowDimensions();
+  const width = usePageWidth();
   const ink = destructive ? colors.danger : colors.textPrimary;
   const note = attention ? colors.primary : colors.textSecondary;
   return (
@@ -288,7 +289,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   header: {
-    fontSize: typography.sizes.sm,
+    fontSize: typography.sizes.text,
     fontWeight: typography.weights.semibold,
     paddingHorizontal: layout.gutter,
     paddingTop: spacing.lg,
@@ -303,12 +304,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm + 2,
   },
   words: { flex: 1, gap: 2 },
-  title: { fontSize: typography.sizes.md },
-  subtitle: { fontSize: typography.sizes.sm, lineHeight: 20 },
-  value: { fontSize: typography.sizes.md, maxWidth: '45%', flexShrink: 1 },
+  title: { fontSize: typography.sizes.text },
+  subtitle: { fontSize: typography.sizes.text, lineHeight: 20 },
+  value: { fontSize: typography.sizes.text, maxWidth: '45%', flexShrink: 1 },
   check: { width: 22, alignItems: 'center' },
   badge: { minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  note: { fontSize: typography.sizes.sm, lineHeight: 20, paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
+  badgeText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  note: { fontSize: typography.sizes.text, lineHeight: 20, paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
   disabled: { opacity: 0.45 },
 });

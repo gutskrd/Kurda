@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import {
   LATIN_LETTERS,
   SORANI_LETTERS,
@@ -38,6 +38,7 @@ import { Practice } from './Practice';
 import { useSeen } from './seen';
 import { useClipPlayer } from './useClipPlayer';
 import { dialectNameKey } from '../i18n/dialectName';
+import { usePageWidth } from '../theme/pageWidth';
 
 const SCRIPTS: readonly AlphabetScript[] = ['kmr', 'ckb'];
 
@@ -93,7 +94,7 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
   const navigation = useNavigation<RootNavigation>();
   const reduceMotion = useReducedMotion();
   const bottom = useScreenBottomInset(spacing.xl);
-  const { width } = useWindowDimensions();
+  const width = usePageWidth();
   const grid = tileGrid(Math.min(width, layout.column) - layout.gutter * 2);
 
   // A link may ask for either alphabet; anything else it says is ignored.
@@ -219,7 +220,7 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
             </Text>
             {/* Stacked from the reading side: side by side, the longest overflowed the card in English and German. */}
             <View style={[styles.links, { alignItems: dir.rtl ? 'flex-end' : 'flex-start' }]}>
-              <ClayButton label={t('alphabet.next.dictionary')} icon="text" onPress={() => navigation.navigate('Dictionary')} />
+              <ClayButton label={t('alphabet.next.dictionary')} icon="dictionary" onPress={() => navigation.navigate('Dictionary')} />
               <ClayButton label={t('alphabet.next.wordle')} icon="grid" onPress={() => navigation.navigate('Wordle')} />
               <ClayButton label={t('words.fromAlphabet')} icon="palette" onPress={() => navigation.popTo('Words')} />
             </View>
@@ -355,12 +356,12 @@ function JoinDemo(): React.JSX.Element {
   );
 }
 
-const GLYPH = 28;
-const RULE_GLYPH = 30;
+const GLYPH = typography.sizes.title;
+const RULE_GLYPH = typography.sizes.title;
 const RULE_LINE = Math.round(RULE_GLYPH * 1.2);
 const TRACK = 120;
 /** display(22) at the summary's own leading. */
-const SUMMARY_LINE = Math.round(typography.sizes.lg * 1.3);
+const SUMMARY_LINE = Math.round(typography.sizes.text * 1.3);
 /** How long to wait before retrying the recordings when the first request got no answer. */
 const ASK_AGAIN_MS = 20_000;
 
@@ -372,36 +373,36 @@ const styles = StyleSheet.create({
   column: { width: '100%', maxWidth: layout.column, alignSelf: 'center', paddingHorizontal: layout.gutter, paddingTop: spacing.xs, gap: spacing.lg },
 
   intro: { gap: spacing.sm },
-  summary: { ...display(typography.sizes.lg), lineHeight: SUMMARY_LINE },
-  lead: { fontSize: typography.sizes.sm },
+  summary: { ...display(typography.sizes.text), lineHeight: SUMMARY_LINE },
+  lead: { fontSize: typography.sizes.text },
   progress: { alignItems: 'center', gap: spacing.sm + 4, marginTop: spacing.xs },
   track: { width: TRACK, height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   fill: { height: 6, borderRadius: radii.pill },
   fillEnd: { alignSelf: 'flex-end' },
-  progressText: { fontSize: typography.sizes.xs },
+  progressText: { fontSize: typography.sizes.text },
   progressDone: { fontWeight: typography.weights.semibold },
 
   card: { borderRadius: radii.lg, padding: spacing.md + 4, gap: spacing.sm },
-  cardTitle: { ...display(typography.sizes.lg) },
+  cardTitle: { ...display(typography.sizes.text) },
   ruleDemo: { alignItems: 'center', gap: spacing.md + 4, marginBottom: spacing.xs },
   pair: { alignItems: 'center', gap: spacing.sm },
   ruleGlyph: { ...display(RULE_GLYPH), lineHeight: RULE_LINE },
   ruleArabic: { fontSize: RULE_GLYPH, lineHeight: Math.round(RULE_GLYPH * 1.5) },
-  arrow: { fontSize: typography.sizes.md },
+  arrow: { fontSize: typography.sizes.text },
   links: { gap: spacing.sm, marginTop: spacing.xs },
 
   group: { gap: spacing.sm },
   groupHead: { alignItems: 'baseline', gap: spacing.sm },
-  groupTitle: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  count: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  groupBody: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  groupTitle: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  count: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  groupBody: { fontSize: typography.sizes.text, lineHeight: 21 },
   grid: { flexWrap: 'wrap', gap: TILE_GAP, marginTop: spacing.xs },
 
   tile: { minHeight: TILE_HEIGHT, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', gap: 2, paddingHorizontal: 6, paddingVertical: spacing.sm },
   glyph: { ...display(GLYPH), lineHeight: Math.round(GLYPH * 1.15) },
-  glyphArabic: { fontSize: GLYPH + 2, lineHeight: Math.round((GLYPH + 2) * 1.45) },
-  glyphSmall: { fontSize: Math.round(GLYPH * 0.62) },
-  hint: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, maxWidth: '100%' },
+  glyphArabic: { fontSize: GLYPH, lineHeight: Math.round(GLYPH * 1.45) },
+  glyphSmall: { fontSize: typography.sizes.text },
+  hint: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, maxWidth: '100%' },
   corner: { position: 'absolute', top: 7 },
   left: { left: 8 },
   right: { right: 8 },

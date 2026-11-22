@@ -70,6 +70,6 @@ const styles = StyleSheet.create({
   // The icon sits close to its words; ToggleRow keeps the row a fingertip tall.
   row: { gap: spacing.sm },
   text: { flex: 1 },
-  label: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  hint: { fontSize: typography.sizes.xs },
+  label: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  hint: { fontSize: typography.sizes.text },
 });

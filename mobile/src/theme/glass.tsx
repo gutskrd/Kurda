@@ -132,7 +132,7 @@ export function ClayButton({
   onPress: () => void;
   /** The screen-reader label, where the visible word is not enough (an "Accept" on every row must say whose request). */
   accessibilityLabel?: string;
-  /** Neutral unless the button means something: the brand for a screen's main action, success and danger for a lesson's two answers. */
+  /** Neutral unless the button means something: `primary` for a screen's main action (solid, it wears the one accent), success and danger for a lesson's two answers. */
   tone?: ClayTone;
   /** Outlined for the quieter of two side-by-side actions: the tone in the edge and label, no fill. */
   variant?: 'solid' | 'outline';
@@ -156,14 +156,15 @@ export function ClayButton({
   reach?: Reach;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const outline = variant === 'outline';
+  // The accent is the main button's alone: filled, `primary` wears it; outlined, it is drawn in the ink.
   const TONE: Record<ClayTone, string | null> = {
     neutral: null,
-    primary: colors.primary,
+    primary: outline ? colors.primary : colors.accent,
     success: colors.success,
     danger: colors.danger,
   };
   const toneColor = TONE[tone];
-  const outline = variant === 'outline';
   const fill = outline ? 'transparent' : (toneColor ?? colors.controlTrack);
   const textColor = outline
     ? (toneColor ?? colors.textPrimary)
@@ -393,9 +394,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: MIN_REACH, paddingVertical: 13 },
   rowIcon: { width: 26, alignItems: 'center' },
   rowMain: { flex: 1, gap: 2 },
-  rowTitle: { fontSize: typography.ios.row, fontWeight: typography.weights.regular },
-  rowSubtitle: { fontSize: typography.sizes.sm },
-  rowValue: { fontSize: typography.ios.row },
+  rowTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.regular },
+  rowSubtitle: { fontSize: typography.sizes.text },
+  rowValue: { fontSize: typography.sizes.text },
   // A flat capsule, like every button and chip, so a button reads as one on any screen.
   clay: {
     borderRadius: radii.pill,
@@ -412,9 +413,9 @@ const styles = StyleSheet.create({
   // 50, which iOS gives a screen's full-width main button.
   clayLarge: { minHeight: CLAY_SIZE.large.height, alignSelf: 'stretch' },
   // A label longer than the button wraps inside it, centred.
-  clayText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
+  clayText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
   clayBadge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  clayBadgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
+  clayBadgeText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   segTrack: { borderRadius: radii.pill, padding: SEG_PAD },
   // Absolute, so it slides independently of the row; a wash rather than a raised fill, since a shadow under a
   // translucent fill shows through as a smudge.
@@ -426,7 +427,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
   },
   segItem: { flex: 1, paddingVertical: 6, paddingHorizontal: spacing.xs, alignItems: 'center', justifyContent: 'center' },
-  segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, lineHeight: SEG_LINE },
+  segText: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium, lineHeight: SEG_LINE },
   segTextActive: { fontWeight: typography.weights.semibold },
   segTextWrap: { textAlign: 'center' },
   errorWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },

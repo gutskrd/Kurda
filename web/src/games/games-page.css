@@ -13,7 +13,7 @@
   margin: 0;
   color: var(--ink-3);
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   line-height: 1.3;
   letter-spacing: 0.08em;
@@ -40,7 +40,7 @@
   max-width: 44ch;
   margin: 0;
   color: var(--ink-3);
-  font-size: var(--text-body);
+  font-size: var(--text);
   line-height: 1.4;
   text-wrap: balance;
 }
@@ -131,7 +131,7 @@
   padding-inline: var(--space-3);
   border-radius: var(--r-pill);
   color: var(--primary);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
   transition: background var(--dur-fast) ease;
 }
@@ -167,7 +167,7 @@
 .gp-offer-meaning {
   margin-top: calc(var(--space-1) * -1);
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1.3;
 }
@@ -175,7 +175,7 @@
   max-width: 34ch;
   margin-block: var(--space-1) var(--space-4);
   color: var(--ink-2);
-  font-size: var(--text-body);
+  font-size: var(--text);
   line-height: 1.45;
   text-wrap: pretty;
 }
@@ -220,7 +220,7 @@
 .gp-soon-name {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
 }
 

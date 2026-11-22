@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { WORD_PICTURES, wordPictureSvg, type WordPictureId } from '@kurda/shared';
 import { haptic } from '../../feedback/haptics';
@@ -15,6 +15,7 @@ import { layout, radii, spacing, typography } from '../../theme/tokens';
 import { useValley } from '../ValleyScope';
 import { CARD } from '../valley';
 import { OptionChip } from './OptionChip';
+import { usePageWidth } from '../../theme/pageWidth';
 
 /*
  * Answers that are not a list of lines: pictures to choose a word's meaning among, and short Kurdish words to fill a
@@ -71,8 +72,8 @@ let grids = 0;
 export function PictureChoices({ options, choice, onSelect, disabled, isRight, graded }: ChoiceProps): React.JSX.Element {
   const { t, locale } = useI18n();
   const dir = useDirection();
-  const screen = useWindowDimensions();
-  const [width, setWidth] = useState(screen.width - 2 * layout.gutter);
+  const pageWide = usePageWidth();
+  const [width, setWidth] = useState(pageWide - 2 * layout.gutter);
   const id = useRef<string | null>(null);
   if (id.current === null) id.current = `pics${(grids += 1).toString(36)}`;
   const columns = pictureColumns(options.length, width);
@@ -187,15 +188,15 @@ export function WordChoices({ options, choice, onSelect, disabled, isRight, grad
 
 const styles = StyleSheet.create({
   grid: { flexWrap: 'wrap', justifyContent: 'center', gap: GRID_GAP },
-  card: { alignItems: 'center', justifyContent: 'center', borderRadius: CARD.radius, borderWidth: CARD.edge, padding: spacing.sm },
+  card: { alignItems: 'center', justifyContent: 'center', borderRadius: CARD.radius, padding: spacing.sm },
   corner: { position: 'absolute', top: spacing.sm, zIndex: 1 },
   cornerLeft: { left: spacing.sm },
   cornerRight: { right: spacing.sm },
   unknown: { alignItems: 'center', justifyContent: 'center' },
   words: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm + 2 },
   // A word tile like the word bank's: smaller than an answer card, on the same hairline edge.
-  word: { alignItems: 'center', gap: spacing.xs + 2, borderRadius: radii.md + 2, borderWidth: CARD.edge, paddingHorizontal: spacing.md + 2 },
-  wordText: { ...display(typography.sizes.md + 2) },
+  word: { alignItems: 'center', gap: spacing.xs + 2, borderRadius: radii.md + 2, paddingHorizontal: spacing.md + 2 },
+  wordText: { ...display(typography.sizes.text) },
   ghost: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.md + 2 },
   hidden: { opacity: 0 },
 });

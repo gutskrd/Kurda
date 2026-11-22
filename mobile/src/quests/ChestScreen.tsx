@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CHEST_HOP_LAND, CHEST_HOP_MS, celebrationPlan, type ChestOpening, type ChestTier } from '@kurda/shared';
@@ -23,6 +23,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { CHEST_RATIO, ChestArt } from './ChestArt';
 import { CHEST_NAME, CHEST_TONE, CLAIM_WORDS, claimProblem, type ClaimProblem } from './model';
+import { usePageWidth } from '../theme/pageWidth';
 
 /** How long one bob of the waiting chest takes, up and back, and how far it goes. */
 const BOB_MS = 1800;
@@ -72,7 +73,7 @@ export function ChestScreen({
   const { t } = useI18n();
   const top = useScreenTopInset();
   const bottom = useScreenBottomInset(spacing.lg);
-  const { width } = useWindowDimensions();
+  const width = usePageWidth();
   const tone = TONES[scheme][CHEST_TONE[tier]];
   const size = Math.min(220, width * 0.55);
   const [busy, setBusy] = useState(false);
@@ -331,19 +332,19 @@ const styles = StyleSheet.create({
   middle: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg, gap: spacing.md },
   centre: { alignItems: 'center', justifyContent: 'center' },
   sparkle: { position: 'absolute' },
-  name: { ...display(typography.sizes.xxl), textAlign: 'center' },
+  name: { ...display(typography.sizes.title), textAlign: 'center' },
   stage: { alignItems: 'center', justifyContent: 'center' },
   // The tile sits over the open lid, its foot a little above the chest's top.
   tile: { position: 'absolute', alignItems: 'center', gap: spacing.xs, borderRadius: radii.lg, paddingHorizontal: spacing.md + 4, paddingVertical: spacing.sm + 4, minWidth: 96 },
   // What is said under the chest ("Tap to open", a problem, or the contents), in one slot tall enough for the largest.
   words: { minHeight: 56, alignItems: 'center', justifyContent: 'center' },
   gone: { opacity: 0 },
-  count: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'], writingDirection: 'ltr' },
-  tap: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
-  problem: { fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center', maxWidth: 340 },
+  count: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'], writingDirection: 'ltr' },
+  tap: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
+  problem: { fontSize: typography.sizes.text, lineHeight: 23, textAlign: 'center', maxWidth: 340 },
   corner: { paddingHorizontal: spacing.lg, minHeight: 36 },
   balance: { alignItems: 'center', gap: spacing.xs, borderRadius: radii.pill, paddingHorizontal: spacing.sm + 4, paddingVertical: spacing.xs + 2 },
-  balanceText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  balanceText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   amount: { ...display(44), textAlign: 'center', fontVariant: ['tabular-nums'] },
   bar: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm },
 });

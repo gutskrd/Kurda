@@ -63,14 +63,14 @@ const styles = StyleSheet.create({
   // Opens the examples: a fingertip tall.
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   pos: {
-    fontSize: typography.sizes.xs,
+    fontSize: typography.sizes.text,
     fontStyle: 'italic',
     minWidth: POS_WIDTH,
   },
-  def: { flex: 1, fontSize: typography.sizes.md },
-  defKu: { fontSize: typography.sizes.sm },
+  def: { flex: 1, fontSize: typography.sizes.text },
+  defKu: { fontSize: typography.sizes.text },
   examples: { gap: spacing.xs, marginTop: spacing.xs },
   example: { borderRadius: radii.sm, padding: spacing.sm },
-  exKu: { fontSize: typography.sizes.md },
-  exEn: { fontSize: typography.sizes.sm },
+  exKu: { fontSize: typography.sizes.text },
+  exEn: { fontSize: typography.sizes.text },
 });

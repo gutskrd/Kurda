@@ -79,12 +79,13 @@ describe('who somebody is', () => {
     expect(screen.getByText('Ez ji çîrokan hez dikim.')).toBeTruthy();
   });
 
-  it('puts what you can do above the numbers, and falls back to the handle where no name was chosen', async () => {
+  it('puts the numbers beside their face and what you can do under their name, falling back to the handle where no name was chosen', async () => {
     show({ displayName: null });
-    expect(await screen.findByRole('heading', { name: 'baran' })).toBeTruthy();
+    const name = await screen.findByRole('heading', { name: 'baran' });
     const message = screen.getByRole('button', { name: 'Message' });
     const xp = screen.getByText('410');
-    expect(message.compareDocumentPosition(xp) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(xp.compareDocumentPosition(name) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(name.compareDocumentPosition(message) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // Nothing is said about a bio that is not there.
     expect(screen.queryByText(/bio/i)).toBeNull();
   });
@@ -96,7 +97,9 @@ describe('who somebody is', () => {
       'GET /users/u2/activity?kind=posts&limit=12': ok({ items: [] }),
     });
     renderWithProviders(<PublicProfileScreen userId="u2" onExit={() => undefined} />);
-    expect(await screen.findByText('1,385')).toBeTruthy();
+    // shortened beside their face, and said whole to a screen reader
+    expect(await screen.findByText('1.4K')).toBeTruthy();
+    expect(screen.getByLabelText('1,385 XP')).toBeTruthy();
   });
 
   it('shows neither their words nor where they are from on a profile that is private', async () => {

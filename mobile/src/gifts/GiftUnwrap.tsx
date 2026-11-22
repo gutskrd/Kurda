@@ -441,13 +441,13 @@ const styles = StyleSheet.create({
   itemImage: {},
   itemFallback: { borderRadius: radii.lg, alignItems: 'center', justifyContent: 'center' },
   details: { width: '100%', alignItems: 'center', gap: spacing.sm, maxWidth: 420 },
-  name: { ...display(typography.sizes.xl), textAlign: 'center' },
-  from: { fontSize: typography.sizes.md, textAlign: 'center' },
+  name: { ...display(typography.sizes.title), textAlign: 'center' },
+  from: { fontSize: typography.sizes.text, textAlign: 'center' },
   actions: { width: '100%', gap: spacing.sm, marginTop: spacing.sm },
   // As wide as the buttons above it, in their column.
   notice: { alignSelf: 'stretch', marginHorizontal: 0, marginBottom: 0 },
   stretch: { alignSelf: 'stretch' },
-  error: { fontSize: typography.sizes.sm, textAlign: 'center' },
+  error: { fontSize: typography.sizes.text, textAlign: 'center' },
   close: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.lg },
-  closeText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  closeText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

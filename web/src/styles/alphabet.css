@@ -6,7 +6,7 @@
 
 /* Soranî letters in a face made for Arabic script, so the joined forms are the real ones */
 .ab-ar {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
   font-feature-settings: normal;
 }
 
@@ -35,8 +35,8 @@
 }
 .ab-summary {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.2rem, 1rem + 0.8vw, 1.5rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.35;
   letter-spacing: -0.01em;
   color: var(--ink);
@@ -49,12 +49,12 @@
   display: flex;
   align-items: baseline;
   gap: 10px;
-  font-size: 1.2rem;
+  font-size: var(--text);
   margin: 0;
 }
 .ab-count {
   font-family: var(--font-sans);
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
@@ -62,7 +62,7 @@
 .ab-group-body {
   margin: 6px 0 14px;
   color: var(--ink-3);
-  font-size: 0.95rem;
+  font-size: var(--text);
   max-width: 58ch;
 }
 .ab-grid {
@@ -102,21 +102,21 @@
   background: var(--surface-2);
 }
 .ab-tile-glyph {
-  font-family: var(--font-display);
-  font-size: 1.7rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1;
 }
 .ab-tile-glyph small {
   margin-inline-start: 2px;
-  font-size: 0.62em;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .ab-tile-glyph.ab-ar {
-  font-size: 1.9rem;
+  font-size: var(--text-title);
   line-height: 1.2;
 }
 .ab-tile-hint {
-  font-size: 0.74rem;
+  font-size: var(--text);
   font-weight: 650;
   color: var(--gold-ink);
   max-width: 100%;
@@ -154,8 +154,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-display);
-  font-size: 1.9rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1;
 }
 .ab-rule-pairs .ab-sep {
@@ -163,7 +163,7 @@
 }
 .ab-arrow {
   font-family: var(--font-sans);
-  font-size: 1rem;
+  font-size: var(--text);
   color: var(--ink-4);
 }
 .ab-join-parts {
@@ -176,12 +176,12 @@
 }
 .ab-rule-title {
   margin: 0;
-  font-size: 1.02rem;
+  font-size: var(--text);
 }
 .ab-rule-body {
   margin: 4px 0 0;
   color: var(--ink-3);
-  font-size: 0.92rem;
+  font-size: var(--text);
   max-width: 48ch;
 }
 
@@ -208,24 +208,24 @@
   gap: 12px;
 }
 .ab-card-glyph {
-  font-family: var(--font-display);
-  font-size: 4.6rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 0.9;
 }
 .ab-card-glyph small {
   margin-inline-start: 6px;
-  font-size: 0.55em;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .ab-card-glyph.ab-ar {
-  font-size: 4.8rem;
+  font-size: var(--text-title);
   line-height: 1.1;
 }
 .ab-ipa {
   padding: 3px 9px;
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-3);
   font-family: var(--font-sans);
 }
@@ -236,7 +236,7 @@
   border-radius: var(--r-pill);
   background: var(--gold-soft);
   color: var(--gold-ink);
-  font-size: 0.74rem;
+  font-size: var(--text);
   font-weight: 650;
 }
 .ab-card-row {
@@ -246,7 +246,7 @@
   border-top: 1px solid var(--separator);
 }
 .ab-card-label {
-  font-size: 0.7rem;
+  font-size: var(--text);
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -256,8 +256,8 @@
   letter-spacing: normal;
 }
 .ab-like {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.35;
   color: var(--ink-2);
 }
@@ -270,29 +270,29 @@
   text-underline-offset: 4px;
 }
 .ab-card-word {
-  font-family: var(--font-display);
-  font-size: 2rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.2;
 }
 .ab-card-word.ab-ar {
-  font-size: 2.1rem;
+  font-size: var(--text-title);
 }
 .ab-card-meaning {
   color: var(--ink-3);
-  font-size: 0.95rem;
+  font-size: var(--text);
 }
 .ab-card-partner {
-  font-family: var(--font-display);
-  font-size: 2.2rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.2;
 }
 .ab-card-partner.ab-ar {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
 }
 .ab-card-note {
   margin: 0;
   color: var(--ink-3);
-  font-size: 0.88rem;
+  font-size: var(--text);
 }
 .ab-forms {
   display: flex;
@@ -308,11 +308,11 @@
   border-radius: 12px;
 }
 .ab-form .ab-ar {
-  font-size: 1.7rem;
+  font-size: var(--text-title);
   line-height: 1.2;
 }
 .ab-form small {
-  font-size: var(--text-tab);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .ab-step {
@@ -343,8 +343,8 @@
 }
 .ab-q-prompt {
   margin: 0 0 6px;
-  font-family: var(--font-display);
-  font-size: 1.9rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.25;
 }
 .ab-q-prompt .ab-like {
@@ -393,8 +393,8 @@
 }
 .ab-q-score {
   margin: 12px 0 0;
-  font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
 }
 .ab-next-links {
   display: flex;
@@ -413,9 +413,67 @@
 }
 
 /* ---- the ways in, from the dictionary and the landing page ------------------ */
-.dict-alphabet {
-  display: inline-block;
-  margin: 10px 0 4px;
+/* on the dictionary, a card beside today's word: the letters' glyph, the way in, and where it leads */
+.learn-tool.dict-alphabet {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.dict-alphabet-text {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+.learn-tool-link.dict-alphabet > svg {
+  flex: none;
+}
+[dir='rtl'] .dict-alphabet-go {
+  transform: scaleX(-1);
+}
+
+/* ---- the dictionary's picture before a search ---------------------------------- */
+.dict-art {
+  display: grid;
+  place-items: center;
+  margin: 4px 0 -4px;
+  line-height: 0;
+}
+.dict-art svg {
+  width: min(232px, 64vw);
+  height: auto;
+}
+/* each letter tile rises and settles on its own beat */
+.dict-art-tile {
+  animation: dict-float 3.2s ease-in-out infinite;
+}
+.dict-art-tile-2 {
+  animation-delay: -0.6s;
+}
+.dict-art-tile-3 {
+  animation-delay: -1.3s;
+}
+.dict-art-tile-4 {
+  animation-delay: -1.9s;
+}
+.dict-art-tile-5 {
+  animation-delay: -2.5s;
+}
+@keyframes dict-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dict-art-tile {
+    animation: none;
+  }
 }
 .lp-alphabet {
   display: inline-block;
@@ -490,10 +548,10 @@
   gap: 12px;
 }
 .ab-stage-letter .ab-card-glyph {
-  font-size: 5.4rem;
+  font-size: var(--text-title);
 }
 .ab-stage-letter .ab-card-glyph.ab-ar {
-  font-size: 5.6rem;
+  font-size: var(--text-title);
 }
 .ab-stage-letter .ab-card-tools {
   justify-content: center;
@@ -517,7 +575,7 @@
 }
 .ab-voice-note {
   margin: -4px 0 0;
-  font-size: 0.74rem;
+  font-size: var(--text);
   color: var(--ink-4);
 }
 
@@ -554,7 +612,7 @@
   border-radius: var(--r-pill);
   background: var(--gold-soft);
   color: var(--gold-ink);
-  font-size: 0.74rem;
+  font-size: var(--text);
   font-weight: 650;
 }
 .ab-q-prompt {
@@ -565,13 +623,13 @@
   min-height: 56px;
 }
 .ab-q-glyph {
-  font-family: var(--font-display);
-  font-size: 2.8rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.1;
 }
 .ab-q-glyph.ab-ar {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
-  font-size: 3rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.3;
 }
 .ab-q-form {
@@ -585,12 +643,12 @@
 }
 .ab-q-form small {
   font-family: var(--font-sans);
-  font-size: 0.72rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .ab-q-meaning {
   font-family: var(--font-sans);
-  font-size: 1rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .ab-q-meaning::before {
@@ -603,7 +661,7 @@
   position: absolute;
   top: 6px;
   inset-inline-start: 8px;
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-4);
   font-variant-numeric: tabular-nums;
@@ -612,7 +670,7 @@
   max-width: 480px;
 }
 .ab-q-options.is-words .ab-tile-glyph {
-  font-size: 1.35rem;
+  font-size: var(--text);
 }
 .ab-q-comeback {
   color: var(--ink-3);
@@ -621,7 +679,7 @@
 .ab-q-keys {
   display: none;
   margin: 2px 0 0;
-  font-size: 0.74rem;
+  font-size: var(--text);
   color: var(--ink-4);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -642,17 +700,17 @@
   background: var(--surface);
 }
 .ab-explain-letter {
-  font-family: var(--font-display);
-  font-size: 2.2rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1;
 }
 .ab-explain-letter small {
   margin-inline-start: 3px;
-  font-size: 0.6em;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .ab-explain-letter.ab-ar {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
   line-height: 1.3;
 }
 .ab-explain-text {
@@ -661,25 +719,25 @@
   min-width: 0;
 }
 .ab-explain-text .ab-like {
-  font-size: 1.05rem;
+  font-size: var(--text);
 }
 .ab-explain-word {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
 }
 .ab-explain-word .ab-card-meaning {
   font-family: var(--font-sans);
-  font-size: 0.88rem;
+  font-size: var(--text);
 }
 .ab-explain-note {
   flex-basis: 100%;
   margin: 0;
   color: var(--ink-3);
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 .ab-explain-pair {
   display: flex;
@@ -744,7 +802,7 @@
   background: var(--success);
 }
 .ab-progress-text {
-  font-size: 0.82rem;
+  font-size: var(--text);
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
@@ -759,7 +817,7 @@
   position: absolute;
   top: 5px;
   inset-inline-start: 8px;
-  font-size: 0.66rem;
+  font-size: var(--text);
   font-weight: 700;
   color: var(--success);
 }

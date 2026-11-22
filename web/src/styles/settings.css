@@ -42,7 +42,7 @@
   background: var(--surface-2);
   color: var(--ink);
   font: inherit;
-  font-size: 1rem;
+  font-size: var(--text);
 }
 .settings-search-input::placeholder {
   color: var(--ink-3);
@@ -93,7 +93,7 @@
   margin: 0;
   padding: var(--space-5) 0 var(--space-1);
   font-family: var(--font-sans);
-  font-size: 0.9rem;
+  font-size: var(--text);
   font-weight: 600;
   letter-spacing: 0;
   color: var(--ink-3);
@@ -151,7 +151,7 @@
   gap: 2px;
 }
 .settings-row-title {
-  font-size: 1rem;
+  font-size: var(--text);
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
@@ -161,18 +161,18 @@
   -webkit-line-clamp: 3;
   line-clamp: 3;
   overflow: hidden;
-  font-size: 0.875rem;
+  font-size: var(--text);
   line-height: 1.4;
   color: var(--ink-3);
 }
 .settings-row-value {
-  /* gives way far sooner than the title: a long value is cut short, not the name */
-  flex: 0 100 auto;
+  /* keeps its whole width up to half the row, and the name wraps beside it; only a longer value is cut short */
+  flex: 0 0 auto;
   min-width: 0;
-  max-width: 45%;
+  max-width: 50%;
   overflow: hidden;
   color: var(--ink-3);
-  font-size: 0.95rem;
+  font-size: var(--text);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -312,11 +312,11 @@
 }
 .settings-page .section-toggle-label {
   font-weight: 400;
-  font-size: 1rem;
+  font-size: var(--text);
 }
 .settings-page .section-toggle-hint {
   margin-top: 2px;
-  font-size: 0.875rem;
+  font-size: var(--text);
 }
 .settings-page .section-toggles li + li .section-toggle {
   border-top: 0;
@@ -332,21 +332,21 @@
 .settings-birth-month {
   margin: 0 0 var(--space-2);
   color: var(--ink);
-  font-size: 1.25rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .settings-page-intro {
   max-width: 62ch;
   margin: 0 0 var(--space-3);
   color: var(--ink-3);
-  font-size: 0.95rem;
+  font-size: var(--text);
   line-height: 1.5;
 }
 .settings-page-note {
   max-width: 62ch;
   margin: var(--space-3) 0 0;
   color: var(--ink-3);
-  font-size: 0.875rem;
+  font-size: var(--text);
   line-height: 1.5;
 }
 .settings-page-note:empty {
@@ -388,7 +388,7 @@
 }
 .settings-page-body > .card > .friend-heading:first-child {
   margin-bottom: var(--space-1);
-  font-size: 0.9rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-3);
 }
@@ -451,7 +451,7 @@
 }
 .settings-nav-title {
   margin: 0 0 var(--space-4);
-  font-size: 1.75rem;
+  font-size: var(--text-title);
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
@@ -481,7 +481,7 @@
 }
 .settings-pane-title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: var(--text-title);
   line-height: 1.15;
   letter-spacing: -0.02em;
 }

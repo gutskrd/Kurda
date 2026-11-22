@@ -65,8 +65,8 @@ export function YoursRowSkeleton(): React.JSX.Element {
         <Skeleton width={ART} height={ART} radius={radii.pill} />
       </View>
       <View style={[styles.main, start]}>
-        <SkeletonText size={typography.sizes.xs} width={96} />
-        <SkeletonText size={typography.sizes.md} width="46%" />
+        <SkeletonText size={typography.sizes.text} width={96} />
+        <SkeletonText size={typography.sizes.text} width="46%" />
       </View>
     </View>
   );
@@ -81,5 +81,5 @@ const styles = StyleSheet.create({
   art: { width: 72, alignItems: 'center', justifyContent: 'center' },
   main: { flex: 1, gap: 2 },
   label: { ...sectionLabel },
-  value: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  value: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

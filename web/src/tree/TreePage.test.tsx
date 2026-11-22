@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { TREE_KINDS, TREE_SPECIES, treeView, type TreeRecord, type TreeView } from '@kurda/shared';
 import { jsonResponse, renderApp } from '../test/utils';
 import { ProfileTree } from './ProfileTree';
-import { TreeCard } from './TreeCard';
 import { TreePage } from './TreePage';
 import type { MyTree, Watered } from './useTree';
 
@@ -311,35 +310,6 @@ describe('TreePage', () => {
     server({});
     renderApp(<TreePage />);
     expect(await screen.findByText('Trees are on their way. Come back soon.')).toBeInTheDocument();
-  });
-});
-
-describe('TreeCard', () => {
-  it('invites planting before there is a tree', async () => {
-    server({ 'GET /me/tree': mine(null) });
-    renderApp(<TreeCard />);
-    const card = await screen.findByRole('link', { name: /Plant your tree/ });
-    expect(card).toHaveAttribute('href', '/app/tree');
-  });
-
-  it('says there is water to pour, with how much', async () => {
-    server({ 'GET /me/tree': mine(view({ water: 3 })) });
-    renderApp(<TreeCard />);
-    const card = await screen.findByRole('link', { name: 'Berû, Seedling. You have water to pour.' });
-    expect(within(card).getByText('3')).toBeInTheDocument();
-  });
-
-  it('says how a dry tree fares, and what earns water when none is held', async () => {
-    server({ 'GET /me/tree': mine(view({ water: 0, lastWateredOn: '2026-11-10' })) });
-    renderApp(<TreeCard />);
-    expect(await screen.findByRole('link', { name: 'Berû, Seedling, Thirsty. Thirsty. A lesson earns water.' })).toBeInTheDocument();
-  });
-
-  it('is not there at all on a server without trees', async () => {
-    const calls = server({});
-    const { container } = renderApp(<TreeCard />);
-    await waitFor(() => expect(calls.some((c) => c.path === '/me/tree')).toBe(true));
-    expect(container.querySelector('.tree-card')).toBeNull();
   });
 });
 

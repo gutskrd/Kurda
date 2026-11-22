@@ -62,5 +62,5 @@ export function UsernameStepField({
 }
 
 const styles = StyleSheet.create({
-  line: { fontSize: typography.sizes.sm, lineHeight: 20, marginTop: spacing.sm },
+  line: { fontSize: typography.sizes.text, lineHeight: 20, marginTop: spacing.sm },
 });

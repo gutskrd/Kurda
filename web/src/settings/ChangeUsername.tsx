@@ -178,7 +178,7 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
   return (
     <section className="card" style={{ marginTop: 20 }}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('settings.username.title')}</h2>
-      <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
+      <p className="muted" style={{ fontSize: 'var(--text)', marginBottom: 14 }}>
         {t('settings.username.help', { cooldown: status.cooldownDays, hold: status.holdDays })}
       </p>
 

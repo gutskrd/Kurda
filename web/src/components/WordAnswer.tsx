@@ -73,7 +73,7 @@ export function WordAnswer({
           disabled={save.saved}
           onClick={save.onSave}
         >
-          <BookmarkIcon size={16} weight={save.saved ? 'fill' : 'regular'} />
+          <BookmarkIcon size={16} weight={save.saved ? 'fill' : 'regular'} className={save.saved ? 'saved-mark' : undefined} />
           <span>{save.saved ? t('dictionary.savedWord') : t('dictionary.saveWord')}</span>
         </button>
       )}

@@ -20,12 +20,12 @@ const CHEST = 36;
 const CARD_HEIGHT = CHEST * CHEST_RATIO + 2 * (spacing.sm + 6) + 16;
 
 /**
- * Today's quests on Learn, compact: a chest, "Daily quests" with the count done (or that a chest is ready,
+ * Today's quests on Home, compact: a chest, "Daily quests" with the count done (or that a chest is ready,
  * today's or an earlier day's, with a dot and an occasional shake, ChestWobble), and a short bar for each of the
  * three. A tap opens the full list (QuestsScreen), where chests are opened. A ready chest's dot and text are
  * violet like the tab bar's dots; gold stays with the earned bars.
  *
- * Reloaded whenever Learn comes into view. Grey while loading; a failed load says so and a tap retries; with no
+ * Reloaded whenever Home comes into view. Grey while loading; a failed load says so and a tap retries; with no
  * quests today the card is hidden.
  */
 export function QuestsCard(): React.JSX.Element | null {
@@ -121,11 +121,11 @@ export function QuestsCard(): React.JSX.Element | null {
 const styles = StyleSheet.create({
   card: { alignItems: 'center', gap: spacing.sm + 4, borderRadius: radii.lg, paddingVertical: spacing.sm + 6, paddingHorizontal: spacing.sm + 6, minHeight: CARD_HEIGHT },
   failed: { gap: spacing.sm },
-  failedText: { flex: 1, fontSize: typography.sizes.sm },
+  failedText: { flex: 1, fontSize: typography.sizes.text },
   main: { flex: 1, gap: spacing.sm },
   head: { alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', columnGap: spacing.sm, rowGap: 2 },
-  title: { maxWidth: '100%', fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  detail: { maxWidth: '100%', fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  title: { maxWidth: '100%', fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  detail: { maxWidth: '100%', fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   bars: { gap: spacing.xs + 2 },
   track: { flex: 1, height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   fill: { height: 6, borderRadius: radii.pill },

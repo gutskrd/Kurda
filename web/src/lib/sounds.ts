@@ -34,8 +34,9 @@ export function setLessonSounds(on: boolean): void {
 const AUTOPLAY_KEY = 'hevalo_autoplay_audio';
 
 /**
- * Settings → Sounds → Play pronunciations automatically: an answer's recording plays a moment after the verdict. On
- * unless turned off on this device; it is lesson audio, not a chime, so the lesson sounds switch does not affect it.
+ * Settings → Sounds → Play pronunciations automatically: each exercise's Kurdish line plays as it appears, and the
+ * answer's recording a moment after the verdict. On unless turned off on this device; it is lesson audio, not a chime,
+ * so the lesson sounds switch does not affect it.
  */
 export function autoplayOn(): boolean {
   try {

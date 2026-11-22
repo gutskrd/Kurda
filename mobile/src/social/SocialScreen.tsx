@@ -406,8 +406,8 @@ function PeopleSkeleton(): React.JSX.Element {
         <View key={i} style={[styles.row, { backgroundColor: colors.glassFill }]}>
           <Skeleton width={36} height={36} radius={radii.pill} />
           <View style={styles.rowMain}>
-            <SkeletonText size={typography.sizes.md} width={i % 2 ? '36%' : '50%'} />
-            <SkeletonText size={typography.sizes.sm} width="28%" />
+            <SkeletonText size={typography.sizes.text} width={i % 2 ? '36%' : '50%'} />
+            <SkeletonText size={typography.sizes.text} width="28%" />
           </View>
           <Skeleton width={64} height={MIN_TOUCH_TARGET - 12} radius={radii.pill} />
         </View>
@@ -419,18 +419,18 @@ function PeopleSkeleton(): React.JSX.Element {
 const styles = StyleSheet.create({
   skeleton: { gap: spacing.xs },
   screen: { flex: 1, paddingHorizontal: layout.gutter, paddingTop: spacing.xs },
-  intro: { fontSize: typography.sizes.md, lineHeight: 22, marginBottom: spacing.md },
+  intro: { fontSize: typography.sizes.text, lineHeight: 22, marginBottom: spacing.md },
   list: { paddingVertical: spacing.md, gap: spacing.xs },
   section: { ...sectionLabel, marginTop: spacing.md, marginBottom: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },
   rowOpen: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   rowMain: { flex: 1 },
-  username: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  display: { fontSize: typography.sizes.sm },
+  username: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  display: { fontSize: typography.sizes.text },
   accept: { paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radii.sm },
   add: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   tickets: { gap: spacing.xs },
-  acceptText: { fontWeight: typography.weights.bold, fontSize: typography.sizes.sm },
-  cancel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  acceptText: { fontWeight: typography.weights.bold, fontSize: typography.sizes.text },
+  cancel: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   empty: { textAlign: 'center', marginTop: spacing.xl },
 });

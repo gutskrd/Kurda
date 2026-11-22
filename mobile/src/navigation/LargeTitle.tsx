@@ -51,5 +51,5 @@ const styles = StyleSheet.create({
   // The title takes the space, so a leading control sits before it and a trailing one at the end.
   row: { alignItems: 'center', gap: spacing.md, minHeight: 44 },
   // 34pt, the large-title size.
-  title: { ...display(typography.sizes.xxl), flex: 1 },
+  title: { ...display(typography.sizes.title), flex: 1 },
 });

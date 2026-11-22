@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import '@fontsource-variable/vazirmatn';
 import {
   LATIN_LETTERS,
   SORANI_LETTERS,

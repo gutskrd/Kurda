@@ -133,16 +133,16 @@ export function TeamPicker({
 
 const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.sm },
-  heading: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  heading: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   team: { borderWidth: 1.5, borderRadius: radii.md, padding: spacing.sm, gap: spacing.xs },
   teamHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   swatch: { width: 14, height: 14, borderRadius: radii.pill },
-  teamName: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  count: { fontSize: typography.sizes.sm },
-  empty: { fontSize: typography.sizes.sm },
+  teamName: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  count: { fontSize: typography.sizes.text },
+  empty: { fontSize: typography.sizes.text },
   member: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
-  memberName: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  memberName: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   moveBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   join: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.md, marginTop: spacing.xs },
-  joinText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  joinText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

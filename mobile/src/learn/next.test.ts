@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CourseEntry } from '../coursemap/node';
 import type { CourseMap, SkillNode, SkillState } from '../coursemap/types';
-import { fraction, nextStep } from './next';
+import { nextStep } from './next';
 
 const skill = (id: string, state: SkillState, lesson: string | null = `l-${id}`): SkillNode => ({
   skillId: id,
@@ -89,13 +89,5 @@ describe('the next step on Learn', () => {
   it('never points at a skill with no lesson to open', () => {
     const step = nextStep([course('a', [[skill('1', 'completed'), skill('2', 'unlocked', null), skill('3', 'unlocked')]])]);
     expect(step).toMatchObject({ lessonId: 'l-3' });
-  });
-});
-
-describe('the progress bar', () => {
-  it('runs from 0 to 1, and an empty course is at the start', () => {
-    expect(fraction(0, 0)).toBe(0);
-    expect(fraction(1, 4)).toBe(0.25);
-    expect(fraction(5, 4)).toBe(1);
   });
 });

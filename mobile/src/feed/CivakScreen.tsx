@@ -13,6 +13,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import type { TabNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarScroll } from '../navigation/tabBarScroll';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useTheme } from '../theme/ThemeProvider';
@@ -40,6 +41,8 @@ import { EmptyState } from '../theme/EmptyState';
 import { FilterChip, FilterChips } from '../theme/FilterSheet';
 import { Loading } from '../theme/Loading';
 import { DailyCard } from '../daily/DailyCard';
+import { EventBanner } from '../events/EventBanner';
+import { QuestsCard } from '../quests/QuestsCard';
 import { LeagueLine } from '../leagues/LeagueLine';
 import { HeldBanner } from '../reports/HeldNotice';
 
@@ -123,6 +126,8 @@ export function CivakScreen({
     apply: (update) => setItems((prev) => (prev ? update(prev) : prev)),
     retry: error ? () => void refresh() : undefined,
   });
+  // The tab bar shrinks as the feed scrolls down (tabBarScroll.ts).
+  const tabScroll = useTabBarScroll(onScroll);
 
   // The bell's dot is worth getting right on the screen it sits on.
   useFocusEffect(
@@ -233,7 +238,7 @@ export function CivakScreen({
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(onPull)} tintColor={colors.textSecondary} />}
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
-          onScroll={onScroll}
+          onScroll={tabScroll}
           scrollEventThrottle={64}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
@@ -242,7 +247,10 @@ export function CivakScreen({
                 <Text style={[styles.subtitle, dir.text, { color: colors.textSecondary }]}>{t('civak.subtitle')}</Text>
                 {/* Where a held account lands: what waits and that learning does not. */}
                 <HeldBanner />
+                {/* An event while one runs, then the day: the streak and today's Zêr, today's quests, the week's league. */}
+                <EventBanner />
                 <DailyCard onLearn={() => navigation.navigate('Learn', { view: 'lessons' })} />
+                <QuestsCard />
                 <LeagueLine />
               </View>
               <FriendsRow refreshKey={pulls} />
@@ -339,11 +347,11 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   // The way into sorting and narrowing: a fingertip tall, as wide as its words.
   sortChip: { alignItems: 'center', gap: spacing.xs + 2, minHeight: CHIP, paddingHorizontal: spacing.md - 4, borderRadius: radii.pill },
-  sortChipText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  sortChipText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   waiting: { paddingHorizontal: layout.gutter },
   // The page's line, today's reward and the week, inside the gutter above the faces.
   top: { paddingHorizontal: layout.gutter, gap: spacing.sm, paddingBottom: spacing.md },
-  subtitle: { fontSize: typography.sizes.md, lineHeight: 22 },
+  subtitle: { fontSize: typography.sizes.text, lineHeight: 22 },
   // The chips under the faces, inside the page's gutter.
   filterChips: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },
 });

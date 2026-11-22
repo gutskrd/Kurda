@@ -23,14 +23,14 @@
   margin: 0;
 }
 .imp-phase {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
 .imp-whose {
-  font-size: var(--text-section);
+  font-size: var(--text);
   font-weight: 700;
 }
 .imp-whose.is-mine {
@@ -112,10 +112,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 600;
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .imp-seat-tag {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .imp-seat.is-speaking .imp-seat-tag {
@@ -153,7 +153,7 @@
   margin: 0;
 }
 .imp-card-label {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -164,28 +164,32 @@
 }
 .imp-card-word {
   margin-top: var(--space-2) !important;
-  font-size: 30px;
+  font-size: var(--text-title);
   font-weight: 800;
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
 .imp-card-word.is-impostor {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: 22px;
+  font-size: var(--text);
   color: var(--danger);
+}
+/* the deer or the wolf, above the word */
+.imp-card > .imp-art {
+  margin-top: var(--space-3);
+}
+.imp-card > .imp-art + .imp-card-word {
+  margin-top: var(--space-1) !important;
 }
 .imp-card-meaning {
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 
 /* the clues */
 .imp-section-title {
   font-family: var(--font-sans);
   margin: 0 0 var(--space-2);
-  font-size: var(--text-body);
+  font-size: var(--text);
 }
 .imp-rounds {
   display: grid;
@@ -194,7 +198,7 @@
 }
 .imp-round-title {
   margin: 0 0 var(--space-1);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .imp-clue-list {
@@ -221,17 +225,17 @@
 }
 .imp-clue-by {
   flex: none;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3);
   min-width: 64px;
 }
 .imp-clue-text {
-  font-size: 18px;
+  font-size: var(--text);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
 .imp-clue-text.is-none {
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 400;
   font-style: italic;
   color: var(--ink-3);
@@ -258,7 +262,7 @@
   min-height: 48px;
 }
 .imp-guess-option {
-  font-size: 20px;
+  font-size: var(--text);
   font-weight: 700;
 }
 .imp-vote-cast {
@@ -307,14 +311,14 @@
   border: 1px solid var(--border-strong);
   backface-visibility: hidden;
   text-align: center;
-  font-size: 14px;
+  font-size: var(--text);
   font-weight: 700;
   overflow-wrap: break-word;
 }
 .imp-flip-back {
   background: color-mix(in srgb, var(--gold) 22%, var(--surface-solid));
   color: var(--gold-ink);
-  font-size: 28px;
+  font-size: var(--text-title);
 }
 .imp-flip-back::after {
   content: '?';
@@ -332,7 +336,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .imp-reveal-word {
@@ -398,7 +402,7 @@
     height: 34px;
   }
   .imp-card-word {
-    font-size: 26px;
+    font-size: var(--text-title);
   }
   .imp-flip {
     width: 76px;

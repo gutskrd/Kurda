@@ -159,8 +159,8 @@ const styles = StyleSheet.create({
   columns: { gap: spacing.md },
   column: { flex: 1, gap: spacing.sm + 2 },
   // The lesson's cards: 16 round, on a hairline edge.
-  card: { minHeight: 60, borderRadius: CARD.radius, borderWidth: CARD.edge },
+  card: { minHeight: 60, borderRadius: CARD.radius },
   // The Kurdish in the headings' display face, its meaning in the reader's own.
-  kurdish: { ...display(typography.sizes.md + 2) },
-  meaning: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  kurdish: { ...display(typography.sizes.text) },
+  meaning: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

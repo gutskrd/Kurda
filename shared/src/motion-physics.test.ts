@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { APPLE_SPRINGS, DECELERATION, project, releaseVelocity, rubberBand, shouldDismiss, snapTarget, springFor } from './motion-physics.js';
+import { APPLE_SPRINGS, DECELERATION, project, releaseVelocity, rubberBand, shouldDismiss, snapTarget, springEasing, springFor } from './motion-physics.js';
 
 describe('springFor', () => {
   it('turns a response and a damping fraction into stiffness and damping', () => {
@@ -136,5 +136,29 @@ describe('releaseVelocity', () => {
 
   it('keeps the direction: up is negative', () => {
     expect(releaseVelocity([{ time: 0, position: 100 }, { time: 20, position: 80 }], 20)).toBe(-1000);
+  });
+});
+
+describe('springEasing', () => {
+  const values = (easing: string) => easing.slice('linear('.length, -1).split(', ').map(Number);
+
+  it('starts at rest and ends exactly on 1', () => {
+    const v = values(springEasing({ duration: 0.32, bounce: 0.3 }).easing);
+    expect(v[0]).toBe(0);
+    expect(v[v.length - 1]).toBe(1);
+    expect(v).toHaveLength(41);
+  });
+
+  it('runs past 1 when the spring bounces, and never when it does not', () => {
+    expect(Math.max(...values(springEasing({ duration: 0.32, bounce: 0.3 }).easing))).toBeGreaterThan(1.03);
+    expect(Math.max(...values(springEasing({ duration: 0.32, bounce: 0 }).easing))).toBeLessThanOrEqual(1);
+  });
+
+  it('lasts until the spring has settled, longer for a bouncier one', () => {
+    const calm = springEasing({ duration: 0.32, bounce: 0 }).ms;
+    const lively = springEasing({ duration: 0.32, bounce: 0.3 }).ms;
+    expect(calm).toBeGreaterThan(320);
+    expect(lively).toBeGreaterThan(calm);
+    expect(lively).toBeLessThan(1000);
   });
 });

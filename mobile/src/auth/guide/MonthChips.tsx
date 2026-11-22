@@ -84,7 +84,7 @@ export function monthColumns(width: number, fontScale: number, labels: readonly 
   if (width <= 0) return 3;
   const room = (width - GAP * 2) / 3 - PAD * 2;
   const longest = Math.max(0, ...labels.flatMap((label) => label.split(/\s+/).map((word) => [...word].length)));
-  return longest * typography.sizes.sm * LETTER * fontScale <= room ? 3 : 2;
+  return longest * typography.sizes.text * LETTER * fontScale <= room ? 3 : 2;
 }
 
 const styles = StyleSheet.create({
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   // Three to a row, or two, with the gaps between them.
   third: { flexBasis: '31%' },
   half: { flexBasis: '46%' },
-  label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, textAlign: 'center' },
+  label: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium, textAlign: 'center' },
   labelChosen: { fontWeight: typography.weights.bold },
   dim: { opacity: 0.5 },
 });

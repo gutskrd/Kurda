@@ -41,6 +41,16 @@ export const TONES: Record<ColorScheme, Record<UnitTone, ToneColors>> = {
   },
 };
 
+/**
+ * What a unit wears on the path itself (its banner, finished lessons, the rail and the jump sheet): the page's ink, as
+ * what is chosen or earned is everywhere, so the main button stays the one coloured thing. Its drawn stops keep their
+ * unit's colours (`TONES`). Must match path.css's `lp-tone-*` rules.
+ */
+export const UNIT_INK: Record<ColorScheme, ToneColors> = {
+  dark: { fill: '#f3f1fb', lip: '#a9a6bb', ink: '#14112e', text: '#f3f1fb' },
+  light: { fill: '#14112e', lip: '#050410', ink: '#ffffff', text: '#14112e' },
+};
+
 /** Locked stops and the line still ahead, in each scheme. */
 export const REST: Record<ColorScheme, { fill: string; lip: string; ink: string; line: string }> = {
   dark: { fill: '#2b283c', lip: '#1a1828', ink: '#9e9cb0', line: 'rgba(255,255,255,0.2)' },

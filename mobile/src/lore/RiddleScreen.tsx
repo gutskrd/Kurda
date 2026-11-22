@@ -175,8 +175,8 @@ export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => voi
           )
         ) : (
           <View style={[styles.content, styles.skeleton]} accessibilityLabel={t('common.loading')}>
-            <SkeletonText size={typography.sizes.xl} width="86%" />
-            <SkeletonText size={typography.sizes.xl} width="64%" />
+            <SkeletonText size={typography.sizes.title} width="86%" />
+            <SkeletonText size={typography.sizes.title} width="64%" />
           </View>
         )}
       </GradientBackground>
@@ -344,27 +344,27 @@ const styles = StyleSheet.create({
   skeleton: { alignItems: 'center', paddingTop: spacing.xxl },
   facts: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.xs },
   questionBlock: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.md },
-  question: { ...display(typography.sizes.xl), lineHeight: Math.round(typography.sizes.xl * 1.32) },
-  translation: { fontSize: typography.sizes.md, lineHeight: 24 },
+  question: { ...display(typography.sizes.title), lineHeight: Math.round(typography.sizes.title * 1.32) },
+  translation: { fontSize: typography.sizes.text, lineHeight: 24 },
   translationToggle: { alignItems: 'center', gap: spacing.xs, minHeight: 32, paddingHorizontal: spacing.sm },
-  translationToggleText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  translationToggleText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   hints: { gap: spacing.sm },
   hint: { borderRadius: radii.md, padding: spacing.md, gap: spacing.xs },
   hintHead: { alignItems: 'center', gap: spacing.xs },
-  hintLabel: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
-  hintText: { fontSize: typography.sizes.md, lineHeight: 24 },
-  hintTranslation: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  hintLabel: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
+  hintText: { fontSize: typography.sizes.text, lineHeight: 24 },
+  hintTranslation: { fontSize: typography.sizes.text, lineHeight: 20 },
   guess: { gap: spacing.sm },
-  label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  input: { minHeight: 52, borderRadius: radii.md, paddingHorizontal: spacing.md, fontSize: typography.sizes.lg },
-  wrong: { fontSize: typography.sizes.md, lineHeight: 22 },
-  small: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  label: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  input: { minHeight: 52, borderRadius: radii.md, paddingHorizontal: spacing.md, fontSize: typography.sizes.text },
+  wrong: { fontSize: typography.sizes.text, lineHeight: 22 },
+  small: { fontSize: typography.sizes.text, lineHeight: 22 },
   helpers: { gap: spacing.sm, marginTop: spacing.sm },
   after: { gap: spacing.sm },
   solved: { alignItems: 'center', borderRadius: radii.lg, padding: spacing.lg, gap: spacing.sm },
-  solvedTitle: { ...display(typography.sizes.lg) },
-  solvedAnswer: { ...display(typography.sizes.xl), lineHeight: Math.round(typography.sizes.xl * 1.25) },
-  solvedXp: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  solvedTitle: { ...display(typography.sizes.text) },
+  solvedAnswer: { ...display(typography.sizes.title), lineHeight: Math.round(typography.sizes.title * 1.25) },
+  solvedXp: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   stretch: { alignSelf: 'stretch', marginTop: spacing.xs },
-  sheetText: { fontSize: typography.sizes.md, lineHeight: 22 },
+  sheetText: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

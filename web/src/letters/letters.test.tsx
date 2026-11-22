@@ -113,8 +113,11 @@ function signIn(answers: Record<string, unknown>, fails: Record<string, { status
 const sent = (calls: Call[], method: string, path: string): Call[] => calls.filter((c) => c.method === method && new URL(c.url, 'http://x').pathname.endsWith(path));
 const reads = (calls: Call[]): Call[] => calls.filter((c) => c.method === 'GET' && new URL(c.url, 'http://x').pathname.endsWith('/letters'));
 
-/** A stand-in for the realtime connection: the test says when the server pings. */
-function fakeRealtime(): { client: RealtimeClient; ping: (type?: string) => void } {
+/**
+ * A stand-in for the realtime connection: the test says when the server pings. A ping waits until the app listens, as
+ * the server's would only reach a connected socket; fired before sign-in has wired the listener it would be lost.
+ */
+function fakeRealtime(): { client: RealtimeClient; ping: (type?: string) => Promise<void> } {
   const listeners: Record<string, Set<(arg: unknown) => void>> = {};
   const client = {
     on(type: string, handler: (arg: unknown) => void) {
@@ -131,7 +134,10 @@ function fakeRealtime(): { client: RealtimeClient; ping: (type?: string) => void
   };
   return {
     client: client as unknown as RealtimeClient,
-    ping: (type = 'letters_changed') => listeners['event']?.forEach((h) => h({ room: 'user:me', event: { type } })),
+    ping: async (type = 'letters_changed') => {
+      await waitFor(() => expect(listeners['event']?.size ?? 0).toBeGreaterThan(0));
+      act(() => listeners['event']?.forEach((h) => h({ room: 'user:me', event: { type } })));
+    },
   };
 }
 
@@ -142,7 +148,7 @@ function Where(): React.JSX.Element {
 }
 
 /** The letters page at `path`, a correspondence standing in for the thread page, and the realtime connection. */
-function atWindow(path = '/app/letters'): { ping: (type?: string) => void } {
+function atWindow(path = '/app/letters'): { ping: (type?: string) => Promise<void> } {
   const live = fakeRealtime();
   render(
     <AuthProvider>
@@ -402,7 +408,7 @@ describe('letters by bird', () => {
       await waitFor(() => expect(reads(calls).length).toBeGreaterThanOrEqual(1));
       const before = reads(calls).length;
       answers['GET /letters'] = home({ landings: [landing()], penPals: [pal()] });
-      act(() => live.ping());
+      await live.ping();
       expect(await screen.findByText('Baran’s bird brought you a letter')).toBeInTheDocument();
       expect(reads(calls)).toHaveLength(before + 1);
       await waitFor(() => expect(sent(calls, 'POST', '/letters/landed')).toHaveLength(1));
@@ -427,7 +433,7 @@ describe('letters by bird', () => {
       await userEvent.click(await screen.findByRole('button', { name: 'Write a letter' }));
       await userEvent.type(screen.getByLabelText('Your letter'), letter);
       answers['GET /letters'] = home({ landings: [landing()], penPals: [pal()] });
-      act(() => live.ping());
+      await live.ping();
       // the paper stays as it is while the bird waits
       await waitFor(() => expect(screen.getByLabelText('Your letter')).toHaveValue(letter));
       expect(screen.queryByText('Baran’s bird brought you a letter')).toBeNull();
@@ -488,7 +494,7 @@ describe('letters by bird', () => {
       const live = atWindow();
       expect(await screen.findByText('Your bird is out')).toBeInTheDocument();
       answers['GET /letters'] = home({ landings: [landing({ how: 'home', letterId: L2 })], penPals: [pal()], flight: 'homeward' });
-      act(() => live.ping());
+      await live.ping();
       expect(await screen.findByText('Your bird came home with a letter from Baran')).toBeInTheDocument();
       await waitFor(() => expect(sent(calls, 'POST', '/letters/landed').map((c) => c.body)).toEqual([{ letterIds: [L2] }]));
     });
@@ -530,7 +536,7 @@ describe('letters by bird', () => {
       await userEvent.type(await screen.findByLabelText('Your answer to Baran'), 'Silav Baran, ez Rojda me.');
       // its day is up: the server has it at the window no more
       answers['GET /letters'] = home();
-      act(() => live.ping());
+      await live.ping();
       expect(await screen.findByText('Your answer is kept. You can send it with your own bird.')).toBeInTheDocument();
       expect(screen.queryByLabelText('Your answer to Baran')).toBeNull();
       await userEvent.click(screen.getByRole('button', { name: 'Write a letter' }));
@@ -547,7 +553,7 @@ describe('letters by bird', () => {
       expect(screen.getByText('Another bird is waiting to come in.')).toBeInTheDocument();
       // Baran's letter read in its correspondence (on another device, say): it leaves the sill and Rojîn's bird comes in
       answers['GET /letters'] = home({ landings: [landing({ letterId: L2, threadId: T2, person: rojin })], penPals: [pal(), pal(rojin, T2)] });
-      act(() => live.ping());
+      await live.ping();
       expect(await screen.findByText('Rojîn’s bird brought you a letter')).toBeInTheDocument();
       expect(screen.queryByText('Another bird is waiting to come in.')).toBeNull();
       await waitFor(() => expect(sent(calls, 'POST', '/letters/landed').map((c) => c.body)).toEqual([{ letterIds: [L1] }, { letterIds: [L2] }]));
@@ -645,7 +651,7 @@ describe('letters by bird', () => {
       closed: false,
       ...over,
     });
-    const at = (body: LetterThread): { answers: Record<string, unknown>; calls: Call[]; ping: () => void } => {
+    const at = (body: LetterThread): { answers: Record<string, unknown>; calls: Call[]; ping: () => Promise<void> } => {
       const answers: Record<string, unknown> = { 'GET /letters/threads/t1': body };
       const calls = signIn(answers);
       const live = fakeRealtime();
@@ -683,7 +689,7 @@ describe('letters by bird', () => {
       const open = at(thread());
       await userEvent.type(await screen.findByLabelText('Write back to Baran'), 'Ez baş im');
       vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(503, { code: 'UNAVAILABLE', message: 'down' })));
-      act(() => open.ping());
+      await open.ping();
       await new Promise((r) => setTimeout(r, 50));
       expect(screen.getByText('Silav Rojda! Ez Baran im.')).toBeInTheDocument();
       expect(screen.getByLabelText('Write back to Baran')).toHaveValue('Ez baş im');
@@ -706,7 +712,7 @@ describe('letters by bird', () => {
 
       // their answer comes: the newest page moves on by one, and the earlier letters stay above it
       open.answers['GET /letters/threads/t1'] = thread({ letters: page(12, 21), earlier: true, yourTurn: true });
-      act(() => open.ping());
+      await open.ping();
       expect(await screen.findByText('Name 21')).toBeInTheDocument();
       expect(screen.getAllByText(/^Name \d+$/).map((el) => el.textContent)).toEqual(page(1, 21).map((l) => l.body));
       expect(screen.queryByRole('button', { name: 'Show earlier letters' })).toBeNull();
@@ -811,7 +817,7 @@ describe('letters by bird', () => {
       open.answers['GET /letters/threads/t1'] = thread({
         letters: [...base.letters, { id: 'l3', mine: false, body: 'Ez jî baş im!', decor: null, removed: false, sentAt: '2026-11-14T10:00:00.000Z', readAt: null }],
       });
-      act(() => open.ping());
+      await open.ping();
       expect(await screen.findByText('Ez jî baş im!')).toBeInTheDocument();
       expect(screen.getByLabelText('Write back to Baran')).toBeInTheDocument();
     });

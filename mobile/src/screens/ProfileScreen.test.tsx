@@ -62,21 +62,24 @@ function open({ league = null as { tier: string } | null, bio = 'Fêrî Kurmanc�
 }
 
 describe('your profile', () => {
-  it('shows the face with the name, the handle, the year and who can see it, then the level and four figures', async () => {
+  it('shows the face with the name, the handle, the year and who can see it, then the level and three figures', async () => {
     open();
     expect(await screen.findByText('23')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Profile' })).toBeTruthy();
     expect(screen.getByText('Rojda')).toBeTruthy();
-    expect(screen.getByText(/@rojda\s+·\s+Joined\s2026/)).toBeTruthy();
+    expect(screen.getByText('@rojda')).toBeTruthy();
+    expect(screen.getByText('Joined 2026')).toBeTruthy();
     expect(screen.getByText('Fêrî Kurmancî dibim.')).toBeTruthy();
     expect(screen.getByRole('progressbar', { name: 'Level 5, 160 XP to level 6' })).toBeTruthy();
-    // Streak, XP, friends and badges, in one row.
+    // Streak, XP and friends, in one row; how many badges is on the badge case in the highlights.
     const row = screen.getByTestId('profile-facts');
-    expect(row.textContent).toMatch(/6.*Streak.*1,340.*XP.*23.*Friends/);
+    // XP shortened beside the face, and said whole to a screen reader
+    expect(row.textContent).toMatch(/6.*Streak.*1\.3K.*XP.*23.*Friends/);
     expect(screen.getByRole('button', { name: 'Streak, 6 days' })).toBeTruthy();
     expect(screen.getByLabelText('1,340 XP')).toBeTruthy();
     expect(screen.getByRole('button', { name: '23 Friends' })).toBeTruthy();
-    expect(await screen.findByRole('button', { name: '4 Badges' })).toBeTruthy();
+    expect(row.textContent).not.toMatch(/Badges/);
+    expect(await screen.findByRole('button', { name: 'Badges: 4' })).toBeTruthy();
     // No Zêr line left on its own under the figures: it is in the card only you see.
     expect(screen.queryByText('1,240 Zêr')).toBeNull();
   });
@@ -89,11 +92,10 @@ describe('your profile', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('EditProfile');
   });
 
-  it('keeps the numbers only you see in a card that says so, Zêr leading to the shop', async () => {
+  it('keeps the numbers only you see behind a row that says so, Zêr leading to the shop', async () => {
     open();
-    expect(await screen.findByRole('heading', { name: 'Your progress' })).toBeTruthy();
-    expect(screen.getByText('Only you can see this')).toBeTruthy();
-    expect(screen.getByLabelText('14 Longest streak')).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'Your progress, Only you can see this' }));
+    expect(await screen.findByLabelText('14 Longest streak')).toBeTruthy();
     expect(screen.getByLabelText('31 Days learned')).toBeTruthy();
     expect(screen.getByLabelText('1 Streak freezes')).toBeTruthy();
     expect(screen.getByText(/Every 5 lessons or practice sessions you finish earn a streak freeze/)).toBeTruthy();
@@ -101,11 +103,11 @@ describe('your profile', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Shop');
   });
 
-  it('opens the friends from their count, the badges from theirs, and the daily view from the streak', async () => {
+  it('opens the friends from their count, the badges from their case, and the daily view from the streak', async () => {
     open();
     fireEvent.click(await screen.findByRole('button', { name: '23 Friends' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Friends');
-    fireEvent.click(await screen.findByRole('button', { name: '4 Badges' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Badges: 4' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Badges');
     fireEvent.click(await screen.findByRole('button', { name: 'Streak, 6 days' }));
     // The daily view, with the streak by its fire and the longest one.
@@ -113,7 +115,7 @@ describe('your profile', () => {
     expect(screen.getByLabelText('Longest streak: 14')).toBeTruthy();
   });
 
-  it('keeps editing and sharing side by side under your words, ahead of the numbers, with the way to more friends beside them', async () => {
+  it('keeps editing and sharing side by side under your words, the figures beside your face, with the way to more friends beside them', async () => {
     open();
     const edit = await screen.findByRole('button', { name: 'Edit profile' });
     const share = screen.getByRole('button', { name: 'Share profile' });
@@ -123,9 +125,9 @@ describe('your profile', () => {
     expect(share.parentElement).toBe(add.parentElement);
     expect(edit.compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(share.compareDocumentPosition(add) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // Actions come before progress.
+    // The figures stand beside the face, above the name and the actions.
     const friends = await screen.findByRole('button', { name: /Friends$/ });
-    expect(edit.compareDocumentPosition(friends) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(friends.compareDocumentPosition(edit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     fireEvent.click(add);
     expect(navigation.navigate).toHaveBeenCalledWith('Friends');
@@ -146,7 +148,7 @@ describe('your profile', () => {
     expect(share.textContent).toBe('Share profile');
   });
 
-  it('shows a dash for the badges, not a made-up zero, when the public profile does not answer', async () => {
+  it('shows no made-up badge count when the public profile does not answer', async () => {
     // No route for `/users/u1`, so it fails like a server error.
     testAuth.client = fakeClient({
       'GET /me': ok({ user: { id: 'u1', username: 'rojda', displayName: null, bio: null, xp: 0, streak: null, profilePhotoUrl: null } }),
@@ -159,7 +161,9 @@ describe('your profile', () => {
         <ProfileScreen />
       </UnreadProvider>,
     );
-    expect(await screen.findByRole('button', { name: '— Badges' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: '0 Friends' })).toBeTruthy();
+    await waitFor(() => expect(screen.queryByTestId('profile-highlights')).toBeNull());
+    expect(screen.queryByText(/Badges/)).toBeNull();
   });
 
   it('draws your own horizon behind your face', async () => {

@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   segmentFill: { flex: 1, borderRadius: radii.pill },
   guide: { paddingHorizontal: spacing.lg, marginTop: spacing.sm },
   body: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.md },
-  question: { ...display(typography.sizes.xxl), marginBottom: spacing.lg },
-  error: { fontSize: typography.sizes.sm, marginTop: spacing.sm, lineHeight: 20 },
+  question: { ...display(typography.sizes.title), marginBottom: spacing.lg },
+  error: { fontSize: typography.sizes.text, marginTop: spacing.sm, lineHeight: 20 },
   foot: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
 });

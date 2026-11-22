@@ -26,10 +26,11 @@ import { railEdits } from '../social/useSocialRail';
 import { useUnfriend } from '../social/unfriend';
 import { useOptimisticSend } from '../lib/optimistic';
 import { PlayWithButton } from '../play/PlayButtons';
-import { flagUrl, countryName } from '../lib/countries';
+import { countryName } from '../lib/countries';
+import { Flag } from '../components/Flag';
 import { ChevronIcon, EditIcon, FlameIcon, MedalIcon, SendIcon, TrophyIcon, XpIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
-import { toLeagueTier } from '@kurda/shared';
+import { compactCount, toLeagueTier } from '@kurda/shared';
 import { leagueName } from '../ranks/names';
 import type { MessageKey } from '../i18n/en';
 
@@ -142,6 +143,9 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
 
   // One normalized view drives a shared card shell for both own + others.
   const number = (n: number): string => n.toLocaleString(locale);
+  // Figures are shortened (5230 → 5.2K) so they fit side by side; a screen reader is given the whole number.
+  const short = (n: number): string => compactCount(n, locale);
+  const whole = (n: number): string | undefined => (short(n) === number(n) ? undefined : number(n));
   const days = (n: number): string => t(n === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: number(n) });
   let id = '';
   let name = '';
@@ -160,7 +164,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   const streakFact = (current: number): ProfileFact => ({
     key: 'streak',
     label: t('profile.stat.streak'),
-    value: number(current),
+    value: short(current),
     icon: <FlameIcon size={15} className={current > 0 ? 'mkp-fact-lit' : undefined} />,
     spoken: days(current),
   });
@@ -180,9 +184,10 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     online = me.online;
     country = me.country ?? null;
     facts.push(streakFact(me.streak.current));
-    facts.push({ key: 'xp', label: t('profile.stat.xp'), value: number(me.level?.xp ?? me.xp), icon: <XpIcon size={15} /> });
+    const xp = me.level?.xp ?? me.xp;
+    facts.push({ key: 'xp', label: t('profile.stat.xp'), value: short(xp), spoken: whole(xp), icon: <XpIcon size={15} /> });
     // beside the streak, the number a missed day never takes away
-    facts.push({ key: 'longest', label: t('profile.stat.longestStreak'), value: number(me.streak.longest), spoken: days(me.streak.longest) });
+    facts.push({ key: 'longest', label: t('profile.stat.longestStreak'), value: short(me.streak.longest), spoken: days(me.streak.longest) });
     actions = <OwnActions userId={me.id} name={name} onGo={closeProfile} />;
   } else {
     if (!other) return unavailable;
@@ -199,12 +204,15 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     country = other.country ?? null;
     if (other.streak !== undefined) facts.push(streakFact(other.streak));
     if (other.level?.xp !== undefined || other.xp !== undefined) {
-      facts.push({ key: 'xp', label: t('profile.stat.xp'), value: number(other.level?.xp ?? other.xp ?? 0), icon: <XpIcon size={15} /> });
+      const xp = other.level?.xp ?? other.xp ?? 0;
+      facts.push({ key: 'xp', label: t('profile.stat.xp'), value: short(xp), spoken: whole(xp), icon: <XpIcon size={15} /> });
     }
     // a league tier key, translated; none for someone not taking part (never a default tier)
     const leagueTier = toLeagueTier(other.league?.tier ?? other.tier ?? null);
     if (leagueTier) facts.push({ key: 'league', label: t('profile.stat.league'), value: leagueName(t, leagueTier), icon: <TrophyIcon size={15} /> });
-    if (other.achievements !== undefined) facts.push({ key: 'badges', label: t('profile.badges'), value: number(other.achievements), icon: <MedalIcon size={15} /> });
+    if (other.achievements !== undefined) {
+      facts.push({ key: 'badges', label: t('profile.badges'), value: short(other.achievements), spoken: whole(other.achievements), icon: <MedalIcon size={15} /> });
+    }
     actions = blocked ? (
       <div className="pcard-blocked" role="status">
         <p>{t('profile.blockedNote')}</p>
@@ -286,7 +294,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
                 {level && <li className="pc-level-chip">{t('profile.levelN', { level: level.level })}</li>}
                 {country && place && (
                   <li className="mkp-country">
-                    <img className="flag" src={flagUrl(country)} alt="" width={22} height={16} loading="lazy" />
+                    <Flag code={country} />
                     <span>{place}</span>
                   </li>
                 )}

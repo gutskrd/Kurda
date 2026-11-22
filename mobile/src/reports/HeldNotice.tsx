@@ -93,9 +93,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
   },
   row: { alignItems: 'flex-start', gap: spacing.sm },
-  text: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
+  text: { flex: 1, fontSize: typography.sizes.text, lineHeight: 20 },
   ways: { flexWrap: 'wrap', columnGap: spacing.lg },
   way: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
-  wayText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  more: { fontSize: typography.sizes.sm, lineHeight: 20, paddingBottom: spacing.xs },
+  wayText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  more: { fontSize: typography.sizes.text, lineHeight: 20, paddingBottom: spacing.xs },
 });

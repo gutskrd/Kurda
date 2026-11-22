@@ -2,48 +2,29 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import {
   PATH_LANDMARK_LOOP,
   landmarkBox,
-  pathGroundColour,
-  pathLandSvg,
   pathLandmarkSvg,
   pathLoopSvg,
   pathSignpostSvg,
-  pathStonesSvg,
   pathStopSvg,
-  trailStones,
   type PathBox,
   type PathLand,
   type PathStopLook,
   type PathUnit,
   type UnitTone,
 } from '@kurda/shared';
-import { useAuth } from '../auth/AuthProvider';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
-import { Avatar } from '../components/Avatar';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import type { SkillNode } from './types';
 
 /**
- * The valley the lesson path walks through, drawn from @kurda/shared (path-world.ts, art/path-land.ts,
- * art/path-landmark.ts) as on the phone: each unit's land and road, walked stretches in warm dirt, its landmark with one
- * moving part, and the learner on the current stop; plus the rail of units. A unit far from the screen (`near` false)
- * is only its ground colour, and only the unit in view moves (path.css), never under reduced motion.
+ * What stands beside the lesson path, drawn from @kurda/shared (path-world.ts, art/path-landmark.ts) as on the phone:
+ * each unit's landmark with one moving part, beside a path that stands on the page itself; plus the rail of units. A
+ * unit far from the screen (`near` false) draws nothing, and only the unit in view moves (path.css), never under
+ * reduced motion.
  */
 
 type Unit = PathUnit<SkillNode>;
-
-/** Whether the page is dark (theme/theme.ts sets the scheme on the root), followed as it changes. */
-export function useDarkPage(): boolean {
-  const read = (): boolean => typeof document !== 'undefined' && document.documentElement.dataset.theme !== 'light';
-  const [dark, setDark] = useState(read);
-  useEffect(() => {
-    if (typeof MutationObserver === 'undefined') return;
-    const observer = new MutationObserver(() => setDark(read()));
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    return () => observer.disconnect();
-  }, []);
-  return dark;
-}
 
 /** An element's width, followed as it changes, from when it is `ready`. */
 export function useWidth(ref: React.RefObject<HTMLElement | null>, ready: boolean): number {
@@ -98,56 +79,11 @@ export function useUnitsOnScreen(root: React.RefObject<HTMLElement | null>, unit
   return { near, seen };
 }
 
-/** One unit's land, trail and landmark behind its stops; decorative. */
-export function UnitLand({
-  unit,
-  land,
-  width,
-  rtl,
-  dark,
-  near,
-  fresh,
-}: {
-  unit: Unit;
-  land: PathLand;
-  width: number;
-  rtl: boolean;
-  dark: boolean;
-  near: boolean;
-  /** Stops whose trail was walked since the last lesson; their stones fill in as the path moves on. */
-  fresh: ReadonlySet<string>;
-}): React.JSX.Element {
-  const stones = useMemo(() => trailStones(unit.stops), [unit.stops]);
-  const ground = useMemo(() => {
-    if (!near || width <= 0) return null;
-    const stops = unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
-    return { __html: pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, dark, rtl, seed: unit.unitId }) };
-  }, [near, width, unit, land.ground, stones, dark, rtl]);
-  const trail = useMemo(() => {
-    if (!near || width <= 0) return null;
-    const isFresh = (s: (typeof stones)[number]): boolean => s.walked && fresh.has(s.to);
-    const draw = (list: typeof stones, walked: boolean): { __html: string } | null =>
-      list.length > 0 ? { __html: pathStonesSvg({ width, height: unit.height, stones: list, walked, dark, rtl }) } : null;
-    return {
-      ahead: draw(
-        stones.filter((s) => !s.walked || isFresh(s)),
-        false,
-      ),
-      walked: draw(
-        stones.filter((s) => s.walked && !isFresh(s)),
-        true,
-      ),
-      fresh: draw(stones.filter(isFresh), true),
-    };
-  }, [near, width, unit.height, stones, fresh, dark, rtl]);
-  const box = landmarkBox(width);
+/** A unit's landmark beside its stops, the path itself standing on the page; decorative. */
+export function UnitLandmark({ land, width, dark, near }: { land: PathLand; width: number; dark: boolean; near: boolean }): React.JSX.Element {
   return (
-    <li className="lp-land" aria-hidden="true" style={{ background: ground ? undefined : pathGroundColour(land.ground, dark) }}>
-      {ground && <span className="lp-land-ground" dangerouslySetInnerHTML={ground} />}
-      {trail?.ahead && <span className="lp-land-stones" dangerouslySetInnerHTML={trail.ahead} />}
-      {trail?.walked && <span className="lp-land-stones" dangerouslySetInnerHTML={trail.walked} />}
-      {trail?.fresh && <span className="lp-land-stones is-fresh" dangerouslySetInnerHTML={trail.fresh} />}
-      {near && width > 0 && <Landmark land={land} box={box} dark={dark} />}
+    <li className="lp-land" aria-hidden="true">
+      {near && width > 0 && <Landmark land={land} box={landmarkBox(width)} dark={dark} />}
     </li>
   );
 }
@@ -186,27 +122,6 @@ export function StopArt({ look, tone, dark, near }: { look: PathStopLook; tone: 
       <span className="lp-art lp-art-base" aria-hidden="true" dangerouslySetInnerHTML={art.base} />
       <span className="lp-art lp-art-face" aria-hidden="true" dangerouslySetInnerHTML={art.face} />
     </>
-  );
-}
-
-/**
- * The learner on the current stop: their picture in a ring of the unit's colour on a short stem. Returning from a lesson
- * that moved them on, they hop from the finished stop (`hop`, its offset in points); the stylesheet plays the hop.
- */
-export function LearnerToken({ x, y, hop }: { x: number; y: number; hop: { dx: number; dy: number } | null }): React.JSX.Element {
-  const { user } = useAuth();
-  return (
-    <li
-      className={`lp-learner${hop ? ' is-hopping' : ''}`}
-      aria-hidden="true"
-      data-testid="lp-learner"
-      style={{ top: y, '--tx': `${x}px`, '--hx': `${hop?.dx ?? 0}px`, '--hy': `${hop?.dy ?? 0}px` } as React.CSSProperties}
-    >
-      <span className="lp-learner-ring">
-        <Avatar url={user?.avatarUrl ?? null} glyphSize={22} />
-      </span>
-      <span className="lp-learner-stem" />
-    </li>
   );
 }
 

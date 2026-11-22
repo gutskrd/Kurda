@@ -16,7 +16,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 const ART = 52;
 
 /**
- * Hevalo's book on Learn: one slim card opening the PDF of every online chapter (api/src/books), with Hamo's
+ * Hevalo's book in Stories: one slim card opening the PDF of every online chapter (api/src/books), with Hamo's
  * stories, words and grammar, to keep, share or print. Shown only once a chapter is online, never when the server
  * has no book.
  */
@@ -70,6 +70,6 @@ const styles = StyleSheet.create({
   card: { alignItems: 'center', gap: spacing.sm + 4, borderRadius: radii.lg, paddingVertical: spacing.sm, paddingHorizontal: spacing.sm + 2 },
   art: { borderRadius: radii.md, overflow: 'hidden' },
   main: { flex: 1, gap: 1 },
-  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  sub: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  title: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  sub: { fontSize: typography.sizes.text, lineHeight: 20 },
 });

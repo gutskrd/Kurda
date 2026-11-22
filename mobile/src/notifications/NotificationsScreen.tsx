@@ -162,15 +162,15 @@ function PrefsSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   const row = (i: number) => (
     <View key={i} style={styles.row}>
-      <SkeletonText size={typography.sizes.md} width={i % 2 ? '38%' : '52%'} raised style={styles.flex} />
+      <SkeletonText size={typography.sizes.text} width={i % 2 ? '38%' : '52%'} raised style={styles.flex} />
       <SwitchSkeleton />
     </View>
   );
   return (
     <View style={styles.content} accessibilityLabel={t('common.loading')}>
-      <SkeletonText size={typography.sizes.sm} width={88} style={styles.sectionSkeleton} />
+      <SkeletonText size={typography.sizes.text} width={88} style={styles.sectionSkeleton} />
       {NOTIFICATION_CATEGORIES.map((_, i) => row(i))}
-      <SkeletonText size={typography.sizes.sm} width={96} style={styles.sectionSkeleton} />
+      <SkeletonText size={typography.sizes.text} width={96} style={styles.sectionSkeleton} />
       {row(NOTIFICATION_CATEGORIES.length)}
     </View>
   );
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingHorizontal: layout.gutter },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   stepBtn: { width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  stepText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  stepText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   // Wide enough for "10:00 PM", so the two rows' steps line up whatever the times.
-  time: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, minWidth: 80, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  time: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, minWidth: 80, textAlign: 'center', fontVariant: ['tabular-nums'] },
 });

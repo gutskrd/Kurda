@@ -72,7 +72,7 @@ describe('ProfileActivity', () => {
   it('renders nothing at all when the profile is private', () => {
     vi.stubGlobal('fetch', vi.fn());
     const { container } = renderApp(<ProfileActivity userId="u1" sections={null} />);
-    expect(container.querySelector('.mkp-activity')).toBeNull();
+    expect(container.querySelector('.pg')).toBeNull();
     expect(fetch).not.toHaveBeenCalled();
   });
 
@@ -96,18 +96,19 @@ describe('ProfileActivity', () => {
     expect(asked).toEqual(['posts', 'games']);
   });
 
-  it('links a post to its page, and leaves a game result unlinked', async () => {
+  it('links a post’s tile to its page, and shows a game as its cover with the result, unlinked', async () => {
     const { fetch } = activityFetch({
       posts: [post('s1', 'Çîroka min')],
-      games: [entry('g1', 'games', 'Peyvok')],
+      games: [entry('g1', 'games', 'Peyvok', { detail: 'Won · easy' })],
     });
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={ALL} />);
 
     expect(await screen.findByRole('link', { name: /Çîroka min/ })).toHaveAttribute('href', '/app/library/s1');
 
-    await userEvent.click(screen.getByRole('tab', { name: /Games/ }));
-    expect(await screen.findByText('Peyvok')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: 'Games' }));
+    const game = await screen.findByRole('img', { name: /^Peyvok, Won · easy, / });
+    expect(game.querySelector('.gp-art')).not.toBeNull();
     expect(screen.queryByRole('link', { name: /Peyvok/ })).not.toBeInTheDocument();
   });
 
@@ -142,47 +143,44 @@ describe('ProfileActivity', () => {
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={{ ...ALL, likes: false }} own />);
 
-    // on your own profile the tab stays — your work should not vanish on you
-    const likes = await screen.findByRole('tab', { name: /Likes/ });
-    expect(likes).toBeInTheDocument();
-    expect(likes.textContent).toContain('Hidden');
-    expect(screen.getByRole('tab', { name: /Posts/ }).textContent).not.toContain('Hidden');
+    // on your own profile the tab stays, said to be hidden and marked with a lock
+    const likes = await screen.findByRole('tab', { name: 'Likes, Hidden' });
+    expect(likes.querySelector('.pg-tab-lock')).not.toBeNull();
+    expect(screen.getByRole('tab', { name: 'Posts' }).querySelector('.pg-tab-lock')).toBeNull();
   });
 
-  it('offers exactly five sections: posts, games, likes, reposts, saved', async () => {
+  it('offers exactly five sections as icons named for a screen reader: posts, games, likes, reposts, saved', async () => {
     const { fetch } = activityFetch({ posts: [] });
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={ALL} />);
 
     // Stories, poems and Dîmen share the Posts tab, as on the community wall.
-    const tabs = (await screen.findAllByRole('tab')).map((t) => t.textContent?.replace('Hidden', '').trim());
-    expect(tabs).toEqual(['Posts', 'Games', 'Likes', 'Reposts', 'Saved']);
+    const tabs = await screen.findAllByRole('tab');
+    expect(tabs.map((t) => t.getAttribute('aria-label'))).toEqual(['Posts', 'Games', 'Likes', 'Reposts', 'Saved']);
+    expect(tabs.every((t) => t.textContent === '')).toBe(true);
   });
 
-  it('shows a picture at the size the card shows it, not as a thumbnail', async () => {
+  it('draws a post with a picture as the picture, filling its tile, with how often it was seen, shortened', async () => {
     const { fetch } = activityFetch({
-      posts: [post('i1', 'Çiya', { imageUrl: 'https://cdn.test/a.webp' })],
+      posts: [post('i1', 'Çiya', { imageUrl: 'https://cdn.test/a.webp', viewCount: 1240 })],
     });
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={ALL} />);
 
-    // The picture is drawn in the post card.
-    await screen.findByText('Çiya');
-    expect(document.querySelector('.fcard-pics img')).toHaveAttribute('src', 'https://cdn.test/a.webp');
-    expect(document.querySelector('.mkp-activity-shot')).toBeNull();
+    const tile = await screen.findByRole('link', { name: /Çiya/ });
+    expect(tile.querySelector('img.pg-tile-img')).toHaveAttribute('src', 'https://cdn.test/a.webp');
+    expect(tile.querySelector('.pg-tile-foot')?.textContent).toBe('1.2K');
   });
 
-  it('draws a post as the whole card, byline and actions and all', async () => {
+  it('draws a post of words as its title and opening lines, marked with its kind', async () => {
     const { fetch } = activityFetch({ posts: [post('s1', 'Çîroka min')] });
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={ALL} />);
 
-    await screen.findByText('Çîroka min');
-    const card = document.querySelector('.mkp-activity-feed .fcard');
-    expect(card, 'a post should be a card').not.toBeNull();
-    // who wrote it, what it says, and the things you can do with it
-    expect(card!.querySelector('.fcard-name')?.textContent).toBe('nivîskar');
-    expect(card!.querySelector('.fcard-text')?.textContent).toContain('fill a card');
-    expect(card!.querySelectorAll('.fcard-act').length).toBeGreaterThan(1);
+    const tile = await screen.findByRole('link', { name: 'Story: Çîroka min' });
+    expect(tile).toHaveClass('is-words');
+    expect(tile.querySelector('.pg-tile-title')?.textContent).toBe('Çîroka min');
+    expect(tile.querySelector('.pg-tile-excerpt')?.textContent).toContain('fill a card');
+    expect(tile.querySelector('.pg-tile-mark svg')).not.toBeNull();
   });
 });

@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
   },
-  pillText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  pillText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: CHOICE_GAP },
   chip: {
     minHeight: MIN_TOUCH_TARGET,
@@ -278,9 +278,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  chipText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   chipTextOn: { fontWeight: typography.weights.bold },
   note: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, borderRadius: radii.md, padding: spacing.md },
-  noteText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
+  noteText: { flex: 1, fontSize: typography.sizes.text, lineHeight: 20 },
   liveRegion: { position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0.01 },
 });

@@ -17,7 +17,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { AccessibilityInfo } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -132,60 +132,26 @@ const exercises = (sentence: boolean, hear: boolean) =>
   });
 
 describe('Learn', () => {
-  /*
-   * Build a Sentence and Hear It, Find It each have a tile among the Lessons tools while available in the
-   * course's Kurdish, and open their own screens.
-   */
-  it('offers the lessons’ two exercises among the tools on Lessons, and opens each', async () => {
+  /* Lessons is the road alone: the course's name over it, and no practice, exercise or extras around it. */
+  it('opens on Lessons, the course as a road under its name', async () => {
     client(STREAK, undefined, { 'GET /games/availability?dialect=kmr': exercises(true, true) });
-    renderWithProviders(<LearnScreen />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Build a Sentence, Put the words in order' }));
-    expect(navigation.navigate).toHaveBeenLastCalledWith('BuildSentence');
-    fireEvent.click(screen.getByRole('button', { name: 'Hear It, Find It, Find what you heard' }));
-    expect(navigation.navigate).toHaveBeenLastCalledWith('HearIt');
-    // A game is not a lessons tool. The Games half, mounted beside this one, lists the game once drawn, so the
-    // claim is about the tools and holds either way.
-    const tools = within(screen.getByTestId('learn-tools'));
-    expect(tools.getByRole('button', { name: /^Hear It, Find It, / })).toBeTruthy();
-    expect(tools.queryByText('Dizê Bîrê')).toBeNull();
-    await waitFor(() => expect(screen.queryByText('Dizê Bîrê')).not.toBeNull());
-    expect(tools.queryByText('Dizê Bîrê')).toBeNull();
-  });
-
-  it('shows no tile for an exercise that cannot be done yet, and none when the answer cannot be had', async () => {
-    client(STREAK, undefined, { 'GET /games/availability?dialect=kmr': exercises(false, true) });
-    renderWithProviders(<LearnScreen />);
-    expect(await screen.findByRole('button', { name: /^Hear It, Find It, / })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /^Build a Sentence/ })).toBeNull();
-    cleanup();
-    client();
-    renderWithProviders(<LearnScreen />);
-    expect(await screen.findByText('Malbat', { selector: '[role="heading"]' })).toBeTruthy();
-    await waitFor(() => expect((testAuth.client as ReturnType<typeof fakeClient>).calls.some((c) => c.path.startsWith('/games/availability'))).toBe(true));
-    expect(screen.queryByRole('button', { name: /^Hear It, Find It/ })).toBeNull();
-    expect(screen.queryByRole('button', { name: /^Build a Sentence/ })).toBeNull();
-  });
-
-  it('opens on Lessons, with one next step at the top', async () => {
-    client();
     renderWithProviders(<LearnScreen />);
     expect(lessonsTab().getAttribute('aria-selected')).toBe('true');
     expect(gamesTab().getAttribute('aria-selected')).toBe('false');
-    // The next open skill, how far the course has come, and one button.
-    expect(await screen.findByText('Malbat', { selector: '[role="heading"]' })).toBeTruthy();
-    expect(screen.getByText('1 of 3 skills done')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Lesson', { lessonId: 'l2', courseId: 'c1' });
+    expect(await screen.findByRole('heading', { name: 'Kurmancî' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Chapter 1 trophy, not earned yet' })).toBeTruthy();
+    for (const gone of [/^Practice,/, /^Build a Sentence/, /^Hear It, Find It/, /^Continue$/]) expect(screen.queryByRole('button', { name: gone })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'More for today' })).toBeNull();
   });
 
-  // The path comes right after the next step and the tools; the week and the day's extras wait below it.
-  it('puts the path before the rest of today', async () => {
+  /* The letters and first words, and the dictionary, are two buttons in one pill at the top, under the bell. */
+  it('opens the letters and the dictionary from the two buttons at the top', async () => {
     client();
     renderWithProviders(<LearnScreen />);
-    const path = await screen.findByRole('heading', { name: 'Course map' });
-    const more = screen.getByRole('heading', { name: 'More for today' });
-    expect(path.compareDocumentPosition(more) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Chapter 1 trophy, not earned yet' }).compareDocumentPosition(more) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'Letters and words' }));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('Words');
+    fireEvent.click(screen.getByRole('button', { name: 'Dictionary' }));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('Dictionary');
   });
 
   /* Learn's corner shows today's status at a glance (streak, daily goal, Zêr), and each opens more. */
@@ -230,34 +196,20 @@ describe('Learn', () => {
     expect(said).toHaveBeenCalledWith('Something went wrong on our end. Please try again shortly.');
   });
 
-  it('keeps the practice tools one tap away, and says what is due for review', async () => {
-    client();
-    renderWithProviders(<LearnScreen />);
-    // Practice opens on its hub, the count of words due on its tile.
-    fireEvent.click(await screen.findByRole('button', { name: 'Practice, 8 words due' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('PracticeHub');
-    fireEvent.click(screen.getByRole('button', { name: 'Dictionary, Look up any word' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Dictionary');
-    // The letters are the first step of Letters and words, not a tile of their own.
-    expect(screen.queryByRole('button', { name: /^Alphabet,/ })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Letters and words, Letters, colours, numbers, days, months' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Words');
-  });
-
-  /* A review left part-way is resumed as on the web: its own session, not a new one beside it. */
-  it('offers a review left part-way through, and opens that one where it stopped', async () => {
+  /* Review is a stop on the road; one left part-way is carried on there, in its own session. */
+  it('carries on a review left part-way from the road, and starts one when none was left', async () => {
     client(STREAK, { due: 8, available: 20, open: 'p9' });
     renderWithProviders(<LearnScreen />);
-    expect(await screen.findByText('You left a review part-way through. Your answers so far are saved.')).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'Review, words ready: 8' }));
     fireEvent.click(screen.getByRole('button', { name: 'Continue review' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Practice', { sessionId: 'p9' });
-  });
 
-  it('offers no review to continue when none was left part-way', async () => {
+    cleanup();
     client();
     renderWithProviders(<LearnScreen />);
-    await screen.findByRole('button', { name: 'Practice, 8 words due' });
-    expect(screen.queryByRole('button', { name: 'Continue review' })).toBeNull();
+    fireEvent.click(await screen.findByRole('button', { name: 'Review, words ready: 8' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start review' }));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('Practice');
   });
 
   /* Three groups in order, Lessons · Stories · Games. Stories is the library, and this switch is the only way to a story. */
@@ -356,7 +308,7 @@ describe('Learn', () => {
     // The same kept day is not said again.
     cleanup();
     renderWithProviders(<LearnScreen />);
-    await screen.findByRole('button', { name: 'Continue' });
+    await screen.findByRole('button', { name: 'Chapter 1 trophy, not earned yet' });
     await act(async () => new Promise((resolve) => setTimeout(resolve, 1600)));
     expect(screen.queryByRole('heading', { name: title })).toBeNull();
     }, 15_000);
@@ -373,7 +325,7 @@ describe('Learn', () => {
     localStorage.clear();
     client();
     renderWithProviders(<LearnScreen />);
-    await screen.findByRole('button', { name: 'Continue' });
+    await screen.findByRole('button', { name: 'Chapter 1 trophy, not earned yet' });
     await act(async () => new Promise((resolve) => setTimeout(resolve, 1600)));
     expect(screen.queryByRole('button', { name: 'Start a lesson' })).toBeNull();
   }, 15_000);
@@ -381,7 +333,7 @@ describe('Learn', () => {
   it('reads the course and the streak again when pulled down', async () => {
     client();
     renderWithProviders(<LearnScreen />);
-    await screen.findByRole('button', { name: 'Continue' });
+    await screen.findByRole('button', { name: 'Chapter 1 trophy, not earned yet' });
     await screen.findByRole('button', { name: 'Streak: 6 days' });
     const count = (path: string) => (testAuth.client as ReturnType<typeof fakeClient>).calls.filter((c) => c.path === path).length;
     const before = { map: count('/courses/c1/map'), me: count('/me') };
@@ -394,7 +346,7 @@ describe('Learn', () => {
   it('keeps the course and the bar over a quick tab switch, and reads them again back from a lesson', async () => {
     client();
     renderWithProviders(<LearnScreen />);
-    await screen.findByRole('button', { name: 'Continue' });
+    await screen.findByRole('button', { name: 'Chapter 1 trophy, not earned yet' });
     await screen.findByRole('button', { name: 'Streak: 6 days' });
     const paths = ['/courses', '/courses/c1/map', '/practice/due', '/me', '/me/daily-goal', '/me/wallet'];
     const asked = () => paths.map((path) => (testAuth.client as ReturnType<typeof fakeClient>).calls.filter((c) => c.path === path).length);

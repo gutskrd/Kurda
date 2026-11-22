@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     minHeight: MIN_TOUCH_TARGET,
   },
-  title: { flex: 1, fontSize: typography.ios.row, fontWeight: typography.weights.semibold },
+  title: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   spacer: { flex: 1 },
   // The ✕ and ‹: small circles reaching 48 past their edges.
   round: { width: ROUND, height: ROUND, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },

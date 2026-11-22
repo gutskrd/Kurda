@@ -1,17 +1,17 @@
 /**
  * Join codes without React Native: reading a code from typed or pasted text, explaining refusals, the share message,
- * and each game's code colours. Pure, so each rule is tested alone; CodeTicket.tsx and JoinByCode.tsx draw them.
+ * and the code tiles' colours. Pure, so each rule is tested alone; CodeTicket.tsx and JoinByCode.tsx draw them.
  *
  * A code is six characters from `JOIN_CODE_ALPHABET` (no 0/O, no 1/I/L) for every game, and the server normalises
  * it (`normalizeJoinCode`); these rules only shape what the boxes show while typing.
  */
-import { JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH, hueSteps, playGameHue, type PlayGame } from '@kurda/shared';
+import { JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH, type PlayGame } from '@kurda/shared';
 import { describeError, type Translate } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { AA_NORMAL, contrastRatio } from '../a11y/contrast';
 import { ensureContrast } from '../a11y/ensureContrast';
 import type { Palette } from '../theme/palette';
-import { blend, lipOf, type TileTone } from '../theme/tileTones';
+import { lipOf, type TileTone } from '../theme/tileTones';
 
 /** Converts Arabic-script digits to Western ones. */
 function westernDigits(text: string): string {
@@ -78,27 +78,9 @@ export function shareMessage(
   return link ? `${said}\n${t('play.code.shareTap')} ${link}` : said;
 }
 
-/**
- * Each game's colour: the hue of its stamp on the games page (shared art/games.ts), or the app's violet for story
- * games, which have no stamp. By day, halfway from the base to its deep shade under white text; by night, its
- * lifted base under dark text, as the violet is.
- */
-export function gameColour(colors: Palette, game: PlayGame): string {
-  const hue = playGameHue(game);
-  if (!hue) return colors.primary;
-  const steps = hueSteps(colors.scheme, hue);
-  return colors.scheme === 'dark' ? steps.base : blend(steps.deep, steps.base, DAY_DEPTH);
-}
-
-/** How far toward its deep shade a game's colour sits by day: halfway, where white text clears 5:1 on every game. */
-const DAY_DEPTH = 0.5;
-
-/**
- * A code tile in its game's colour: the face, a lip a step darker, and whichever palette ink reads better, nudged
- * until it clears 4.5:1 (which a game colour already does).
- */
-export function codeTone(colors: Palette, game: PlayGame): TileTone {
-  return filledTone(colors, gameColour(colors, game));
+/** A code tile, the same for every game: the ink as its face, a lip a step darker, and the page's ink written on it. */
+export function codeTone(colors: Palette, _game: PlayGame): TileTone {
+  return filledTone(colors, colors.primary);
 }
 
 /** Any face in a palette colour, inked the same way: a code tile, or a ticket's stub (Ticket.tsx). */

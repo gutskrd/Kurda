@@ -315,11 +315,11 @@ export function SetupSheet({
 
 const styles = StyleSheet.create({
   field: { gap: spacing.sm },
-  hint: { fontSize: typography.sizes.sm, lineHeight: 19 },
+  hint: { fontSize: typography.sizes.text, lineHeight: 22 },
   fixed: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radii.md, padding: spacing.md },
   fixedText: { flex: 1, gap: 2 },
-  fixedTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  fixedMeta: { fontSize: typography.sizes.sm },
+  fixedTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  fixedMeta: { fontSize: typography.sizes.text },
   pickList: { gap: spacing.xs },
   pickRow: {
     flexDirection: 'row',
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     paddingHorizontal: spacing.md,
   },
-  pickText: { flex: 1, fontSize: typography.sizes.md },
+  pickText: { flex: 1, fontSize: typography.sizes.text },
   radio: { width: 20, height: 20, borderRadius: radii.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   radioDot: { width: 10, height: 10, borderRadius: radii.pill },
 });

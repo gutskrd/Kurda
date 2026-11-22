@@ -3,7 +3,7 @@
   /* Clear of the modal's ×, which sits top right in either direction. */
   margin: 0 40px 10px 0;
   font-family: var(--font-sans);
-  font-size: 1.1rem;
+  font-size: var(--text);
   font-weight: 650;
   line-height: 1.35;
   color: var(--ink);
@@ -14,13 +14,13 @@
   gap: 6px;
   margin: 0 0 10px;
   color: var(--gold-ink);
-  font-size: 1.05rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .buy-confirm-note {
   margin: 0;
   color: var(--ink-2);
-  font-size: 0.93rem;
+  font-size: var(--text);
   line-height: 1.5;
 }
 .buy-confirm-actions {
@@ -69,19 +69,19 @@
 .buy-confirm-balance {
   margin: 0 0 12px;
   color: var(--ink-3);
-  font-size: 0.9rem;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 /* The shortfall, when the balance does not reach the price. */
 .buy-confirm-short {
   margin: 0 0 10px;
   color: var(--ink);
-  font-size: 0.95rem;
+  font-size: var(--text);
   font-weight: 650;
 }
 .buy-confirm-error {
   margin: 12px 0 0;
   color: var(--danger);
-  font-size: 0.9rem;
+  font-size: var(--text);
   line-height: 1.45;
 }

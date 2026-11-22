@@ -63,8 +63,8 @@ function CrashScreen({ error, onRetry }: { error: Error; onRetry: () => void }) 
 
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl, gap: spacing.md },
-  title: { ...display(typography.sizes.xxl), textAlign: 'center' },
-  body: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 22 },
-  detail: { fontSize: typography.sizes.xs, textAlign: 'center', fontStyle: 'italic' },
+  title: { ...display(typography.sizes.title), textAlign: 'center' },
+  body: { fontSize: typography.sizes.text, textAlign: 'center', lineHeight: 22 },
+  detail: { fontSize: typography.sizes.text, textAlign: 'center', fontStyle: 'italic' },
   buttonWrap: { alignSelf: 'stretch', marginTop: spacing.md },
 });

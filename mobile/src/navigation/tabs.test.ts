@@ -42,7 +42,7 @@ describe('tab registry', () => {
     for (const tab of TABS) expect(tab.activeIcon).toBeTruthy();
   });
 
-  /* A tab's word has a quarter of the bar and one line: fourteen letters fit at the tab label's size. */
+  /* A tab’s word has a quarter of the bar and one line: fourteen letters fit once the words shrink together to fit. */
   it('names every tab in a word short enough to sit under its icon, in every language', () => {
     for (const locale of LOCALES) {
       for (const tab of TABS) expect(TRANSLATIONS[locale][tab.labelKey].length, `${locale} ${tab.name}`).toBeLessThanOrEqual(14);

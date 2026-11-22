@@ -55,7 +55,7 @@ describe('a person’s avatar', () => {
 
 describe('a group’s avatar', () => {
   it('keeps its initials without a picture, as on the website', () => {
-    renderWithProviders(<GroupAvatar name="Hevalên Kurmancî" id="g1" size={40} />);
+    renderWithProviders(<GroupAvatar name="Hevalên Kurmancî" size={40} />);
     expect(screen.getByText('HK')).toBeTruthy();
   });
 });

@@ -85,5 +85,5 @@ const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   // The skill's name, quieter than the note's own heading.
   skill: { ...sectionLabel },
-  error: { fontSize: typography.sizes.sm },
+  error: { fontSize: typography.sizes.text },
 });

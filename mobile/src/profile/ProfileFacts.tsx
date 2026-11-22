@@ -1,20 +1,19 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useI18n } from '../i18n/I18nContext';
-import { formatNumber } from '../i18n/format';
 import { useDirection } from '../reports/direction';
-import { sectionLabel, statValue } from '../theme/fonts';
+import { statValue } from '../theme/fonts';
+import { BottomSheet } from '../theme/BottomSheet';
 import { Icon } from '../theme/Icon';
 import { pressedDim } from '../theme/motion';
 import { Pressable } from '../theme/Pressable';
 import { SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import type { LevelInfo } from './types';
 
 /**
- * The parts of a profile laid out as on the website (web/src/profile/FullProfile.tsx): the level and how far to the
- * next, a row of figures split by hairlines, and a section only its owner sees.
+ * The figures of a profile, laid out as on the website (web/src/profile/FullProfile.tsx): a row of them beside the
+ * face, or split by hairlines inside a sheet, and the row that opens what only the owner sees.
  */
 
 /** One figure and what it counts; a button where there is a page or a sheet behind it. */
@@ -27,50 +26,67 @@ export interface ProfileFact {
   art?: ReactNode;
   /** How a screen reader says it, where the figure alone would not do ("12 days"). */
   spoken?: string;
+  /** The whole number, where the figure is shortened ("5.2K"): what a screen reader says instead. */
+  whole?: string;
   onPress?: () => void;
 }
 
-/** Up to four figures in a row, the figure over its label, with a hairline between each. */
-export function ProfileFacts({ facts, testID }: { facts: readonly ProfileFact[]; testID?: string }): React.JSX.Element {
+/**
+ * Up to four figures in a row, the figure over its label. `head` is the row beside a face: large figures with no
+ * hairlines, each shrinking to fit its share of the row rather than being cut; otherwise a hairline stands between each.
+ */
+export function ProfileFacts({ facts, head = false, testID }: { facts: readonly ProfileFact[]; head?: boolean; testID?: string }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   return (
-    <View style={[styles.facts, { flexDirection: dir.row }]} testID={testID}>
+    <View style={[styles.facts, head ? styles.factsHead : null, { flexDirection: dir.row }]} testID={testID}>
       {facts.map((fact, i) => (
         <Fragment key={fact.key}>
-          {i > 0 ? <View style={[styles.divider, { backgroundColor: colors.separator }]} /> : null}
-          <Fact fact={fact} />
+          {i > 0 && !head ? <View style={[styles.divider, { backgroundColor: colors.separator }]} /> : null}
+          <Fact fact={fact} head={head} />
         </Fragment>
       ))}
     </View>
   );
 }
 
-function Fact({ fact }: { fact: ProfileFact }): React.JSX.Element {
+function Fact({ fact, head }: { fact: ProfileFact; head: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   const body = (
     <>
       {fact.value === null ? (
-        <SkeletonText size={typography.sizes.lg} width={28} align="center" />
+        <SkeletonText size={head ? typography.sizes.title : typography.sizes.text} width={28} align="center" />
       ) : (
         <View style={[styles.figureRow, { flexDirection: dir.row }]}>
           {fact.art}
-          <Text style={[styles.figure, { color: colors.textPrimary }]} numberOfLines={1}>
+          <Text
+            style={[head ? styles.figureHead : styles.figure, { color: colors.textPrimary }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit={head}
+            minimumFontScale={0.5}
+          >
             {fact.value}
           </Text>
         </View>
       )}
-      <Text style={[styles.label, { color: colors.textSecondary }, fact.onPress ? styles.labelLink : null]} numberOfLines={1}>
+      <Text
+        style={[styles.label, { color: colors.textSecondary }, fact.onPress && !head ? styles.labelLink : null]}
+        numberOfLines={1}
+        adjustsFontSizeToFit={head}
+        minimumFontScale={0.75}
+      >
         {fact.label}
       </Text>
     </>
   );
   // "23 Friends", or the label first where the figure needs words of its own ("Streak, 6 days").
-  const spoken = fact.spoken ? `${fact.label}, ${fact.spoken}` : `${fact.value ?? '—'} ${fact.label}`;
+  const spoken = fact.spoken ? `${fact.label}, ${fact.spoken}` : `${fact.whole ?? fact.value ?? '—'} ${fact.label}`;
+  // Beside a face each figure is as wide as it needs and the row shares out the rest, so "128K" never squeezes "Friends".
+  const place = head ? [styles.fact, styles.factHead] : styles.fact;
   if (!fact.onPress) {
     return (
-      <View style={styles.fact} accessible accessibilityLabel={spoken}>
+      <View style={place} accessible accessibilityLabel={spoken}>
         {body}
       </View>
     );
@@ -80,80 +96,69 @@ function Fact({ fact }: { fact: ProfileFact }): React.JSX.Element {
       onPress={fact.onPress}
       accessibilityRole="button"
       accessibilityLabel={spoken}
-      style={({ pressed }) => [styles.fact, pressed && { opacity: pressedDim }]}
+      style={({ pressed }) => [place, pressed && { opacity: pressedDim }]}
     >
       {body}
     </Pressable>
   );
 }
 
-/** The level, a bar towards the next one, and how much XP is left to it. */
-export function LevelBar({ level }: { level: Pick<LevelInfo, 'level' | 'xp' | 'nextLevelXp' | 'progress'> }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t, locale } = useI18n();
-  const dir = useDirection();
-  const share = Math.min(1, Math.max(0, level.progress));
-  const next = t('profile.xpToLevel', { xp: formatNumber(Math.max(0, level.nextLevelXp - level.xp), locale), level: formatNumber(level.level + 1, locale) });
-  return (
-    <View
-      style={styles.level}
-      accessible
-      accessibilityRole="progressbar"
-      accessibilityLabel={`${t('profile.levelN', { level: formatNumber(level.level, locale) })}, ${next}`}
-      accessibilityValue={{ min: 0, max: 100, now: Math.round(share * 100) }}
-    >
-      <View style={[styles.levelHead, { flexDirection: dir.row }]}>
-        <Text style={[styles.levelName, dir.text, { color: colors.goldText }]}>{t('profile.levelN', { level: formatNumber(level.level, locale) })}</Text>
-        <Text style={[styles.levelNext, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
-          {next}
-        </Text>
-      </View>
-      <View style={[styles.track, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]}>
-        <View style={[styles.fill, { width: `${share * 100}%`, backgroundColor: colors.gold }]} />
-      </View>
-    </View>
-  );
-}
-
-/** A section of your own profile nobody else is shown, saying so beside its title. */
+/**
+ * What only the profile's owner sees, as one quiet row (a social app's dashboard): its title and that it is only
+ * theirs, opening the whole of it in a sheet.
+ */
 export function OnlyYou({ title, children }: { title: string; children: ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
+  const [open, setOpen] = useState(false);
   return (
-    <View style={styles.yours}>
-      <View style={[styles.yoursHead, { flexDirection: dir.row }]}>
-        <Text style={[sectionLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
-          {title}
-        </Text>
-        <View style={[styles.onlyYou, { flexDirection: dir.row }]}>
-          <Icon name="lock" size={12} tone="secondary" />
-          <Text style={[styles.onlyYouText, { color: colors.textSecondary }]}>{t('profile.onlyYou')}</Text>
+    <>
+      <Pressable
+        onPress={() => setOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`${title}, ${t('profile.onlyYou')}`}
+        testID="profile-yours"
+        style={({ pressed }) => [styles.yoursRow, { flexDirection: dir.row, backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+      >
+        <View style={styles.yoursText}>
+          <Text style={[styles.yoursTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+            {title}
+          </Text>
+          <View style={[styles.onlyYou, { flexDirection: dir.row }]}>
+            <Icon name="lock" size={12} tone="secondary" />
+            <Text style={[styles.onlyYouText, { color: colors.textSecondary }]} numberOfLines={1}>
+              {t('profile.onlyYou')}
+            </Text>
+          </View>
         </View>
-      </View>
-      <View style={[styles.yoursCard, { backgroundColor: colors.controlTrack }]}>{children}</View>
-    </View>
+        <View style={dir.flip}>
+          <Icon name="chevron-right" size={16} tone="secondary" />
+        </View>
+      </Pressable>
+      <BottomSheet visible={open} onClose={() => setOpen(false)} title={title} contentStyle={styles.yoursSheet}>
+        {children}
+      </BottomSheet>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   facts: { alignSelf: 'stretch', alignItems: 'stretch' },
+  factsHead: { justifyContent: 'space-between', gap: spacing.xs },
   divider: { width: StyleSheet.hairlineWidth, marginVertical: spacing.xs },
-  fact: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: spacing.xs },
-  figureRow: { alignItems: 'center', gap: 4 },
+  fact: { flex: 1, minWidth: 0, alignItems: 'center', gap: 2, paddingVertical: spacing.xs },
+  factHead: { flexGrow: 1, flexShrink: 1, flexBasis: 'auto' },
+  figureRow: { alignItems: 'center', gap: 4, maxWidth: '100%' },
   figure: { ...statValue },
-  label: { fontSize: typography.sizes.sm },
+  figureHead: { flexShrink: 1, fontSize: typography.sizes.title, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  label: { fontSize: typography.sizes.text },
   // A figure with a page behind it is underlined, as a link on the website.
   labelLink: { textDecorationLine: 'underline' },
-  level: { alignSelf: 'stretch', gap: spacing.xs },
-  levelHead: { justifyContent: 'space-between', alignItems: 'baseline', gap: spacing.sm },
-  levelName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  levelNext: { flexShrink: 1, fontSize: typography.sizes.sm },
-  track: { height: 6, borderRadius: radii.pill, overflow: 'hidden' },
-  fill: { height: 6, borderRadius: radii.pill },
-  yours: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
-  yoursHead: { justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
+  yoursRow: { alignItems: 'center', gap: spacing.md, minHeight: 52, borderRadius: radii.lg, paddingHorizontal: spacing.md - 2, paddingVertical: spacing.sm },
+  yoursText: { flex: 1, minWidth: 0, gap: 2 },
+  yoursTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   onlyYou: { alignItems: 'center', gap: 4 },
-  onlyYouText: { fontSize: typography.sizes.xs },
-  yoursCard: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md },
+  onlyYouText: { fontSize: typography.sizes.text },
+  yoursSheet: { gap: spacing.md },
 });

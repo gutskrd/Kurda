@@ -12,6 +12,8 @@ import { DEFAULT_FILTER, FeedFilter, isDefaultFilter, type FeedFilterValue } fro
 import { PostButton } from '../feed/PostButton';
 import { asSection, kindWithin } from '../feed/postKinds';
 import { DailyCard } from '../daily/DailyCard';
+import { EventCard } from '../events/EventCard';
+import { QuestsCard } from '../quests/QuestsCard';
 import { HomeLeagueLine } from '../leagues/HomeLeagueLine';
 import { useT } from '../i18n/I18nProvider';
 import { useArrival } from '../lib/motion';
@@ -192,8 +194,12 @@ export function Civak(): React.JSX.Element {
       {/* Where a held account lands: what waits and that learning does not. */}
       <HeldBanner />
 
-      {/* The streak and today's Zêr, opening the daily view; nothing for a visitor. */}
+      {/* An event while one runs; nothing otherwise. */}
+      <EventCard />
+
+      {/* The streak and today's Zêr, opening the daily view, then today's quests; nothing for a visitor. */}
       <DailyCard />
+      <QuestsCard />
 
       {/* The week's league in one line with the goal ring, linking to it. */}
       <HomeLeagueLine />

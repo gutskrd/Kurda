@@ -51,7 +51,7 @@
 /* the chapters to review, each with its number on a disc in its colour (learn/path.css `lp-tone-*`) */
 .practice-units-title {
   margin: 0 0 var(--space-4);
-  font-size: var(--text-section);
+  font-size: var(--text);
 }
 .practice-unit-disc {
   display: grid;
@@ -68,6 +68,6 @@
 }
 .practice-unit-eyebrow {
   color: var(--u-text);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
 }

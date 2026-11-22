@@ -47,18 +47,19 @@ afterEach(() => {
 
 describe('RatingBox, as a choice is marked', () => {
   // A rating given is a choice, so violet; gold is kept for what is earned.
-  it('fills the chosen stars in violet, not gold, and marks a chosen topic in solid violet', () => {
+  it('fills the chosen stars and marks a chosen topic in the ink, leaving the accent to Send alone', () => {
     testAuth.client = fakeClient();
     renderWithProviders(<RatingBox source="settings" onClose={() => undefined} />);
     fireEvent.click(screen.getByRole('radio', { name: '4 stars' }));
     const star = screen.getByRole('radio', { name: '1 star' }).querySelector('svg')!.outerHTML.toLowerCase();
-    expect([LIGHT.primary, DARK.primary].some((violet) => star.includes(violet.toLowerCase()))).toBe(true);
-    expect([LIGHT.gold, DARK.gold].some((gold) => star.includes(gold.toLowerCase()))).toBe(false);
+    expect([LIGHT.primary, DARK.primary].some((ink) => star.includes(ink.toLowerCase()))).toBe(true);
+    expect([LIGHT.accent, DARK.accent].some((violet) => star.includes(violet.toLowerCase()))).toBe(false);
     const bugs = screen.getByRole('checkbox', { name: 'Bugs' });
     fireEvent.click(bugs);
     expect(bugs.getAttribute('aria-checked')).toBe('true');
-    // The same violet as the main button, as every chosen chip is and as the website marks one.
-    expect(getComputedStyle(bugs).backgroundColor).toBe(getComputedStyle(screen.getByRole('button', { name: 'Send' }).firstElementChild as HTMLElement).backgroundColor);
+    // A chosen chip is the ink, never the main button's violet.
+    const send = getComputedStyle(screen.getByRole('button', { name: 'Send' }).firstElementChild as HTMLElement).backgroundColor;
+    expect(getComputedStyle(bugs).backgroundColor).not.toBe(send);
   });
 });
 

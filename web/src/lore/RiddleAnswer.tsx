@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 // Soranî riddles in a typeface made for Arabic script.
-import '@fontsource-variable/vazirmatn';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { dialectDirection, type RiddleAnswer, type RiddleCard, type RiddleDetail, type RiddleList } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';

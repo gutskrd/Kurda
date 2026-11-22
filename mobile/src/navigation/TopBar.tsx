@@ -58,9 +58,10 @@ export function TabHeader({
           numberOfLines={1}
           // One line beside the actions: grown without limit it would be cut off after a few letters.
           maxFontSizeMultiplier={fontScaleCap.heading}
-          // A long name ("الملف الشخصي" beside the menu at 320pt wide) is set a little smaller rather than cut.
+          // A long name ("الملف الشخصي" beside the menu at 320pt, any name on a folded phone's cover screen) is set smaller
+          // rather than cut, down to the text size.
           adjustsFontSizeToFit
-          minimumFontScale={0.75}
+          minimumFontScale={0.6}
           accessibilityRole="header"
         >
           {title}
@@ -75,6 +76,6 @@ export function TabHeader({
 const styles = StyleSheet.create({
   head: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   // The title takes the room, pushing the actions to the far end.
-  title: { ...display(typography.sizes.xl), flex: 1 },
+  title: { ...display(typography.sizes.title), flex: 1 },
   lead: { flex: 1, alignItems: 'center' },
 });

@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { assetUrl } from '../api/env';
-import { AAA_NORMAL } from '../a11y/contrast';
 import { scaledFontSize } from '../a11y/dynamicType';
-import { ensureContrast } from '../a11y/ensureContrast';
 import { useFontScale } from '../a11y/useFontScale';
 import { useI18n } from '../i18n/I18nContext';
-import { initialsAvatar } from '../profile/initials';
+import { deriveInitials } from '../profile/initials';
+import { useTheme } from '../theme/ThemeProvider';
 import { typography } from '../theme/tokens';
 
 /**
- * A group's picture, or its initials on its own colour, in a rounded square, as on the website: people are circles
+ * A group's picture, or its initials in ink on grey, in a rounded square, as on the website: people are circles
  * everywhere in the app, so the shape alone says which. A picture that will not load falls back to the initials.
  */
-export function GroupAvatar({ name, id, size, photoUrl }: { name: string; id: string; size: number; photoUrl?: string | null }): React.JSX.Element {
+export function GroupAvatar({ name, size, photoUrl }: { name: string; size: number; photoUrl?: string | null }): React.JSX.Element {
   const { t } = useI18n();
+  const { colors } = useTheme();
   const [broken, setBroken] = useState(false);
   // Honours Dynamic Type, but tightly, so the letters stay inside the square. Above the early return, since a failing
   // picture swaps the branch and the hook count must not change.
@@ -24,15 +24,15 @@ export function GroupAvatar({ name, id, size, photoUrl }: { name: string; id: st
   if (uri && !broken) {
     return <Image source={{ uri }} onError={() => setBroken(true)} accessibilityRole="image" accessibilityLabel={t('profile.avatarOf', { name })} style={box} />;
   }
-  const { initials, backgroundColor, textColor } = initialsAvatar(name, id);
+  const initials = deriveInitials(name);
+  const letters = size >= 56 ? typography.sizes.title : typography.sizes.text;
   return (
     <View
       accessibilityRole="image"
       accessibilityLabel={t('profile.avatarOf', { name })}
-      // The palette is already AA against white; this nudges it to AAA (7:1) for low-vision users, deterministically.
-      style={[styles.box, box, { backgroundColor: ensureContrast(backgroundColor, textColor, AAA_NORMAL) }]}
+      style={[styles.box, box, { backgroundColor: colors.controlTrack }]}
     >
-      <Text allowFontScaling={false} style={[styles.text, { color: textColor, fontSize: scaledFontSize(Math.round(size * 0.4), fontScale) }]}>
+      <Text allowFontScaling={false} style={[styles.text, { color: colors.textPrimary, fontSize: scaledFontSize(letters, fontScale) }]}>
         {initials}
       </Text>
     </View>

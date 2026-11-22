@@ -43,6 +43,7 @@ import {
   GAME_EMBLEMS,
   GAME_EMBLEM_SAMPLES,
   PLAY_GAME_EMBLEM,
+  gameEmblemNamed,
   gameEmblemHue,
   gameEmblemLayers,
   gameEmblemLoopMs,
@@ -53,13 +54,14 @@ import {
 } from './games.js';
 import { isHueName } from '../hues.js';
 import { PLAY_GAMES } from '../play.js';
+import { GAME_NAMES } from '../games/names.js';
 import { LETTERS, letter } from './ink.js';
+import { DICTIONARY_TILE, dictionaryStillSvg, dictionarySvg, dictionaryTileSvg, dictionaryTiles } from './dictionary.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
-import { PATH_STOP_ART, PATH_STOP_LOOKS, PATH_STOP_TONES, pathSignpostSvg, pathLandSvg, pathStonesSvg, pathStopSvg, type PathStopLook } from './path-land.js';
+import { PATH_STOP_ART, PATH_STOP_LOOKS, PATH_STOP_TONES, pathSignpostSvg, pathStopSvg, type PathStopLook } from './path-land.js';
 import { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg } from './path-landmark.js';
-import { PATH_CAIRN_GROUNDS, PATH_LANDMARKS, PATH_LANDS, cairnBox, trailStones } from '../path-world.js';
-import { lessonPath } from '../lesson-path.js';
+import { PATH_LANDMARKS } from '../path-world.js';
 import { WORD_SET_IDS } from '../word-sets/words.js';
 import {
   CHEST_BOX,
@@ -1545,71 +1547,16 @@ describe('the lesson path’s world', () => {
         }
       }
     }
-    // every look its own: the stop to do now in its chapter's colour, a finished one in gold
+    // every look its own: the stop to do now in the app's violet in every chapter, a finished one in gold
     const looks = PATH_STOP_LOOKS.map((look) => (['base', 'face'] as const).map((part) => pathStopSvg({ look, tone: 'clay', part, idPrefix: 's' })).join(''));
     expect(new Set(looks).size).toBe(PATH_STOP_LOOKS.length);
-    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain(PATH_STOP_TONES.light.clay.fill);
-    expect(pathStopSvg({ look: 'current', tone: 'river', part: 'face' })).toContain(PATH_STOP_TONES.light.river.fill);
-    expect(PATH_STOP_TONES.light.clay.fill).not.toBe(PATH_STOP_TONES.light.river.fill);
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'current', tone: 'river', part: 'face', idPrefix: 's' }));
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain('#862be2');
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', dark: true })).toContain('#bf9bfe');
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).not.toContain(PATH_STOP_TONES.light.clay.fill);
     // gold is gold in every chapter: what was earned looks the same wherever it was earned
     expect(pathStopSvg({ look: 'done', tone: 'river', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'done', tone: 'clay', part: 'face', idPrefix: 's' }));
     expect(() => pathStopSvg({ look: 'gold' as PathStopLook, tone: 'clay', part: 'face' })).toThrow(RangeError);
-  });
-
-  it('stands a cairn beside the road in the lands of open country, and nowhere else', () => {
-    const skills = [0, 1, 2, 3].map((i) => ({ skillId: `k${i}`, title: 'S', state: (i === 0 ? 'unlocked' : 'locked') as 'unlocked' | 'locked', strength: 0, hasGrammar: i === 0, firstLessonId: `l${i}` }));
-    const unit = lessonPath({ units: [{ unitId: 'u', title: 'U', skills, story: { slug: 'road-01-tale', title: 'Tale' } }] }).units[0]!;
-    const stops = unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
-    const stones = trailStones(unit.stops);
-    for (const land of PATH_LANDS) {
-      for (const width of [390, 720]) {
-        const day = pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, seed: 'u' });
-        const dusk = pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, dark: true, seed: 'u' });
-        const has = PATH_CAIRN_GROUNDS.includes(land.ground);
-        expect(day.includes('#e2a334'), `${land.ground} ${width}`).toBe(has);
-        expect(dusk.includes('#c98f3c'), `${land.ground} ${width} dusk`).toBe(has);
-        if (!has) continue;
-        // its box lies inside the land, out of the river where one runs across it
-        const streams = land.ground === 'valley' || land.ground === 'alpine';
-        const stream = (stops[1]!.y + stops[2]!.y) / 2 + 6;
-        const box = cairnBox(stops, width, streams ? [{ x: 0, y: stream - 26, w: 2 * width, h: 52 }] : [])!;
-        expect(box.y).toBeGreaterThanOrEqual(0);
-        expect(box.y + box.h).toBeLessThanOrEqual(unit.height);
-        if (streams) expect(box.y >= stream + 26 || box.y + box.h <= stream - 26, land.ground).toBe(true);
-      }
-    }
-  });
-
-  it('draws each unit’s land within its budget, the same every time, and changes it with the season', () => {
-    const skills = [0, 1, 2, 3].map((i) => ({ skillId: `k${i}`, title: 'S', state: (i === 0 ? 'unlocked' : 'locked') as 'unlocked' | 'locked', strength: 0, hasGrammar: i === 0, firstLessonId: `l${i}` }));
-    const unit = lessonPath({ units: [{ unitId: 'u', title: 'U', skills, story: { slug: 'road-01-tale', title: 'Tale' } }] }).units[0]!;
-    const stops = unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
-    const stones = trailStones(unit.stops);
-    const drawings = new Set<string>();
-    for (const land of PATH_LANDS) {
-      for (const dark of [false, true]) {
-        for (const width of [390, 720]) {
-          const svg = pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, dark, seed: 'u' });
-          const elements = sound(svg, `0 0 ${width} ${unit.height}`);
-          expect(parse(svg).attrs['aria-hidden']).toBe('true');
-          // A few hundred elements, and a capped size, since a path draws two or three lands at once.
-          expect(elements, `${land.ground} ${width}`).toBeLessThan(width > 400 ? 420 : 260);
-          expect(svg.length, `${land.ground} ${width}`).toBeLessThan((width > 400 ? 64 : 36) * 1024);
-          drawings.add(svg);
-        }
-      }
-      expect(pathLandSvg({ ground: land.ground, width: 390, height: unit.height, stops, stones, seed: 'u' })).toBe(
-        pathLandSvg({ ground: land.ground, width: 390, height: unit.height, stops, stones, seed: 'u' }),
-      );
-    }
-    expect(drawings.size).toBe(PATH_LANDS.length * 4);
-    const walked = pathStonesSvg({ width: 390, height: unit.height, stones, walked: true });
-    // three elements however many stretches: the road's edge, its face and its ruts
-    expect(sound(walked)).toBe(4);
-    // and nothing laid over the road still ahead, which the land itself draws
-    expect(sound(pathStonesSvg({ width: 390, height: unit.height, stones, walked: false }))).toBe(1);
-    expect(() => pathLandSvg({ ground: 'moon' as never, width: 390, height: 600, stops, stones })).toThrow(RangeError);
-    expect(() => pathLandSvg({ ground: 'snow', width: 0, height: 600, stops, stones })).toThrow(RangeError);
   });
 });
 
@@ -2518,5 +2465,54 @@ describe('the word pictures', () => {
     // the apps and the server read the catalogue from the package itself
     expect(SHARED_WORD_PICTURES).toBe(WORD_PICTURES);
     expect(sharedWordPictureSvg).toBe(wordPictureSvg);
+  });
+});
+
+describe('gameEmblemNamed', () => {
+  it('finds a game’s cover from the name a profile’s games list gives it', () => {
+    expect(gameEmblemNamed(GAME_NAMES.peyvok)).toBe('peyvok');
+    expect(gameEmblemNamed(GAME_NAMES['wordle-battle'])).toBe('peyvok');
+    expect(gameEmblemNamed(GAME_NAMES['rhyme-match'])).toBe('rhyme');
+    expect(gameEmblemNamed(GAME_NAMES['who-am-i'])).toBe('who-am-i');
+  });
+
+  it('has none for a name it does not know', () => {
+    expect(gameEmblemNamed('Something else')).toBeNull();
+  });
+});
+
+describe('the dictionary’s picture', () => {
+  it('is a valid drawing in both schemes, the same on every machine, with its tiles and without', () => {
+    for (const dark of [false, true]) {
+      const svg = dictionarySvg({ size: 240, dark, title: 'A dictionary' });
+      checkSvg(svg, 240);
+      expect(dictionarySvg({ size: 240, dark, title: 'A dictionary' })).toBe(svg);
+      checkSvg(dictionaryStillSvg({ size: 240, dark, title: 'A dictionary' }), 240);
+      // light enough to draw every time the page opens
+      expect(svg.length).toBeLessThan(12_000);
+    }
+    expect(dictionarySvg({ dark: true })).not.toBe(dictionarySvg());
+  });
+
+  it('lifts the five letters Kurmancî adds to the Latin alphabet off the pages, each tile its own markup', () => {
+    const tiles = dictionaryTiles();
+    expect(new Set(tiles.map((t) => t.ch))).toEqual(new Set(['Ç', 'Ê', 'Î', 'Ş', 'Û']));
+    const whole = dictionarySvg();
+    const still = dictionaryStillSvg();
+    for (const t of tiles) {
+      const tile = dictionaryTileSvg(t);
+      expect(whole).toContain(tile);
+      expect(still).not.toContain(tile);
+      // inside the picture, clear of its edges
+      expect(t.at[0]).toBeGreaterThan(DICTIONARY_TILE);
+      expect(t.at[0]).toBeLessThan(120 - DICTIONARY_TILE);
+      expect(t.at[1]).toBeGreaterThan(DICTIONARY_TILE);
+    }
+  });
+
+  it('keeps its ids its own, so two on one page do not collide', () => {
+    const a = checkSvg(dictionarySvg({ idPrefix: 'a', title: 'A dictionary' }), 240);
+    for (const id of checkSvg(dictionarySvg({ idPrefix: 'b', title: 'A dictionary' }), 240)) expect(a.has(id)).toBe(false);
+    expect(() => dictionarySvg({ size: -1 })).toThrow(RangeError);
   });
 });

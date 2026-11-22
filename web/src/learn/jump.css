@@ -10,8 +10,8 @@
 }
 .jump-end-title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.6rem, 1.3rem + 1vw, 2rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.15;
   text-wrap: balance;
 }

@@ -228,8 +228,8 @@ const styles = StyleSheet.create({
   wrap: { gap: spacing.sm, alignSelf: 'stretch' },
   row: { gap: spacing.sm },
   offer: { justifyContent: 'center', minHeight: 48 },
-  offerText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  offerText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   grow: { flex: 1 },
-  line: { fontSize: typography.sizes.md, textAlign: 'center' },
-  series: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
+  line: { fontSize: typography.sizes.text, textAlign: 'center' },
+  series: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, textAlign: 'center' },
 });

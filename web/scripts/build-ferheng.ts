@@ -11,7 +11,6 @@
  * /ferheng/ab/ holds every word whose folded form begins "ab".
  */
 import fs from 'node:fs';
-import { createRequire } from 'node:module';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -22,7 +21,6 @@ import { COPY, FERHENG_LOCALES } from './ferheng-copy.js';
 import { toEntries } from './ferheng-entries.js';
 import { SEARCH_DIR, SEARCH_FILE, fileName, searchScript, shard, shardFile } from './ferheng-search.js';
 import {
-  FONTS,
   ORIGIN,
   STYLE,
   featured,
@@ -40,7 +38,6 @@ import {
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 /** Finds the font files wherever npm put them, hoisted or not. */
-const require_ = createRequire(import.meta.url);
 
 /** Which published set; Kurmancî is the one with the words. */
 const LANG = 'ku';
@@ -138,16 +135,6 @@ async function main(): Promise<void> {
     write(CHROME_FILE, chromeScript());
     // What the Worker serves for an address with no page; see notFoundPage() for why the app's 404 cannot.
     write('404.html', notFoundPage(copy));
-
-    /* The typefaces, copied onto the edge because the pages run under `default-src 'none'`. */
-    const fonts = path.join(out, 'fonts');
-    fs.mkdirSync(fonts, { recursive: true });
-    for (const font of FONTS) {
-      const from = require_.resolve(font.from);
-      fs.copyFileSync(from, path.join(fonts, font.as));
-      bytes += fs.statSync(from).size;
-      files += 1;
-    }
 
     // Its own sitemap, announced from robots.txt alongside the app’s.
     const urls = ['', ...letters.map((l) => `${l.letter}/`), ...pages.map((q) => `${q.prefix}/`)]

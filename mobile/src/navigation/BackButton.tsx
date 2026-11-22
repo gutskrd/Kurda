@@ -6,10 +6,10 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
-import { floating } from '../theme/floating';
+import { GlassFill, useGlassShape } from '../theme/LiquidGlass';
 
 /**
- * The way out of a page: a disc at the top, on the side reading starts from. A chevron on a pushed page, an ✕ on one
+ * The way out of a page: a disc of glass at the top, on the side reading starts from. A chevron on a pushed page, an ✕ on one
  * presented over the app; the chevron points the other way in right-to-left languages.
  *
  * It reaches a fingertip past its edge on every side (`reach="open"`), since leaving a page should never take a second
@@ -28,6 +28,7 @@ export function BackButton({
   const { colors } = useTheme();
   const { t } = useI18n();
   const flip = useDirection().flip;
+  const glass = useGlassShape('control');
   return (
     <PressableScale
       onPress={onPress}
@@ -36,8 +37,9 @@ export function BackButton({
       accessibilityLabel={label ?? (kind === 'close' ? t('common.close') : t('common.back'))}
       testID="header-back"
       reach="open"
-      style={[styles.button, floating.control, { backgroundColor: colors.barFill, shadowColor: colors.softShadow }]}
+      style={[styles.button, ...glass]}
     >
+      <GlassFill interactive />
       {kind === 'close' ? (
         <Icon name="close" size={20} color={colors.textPrimary} />
       ) : (

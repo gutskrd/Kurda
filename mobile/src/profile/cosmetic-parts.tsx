@@ -1,4 +1,7 @@
+import { useMemo } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
+import { SvgXml } from 'react-native-svg';
+import { flagSvg } from '@kurda/shared/src/flags';
 import { assetUrl } from '../api/env';
 import { radii, spacing, typography } from '../theme/tokens';
 import { Icon } from '../theme/Icon';
@@ -100,33 +103,30 @@ export function GiftedNote({
 }
 
 /**
- * Where a flag picture comes from. The country list is `@kurda/shared`'s, as the browser's. Flags are small cached PNGs
- * from a flag CDN, since emoji flags do not render on every platform; Kurdistan's is served by Hevalo, since services
- * that only know states do not have it.
+ * A country's small flag before its name, drawn by Hevalo (shared/src/flags.ts), so it shows at once, offline too, and
+ * no outside service learns who looked. Left out for a code with no flag. Decorative: the name beside it says it.
  */
-export function flagUrl(code: string): string {
-  if (code.toUpperCase() === 'KU') return assetUrl('/flags/kurdistan.png') ?? '';
-  return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
-}
-
-/** A poem or story somebody pinned to their profile, shared by your own profile and somebody else's. */
-export function FavoriteRow({ label, title }: { label: string; title: string }): React.JSX.Element {
+export function Flag({ code }: { code: string }): React.JSX.Element | null {
   const { colors } = useTheme();
+  const xml = useMemo(() => flagSvg(code), [code]);
+  if (!xml) return null;
   return (
-    <View style={styles.favorite}>
-      <Text style={[styles.favoriteLabel, { color: colors.textSecondary }]}>{label}</Text>
-      <Text style={[styles.favoriteTitle, { color: colors.textPrimary }]}>{title}</Text>
+    <View style={[styles.flag, { borderColor: colors.separator }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <SvgXml xml={xml} width={FLAG_W} height={FLAG_H} preserveAspectRatio="xMidYMid slice" />
     </View>
   );
 }
 
+/** A flag's size: 3:2, as tall as a capital letter. */
+const FLAG_W = 21;
+const FLAG_H = 14;
+
 const styles = StyleSheet.create({
   premium: { borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
-  premiumText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 0.5 },
+  premiumText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 0.5 },
   gifts: { gap: 2, marginTop: spacing.xs },
   gift: { alignItems: 'center', gap: spacing.xs },
-  giftText: { fontSize: typography.sizes.xs },
-  favorite: { alignSelf: 'stretch', gap: 2, marginTop: spacing.md },
-  favoriteLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5 },
-  favoriteTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
+  giftText: { fontSize: typography.sizes.text },
+  // A hairline so a white band keeps its edge on a white page, as on the website.
+  flag: { width: FLAG_W, height: FLAG_H, borderRadius: radii.none, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
 });

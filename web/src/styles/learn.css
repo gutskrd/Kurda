@@ -25,28 +25,12 @@
   flex: 1 1 260px;
 }
 .learn-review-title {
-  font-size: 1.2rem;
+  font-size: var(--text);
 }
 .learn-review-body {
   margin: 0;
   color: var(--ink-3);
-  font-size: 0.95rem;
-}
-.learn-courses {
-  display: grid;
-  gap: 16px;
-}
-@media (min-width: 900px) {
-  .learn-courses {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-.course-card-link {
-  color: inherit;
-}
-.course-card-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  font-size: var(--text);
 }
 .course-progress {
   display: grid;
@@ -69,18 +53,8 @@
   background: var(--ink);
 }
 .course-progress-text {
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-3);
-}
-.course-card .course-next {
-  margin: 0;
-  color: var(--ink-2);
-}
-.course-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 4px;
 }
 .learn-empty-action {
   margin-top: 18px;
@@ -99,11 +73,11 @@
   margin: 0;
 }
 .grammar-note .grammar-head {
-  font-size: 1.15rem;
+  font-size: var(--text);
   color: var(--ink);
 }
 .grammar-note .grammar-subhead {
-  font-size: 1rem;
+  font-size: var(--text);
   color: var(--ink);
 }
 .grammar-note ul {
@@ -114,8 +88,8 @@
 }
 .grammar-note code,
 .grammar-note pre {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.9em;
+  font-family: var(--font-sans);
+  font-size: var(--text);
 }
 .grammar-note pre {
   overflow-x: auto;
@@ -125,181 +99,30 @@
 }
 .grammar-title {
   margin-bottom: 12px;
-  font-size: 1.3rem;
+  font-size: var(--text);
 }
 
 /* ---- the lesson player -------------------------------------------------------- */
 /*
- * The painted valley: lessons sit on warm paper with pale hills behind the top. Pressable things are cream cards on a
- * darker edge; chosen is pomegranate red, right is the valley green, and a miss is warm red. The dark scheme is the
- * valley at dusk. The colours sit on the root so overscroll and the Tips dialog share the paper. Every text colour
- * meets 4.5:1 on its grounds, the closest noted beside it.
+ * Lessons wear Hevalo's own colours: the page and its cards, the ink for what is chosen, the violet on the one main
+ * button (Check), and green and red only for right and wrong. Faint ridges of the page's own colour stand behind the
+ * top, by night and by day.
  */
 :root {
-  --vale-paper: #1f1a16;
-  /* the action bar, a shade off the paper */
-  --vale-bar: #241e19;
-  --vale-card: #2a231d;
-  --vale-hover: #312921;
-  --vale-line: #3d342b;
-  --vale-edge: #4b4035;
-  /* a field's edge: 3:1 against a card, as a control's must be */
-  --vale-field-edge: #8a7b67;
-  /* 12.7:1 on a card */
-  --vale-ink: #f1e8d8;
-  --vale-ink-2: #ddd1bd;
-  /* 5.2:1 on a speaker's tinted line and on a number's chip, its closest */
-  --vale-muted: #b8a892;
-  --vale-chip: #3d342b;
-  /* the bar's empty track, and the shade along its top */
-  --vale-track: #342c25;
-  --vale-track-rim: #2a231d;
-  /* the pomegranate: a fill, and a step lighter as words (5.1:1 on the hills behind the top, its closest) */
-  --vale-red: #e0675a;
-  --vale-red-ink: #e8776a;
-  --vale-red-soft: #3a2520;
-  /* an answer that was not right, and its words (7:1) */
-  --vale-wrong-soft: #3f2420;
-  --vale-wrong-ink: #f0a397;
-  --vale-green: #7fb069;
-  /* 6.4:1 on the green sheet */
-  --vale-green-ink: #8fbd79;
-  --vale-green-soft: #26301f;
-  --vale-green-line: #3b4a30;
-  /* the words on a right answer (8:1), and on a pair already made (5.5:1) */
-  --vale-right-ink: #a8d192;
-  --vale-done-ink: #94ab84;
-  /* words and marks on the red and the green: the paper itself (5.1:1 on the red) */
-  --vale-on-fill: #1f1a16;
-  --vale-on-chip: #1f1a16;
-  --vale-red-fill: #e0675a;
-  --vale-red-lip: #a5463b;
-  --vale-green-fill: #7fb069;
-  --vale-green-lip: #57804a;
-  /* the blue of Hamo's gate, on the end of a lesson: a fill under the paper's dark (6.8:1), and as a number on a card (6.1:1) */
-  --vale-blue-fill: #7ea7cf;
-  --vale-blue-ink: #7ea7cf;
-  /* the main button: the ink as a fill at dusk, the paper's dark as its words (13.4:1) */
-  --vale-go: #f1e8d8;
-  --vale-go-hover: #e6dac6;
-  --vale-go-ink: #2a1d15;
-  --vale-go-lip: #a8977f;
-  --vale-go-off: #332b24;
-  --vale-go-off-ink: #8a7b67;
-  --vale-go-off-lip: #2b241e;
-  /* the verdict sheets: right, almost and not yet */
-  --vale-sheet-right: #232c1d;
-  --vale-sheet-almost: #312a19;
-  --vale-sheet-almost-line: #4d4126;
-  --vale-sheet-wrong: #33211c;
-  --vale-sheet-wrong-line: #4d2c26;
-  /* 5.8:1 on its sheet */
-  --vale-sheet-wrong-ink: #e98276;
-  /* a character's own corner of the lesson: a round portrait, and the low sun behind whoever speaks */
-  --vale-portrait: #352c24;
-  --vale-portrait-rim: #2a231d;
-  --vale-stage: #241e19;
-  --vale-sun: #33291f;
-  --vale-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23232319'/%3E%3Cstop offset='1' stop-color='%231f1a16'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%23292730'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%23262a20'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
+  --lesson-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23141226'/%3E%3Cstop offset='1' stop-color='%23100e1d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%231b1830'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%2317152a'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
 }
 :root[data-theme='light'] {
-  --vale-paper: #fbf6ec;
-  --vale-bar: #fffaf1;
-  --vale-card: #fffdf8;
-  --vale-hover: #f8f1e4;
-  --vale-line: #e7dcc6;
-  --vale-edge: #dccdb0;
-  /* 3.3:1 against a card */
-  --vale-field-edge: #9c8a6c;
-  /* 12.6:1 on the paper */
-  --vale-ink: #3d2a1f;
-  --vale-ink-2: #5a4536;
-  /* 4.7:1 on the bar's empty track, its closest (4.9:1 on a number's chip and a speaker's blue line); 5.4:1 on the paper */
-  --vale-muted: #74624f;
-  --vale-chip: #f3ead8;
-  --vale-track: #efe5d2;
-  --vale-track-rim: #e3d6bd;
-  --vale-red: #c8483a;
-  /* the red as words is a step deeper: 5.2:1 on the paper, 4.6:1 on the hills behind the top */
-  --vale-red-ink: #b63f31;
-  --vale-red-soft: #fdf1ec;
-  --vale-wrong-soft: #fbe7e0;
-  /* 6.8:1 */
-  --vale-wrong-ink: #8f2f22;
-  --vale-green: #4f8a3c;
-  /* 4.6:1 on the green sheet, 4.8:1 on the paper */
-  --vale-green-ink: #3f7a32;
-  --vale-green-soft: #eef4e3;
-  --vale-green-line: #d4e4bf;
-  /* 6.7:1, and 4.9:1 */
-  --vale-right-ink: #2f5f24;
-  --vale-done-ink: #56704a;
-  /* cream on the deeper red and green of the buttons (5.3:1 and 4.6:1); white on the red of a chosen card's number (4.7:1) */
-  --vale-on-fill: #fff8ef;
-  --vale-on-chip: #ffffff;
-  --vale-red-fill: #b63f31;
-  --vale-red-lip: #86291e;
-  --vale-green-fill: #467f35;
-  --vale-green-lip: #2f5a23;
-  /* under cream (5.2:1), and on a card (5.4:1) */
-  --vale-blue-fill: #3d6c9a;
-  --vale-blue-ink: #3d6c9a;
-  --vale-go: #3d2a1f;
-  --vale-go-hover: #4b3527;
-  /* 12.9:1 */
-  --vale-go-ink: #fff8ef;
-  --vale-go-lip: #24170f;
-  --vale-go-off: #efe5d2;
-  --vale-go-off-ink: #b5a68c;
-  --vale-go-off-lip: #e2d4ba;
-  --vale-sheet-right: #eef4e3;
-  --vale-sheet-almost: #fbf1d8;
-  --vale-sheet-almost-line: #ecdba9;
-  --vale-sheet-wrong: #fbebe5;
-  --vale-sheet-wrong-line: #f0cfc4;
-  /* 5.6:1 */
-  --vale-sheet-wrong-ink: #a63a2d;
-  --vale-portrait: #fffaf0;
-  --vale-portrait-rim: #ffffff;
-  --vale-stage: #f7efe1;
-  --vale-sun: #f3e4c4;
-  --vale-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23edf2e0'/%3E%3Cstop offset='1' stop-color='%23fbf6ec'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%23e6e8ee'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%23e3ecd2'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
+  --lesson-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23f1eefb'/%3E%3Cstop offset='1' stop-color='%23f6f4fd'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%23e8e5f6'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%23edeaf8'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Inside a lesson and its Tips the app's colour names map to the valley's, so every part follows without its own rule. */
+/* the edge of what is pressed or said in a lesson (a tile, a speech bubble, a word's meanings), here and in its Tips */
 .lesson,
 .modal-panel:has(> .lesson-tips) {
-  --app-bg: var(--vale-paper);
-  --ink: var(--vale-ink);
-  --ink-2: var(--vale-ink-2);
-  --ink-3: var(--vale-muted);
-  --ink-4: var(--vale-muted);
-  --bg: var(--vale-card);
-  --surface: var(--vale-card);
-  --surface-solid: var(--vale-card);
-  --surface-2: color-mix(in srgb, var(--vale-ink) 7%, transparent);
-  --surface-3: color-mix(in srgb, var(--vale-ink) 12%, transparent);
-  --panel-bg: var(--vale-card);
-  --separator: var(--vale-line);
-  --border: var(--vale-line);
-  --border-strong: var(--vale-edge);
-  --input-bg: var(--vale-card);
-  --input-border: var(--vale-field-edge);
-  --primary: var(--vale-go);
-  --primary-hover: var(--vale-go-hover);
-  --primary-ink: var(--vale-go-ink);
-  --success: var(--vale-green-ink);
-  --success-soft: var(--vale-green-soft);
-  --danger: var(--vale-red-ink);
-  --danger-soft: var(--vale-wrong-soft);
-  --focus: color-mix(in srgb, var(--vale-ink) 65%, transparent);
-  /* the edge of what is pressed or said in a lesson: a tile, a speech bubble, a word's meanings */
-  --lesson-edge: var(--vale-edge);
+  --lesson-edge: var(--border-strong);
   color: var(--ink);
 }
-/* past the lesson's own edges too: the page a phone shows when it is pulled beyond its end */
 body:has(.lesson) {
-  background: var(--vale-paper);
+  background: var(--app-bg);
 }
 
 /*
@@ -312,7 +135,7 @@ body:has(.lesson) {
   min-height: 100vh;
   min-height: 100dvh;
   padding-top: calc(16px + env(safe-area-inset-top));
-  background: var(--vale-hills) center top / 100% calc(120px + env(safe-area-inset-top)) no-repeat, var(--vale-paper);
+  background: var(--lesson-hills) center top / 100% calc(120px + env(safe-area-inset-top)) no-repeat, var(--app-bg);
 }
 @media (min-width: 720px) {
   .lesson {
@@ -350,7 +173,7 @@ html:has(.lesson-bar) {
   align-items: center;
   gap: 4px;
   color: var(--gold-ink);
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-weight: 800;
   line-height: 1;
   white-space: nowrap;
@@ -359,15 +182,14 @@ html:has(.lesson-bar) {
 [dir='rtl'] .lesson-run-label {
   transform-origin: 100% 100%;
 }
-/* the lesson's own bar is thicker than a course's, in the pomegranate red with a soft light along its top, and warms to gold through a run */
+/* the lesson's own bar is thicker than a course's, in the ink with a soft light along its top */
 .lesson-progress {
   height: 12px;
-  background: var(--vale-track);
-  box-shadow: inset 0 1.5px 0 var(--vale-track-rim);
+  background: var(--surface-2);
 }
 .lesson-progress > span {
   overflow: hidden;
-  background: var(--vale-red);
+  background: var(--primary);
   transition: background var(--dur) ease;
 }
 /* a light run along the fill each time it moves on (styles/motion.css) */
@@ -389,7 +211,7 @@ html:has(.lesson-bar) {
 .lesson-progress.is-run > span {
   background: var(--gold);
 }
-/* the way out and the Tips: cream on the paper, a round one and a pill */
+/* the way out and the Tips: cards on the page, a round one and a pill */
 .lesson-leave {
   position: relative;
   flex: none;
@@ -397,36 +219,36 @@ html:has(.lesson-bar) {
   place-items: center;
   width: 40px;
   height: 40px;
-  border: 1.5px solid var(--vale-line);
+  border: 1.5px solid var(--border);
   border-radius: 50%;
-  background: var(--vale-card);
-  color: var(--vale-muted);
+  background: var(--bg);
+  color: var(--ink-3);
 }
 .lesson-leave:hover {
-  border-color: var(--vale-edge);
+  border-color: var(--border-strong);
   color: var(--ink);
 }
 .lesson-top .lesson-tips-btn {
   flex: none;
-  border: 1.5px solid var(--vale-line);
-  background: var(--vale-card);
+  border: 1.5px solid var(--border);
+  background: var(--bg);
   color: var(--ink);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
 }
 .lesson-top .lesson-tips-btn:hover:not(:disabled) {
-  border-color: var(--vale-edge);
-  background: var(--vale-card);
+  border-color: var(--border-strong);
+  background: var(--bg);
 }
 .lesson-stage {
   display: grid;
   gap: 20px;
 }
-/* the lesson's name over the question, small capitals in the red: close above the question, not a gap away */
+/* the lesson's name over the question, quiet small capitals: close above the question, not a gap away */
 .lesson-kicker {
   margin: 0 0 -16px;
-  color: var(--vale-red-ink);
-  font-size: var(--text-tab);
+  color: var(--ink-3);
+  font-size: var(--text);
   font-weight: 800;
   line-height: 1.35;
   letter-spacing: 0.13em;
@@ -444,10 +266,10 @@ html:has(.lesson-bar) {
   border-radius: var(--r-pill);
   background: var(--gold-soft);
   color: var(--gold-ink);
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-weight: 650;
 }
-/* The new-words pill in the kicker's place: soft pomegranate with red words and a gold sparkle (5:1 or more). */
+/* The new-words pill in the kicker's place: a soft wash of the ink with its words and a sparkle. */
 .lesson-new {
   justify-self: start;
   display: inline-flex;
@@ -455,11 +277,11 @@ html:has(.lesson-bar) {
   gap: 6px;
   margin: 0 0 -8px;
   padding: 4px 12px 4px 9px;
-  border: 1.5px solid color-mix(in srgb, var(--vale-red) 30%, var(--vale-card));
+  border: 1.5px solid color-mix(in srgb, var(--primary) 30%, var(--bg));
   border-radius: var(--r-pill);
-  background: var(--vale-red-soft);
-  color: var(--vale-red-ink);
-  font-size: var(--text-tab);
+  background: var(--primary-soft);
+  color: var(--ink);
+  font-size: var(--text);
   font-weight: 800;
   line-height: 1.35;
   letter-spacing: 0.12em;
@@ -488,8 +310,8 @@ html:has(.lesson-bar) {
 /* what to do, in the display face: the first thing read on every exercise */
 .lesson-ask {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.5rem, 6.6vw, 1.875rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.005em;
@@ -502,8 +324,8 @@ html:has(.lesson-bar) {
 }
 .lesson-prompt {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.45rem, 4.6vw, 1.9rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
@@ -581,7 +403,7 @@ html:has(.lesson-bar) {
   box-shadow: 0 var(--lip) 0 var(--tile-lip);
   color: var(--tile-ink);
   font: inherit;
-  font-size: 1.1rem;
+  font-size: var(--text);
   line-height: 1.25;
   text-align: center;
   overflow: hidden;
@@ -654,55 +476,13 @@ html:has(.lesson-bar) {
 .tile.is-flying {
   z-index: 2;
 }
-/* A lesson tile is a cream card on a 3.5px edge of the same paper; chosen is red, right green, a miss warm red. */
+/* A lesson tile is the app's own (Tile.tsx above), with the lesson cards' corners and weight, as the phone draws it. */
 .lesson .tile {
-  --lip: 2px;
-  --tile-edge: var(--vale-line);
-  --tile-lip: var(--vale-edge);
-  --tile-fill: var(--vale-card);
-  --tile-ink: var(--ink);
-  border-width: 1.5px;
-  border-bottom-color: var(--tile-lip);
   border-radius: var(--r-lg);
-  font-size: var(--text-body);
   font-weight: 600;
-}
-@media (hover: hover) {
-  .lesson .tile.is-idle:hover:not(:disabled) {
-    --tile-fill: var(--vale-hover);
-    --tile-edge: var(--vale-edge);
-  }
 }
 .lesson .tile:focus-visible {
   border-radius: var(--r-lg);
-}
-.lesson .tile.is-picked {
-  --tile-edge: var(--vale-red);
-  --tile-lip: var(--vale-red);
-  --tile-fill: var(--vale-red-soft);
-  --tile-ink: var(--ink);
-}
-.lesson .tile.is-right {
-  --tile-edge: var(--vale-green);
-  --tile-lip: var(--vale-green);
-  --tile-fill: var(--vale-green-soft);
-  --tile-ink: var(--vale-right-ink);
-}
-.lesson .tile.is-wrong {
-  --tile-edge: var(--vale-red-ink);
-  --tile-lip: var(--vale-red-ink);
-  --tile-fill: var(--vale-wrong-soft);
-  --tile-ink: var(--vale-wrong-ink);
-}
-/* a pair made: settled on its edge in a quiet green, done with */
-.lesson .tile.is-spent {
-  --tile-edge: var(--vale-green-line);
-  --tile-lip: var(--vale-green-line);
-  --tile-fill: var(--vale-green-soft);
-  --tile-ink: var(--vale-done-ink);
-}
-.lesson .tile.is-dim {
-  opacity: 0.55;
 }
 
 /* multiple choice: full-width cards, the words after the number's round chip */
@@ -738,32 +518,32 @@ html:has(.lesson-bar) {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: var(--vale-chip);
-  color: var(--vale-muted);
-  font-size: 0.75rem;
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: var(--text);
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .tile.is-picked .lesson-option-key {
-  background: var(--vale-red);
-  color: var(--vale-on-chip);
+  background: var(--primary);
+  color: var(--primary-ink);
 }
 .tile.is-right .lesson-option-key {
-  background: var(--vale-green);
+  background: var(--success);
   color: transparent;
 }
 .tile.is-wrong .lesson-option-key {
-  background: var(--vale-red);
+  background: var(--danger);
   color: transparent;
 }
-/* the keys are for a keyboard: on a touch screen the chip is an empty round, the red one a ring round a dot */
+/* the keys are for a keyboard: on a touch screen the chip is an empty round, the chosen one a ring round a dot */
 @media (hover: none), (pointer: coarse) {
   .lesson-option-key {
     color: transparent;
   }
   .tile.is-picked .lesson-option-key {
-    background: radial-gradient(circle, var(--vale-on-chip) 0 4px, var(--vale-red) 4.5px);
+    background: radial-gradient(circle, var(--primary-ink) 0 4px, var(--primary) 4.5px);
   }
 }
 /* beside its chip, whichever way the page and the option's own words run: the words' box sits at the row's start */
@@ -778,7 +558,7 @@ html:has(.lesson-bar) {
   grid-row: 1;
   place-self: center;
   display: inline-flex;
-  color: var(--vale-on-chip);
+  color: var(--primary-ink);
 }
 .lesson-option-mark svg {
   width: 16px;
@@ -786,8 +566,8 @@ html:has(.lesson-bar) {
 }
 /* options in Kurdish — a reply, a missing word, the Kurdish for an English line — in the display face, as the line itself is */
 .lesson-options.is-kurdish .lesson-option-text {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
   line-height: 1.3;
 }
@@ -804,8 +584,8 @@ html:has(.lesson-bar) {
   min-height: 52px;
   padding-inline: 18px;
   border-radius: 14px;
-  font-family: var(--font-display);
-  font-size: 1.3125rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
 }
 /* once graded, the tick or the cross before the word, in its own colour */
@@ -815,7 +595,7 @@ html:has(.lesson-bar) {
 }
 
 /*
- * Picture choices: square cream cards with the choosing number in the corner, where the tick or cross goes once graded.
+ * Picture choices: square cards with the choosing number in the corner, where the tick or cross goes once graded.
  * Three or four to a row while the pictures stay large, two by two on a phone.
  */
 /* Never wider than the pictures need, so a row centres on a wide screen like the word tiles. */
@@ -887,20 +667,20 @@ html:has(.lesson-bar) {
   display: grid;
   place-items: center;
   aspect-ratio: auto;
-  font-size: 1rem;
+  font-size: var(--text);
 }
 .lesson .lesson-picture.is-dim {
   opacity: 0.45;
 }
 .lesson-hint {
   margin: 0;
-  font-size: 0.86rem;
+  font-size: var(--text);
   line-height: 1.45;
   color: var(--ink-3);
 }
 .lesson-hint--keys {
   display: none;
-  font-size: 0.78rem;
+  font-size: var(--text);
   color: var(--ink-4);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -924,9 +704,9 @@ html:has(.lesson-bar) {
   padding: 0 16px;
   border-width: 1.5px;
   border-radius: var(--r-lg);
-  background: var(--vale-card);
-  font-family: var(--font-display);
-  font-size: 1.375rem;
+  background: var(--bg);
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 600;
 }
 .lesson-input:read-only {
@@ -943,25 +723,25 @@ html:has(.lesson-bar) {
   min-width: 44px;
   height: 44px;
   padding: 0 10px;
-  border: 1.5px solid var(--vale-line);
-  border-bottom: 3.5px solid var(--vale-edge);
+  border: 1.5px solid var(--border);
+  border-bottom: 3.5px solid var(--border-strong);
   border-radius: var(--r-md);
-  background: var(--vale-card);
+  background: var(--bg);
   color: var(--ink);
   font: inherit;
-  font-size: 1.15rem;
+  font-size: var(--text);
   font-weight: 600;
   cursor: pointer;
 }
 .lesson-key:hover:not(:disabled) {
-  background: var(--vale-hover);
+  background: var(--surface-2);
 }
 .lesson-key:disabled {
   opacity: 0.45;
   cursor: default;
 }
 .lesson-skip {
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 
 /* match pairs: two columns of tiles, the Kurdish at the start */
@@ -982,8 +762,8 @@ html:has(.lesson-bar) {
 }
 /* the Kurdish cards in the display face, a little larger than their meanings */
 .lesson-match-col:first-child .lesson-card {
-  font-family: var(--font-display);
-  font-size: 1.1875rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
 }
 /* made but not yet checked (pairs made freely): edged in dashes, the pair's number on both cards */
@@ -1002,7 +782,7 @@ html:has(.lesson-bar) {
   border-radius: 50%;
   background: var(--ink);
   color: var(--primary-ink);
-  font-size: 0.75rem;
+  font-size: var(--text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -1015,14 +795,14 @@ html:has(.lesson-bar) {
   .lesson-card,
   .lesson-match-col:first-child .lesson-card {
     padding-inline: 24px;
-    font-size: 1rem;
+    font-size: var(--text);
   }
   .lesson-card-pair {
     inset-inline-end: 3px;
   }
 }
 
-/* A speech bubble (Bubble.tsx): an opaque cream card with one sharp corner at the foot of the speaker's side. */
+/* A speech bubble (Bubble.tsx): an opaque card with one sharp corner at the foot of the speaker's side. */
 .lesson-bubble {
   position: relative;
   justify-self: start;
@@ -1032,14 +812,14 @@ html:has(.lesson-bar) {
   max-width: 100%;
   min-width: 0;
   padding: 12px 16px 13px;
-  border: 1.5px solid var(--vale-line);
+  border: 1.5px solid var(--border);
   border-radius: 18px;
   border-end-start-radius: 6px;
-  background: var(--vale-card);
+  background: var(--bg);
 }
 .lesson-bubble .lesson-prompt {
   min-width: 0;
-  font-size: clamp(1rem, 2.6vw + 0.4rem, 1.45rem);
+  font-size: var(--text);
   line-height: 1.32;
 }
 /* the speaker at the start of what is said: a round red button, its reach still a fingertip's */
@@ -1049,21 +829,21 @@ html:has(.lesson-bar) {
   height: 34px;
   margin-inline-start: -4px;
   border-width: 0;
-  background: var(--vale-red);
-  color: var(--vale-on-chip);
+  background: var(--primary);
+  color: var(--primary-ink);
 }
 .lesson-bubble .lesson-play-round:hover:not(:disabled) {
-  background: var(--vale-red-ink);
+  background: var(--ink);
 }
 .lesson-bubble .lesson-play-round.is-on {
-  background: var(--vale-red-ink);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--vale-red) 28%, transparent);
+  background: var(--ink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 28%, transparent);
 }
 .lesson-bubble .lesson-play-round svg {
   width: 18px;
   height: 18px;
 }
-/* listening's bubble: the speaker and its waveform, in the red, level in the middle */
+/* listening's bubble: the speaker and its waveform, in the ink, level in the middle */
 .lesson-bubble.is-sound {
   align-items: center;
 }
@@ -1084,18 +864,18 @@ html:has(.lesson-bar) {
   padding-inline: 14px 20px;
 }
 .lesson-bubble .lesson-line-text {
-  font-size: clamp(1.3rem, 2.4vw + 0.75rem, 1.75rem);
+  font-size: var(--text-title);
   font-weight: 600;
   line-height: 1.3;
 }
 .lesson-bubble .lesson-line-text.is-big {
-  font-size: clamp(1.9rem, 4vw + 1rem, 2.5rem);
+  font-size: var(--text-title);
   font-weight: 700;
   line-height: 1.15;
 }
 .lesson-bubble .lesson-line-text.is-english {
   font-family: var(--font-sans);
-  font-size: clamp(1.15rem, 1.6vw + 0.75rem, 1.4rem);
+  font-size: var(--text);
   line-height: 1.35;
 }
 .lesson-bubble.is-line:not(:has(.lesson-line-play)) {
@@ -1116,19 +896,19 @@ html:has(.lesson-bar) {
   width: 21px;
   height: 21px;
 }
-/* the same recording at 0.75×: a small chip under the speaker, lit in the red while it plays */
+/* the same recording at 0.75×: a small chip under the speaker, lit while it plays */
 .lesson-slow-chip {
   position: relative;
   min-width: 42px;
   height: 26px;
   padding: 0 6px;
-  border: 1.5px solid var(--vale-line);
+  border: 1.5px solid var(--border);
   border-radius: var(--r-pill);
-  background: var(--vale-paper);
-  color: var(--vale-muted);
+  background: var(--app-bg);
+  color: var(--ink-3);
   font: inherit;
   font-family: var(--font-sans);
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -1148,14 +928,14 @@ html:has(.lesson-bar) {
 }
 @media (hover: hover) {
   .lesson-slow-chip:hover {
-    border-color: var(--vale-edge);
+    border-color: var(--border-strong);
     color: var(--ink);
   }
 }
 .lesson-slow-chip.is-on {
-  border-color: var(--vale-red);
-  background: var(--vale-red-soft);
-  color: var(--vale-red-ink);
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--ink);
 }
 .lesson-slow-chip:focus-visible {
   outline: 2px solid var(--focus);
@@ -1178,8 +958,8 @@ html:has(.lesson-bar) {
   min-width: 3.2em;
   margin: 0 0.12em;
   padding: 0 0.2em;
-  border-bottom: 2.5px solid var(--vale-field-edge);
-  color: var(--vale-red-ink);
+  border-bottom: 2.5px solid var(--input-border);
+  color: var(--ink);
   line-height: 1.1;
   text-align: center;
   vertical-align: baseline;
@@ -1189,15 +969,15 @@ html:has(.lesson-bar) {
 }
 .lesson-gap.is-filled {
   min-width: 2em;
-  border-bottom-color: var(--vale-red);
+  border-bottom-color: var(--primary);
 }
 .lesson-gap.is-right {
-  border-bottom-color: var(--vale-green);
-  color: var(--vale-right-ink);
+  border-bottom-color: var(--success);
+  color: var(--success);
 }
 .lesson-gap.is-wrong {
-  border-bottom-color: var(--vale-red-ink);
-  color: var(--vale-wrong-ink);
+  border-bottom-color: var(--danger);
+  color: var(--danger);
 }
 
 /* a few words of context under the line: a quiet pill, not part of what is said */
@@ -1207,22 +987,22 @@ html:has(.lesson-bar) {
   margin: 0;
   padding: 4px 12px;
   border-radius: var(--r-pill);
-  background: var(--vale-track);
-  color: var(--vale-muted);
-  font-size: var(--text-caption);
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: var(--text);
   font-weight: 650;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
-/* The speaker stands on warm paper with a pale sun behind; the stage grows with the line so it never overruns the answers. */
+/* The speaker stands on the page with a faint sun behind; the stage grows with the line so it never overruns the answers. */
 .lesson .character-stage {
   --sun-x: calc(var(--stage-spot, 45%) / 2);
   height: auto;
   min-height: var(--stage-h, 320px);
-  border: 1.5px solid var(--vale-line);
+  border: 1.5px solid var(--border);
   background:
-    radial-gradient(circle calc(var(--stage-h, 320px) * 0.34) at var(--sun-x) 42%, var(--vale-sun) 99%, transparent),
-    var(--vale-stage);
+    radial-gradient(circle calc(var(--stage-h, 320px) * 0.34) at var(--sun-x) 42%, color-mix(in srgb, var(--ink) 9%, var(--app-bg)) 99%, transparent),
+    color-mix(in srgb, var(--ink) 4%, var(--app-bg));
 }
 [dir='rtl'] .lesson .character-stage {
   --sun-x: calc(100% - var(--stage-spot, 45%) / 2);
@@ -1230,27 +1010,27 @@ html:has(.lesson-bar) {
 :root .lesson :is(.character-stage, .conversation-stage) > .character-stage-backdrop:is(.is-light, .is-dark) {
   display: none;
 }
-/* a conversation's people stand together on the same paper, one wide low sun behind them */
+/* a conversation's people stand together on the same page, one wide low sun behind them */
 .lesson .conversation-stage {
-  border: 1.5px solid var(--vale-line);
+  border: 1.5px solid var(--border);
   background:
-    radial-gradient(ellipse 62% 58% at 50% 46%, var(--vale-sun) 98%, transparent),
-    var(--vale-stage);
+    radial-gradient(ellipse 62% 58% at 50% 46%, color-mix(in srgb, var(--ink) 9%, var(--app-bg)) 98%, transparent),
+    color-mix(in srgb, var(--ink) 4%, var(--app-bg));
 }
 /* what a speaking exercise asks, beside whoever says it first: in a bubble, as every other exercise's is */
 .lesson .character-stage-side > .lesson-prompt {
   padding: 12px 16px 13px;
-  border: 1.5px solid var(--vale-line);
+  border: 1.5px solid var(--border);
   border-radius: 18px;
   border-end-start-radius: 6px;
-  background: var(--vale-card);
-  font-size: clamp(1rem, 2.6vw + 0.4rem, 1.45rem);
+  background: var(--bg);
+  font-size: var(--text);
   line-height: 1.32;
 }
 .lesson .character-stage-side .lesson-listen .lesson-play-round {
   border-width: 0;
-  background: var(--vale-red);
-  color: var(--vale-on-chip);
+  background: var(--primary);
+  color: var(--primary-ink);
 }
 /* beside a character, a word's meanings opened from the bubble lie over the answer below, not under it */
 .lesson-exercise > .character-stage {
@@ -1283,9 +1063,9 @@ html:has(.lesson-bar) {
   position: absolute;
   inset: -10px -3px;
 }
-/* a word the item brings in: the same dots in the red of its badge, a little heavier */
+/* a word the item brings in: the same dots in the ink of its badge, a little heavier */
 .lesson-word.is-new {
-  text-decoration-color: var(--vale-red-ink);
+  text-decoration-color: var(--ink);
   text-decoration-thickness: 2.5px;
 }
 .lesson-word.is-open {
@@ -1304,7 +1084,7 @@ html:has(.lesson-bar) {
   background: var(--panel-bg);
   box-shadow: var(--shadow);
   font-family: var(--font-sans);
-  font-size: 1.05rem;
+  font-size: var(--text);
   line-height: 1.3;
   text-align: center;
   transform: translateX(calc(-50% + var(--shift, 0px)));
@@ -1347,7 +1127,7 @@ html:has(.lesson-bar) {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--vale-red-ink);
+  color: var(--ink);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -1390,7 +1170,7 @@ html:has(.lesson-bar) {
   background: none;
   color: var(--ink-2);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: var(--text);
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -1427,7 +1207,7 @@ html:has(.lesson-bar) {
 /* a lesson's tiles stand on a 2px lip, not 4px: the ruled lines come up to meet them */
 .lesson .lesson-answer-line {
   --row: 58px;
-  background-image: linear-gradient(to bottom, transparent calc(var(--row) - 1.5px), var(--vale-edge) calc(var(--row) - 1.5px));
+  background-image: linear-gradient(to bottom, transparent calc(var(--row) - 1.5px), var(--border-strong) calc(var(--row) - 1.5px));
 }
 .lesson-bank {
   display: flex;
@@ -1448,7 +1228,7 @@ html:has(.lesson-bar) {
   border-radius: var(--r-md);
   background: var(--surface-2);
   color: transparent;
-  font-size: 1.1rem;
+  font-size: var(--text);
   line-height: 1.25;
   user-select: none;
 }
@@ -1456,14 +1236,14 @@ html:has(.lesson-bar) {
 .lesson .lesson-word-tile,
 .lesson .tile-ghost {
   border-radius: 14px;
-  font-family: var(--font-display);
-  font-size: 1.1875rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
 }
 .lesson .tile-ghost {
   margin-bottom: var(--lip, 2px);
   border-width: 1.5px;
-  background: var(--vale-track);
+  background: var(--surface-2);
 }
 .lesson-mode {
   justify-self: center;
@@ -1473,7 +1253,7 @@ html:has(.lesson-bar) {
   background: none;
   color: var(--ink-3);
   font: inherit;
-  font-size: 0.88rem;
+  font-size: var(--text);
   font-weight: 700;
   cursor: pointer;
 }
@@ -1505,7 +1285,7 @@ html:has(.lesson-bar) {
   align-items: center;
   gap: 8px;
   color: var(--gold-ink);
-  font-size: clamp(2.4rem, 11vw, 4rem);
+  font-size: var(--text-title);
   font-weight: 900;
   line-height: 1.05;
   letter-spacing: -0.01em;
@@ -1518,8 +1298,8 @@ html:has(.lesson-bar) {
  */
 .lesson-conversation-title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
@@ -1537,8 +1317,8 @@ html:has(.lesson-bar) {
   list-style: none;
 }
 .lesson-line {
-  --line-tint: var(--vale-card);
-  --line-edge: var(--vale-line);
+  --line-tint: var(--bg);
+  --line-edge: var(--border);
   display: flex;
   align-items: flex-end;
   gap: 8px;
@@ -1550,23 +1330,23 @@ html:has(.lesson-bar) {
   flex-direction: row-reverse;
   margin-inline-start: auto;
 }
-/* the others in tints of the valley mixed into the card: the blue gate, the pomegranate, the gold */
+/* the others in faint tints mixed into the card, so each voice keeps its own */
 .lesson-line.is-part-1 {
-  --line-tint: color-mix(in srgb, var(--gems) 12%, var(--vale-card));
-  --line-edge: color-mix(in srgb, var(--gems) 38%, var(--vale-card));
+  --line-tint: color-mix(in srgb, var(--gems) 12%, var(--bg));
+  --line-edge: color-mix(in srgb, var(--gems) 38%, var(--bg));
 }
 .lesson-line.is-part-2 {
-  --line-tint: color-mix(in srgb, var(--vale-red) 9%, var(--vale-card));
-  --line-edge: color-mix(in srgb, var(--vale-red) 38%, var(--vale-card));
+  --line-tint: color-mix(in srgb, var(--primary) 9%, var(--bg));
+  --line-edge: color-mix(in srgb, var(--primary) 38%, var(--bg));
 }
 .lesson-line.is-part-3 {
-  --line-tint: color-mix(in srgb, var(--gold) 14%, var(--vale-card));
-  --line-edge: color-mix(in srgb, var(--gold) 45%, var(--vale-card));
+  --line-tint: color-mix(in srgb, var(--gold) 14%, var(--bg));
+  --line-edge: color-mix(in srgb, var(--gold) 45%, var(--bg));
 }
 /* the learner's own lines: their colour, the way a message they sent would be */
 .lesson-line.is-you {
-  --line-tint: color-mix(in srgb, var(--bubble-mine) 18%, var(--vale-card));
-  --line-edge: color-mix(in srgb, var(--bubble-mine) 50%, var(--vale-card));
+  --line-tint: color-mix(in srgb, var(--bubble-mine) 18%, var(--bg));
+  --line-edge: color-mix(in srgb, var(--bubble-mine) 50%, var(--bg));
 }
 .lesson-line-bubble {
   display: grid;
@@ -1590,19 +1370,19 @@ html:has(.lesson-bar) {
   box-shadow: 0 0 0 1px var(--ink);
 }
 .lesson-line-name {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   color: var(--ink-3);
 }
 .lesson-line-text {
-  font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
 .lesson-line-meaning {
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   line-height: 1.35;
   color: var(--ink-3);
   overflow-wrap: anywhere;
@@ -1626,7 +1406,7 @@ html:has(.lesson-bar) {
 }
 .lesson-note {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .lesson-recording {
@@ -1658,25 +1438,25 @@ html:has(.lesson-bar) {
   flex-wrap: wrap;
   gap: 8px;
 }
-/* how it went, three cards on their edge as the answers are; the one chosen in the red, waiting for Check */
+/* how it went, three cards on their edge as the answers are; the one chosen marked, waiting for Check */
 .lesson-rate .btn {
   height: auto;
   min-height: 46px;
   padding: 8px 16px;
-  border: 1.5px solid var(--vale-line);
-  border-bottom: 3.5px solid var(--vale-edge);
+  border: 1.5px solid var(--border);
+  border-bottom: 3.5px solid var(--border-strong);
   border-radius: 14px;
-  background: var(--vale-card);
+  background: var(--bg);
   color: var(--ink);
 }
 .lesson-rate .btn:hover:not(:disabled) {
-  border-color: var(--vale-edge);
-  background: var(--vale-hover);
+  border-color: var(--border-strong);
+  background: var(--surface-2);
 }
 .lesson-rate .btn.is-selected,
 .lesson-rate .btn.is-selected:hover:not(:disabled) {
-  border-color: var(--vale-red);
-  background: var(--vale-red-soft);
+  border-color: var(--primary);
+  background: var(--primary-soft);
 }
 
 /*
@@ -1685,14 +1465,14 @@ html:has(.lesson-bar) {
  */
 .lesson-bar {
   /* the one button's colours (`.lesson-bar-go`), which a verdict sheet changes for its own */
-  --go-fill: var(--vale-go);
-  --go-ink: var(--vale-go-ink);
-  --go-lip: var(--vale-go-lip);
+  --go-fill: var(--accent);
+  --go-ink: var(--accent-ink);
+  --go-lip: color-mix(in srgb, var(--accent) 65%, #000);
   position: sticky;
   bottom: 0;
   z-index: 20;
-  border-top: 1.5px solid var(--vale-line);
-  background: var(--vale-bar);
+  border-top: 1.5px solid var(--border);
+  background: var(--app-bg);
   padding: 14px 16px calc(18px + env(safe-area-inset-bottom));
 }
 .lesson-bar-inner {
@@ -1729,13 +1509,13 @@ html:has(.lesson-bar) {
   background: var(--go-fill);
   box-shadow: 0 3.5px 0 var(--go-lip);
   color: var(--go-ink);
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 800;
   letter-spacing: 0.02em;
 }
 .lesson-bar-go:hover:not(:disabled) {
   border-color: transparent;
-  background: color-mix(in srgb, var(--go-fill) 90%, var(--vale-paper));
+  background: color-mix(in srgb, var(--go-fill) 90%, var(--app-bg));
 }
 .lesson-bar-go:active:not(:disabled) {
   transform: translateY(3.5px);
@@ -1744,23 +1524,23 @@ html:has(.lesson-bar) {
 .lesson-bar-go:focus-visible {
   border-radius: var(--r-lg);
 }
-/* nothing to check yet: the paper's own shade, not a faded ink */
+/* nothing to check yet: a quiet grey of the page, not a faded violet */
 .lesson-bar-go:disabled {
   border-color: transparent;
-  background: var(--vale-go-off);
-  box-shadow: 0 3.5px 0 var(--vale-go-off-lip);
-  color: var(--vale-go-off-ink);
+  background: var(--surface-2);
+  box-shadow: 0 3.5px 0 transparent;
+  color: var(--ink-4);
   opacity: 1;
 }
-/* what else the bar holds: cream cards on the paper, or on the verdict's colour */
+/* what else the bar holds: cards on the page, or on the verdict's colour */
 .lesson-bar .btn-secondary {
-  border: 1.5px solid var(--vale-line);
-  background: var(--vale-card);
+  border: 1.5px solid var(--border);
+  background: var(--bg);
   color: var(--ink);
 }
 .lesson-bar .btn-secondary:hover:not(:disabled) {
-  border-color: var(--vale-edge);
-  background: var(--vale-card);
+  border-color: var(--border-strong);
+  background: var(--bg);
 }
 .lesson-bar-note {
   display: flex;
@@ -1768,7 +1548,7 @@ html:has(.lesson-bar) {
   align-items: baseline;
   gap: 4px 10px;
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .lesson-bar-note:empty {
@@ -1802,41 +1582,41 @@ html:has(.lesson-bar) {
   }
 }
 /*
- * The verdict colours: a pale wash of green, gold or warm red with the words in its deep shade, and Continue filled
- * with it on a darker edge; dark brown on gold, which is light in both schemes.
+ * The verdict colours: a wash of green, the ink, or red over the page with the words in its own colour, and Continue
+ * filled with it on a darker edge, the page's colour written on it.
  */
 .lesson-bar.is-right {
-  --verdict: var(--vale-green);
-  --verdict-ink: var(--vale-green-ink);
-  --on-verdict: var(--vale-on-chip);
-  --go-fill: var(--vale-green-fill);
-  --go-ink: var(--vale-on-fill);
-  --go-lip: var(--vale-green-lip);
-  --portrait-ring: var(--vale-green-line);
-  border-top-color: var(--vale-green-line);
-  background: var(--vale-sheet-right);
+  --verdict: var(--success);
+  --verdict-ink: var(--success);
+  --on-verdict: var(--primary-ink);
+  --go-fill: var(--success);
+  --go-ink: var(--primary-ink);
+  --go-lip: color-mix(in srgb, var(--success) 70%, #000);
+  --portrait-ring: color-mix(in srgb, var(--success) 40%, var(--app-bg));
+  border-top-color: color-mix(in srgb, var(--success) 40%, var(--app-bg));
+  background: color-mix(in srgb, var(--success) 14%, var(--app-bg));
 }
 .lesson-bar.is-almost {
   --verdict: var(--gold);
   --verdict-ink: var(--gold-ink);
-  --on-verdict: #2a1f00;
+  --on-verdict: var(--primary-ink);
   --go-fill: var(--gold);
-  --go-ink: #2a1f00;
-  --go-lip: color-mix(in srgb, var(--gold) 62%, #3d2a1f);
-  --portrait-ring: var(--vale-sheet-almost-line);
-  border-top-color: var(--vale-sheet-almost-line);
-  background: var(--vale-sheet-almost);
+  --go-ink: var(--primary-ink);
+  --go-lip: color-mix(in srgb, var(--gold) 65%, #000);
+  --portrait-ring: color-mix(in srgb, var(--ink) 18%, var(--app-bg));
+  border-top-color: color-mix(in srgb, var(--ink) 18%, var(--app-bg));
+  background: color-mix(in srgb, var(--ink) 7%, var(--app-bg));
 }
 .lesson-bar.is-notyet {
-  --verdict: var(--vale-red);
-  --verdict-ink: var(--vale-sheet-wrong-ink);
-  --on-verdict: var(--vale-on-chip);
-  --go-fill: var(--vale-red-fill);
-  --go-ink: var(--vale-on-fill);
-  --go-lip: var(--vale-red-lip);
-  --portrait-ring: var(--vale-sheet-wrong-line);
-  border-top-color: var(--vale-sheet-wrong-line);
-  background: var(--vale-sheet-wrong);
+  --verdict: var(--danger);
+  --verdict-ink: var(--danger);
+  --on-verdict: var(--primary-ink);
+  --go-fill: var(--danger);
+  --go-ink: var(--primary-ink);
+  --go-lip: color-mix(in srgb, var(--danger) 70%, #000);
+  --portrait-ring: color-mix(in srgb, var(--danger) 40%, var(--app-bg));
+  border-top-color: color-mix(in srgb, var(--danger) 40%, var(--app-bg));
+  background: color-mix(in srgb, var(--danger) 14%, var(--app-bg));
 }
 
 /* after an answer: the sheet's words, with the character standing on its floor at the start */
@@ -1915,10 +1695,10 @@ html:has(.lesson-bar) {
   width: 60px;
   height: 60px;
   overflow: hidden;
-  border: 2.5px solid var(--vale-portrait-rim);
+  border: 2.5px solid var(--border);
   border-radius: 50%;
-  background: var(--vale-portrait);
-  box-shadow: 0 0 0 1.5px var(--portrait-ring, var(--vale-edge));
+  background: color-mix(in srgb, var(--ink) 10%, var(--app-bg));
+  box-shadow: 0 0 0 1.5px var(--portrait-ring, var(--border-strong));
   isolation: isolate;
 }
 .lesson-feedback-face > .hevalo-window {
@@ -1942,8 +1722,8 @@ html:has(.lesson-bar) {
   gap: 8px 12px;
   margin: 0;
   color: var(--verdict-ink);
-  font-family: var(--font-display);
-  font-size: clamp(1.4rem, 6vw, 1.6rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   font-weight: 700;
   line-height: 1.15;
 }
@@ -1957,7 +1737,7 @@ html:has(.lesson-bar) {
 /* what the Kurdish praise means, small, beside it */
 .lesson-praise-gloss {
   font-family: var(--font-sans);
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 500;
   color: var(--ink-3);
 }
@@ -1968,16 +1748,16 @@ html:has(.lesson-bar) {
   gap: 4px;
   padding: 3px 10px;
   border-radius: var(--r-pill);
-  background: var(--vale-card);
+  background: var(--bg);
   font-family: var(--font-sans);
   color: var(--gold-ink);
-  font-size: 0.75rem;
+  font-size: var(--text);
   font-weight: 700;
   white-space: nowrap;
 }
 .lesson-hint-line {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--gold-ink);
 }
@@ -1998,13 +1778,13 @@ html:has(.lesson-bar) {
   margin: 0;
 }
 .lesson-compare dt {
-  font-size: 0.82rem;
+  font-size: var(--text);
   color: var(--ink-3);
   align-self: center;
 }
 .lesson-compare dd {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: var(--text);
   overflow-wrap: anywhere;
 }
 .lesson-compare mark {
@@ -2025,11 +1805,11 @@ html:has(.lesson-bar) {
 }
 .lesson-correction-label {
   color: var(--verdict-ink);
-  font-size: 1.05rem;
+  font-size: var(--text);
   font-weight: 800;
 }
 .lesson-correction strong {
-  font-size: 1.15rem;
+  font-size: var(--text);
   font-weight: 500;
   overflow-wrap: anywhere;
 }
@@ -2042,7 +1822,7 @@ html:has(.lesson-bar) {
 }
 .lesson-saved {
   margin: 8px 0 0;
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-4);
 }
 
@@ -2055,7 +1835,7 @@ html:has(.lesson-bar) {
   gap: 18px;
 }
 .lesson-results-title {
-  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  font-size: var(--text-title);
   text-align: center;
 }
 .lesson-results-title:focus {
@@ -2075,11 +1855,11 @@ html:has(.lesson-bar) {
 .lesson-goal-bar {
   flex: 1 1 100%;
   height: 8px;
-  background: var(--vale-track);
+  background: var(--surface-2);
 }
 .lesson-goal-bar > span {
   width: 100%;
-  background: var(--vale-green);
+  background: var(--success);
   transform: scaleX(var(--to, 0));
   transform-origin: left;
 }
@@ -2096,7 +1876,7 @@ html:has(.lesson-bar) {
   gap: 4px;
   margin-inline-start: auto;
   color: var(--success);
-  font-size: 0.85rem;
+  font-size: var(--text);
 }
 .lesson-moment .lesson-league-up svg {
   color: inherit;
@@ -2133,11 +1913,11 @@ html:has(.lesson-bar) {
 }
 .lesson-mistakes-title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--text);
   font-weight: 700;
 }
 .lesson-results-back {
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 
 .lesson-mistakes ul {
@@ -2151,12 +1931,12 @@ html:has(.lesson-bar) {
   display: grid;
   gap: 4px;
   padding: 12px 14px;
-  border: 1.5px solid var(--vale-line);
+  border: 1.5px solid var(--border);
   border-radius: var(--r-lg);
-  background: var(--vale-card);
+  background: var(--bg);
 }
 .lesson-mistake-prompt {
-  font-size: 0.9rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .lesson-mistake-answer {
@@ -2166,25 +1946,25 @@ html:has(.lesson-bar) {
   color: var(--ink);
 }
 
-/* the Tips, over the lesson: on its paper, the note a card on it */
+/* the Tips, over the lesson: on its page, the note a card on it */
 .modal-panel:has(> .lesson-tips) {
-  border: 1.5px solid var(--vale-line);
-  background: var(--vale-paper);
+  border: 1.5px solid var(--border);
+  background: var(--app-bg);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 .lesson-tips .grammar-title {
-  font-size: 1.5rem;
+  font-size: var(--text-title);
   font-weight: 700;
 }
 .lesson-tips .grammar-note {
-  border: 1.5px solid var(--vale-line);
+  border: 1.5px solid var(--border);
   border-radius: var(--r-lg);
-  background: var(--vale-card);
+  background: var(--bg);
 }
 
 /* Soranî in an Arabic-script face, last so it beats display faces set above, including word tiles under a Soranî line. */
 .lesson [lang='ckb'],
 .lesson [lang='ckb'] :is(.tile, .tile-ghost) {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
 }

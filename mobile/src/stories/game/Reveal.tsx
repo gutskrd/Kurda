@@ -216,10 +216,10 @@ export function Reveal({
 }
 
 const styles = StyleSheet.create({
-  index: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  index: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   verdict: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, padding: spacing.md },
-  verdictText: { ...display(typography.sizes.lg) },
-  prompt: { ...display(typography.sizes.lg), lineHeight: 30 },
+  verdictText: { ...display(typography.sizes.text) },
+  prompt: { ...display(typography.sizes.text), lineHeight: 30 },
   options: { gap: spacing.sm },
   // The question's tiles in their shape, laid flat now that nothing is pressable, marking which was right.
   option: {
@@ -231,19 +231,19 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   optionMain: { flex: 1, gap: 2 },
-  optionText: { fontSize: typography.sizes.md, lineHeight: 22 },
-  tag: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
+  optionText: { fontSize: typography.sizes.text, lineHeight: 22 },
+  tag: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   explain: { gap: spacing.xs },
-  explanation: { fontSize: typography.sizes.md, lineHeight: 23 },
-  english: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  explanation: { fontSize: typography.sizes.text, lineHeight: 23 },
+  english: { fontSize: typography.sizes.text, lineHeight: 20 },
   toggle: { alignSelf: 'flex-start', minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
-  toggleText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  toggleText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   quote: { flexDirection: 'row', borderRadius: radii.md, padding: spacing.md, gap: spacing.md },
   quoteBar: { width: 3, borderRadius: radii.pill },
   quoteMain: { flex: 1, gap: spacing.xs },
   iconSpace: { width: 18 },
-  quoteLabel: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  quoteText: { fontSize: typography.sizes.md, lineHeight: 24, fontStyle: 'italic' },
-  count: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  waiting: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  quoteLabel: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  quoteText: { fontSize: typography.sizes.text, lineHeight: 24, fontStyle: 'italic' },
+  count: { fontSize: typography.sizes.text, textAlign: 'center' },
+  waiting: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
 });

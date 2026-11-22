@@ -78,16 +78,16 @@ const TEXT_MAX = 1.3;
  * A name a little smaller on a stamp narrower than usual, as the website sets it: two lines of name over two of meaning
  * is the most a stamp holds. At the usual width or wider it is the usual size.
  */
-const nameOn = (width: number) => display(Math.round(Math.min(typography.sizes.md, Math.max(15, width * 0.105))));
+const nameOn = (width: number) => display(Math.round(Math.min(typography.sizes.text, Math.max(15, width * 0.105))));
 
 const styles = StyleSheet.create({
   paper: { position: 'absolute' },
   face: { flex: 1, alignItems: 'center' },
   // The words are centred in what the cover leaves, so a short name does not sit against the picture.
   words: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', gap: 2, paddingBottom: 6 },
-  name: { ...display(typography.sizes.md), textAlign: 'center' },
-  nameLarge: { ...display(typography.sizes.xl), textAlign: 'center' },
+  name: { ...display(typography.sizes.text), textAlign: 'center' },
+  nameLarge: { ...display(typography.sizes.title), textAlign: 'center' },
   // In the name's ink a little quieter, as one solid colour (`StampLook.inkSoft`).
-  meaning: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  meaningLarge: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  meaning: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  meaningLarge: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
 });

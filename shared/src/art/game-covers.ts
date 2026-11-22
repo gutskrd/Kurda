@@ -10,7 +10,7 @@ import { deerSilhouetteSvg } from '../games/who-am-i/silhouette.js';
 import { GAME_NAMES } from '../games/names.js';
 import { dab, dot, fill, form, line, ring, rr, tones, turned, type Tones } from './cutout.js';
 import type { Cover, Key, Part } from './game-acting.js';
-import { MASK, MASK_EYES } from './impostor.js';
+import { DEER_CARD, deerHead, wolfHead } from './impostor.js';
 import { songbird } from './songbird.js';
 import { letter, letterWidth, oval } from './ink.js';
 import { Drawing, n, tint } from './svg.js';
@@ -451,22 +451,20 @@ function card(dr: Drawing, angle: number, face: Tones, mark: () => void): void {
     mark();
   });
 }
-/** An open card: the shared word, drawn as a round gold bead as in Impostor's pictures. */
-const openCard = (dr: Drawing, angle: number): void => card(dr, angle, CREAM, () => dab(dr, 60, 55, 10, 10, GOLD, 2.4));
+/** A player's card: the deer on meadow green, as in the game, set toward the card's outer edge so the wolf's card leaves it in view. */
+const deerCard = (dr: Drawing, angle: number): void => card(dr, angle, DEER_CARD, () => deerHead(dr, 60 + Math.sign(angle) * 7, 56, 0.5));
 
-/** The impostor: a hand of three cards, two open and alike, the middle one dark and masked; it rises, looks round and slips back. */
+/** The impostor: a hand of three cards, two deer and the wolf in the middle; the wolf rises, looks round and slips back. */
 const impostor: Cover = {
   title: GAME_NAMES.impostor,
   loopMs: 5400,
   parts: [
     { draw: (dr) => ground(dr, MUSTARD, [60, 58, 50], [60, 104, 42, 5]) },
-    { draw: (dr) => openCard(dr, -24), pivot: FAN, keys: [[0, {}], [0.14, {}, 'hold'], [0.22, { r: -5 }, 'out'], [0.62, {}, 'hold'], [0.7, { r: 0 }, 'inOut'], [1, {}, 'hold']] },
-    { draw: (dr) => openCard(dr, 24), pivot: FAN, keys: [[0, {}], [0.14, {}, 'hold'], [0.22, { r: 5 }, 'out'], [0.62, {}, 'hold'], [0.7, { r: 0 }, 'inOut'], [1, {}, 'hold']] },
+    { draw: (dr) => deerCard(dr, -24), pivot: FAN, keys: [[0, {}], [0.14, {}, 'hold'], [0.22, { r: -5 }, 'out'], [0.62, {}, 'hold'], [0.7, { r: 0 }, 'inOut'], [1, {}, 'hold']] },
+    { draw: (dr) => deerCard(dr, 24), pivot: FAN, keys: [[0, {}], [0.14, {}, 'hold'], [0.22, { r: 5 }, 'out'], [0.62, {}, 'hold'], [0.7, { r: 0 }, 'inOut'], [1, {}, 'hold']] },
     {
       draw: (dr) =>
-        card(dr, 0, tones(NIGHT), () => {
-          dr.add(`<g transform="translate(60 54) scale(0.78)"><path d="${MASK}${MASK_EYES}" fill="${GOLD}" fill-rule="evenodd"/></g>`);
-        }),
+        card(dr, 0, tones(NIGHT), () => wolfHead(dr, 60, 58, 0.62)),
       pivot: [60, 88],
       keys: [[0, {}], [0.16, {}, 'hold'], [0.24, { y: -9 }, 'out'], [0.32, { r: -5 }, 'inOut'], [0.42, { r: 5 }, 'inOut'], [0.5, { r: 0 }, 'inOut'], [0.6, { y: 0 }, 'back'], [1, {}, 'hold']],
     },

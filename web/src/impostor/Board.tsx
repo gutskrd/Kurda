@@ -12,7 +12,6 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
-import { ImpostorIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { haptic } from '../lib/haptics';
@@ -23,6 +22,7 @@ import { useServerClock } from '../stories/useStoryGame';
 import { PartyComposer } from '../party/Composer';
 import { PartyTimer, secondsLeft } from '../party/PartyPage';
 import { SLIP_KEY, partyTextError } from '../party/text';
+import { EmblemArt } from './art';
 
 type ImpostorView = MultiView<ImpostorBoard | null>;
 type Move = (body: unknown) => Promise<ApiResult<MultiMoveAnswer<ImpostorBoard | null, ImpostorOutcome>>>;
@@ -202,7 +202,7 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
   );
 }
 
-/** The viewer's card on the table: the category for everyone, the word and its meaning for all but the impostor. */
+/** The viewer's card on the table: the category for everyone; a deer with the word and its meaning, or the wolf for the impostor. */
 function HandCard({ board, locale }: { board: ImpostorBoard; locale: string }): React.JSX.Element {
   const t = useT();
   const script = dialectDirection(board.dialect);
@@ -219,6 +219,7 @@ function HandCard({ board, locale }: { board: ImpostorBoard; locale: string }): 
       </p>
       {hand?.role === 'player' && (
         <>
+          <EmblemArt emblem="deer" size={80} />
           <p className="imp-card-word" lang={script.lang} dir={script.dir}>
             {hand.word}
           </p>
@@ -227,9 +228,8 @@ function HandCard({ board, locale }: { board: ImpostorBoard; locale: string }): 
       )}
       {impostor && (
         <>
-          <p className="imp-card-word is-impostor">
-            <ImpostorIcon size={26} /> {t('games.impostor.youAreImpostor')}
-          </p>
+          <EmblemArt emblem="wolf" size={80} />
+          <p className="imp-card-word is-impostor">{t('games.impostor.youAreImpostor')}</p>
           <p className="imp-card-meaning">{t('games.impostor.blendIn')}</p>
         </>
       )}
@@ -356,13 +356,16 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
                 <span className="imp-flip-face">
                   {isImpostor ? (
                     <>
-                      <ImpostorIcon size={20} />
+                      <EmblemArt emblem="wolf" size={44} />
                       <span>{t('games.impostor.impostorTag')}</span>
                     </>
                   ) : (
-                    <span lang={script.lang} dir={script.dir}>
-                      {reveal.word}
-                    </span>
+                    <>
+                      <EmblemArt emblem="deer" size={44} />
+                      <span lang={script.lang} dir={script.dir}>
+                        {reveal.word}
+                      </span>
+                    </>
                   )}
                 </span>
               </span>

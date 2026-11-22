@@ -85,6 +85,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   badge: { width: 56, height: 56, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
-  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
-  body: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center' },
+  title: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
+  body: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center' },
 });

@@ -16,6 +16,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { DailySheet } from './DailySheet';
 import { useToday } from './today';
 import { WeekRow, thisWeek } from './WeekRow';
+import { useNarrowPage } from '../theme/pageWidth';
 
 /** The small fire's square on the card. */
 const CARD_FIRE = 44;
@@ -29,6 +30,7 @@ export function DailyCard({ onLearn }: { onLearn?: () => void }): React.JSX.Elem
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
+  const narrow = useNarrowPage();
   const today = useToday();
   const [open, setOpen] = useState(false);
   // The first focus is the first load; each later one asks again, since a lesson may have changed the day.
@@ -74,9 +76,10 @@ export function DailyCard({ onLearn }: { onLearn?: () => void }): React.JSX.Elem
             {days === 1 ? t('daily.view.unitOne') : t('daily.view.unit')}
           </Text>
         </View>
-        {/* Beside today's mark, at the reading end of the space between. */}
+        {/* Beside today's mark, at the reading end of the space between. A folded phone's cover screen leaves the week, and
+           the chevron, to the sheet the card opens. */}
         <View style={[styles.week, { alignItems: dir.row === 'row-reverse' ? 'flex-start' : 'flex-end' }]}>
-          <WeekRow week={thisWeek(view.days, view.today, view.weekStart)} mini />
+          {narrow ? null : <WeekRow week={thisWeek(view.days, view.today, view.weekStart)} mini />}
         </View>
         <View
           style={[
@@ -95,7 +98,7 @@ export function DailyCard({ onLearn }: { onLearn?: () => void }): React.JSX.Elem
             </Text>
           )}
         </View>
-        <Icon name={dir.rtl ? 'chevron-left' : 'chevron-right'} size={18} color={colors.textSecondary} />
+        {narrow ? null : <Icon name={dir.rtl ? 'chevron-left' : 'chevron-right'} size={18} color={colors.textSecondary} />}
       </Pressable>
       <DailySheet visible={open} onClose={() => setOpen(false)} today={today} onLearn={onLearn} />
     </>
@@ -106,9 +109,9 @@ const styles = StyleSheet.create({
   card: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.sm + 4, paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.sm + 6, borderRadius: radii.lg },
   fire: { width: CARD_FIRE, height: CARD_FIRE, alignItems: 'center', justifyContent: 'center' },
   words: { minWidth: 0 },
-  number: { fontSize: 24, lineHeight: 26, fontWeight: '800' },
-  unit: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  number: { fontSize: typography.sizes.title, lineHeight: 34, fontWeight: '800' },
+  unit: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   week: { flex: 1 },
   zer: { alignItems: 'center', gap: 4, minHeight: 28, paddingStart: 6, paddingEnd: 10, borderRadius: radii.pill },
-  zerText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  zerText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
 });

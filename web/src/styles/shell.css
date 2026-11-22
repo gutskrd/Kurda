@@ -137,7 +137,7 @@
   gap: 2px;
 }
 .list-row-title {
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1.3;
   overflow: hidden;
@@ -145,7 +145,7 @@
   white-space: nowrap;
 }
 .list-row-sub {
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   color: var(--ink-3);
   line-height: 1.35;
   overflow: hidden;
@@ -160,7 +160,7 @@
 /* a section heading inside a page: the 22 of the scale, in the sans */
 .learn-section-title {
   font-family: var(--font-sans);
-  font-size: var(--text-section);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: -0.01em;
   margin: 0 0 var(--space-3);
@@ -253,7 +253,7 @@
   flex: 1;
   min-width: 0;
   font-family: var(--font-sans);
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 700;
   line-height: 1.3;
 }
@@ -266,7 +266,7 @@
 }
 .bell-count {
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 .bell-read-all {
   display: inline-flex;
@@ -280,7 +280,7 @@
   background: transparent;
   color: var(--ink-2);
   font: inherit;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 600;
   cursor: pointer;
   transition: background var(--dur-fast) ease;
@@ -325,13 +325,13 @@
 }
 .bell-state-title {
   color: var(--ink);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
   max-width: 32ch;
 }
 .bell-state-body {
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   line-height: 1.45;
   max-width: 32ch;
 }
@@ -366,7 +366,7 @@
   background: transparent;
   color: var(--ink-2);
   font: inherit;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -401,7 +401,7 @@
   background: var(--note-ground);
   color: var(--ink-3);
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   line-height: 1.4;
 }
@@ -529,7 +529,7 @@
   line-clamp: 2;
   overflow: hidden;
   color: var(--ink-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -569,7 +569,7 @@
   line-clamp: 1;
   overflow: hidden;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
@@ -584,7 +584,7 @@
   border-radius: var(--r-pill);
   background: var(--primary);
   color: var(--primary-ink);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
 }
 
@@ -689,7 +689,7 @@
   padding: 0;
   border: 0;
   font: inherit;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   text-decoration: none;
   cursor: pointer;
@@ -878,7 +878,7 @@
   background: var(--surface-2);
   color: var(--ink);
   font: inherit;
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   transition:
     border-color var(--dur-fast) ease,
     background var(--dur-fast) ease;
@@ -953,7 +953,7 @@
 }
 .nav-search-head-title,
 .nav-search-group-title {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-3);
 }
@@ -972,7 +972,7 @@
 .nav-search-note {
   margin: 0;
   padding: 14px 12px;
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .nav-search-note.is-loading {
@@ -1033,7 +1033,7 @@
   gap: 1px;
 }
 .nav-search-title {
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1.3;
   overflow: hidden;
@@ -1041,7 +1041,7 @@
   white-space: nowrap;
 }
 .nav-search-sub {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3);
   line-height: 1.35;
   overflow: hidden;
@@ -1110,7 +1110,7 @@
     /* the clear button's 40px and its 2px inset, so the words stop short of it */
     padding-inline-end: 44px;
     /* sixteen pixels, or a phone zooms the page in when the field is touched */
-    font-size: 16px;
+    font-size: var(--text);
   }
   .nav-search-clear {
     width: 40px;
@@ -1182,7 +1182,7 @@
   padding: 0 18px;
   border-radius: var(--r-pill);
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -1203,15 +1203,13 @@
 .switch-btn.is-active,
 .rank-by-btn.is-active,
 .seg-btn.is-active,
-.mkp-tab.is-active,
 .wordle-layout-option.is-on {
   border-color: var(--primary);
   background: var(--primary);
   color: var(--primary-ink);
 }
 /* what sits inside a chosen one takes its ink: a mark coloured for the page would be lost on it */
-.rank-by-btn.is-active .rank-by-xp,
-.mkp-tab.is-active .mkp-tab-hidden {
+.rank-by-btn.is-active .rank-by-xp {
   border-color: currentColor;
   color: inherit;
 }
@@ -1232,19 +1230,53 @@
 @media (max-width: 360px) {
   .learn-head .switch-btn {
     padding: 0 4px;
-    font-size: var(--text-caption);
+    font-size: var(--text);
   }
 }
 
-/* today, in one row above the path: the streak, the goal's ring, what review has waiting */
+/* the head of the road: today at the reading edge, the letters and the dictionary at the far end, under the bell */
+.learn-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: var(--container-narrow);
+  margin: 0 auto var(--space-5);
+}
+/* today: the streak and the goal's ring */
 .learn-strip {
   display: flex;
+  flex: 1;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
   min-height: 40px;
-  margin: 0 auto var(--space-5);
-  max-width: var(--container-narrow);
+}
+/* the letters and the dictionary: two buttons in one pill, drawn as the pill of search and the bell is */
+.learn-tools {
+  display: flex;
+  flex: none;
+  height: 44px;
+  margin-inline-start: auto;
+  border-radius: var(--r-pill);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-control);
+}
+.learn-tools-btn {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  border-radius: var(--r-pill);
+  color: var(--ink);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.learn-tools-btn:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.learn-tools-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
 }
 .learn-strip-item {
   display: inline-flex;
@@ -1255,7 +1287,7 @@
   padding: 0 14px;
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 650;
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
@@ -1283,7 +1315,7 @@
 /* the goal's sheet: the ring with what is earned, then the four goals to choose from */
 .goal-sheet-title {
   margin: 0 0 var(--space-4);
-  font-size: var(--text-section);
+  font-size: var(--text);
 }
 .goal-sheet-now {
   display: flex;
@@ -1293,7 +1325,7 @@
 }
 .goal-sheet-words {
   margin: 0;
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 600;
 }
 .goal-picker {
@@ -1306,7 +1338,7 @@
   margin-bottom: var(--space-2);
   padding: 0;
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
 }
 .goal-picker-options {
@@ -1322,7 +1354,7 @@
   display: grid;
   place-items: center;
   min-height: 44px;
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
@@ -1342,7 +1374,7 @@
 .goal-sheet-note {
   margin: var(--space-3) 0 0;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   line-height: 1.4;
 }
 .learn-strip-ring {
@@ -1369,17 +1401,6 @@
   margin-inline-start: -2px;
   color: var(--success);
 }
-/* review waiting: the one item here that opens something */
-.learn-strip-chip {
-  margin-inline-start: auto;
-  background: var(--surface-2);
-  color: var(--ink);
-}
-.learn-strip-chip:hover {
-  background: var(--surface-3);
-  color: var(--ink);
-  text-decoration: none;
-}
 /* the path, as wide as a course's own page draws it */
 .lp-courses.learn-courses-switch {
   max-width: var(--container-narrow);
@@ -1390,18 +1411,7 @@
   margin: 0 auto var(--space-8);
 }
 
-/* practice tools: review, the alphabet, the words to know and the dictionary, side by side */
-.learn-tools-section {
-  margin-bottom: var(--space-8);
-}
-.learn-tools {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-3);
-}
-.learn-tools.is-guest {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
+/* a card of practice: review on the practice hub, today's word on the dictionary page */
 .learn-tool {
   display: flex;
   flex-direction: column;
@@ -1430,27 +1440,18 @@
 .learn-tool-title {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 700;
 }
 .learn-tool-body {
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   color: var(--ink-3);
 }
-/* Letters and words shows its first letters where an icon would be */
-.learn-tool-letters {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  line-height: 1;
-  letter-spacing: 0.04em;
-  color: var(--primary);
-  direction: ltr;
-}
-/* today's word stands where another tool has its icon, in the display face as the first letters are */
+/* today's word stands where another card has its icon */
 .learn-tool-word {
   max-width: 100%;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.1;
   color: var(--primary);
   overflow-wrap: anywhere;
@@ -1462,30 +1463,12 @@
 .learn-tool.learn-review .learn-review-text {
   flex: 0 1 auto;
 }
-/* review's button, and on Learn the way to the other kinds of practice beside it */
+/* review's button, and the way to the other kinds of practice beside it */
 .learn-review-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-}
-@media (max-width: 860px) {
-  .learn-tools,
-  .learn-tools.is-guest {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .learn-tools .learn-review {
-    grid-column: 1 / -1;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-}
-@media (max-width: 380px) {
-  .learn-tools,
-  .learn-tools.is-guest {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 /* what a visitor sees where the courses would be */
@@ -1542,7 +1525,7 @@
 }
 /* a sentence, so it wraps: on one line it lost its end on a phone, and the longer Arabic and Soranî lost more */
 .games-rankings-sub {
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   line-height: 1.35;
   color: var(--ink-3);
   text-wrap: pretty;
@@ -1630,7 +1613,7 @@
 }
 .search-note {
   margin-bottom: var(--space-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .search-back {
   margin-bottom: var(--space-3);
@@ -1701,7 +1684,7 @@
 }
 .chat-convo-when {
   flex: none;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .chat-convo-bottom {
@@ -1741,7 +1724,7 @@
 }
 .chat-list-none {
   padding: var(--space-4) var(--space-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .new-message {
   display: grid;
@@ -1814,7 +1797,7 @@
 :root {
   /* the bar of places: its height, and how far above the window's bottom edge it floats — just over the
      home indicator on a phone that has one, and a small margin up from the edge on one that has none */
-  --places-h: 64px;
+  --places-h: 60px;
   --places-lift: max(env(safe-area-inset-bottom, 0px) - 8px, 12px);
 }
 
@@ -1929,10 +1912,15 @@
   bottom: var(--places-lift);
   height: var(--places-h);
   /* the air round the capsule behind the place you are on */
-  padding: 6px;
+  padding: 5px;
   border-radius: var(--r-pill);
   background: var(--surface-solid);
   box-shadow: var(--shadow-raised);
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+/* small while the page scrolls down, out of the way of what is being read (PlacesBar.tsx) */
+.places-bar.is-compact {
+  transform: scale(var(--compact));
 }
 @media (min-width: 641px) {
   .places-bar {
@@ -1956,35 +1944,68 @@
   min-width: 0;
   display: flex;
 }
-/* The capsule behind the current place slides by transform (`--at`), and appears without sliding once a place is chosen. */
+/*
+ * The capsule behind the current place, by its two ends (`--at` of `--places`), appearing without a slide once a place
+ * is chosen. Moving on, the end in front leads on a spring that runs a little past the place and the one behind
+ * follows on a softer one (PlacesBar.tsx), so it stretches toward the place and settles round it, lifting larger and
+ * lighter on the way. Its track stops at the bar's ends, so running past an end place squeezes it against the wall.
+ */
+.places-track {
+  position: absolute;
+  inset-block: -4px;
+  inset-inline: 0;
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  pointer-events: none;
+}
 .places-capsule {
   position: absolute;
-  inset-block: 0;
-  inset-inline-start: 0;
-  width: calc(100% / var(--places));
+  inset-block: 4px;
+  inset-inline-start: calc(100% * var(--at) / var(--places));
+  inset-inline-end: calc(100% * (var(--places) - var(--at) - 1) / var(--places));
   border-radius: var(--r-pill);
-  /* a faint wash of the violet the chosen place is written in, so capsule, glyph and word are one thing */
-  background: var(--primary-soft);
-  transform: translateX(calc(var(--at) * 100%));
-  transition: transform var(--dur) var(--ease-out);
+  /* a wash of the ink the chosen place is drawn in, so capsule and glyph are one thing */
+  background: var(--capsule);
+  transition:
+    inset-inline-start var(--follow-ms) var(--follow-ease),
+    inset-inline-end var(--follow-ms) var(--follow-ease);
 }
-[dir='rtl'] .places-capsule {
-  transform: translateX(calc(var(--at) * -100%));
+.places-row.is-leading-end .places-capsule {
+  transition-duration: var(--follow-ms), var(--lead-ms);
+  transition-timing-function: var(--follow-ease), var(--lead-ease);
 }
-/* a place: its whole share of the bar is the target, its glyph over its word */
+.places-row.is-leading-start .places-capsule {
+  transition-duration: var(--lead-ms), var(--follow-ms);
+  transition-timing-function: var(--lead-ease), var(--follow-ease);
+}
+/* the same lift under two names, so each move starts it again */
+.places-row.is-lift-a .places-capsule {
+  animation: places-lift-a var(--lift-ms) var(--ease-out);
+}
+.places-row.is-lift-b .places-capsule {
+  animation: places-lift-b var(--lift-ms) var(--ease-out);
+}
+@keyframes places-lift-a {
+  33% {
+    scale: var(--lift-scale);
+    opacity: var(--lift-fill);
+  }
+}
+@keyframes places-lift-b {
+  33% {
+    scale: var(--lift-scale);
+    opacity: var(--lift-fill);
+  }
+}
+/* a place: its whole share of the bar is the target, its glyph alone in the middle */
 .places-link {
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
   border-radius: var(--r-pill);
   color: var(--ink-3);
-  font-size: var(--text-tab);
-  font-weight: 500;
-  line-height: 13px;
   transition:
     color var(--dur-fast) var(--ease-out),
     transform var(--dur) var(--ease-spring);
@@ -1992,45 +2013,58 @@
 .places-link:hover {
   color: var(--ink);
 }
-/* the one you are on: the app's violet, a step heavier. Its share of the bar is fixed, so the wider word moves nothing */
+/* the one you are on: drawn in the ink, its glyph solid */
 .places-link.active {
   color: var(--primary);
-  font-weight: 600;
 }
 .places-link:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: -2px;
 }
-/* a box of one size for every glyph, so your face in place of an outline, or a count landing, moves nothing */
+/* a box of one size for every glyph and for your picture in its ring, so the ring coming and going moves nothing */
 .places-glyph {
   position: relative;
   display: grid;
   place-items: center;
+  width: 36px;
+  height: 36px;
+}
+/* the list's glyphs are drawn for the top bar; alone here, they have the room to be larger */
+.places-glyph > svg {
+  width: 26px;
+  height: 26px;
+}
+/* your picture, a little larger than the glyphs as a face reads smaller than an outline, and ringed in the ink when
+   it is the place you are on; the level ring stays on the top bar */
+.places-glyph .nav-avatar {
+  width: 36px;
+  height: 36px;
+}
+.places-glyph .nav-avatar .friend-avatar {
   width: 28px;
   height: 28px;
 }
-/* the list's glyphs are drawn for the top bar; here they have the room to be a little larger */
-.places-glyph > svg {
-  width: 24px;
-  height: 24px;
+.places-glyph .nav-avatar .level-ring {
+  display: none;
 }
-.places-word {
-  max-width: 100%;
-  padding-inline: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.places-glyph .nav-avatar.is-active .friend-avatar {
+  box-shadow:
+    0 0 0 2px var(--surface-solid),
+    0 0 0 4px var(--primary);
 }
-/* what is waiting, on the glyph's shoulder, ringed in the bar's own fill so it reads as sitting on the glyph */
-.places-glyph .nav-badge {
-  position: absolute;
-  top: -4px;
-  inset-inline-start: 15px;
-  margin: 0;
-  box-shadow: 0 0 0 2px var(--surface-solid);
-}
+/* something new waiting: a red dot at the glyph's foot on the trailing side, ringed in the bar's own fill */
 .places-glyph .nav-dot {
-  box-shadow: 0 0 0 2px var(--surface-solid);
+  top: auto;
+  bottom: 4px;
+  inset-inline-end: 3px;
+  width: 9px;
+  height: 9px;
+  background: var(--notice);
+  box-shadow: 0 0 0 1.5px var(--surface-solid);
+}
+.places-glyph .nav-avatar ~ .nav-dot {
+  bottom: 2px;
+  inset-inline-end: 2px;
 }
 /* a shape gives under the finger as a button does, and springs back when let go */
 .nav-back:active,
@@ -2060,6 +2094,7 @@
   .nav-search.is-open .nav-search-bar,
   .nav-search-panel,
   .nav-search-list.is-stale,
+  .places-bar,
   .places-capsule,
   .places-link,
   .nav-back,
@@ -2068,6 +2103,7 @@
     animation: none;
   }
   /* the shapes stay their size, and answer a press in their ground as a row does */
+  .places-bar.is-compact,
   .nav-back:active,
   .nav-phone .nav-search.is-open .nav-search-back:active,
   .places-link:active {
@@ -2143,7 +2179,6 @@
   .switch-btn,
   .seg-btn,
   .search-clear,
-  .mkp-tab,
   .fcard-who,
   .friend-id {
     min-height: 44px;
@@ -2213,14 +2248,12 @@
  */
 .fcard-act,
 .seg-btn,
-.mkp-tab,
 .post-plus {
   transition: transform var(--dur) var(--ease-spring);
 }
 .fcard-act:active:not(:disabled),
 .switch-btn:active,
 .seg-btn:active:not(:disabled),
-.mkp-tab:active:not(:disabled),
 .post-plus:active:not(:disabled) {
   transform: scale(var(--press-scale));
   transition-duration: 80ms;
@@ -2242,14 +2275,12 @@
   .fcard-act:active:not(:disabled),
   .switch-btn:active,
   .seg-btn:active:not(:disabled),
-  .mkp-tab:active:not(:disabled),
   .post-plus:active:not(:disabled) {
     transform: none;
   }
   .fcard-act:active:not(:disabled),
   .switch-btn:active:not(.is-active),
-  .seg-btn:active:not(:disabled, .is-active),
-  .mkp-tab:active:not(:disabled, .is-active) {
+  .seg-btn:active:not(:disabled, .is-active) {
     background: var(--surface-3);
   }
   .post-plus:active:not(:disabled) {

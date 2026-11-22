@@ -176,5 +176,5 @@ const feedKey = (item: FeedItem): string => item.key;
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   // In the page's gutter, where the posts' own words start.
-  sub: { fontSize: typography.sizes.sm, marginBottom: spacing.sm, paddingHorizontal: layout.gutter },
+  sub: { fontSize: typography.sizes.text, marginBottom: spacing.sm, paddingHorizontal: layout.gutter },
 });

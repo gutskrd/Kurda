@@ -16,7 +16,6 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import type { MyTree, Watered } from './api';
 import { ProfileTree } from './ProfileTree';
-import { TreeCard } from './TreeCard';
 import { TreeScreen } from './TreeScreen';
 
 // Straight to how things stand after a pour, as for a reader who asked for less motion.
@@ -235,38 +234,6 @@ describe('the tree’s screen', () => {
     testAuth.client = fakeClient({ 'GET /me/tree': missing });
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByText('Trees are on their way. Come back soon.')).toBeTruthy();
-  });
-});
-
-describe('the tree’s card on Learn', () => {
-  it('invites planting before there is a tree, and opens the tree', async () => {
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(null)) });
-    renderWithProviders(<TreeCard />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Plant your tree. Grow it with the water your lessons earn.' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Tree');
-  });
-
-  it('says there is water to pour, with how much', async () => {
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ water: 3 }))) });
-    renderWithProviders(<TreeCard />);
-    expect(await screen.findByRole('button', { name: 'Berû, Seedling. You have water to pour.' })).toBeTruthy();
-    expect(within(screen.getByTestId('tree-card-water')).getByText('3')).toBeTruthy();
-  });
-
-  it('says how a dry tree fares, and what earns water when none is held', async () => {
-    const dry = treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: '2026-11-10', waterings: 5, water: 0, harvests: 0 }, TODAY);
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(dry)) });
-    renderWithProviders(<TreeCard />);
-    expect(await screen.findByRole('button', { name: 'Berû, Seedling, Thirsty. Thirsty. A lesson earns water.' })).toBeTruthy();
-    expect(screen.queryByTestId('tree-card-water')).toBeNull();
-  });
-
-  it('is not there at all on a server without trees', async () => {
-    const client = fakeClient({ 'GET /me/tree': missing });
-    testAuth.client = client;
-    renderWithProviders(<TreeCard />);
-    await waitFor(() => expect(client.calls.some((c) => c.path === '/me/tree')).toBe(true));
-    expect(screen.queryByTestId('tree-card')).toBeNull();
   });
 });
 

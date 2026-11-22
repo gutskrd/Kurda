@@ -183,10 +183,10 @@ const styles = StyleSheet.create({
   textLeft: { paddingLeft: spacing.md },
   art: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, gap: 2 },
-  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  hint: { fontSize: typography.sizes.sm },
+  title: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  hint: { fontSize: typography.sizes.text },
   statusRow: { alignItems: 'center', gap: 4, marginTop: 2 },
-  status: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  status: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   thumb: { width: 56, height: 56 },
   thumbFallback: { alignItems: 'center', justifyContent: 'center', borderRadius: radii.md },
 });

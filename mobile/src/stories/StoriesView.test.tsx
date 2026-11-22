@@ -569,8 +569,8 @@ describe('StoriesView', () => {
     const bookmarks = screen.getByRole('heading', { name: 'Bookmarks' }).parentElement!;
     expect(within(bookmarks).getByRole('button', { name: 'Nanê Germ' })).toBeTruthy();
     expect(screen.getAllByRole('button', { name: 'Bookmarked' }).length).toBeGreaterThanOrEqual(3);
-    // An active bookmark is the chosen violet; an inactive one the page's quiet ink.
-    for (const on of screen.getAllByRole('button', { name: 'Bookmarked' })) expect(fillOf(on)).toBe(NIGHT.primary);
+    // An active bookmark is the saved yellow; an inactive one the page's quiet ink.
+    for (const on of screen.getAllByRole('button', { name: 'Bookmarked' })) expect(fillOf(on)).toBe(NIGHT.saved);
     for (const off of screen.getAllByRole('button', { name: 'Bookmark' })) expect(fillOf(off)).toBe(NIGHT.textSecondary);
 
     // The Soranî story's bookmark cannot be removed: the mark comes back and the refusal shows.

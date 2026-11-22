@@ -94,6 +94,27 @@ describe('what does this mean', () => {
     options: ['Goodbye!', 'Hello!', 'Thank you!'],
   };
 
+  it('says the line by itself as the item appears, as a voice on its turn', async () => {
+    lesson([meaning]);
+    expect(await headline()).toHaveTextContent('What does this mean?');
+    await waitFor(() => expect(played).toContainEqual({ src: 'https://cdn.test/silav.mp3', rate: 1 }));
+  });
+
+  it('keeps the line to a tap when playing pronunciations by themselves is off', async () => {
+    localStorage.setItem('hevalo_autoplay_audio', 'off');
+    lesson([meaning]);
+    expect(await headline()).toHaveTextContent('What does this mean?');
+    await new Promise((done) => setTimeout(done, 500));
+    expect(played).toEqual([]);
+  });
+
+  it('never says an English line’s Kurdish answer before it is given', async () => {
+    lesson([{ ...meaning, id: 'k1', ask: 'choose-kurdish', prompt: 'Hello!', promptTokens: undefined, newWords: undefined, options: ['Silav!', 'Spas!', 'Xatirê te!'] }]);
+    await headline();
+    await new Promise((done) => setTimeout(done, 500));
+    expect(played).toEqual([]);
+  });
+
   it('asks it in the headline, with the line alone in the bubble, its play and slow play, and a badge for the new word', async () => {
     lesson([meaning, { ...meaning, id: 'm2', newWords: undefined }]);
     expect(await headline()).toHaveTextContent('What does this mean?');

@@ -9,7 +9,7 @@ import { usePressOrigin } from '../theme/origin';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii } from '../theme/tokens';
 import { useDirection } from '../reports/direction';
-import { floating } from '../theme/floating';
+import { GlassFill, useGlassShape } from '../theme/LiquidGlass';
 
 /** The glyph in a header control: a little under the tab bar's, since it sits in a shape of its own. */
 const GLYPH = 22;
@@ -27,7 +27,7 @@ const PILL_NUDGE = (PILL_BUTTON - MIN_TOUCH_TARGET) / 2;
 const InPill = createContext(false);
 
 /**
- * An icon button at the top of a page (the "+" on Home, the bell, the profile's menu): a 44pt disc in the bar's fill
+ * An icon button at the top of a page (the "+" on Home, the bell, the profile's menu): a 44pt disc of glass
  * with a 22pt glyph. Buttons that belong together stand in one `ActionPill` and draw no disc of their own.
  *
  * `dot` marks something new without a number; `label` must say it too, since a screen reader cannot see the dot. `ring`
@@ -56,6 +56,7 @@ export function HeaderButton({
   const swing = useRing(ring);
   // A page this opens grows out of the button, inside a pill too.
   const origin = usePressOrigin();
+  const glass = useGlassShape('control');
   const marks = (
     <>
       {/* Swung from its top, where a bell hangs. */}
@@ -95,8 +96,9 @@ export function HeaderButton({
       accessibilityLabel={label}
       testID={testID}
       reach="open"
-      style={[styles.button, floating.control, { backgroundColor: colors.barFill, shadowColor: colors.softShadow }]}
+      style={[styles.button, ...glass]}
     >
+      <GlassFill interactive />
       {marks}
     </PressableScale>
   );
@@ -107,11 +109,12 @@ export function HeaderButton({
  * shape reads as one thing in the corner. The buttons touch, so their group gives neither any sideways reach.
  */
 export function ActionPill({ children }: { children: ReactNode }): React.JSX.Element {
-  const { colors } = useTheme();
   const dir = useDirection();
+  const glass = useGlassShape('control');
   return (
     <InPill.Provider value>
-      <View style={[styles.pill, floating.control, { backgroundColor: colors.barFill, shadowColor: colors.softShadow, flexDirection: dir.row }]}>
+      <View style={[styles.pill, ...glass, { flexDirection: dir.row }]}>
+        <GlassFill />
         <ReachGroup gap={0}>{children}</ReachGroup>
       </View>
     </InPill.Provider>

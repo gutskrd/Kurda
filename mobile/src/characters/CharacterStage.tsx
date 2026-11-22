@@ -8,6 +8,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing } from '../theme/tokens';
 import { SpeakingCharacter, type SpeakingCharacterProps } from './SpeakingCharacter';
 import { stageHeight } from './voice';
+import { usePageWidth } from '../theme/pageWidth';
 
 export interface CharacterStageProps extends Omit<SpeakingCharacterProps, 'crop' | 'size' | 'height' | 'style'> {
   /** The buttons that play what the character says, standing beside it. */
@@ -42,6 +43,7 @@ export function CharacterStage({ children, reserve, height: fixed, flip, speaker
   const dir = useDirection();
   const reduce = useReducedMotion();
   const screen = useWindowDimensions();
+  const pageWide = usePageWidth();
   const [keyboard, setKeyboard] = useState(false);
   const height = fixed ?? stageHeight(screen.height, keyboard, reserve);
   const [width, setWidth] = useState(0);
@@ -64,7 +66,7 @@ export function CharacterStage({ children, reserve, height: fixed, flip, speaker
   }, []);
 
   // Until the stage is laid out, the window width minus the screen margins stands in for its own.
-  const across = width > 0 ? width : screen.width - spacing.lg * 2;
+  const across = width > 0 ? width : pageWide - spacing.lg * 2;
   const shown = stageFigure(speaker, across, height, HEADROOM);
   const art = characterArt(speaker);
   const unit = shown.height / art.half.h;

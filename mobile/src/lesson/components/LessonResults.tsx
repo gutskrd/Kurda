@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
 import {
   RESULTS_TIMING,
@@ -31,7 +31,7 @@ import { BURST } from '../../theme/celebration';
 import { timing, useCountUp } from '../../theme/animate';
 import { duration, pressedDim } from '../../theme/motion';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
-import { TONES, type ToneColors } from '../../coursemap/path';
+import { UNIT_INK, type ToneColors } from '../../coursemap/path';
 import { NO_MOMENTS, lessonMoments, type LessonMoments } from '../moments';
 import { useDirection } from '../../reports/direction';
 import { ReminderOffer, useReminderOffer } from '../../push/ReminderOffer';
@@ -50,6 +50,7 @@ import { StreakMoment } from './StreakMoment';
 import { PlayDisc } from './ModelButton';
 import { useAudio } from '../useAudio';
 import { CARD } from '../valley';
+import { usePageWidth } from '../../theme/pageWidth';
 
 interface Props {
   results: SessionResults;
@@ -211,7 +212,7 @@ export function LessonResults({
     : isSoraniDialect(dialect)
       ? 'lesson.results.strongerSorani'
       : 'lesson.results.strongerKurmanci';
-  const tones = TONES[scheme];
+  const ink = UNIT_INK[scheme];
   const gold: ToneColors = { fill: colors.gold, lip: colors.gold, ink: colors.textOnGold, text: colors.goldText };
   const clock = sitting ? sittingClock(sitting.ms) : null;
 
@@ -260,7 +261,7 @@ export function LessonResults({
               band={band}
               onBand={fitBand}
               travel={plan.travel}
-              tone={tones.meadow}
+              tone={ink}
               icon="target"
               label={gradeWord}
               to={pct}
@@ -274,7 +275,7 @@ export function LessonResults({
                 band={band}
                 onBand={fitBand}
                 travel={plan.travel}
-                tone={tones.river}
+                tone={ink}
                 icon="clock"
                 label={t(sittingPace(sitting.ms, sitting.answers) === 'quick' ? 'lesson.results.quick' : 'lesson.results.time')}
                 to={clock.minutes * 60 + clock.seconds}
@@ -427,7 +428,7 @@ function StatCard({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
-  const roomy = useWindowDimensions().width >= ICON_ROOM;
+  const roomy = usePageWidth() >= ICON_ROOM;
   const delayMs = RESULTS_TIMING.tilesAtMs + index * RESULTS_TIMING.tileStaggerMs;
   const shown = useCountUp(to, { delayMs: travel ? delayMs : 0 });
   const rise = useRef(new Animated.Value(travel ? 0 : 1)).current;
@@ -574,27 +575,27 @@ const styles = StyleSheet.create({
   stage: { width: STAGE.width, height: STAGE.height, alignItems: 'center', justifyContent: 'flex-end' },
   details: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.md },
   heading: { alignItems: 'center', gap: spacing.xs },
-  title: { ...display(typography.sizes.xxl), textAlign: 'center' },
-  subtitle: { fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center' },
-  note: { fontSize: typography.sizes.sm, textAlign: 'center' },
+  title: { ...display(typography.sizes.title), textAlign: 'center' },
+  subtitle: { fontSize: typography.sizes.text, lineHeight: 23, textAlign: 'center' },
+  note: { fontSize: typography.sizes.text, textAlign: 'center' },
   cards: { alignSelf: 'stretch', gap: spacing.sm + 2, marginTop: spacing.xs },
   // A coloured band over the framed body; the band's fill is the frame.
   card: { flex: 1, minWidth: 0, borderRadius: radii.lg, padding: 3, paddingTop: 0 },
   cardBand: { justifyContent: 'center', paddingVertical: 5, paddingHorizontal: 4 },
-  cardLabel: { fontSize: 12, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase', textAlign: 'center' },
+  cardLabel: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase', textAlign: 'center' },
   cardBody: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: radii.lg - 3, paddingVertical: spacing.sm + 6, paddingHorizontal: spacing.xs },
-  cardValue: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  cardValue: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   rows: { alignSelf: 'stretch', gap: spacing.sm },
   row: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, minHeight: 48 },
-  rowText: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  rowUp: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  rowText: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  rowUp: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   mistakes: { alignSelf: 'stretch', gap: spacing.md, borderRadius: radii.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
   mistakesHead: { alignItems: 'center', justifyContent: 'space-between', minHeight: MIN_TOUCH_TARGET },
   turned: { transform: [{ rotate: '180deg' }] },
-  mistakesTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  mistakesTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   mistakeRow: { gap: spacing.xs },
-  mistakePrompt: { fontSize: typography.sizes.sm },
-  mistakeAnswer: { fontSize: typography.sizes.md },
+  mistakePrompt: { fontSize: typography.sizes.text },
+  mistakeAnswer: { fontSize: typography.sizes.text },
   // A listening mistake's play mark at the start of its answer, the words wrapping beside it.
   answerLine: { alignItems: 'center', gap: spacing.sm },
   answerWords: { flex: 1 },
@@ -605,5 +606,5 @@ const styles = StyleSheet.create({
   // Side by side and centred, or stacked when the text size leaves no room.
   quiet: { alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', columnGap: spacing.md, rowGap: spacing.xs },
   back: { alignSelf: 'center', minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.md },
-  backText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textDecorationLine: 'underline' },
+  backText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textDecorationLine: 'underline' },
 });

@@ -139,7 +139,7 @@ function GoneCard({ onReport }: { onReport?: () => void }): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  body: { fontSize: typography.sizes.md, lineHeight: 23 },
+  body: { fontSize: typography.sizes.text, lineHeight: 23 },
   game: { gap: spacing.xs, alignItems: 'flex-start' },
   gameMine: { alignItems: 'flex-end' },
   // Words sent with a card, in a tailless bubble of the thread's shape (chat/Bubble.tsx): the card below ends the message.
@@ -152,5 +152,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radii.lg,
   },
-  cardText: { fontSize: typography.sizes.sm },
+  cardText: { fontSize: typography.sizes.text },
 });

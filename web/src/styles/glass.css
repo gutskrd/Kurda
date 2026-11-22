@@ -1,0 +1,43 @@
+/*
+ * Liquid glass on what floats over the page (the bar of places, the way back, the pill of search and the bell), never
+ * on the page itself. Nothing is blurred: the page shows through a tint that is clear at the rim, where it bends
+ * (`useGlass` cuts a lens to each shape, glass/lens.ts), and deeper in the middle where the words are, with a fine
+ * line of light round the edge, brightest where it faces up. A browser that cannot bend the page gets the same face
+ * over a deeper tint. Asked for less transparency or more contrast, it is solid.
+ */
+.glass {
+  background-color: var(--glass-tint-still);
+  background-image: var(--glass-face-dark, none);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  -webkit-backdrop-filter: var(--glass-optics);
+  backdrop-filter: var(--glass-optics);
+  box-shadow: var(--glass-shadow);
+}
+.glass[data-lens] {
+  background-color: var(--glass-tint);
+  -webkit-backdrop-filter: var(--glass-lens) var(--glass-optics);
+  backdrop-filter: var(--glass-lens) var(--glass-optics);
+}
+:root[data-theme='light'] .glass {
+  background-image: var(--glass-face-light, none);
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .glass,
+  .glass[data-lens] {
+    background: var(--surface-solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: var(--shadow-raised);
+  }
+}
+@media (forced-colors: active) {
+  .glass {
+    border: 1px solid CanvasText;
+  }
+}
+
+/* The top of a phone's screen lets the page scroll under its glass, fading it out toward the very top. */
+.nav-phone {
+  background: linear-gradient(to bottom, var(--app-bg) calc(env(safe-area-inset-top, 0px) + 40%), color-mix(in srgb, var(--app-bg) 55%, transparent) 70%, transparent);
+}

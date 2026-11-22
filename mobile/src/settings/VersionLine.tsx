@@ -21,7 +21,7 @@ export function VersionLine({ build = nativeBuildNumber() }: { build?: string | 
 
 const styles = StyleSheet.create({
   line: {
-    fontSize: typography.sizes.xs,
+    fontSize: typography.sizes.text,
     textAlign: 'center',
     paddingHorizontal: layout.gutter,
     paddingTop: spacing.xl,

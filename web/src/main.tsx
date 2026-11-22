@@ -6,6 +6,7 @@ import { applyTheme, watchSystemTheme } from './theme/theme';
 import { startArtOverrides } from './art/overrides';
 import { installPressFeedback } from './lib/press';
 import { watchOpeners } from './lib/opener';
+import { unlockOnFirstTap } from './lib/sound';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/ui.css';
@@ -16,6 +17,7 @@ import './styles/filter.css';
 import './styles/rail.css';
 import './styles/editor.css';
 import './styles/product.css';
+import './styles/profile.css';
 import './styles/alphabet.css';
 // The words after the letters: colours, numbers, days and months.
 import './styles/words.css';
@@ -36,6 +38,8 @@ import './styles/ranks.css';
 import './styles/motion.css';
 // The shell's newer parts: the top bar and its menu, the bell, the five places' pages.
 import './styles/shell.css';
+// Liquid glass on the floating chrome, after the shell's own fills (glass/lens.ts).
+import './styles/glass.css';
 // Each control's touch reach, after every control's own rules (lib/reach.ts).
 import './styles/reach.css';
 // The screen in place of the app while Hevalo is offline.
@@ -57,6 +61,8 @@ startArtOverrides();
 installPressFeedback();
 // The last press's position, so a dialog can grow out of its opener (lib/opener.ts).
 watchOpeners();
+// So a lesson's line can play on its turn without its own tap, Safari included (lib/sound.ts).
+unlockOnFirstTap();
 // In development, `?show-reach` tints each control's touch area (styles/reach.css).
 if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('show-reach')) document.documentElement.classList.add('show-reach');
 

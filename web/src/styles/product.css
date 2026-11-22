@@ -168,8 +168,8 @@
 }
 .pc-name {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   font-weight: 600;
   line-height: 1.15;
   overflow-wrap: anywhere;
@@ -183,13 +183,13 @@
   align-items: center;
   gap: 2px 10px;
   color: var(--ink-3);
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 .pc-online {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--success);
 }
@@ -240,7 +240,7 @@
 }
 .pcard-level-badge {
   grid-area: badge;
-  font-size: 0.84rem;
+  font-size: var(--text);
   font-weight: 650;
   color: var(--gold-ink);
 }
@@ -259,7 +259,7 @@
 .pcard-level-next {
   grid-area: next;
   justify-self: end;
-  font-size: 0.78rem;
+  font-size: var(--text);
   color: var(--ink-3);
   text-align: end;
 }
@@ -267,7 +267,7 @@
 /* what the popup adds under the card: a bio, the numbers, what can be done */
 .pc-bio {
   margin: 12px 0 0;
-  font-size: 0.92rem;
+  font-size: var(--text);
   line-height: 1.55;
   color: var(--ink-2);
   white-space: pre-wrap;
@@ -290,7 +290,7 @@
   gap: 14px;
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 .pc-fav dt {
   color: var(--ink-3);
@@ -346,7 +346,7 @@
   background: transparent;
   color: var(--ink-2);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: var(--text);
   font-weight: 600;
   cursor: pointer;
   width: 100%;
@@ -379,7 +379,7 @@
   bottom: 4px;
 }
 .pc--wide .pc-name {
-  font-size: 1.65rem;
+  font-size: var(--text-title);
 }
 @container pc (min-width: 600px) {
   /* The face and actions share a line over the banner's edge, leaving the name the full width below. */
@@ -428,7 +428,7 @@
     min-height: 40px;
   }
   .pc--wide .pc-name {
-    font-size: 1.9rem;
+    font-size: var(--text-title);
   }
 }
 
@@ -445,7 +445,7 @@
   display: grid;
   justify-items: center;
   gap: 8px;
-  font-size: 0.74rem;
+  font-size: var(--text);
   color: var(--ink-3);
   text-align: center;
 }
@@ -489,7 +489,7 @@
   min-height: 46px;
   padding: 8px 12px;
   border-radius: 12px;
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 /* the row and half the 2px between rows, so a row of 46 answers across 48 and the rows' areas meet */
 a.rank-name::after {
@@ -555,7 +555,7 @@ a.rank-name:hover {
   padding: 1px 7px;
   border-radius: var(--r-pill);
   border: 1px solid var(--border);
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -595,7 +595,7 @@ a.rank-name:hover {
   direction: ltr;
   unicode-bidi: isolate;
   color: var(--gold-ink);
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -626,7 +626,7 @@ a.rank-name:hover {
   gap: 4px;
 }
 .league-card-title {
-  font-size: 1.35rem;
+  font-size: var(--text);
 }
 
 /* ---- head-to-head: one chip per player ------------------------------------ */
@@ -672,14 +672,14 @@ a.rank-name:hover {
   line-height: 1.25;
 }
 .player-name {
-  font-size: 0.84rem;
+  font-size: var(--text);
   font-weight: 650;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .player-status {
-  font-size: 0.72rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .player.is-done .player-status {
@@ -733,19 +733,19 @@ a.invite-card:hover {
   inset-inline-end: 10px;
 }
 .invite-eyebrow {
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
 .invite-title {
-  font-size: 0.96rem;
+  font-size: var(--text);
   font-weight: 650;
   line-height: 1.3;
 }
 .invite-blurb {
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-3);
   margin-bottom: 6px;
 }
@@ -758,7 +758,7 @@ a.invite-card:hover {
   border-radius: var(--r-sm);
   background: var(--primary);
   color: var(--primary-ink);
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 
@@ -840,13 +840,13 @@ a.invite-card:hover {
 .game-tile-head h3,
 .game-tile-text h3 {
   font-family: var(--font-sans);
-  font-size: 1.06rem;
+  font-size: var(--text);
   font-weight: 650;
   line-height: 1.3;
 }
 .game-tile-text p {
   color: var(--ink-3);
-  font-size: 0.95rem;
+  font-size: var(--text);
 }
 .game-tile .btn {
   justify-self: start;
@@ -886,7 +886,7 @@ a.invite-card:hover {
   padding: 4px 10px;
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
-  font-size: 0.74rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .game-tags li.is-locked {
@@ -933,7 +933,7 @@ a.invite-card:hover {
   padding: 3px 9px;
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -946,8 +946,8 @@ a.invite-card:hover {
   color: var(--success);
   text-transform: none;
   letter-spacing: 0;
-  font-size: 0.86rem;
-  font-family: var(--font-display);
+  font-size: var(--text);
+  font-family: var(--font-sans);
   padding: 4px 12px;
 }
 .lp-fake-btn {
@@ -960,7 +960,7 @@ a.invite-card:hover {
   border-radius: var(--r-sm);
   background: var(--primary);
   color: var(--primary-ink);
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -1002,7 +1002,7 @@ a.invite-card:hover {
   padding: 6px 11px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .lp-option.is-right {
@@ -1013,17 +1013,17 @@ a.invite-card:hover {
 .lp-option--lg {
   padding: 12px 14px;
   border-radius: 13px;
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 .lp-float-kicker {
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
 .lp-ku {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   letter-spacing: -0.01em;
 }
 
@@ -1041,7 +1041,7 @@ a.invite-card:hover {
   aspect-ratio: 1;
   border: 2px solid var(--border);
   border-radius: 8px;
-  font-size: 1.15rem;
+  font-size: var(--text);
   font-weight: 700;
   text-transform: lowercase;
   line-height: 1;
@@ -1076,7 +1076,7 @@ a.invite-card:hover {
   max-width: 230px;
 }
 .lp-mini--wordle .lp-tile {
-  font-size: 1rem;
+  font-size: var(--text);
 }
 .lp-keys {
   display: flex;
@@ -1092,11 +1092,11 @@ a.invite-card:hover {
   border: 1px solid var(--border-strong);
   border-radius: 8px;
   background: var(--surface-2);
-  font-size: 1.05rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .lp-rhyme-prompt {
-  font-size: 2.8rem;
+  font-size: var(--text-title);
   line-height: 1;
 }
 .lp-rhyme-found {
@@ -1106,8 +1106,8 @@ a.invite-card:hover {
   gap: 6px;
 }
 .lp-race-text {
-  font-family: var(--font-display);
-  font-size: 1.45rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   color: var(--ink-4);
   direction: ltr;
   white-space: nowrap;
@@ -1128,12 +1128,12 @@ a.invite-card:hover {
 .lp-race-stats {
   display: flex;
   gap: 18px;
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .lp-race-stats b {
   color: var(--ink);
-  font-size: 1rem;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 /* a story being read: lines of text, one word glossed, and the quiz under it */
@@ -1166,7 +1166,7 @@ a.invite-card:hover {
   background: var(--surface-3);
 }
 .lp-story-word {
-  font-size: 1rem;
+  font-size: var(--text);
   color: var(--ink);
   text-decoration: underline dotted var(--gold);
   text-decoration-thickness: 2px;
@@ -1179,7 +1179,7 @@ a.invite-card:hover {
   border-radius: var(--r-sm);
   background: var(--gold-soft);
   color: var(--gold-ink);
-  font-size: 0.78rem;
+  font-size: var(--text);
   white-space: nowrap;
 }
 .lp-story-gloss .lp-ku {
@@ -1238,27 +1238,12 @@ a.invite-card:hover {
   place-items: center;
 }
 .zer-sub {
-  font-size: 0.86rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-2);
 }
 
-/* ---- learn: the courses (the rest is in learn.css) ------------------------- */
-.course-card {
-  display: grid;
-  gap: 10px;
-  padding: 22px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: var(--glass-rim);
-}
-.course-card-title {
-  font-size: 1.5rem;
-}
-.course-card p {
-  color: var(--ink-3);
-}
+/* ---- learn (the rest is in learn.css) -------------------------------------- */
 .lp-status {
   display: inline-flex;
   align-items: center;
@@ -1267,7 +1252,7 @@ a.invite-card:hover {
   padding: 6px 12px;
   border: 1px dashed var(--border-strong);
   border-radius: var(--r-pill);
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .lp-status::before {

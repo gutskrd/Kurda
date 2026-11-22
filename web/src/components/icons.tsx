@@ -151,7 +151,8 @@ function named(Glyph: Icon, fallbackSize: number, defaultWeight: IconWeight = IC
  */
 function currency(draw: (opts: CurrencyOptions) => string, fallbackSize: number) {
   return function CurrencyIcon({ size = fallbackSize, className }: P): React.JSX.Element {
-    const markup = useMemo(() => ({ __html: draw({ size }) }), [size]);
+    // Drawn untitled: it stands beside its amount and is hidden from screen readers, so a title would only be stray text.
+    const markup = useMemo(() => ({ __html: draw({ size, title: '' }) }), [size]);
     return (
       <span
         className={`currency-icon${className ? ` ${className}` : ''}`}

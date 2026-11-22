@@ -55,7 +55,7 @@
   border-radius: var(--r-pill);
   background: var(--primary);
   color: var(--primary-ink);
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -120,7 +120,7 @@
   border-bottom: 1px solid var(--border);
 }
 .rail-title {
-  font-size: 0.72rem;
+  font-size: var(--text);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -155,14 +155,14 @@
 }
 .rail-section-name {
   flex: 1;
-  font-size: 0.7rem;
+  font-size: var(--text);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-4);
 }
 .rail-section-count {
   color: var(--ink-4);
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 /* the glyph points right; a disclosure triangle points down when open */
@@ -175,7 +175,7 @@
 }
 .rail-empty {
   color: var(--ink-4);
-  font-size: 0.82rem;
+  font-size: var(--text);
   margin: 4px 10px 8px;
 }
 
@@ -216,7 +216,7 @@
 }
 .rail-row-name {
   display: block;
-  font-size: 0.86rem;
+  font-size: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -226,7 +226,7 @@
   align-items: center;
   gap: 4px;
   color: var(--ink-4);
-  font-size: 0.75rem;
+  font-size: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -262,7 +262,7 @@
   background: transparent;
   color: var(--ink-2);
   font: inherit;
-  font-size: 0.78rem;
+  font-size: var(--text);
   cursor: pointer;
 }
 .rail-act:hover:not(:disabled) {
@@ -340,7 +340,7 @@
   right: -3px;
   min-width: 16px;
   height: 16px;
-  font-size: var(--text-tab);
+  font-size: var(--text);
 }
 /* a count that is only informational should not shout like an invite does */
 .rail-rung:not(.is-urgent) .rail-rung-count {
@@ -417,13 +417,13 @@
 }
 .rail-toast-title {
   display: block;
-  font-size: 0.84rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .rail-toast-body {
   display: block;
   color: var(--ink-3);
-  font-size: 0.78rem;
+  font-size: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

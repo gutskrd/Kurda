@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useDirection } from '../reports/direction';
+import { usePageWidth } from './pageWidth';
 
 /**
  * How long after the first page shows the others are drawn behind it, so a first swipe uncovers a page rather than a
@@ -38,13 +39,13 @@ export function SwipePager<T extends string>({
   renderPage: (page: T, active: boolean) => ReactNode;
   testID?: string;
 }): React.JSX.Element {
-  const window = useWindowDimensions();
+  const pageWide = usePageWidth();
   const reduceMotion = useReducedMotion();
   const dir = useDirection();
   const mirrored = dir.row === 'row-reverse';
   // The window's width until the pager is measured, since a tab's pages are as wide as the screen.
   const [measured, setMeasured] = useState(0);
-  const width = measured > 0 ? measured : window.width;
+  const width = measured > 0 ? measured : pageWide;
   // The pages as they lie from the left.
   const laid = useMemo(() => (mirrored ? [...pages].reverse() : [...pages]), [pages, mirrored]);
   const index = Math.max(0, laid.indexOf(value));

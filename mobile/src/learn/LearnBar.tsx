@@ -23,6 +23,7 @@ import { Skeleton } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { pressedDim } from '../theme/motion';
+import { useNarrowPage } from '../theme/pageWidth';
 
 /** The ring in the bar: an icon's size. */
 const RING = 24;
@@ -47,6 +48,8 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
   const [settled, setSettled] = useState(false);
   const [open, setOpen] = useState<'streak' | 'goal' | null>(null);
   const today = useToday(open === 'streak');
+  // Beside the search and bell the three stats fit from 320pt (NARROW_PAGE); narrower, the goal keeps its ring alone.
+  const narrow = useNarrowPage();
 
   // Fresh each time Learn comes back from a lesson or any other page, since a lesson moves all three; a quick tab
   // switch keeps them (navigation/tabFocusLoad). The streak is only on GET /me.
@@ -131,12 +134,14 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
           <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
             <GoalRing xp={goal.earnedXp} goal={goal.effectiveGoal} size={RING} tint={[colors.gold, colors.goldText]} showNumbers={false} />
           </View>
-          {/* A passed goal shows what was earned, not "130/20 XP". */}
+          {/* A passed goal shows what was earned, not "130/20 XP"; on the narrowest phones the ring alone shows it. */}
+          {narrow ? null : (
           <Text style={[styles.number, { color: colors.textPrimary }]}>
             {goal.completed
               ? t('leagues.xpCount', { xp: formatNumber(goal.earnedXp, locale) })
               : t('learn.today.goalShort', { xp: formatNumber(goal.earnedXp, locale), goal: formatNumber(goal.effectiveGoal, locale) })}
           </Text>
+          )}
         </Pressable>
       ) : null}
       {zer !== null ? (
@@ -184,9 +189,9 @@ const styles = StyleSheet.create({
   bar: { alignItems: 'center', gap: spacing.xs },
   // Each stat is a 44pt target however small its number.
   stat: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', gap: spacing.xs, paddingHorizontal: spacing.xs },
-  number: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  number: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   sheetBody: { gap: spacing.md, paddingBottom: spacing.sm },
   goalHead: { alignItems: 'center', gap: spacing.md },
-  goalWords: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  caption: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  goalWords: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  caption: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

@@ -1,18 +1,16 @@
 import './groups.css';
-import { colourFor, initialsOf } from '../lib/initials';
+import { initialsOf } from '../lib/initials';
 
 /**
- * A group's picture: the uploaded one, or its initials on its own colour (lib/initials.ts, as on the phone). Always a
+ * A group's picture: the uploaded one, or its initials in ink on grey (lib/initials.ts, as on the phone). Always a
  * rounded square, since people are circles, so the shape alone says "a group".
  */
 export function GroupAvatar({
-  id,
   name,
   photoUrl,
   size = 40,
   className,
 }: {
-  id: string;
   name: string;
   photoUrl?: string | null;
   /** The side length in pixels. */
@@ -24,8 +22,7 @@ export function GroupAvatar({
     height: size,
     // Square enough to read as a group, soft enough to sit beside the round faces.
     borderRadius: Math.round(size * 0.22),
-    fontSize: Math.max(11, Math.round(size * 0.36)),
-    ...(photoUrl ? {} : { background: colourFor(id) }),
+    fontSize: size >= 56 ? 'var(--text-title)' : 'var(--text)',
   };
   // The group's name is always written beside its picture, so the picture is hidden from screen readers.
   return (

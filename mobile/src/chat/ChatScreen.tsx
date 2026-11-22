@@ -515,7 +515,7 @@ type ShownMessage = RowMessage;
 const LONE = { day: null, first: true, last: true, timed: false } as const;
 
 /** A one-line bubble: 9 above and below a 17pt line. */
-const BUBBLE_LINE = 18 + lineOf(typography.sizes.md);
+const BUBBLE_LINE = 18 + lineOf(typography.sizes.text);
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },

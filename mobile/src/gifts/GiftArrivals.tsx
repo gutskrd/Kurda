@@ -115,9 +115,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 6,
   },
-  text: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  text: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   later: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.xs },
-  laterText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  laterText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   open: { minHeight: MIN_TOUCH_TARGET, alignItems: 'center', gap: 6, paddingHorizontal: spacing.md, borderRadius: radii.pill },
-  openText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  openText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

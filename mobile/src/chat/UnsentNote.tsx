@@ -47,7 +47,7 @@ const GAP = spacing.md - 4;
 const styles = StyleSheet.create({
   row: { alignItems: 'center', gap: GAP, marginTop: 4 },
   said: { alignItems: 'center', gap: spacing.xs },
-  text: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  text: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   link: { minHeight: LINE, justifyContent: 'center' },
-  linkText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  linkText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

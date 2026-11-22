@@ -63,7 +63,7 @@ export function EmptyState({
             accessibilityRole="button"
             accessibilityLabel={action.label}
             reach="open"
-            style={[styles.action, { backgroundColor: colors.primary }]}
+            style={[styles.action, { backgroundColor: colors.accent }]}
           >
             <Text style={[styles.actionText, { color: colors.textOnPrimary }]}>{action.label}</Text>
           </PressableScale>
@@ -87,8 +87,8 @@ export function EmptyState({
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.sm },
   art: { marginBottom: spacing.xs },
-  title: { ...display(typography.sizes.lg), textAlign: 'center' },
-  body: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center', maxWidth: 300 },
+  title: { ...display(typography.sizes.text), textAlign: 'center' },
+  body: { fontSize: typography.sizes.text, lineHeight: 21, textAlign: 'center', maxWidth: 300 },
   action: {
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: radii.pill,
@@ -104,5 +104,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  actionText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
+  actionText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

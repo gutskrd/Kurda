@@ -141,7 +141,7 @@ const SPEAKER = 32;
 
 const styles = StyleSheet.create({
   container: { gap: spacing.lg },
-  prompt: { ...display(typography.sizes.lg) },
+  prompt: { ...display(typography.sizes.text) },
   // The play mark at the top of the bubble's start, however many lines follow.
   said: { alignItems: 'flex-start', gap: spacing.sm + 2 },
   grow: { flexShrink: 1 },
@@ -155,9 +155,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm + 4,
     paddingHorizontal: spacing.md - 2,
     borderRadius: CARD.radius,
-    borderWidth: CARD.edge,
   },
-  optionText: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  optionText: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   // Kurdish answers in the lesson's Kurdish face.
-  kurdishText: { ...display(typography.sizes.md + 2) },
+  kurdishText: { ...display(typography.sizes.text) },
 });

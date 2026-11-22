@@ -271,7 +271,7 @@ export function WordPractice({
   );
 }
 
-const FACE = { prompt: { word: 34, digits: 52, swatch: 72, text: typography.sizes.lg }, option: { word: 20, digits: 30, swatch: 40, text: typography.sizes.sm } } as const;
+const FACE = { prompt: { word: typography.sizes.title, digits: typography.sizes.title, swatch: 72, text: typography.sizes.text }, option: { word: typography.sizes.text, digits: typography.sizes.title, swatch: 40, text: typography.sizes.text } } as const;
 
 /**
  * A word as a question or option shows it: the Kurdish word (a day with its number marked), or its meaning (a
@@ -353,7 +353,7 @@ function Explain({ word, dialect, audio, player }: { word: SetWord; dialect: Alp
     <View style={[styles.explain, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]}>
       {word.set === 'colours' ? <Swatch hex={word.hex} size={32} /> : null}
       <View style={styles.flex}>
-        <WordText word={word} dialect={dialect} size={typography.sizes.lg} align="start" />
+        <WordText word={word} dialect={dialect} size={typography.sizes.text} align="start" />
         <Text style={[styles.explainNote, meaning.script ? scriptText(meaning.script) : dir.text, { color: colors.textSecondary }]}>{meaning.text}</Text>
       </View>
       <PlayButton src={audio.sounds.of(word, dialect)} label={t('alphabet.listen')} player={player} />
@@ -363,8 +363,8 @@ function Explain({ word, dialect, audio, player }: { word: SetWord; dialect: Alp
 
 const styles = StyleSheet.create({
   card: { borderRadius: radii.lg, padding: spacing.md + 4, gap: spacing.sm + 4 },
-  title: { ...display(typography.sizes.lg) },
-  body: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  title: { ...display(typography.sizes.text) },
+  body: { fontSize: typography.sizes.text, lineHeight: 21 },
   // At the reading side: the right, in Soranî and Arabic.
   action: { alignSelf: 'flex-start' },
   actionEnd: { alignSelf: 'flex-end' },
@@ -374,8 +374,8 @@ const styles = StyleSheet.create({
   question: { gap: spacing.sm + 4 },
   top: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, minHeight: 22 },
   pill: { borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 3 },
-  pillText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  ask: { fontSize: typography.sizes.md },
+  pillText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  ask: { fontSize: typography.sizes.text },
   prompt: { alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: spacing.sm + 6, minHeight: 56 },
   staged: { alignItems: 'center', gap: spacing.sm },
 
@@ -393,13 +393,13 @@ const styles = StyleSheet.create({
   choiceMark: { position: 'absolute', top: 6, right: 6 },
 
   feedback: { gap: spacing.sm + 4 },
-  verdict: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  verdict: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   comeback: { fontWeight: typography.weights.regular },
   explain: { alignItems: 'center', borderRadius: radii.md, padding: spacing.sm + 4, gap: spacing.sm + 4 },
-  explainNote: { fontSize: typography.sizes.sm },
+  explainNote: { fontSize: typography.sizes.text },
 
   done: { gap: spacing.sm + 4 },
-  score: { ...display(typography.sizes.xl) },
+  score: { ...display(typography.sizes.title) },
   review: { flexWrap: 'wrap', gap: spacing.sm },
   reviewTile: { minWidth: 56, minHeight: 56, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.sm },
   actions: { flexWrap: 'wrap', gap: spacing.sm },

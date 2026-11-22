@@ -5,8 +5,6 @@ import { describeError } from '../lib/api';
 import type { InventoryItem, MeProfile, ProfileSections, PublicProfile, UserSummary, WalletBalances } from '../lib/types';
 import { FullProfile, OnlyYou, ProfileFacts, type FullProfileView } from '../profile/FullProfile';
 import { ProfileActivity } from '../profile/ProfileActivity';
-import { ProfileProgress } from '../profile/ProfileProgress';
-import { ProfileTree } from '../tree/ProfileTree';
 import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
 import { CoinIcon, EditIcon } from '../components/icons';
@@ -139,17 +137,8 @@ export function Profile(): React.JSX.Element {
             <ShareProfile userId={me.id} name={view.name} />
           </div>
         }
-        progress={
-          <>
-            {me.profilePhotoPending && <PendingPhoto pending={me.profilePhotoPending} words="pictureCheck.held.profile" round />}
-            {shown && (
-              <>
-                <ProfileTree tree={shown.tree} own />
-                <ProfileProgress badges={shown.badges} league={shown.league} own />
-              </>
-            )}
-          </>
-        }
+        showcase={shown ? { tree: shown.tree, badges: shown.badges, league: shown.league } : undefined}
+        notice={me.profilePhotoPending && <PendingPhoto pending={me.profilePhotoPending} words="pictureCheck.held.profile" round />}
         yours={
           <OnlyYou title={t('profile.yourProgress')}>
             <ProfileFacts

@@ -32,8 +32,8 @@
   --t-ink: var(--hue-deep);
 }
 .ticket--friend {
-  --t-accent: var(--like);
-  --t-ink: var(--like);
+  --t-accent: var(--ink);
+  --t-ink: var(--ink);
 }
 .ticket--muted {
   --t-accent: var(--ink-4);
@@ -230,7 +230,7 @@
   border-radius: var(--r-xs);
   background: color-mix(in srgb, currentColor 8%, transparent);
   color: var(--t-ink);
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 800;
   line-height: 1.4;
   letter-spacing: 0.08em;
@@ -279,7 +279,7 @@
   flex-direction: column;
 }
 .friend-ask-sent > svg {
-  color: var(--like);
+  color: var(--ink);
 }
 .friend-ask-ticket {
   --stub-w: 18px;
@@ -366,7 +366,7 @@ button.request-name::after {
   width: calc(100% + var(--stub-w, 52px));
 }
 .request-sub {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--t-ink);
 }
 .request-actions {

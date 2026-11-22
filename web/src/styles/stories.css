@@ -14,7 +14,7 @@
 .story-setup [lang='ckb'],
 .story-words [lang='ckb'],
 .story-gloss-pop [lang='ckb'] {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
 }
 
 /* ---- presets drawn as chips: real radios underneath ------------------------- */
@@ -28,7 +28,7 @@
   display: block;
   padding: 0;
   margin-bottom: 8px;
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-3);
 }
@@ -49,7 +49,7 @@
   border: 1px solid var(--border-strong);
   background: var(--surface-2);
   color: var(--ink-2);
-  font-size: 0.92rem;
+  font-size: var(--text);
   font-weight: 500;
   line-height: 1.15;
   cursor: pointer;
@@ -80,7 +80,7 @@
   outline-offset: 2px;
 }
 .chip-radio-hint {
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-weight: 500;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
@@ -100,7 +100,7 @@
 }
 .story-section-title {
   font-family: var(--font-sans);
-  font-size: 1rem;
+  font-size: var(--text);
   font-weight: 650;
   color: var(--ink);
   margin: 0 0 12px;
@@ -144,14 +144,14 @@
   white-space: nowrap;
 }
 .story-continue-meta {
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .story-continue-go {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.9rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--primary);
   white-space: nowrap;
@@ -201,12 +201,12 @@
   flex-direction: column;
   gap: 2px;
   margin: 0;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .story-progress-text strong,
 .story-progress-tile strong {
-  font-size: 1.25rem;
+  font-size: var(--text);
   font-weight: 700;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
@@ -254,7 +254,7 @@
 }
 .story-filter-clear {
   padding-inline: 6px;
-  font-size: 0.875rem;
+  font-size: var(--text);
 }
 /* the shelf of categories: chips that each open their own shelf, with a count */
 .story-chip-row {
@@ -273,7 +273,7 @@
   background: var(--surface);
   color: var(--ink-2);
   font: inherit;
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 550;
   cursor: pointer;
   transition:
@@ -291,13 +291,13 @@
   color: var(--primary-ink);
 }
 .story-chip-count {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
 .story-guest-line {
   margin: -8px 0 22px;
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .story-guest-line a {
@@ -435,19 +435,19 @@
   padding: 12px 14px 14px;
 }
 .story-card-title {
-  font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1.25;
   text-wrap: balance;
 }
 .story-card-title[lang='ckb'] {
-  font-size: 1.1rem;
+  font-size: var(--text);
   line-height: 1.5;
 }
 .story-card-summary {
   color: var(--ink-2);
-  font-size: 0.9rem;
+  font-size: var(--text);
   line-height: 1.5;
   /* one line, as a shelf's cards must stay one height */
   display: -webkit-box;
@@ -465,7 +465,7 @@
   align-items: center;
   gap: 4px 0;
   margin-top: auto;
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 /*
@@ -511,7 +511,7 @@
   border-radius: var(--r-xs);
   background: var(--surface-2);
   color: var(--ink-3);
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 700;
   /* a level's plain name is a word like any other, one line however long it is in a language */
   white-space: nowrap;
@@ -554,10 +554,6 @@
 .story-card-bookmark:hover {
   background: color-mix(in srgb, var(--app-bg) 90%, transparent);
 }
-/* a bookmark that is on is the violet of everything chosen */
-.story-card-bookmark.is-on {
-  color: var(--primary);
-}
 .story-card-bookmark:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
@@ -565,7 +561,7 @@
 .story-card-problem {
   display: block;
   padding: 0 14px 10px;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--danger);
 }
 @media (pointer: coarse) {
@@ -664,7 +660,7 @@
 }
 .story-title {
   margin: 0;
-  font-size: clamp(1.9rem, 4.4vw, 2.6rem);
+  font-size: var(--text-title);
   line-height: 1.15;
   letter-spacing: -0.02em;
   text-wrap: balance;
@@ -679,13 +675,13 @@
   flex-wrap: wrap;
   gap: 4px 0;
   margin-block: 0;
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .story-summary {
   margin: 0;
   color: var(--ink-2);
-  font-size: 1.05rem;
+  font-size: var(--text);
   line-height: 1.6;
 }
 .story-summary[lang='ckb'] {
@@ -702,9 +698,6 @@
   .story-overview-actions .btn-primary {
     flex: 1 1 100%;
   }
-}
-.story-overview-bookmark.is-on {
-  color: var(--primary);
 }
 /* a story told in both varieties: the library's own switch, at the head of its overview */
 .story-variety-reader {
@@ -736,7 +729,7 @@
 }
 .story-tools-left {
   padding: 0 8px;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
@@ -771,13 +764,13 @@
   cursor: default;
 }
 .story-size-a {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1;
 }
 .story-size-a.is-small {
-  font-size: 0.95rem;
+  font-size: var(--text);
 }
 
 /* the way back to where a reader was */
@@ -791,12 +784,12 @@
   border-radius: var(--r-lg);
   border: 1px solid color-mix(in srgb, var(--primary) 34%, transparent);
   background: var(--primary-soft);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   color: var(--ink);
 }
 .story-resume .link-btn {
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 
 /* the text: the display serif at about 19.5px to start with, room between the lines, a measure of 36 em */
@@ -809,14 +802,14 @@
 }
 .story-para {
   margin-bottom: 1.25em;
-  font-size: calc(var(--story-size) * 1.0625rem);
+  font-size: var(--text);
   /* Read and Continue bring a paragraph to the top: below the app's bar and the reader's tools, not under them */
   scroll-margin-top: calc(var(--nav-bottom) + var(--invite-banner-h, 0px) + 80px);
 }
 .story-para p {
   margin: 0;
   max-width: 36em;
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: inherit;
   line-height: 1.65;
   color: var(--ink);
@@ -894,7 +887,7 @@
   gap: 6px 8px;
   margin-top: 6px;
   font-family: var(--font-sans);
-  font-size: 1rem;
+  font-size: var(--text);
 }
 .story-listen {
   display: inline-flex;
@@ -906,7 +899,7 @@
   border: 1px solid var(--border);
   background: transparent;
   color: var(--ink-3);
-  font-size: 0.84rem;
+  font-size: var(--text);
   cursor: pointer;
 }
 .story-listen:hover,
@@ -923,7 +916,7 @@
   /* a quiet line, no colour of its own: the translation belongs to the paragraph above it, it is not a mark */
   border-inline-start: 2px solid var(--border-strong);
   font-family: var(--font-sans);
-  font-size: calc(var(--story-size) * 0.95rem);
+  font-size: var(--text);
   line-height: 1.6;
   color: var(--ink-2);
 }
@@ -981,19 +974,19 @@
   gap: 4px 10px;
 }
 .story-gloss-term {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink);
 }
 .story-gloss-pos,
 .story-word-pos {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-style: italic;
   color: var(--ink-3);
 }
 .story-gloss-meaning {
-  font-size: 0.95rem;
+  font-size: var(--text);
   line-height: 1.45;
 }
 .story-gloss-foot {
@@ -1011,7 +1004,7 @@
   border: 0;
   background: none;
   color: var(--ink-3);
-  font-size: 0.82rem;
+  font-size: var(--text);
   cursor: pointer;
 }
 .story-gloss-close:hover {
@@ -1044,7 +1037,7 @@
   background: transparent;
   color: var(--ink-2);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 600;
   cursor: pointer;
 }
@@ -1060,7 +1053,7 @@
 }
 .story-save-problem {
   flex: 1 1 100%;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--danger);
 }
 
@@ -1100,15 +1093,15 @@
   gap: 4px 8px;
 }
 .story-word-term {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink);
 }
 .story-word-meaning {
   grid-area: meaning;
   color: var(--ink-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .story-word-save {
   grid-area: save;
@@ -1140,12 +1133,12 @@
   color: var(--ink-3);
 }
 .story-check-best {
-  font-size: 1.1rem;
+  font-size: var(--text);
   font-weight: 650;
   color: var(--gold-ink);
 }
 .story-check-note {
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .story-check-actions {
@@ -1166,7 +1159,7 @@
   margin-top: 30px;
   padding-top: 18px;
   border-top: 1px solid var(--border);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .story-about p {
@@ -1183,8 +1176,8 @@
 /* the title and summary in the reader's language: under the Kurdish, quieter, never instead of it */
 .story-title-tr {
   margin: -4px 0 0;
-  font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-style: italic;
   color: var(--ink-3);
 }
@@ -1195,7 +1188,7 @@
   margin: 0;
   max-width: 60ch;
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   line-height: 1.6;
 }
 
@@ -1203,13 +1196,13 @@
 .story-para > .story-intro-label {
   margin: 0 0 6px;
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   letter-spacing: 0.02em;
   color: var(--ink-3);
 }
 .story-para.is-intro > p[lang]:not(.story-translation) {
-  font-size: 1.06em;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 /* a chapter's title: the display face, room above it, its number small over it, its translation small under it */
@@ -1219,7 +1212,7 @@
 .story-chapter > .story-chapter-n {
   margin: 0 0 4px;
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   letter-spacing: 0.02em;
   color: var(--ink-3);
@@ -1227,8 +1220,8 @@
 .story-chapter-title {
   margin: 0;
   max-width: 24em;
-  font-family: var(--font-display);
-  font-size: calc(var(--story-size) * 1.6rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   font-weight: 600;
   line-height: 1.25;
   letter-spacing: -0.01em;
@@ -1236,14 +1229,14 @@
   text-wrap: balance;
 }
 .story-chapter-title[lang='ckb'] {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
   letter-spacing: normal;
   line-height: 1.6;
 }
 .story-chapter > .story-chapter-tr {
   margin: 4px 0 0;
   font-family: var(--font-sans);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   line-height: 1.5;
   color: var(--ink-3);
 }
@@ -1264,7 +1257,7 @@
 }
 .story-contents-count {
   margin: 0;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
@@ -1323,7 +1316,7 @@
 .story-contents-n {
   flex: none;
   width: 22px;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   color: var(--ink-4);
   text-align: center;
@@ -1346,22 +1339,22 @@
   text-align: match-parent;
 }
 .story-contents-name {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.35;
   color: var(--ink);
 }
 .story-contents-name[lang='ckb'] {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
   line-height: 1.7;
 }
 .story-contents-item.is-intro .story-contents-name {
   font-family: var(--font-sans);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .story-contents-tr {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .story-contents-mark {
@@ -1378,7 +1371,7 @@
   background-color: var(--surface);
   color: var(--ink-2);
   font: inherit;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   text-overflow: ellipsis;
   cursor: pointer;
 }
@@ -1399,7 +1392,7 @@
 .story-think-lede {
   margin: 0 0 14px;
   max-width: 60ch;
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .story-think-list {
@@ -1410,24 +1403,24 @@
 }
 .story-think-item::marker {
   color: var(--ink-4);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .story-think-ku {
   margin: 0;
   max-width: 36em;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.55;
   color: var(--ink);
 }
 .story-think-ku[lang='ckb'] {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
   line-height: 1.9;
 }
 .story-think-tr {
   margin: 4px 0 0;
   max-width: 60ch;
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   line-height: 1.55;
   color: var(--ink-3);
 }
@@ -1444,7 +1437,7 @@
 }
 .story-note-kind {
   margin: 0 0 2px;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   letter-spacing: 0.02em;
   color: var(--ink-4);
@@ -1452,7 +1445,7 @@
 .story-note-title {
   margin: 0 0 6px;
   font-family: var(--font-sans);
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 650;
   color: var(--ink-2);
 }
@@ -1461,7 +1454,7 @@
   line-height: 1.65;
 }
 .story-note p[lang='ckb'] {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
   line-height: 1.95;
 }
 .story-note-ku {
@@ -1470,7 +1463,7 @@
 .story-note-ku summary {
   width: fit-content;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 600;
   cursor: pointer;
 }
@@ -1484,7 +1477,7 @@
 .story-sources-title {
   margin: 0 0 10px;
   font-family: var(--font-sans);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 650;
   color: var(--ink-2);
 }
@@ -1502,7 +1495,7 @@
   border-inline-start: 2px solid var(--border);
 }
 .story-source-type {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   color: var(--ink-4);
 }
@@ -1511,7 +1504,7 @@
   font-weight: 550;
 }
 .story-source-note {
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 
 /*
@@ -1593,7 +1586,7 @@
   border: 1px solid var(--player-line);
   background: transparent;
   color: var(--player-ink);
-  font-size: 0.85rem;
+  font-size: var(--text);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
@@ -1610,7 +1603,7 @@
   flex: none;
   padding-inline-end: 6px;
   color: var(--player-ink);
-  font-size: 0.85rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .story-player-face {
@@ -1626,7 +1619,7 @@
 }
 .story-player-clock {
   flex: none;
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
   color: var(--player-ink-2);
   white-space: nowrap;
@@ -1708,7 +1701,7 @@
   flex-wrap: wrap;
   gap: 4px 14px;
   padding: 0 6px;
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--player-ink-2);
 }
 .story-player-note {
@@ -1775,7 +1768,7 @@
 }
 .story-setup-title {
   font-family: var(--font-sans);
-  font-size: 1.25rem;
+  font-size: var(--text);
   margin: 0;
   padding-inline-end: 40px;
 }
@@ -1794,12 +1787,12 @@
   background: var(--surface);
 }
 .story-setup-story [lang] {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 600;
 }
 .story-setup-story .muted {
-  font-size: 0.85rem;
+  font-size: var(--text);
 }
 .story-setup-list {
   display: grid;
@@ -1838,7 +1831,7 @@
 /* a line about a choice: the quiet ink, as the phone's setup sheet has it */
 .story-setup-note {
   margin: -8px 0 0;
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .story-setup .msg {
@@ -1870,7 +1863,7 @@
   margin-bottom: 10px;
 }
 .sg-title {
-  font-size: clamp(1.5rem, 3.2vw, 2rem);
+  font-size: var(--text-title);
   line-height: 1.2;
   margin: 0;
   text-wrap: balance;
@@ -1880,7 +1873,7 @@
 }
 .sg-sub {
   margin: 4px 0 0;
-  font-size: 0.88rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .sg-leave {
@@ -1906,7 +1899,7 @@
 }
 .sg-notice {
   margin: 4px 0 0;
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 /* a note in the game: the quiet box the phone's notes are, the control's track under the ink (gold is for what is earned) */
@@ -1916,7 +1909,7 @@
   border-radius: var(--r-md);
   background: var(--surface-2);
   color: var(--ink-2);
-  font-size: 0.9rem;
+  font-size: var(--text);
   line-height: 1.5;
 }
 .sg-panel {
@@ -1934,7 +1927,7 @@
 }
 .sg-panel-title {
   font-family: var(--font-sans);
-  font-size: 0.95rem;
+  font-size: var(--text);
   font-weight: 650;
   color: var(--ink);
   margin: 0;
@@ -1952,7 +1945,7 @@
   padding: 4px 10px;
   border-radius: var(--r-pill);
   background: var(--surface-2);
-  font-size: 0.84rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .sg-players {
@@ -1987,12 +1980,12 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.75rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-3);
 }
 .sg-away {
-  font-size: 0.75rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .sg-remove {
@@ -2073,10 +2066,10 @@
 .sg-switch-text {
   display: flex;
   flex-direction: column;
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 .sg-switch-hint {
-  font-size: 0.78rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 
@@ -2116,17 +2109,17 @@
 }
 .sg-count {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 .sg-dock-note {
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .sg-dock-error {
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--danger);
 }
 .sg-dock-actions {
@@ -2184,7 +2177,7 @@
   align-items: center;
   gap: 8px;
   font-family: var(--font-sans);
-  font-size: 0.95rem;
+  font-size: var(--text);
   font-weight: 650;
   letter-spacing: 0.02em;
   color: var(--ink-3);
@@ -2218,7 +2211,7 @@
   justify-content: flex-end;
   gap: 6px;
   min-width: 64px;
-  font-size: 1.05rem;
+  font-size: var(--text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
@@ -2249,8 +2242,8 @@
 }
 .sg-prompt {
   margin: 4px 0 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.3rem, 3vw, 1.6rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.4;
   color: var(--ink);
   text-wrap: pretty;
@@ -2262,7 +2255,7 @@
 .sg-explain-en {
   margin: -6px 0 0;
   color: var(--ink-3);
-  font-size: 0.95rem;
+  font-size: var(--text);
   /* English runs left to right, but sits on the page's own side (Chromium knows the value only by its prefixed name) */
   text-align: -webkit-match-parent;
   text-align: match-parent;
@@ -2270,7 +2263,7 @@
 .sg-english {
   align-self: flex-start;
   min-height: 36px;
-  font-size: 0.85rem;
+  font-size: var(--text);
 }
 .sg-options {
   list-style: none;
@@ -2292,7 +2285,7 @@
   background: var(--surface);
   color: var(--ink);
   font: inherit;
-  font-size: 1.05rem;
+  font-size: var(--text);
   text-align: start;
   cursor: pointer;
   transition:
@@ -2323,7 +2316,7 @@ button.sg-option:focus-visible {
   height: 32px;
   border-radius: 50%;
   border: 1px solid var(--border-strong);
-  font-size: 0.9rem;
+  font-size: var(--text);
   font-weight: 700;
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
@@ -2351,7 +2344,7 @@ button.sg-option:focus-visible {
   flex-basis: 100%;
   padding-inline-start: 46px;
   font-family: var(--font-sans);
-  font-size: 0.88rem;
+  font-size: var(--text);
   line-height: 1.4;
   color: var(--ink-3);
 }
@@ -2362,7 +2355,7 @@ button.sg-option:focus-visible {
 .sg-option-tag {
   order: 2;
   flex: none;
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .sg-option.is-right {
@@ -2389,7 +2382,7 @@ button.sg-option:focus-visible {
 .sg-status {
   min-height: 1.4em;
   margin: 0;
-  font-size: 0.92rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .sg-q-foot {
@@ -2419,7 +2412,7 @@ button.sg-option:focus-visible {
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-size: 1.35rem;
+  font-size: var(--text);
   font-weight: 700;
 }
 .sg-verdict.is-right {
@@ -2433,7 +2426,7 @@ button.sg-option:focus-visible {
 }
 .sg-explain {
   margin: 0;
-  font-size: 1.02rem;
+  font-size: var(--text);
   line-height: 1.6;
   color: var(--ink);
 }
@@ -2448,15 +2441,15 @@ button.sg-option:focus-visible {
   background: color-mix(in srgb, var(--success) 8%, transparent);
 }
 .sg-evidence figcaption {
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-3);
   margin-bottom: 4px;
 }
 .sg-evidence blockquote {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.6;
   color: var(--ink);
 }
@@ -2471,7 +2464,7 @@ button.sg-option:focus-visible {
   gap: 18px;
 }
 .sg-results-title {
-  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-size: var(--text-title);
   margin: 0;
 }
 .sg-results-title:focus {
@@ -2499,7 +2492,7 @@ button.sg-option:focus-visible {
   align-items: center;
   gap: 6px;
   margin: 0;
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 .sg-counted {
   color: var(--success);
@@ -2510,7 +2503,7 @@ button.sg-option:focus-visible {
 .sg-repeat-note {
   flex: 1 1 100%;
   margin: 0;
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .sg-standings {
@@ -2524,7 +2517,7 @@ button.sg-option:focus-visible {
   flex-wrap: wrap;
   gap: 10px 22px;
   margin: 0;
-  font-size: 1.05rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .sg-duo-player {
@@ -2650,14 +2643,14 @@ button.sg-option:focus-visible {
 }
 .sg-review-n {
   flex: none;
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .sg-review-prompt {
   flex: 1 1 100%;
   min-width: 0;
-  font-family: var(--font-display);
-  font-size: 1.08rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.45;
   color: var(--ink);
 }
@@ -2677,7 +2670,7 @@ button.sg-option:focus-visible {
 }
 .sg-review-answers dt {
   color: var(--ink-3);
-  font-size: 0.85rem;
+  font-size: var(--text);
 }
 .sg-review-answers dd {
   margin: 0;

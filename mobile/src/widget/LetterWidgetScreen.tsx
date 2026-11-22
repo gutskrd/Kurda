@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image, PixelRatio, Platform, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Image, PixelRatio, Platform, StyleSheet, Text, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { DEFAULT_PAPER, letterBirdSvg, letterPaperSvg, paperColors, type WidgetSettings } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
@@ -19,6 +19,7 @@ import { loadWidgetSettings, saveWidgetPrefs } from './prefs';
 import { readWidgetConfig } from './storage';
 import { widgetDate, widgetText } from './strings';
 import { removeEveryWidget } from './tokens';
+import { usePageWidth } from '../theme/pageWidth';
 
 /**
  * The letter widget's settings page, opened from the letters screen's header.
@@ -147,7 +148,7 @@ function WidgetSettingsBody({
 }): React.JSX.Element {
   const { t } = useI18n();
   const { colors } = useTheme();
-  const { width: screen } = useWindowDimensions();
+  const screen = usePageWidth();
   const width = Math.max(PREVIEW_MIN, Math.min(PREVIEW_MAX, screen - layout.gutter * 2));
   const iphone = (
     <HowToAdd
@@ -290,15 +291,15 @@ const styles = StyleSheet.create({
   previewInside: { flex: 1, justifyContent: 'space-between', padding: 10 },
   previewWords: { borderRadius: radii.sm, padding: 6, gap: 2 },
   previewHeading: { alignItems: 'center', gap: 6 },
-  previewName: { flex: 1, fontSize: 15, fontWeight: typography.weights.bold },
-  previewBody: { fontSize: 13, lineHeight: 18 },
-  previewDate: { fontSize: 11, borderRadius: radii.xs, paddingHorizontal: 5, paddingVertical: 1, overflow: 'hidden' },
-  problem: { fontSize: typography.sizes.sm, lineHeight: 20, paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
+  previewName: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  previewBody: { fontSize: typography.sizes.text, lineHeight: 22 },
+  previewDate: { fontSize: typography.sizes.text, borderRadius: radii.xs, paddingHorizontal: 5, paddingVertical: 1, overflow: 'hidden' },
+  problem: { fontSize: typography.sizes.text, lineHeight: 20, paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
   bird: { alignItems: 'center', paddingTop: spacing.sm },
   how: { paddingHorizontal: layout.gutter, paddingTop: spacing.md, gap: spacing.sm },
-  howTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  howTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   step: { alignItems: 'flex-start', gap: spacing.sm + 4 },
   stepNumber: { width: 26, height: 26, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  stepNumberText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  stepText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 21, paddingTop: 2 },
+  stepNumberText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  stepText: { flex: 1, fontSize: typography.sizes.text, lineHeight: 21, paddingTop: 2 },
 });

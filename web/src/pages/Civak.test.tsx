@@ -720,6 +720,36 @@ describe('Civak', () => {
     expect(screen.getByRole('dialog', { name: 'Streak' })).toBeInTheDocument();
   });
 
+  it('shows today’s quests under the daily card, read once, with a chest waiting', async () => {
+    signIn();
+    const quests = vi.fn(() =>
+      jsonResponse(200, {
+        date: '2026-10-29',
+        monthDone: 1,
+        quests: [
+          { id: 'q1', kind: 'streak', target: 1, progress: 1, chest: 'common', claimable: true, claimed: false },
+          { id: 'q2', kind: 'xp', target: 40, progress: 15, chest: 'rare', claimable: false, claimed: false },
+          { id: 'q3', kind: 'lessons', target: 2, progress: 1, chest: 'epic', claimable: false, claimed: false },
+        ],
+      }),
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/feed')) return jsonResponse(200, { items: [item('library:s1')] });
+        if (url.includes('/me/quests')) return quests();
+        if (url.includes('/me/today')) return jsonResponse(200, fourDayView());
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'me' } });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Civak />, ['/app/civak']);
+    const daily = await screen.findByRole('button', { name: '4-day streak. +20 Zêr to claim today' });
+    const chest = await screen.findByRole('button', { name: 'Daily quests A chest to open! 1 of 3 done' });
+    expect(daily.compareDocumentPosition(chest) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(quests).toHaveBeenCalledTimes(1);
+  });
+
   it('shows nothing above the wall when the daily view cannot be had', async () => {
     signIn();
     vi.stubGlobal(

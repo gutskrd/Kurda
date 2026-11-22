@@ -18,7 +18,6 @@ export function TopicRing({
   filled,
   whole,
   from,
-  locked = false,
 }: {
   of: number;
   /** Pieces drawn filled. */
@@ -27,8 +26,6 @@ export function TopicRing({
   whole: boolean;
   /** On a return from a lesson, the pieces filled before it; the rest fill one after another. */
   from?: number;
-  /** A topic not open yet: its ring a faint track. */
-  locked?: boolean;
 }): React.JSX.Element | null {
   const pieces = ringPieces(of);
   if (pieces.length === 0) return null;
@@ -36,7 +33,7 @@ export function TopicRing({
   const span = Math.max(1, filled - start);
   return (
     <svg
-      className={`lp-ring${whole ? ' is-whole' : ''}${locked ? ' is-faint' : ''}`}
+      className={`lp-ring${whole ? ' is-whole' : ''}`}
       width={box}
       height={box}
       viewBox={`${-pad} ${-pad} ${box} ${box}`}

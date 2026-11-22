@@ -7,8 +7,6 @@ import { FullProfile, type FullProfileView } from '../profile/FullProfile';
 import { FRIENDS_SHOWN, ProfileFriends } from '../profile/ProfileFriends';
 import { UserActions } from '../profile/UserActions';
 import { ProfileActivity } from '../profile/ProfileActivity';
-import { ProfileProgress } from '../profile/ProfileProgress';
-import { ProfileTree } from '../tree/ProfileTree';
 import { PlayWithButton } from '../play/PlayButtons';
 import { AddFriendButton } from '../social/FriendTickets';
 import { useRail } from '../social/RailProvider';
@@ -155,12 +153,7 @@ export function UserProfile(): React.JSX.Element {
       view={view}
       corner={corner}
       headerAction={actions}
-      progress={
-        <>
-          <ProfileTree tree={profile.tree} />
-          <ProfileProgress badges={profile.badges} league={profile.league ?? (profile.tier ? { tier: profile.tier } : null)} />
-        </>
-      }
+      showcase={{ tree: profile.tree, badges: profile.badges, league: profile.league ?? (profile.tier ? { tier: profile.tier } : null) }}
       people={<ProfileFriends userId={profile.userId} initial={friends} />}
       activity={<ProfileActivity userId={profile.userId} sections={profile.sections} />}
     />

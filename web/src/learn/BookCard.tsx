@@ -7,7 +7,7 @@ import { BookIcon } from '../components/icons';
 import '../tree/tree.css';
 
 /**
- * Hevalo's book on Learn: a card that downloads the PDF of every online chapter (api/src/books), shown only once a chapter
+ * Hevalo's book in Stories: a card that downloads the PDF of every online chapter (api/src/books), shown only once a chapter
  * is online and the server has a book.
  */
 export function BookCard(): React.JSX.Element | null {
