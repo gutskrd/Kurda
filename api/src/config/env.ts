@@ -147,8 +147,12 @@ const envSchema = z.object({
   APPLE_PRIVATE_KEY: z.string().optional(),
   /** The client those tokens belong to; defaults to the first APPLE_CLIENT_IDS entry, else the app's bundle id. */
   APPLE_CLIENT_ID: z.string().optional(),
-  /** CAPTCHA secret; CAPTCHA is off when unset. */
+  /** CAPTCHA secret; CAPTCHA is off when unset, and a production boot without it says so (app.ts). */
   TURNSTILE_SECRET: z.string().optional(),
+  /** New email accounts a day (UTC) for the whole service, counted in Redis; past it sign-up answers 429 RATE_LIMITED. */
+  SIGNUP_DAILY_CEILING: z.coerce.number().int().min(1).default(500),
+  /** The same ceiling, lower, for a production server whose sign-up has no CAPTCHA (TURNSTILE_SECRET unset). */
+  SIGNUP_DAILY_CEILING_WITHOUT_CAPTCHA: z.coerce.number().int().min(1).default(100),
   /** Shared secret guarding store refund webhooks; they are refused when unset. */
   IAP_WEBHOOK_SECRET: z.string().optional(),
   /**
@@ -176,6 +180,12 @@ const envSchema = z.object({
   SMTP_SECURE: z.enum(['true', 'false']).optional(),
   /** From address for transactional email. */
   EMAIL_FROM: z.string().default('Hevalo <no-reply@hevalo.app>'),
+  /**
+   * Emails a day (UTC) the service queues at most (email/send-limits.ts): past 80% of it only confirmation codes and
+   * password resets go, and at it nothing more until midnight. The default keeps a month of it under the sending plan's
+   * 50,000.
+   */
+  EMAIL_DAILY_CEILING: z.coerce.number().int().min(1).default(1500),
   /** Reply-to for transactional email, which comes from a no-reply address, so answers reach the support inbox. */
   EMAIL_REPLY_TO: z.string().optional(),
   /** The address the support inbox answers from (admin → Email). */

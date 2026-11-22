@@ -15,7 +15,7 @@ import { FavoritesPicker } from '../profile/FavoritesPicker';
 import { SectionToggles } from '../profile/SectionToggles';
 import { TagsCard } from '../tags/TagsCard';
 import { ErrorState } from '../components/states';
-import { CardStackSkeleton } from '../components/skeletons';
+import { ProfileEditSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { ArrowIcon, LockIcon, PersonGlyph } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -74,7 +74,7 @@ export function ProfileEdit(): React.JSX.Element {
     return (
       <div className="container container-narrow">
         {header}
-        <CardStackSkeleton count={4} label="profile.loadingYours" />
+        <ProfileEditSkeleton label="profile.loadingYours" />
       </div>
     );
   if (error || !me) return <ErrorState

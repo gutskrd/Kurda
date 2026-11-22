@@ -12,6 +12,7 @@ import {
   lessonPath,
   lessonStates,
   mascotSpot,
+  openingStops,
   nextLaunch,
   pathChanges,
   pathSnapshot,
@@ -189,6 +190,14 @@ describe('lessonPath — the way it winds', () => {
     const ys = path.units[0]!.stops.map((p) => p.y);
     expect(ys).toEqual([pad, pad + step + lift, pad + 2 * step + lift, pad + 3 * step + lift]);
     expect(path.units[0]!.height).toBe(ys.at(-1)! + pad);
+  });
+
+  it('places the loading road’s stops where a new learner’s first stops stand', () => {
+    const unit = lessonPath(map([skill('a', 'unlocked'), skill('b', 'locked'), skill('c', 'locked')])).units[0]!;
+    const opening = openingStops(unit.stops.length);
+    expect(opening.stops).toEqual(unit.stops.map((p) => ({ x: p.x, y: p.y })));
+    expect(opening.height).toBe(unit.height);
+    expect(openingStops(0)).toEqual({ stops: [], height: 0 });
   });
 
   it('walks the line up to the current skill, and leaves the rest ahead', () => {

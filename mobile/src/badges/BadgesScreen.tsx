@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { PressableScale } from '../theme/MotionParts';
 import { SHOWCASE_SIZE, badgeColour, hasBadgeArt, nearestBadges, type BadgeView, type BadgesResponse } from '@kurda/shared';
@@ -177,18 +177,24 @@ const SLOT = 96;
 const SLOT_MEDAL = 84;
 const SLOT_EMPTY = 72;
 
-/**
- * The three showcase badges in order, and the way to choose them: each place a third of the row up to 96, with
- * the medal sized to fit, so three fit any phone.
- */
+/** The showcase's places once their row is measured: each a third of it up to `SLOT`, medal and ring sized to fit. */
+function useShowcaseSlots(): { slot: number; medal: number; empty: number; onLayout: (e: LayoutChangeEvent) => void } {
+  const [row, setRow] = useState(0);
+  const slot = row > 0 ? Math.min(SLOT, Math.floor(row / SHOWCASE_SIZE)) : SLOT;
+  return {
+    slot,
+    medal: Math.min(SLOT_MEDAL, slot - spacing.sm),
+    empty: Math.min(SLOT_EMPTY, slot - spacing.sm * 2),
+    onLayout: (e) => setRow(e.nativeEvent.layout.width),
+  };
+}
+
+/** The three showcase badges in order, and the way to choose them, sized so three fit any phone. */
 function Showcase({ data, onPick, onOpen }: { data: BadgesResponse; onPick: () => void; onOpen: (b: BadgeView) => void }): React.JSX.Element {
   const dir = useDirection();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  const [row, setRow] = useState(0);
-  const slot = row > 0 ? Math.min(SLOT, Math.floor(row / SHOWCASE_SIZE)) : SLOT;
-  const medal = Math.min(SLOT_MEDAL, slot - spacing.sm);
-  const empty = Math.min(SLOT_EMPTY, slot - spacing.sm * 2);
+  const { slot, medal, empty, onLayout } = useShowcaseSlots();
   const earned = data.badges.filter((b) => b.tier > 0).length;
   const chosen = data.showcase.map((k) => data.badges.find((b) => b.key === k)).filter((b): b is BadgeView => !!b);
   return (
@@ -204,7 +210,7 @@ function Showcase({ data, onPick, onOpen }: { data: BadgesResponse; onPick: () =
         </View>
         <ClayButton label={t('badges.showcaseChoose')} variant="outline" onPress={onPick} disabled={earned === 0} />
       </View>
-      <View style={[styles.slots, { flexDirection: dir.row }]} onLayout={(e) => setRow(e.nativeEvent.layout.width)}>
+      <View style={[styles.slots, { flexDirection: dir.row }]} onLayout={onLayout}>
         {Array.from({ length: SHOWCASE_SIZE }, (_, i) => {
           const b = chosen[i];
           if (!b) {
@@ -259,16 +265,15 @@ function MonthlyChallenge({ month }: { month: BadgesResponse['monthlyChallenge']
 }
 
 /**
- * The loading placeholder: the showcase card's three places, then each family's heading over a grid with the real
- * column count and tile width.
+ * The loading placeholder, in the screen's own styles: the showcase as a new learner sees it, with three empty places
+ * and the hint, then families of medals in the real columns, more than a tall phone shows.
  */
 function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): React.JSX.Element {
   const dir = useDirection();
   const { t } = useI18n();
-  const medal = Math.min(76, tile - spacing.sm * 2);
-  const { height } = useWindowDimensions();
-  // A family is its heading and two rows of tiles: as many as reach the foot of the screen.
-  const families = Math.max(2, Math.ceil((height - 260) / (2 * (medal + 64) + 40)));
+  const showcase = useShowcaseSlots();
+  const medal = tileMedal(tile);
+  const face = Math.round(medal * MEDAL_FACE);
   return (
     <View style={styles.content} accessibilityLabel={t('common.loading')}>
       <GlassCard>
@@ -277,17 +282,21 @@ function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): R
             <SkeletonText size={typography.sizes.text} width={96} />
             <SkeletonText size={typography.sizes.text} lineHeight={SUMMARY_LINE} width="52%" />
           </View>
+          <Skeleton width={96} height={MIN_TOUCH_TARGET} radius={radii.pill} />
         </View>
-        <View style={[styles.slots, { flexDirection: dir.row }]}>
-          {[0, 1, 2].map((i) => (
-            <View key={i} style={styles.slot}>
-              <Skeleton width={72} height={72} radius={radii.pill} style={styles.slotSkeleton} />
-              <SkeletonText size={typography.sizes.text} width={56} align="center" />
+        <View style={[styles.slots, { flexDirection: dir.row }]} onLayout={showcase.onLayout}>
+          {Array.from({ length: SHOWCASE_SIZE }, (_, i) => (
+            <View key={i} style={[styles.slot, { width: showcase.slot }]}>
+              <Skeleton width={showcase.empty} height={showcase.empty} radius={radii.pill} style={styles.emptySlot} />
             </View>
           ))}
         </View>
+        <View style={styles.hintLines}>
+          <SkeletonText size={typography.sizes.text} lineHeight={styles.hint.lineHeight} width="94%" />
+          <SkeletonText size={typography.sizes.text} lineHeight={styles.hint.lineHeight} width="58%" />
+        </View>
       </GlassCard>
-      {Array.from({ length: families }, (_, f) => (
+      {Array.from({ length: FAMILIES_SHOWN }, (_, f) => (
         <View key={f} style={styles.family}>
           <View style={[styles.familyHead, { flexDirection: dir.row }]}>
             <SkeletonText size={typography.sizes.text} width={88} />
@@ -296,9 +305,11 @@ function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): R
           <View style={[styles.grid, { flexDirection: dir.row }]}>
             {Array.from({ length: columns * 2 }, (_, i) => (
               <View key={i} style={[styles.tile, { width: tile }]}>
-                <Skeleton width={medal} height={medal} radius={radii.pill} />
+                <View style={[styles.medalBox, { width: medal, height: medal }]}>
+                  <Skeleton width={face} height={face} radius={radii.pill} />
+                </View>
                 <SkeletonText size={typography.sizes.text} width="70%" align="center" style={styles.tileNameSkeleton} />
-                <SkeletonText size={typography.sizes.text} width="44%" align="center" style={styles.tileTierSkeleton} />
+                <Skeleton width={styles.tileMeter.width} height={TILE_METER} radius={radii.pill} style={styles.tileMeter} />
               </View>
             ))}
           </View>
@@ -307,6 +318,18 @@ function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): R
     </View>
   );
 }
+
+/** Families in the placeholder: two rows of medals each, three to reach past the foot of a tall phone. */
+const FAMILIES_SHOWN = 3;
+
+/** A grid medal's square, as wide as its tile allows. */
+const tileMedal = (tile: number): number => Math.min(76, tile - spacing.sm * 2);
+
+/** How much of its square a medal's drawn face fills, so its placeholder is the face rather than the box. */
+const MEDAL_FACE = 0.78;
+
+/** The progress line under a grid medal. */
+const TILE_METER = 4;
 
 /** The stage a badge stands on in its sheet, and the ellipse of the sheet surface rising under it. */
 const STAGE = 196;
@@ -323,7 +346,7 @@ function BadgeTile({ badge, width, fresh = false, onPress }: { badge: BadgeView;
   const name = badge.hidden ? t('badges.secretName') : badgeName(t, badge.key);
   const tier = badge.hidden ? null : tierName(t, badge.tierKey, badge.tierCount);
   const progress = badge.hidden ? null : progressText(t, badge, (v) => formatNumber(v, locale));
-  const size = Math.min(76, width - spacing.sm * 2);
+  const size = tileMedal(width);
   return (
     <PressableScale
       onPress={onPress}
@@ -340,7 +363,7 @@ function BadgeTile({ badge, width, fresh = false, onPress }: { badge: BadgeView;
       </Text>
       {tier ? <Text style={[styles.tileTier, { color: colors.textSecondary }]}>{tier}</Text> : null}
       {!badge.hidden && badge.next !== null ? (
-        <Meter fraction={nextFraction(badge)} tint={badgeTint(badge.tier + 1, scheme)} height={4} style={styles.tileMeter} />
+        <Meter fraction={nextFraction(badge)} tint={badgeTint(badge.tier + 1, scheme)} height={TILE_METER} style={styles.tileMeter} />
       ) : null}
     </PressableScale>
   );
@@ -564,6 +587,7 @@ const styles = StyleSheet.create({
   emptySlot: { borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', margin: 6 },
   slotName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   hint: { fontSize: typography.sizes.text, lineHeight: 22, marginTop: spacing.sm },
+  hintLines: { marginTop: spacing.sm },
   family: { gap: spacing.sm },
   familyHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   familyCount: { fontSize: typography.sizes.text, fontVariant: ['tabular-nums'] },
@@ -574,8 +598,7 @@ const styles = StyleSheet.create({
   tileTier: { fontSize: typography.sizes.text },
   tileMeter: { width: '62%', alignSelf: 'center', marginTop: 4 },
   tileNameSkeleton: { alignSelf: 'stretch', marginTop: spacing.xs },
-  tileTierSkeleton: { alignSelf: 'stretch' },
-  slotSkeleton: { margin: 6 },
+  medalBox: { alignItems: 'center', justifyContent: 'center' },
   month: { borderRadius: radii.md, padding: spacing.md, gap: spacing.sm },
   monthHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   monthText: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },

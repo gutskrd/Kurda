@@ -7,6 +7,7 @@ import {
   conversationSpeaker,
   isConversationLineKey,
   learnerPart,
+  nextConversationLine,
   stageCast,
   stageLines,
 } from './conversation.js';
@@ -120,3 +121,18 @@ describe('a conversation with the learner', () => {
     ]);
   });
 });
+
+describe('playing a conversation through', () => {
+  const speakers = [{ name: 'Hamo' }, { name: 'Tu', learner: true }];
+  const lines = [{ speaker: 0 }, { speaker: 1 }, { speaker: 0 }, { speaker: 0 }, { speaker: 1 }];
+  const audio = ['a.m4a', null, null, 'd.m4a', null];
+
+  it('stops at each line to hear and each line the learner says, passing over a character’s line not yet recorded', () => {
+    expect(nextConversationLine(speakers, lines, audio, 0)).toBe(0);
+    expect(nextConversationLine(speakers, lines, audio, 1)).toBe(1);
+    expect(nextConversationLine(speakers, lines, audio, 2)).toBe(3);
+    expect(nextConversationLine(speakers, lines, audio, 4)).toBe(4);
+    expect(nextConversationLine(speakers, lines, audio, 5)).toBeNull();
+  });
+});
+

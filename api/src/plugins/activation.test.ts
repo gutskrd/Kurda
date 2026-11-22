@@ -64,7 +64,6 @@ describe('blockedBeforeActivation', () => {
       '/auth/logout',
       '/auth/verify-email',
       '/auth/verify-email-code',
-      '/auth/resend-verification',
       '/auth/resend-verification-code',
       '/auth/request-password-reset',
       '/auth/reset-password',

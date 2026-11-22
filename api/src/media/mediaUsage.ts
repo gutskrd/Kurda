@@ -53,6 +53,19 @@ export class MediaUsageService {
     }
   }
 
+  /** Bytes one account's uploads hold, held and confirmed alike, or null if the query fails, so callers fail closed. */
+  async storedBytesFor(uploaderId: string): Promise<number | null> {
+    try {
+      const r = await this.pool.query<{ sum: string | null }>(
+        `SELECT COALESCE(SUM(content_length), 0)::bigint AS sum FROM media_uploads WHERE uploader_id = $1`,
+        [uploaderId],
+      );
+      return Number(r.rows[0]?.sum ?? 0);
+    } catch {
+      return null;
+    }
+  }
+
   async objectCount(): Promise<number | null> {
     try {
       const r = await this.pool.query<{ count: string }>(

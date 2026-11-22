@@ -5,8 +5,8 @@ import { loadConfig } from '../config/env.js';
 import { voiceAttachable } from '../moderation/restrictions.js';
 import { FakeStorage } from '../test/fake-storage.js';
 import { mp3 as frames } from '../test/audio-files.js';
-import { AUDIO_DAILY_UPLOADS, storeAudioMedia, type AudioMediaDeps } from './audioMedia.js';
-import { audioLimits } from './mediaLimits.js';
+import { AUDIO_DAILY_UPLOADS, AUDIO_DAILY_UPLOADS_NEW_ACCOUNT, storeAudioMedia, type AudioMediaDeps } from './audioMedia.js';
+import { ACCOUNT_STORAGE_LIMIT_BYTES, audioLimits } from './mediaLimits.js';
 import { MediaUsageService } from './mediaUsage.js';
 import { MediaService, ORPHAN_AGE_HOURS } from './service.js';
 
@@ -37,6 +37,8 @@ describe.skipIf(!DATABASE_URL)('a member’s recordings (integration)', () => {
     deps = { pool, storage: storage.asStorage, usage: new MediaUsageService(pool, null), limits: audioLimits(config), log: { warn: () => {}, error: () => {} } };
     author = await user('reca');
     busy = await user('recb');
+    // past their first week, so the ordinary day's recordings apply
+    await pool.query(`UPDATE users SET created_at = now() - interval '30 days' WHERE id = ANY($1::uuid[])`, [[author, busy]]);
   });
 
   afterAll(async () => {
@@ -69,6 +71,36 @@ describe.skipIf(!DATABASE_URL)('a member’s recordings (integration)', () => {
     const lesson = await storeAudioMedia(deps, 'lesson-audio', mp3(1001), null);
     expect(lesson.ok).toBe(true);
     if (lesson.ok) await pool.query(`DELETE FROM media_uploads WHERE key = $1`, [lesson.mediaId]);
+  });
+
+  it('gives an account in its first week only a few recordings a day', async () => {
+    const fresh = await user('recn');
+    try {
+      for (let i = 0; i < AUDIO_DAILY_UPLOADS_NEW_ACCOUNT; i++) expect((await storeAudioMedia(deps, 'voice-note', mp3(4000 + i), fresh)).ok, `upload ${i}`).toBe(true);
+      expect(await storeAudioMedia(deps, 'voice-note', mp3(4999), fresh)).toMatchObject({ ok: false, status: 429, code: 'MEDIA_DAILY_LIMIT_REACHED' });
+    } finally {
+      await pool.query(`DELETE FROM media_uploads WHERE uploader_id = $1`, [fresh]);
+    }
+  });
+
+  it('stops an account whose uploads fill its share of storage, and nobody else with it', async () => {
+    const full = await user('recs');
+    try {
+      await pool.query(
+        `INSERT INTO media_uploads (key, content_type, content_length, kind, uploader_id, confirmed_at, scan_status)
+         VALUES ($1, 'audio/mpeg', $2, 'voice-note', $3, now(), 'cleared')`,
+        [`voice-note/${suffix}-full.mp3`, ACCOUNT_STORAGE_LIMIT_BYTES - 100, full],
+      );
+      expect(await storeAudioMedia(deps, 'voice-note', mp3(5001), full)).toMatchObject({
+        ok: false,
+        status: 507,
+        code: 'MEDIA_STORAGE_LIMIT_REACHED',
+        reason: 'account-storage-limit',
+      });
+      expect((await storeAudioMedia(deps, 'voice-note', mp3(5002), author)).ok).toBe(true);
+    } finally {
+      await pool.query(`DELETE FROM media_uploads WHERE uploader_id = $1`, [full]);
+    }
   });
 
   it('gives two people sending the same file an upload each, and refuses it to anyone once moderation takes one down', async () => {

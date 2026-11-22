@@ -49,4 +49,14 @@ describe.skipIf(!REDIS_URL)('RedisRateLimitStore (integration)', () => {
     expect(second.oldestMs).toBe(t0);
     await redis.del(oldKey);
   });
+
+  it('records nothing more once a key is past its limit', async () => {
+    const capKey = `${key}:cap`;
+    const t0 = Date.now();
+    const counts: number[] = [];
+    for (let i = 0; i < 8; i++) counts.push((await store.hit(capKey, 60_000, t0 + i, 2)).count);
+    expect(counts).toEqual([1, 2, 3, 3, 3, 3, 3, 3]);
+    expect(await redis.zcard(capKey)).toBe(3);
+    await redis.del(capKey);
+  });
 });

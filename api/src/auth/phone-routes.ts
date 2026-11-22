@@ -24,7 +24,8 @@ export function registerPhoneVerificationRoutes(
     '/auth/phone/send',
     {
       schema: { body: sendBody },
-      config: { rateLimit: { max: 5, windowMs: 60_000, per: 'user-or-ip' as const } },
+      // a code is a paid text, so the limit keeps counting while Redis is down
+      config: { rateLimit: { max: 5, windowMs: 60_000, per: 'user-or-ip' as const, onStoreDown: 'local' as const } },
       preHandler: requireAuth,
     },
     async (req, reply) => {
@@ -53,7 +54,7 @@ export function registerPhoneVerificationRoutes(
     '/auth/phone/verify',
     {
       schema: { body: verifyBody },
-      config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } },
+      config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const, onStoreDown: 'local' as const } },
       preHandler: requireAuth,
     },
     async (req, reply) => {

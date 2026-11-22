@@ -5,18 +5,14 @@
  * keep a spinner. `label` is the key a screen reader hears, defaulting to "Loading…".
  */
 import { Fragment } from 'react';
-import { Skeleton, SkeletonRegion, SkeletonText } from './Skeleton';
+import { PATH_GEOMETRY, openingStops } from '@kurda/shared';
+import { Skeleton, SkeletonButton, SkeletonRegion, SkeletonText } from './Skeleton';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
 /** Repeats a row `n` times. */
 function times(n: number, render: (i: number) => React.ReactNode): React.ReactNode[] {
   return Array.from({ length: n }, (_, i) => render(i));
-}
-
-/** A button's place: a pill at that button size's height (ui.css). */
-function ButtonBox({ w, size = 'md' }: { w: number | string; size?: 'sm' | 'md' | 'lg' }): React.JSX.Element {
-  return <Skeleton w={w} className={`skeleton-btn${size === 'md' ? '' : ` skeleton-btn-${size}`}`} />;
 }
 
 /** The avatar a list or card starts with, sized by its CSS. */
@@ -109,23 +105,12 @@ function FeedPostBox({ picture }: { picture: boolean }): React.JSX.Element {
   );
 }
 
-/** The Friends page's people: a face, a name, a handle and the row's buttons. */
-export function FriendListSkeleton({
-  count = 6,
-  actions = 1,
-  widths,
-  label,
-}: {
-  count?: number;
-  /** How many worded buttons each row carries, as the page's own rows do. */
-  actions?: number;
-  /** Or the row's buttons by width, where they are not words: a friend's game and ⋯. */
-  widths?: readonly number[];
-  label?: MessageKey;
-}): React.JSX.Element {
+/**
+ * The Friends page's people: a face, a name and a handle, then a request's Accept and Decline, or for `friends` the
+ * game button and ⋯ (pages/Friends).
+ */
+export function FriendListSkeleton({ count = 6, friends = false, label }: { count?: number; friends?: boolean; label?: MessageKey }): React.JSX.Element {
   const t = useT();
-  const worded = [44, 84, 64];
-  const boxes = widths ?? Array.from({ length: actions }, (_, j) => worded[(j + (3 - actions)) % 3]!);
   return (
     <SkeletonRegion label={t(label ?? 'common.loading')} className="post-list">
       {times(count, (i) => (
@@ -139,11 +124,20 @@ export function FriendListSkeleton({
               <Skeleton line w={[64, 80, 56, 72, 68, 60][i % 6]} />
             </span>
           </span>
-          <span className="friend-actions">
-            {boxes.map((w, j) => (
-              <ButtonBox key={j} size="sm" w={w} />
-            ))}
-          </span>
+          {friends ? (
+            <>
+              <Skeleton className="friend-play" size={44} circle />
+              {/* The ⋯ keeps its own ring and surface, with the grey inside it. */}
+              <span className="user-actions-btn">
+                <Skeleton w="100%" h="100%" radius="inherit" />
+              </span>
+            </>
+          ) : (
+            <span className="friend-actions">
+              <SkeletonButton size="sm" w={84} />
+              <SkeletonButton size="sm" w={64} />
+            </span>
+          )}
         </div>
       ))}
     </SkeletonRegion>
@@ -167,7 +161,7 @@ export function BlocklistSkeleton({ count = 3, label }: { count?: number; label?
                 <Skeleton line w={[148, 128, 160][i % 3]} />
               </span>
             </span>
-            <ButtonBox size="sm" w={84} />
+            <SkeletonButton size="sm" w={84} />
           </li>
         ))}
       </ul>
@@ -192,7 +186,7 @@ export function DeviceListSkeleton({ count = 2, label }: { count?: number; label
                 <Skeleton line w={[148, 128, 112][i % 3]} />
               </span>
             </span>
-            {i > 0 && <ButtonBox size="sm" w={84} />}
+            {i > 0 && <SkeletonButton size="sm" w={84} />}
           </li>
         ))}
       </ul>
@@ -592,7 +586,7 @@ export function EntrySkeleton(): React.JSX.Element {
             </span>
           </div>
           <div className="dict-entry-actions">
-            <ButtonBox size="sm" w={88} />
+            <SkeletonButton size="sm" w={88} />
           </div>
         </header>
         <ol className="dict-senses">
@@ -623,7 +617,7 @@ export function BadgesSkeleton({ count = 8 }: { count?: number }): React.JSX.Ele
             <h2 className="badges-section-title">
               <Skeleton line w={112} />
             </h2>
-            <ButtonBox size="sm" w={92} />
+            <SkeletonButton size="sm" w={92} />
           </div>
           <ol className="badges-showcase-slots">
             {times(3, (i) => (
@@ -769,95 +763,225 @@ export function ProfileCardSkeleton(): React.JSX.Element {
             </dl>
             {/* One full-width button: Message, Add friend or Accept. */}
             <div className="pc-actions">
-              <ButtonBox size="sm" w="100%" />
+              <SkeletonButton size="sm" w="100%" />
             </div>
           </div>
         </div>
         <div className="profile-actions">
-          <ButtonBox size="sm" w={136} />
+          <SkeletonButton size="sm" w={136} />
         </div>
       </article>
     </SkeletonRegion>
   );
 }
 
-/**
- * The full profile page as FullProfile lays it out. The banner is the short one, since most people have no background
- * and it is not known until the profile arrives.
- */
+/** The top of a full profile in ProfileHead's own classes. Your own has more about lines and an unwritten bio. */
+function ProfileHeadSkeleton({ own }: { own: boolean }): React.JSX.Element {
+  return (
+    <div className="ph">
+      <div className="ph-banner">
+        <Skeleton fill />
+      </div>
+      <div className="ph-top">
+        <span className="ph-face">
+          <Skeleton className="ph-face-img" circle />
+        </span>
+        <div className="ph-stats">
+          <ul className="mkp-facts">
+            {[44, 24, 48].map((label, i) => (
+              <li key={i}>
+                <span className="mkp-fact">
+                  <span className="mkp-fact-label">
+                    <Skeleton line w={label} />
+                  </span>
+                  <span className="mkp-fact-value">
+                    <Skeleton line w={[20, 40, 16][i]} />
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <div className="ph-names">
+        <div className="ph-name-row">
+          <span className="ph-name">
+            <Skeleton line w={own ? 96 : 180} />
+          </span>
+          <Skeleton className="ph-level" circle />
+        </div>
+        <div className="ph-handle">
+          <Skeleton line w={64} />
+        </div>
+      </div>
+      <ul className="mkp-about">
+        <li className="mkp-country">
+          <Skeleton line w={own ? 96 : 112} />
+        </li>
+        {own && (
+          <>
+            <li>
+              <Skeleton line w={104} />
+            </li>
+            <li>
+              <Skeleton line w={240} />
+            </li>
+          </>
+        )}
+      </ul>
+      {own ? (
+        <span className="mkp-bio-add">
+          <Skeleton line w={212} />
+        </span>
+      ) : (
+        <p className="mkp-bio">
+          <SkeletonText lines={2} lastWidth="58%" />
+        </p>
+      )}
+      {own ? (
+        <span className="mkp-yours-row">
+          <span className="mkp-yours-row-text">
+            <span className="mkp-yours-title">
+              <Skeleton line w={104} />
+            </span>
+            <span className="mkp-yours-note">
+              <Skeleton line w={136} />
+            </span>
+          </span>
+        </span>
+      ) : (
+        <span className="mkp-friends-line">
+          <span className="mkp-friends-faces">
+            <Skeleton circle />
+          </span>
+          <span className="mkp-friends-said">
+            <span className="mkp-friends-count">
+              <Skeleton line w={72} />
+            </span>
+            <span className="mkp-friends-names">
+              <Skeleton line w={48} />
+            </span>
+          </span>
+        </span>
+      )}
+      <div className="ph-actions">
+        <div className="pc-acts">
+          <SkeletonButton size="sm" w="100%" />
+          <SkeletonButton size="sm" w="100%" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** The highlights row (ProfileHighlights) with the two most profiles show, badges and the tree. */
+function ProfileHighlightsSkeleton(): React.JSX.Element {
+  return (
+    <ul className="hl-row">
+      {times(2, (i) => (
+        <li key={i}>
+          <span className="hl">
+            <Skeleton className="hl-ring" circle />
+            <span className="hl-label">
+              <Skeleton line w={[48, 32][i]} />
+            </span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Two rows of a profile tab's grid (ProfileActivity): post tiles, or game covers with their captions. */
+export function ProfileGridSkeleton({ games = false }: { games?: boolean }): React.JSX.Element {
+  return (
+    <div className="pg-grid skeleton-late" aria-hidden="true">
+      {times(6, (i) =>
+        games ? (
+          <span key={i} className="pg-tile is-game">
+            <Skeleton className="gp-art" />
+            <span className="pg-tile-foot is-game">
+              <span className="pg-tile-game">
+                <Skeleton line w={['72%', '56%', '64%'][i % 3]} />
+              </span>
+              <span>
+                <Skeleton line w="40%" />
+              </span>
+            </span>
+          </span>
+        ) : (
+          <span key={i} className="pg-tile">
+            <Skeleton fill />
+          </span>
+        ),
+      )}
+    </div>
+  );
+}
+
+/** The full profile page (FullProfile): the head, the highlights, and the tabs over the first rows of the grid. */
 export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey; own?: boolean }): React.JSX.Element {
   const t = useT();
   return (
     <SkeletonRegion label={t(label ?? 'profile.loading')} className="mkp-page">
       <div className="mkp-wrap">
-        {/* The head as it will stand: banner, face with its four figures, name and handle, the actions. */}
-        <div className="ph">
-          <Skeleton className="ph-banner" radius={0} />
-          <div className="ph-top">
-            <span className="ph-face">
-              <Skeleton className="ph-face-img" circle />
-            </span>
-            <div className="ph-stats">
-              <ul className="mkp-facts">
-                {times(3, (i) => (
-                  <li key={i}>
-                    <span className="mkp-fact">
-                      <span className="mkp-fact-label">
-                        <Skeleton line w={[40, 22, 44, 42][i]} />
-                      </span>
-                      <span className="mkp-fact-value">
-                        <Skeleton line w={24} />
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <div className="ph-names">
-            <span className="ph-name">
-              <Skeleton line w={150} />
-            </span>
-            <span className="ph-handle">
-              <Skeleton line w={84} />
-            </span>
-          </div>
-          <p className="mkp-bio">
-            <Skeleton line w={own ? 190 : 210} />
-          </p>
-          <div className="ph-actions">
-            <div className="pc-acts">
-              <ButtonBox size="sm" w={120} />
-              <ButtonBox size="sm" w={120} />
-            </div>
-          </div>
-        </div>
-        {/* The highlights, then the tabs over the grid's first tiles. */}
-        <ul className="hl-row">
-          {times(3, (i) => (
-            <li key={i}>
-              <span className="hl">
-                <Skeleton w={68} h={68} circle />
-                <Skeleton line w={48} />
-              </span>
-            </li>
-          ))}
-        </ul>
+        <ProfileHeadSkeleton own={own} />
+        <ProfileHighlightsSkeleton />
         <div className="pg">
-          <div className="pg-tabs" style={{ '--n': 5 } as React.CSSProperties}>
+          <div className="pg-tabs" style={{ '--n': 5, '--at': 0 } as React.CSSProperties}>
             {times(5, (i) => (
               <span className="pg-tab" key={i}>
                 <Skeleton w={24} h={24} radius="var(--r-sm)" />
               </span>
             ))}
+            <span className="pg-ink" />
           </div>
-          <div className="pg-grid">
-            {times(6, (i) => (
-              <span key={i} className="pg-tile skeleton" />
-            ))}
-          </div>
+          <ProfileGridSkeleton />
         </div>
       </div>
+    </SkeletonRegion>
+  );
+}
+
+/** Editing your profile (pages/ProfileEdit) while it loads: the picture card, then the details form and its Save. */
+export function ProfileEditSkeleton({ label }: { label: MessageKey }): React.JSX.Element {
+  const t = useT();
+  // A field's box at its own height and corner (ui.css `.input`); the bio's is taller, as the form sets it.
+  const field = (labelWidth: number, hint: string, box = 46) => (
+    <div className="field">
+      <span className="field-label">
+        <Skeleton line w={labelWidth} />
+      </span>
+      <Skeleton className="input" h={box} radius="var(--r-md)" />
+      <span className="field-hint">
+        <Skeleton line w={hint} />
+      </span>
+    </div>
+  );
+  return (
+    <SkeletonRegion label={t(label)}>
+      <section className="card">
+        <h2 className="friend-heading" style={{ marginTop: 0 }}>
+          <Skeleton line w={124} />
+        </h2>
+        <div className="edit-photo-row">
+          <span className="hero-avatar-wrap">
+            <Skeleton className="pcard-avatar" circle />
+          </span>
+          <div className="edit-photo-actions">
+            <SkeletonButton size="sm" w={132} />
+          </div>
+        </div>
+      </section>
+      <section className="card" style={{ marginTop: 24 }}>
+        <h2 className="friend-heading" style={{ marginTop: 0 }}>
+          <Skeleton line w={72} />
+        </h2>
+        {field(96, '82%')}
+        {field(32, '64%', 96)}
+        {field(56, '76%')}
+        <SkeletonButton w={148} />
+      </section>
     </SkeletonRegion>
   );
 }
@@ -946,56 +1070,222 @@ export function PostSkeleton({ withImage = false }: { withImage?: boolean }): Re
   );
 }
 
-/** A course's lesson path: the map's head, then the first unit's banner and stops leaning as the path leans. */
-export function CourseMapSkeleton(): React.JSX.Element {
+/** The letters window (letters/LettersPage) while it loads: the window's own square, then the lines that stand under it. */
+export function LettersHeroSkeleton(): React.JSX.Element {
   const t = useT();
-  // The path's own lean: middle, start, middle, end.
-  const lean = [0, -72, 0, 72];
   return (
-    <SkeletonRegion label={t('common.loading')}>
-      <div className="page-header lp-head">
-        <span className="eyebrow lp-back">
+    <SkeletonRegion label={t('common.loading')} className="letters-hero">
+      <div className="letters-window">
+        <Skeleton className="lw" h="auto" />
+      </div>
+      <div className="letters-hero-text">
+        <p className="letters-status">
+          <Skeleton line w={136} />
+        </p>
+        <p className="letters-status letters-status--quiet">
+          <SkeletonText lines={2} lastWidth="56%" />
+        </p>
+      </div>
+    </SkeletonRegion>
+  );
+}
+
+/** Hevalo's book card (learn/BookCard) while the server says whether there is a book: the face, its lines, the icon. */
+export function BookCardSkeleton(): React.JSX.Element {
+  return (
+    <span className="tree-card book-card skeleton-late" aria-hidden="true">
+      <Skeleton className="tree-card-art book-card-art" size={48} circle />
+      <span className="tree-card-text">
+        <span className="tree-card-title">
           <Skeleton line w={112} />
         </span>
-        <h1 className="page-title">
-          <Skeleton line w="62%" />
-        </h1>
-        <p className="page-sub">
-          <Skeleton line w={150} />
-        </p>
-        <div className="lp-courses">
-          <Skeleton className="lp-course" w={196} h={44} radius="var(--r-pill)" />
-          <Skeleton className="lp-course" w={172} h={44} radius="var(--r-pill)" />
-        </div>
-        <span className="lp-continue" style={{ display: 'block' }}>
-          <ButtonBox w={116} />
+        <span className="tree-card-sub">
+          <SkeletonText lines={2} lastWidth="54%" />
         </span>
+      </span>
+      <Skeleton className="tree-card-go" size={20} radius="var(--r-sm)" />
+    </span>
+  );
+}
+
+/** Your stories progress (StoriesLibrary's ProgressCard): its heading, the ring with its count, and the score tile. */
+export function StoryProgressSkeleton(): React.JSX.Element {
+  return (
+    <section className="story-progress-card skeleton-late" aria-hidden="true">
+      <h2 className="story-section-title">
+        <Skeleton line w={96} />
+      </h2>
+      <div className="story-progress-row">
+        <p className="story-progress-ring-wrap">
+          <Skeleton w={64} h={64} circle />
+          <span className="story-progress-text">
+            <Skeleton line w={56} />
+            <Skeleton line w={96} />
+          </span>
+        </p>
+        <p className="story-progress-tile">
+          <Skeleton line w={20} />
+          <Skeleton line w={84} />
+        </p>
       </div>
-      <div className="lp-map">
-        <div className="lp-unit">
-          <div className="lp-banner lp-skel-banner">
-            <div className="lp-banner-text">
-              <p className="lp-banner-eyebrow">
-                <Skeleton line w={52} />
-              </p>
-              <h2 className="lp-banner-title">
-                <Skeleton line w="56%" />
-              </h2>
-              <p className="lp-banner-topics">
-                <Skeleton line w="38%" />
-              </p>
-            </div>
-            <div className="lp-banner-side">
-              <span className="lp-banner-count">
-                <Skeleton line w={64} />
+    </section>
+  );
+}
+
+/** The riddles or the proverbs (lore/RiddlesList, lore/ProverbsList) in their own classes, the day's one first. */
+export function LoreListSkeleton({ kind, label }: { kind: 'riddles' | 'proverbs'; label: MessageKey }): React.JSX.Element {
+  const t = useT();
+  const riddles = kind === 'riddles';
+  return (
+    <SkeletonRegion label={t(label)}>
+      <section className="lore-daily">
+        <p className="lore-eyebrow">
+          <Skeleton line w={112} />
+        </p>
+        <p className="lore-daily-text lore-display">
+          <SkeletonText lines={riddles ? 3 : 2} lastWidth={riddles ? '40%' : '56%'} />
+        </p>
+        {riddles ? (
+          <p className="story-meta lore-meta">
+            <Skeleton line w={96} />
+          </p>
+        ) : (
+          <p className="lore-daily-meaning">
+            <SkeletonText lines={2} lastWidth="64%" />
+          </p>
+        )}
+        <p className="lore-daily-go">
+          <SkeletonButton />
+        </p>
+      </section>
+      {riddles && (
+        <p className="lore-solved-count">
+          <span className="lore-solved-text">
+            <Skeleton line w={84} />
+          </span>
+          <span className="lore-solved-bar" />
+        </p>
+      )}
+      <section className="lore-section">
+        <h2 className="story-section-title">
+          <Skeleton line w={96} />
+        </h2>
+        <div className="lore-filter">
+          {/* Each chip's words with its padding. */}
+          {[76, 84, 100, 80].map((w, i) => (
+            <Skeleton key={i} className="story-chip" w={w} />
+          ))}
+        </div>
+        <ol className="lore-list">
+          {times(4, (i) => (
+            <li key={i}>
+              <span className="lore-row">
+                <span className="lore-row-text">
+                  <span className="lore-row-question lore-display">
+                    <SkeletonText lines={2} lastWidth={['48%', '70%', '36%', '58%'][i]} />
+                  </span>
+                  <span className="story-meta lore-meta">
+                    <Skeleton line w={riddles ? 92 : 76} />
+                  </span>
+                </span>
               </span>
-              <Skeleton w={96} h={44} radius="var(--r-pill)" />
+            </li>
+          ))}
+        </ol>
+      </section>
+    </SkeletonRegion>
+  );
+}
+
+/** The unit rail beside the road on a wide screen (PathWorld's UnitRail): the section's name, then a few units. */
+function UnitRailSkeleton(): React.JSX.Element {
+  return (
+    <div className="lp-rail">
+      <div className="lp-rail-section">
+        <p className="lp-rail-section-name">
+          <Skeleton line w={96} />
+        </p>
+        <ol>
+          {[64, 88, 72, 96, 80].map((w, i) => (
+            <li key={i} className="lp-rail-unit">
+              <span className="lp-rail-row">
+                <span className="lp-rail-dot">
+                  <Skeleton w="100%" h="100%" radius="inherit" />
+                </span>
+                <span className="lp-rail-words">
+                  <span className="lp-rail-number">
+                    <Skeleton line w={48} />
+                  </span>
+                  <span className="lp-rail-title">
+                    <Skeleton line w={w} />
+                  </span>
+                </span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The road while it loads (CoursePath), as a new learner's road opens: the chapter banner and the first stops where the
+ * shared layout puts them, so the course drops into place. A course's own page adds its heading and Continue.
+ */
+export function CourseMapSkeleton({ header = false }: { header?: boolean }): React.JSX.Element {
+  const t = useT();
+  const { stops, height } = openingStops(5);
+  const { node } = PATH_GEOMETRY;
+  return (
+    <SkeletonRegion label={t('common.loading')} className="lp">
+      {header && (
+        <div className="page-header lp-head">
+          <span className="back-link">
+            <Skeleton line w={112} />
+          </span>
+          <h1 className="page-title">
+            <Skeleton line w="62%" />
+          </h1>
+          <p className="page-sub">
+            <Skeleton line w={150} />
+          </p>
+          <SkeletonButton w={128} className="lp-continue" />
+        </div>
+      )}
+      <div className="lp-world">
+        <UnitRailSkeleton />
+        <div className="lp-map">
+          <div className="lp-open-section">
+            <div className="lp-pin">
+              <div className="lp-pin-words">
+                <p className="lp-pin-eyebrow">
+                  <Skeleton line w={148} />
+                </p>
+                <p className="lp-pin-title">
+                  <Skeleton line w="44%" />
+                </p>
+              </div>
+              <div className="lp-pin-actions">
+                <Skeleton className="lp-pin-button" circle />
+                {/* The map's button, which a wide screen hides for the rail beside the road. */}
+                <span className="lp-pin-button lp-unit-rail">
+                  <Skeleton w="100%" h="100%" radius="inherit" />
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="lp-skel-path">
-            {times(4, (i) => (
-              <Skeleton key={i} className="lp-skel-node" style={{ top: 60 + i * 104 - 36, '--x': `${lean[i]}px` } as React.CSSProperties} />
-            ))}
+            <section className="lp-unit">
+              <ol className="lp-path is-first" style={{ height }}>
+                {stops.map(({ x, y }, i) => (
+                  <li key={i} className="lp-stop" style={{ top: y - node / 2, '--x': `${x}px` } as React.CSSProperties}>
+                    {/* The stop's own box is see-through, so the grey goes inside it. */}
+                    <span className="lp-node">
+                      <Skeleton fill />
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </section>
           </div>
         </div>
       </div>

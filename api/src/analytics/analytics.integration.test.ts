@@ -1,11 +1,11 @@
-/** Event tracking ingest against real Postgres. */
+/** Event ingest (experiment exposures) and its retention, against real Postgres. */
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { AnalyticsService } from './service.js';
+import { ANALYTICS_RETENTION_DAYS, AnalyticsService, pruneAnalyticsEvents } from './service.js';
 import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -64,57 +64,33 @@ describe.skipIf(!DATABASE_URL)('analytics ingest (integration)', () => {
     expect(replay).toEqual({ accepted: 0, dropped: 0, duplicates: 1 });
   });
 
-  const track = async (token: string, eventId: string) =>
-    app.inject({
-      method: 'POST',
-      url: '/events/track',
-      headers: { authorization: `Bearer ${token}` },
-      payload: { events: [{ eventId, type: 'screen_view', payload: { screen: 'Learn' } }] },
-      remoteAddress: '10.105.0.1',
-    });
-  const stored = async (eventId: string) =>
-    (await pool.query(`SELECT 1 FROM analytics_events WHERE event_id = $1`, [eventId])).rowCount;
-  const setConsent = async (token: string, analytics: boolean) => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/me/consent',
-      headers: { authorization: `Bearer ${token}` },
-      payload: { analytics },
-      remoteAddress: '10.105.0.1',
-    });
-    expect(res.statusCode, res.body).toBe(200);
-  };
-
-  it('stores nothing over HTTP for an account that has not agreed to analytics', async () => {
-    const eventId = randomUUID();
-    const res = await track(await login(), eventId);
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ accepted: 0, dropped: 0, duplicates: 0, consent: false });
-    expect(await stored(eventId)).toBe(0);
+  it('keeps stored events for ninety days, then deletes them', async () => {
+    const [old, recent] = [randomUUID(), randomUUID()];
+    await pool.query(
+      `INSERT INTO analytics_events (event_id, user_id, type, payload, day) VALUES
+         ($1, $3, 'screen_view', '{}'::jsonb, current_date - ${ANALYTICS_RETENTION_DAYS + 1}),
+         ($2, $3, 'screen_view', '{}'::jsonb, current_date - ${ANALYTICS_RETENTION_DAYS - 1})`,
+      [old, recent, userId],
+    );
+    expect(await pruneAnalyticsEvents(pool)).toBeGreaterThanOrEqual(1);
+    const left = await pool.query<{ event_id: string }>(`SELECT event_id FROM analytics_events WHERE event_id = ANY($1)`, [[old, recent]]);
+    expect(left.rows.map((r) => r.event_id)).toEqual([recent]);
   });
 
-  it('accepts a batch over HTTP once the account agrees, and stops when it withdraws', async () => {
-    const token = await login();
-    await setConsent(token, true);
-    const first = randomUUID();
-    const res = await track(token, first);
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toMatchObject({ accepted: 1, dropped: 0, duplicates: 0, consent: true });
-    expect(await stored(first)).toBe(1);
-
-    await setConsent(token, false);
-    const after = randomUUID();
-    expect((await track(token, after)).json()).toMatchObject({ accepted: 0, consent: false });
-    expect(await stored(after)).toBe(0);
-  });
-
-  async function login(): Promise<string> {
-    const res = await app.inject({
+  it('no longer takes events from apps: nothing sends them', async () => {
+    const login = await app.inject({
       method: 'POST',
       url: '/auth/login',
       payload: { email: `analytics_${suffix}@it.kurda.app`, password: 'a-strong-password1' },
       remoteAddress: '10.105.0.1',
     });
-    return res.json().tokens.accessToken;
-  }
+    const res = await app.inject({
+      method: 'POST',
+      url: '/events/track',
+      headers: { authorization: `Bearer ${login.json().tokens.accessToken}` },
+      payload: { events: [{ eventId: randomUUID(), type: 'screen_view', payload: { screen: 'Learn' } }] },
+      remoteAddress: '10.105.0.1',
+    });
+    expect(res.statusCode).toBe(404);
+  });
 });

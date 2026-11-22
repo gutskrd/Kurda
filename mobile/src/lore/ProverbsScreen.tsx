@@ -16,13 +16,13 @@ import { usePullRefresh } from '../net/usePullRefresh';
 import { useDirection } from '../reports/direction';
 import { COLUMN, Note } from '../stories/ui';
 import { useListEntrance } from '../theme/animate';
-import { Chips } from '../theme/Chips';
+import { Chips, ChipsSkeleton } from '../theme/Chips';
 import { display, sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { PressableScale, Rise, heldRow } from '../theme/MotionParts';
 import { Pressable } from '../theme/Pressable';
-import { SkeletonText } from '../theme/Skeleton';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { getProverbs } from './api';
@@ -81,15 +81,7 @@ export function ProverbsScreen({ dialect: asked, theme, onExit }: { dialect?: Ga
   if (error && !list) {
     body = <ErrorRetry message={describeError(error, t)} onRetry={() => void load()} />;
   } else if (!list) {
-    body = (
-      <View style={styles.skeleton} accessibilityLabel={t('common.loading')}>
-        <View style={[styles.today, { backgroundColor: colors.surface }]}>
-          <SkeletonText size={typography.sizes.text} width={120} />
-          <SkeletonText size={typography.sizes.text} width="80%" />
-          <SkeletonText size={typography.sizes.text} width="60%" />
-        </View>
-      </View>
-    );
+    body = <ListSkeleton />;
   } else if (list.proverbs.length === 0) {
     body = <Note icon="quotes">{t('lore.proverbs.empty', { variety: t(dialectNameKey(dialect)) })}</Note>;
   } else {
@@ -151,6 +143,54 @@ export function ProverbsScreen({ dialect: asked, theme, onExit }: { dialect?: Ga
         {body}
       </ScrollView>
     </GradientBackground>
+  );
+}
+
+/**
+ * The list while it loads, in its own styles: the proverb of the day (label, saying, translation, the way in), the round
+ * to play, the themes with their chips, then the first rows.
+ */
+function ListSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  const text = typography.sizes.text;
+  return (
+    <View style={styles.skeleton} accessibilityLabel={t('common.loading')}>
+      <View style={[styles.today, { backgroundColor: colors.surface }]}>
+        <SkeletonText size={text} width={128} />
+        <SkeletonText size={text} lineHeight={styles.todayText.lineHeight} width="78%" />
+        <SkeletonText size={text} lineHeight={styles.todayTranslation.lineHeight} width="64%" />
+        <View style={[styles.todayFoot, { flexDirection: dir.row }]}>
+          <SkeletonText size={text} width={80} />
+        </View>
+      </View>
+      <View style={[styles.round, { backgroundColor: colors.surface, flexDirection: dir.row }]}>
+        <Skeleton width={styles.roundIcon.width} height={styles.roundIcon.height} radius={radii.pill} />
+        <View style={styles.flex}>
+          <SkeletonText size={text} width={96} />
+          <SkeletonText size={text} lineHeight={styles.roundLine.lineHeight} width="88%" />
+        </View>
+      </View>
+      <View style={styles.group}>
+        <SkeletonText size={text} width={64} />
+        <ChipsSkeleton />
+      </View>
+      <View style={[styles.rows, { backgroundColor: colors.surface }]}>
+        {(['70%', '56%', '64%'] as const).map((w, i) => (
+          <View
+            key={i}
+            style={[styles.row, { flexDirection: dir.row }, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.separator }]}
+          >
+            <View style={styles.rowMain}>
+              <SkeletonText size={text} lineHeight={styles.rowText.lineHeight} width={w} />
+              <SkeletonText size={text} lineHeight={styles.rowTranslation.lineHeight} width="52%" />
+              <SkeletonText size={text} width={72} style={{ marginTop: styles.rowMark.marginTop }} />
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
   );
 }
 

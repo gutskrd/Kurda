@@ -499,6 +499,14 @@ input[type='password']::-ms-clear {
 .skeleton-circle {
   border-radius: 50%;
 }
+/* a picture's place, filling the real element it stands in (positioned), so that element's rules give its size */
+.skeleton-fill {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  border-radius: inherit;
+}
 
 /*
  * One line of whatever it stands for: the box is `1lh` of the inherited line-height, so a skeleton inside the real
@@ -539,6 +547,8 @@ input[type='password']::-ms-clear {
 .skeleton-region,
 .skeleton-late {
   animation: spinner-wait var(--dur) var(--ease-out) 120ms both;
+  /* Not a control yet, though it wears a control's classes: no hover, press or pointer over it. */
+  pointer-events: none;
 }
 
 /* A button placeholder at that button's height: 44px, 36px small on a pointer (44px on touch), 52px large, as `.btn`. */
@@ -572,14 +582,10 @@ input[type='password']::-ms-clear {
   }
 }
 
-/* Reduce Motion removes the ray but keeps the skeleton, which holds the layout. */
+/* Reduce Motion removes the ray but keeps the grey box, which holds the layout. */
 @media (prefers-reduced-motion: reduce) {
   .skeleton::after {
-    animation: none;
-    left: 0;
-    width: 100%;
-    transform: none;
-    background: var(--surface);
+    content: none;
   }
 }
 

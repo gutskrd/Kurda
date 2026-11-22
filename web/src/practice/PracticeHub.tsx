@@ -234,17 +234,24 @@ function UnitSheet({ open, units, onClose }: { open: boolean; units: PracticeHub
   );
 }
 
-/** The list while it loads: five rows of its shape. */
+/** The list while it loads, in its rows' own classes: the five kinds and the sentence-building row under Words. */
 function KindsSkeleton(): React.JSX.Element {
   return (
     <ul className="list skeleton-late" aria-hidden="true">
-      {[0, 1, 2, 3, 4].map((i) => (
+      {[96, 64, 120, 56, 72, 132].map((title, i) => (
         <li key={i} className="list-row">
           <span className="list-row-main">
-            <Skeleton w={44} h={44} radius="var(--r-md)" />
+            {/* The badge's own fill is its kind's colour, which a placeholder has none of, so the grey goes inside. */}
+            <span className="practice-badge">
+              <Skeleton w="100%" h="100%" radius="inherit" />
+            </span>
             <span className="list-row-text">
-              <Skeleton line w="40%" />
-              <Skeleton line w="65%" />
+              <span className="list-row-title">
+                <Skeleton line w={title} />
+              </span>
+              <span className="list-row-sub">
+                <Skeleton line w="72%" />
+              </span>
             </span>
           </span>
         </li>

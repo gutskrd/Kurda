@@ -39,8 +39,16 @@ import { inTransaction, type Executor } from '../moderation/tx.js';
  * case like a report, under the source `copyright` at P1, and several notices about one post join its open case.
  * The form answers with the same receipt whatever the link points at, so it cannot reveal whether a draft,
  * removed or friends-only post exists; a link matching nothing still opens a case for an admin. The receipt is
- * emailed at once; the decision goes from a sweep that claims each notice before sending, so it goes at most once.
+ * emailed at once, within a day's few per address and the service's daily total; the decision goes from a sweep that
+ * claims each notice before sending, so it goes at most once.
  */
+
+/**
+ * Receipts one address is emailed a day, and the service emails in all: past either the notice is still taken and
+ * opens its case, and only the receipt is not sent, so the form cannot be used to mail a stranger or run up the bill.
+ */
+export const RECEIPTS_PER_ADDRESS_PER_DAY = 2;
+export const RECEIPTS_PER_DAY = 50;
 
 export type CopyrightTemplate =
   | 'copyright-received'
@@ -298,19 +306,42 @@ export class CopyrightService {
     });
 
     const reference = copyrightReference(notice.id);
-    try {
-      await this.opts.mailer.send(
-        email,
-        'copyright-received',
-        { reference, link: this.contentLink(target, typedLink), contact: PROVIDER.copyrightEmail },
-        emailLocaleFor(locale),
-      );
-      await this.pool.query(`UPDATE copyright_notices SET receipt_sent_at = now() WHERE id = $1`, [notice.id]);
-    } catch (err) {
-      // the notice stands either way; the admin sees that no receipt went
-      this.opts.log?.warn({ err, noticeId: notice.id }, 'copyright notice receipt failed to send');
+    // the notice stands either way; the admin sees whether a receipt went
+    if (!(await this.claimReceipt(notice.id, email))) {
+      this.opts.log?.warn({ noticeId: notice.id }, 'copyright notice receipt not sent: the day’s receipts for this address or the service are used');
+    } else {
+      try {
+        await this.opts.mailer.send(
+          email,
+          'copyright-received',
+          { reference, link: this.contentLink(target, typedLink), contact: PROVIDER.copyrightEmail },
+          emailLocaleFor(locale),
+        );
+      } catch (err) {
+        await this.pool.query(`UPDATE copyright_notices SET receipt_sent_at = NULL WHERE id = $1`, [notice.id]).catch(() => undefined);
+        this.opts.log?.warn({ err, noticeId: notice.id }, 'copyright notice receipt failed to send');
+      }
     }
     return { reference, receivedAt: notice.created_at.toISOString() };
+  }
+
+  /**
+   * Marks a notice's receipt as sent if the day's receipts allow one more (`RECEIPTS_PER_ADDRESS_PER_DAY`,
+   * `RECEIPTS_PER_DAY`), under one lock so a burst of notices cannot pass them together.
+   */
+  private async claimReceipt(noticeId: string, email: string): Promise<boolean> {
+    return inTransaction(this.pool, async (client) => {
+      await client.query(`SELECT pg_advisory_xact_lock(hashtext('copyright-receipts'))`);
+      const sent = await client.query<{ mine: number; total: number }>(
+        `SELECT count(*) FILTER (WHERE lower(notifier_email) = lower($1))::int AS mine, count(*)::int AS total
+           FROM copyright_notices WHERE receipt_sent_at > now() - interval '24 hours'`,
+        [email],
+      );
+      const { mine, total } = sent.rows[0] ?? { mine: 0, total: 0 };
+      if (mine >= RECEIPTS_PER_ADDRESS_PER_DAY || total >= RECEIPTS_PER_DAY) return false;
+      await client.query(`UPDATE copyright_notices SET receipt_sent_at = now() WHERE id = $1`, [noticeId]);
+      return true;
+    });
   }
 
   /** Opens or joins the target's copyright case and updates its counts and summary; an unmatched link gets its own. */

@@ -880,15 +880,9 @@
   margin-bottom: 8px;
 }
 .league-resting-title {
-  margin: 0;
+  margin: 0 0 8px;
   color: var(--ink);
   font-size: var(--text);
-}
-.league-resting-body {
-  max-width: 34ch;
-  margin: 0 0 8px;
-  color: var(--ink-2);
-  line-height: 1.5;
 }
 .league-resting-go {
   gap: 8px;
@@ -1118,9 +1112,6 @@ a.league-card-mini:focus-visible {
   margin: 6px 0 0;
   padding-inline: 12px;
   font-size: var(--text);
-}
-.rankings-blurb {
-  margin: 0 0 14px;
 }
 .league-page {
   --league-edge: 24px;

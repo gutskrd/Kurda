@@ -49,6 +49,10 @@ import { AppError } from '../plugins/errors.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 import { payRound, type ItemOutcome, type RewardDeps } from './rewards.js';
 import { deleteInBatches } from '../db/batches.js';
+import { secondsToUtcMidnight, takeDaily, type CounterRedis } from '../limits/counters.js';
+
+/** Rounds one learner may start a day (UTC), every game together: far past a long day's play, short of a loop's. */
+export const SOLO_ROUNDS_PER_DAY = 300;
 
 /** What every stored item has, whatever the game: its stable key, its level, and whether it was answered right lately. */
 export interface StoredItem {
@@ -141,7 +145,9 @@ interface AnswerRow {
 
 export interface SoloDeps extends RewardDeps {
   milestones?: MilestoneRecorder;
-  log?: { warn: (obj: unknown, msg: string) => void };
+  log?: { warn: (obj: unknown, msg?: string) => void };
+  /** where the day's rounds are counted (`SOLO_ROUNDS_PER_DAY`); without it they are not */
+  redis?: CounterRedis;
 }
 
 /** Where each item stands, from its tries. */
@@ -237,7 +243,7 @@ export class SoloService {
 
   /**
    * A new round of a game, in a variety, at a difficulty, replacing any open round (`replaceOpen`). 409
-   * NOT_ENOUGH_CONTENT when there is too little approved content.
+   * NOT_ENOUGH_CONTENT when there is too little approved content, 429 past the day's `SOLO_ROUNDS_PER_DAY`.
    *
    * The open round is given up before the new one is built, so its coverage already counts as seen; the build runs
    * outside any transaction (reading pools on its own connections), and the insert gives up any round a racing request
@@ -246,6 +252,10 @@ export class SoloService {
   async create(userId: string, game: SoloGameId, dialect: GameDialect, difficulty: GameDifficulty): Promise<SoloSessionView<unknown>> {
     const engine = this.engine(game);
     if (!this.rules(engine).dialects.includes(dialect)) throw new AppError('BAD_REQUEST', 400, 'this game is not played in that variety');
+    // before the open round is given up, so a refused round leaves it as it was
+    if (!(await takeDaily(this.deps.redis, 'solo-rounds', userId, SOLO_ROUNDS_PER_DAY, this.deps.log))) {
+      throw new AppError('RATE_LIMITED', 429, 'too many rounds today; try again tomorrow', { retryAfterSec: secondsToUtcMidnight() });
+    }
     await this.replaceOpen(this.pool, userId, game, dialect);
     const id = randomUUID();
     const round = await engine.build({ userId, dialect, difficulty, seed: id }, this.pool);

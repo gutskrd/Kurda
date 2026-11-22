@@ -613,6 +613,10 @@
   border-radius: var(--r-md);
   background: var(--surface);
 }
+/*
+ * The app's own text rather than a button's, so the name keeps the page's size and a placeholder row measures the same;
+ * lines a little tighter than prose, so name and handle stacked on a phone fit the 44px row.
+ */
 .friend-id {
   flex: 1;
   min-width: 0;
@@ -624,6 +628,8 @@
   padding: 0;
   cursor: pointer;
   color: var(--ink);
+  font: inherit;
+  line-height: 1.3;
   text-align: left;
 }
 .friend-avatar img {

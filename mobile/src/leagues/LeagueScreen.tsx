@@ -312,10 +312,7 @@ function Bobbing({ children }: { children: ReactNode }): React.JSX.Element {
   return <Animated.View style={{ transform: [{ translateY }] }}>{children}</Animated.View>;
 }
 
-/**
- * Before the week's first lesson: Hevalo's head through the page, dozing, a line in his words about the lesson that
- * wakes him and puts you both on the table, and the lesson itself. Nothing about falling behind.
- */
+/** Before the week's first lesson: Hevalo dozing through the page, one line, and the lesson. Nothing about falling behind. */
 function Resting(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -324,12 +321,7 @@ function Resting(): React.JSX.Element {
   return (
     <View style={styles.resting}>
       <HevaloPeek size={RESTING_HEIGHT} resting pop={false} flip={dir.rtl} />
-      {/* What he would say if awake: his words in a bubble, read as his. */}
-      <View style={[styles.bubble, { backgroundColor: colors.glassFill }]} accessibilityRole="text">
-        <Text style={[styles.bubbleText, dir.text, { color: colors.textPrimary }]}>{t('leagues.resting.hevalo')}</Text>
-      </View>
       <Text style={[styles.waitTitle, { color: colors.textPrimary }]}>{t('leagues.resting.title')}</Text>
-      <Text style={[styles.goalHint, styles.center, { color: colors.textSecondary }]}>{t('leagues.notJoined.body')}</Text>
       <ClayButton
         label={t('leagues.notJoined.start')}
         icon="book"
@@ -638,9 +630,6 @@ const styles = StyleSheet.create({
   ladder: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', gap: LADDER_GAP, paddingHorizontal: layout.gutter, paddingVertical: spacing.sm },
   divider: { height: StyleSheet.hairlineWidth, marginHorizontal: -layout.gutter },
   resting: { alignItems: 'center', gap: spacing.sm, paddingTop: spacing.md, paddingBottom: spacing.sm },
-  // His words, in a bubble under him: filled, not framed, like every surface here.
-  bubble: { borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2, maxWidth: 320 },
-  bubbleText: { fontSize: typography.sizes.text, lineHeight: 22, fontStyle: 'italic', textAlign: 'center' },
   daysPill: { borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 4, marginTop: spacing.sm },
   leave: { alignItems: 'center', paddingTop: spacing.xl, paddingBottom: spacing.md },
   // A fingertip tall, however few its words.

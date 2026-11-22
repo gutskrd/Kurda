@@ -209,7 +209,8 @@ function StartButton({ label, xp, onPress }: { label: string; xp: string | null;
       accessibilityLabel={xp ? `${label}, ${xp}` : label}
       testID="lp-card-start"
       onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
-      style={({ pressed }) => [styles.start, pressed ? styles.startPressed : null, { flexDirection: 'row' }]}
+      // The label and what the lesson pays stack, so the longest pair fits a narrow phone.
+      style={({ pressed }) => [styles.start, pressed ? styles.startPressed : null, xp ? styles.startStacked : { flexDirection: 'row' }]}
     >
       {live && width > 0 ? (
         <Animated.View
@@ -487,7 +488,8 @@ const styles = StyleSheet.create({
   },
   startPressed: { marginTop: spacing.xs + 3, borderBottomWidth: 1 },
   startText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 0.6 },
-  startXp: { fontVariant: ['tabular-nums'] },
+  startStacked: { flexDirection: 'column', gap: 0, paddingVertical: spacing.sm },
+  startXp: { fontVariant: ['tabular-nums'], fontWeight: typography.weights.semibold, textTransform: 'none', letterSpacing: 0, opacity: 0.8, textAlign: 'center' },
   glint: { position: 'absolute', top: -8, bottom: -8, left: 0 },
   eyebrow: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   title: { ...display(typography.sizes.text) },

@@ -5,6 +5,7 @@ import { SEASON_FRAME_INNER } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { useDirection } from '../reports/direction';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { CosmeticBackground, PremiumPill } from './cosmetic-parts';
@@ -133,6 +134,42 @@ export function ProfileHead({
         </Text>
       </View>
 
+      {children}
+      {actions ? <View style={styles.actions}>{actions}</View> : null}
+    </View>
+  );
+}
+
+/** The head while a profile loads, in `ProfileHead`'s own layout; each screen passes what sits under it. */
+export function ProfileHeadSkeleton({
+  width,
+  stats,
+  children,
+  actions,
+}: {
+  width: number;
+  stats?: ReactNode;
+  children?: ReactNode;
+  actions?: ReactNode;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const dir = useDirection();
+  return (
+    <View style={styles.head}>
+      <Skeleton width={width} height={BANNER} radius={radii.none} style={styles.banner} />
+      <View style={[styles.top, { flexDirection: dir.row, marginTop: -overlap(false) }]}>
+        <View style={[styles.face, { borderColor: colors.background, backgroundColor: colors.background }]}>
+          <Skeleton width={FACE} height={FACE} radius={radii.pill} />
+        </View>
+        {stats ? <View style={[styles.stats, { marginTop: overlap(false) + spacing.md }]}>{stats}</View> : null}
+      </View>
+      <View style={styles.names}>
+        <View style={[styles.nameRow, { flexDirection: dir.row }]}>
+          <SkeletonText size={typography.sizes.title} width={160} />
+          <Skeleton width={LEVEL} height={LEVEL} radius={radii.pill} />
+        </View>
+        <SkeletonText size={typography.sizes.text} width={72} />
+      </View>
       {children}
       {actions ? <View style={styles.actions}>{actions}</View> : null}
     </View>

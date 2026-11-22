@@ -18,6 +18,8 @@ import { poolQuiet, queriesDuring } from '../test/query-count.js';
 import { bustAvailability } from './availability.js';
 import { bustGamePools } from './sources.js';
 import { learnGameServices } from './routes.js';
+import { SOLO_ROUNDS_PER_DAY } from './solo.js';
+import { utcDay } from '../limits/counters.js';
 import { removeCourses } from '../test/courses.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -358,6 +360,17 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('learning games (integration)', () 
       for (let i = 0; i < 21; i++) codes.push((await play(hurried, 'kmr')).statusCode);
       expect(codes.slice(0, 20).every((c) => c === 201)).toBe(true);
       expect(codes[20]).toBe(429);
+    });
+
+    it('starts at most a day’s rounds, then says when to come back, and leaves the open round as it was', async () => {
+      const keen = await register('gKeen');
+      const { id: open } = (await play(keen.token, 'kmr')).json();
+      await app.redis.set(`solo-rounds:${utcDay()}:${keen.id}`, String(SOLO_ROUNDS_PER_DAY));
+      const over = await play(keen.token, 'kmr');
+      expect(over.statusCode).toBe(429);
+      expect(over.json().code).toBe('RATE_LIMITED');
+      expect(Number(over.headers['retry-after'])).toBeGreaterThan(0);
+      expect((await call('GET', '/games/solo/open?game=build-sentence&dialect=kmr', keen.token)).json().id).toBe(open);
     });
 
     it('refuses a difficulty with too little approved content', async () => {

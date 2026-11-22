@@ -18,7 +18,7 @@ import {
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { ErrorState, EmptyState, Loading } from '../components/states';
-import { StoryLibrarySkeleton, StoryListSkeleton } from '../components/skeletons';
+import { StoryLibrarySkeleton, StoryListSkeleton, StoryProgressSkeleton } from '../components/skeletons';
 import { ChevronIcon } from '../components/icons';
 import { RequireAccount } from '../components/RequireAccount';
 import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
@@ -305,10 +305,15 @@ function Library(): React.JSX.Element {
     );
   }
 
+  // Your progress, with its placeholder held while the library loads; none for a visitor or once the load fails.
+  let progress: React.ReactNode = null;
+  if (signedIn && library?.me) progress = <ProgressCard me={library.me} />;
+  else if (signedIn && !library && !error) progress = <StoryProgressSkeleton />;
+
   return (
     <>
       {variety}
-      {signedIn && library?.me && <ProgressCard me={library.me} />}
+      {progress}
       <LibraryFilterBar
         q={q}
         typed={typed}

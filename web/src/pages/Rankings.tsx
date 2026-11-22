@@ -9,7 +9,7 @@ import { Button } from '../components/Button';
 import { useLocale, useT, type Translate } from '../i18n/I18nProvider';
 import { LeagueCard } from '../leagues/LeagueCard';
 import { RankList, RankRow } from '../ui/RankRow';
-import { BOARD_BLURB, BOARD_NAME, BoardAmount, BoardSwitch, SpanSwitch, boardFor, isRankKind, type BoardType, type RankKind, type XpSpan } from '../ui/BoardSwitch';
+import { BOARD_NAME, BoardAmount, BoardSwitch, SpanSwitch, boardFor, isRankKind, type BoardType, type RankKind, type XpSpan } from '../ui/BoardSwitch';
 import type { MessageKey } from '../i18n/en';
 
 interface Entry {
@@ -80,7 +80,6 @@ export function Rankings(): React.JSX.Element {
       {kind === 'xp' && <SpanSwitch value={span} onChange={(next) => set('span', next === 'all' ? 'all' : null)} />}
       {/* This week's XP is the league's: the reader's own group comes first. */}
       {type === 'weekly_xp' && status === 'signedIn' && <LeagueCard />}
-      <p className="page-sub rankings-blurb">{t(BOARD_BLURB[type])}</p>
       <div className="toolbar" role="tablist" aria-label={t('rankings.compareWith')}>
         {SCOPES.map((s) => (
           <button

@@ -6,6 +6,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { display, sectionLabel } from '../theme/fonts';
 import { Segmented } from '../theme/glass';
+import { SkeletonText } from '../theme/Skeleton';
 import { Icon } from '../theme/Icon';
 import { heldDim } from '../theme/MotionParts';
 import { Pressable } from '../theme/Pressable';
@@ -21,7 +22,18 @@ import { dialectNameKey } from '../i18n/dialectName';
  */
 
 /** "Metelok · Riddles": the Kurdish name in the display face, the reader's own word after it (`collectionName`). */
-export function CollectionTitle({ kurmanci, localized, line }: { kurmanci: string; localized: string; line?: string | null }): React.JSX.Element {
+export function CollectionTitle({
+  kurmanci,
+  localized,
+  line,
+  pending = false,
+}: {
+  kurmanci: string;
+  localized: string;
+  line?: string | null;
+  /** The line still loading: its place held at its height. */
+  pending?: boolean;
+}): React.JSX.Element {
   const { colors } = useTheme();
   const { locale } = useI18n();
   const dir = useDirection();
@@ -34,7 +46,11 @@ export function CollectionTitle({ kurmanci, localized, line }: { kurmanci: strin
         </Text>
         {beside ? <Text style={[styles.titleBeside, dir.text, { color: colors.textSecondary }]}>{beside}</Text> : null}
       </View>
-      {line ? <Text style={[styles.titleLine, dir.text, { color: colors.textSecondary }]}>{line}</Text> : null}
+      {line ? (
+        <Text style={[styles.titleLine, dir.text, { color: colors.textSecondary }]}>{line}</Text>
+      ) : pending ? (
+        <SkeletonText size={typography.sizes.text} lineHeight={styles.titleLine.lineHeight} width={96} />
+      ) : null}
     </View>
   );
 }

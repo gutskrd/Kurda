@@ -12,6 +12,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { formatCompact } from '../i18n/format';
 import { useDirection } from '../reports/direction';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 
 /** Enough to show who someone knows without turning a profile into a directory. */
 const SHOW = 12;
@@ -119,6 +120,20 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
         </SheetScrollView>
       </BottomSheet>
     </>
+  );
+}
+
+/** The friends line while the profile loads: one face, the count and a name, in the line's own shape. */
+export function ProfileFriendsSkeleton(): React.JSX.Element {
+  const dir = useDirection();
+  return (
+    <View style={[styles.line, { flexDirection: dir.row }]}>
+      <Skeleton width={FACE} height={FACE} radius={radii.pill} />
+      <View style={styles.said}>
+        <SkeletonText size={typography.sizes.text} width={72} />
+        <SkeletonText size={typography.sizes.text} width={48} />
+      </View>
+    </View>
   );
 }
 

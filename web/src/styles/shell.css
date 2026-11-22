@@ -1463,6 +1463,10 @@
 .learn-tool.learn-review .learn-review-text {
   flex: 0 1 auto;
 }
+/* Placeholder lines have no width of their own, so while the answer loads the text spans the card as a sentence would. */
+.learn-tool.learn-review.is-pending .learn-review-text {
+  align-self: stretch;
+}
 /* review's button, and the way to the other kinds of practice beside it */
 .learn-review-actions {
   display: flex;

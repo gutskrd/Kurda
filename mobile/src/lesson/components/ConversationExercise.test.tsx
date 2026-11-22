@@ -13,6 +13,7 @@ import { FakeAudio, fakeFrames, type Frames } from '../../characters/testing/aud
 import { characterLayers } from '../../characters/layers';
 import { sameIds } from '../../reports/testing/sameIds';
 import type { Exercise } from '../types';
+import { resetAutoplayPref, setAutoplay } from '../../feedback/autoplayPref';
 import { ConversationExercise } from './ConversationExercise';
 
 const SILAV = 'https://media.test/silav.wav';
@@ -63,6 +64,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  resetAutoplayPref();
   localStorage.removeItem('kurda_locale_v1');
 });
 
@@ -161,45 +163,82 @@ describe('a conversation in a lesson', () => {
     await settle();
     expect(screen.getByText('Read the conversation, then answer')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Show translation' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Play conversation' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^(Play the first line|Next line|Start again)$/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /^Play line/ })).toBeNull();
   });
 
-  it('plays every recorded line in order, lighting the one heard and passing over the one not recorded', async () => {
+  it('plays the first line by itself, then one more line per tap, lighting the one heard and passing over the one not recorded', async () => {
     show(conversation());
-    await settle();
-    fireEvent.click(screen.getByRole('button', { name: 'Play conversation' }));
-    await settle();
-    expect(FakeAudio.of(SILAV)!.paused).toBe(false);
+    await waitFor(() => expect(FakeAudio.of(SILAV)?.paused).toBe(false));
     expect(within(screen.getByTestId('conversation-heard')).getByText('Silav, tu çawa yî?')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Stop' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Next line' })).toBeTruthy();
 
+    // The first line ends and nothing follows it until the learner asks.
     act(() => FakeAudio.of(SILAV)!.finish());
+    await settle();
+    expect(FakeAudio.made.filter((a) => !a.paused)).toHaveLength(0);
+    expect(screen.queryByTestId('conversation-heard')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next line' }));
     await settle();
     expect(FakeAudio.of(BAS)!.paused).toBe(false);
     expect(within(screen.getByTestId('conversation-heard')).getByText('Ez jî baş im.')).toBeTruthy();
     // One sound at a time.
     expect(FakeAudio.made.filter((a) => !a.paused)).toHaveLength(1);
 
+    // After the last line, the button starts again from the first.
     act(() => FakeAudio.of(BAS)!.finish());
     await settle();
-    expect(screen.queryByTestId('conversation-heard')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Play conversation' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Start again' }));
+    await settle();
+    expect(within(screen.getByTestId('conversation-heard')).getByText('Silav, tu çawa yî?')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Next line' })).toBeTruthy();
   });
 
-  it('stops when asked, and when the exercise goes', async () => {
+  it('waits for the learner to say their own line, then plays the answer to it', async () => {
+    show(
+      conversation({
+        speakers: [
+          { name: 'Hamo', character: 'hamo' },
+          { name: 'Tu', character: null, learner: true },
+        ],
+        lines: [
+          { speaker: 0, text: 'Bi xêr hatî!' },
+          { speaker: 1, text: 'Xêra Xwedê li we bê!' },
+          { speaker: 0, text: 'Tu çawa yî?' },
+        ],
+        lineAudio: [SILAV, null, BAS],
+        lineVoices: [null, null, null],
+      }),
+    );
+    await waitFor(() => expect(FakeAudio.of(SILAV)?.paused).toBe(false));
+    act(() => FakeAudio.of(SILAV)!.finish());
+    await settle();
+    // The learner's turn: their line waits for them, and Hamo says nothing more until they have said it.
+    expect(within(screen.getByTestId('conversation-turn')).getByText('Xêra Xwedê li we bê!')).toBeTruthy();
+    expect(FakeAudio.made.filter((a) => !a.paused)).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'I said it' }));
+    await settle();
+    expect(FakeAudio.of(BAS)!.paused).toBe(false);
+    expect(screen.queryByTestId('conversation-turn')).toBeNull();
+    act(() => FakeAudio.of(BAS)!.finish());
+    await settle();
+    expect(screen.getByRole('button', { name: 'Start again' })).toBeTruthy();
+  });
+
+  it('waits for a tap when lines do not play by themselves, goes on from a line played by its own button, and stops when the exercise goes', async () => {
+    await setAutoplay(false);
     const view = show(conversation());
     await settle();
-    fireEvent.click(screen.getByRole('button', { name: 'Play conversation' }));
-    await settle();
-    fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
-    await settle();
-    expect(FakeAudio.of(SILAV)!.paused).toBe(true);
-    expect(screen.queryByTestId('conversation-heard')).toBeNull();
+    await act(() => new Promise((resolve) => setTimeout(resolve, 400)));
+    expect(FakeAudio.made.filter((a) => !a.paused)).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Play the first line' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Play line 3, said by Xezo' }));
     await settle();
     expect(FakeAudio.of(BAS)!.paused).toBe(false);
+    expect(screen.getByRole('button', { name: 'Start again' })).toBeTruthy();
     view.unmount();
     expect(FakeAudio.of(BAS)!.paused).toBe(true);
   });

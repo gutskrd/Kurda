@@ -102,7 +102,8 @@
   margin: 0;
   padding: 10px 6px;
   border-radius: 14px;
-  background: var(--bg);
+  /* solid, so the band's colour never shows through behind the number in the dark */
+  background: var(--surface-solid);
   color: var(--stat-ink);
   font-size: var(--text-title);
   font-weight: 800;

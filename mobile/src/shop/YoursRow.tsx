@@ -58,13 +58,12 @@ export function YoursRow({
 export function YoursRowSkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
-  const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
   return (
     <View style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}>
       <View style={styles.art}>
         <Skeleton width={ART} height={ART} radius={radii.pill} />
       </View>
-      <View style={[styles.main, start]}>
+      <View style={styles.main}>
         <SkeletonText size={typography.sizes.text} width={96} />
         <SkeletonText size={typography.sizes.text} width="46%" />
       </View>

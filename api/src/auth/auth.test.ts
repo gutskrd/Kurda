@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadConfig } from '../config/env.js';
-import { registerBodySchema } from './routes.js';
+import { registerBodySchema, signupCeiling } from './routes.js';
 import { hashPassword, verifyPassword } from './service.js';
 import { hashRefreshToken, issueAccessToken, verifyAccessToken } from './tokens.js';
 
@@ -73,5 +73,16 @@ describe('registerBodySchema', () => {
     expect(registerBodySchema.safeParse({ ...noBirth, birthYear: 1990 }).success).toBe(false);
     expect(registerBodySchema.safeParse({ ...noBirth, birthMonth: 6 }).success).toBe(false);
     expect(registerBodySchema.safeParse({ ...valid, birthMonth: 13 }).success).toBe(false);
+  });
+});
+
+describe('the service’s daily sign-up ceiling', () => {
+  it('is the lower one only on a production server whose sign-up has no CAPTCHA', () => {
+    const at = (env: Record<string, string>) =>
+      signupCeiling({ SIGNUP_DAILY_CEILING: 500, SIGNUP_DAILY_CEILING_WITHOUT_CAPTCHA: 100, TURNSTILE_SECRET: undefined, ...env } as Parameters<typeof signupCeiling>[0]);
+    expect(at({ NODE_ENV: 'production' })).toBe(100);
+    expect(at({ NODE_ENV: 'production', TURNSTILE_SECRET: 'secret' })).toBe(500);
+    expect(at({ NODE_ENV: 'development' })).toBe(500);
+    expect(signupCeiling(config)).toBe(config.SIGNUP_DAILY_CEILING);
   });
 });

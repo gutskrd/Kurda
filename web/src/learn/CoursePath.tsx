@@ -691,13 +691,7 @@ export function CoursePath({
     el?.focus({ preventScroll: true });
   };
 
-  if ((loading && !data) || (data && !dueSettled)) {
-    return (
-      <div className="lp">
-        <CourseMapSkeleton />
-      </div>
-    );
-  }
+  if ((loading && !data) || (data && !dueSettled)) return <CourseMapSkeleton header={showHeader} />;
   if (error || !data || !path || !shown) {
     return <ErrorState message={error ?? t('common.somethingWentWrong')} onRetry={reload} />;
   }

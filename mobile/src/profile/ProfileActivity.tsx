@@ -17,7 +17,7 @@ import { Icon, type IconName } from '../theme/Icon';
 import { duration } from '../theme/motion';
 import { PressableScale } from '../theme/MotionParts';
 import { Pressable } from '../theme/Pressable';
-import { Skeleton } from '../theme/Skeleton';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { PROFILE_SECTIONS, type ProfileSection, type ProfileSections } from './sections';
@@ -221,8 +221,8 @@ export function ActivityGrid({ activity, width }: { activity: ProfileActivitySta
   const size = { width: tile, height: Math.round(tile * 1.25) };
   if (!activity.active) return null;
 
-  if (activity.loading) return <TileSkeletons size={size} width={width} />;
   const games = activity.active === 'games';
+  if (activity.loading) return <TileSkeletons size={size} width={width} games={games} />;
   const count = games ? activity.entries.length : activity.items.length;
   if (count === 0) {
     return (
@@ -241,25 +241,51 @@ export function ActivityGrid({ activity, width }: { activity: ProfileActivitySta
   );
 }
 
-/** The tabs and a screenful of grey tiles, for a profile still loading. */
+/** The tabs and two rows of tiles, for a profile still loading: the tabs' icons in their cells, the first one marked. */
 export function ProfileActivitySkeleton({ width }: { width: number }): React.JSX.Element {
   const { colors } = useTheme();
+  const dir = useDirection();
   const tile = Math.floor((width - 2 * GAP) / 3);
+  const tab = width / PROFILE_SECTIONS.length;
   return (
     <View>
-      <View style={[styles.tabs, { width, borderBottomColor: colors.separator }]} />
+      <View style={[styles.tabs, { width, flexDirection: dir.row, borderBottomColor: colors.separator }]}>
+        {PROFILE_SECTIONS.map((s) => (
+          <View key={s} style={styles.tab}>
+            <Skeleton width={24} height={24} radius={radii.sm} />
+          </View>
+        ))}
+        <View style={[styles.ink, { left: dir.row === 'row' ? 0 : width - tab, width: tab, backgroundColor: colors.textPrimary }]} />
+      </View>
       <TileSkeletons size={{ width: tile, height: Math.round(tile * 1.25) }} width={width} />
     </View>
   );
 }
 
-function TileSkeletons({ size, width }: { size: { width: number; height: number }; width: number }): React.JSX.Element {
+/** The game captions' first lines, varied so the row reads as different games. */
+const CAPTION_WIDTHS = ['72%', '56%', '64%'] as const;
+
+/** Two rows of tiles in the grid's own layout: posts as plain tiles, games as a square cover over the result and the day. */
+function TileSkeletons({ size, width, games = false }: { size: { width: number; height: number }; width: number; games?: boolean }): React.JSX.Element {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const dir = useDirection();
   return (
-    <View style={[styles.grid, { width }]} accessibilityLabel={t('common.loading')}>
-      {Array.from({ length: 6 }, (_, i) => (
-        <Skeleton key={i} width={size.width} height={size.height} radius={radii.none} />
-      ))}
+    <View style={[styles.grid, { width, flexDirection: dir.row }]} accessibilityLabel={t('common.loading')}>
+      {Array.from({ length: 6 }, (_, i) =>
+        games ? (
+          // A game tile is painted the placeholder grey, so its boxes take the raised grey to show on it.
+          <View key={i} style={[styles.tile, { width: size.width, backgroundColor: colors.controlTrack }]}>
+            <Skeleton width={size.width} height={size.width} radius={radii.none} raised />
+            <View style={styles.gameCaption}>
+              <SkeletonText size={typography.sizes.text} width={CAPTION_WIDTHS[i % CAPTION_WIDTHS.length]} raised />
+              <SkeletonText size={typography.sizes.text} width="40%" raised />
+            </View>
+          </View>
+        ) : (
+          <Skeleton key={i} width={size.width} height={size.height} radius={radii.none} />
+        ),
+      )}
     </View>
   );
 }
@@ -317,39 +343,31 @@ function PostTile({ item, size }: { item: FeedItem; size: { width: number; heigh
   );
 }
 
-/** A game played, as its cover with the result and the day under it. */
+/** A game played: its whole square cover, uncropped, with the result and the day in a caption under it. */
 function GameTile({ entry, size }: { entry: ActivityEntry; size: { width: number; height: number } }): React.JSX.Element {
   const { colors } = useTheme();
   const { locale } = useI18n();
+  const dir = useDirection();
   const emblem = gameEmblemNamed(entry.title);
   const date = when(entry.at, locale);
   return (
     <View
-      style={[styles.tile, size, { backgroundColor: colors.controlTrack }]}
+      style={[styles.tile, { width: size.width, backgroundColor: colors.controlTrack }]}
       accessible
       accessibilityRole="image"
       accessibilityLabel={[entry.title, entry.detail, date].filter(Boolean).join(', ')}
     >
-      {emblem ? (
-        // The square cover as tall as the tile, centred, its sides running past the tile's edges.
-        <View style={[styles.cover, { left: (size.width - size.height) / 2 }]}>
-          <GameArt game={emblem} size={size.height} />
-        </View>
-      ) : (
-        <View style={styles.centre}>
-          <Icon name="play" size={32} tone="secondary" />
-        </View>
-      )}
-      <Foot onArt>
-        <View style={styles.footStack}>
-          <Text style={[styles.footText, { color: colors.textOnScrim }]} numberOfLines={1}>
-            {entry.detail ?? entry.title}
-          </Text>
-          <Text style={[styles.footDate, { color: colors.textOnScrim }]} numberOfLines={1}>
-            {date}
-          </Text>
-        </View>
-      </Foot>
+      <View style={[styles.gameCover, { width: size.width, height: size.width }]}>
+        {emblem ? <GameArt game={emblem} size={size.width} square /> : <Icon name="play" size={32} tone="secondary" />}
+      </View>
+      <View style={styles.gameCaption}>
+        <Text style={[styles.footText, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+          {entry.detail ?? entry.title}
+        </Text>
+        <Text style={[styles.footDate, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
+          {date}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -381,6 +399,8 @@ const styles = StyleSheet.create({
   ink: { position: 'absolute', bottom: -StyleSheet.hairlineWidth, left: 0, height: 2 },
   grid: { flexWrap: 'wrap', gap: GAP, marginTop: GAP },
   tile: { overflow: 'hidden' },
+  gameCover: { alignItems: 'center', justifyContent: 'center' },
+  gameCaption: { paddingHorizontal: spacing.sm, paddingTop: 6, paddingBottom: spacing.sm },
   fill: { width: '100%', height: '100%' },
   held: { opacity: 0.55 },
   words: { position: 'absolute', top: 10, left: 10, right: 10, bottom: 30, overflow: 'hidden', gap: 4 },
@@ -389,11 +409,8 @@ const styles = StyleSheet.create({
   mark: { position: 'absolute', top: 8, end: 8 },
   markOnArt: { shadowColor: '#000000', shadowOpacity: 0.45, shadowRadius: 3, shadowOffset: { width: 0, height: 0 } },
   foot: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', gap: 4, paddingTop: 28, paddingBottom: 6, paddingHorizontal: spacing.sm },
-  footStack: { flex: 1, minWidth: 0 },
   footText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   footDate: { fontSize: typography.sizes.text, opacity: 0.85 },
-  cover: { position: 'absolute', top: 0 },
-  centre: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   empty: { alignItems: 'center', gap: spacing.md - 4, paddingTop: spacing.xl + 8, paddingBottom: spacing.lg, paddingHorizontal: spacing.md },
   emptyMark: { width: 72, height: 72, borderWidth: 2, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   emptyTitle: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, textAlign: 'center' },

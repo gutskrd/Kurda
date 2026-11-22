@@ -1,5 +1,5 @@
 import { LinkButton } from '../components/Button';
-import { Skeleton } from '../components/Skeleton';
+import { SkeletonButton, SkeletonText } from '../components/Skeleton';
 import { useT } from '../i18n/I18nProvider';
 import type { ApiState } from '../lib/useApi';
 import type { PracticeDue } from './types';
@@ -23,8 +23,11 @@ export function ReviewEntry({
   const { data, error, loading } = due;
   let body: React.ReactNode;
   let action: React.ReactNode = null;
-  if (loading && !data) {
-    body = <Skeleton line w="60%" />;
+  const pending = loading && !data;
+  if (pending) {
+    // What most answers hold: two lines and a small button.
+    body = <SkeletonText lines={2} lastWidth="48%" />;
+    action = <SkeletonButton size="sm" w={96} />;
   } else if (error || !data) {
     body = t('review.dueFailed');
     action = <LinkButton to="/app/learn/review" variant="secondary" size="sm">{t('review.start')}</LinkButton>;
@@ -45,7 +48,7 @@ export function ReviewEntry({
     action = <LinkButton to="/app/learn/review" variant="secondary" size="sm">{t('review.practise')}</LinkButton>;
   }
   return (
-    <section className="learn-tool learn-review" aria-labelledby="learn-review-title">
+    <section className={`learn-tool learn-review${pending ? ' is-pending' : ''}`} aria-labelledby="learn-review-title">
       <div className="learn-review-text">
         <Heading className="learn-tool-title" id="learn-review-title">
           {t('review.title')}

@@ -25,6 +25,8 @@ import { storableTimeZone } from '../streaks/time-zones.js';
 import { assertOldEnough, birthMonthSchema, birthYearSchema } from '../users/birth-month.js';
 import { createMeReader } from '../users/routes.js';
 import type { AdminAccess } from '../admin/owner-access.js';
+import { secondsToUtcMidnight, takeDaily } from '../limits/counters.js';
+import type { RateLimitOptions } from '../ratelimit/plugin.js';
 
 /** Rejects a password that fails policy with a specific, actionable reason. */
 function assertPasswordPolicy(password: string): void {
@@ -122,10 +124,6 @@ export const verifyEmailBodySchema = z.object({
   token: z.string().min(20).max(200),
 });
 
-export const resendVerificationBodySchema = z.object({
-  email: emailAddress,
-});
-
 export const passwordResetRequestBodySchema = z.object({
   email: emailAddress,
   captchaToken: z.string().max(3_000).optional(),
@@ -154,6 +152,23 @@ export const oauthBodySchema = z
     message: 'authorizationCode and fullName are only sent with Apple sign-in',
   });
 
+/**
+ * Rate limits for routes that sign in, sign up or send mail: counted in this process while Redis is down instead of let
+ * through, and with `wideNetwork` by an IPv6 address's /56 rather than its /64 (ratelimit/plugin.ts).
+ */
+const strict = (max: number, windowMs: number, per: 'ip' | 'user-or-ip', wideNetwork = false): RateLimitOptions => ({
+  max,
+  windowMs,
+  per,
+  wideNetwork,
+  onStoreDown: 'local',
+});
+
+/** New email accounts the whole service takes a day: lower on a production server whose sign-up has no CAPTCHA. */
+export function signupCeiling(config: Pick<AppConfig, 'NODE_ENV' | 'TURNSTILE_SECRET' | 'SIGNUP_DAILY_CEILING' | 'SIGNUP_DAILY_CEILING_WITHOUT_CAPTCHA'>): number {
+  return config.NODE_ENV === 'production' && !config.TURNSTILE_SECRET ? config.SIGNUP_DAILY_CEILING_WITHOUT_CAPTCHA : config.SIGNUP_DAILY_CEILING;
+}
+
 export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, adminAccess?: AdminAccess): void {
   const service = new AuthService(config, app.db, { jobs: app.jobs, log: app.log, redis: app.redis, security: app.securityLog });
   /** A refused sign-up, with which check refused it, for the security log; the person is told nothing more. */
@@ -176,6 +191,16 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
   const checkReturn = async (probe: ReturnProbe): Promise<void> => {
     if (app.hasDecorator('returns')) await app.returns.assess(probe);
   };
+  /**
+   * One from the service's sign-ups today (`signupCeiling`), taken just before an account is made or claimed. Past it the
+   * answer is the ordinary rate-limit one, with the wait until midnight UTC.
+   */
+  const ceiling = signupCeiling(config);
+  const takeSignup = async (): Promise<void> => {
+    if (await takeDaily(app.hasDecorator('redis') ? app.redis : undefined, 'signups', 'all', ceiling, app.log)) return;
+    await app.securityLog.record('signup.rejected', { details: { why: 'daily sign-up ceiling' } });
+    throw new AppError('RATE_LIMITED', 429, 'too many requests', { retryAfterSec: secondsToUtcMidnight() });
+  };
   /** Whether this account used this install id before today's sign-in; a new one is checked against banned people. */
   const newDevice = async (userId: string, deviceId: string | null): Promise<boolean> => {
     if (!deviceId) return false;
@@ -188,8 +213,8 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     {
       schema: { body: registerBodySchema },
       config: {
-        // pre-auth endpoint: strict per-IP limit against signup abuse
-        rateLimit: { max: 5, windowMs: 60_000, per: 'ip' as const },
+        // pre-auth endpoint: strict per-network limit against signup abuse
+        rateLimit: strict(5, 60_000, 'ip', true),
       },
     },
     async (req, reply) => {
@@ -217,6 +242,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       if (assessment.hardBlock) throw await rejected('too many accounts from this device or network');
       // a banned or suspended person's address (or a +tag, dots or another domain of the same mailbox)
       if (await isReturningIdentity(app.db, { email: body.email })) throw await rejected('banned email address');
+      await takeSignup();
 
       const result = await service.register({
         ...body,
@@ -245,7 +271,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     '/auth/guest',
     {
       schema: { body: guestBodySchema },
-      config: { rateLimit: { max: 5, windowMs: 60_000, per: 'ip' as const } },
+      config: { rateLimit: strict(5, 60_000, 'ip', true) },
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof guestBodySchema>;
@@ -278,7 +304,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     {
       schema: { body: claimBodySchema },
       preHandler: requireAuth,
-      config: { rateLimit: { max: 5, windowMs: 60_000, per: 'user-or-ip' as const } },
+      config: { rateLimit: strict(5, 60_000, 'user-or-ip', true) },
     },
     async (req) => {
       if (req.user!.guest !== true) throw notAGuest();
@@ -297,6 +323,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       if (!(await verifyCaptcha(config, body.captchaToken, req.ip))) throw await rejected('challenge not passed');
       await service.assertNotBreached(body.password);
       if (await isReturningIdentity(app.db, { email: body.email }, req.user!.id)) throw await rejected('banned email address');
+      await takeSignup();
 
       const claimed = await service.claim(req.user!.id, {
         email: body.email,
@@ -320,7 +347,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       schema: { body: loginBodySchema },
       config: {
         // brute-force resistance; keyed by IP because there is no user yet
-        rateLimit: { max: 5, windowMs: 60_000, per: 'ip' as const },
+        rateLimit: strict(5, 60_000, 'ip'),
       },
     },
     async (req) => {
@@ -362,7 +389,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       '/admin/auth/login',
       {
         schema: { body: loginBodySchema },
-        config: { rateLimit: { max: 5, windowMs: 5 * 60_000, per: 'ip' as const } },
+        config: { rateLimit: strict(5, 5 * 60_000, 'ip') },
       },
       async (req) => {
         const body = req.body as z.infer<typeof loginBodySchema>;
@@ -391,7 +418,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     {
       schema: { body: refreshBodySchema },
       config: {
-        rateLimit: { max: 20, windowMs: 60_000, per: 'ip' as const },
+        rateLimit: strict(20, 60_000, 'ip'),
       },
     },
     async (req) => {
@@ -417,7 +444,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     '/auth/logout',
     {
       schema: { body: refreshBodySchema },
-      config: { rateLimit: { max: 20, windowMs: 60_000, per: 'ip' as const } },
+      config: { rateLimit: strict(20, 60_000, 'ip') },
     },
     async (req) => {
       await service.logout((req.body as z.infer<typeof refreshBodySchema>).refreshToken);
@@ -429,7 +456,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     '/auth/verify-email',
     {
       schema: { body: verifyEmailBodySchema },
-      config: { rateLimit: { max: 10, windowMs: 60_000, per: 'ip' as const } },
+      config: { rateLimit: strict(10, 60_000, 'ip') },
     },
     async (req) => {
       await service.verifyEmail((req.body as z.infer<typeof verifyEmailBodySchema>).token);
@@ -438,26 +465,10 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
   );
 
   app.post(
-    '/auth/resend-verification',
-    {
-      schema: { body: resendVerificationBodySchema },
-      // 3/hour: verification mail must not become a spam vector
-      config: { rateLimit: { max: 3, windowMs: 3_600_000, per: 'ip' as const } },
-    },
-    async (req) => {
-      await service.resendVerification(
-        (req.body as z.infer<typeof resendVerificationBodySchema>).email,
-      );
-      // always 200 — never confirms whether the email has an account
-      return { sent: true };
-    },
-  );
-
-  app.post(
     '/auth/request-password-reset',
     {
       schema: { body: passwordResetRequestBodySchema },
-      config: { rateLimit: { max: 3, windowMs: 3_600_000, per: 'ip' as const } },
+      config: { rateLimit: strict(3, 3_600_000, 'ip', true) },
     },
     async (req) => {
       const body = req.body as z.infer<typeof passwordResetRequestBodySchema>;
@@ -479,7 +490,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     '/auth/reset-password',
     {
       schema: { body: resetPasswordBodySchema },
-      config: { rateLimit: { max: 10, windowMs: 60_000, per: 'ip' as const } },
+      config: { rateLimit: strict(10, 60_000, 'ip') },
     },
     async (req) => {
       const body = req.body as z.infer<typeof resetPasswordBodySchema>;
@@ -501,7 +512,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       schema: { body: changePasswordBodySchema },
       preHandler: requireAuth,
       // a stolen session must not become a way to guess the current password
-      config: { rateLimit: { max: 5, windowMs: 15 * 60_000, per: 'user-or-ip' as const } },
+      config: { rateLimit: strict(5, 15 * 60_000, 'user-or-ip') },
     },
     async (req) => {
       const body = req.body as z.infer<typeof changePasswordBodySchema>;
@@ -518,7 +529,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     {
       schema: { body: verifyEmailCodeBodySchema },
       preHandler: requireAuth,
-      config: { rateLimit: { max: 10, windowMs: 60_000, per: 'ip' as const } },
+      config: { rateLimit: strict(10, 60_000, 'ip') },
     },
     async (req) => {
       const { code } = req.body as z.infer<typeof verifyEmailCodeBodySchema>;
@@ -547,7 +558,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
         // a new code must not become a mail-spam vector, and each new code
         // comes with a fresh set of guesses — so the limit is the account's,
         // not the address it asks from: from many addresses it was unlimited
-        rateLimit: { max: 4, windowMs: 3_600_000, per: 'user-or-ip' as const },
+        rateLimit: strict(4, 3_600_000, 'user-or-ip', true),
       },
     },
     async (req, reply) => {
@@ -572,7 +583,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     {
       schema: { body: z.object({ email: emailAddress }) },
       preHandler: requireAuth,
-      config: { rateLimit: { max: 4, windowMs: 3_600_000, per: 'user-or-ip' as const } },
+      config: { rateLimit: strict(4, 3_600_000, 'user-or-ip', true) },
     },
     async (req) => {
       const { email } = req.body as { email: string };
@@ -589,7 +600,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     '/auth/oauth',
     {
       schema: { body: oauthBodySchema },
-      config: { rateLimit: { max: 10, windowMs: 60_000, per: 'ip' as const } },
+      config: { rateLimit: strict(10, 60_000, 'ip', true) },
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof oauthBodySchema>;

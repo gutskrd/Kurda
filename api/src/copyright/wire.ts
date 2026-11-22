@@ -27,7 +27,7 @@ export function registerCopyright(app: FastifyInstance, config: AppConfig, optio
   // said on every boot until it is fixed: these addresses go to real rights holders
   for (const warning of providerPlaceholderWarnings(config.NODE_ENV)) app.log.error(warning);
   const copyright = new CopyrightService(app.db, { mailer, webBaseUrl: config.APP_BASE_URL, log: app.log });
-  registerCopyrightRoutes(app, copyright);
+  registerCopyrightRoutes(app, copyright, config);
 
   const sweep = setInterval(() => {
     void copyright.sendOutcomes().catch((err) => app.log.warn({ err }, 'sending copyright outcomes failed'));

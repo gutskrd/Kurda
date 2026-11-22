@@ -211,6 +211,7 @@ export {
   jumpPlan,
   lean,
   lessonPath,
+  openingStops,
   lessonStates,
   mascotSpot,
   nextLaunch,

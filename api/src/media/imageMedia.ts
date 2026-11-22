@@ -3,7 +3,14 @@ import type pg from 'pg';
 import { mediaKey, type MediaStorage } from './storage.js';
 import { processImage } from './imageProcess.js';
 import { signPicture } from './signature.js';
-import { exceedsUploadSize, opLimitReached, wouldExceedStorage, type MediaLimits } from './mediaLimits.js';
+import {
+  ACCOUNT_STORAGE_LIMIT_BYTES,
+  ACCOUNT_STORAGE_MESSAGE,
+  exceedsUploadSize,
+  opLimitReached,
+  wouldExceedStorage,
+  type MediaLimits,
+} from './mediaLimits.js';
 import type { MediaUsageService } from './mediaUsage.js';
 import type { PictureRejectReason, PictureReviewState } from '@kurda/shared';
 import { REFUSAL_MESSAGES, type PictureReviewService } from '../moderation/pictures-service.js';
@@ -154,6 +161,9 @@ export async function storeImageMedia(
   // Storage ceiling against the size actually written; unknown usage fails closed.
   if (wouldExceedStorage(await usage.totalStoredBytes(), stored.length, limits.storageLimitBytes)) {
     return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', 'storage limit reached; new uploads are paused', 'storage-limit');
+  }
+  if (options.ownerId && wouldExceedStorage(await usage.storedBytesFor(options.ownerId), stored.length, ACCOUNT_STORAGE_LIMIT_BYTES)) {
+    return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', ACCOUNT_STORAGE_MESSAGE, 'account-storage-limit');
   }
 
   // Bytes moderation refused or took down are refused again under any key, since owned keys include the owner and a

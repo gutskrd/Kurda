@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { RIDDLE_DIFFICULTIES, dialectDirection, type RiddleCard, type RiddleDifficulty, type RiddleList, type RiddleState } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { CheckIcon, ChevronIcon } from '../components/icons';
-import { ListRowsSkeleton } from '../components/skeletons';
+import { LoreListSkeleton } from '../components/skeletons';
 import { EmptyState, ErrorState } from '../components/states';
 import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
 import { describeError } from '../lib/api';
@@ -112,7 +112,7 @@ function Riddles(): React.JSX.Element {
       </header>
 
       {load.state === 'error' && <ErrorState title={t('lore.riddles.loadFailed')} message={load.message} onRetry={() => setNonce((n) => n + 1)} />}
-      {load.state === 'loading' && <ListRowsSkeleton count={5} label="lore.riddles.loading" />}
+      {load.state === 'loading' && <LoreListSkeleton kind="riddles" label="lore.riddles.loading" />}
       {list && list.total === 0 && <EmptyState title={t('lore.riddles.empty', { variety: dialectName(dialect) })} />}
 
       {list && list.total > 0 && (

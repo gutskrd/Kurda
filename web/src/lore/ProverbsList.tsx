@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { PROVERB_ROUND_ITEMS, dialectDirection, isProverbTheme, type ProverbList, type ProverbView } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { ChevronIcon } from '../components/icons';
-import { ListRowsSkeleton } from '../components/skeletons';
+import { LoreListSkeleton } from '../components/skeletons';
 import { EmptyState, ErrorState } from '../components/states';
 import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
 import { describeError } from '../lib/api';
@@ -83,7 +83,7 @@ function Proverbs(): React.JSX.Element {
       </header>
 
       {load.state === 'error' && <ErrorState title={t('lore.proverbs.loadFailed')} message={load.message} onRetry={() => setNonce((n) => n + 1)} />}
-      {load.state === 'loading' && <ListRowsSkeleton count={5} label="lore.proverbs.loading" />}
+      {load.state === 'loading' && <LoreListSkeleton kind="proverbs" label="lore.proverbs.loading" />}
       {list && list.proverbs.length === 0 && <EmptyState title={t('lore.proverbs.empty', { variety: dialectName(dialect) })} />}
 
       {list && list.proverbs.length > 0 && (

@@ -10,6 +10,7 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { CARD_LABEL_KEY, cardKind } from '../feed/postKinds';
 import { GameArt } from '../games/GameArt';
+import { ProfileGridSkeleton } from '../components/skeletons';
 
 const PAGE = 12;
 
@@ -161,15 +162,7 @@ function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection 
     return () => watcher.disconnect();
   }, [more, canWatch, load, count]);
 
-  if (state === 'loading') {
-    return (
-      <div className="pg-grid" aria-hidden="true">
-        {Array.from({ length: 6 }, (_, i) => (
-          <span key={i} className="pg-tile skeleton" />
-        ))}
-      </div>
-    );
-  }
+  if (state === 'loading') return <ProfileGridSkeleton games={games} />;
   if (state === 'error') return <p className="muted pg-note">{error}</p>;
   if (count === 0) {
     return (

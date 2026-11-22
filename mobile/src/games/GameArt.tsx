@@ -7,7 +7,7 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 
 /**
  * A game's cover on the phone, drawn from the shared art (shared/src/art/games.ts) so the website shows the same
- * picture. It fills its square with corners rounded by `coverRadius`, which also clips parts that move past the edge.
+ * picture. It fills its square with corners rounded by `coverRadius` (or square), which also clips parts that move past the edge.
  * It is decoration beside the game's name, so screen readers skip it; each drawing gets its own clip-path ids, since a
  * screen can show the same cover twice.
  *
@@ -18,17 +18,35 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 /** How round a cover's corners are at a size: the same shape small and large, and the same as the website's. */
 const coverRadius = (size: number): number => Math.round(size * 0.22);
 
-export function GameArt({ game, size = 72, moving = false, after = 0 }: { game: GameEmblem; size?: number; moving?: boolean; after?: number }): React.JSX.Element {
+export function GameArt({
+  game,
+  size = 72,
+  moving = false,
+  after = 0,
+  square = false,
+}: {
+  game: GameEmblem;
+  size?: number;
+  moving?: boolean;
+  after?: number;
+  /** Square corners, for a tile that shapes its own edges (a profile's grid of games). */
+  square?: boolean;
+}): React.JSX.Element {
   const idPrefix = `ga${useId().replace(/[^A-Za-z0-9]/g, '')}`;
   const reduce = useReducedMotion();
   const awake = useScreenAwake();
-  return moving && !reduce && awake ? <MovingArt game={game} size={size} idPrefix={idPrefix} after={after} /> : <StillArt game={game} size={size} idPrefix={idPrefix} />;
+  const radius = square ? 0 : coverRadius(size);
+  return moving && !reduce && awake ? (
+    <MovingArt game={game} size={size} radius={radius} idPrefix={idPrefix} after={after} />
+  ) : (
+    <StillArt game={game} size={size} radius={radius} idPrefix={idPrefix} />
+  );
 }
 
-function StillArt({ game, size, idPrefix }: { game: GameEmblem; size: number; idPrefix: string }): React.JSX.Element {
+function StillArt({ game, size, radius, idPrefix }: { game: GameEmblem; size: number; radius: number; idPrefix: string }): React.JSX.Element {
   const xml = useMemo(() => gameEmblemSvg({ game, size, idPrefix }), [game, size, idPrefix]);
   return (
-    <View style={[styles.cover, { width: size, height: size, borderRadius: coverRadius(size) }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View style={[styles.cover, { width: size, height: size, borderRadius: radius }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <SvgXml xml={xml} width={size} height={size} />
     </View>
   );
@@ -37,7 +55,7 @@ function StillArt({ game, size, idPrefix }: { game: GameEmblem; size: number; id
 /** The loop's moments, 0 to 1: what every layer's poses are spaced over. */
 const MOMENTS = Array.from({ length: GAME_EMBLEM_SAMPLES + 1 }, (_, i) => i / GAME_EMBLEM_SAMPLES);
 
-function MovingArt({ game, size, idPrefix, after }: { game: GameEmblem; size: number; idPrefix: string; after: number }): React.JSX.Element {
+function MovingArt({ game, size, radius, idPrefix, after }: { game: GameEmblem; size: number; radius: number; idPrefix: string; after: number }): React.JSX.Element {
   const layers = useMemo(() => gameEmblemLayers({ game, size, idPrefix }), [game, size, idPrefix]);
   const clock = useRef(new Animated.Value(0)).current;
 
@@ -63,7 +81,7 @@ function MovingArt({ game, size, idPrefix, after }: { game: GameEmblem; size: nu
 
   const unit = size / 120;
   return (
-    <View style={[styles.cover, { width: size, height: size, borderRadius: coverRadius(size) }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View style={[styles.cover, { width: size, height: size, borderRadius: radius }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {layers.map((layer, i) => {
         if (!layer.poses) {
           return (

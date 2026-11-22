@@ -34,6 +34,7 @@ import { describeError } from '../lib/api';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { ErrorState } from '../components/states';
+import { LettersHeroSkeleton } from '../components/skeletons';
 import { ChevronIcon, HelpIcon, PaletteIcon } from '../components/icons';
 import { ReportSheet } from '../reports/ReportSheet';
 import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
@@ -243,8 +244,23 @@ export function LettersPage(): React.JSX.Element {
     [choosing, scene, pick],
   );
 
+  // Fixed words, so they stand from the first frame, the loading placeholder included.
+  const head = (
+    <header className="letters-head">
+      <h1 className="page-title">{t('letters.title')}</h1>
+      <p className="letters-lead">{t('letters.lead')}</p>
+    </header>
+  );
+
   if (home.error && !data) return <ErrorState message={home.error} onRetry={home.reload} />;
-  if (!data || !scene || !look) return <div className="container letters-page" aria-busy="true" />;
+  if (!data || !scene || !look) {
+    return (
+      <div className="container letters-page">
+        {head}
+        <LettersHeroSkeleton />
+      </div>
+    );
+  }
 
   const said = (err: Parameters<typeof letterErrorText>[0]): string => letterErrorText(err, t) ?? describeError(err, t);
 
@@ -599,10 +615,7 @@ export function LettersPage(): React.JSX.Element {
 
   return (
     <div className="container letters-page">
-      <header className="letters-head">
-        <h1 className="page-title">{t('letters.title')}</h1>
-        <p className="letters-lead">{t('letters.lead')}</p>
-      </header>
+      {head}
 
       <section className="letters-hero">
         <div className="letters-window">

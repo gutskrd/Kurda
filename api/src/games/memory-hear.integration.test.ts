@@ -38,6 +38,7 @@ import { poolQuiet, queriesDuring } from '../test/query-count.js';
 import { bustAvailability } from './availability.js';
 import { bustGamePools, itemKey } from './sources.js';
 import { learnGameServices } from './routes.js';
+import { CLIP_FETCHES_PER_ROUND } from './clips.js';
 import { removeCourses } from '../test/courses.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -466,6 +467,13 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Dizê Bîrê and Hear It, Find It 
       expect(start.headers['content-range']).toBe(`bytes 0-1/${file.length}`);
       expect(start.rawPayload.toString('latin1')).toBe('RI');
       expect((await call('GET', path, '', undefined, { range: 'bytes=999999-' })).statusCode).toBe(416);
+
+      // kept for as long as the round has left, and one round's clips answer a few hundred fetches in all
+      const maxAge = Number(/max-age=(\d+)/.exec(String(whole.headers['cache-control']))?.[1]);
+      expect(maxAge).toBeGreaterThan(23 * 3600);
+      expect(maxAge).toBeLessThanOrEqual(24 * 3600);
+      await app.redis.set(`clips:round:${id}`, String(CLIP_FETCHES_PER_ROUND));
+      expect((await call('GET', path, '')).statusCode).toBe(429);
 
       // a handle is this round's only, and nothing at all once the round has expired
       const { id: another } = (await play(learner, 'hear-it')).json();

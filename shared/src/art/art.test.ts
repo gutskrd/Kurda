@@ -28,6 +28,8 @@ import {
 import { coinSvg, gemSvg } from './currency.js';
 import { wordSetSvg } from './word-sets.js';
 import {
+  CARD_RIM,
+  FACE_CLEAR,
   IMPOSTOR_CATEGORY_PICTURES,
   IMPOSTOR_EMBLEMS_DRAWN,
   IMPOSTOR_WAYS_DRAWN,
@@ -1188,6 +1190,41 @@ describe('Xapînok’s pictures', () => {
       }
     }
     expect(impostorWaySvg({ way: 'odd', idPrefix: 'mine' })).toContain('id="minet"');
+  });
+
+  it('keeps every head on a fanned card inside the card’s face, clear of its rim and edges', () => {
+    // A card is a turned group: its outline first (M x+r y H x+w-r A r … V y+h-r …) and its head last.
+    const card = /<g transform="rotate\([^)]+\)"><path d="M([\d.]+) ([\d.]+)H([\d.]+)A([\d.]+) [^V]+V([\d.]+).*?<path d="(M60,[^"]+)"[^>]*transform="translate\(([\d.]+) ([\d.]+)\) scale\(([\d.]+)\) translate\(-60 -58\)"\/><\/g>/g;
+    /** An outline's knots, where each of its curves starts and ends, which is its edge near enough. */
+    const knots = (d: string): (readonly [number, number])[] => {
+      const at: (readonly [number, number])[] = [];
+      let [x, y] = [0, 0];
+      for (const [, cmd, args] of d.matchAll(/([Mlcsz])([^Mlcsz]*)/g)) {
+        const v = (args!.match(/-?[\d.]+/g) ?? []).map(Number);
+        const step = cmd === 'c' ? 6 : cmd === 's' ? 4 : 2;
+        for (let i = 0; i + step <= v.length; i += step) {
+          [x, y] = cmd === 'M' ? [v[i]!, v[i + 1]!] : [x + v[i + step - 2]!, y + v[i + step - 1]!];
+          at.push([x, y]);
+        }
+      }
+      return at;
+    };
+    // The written numbers round to tenths and hundredths, which can cost the clear space a fraction of a unit.
+    const clear = FACE_CLEAR - 0.25;
+    const pictures = [impostorWaySvg({ way: 'classic' }), impostorEmblemSvg({ emblem: 'cards' }), gameEmblemSvg({ game: 'impostor' })];
+    const heads = pictures.flatMap((svg) => [...svg.matchAll(card)]);
+    expect(heads).toHaveLength(3 + 5 + 3);
+    for (const m of heads) {
+      const [mx, top, hx, r, vy] = m.slice(1, 6).map(Number) as [number, number, number, number, number];
+      const [cx, cy, k] = m.slice(7, 10).map(Number) as [number, number, number];
+      const outline = knots(m[6]!).map(([x, y]) => [cx + k * (x - 60), cy + k * (y - 58)] as const);
+      const xs = outline.map(([x]) => x);
+      const ys = outline.map(([, y]) => y);
+      expect(Math.min(...xs)).toBeGreaterThanOrEqual(mx - r + CARD_RIM + clear);
+      expect(Math.max(...xs)).toBeLessThanOrEqual(hx + r - clear);
+      expect(Math.min(...ys)).toBeGreaterThanOrEqual(top + CARD_RIM + clear);
+      expect(Math.max(...ys)).toBeLessThanOrEqual(vy + r - clear);
+    }
   });
 
   it('has a colour for every tile, and stays light enough to put a page of them on one screen', () => {

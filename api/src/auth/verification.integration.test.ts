@@ -101,17 +101,8 @@ describe.skipIf(!DATABASE_URL)('email verification (integration)', () => {
     expect((await verify(raw, '10.6.0.7')).statusCode).toBe(400);
   });
 
-  it('resend always returns 200 and rate limits at 3/hour/IP', async () => {
-    const resend = (email: string) =>
-      app.inject({
-        method: 'POST',
-        url: '/auth/resend-verification',
-        payload: { email },
-        remoteAddress: '10.6.0.8',
-      });
-    expect((await resend(userEmail)).statusCode).toBe(200);
-    expect((await resend(`ghost_${suffix}@it.kurda.app`)).statusCode).toBe(200);
-    expect((await resend(userEmail)).statusCode).toBe(200);
-    expect((await resend(userEmail)).statusCode).toBe(429);
+  it('no longer answers the old resend of a link: a code is resent from /auth/resend-verification-code', async () => {
+    const res = await app.inject({ method: 'POST', url: '/auth/resend-verification', payload: { email: userEmail }, remoteAddress: '10.6.0.8' });
+    expect(res.statusCode).toBe(404);
   });
 });

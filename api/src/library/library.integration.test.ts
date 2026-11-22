@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { pass2fa } from '../test/admin-2fa.js';
+import { POSTS_PER_DAY } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -126,5 +127,22 @@ describe.skipIf(!DATABASE_URL)('community library (integration)', () => {
     expect((await post('POST', `/library/posts/${created.id}/publish`, authorTok)).statusCode).toBe(200);
     expect((await post('DELETE', `/library/posts/${created.id}`, adminTok)).statusCode).toBe(200);
     expect((await post('GET', `/library/posts/${created.id}`)).statusCode).toBe(404);
+  });
+
+  it('takes a day’s posts from one member, then says when to come back; staff are not counted', async () => {
+    const prolific = await register('prolific', '10.30.0.4');
+    const made = await pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM library_posts WHERE author_id = $1`, [prolific.id]);
+    await pool.query(
+      `INSERT INTO library_posts (author_id, author_role, type, title, body, language, status, created_at)
+       SELECT $1, 'user', 'gotin', NULL, 'Gotinek ' || n, 'kmr', 'published', now() - make_interval(hours => 23)
+         FROM generate_series(1, $2::int) n`,
+      [prolific.id, POSTS_PER_DAY - made.rows[0]!.n],
+    );
+    const over = await post('POST', '/library/posts', prolific.token, { type: 'gotin', body: 'Yek din jî.' });
+    expect(over.statusCode).toBe(429);
+    expect(over.json().code).toBe('RATE_LIMITED');
+    // the oldest of the day's posts frees a place within the hour
+    expect(Number(over.headers['retry-after'])).toBeLessThanOrEqual(3_600);
+    expect((await post('POST', '/library/posts', adminTok, { type: 'gotin', body: 'Ji edîtoran.' })).statusCode).toBe(201);
   });
 });

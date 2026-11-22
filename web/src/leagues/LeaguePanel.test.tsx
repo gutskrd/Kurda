@@ -175,7 +175,6 @@ describe('LeaguePanel', () => {
     await act(() => new Promise((r) => setTimeout(r, 1000)));
     expect(deer.querySelector('[data-eyes="happy"]')).toHaveAttribute('visibility', 'hidden');
     expect(screen.getByRole('heading', { name: en['leagues.resting.title'] })).toBeInTheDocument();
-    expect(screen.getByText(en['leagues.joinHint'])).toBeInTheDocument();
     expect(screen.getByRole('link', { name: en['leagues.notJoined.start'] })).toHaveAttribute('href', '/app/learn');
     expect(container.querySelector('.rank-list')).toBeNull();
     // No goal ring yet, and nothing about time running out.
@@ -366,7 +365,7 @@ describe('LeaguePanel', () => {
     expect(weekLeft(t, ends, 'en', at('2026-10-21T22:00:00Z'))).toBe('4 days left');
     expect(weekLeft(t, ends, 'en', at('2026-10-24T00:00:00Z'))).toBe('2 days left');
     expect(weekLeft(t, ends, 'en', at('2026-10-24T12:00:00Z'))).toBe('1 day left');
-    expect(weekLeft(t, ends, 'en', at('2026-10-25T09:00:00Z'))).toBe(`This week closes ${weekEnds(ends, 'en')}`);
+    expect(weekLeft(t, ends, 'en', at('2026-10-25T09:00:00Z'))).toBe(`Week ends ${weekEnds(ends, 'en')}`);
     expect(weekLeft(t, 'soon', 'en')).toBe('');
   });
 

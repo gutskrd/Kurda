@@ -3,7 +3,14 @@ import type pg from 'pg';
 import type { PendingPicture, PictureRejectReason, PictureReviewState } from '@kurda/shared';
 import { mediaKey, type MediaStorage } from './storage.js';
 import { processImage } from './imageProcess.js';
-import { exceedsUploadSize, opLimitReached, wouldExceedStorage, type MediaLimits } from './mediaLimits.js';
+import {
+  ACCOUNT_STORAGE_LIMIT_BYTES,
+  ACCOUNT_STORAGE_MESSAGE,
+  exceedsUploadSize,
+  opLimitReached,
+  wouldExceedStorage,
+  type MediaLimits,
+} from './mediaLimits.js';
 import type { MediaUsageService } from './mediaUsage.js';
 import { REFUSAL_MESSAGES, type PictureReviewService } from '../moderation/pictures-service.js';
 
@@ -60,7 +67,7 @@ export type StoredPhoto = { ok: true; key: string; reused: boolean; review: Pict
 
 /**
  * Steps 1–6 of putting up a picture that stands for someone or something (a profile photo or group picture): size, op
- * ceiling, real type and WebP, storage ceiling (fail-closed), refusing bytes moderation refused or removed before, then
+ * ceiling, real type and WebP, the service's and the uploader's storage ceilings (fail-closed), refusing bytes moderation refused or removed before, then
  * the picture check in memory, with only a clear picture written to the public bucket (moderation/pictures-service.ts
  * `intake`). `current` is the key the owner shows now, so identical bytes are a no-op. The upload stays unconfirmed
  * for the caller's swap, so an earlier failure leaves the old picture and the new object for the orphan job.
@@ -115,6 +122,9 @@ export async function storeScannedPhoto(
   const total = await usage.totalStoredBytes();
   if (wouldExceedStorage(total, proc.bytes, limits.storageLimitBytes)) {
     return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', 'storage limit reached; new uploads are paused', 'storage-limit');
+  }
+  if (wouldExceedStorage(await usage.storedBytesFor(uploaderId), proc.bytes, ACCOUNT_STORAGE_LIMIT_BYTES)) {
+    return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', ACCOUNT_STORAGE_MESSAGE, 'account-storage-limit');
   }
 
   // 5) Bytes moderation refused or took down are never written back, whoever uploads them and as whatever kind.

@@ -51,14 +51,6 @@ const SPANS: { key: XpSpan; labelKey: TranslationKey }[] = [
   { key: 'all', labelKey: 'rankings.span.all' },
 ];
 
-/** Each board's line above its rows, saying what it ranks. */
-const BLURB: Record<BoardType, TranslationKey> = {
-  weekly_xp: 'rankings.board.weeklyXpBlurb',
-  all_time_xp: 'rankings.board.allTimeXpBlurb',
-  zer: 'rankings.board.zerBlurb',
-  gewher: 'rankings.board.gewherBlurb',
-};
-
 /** The board behind a choice: XP is this week's or all time's, the balances are their own. */
 function boardFor(kind: RankKind, span: XpSpan): BoardType {
   if (kind === 'xp') return span === 'all' ? 'all_time_xp' : 'weekly_xp';
@@ -323,7 +315,6 @@ function BoardList({
   const top = (
     <View style={styles.head}>
       {head}
-      <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(BLURB[type])}</Text>
       {scopes}
     </View>
   );

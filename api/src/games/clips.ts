@@ -8,20 +8,27 @@
  * Nothing in the address or reply says what is said.
  *
  * The address is the permission, like a media address: <audio> elements and phone players fetch without the learner's
- * token. It is unguessable (round id plus a 128-bit handle), stops answering when the round expires, and is
- * rate-limited per address.
+ * token. It is unguessable (round id plus a 128-bit handle), stops answering when the round expires, is rate-limited
+ * per address, and one round's clips answer `CLIP_FETCHES_PER_ROUND` times in all, wherever they are fetched from.
  *
  * The file is read whole (sentence recordings are small and capped) so the reply can serve byte ranges, which some
- * players request before playing. Browsers may cache it for the hour a round takes; shared caches may not.
+ * players request before playing. Browsers may cache it for as long as the round has left; shared caches may not.
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { AppError } from '../plugins/errors.js';
+import { takeCount } from '../limits/counters.js';
 import { readAudio, type RecordingFiles } from '../speakers/recording-file.js';
 import type { RecordingRef } from './hear-it.js';
 
 /** Clips one address may fetch a minute: a round's eight, each replayed and range-read, many times over. */
 export const CLIP_RATE = { max: 240, windowMs: 60_000, per: 'ip' as const };
+
+/**
+ * Fetches one round's clips answer in all, counted in Redis for the round's lifetime: its items played and replayed,
+ * range-read and fetched again by a player that ignored its cache, many times over; not a loop pulling the bucket.
+ */
+export const CLIP_FETCHES_PER_ROUND = 300;
 
 const params = z.object({ id: z.uuid(), clip: z.string().regex(/^[A-Za-z0-9_-]{16,64}$/) });
 
@@ -50,12 +57,18 @@ interface ClipItem {
 export function registerGameClipRoute(app: FastifyInstance, files: RecordingFiles): void {
   app.get('/games/solo/sessions/:id/clips/:clip', { schema: { params }, config: { rateLimit: CLIP_RATE } }, async (req, reply) => {
     const { id, clip } = req.params as z.infer<typeof params>;
-    const res = await app.db.query<{ items: ClipItem[]; live: boolean }>(`SELECT items, expires_at > now() AS live FROM game_sessions WHERE id = $1`, [id]);
+    const res = await app.db.query<{ items: ClipItem[]; live: boolean; seconds_left: number }>(
+      `SELECT items, expires_at > now() AS live, GREATEST(1, ceil(extract(epoch FROM expires_at - now())))::int AS seconds_left FROM game_sessions WHERE id = $1`,
+      [id],
+    );
     const row = res.rows[0];
     const item = row?.items.find((i) => i.clip === clip && i.recording);
     // a round that is not there and a handle that is not in it are the same answer
     if (!row || !item?.recording) throw new AppError('NOT_FOUND', 404, 'no such clip');
     if (!row.live) throw new AppError('GAME_SESSION_EXPIRED', 410, 'this round has expired; start a new one');
+    if (!(await takeCount(app.hasDecorator('redis') ? app.redis : undefined, `clips:round:${id}`, CLIP_FETCHES_PER_ROUND, row.seconds_left, app.log))) {
+      throw new AppError('RATE_LIMITED', 429, 'too many requests', { retryAfterSec: row.seconds_left });
+    }
 
     const signal = AbortSignal.timeout(files.timeoutMs);
     const { source, id: ref } = item.recording;
@@ -69,7 +82,8 @@ export function registerGameClipRoute(app: FastifyInstance, files: RecordingFile
     reply
       .header('content-type', type)
       .header('accept-ranges', 'bytes')
-      .header('cache-control', 'private, max-age=3600')
+      // the same clip for the rest of the round, so a replay costs nothing here
+      .header('cache-control', `private, max-age=${row.seconds_left}, immutable`)
       .header('content-disposition', 'inline')
       .header('x-content-type-options', 'nosniff');
     const range = byteRange(req.headers.range, bytes.length);

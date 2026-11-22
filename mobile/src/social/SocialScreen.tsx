@@ -248,7 +248,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
               : t('friends.openProfile', { username: u.username })
           }
         >
-          <Avatar name={u.username} size={36} photoUrl={u.avatarUrl ?? undefined} />
+          <Avatar name={u.username} size={AVATAR} photoUrl={u.avatarUrl ?? undefined} />
           <View style={styles.rowMain}>
             <Text style={[styles.username, dir.free, { color: colors.textPrimary }]}>{u.username}</Text>
             {sub ? <Text style={[styles.display, dir.free, { color: colors.textSecondary }]}>{sub}</Text> : null}
@@ -352,7 +352,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             // A friend's row has a Play button: any game, with that friend picked (play/InviteSheet).
             renderItem={({ item }) => row(item, <PlayWithButton friendId={item.userId} name={item.displayName ?? item.username} compact />)}
             ListEmptyComponent={
-              settled ? <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.searchToStart')}</Text> : <PeopleSkeleton />
+              settled ? <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.searchToStart')}</Text> : <PeopleSkeleton play />
             }
             ListFooterComponent={
               without(suggestions).length > 0 ? (
@@ -396,20 +396,27 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
  */
 const LINK_LINE = 22;
 
-/** People row for row, as their cards will stand: the face, the name and its line, the button at the end. */
-function PeopleSkeleton(): React.JSX.Element {
+/** A person's face in a row. */
+const AVATAR = 36;
+
+/**
+ * People row for row, as their cards will stand: the face, the name and its line, and for friends the round game button
+ * at the end (play/PlayWithButton); search results have no button.
+ */
+function PeopleSkeleton({ play = false }: { play?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   return (
     <View style={styles.skeleton} accessibilityLabel={t('common.loading')}>
       {[0, 1, 2, 3, 4].map((i) => (
-        <View key={i} style={[styles.row, { backgroundColor: colors.glassFill }]}>
-          <Skeleton width={36} height={36} radius={radii.pill} />
+        <View key={i} style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}>
+          <Skeleton width={AVATAR} height={AVATAR} radius={radii.pill} />
           <View style={styles.rowMain}>
             <SkeletonText size={typography.sizes.text} width={i % 2 ? '36%' : '50%'} />
             <SkeletonText size={typography.sizes.text} width="28%" />
           </View>
-          <Skeleton width={64} height={MIN_TOUCH_TARGET - 12} radius={radii.pill} />
+          {play ? <Skeleton width={MIN_TOUCH_TARGET} height={MIN_TOUCH_TARGET} radius={radii.pill} /> : null}
         </View>
       ))}
     </View>

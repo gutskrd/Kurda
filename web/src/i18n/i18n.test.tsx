@@ -134,7 +134,6 @@ describe('the catalogues', () => {
     for (const [code, catalogue] of Object.entries({ en, ...CATALOGUES })) {
       expect(catalogue['rankings.board.gewher'], code).toBe(catalogue['shop.gems']);
       expect(catalogue['rankings.board.zer'], code).toBe('Zêr');
-      expect(catalogue['rankings.board.zerBlurb'], code).toContain('Zêr');
     }
     expect(ku['rankings.board.gewher']).toBe('Gewher');
     expect(ckb['rankings.board.gewher']).toBe('گەوهەر');

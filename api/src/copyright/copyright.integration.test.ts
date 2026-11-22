@@ -17,7 +17,7 @@ import {
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { moderationKit, type Person } from '../test/moderation-kit.js';
-import { CopyrightService, copyrightCaseSummary, copyrightStrikes, type CopyrightMailer } from './service.js';
+import { CopyrightService, RECEIPTS_PER_ADDRESS_PER_DAY, RECEIPTS_PER_DAY, copyrightCaseSummary, copyrightStrikes, type CopyrightMailer } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -442,6 +442,56 @@ describe.skipIf(!DATABASE_URL)('copyright notices (integration)', () => {
     const res = await call('POST', '/reports', other.token, { targetType: 'user', targetId: author.id, category: 'spam' });
     const caseId = (await pool.query<{ case_id: string }>(`SELECT case_id FROM reports WHERE id = $1`, [(res.json() as ReportReceipt).report.id])).rows[0]!.case_id;
     expect((await detail(caseId)).copyright).toBeNull();
+  });
+
+  it('emails one address two receipts a day, and takes its later notices without one', async () => {
+    const id = await post(other, 'Three notices from one sender.');
+    for (let i = 0; i < 3; i++) expect((await send(notice(`/app/library/${id}`, { email: 'repeat@example.com' }))).statusCode).toBe(201);
+    expect(mails.filter((m) => m.to === 'repeat@example.com' && m.template === 'copyright-received')).toHaveLength(RECEIPTS_PER_ADDRESS_PER_DAY);
+    const rows = await pool.query<{ sent: boolean; case_id: string | null }>(
+      `SELECT receipt_sent_at IS NOT NULL AS sent, case_id FROM copyright_notices WHERE notifier_email = 'repeat@example.com' ORDER BY created_at`,
+    );
+    expect(rows.rows.map((r) => r.sent)).toEqual([true, true, false]);
+    // the third is a notice all the same, in the post's case
+    expect(rows.rows[2]!.case_id).toBe(rows.rows[0]!.case_id);
+  });
+
+  it('stops sending receipts once the service has sent the day’s, and still takes the notice', async () => {
+    const id = await post(other, 'A busy day for notices.');
+    const sample = (await pool.query<{ id: string }>(`SELECT id FROM copyright_notices WHERE notifier_email LIKE '%@example.com' LIMIT 1`)).rows[0]!.id;
+    await pool.query(
+      `INSERT INTO copyright_notices (target_type, target_id, target_found, subject_user_id, notifier_name, notifier_email, notifier_address,
+                                      notifier_phone, notifier_role, rights_holder, work, work_url, content_url, explanation, good_faith,
+                                      accurate, signature, locale, ip_hash, receipt_sent_at)
+       SELECT target_type, target_id, target_found, subject_user_id, notifier_name, 'bulk' || n || '@example.com', notifier_address,
+              notifier_phone, notifier_role, rights_holder, work, work_url, content_url, explanation, good_faith,
+              accurate, signature, locale, 'bulk', now()
+         FROM copyright_notices, generate_series(1, $2::int) n WHERE id = $1`,
+      [sample, RECEIPTS_PER_DAY],
+    );
+    const body = notice(`/app/library/${id}`);
+    const res = await send(body);
+    expect(res.statusCode).toBe(201);
+    expect(mails.some((m) => m.to === body.email)).toBe(false);
+    expect((await pool.query(`SELECT 1 FROM copyright_notices WHERE notifier_email = $1 AND receipt_sent_at IS NULL`, [body.email])).rowCount).toBe(1);
+    await pool.query(`DELETE FROM copyright_notices WHERE notifier_email LIKE 'bulk%@example.com'`);
+  });
+
+  it('asks for the challenge once a CAPTCHA is configured, as sign-up does, and stores nothing without it', async () => {
+    const guarded = buildApp(loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal', TURNSTILE_SECRET: 'not-a-real-secret' }), {
+      moderation: { moderatorCount: async () => 2, mailer: { send: async () => undefined } },
+      copyright: { mailer },
+    });
+    await guarded.ready();
+    try {
+      const body = notice(`/app/library/${await post(other, 'Guarded.')}`);
+      const res = await guarded.inject({ method: 'POST', url: '/copyright/notices', payload: body, remoteAddress: kit.ip() });
+      expect(res.statusCode).toBe(403);
+      expect(res.json()).toMatchObject({ code: 'CAPTCHA_REQUIRED', details: { captchaRequired: true } });
+      expect((await pool.query(`SELECT 1 FROM copyright_notices WHERE notifier_email = $1`, [body.email])).rowCount).toBe(0);
+    } finally {
+      await guarded.close();
+    }
   });
 
   it('writes a summary that is never empty', () => {

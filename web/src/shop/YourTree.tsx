@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { Button } from '../components/Button';
-import { Skeleton } from '../components/Skeleton';
+import { Skeleton, SkeletonButton, SkeletonText } from '../components/Skeleton';
 import { ChevronIcon, CoinIcon } from '../components/icons';
 import { withMeaning } from '../ranks/names';
 import { TreeArt } from '../tree/TreeArt';
@@ -41,6 +41,25 @@ function Heading({ id }: { id: string }): React.JSX.Element {
   );
 }
 
+/** One kind's tile while the nursery loads: the square picture, its name and meaning, the price and the button. */
+function TreeTileSkeleton(): React.JSX.Element {
+  return (
+    <div className="yours-tree">
+      <Skeleton className="yours-tree-art" h="auto" />
+      <span className="yours-tree-name">
+        <Skeleton line w="64%" />
+      </span>
+      <span className="yours-tree-meaning">
+        <Skeleton line w="46%" />
+      </span>
+      <span className="yours-tree-state">
+        <Skeleton line w="58%" />
+      </span>
+      <SkeletonButton size="sm" className="yours-tree-act" />
+    </div>
+  );
+}
+
 export function YourTree({ tree, zer, onZer }: { tree: TreeState; zer: number | null; onZer: (zer: number) => void }): React.JSX.Element | null {
   const { client } = useAuth();
   const t = useT();
@@ -62,11 +81,13 @@ export function YourTree({ tree, zer, onZer }: { tree: TreeState; zer: number | 
         <section className="yours" aria-labelledby={headingId} aria-busy="true">
           <Heading id={headingId} />
           <span className="sr-only">{t('common.loading')}</span>
-          <Skeleton line w="54%" style={{ marginBottom: 14 }} />
-          <ul className="yours-trees">
+          <p className="yours-lead yours-lead--alone">
+            <SkeletonText lines={2} lastWidth="44%" />
+          </p>
+          <ul className="yours-trees" aria-hidden="true">
             {Array.from({ length: 5 }, (_, i) => (
               <li key={i}>
-                <Skeleton h={208} radius="var(--r-md)" style={{ display: 'block' }} />
+                <TreeTileSkeleton />
               </li>
             ))}
           </ul>

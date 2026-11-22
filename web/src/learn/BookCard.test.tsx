@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { jsonResponse, renderApp } from '../test/utils';
 import { API_URL } from '../lib/config';
 import { BookCard } from './BookCard';
@@ -38,7 +38,7 @@ describe('Hevalo’s book on Learn', () => {
   it('is not there before any chapter is online', async () => {
     serve([]);
     const { container } = renderApp(<BookCard />);
-    await new Promise((r) => setTimeout(r, 20));
-    expect(container.querySelector('.book-card')).toBeNull();
+    // Its placeholder stands while the answer is on its way, then nothing is left.
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 });

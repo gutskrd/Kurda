@@ -283,6 +283,12 @@ export function Shop(): React.JSX.Element {
     return (
       <div className="container">
         {header}
+        {/*
+          The bird and the tree load on their own, so they stand in their places while the catalogue arrives. Keyed as
+          below, so the same two carry over when it does, with a pick or a question in progress kept.
+        */}
+        <YourBird key="bird" home={letters} zer={zer} onZer={learnZer} />
+        <YourTree key="tree" tree={tree} zer={zer} onZer={learnZer} />
         <ShopSkeleton label="shop.loading" />
       </div>
     );
@@ -343,8 +349,8 @@ export function Shop(): React.JSX.Element {
 
       <GiftsReceived onEquipHint={() => setMsg(null)} />
 
-      <YourBird home={letters} zer={zer} onZer={learnZer} />
-      <YourTree tree={tree} zer={zer} onZer={learnZer} />
+      <YourBird key="bird" home={letters} zer={zer} onZer={learnZer} />
+      <YourTree key="tree" tree={tree} zer={zer} onZer={learnZer} />
 
       {tiles.length === 0 ? (
         <p className="muted">{t('shop.nothingYet')}</p>

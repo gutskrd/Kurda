@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { createEmailToken } from './email-tokens.js';
+import { AuthService, RESET_EMAILS_PER_DAY } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -160,5 +161,25 @@ describe.skipIf(!DATABASE_URL)('password reset (integration)', () => {
     });
     expect(res.statusCode).toBe(400);
     expect(res.json().code).toBe('VALIDATION_ERROR');
+  });
+
+  it('sends one account at most a few reset links a day, however they are spread over the hours', async () => {
+    const service = new AuthService(config, pool);
+    const resets = async () =>
+      (await pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM email_tokens WHERE user_id = $1 AND purpose = 'password_reset'`, [userId])).rows[0]!.n;
+    await pool.query(`DELETE FROM email_tokens WHERE user_id = $1 AND purpose = 'password_reset'`, [userId]);
+    // earlier today, each more than an hour ago
+    for (let i = 0; i < RESET_EMAILS_PER_DAY - 1; i++) {
+      await pool.query(
+        `INSERT INTO email_tokens (user_id, token_hash, purpose, expires_at, created_at)
+         VALUES ($1, $2, 'password_reset', now() - interval '2 hours', now() - make_interval(hours => $3))`,
+        [userId, `spent-${suffix}-${i}`, 2 + i],
+      );
+    }
+    await service.requestPasswordReset(userEmail);
+    expect(await resets()).toBe(RESET_EMAILS_PER_DAY);
+    // the hour allows another, the day does not
+    await service.requestPasswordReset(userEmail);
+    expect(await resets()).toBe(RESET_EMAILS_PER_DAY);
   });
 });

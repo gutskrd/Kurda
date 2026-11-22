@@ -443,7 +443,7 @@ button.lp-scard:focus-visible {
   border-radius: var(--r-pill);
   background: var(--border);
 }
-.lp-rail-unit button {
+.lp-rail-unit > :is(button, .lp-rail-row) {
   position: relative;
   display: flex;
   align-items: center;
@@ -1360,8 +1360,20 @@ button.lp-scard:focus-visible {
   translate: -60% 0;
   animation: lp-glint 2.8s ease-in-out 0.6s infinite;
 }
+/* The label and what the lesson pays stack, so the longest pair still fits a narrow phone without spilling out. */
+.lp-pop.is-go .lp-pop-start:has(.lp-pop-start-xp) {
+  flex-direction: column;
+  gap: 0;
+  padding-block: 8px;
+  white-space: normal;
+  line-height: 1.2;
+}
 .lp-pop-start-xp {
   font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0.8;
 }
 @media (prefers-reduced-motion: reduce) {
   .lp-pop.is-go .lp-pop-start::after {
@@ -1500,23 +1512,4 @@ a.lp-part-row:hover {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
-}
-
-/* ---- the path while it loads ------------------------------------------------- */
-
-/* The banner's box and lip in the grey of something not loaded yet. */
-.lp-skel-banner {
-  background: var(--surface);
-  box-shadow: 0 5px 0 var(--surface-2);
-}
-.lp-skel-path {
-  position: relative;
-  height: 420px;
-}
-.lp-skel-node {
-  position: absolute;
-  inset-inline-start: calc(50% + var(--x, 0px) - 36px);
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
 }

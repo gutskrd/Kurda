@@ -17,8 +17,11 @@ export const queryUuid = z.preprocess(absentIfEmpty, z.uuid().optional());
 /** An optional short word (a sort, a type, a language): one value, not a list. */
 export const queryWord = z.string().max(40).optional();
 
+/** The deepest a public list pages: far past any scroll, and short of a scan that walks the whole table. */
+export const MAX_OFFSET = 10_000;
+
 /** Page size and position. Larger sizes are accepted and capped by the services at what they serve (100). */
 export const pageQuery = {
   limit: queryInt(1, 1_000),
-  offset: queryInt(0, 1_000_000),
+  offset: queryInt(0, MAX_OFFSET),
 };
