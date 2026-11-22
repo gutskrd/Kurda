@@ -317,39 +317,31 @@ function PostTile({ item, size }: { item: FeedItem; size: { width: number; heigh
   );
 }
 
-/** A game played, as its cover with the result and the day under it. */
+/** A game played: its whole square cover, uncropped, with the result and the day in a caption under it. */
 function GameTile({ entry, size }: { entry: ActivityEntry; size: { width: number; height: number } }): React.JSX.Element {
   const { colors } = useTheme();
   const { locale } = useI18n();
+  const dir = useDirection();
   const emblem = gameEmblemNamed(entry.title);
   const date = when(entry.at, locale);
   return (
     <View
-      style={[styles.tile, size, { backgroundColor: colors.controlTrack }]}
+      style={[styles.tile, { width: size.width, backgroundColor: colors.controlTrack }]}
       accessible
       accessibilityRole="image"
       accessibilityLabel={[entry.title, entry.detail, date].filter(Boolean).join(', ')}
     >
-      {emblem ? (
-        // The square cover as tall as the tile, centred, its sides running past the tile's edges.
-        <View style={[styles.cover, { left: (size.width - size.height) / 2 }]}>
-          <GameArt game={emblem} size={size.height} />
-        </View>
-      ) : (
-        <View style={styles.centre}>
-          <Icon name="play" size={32} tone="secondary" />
-        </View>
-      )}
-      <Foot onArt>
-        <View style={styles.footStack}>
-          <Text style={[styles.footText, { color: colors.textOnScrim }]} numberOfLines={1}>
-            {entry.detail ?? entry.title}
-          </Text>
-          <Text style={[styles.footDate, { color: colors.textOnScrim }]} numberOfLines={1}>
-            {date}
-          </Text>
-        </View>
-      </Foot>
+      <View style={[styles.gameCover, { width: size.width, height: size.width }]}>
+        {emblem ? <GameArt game={emblem} size={size.width} square /> : <Icon name="play" size={32} tone="secondary" />}
+      </View>
+      <View style={styles.gameCaption}>
+        <Text style={[styles.footText, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+          {entry.detail ?? entry.title}
+        </Text>
+        <Text style={[styles.footDate, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
+          {date}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -381,6 +373,8 @@ const styles = StyleSheet.create({
   ink: { position: 'absolute', bottom: -StyleSheet.hairlineWidth, left: 0, height: 2 },
   grid: { flexWrap: 'wrap', gap: GAP, marginTop: GAP },
   tile: { overflow: 'hidden' },
+  gameCover: { alignItems: 'center', justifyContent: 'center' },
+  gameCaption: { paddingHorizontal: spacing.sm, paddingTop: 6, paddingBottom: spacing.sm },
   fill: { width: '100%', height: '100%' },
   held: { opacity: 0.55 },
   words: { position: 'absolute', top: 10, left: 10, right: 10, bottom: 30, overflow: 'hidden', gap: 4 },
@@ -389,11 +383,8 @@ const styles = StyleSheet.create({
   mark: { position: 'absolute', top: 8, end: 8 },
   markOnArt: { shadowColor: '#000000', shadowOpacity: 0.45, shadowRadius: 3, shadowOffset: { width: 0, height: 0 } },
   foot: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', gap: 4, paddingTop: 28, paddingBottom: 6, paddingHorizontal: spacing.sm },
-  footStack: { flex: 1, minWidth: 0 },
   footText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   footDate: { fontSize: typography.sizes.text, opacity: 0.85 },
-  cover: { position: 'absolute', top: 0 },
-  centre: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   empty: { alignItems: 'center', gap: spacing.md - 4, paddingTop: spacing.xl + 8, paddingBottom: spacing.lg, paddingHorizontal: spacing.md },
   emptyMark: { width: 72, height: 72, borderWidth: 2, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   emptyTitle: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, textAlign: 'center' },

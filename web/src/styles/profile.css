@@ -599,31 +599,44 @@
   background: none;
   color: var(--ink-3);
 }
-/* the square cover as tall as the tile, centred, its sides running past the tile's edges */
+/* a game played: its whole square cover, uncropped, with the result and the day in a caption under it */
+.pg-tile.is-game {
+  display: grid;
+  grid-template-rows: auto auto;
+  aspect-ratio: auto;
+}
 .pg-tile.is-game .gp-art {
-  position: absolute;
-  top: 0;
-  left: 50%;
   display: block;
-  width: auto;
-  height: 100%;
+  width: 100%;
+  height: auto;
   aspect-ratio: 1;
   border-radius: 0;
-  transform: translateX(-50%);
 }
 .pg-tile.is-game .gp-art svg {
   display: block;
   width: 100%;
   height: 100%;
 }
+.pg-tile.is-game .pg-tile-glyph {
+  position: static;
+  aspect-ratio: 1;
+}
 .pg-tile-foot.is-game {
+  position: static;
   display: grid;
   gap: 0;
+  padding: 6px 8px 8px;
+  background: none;
+  color: var(--ink);
 }
 .pg-tile-game {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+.pg-tile-foot.is-game time {
+  color: var(--ink-3);
+  opacity: 1;
 }
 .pg-tile-foot time {
   font-weight: 500;

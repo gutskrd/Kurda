@@ -1360,8 +1360,20 @@ button.lp-scard:focus-visible {
   translate: -60% 0;
   animation: lp-glint 2.8s ease-in-out 0.6s infinite;
 }
+/* The label and what the lesson pays stack, so the longest pair still fits a narrow phone without spilling out. */
+.lp-pop.is-go .lp-pop-start:has(.lp-pop-start-xp) {
+  flex-direction: column;
+  gap: 0;
+  padding-block: 8px;
+  white-space: normal;
+  line-height: 1.2;
+}
 .lp-pop-start-xp {
   font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0.8;
 }
 @media (prefers-reduced-motion: reduce) {
   .lp-pop.is-go .lp-pop-start::after {
