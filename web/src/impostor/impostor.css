@@ -170,11 +170,15 @@
   overflow-wrap: anywhere;
 }
 .imp-card-word.is-impostor {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
   font-size: var(--text);
   color: var(--danger);
+}
+/* the deer or the wolf, above the word */
+.imp-card > .imp-art {
+  margin-top: var(--space-3);
+}
+.imp-card > .imp-art + .imp-card-word {
+  margin-top: var(--space-1) !important;
 }
 .imp-card-meaning {
   color: var(--ink-3);

@@ -1,7 +1,7 @@
 /*
  * Impostor on one phone (impostor/Couch.tsx): three numbered setup steps with Deal the cards fixed at the foot, then
- * one large thing at a time. Rounds use the game's night-blue table (start.css); cards show the mask face down and
- * paper face up in both themes, the impostor's in the mask's night colour. Nothing moves under Reduce Motion.
+ * one large thing at a time. Rounds use the game's night-blue table (start.css); cards show a gold question face down and
+ * paper face up in both themes, the impostor's in the wolf's night colour. Nothing moves under Reduce Motion.
  */
 .couch,
 .couch-setup,
@@ -379,7 +379,7 @@
 .couch-card-main .imp-card-meaning {
   font-size: var(--text);
 }
-/* the impostor's card is the night the mask is cut from */
+/* the impostor's card is the wolf's night */
 .couch-card.is-impostor .couch-card-face {
   background: linear-gradient(160deg, #3a2f72 0%, #1d1640 100%);
   color: #f4efff;

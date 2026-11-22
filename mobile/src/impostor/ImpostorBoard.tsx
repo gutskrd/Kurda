@@ -23,11 +23,11 @@ import type { TranslationKey } from '../i18n/translations';
 import { multiSeatName } from '../play/GameRoom';
 import { PartyComposer, PartyTimer, waitLeft } from '../party/Composer';
 import { SLIP_KEY, partyTextError } from '../party/text';
-import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { PULSE_MS, pressedDim } from '../theme/motion';
 import { timing, turnCard } from '../theme/animate';
+import { EmblemArt } from './art';
 
 export type ImpostorView = MultiView<ImpostorBoard | null>;
 type Move = (body: unknown) => Promise<ApiResult<MultiMoveAnswer<ImpostorBoard | null, ImpostorOutcome>>>;
@@ -178,15 +178,18 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
             </Text>
             {board.hand?.role === 'player' ? (
               <>
+                <View style={styles.cardArt}>
+                  <EmblemArt emblem="deer" size={76} />
+                </View>
                 <Text style={[styles.cardWord, { color: colors.textPrimary, writingDirection: script.writingDirection }]}>{board.hand.word}</Text>
                 <Text style={[styles.cardMeaning, { color: colors.textSecondary }]}>{meaningIn(board.hand.meanings, locale)}</Text>
               </>
             ) : board.hand?.role === 'impostor' ? (
               <>
-                <View style={styles.impostorLine}>
-                  <Icon name="eye-off" size={20} color={colors.danger} />
-                  <Text style={[styles.impostorText, { color: colors.danger }]}>{t('games.impostor.youAreImpostor')}</Text>
+                <View style={styles.cardArt}>
+                  <EmblemArt emblem="wolf" size={76} />
                 </View>
+                <Text style={[styles.impostorText, { color: colors.danger }]}>{t('games.impostor.youAreImpostor')}</Text>
                 <Text style={[styles.cardMeaning, { color: colors.textSecondary }]}>{t('games.impostor.blendIn')}</Text>
               </>
             ) : null}
@@ -385,8 +388,8 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
                 accessibilityLabel={`${name(s.seat)}: ${isImpostor ? t('games.impostor.impostorTag') : reveal.word}`}
                 style={[styles.flip, { borderColor: isImpostor ? colors.danger : colors.clayBorder, backgroundColor: colors.glassFill, transform: [{ scaleX }] }]}
               >
-                <Animated.View style={{ opacity: face, alignItems: 'center' }}>
-                  {isImpostor ? <Icon name="eye-off" size={18} color={colors.danger} /> : null}
+                <Animated.View style={{ opacity: face, alignItems: 'center', gap: 2 }}>
+                  <EmblemArt emblem={isImpostor ? 'wolf' : 'deer'} size={38} />
                   <Text style={[styles.flipText, { color: isImpostor ? colors.danger : colors.textPrimary }]} numberOfLines={2}>
                     {isImpostor ? t('games.impostor.impostorTag') : reveal.word}
                   </Text>
@@ -467,10 +470,10 @@ const styles = StyleSheet.create({
   card: { alignSelf: 'center', width: '100%', maxWidth: 300, alignItems: 'center', gap: 2, padding: spacing.md, borderWidth: 1.5, borderRadius: radii.md },
   cardLabel: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
   cardHint: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  cardArt: { marginTop: spacing.sm },
   cardWord: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, marginTop: spacing.xs, textAlign: 'center' },
   cardMeaning: { fontSize: typography.sizes.text, textAlign: 'center' },
-  impostorLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.xs },
-  impostorText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  impostorText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, marginTop: spacing.xs },
   section: { gap: spacing.xs },
   sectionTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   muted: { fontSize: typography.sizes.text },

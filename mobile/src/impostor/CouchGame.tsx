@@ -785,7 +785,7 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
         >
           {!shown ? (
             <View style={styles.cardBack}>
-              <EmblemArt emblem="mask" size={132} />
+              <EmblemArt emblem="back" size={132} />
             </View>
           ) : (
             <>
@@ -804,6 +804,7 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
               <View style={styles.cardMain}>
                 {hand.role === 'player' ? (
                   <>
+                    <EmblemArt emblem="deer" size={112} />
                     <Text style={[styles.cardWord, { color: TABLE.paperInk, writingDirection: script.writingDirection }]} adjustsFontSizeToFit numberOfLines={2}>
                       {hand.word}
                     </Text>
@@ -811,7 +812,7 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
                   </>
                 ) : (
                   <>
-                    <EmblemArt emblem="mask" size={72} />
+                    <EmblemArt emblem="wolf" size={112} />
                     <Text style={styles.impostorText}>{t('games.impostor.youAreImpostor')}</Text>
                     <Text style={[styles.cardMeaning, { color: TABLE.inkSoft }]}>{t('games.impostor.blendIn')}</Text>
                   </>
@@ -1190,7 +1191,7 @@ function Reveal({
                 style={[styles.flip, { borderColor: hidden ? colors.danger : 'transparent', backgroundColor: colors.glassFill, transform: [{ scaleX }] }]}
               >
                 <Animated.View style={[styles.flipFace, { opacity: face }]}>
-                  {hidden ? <Icon name="eye-off" size={18} color={colors.danger} /> : null}
+                  <EmblemArt emblem={hidden ? 'wolf' : 'deer'} size={38} />
                   <Text style={[hidden ? styles.flipTag : styles.flipText, { color: hidden ? colors.danger : colors.textPrimary }]} numberOfLines={2}>
                     {hidden ? t('games.impostor.impostorTag') : reveal.word}
                   </Text>
@@ -1412,7 +1413,7 @@ const styles = StyleSheet.create({
   flips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
   flipWrap: { width: 78, alignItems: 'center', gap: 4 },
   flip: { width: 72, height: 92, borderWidth: 1.5, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', padding: 4 },
-  flipFace: { alignItems: 'center' },
+  flipFace: { alignItems: 'center', gap: 2 },
   flipText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
   // The tag is longer than most cards' words in several languages, so a size down keeps it off the card's edge.
   flipTag: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },

@@ -34,7 +34,7 @@ export function WayArt({ way, size = 64 }: { way: ImpostorWay; size?: number }):
   return <Picture xml={xml} size={size} />;
 }
 
-/** The game's emblem: the hand of cards for its start, the mask for a card's back. */
+/** The game's emblem: the hand of cards for its start, the back every card shows, and the wolf and the deer on a card's face. */
 export function EmblemArt({ emblem, size = 120 }: { emblem: ImpostorEmblem; size?: number }): React.JSX.Element {
   const idPrefix = useArtId();
   const xml = useMemo(() => impostorEmblemSvg({ emblem, size, idPrefix }), [emblem, size, idPrefix]);

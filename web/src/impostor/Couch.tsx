@@ -657,7 +657,7 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
       <div className={`couch-card${shown ? ' is-face' : ' is-back'}${shown && hand.role === 'impostor' ? ' is-impostor' : ''}`} role="group" aria-label={t('games.couch.cardOf', { name })}>
         {!shown ? (
           <span className="couch-card-back" aria-hidden="true">
-            <EmblemArt emblem="mask" size={148} />
+            <EmblemArt emblem="back" size={148} />
           </span>
         ) : (
           <div className="couch-card-face">
@@ -677,6 +677,7 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
             )}
             {hand.role === 'player' ? (
               <div className="couch-card-main">
+                <EmblemArt emblem="deer" size={128} />
                 <p className="imp-card-word" lang={script.lang} dir={script.dir}>
                   {hand.word}
                 </p>
@@ -684,7 +685,7 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
               </div>
             ) : (
               <div className="couch-card-main">
-                <EmblemArt emblem="mask" size={72} />
+                <EmblemArt emblem="wolf" size={128} />
                 <p className="imp-card-word is-impostor">{t('games.impostor.youAreImpostor')}</p>
                 <p className="imp-card-meaning">{t('games.impostor.blendIn')}</p>
               </div>
@@ -1045,13 +1046,16 @@ function Reveal({
                 <span className="imp-flip-face">
                   {hidden ? (
                     <>
-                      <ImpostorIcon size={20} />
+                      <EmblemArt emblem="wolf" size={44} />
                       <span>{t('games.impostor.impostorTag')}</span>
                     </>
                   ) : (
-                    <span lang={script.lang} dir={script.dir}>
-                      {reveal.word}
-                    </span>
+                    <>
+                      <EmblemArt emblem="deer" size={44} />
+                      <span lang={script.lang} dir={script.dir}>
+                        {reveal.word}
+                      </span>
+                    </>
                   )}
                 </span>
               </span>

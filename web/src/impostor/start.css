@@ -45,10 +45,6 @@
   place-items: center;
   animation: imp-float 5s ease-in-out infinite;
 }
-.imp-art {
-  display: inline-grid;
-  line-height: 0;
-}
 .imp-hero-meta {
   font-size: var(--text);
   font-weight: 700;

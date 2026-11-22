@@ -1,0 +1,5 @@
+/* Every picture of the game sits on its own box, with no line gap under it. */
+.imp-art {
+  display: inline-grid;
+  line-height: 0;
+}
