@@ -155,7 +155,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm + 4,
     paddingHorizontal: spacing.md - 2,
     borderRadius: CARD.radius,
-    borderWidth: CARD.edge,
   },
   optionText: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   // Kurdish answers in the lesson's Kurdish face.

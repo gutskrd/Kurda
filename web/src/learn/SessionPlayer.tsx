@@ -612,7 +612,8 @@ export function SessionPlayer({
             onRetry={onRestart}
           />
         ) : state.status !== 'finished' && ex ? (
-          <div className="lesson-stage">
+          // Keyed by the turn, so each exercise rises into place as it comes (styles/motion.css).
+          <div className="lesson-stage" key={`stage-${state.index}`}>
             {reask && <p className="lesson-badge">{t('lesson.secondTry')}</p>}
             {/* The lesson's name in small capitals over each question (the h1 says it to screen readers), or a new-words badge. */}
             {ex.newWords?.length && !reask ? (

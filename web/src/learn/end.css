@@ -1,7 +1,7 @@
 /*
  * The end of a lesson (Results.tsx, StreakMoment.tsx): Hevalo over the title and three framed cards, then the streak's
  * flame and week, then today's quests (quests/quests.css). The rows under the cards are in styles/learn.css and the
- * results' arrival in styles/motion.css. Drawn on the lesson's paper in the valley's colours, phone first and centred on
+ * results' arrival in styles/motion.css. Drawn on the lesson's page in Hevalo's colours, phone first and centred on
  * wider screens. Only transform and opacity move; base.css ends movement at once under reduced motion, and anything
  * that would still show a frame of travel is switched off at the foot of this file.
  */
@@ -25,7 +25,7 @@
 }
 .lesson-results-title {
   margin: 4px 0 0;
-  color: var(--vale-green-ink);
+  color: var(--success);
   font-weight: 700;
   line-height: 1.1;
 }
@@ -38,9 +38,8 @@
 }
 
 /*
- * Three cards side by side, each framed in its colour on a deeper edge: a band with the label over a cream body with
- * the icon and number. Gold for XP, green for right first time, blue for time. Band words are dark on gold and the
- * light dusk colours, cream on the deep light-scheme ones.
+ * Three cards side by side, each framed on a deeper edge: a band with the label over a card with the icon and number.
+ * The ink for XP and for time, green for right first time; the band's words are the page's colour on its fill.
  */
 .end-stats {
   display: grid;
@@ -50,7 +49,7 @@
 }
 .end-stat {
   --stat: var(--gold);
-  --on-stat: #241a00;
+  --on-stat: var(--primary-ink);
   --stat-ink: var(--gold);
   display: grid;
   grid-template-rows: auto 1fr;
@@ -59,17 +58,17 @@
   padding: 0 2px 2px;
   border-radius: 16px;
   background: var(--stat);
-  box-shadow: 0 3.5px 0 color-mix(in srgb, var(--stat) 70%, var(--vale-ink));
+  box-shadow: 0 3.5px 0 color-mix(in srgb, var(--stat) 70%, var(--ink));
 }
 .end-stat.is-accuracy {
-  --stat: var(--vale-green-fill);
-  --on-stat: var(--vale-on-fill);
-  --stat-ink: var(--vale-green-ink);
+  --stat: var(--success);
+  --on-stat: var(--primary-ink);
+  --stat-ink: var(--success);
 }
 .end-stat.is-time {
-  --stat: var(--vale-blue-fill);
-  --on-stat: var(--vale-on-fill);
-  --stat-ink: var(--vale-blue-ink);
+  --stat: var(--primary);
+  --on-stat: var(--primary-ink);
+  --stat-ink: var(--ink);
 }
 :root[data-theme='light'] .end-stat.is-xp {
   --stat-ink: var(--gold-ink);
@@ -103,7 +102,7 @@
   margin: 0;
   padding: 10px 6px;
   border-radius: 14px;
-  background: var(--vale-card);
+  background: var(--bg);
   color: var(--stat-ink);
   font-size: var(--text-title);
   font-weight: 800;
@@ -645,7 +644,7 @@
 }
 .end-quests-title {
   margin: 0;
-  color: var(--vale-green-ink);
+  color: var(--success);
   font-size: var(--text-title);
   font-weight: 700;
   text-align: center;
@@ -654,15 +653,15 @@
   outline: none;
 }
 
-/* Today's goal, the league, a new level: cream rows on the paper, a met goal in green. */
+/* Today's goal, the league, a new level: card rows on the page, a met goal in green. */
 .lesson .lesson-moment {
-  border: 1.5px solid var(--vale-line);
+  border: 1.5px solid var(--border);
   border-radius: var(--r-lg);
-  background: var(--vale-card);
+  background: var(--bg);
 }
 .lesson .lesson-moment.is-goal {
-  border-color: var(--vale-green-line);
-  background: var(--vale-green-soft);
+  border-color: color-mix(in srgb, var(--success) 40%, var(--app-bg));
+  background: var(--success-soft);
 }
 
 /* "Not now" beside Open chest: a full fingertip target, though it reads as a link. */

@@ -253,8 +253,8 @@ const styles = StyleSheet.create({
   rule: { position: 'absolute', left: 0, right: 0, height: CARD.edge, borderRadius: radii.pill },
   flow: { flexWrap: 'wrap', gap: GAP },
   bank: { justifyContent: 'center' },
-  // A word tile: a smaller card than an answer, on the same hairline edge.
-  face: { borderRadius: radii.md + 2, borderWidth: CARD.edge },
+  // A word tile: a smaller card than an answer, on the app's tile edge.
+  face: { borderRadius: radii.md + 2 },
   // The Kurdish words in the headings' display face.
   word: { ...display(typography.sizes.text) },
   ghost: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.md + 2 },

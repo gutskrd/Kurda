@@ -36,6 +36,22 @@
 }
 /* Other pressables answer at the end of shell.css, the last sheet, since a pressed state must follow every hover. */
 
+/* ---- a lesson's next exercise ----------------------------------------------- */
+/* Each exercise rises a little into place as it comes, as the phone's do (mobile/src/theme/SlideSwap.tsx). */
+@keyframes lesson-next {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.lesson-stage {
+  animation: lesson-next var(--dur-slow) var(--ease-out) both;
+}
+
 /* ---- an answer, answered ---------------------------------------------------- */
 @keyframes answer-pop {
   0% {

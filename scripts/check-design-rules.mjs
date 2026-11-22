@@ -6,8 +6,8 @@
  *   `typography.sizes.title` on the phone. A size handed down as a name (a component's `size`) is allowed; a number or
  *   sum written at the call is not. Either size may shrink, never grow, to fit a box that cannot grow with it.
  * - One accent, on the main button alone: only the main button's styles may name it (`--accent` in ui.css's
- *   `.btn-primary`, `colors.accent` in the phone's button and lesson-button tones), and the road's own main button:
- *   the stop to do now and the card that starts its lesson.
+ *   `.btn-primary`, `colors.accent` in the phone's button and lesson-button tones), the road's own main button (the
+ *   stop to do now and the card that starts its lesson), and the lesson's own (Check, at the foot of every exercise).
  *
  * Drawings keep their own type and colour: a letter's paper scales its writing with the sheet. Those files are listed
  * below with why. Runs inside `npm run lint` for the website (`web`) and the phone (`mobile`).
@@ -62,6 +62,8 @@ if (app === 'web') {
         if (name === 'styles/ui.css' && /^\.btn-primary\b/.test(selector)) continue;
         // The road's main button: the stop to do now and the card it opens, where the lesson is started.
         if (name === 'learn/path.css' && /^(:root\[data-theme='light'\] )?\.lp-(pop\.is-go|node\.is-current)\b/.test(selector)) continue;
+        // The lesson's main button: Check, the colours its bar hands to the one button it holds.
+        if (name === 'styles/learn.css' && selector === '.lesson-bar') continue;
         wrong.push(`${name}:${lineOf(src, m.index)} the accent off the main button: ${selector}`);
       }
     }

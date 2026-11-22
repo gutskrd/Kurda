@@ -188,14 +188,14 @@ export function WordChoices({ options, choice, onSelect, disabled, isRight, grad
 
 const styles = StyleSheet.create({
   grid: { flexWrap: 'wrap', justifyContent: 'center', gap: GRID_GAP },
-  card: { alignItems: 'center', justifyContent: 'center', borderRadius: CARD.radius, borderWidth: CARD.edge, padding: spacing.sm },
+  card: { alignItems: 'center', justifyContent: 'center', borderRadius: CARD.radius, padding: spacing.sm },
   corner: { position: 'absolute', top: spacing.sm, zIndex: 1 },
   cornerLeft: { left: spacing.sm },
   cornerRight: { right: spacing.sm },
   unknown: { alignItems: 'center', justifyContent: 'center' },
   words: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm + 2 },
   // A word tile like the word bank's: smaller than an answer card, on the same hairline edge.
-  word: { alignItems: 'center', gap: spacing.xs + 2, borderRadius: radii.md + 2, borderWidth: CARD.edge, paddingHorizontal: spacing.md + 2 },
+  word: { alignItems: 'center', gap: spacing.xs + 2, borderRadius: radii.md + 2, paddingHorizontal: spacing.md + 2 },
   wordText: { ...display(typography.sizes.text) },
   ghost: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.md + 2 },
   hidden: { opacity: 0 },
