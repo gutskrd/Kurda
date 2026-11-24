@@ -37,6 +37,10 @@ interface SettingsRowProps {
   /** An address outside the app, such as an email address. */
   href?: string;
   onClick?: () => void;
+  /** Shows the way in on a row pressed to open something, such as a sheet. */
+  opens?: boolean;
+  /** A button of its own under the row's words; the row itself is then not pressed. */
+  action?: React.ReactNode;
   /** Red, for what cannot be undone. */
   destructive?: boolean;
   /** The page open beside the list on a wide screen. */
@@ -56,26 +60,32 @@ export function SettingsRow({
   to,
   href,
   onClick,
+  opens = false,
+  action,
   destructive = false,
   current = false,
   attention = false,
   className: extra,
 }: SettingsRowProps): React.JSX.Element {
-  const className = `settings-row${destructive ? ' is-danger' : ''}${attention ? ' is-attention' : ''}${extra ? ` ${extra}` : ''}`;
+  const held = action !== undefined && action !== null;
+  const className = `settings-row${destructive ? ' is-danger' : ''}${attention ? ' is-attention' : ''}${held ? ' is-held' : ''}${extra ? ` ${extra}` : ''}`;
   const body = (
     <>
       {icon !== undefined && <span className="settings-row-icon">{icon}</span>}
       <span className="settings-row-text">
         <span className="settings-row-title">{title}</span>
         {subtitle && <span className="settings-row-sub">{subtitle}</span>}
+        {action}
       </span>
       {value !== undefined && value !== null && <span className="settings-row-value">{value}</span>}
-      {(to || href) && <ChevronIcon size={18} className="settings-row-go" />}
+      {(to || href || opens) && <ChevronIcon size={18} className="settings-row-go" />}
     </>
   );
   return (
     <li>
-      {to ? (
+      {held ? (
+        <div className={className}>{body}</div>
+      ) : to ? (
         <Link to={to} className={className} aria-current={current ? 'page' : undefined}>
           {body}
         </Link>

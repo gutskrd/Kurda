@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { MAX_PARENTS_PER_TEEN, MAX_TEENS_PER_PARENT, PARENTAL_SWITCHES, type SupervisionState } from '@kurda/shared';
+import { MAX_PARENTS_PER_TEEN, MAX_TEENS_PER_PARENT, PARENTAL_LEAVE_DAYS, PARENTAL_SWITCHES, type SupervisionState } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { Button, LinkButton } from '../components/Button';
@@ -10,10 +10,11 @@ import { Skeleton, SkeletonRegion } from '../components/Skeleton';
 import { ErrorState } from '../components/states';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import { describeError } from '../lib/api';
+import { useOptimisticSend } from '../lib/optimistic';
 import type { ApiState } from '../lib/useApi';
 import { SettingsChoices, SettingsFrame, SettingsRow, SettingsSection } from '../settings/SettingsList';
 import { settingsPath, SETTINGS_HOME } from '../settings/catalogue';
-import { PARENTAL_PATH, firstParent, personName, roleOf, type ParentLink, type ParentalOverview, type PersonRef } from './api';
+import { firstParent, leavePath, personName, roleOf, type ParentLink, type ParentalOverview, type PersonRef } from './api';
 import { ConnectParent } from './ConnectParent';
 import { AddTeen } from './AddTeen';
 import { BedtimeChoice, LimitChoice, TeenPage } from './TeenPage';
@@ -166,23 +167,41 @@ export function Face({ person }: { person: Pick<PersonRef, 'avatarUrl'> }): Reac
 
 /**
  * A connected teen's own view: their parents, then everything the parents set, read-only, and the plain promise of what
- * a parent can and cannot see. Disconnecting tells the parent.
+ * a parent can and cannot see. Asking to stop tells the parent at once, but the link only ends a week later unless the
+ * parent lets the teen go sooner, so a limit cannot be dropped on a whim; until then the teen can stay after all.
  */
 function TeenSide({ overview, reload }: { overview: ParentalOverview; reload: () => void }): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
+  const { client } = useAuth();
+  const sendShown = useOptimisticSend();
   const live = useSupervision().state;
   const parents = overview.parents ?? [];
   const first = firstParent(parents);
   // A beat's answer is newer than the page's.
   const state: SupervisionState | null = live ?? overview.supervision ?? null;
-  const [leaving, setLeaving] = useState(false);
+  const [asking, setAsking] = useState(false);
+  // Each answer shown at once, until the page is read again.
+  const [shownLeave, setShownLeave] = useState<Record<string, string | null>>({});
+  useEffect(() => setShownLeave({}), [overview]);
+  const leaveOf = (p: ParentLink): string | null => (p.userId in shownLeave ? shownLeave[p.userId]! : (p.leaveEndsAt ?? null));
+  const showLeave = (parentId: string, endsAt: string | null): void => setShownLeave((was) => ({ ...was, [parentId]: endsAt }));
+  const staying = parents.filter((p) => !leaveOf(p));
+  const day = (iso: string): string => calendarDay(t, iso, locale);
+
+  function stay(p: ParentLink): void {
+    const was = leaveOf(p);
+    showLeave(p.userId, null);
+    // A link already gone has nothing to keep, and the page read again says so.
+    void sendShown(() => client.delete(leavePath(p.userId)), { undo: () => showLeave(p.userId, was), keep: reload }, { goneIsDone: true });
+  }
 
   return (
     <>
       <SettingsSection title={t('parental.parents.title')}>
         {parents.map((p) => {
-          const since = t('parental.since', { date: calendarDay(t, p.since, locale) });
+          const ends = leaveOf(p);
+          const when = ends ? t('parental.leave.endsOn', { date: day(ends) }) : t('parental.since', { date: day(p.since) });
           // With two, the first is marked: only they can turn something back on or loosen it.
           const marked = parents.length > 1 && first?.userId === p.userId;
           return (
@@ -191,7 +210,14 @@ function TeenSide({ overview, reload }: { overview: ParentalOverview; reload: ()
               className="parental-person"
               icon={<Face person={p} />}
               title={personName(p)}
-              subtitle={marked ? `${t('parental.firstParent')} · ${since}` : since}
+              subtitle={marked ? `${t('parental.firstParent')} · ${when}` : when}
+              action={
+                ends ? (
+                  <Button variant="secondary" size="sm" onClick={() => stay(p)}>
+                    {t('parental.leave.stay')}
+                  </Button>
+                ) : undefined
+              }
             />
           );
         })}
@@ -201,10 +227,20 @@ function TeenSide({ overview, reload }: { overview: ParentalOverview; reload: ()
       </SettingsSection>
       {state && <SetByParents state={state} />}
       <p className="settings-page-note parental-privacy">{t('parental.privacy.teen')}</p>
-      <ul className="settings-rows settings-apart">
-        <SettingsRow icon={<RemovePersonIcon size={22} />} title={t('parental.disconnect')} destructive onClick={() => setLeaving(true)} />
-      </ul>
-      <DisconnectSheet open={leaving} parents={parents} onClose={() => setLeaving(false)} onDone={reload} />
+      {staying.length > 0 && (
+        <ul className="settings-rows settings-apart">
+          <SettingsRow icon={<RemovePersonIcon size={22} />} title={t('parental.leave.ask')} destructive onClick={() => setAsking(true)} />
+        </ul>
+      )}
+      <LeaveSheet
+        open={asking}
+        parents={staying}
+        onClose={() => setAsking(false)}
+        onAsked={(parentId, endsAt) => {
+          if (endsAt) showLeave(parentId, endsAt);
+          reload();
+        }}
+      />
     </>
   );
 }
@@ -240,48 +276,61 @@ function SetByParents({ state }: { state: SupervisionState }): React.JSX.Element
   );
 }
 
-/** Disconnecting a parent, who is told: which one, when there are two, and a second step. */
-function DisconnectSheet({ open, parents, onClose, onDone }: { open: boolean; parents: ParentLink[]; onClose: () => void; onDone: () => void }): React.JSX.Element {
+/**
+ * Asking to stop supervision by one parent, who is told at once: which one, when there are two, and a second step that
+ * says when it would end and that nothing changes until then.
+ */
+function LeaveSheet({
+  open,
+  parents,
+  onClose,
+  onAsked,
+}: {
+  open: boolean;
+  parents: ParentLink[];
+  onClose: () => void;
+  /** When it ends, as the server answered; null when the link had already gone. */
+  onAsked: (parentId: string, endsAt: string | null) => void;
+}): React.JSX.Element {
   const t = useT();
-  const { client, refreshUser } = useAuth();
-  const { adopt } = useSupervision();
+  const { locale } = useI18n();
+  const { client } = useAuth();
   const [chosen, setChosen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const who = parents.find((p) => p.userId === chosen) ?? (parents.length === 1 ? parents[0] : undefined);
+  const endsAt = new Date(Date.now() + PARENTAL_LEAVE_DAYS * 86_400_000).toISOString();
 
-  async function disconnect(): Promise<void> {
+  async function ask(): Promise<void> {
     if (!who) return;
     setBusy(true);
     setError(null);
-    const res = await client.delete(`${PARENTAL_PATH}/parents/${encodeURIComponent(who.userId)}`);
+    const res = await client.post<{ endsAt?: string }>(leavePath(who.userId));
     setBusy(false);
-    // A link already gone counts as disconnected.
+    // A link already gone has nothing to leave.
     if (!res.ok && res.error.status !== 404) {
       setError(describeError(res.error, t));
       return;
     }
-    // The last parent gone ends the supervision, and the account says so when read again.
-    if (parents.length === 1) adopt(null);
-    void refreshUser();
     onClose();
-    onDone();
+    onAsked(who.userId, res.ok ? (res.data?.endsAt ?? endsAt) : null);
   }
 
+  const title = who ? t('parental.leave.title', { name: personName(who) }) : t('parental.leave.ask');
   return (
-    <Sheet open={open} onClose={() => !busy && onClose()} label={t('parental.disconnect')}>
+    <Sheet open={open} onClose={() => !busy && onClose()} label={title}>
       <div className="parental-sheet">
-        <h2 className="report-heading">{t('parental.disconnect')}</h2>
+        <h2 className="report-heading">{title}</h2>
         {parents.length > 1 && (
           <SettingsChoices
-            name="parental-disconnect"
-            label={t('parental.disconnect')}
+            name="parental-leave"
+            label={t('parental.leave.ask')}
             value={chosen}
             options={parents.map((p) => ({ value: p.userId, title: personName(p) }))}
             onChange={setChosen}
           />
         )}
-        {who && <p className="report-intro">{t('parental.disconnect.body', { name: personName(who) })}</p>}
+        {who && <p className="report-intro">{t('parental.leave.body', { name: personName(who), date: calendarDay(t, endsAt, locale) })}</p>}
         {error && (
           <div className="msg msg-error" role="alert">
             {error}
@@ -291,8 +340,8 @@ function DisconnectSheet({ open, parents, onClose, onDone }: { open: boolean; pa
           <Button variant="ghost" onClick={onClose} disabled={busy}>
             {t('common.cancel')}
           </Button>
-          <button type="button" className="btn btn-danger" disabled={!who || busy} onClick={() => void disconnect()}>
-            {busy ? t('parental.disconnecting') : t('parental.disconnect.confirm')}
+          <button type="button" className="btn btn-danger" disabled={!who || busy} onClick={() => void ask()}>
+            {busy ? t('parental.leave.asking') : t('parental.leave.ask')}
           </button>
         </div>
       </div>
@@ -303,6 +352,7 @@ function DisconnectSheet({ open, parents, onClose, onDone }: { open: boolean; pa
 /** A parent's view: their teens with today's learning, and the way to add one more. */
 function ParentSide({ overview }: { overview: ParentalOverview }): React.JSX.Element {
   const t = useT();
+  const { locale } = useI18n();
   const navigate = useNavigate();
   const teens = overview.teens ?? [];
   const full = teens.length >= MAX_TEENS_PER_PARENT;
@@ -319,16 +369,29 @@ function ParentSide({ overview }: { overview: ParentalOverview }): React.JSX.Ele
   return (
     <>
       <SettingsSection title={t('parental.teens.title')}>
-        {teens.map(({ teen, today }) => (
-          <SettingsRow
-            key={teen.userId}
-            className="parental-person"
-            icon={<Face person={teen} />}
-            title={personName(teen)}
-            subtitle={t('parental.todayIs', { what: dayText(t, today.minutes, today.lessons) })}
-            to={`${PARENTAL_HOME}/teen/${encodeURIComponent(teen.userId)}`}
-          />
-        ))}
+        {teens.map(({ teen, today, leaveEndsAt }) => {
+          const learnt = t('parental.todayIs', { what: dayText(t, today.minutes, today.lessons) });
+          return (
+            <SettingsRow
+              key={teen.userId}
+              className="parental-person"
+              icon={<Face person={teen} />}
+              title={personName(teen)}
+              subtitle={
+                leaveEndsAt ? (
+                  <>
+                    {t('parental.leavingOn', { date: calendarDay(t, leaveEndsAt, locale) })}
+                    <br />
+                    {learnt}
+                  </>
+                ) : (
+                  learnt
+                )
+              }
+              to={`${PARENTAL_HOME}/teen/${encodeURIComponent(teen.userId)}`}
+            />
+          );
+        })}
         {!full && <SettingsRow className="parental-person" icon={<PlusIcon size={22} />} title={t('parental.addTeen')} to={`${PARENTAL_HOME}/add`} />}
       </SettingsSection>
       {full && <p className="settings-page-note">{t('parental.teensFull', { count: MAX_TEENS_PER_PARENT })}</p>}

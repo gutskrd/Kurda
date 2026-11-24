@@ -225,7 +225,11 @@ export function NotificationList({
             {group.items.map((n) => {
               const actor = actorOf(n);
               const view: NoteView | null =
-                socialNotification(n, t, locale) ?? playNotification(n, t, incoming) ?? progressNotification(n, t) ?? groupNotification(n, t, locale) ?? parentalNotification(n, t);
+                socialNotification(n, t, locale) ??
+                playNotification(n, t, incoming) ??
+                progressNotification(n, t) ??
+                groupNotification(n, t, locale) ??
+                parentalNotification(n, t, locale);
               // A gift from somebody the app can name says who it is from.
               const title = n.data?.kind === 'gift' && actor ? t('gift.fromLabel', { name: actor.name }) : (view?.title ?? n.title);
               const when = noteWhen(n.createdAt, group.key, t, shortDate);

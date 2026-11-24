@@ -1,4 +1,4 @@
-import type { Bedtime, ParentalControls, SupervisionState } from '@kurda/shared';
+import type { Bedtime, BirthMonth, ParentalControls, SupervisionState } from '@kurda/shared';
 
 /**
  * The parental-controls API as the website reads it (`/me/parental`, `/me/usage`), and the small sums both sides of a
@@ -17,13 +17,16 @@ export interface PersonRef {
 export interface ParentLink extends PersonRef {
   since: string;
   first?: boolean;
+  /** When the teen's request to stop supervision ends the link, or null while none is pending. */
+  leaveEndsAt?: string | null;
 }
 
-/** A teen on their parent's list, with today's learning so far. */
+/** A teen on their parent's list, with today's learning so far and when the link ends if they asked to leave. */
 export interface TeenSummary {
   teen: PersonRef;
   since: string;
   today: { minutes: number; lessons: number };
+  leaveEndsAt?: string | null;
 }
 
 /** Why an account has neither side of parental controls: a visitor, an age not on record, an unconfirmed address, or a limited account. */
@@ -60,6 +63,11 @@ export interface TeenDetail {
   canLoosen?: boolean;
   /** The teen's time zone, which their day and bedtime are counted in. */
   timeZone?: string;
+  /** When the teen's request to stop supervision ends the link, or null while none is pending. */
+  leaveEndsAt?: string | null;
+  birthMonth?: BirthMonth | null;
+  /** True only for the first parent, until the birth month has been corrected once. */
+  birthCorrectable?: boolean;
 }
 
 /** `POST /me/parental/code`: a new code for a teen to enter, the last one void. */
@@ -70,6 +78,8 @@ export interface ParentCode {
 
 export const PARENTAL_PATH = '/me/parental';
 export const teenPath = (teenId: string): string => `${PARENTAL_PATH}/teens/${encodeURIComponent(teenId)}`;
+/** A teen's request to stop supervision by one parent: POST asks, DELETE takes it back. */
+export const leavePath = (parentId: string): string => `${PARENTAL_PATH}/parents/${encodeURIComponent(parentId)}/leave`;
 
 /** A person's name as shown: the name they chose, else their username. */
 export const personName = (p: Pick<PersonRef, 'displayName' | 'username'>): string => p.displayName?.trim() || p.username;

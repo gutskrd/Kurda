@@ -30,8 +30,53 @@ describe('parental notifications', () => {
     });
   });
 
+  it('say when a teen asked to stop or chose to stay, opening the teen’s page', () => {
+    const asked = note({ kind: 'parental_leave', state: 'asked', teenId: 't1', teenName: 'Roj', teenUsername: 'roj', endsAt: '2026-12-01T10:00:00.000Z' });
+    expect(parentalNotification(asked, t, 'en-US')).toEqual({
+      title: 'Roj asked to stop supervision',
+      body: 'It ends on December 1, 2026.',
+      to: '/app/settings/parental/teen/t1',
+    });
+    expect(parentalNotification(note({ kind: 'parental_leave', state: 'kept', teenId: 't1', teenName: null, teenUsername: 'roj' }), t, 'en-US')).toEqual({
+      title: 'roj chose to stay connected',
+      body: null,
+      to: '/app/settings/parental/teen/t1',
+    });
+  });
+
+  it('say who corrected a birth month, worded for the teen and for another parent', () => {
+    // The month comes as digits, as the server sends it.
+    const birth = { kind: 'parental_birth', to: 'teen', parentId: 'p1', parentName: 'Dilan', parentUsername: 'dilan', birthYear: '2011', birthMonth: '3' };
+    expect(parentalNotification(note(birth), t, 'en-US')).toEqual({
+      title: 'Dilan corrected your birth month to March 2011',
+      body: 'If this is wrong, write to support.',
+      to: '/app/settings/parental',
+    });
+    expect(parentalNotification(note({ ...birth, to: 'parent', teenId: 't1', teenName: 'Roj', teenUsername: 'roj' }), t, 'en-US')).toEqual({
+      title: 'Dilan corrected Roj’s birth month to March 2011',
+      body: null,
+      to: '/app/settings/parental/teen/t1',
+    });
+    // Without a month to show, the server’s own words stand.
+    expect(parentalNotification(note({ ...birth, birthMonth: '13' }), t, 'en-US')).toMatchObject({ title: 'English from the server' });
+  });
+
+  it('tell a teen when the days they asked for have run', () => {
+    const left = note({ kind: 'parental_ended', by: 'teen', parentId: 'p1', parentName: 'Dilan', parentUsername: 'dilan' });
+    expect(parentalNotification(left, t, 'en-US')).toEqual({
+      title: 'Supervision by Dilan has ended',
+      body: null,
+      to: '/app/settings/parental',
+    });
+    // The parent’s side of the same end names the teen.
+    expect(parentalNotification(note({ kind: 'parental_ended', by: 'teen', teenId: 't1', teenName: 'Roj', teenUsername: 'roj' }), t, 'en-US')).toMatchObject({
+      title: 'Roj disconnected you from their parental controls',
+    });
+  });
+
   it('wear the parental glyph', () => {
-    for (const kind of ['parental_connected', 'parental_ended', 'parental_changed', 'parental_parent_added', 'parental_zone']) {
+    const kinds = ['parental_connected', 'parental_ended', 'parental_changed', 'parental_parent_added', 'parental_zone', 'parental_leave', 'parental_birth'];
+    for (const kind of kinds) {
       expect(noteKind({ category: 'friends', data: { kind } } as never), kind).toBe('parental');
     }
   });

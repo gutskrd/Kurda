@@ -183,6 +183,18 @@
 [dir='rtl'] .settings-row-go {
   transform: scaleX(-1);
 }
+/* a row holding its own button, which is what is pressed */
+.settings-row.is-held {
+  cursor: default;
+}
+.settings-row.is-held:hover,
+.settings-row.is-held:active {
+  background: none;
+}
+.settings-row.is-held .settings-row-text > .btn {
+  justify-self: start;
+  margin-top: var(--space-2);
+}
 /* what cannot be undone */
 .settings-row.is-danger,
 .settings-row.is-danger:hover,

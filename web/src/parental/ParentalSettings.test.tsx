@@ -148,17 +148,62 @@ describe('Parental controls: a connected teen', () => {
     expect(screen.queryByText(en['parental.addParent'])).not.toBeInTheDocument();
   });
 
-  it('disconnects a parent only after saying they will be told', async () => {
-    const fetchMock = server({ 'GET /me/parental': { body: overview }, 'DELETE /me/parental/parents/p1': { body: { ended: true } } });
+  it('asks to stop only after saying when it would end, then shows that day with the way to stay', async () => {
+    vi.useFakeTimers({ now: new Date('2026-11-24T10:00:00.000Z'), toFake: ['Date'] });
+    let leaveEndsAt: string | null = null;
+    const fetchMock = server({
+      'GET /me/parental': () => jsonResponse(200, { ...overview, parents: [{ ...overview.parents[0]!, leaveEndsAt }] }),
+      'POST /me/parental/parents/p1/leave': () => {
+        leaveEndsAt = '2026-12-01T10:00:00.000Z';
+        return jsonResponse(200, { endsAt: leaveEndsAt });
+      },
+      'DELETE /me/parental/parents/p1/leave': () => {
+        leaveEndsAt = null;
+        return jsonResponse(200, { kept: true });
+      },
+    });
     vi.stubGlobal('fetch', fetchMock);
     renderApp(<Settings />, ['/app/settings/parental']);
 
-    await userEvent.click(await screen.findByRole('button', { name: en['parental.disconnect'] }));
-    const sheet = await screen.findByRole('dialog', { name: en['parental.disconnect'] });
-    expect(within(sheet).getByText('Dilan will be told.')).toBeInTheDocument();
-    expect(sent(fetchMock, 'DELETE', '/me/parental/parents/p1')).toEqual([]);
-    await userEvent.click(within(sheet).getByRole('button', { name: en['parental.disconnect.confirm'] }));
-    await waitFor(() => expect(sent(fetchMock, 'DELETE', '/me/parental/parents/p1')).toHaveLength(1));
+    await userEvent.click(await screen.findByRole('button', { name: en['parental.leave.ask'] }));
+    const sheet = await screen.findByRole('dialog', { name: 'Stop supervision by Dilan?' });
+    expect(sheet).toHaveTextContent('Dilan is told now and can let you go straight away. Otherwise it ends on December 1, 2026.');
+    expect(sheet).toHaveTextContent('Until then, everything stays as it is.');
+    expect(sent(fetchMock, 'POST', '/me/parental/parents/p1/leave')).toEqual([]);
+    await userEvent.click(within(sheet).getByRole('button', { name: en['parental.leave.ask'] }));
+
+    expect(await within(row('Dilan')).findByText('Ends on December 1, 2026')).toBeInTheDocument();
+    expect(sent(fetchMock, 'POST', '/me/parental/parents/p1/leave')).toHaveLength(1);
+    // Everything set stays in force, and there is nobody left to ask about.
+    expect(within(row(en['parental.limit.title'])).getByText('30 minutes')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: en['parental.leave.ask'] })).not.toBeInTheDocument();
+
+    await userEvent.click(within(row('Dilan')).getByRole('button', { name: en['parental.leave.stay'] }));
+    expect(await within(row('Dilan')).findByText('Since September 2, 2026')).toBeInTheDocument();
+    expect(sent(fetchMock, 'DELETE', '/me/parental/parents/p1/leave')).toHaveLength(1);
+    expect(await screen.findByRole('button', { name: en['parental.leave.ask'] })).toBeInTheDocument();
+  });
+
+  it('asks about the one parent not asked yet, and puts the request back when staying is refused', async () => {
+    const two = {
+      ...overview,
+      parents: [
+        { ...overview.parents[0]!, leaveEndsAt: '2026-12-01T10:00:00.000Z' },
+        { ...person('p2', 'baran', 'Baran'), since: '2026-10-02T10:00:00.000Z', leaveEndsAt: null },
+      ],
+    };
+    vi.stubGlobal('fetch', server({ 'GET /me/parental': { body: two }, 'DELETE /me/parental/parents/p1/leave': { status: 503, body: {} } }));
+    renderApp(<Settings />, ['/app/settings/parental']);
+
+    await screen.findByText('Dilan');
+    expect(within(row('Dilan')).getByText('First parent · Ends on December 1, 2026')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: en['parental.leave.ask'] }));
+    const sheet = await screen.findByRole('dialog', { name: 'Stop supervision by Baran?' });
+    expect(within(sheet).queryByRole('radio')).not.toBeInTheDocument();
+    await userEvent.click(within(sheet).getByRole('button', { name: en['common.cancel'] }));
+
+    await userEvent.click(within(row('Dilan')).getByRole('button', { name: en['parental.leave.stay'] }));
+    expect(await within(row('Dilan')).findByText('First parent · Ends on December 1, 2026')).toBeInTheDocument();
   });
 });
 
@@ -181,11 +226,13 @@ describe('Parental controls: a parent', () => {
   /** The same teen seen by their second parent, who may only tighten. */
   const second = { ...detail, parents: [{ ...person('p2', 'dilan', 'Dilan'), first: true }, person('me', 'ada', 'Ada')], canLoosen: false };
 
-  it('lists the teens with today’s learning, each opening their page', async () => {
-    vi.stubGlobal('fetch', server({ 'GET /me/parental': { body: { role: 'parent', teens } } }));
+  it('lists the teens with today’s learning, each opening their page, and when one asked to leave', async () => {
+    const leaving = [{ ...teens[0]!, leaveEndsAt: '2026-12-01T10:00:00.000Z' }, teens[1]!];
+    vi.stubGlobal('fetch', server({ 'GET /me/parental': { body: { role: 'parent', teens: leaving } } }));
     renderApp(<Settings />, ['/app/settings/parental']);
 
-    expect(within(await screen.findByRole('link', { name: /Roj/ })).getByText('Today: 12 min · 2 lessons')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /Roj/ })).toHaveTextContent('Leaving on December 1, 2026Today: 12 min · 2 lessons');
+    expect(screen.getByRole('link', { name: /baran/ })).not.toHaveTextContent('Leaving');
     expect(within(screen.getByRole('link', { name: /baran/ })).getByText('Today: 0 min · 1 lesson')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Roj/ })).toHaveAttribute('href', '/app/settings/parental/teen/t1');
     expect(row(en['parental.addTeen'])).toHaveAttribute('href', '/app/settings/parental/add');
@@ -273,6 +320,105 @@ describe('Parental controls: a parent', () => {
     await userEvent.click(letters);
     await waitFor(() => expect(letters).not.toBeChecked());
     expect(await screen.findByText('Only Dilan can turn these back on or loosen them.')).toBeInTheDocument();
+  });
+
+  it('says at the top when the teen asked to stop, with the way to let them go now', async () => {
+    const fetchMock = server({
+      'GET /me/parental': { body: { role: 'parent', teens } },
+      'GET /me/parental/teens/t1': { body: { ...detail, leaveEndsAt: '2026-12-01T10:00:00.000Z' } },
+      'DELETE /me/parental/teens/t1': { body: { ended: true } },
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderApp(<Settings />, ['/app/settings/parental/teen/t1']);
+
+    expect(await screen.findByText('Roj asked to stop supervision. It ends on December 1, 2026.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Let Roj go now' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Stop supervising Roj?' });
+    await userEvent.click(within(sheet).getByRole('button', { name: en['parental.stop'] }));
+    await waitFor(() => expect(sent(fetchMock, 'DELETE', '/me/parental/teens/t1')).toHaveLength(1));
+  });
+
+  describe('the birth month', () => {
+    const born = { ...detail, birthMonth: { year: 2011, month: 3 }, birthCorrectable: true };
+
+    it('lets the first parent correct it once, choosing among the years that keep the teen 13 to 17', async () => {
+      vi.useFakeTimers({ now: new Date('2026-11-24T10:00:00.000Z'), toFake: ['Date'] });
+      const fetchMock = server({ 'GET /me/parental/teens/t1': { body: born }, 'PUT /me/parental/teens/t1/birth-month': { body: { ok: true } } });
+      vi.stubGlobal('fetch', fetchMock);
+      renderApp(<Settings />, ['/app/settings/parental/teen/t1']);
+
+      await userEvent.click(await screen.findByRole('button', { name: /Birth month.*March 2011/ }));
+      const sheet = await screen.findByRole('dialog', { name: en['parental.birth.title'] });
+      expect(within(sheet).getByText('You can correct this once. Roj will be told. Hevalo stays for ages 13 to 17 under supervision.')).toBeInTheDocument();
+      const year = within(sheet).getByLabelText(en['age.year']);
+      expect([...(year as HTMLSelectElement).options].map((o) => o.value)).toEqual(['2013', '2012', '2011', '2010', '2009', '2008']);
+      // Nothing to save until it differs.
+      expect(within(sheet).getByRole('button', { name: en['age.prompt.save'] })).toBeDisabled();
+
+      await userEvent.selectOptions(within(sheet).getByLabelText(en['age.month']), 'April');
+      await userEvent.selectOptions(year, '2012');
+      await userEvent.click(within(sheet).getByRole('button', { name: en['age.prompt.save'] }));
+
+      await waitFor(() => expect(sent(fetchMock, 'PUT', '/me/parental/teens/t1/birth-month')).toEqual([{ birthYear: 2012, birthMonth: 4 }]));
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(within(row(en['parental.birth.title'])).getByText('April 2012')).toBeInTheDocument();
+      expect(within(row(en['parental.birth.title'])).getByText(en['parental.birth.done'])).toBeInTheDocument();
+    });
+
+    it('refuses a date under 13 before asking, and words the server’s refusal of an adult one', async () => {
+      vi.useFakeTimers({ now: new Date('2026-11-24T10:00:00.000Z'), toFake: ['Date'] });
+      const fetchMock = server({
+        'GET /me/parental/teens/t1': { body: born },
+        'PUT /me/parental/teens/t1/birth-month': { status: 422, body: { code: 'PARENTAL_BIRTH_OUT_OF_RANGE', message: 'x', details: { reason: 'adult' } } },
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      renderApp(<Settings />, ['/app/settings/parental/teen/t1']);
+
+      await userEvent.click(await screen.findByRole('button', { name: /Birth month/ }));
+      const sheet = await screen.findByRole('dialog', { name: en['parental.birth.title'] });
+      // December 2013 is still twelve in November 2026.
+      await userEvent.selectOptions(within(sheet).getByLabelText(en['age.month']), 'December');
+      await userEvent.selectOptions(within(sheet).getByLabelText(en['age.year']), '2013');
+      await userEvent.click(within(sheet).getByRole('button', { name: en['age.prompt.save'] }));
+      expect(within(sheet).getByRole('alert')).toHaveTextContent(en['parental.birth.under13']);
+      expect(sent(fetchMock, 'PUT', '/me/parental/teens/t1/birth-month')).toEqual([]);
+
+      await userEvent.selectOptions(within(sheet).getByLabelText(en['age.year']), '2009');
+      expect(within(sheet).queryByRole('alert')).not.toBeInTheDocument();
+      await userEvent.click(within(sheet).getByRole('button', { name: en['age.prompt.save'] }));
+      expect(await within(sheet).findByRole('alert')).toHaveTextContent('That would make Roj an adult. If they are, you can stop supervising instead.');
+      expect(screen.getByRole('dialog', { name: en['parental.birth.title'] })).toBeInTheDocument();
+    });
+
+    it('names the first parent when the server says only they may correct it, and goes read-only', async () => {
+      vi.useFakeTimers({ now: new Date('2026-11-24T10:00:00.000Z'), toFake: ['Date'] });
+      const refusal = { code: 'PARENTAL_FIRST_PARENT_ONLY', message: 'x', details: { parent: person('p2', 'dilan', 'Dilan') } };
+      vi.stubGlobal('fetch', server({ 'GET /me/parental/teens/t1': { body: born }, 'PUT /me/parental/teens/t1/birth-month': { status: 403, body: refusal } }));
+      renderApp(<Settings />, ['/app/settings/parental/teen/t1']);
+
+      await userEvent.click(await screen.findByRole('button', { name: /Birth month/ }));
+      const sheet = await screen.findByRole('dialog', { name: en['parental.birth.title'] });
+      await userEvent.selectOptions(within(sheet).getByLabelText(en['age.year']), '2012');
+      await userEvent.click(within(sheet).getByRole('button', { name: en['age.prompt.save'] }));
+      expect(await within(sheet).findByRole('alert')).toHaveTextContent('Only Dilan can correct this');
+      await userEvent.click(within(sheet).getByRole('button', { name: en['common.cancel'] }));
+      expect(within(row(en['parental.birth.title'])).getByText(en['parental.birth.done'])).toBeInTheDocument();
+    });
+
+    it('is read-only once corrected, and for a second parent names who can correct it', async () => {
+      vi.stubGlobal('fetch', server({ 'GET /me/parental/teens/t1': { body: { ...born, birthCorrectable: false } } }));
+      const { unmount } = renderApp(<Settings />, ['/app/settings/parental/teen/t1']);
+      await screen.findByText(en['parental.birth.title']);
+      expect(within(row(en['parental.birth.title'])).getByText(en['parental.birth.done'])).toBeInTheDocument();
+      await userEvent.click(row(en['parental.birth.title']));
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      unmount();
+
+      vi.stubGlobal('fetch', server({ 'GET /me/parental/teens/t1': { body: { ...second, birthMonth: born.birthMonth, birthCorrectable: false } } }));
+      renderApp(<Settings />, ['/app/settings/parental/teen/t1']);
+      await screen.findByText(en['parental.birth.title']);
+      expect(within(row(en['parental.birth.title'])).getByText('Only Dilan can correct this')).toBeInTheDocument();
+    });
   });
 
   it('says plainly when the teen is no longer connected to the reader', async () => {

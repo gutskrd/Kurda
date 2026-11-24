@@ -412,6 +412,8 @@ export const CODE_COPY: Record<string, MessageKey> = {
   PARENTAL_NOT_PARENT: 'error.code.parentalNotParent',
   // Only the first parent connected may turn something back on or loosen it.
   PARENTAL_FIRST_PARENT_ONLY: 'error.code.parentalFirstParentOnly',
+  // A parent corrects a teen's birth month once; later ones go through support.
+  PARENTAL_BIRTH_ALREADY_CORRECTED: 'error.code.parentalBirthAlreadyCorrected',
 };
 /** Sentences for `WEAK_PASSWORD`'s `details.reason` (api/src/auth/password-policy.ts); the numbers are the policy's. */
 const PASSWORD_REASON: Record<string, [MessageKey, Record<string, number>?]> = {

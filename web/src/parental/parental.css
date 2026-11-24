@@ -1,7 +1,7 @@
 /*
- * Parental controls (parental/): the calm note in place of something switched off, the pages on both sides of a link,
- * a teen's week as slim bars, the code a parent reads out, and the pause screen. Ink and greys only; the main button
- * keeps the one accent.
+ * Parental controls (parental/): the calm note in place of something switched off or over a teen's request to stop,
+ * the pages on both sides of a link, a teen's week as slim bars, the code a parent reads out, and the pause screen. Ink
+ * and greys only; the main button keeps the one accent.
  */
 
 /* ---- the note in place of a switched-off part ------------------------------- */
@@ -48,6 +48,19 @@
 /* in place of a message box, it sits where the box was */
 .parental-note.is-inline {
   flex: 1;
+  margin: 0;
+}
+
+/* a teen's request to stop, at the top of their page: the same calm note, with the way to let them go now */
+.parental-leaving {
+  margin-bottom: var(--space-4);
+}
+.parental-leaving .parental-note-text {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+.parental-leaving .parental-note-text p {
   margin: 0;
 }
 
@@ -141,9 +154,12 @@
   transform-origin: right center;
 }
 
-/* ---- sheets: confirming a parent, disconnecting, stopping ------------------- */
+/* ---- sheets: confirming a parent, asking to stop, stopping, a birth month ----- */
 .parental-sheet .report-heading {
   padding-inline-end: 48px;
+}
+.parental-birth {
+  margin-top: var(--space-3);
 }
 .parental-confirm-who {
   display: flex;

@@ -1,10 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { PARENTAL_BEDTIMES, PARENTAL_DAILY_LIMITS, PARENTAL_SWITCHES, weekdayName, type Bedtime, type ParentalControls, type ParentalSwitch } from '@kurda/shared';
+import {
+  ADULT_AGE,
+  MIN_SIGNUP_AGE,
+  PARENTAL_BEDTIMES,
+  PARENTAL_DAILY_LIMITS,
+  PARENTAL_SWITCHES,
+  isBelowMinimumAge,
+  isMinor,
+  weekdayName,
+  type Bedtime,
+  type BirthMonth,
+  type ParentalControls,
+  type ParentalSwitch,
+} from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
-import { FlameIcon, RemovePersonIcon } from '../components/icons';
+import { FlameIcon, ParentalIcon, RemovePersonIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import { ErrorState } from '../components/states';
 import { useI18n, useT, type Translate } from '../i18n/I18nProvider';
@@ -31,13 +44,14 @@ import {
 } from './api';
 import { Face, PARENTAL_HOME, PageSkeleton, type ParentalPageProps } from './ParentalSettings';
 import { SWITCH_HINT, SWITCH_TITLE } from './switches';
-import { bedtimeText, calendarDay, dayText, durationText, lessonsText, limitText } from './words';
+import { bedtimeText, calendarDay, dayText, durationText, lessonsText, limitText, monthName, monthYear } from './words';
 
 /**
  * A parent's page for one teen: their week at a glance (minutes a day as seven slim bars, with the lessons, XP and
  * streak), the daily limit, bedtime and time zone, and the six switches, each set the moment it is pressed and put back
- * if the server refuses. Only the first parent connected may loosen anything; another parent finds those choices there
- * but switched off, with the reason under them. Stopping is last, in red, and the teen is told.
+ * if the server refuses. Only the first parent connected may loosen anything, or correct the teen's birth month once;
+ * another parent finds those choices there but switched off, with the reason under them. A teen's request to stop is
+ * said at the top, with the way to let them go now. Stopping is last, in red, and the teen is told.
  */
 
 const teenPage = (teenId: string): string => `${PARENTAL_HOME}/teen/${encodeURIComponent(teenId)}`;
@@ -52,6 +66,8 @@ interface Teen {
   error: string | null;
   reload: () => void;
   saved: (controls: ParentalControls) => void;
+  /** Takes a change the server confirmed into the details shown and remembered. */
+  amend: (change: Partial<TeenDetail>) => void;
 }
 
 /**
@@ -86,18 +102,20 @@ function useTeen(teenId: string): Teen {
     };
   }, [client, who, path, nonce]);
 
+  const amend = (change: Partial<TeenDetail>): void =>
+    setDetail((d) => {
+      if (!d) return d;
+      const next = { ...d, ...change };
+      if (who) remember(who, path, next);
+      return next;
+    });
   return {
     detail,
     gone,
     error: error ? describeError(error, t) : null,
     reload: () => setNonce((n) => n + 1),
-    saved: (controls) =>
-      setDetail((d) => {
-        if (!d) return d;
-        const next = { ...d, controls };
-        if (who) remember(who, path, next);
-        return next;
-      }),
+    saved: (controls) => amend({ controls }),
+    amend,
   };
 }
 
@@ -164,25 +182,39 @@ export function TeenPage({ teenId, overview, heading, focus }: ParentalPageProps
   const teen = useTeen(teenId);
   return (
     <TeenFrame teen={teen} back={{ to: PARENTAL_HOME, label: t('parental.title') }} heading={heading} focus={focus}>
-      {(detail) => <TeenBody detail={detail} teenId={teenId} onSaved={teen.saved} onStopped={overview.reload} />}
+      {(detail) => <TeenBody detail={detail} teen={teen} teenId={teenId} onStopped={overview.reload} />}
     </TeenFrame>
   );
 }
 
-function TeenBody({ detail, teenId, onSaved, onStopped }: { detail: TeenDetail; teenId: string; onSaved: (c: ParentalControls) => void; onStopped: () => void }): React.JSX.Element {
+function TeenBody({ detail, teen, teenId, onStopped }: { detail: TeenDetail; teen: Teen; teenId: string; onStopped: () => void }): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
   const { user } = useAuth();
   const [stopping, setStopping] = useState(false);
+  const [correcting, setCorrecting] = useState(false);
   // A loosening the server refused, said under the switches with the name it gave.
   const [refused, setRefused] = useState<string | null>(null);
   const name = personName(detail.teen);
   const canLoosen = detail.canLoosen !== false;
   const first = firstParent(detail.parents);
+  const firstName = first ? personName(first) : name;
   const zone = detail.timeZone;
 
   return (
     <>
+      {detail.leaveEndsAt && (
+        <div className="parental-note parental-leaving" role="note">
+          <ParentalIcon size={20} className="parental-note-icon" />
+          <div className="parental-note-text">
+            <p>{t('parental.leave.asked', { name, date: calendarDay(t, detail.leaveEndsAt, locale) })}</p>
+            <Button variant="secondary" size="sm" onClick={() => setStopping(true)}>
+              {t('parental.leave.letGo', { name })}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="parental-teen-head">
         <span className="parental-teen-face">
           <Avatar url={detail.teen.avatarUrl} glyphSize={30} />
@@ -213,9 +245,9 @@ function TeenBody({ detail, teenId, onSaved, onStopped }: { detail: TeenDetail; 
               canLoosen={canLoosen}
               onSaved={(c) => {
                 setRefused(null);
-                onSaved(c);
+                teen.saved(c);
               }}
-              onRefused={(by) => setRefused(t('parental.firstOnly', { name: by ?? (first ? personName(first) : name) }))}
+              onRefused={(by) => setRefused(t('parental.firstOnly', { name: by ?? firstName }))}
             />
           </li>
         ))}
@@ -238,12 +270,25 @@ function TeenBody({ detail, teenId, onSaved, onStopped }: { detail: TeenDetail; 
         ))}
       </SettingsSection>
 
+      {detail.birthMonth && (
+        <SettingsSection>
+          <SettingsRow
+            title={t('parental.birth.title')}
+            subtitle={detail.birthCorrectable ? undefined : canLoosen ? t('parental.birth.done') : t('parental.birth.firstOnly', { name: firstName })}
+            value={monthYear(t, detail.birthMonth, locale)}
+            onClick={detail.birthCorrectable ? () => setCorrecting(true) : undefined}
+            opens={detail.birthCorrectable}
+          />
+        </SettingsSection>
+      )}
+
       <p className="settings-page-note parental-privacy">{t('parental.privacy.parentOf', { name })}</p>
 
       <ul className="settings-rows settings-apart">
         <SettingsRow icon={<RemovePersonIcon size={22} />} title={t('parental.stop')} destructive onClick={() => setStopping(true)} />
       </ul>
       <StopSheet open={stopping} teenId={teenId} name={name} onClose={() => setStopping(false)} onStopped={onStopped} />
+      {detail.birthMonth && <BirthSheet open={correcting} teenId={teenId} detail={detail} teen={teen} onClose={() => setCorrecting(false)} />}
     </>
   );
 }
@@ -376,6 +421,148 @@ function StopSheet({ open, teenId, name, onClose, onStopped }: { open: boolean; 
           <button type="button" className="btn btn-danger" disabled={busy} onClick={() => void stop()}>
             {busy ? t('parental.stopping') : t('parental.stop')}
           </button>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
+/** The years a corrected birth month may fall in: those that can leave the teen 13 to 17, newest first. */
+function teenYears(now: Date): number[] {
+  const year = now.getUTCFullYear();
+  const years: number[] = [];
+  for (let y = year - MIN_SIGNUP_AGE; y >= year - ADULT_AGE; y--) years.push(y);
+  return years;
+}
+
+/** Why a corrected birth month cannot be taken, in plain words; null when it can. */
+function outOfRange(t: Translate, reason: unknown, name: string): string | null {
+  if (reason === 'under13') return t('parental.birth.under13');
+  if (reason === 'adult') return t('parental.birth.adult', { name });
+  return null;
+}
+
+/**
+ * The first parent's one correction of a teen's birth month: a month and a year that keep the teen 13 to 17, refused
+ * in plain words otherwise. A date under 13 would close the account and one over 17 would end supervision, so neither
+ * is a parent's to set here.
+ */
+function BirthSheet({
+  open,
+  teenId,
+  detail,
+  teen,
+  onClose,
+}: {
+  open: boolean;
+  teenId: string;
+  detail: TeenDetail;
+  teen: Teen;
+  onClose: () => void;
+}): React.JSX.Element {
+  const t = useT();
+  const { locale } = useI18n();
+  const { client } = useAuth();
+  const name = personName(detail.teen);
+  const years = teenYears(new Date());
+  const was = detail.birthMonth!;
+  // The year on record, unless it is one no correction could keep.
+  const recordedYear = (): string => (teenYears(new Date()).includes(was.year) ? String(was.year) : '');
+  const [month, setMonth] = useState(String(was.month));
+  const [year, setYear] = useState(recordedYear);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Each opening starts from the month on record.
+  useEffect(() => {
+    if (!open) return;
+    setMonth(String(was.month));
+    setYear(recordedYear());
+    setError(null);
+  }, [open, was.month, was.year]);
+  const birth: BirthMonth | null = month && year ? { year: Number(year), month: Number(month) } : null;
+  const changed = birth !== null && (birth.year !== was.year || birth.month !== was.month);
+
+  async function save(): Promise<void> {
+    if (!birth) return;
+    // The same lines the server draws, said before asking it.
+    const early = outOfRange(t, isBelowMinimumAge(birth) ? 'under13' : isMinor(birth) ? null : 'adult', name);
+    if (early) return setError(early);
+    setBusy(true);
+    setError(null);
+    const body = { birthYear: birth.year, birthMonth: birth.month };
+    const res = await client.put<Pick<TeenDetail, 'birthMonth' | 'birthCorrectable'>>(`${teenPath(teenId)}/birth-month`, body);
+    setBusy(false);
+    if (res.ok) {
+      teen.amend({ birthMonth: res.data?.birthMonth ?? birth, birthCorrectable: res.data?.birthCorrectable ?? false });
+      onClose();
+      return;
+    }
+    const { code } = res.error;
+    if (code === 'PARENTAL_BIRTH_OUT_OF_RANGE') {
+      const reason = (res.error.details as { reason?: unknown } | undefined)?.reason;
+      return setError(outOfRange(t, reason, name) ?? describeError(res.error, t));
+    }
+    if (code === FIRST_ONLY || code === 'PARENTAL_BIRTH_ALREADY_CORRECTED') {
+      // Nobody else may correct it now, so the row goes back to read-only behind the sheet.
+      teen.amend({ birthCorrectable: false });
+      const by = code === FIRST_ONLY ? refusedBy(res.error) : null;
+      return setError(by ? t('parental.birth.firstOnly', { name: by }) : describeError(res.error, t));
+    }
+    setError(describeError(res.error, t));
+  }
+
+  const pick = (set: (v: string) => void) => (e: React.ChangeEvent<HTMLSelectElement>) => {
+    set(e.target.value);
+    setError(null);
+  };
+
+  return (
+    <Sheet open={open} onClose={() => !busy && onClose()} label={t('parental.birth.title')}>
+      <div className="parental-sheet">
+        <h2 className="report-heading">{t('parental.birth.title')}</h2>
+        <p className="report-intro">{t('parental.birth.help', { name })}</p>
+        <fieldset className="field birth-month parental-birth" disabled={busy}>
+          <legend className="sr-only">{t('parental.birth.title')}</legend>
+          <div className="birth-month-row">
+            <label className="sr-only" htmlFor="parental-birth-month">
+              {t('age.month')}
+            </label>
+            <select id="parental-birth-month" className="input" value={month} onChange={pick(setMonth)}>
+              {Array.from({ length: 12 }, (_, i) => (
+                <option key={i} value={String(i + 1)}>
+                  {monthName(t, i + 1, locale)}
+                </option>
+              ))}
+            </select>
+            <label className="sr-only" htmlFor="parental-birth-year">
+              {t('age.year')}
+            </label>
+            <select id="parental-birth-year" className="input" value={year} onChange={pick(setYear)}>
+              {!year && (
+                <option value="" disabled>
+                  {t('age.year')}
+                </option>
+              )}
+              {years.map((y) => (
+                <option key={y} value={String(y)}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </div>
+        </fieldset>
+        {error && (
+          <div className="msg msg-error" role="alert">
+            {error}
+          </div>
+        )}
+        <div className="report-actions">
+          <Button variant="ghost" onClick={onClose} disabled={busy}>
+            {t('common.cancel')}
+          </Button>
+          <Button disabled={!changed || busy} onClick={() => void save()}>
+            {busy ? t('age.prompt.saving') : t('age.prompt.save')}
+          </Button>
         </div>
       </div>
     </Sheet>

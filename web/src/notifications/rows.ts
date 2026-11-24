@@ -48,6 +48,8 @@ const BY_DATA: Record<string, NoteKind> = {
   parental_changed: 'parental',
   parental_parent_added: 'parental',
   parental_zone: 'parental',
+  parental_leave: 'parental',
+  parental_birth: 'parental',
 };
 
 const BY_CATEGORY: Record<string, NoteKind> = {
