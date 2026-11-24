@@ -28,6 +28,7 @@ export const EMAIL_TEMPLATES = [
   'account-closed',
   'parental-ended',
   'parental-parent-added',
+  'parental-leave-requested',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -262,11 +263,22 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
   'parental-parent-added': {
     en: {
       subject: 'Another parent was connected to {teen}',
-      text: 'Hello {username},\n\n{parent} was connected as a parent of {teen} on Hevalo ({time}). They can now see {teen}’s learning time and progress, and make the settings stricter, but not looser.\n\nIf you don’t know who this is, talk with {teen}: they can disconnect a parent in Settings, then Parental controls.\n\n— The Hevalo team',
+      text: 'Hello {username},\n\n{parent} was connected as a parent of {teen} on Hevalo ({time}). They can now see {teen}’s learning time and progress, and make the settings stricter, but not looser.\n\nIf you don’t know who this is, talk with {teen} and contact support. {teen} can also ask to stop a parent’s supervision in Settings, then Parental controls.\n\n— The Hevalo team',
     },
     ku: {
       subject: 'Kesekî din wekî dêûbav bi {teen} ve hate girêdan',
-      text: 'Silav {username},\n\n{parent} li Hevalo wekî dêûbav bi {teen} ve hate girêdan ({time}). Niha ew dikare dema hînbûn û pêşketina {teen} bibîne, û dikare mîhengan hişktir bike, lê ne siviktir.\n\nHeke tu nizanî ev kî ye, bi {teen} re biaxive: ew dikare di Mîhengan de, paşê di Çavdêriya dêûbavan de, dêûbavekî qut bike.\n\n— Tîma Hevalo',
+      text: 'Silav {username},\n\n{parent} li Hevalo wekî dêûbav bi {teen} ve hate girêdan ({time}). Niha ew dikare dema hînbûn û pêşketina {teen} bibîne, û dikare mîhengan hişktir bike, lê ne siviktir.\n\nHeke tu nizanî ev kî ye, bi {teen} re biaxive û bi piştgiriyê re têkilî deyne. {teen} jî dikare di Mîhengan de, paşê di Çavdêriya dêûbavan de, bixwaze ku çavdêriya dêûbavekî bi dawî bibe.\n\n— Tîma Hevalo',
+    },
+  },
+  /** To a parent whose teen asked to stop their supervision, which ends days later: told at once, so it is never a surprise. */
+  'parental-leave-requested': {
+    en: {
+      subject: '{teen} asked to stop supervision',
+      text: 'Hello {username},\n\n{teen} asked on Hevalo to stop being supervised by you ({time}). It ends on {endsOn}, unless you let them go sooner. Until then, everything stays as you set it.\n\nThe best next step is to talk with them. If you would like to let them go now, open Settings, then Parental controls, then {teen}.\n\n— The Hevalo team',
+    },
+    ku: {
+      subject: '{teen} xwest ku çavdêrî bi dawî bibe',
+      text: 'Silav {username},\n\n{teen} li Hevalo xwest ku çavdêriya te ya dêûbavan bi dawî bibe ({time}). Ew ê di {endsOn} de bi dawî bibe, heke tu berê wê çavdêriyê ranewestînî. Heta wê demê, her tişt wek ku te ji bo ciwanê xwe saz kiriye dimîne.\n\nGava herî baş a pêşîn ew e ku tu pê re biaxivî. Heke tu dixwazî niha çavdêriyê rawestînî, di Mîhengan de, paşê di Çavdêriya dêûbavan de, {teen} veke.\n\n— Tîma Hevalo',
     },
   },
   'deletion-notice': {
@@ -315,6 +327,8 @@ const DESIGN: Record<EmailTemplate, { picture: EmailPicture; button?: Record<Ema
   // what looks after an account, as the sign-in notices are
   'parental-ended': { picture: 'shield' },
   'parental-parent-added': { picture: 'shield' },
+  // the time left before it ends
+  'parental-leave-requested': { picture: 'hourglass' },
 };
 
 /** The footer's two lines: where to write, and the link again for a button that will not press. */

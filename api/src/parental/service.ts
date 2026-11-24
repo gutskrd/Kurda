@@ -8,10 +8,14 @@ import { randomInt } from 'node:crypto';
 import type pg from 'pg';
 import {
   addDays,
+  isBelowConsentAge,
+  isBelowMinimumAge,
   isMinor,
+  isPlausibleBirthMonth,
   localDay,
   MAX_PARENTS_PER_TEEN,
   MAX_TEENS_PER_PARENT,
+  MIN_SIGNUP_AGE,
   normalizeParentCode,
   OPEN_CONTROLS,
   PARENT_CODE_ALPHABET,
@@ -19,6 +23,7 @@ import {
   PARENT_CODE_TTL_HOURS,
   PARENTAL_SWITCHES,
   type Bedtime,
+  type BirthMonth,
   type ParentalControls,
   type SupervisionState,
 } from '@kurda/shared';
@@ -32,13 +37,26 @@ import { recordNotifications } from '../notifications/inbox-service.js';
 import type { Notification } from '../push/service.js';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 import { birthMonthOf, minorSql } from '../users/age.js';
+import { invalidBirthMonth } from '../users/birth-month.js';
 import { StreakService } from '../streaks/service.js';
 import { answeredTodaySql, countsAsLearningSql, safeTimeZone } from '../streaks/streak-logic.js';
 import { sendEmailJob } from '../jobs/email.js';
 import type { JobQueue } from '../jobs/queue.js';
-import { emailLocaleFor, type EmailTemplate } from '../email/templates.js';
-import { changedNotice, connectedNotice, disconnectedNotice, parentAddedNotice, stoppedNotice, type NoticePerson } from './notices.js';
-import { CONTROL_COLUMNS, controlsOf, endGrownUpLinks, recordBeat, supervisionOf, type ControlsRow } from './supervision.js';
+import { emailLocaleFor } from '../email/templates.js';
+import {
+  birthNotice,
+  changedNotice,
+  connectedNotice,
+  leaveAskedNotice,
+  leaveEndsOn,
+  leaveKeptNotice,
+  parentAddedNotice,
+  parentalEmail,
+  stoppedNotice,
+  type NoticePerson,
+  type ParentalTemplate,
+} from './notices.js';
+import { CONTROL_COLUMNS, controlsOf, endDueLinks, leaveDueSql, leaveEndsAt, recordBeat, supervisionOf, type ControlsRow } from './supervision.js';
 
 /** A person as either side of a link is shown the other. */
 export interface PersonRef {
@@ -59,12 +77,15 @@ export interface LearningDay {
   xp: number;
 }
 
+/** A teen's parent as the teen sees them: since when, and when the teen's request to leave ends the link, if they asked. */
+export type ConnectedParent = PersonRef & { since: string; leaveEndsAt: string | null };
+
 export interface ParentalOverview {
   role: ParentalRole;
   reason?: NoRoleReason;
-  parents?: Array<PersonRef & { since: string }>;
+  parents?: ConnectedParent[];
   supervision?: SupervisionState | null;
-  teens?: Array<{ teen: PersonRef; since: string; today: { minutes: number; lessons: number } }>;
+  teens?: Array<{ teen: PersonRef; since: string; today: { minutes: number; lessons: number }; leaveEndsAt: string | null }>;
 }
 
 export interface TeenPage {
@@ -79,6 +100,11 @@ export interface TeenPage {
   streak: number;
   /** every parent, the first first */
   parents: Array<PersonRef & { first: boolean }>;
+  /** when the teen's request to stop this parent's supervision ends it, or null when they have not asked */
+  leaveEndsAt: string | null;
+  birthMonth: BirthMonth;
+  /** the caller may correct the birth month: the first parent, while nobody has */
+  birthCorrectable: boolean;
 }
 
 /** The days a parent's week shows, today the last. */
@@ -194,6 +220,19 @@ const firstParentOnly = (first: PersonRef): AppError =>
   new AppError('PARENTAL_FIRST_PARENT_ONLY', 403, 'only the first parent connected can loosen these settings', { parent: first });
 /** The same answer for a link that does not exist and one that is not the caller's, so no link is ever revealed. */
 const noSuchLink = (): AppError => new AppError('NOT_FOUND', 404, 'nothing to show here');
+/** A birth month is corrected once by a parent; after that only support can. */
+const birthAlreadyCorrected = (): AppError =>
+  new AppError('PARENTAL_BIRTH_ALREADY_CORRECTED', 409, 'this birth month has already been corrected once: write to support to change it again');
+/** A correction that would take the teen out of 13 to 17, with which way, so the apps can say what to do instead. */
+const birthOutOfRange = (reason: 'under13' | 'adult'): AppError =>
+  new AppError(
+    'PARENTAL_BIRTH_OUT_OF_RANGE',
+    422,
+    reason === 'under13'
+      ? `Hevalo is for people aged ${MIN_SIGNUP_AGE} and over: write to support to fix this`
+      : 'that would make them an adult: you can stop supervising instead',
+    { reason },
+  );
 
 interface PersonColumns {
   id: string;
@@ -201,6 +240,18 @@ interface PersonColumns {
   display_name: string | null;
   profile_photo_key: string | null;
   selected_avatar_key: string | null;
+}
+
+interface TeenPageRow extends PersonColumns, ControlsRow {
+  since: Date;
+  minor: boolean;
+  timezone: string;
+  birth_year: number;
+  birth_month: number;
+  birth_corrected_at: Date | null;
+  leave_requested_at: Date | null;
+  /** a live link of the teen's, this one or another parent's, whose leave has run its days */
+  any_leave_due: boolean;
 }
 
 export interface ParentalDeps {
@@ -242,11 +293,12 @@ export class ParentalService {
     if (!account) throw noSuchLink();
     const { role, reason } = roleOf(account, now);
     if (role === 'teen') {
-      const [parents, supervision] = await Promise.all([this.parentsOf(this.pool, userId), supervisionOf(this.pool, userId, now)]);
-      return { role, parents, supervision };
+      // the supervision read first, since it ends a link whose leave has run its days, which the list must not show
+      const supervision = await supervisionOf(this.pool, userId, now);
+      return { role, parents: await this.parentsOf(this.pool, userId), supervision };
     }
     // an adult still listed as someone's teen has turned 18 since it was last read
-    if (account.supervised) await endGrownUpLinks(this.pool, 'teen_id', userId, now);
+    if (account.supervised) await endDueLinks(this.pool, 'teen_id', userId, now);
     // A parent whose address or standing changed keeps their teens in view (and can stop supervising), but adds no more.
     const adult = role === 'parent' || reason === 'email' || reason === 'standing';
     const teens = adult ? await this.teensOf(userId, now) : [];
@@ -255,22 +307,22 @@ export class ParentalService {
   }
 
   /** A teen's parents, longest connected first: the first of them is the first parent. */
-  private async parentsOf(db: Executor, teenId: string): Promise<Array<PersonRef & { since: string }>> {
-    const r = await db.query<PersonColumns & { since: Date }>(
-      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, l.created_at AS since
+  private async parentsOf(db: Executor, teenId: string): Promise<ConnectedParent[]> {
+    const r = await db.query<PersonColumns & { since: Date; leave_requested_at: Date | null }>(
+      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, l.created_at AS since, l.leave_requested_at
          FROM parental_links l JOIN users u ON u.id = l.parent_id
         WHERE l.teen_id = $1 AND l.ended_at IS NULL
         ORDER BY l.created_at, l.id`,
       [teenId],
     );
-    return r.rows.map((row) => ({ ...this.person(row), since: row.since.toISOString() }));
+    return r.rows.map((row) => ({ ...this.person(row), since: row.since.toISOString(), leaveEndsAt: leaveEndOf(row.leave_requested_at) }));
   }
 
-  /** A parent's teens with today's minutes and lessons, longest connected first; one who turned 18 is let go here. */
+  /** A parent's teens with today's minutes and lessons, longest connected first; one who turned 18 or whose leave ran out is let go here. */
   private async teensOf(parentId: string, now: Date): Promise<NonNullable<ParentalOverview['teens']>> {
-    await endGrownUpLinks(this.pool, 'parent_id', parentId, now);
-    const r = await this.pool.query<PersonColumns & { since: Date; time_zone: string | null }>(
-      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, l.created_at AS since, c.time_zone
+    await endDueLinks(this.pool, 'parent_id', parentId, now);
+    const r = await this.pool.query<PersonColumns & { since: Date; time_zone: string | null; leave_requested_at: Date | null }>(
+      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, l.created_at AS since, c.time_zone, l.leave_requested_at
          FROM parental_links l
          JOIN users u ON u.id = l.teen_id
          LEFT JOIN parental_controls c ON c.teen_id = l.teen_id
@@ -282,7 +334,12 @@ export class ParentalService {
       r.rows.map(async (row) => {
         const zone = safeTimeZone(row.time_zone);
         const [today] = await learningDays(this.pool, row.id, zone, localDay(now, zone), 1, row.since);
-        return { teen: this.person(row), since: row.since.toISOString(), today: { minutes: today?.minutes ?? 0, lessons: today?.lessons ?? 0 } };
+        return {
+          teen: this.person(row),
+          since: row.since.toISOString(),
+          today: { minutes: today?.minutes ?? 0, lessons: today?.lessons ?? 0 },
+          leaveEndsAt: leaveEndOf(row.leave_requested_at),
+        };
       }),
     );
   }
@@ -300,8 +357,8 @@ export class ParentalService {
           reason: account ? (roleOf(account, now).reason ?? null) : null,
         });
       }
-      if (account.supervised) await endGrownUpLinks(client, 'teen_id', userId, now);
-      await endGrownUpLinks(client, 'parent_id', userId, now);
+      if (account.supervised) await endDueLinks(client, 'teen_id', userId, now);
+      await endDueLinks(client, 'parent_id', userId, now);
       const teens = await client.query<{ n: number }>(`SELECT count(*)::int AS n FROM parental_links WHERE parent_id = $1 AND ended_at IS NULL`, [userId]);
       if (teens.rows[0]!.n >= MAX_TEENS_PER_PARENT) throw parentFull();
 
@@ -362,7 +419,7 @@ export class ParentalService {
    * zone for at least ZONE_HOLD_DAYS; a second finds them as they are, and the parents already there are told in the
    * app and by email, so a second account cannot join unseen.
    */
-  async connect(userId: string, input: string, now: Date = new Date()): Promise<{ parents: Array<PersonRef & { since: string }>; supervision: SupervisionState | null }> {
+  async connect(userId: string, input: string, now: Date = new Date()): Promise<{ parents: ConnectedParent[]; supervision: SupervisionState | null }> {
     const code = normalizeParentCode(input);
     await this.assertTeen(await this.account(this.pool, userId), userId, code, now);
     // whose code it is, read once without a lock to know whose lock to take
@@ -377,7 +434,9 @@ export class ParentalService {
       const parent = await this.codeOwner(client, code, now, { lock: true });
       if (!parent || parent.id !== parentId) throw codeInvalid();
 
-      await endGrownUpLinks(client, 'parent_id', parentId, now);
+      // links whose time is up count against neither side's cap
+      await endDueLinks(client, 'parent_id', parentId, now);
+      await endDueLinks(client, 'teen_id', userId, now);
       const links = await client.query<{ parent_id: string; teen_id: string }>(
         `SELECT parent_id, teen_id FROM parental_links WHERE (teen_id = $1 OR parent_id = $2) AND ended_at IS NULL`,
         [userId, parentId],
@@ -426,23 +485,26 @@ export class ParentalService {
 
   /**
    * What a parent sees of one of their teens: who, since when, the controls and the zone they are counted in, whether
-   * this parent may loosen them, the week in numbers from the day they connected, the streak, and every parent.
+   * this parent may loosen them, the week in numbers from the day they connected, the streak, every parent, when the
+   * teen's request to leave ends this link, and the birth month with whether this parent may correct it.
    */
   async teen(parentId: string, teenId: string, now: Date = new Date()): Promise<TeenPage> {
-    const r = await this.pool.query<PersonColumns & ControlsRow & { since: Date; minor: boolean; timezone: string }>(
-      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.timezone, l.created_at AS since,
-              ${CONTROL_COLUMNS}, ${minorSql('u')} AS minor
+    const r = await this.pool.query<TeenPageRow>(
+      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.timezone, u.birth_year, u.birth_month,
+              l.created_at AS since, l.leave_requested_at, c.birth_corrected_at, ${CONTROL_COLUMNS}, ${minorSql('u')} AS minor,
+              EXISTS (SELECT 1 FROM parental_links d WHERE d.teen_id = l.teen_id AND d.ended_at IS NULL AND ${leaveDueSql('d', '$3')}) AS any_leave_due
          FROM parental_links l
          JOIN users u ON u.id = l.teen_id
          JOIN parental_controls c ON c.teen_id = l.teen_id
         WHERE l.parent_id = $1 AND l.teen_id = $2 AND l.ended_at IS NULL`,
-      [parentId, teenId],
+      [parentId, teenId, now],
     );
     const row = r.rows[0];
     if (!row) throw noSuchLink();
-    if (!row.minor) {
-      await endGrownUpLinks(this.pool, 'teen_id', teenId, now);
-      throw noSuchLink();
+    if (!row.minor || row.any_leave_due) {
+      await endDueLinks(this.pool, 'teen_id', teenId, now);
+      // the teen's leave from another parent ends that link only
+      if (!row.minor || (row.leave_requested_at && leaveEndsAt(row.leave_requested_at) <= now)) throw noSuchLink();
     }
     const zone = safeTimeZone(row.time_zone);
     const [week, streak, parents] = await Promise.all([
@@ -451,15 +513,20 @@ export class ParentalService {
       new StreakService(this.pool).get(teenId, safeTimeZone(row.timezone), now),
       this.parentsOf(this.pool, teenId),
     ]);
+    const canLoosen = parents[0]?.userId === parentId;
     return {
       teen: this.person(row),
       since: row.since.toISOString(),
       controls: controlsOf(row),
       timeZone: zone,
-      canLoosen: parents[0]?.userId === parentId,
+      canLoosen,
       week,
       streak: streak.current,
       parents: parents.map((p, i) => ({ ...refOf(p), first: i === 0 })),
+      leaveEndsAt: leaveEndOf(row.leave_requested_at),
+      birthMonth: { year: row.birth_year, month: row.birth_month },
+      // the first parent alone, as for loosening, and once
+      birthCorrectable: canLoosen && row.birth_corrected_at === null,
     };
   }
 
@@ -473,6 +540,8 @@ export class ParentalService {
     const done = await inTransaction(this.pool, async (client) => {
       // in the order connecting and ending take them, so who is first cannot change meanwhile
       await lockPeopleFor(client, 'parental', parentId, teenId);
+      // a parent whose time is up neither changes anything nor counts as first
+      await endDueLinks(client, 'teen_id', teenId, now);
       const r = await client.query<ControlsRow>(
         `SELECT ${CONTROL_COLUMNS}
            FROM parental_controls c JOIN users u ON u.id = c.teen_id
@@ -531,40 +600,137 @@ export class ParentalService {
     return (folded.rowCount ?? 0) > 0;
   }
 
-  /** A parent stops supervising a teen; the teen is told. */
+  /** A parent stops supervising a teen, which is also how a parent lets a teen who asked to leave go at once; the teen is told. */
   async stopSupervising(parentId: string, teenId: string, now: Date = new Date()): Promise<{ ended: true }> {
-    const { parent } = await this.end(parentId, teenId, 'parent', now);
+    const parent = await inTransaction(this.pool, async (client) => {
+      await lockPeopleFor(client, 'parental', parentId, teenId);
+      // a request to leave has nothing left to end
+      const ended = await client.query(
+        `UPDATE parental_links SET ended_at = $3, ended_by = 'parent', leave_requested_at = NULL WHERE parent_id = $1 AND teen_id = $2 AND ended_at IS NULL`,
+        [parentId, teenId, now],
+      );
+      if (!ended.rowCount) throw noSuchLink();
+      const parent = await this.account(client, parentId);
+      if (!parent) throw noSuchLink();
+      await recordNotifications(client, [{ userId: teenId, notification: stoppedNotice(parent) }]);
+      return parent;
+    });
     await this.tell(teenId, stoppedNotice(parent));
     return { ended: true };
   }
 
-  /** A teen disconnects a parent; the parent is told in the app and by email, since it is the one change they must not miss. */
-  async disconnectParent(teenId: string, parentId: string, now: Date = new Date()): Promise<{ ended: true }> {
-    const { parent, teen } = await this.end(parentId, teenId, 'teen', now);
-    await this.tell(parentId, disconnectedNotice(teen));
-    await this.email(parent, 'parental-ended', { teen: `@${teen.username}` }, now);
-    return { ended: true };
+  /**
+   * A teen asks to stop a parent's supervision. A teen may always leave, since a parent could be someone they should
+   * not be linked to, but nothing changes for PARENTAL_LEAVE_DAYS, so leaving is no way round tonight's bedtime; the
+   * link then ends the next time either side is read (supervision.ts `endDueLinks`). The parent is told at once, in the
+   * app and by email, and can let them go sooner. Asking again keeps the first time and tells nobody twice.
+   */
+  async requestLeave(teenId: string, parentId: string, now: Date = new Date()): Promise<{ endsAt: string }> {
+    const done = await inTransaction(this.pool, async (client) => {
+      await lockPeopleFor(client, 'parental', parentId, teenId);
+      await endDueLinks(client, 'teen_id', teenId, now);
+      const link = await this.liveLink(client, parentId, teenId);
+      if (link.leave_requested_at) return { endsAt: leaveEndsAt(link.leave_requested_at), told: null };
+      await client.query(`UPDATE parental_links SET leave_requested_at = $3 WHERE parent_id = $1 AND teen_id = $2 AND ended_at IS NULL`, [
+        parentId,
+        teenId,
+        now,
+      ]);
+      const endsAt = leaveEndsAt(now);
+      const teen = (await this.account(client, teenId))!;
+      const parent = (await this.account(client, parentId))!;
+      const notification = leaveAskedNotice(teen, endsAt);
+      await recordNotifications(client, [{ userId: parentId, notification }]);
+      return { endsAt, told: { teen, parent, notification } };
+    });
+    if (done.told) {
+      const { teen, parent, notification } = done.told;
+      await this.tell(parentId, notification);
+      const endsOn = leaveEndsOn(done.endsAt, emailLocaleFor(parent.locale), parent.timezone);
+      await this.email(parent, 'parental-leave-requested', { teen: `@${teen.username}`, endsOn }, now);
+    }
+    return { endsAt: done.endsAt.toISOString() };
+  }
+
+  /** A teen takes back their request to leave, and the parent is told; with no request to take back, nobody is. */
+  async cancelLeave(teenId: string, parentId: string, now: Date = new Date()): Promise<{ kept: true }> {
+    const told = await inTransaction(this.pool, async (client) => {
+      await lockPeopleFor(client, 'parental', parentId, teenId);
+      // one whose days have run has already ended, and is not kept
+      await endDueLinks(client, 'teen_id', teenId, now);
+      const link = await this.liveLink(client, parentId, teenId);
+      if (!link.leave_requested_at) return null;
+      await client.query(`UPDATE parental_links SET leave_requested_at = NULL WHERE parent_id = $1 AND teen_id = $2 AND ended_at IS NULL`, [parentId, teenId]);
+      const notification = leaveKeptNotice((await this.account(client, teenId))!);
+      await recordNotifications(client, [{ userId: parentId, notification }]);
+      return notification;
+    });
+    if (told) await this.tell(parentId, told);
+    return { kept: true };
+  }
+
+  /** The live link between two people, locked for the caller's transaction; 404 when there is none. */
+  private async liveLink(client: Executor, parentId: string, teenId: string): Promise<{ leave_requested_at: Date | null }> {
+    const r = await client.query<{ leave_requested_at: Date | null }>(
+      `SELECT leave_requested_at FROM parental_links WHERE parent_id = $1 AND teen_id = $2 AND ended_at IS NULL FOR UPDATE`,
+      [parentId, teenId],
+    );
+    const link = r.rows[0];
+    if (!link) throw noSuchLink();
+    return link;
   }
 
   /**
-   * Ends a live link under both people's locks, recording the other side's notice with it. 404 when there is no such
-   * link, whoever asks.
+   * The first parent corrects their teen's birth month, once: the teen answered it alone, and a fake older year keeps
+   * fewer protections and ends supervision early. The month must be possible and keep the teen 13 to 17, since a
+   * parent must not close an account by typing a date (support can), and one who says the teen is an adult can stop
+   * supervising instead. A younger age turns analytics off as a first answer would (users/birth-month.ts); the teen is
+   * a minor before and after, so the minor's defaults are in place already. The teen and every other parent are told.
    */
-  private async end(parentId: string, teenId: string, by: 'parent' | 'teen', now: Date): Promise<{ parent: AccountRow; teen: AccountRow }> {
-    return inTransaction(this.pool, async (client) => {
+  async correctBirthMonth(
+    parentId: string,
+    teenId: string,
+    birth: BirthMonth,
+    now: Date = new Date(),
+  ): Promise<{ birthMonth: BirthMonth; birthCorrectable: boolean }> {
+    if (!isPlausibleBirthMonth(birth, now)) throw invalidBirthMonth();
+    const done = await inTransaction(this.pool, async (client) => {
       await lockPeopleFor(client, 'parental', parentId, teenId);
-      const ended = await client.query(
-        `UPDATE parental_links SET ended_at = $3, ended_by = $4 WHERE parent_id = $1 AND teen_id = $2 AND ended_at IS NULL`,
-        [parentId, teenId, now, by],
+      await endDueLinks(client, 'teen_id', teenId, now);
+      const r = await client.query<{ birth_year: number; birth_month: number; birth_corrected_at: Date | null }>(
+        `SELECT u.birth_year, u.birth_month, c.birth_corrected_at
+           FROM parental_controls c JOIN users u ON u.id = c.teen_id
+          WHERE c.teen_id = $1 AND ${minorSql('u')}
+            AND EXISTS (SELECT 1 FROM parental_links l WHERE l.teen_id = c.teen_id AND l.parent_id = $2 AND l.ended_at IS NULL)
+          FOR UPDATE OF c, u`,
+        [teenId, parentId],
       );
-      if (!ended.rowCount) throw noSuchLink();
-      const parent = await this.account(client, parentId);
-      const teen = await this.account(client, teenId);
-      if (!parent || !teen) throw noSuchLink();
-      const told = by === 'parent' ? { userId: teenId, notification: stoppedNotice(parent) } : { userId: parentId, notification: disconnectedNotice(teen) };
-      await recordNotifications(client, [told]);
-      return { parent, teen };
+      const row = r.rows[0];
+      if (!row) throw noSuchLink();
+      const parents = await this.parentsOf(client, teenId);
+      const first = parents[0]!;
+      if (first.userId !== parentId) throw firstParentOnly(refOf(first));
+      if (row.birth_corrected_at) throw birthAlreadyCorrected();
+      if (isBelowMinimumAge(birth, now)) throw birthOutOfRange('under13');
+      if (!isMinor(birth, now)) throw birthOutOfRange('adult');
+      // the month already on record corrects nothing, and leaves the one correction unused
+      if (row.birth_year === birth.year && row.birth_month === birth.month) return { pushes: [], correctable: true };
+
+      await client.query(`UPDATE users SET birth_year = $2, birth_month = $3 WHERE id = $1`, [teenId, birth.year, birth.month]);
+      // Analytics consent below 16 needs a parent's, which POST /me/consent asks for; until then it is off.
+      if (isBelowConsentAge(birth, now)) await client.query(`UPDATE users SET analytics_consent = false WHERE id = $1`, [teenId]);
+      await client.query(`UPDATE parental_controls SET birth_corrected_at = $2, birth_corrected_by = $3 WHERE teen_id = $1`, [teenId, now, parentId]);
+      const teen = (await this.account(client, teenId))!;
+      const parent = (await this.account(client, parentId))!;
+      const pushes: Array<{ userId: string; notification: Notification }> = [
+        { userId: teenId, notification: birthNotice(teen, parent, birth, 'teen') },
+        ...parents.slice(1).map((p) => ({ userId: p.userId, notification: birthNotice(teen, parent, birth, 'parent') })),
+      ];
+      await recordNotifications(client, pushes);
+      return { pushes, correctable: false };
     });
+    for (const { userId, notification } of done.pushes) await this.tell(userId, notification);
+    return { birthMonth: { year: birth.year, month: birth.month }, birthCorrectable: done.correctable };
   }
 
   /** The usage beat (supervision.ts `recordBeat`). */
@@ -578,15 +744,11 @@ export class ParentalService {
   }
 
   /** A parent's email about their teen, to a confirmed address only; best-effort. */
-  private async email(to: AccountRow, template: Extract<EmailTemplate, `parental-${string}`>, vars: Record<string, string>, now: Date): Promise<void> {
-    if (!this.deps.jobs || !to.email || !to.email_verified) return;
+  private async email(to: AccountRow, template: ParentalTemplate, vars: Record<string, string>, now: Date): Promise<void> {
+    const email = parentalEmail(to, template, vars, now);
+    if (!this.deps.jobs || !email) return;
     await this.deps.jobs
-      .enqueue(sendEmailJob, {
-        to: to.email,
-        template,
-        vars: { username: to.username, time: `${now.toISOString().slice(0, 16).replace('T', ' ')} UTC`, ...vars },
-        locale: emailLocaleFor(to.locale),
-      })
+      .enqueue(sendEmailJob, email)
       .catch((err: unknown) => this.deps.log?.warn({ err, template }, 'a parental controls email could not be queued'));
   }
 }
@@ -594,6 +756,11 @@ export class ParentalService {
 /** A person without when they connected. */
 function refOf(p: PersonRef): PersonRef {
   return { userId: p.userId, username: p.username, displayName: p.displayName, avatarUrl: p.avatarUrl };
+}
+
+/** When a link's leave ends it, as the apps are told, or null when the teen has not asked. */
+function leaveEndOf(requestedAt: Date | null): string | null {
+  return requestedAt ? leaveEndsAt(requestedAt).toISOString() : null;
 }
 
 /** Whether two sets of controls say the same. */

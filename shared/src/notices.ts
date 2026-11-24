@@ -30,12 +30,15 @@ const BY_KIND: Readonly<Record<string, Exclude<NoticeFilter, 'all'>>> = {
   group_request_declined: 'people',
   group_removed: 'people',
   group_banned: 'people',
-  // A parent and a teen connecting, parting, a second parent joining, a parent changing the limits, or the teen's time zone moving.
+  // A parent and a teen connecting, parting, a second parent joining, a parent changing the limits, the teen's time zone
+  // moving, the teen asking to leave or staying after all, or the first parent correcting the teen's birth month.
   parental_connected: 'people',
   parental_ended: 'people',
   parental_changed: 'people',
   parental_parent_added: 'people',
   parental_zone: 'people',
+  parental_leave: 'people',
+  parental_birth: 'people',
   badge: 'progress',
   league_safe: 'progress',
   league_promotion: 'progress',

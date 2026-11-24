@@ -1,12 +1,23 @@
 /**
  * Parental controls against real Postgres and Redis, through the routes the apps call: who may be a parent or a teen,
- * codes and connecting with every refusal, the caps, ending from either side, the 18th birthday, the usage beat, the
- * week a parent sees, the notices and the email, and the data export and erasure.
+ * codes and connecting with every refusal, the caps, a parent stopping, a teen's request to leave and its seven days,
+ * the 18th birthday, the first parent's one correction of the birth month, the usage beat, the week a parent sees, the
+ * notices and the emails, and the data export and erasure.
  */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { MAX_PARENTS_PER_TEEN, MAX_TEENS_PER_PARENT, OPEN_CONTROLS, PARENT_CODE_ALPHABET, PARENT_CODE_LENGTH, addDays, formatParentCode, localDay } from '@kurda/shared';
+import {
+  MAX_PARENTS_PER_TEEN,
+  MAX_TEENS_PER_PARENT,
+  OPEN_CONTROLS,
+  PARENT_CODE_ALPHABET,
+  PARENT_CODE_LENGTH,
+  PARENTAL_LEAVE_DAYS,
+  addDays,
+  formatParentCode,
+  localDay,
+} from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { issueAccessToken } from '../auth/tokens.js';
@@ -55,7 +66,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('parental controls (integration)', 
   const adult = () => person(35);
   const teen = (timezone?: string) => person(15, { timezone });
 
-  const call = (who: Person, method: 'GET' | 'POST' | 'PATCH' | 'DELETE', url: string, payload?: Record<string, unknown>) =>
+  const call = (who: Person, method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', url: string, payload?: Record<string, unknown>) =>
     app.inject({ method, url, payload, headers: { authorization: `Bearer ${who.token}` }, remoteAddress: ip() });
 
   const codeFor = async (parent: Person): Promise<string> => {
@@ -71,7 +82,27 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('parental controls (integration)', 
   const notices = async (userId: string, kind: string) =>
     (await pool.query<{ data: Record<string, string> }>(`SELECT data FROM notifications WHERE user_id = $1 AND data->>'kind' = $2 ORDER BY created_at`, [userId, kind])).rows;
   const link = async (parentId: string, teenId: string) =>
-    (await pool.query<{ ended_at: Date | null; ended_by: string | null }>(`SELECT ended_at, ended_by FROM parental_links WHERE parent_id = $1 AND teen_id = $2 ORDER BY created_at DESC LIMIT 1`, [parentId, teenId])).rows[0];
+    (
+      await pool.query<{ ended_at: Date | null; ended_by: string | null; leave_requested_at: Date | null }>(
+        `SELECT ended_at, ended_by, leave_requested_at FROM parental_links WHERE parent_id = $1 AND teen_id = $2 ORDER BY created_at DESC LIMIT 1`,
+        [parentId, teenId],
+      )
+    ).rows[0];
+  /** The parental emails queued to someone, by template. */
+  const mailTo = async (userId: string, template: string) => {
+    const address = (await pool.query<{ email: string }>(`SELECT email FROM users WHERE id = $1`, [userId])).rows[0]!.email;
+    const jobs = await app.jobs!.raw.getJobs(['waiting', 'delayed', 'prioritized', 'completed', 'failed']);
+    return jobs.filter((j) => j.name === SEND_EMAIL_JOB_NAME && j.data.template === template && j.data.to === address);
+  };
+  /** The minutes a request to leave takes to end the link. */
+  const LEAVE_MINUTES = PARENTAL_LEAVE_DAYS * 24 * 60;
+  /** Moves a teen's request to leave a parent back by `minutes`, as if asked then. */
+  const askedAgo = (parentId: string, teenId: string, minutes: number) =>
+    pool.query(`UPDATE parental_links SET leave_requested_at = now() - make_interval(mins => $3) WHERE parent_id = $1 AND teen_id = $2 AND ended_at IS NULL`, [
+      parentId,
+      teenId,
+      minutes,
+    ]);
 
   beforeAll(async () => {
     app = buildApp(config);
@@ -203,7 +234,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('parental controls (integration)', 
       const lookedUp = await call(t, 'POST', '/me/parental/lookup', { code: await codeFor(parent) });
       expect(lookedUp.statusCode).toBe(200);
       const connected = await connect(parent, t);
-      expect(connected.parents).toEqual([expect.objectContaining({ userId: parent.id, username: parent.username, since: expect.any(String) })]);
+      expect(connected.parents).toEqual([
+        expect.objectContaining({ userId: parent.id, username: parent.username, since: expect.any(String), leaveEndsAt: null }),
+      ]);
       expect(connected.supervision).toEqual({ controls: OPEN_CONTROLS, minutesToday: 0, timeZone: 'Europe/Istanbul', paused: null, resumesAt: null });
 
       const told = await notices(parent.id, 'parental_connected');
@@ -213,7 +246,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('parental controls (integration)', 
       const overview = (await call(parent, 'GET', '/me/parental')).json();
       expect(overview).toEqual({
         role: 'parent',
-        teens: [{ teen: expect.objectContaining({ userId: t.id }), since: expect.any(String), today: { minutes: 0, lessons: 0 } }],
+        teens: [{ teen: expect.objectContaining({ userId: t.id }), since: expect.any(String), today: { minutes: 0, lessons: 0 }, leaveEndsAt: null }],
       });
       // and an adult's account carries none
       expect((await call(parent, 'GET', '/me')).json().user.supervision).toBeNull();
@@ -305,16 +338,33 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('parental controls (integration)', 
         canLoosen: true,
         streak: 0,
         parents: [expect.objectContaining({ userId: parent.id, first: true }), expect.objectContaining({ userId: second.id, first: false })],
+        leaveEndsAt: null,
+        birthMonth: { year: bornYearsAgo(15).birthYear, month: bornYearsAgo(15).birthMonth },
+        birthCorrectable: true,
       });
-      expect(Object.keys(page.json()).sort()).toEqual(['canLoosen', 'controls', 'parents', 'since', 'streak', 'teen', 'timeZone', 'week']);
-      expect((await call(second, 'GET', `/me/parental/teens/${t.id}`)).json().canLoosen).toBe(false);
+      expect(Object.keys(page.json()).sort()).toEqual([
+        'birthCorrectable',
+        'birthMonth',
+        'canLoosen',
+        'controls',
+        'leaveEndsAt',
+        'parents',
+        'since',
+        'streak',
+        'teen',
+        'timeZone',
+        'week',
+      ]);
+      expect((await call(second, 'GET', `/me/parental/teens/${t.id}`)).json()).toMatchObject({ canLoosen: false, birthCorrectable: false });
 
       const nobody = '00000000-0000-4000-8000-000000000000';
       const strangerAttempts = [
         await call(other, 'GET', `/me/parental/teens/${t.id}`),
         await call(other, 'PATCH', `/me/parental/teens/${t.id}/controls`, { chat: false }),
         await call(other, 'DELETE', `/me/parental/teens/${t.id}`),
-        await call(t, 'DELETE', `/me/parental/parents/${other.id}`),
+        await call(other, 'PUT', `/me/parental/teens/${t.id}/birth-month`, bornYearsAgo(14)),
+        await call(t, 'POST', `/me/parental/parents/${other.id}/leave`),
+        await call(t, 'DELETE', `/me/parental/parents/${other.id}/leave`),
         await call(t, 'GET', `/me/parental/teens/${t.id}`),
       ];
       const unknown = await call(other, 'GET', `/me/parental/teens/${nobody}`);
@@ -409,22 +459,6 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('parental controls (integration)', 
       expect((await call(parent, 'DELETE', `/me/parental/teens/${t.id}`)).statusCode).toBe(404);
     });
 
-    it('lets a teen disconnect a parent, who is told in the app and by email', async () => {
-      const parent = await adult();
-      const t = await teen();
-      await connect(parent, t);
-      const res = await call(t, 'DELETE', `/me/parental/parents/${parent.id}`);
-      expect(res.json()).toEqual({ ended: true });
-      expect(await link(parent.id, t.id)).toMatchObject({ ended_by: 'teen' });
-      expect(await notices(parent.id, 'parental_ended')).toEqual([{ data: expect.objectContaining({ by: 'teen', teenId: t.id }) }]);
-      const jobs = await app.jobs!.raw.getJobs(['waiting', 'delayed', 'prioritized', 'completed', 'failed']);
-      const address = (await pool.query<{ email: string }>(`SELECT email FROM users WHERE id = $1`, [parent.id])).rows[0]!.email;
-      const mail = jobs.filter((j) => j.name === SEND_EMAIL_JOB_NAME && j.data.template === 'parental-ended' && j.data.to === address);
-      expect(mail).toHaveLength(1);
-      expect(mail[0]!.data.vars).toMatchObject({ username: parent.username, teen: `@${t.username}` });
-      expect((await call(t, 'GET', '/me')).json().user.supervision).toBeNull();
-    });
-
     it('ends supervision on the 18th birthday, the first time it is read, and tells both sides', async () => {
       const parent = await adult();
       const other = await adult();
@@ -451,6 +485,258 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('parental controls (integration)', 
       await pool.query(`UPDATE users SET birth_year = $2, birth_month = $3 WHERE id = $1`, [t.id, grown.birthYear, grown.birthMonth]);
       expect((await call(parent, 'GET', '/me/parental')).json().teens).toEqual([]);
       expect(await link(parent.id, t.id)).toMatchObject({ ended_by: 'age' });
+    });
+  });
+
+  describe('a teen leaving', () => {
+    it('asks once and keeps the first time, tells the parent in the app and by email, and shows when it ends to both', async () => {
+      const parent = await adult();
+      const t = await teen();
+      await connect(parent, t);
+      const asked = await call(t, 'POST', `/me/parental/parents/${parent.id}/leave`);
+      expect(asked.statusCode, asked.body).toBe(200);
+      const { endsAt } = asked.json() as { endsAt: string };
+      expect(Object.keys(asked.json())).toEqual(['endsAt']);
+      expect(Math.abs(new Date(endsAt).getTime() - Date.now() - PARENTAL_LEAVE_DAYS * 86_400_000)).toBeLessThan(60_000);
+
+      // asked again a minute later: the first time stands, and nobody is told twice
+      await pool.query(`UPDATE parental_links SET leave_requested_at = leave_requested_at - interval '1 minute' WHERE teen_id = $1`, [t.id]);
+      const kept = new Date(new Date(endsAt).getTime() - 60_000).toISOString();
+      const again = await call(t, 'POST', `/me/parental/parents/${parent.id}/leave`);
+      expect(again.json()).toEqual({ endsAt: kept });
+
+      expect(await notices(parent.id, 'parental_leave')).toEqual([
+        { data: expect.objectContaining({ kind: 'parental_leave', state: 'asked', teenId: t.id, teenUsername: t.username, endsAt }) },
+      ]);
+      const mail = await mailTo(parent.id, 'parental-leave-requested');
+      expect(mail).toHaveLength(1);
+      // the date as an English reader says it, where the parent is
+      const endsOn = expect.stringMatching(/^\d{1,2} [A-Z][a-z]+ \d{4}$/);
+      expect(mail[0]!.data.vars).toMatchObject({ username: parent.username, teen: `@${t.username}`, endsOn });
+
+      expect((await call(t, 'GET', '/me/parental')).json().parents).toEqual([expect.objectContaining({ userId: parent.id, leaveEndsAt: kept })]);
+      expect((await call(parent, 'GET', '/me/parental')).json().teens).toEqual([expect.objectContaining({ leaveEndsAt: kept })]);
+      expect((await call(parent, 'GET', `/me/parental/teens/${t.id}`)).json().leaveEndsAt).toBe(kept);
+    });
+
+    it('keeps every control in force for the seven days', async () => {
+      const parent = await adult();
+      const t = await teen();
+      await connect(parent, t);
+      await call(parent, 'PATCH', `/me/parental/teens/${t.id}/controls`, { chat: false });
+      await call(t, 'POST', `/me/parental/parents/${parent.id}/leave`);
+      // an hour before the seventh day is out
+      await askedAgo(parent.id, t.id, LEAVE_MINUTES - 60);
+      const refused = await call(t, 'POST', '/groups', { name: 'Koma me' });
+      expect(refused.statusCode, refused.body).toBe(403);
+      expect(refused.json()).toMatchObject({ code: 'PARENTAL_BLOCKED', details: { control: 'chat' } });
+      expect((await call(t, 'GET', '/me')).json().user.supervision.controls.chat).toBe(false);
+      expect(await link(parent.id, t.id)).toMatchObject({ ended_at: null });
+      // and the parent can still change them
+      expect((await call(parent, 'PATCH', `/me/parental/teens/${t.id}/controls`, { games: false })).statusCode).toBe(200);
+    });
+
+    it('lets the teen stay connected, telling the parent, and tells nobody when there was nothing to take back', async () => {
+      const parent = await adult();
+      const t = await teen();
+      await connect(parent, t);
+      await call(t, 'POST', `/me/parental/parents/${parent.id}/leave`);
+      const stay = await call(t, 'DELETE', `/me/parental/parents/${parent.id}/leave`);
+      expect(stay.statusCode, stay.body).toBe(200);
+      expect(stay.json()).toEqual({ kept: true });
+      expect(await link(parent.id, t.id)).toMatchObject({ ended_at: null, leave_requested_at: null });
+      expect((await notices(parent.id, 'parental_leave')).map((n) => n.data.state)).toEqual(['asked', 'kept']);
+      const stayed = (await notices(parent.id, 'parental_leave'))[1]!.data;
+      expect(stayed).toMatchObject({ kind: 'parental_leave', state: 'kept', teenId: t.id, teenUsername: t.username });
+      expect((await call(t, 'GET', '/me/parental')).json().parents[0].leaveEndsAt).toBeNull();
+      expect((await call(t, 'DELETE', `/me/parental/parents/${parent.id}/leave`)).json()).toEqual({ kept: true });
+      expect(await notices(parent.id, 'parental_leave')).toHaveLength(2);
+    });
+
+    it('ends the link at day seven on the teen’s next read, and tells both sides as a disconnect does', async () => {
+      const parent = await adult();
+      const t = await teen();
+      await connect(parent, t);
+      await call(t, 'POST', `/me/parental/parents/${parent.id}/leave`);
+      // a minute past the seventh day
+      await askedAgo(parent.id, t.id, LEAVE_MINUTES + 1);
+      expect((await call(t, 'GET', '/me')).json().user.supervision).toBeNull();
+      expect(await link(parent.id, t.id)).toMatchObject({ ended_by: 'teen', ended_at: expect.any(Date) });
+      expect(await notices(parent.id, 'parental_ended')).toEqual([{ data: expect.objectContaining({ by: 'teen', teenId: t.id, teenUsername: t.username }) }]);
+      expect(await notices(t.id, 'parental_ended')).toEqual([
+        { data: expect.objectContaining({ by: 'teen', parentId: parent.id, parentUsername: parent.username }) },
+      ]);
+      // a read ends it outside any transaction, so the email is queued just after the answer
+      const mail = await vi.waitFor(async () => {
+        const queued = await mailTo(parent.id, 'parental-ended');
+        expect(queued).toHaveLength(1);
+        return queued;
+      });
+      expect(mail[0]!.data.vars).toMatchObject({ username: parent.username, teen: `@${t.username}` });
+      // read again by both: told once
+      expect((await call(t, 'GET', '/me/parental')).json()).toEqual({ role: 'teen', parents: [], supervision: null });
+      expect((await call(parent, 'GET', '/me/parental')).json().teens).toEqual([]);
+      expect(await notices(parent.id, 'parental_ended')).toHaveLength(1);
+      expect(await notices(t.id, 'parental_ended')).toHaveLength(1);
+      expect(await mailTo(parent.id, 'parental-ended')).toHaveLength(1);
+      // and it can no longer be taken back
+      expect((await call(t, 'DELETE', `/me/parental/parents/${parent.id}/leave`)).statusCode).toBe(404);
+    });
+
+    it('ends it on the parent’s next read just the same, and leaves the other parent’s supervision in place', async () => {
+      const parent = await adult();
+      const other = await adult();
+      const t = await teen();
+      await connect(parent, t);
+      await connect(other, t);
+      await call(t, 'POST', `/me/parental/parents/${parent.id}/leave`);
+      await askedAgo(parent.id, t.id, LEAVE_MINUTES + 24 * 60);
+      expect((await call(parent, 'GET', `/me/parental/teens/${t.id}`)).statusCode).toBe(404);
+      expect(await link(parent.id, t.id)).toMatchObject({ ended_by: 'teen' });
+      expect(await notices(parent.id, 'parental_ended')).toEqual([{ data: expect.objectContaining({ by: 'teen', teenId: t.id }) }]);
+      expect(await notices(t.id, 'parental_ended')).toEqual([{ data: expect.objectContaining({ by: 'teen', parentId: parent.id }) }]);
+      await vi.waitFor(async () => expect(await mailTo(parent.id, 'parental-ended')).toHaveLength(1));
+      expect(await link(other.id, t.id)).toMatchObject({ ended_at: null });
+      expect((await call(t, 'GET', '/me')).json().user.supervision).not.toBeNull();
+      // the other parent is now the first, and may loosen
+      expect((await call(other, 'GET', `/me/parental/teens/${t.id}`)).json()).toMatchObject({ canLoosen: true, parents: [{ userId: other.id, first: true }] });
+    });
+
+    it('lets the parent let the teen go at once, which ends the request with the link', async () => {
+      const parent = await adult();
+      const t = await teen();
+      await connect(parent, t);
+      await call(t, 'POST', `/me/parental/parents/${parent.id}/leave`);
+      expect((await call(parent, 'DELETE', `/me/parental/teens/${t.id}`)).json()).toEqual({ ended: true });
+      expect(await link(parent.id, t.id)).toMatchObject({ ended_by: 'parent', leave_requested_at: null });
+      expect(await notices(t.id, 'parental_ended')).toEqual([{ data: expect.objectContaining({ by: 'parent', parentId: parent.id }) }]);
+      expect((await call(t, 'GET', '/me')).json().user.supervision).toBeNull();
+      expect((await call(t, 'POST', `/me/parental/parents/${parent.id}/leave`)).statusCode).toBe(404);
+    });
+
+    it('answers a stranger and an unknown id with the same 404, and the instant disconnect is gone', async () => {
+      const parent = await adult();
+      const stranger = await adult();
+      const t = await teen();
+      await connect(parent, t);
+      const nobody = '00000000-0000-4000-8000-000000000000';
+      const unknown = await call(t, 'POST', `/me/parental/parents/${nobody}/leave`);
+      expect(unknown.statusCode).toBe(404);
+      for (const res of [
+        await call(t, 'POST', `/me/parental/parents/${stranger.id}/leave`),
+        await call(t, 'DELETE', `/me/parental/parents/${nobody}/leave`),
+        await call(stranger, 'POST', `/me/parental/parents/${parent.id}/leave`),
+        await call(parent, 'POST', `/me/parental/parents/${t.id}/leave`),
+      ]) {
+        expect(res.statusCode).toBe(404);
+        expect(res.json()).toMatchObject({ code: unknown.json().code, message: unknown.json().message });
+      }
+      expect((await call(t, 'DELETE', `/me/parental/parents/${parent.id}`)).statusCode).toBe(404);
+      expect(app.hasRoute({ method: 'DELETE', url: '/me/parental/parents/:parentId' })).toBe(false);
+      expect(await link(parent.id, t.id)).toMatchObject({ ended_at: null, leave_requested_at: null });
+      expect(await notices(parent.id, 'parental_leave')).toEqual([]);
+    });
+  });
+
+  describe('correcting the birth month', () => {
+    const url = (t: Person) => `/me/parental/teens/${t.id}/birth-month`;
+
+    it('lets the first parent correct it once, telling the teen and every other parent', async () => {
+      const first = await adult();
+      const second = await adult();
+      const t = await teen();
+      await connect(first, t);
+      await connect(second, t);
+      const younger = bornYearsAgo(14);
+      const res = await call(first, 'PUT', url(t), younger);
+      expect(res.statusCode, res.body).toBe(200);
+      expect(res.json()).toEqual({ birthMonth: { year: younger.birthYear, month: younger.birthMonth }, birthCorrectable: false });
+      const stored = await pool.query(`SELECT birth_year, birth_month FROM users WHERE id = $1`, [t.id]);
+      expect(stored.rows[0]).toEqual({ birth_year: younger.birthYear, birth_month: younger.birthMonth });
+      expect((await pool.query(`SELECT birth_corrected_at, birth_corrected_by FROM parental_controls WHERE teen_id = $1`, [t.id])).rows[0]).toEqual({
+        birth_corrected_at: expect.any(Date),
+        birth_corrected_by: first.id,
+      });
+      const said = { birthYear: String(younger.birthYear), birthMonth: String(younger.birthMonth) };
+      expect(await notices(t.id, 'parental_birth')).toEqual([
+        { data: expect.objectContaining({ kind: 'parental_birth', parentId: first.id, parentUsername: first.username, ...said }) },
+      ]);
+      expect(await notices(second.id, 'parental_birth')).toEqual([
+        { data: expect.objectContaining({ kind: 'parental_birth', teenId: t.id, teenUsername: t.username, teenName: expect.any(String), ...said }) },
+      ]);
+      expect(await notices(first.id, 'parental_birth')).toEqual([]);
+      expect((await call(first, 'GET', `/me/parental/teens/${t.id}`)).json()).toMatchObject({
+        birthMonth: { year: younger.birthYear, month: younger.birthMonth },
+        birthCorrectable: false,
+      });
+
+      const again = await call(first, 'PUT', url(t), bornYearsAgo(15));
+      expect(again.statusCode).toBe(409);
+      expect(again.json().code).toBe('PARENTAL_BIRTH_ALREADY_CORRECTED');
+      // and it stays used once that parent has gone and another is first
+      await call(first, 'DELETE', `/me/parental/teens/${t.id}`);
+      expect((await call(second, 'GET', `/me/parental/teens/${t.id}`)).json()).toMatchObject({ canLoosen: true, birthCorrectable: false });
+      expect((await call(second, 'PUT', url(t), bornYearsAgo(15))).json().code).toBe('PARENTAL_BIRTH_ALREADY_CORRECTED');
+      // the export says when, and the teen knows who from the notice
+      const doc = (await new GdprService(pool).buildExport(t.id)).parentalControls as { controls: Record<string, unknown> };
+      expect(doc.controls.birthCorrectedAt).toEqual(expect.any(Date));
+    });
+
+    it('refuses a second parent, naming the first', async () => {
+      const first = await adult();
+      const second = await adult();
+      const t = await teen();
+      await connect(first, t);
+      await connect(second, t);
+      const res = await call(second, 'PUT', url(t), bornYearsAgo(14));
+      expect(res.statusCode).toBe(403);
+      expect(res.json()).toMatchObject({ code: 'PARENTAL_FIRST_PARENT_ONLY', details: { parent: { userId: first.id, username: first.username } } });
+      expect((await pool.query(`SELECT birth_corrected_at FROM parental_controls WHERE teen_id = $1`, [t.id])).rows[0]).toEqual({ birth_corrected_at: null });
+    });
+
+    it('keeps the teen 13 to 17, and refuses a month that cannot be', async () => {
+      const parent = await adult();
+      const t = await teen();
+      await connect(parent, t);
+      for (const [birth, reason] of [
+        [bornYearsAgo(12), 'under13'],
+        [bornYearsAgo(18), 'adult'],
+        [bornYearsAgo(40), 'adult'],
+      ] as const) {
+        const res = await call(parent, 'PUT', url(t), birth);
+        expect(res.statusCode, reason).toBe(422);
+        expect(res.json(), reason).toMatchObject({ code: 'PARENTAL_BIRTH_OUT_OF_RANGE', details: { reason } });
+      }
+      const future = await call(parent, 'PUT', url(t), { birthYear: new Date().getUTCFullYear() + 1, birthMonth: 1 });
+      expect(future.statusCode).toBe(400);
+      expect(future.json().code).toBe('INVALID_BIRTH_MONTH');
+      expect((await call(parent, 'PUT', url(t), { birthYear: 2011, birthMonth: 13 })).statusCode).toBe(400);
+      // none of it used the one correction, or touched the account
+      expect((await call(parent, 'GET', `/me/parental/teens/${t.id}`)).json()).toMatchObject({
+        birthCorrectable: true,
+        birthMonth: { year: bornYearsAgo(15).birthYear, month: bornYearsAgo(15).birthMonth },
+      });
+      expect(await notices(t.id, 'parental_birth')).toEqual([]);
+    });
+
+    it('still never lets the teen set their own birth month again', async () => {
+      const parent = await adult();
+      const t = await teen();
+      await connect(parent, t);
+      await call(parent, 'PUT', url(t), bornYearsAgo(14));
+      const own = await call(t, 'POST', '/me/birth-date', bornYearsAgo(17));
+      expect(own.statusCode).toBe(409);
+      expect(own.json().code).toBe('BIRTH_DATE_ALREADY_SET');
+      expect((await call(t, 'PUT', url(t), bornYearsAgo(17))).statusCode).toBe(404);
+    });
+
+    it('turns analytics consent off when the corrected age is below the age of consent', async () => {
+      const parent = await adult();
+      const t = await person(16);
+      await pool.query(`UPDATE users SET analytics_consent = true WHERE id = $1`, [t.id]);
+      await connect(parent, t);
+      expect((await call(parent, 'PUT', url(t), bornYearsAgo(14))).statusCode).toBe(200);
+      expect((await pool.query(`SELECT analytics_consent FROM users WHERE id = $1`, [t.id])).rows[0]).toEqual({ analytics_consent: false });
     });
   });
 
@@ -590,9 +876,11 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('parental controls (integration)', 
       const gdpr = new GdprService(pool);
       const teenDoc = (await gdpr.buildExport(t.id)).parentalControls as Record<string, unknown>;
       expect(teenDoc).toMatchObject({
-        parents: [{ username: parent.username, displayName: expect.any(String), since: expect.any(Date), endedAt: null, endedBy: null }],
+        parents: [
+          { username: parent.username, displayName: expect.any(String), since: expect.any(Date), leaveRequestedAt: null, endedAt: null, endedBy: null },
+        ],
         teens: [],
-        controls: { ...OPEN_CONTROLS, posts: false, timeZone: 'UTC' },
+        controls: { ...OPEN_CONTROLS, posts: false, timeZone: 'UTC', birthCorrectedAt: null },
         minutesByDay: [{ day: localDay(new Date(), 'UTC'), minutes: 1 }],
       });
       const parentDoc = (await gdpr.buildExport(parent.id)).parentalControls as Record<string, unknown>;

@@ -4,15 +4,21 @@ import { setModerationKey } from '../moderation/pseudonym.js';
 import { DEV_JWT_SECRET } from '../config/env.js';
 import { controlsPatchSchema } from './routes.js';
 import { hashParentCode, loosens, makeParentCode, mayBeParent, mayBeTeen, roleOf, type AccountRow } from './service.js';
-import { controlsOf, noticeSwitch, requireParental, routeParentalSwitch, stateOf } from './supervision.js';
+import { controlsOf, leaveEndsAt, noticeSwitch, requireParental, routeParentalSwitch, stateOf } from './supervision.js';
 import {
   barredNotice,
+  birthNotice,
   changedNotice,
   connectedNotice,
   disconnectedNotice,
   grownUpParentNotice,
   grownUpTeenNotice,
+  leaveAskedNotice,
+  leaveEndsOn,
+  leaveKeptNotice,
+  leftNotice,
   parentAddedNotice,
+  parentalEmail,
   stoppedNotice,
   zoneNotice,
 } from './notices.js';
@@ -188,6 +194,11 @@ describe('notices', () => {
     changedNotice(teen, parent, 'teen'),
     changedNotice(teen, parent, 'parent'),
     zoneNotice(teen, 'Asia/Baghdad'),
+    leftNotice(parent),
+    leaveAskedNotice(teen, new Date('2026-12-01T12:00:00Z')),
+    leaveKeptNotice(teen),
+    birthNotice(teen, parent, { year: 2011, month: 3 }, 'teen'),
+    birthNotice(teen, parent, { year: 2011, month: 3 }, 'parent'),
   ];
 
   it('files each under people with its kind, and names the other side by display name or username', () => {
@@ -202,6 +213,61 @@ describe('notices', () => {
     expect(zoneNotice(teen, 'Asia/Baghdad')).toMatchObject({ data: { kind: 'parental_zone', teenId: 't1', timeZone: 'Asia/Baghdad' } });
     expect(stoppedNotice(parent).body).toContain('Rojda');
     expect(changedNotice(teen, parent, 'parent').body).toContain('dilan');
+  });
+
+  it('tells a parent when a teen asks to leave and when they stay, and the teen when their leave has ended it', () => {
+    expect(leaveAskedNotice(teen, new Date('2026-12-01T12:00:00Z'))).toMatchObject({
+      category: 'friends',
+      body: 'dilan asked to stop supervision. It ends on 1 December 2026.',
+      data: { kind: 'parental_leave', state: 'asked', teenId: 't1', teenName: 'dilan', teenUsername: 'dilan', endsAt: '2026-12-01T12:00:00.000Z' },
+    });
+    expect(leaveKeptNotice(teen)).toMatchObject({ body: 'dilan chose to stay connected.', data: { kind: 'parental_leave', state: 'kept', teenId: 't1' } });
+    expect(leftNotice(parent)).toMatchObject({ data: { kind: 'parental_ended', by: 'teen', parentId: 'p1', parentName: 'Rojda' } });
+    expect(leftNotice(parent).data).not.toHaveProperty('teenId');
+  });
+
+  it('tells the teen who corrected their birth month and where to go if it is wrong, and another parent whose it was', () => {
+    const toTeen = birthNotice(teen, parent, { year: 2011, month: 3 }, 'teen');
+    expect(toTeen).toMatchObject({
+      body: 'Rojda corrected your birth month to March 2011. If this is wrong, write to support.',
+      data: { kind: 'parental_birth', to: 'teen', parentId: 'p1', parentName: 'Rojda', parentUsername: 'rojda', birthYear: '2011', birthMonth: '3' },
+    });
+    expect(toTeen.data).not.toHaveProperty('teenId');
+    expect(birthNotice(teen, parent, { year: 2011, month: 3 }, 'parent')).toMatchObject({
+      body: 'Rojda corrected dilan’s birth month to March 2011.',
+      data: {
+        kind: 'parental_birth',
+        to: 'parent',
+        teenId: 't1',
+        teenName: 'dilan',
+        teenUsername: 'dilan',
+        parentId: 'p1',
+        birthYear: '2011',
+        birthMonth: '3',
+      },
+    });
+  });
+
+  it('ends a leave seven whole days after it was asked, and dates it for each reader', () => {
+    expect(leaveEndsAt(new Date('2026-11-24T21:30:00Z')).toISOString()).toBe('2026-12-01T21:30:00.000Z');
+    const at = new Date('2026-12-01T21:30:00Z');
+    expect(leaveEndsOn(at, 'en', 'Europe/London')).toBe('1 December 2026');
+    // already the next day where the parent is
+    expect(leaveEndsOn(at, 'en', 'Asia/Baghdad')).toBe('2 December 2026');
+    expect(leaveEndsOn(at, 'ku', 'Asia/Baghdad')).toBe('02.12.2026');
+    expect(leaveEndsOn(at, 'ku', 'Nowhere/Place')).toBe('01.12.2026');
+  });
+
+  it('emails a parent only at a confirmed address, in their language', () => {
+    const to = { username: 'rojda', email: 'someone@example.org', email_verified: true, locale: 'ku' };
+    expect(parentalEmail(to, 'parental-leave-requested', { teen: '@dilan', endsOn: '01.12.2026' }, NOW)).toEqual({
+      to: 'someone@example.org',
+      template: 'parental-leave-requested',
+      vars: { username: 'rojda', time: '2026-11-24 12:00 UTC', teen: '@dilan', endsOn: '01.12.2026' },
+      locale: 'ku',
+    });
+    expect(parentalEmail({ ...to, email_verified: false }, 'parental-ended', {}, NOW)).toBeNull();
+    expect(parentalEmail({ ...to, email: null }, 'parental-ended', {}, NOW)).toBeNull();
   });
 
   it('never says why a parent’s account was barred', () => {

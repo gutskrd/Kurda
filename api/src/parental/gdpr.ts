@@ -6,13 +6,22 @@ export const USAGE_KEPT_DAYS = 35;
 
 /**
  * Parental controls in a data export (Art. 15): the person's links in both directions with the other side by name
- * only, when each began and ended and who ended it; their controls as a teen; and their minutes by day. Codes are kept
- * only as keyed hashes, which would mean nothing to them.
+ * only, when each began, when the teen asked to leave, and when it ended and who ended it; their controls as a teen,
+ * with when their birth month was corrected; and their minutes by day. Who corrected it the teen was told by notice.
+ * Codes are kept only as keyed hashes, which would mean nothing to them.
  */
 export async function exportParental(db: Executor, userId: string): Promise<Record<string, unknown>> {
-  const links = await db.query<{ mine_as: 'parent' | 'teen'; username: string; display_name: string | null; since: Date; ended_at: Date | null; ended_by: string | null }>(
+  const links = await db.query<{
+    mine_as: 'parent' | 'teen';
+    username: string;
+    display_name: string | null;
+    since: Date;
+    leave_requested_at: Date | null;
+    ended_at: Date | null;
+    ended_by: string | null;
+  }>(
     `SELECT CASE WHEN l.parent_id = $1 THEN 'parent' ELSE 'teen' END AS mine_as, o.username, o.display_name,
-            l.created_at AS since, l.ended_at, l.ended_by
+            l.created_at AS since, l.leave_requested_at, l.ended_at, l.ended_by
        FROM parental_links l
        JOIN users o ON o.id = CASE WHEN l.parent_id = $1 THEN l.teen_id ELSE l.parent_id END
       WHERE l.parent_id = $1 OR l.teen_id = $1
@@ -22,22 +31,36 @@ export async function exportParental(db: Executor, userId: string): Promise<Reco
   const named = (as: 'parent' | 'teen') =>
     links.rows
       .filter((l) => l.mine_as === as)
-      .map((l) => ({ username: l.username, displayName: l.display_name, since: l.since, endedAt: l.ended_at, endedBy: l.ended_by }));
-  const controls = await db.query<ControlsRow & { updated_at: Date }>(`SELECT ${CONTROL_COLUMNS}, c.updated_at FROM parental_controls c WHERE c.teen_id = $1`, [userId]);
+      .map((l) => ({
+        username: l.username,
+        displayName: l.display_name,
+        since: l.since,
+        leaveRequestedAt: l.leave_requested_at,
+        endedAt: l.ended_at,
+        endedBy: l.ended_by,
+      }));
+  const controls = await db.query<ControlsRow & { updated_at: Date; birth_corrected_at: Date | null }>(
+    `SELECT ${CONTROL_COLUMNS}, c.updated_at, c.birth_corrected_at FROM parental_controls c WHERE c.teen_id = $1`,
+    [userId],
+  );
   const row = controls.rows[0];
   const usage = await db.query(`SELECT day::text AS day, minutes FROM parental_usage WHERE teen_id = $1 ORDER BY day`, [userId]);
   return {
     // the parents connected to them, and the teens they look after
     parents: named('teen'),
     teens: named('parent'),
-    controls: row ? { ...controlsOf(row), timeZone: row.time_zone, updatedAt: row.updated_at } : null,
+    controls: row ? { ...controlsOf(row), timeZone: row.time_zone, updatedAt: row.updated_at, birthCorrectedAt: row.birth_corrected_at } : null,
     minutesByDay: usage.rows,
   };
 }
 
-/** Erasing an account ends its links by removing them, with its code, its controls and its minutes. */
+/**
+ * Erasing an account ends its links by removing them, with its code, its controls and its minutes. A parent's name
+ * comes off a birth month they corrected, which stays corrected; the account is anonymised, so SET NULL never runs.
+ */
 export async function eraseParental(db: Executor, userId: string): Promise<void> {
   await db.query(`DELETE FROM parental_links WHERE parent_id = $1 OR teen_id = $1`, [userId]);
+  await db.query(`UPDATE parental_controls SET birth_corrected_by = NULL WHERE birth_corrected_by = $1`, [userId]);
   await db.query(`DELETE FROM parental_codes WHERE parent_id = $1`, [userId]);
   await db.query(`DELETE FROM parental_usage WHERE teen_id = $1`, [userId]);
   await db.query(`DELETE FROM parental_controls WHERE teen_id = $1`, [userId]);

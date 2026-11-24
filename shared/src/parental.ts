@@ -11,6 +11,12 @@
 export const MAX_PARENTS_PER_TEEN = 2;
 export const MAX_TEENS_PER_PARENT = 5;
 
+/**
+ * How long a teen's request to stop a parent's supervision takes to end the link. The parent is told at once and can
+ * let them go sooner; until then every control stays, so leaving is never a way round tonight's bedtime.
+ */
+export const PARENTAL_LEAVE_DAYS = 7;
+
 /** How long a parent's code works, and how many letters it has. */
 export const PARENT_CODE_TTL_HOURS = 24;
 export const PARENT_CODE_LENGTH = 8;

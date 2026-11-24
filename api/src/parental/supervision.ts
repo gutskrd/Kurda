@@ -1,17 +1,28 @@
 /**
  * A supervised teen's controls as the server reads them for every guarded write, GET /me and the usage beat: one
- * indexed lookup, which finds nothing for anyone who is not a supervised teen. A link whose teen has turned 18 is
- * ended the first time it is read this way, so supervision stops on the birthday without a sweep.
+ * indexed lookup, which finds nothing for anyone who is not a supervised teen. A link whose teen has turned 18, or
+ * whose teen asked to leave PARENTAL_LEAVE_DAYS ago, is ended the first time it is read this way, so supervision stops
+ * on the day without a sweep.
  */
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { localDay, parentalPause, type ParentalControls, type ParentalSwitch, type SupervisionState } from '@kurda/shared';
+import { localDay, PARENTAL_LEAVE_DAYS, parentalPause, type ParentalControls, type ParentalSwitch, type SupervisionState } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { Executor } from '../moderation/tx.js';
 import type { Notification } from '../push/service.js';
 import { currentRequest } from '../security/context.js';
 import { storableTimeZone } from '../streaks/time-zones.js';
 import { minorSql } from '../users/age.js';
-import { barredNotice, grownUpParentNotice, grownUpTeenNotice, tellParental, zoneNotice, type NoticePerson } from './notices.js';
+import {
+  barredNotice,
+  disconnectedNotice,
+  grownUpParentNotice,
+  grownUpTeenNotice,
+  leftNotice,
+  parentalEmail,
+  tellParental,
+  zoneNotice,
+  type NoticePerson,
+} from './notices.js';
 
 /** The switches a write is refused for; purchases are told to the shop list instead (`parentalAllows`). */
 export type GuardedSwitch = Exclude<ParentalSwitch, 'purchases'>;
@@ -57,27 +68,71 @@ export function stateOf(controls: ParentalControls, minutesToday: number, timeZo
   return { controls, minutesToday, timeZone, paused, resumesAt };
 }
 
+/** When a teen's request to leave, made at `requestedAt`, ends the link: PARENTAL_LEAVE_DAYS of 24 hours, as `leaveDueSql` counts. */
+export function leaveEndsAt(requestedAt: Date): Date {
+  return new Date(requestedAt.getTime() + PARENTAL_LEAVE_DAYS * 86_400_000);
+}
+
 /**
- * Ends the live links of `who` whose teen is no longer a minor, as having turned 18, and tells both sides: each parent,
- * and the teen once. `side` is a literal from this module's callers, never input.
+ * SQL twin of `leaveEndsAt`: the link `alias` is one whose teen asked to leave at least PARENTAL_LEAVE_DAYS before `at`,
+ * a timestamptz placeholder. Counted in hours, so a clock change in the database's zone moves nothing. Both are
+ * literals from this codebase.
  */
-export async function endGrownUpLinks(db: Executor, side: 'teen_id' | 'parent_id', who: string, now: Date = new Date()): Promise<void> {
-  const ended = await db.query<NoticePerson & { parent_id: string }>(
+export function leaveDueSql(alias: string, at: string): string {
+  return `${alias}.leave_requested_at <= ${at}::timestamptz - make_interval(hours => ${PARENTAL_LEAVE_DAYS * 24})`;
+}
+
+interface EndedRow extends NoticePerson {
+  ended_by: 'age' | 'teen';
+  parent_id: string;
+  parent_username: string;
+  parent_display_name: string | null;
+  parent_email: string | null;
+  parent_email_verified: boolean;
+  parent_locale: string;
+}
+
+/**
+ * Ends the live links of `who` that are due: those whose teen is no longer a minor, as having turned 18, and those whose
+ * teen asked to leave PARENTAL_LEAVE_DAYS ago, as the teen's. Both sides are told: for the birthday each parent, and the
+ * teen once; for a leave the parent as when a teen disconnects, by email too, and the teen. Each link is ended by one
+ * statement whichever read gets there first, so nobody is told twice. `side` is a literal from this module's callers,
+ * never input.
+ */
+export async function endDueLinks(db: Executor, side: 'teen_id' | 'parent_id', who: string, now: Date = new Date()): Promise<void> {
+  const ended = await db.query<EndedRow>(
     `WITH ended AS (
-       UPDATE parental_links l SET ended_at = $2, ended_by = 'age'
+       UPDATE parental_links l SET ended_at = $2, ended_by = CASE WHEN ${minorSql('t')} THEN 'teen' ELSE 'age' END
          FROM users t
-        WHERE l.${side} = $1 AND l.ended_at IS NULL AND t.id = l.teen_id AND NOT ${minorSql('t')}
-        RETURNING l.parent_id, l.teen_id
+        WHERE l.${side} = $1 AND l.ended_at IS NULL AND t.id = l.teen_id AND (NOT ${minorSql('t')} OR ${leaveDueSql('l', '$2')})
+        RETURNING l.parent_id, l.teen_id, l.ended_by
      )
-     SELECT e.parent_id, t.id, t.username, t.display_name FROM ended e JOIN users t ON t.id = e.teen_id`,
+     SELECT e.ended_by, e.parent_id, t.id, t.username, t.display_name, p.username AS parent_username, p.display_name AS parent_display_name,
+            p.email AS parent_email, p.email_verified_at IS NOT NULL AS parent_email_verified, p.locale AS parent_locale
+       FROM ended e JOIN users t ON t.id = e.teen_id JOIN users p ON p.id = e.parent_id`,
     [who, now],
   );
   if (!ended.rowCount) return;
-  const teens = new Map(ended.rows.map((r) => [r.id, r]));
-  await tellParental(db, [
-    ...ended.rows.map((r) => ({ userId: r.parent_id, notification: grownUpParentNotice(r) })),
-    ...[...teens.values()].map((teen) => ({ userId: teen.id, notification: grownUpTeenNotice(teen) })),
-  ]);
+  const grown = ended.rows.filter((r) => r.ended_by === 'age');
+  const left = ended.rows.filter((r) => r.ended_by === 'teen');
+  const teens = new Map(grown.map((r) => [r.id, r]));
+  const parentOf = (r: EndedRow): NoticePerson => ({ id: r.parent_id, username: r.parent_username, display_name: r.parent_display_name });
+  await tellParental(
+    db,
+    [
+      ...grown.map((r) => ({ userId: r.parent_id, notification: grownUpParentNotice(r) })),
+      ...[...teens.values()].map((teen) => ({ userId: teen.id, notification: grownUpTeenNotice(teen) })),
+      ...left.flatMap((r) => [
+        { userId: r.parent_id, notification: disconnectedNotice(r) },
+        { userId: r.id, notification: leftNotice(parentOf(r)) },
+      ]),
+    ],
+    left.flatMap((r) => {
+      const to = { username: r.parent_username, email: r.parent_email, email_verified: r.parent_email_verified, locale: r.parent_locale };
+      const email = parentalEmail(to, 'parental-ended', { teen: `@${r.username}` }, now);
+      return email ? [email] : [];
+    }),
+  );
 }
 
 /**
@@ -100,6 +155,9 @@ export async function endLinksOfBarredParent(db: Executor, parentId: string, now
 
 interface SupervisionRow extends ControlsRow {
   minor: boolean;
+  /** the teen's live links, and those of them whose leave has run its days */
+  live: number;
+  due: number;
   /** minutes by local day, for the days around today in any zone */
   minutes: Record<string, number>;
 }
@@ -108,20 +166,23 @@ interface SupervisionRow extends ControlsRow {
 export async function supervisionOf(db: Executor, userId: string, now: Date = new Date()): Promise<SupervisionState | null> {
   // A local day is at most a day either side of UTC's, so the days from yesterday on cover today wherever they are.
   const r = await db.query<SupervisionRow>(
-    `SELECT ${CONTROL_COLUMNS}, ${minorSql('u')} AS minor,
+    `SELECT ${CONTROL_COLUMNS}, ${minorSql('u')} AS minor, links.live, links.due,
             COALESCE((SELECT json_object_agg(pu.day::text, pu.minutes) FROM parental_usage pu
                        WHERE pu.teen_id = c.teen_id AND pu.day >= ($2::timestamptz AT TIME ZONE 'UTC')::date - 1), '{}'::json) AS minutes
        FROM parental_controls c
        JOIN users u ON u.id = c.teen_id
-      WHERE c.teen_id = $1
-        AND EXISTS (SELECT 1 FROM parental_links l WHERE l.teen_id = c.teen_id AND l.ended_at IS NULL)`,
+       CROSS JOIN LATERAL (SELECT count(*)::int AS live, (count(*) FILTER (WHERE ${leaveDueSql('l', '$2')}))::int AS due
+                             FROM parental_links l WHERE l.teen_id = c.teen_id AND l.ended_at IS NULL) links
+      WHERE c.teen_id = $1 AND links.live > 0`,
     [userId, now],
   );
   const row = r.rows[0];
   if (!row) return null;
-  if (!row.minor) {
-    await endGrownUpLinks(db, 'teen_id', userId, now);
-    return null;
+  if (!row.minor || row.due > 0) {
+    // Ended here or by a read racing this one; a due link is never kept, since keeping one ends due links first.
+    await endDueLinks(db, 'teen_id', userId, now);
+    // a teen who asked to leave one parent is still supervised by the other
+    if (!row.minor || row.due >= row.live) return null;
   }
   return stateOf(controlsOf(row), row.minutes[localDay(now, row.time_zone)] ?? 0, row.time_zone, now);
 }

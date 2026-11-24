@@ -5,9 +5,11 @@
  *   so the old one stops working, and a code works once, for a day.
  * - `parental_links`: who looks after whom. A link ends rather than going away, saying how (a parent, the teen, the
  *   18th birthday, or the parent's account barred), so both sides' exports can say what happened; one live link per
- *   pair, and the teen's live links are what every guard reads.
+ *   pair, and the teen's live links are what every guard reads. A teen's request to leave is kept as the time they
+ *   asked, since the link ends a set number of days after it.
  * - `parental_controls`: the teen's limits, one row whichever parent set them, with the time zone their day and bedtime
- *   are counted in, when it last changed, and when the last minute was counted.
+ *   are counted in, when it last changed, and when the last minute was counted; and when the first parent corrected
+ *   the teen's birth month, and who, since that is done once for good, whichever parents come and go.
  * - `parental_usage`: minutes the app was open in front of the teen, per local day, kept about five weeks.
  */
 
@@ -29,6 +31,7 @@ export const up = (pgm) => {
       created_at: { type: 'timestamptz', notNull: true, default: pgm.func('now()') },
       ended_at: { type: 'timestamptz' },
       ended_by: { type: 'text', check: "ended_by IN ('parent','teen','age','account')" },
+      leave_requested_at: { type: 'timestamptz' },
     },
     {
       constraints: {
@@ -61,6 +64,9 @@ export const up = (pgm) => {
       time_zone_changed_at: { type: 'timestamptz' },
       last_beat_at: { type: 'timestamptz' },
       updated_at: { type: 'timestamptz', notNull: true, default: pgm.func('now()') },
+      birth_corrected_at: { type: 'timestamptz' },
+      // Cleared when that parent's account goes; the time stays, so the one correction stays used.
+      birth_corrected_by: { type: 'uuid', references: 'users', onDelete: 'SET NULL' },
     },
     {
       constraints: {

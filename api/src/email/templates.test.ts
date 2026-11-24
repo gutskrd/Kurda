@@ -136,6 +136,21 @@ describe('the urgent-report email to moderators', () => {
   });
 });
 
+describe('the email to a parent whose teen asked to stop supervision', () => {
+  it('says when it ends, that nothing changes until then, and where to let them go sooner', () => {
+    const vars = { username: 'rojda', teen: '@dilan', endsOn: '1 December 2026', time: '2026-11-24 08:14 UTC' };
+    const en = renderEmail('parental-leave-requested', 'en', vars);
+    expect(en.subject).toBe('@dilan asked to stop supervision');
+    expect(en.text).toContain('It ends on 1 December 2026, unless you let them go sooner.');
+    expect(en.text).toContain('Until then, everything stays as you set it.');
+    expect(en.text).toContain('Settings, then Parental controls, then @dilan');
+    const ku = renderEmail('parental-leave-requested', 'ku', { ...vars, endsOn: '1.12.2026' });
+    expect(ku.text).toContain('1.12.2026');
+    for (const term of ['Çavdêriya dêûbavan', 'ciwan', 'dêûbav']) expect(ku.text, term).toContain(term);
+    for (const r of [en, ku]) expect(r.text).not.toMatch(/\{[a-zA-Z]+\}/);
+  });
+});
+
 /** Every email is designed from its own text: the same words, one picture, and one link or code to act on. */
 describe('every email, designed', () => {
   const VARS = {
@@ -164,6 +179,7 @@ describe('every email, designed', () => {
     review: 'This came from a report by another member, and a person reviewed it.',
     teen: '@dilan',
     parent: '@berfin',
+    endsOn: '1 December 2026',
   };
   /** The words of an HTML email, as a reader gets them. */
   const words = (html: string): string =>

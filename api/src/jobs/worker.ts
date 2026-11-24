@@ -14,13 +14,14 @@ import { makeAnonymizeJob, makeExportJob } from './gdpr-jobs.js';
 import { makePurgeGuestsJob } from './guest-jobs.js';
 import { makeWalletReconcileJob } from './wallet-jobs.js';
 import { WalletReconciler } from '../wallet/reconcile.js';
-import { makePushSendJob } from './push-jobs.js';
+import { makePushSendJob, pushRecorded } from './push-jobs.js';
 import { letterPushStillNews } from '../letters/notice.js';
 import { PushService } from '../push/service.js';
 import { DeviceTokenService } from '../push/tokens-service.js';
 import { createPushProvider } from '../push/provider.js';
 import { NotificationPrefsService } from '../notifications/prefs-service.js';
 import { pushMutedByParent } from '../parental/supervision.js';
+import { setParentalMail, setParentalPush } from '../parental/notices.js';
 import { InboxService } from '../notifications/inbox-service.js';
 import { sendEmailJob, makeSendEmailJob } from './email.js';
 import { EmailService } from '../email/service.js';
@@ -73,6 +74,9 @@ export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistr
       (userId, notification) => pushMutedByParent(pool, userId, notification),
     );
     const queue = config.REDIS_URL ? JobQueue.create(config) : null;
+    // That check can find a link whose time is up and end it here, so its notices and the parent's email go as on the API.
+    setParentalPush(pushRecorded(push, queue));
+    setParentalMail(queue);
     // A letter's push held by quiet hours is queued again for when they end, and goes only if the letter still waits.
     registry.register(
       makePushSendJob(push, new InboxService(pool), {

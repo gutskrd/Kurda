@@ -215,7 +215,7 @@ import { ExperimentService } from './experiments/service.js';
 import { registerExperimentRoutes } from './experiments/routes.js';
 import { ParentalService } from './parental/service.js';
 import { pruneParental } from './parental/gdpr.js';
-import { setParentalPush } from './parental/notices.js';
+import { setParentalMail, setParentalPush } from './parental/notices.js';
 import { pushMutedByParent } from './parental/supervision.js';
 import { registerParentalRoutes } from './parental/routes.js';
 
@@ -706,8 +706,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerInboxRoutes(app, inbox);
     registerPushRoutes(app, deviceTokens, pushService, inbox);
     // Parental controls: a parent's link to a teen, the teen's limits, and the minutes beat; notices through the inbox
-    // and push like any other, and the email a parent gets when a teen disconnects them.
+    // and push like any other, and the emails a parent gets when a teen asks to leave and when the link ends.
     setParentalPush(pushRecorded(pushService, app.jobs));
+    setParentalMail(app.jobs ?? null);
     registerParentalRoutes(
       app,
       new ParentalService(app.db, {

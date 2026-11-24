@@ -21,6 +21,11 @@ export const birthDateBodySchema = z.object({
   birthMonth: birthMonthSchema,
 });
 
+/** 400 INVALID_BIRTH_MONTH: not a real month, or before 1900, or still to come. */
+export function invalidBirthMonth(): AppError {
+  return new AppError('INVALID_BIRTH_MONTH', 400, 'that birth month is not possible');
+}
+
 function underMinimumAge(details?: Record<string, unknown>): AppError {
   return new AppError(
     'UNDER_MINIMUM_AGE',
@@ -32,16 +37,15 @@ function underMinimumAge(details?: Record<string, unknown>): AppError {
 
 /** The gate every sign-up passes: a plausible month and an age of at least 13. Throws rather than returning a verdict. */
 export function assertOldEnough(birth: BirthMonth, now: Date = new Date()): void {
-  if (!isPlausibleBirthMonth(birth, now)) {
-    throw new AppError('INVALID_BIRTH_MONTH', 400, 'that birth month is not possible');
-  }
+  if (!isPlausibleBirthMonth(birth, now)) throw invalidBirthMonth();
   if (isBelowMinimumAge(birth, now)) throw underMinimumAge();
 }
 
 /**
  * The one-time birth month question for accounts without one (made before it was asked, or provider sign-ups, which
- * give no age). Answered once, since changing it would let anyone undo the protections for minors; only support can
- * correct it. An answer under 13 closes the account at once, not through the cancellable fourteen-day deletion.
+ * give no age). Answered once, since changing it would let anyone undo the protections for minors; a supervised teen's
+ * first parent may correct it once, within 13 to 17 (parental/service.ts `correctBirthMonth`), and otherwise only
+ * support can. An answer under 13 closes the account at once, not through the cancellable fourteen-day deletion.
  */
 export class BirthMonthService {
   constructor(
@@ -50,9 +54,7 @@ export class BirthMonthService {
   ) {}
 
   async set(userId: string, birth: BirthMonth, now: Date = new Date()): Promise<void> {
-    if (!isPlausibleBirthMonth(birth, now)) {
-      throw new AppError('INVALID_BIRTH_MONTH', 400, 'that birth month is not possible');
-    }
+    if (!isPlausibleBirthMonth(birth, now)) throw invalidBirthMonth();
 
     const client = await this.pool.connect();
     let closeAccount = false;
