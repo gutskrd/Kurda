@@ -2351,15 +2351,15 @@
           "kind": "statement",
           "line": {
             "conversation": "roadu07s1l3a",
-            "en": "Thanks. I’m afraid of the storm, and the wind is very cold!",
+            "en": "Thanks! I’m afraid of storms, and the wind is very cold. Where I live, summer is hot.",
             "meanings": {
-              "ckb": "سوپاس. لە ڕەشەباکە دەترسم، و باکە زۆر ساردە!",
-              "de": "Danke. Ich habe Angst vor dem Sturm, und der Wind ist sehr kalt!",
-              "es": "Gracias. Me da miedo la tormenta, ¡y el viento es muy frío!",
-              "tr": "Teşekkürler. Fırtınadan korkuyorum, rüzgâr da çok soğuk!",
-              "ar": "شكرًا. أخاف من العاصفة، والريح باردة جدًا!",
-              "fr": "Merci. J’ai peur de la tempête, et le vent est très froid !",
-              "nl": "Bedankt. Ik ben bang voor de storm, en de wind is erg koud!"
+              "ckb": "سوپاس! لە ڕەشەبا دەترسم، و باکە زۆر ساردە. لای ئێمە هاوین گەرمە.",
+              "de": "Danke! Ich habe Angst vor Stürmen, und der Wind ist sehr kalt. Bei uns ist der Sommer heiß.",
+              "es": "¡Gracias! Me dan miedo las tormentas, y el viento está muy frío. Donde yo vivo, el verano es caluroso.",
+              "tr": "Teşekkürler! Fırtınadan korkarım, rüzgâr da çok soğuk. Bizim orada yaz sıcak olur.",
+              "ar": "شكرًا! أخاف من العواصف، والريح باردة جدًا. عندنا الصيف حار.",
+              "fr": "Merci ! J’ai peur des tempêtes, et le vent est très froid. Chez nous, l’été est chaud.",
+              "nl": "Bedankt! Ik ben bang voor stormen, en de wind is erg koud. Bij ons is de zomer heet."
             }
           }
         },

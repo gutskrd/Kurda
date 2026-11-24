@@ -610,13 +610,24 @@ const CUE_MAX = 40;
 
 /**
  * Rule 8: an item that states what it asks keeps to it. Its line is the sentence alone (no scene, no quotes) since the
- * apps name the task; a picture's word is what its right picture shows; a repeat line is the one shown; and a cue is a
- * few words.
+ * apps name the task; a picture's word is what its right picture shows; a repeat line is the one shown; a cue is a few
+ * words; and a conversation's translations carry no scene notes.
  */
 function askProblems(ex: RawExercise): Array<{ message: string; field: string }> {
   const p = ex.payload;
   const out: Array<{ message: string; field: string }> = [];
-  if (ex.type === 'match_pairs' || ex.type === 'conversation') return out;
+  if (ex.type === 'conversation') {
+    // A conversation is understood from its lines alone: a learner who never opens the translation sees no scene notes.
+    if (Array.isArray(p.lines)) {
+      p.lines.forEach((l, i) => {
+        if (isRecord(l) && typeof l.en === 'string' && /[()]/.test(l.en)) {
+          out.push({ message: 'translates its line and sets no scene: a note in brackets reaches only a learner who opens the translation, so say it in the lines', field: `payload.lines[${i}].en` });
+        }
+      });
+    }
+    return out;
+  }
+  if (ex.type === 'match_pairs') return out;
   const ask = p.ask;
   if (typeof ask !== 'string') {
     out.push({ message: `says nothing of what it asks: give it an ask (${(ASKS_BY_TYPE[ex.type as ExerciseType] ?? []).join(', ')}) and keep its prompt to the line`, field: 'payload.ask' });

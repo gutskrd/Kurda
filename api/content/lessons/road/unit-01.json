@@ -665,7 +665,7 @@
                       {
                         "speaker": 1,
                         "text": "Hevalo sêvê dixwe.",
-                        "en": "Hevalo is eating the apple. (no answer, only crunching)"
+                        "en": "Hevalo is eating the apple."
                       },
                       {
                         "speaker": 0,
@@ -1741,7 +1741,7 @@
                       {
                         "speaker": 0,
                         "text": "Bi xêr hatî!",
-                        "en": "Welcome! (he opens the gate with a bow)"
+                        "en": "Welcome!"
                       },
                       {
                         "speaker": 1,
@@ -1771,7 +1771,7 @@
                       {
                         "speaker": 0,
                         "text": "Hevalo, nan xweş e?",
-                        "en": "Hevalo, is the bread nice? (he nods, chewing)"
+                        "en": "Hevalo, is the bread nice?"
                       }
                     ],
                     "prompt": "What does Hevalo do with the bread?",
@@ -2795,7 +2795,7 @@
                       {
                         "speaker": 0,
                         "text": "Ev bi kurdî çi ye?",
-                        "en": "What’s this in Kurdish? (you point at the door)"
+                        "en": "What’s this in Kurdish?"
                       },
                       {
                         "speaker": 1,
@@ -2815,7 +2815,7 @@
                       {
                         "speaker": 0,
                         "text": "Erê, spas. Û ew? Ew çi ye?",
-                        "en": "Yes, thanks. And that? What’s that? (an old tool over the stove)"
+                        "en": "Yes, thanks. And that? What’s that?"
                       },
                       {
                         "speaker": 1,
@@ -2824,20 +2824,20 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Wey, çaya min!",
-                        "en": "Oh no, my tea! (Hevalo has knocked the tray with his nose)"
+                        "text": "Wey, Hevalo! Ew çaya min e!",
+                        "en": "Oh, Hevalo! That’s my tea!"
                       },
                       {
                         "speaker": 1,
                         "text": "Bibore! Hevalo birçî ye.",
-                        "en": "Sorry! Hevalo is hungry. (he looks sorry for almost a second)"
+                        "en": "Sorry! Hevalo is hungry."
                       }
                     ],
-                    "prompt": "What does Hamo not know?",
+                    "prompt": "You ask “Ew çi ye?” What does Hamo answer?",
                     "options": [
-                      "The word for the old tool",
-                      "The word for bread",
-                      "The word for door"
+                      "That he doesn’t know",
+                      "That it’s bread",
+                      "That it’s a door"
                     ],
                     "correctIndex": 0
                   }
@@ -3879,7 +3879,7 @@
                   "type": "conversation",
                   "payload": {
                     "id": "roadu01s4l3a",
-                    "title": "Şev baş!",
+                    "title": "Bi xêr biçî!",
                     "speakers": [
                       {
                         "name": "Hamo",
@@ -3892,18 +3892,8 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Şev baş!",
-                        "en": "Good night! (at the door of the guest room)"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Şev baş! Gelek spas.",
-                        "en": "Good night! Thank you very much."
-                      },
-                      {
-                        "speaker": 0,
                         "text": "Roj baş! Tu çawa yî?",
-                        "en": "Good morning! How are you? (next morning, at the gate)"
+                        "en": "Good morning! How are you?"
                       },
                       {
                         "speaker": 1,
@@ -3928,7 +3918,7 @@
                       {
                         "speaker": 1,
                         "text": "Hevalo, were!",
-                        "en": "Hevalo, come on! (ten steps down the lane, he has turned back)"
+                        "en": "Hevalo, come on!"
                       },
                       {
                         "speaker": 0,
@@ -3936,11 +3926,11 @@
                         "en": "Hevalo wants an apple."
                       }
                     ],
-                    "prompt": "Why does Hevalo turn back?",
+                    "prompt": "You call Hevalo. What does he want?",
                     "options": [
-                      "For an apple",
-                      "For a glass of tea",
-                      "To say good night"
+                      "An apple",
+                      "A glass of tea",
+                      "To go back to sleep"
                     ],
                     "correctIndex": 0
                   }
