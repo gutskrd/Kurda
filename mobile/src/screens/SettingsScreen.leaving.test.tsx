@@ -5,7 +5,7 @@ import { Alert } from 'react-native';
 import type { AccountDeletion } from '../auth/AuthContext';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
-import { SettingsScreen } from './SettingsScreen';
+import { SettingsPageScreen } from '../settings/SettingsPageScreen';
 
 vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -36,11 +36,11 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('signing out everywhere', () => {
+describe('Settings → Account: signing out everywhere', () => {
   it('signs this phone out once the server has ended every session', async () => {
     testAuth.client = fakeClient({ 'DELETE /me/sessions': ok({ revoked: true, everywhere: true }) });
     goAheadWithEverything();
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="account" onExit={() => undefined} />);
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Sign out everywhere' }));
     });
@@ -51,7 +51,7 @@ describe('signing out everywhere', () => {
   it('stays signed in and says so when the server did not take it', async () => {
     testAuth.client = fakeClient({ 'DELETE /me/sessions': { ok: false, error: { kind: 'network', message: 'Network request failed' } } });
     const alert = goAheadWithEverything();
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="account" onExit={() => undefined} />);
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Sign out everywhere' }));
     });
@@ -60,12 +60,12 @@ describe('signing out everywhere', () => {
   });
 });
 
-describe('deleting the account', () => {
+describe('Settings → Account: deleting the account', () => {
   // The server keeps the account for a grace period that a sign-in cancels, so the phone says how long and how.
   it('says how long the account is kept, and how to keep it, once it is deleted', async () => {
     testAuth.client = fakeClient();
     const alert = goAheadWithEverything();
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="account" onExit={() => undefined} />);
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Delete account' }));
     });
@@ -80,7 +80,7 @@ describe('deleting the account', () => {
     testAuth.client = fakeClient();
     deleteAccount.mockResolvedValueOnce({ ok: false, message: 'Can’t reach Hevalo right now. Check your connection and try again.' });
     const alert = goAheadWithEverything();
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="account" onExit={() => undefined} />);
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Delete account' }));
     });

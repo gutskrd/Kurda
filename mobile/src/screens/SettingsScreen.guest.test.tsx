@@ -7,6 +7,7 @@ import { fakeClient, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { navigation } from '../play/testing/navigation';
+import { SettingsPageScreen } from '../settings/SettingsPageScreen';
 import { SettingsScreen } from './SettingsScreen';
 
 vi.mock('react-native', () => import('../play/testing/native'));
@@ -39,20 +40,30 @@ describe('Settings for a guest', () => {
     testAuth.user = FULL;
   });
 
-  it('offers to create the account in place of the account rows, and keeps Sign out and Delete account at the end', () => {
+  it('offers to create the account in place of the account page, and keeps Sign out and Delete account at the end', () => {
     const client = fakeClient();
     testAuth.client = client;
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
-    fireEvent.click(screen.getByTestId('settings-claim'));
+    const account = screen.getByTestId('settings-account');
+    expect(account.getAttribute('aria-label')).toBe('Account');
+    expect(within(account).getByText('Create your account')).toBeTruthy();
+    fireEvent.click(account);
     expect(navigation.navigate).toHaveBeenLastCalledWith('ClaimAccount');
-    expect(screen.queryByRole('button', { name: 'Password' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Signed-in devices' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Sign out everywhere' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Request data export' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Delete account' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy();
-    // A guest's standing is never requested; the route refuses guests.
+    // Nothing a guest has none of: no teen or parent, no profile to hide, no reports or standing.
+    for (const name of ['Parental controls', 'Privacy and social', 'Safety']) expect(screen.queryByRole('button', { name })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Storage and data' })).toBeTruthy();
+    const buttons = screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'));
+    expect(buttons.slice(-2)).toEqual(['Sign out', 'Delete account']);
+    // A guest's standing and parental side are never requested; the routes refuse guests.
     expect(client.calls.map((c) => c.path)).not.toContain('/me/standing');
+    expect(client.calls.map((c) => c.path)).not.toContain('/me/parental');
+  });
+
+  it('offers a guest the cache, and no copy of data to make', async () => {
+    testAuth.client = fakeClient();
+    renderWithProviders(<SettingsPageScreen page="storage" onExit={() => undefined} />);
+    expect(screen.getByRole('button', { name: 'Clear cache' })).toBeTruthy();
+    expect(screen.queryByText('Your data')).toBeNull();
   });
 
   it('deletes a guest at once, warning first that nothing comes back, and says it is done', async () => {

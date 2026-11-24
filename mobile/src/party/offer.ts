@@ -17,7 +17,7 @@ export interface PartyOffer {
 
 let cached: Promise<GamesAvailability[]> | null = null;
 
-/** Test seam: forget the answer read earlier. */
+/** Forget the answer read earlier, so the next screen asks again (tests, and Settings → Clear cache). */
 export function forgetPartyOffers(): void {
   cached = null;
 }

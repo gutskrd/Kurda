@@ -13,12 +13,13 @@ import { createDeviceIdStore, createTokenStorage } from './storage';
 import { loadDeviceId } from './deviceId';
 import { deviceName } from './deviceName';
 import type { AgeStopKind } from './birthMonth';
-import type { AccountHold, SuspendedErrorDetails } from '@kurda/shared';
+import type { AccountHold, SupervisionState, SuspendedErrorDetails } from '@kurda/shared';
 import { suspendedDetails } from '../reports/suspension';
 import { onMaintenanceOver, showMaintenance } from '../maintenance/maintenance';
 import { notifyGuestRefused } from './guestRefused';
 import { unregisterThisDevice } from '../push/thisDevice';
 import { openFirstLessonNext } from '../learn/firstLesson';
+import { noteParentalRefusal } from '../parental/refusals';
 
 export interface SessionUser {
   id: string;
@@ -50,6 +51,8 @@ export interface SessionUser {
   timezone?: string;
   /** Set while a person checks the account before it may post or message (/me only); null or absent for nearly everyone. */
   accountHold?: AccountHold | null;
+  /** A supervised teen's limits and where they stand today (/me only); null or absent for everyone else (parental/). */
+  supervision?: SupervisionState | null;
 }
 
 /** A failed request, with the server's code when it sent one. */
@@ -286,6 +289,8 @@ export function AuthProvider({
         onGuestRefused: notifyGuestRefused,
         // A refusal can come before /me is read again, so the account shows as held from then on (reports/HeldNotice).
         onHeld: () => setUser((u) => (u && !u.accountHold ? { ...u, accountHold: { reason: 'possible_return', since: new Date().toISOString() } } : u)),
+        // A parent's switch or pause met at a write: the teen's limits are read again (parental/supervision.tsx).
+        onParental: noteParentalRefusal,
         deviceId: () => loadDeviceId(deviceStore),
       }),
     [baseUrl, storage, deviceStore],

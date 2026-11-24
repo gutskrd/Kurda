@@ -4,7 +4,7 @@
  */
 import type { ReactNode } from 'react';
 import { vi } from 'vitest';
-import type { AccountHold } from '@kurda/shared';
+import type { AccountHold, SupervisionState } from '@kurda/shared';
 import type { ApiClient } from '../../api/client';
 import type { ApiError, ApiResult } from '../../api/types';
 
@@ -70,6 +70,8 @@ export const testAuth: {
     guest?: boolean;
     /** Set for a test of what a held account sees (reports/HeldNotice). */
     accountHold?: AccountHold | null;
+    /** Set for a test of what a supervised teen sees (parental/). */
+    supervision?: SupervisionState | null;
   };
   baseUrl: string;
   /** Reading the account again after something changed; a test can ask whether it was. */

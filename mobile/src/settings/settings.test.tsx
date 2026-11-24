@@ -30,25 +30,68 @@ afterEach(() => {
 });
 
 describe('Settings', () => {
-  it('is one list in a few named sections, each row showing what it is set to', async () => {
+  it('is a short home: two quick tiles, then every kind of setting saying what is inside it, then signing out', () => {
     testAuth.client = fakeClient({ 'GET /me': ME() });
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
-    // Where to get help is a section of its own.
-    for (const name of ['Account', 'Preferences', 'Privacy', 'Help', 'About & legal']) expect(screen.getByRole('heading', { name })).toBeTruthy();
-    // The account's own values arrive with /me; this phone's own are there at once.
-    expect(await screen.findByRole('button', { name: 'Username, @rojda' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Profile visibility, Hevalo members' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Weekly leagues, On' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Language, English' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /^Keyboard and accents, / })).toBeTruthy();
+    expect(screen.getByRole('switch', { name: 'Sounds, On' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Appearance, / })).toBeTruthy();
+    const categories = [
+      'Account',
+      'Parental controls',
+      'Content and display',
+      'Privacy and social',
+      'Sounds and vibration',
+      'Notifications',
+      'Safety',
+      'Storage and data',
+      'Help and feedback',
+      'About',
+    ];
+    const listed = screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'));
+    expect(listed.filter((name) => categories.includes(name ?? ''))).toEqual(categories);
+    expect(listed.at(-1)).toBe('Sign out');
+    // What is inside, said under each, as the website says it.
+    expect(screen.getByText('Username • Password • Devices')).toBeTruthy();
+    expect(screen.getByText('Clear cache • Download your data')).toBeTruthy();
+    expect(screen.getByText('Daily limit • Bedtime • Safety')).toBeTruthy();
   });
 
-  it('marks in gold, and says in words, only what needs doing: a limited account', async () => {
+  it('turns the sounds off and on from their tile, and moves the appearance on a step at each tap', async () => {
+    testAuth.client = fakeClient({ 'GET /me': ME() });
+    localStorage.clear();
+    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    const sounds = screen.getByTestId('quick-sounds');
+    await act(async () => {
+      fireEvent.click(sounds);
+    });
+    expect(sounds.getAttribute('aria-checked')).toBe('false');
+    expect(sounds.getAttribute('aria-label')).toBe('Sounds, Off');
+    await act(async () => {
+      fireEvent.click(sounds);
+    });
+    expect(sounds.getAttribute('aria-label')).toBe('Sounds, On');
+    const appearance = screen.getByTestId('quick-appearance');
+    const seen = [appearance.getAttribute('aria-label')];
+    for (let i = 0; i < 3; i++) {
+      await act(async () => {
+        fireEvent.click(appearance);
+      });
+      seen.push(appearance.getAttribute('aria-label'));
+    }
+    // Automatic, then light, then dark, and round again to where it began.
+    expect(seen[0]).toBe(seen[3]);
+    expect(new Set(seen.slice(0, 3))).toEqual(new Set(['Appearance, Automatic', 'Appearance, Light', 'Appearance, Dark']));
+  });
+
+  it('marks in violet, and says in words, only what needs doing: a limited account', async () => {
     testAuth.client = fakeClient({
       'GET /me': ME(),
       'GET /me/standing': ok({ status: 'limited', active: [], past: [], unacknowledgedWarnings: [], reportAppeals: [], restrictions: {} }),
     });
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Some things are limited for now.')).toBeTruthy();
+    cleanup();
+    renderWithProviders(<SettingsPageScreen page="safety" onExit={() => undefined} />);
     expect(await screen.findByText('Some things are limited for now.')).toBeTruthy();
     // An account in good standing is just a row.
     cleanup();
@@ -57,40 +100,72 @@ describe('Settings', () => {
       'GET /me/standing': ok({ status: 'good', active: [], past: [], unacknowledgedWarnings: [], reportAppeals: [], restrictions: {} }),
     });
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
-    await screen.findByRole('button', { name: 'Username, @rojda' });
-    expect(screen.queryByText(/good standing/)).toBeNull();
-    expect(screen.getByRole('button', { name: 'Account standing' })).toBeTruthy();
+    expect(await screen.findByText('Your reports • Account standing')).toBeTruthy();
+    expect(screen.queryByText(/limited/)).toBeNull();
   });
 
   it('opens each kind of setting on a page of its own', () => {
     testAuth.client = fakeClient({ 'GET /me': ME() });
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Profile visibility/ }));
-    expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'visibility' });
+    fireEvent.click(screen.getByRole('button', { name: 'Privacy and social' }));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'privacy' });
     fireEvent.click(screen.getByRole('button', { name: 'Sounds and vibration' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'sounds' });
     fireEvent.click(screen.getByRole('button', { name: 'Notifications' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Notifications');
-    fireEvent.click(screen.getByRole('button', { name: 'Blocked people' }));
-    expect(navigation.navigate).toHaveBeenLastCalledWith('BlockedUsers');
+    fireEvent.click(screen.getByRole('button', { name: 'Parental controls' }));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'parental' });
+    fireEvent.click(screen.getByRole('button', { name: 'Storage and data' }));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'storage' });
   });
 
-  it('finds a setting by what is on the page behind it, and says so when nothing matches', () => {
+  it('shows each page’s values on its rows', async () => {
+    testAuth.client = fakeClient({ 'GET /me': ME() });
+    renderWithProviders(<SettingsPageScreen page="account" onExit={() => undefined} />);
+    expect(await screen.findByRole('button', { name: 'Username, @rojda' })).toBeTruthy();
+    cleanup();
+    renderWithProviders(<SettingsPageScreen page="privacy" onExit={() => undefined} />);
+    expect(await screen.findByRole('button', { name: 'Profile visibility, Hevalo members' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Weekly leagues, On' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Blocked people' }));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('BlockedUsers');
+    cleanup();
+    renderWithProviders(<SettingsPageScreen page="display" onExit={() => undefined} />);
+    expect(screen.getByRole('button', { name: 'Language, English' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Keyboard and accents, / })).toBeTruthy();
+  });
+
+  it('finds any single setting from the search in its header, naming the page it is on, and says so when nothing matches', () => {
     testAuth.client = fakeClient({ 'GET /me': ME() });
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    // The field opens from the header, focused; the list gives way to what it finds.
+    fireEvent.click(screen.getByRole('button', { name: 'Search settings' }));
     const search = screen.getByLabelText('Search settings');
+    expect(screen.queryByTestId('quick-sounds')).toBeNull();
     // The accents are on the keyboard page; "e" for "ê" is the same letter to a search.
     fireEvent.change(search, { target: { value: 'ACCÉNTS' } });
-    expect(screen.getByRole('button', { name: /^Keyboard and accents/ })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /^Language/ })).toBeNull();
-    // A section with nothing left in it is not shown at all.
-    expect(screen.queryByRole('heading', { name: 'Account' })).toBeNull();
+    const keyboard = screen.getByTestId('found-keyboard');
+    expect(keyboard.getAttribute('aria-label')).toBe('Keyboard and accents');
+    expect(keyboard.textContent).toContain('Content and display');
+    expect(screen.queryByTestId('found-language')).toBeNull();
+    fireEvent.click(keyboard);
+    expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'keyboard' });
 
+    // A switch is found too, and opens the page it is on rather than flipping.
     fireEvent.change(search, { target: { value: 'vibration' } });
-    expect(screen.getByRole('button', { name: 'Sounds and vibration' })).toBeTruthy();
+    fireEvent.click(screen.getByTestId('found-vibration'));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'sounds' });
+
+    fireEvent.change(search, { target: { value: 'clear cache' } });
+    expect(screen.getByTestId('found-cache').textContent).toContain('Storage and data');
 
     fireEvent.change(search, { target: { value: 'zzzz' } });
     expect(screen.getByText('No settings match “zzzz”.')).toBeTruthy();
+
+    // The ✕ closes it, and the list is back.
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(screen.getByTestId('quick-sounds')).toBeTruthy();
   });
 
   /* A row's name keeps room for its longest word: the value ends in an ellipsis before the name breaks inside a word. */
@@ -105,12 +180,12 @@ describe('Settings', () => {
     expect(titleRoom('Benachrichtigungseinstellungen', 1.6, 288)).toBe(172);
   });
 
-  it('keeps signing out and deleting the account apart, at the end, and asks before deleting', () => {
+  it('keeps signing out everywhere and deleting the account apart, at the end of Account, and asks before deleting', () => {
     testAuth.client = fakeClient({ 'GET /me': ME() });
     const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="account" onExit={() => undefined} />);
     const buttons = screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'));
-    expect(buttons.slice(-3)).toEqual(['Sign out everywhere', 'Sign out', 'Delete account']);
+    expect(buttons.slice(-2)).toEqual(['Sign out everywhere', 'Delete account']);
     fireEvent.click(screen.getByRole('button', { name: 'Delete account' }));
     expect(alert).toHaveBeenCalledWith('Delete account?', expect.any(String), expect.any(Array));
   });
@@ -119,7 +194,7 @@ describe('Settings', () => {
 describe('Settings pages', () => {
   it('shows the birth month on record, given once, and whom to write to if it is wrong', async () => {
     testAuth.client = fakeClient({ 'GET /me': ME({ birthYear: 2001, birthMonth: 3 }) });
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="account" onExit={() => undefined} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Month and year of birth, March 2001' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'birthMonth' });
     cleanup();
@@ -132,7 +207,7 @@ describe('Settings pages', () => {
 
   it('with no birth month on record, says so and opens the one-time question', async () => {
     testAuth.client = fakeClient({ 'GET /me': ME({ birthYear: null, birthMonth: null }) });
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="account" onExit={() => undefined} />);
     expect(await screen.findByRole('button', { name: 'Month and year of birth, Not added' })).toBeTruthy();
     cleanup();
 

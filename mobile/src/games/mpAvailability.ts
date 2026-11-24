@@ -17,7 +17,7 @@ export interface MpDialectOffer {
 
 const cached = new Map<MultiGame, Promise<MpDialectOffer[]>>();
 
-/** Test seam: forget what was read. */
+/** Forget what was read, so the next screen asks again (tests, and Settings → Clear cache). */
 export function forgetMpAvailability(): void {
   cached.clear();
 }

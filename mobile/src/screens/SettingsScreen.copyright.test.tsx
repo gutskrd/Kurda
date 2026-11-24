@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PROVIDER } from '@kurda/shared';
 import { fakeClient, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
-import { SettingsScreen } from './SettingsScreen';
+import { SettingsPageScreen } from '../settings/SettingsPageScreen';
 
 vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -16,7 +16,7 @@ vi.mock('expo-notifications', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 
-describe('Settings → About & legal', () => {
+describe('Settings → About', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
@@ -25,7 +25,7 @@ describe('Settings → About & legal', () => {
   it('opens the website’s copyright page, in the app’s words', () => {
     testAuth.client = fakeClient();
     const open = vi.spyOn(Linking, 'openURL').mockResolvedValue(true);
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="about" onExit={() => undefined} />);
     expect(screen.getByText('Something here copies your work?')).toBeTruthy();
     fireEvent.click(screen.getByText('Copyright'));
     expect(open).toHaveBeenCalledWith('https://hevalo.app/copyright');
@@ -35,10 +35,12 @@ describe('Settings → About & legal', () => {
   it('opens the terms, the privacy policy and how Hevalo teaches, and writes to support', () => {
     testAuth.client = fakeClient();
     const open = vi.spyOn(Linking, 'openURL').mockResolvedValue(true);
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="about" onExit={() => undefined} />);
     fireEvent.click(screen.getByText('Terms of Use'));
     fireEvent.click(screen.getByText('Privacy Policy'));
     fireEvent.click(screen.getByText('How Hevalo teaches'));
+    cleanup();
+    renderWithProviders(<SettingsPageScreen page="help" onExit={() => undefined} />);
     fireEvent.click(screen.getByText('Contact support'));
     expect(open.mock.calls.map((c) => c[0])).toEqual([
       'https://hevalo.app/terms',
@@ -51,7 +53,7 @@ describe('Settings → About & legal', () => {
   // The business registration Dutch law requires, shown as text since there is nothing to open.
   it('shows the KvK number at the foot of the legal rows', () => {
     testAuth.client = fakeClient();
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="about" onExit={() => undefined} />);
     expect(screen.getByText('KvK number')).toBeTruthy();
     expect(screen.getByText(PROVIDER.kvk)).toBeTruthy();
     expect(PROVIDER.kvk).toBe('42217689');

@@ -54,6 +54,8 @@ struct LetterEntry: TimelineEntry {
     case signedOut
     /// signed in, nothing fetched yet, and nothing kept from before
     case waiting
+    /// a parent turned letters off for this teen
+    case switchedOff
   }
 
   let date: Date
@@ -129,6 +131,10 @@ enum LetterLoader {
       Shared.markRejected()
       Keeper.clear()
       return (LetterEntry(date: now, shows: .signedOut, picture: nil, locale: config.locale), now.addingTimeInterval(Refresh.signedOutSeconds))
+    case .switchedOff:
+      // no letter is shown while letters are off, not even the last one; the token stays
+      Keeper.clear()
+      return (LetterEntry(date: now, shows: .switchedOff, picture: nil, locale: config.locale), now.addingTimeInterval(Refresh.switchedOffSeconds))
     case .later(let wait):
       next = now.addingTimeInterval(wait)
     case .offline:
@@ -188,6 +194,8 @@ struct LetterWidgetView: View {
       Plain(text: Words.text("signedOut", locale: entry.locale), link: "hevalo://")
     case .waiting:
       Plain(text: Words.text("waiting", locale: entry.locale), link: "hevalo://app/letters")
+    case .switchedOff:
+      Plain(text: Words.text("off", locale: entry.locale), link: "hevalo://")
     }
   }
 }

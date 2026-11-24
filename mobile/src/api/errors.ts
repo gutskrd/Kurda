@@ -89,6 +89,16 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   EXPORT_NOT_AVAILABLE: 'error.code.exportNotAvailable',
   // Hevalo offline for a while: the screen over the app says the rest (maintenance/).
   MAINTENANCE: 'maintenance.title',
+  // A supervised teen at something a parent switched off, or while Hevalo rests for them (parental/): calm, never blaming.
+  PARENTAL_BLOCKED: 'parental.off',
+  PARENTAL_PAUSED: 'parental.resting',
+  // Connecting a parent. A wrong, used, expired or replaced code all read the same, as the server answers them.
+  PARENT_CODE_INVALID: 'parental.error.code',
+  PARENTAL_NOT_TEEN: 'parental.error.notTeen',
+  PARENTAL_TOO_MANY_PARENTS: 'parental.error.tooManyParents',
+  PARENTAL_PARENT_FULL: 'parental.error.parentFull',
+  PARENTAL_ALREADY_CONNECTED: 'parental.error.alreadyConnected',
+  PARENTAL_SELF: 'parental.error.self',
 };
 /**
  * Codes that need their details: which rule a password or username broke (`details.reason`,
@@ -103,6 +113,12 @@ const PASSWORD_REASON: Record<string, TranslationKey> = {
   'needs-number': 'field.passwordNeedsNumber',
 };
 
+const NOT_PARENT_REASON: Record<string, TranslationKey> = {
+  guest: 'parental.none.guest',
+  birth_month: 'parental.none.birthMonth',
+  email: 'parental.none.email',
+};
+
 function byReason(error: ApiError, t: Translate): string | null {
   const reason = (error.details as { reason?: unknown } | undefined)?.reason;
   const key = typeof reason === 'string' ? reason : '';
@@ -110,6 +126,17 @@ function byReason(error: ApiError, t: Translate): string | null {
   if (error.code === 'INVALID_USERNAME') {
     const said = usernameMessage(key, (error.details as { chars?: unknown } | undefined)?.chars);
     return t(said.message, said.vars);
+  }
+  if (error.code === 'PARENTAL_FIRST_PARENT_ONLY') {
+    // The first parent named, as the server sends them (a name, or the person).
+    const parent = (error.details as { parent?: unknown } | undefined)?.parent;
+    const person = parent && typeof parent === 'object' ? (parent as { displayName?: unknown; username?: unknown }) : null;
+    const name = typeof parent === 'string' ? parent : person ? String(person.displayName || person.username || '') : '';
+    return name ? t('parental.firstOnly', { name }) : t('parental.firstOnlyAnyone');
+  }
+  if (error.code === 'PARENTAL_NOT_PARENT') {
+    // Why the account cannot add a teen yet, and so what would let it.
+    return t(NOT_PARENT_REASON[key] ?? 'parental.error.notParent');
   }
   if (error.code === 'VALIDATION_ERROR') {
     // The issues name the field; an email address is the one people most often mistype.

@@ -9,7 +9,7 @@ import { useAuth } from '../auth/AuthContext';
  */
 const cached = new Map<GameDialect, Promise<CouchOffer | null>>();
 
-/** Test seam: forget the answers read earlier. */
+/** Forget the answers read earlier, so the next screen asks again (tests, and Settings → Clear cache). */
 export function forgetImpostorCategories(): void {
   cached.clear();
 }

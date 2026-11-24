@@ -23,6 +23,8 @@ import { heldDim } from '../theme/MotionParts';
 import { useDirection } from '../reports/direction';
 import { UnsentNote } from '../chat/UnsentNote';
 import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
+import { ParentalNote } from '../parental/ParentalNote';
+import { useParentalOff } from '../parental/supervision';
 
 /**
  * A post's comments with one level of replies and the composer for both, matching the web thread
@@ -269,6 +271,7 @@ export function CommentComposer({
   const bottom = useScreenBottomInset(spacing.md);
   const { isGuest, require } = useAccountGate();
   const held = useAccountHeld();
+  const postsOff = useParentalOff('posts');
   const target = thread.replyingTo;
   /* A guest sees where a comment would go, and tapping it offers an account rather than a field that would be refused. */
   if (isGuest) {
@@ -291,11 +294,12 @@ export function CommentComposer({
       </View>
     );
   }
-  // A held account reads the thread as usual; the box waits until a person has checked the account.
-  if (held) {
+  // A held account reads the thread as usual; the box waits until a person has checked the account, or while a parent
+  // has commenting turned off.
+  if (held || postsOff) {
     return (
       <View style={[styles.composerWrap, { paddingBottom: bottom }]}>
-        <HeldNotice style={styles.held} />
+        {held ? <HeldNotice style={styles.held} /> : <ParentalNote style={styles.held} />}
       </View>
     );
   }

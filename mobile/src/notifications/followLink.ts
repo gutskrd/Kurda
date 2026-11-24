@@ -1,5 +1,6 @@
 import type { ApiClient } from '../api/client';
 import type { Translate } from '../api/errors';
+import type { TranslationKey } from '../i18n/translations';
 import type { RootNavigation } from '../navigation/rootStack';
 import { acceptInvite } from '../play/api';
 import { GAME_NAME_KEY } from '../play/labels';
@@ -8,7 +9,7 @@ import { badgeDef, isPlayGame, letterNoticeOf } from '@kurda/shared';
 import { badgeName, isKnownBadge } from '../badges/format';
 import { knownTier, leagueName } from '../leagues/format';
 import { formatDay } from '../reports/sendErrors';
-import { isGroupNotice, type DeepLink, type InboxItem } from './inbox';
+import { isGroupNotice, isParentalNotice, type DeepLink, type InboxItem } from './inbox';
 import { pictureReviewOf, pictureReviewText } from '../pictures/review';
 import { isHoldNotice } from '../reports/hold';
 
@@ -77,9 +78,50 @@ export function notificationText(item: Pick<InboxItem, 'title' | 'body' | 'data'
       ? { title: t('letters.notify.homeTitle'), body: t('letters.notify.homeBody') }
       : { title: t('letters.notify.title'), body: t('letters.notify.body') };
   }
-  const progress = progressText(item.data, t) ?? groupText(item.data, t, locale);
+  const progress = progressText(item.data, t) ?? groupText(item.data, t, locale) ?? parentalText(item.data, t);
   if (progress) return progress;
   return { title: item.title, body: item.body };
+}
+
+/**
+ * Parental news in the reader's language, from the names in `data`. A change says who made it, worded for whoever it
+ * went to (`to`); an ending says how, never why an account went. Without the names it needs, the server's line stays.
+ */
+function parentalText(data: Record<string, unknown>, t: Translate): { title: string; body: string } | null {
+  if (!isParentalNotice(data)) return null;
+  const said = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
+  const teen = said(data.teenName);
+  const parent = said(data.parentName);
+  const line = (title: TranslationKey, body: TranslationKey | null, vars: Record<string, string>) => (body ? { title: t(title), body: t(body, vars) } : null);
+  switch (data.kind) {
+    case 'parental_connected':
+      return teen ? line('parental.notice.connectedTitle', 'parental.notice.connected', { teen }) : null;
+    case 'parental_ended': {
+      const body: TranslationKey | null =
+        data.by === 'teen' && teen
+          ? 'parental.notice.endedByTeen'
+          : data.by === 'age' && teen
+            ? 'parental.notice.endedAge'
+            : data.by === 'account' && parent
+              ? 'parental.notice.endedAccount'
+              : parent
+                ? 'parental.notice.endedByParent'
+                : null;
+      return line('parental.notice.endedTitle', body, { teen: teen ?? '', parent: parent ?? '' });
+    }
+    case 'parental_changed':
+      if (!parent) return null;
+      return data.to === 'parent' && teen
+        ? line('parental.notice.changedTitle', 'parental.notice.changedParent', { parent, teen })
+        : line('parental.notice.changedTitle', 'parental.notice.changedTeen', { parent });
+    case 'parental_parent_added':
+      return teen && parent ? line('parental.notice.addedTitle', 'parental.notice.added', { parent, teen }) : null;
+    default: {
+      // A time zone named as its place ("Europe/Berlin" as "Berlin").
+      const zone = said(data.timeZone)?.split('/').pop()?.replace(/_/g, ' ');
+      return teen && zone ? line('parental.notice.zoneTitle', 'parental.notice.zone', { teen, zone }) : null;
+    }
+  }
 }
 
 /**

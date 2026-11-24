@@ -254,8 +254,8 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
       text: 'Hello {username},\n\n{teen} disconnected your account from their parental controls on Hevalo ({time}). You can no longer see their learning time and progress, or change their settings.\n\nIf you would like to be connected again, talk with them first. You can make a new code in Settings, then Parental controls, and they can enter it on their own account.\n\n— The Hevalo team',
     },
     ku: {
-      subject: 'Kontrolên dêûbavan ji bo {teen} bi dawî bûn',
-      text: 'Silav {username},\n\n{teen} hesabê te ji kontrolên dêûbavan qut kir li Hevalo ({time}). Êdî tu nikarî dema hînbûn û pêşketinê bibînî, an mîhengan biguherînî.\n\nHeke tu dixwazî hûn dîsa werin girêdan, pêşî pê re biaxive. Tu dikarî di Mîhengan de, paşê di Kontrolên dêûbavan de, kodeke nû çêkî, û ew dikare wê li ser hesabê xwe binivîse.\n\n— Tîma Hevalo',
+      subject: 'Çavdêriya dêûbavan ji bo {teen} bi dawî bû',
+      text: 'Silav {username},\n\n{teen} li Hevalo hesabê te ji çavdêriya dêûbavan qut kir ({time}). Êdî tu nikarî dema hînbûn û pêşketinê bibînî, an mîhengan biguherînî.\n\nHeke tu dixwazî hûn dîsa werin girêdan, pêşî pê re biaxive. Tu dikarî di Mîhengan de, paşê di Çavdêriya dêûbavan de, kodeke nû çêkî, û ew dikare wê li ser hesabê xwe binivîse.\n\n— Tîma Hevalo',
     },
   },
   /** To a teen's parents when another parent connects, so a second account cannot join unseen. */
@@ -266,7 +266,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
     ku: {
       subject: 'Kesekî din wekî dêûbav bi {teen} ve hate girêdan',
-      text: 'Silav {username},\n\n{parent} li Hevalo wekî dêûbav bi {teen} ve hate girêdan ({time}). Niha ew dikare dema hînbûn û pêşketina {teen} bibîne, û dikare mîhengan hişktir bike, lê ne siviktir.\n\nHeke tu nizanî ev kî ye, bi {teen} re biaxive: ew dikare di Mîhengan de, paşê di Kontrolên dêûbavan de, dêûbavekî qut bike.\n\n— Tîma Hevalo',
+      text: 'Silav {username},\n\n{parent} li Hevalo wekî dêûbav bi {teen} ve hate girêdan ({time}). Niha ew dikare dema hînbûn û pêşketina {teen} bibîne, û dikare mîhengan hişktir bike, lê ne siviktir.\n\nHeke tu nizanî ev kî ye, bi {teen} re biaxive: ew dikare di Mîhengan de, paşê di Çavdêriya dêûbavan de, dêûbavekî qut bike.\n\n— Tîma Hevalo',
     },
   },
   'deletion-notice': {

@@ -43,6 +43,8 @@ import { useDirection } from '../reports/direction';
 import { TicketSlip } from './FriendTicket';
 import { usePageWidth } from '../theme/pageWidth';
 import { Icon } from '../theme/Icon';
+import { ParentalNote } from '../parental/ParentalNote';
+import { useParentalOff } from '../parental/supervision';
 
 interface Profile {
   userId: string;
@@ -93,6 +95,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const { client } = useAuth();
   // Anyone's profile is open to a guest; writing to or befriending them needs an account (auth/AccountGate).
   const { require } = useAccountGate();
+  // A supervised teen whose parent turned friend requests off is told so where the request would be.
+  const friendsOff = useParentalOff('friends');
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -315,7 +319,12 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                                 </View>
                               </>
                             ) : null}
-                            {labelKey ? (
+                            {labelKey && friendsOff && (shown === 'none' || shown === 'pending_in') ? (
+                              // A parent turned friend requests off: a calm line where the request would be made or taken.
+                              <View style={styles.action}>
+                                <ParentalNote />
+                              </View>
+                            ) : labelKey ? (
                               // A request is a ticket handed over: it slips away from the button, and home again when taken back.
                               <View style={styles.action}>
                                 <TicketSlip sent={shown === 'pending_out'}>

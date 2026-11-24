@@ -91,8 +91,11 @@ export function restoreArtOverrides(store: DeviceStore): Promise<void> {
   return restoring;
 }
 
-/** Fetch the list, one request at a time. Anything but a valid list leaves the current one. Never rejects. */
-export function refreshArtOverrides(client: ApiClient, store: DeviceStore, now: () => number = Date.now): Promise<void> {
+/**
+ * Fetch the list, one request at a time. Anything but a valid list leaves the current one. Never rejects. `rewrite`
+ * stores the answer even when it is the list already shown, for a phone whose stored copy was just cleared.
+ */
+export function refreshArtOverrides(client: ApiClient, store: DeviceStore, now: () => number = Date.now, rewrite = false): Promise<void> {
   fetching ??= (async () => {
     try {
       const res = await client.get<ArtOverridesResponse>('/art/overrides');
@@ -101,7 +104,7 @@ export function refreshArtOverrides(client: ApiClient, store: DeviceStore, now: 
       fresh = true;
       fetchedAt = now();
       // Kept for the next start only when it changed: the same list is already the copy on the phone.
-      if (apply(list)) await store.set(ART_OVERRIDES_KEY, JSON.stringify({ version: list.version, overrides: list.overrides }));
+      if (apply(list) || rewrite) await store.set(ART_OVERRIDES_KEY, JSON.stringify({ version: list.version, overrides: list.overrides }));
     } catch {
       // The list the phone had stays: nothing a screen draws depends on this succeeding.
     } finally {
@@ -152,6 +155,15 @@ export function useArtOverrides(): ArtOverrides {
 export function useArtOverride(family: ArtSlotFamily, key: string | null | undefined, level?: string | null): string | null {
   const read = (): string | null => artOverride(family, key, level);
   return useSyncExternalStore(subscribe, read, read);
+}
+
+/**
+ * Settings → Clear cache: the stored copy goes and the list is read again from the server. The pictures shown meanwhile
+ * stay, so nothing on screen changes until the fresh list says so.
+ */
+export async function forgetStoredArtOverrides(client: ApiClient, store: DeviceStore): Promise<void> {
+  await store.remove(ART_OVERRIDES_KEY).catch(() => undefined);
+  await refreshArtOverrides(client, store, Date.now, true);
 }
 
 /** Back to a phone that has never heard of the list — for tests. */

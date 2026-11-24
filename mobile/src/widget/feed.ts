@@ -10,6 +10,8 @@ export type FeedAnswer =
   | { kind: 'feed'; feed: WidgetFeed }
   /** 401 or 403: the token was revoked (signed out on this device, or every widget removed in settings). */
   | { kind: 'rejected' }
+  /** 403 PARENTAL_BLOCKED: a parent turned letters off; the token still holds, and the widget asks again later. */
+  | { kind: 'off' }
   /** 429: asked too often this hour; try again after this many seconds. */
   | { kind: 'later'; retryAfter: number }
   /** No network, a timeout, the server down or answering something that is not a feed. */
@@ -38,6 +40,7 @@ export async function fetchWidgetFeed(apiBase: string, token: string, fetchFn: F
   } catch {
     return { kind: 'offline' };
   }
+  if (res.status === 403 && (await refusalCode(res)) === 'PARENTAL_BLOCKED') return { kind: 'off' };
   if (res.status === 401 || res.status === 403) return { kind: 'rejected' };
   if (res.status === 429) {
     const wait = Number(res.headers.get('retry-after'));
@@ -49,5 +52,15 @@ export async function fetchWidgetFeed(apiBase: string, token: string, fetchFn: F
     return isWidgetFeed(body) ? { kind: 'feed', feed: body } : { kind: 'offline' };
   } catch {
     return { kind: 'offline' };
+  }
+}
+
+/** The code in a refusal's body, when it has one. */
+async function refusalCode(res: Response): Promise<string | null> {
+  try {
+    const body = (await res.json()) as { code?: unknown } | null;
+    return typeof body?.code === 'string' ? body.code : null;
+  } catch {
+    return null;
   }
 }

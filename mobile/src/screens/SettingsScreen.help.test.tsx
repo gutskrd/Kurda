@@ -6,6 +6,7 @@ import { fakeClient, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { clipboardStub } from '../reports/testing/stubs';
 import * as Clipboard from 'expo-clipboard';
+import { SettingsPageScreen } from '../settings/SettingsPageScreen';
 import { SettingsScreen } from './SettingsScreen';
 
 vi.mock('react-native', () => import('../play/testing/native'));
@@ -30,23 +31,31 @@ describe('Settings → help and support', () => {
 
   it('opens the website’s questions and answers, and its page about Hevalo', () => {
     const open = vi.spyOn(Linking, 'openURL').mockResolvedValue(true);
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="help" onExit={() => undefined} />);
     fireEvent.click(screen.getByText('Help & FAQ'));
+    cleanup();
+    renderWithProviders(<SettingsPageScreen page="about" onExit={() => undefined} />);
     fireEvent.click(screen.getByText('About us'));
     expect(open.mock.calls.map((c) => c[0])).toEqual(['https://hevalo.app/faq', 'https://hevalo.app/about']);
   });
 
-  it('finds the help rows by their names', () => {
+  it('finds the help rows by their names from the home’s search, each naming its page', () => {
+    const open = vi.spyOn(Linking, 'openURL').mockResolvedValue(true);
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Search settings' }));
     fireEvent.change(screen.getByLabelText('Search settings'), { target: { value: 'faq' } });
-    expect(screen.getByText('Help & FAQ')).toBeTruthy();
+    const found = screen.getByTestId('found-faq');
+    expect(found.getAttribute('aria-label')).toBe('Help & FAQ');
+    expect(found.textContent).toContain('Help and feedback');
     expect(screen.queryByText('About us')).toBeNull();
+    fireEvent.click(found);
+    expect(open).toHaveBeenCalledWith('https://hevalo.app/faq');
   });
 
   it('copies the support address and says so when there is no mail app to open', async () => {
     vi.spyOn(Linking, 'openURL').mockRejectedValue(new Error('No Activity found to handle Intent'));
     const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="help" onExit={() => undefined} />);
     fireEvent.click(screen.getByText('Contact support'));
     await waitFor(() => expect(alert).toHaveBeenCalledTimes(1));
     expect(clipboardStub.text).toBe('support@hevalo.app');
@@ -57,7 +66,7 @@ describe('Settings → help and support', () => {
     vi.spyOn(Linking, 'openURL').mockRejectedValue(new Error('Unable to open URL'));
     vi.spyOn(Clipboard, 'setStringAsync').mockRejectedValue(new Error('no clipboard'));
     const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="help" onExit={() => undefined} />);
     fireEvent.click(screen.getByText('Contact support'));
     await waitFor(() => expect(alert).toHaveBeenCalledTimes(1));
     expect(alert).toHaveBeenCalledWith('No email app opened', 'Write to us at support@hevalo.app from the app you use for email.');
@@ -66,7 +75,7 @@ describe('Settings → help and support', () => {
   it('says nothing when the mail app opens', async () => {
     const open = vi.spyOn(Linking, 'openURL').mockResolvedValue(true);
     const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    renderWithProviders(<SettingsPageScreen page="help" onExit={() => undefined} />);
     fireEvent.click(screen.getByText('Contact support'));
     await waitFor(() => expect(open).toHaveBeenCalledWith('mailto:support@hevalo.app'));
     expect(alert).not.toHaveBeenCalled();

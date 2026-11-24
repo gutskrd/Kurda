@@ -1,7 +1,7 @@
 /** Pure notification-inbox helpers, with no React Native. */
 import { isPlayGame, letterNoticeOf, type IncomingInvite, type PlayGame } from '@kurda/shared';
 import type { Translate } from '../api/errors';
-import type { IconName } from '../theme/icon-paths';
+import type { IconName } from '../theme/Icon';
 import { socialDeepLink, str, type SocialDeepLink } from '../reports/deepLinks';
 import { pictureReviewLink, pictureReviewOf, type PictureReviewLink } from '../pictures/review';
 
@@ -35,6 +35,8 @@ export type DeepLink =
    * land. Without a correspondence, just the window.
    */
   | { screen: 'Letters'; params?: { bird: string } }
+  /** A parent and a teen connected, parted, or the teen's limits changed: Parental controls, or the teen's own page. */
+  | { screen: 'SettingsPage'; params: { page: 'parental' } | { page: 'parentalTeen'; teenId: string } }
   /** A person's decision on a picture: the post, group or correspondence it belongs to, or your own profile. */
   | PictureReviewLink
   // Gifts, report outcomes and decisions on your account (reports/deepLinks.ts).
@@ -49,6 +51,13 @@ const GROUP_NOTICES = ['group_removed', 'group_banned', 'group_request', 'group_
 
 export function isGroupNotice(data: Record<string, unknown>): boolean {
   return (GROUP_NOTICES as readonly unknown[]).includes(data.kind);
+}
+
+/** What parental controls tell a parent or a teen: connected, ended, changed, another parent added, a new time zone. */
+const PARENTAL_NOTICES = ['parental_connected', 'parental_ended', 'parental_changed', 'parental_parent_added', 'parental_zone'] as const;
+
+export function isParentalNotice(data: Record<string, unknown>): boolean {
+  return (PARENTAL_NOTICES as readonly unknown[]).includes(data.kind);
 }
 
 /**
@@ -85,6 +94,13 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
   // lands; an invalid id is never followed.
   const letter = letterNoticeOf(data);
   if (letter) return letter.threadId ? { screen: 'Letters', params: { bird: letter.threadId } } : { screen: 'Letters' };
+  // Parental controls: news to a parent about a teen opens that teen's page; the teen's own news, and an ending, open
+  // the parental page as it stands now.
+  if (isParentalNotice(data)) {
+    const toParent = data.kind === 'parental_changed' ? data.to === 'parent' : data.kind !== 'parental_ended';
+    const teenId = toParent ? str(data.teenId) : null;
+    return { screen: 'SettingsPage', params: teenId ? { page: 'parentalTeen', teenId } : { page: 'parental' } };
+  }
   // Progress: badges and the weekly league.
   if (data.kind === 'badge') return { screen: 'Badges' };
   if (data.kind === 'league_safe' || data.kind === 'league_promotion' || data.kind === 'league_trophy') return { screen: 'Rankings' };
@@ -231,6 +247,8 @@ export function noticeKind(item: Pick<InboxItem, 'category' | 'data'>): NoticeKi
     case 'group_request_declined':
       return { icon: 'clock', reward: false };
   }
+  // Everything parental controls tell a parent or a teen wears the parental glyph.
+  if (isParentalNotice(item.data)) return { icon: 'parental', reward: false };
   switch (item.data.screen) {
     case 'Chat':
       return { icon: 'chat', reward: false };

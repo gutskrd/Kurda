@@ -252,6 +252,18 @@ describe('what the Android widget shows', () => {
     expect([...disk.files.keys()]).toEqual([]);
   });
 
+  it('says calmly that letters are off when a parent turned them off, shows none, and keeps the token', async () => {
+    signIn();
+    await loadLetterWidget(place, { fresh: true, now: at('2026-11-15T12:00:00'), fetchFn: server([feed()]).fn });
+    const off = await loadLetterWidget(place, {
+      fresh: true,
+      fetchFn: server([{ status: 403, body: { code: 'PARENTAL_BLOCKED', message: 'switched off', details: { control: 'letters' } } }]).fn,
+    });
+    expect(off.shows).toEqual({ kind: 'off' });
+    expect(disk.keystore.has(WIDGET_KEYS.rejected)).toBe(false);
+    expect([...disk.files.keys()]).toEqual([]);
+  });
+
   it('asks once more with the new token when the app replaced the old one meanwhile', async () => {
     signIn('hvw_old');
     const net = server([{ status: 401 }, feed()]);

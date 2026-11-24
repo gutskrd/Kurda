@@ -86,6 +86,8 @@ enum FeedAnswer {
   case feed(WidgetFeed)
   /// 401 or 403: the token was taken away (signed out, every widget removed in settings, a new password)
   case rejected
+  /// 403 PARENTAL_BLOCKED: a parent turned letters off; the token still holds
+  case switchedOff
   /// 429: asked too often this hour
   case later(TimeInterval)
   /// no network, a timeout, the server down or saying something that is not a feed
@@ -98,6 +100,8 @@ enum Refresh {
   static let maxSeconds: TimeInterval = 12 * 60 * 60
   static let offlineSeconds: TimeInterval = 15 * 60
   static let signedOutSeconds: TimeInterval = 6 * 60 * 60
+  /// letters switched off by a parent: asked again within the hour, in case they are back on
+  static let switchedOffSeconds: TimeInterval = 60 * 60
 
   static func seconds(_ refreshAfter: Double) -> TimeInterval {
     guard refreshAfter.isFinite else { return offlineSeconds }
@@ -173,6 +177,8 @@ enum LetterAPI {
       case 200:
         guard let feed = try? JSONDecoder().decode(WidgetFeed.self, from: data) else { return .offline }
         return .feed(feed)
+      case 403 where refusalCode(data) == "PARENTAL_BLOCKED":
+        return .switchedOff
       case 401, 403:
         return .rejected
       case 429:
@@ -184,6 +190,12 @@ enum LetterAPI {
     } catch {
       return .offline
     }
+  }
+
+  /// The code in a refusal's body, when it has one.
+  private static func refusalCode(_ data: Data) -> String? {
+    struct Refusal: Decodable { let code: String? }
+    return (try? JSONDecoder().decode(Refusal.self, from: data))?.code
   }
 
   /// The picture of the letter's paper and drawing with its writer's pigeon, or of the empty sill at a sky.

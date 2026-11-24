@@ -28,7 +28,9 @@ export type WidgetShows =
   /** No token on this phone, or the server refused it. */
   | { kind: 'signedOut' }
   /** Signed in, but nothing could be fetched yet and there is nothing kept from before. */
-  | { kind: 'waiting' };
+  | { kind: 'waiting' }
+  /** A parent turned letters off for this teen: a calm line, never the signed-out one. */
+  | { kind: 'off' };
 
 export type WidgetFamily = 'small' | 'medium' | 'large';
 
@@ -76,6 +78,8 @@ export function LetterWidget({ shows, width, height, locale, rtlLocale, now = ne
       return <Plain text={widgetText(locale, 'signedOut')} link={APP_LINK} pose="sleep" dark={dark} family={family} />;
     case 'waiting':
       return <Plain text={widgetText(locale, 'waiting')} link={LETTERS_LINK} pose="perched" dark={dark} family={family} />;
+    case 'off':
+      return <Plain text={widgetText(locale, 'off')} link={APP_LINK} pose="sleep" dark={dark} family={family} />;
   }
 }
 
