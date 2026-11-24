@@ -962,6 +962,8 @@ declare module 'fastify' {
       guest?: boolean;
       /** held while a person checks whether it belongs to someone banned (moderation/restrictions.ts `requireNotHeld`) */
       held?: boolean;
+      /** a live parent link, as the session read found it; false lets the parental guards skip their read */
+      supervised?: boolean;
     };
     /** Why authentication failed, when a credential was presented. */
     authFailure?: import('./plugins/auth.js').AuthFailure;

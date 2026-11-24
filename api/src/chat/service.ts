@@ -3,7 +3,7 @@ import type pg from 'pg';
 import { stripControlChars, type ChatGameRef, type ChatMessageExtras, type ChatMessageKind } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { assertUnrestricted } from '../moderation/restrictions.js';
-import { assertParentalAllowed, parentalAllows } from '../parental/supervision.js';
+import { assertParentalAllowed, switchedOffSql } from '../parental/supervision.js';
 import { giftCards } from '../gifts/cards.js';
 import { gameRef, previewText, type KindColumns } from './kinds.js';
 import { canonicalPair } from '../friends/pair.js';
@@ -123,6 +123,7 @@ export class ChatService {
       username: string;
       profile_photo_key: string | null;
       selected_avatar_key: string | null;
+      to_muted: boolean;
     }>(
       // a suspended or banned person cannot be written to: nothing is stored, and the sender is told it isn't available
       `WITH ins AS (
@@ -130,7 +131,7 @@ export class ChatService {
          SELECT $1, $2, $3, $4 WHERE EXISTS (SELECT 1 FROM users t WHERE t.id = $5 AND ${availableSql('t')})
          RETURNING id, created_at, sender_id
        )
-       SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key
+       SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key, ${switchedOffSql('$5::uuid', 'chat')} AS to_muted
          FROM ins JOIN users u ON u.id = ins.sender_id`,
       [lo, hi, from, body, to],
     );
@@ -150,7 +151,7 @@ export class ChatService {
       gift: null,
       game: null,
     };
-    await this.liveTo(to, {
+    await this.liveTo(to, row.rows[0]!.to_muted, {
       type: 'dm',
       from,
       fromUsername: row.rows[0]!.username,
@@ -199,13 +200,14 @@ export class ChatService {
       username: string;
       profile_photo_key: string | null;
       selected_avatar_key: string | null;
+      to_muted: boolean;
     }>(
       `WITH ins AS (
          INSERT INTO dm_messages (user_lo, user_hi, sender_id, kind, game, game_lobby_id)
          SELECT $1, $2, $3, 'game', $4, $5 WHERE EXISTS (SELECT 1 FROM users t WHERE t.id = $6 AND ${availableSql('t')})
          RETURNING id, created_at, sender_id
        )
-       SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key
+       SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key, ${switchedOffSql('$6::uuid', 'chat')} AS to_muted
          FROM ins JOIN users u ON u.id = ins.sender_id`,
       [lo, hi, from, card.game, card.lobbyId, to],
     );
@@ -223,16 +225,17 @@ export class ChatService {
       gift: null,
       game: card,
     };
-    await this.liveTo(to, { type: 'dm', from, fromUsername: row.rows[0]!.username, message });
+    await this.liveTo(to, row.rows[0]!.to_muted, { type: 'dm', from, fromUsername: row.rows[0]!.username, message });
     return message;
   }
 
   /**
-   * A new message to `to`'s open apps, unless a parent switched their messages off: it is kept, and shows when they are
-   * on again, but nothing arrives live meanwhile. A lost event only means the thread catches up on its next read.
+   * A new message to `to`'s open apps, unless a parent switched their messages off (`muted`, read with the insert): it
+   * is kept, and shows when they are on again, but nothing arrives live meanwhile. A lost event only means the thread
+   * catches up on its next read.
    */
-  private async liveTo(to: string, event: Record<string, unknown>): Promise<void> {
-    if (!(await parentalAllows(this.pool, to, 'chat'))) return;
+  private async liveTo(to: string, muted: boolean, event: Record<string, unknown>): Promise<void> {
+    if (muted) return;
     await this.notifier.notifyUser(to, event).catch(() => undefined);
   }
 

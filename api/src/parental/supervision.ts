@@ -126,10 +126,20 @@ export async function supervisionOf(db: Executor, userId: string, now: Date = ne
   return stateOf(controlsOf(row), row.minutes[localDay(now, row.time_zone)] ?? 0, row.time_zone, now);
 }
 
+/**
+ * Whether the session read already found that this request's own account has no live parent link (plugins/auth.ts),
+ * so nothing about it needs reading. A link made later in the same request is seen from the next request on.
+ */
+export function knownUnsupervised(userId: string): boolean {
+  const user = currentRequest()?.user;
+  return user?.id === userId && user.supervised === false;
+}
+
 /** Reads made by the guards, once per person per request, so a write checking two switches still makes one lookup. */
 const guardReads = new WeakMap<object, Map<string, Promise<SupervisionState | null>>>();
 
 function guardRead(db: Executor, userId: string): Promise<SupervisionState | null> {
+  if (knownUnsupervised(userId)) return Promise.resolve(null);
   const req = currentRequest();
   if (!req) return supervisionOf(db, userId);
   let byUser = guardReads.get(req);

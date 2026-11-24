@@ -30,7 +30,8 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
     // so a family with none was signed out, revoked, or caught reusing a stolen token, and its access tokens stop now.
     //
     // `birth_month_known`, `guest` and `held` ride along for `requireBirthMonth`, `requireAccount` and the hold
-    // (moderation/restrictions.ts), saving each a second read.
+    // (moderation/restrictions.ts), saving each a second read; `supervised` lets the parental guards skip their read for
+    // everyone without a live parent link (parental/supervision.ts).
     const family = claims.fam && UUID_RE.test(claims.fam) ? claims.fam : null;
     const result = await app.db.query<{
       id: string;
@@ -43,10 +44,12 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
       birth_month_known: boolean;
       guest: boolean;
       held: boolean;
+      supervised: boolean;
       session_live: boolean;
     }>(
       `SELECT id, roles, token_version, deleted_at, banned_at, banned_until, email_verified_at, guest,
               birth_year IS NOT NULL AS birth_month_known, held_at IS NOT NULL AS held,
+              EXISTS (SELECT 1 FROM parental_links pl WHERE pl.teen_id = users.id AND pl.ended_at IS NULL) AS supervised,
               ($2::uuid IS NULL OR EXISTS (
                 SELECT 1 FROM refresh_tokens rt
                  WHERE rt.family_id = $2::uuid AND rt.user_id = users.id AND rt.revoked_at IS NULL)) AS session_live
@@ -78,6 +81,7 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
       birthMonthKnown: user.birth_month_known,
       guest: user.guest,
       held: user.held,
+      supervised: user.supervised,
     };
   });
 }

@@ -4,6 +4,7 @@ import { isParentalBedtime, isParentalDailyLimit, PARENTAL_SWITCHES, type Parent
 import { requireAccount, requireAuth } from '../plugins/auth.js';
 import type { RateLimitOptions } from '../ratelimit/plugin.js';
 import type { ParentalService } from './service.js';
+import { knownUnsupervised } from './supervision.js';
 
 /**
  * Parental controls (parental/service.ts), all under the caller's own account:
@@ -92,7 +93,7 @@ export function registerParentalRoutes(app: FastifyInstance, parental: ParentalS
 
   // Every open app of a supervised teen sends this once a minute; for anyone else it answers 204 and the app stops.
   app.post('/me/usage', { schema: { body: usageBody }, preHandler: requireAuth }, async (req, reply) => {
-    const state = await parental.beat(req.user!.id, (req.body as z.infer<typeof usageBody>).timeZone);
+    const state = knownUnsupervised(req.user!.id) ? null : await parental.beat(req.user!.id, (req.body as z.infer<typeof usageBody>).timeZone);
     if (!state) return reply.code(204).send();
     return state;
   });

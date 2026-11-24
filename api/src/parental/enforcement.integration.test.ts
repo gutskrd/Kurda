@@ -370,7 +370,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('parental switches at every write (
     expect(told.rows).toEqual([{ data: expect.objectContaining({ by: 'account', parentId: ended.parent.id }), body: expect.not.stringMatching(/suspend|ban|safety/i) }]);
   });
 
-  it('asks once per write, even one that checks two switches, and once for an account’s GET /me', async () => {
+  it('asks once per write, even one that checks two switches, and for GET /me only when the account has a parent', async () => {
     const parental = (statements: readonly string[]) => statements.filter((s) => s.includes('FROM parental_controls c')).length;
     const owner = free;
     const group = await pool.query<{ id: string }>(`INSERT INTO groups (name, owner_id) VALUES ('Lîstik', $1) RETURNING id`, [owner.id]);
@@ -384,12 +384,16 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('parental switches at every write (
     } finally {
       log.stop();
     }
-    const me = countQueries(app.db);
-    try {
-      await call(plain, 'GET', '/me');
-      expect(parental(me.statements)).toBe(1);
-    } finally {
-      me.stop();
+    // the session read already says whether a parent is linked, so anyone without one costs nothing more
+    for (const [who, reads] of [[plain, 0], [free, 1]] as const) {
+      const me = countQueries(app.db);
+      try {
+        const res = await call(who, 'GET', '/me');
+        expect(res.statusCode, res.body).toBe(200);
+        expect(parental(me.statements)).toBe(reads);
+      } finally {
+        me.stop();
+      }
     }
     expect(PARENTAL_SWITCHES).toContain('purchases');
   });

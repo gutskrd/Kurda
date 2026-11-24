@@ -25,7 +25,7 @@ import { BirthMonthService, birthDateBodySchema } from './birth-month.js';
 import { leaveThisWeek, returnThisWeek } from '../leagues/service.js';
 import { TIME_ZONE_MESSAGE, storableTimeZone } from '../streaks/time-zones.js';
 import { RequestValidationError } from '../plugins/validation.js';
-import { supervisionOf } from '../parental/supervision.js';
+import { knownUnsupervised, supervisionOf } from '../parental/supervision.js';
 
 export { USERNAME_CHANGE_COOLDOWN_DAYS };
 /** The time zone can change at most once a week, so a streak cannot be farmed by hopping zones. */
@@ -187,8 +187,8 @@ export function createMeReader(app: FastifyInstance): (userId: string) => Promis
     const [row, profile, supervision] = await Promise.all([
       app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [userId]).then((r) => r.rows[0] as MeRow),
       social.profile(userId, userId, { badges: false }),
-      // null for everyone but a supervised teen, from one indexed lookup (parental/supervision.ts)
-      supervisionOf(app.db, userId),
+      // null for everyone but a supervised teen; read only when the session found a live parent link (parental/supervision.ts)
+      knownUnsupervised(userId) ? null : supervisionOf(app.db, userId),
     ]);
     // Settle the streak on read so a lapsed day shows as broken.
     const streak = await streaks.get(row.id, row.timezone);
