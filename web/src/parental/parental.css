@@ -429,7 +429,8 @@
   display: grid;
   place-items: center;
   min-height: 100dvh;
-  padding: var(--space-6) var(--space-4);
+  /* clear of the camera cutout and the home indicator when the screen is short or the text is large */
+  padding: calc(var(--space-6) + env(safe-area-inset-top, 0px)) var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
   background: var(--app-bg);
   color: var(--ink);
 }
