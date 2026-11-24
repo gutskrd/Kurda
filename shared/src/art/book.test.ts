@@ -126,7 +126,7 @@ function checkDrawing(svg: string, what: string): El {
 const SKY = { sky: '#dcecff', ground: '#b9d6f7', light: '#fffdf8' } as const;
 
 /** The people page's violet: the shades a silhouette is cut from. */
-const INKS = { deep: '#4c2574', base: '#9a58e0', paper: '#f4eeff' } as const;
+const INKS = { deep: '#4c2574', paper: '#f4eeff' } as const;
 
 /** Every flat-painted book drawing, with a label. */
 const FLAT: ReadonlyArray<readonly [string, string]> = [

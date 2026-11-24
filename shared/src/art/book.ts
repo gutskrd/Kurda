@@ -845,106 +845,197 @@ export function bookPaintSvg(opts: BookArtOptions & { colour: BookPaint }): stri
 
 // ───────────────────────────────────────────────────────────── the road's other people
 
-/** Shoulders, nape, skull, brow, nose, lips, chin and throat of a grown man in profile, facing right and standing on the canvas's foot. */
-const PROFILE_MAN =
-  'M4 120C6 104 18 96 34 92C42 90 45 86 45 79C45 74 40 71 38 64C34 54 35 38 44 29C51 22 63 20 71 24C79 28 83 36 83 44C83 47 82 49 83 51L90 60C91 62 88 63.5 86 63C86 65 87.5 66 87 67.5C86 68.5 85.5 69 86.5 70C87 71.5 85.5 72.5 85 73C86 76 86 79 83 81C80 82.5 76 82 73 82.5C72 86 73 90 75 93C90 97 110 104 116 120Z';
-/** A woman's: a softer brow, a smaller nose, fuller lips and narrower shoulders. */
-const PROFILE_WOMAN =
-  'M10 120C12 105 22 98 36 94C43 92 46 88 46 81C46 76 41 73 39 66C35 56 36 40 45 31C52 24 63 22 71 26C78 30 82 37 82 45C82 48 81.5 50 82.5 52L88 60.5C89 62 87 63.2 85 63C85 64.8 86.5 65.8 86 67.3C85 68.3 84.6 68.8 85.6 69.8C86.2 71.5 84.8 72.6 84.2 73.2C85 76.5 84.5 79.5 81.5 81C78.5 82.3 75 82 72.5 82.5C71.5 86 72.5 90 74 93C88 97 104 104 110 120Z';
-/** A child's: a large round head, a small upturned nose and small shoulders. */
-const PROFILE_CHILD =
-  'M20 120C22 108 30 102 41 99C47 97 49 94 49 88C49 84 44 81 42 75C38 65 39 49 48 40C55 33 65 31 73 35C80 39 84 46 84 54C84 57 83.5 59 84.5 61L88.5 66.5C89.2 68 87.6 69 86 68.8C86 70.4 87 71.2 86.6 72.4C85.8 73.4 85.6 73.8 86.4 74.6C86.8 76 85.6 77 85 77.5C85.4 80.5 84.4 83 81.5 84.2C78.8 85.3 76 85 74 85.5C73.4 89 74.4 92.5 76 95C87 98.5 97 105 100 120Z';
-const PROFILE_HAIR = 'M80 33C77 25 69 20 59 20C47 20 38 28 36 42C35 52 37 60 41 68C43 71 45 73 45 77C47 70 47 62 49 55C52 48 57 44 62 42C68 40 74 39 79 37Z';
-const PROFILE_MOUSTACHE = 'M83 62.6C87.5 62.2 91 64 91.6 67.6C88.6 68.4 86 68 83.5 67.2Z';
+/** A point of a profile: x, y on a 200 canvas, and 1 where the outline turns a corner (a nose tip, the lips). */
+type ProfilePoint = readonly [x: number, y: number, corner?: 1];
 
-type SilhouettePart = readonly [tone: 'skin' | 'hair' | 'cloth', d: string] | readonly [tone: 'cut', d: string, width: number];
+/** A Catmull-Rom curve through the points, as cubic Béziers; closed, or open from the first point to the last. */
+function throughPoints(pts: readonly ProfilePoint[], closed: boolean): string {
+  const count = pts.length;
+  const at = (i: number): ProfilePoint => (closed ? pts[(i + count) % count]! : pts[Math.max(0, Math.min(count - 1, i))]!);
+  let d = `M${f(at(0)[0])} ${f(at(0)[1])}`;
+  for (let i = 0; i < (closed ? count : count - 1); i++) {
+    const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
+    const c1 = p1[2] ? p1 : [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2 = p2[2] ? p2 : [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += `C${f(c1[0]!)} ${f(c1[1]!)} ${f(c2[0]!)} ${f(c2[1]!)} ${f(p2[0])} ${f(p2[1])}`;
+  }
+  return closed ? `${d}Z` : d;
+}
+
+/** The profiles, facing right and standing on the canvas's foot: a man's, a woman's, a child's, and an older man's and woman's. */
+const PROFILE = {
+  man: [
+    [-6, 200, 1], [0, 178], [18, 162], [42, 153], [56, 142], [60, 130], [54, 116], [46, 98], [44, 76], [52, 52], [70, 35], [96, 28], [120, 32],
+    [134, 45], [138, 61], [138, 71], [135, 77], [140, 87], [148, 97, 1], [145, 100], [139, 101, 1], [141, 105], [144, 108], [140, 111, 1],
+    [143, 114], [140, 118], [138, 120], [141, 127], [137, 134], [126, 137], [115, 138], [114, 147], [117, 156], [128, 165], [154, 175], [178, 186], [192, 200, 1],
+  ],
+  woman: [
+    [2, 200, 1], [8, 180], [24, 166], [46, 157], [58, 146], [62, 134], [56, 119], [50, 101], [48, 80], [55, 57], [72, 40], [96, 33], [117, 36],
+    [129, 48], [133, 63], [133, 73], [131, 79], [135, 88], [141, 97, 1], [138, 100], [133, 101, 1], [135, 105], [138, 108], [134, 111, 1],
+    [137, 114], [134, 118], [132, 120], [134, 126], [130, 132], [121, 135], [113, 136], [112, 146], [115, 156], [126, 166], [150, 176], [172, 186], [184, 200, 1],
+  ],
+  child: [
+    [20, 200, 1], [26, 184], [40, 172], [56, 165], [66, 156], [68, 145], [60, 131], [52, 112], [52, 88], [60, 64], [78, 48], [100, 41], [120, 45],
+    [133, 58], [138, 74], [137, 87], [135, 93], [138, 100], [143, 106, 1], [139, 109], [135, 110, 1], [137, 114], [139, 117], [135, 119, 1],
+    [138, 122], [135, 126], [134, 128], [135, 133], [130, 138], [122, 140], [116, 141], [115, 150], [118, 159], [128, 167], [148, 176], [162, 187], [170, 200, 1],
+  ],
+  oldMan: [
+    [-6, 200, 1], [0, 176], [16, 158], [40, 148], [56, 138], [60, 126], [54, 112], [46, 96], [44, 76], [52, 52], [70, 36], [96, 29], [120, 33],
+    [134, 46], [138, 62], [138, 72], [136, 78], [142, 89], [150, 100, 1], [146, 103], [140, 103, 1], [141, 107], [143, 110], [140, 112, 1],
+    [142, 115], [139, 119], [137, 121], [139, 127], [134, 133], [124, 136], [114, 137], [113, 146], [116, 155], [127, 164], [154, 175], [178, 186], [192, 200, 1],
+  ],
+  oldWoman: [
+    [0, 200, 1], [6, 178], [22, 162], [44, 152], [58, 141], [62, 130], [56, 116], [50, 99], [48, 79], [55, 57], [72, 41], [96, 34], [116, 37],
+    [129, 49], [133, 64], [133, 74], [131, 80], [136, 90], [143, 100, 1], [139, 103], [133, 103, 1], [134, 107], [136, 110], [133, 112, 1],
+    [135, 115], [132, 119], [130, 121], [132, 127], [127, 133], [118, 136], [110, 137], [109, 146], [112, 156], [124, 166], [150, 176], [172, 186], [184, 200, 1],
+  ],
+} as const satisfies Record<string, readonly ProfilePoint[]>;
+
+const PROFILE_MOUSTACHE: readonly ProfilePoint[] = [[137, 100], [146, 101], [149, 104], [147, 108, 1], [143, 106], [138, 106]];
+
+/** One piece of a silhouette: a shape in the ink, a line cut out of it in the paper's colour, a line in the ink, or the lace on a scarf's edge. */
+type SilhouettePart =
+  | { shape: readonly ProfilePoint[] }
+  | { cut: readonly ProfilePoint[]; width: number }
+  | { ink: readonly ProfilePoint[]; width: number }
+  | { lace: readonly ProfilePoint[] };
+
+const shape = (pts: readonly ProfilePoint[]): SilhouettePart => ({ shape: pts });
+const cut = (width: number, ...pts: ProfilePoint[]): SilhouettePart => ({ cut: pts, width });
+const lash = (x: number, y: number): SilhouettePart => ({ ink: [[x, y], [x + 4, y - 1.6]], width: 1.1 });
 
 /**
- * Each of the road's people the book has no portrait for, as a cut-paper profile known by its outline: a headscarf, a
- * cap, a braid, a felt cloak, a stethoscope. Skin and clothes are one shade; hair a darker one and cloth a lighter one;
- * a cut is a line in the paper's own colour.
+ * Each of the road's people the book has no portrait for, as a cut-paper profile in one ink: a headscarf with its lace
+ * edge, a fringe, a plait and its ribbon, a flat cap, a turban and waistcoat, glasses and a stethoscope, a felt cap and cloak, a beard.
  */
 const SILHOUETTES = {
-  // a woman with her headscarf framing her face and falling to her shoulders
+  // a woman, her headscarf framing her face and falling to her shoulders, lace along its edge
   woman: [
-    ['skin', PROFILE_WOMAN],
-    ['cloth', 'M81 37C80 24 70 15 56 15C40 15 29 28 30 46C31 60 29 72 22 82C18 88 13 92 9 97C20 95 30 94 38 94C48 93 58 93 66 91C70 90 73 87 73.5 83L72 82.5C68 80 66 74 66 67C66 60 68 53 72 47C75 43 78 40 81 37Z'],
+    shape(PROFILE.woman),
+    shape([[129, 48], [120, 32], [98, 25], [74, 30], [54, 46], [44, 72], [42, 104], [38, 130], [28, 154], [14, 176], [8, 196], [28, 184], [52, 172], [80, 164], [104, 162], [114, 158], [110, 142], [110, 128], [112, 110], [116, 90], [121, 70], [126, 56]]),
+    cut(1.2, [128, 50], [122, 66], [117, 86], [113, 106], [111, 126], [112, 142], [116, 156]),
+    { lace: [[124, 52], [119, 68], [114, 88], [110, 108], [108, 128], [109, 144], [112, 156]] },
+    cut(1.1, [64, 52], [56, 80], [54, 110], [46, 140], [34, 164]),
+    lash(131, 79),
   ],
-  // a grandmother, her headscarf knotted at the nape
+  // a grandmother, her headscarf knotted at the nape with its two ends hanging
   grandmother: [
-    ['skin', 'M8 120C10 103 18 94 30 90C40 87 45 85 46.5 80C47 76 42 73 40 67C36 57 37 41 46 32C53 25 64 23 72 27C79 31 83 38 83 46C83 49 82.5 51 84 53.5L90.5 63C91.2 65 89 66 87 65.6C87.4 67.2 88 68.2 87.4 69.4C86.6 70.2 86.2 70.6 86.6 71.6C86.8 73.2 85.4 74.2 84.4 74.4C85 77.5 84 80.5 81 81.8C78 83 75 82.6 72.8 83.4C72 87 73 90 74.5 93C89 97 104 104 112 120Z'],
-    ['cloth', 'M82 38C81 25 71 16 57 16C41 16 31 29 32 47C33 58 32 66 29 72C32 79 40 84 50 87C58 89 66 90 70 89C73 88 74.5 85.5 74.5 83.5L73 83C69 80.5 67 75 67 68C67 61 69 54 73 48C76 44 79 41 82 38Z'],
-    ['cloth', 'M33 60C26 58 21 62 22 68C23 73 28 74 32 71C30 77 27 84 26 90L31 90C32 84 34 78 36 73Z'],
+    shape(PROFILE.oldWoman),
+    shape([[129, 49], [120, 33], [98, 26], [74, 31], [55, 46], [45, 72], [43, 100], [40, 120], [46, 140], [64, 152], [88, 158], [106, 160], [112, 156], [108, 142], [108, 128], [111, 110], [115, 90], [121, 70], [126, 57]]),
+    shape([[54, 110], [44, 100], [28, 102], [18, 114], [20, 128], [32, 136], [48, 134], [56, 124]]),
+    shape([[28, 128], [20, 138], [17, 148], [21, 151], [29, 142], [38, 132]]),
+    shape([[38, 132], [32, 142], [29, 152], [33, 156], [40, 146], [48, 134]]),
+    cut(1.1, [40, 104], [34, 118], [40, 132]),
+    cut(1.2, [128, 51], [122, 67], [116, 88], [112, 108], [110, 128], [111, 144], [114, 156]),
+    { lace: [[124, 53], [118, 70], [113, 90], [109, 110], [107, 128], [108, 146], [111, 156]] },
   ],
-  // a boy of about nine: a fringe and a cowlick
+  // a boy of about nine: a tousled fringe
   boy: [
-    ['skin', PROFILE_CHILD],
-    ['hair', 'M42 70C38 55 40 43 49 36C57 30 70 29 78 34C83 37 86 42 86.5 47C86.8 50 85 51 83 50C80 48.5 77 47 73 47C66 47 59 49 55 55C52 59 50 65 47 72Z'],
-    ['hair', 'M52 34C50 29 52 25 56 25C54 28 56 30 59 31Z'],
+    shape(PROFILE.child),
+    shape([[52, 112], [48, 88], [54, 62], [70, 44], [92, 35], [114, 36], [130, 46], [140, 60], [134, 62], [138, 70], [128, 66], [126, 72], [118, 64], [104, 60], [88, 62], [76, 72], [70, 90], [64, 108]]),
+    shape([[84, 40], [86, 30], [80, 20, 1], [96, 24], [106, 38]]),
+    cut(1, [72, 58], [86, 52], [102, 51]),
+    cut(1, [64, 78], [70, 66], [80, 60]),
   ],
-  // a girl of about six: a fringe and a ponytail tied with a ribbon
+  // a girl of about six: a fringe, and a plait tied with a ribbon
   girl: [
-    ['skin', PROFILE_CHILD],
-    ['hair', 'M42 72C38 55 40 43 49 36C57 30 70 29 78 34C83 37 86 42 86.5 49C86.6 52 84.5 53 82.5 51.5C80 49.5 77 48.5 73 48.5C66 48.5 59 51 55 57C52 61 50 67 46 74Z'],
-    ['hair', 'M41 47C33 48 27 55 27 65C27 75 24 84 18 90C28 91 35 85 37 76C39 68 41 61 45 55Z'],
-    ['cloth', 'M42 45C37 38 30 38 30 43.5C30 48 36 49.5 42 47.5C39 52 36 57 38 59C41 59 43 53 44 48.5Z'],
+    shape(PROFILE.child),
+    shape([[52, 116], [48, 90], [54, 64], [70, 46], [92, 37], [114, 38], [130, 48], [139, 64], [136, 72], [128, 68], [116, 62], [100, 60], [86, 64], [76, 76], [70, 94], [64, 114]]),
+    shape([[58, 108], [50, 120], [46, 134], [45, 148], [53, 150], [55, 136], [60, 122], [66, 112]]),
+    shape([[48, 150, 1], [38, 137], [29, 140], [29, 149], [48, 150, 1], [31, 158], [32, 167], [42, 166], [48, 150, 1], [50, 163], [56, 168, 1], [57, 159]]),
+    cut(1, [50, 122], [59, 126]),
+    cut(1, [47, 134], [56, 137]),
+    cut(1, [70, 58], [86, 52], [104, 50]),
+    lash(135, 93),
   ],
-  // a farmer in a flat cap
+  // a farmer in a flat cap with its short peak
   farmer: [
-    ['skin', PROFILE_MAN],
-    ['hair', PROFILE_HAIR],
-    ['hair', 'M37 47C36 35 43 26 55 23C67 21 78 24 83 31L92 35.5C92.5 37.5 89 38.5 83 38L40 50Z'],
+    shape(PROFILE.man),
+    shape([[46, 74], [52, 50], [70, 34], [96, 27], [120, 30], [136, 40], [146, 48], [154, 54, 1], [146, 56], [136, 55], [120, 56], [96, 58], [72, 62], [56, 70]]),
+    cut(1.4, [48, 70], [70, 61], [100, 57], [136, 55]),
   ],
-  // a market seller: a full moustache and an open collar
+  // a market seller: a wrapped turban with its fringe, a full moustache, a waistcoat over his shirt
   seller: [
-    ['skin', PROFILE_MAN],
-    ['hair', PROFILE_HAIR],
-    ['hair', PROFILE_MOUSTACHE],
-    ['cut', 'M75 93C78 99 80 104 80 110M75 93C83 96 88 98 92 99', 1.6],
+    shape(PROFILE.man),
+    shape([[42, 80], [40, 56], [50, 34], [72, 20], [100, 15], [126, 21], [140, 38], [144, 58], [136, 63], [120, 56], [96, 55], [72, 61], [54, 72]]),
+    shape(PROFILE_MOUSTACHE),
+    cut(1.3, [46, 64], [66, 44], [98, 34], [134, 42]),
+    cut(1.3, [52, 40], [78, 27], [112, 25]),
+    { lace: [[52, 70], [72, 59], [96, 53], [120, 54], [134, 60]] },
+    cut(1.2, [113, 152], [119, 160], [126, 154]),
+    cut(1.5, [122, 162], [128, 182], [130, 200]),
+    cut(1.3, [140, 168], [154, 174], [170, 182]),
   ],
-  // an old doctor: a bald crown with grey at the back, glasses, and a stethoscope round his neck
+  // an old doctor: a bald crown, round glasses, a moustache, and a stethoscope round his neck
   doctor: [
-    ['skin', PROFILE_MAN],
-    ['cloth', 'M40 46C37 52 38 60 42 67C44 70 45 73 45 77C47 71 48 66 51 61C49 58 47 53 47 47Z'],
-    ['hair', PROFILE_MOUSTACHE],
-    ['cut', 'M76 47H86M76 47C74 44 70 44 69 47C68 50 71 52 74 51C76 50 77 49 76 47', 1.4],
-    ['cut', 'M40 94C46 104 54 108 62 104C68 101 72 96 74 92M62 104L64 112', 1.8],
+    shape(PROFILE.oldMan),
+    shape(PROFILE_MOUSTACHE.map(([x, y, corner]): ProfilePoint => (corner ? [x + 1, y + 2, corner] : [x + 1, y + 2]))),
+    cut(1.4, [120, 80], [126, 75], [134, 75], [137, 80], [134, 86], [126, 86], [121, 81], [100, 78]),
+    cut(1.8, [60, 150], [70, 168], [88, 178], [108, 174], [116, 160]),
+    cut(1.8, [88, 178], [92, 190]),
   ],
-  // a shepherd: a felt cap and the stiff felt cloak with its square shoulders
+  // a shepherd: a tall felt cap, a moustache, and the stiff felt cloak with square shoulders
   shepherd: [
-    ['skin', 'M0 120L0 98C0 92 4 90 10 90L36 89C42 88 45 85 45 79C45 74 40 71 38 64C34 54 35 38 44 29C51 22 63 20 71 24C79 28 83 36 83 44C83 47 82 49 83 51L90 60C91 62 88 63.5 86 63C86 65 87.5 66 87 67.5C86 68.5 85.5 69 86.5 70C87 71.5 85.5 72.5 85 73C86 76 86 79 83 81C80 82.5 76 82 73 82.5C72 86 72.5 89 74 90.5L110 90C116 90 120 92 120 98L120 120Z'],
-    ['hair', PROFILE_HAIR],
-    ['cloth', 'M37 45C36 30 46 17 60 16C73 15 82 24 82 37L82 41C68 42 52 43 37 45Z'],
-    ['hair', PROFILE_MOUSTACHE],
-    ['cut', 'M74 90.5C76 100 77 110 77 120', 1.6],
+    shape([
+      [-6, 200, 1], [-6, 166, 1], [20, 156, 1], [56, 150], [60, 130], [54, 116], [46, 98], [44, 76], [52, 52], [70, 35], [96, 28], [120, 32], [134, 45],
+      [138, 61], [138, 71], [135, 77], [140, 87], [148, 97, 1], [145, 100], [139, 101, 1], [141, 105], [144, 108], [140, 111, 1], [143, 114],
+      [140, 118], [138, 120], [141, 127], [137, 134], [126, 137], [115, 138], [114, 147], [116, 152], [176, 160, 1], [206, 170, 1], [206, 200, 1],
+    ]),
+    shape([[44, 70], [46, 46], [54, 22], [70, 6], [92, 0], [114, 4], [128, 18], [136, 38], [138, 56], [112, 54], [84, 56], [60, 62]]),
+    cut(1.6, [46, 62], [84, 52], [112, 50], [137, 52]),
+    cut(1, [90, 6], [94, 20], [96, 40]),
+    shape(PROFILE_MOUSTACHE),
+    cut(1.4, [118, 150], [120, 176], [122, 200]),
   ],
-  // the blacksmith of the Newroz tale: a full beard, a band round his brow, and a smith's shoulders
+  // the blacksmith of the Newroz tale: a long beard, a band round his brow, and a smith's shoulders
   smith: [
-    ['skin', 'M0 120C2 102 16 93 32 90C41 88 45 85 45 79C45 74 40 71 38 64C34 54 35 38 44 29C51 22 63 20 71 24C79 28 83 36 83 44C83 47 82 49 83 51L90 60C91 62 88 63.5 86 63C86 65 87.5 66 87 67.5C86 68.5 85.5 69 86.5 70C87 71.5 85.5 72.5 85 73C86 76 86 79 83 81C80 82.5 76 82 73 82.5C72 86 73 90 75 92C92 96 114 103 120 120Z'],
-    ['hair', PROFILE_HAIR],
-    ['hair', 'M58 56C60 63 64 66 69 66C74 66 78 67 81 69C84 71 86.5 70.5 87.5 73C89.5 79 89.5 87 86.5 93C83.5 98 77 99 71.5 96C67 93 63.5 88 61 82C58.5 76 57 66 58 56Z'],
-    ['hair', PROFILE_MOUSTACHE],
-    ['cloth', 'M38 38C52 34 68 33 82 35.5L82.5 40C68 38 52 39 38.5 43Z'],
+    shape([
+      [-10, 200, 1], [-6, 172], [14, 154], [40, 146], [56, 138], [60, 126], [54, 112], [46, 96], [44, 76], [52, 52], [70, 35], [96, 28], [120, 32],
+      [134, 45], [138, 61], [138, 71], [135, 77], [140, 87], [148, 97, 1], [145, 100], [139, 101, 1], [141, 105], [144, 108], [140, 111, 1],
+      [143, 114], [140, 118], [138, 120], [141, 127], [137, 134], [126, 137], [115, 138], [116, 150], [134, 162], [164, 172], [194, 186], [206, 200, 1],
+    ]),
+    shape([[96, 104], [104, 116], [116, 122], [132, 116], [140, 112], [146, 118], [148, 132], [144, 148], [136, 160], [126, 166], [116, 160], [108, 146], [100, 132], [94, 118]]),
+    shape([[44, 76], [50, 54], [66, 38], [90, 29], [114, 30], [130, 40], [136, 52], [134, 56], [116, 46], [96, 46], [76, 52], [60, 64], [52, 80]]),
+    cut(2.4, [46, 66], [74, 54], [104, 50], [135, 54]),
+    cut(1, [124, 124], [128, 140], [126, 154]),
   ],
 } as const satisfies Record<string, readonly SilhouettePart[]>;
 
 export type BookSilhouette = keyof typeof SILHOUETTES;
 export const BOOK_SILHOUETTES: readonly BookSilhouette[] = Object.freeze(Object.keys(SILHOUETTES) as BookSilhouette[]);
 
+/** Dots spaced along a line: the lace on a headscarf's edge. */
+function laceAlong(pts: readonly ProfilePoint[], every = 7): string {
+  let d = '';
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x1, y1] = pts[i]!;
+    const [x2, y2] = pts[i + 1]!;
+    const length = Math.hypot(x2 - x1, y2 - y1);
+    for (let t = 0; t < length; t += every) d += O(x1 + ((x2 - x1) * t) / length, y1 + ((y2 - y1) * t) / length, 1.25);
+  }
+  return d;
+}
+
 /**
- * One of the road's people as a profile silhouette on the canvas's foot, facing right, in a hue's shades: `deep` for
- * skin and clothes, `base` mixed into it for cloth, and `paper` (the round it stands in) for the cut lines.
+ * One of the road's people as a cut-paper profile, facing right and standing on the canvas's foot, in one ink: `deep`
+ * darkened toward black. Its cut lines and lace are `paper`, the colour of the round it stands in.
  */
-export function bookSilhouetteSvg(opts: BookArtOptions & { who: BookSilhouette; deep: string; base: string; paper: string }): string {
+export function bookSilhouetteSvg(opts: BookArtOptions & { who: BookSilhouette; deep: string; paper: string }): string {
   const parts: readonly SilhouettePart[] | undefined = Object.hasOwn(SILHOUETTES, opts.who) ? SILHOUETTES[opts.who] : undefined;
   if (!parts) throw new RangeError(`art: the book has no silhouette ${String(opts.who)}`);
-  for (const hex of [opts.deep, opts.base, opts.paper]) if (!/^#[0-9a-f]{6}$/.test(hex)) throw new RangeError(`art: a silhouette's colours are six-digit colours, not ${String(hex)}`);
-  const tones = { skin: opts.deep, hair: mix(opts.deep, '#000000', 0.42), cloth: mix(opts.deep, opts.base, 0.55) };
+  for (const hex of [opts.deep, opts.paper]) if (!/^#[0-9a-f]{6}$/.test(hex)) throw new RangeError(`art: a silhouette's colours are six-digit colours, not ${String(hex)}`);
+  const ink = mix(opts.deep, '#000000', 0.42);
   const brush = new Brush();
-  for (const part of parts) {
-    if (part[0] === 'cut') brush.line(part[1], opts.paper, part[2]);
-    else brush.fill(part[1], tones[part[0]]);
-  }
+  let lace = '';
+  brush.group('scale(0.6)', () => {
+    for (const part of parts) {
+      if ('shape' in part) brush.fill(throughPoints(part.shape, true), ink);
+      else if ('cut' in part) brush.line(throughPoints(part.cut, false), opts.paper, part.width);
+      else if ('ink' in part) brush.line(throughPoints(part.ink, false), ink, part.width);
+      else lace += laceAlong(part.lace);
+    }
+    if (lace) brush.fill(lace, opts.paper);
+  });
   return picture(String(brush), prefixFor(opts.idPrefix, 'book-silhouette', `${opts.who}-${opts.deep.slice(1)}`), opts.size, opts.title);
 }
 

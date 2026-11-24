@@ -92,7 +92,7 @@ function pictureArt(press: Press, picture: BookPicture, hue: HueSteps, shade?: s
     case 'sapling':
       return squareArt(press, 'sapling', () => treeSvg({ species: 'beru', stage: 2 }));
     case 'silhouette':
-      return squareArt(press, `silhouette|${picture.who}|${hue.deep}`, () => bookSilhouetteSvg({ who: picture.who, deep: hue.deep, base: hue.base, paper: hue.tint }));
+      return squareArt(press, `silhouette|${picture.who}|${hue.deep}`, () => bookSilhouetteSvg({ who: picture.who, deep: hue.deep, paper: hue.tint }));
     case 'figure':
       return null;
   }
