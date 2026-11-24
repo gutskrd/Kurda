@@ -77,7 +77,7 @@ describe('the caption', () => {
   it('leaves the face out when the character says it on screen', async () => {
     renderApp(<ReactionCaption />);
     act(() => void sayReaction({ moment: 'miss', character: 'hevalo', drawn: true }));
-    const caption = await screen.findByRole('button', { name: /Hevalo says “Ne xem e!”/ });
+    const caption = await screen.findByRole('button', { name: /Hevalo says “Xeman nexwe!”/ });
     expect(caption.querySelector('.reaction-caption-face')).toBeNull();
   });
 });
@@ -121,7 +121,7 @@ describe('in a lesson', () => {
   it('has Hevalo, beside a miss in his window, say a gentle word once', async () => {
     lesson([choice('a'), choice('b')]);
     await answer();
-    await screen.findByRole('button', { name: /Hevalo says “Ne xem e!”/ });
+    await screen.findByRole('button', { name: /Hevalo says “Xeman nexwe!”/ });
     expect(soundPlayer()?.src).toBe('https://cdn.test/hevalo-miss-1.wav');
     expect(document.querySelector('.reaction-caption-face')).toBeNull();
   });

@@ -63,12 +63,12 @@ describe('the reaction catalogue', () => {
 
 describe('reactionKey', () => {
   it('files the same words by two characters as two takes, apart from every other kind of key', () => {
-    const hevalo = reactionKey({ character: 'hevalo', id: 'miss-1', ku: 'Ne xem e!' });
-    const xezo = reactionKey({ character: 'xezo', id: 'miss-1', ku: 'Ne xem e!' });
+    const hevalo = reactionKey({ character: 'hevalo', id: 'miss-1', ku: 'Xeman nexwe!' });
+    const xezo = reactionKey({ character: 'xezo', id: 'miss-1', ku: 'Xeman nexwe!' });
     expect(hevalo).not.toBe(xezo);
     expect(isReactionKey(hevalo)).toBe(true);
-    expect(isReactionKey(lessonAudioKey('Ne xem e!'))).toBe(false);
-    const line = conversationLineKey('reaction', 0, 'Ne xem e!');
+    expect(isReactionKey(lessonAudioKey('Xeman nexwe!'))).toBe(false);
+    const line = conversationLineKey('reaction', 0, 'Xeman nexwe!');
     expect(isReactionKey(line)).toBe(false);
     expect(isConversationLineKey(line)).toBe(true);
     expect(isConversationLineKey(hevalo)).toBe(false);
