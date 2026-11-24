@@ -267,7 +267,7 @@ const bareLine = (text: string): string => text.toLowerCase().trim().replace(/[\
  * line; "what does it mean" and translations into English are the read-aloud lines; the conversation is printed whole
  * with its question. Other kinds go to the chapter's practice (`practiceOf`).
  */
-function lessonOf(plan: BookPlanUnit['skills'][number]['lessons'][number], index: number, exercises: readonly BookExercise[]): BookLesson {
+function lessonOf(plan: BookPlanUnit['skills'][number]['lessons'][number], index: number, exercises: readonly BookExercise[], taken: ReadonlySet<string> = new Set()): BookLesson {
   const pictures = new Map<string, string>();
   for (const e of exercises) {
     if (e.type !== 'multiple_choice' || e.payload.ask !== 'picture') continue;
@@ -277,11 +277,12 @@ function lessonOf(plan: BookPlanUnit['skills'][number]['lessons'][number], index
   }
   const dialogue = dialogueOf(exercises);
   const speaking = exercises.find((e) => e.type === 'speaking');
-  // a line of one word is on the page already, as a word; a line of the conversation is in the conversation;
-  // and a line that is one of the lesson's own new sayings is on its word card just above, so other lines are read instead
+  // a line of one word is on the page already, as a word; a line of the conversation is in the conversation; a line
+  // that is one of the lesson's own new sayings is on its word card just above; and a line the chapter prints elsewhere
+  // (`taken`) is printed once, so other lines are read instead
   const spoken = new Set(dialogue?.lines.map((l) => l.text) ?? []);
   const carded = new Set(plan.new.map((w) => bareLine(w.ku)));
-  const all = pairsOf(exercises).filter((s) => !spoken.has(s.ku) && !carded.has(bareLine(s.ku)));
+  const all = pairsOf(exercises).filter((s) => !spoken.has(s.ku) && !taken.has(s.ku) && !carded.has(bareLine(s.ku)));
   const whole = all.filter((s) => wordsIn(s.ku) > 1);
   return {
     key: plan.key,
@@ -441,15 +442,21 @@ export function roadBookChapters(plan: BookPlan, docs: ReadonlyMap<number, BookU
     if (!unit || !doc) continue;
     const everything: BookExercise[] = [];
     const lines: BookPair[] = [];
+    const exercisesOf = (skill: number, lesson: BookPlanUnit['skills'][number]['lessons'][number], i: number): BookExercise[] => {
+      const files = doc.skills.find((s) => s.position === skill)?.lessons ?? [];
+      const file = files.find((l) => l.key === lesson.key) ?? files.find((l) => l.position === (lesson.position ?? i + 1));
+      return sorted(file?.exercises ?? []);
+    };
+    // every line the chapter's conversations say, so that no lesson prints one again to read aloud
+    const taken = new Set(unit.skills.flatMap((skill) => skill.lessons.flatMap((lesson, i) => dialogueOf(exercisesOf(skill.position, lesson, i))?.lines.map((l) => l.text) ?? [])));
     const parts: BookPart[] = unit.skills.map((skill) => {
-      const files = doc.skills.find((s) => s.position === skill.position)?.lessons ?? [];
       const lessons = skill.lessons.map((lesson, i) => {
-        const file = files.find((l) => l.key === lesson.key) ?? files.find((l) => l.position === (lesson.position ?? i + 1));
-        const exercises = sorted(file?.exercises ?? []);
+        const exercises = exercisesOf(skill.position, lesson, i);
         everything.push(...exercises);
         lines.push(...pairsOf(exercises));
-        const made = lessonOf(lesson, i, exercises);
+        const made = lessonOf(lesson, i, exercises, taken);
         for (const l of made.dialogue?.lines ?? []) if (l.en) lines.push({ ku: l.text, en: l.en });
+        for (const t of [...made.sentences.map((x) => x.ku), ...(made.say ? [made.say] : [])]) taken.add(t);
         return made;
       });
       return { position: skill.position, titleKu: skill.titleKu, titleEn: skill.titleEn, grammar: skill.grammar ?? '', grammarMd: skill.grammarMd ?? '', lessons };

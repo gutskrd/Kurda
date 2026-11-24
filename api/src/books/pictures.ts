@@ -24,6 +24,7 @@ import {
   type BookPaint,
   type BookPose,
   type BookSetting,
+  type BookSilhouette,
   type BookSpot,
   type CharacterId,
   type HueName,
@@ -40,6 +41,8 @@ export type BookPicture =
   | { kind: 'landmark'; landmark: PathLandmark }
   | { kind: 'cast'; who: CharacterId; pose: string }
   | { kind: 'sapling' }
+  /** one of the road's people the book has no portrait for, as a profile silhouette */
+  | { kind: 'silhouette'; who: BookSilhouette }
   /** a number, set as its figure in the book's own type */
   | { kind: 'figure'; text: string };
 
@@ -47,6 +50,7 @@ const word = (id: WordPictureId): BookPicture => ({ kind: 'word', id });
 const spot = (id: BookSpot): BookPicture => ({ kind: 'spot', spot: id });
 const landmark = (id: PathLandmark): BookPicture => ({ kind: 'landmark', landmark: id });
 const cast = <K extends CharacterId>(who: K, pose: BookPose<K>): BookPicture => ({ kind: 'cast', who, pose: pose as string });
+const silhouette = (who: BookSilhouette): BookPicture => ({ kind: 'silhouette', who });
 
 const isWordPicture = (id: string): id is WordPictureId => Object.hasOwn(WORD_PICTURES, id);
 
@@ -70,9 +74,8 @@ const DRAWN: Readonly<Record<string, BookPicture>> = {
   bazar: landmark('bazaar'),
   dergeh: landmark('gate'),
   qehwexane: landmark('teahouse'),
-  // the teacher of the road is Xezo, and its friend is the deer whose name means "friend"
+  // the teacher of the road is Xezo; a friend is not drawn as the deer, so that no one learns heval as "deer"
   mamoste: cast('xezo', 'smiling'),
-  heval: cast('hevalo', 'pleased'),
 };
 
 /** The colour words, by their English meaning in the plan. */
@@ -98,25 +101,27 @@ export function pictureForWord(w: Pick<BookWord, 'ku' | 'en' | 'pos' | 'picture'
   return Object.hasOwn(DRAWN, w.ku) ? DRAWN[w.ku]! : null;
 }
 
-/** What stands for each of the road's people and animals beside their name: themselves, or the thing the road knows them by. */
+/**
+ * What stands beside each of the road's people and animals: the three friends' portraits, a profile silhouette for every
+ * other person (a person is never shown as a thing), and each animal itself.
+ */
 const EMBLEMS: Readonly<Record<string, BookPicture>> = {
   Hamo: cast('hamo', 'proud'),
   Xezo: cast('xezo', 'smiling'),
   Hevalo: cast('hevalo', 'caught'),
-  Nazê: word('bread'),
-  Baran: word('book'),
-  Hêvî: word('hen'),
-  // Dapîr is known by the teapot she is never far from, not by a goat
-  Şemsê: word('teapot'),
-  Ferhad: word('tractor'),
-  Mîrza: word('grapes'),
-  Azad: spot('doctorBag'),
-  Bişar: word('tent'),
+  Nazê: silhouette('woman'),
+  Baran: silhouette('boy'),
+  Hêvî: silhouette('girl'),
+  Şemsê: silhouette('grandmother'),
+  Ferhad: silhouette('farmer'),
+  Mîrza: silhouette('seller'),
+  Azad: silhouette('doctor'),
+  Bişar: silhouette('shepherd'),
   Bozo: word('donkey'),
   Şêro: word('dog'),
   // the doe of the summer pastures has no antlers: she is not the deer of the word ask
   Zerê: spot('doe'),
-  Kawa: word('fire'),
+  Kawa: silhouette('smith'),
   Şengê: word('kid'),
   Pengê: word('kid'),
 };
@@ -536,7 +541,7 @@ function settingOf(beat: string): BookSetting {
 /** Things that hang in the sky of a scene rather than stand on its ground. */
 const ALOFT = new Set(['word:sun', 'word:moon', 'word:star', 'word:cloud', 'word:rain', 'word:snow', 'word:plane', 'spot:flyingBird', 'spot:eagle']);
 const keyOf = (p: BookPicture): string =>
-  p.kind === 'word' ? `word:${p.id}` : p.kind === 'spot' ? `spot:${p.spot}` : p.kind === 'landmark' ? `landmark:${p.landmark}` : p.kind === 'cast' ? `cast:${p.who}` : p.kind;
+  p.kind === 'word' ? `word:${p.id}` : p.kind === 'spot' ? `spot:${p.spot}` : p.kind === 'landmark' ? `landmark:${p.landmark}` : p.kind === 'cast' ? `cast:${p.who}` : p.kind === 'silhouette' ? `silhouette:${p.who}` : p.kind;
 export const aloft = (p: BookPicture): boolean => ALOFT.has(keyOf(p));
 
 /** A stove, a table, a bed or a calendar leading a scene puts it indoors. */

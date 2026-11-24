@@ -1,5 +1,5 @@
 /**
- * The book's drawings (book.ts): the shrinking apple, the scene spots, paint dabs, the postmark, backdrops and posed
+ * The book's drawings (book.ts): the shrinking apple, the scene spots, paint dabs, the people's silhouettes, the postmark, backdrops and posed
  * characters. Each must be well-formed, self-contained, flat like the word pictures, deterministic, and refuse bad input.
  */
 import { describe, expect, it } from 'vitest';
@@ -9,6 +9,7 @@ import {
   BOOK_PAINTS,
   BOOK_POSES,
   BOOK_SETTINGS,
+  BOOK_SILHOUETTES,
   BOOK_SPOTS,
   bookAppleSvg,
   bookBackdropSvg,
@@ -16,12 +17,14 @@ import {
   bookPaintSvg,
   bookPostmarkSvg,
   bookRidgeAt,
+  bookSilhouetteSvg,
   bookSkyMarks,
   bookSpotSvg,
   type BookOrb,
   type BookPaint,
   type BookPose,
   type BookSetting,
+  type BookSilhouette,
   type BookSpot,
 } from './book.js';
 import * as shared from '../index.js';
@@ -122,12 +125,16 @@ function checkDrawing(svg: string, what: string): El {
 
 const SKY = { sky: '#dcecff', ground: '#b9d6f7', light: '#fffdf8' } as const;
 
+/** The people page's violet: the shades a silhouette is cut from. */
+const INKS = { deep: '#4c2574', base: '#9a58e0', paper: '#f4eeff' } as const;
+
 /** Every flat-painted book drawing, with a label. */
 const FLAT: ReadonlyArray<readonly [string, string]> = [
   ...Array.from({ length: BOOK_APPLE_BITES + 1 }, (_, bites) => [`apple ${bites}`, bookAppleSvg({ bites })] as const),
   ...BOOK_SPOTS.map((spot) => [`spot ${spot}`, bookSpotSvg({ spot })] as const),
   ...BOOK_PAINTS.map((colour) => [`paint ${colour}`, bookPaintSvg({ colour })] as const),
   ['postmark', bookPostmarkSvg({ ink: '#1f4f8f' })],
+  ...BOOK_SILHOUETTES.map((who) => [`silhouette ${who}`, bookSilhouetteSvg({ who, ...INKS })] as const),
   ...BOOK_SETTINGS.map((setting) => [`backdrop ${setting}`, bookBackdropSvg({ setting, ...SKY })] as const),
 ];
 
@@ -181,6 +188,7 @@ describe('the drawings of Hevalo’s book', () => {
       ...BOOK_SPOTS.map((spot) => bookSpotSvg({ spot })),
       ...BOOK_PAINTS.map((colour) => bookPaintSvg({ colour })),
       bookPostmarkSvg({ ink: '#1f4f8f' }),
+      ...BOOK_SILHOUETTES.map((who) => bookSilhouetteSvg({ who, ...INKS })),
       ...BOOK_SETTINGS.map((setting) => bookBackdropSvg({ setting, ...SKY })),
     ];
     expect(again).toEqual(FLAT.map(([, svg]) => svg));
@@ -191,6 +199,7 @@ describe('the drawings of Hevalo’s book', () => {
       'doe', 'whiteGoat', 'ram', 'flyingBird', 'eagle', 'tin', 'doctorBag', 'boots', 'jug', 'churn', 'saj', 'snowDeer', 'frames',
     ]);
     expect(BOOK_PAINTS).toEqual(['red', 'blue', 'green', 'yellow', 'black', 'white']);
+    expect(BOOK_SILHOUETTES).toEqual(['woman', 'grandmother', 'boy', 'girl', 'farmer', 'seller', 'doctor', 'shepherd', 'smith']);
   });
 
   it('starts from the word pictures’ own apple and takes a bite at a time, down to the core', () => {
@@ -363,6 +372,8 @@ describe('the drawings of Hevalo’s book', () => {
     for (const spot of ['banana', 'toString', 'constructor', '']) expect(() => bookSpotSvg({ spot: spot as BookSpot }), spot).toThrow(RangeError);
     for (const colour of ['purple', 'toString', '']) expect(() => bookPaintSvg({ colour: colour as BookPaint }), colour).toThrow(RangeError);
     for (const ink of ['red', '#FFF', '#12345', '#GGGGGG', 'url(#a)']) expect(() => bookPostmarkSvg({ ink }), ink).toThrow(RangeError);
+    for (const who of ['ghost', 'toString', '']) expect(() => bookSilhouetteSvg({ who: who as BookSilhouette, ...INKS }), who).toThrow(RangeError);
+    for (const deep of ['purple', '#FFF', '"/><script>']) expect(() => bookSilhouetteSvg({ who: 'woman', ...INKS, deep }), deep).toThrow(RangeError);
     expect(() => bookBackdropSvg({ setting: 'dawn' as BookSetting, ...SKY })).toThrow(RangeError);
     expect(() => bookBackdropSvg({ setting: 'night', ...SKY, orb: { x: Number.NaN, y: 4, r: 3 } })).toThrow(RangeError);
     expect(() => bookBackdropSvg({ setting: 'night', ...SKY, orb: { x: 4, y: 4, r: 0 } })).toThrow(RangeError);
@@ -389,6 +400,8 @@ describe('the drawings of Hevalo’s book', () => {
     expect(shared.bookSkyMarks).toBe(bookSkyMarks);
     expect(shared.bookRidgeAt).toBe(bookRidgeAt);
     expect(shared.bookCastSvg).toBe(bookCastSvg);
+    expect(shared.bookSilhouetteSvg).toBe(bookSilhouetteSvg);
+    expect(shared.BOOK_SILHOUETTES).toBe(BOOK_SILHOUETTES);
     expect(shared.BOOK_SPOTS).toBe(BOOK_SPOTS);
     expect(shared.BOOK_POSES).toBe(BOOK_POSES);
     expect(shared.BOOK_APPLE_BITES).toBe(BOOK_APPLE_BITES);

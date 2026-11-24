@@ -843,6 +843,111 @@ export function bookPaintSvg(opts: BookArtOptions & { colour: BookPaint }): stri
   return picture(String(brush), prefixFor(opts.idPrefix, 'book-paint', opts.colour), opts.size, opts.title);
 }
 
+// ───────────────────────────────────────────────────────────── the road's other people
+
+/** Shoulders, nape, skull, brow, nose, lips, chin and throat of a grown man in profile, facing right and standing on the canvas's foot. */
+const PROFILE_MAN =
+  'M4 120C6 104 18 96 34 92C42 90 45 86 45 79C45 74 40 71 38 64C34 54 35 38 44 29C51 22 63 20 71 24C79 28 83 36 83 44C83 47 82 49 83 51L90 60C91 62 88 63.5 86 63C86 65 87.5 66 87 67.5C86 68.5 85.5 69 86.5 70C87 71.5 85.5 72.5 85 73C86 76 86 79 83 81C80 82.5 76 82 73 82.5C72 86 73 90 75 93C90 97 110 104 116 120Z';
+/** A woman's: a softer brow, a smaller nose, fuller lips and narrower shoulders. */
+const PROFILE_WOMAN =
+  'M10 120C12 105 22 98 36 94C43 92 46 88 46 81C46 76 41 73 39 66C35 56 36 40 45 31C52 24 63 22 71 26C78 30 82 37 82 45C82 48 81.5 50 82.5 52L88 60.5C89 62 87 63.2 85 63C85 64.8 86.5 65.8 86 67.3C85 68.3 84.6 68.8 85.6 69.8C86.2 71.5 84.8 72.6 84.2 73.2C85 76.5 84.5 79.5 81.5 81C78.5 82.3 75 82 72.5 82.5C71.5 86 72.5 90 74 93C88 97 104 104 110 120Z';
+/** A child's: a large round head, a small upturned nose and small shoulders. */
+const PROFILE_CHILD =
+  'M20 120C22 108 30 102 41 99C47 97 49 94 49 88C49 84 44 81 42 75C38 65 39 49 48 40C55 33 65 31 73 35C80 39 84 46 84 54C84 57 83.5 59 84.5 61L88.5 66.5C89.2 68 87.6 69 86 68.8C86 70.4 87 71.2 86.6 72.4C85.8 73.4 85.6 73.8 86.4 74.6C86.8 76 85.6 77 85 77.5C85.4 80.5 84.4 83 81.5 84.2C78.8 85.3 76 85 74 85.5C73.4 89 74.4 92.5 76 95C87 98.5 97 105 100 120Z';
+const PROFILE_HAIR = 'M80 33C77 25 69 20 59 20C47 20 38 28 36 42C35 52 37 60 41 68C43 71 45 73 45 77C47 70 47 62 49 55C52 48 57 44 62 42C68 40 74 39 79 37Z';
+const PROFILE_MOUSTACHE = 'M83 62.6C87.5 62.2 91 64 91.6 67.6C88.6 68.4 86 68 83.5 67.2Z';
+
+type SilhouettePart = readonly [tone: 'skin' | 'hair' | 'cloth', d: string] | readonly [tone: 'cut', d: string, width: number];
+
+/**
+ * Each of the road's people the book has no portrait for, as a cut-paper profile known by its outline: a headscarf, a
+ * cap, a braid, a felt cloak, a stethoscope. Skin and clothes are one shade; hair a darker one and cloth a lighter one;
+ * a cut is a line in the paper's own colour.
+ */
+const SILHOUETTES = {
+  // a woman with her headscarf framing her face and falling to her shoulders
+  woman: [
+    ['skin', PROFILE_WOMAN],
+    ['cloth', 'M81 37C80 24 70 15 56 15C40 15 29 28 30 46C31 60 29 72 22 82C18 88 13 92 9 97C20 95 30 94 38 94C48 93 58 93 66 91C70 90 73 87 73.5 83L72 82.5C68 80 66 74 66 67C66 60 68 53 72 47C75 43 78 40 81 37Z'],
+  ],
+  // a grandmother, her headscarf knotted at the nape
+  grandmother: [
+    ['skin', 'M8 120C10 103 18 94 30 90C40 87 45 85 46.5 80C47 76 42 73 40 67C36 57 37 41 46 32C53 25 64 23 72 27C79 31 83 38 83 46C83 49 82.5 51 84 53.5L90.5 63C91.2 65 89 66 87 65.6C87.4 67.2 88 68.2 87.4 69.4C86.6 70.2 86.2 70.6 86.6 71.6C86.8 73.2 85.4 74.2 84.4 74.4C85 77.5 84 80.5 81 81.8C78 83 75 82.6 72.8 83.4C72 87 73 90 74.5 93C89 97 104 104 112 120Z'],
+    ['cloth', 'M82 38C81 25 71 16 57 16C41 16 31 29 32 47C33 58 32 66 29 72C32 79 40 84 50 87C58 89 66 90 70 89C73 88 74.5 85.5 74.5 83.5L73 83C69 80.5 67 75 67 68C67 61 69 54 73 48C76 44 79 41 82 38Z'],
+    ['cloth', 'M33 60C26 58 21 62 22 68C23 73 28 74 32 71C30 77 27 84 26 90L31 90C32 84 34 78 36 73Z'],
+  ],
+  // a boy of about nine: a fringe and a cowlick
+  boy: [
+    ['skin', PROFILE_CHILD],
+    ['hair', 'M42 70C38 55 40 43 49 36C57 30 70 29 78 34C83 37 86 42 86.5 47C86.8 50 85 51 83 50C80 48.5 77 47 73 47C66 47 59 49 55 55C52 59 50 65 47 72Z'],
+    ['hair', 'M52 34C50 29 52 25 56 25C54 28 56 30 59 31Z'],
+  ],
+  // a girl of about six: a fringe and a ponytail tied with a ribbon
+  girl: [
+    ['skin', PROFILE_CHILD],
+    ['hair', 'M42 72C38 55 40 43 49 36C57 30 70 29 78 34C83 37 86 42 86.5 49C86.6 52 84.5 53 82.5 51.5C80 49.5 77 48.5 73 48.5C66 48.5 59 51 55 57C52 61 50 67 46 74Z'],
+    ['hair', 'M41 47C33 48 27 55 27 65C27 75 24 84 18 90C28 91 35 85 37 76C39 68 41 61 45 55Z'],
+    ['cloth', 'M42 45C37 38 30 38 30 43.5C30 48 36 49.5 42 47.5C39 52 36 57 38 59C41 59 43 53 44 48.5Z'],
+  ],
+  // a farmer in a flat cap
+  farmer: [
+    ['skin', PROFILE_MAN],
+    ['hair', PROFILE_HAIR],
+    ['hair', 'M37 47C36 35 43 26 55 23C67 21 78 24 83 31L92 35.5C92.5 37.5 89 38.5 83 38L40 50Z'],
+  ],
+  // a market seller: a full moustache and an open collar
+  seller: [
+    ['skin', PROFILE_MAN],
+    ['hair', PROFILE_HAIR],
+    ['hair', PROFILE_MOUSTACHE],
+    ['cut', 'M75 93C78 99 80 104 80 110M75 93C83 96 88 98 92 99', 1.6],
+  ],
+  // an old doctor: a bald crown with grey at the back, glasses, and a stethoscope round his neck
+  doctor: [
+    ['skin', PROFILE_MAN],
+    ['cloth', 'M40 46C37 52 38 60 42 67C44 70 45 73 45 77C47 71 48 66 51 61C49 58 47 53 47 47Z'],
+    ['hair', PROFILE_MOUSTACHE],
+    ['cut', 'M76 47H86M76 47C74 44 70 44 69 47C68 50 71 52 74 51C76 50 77 49 76 47', 1.4],
+    ['cut', 'M40 94C46 104 54 108 62 104C68 101 72 96 74 92M62 104L64 112', 1.8],
+  ],
+  // a shepherd: a felt cap and the stiff felt cloak with its square shoulders
+  shepherd: [
+    ['skin', 'M0 120L0 98C0 92 4 90 10 90L36 89C42 88 45 85 45 79C45 74 40 71 38 64C34 54 35 38 44 29C51 22 63 20 71 24C79 28 83 36 83 44C83 47 82 49 83 51L90 60C91 62 88 63.5 86 63C86 65 87.5 66 87 67.5C86 68.5 85.5 69 86.5 70C87 71.5 85.5 72.5 85 73C86 76 86 79 83 81C80 82.5 76 82 73 82.5C72 86 72.5 89 74 90.5L110 90C116 90 120 92 120 98L120 120Z'],
+    ['hair', PROFILE_HAIR],
+    ['cloth', 'M37 45C36 30 46 17 60 16C73 15 82 24 82 37L82 41C68 42 52 43 37 45Z'],
+    ['hair', PROFILE_MOUSTACHE],
+    ['cut', 'M74 90.5C76 100 77 110 77 120', 1.6],
+  ],
+  // the blacksmith of the Newroz tale: a full beard, a band round his brow, and a smith's shoulders
+  smith: [
+    ['skin', 'M0 120C2 102 16 93 32 90C41 88 45 85 45 79C45 74 40 71 38 64C34 54 35 38 44 29C51 22 63 20 71 24C79 28 83 36 83 44C83 47 82 49 83 51L90 60C91 62 88 63.5 86 63C86 65 87.5 66 87 67.5C86 68.5 85.5 69 86.5 70C87 71.5 85.5 72.5 85 73C86 76 86 79 83 81C80 82.5 76 82 73 82.5C72 86 73 90 75 92C92 96 114 103 120 120Z'],
+    ['hair', PROFILE_HAIR],
+    ['hair', 'M58 56C60 63 64 66 69 66C74 66 78 67 81 69C84 71 86.5 70.5 87.5 73C89.5 79 89.5 87 86.5 93C83.5 98 77 99 71.5 96C67 93 63.5 88 61 82C58.5 76 57 66 58 56Z'],
+    ['hair', PROFILE_MOUSTACHE],
+    ['cloth', 'M38 38C52 34 68 33 82 35.5L82.5 40C68 38 52 39 38.5 43Z'],
+  ],
+} as const satisfies Record<string, readonly SilhouettePart[]>;
+
+export type BookSilhouette = keyof typeof SILHOUETTES;
+export const BOOK_SILHOUETTES: readonly BookSilhouette[] = Object.freeze(Object.keys(SILHOUETTES) as BookSilhouette[]);
+
+/**
+ * One of the road's people as a profile silhouette on the canvas's foot, facing right, in a hue's shades: `deep` for
+ * skin and clothes, `base` mixed into it for cloth, and `paper` (the round it stands in) for the cut lines.
+ */
+export function bookSilhouetteSvg(opts: BookArtOptions & { who: BookSilhouette; deep: string; base: string; paper: string }): string {
+  const parts: readonly SilhouettePart[] | undefined = Object.hasOwn(SILHOUETTES, opts.who) ? SILHOUETTES[opts.who] : undefined;
+  if (!parts) throw new RangeError(`art: the book has no silhouette ${String(opts.who)}`);
+  for (const hex of [opts.deep, opts.base, opts.paper]) if (!/^#[0-9a-f]{6}$/.test(hex)) throw new RangeError(`art: a silhouette's colours are six-digit colours, not ${String(hex)}`);
+  const tones = { skin: opts.deep, hair: mix(opts.deep, '#000000', 0.42), cloth: mix(opts.deep, opts.base, 0.55) };
+  const brush = new Brush();
+  for (const part of parts) {
+    if (part[0] === 'cut') brush.line(part[1], opts.paper, part[2]);
+    else brush.fill(part[1], tones[part[0]]);
+  }
+  return picture(String(brush), prefixFor(opts.idPrefix, 'book-silhouette', `${opts.who}-${opts.deep.slice(1)}`), opts.size, opts.title);
+}
+
 // ───────────────────────────────────────────────────────────── the postmark
 
 /** The postmark a finished chapter's stamp is cancelled with: two rings, a date bar across them, and wavy lines running off over the stamp, in one ink. */

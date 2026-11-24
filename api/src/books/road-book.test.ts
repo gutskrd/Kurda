@@ -107,9 +107,14 @@ describe('the Hevalo book', () => {
       // speaking: a line to say in every lesson; meaning and translation: lines to read; conversation: one in every "talk" lesson
       expect(lessons.every((l) => l.say !== null && l.beat !== '')).toBe(true);
       expect(lessons.filter((l) => l.focus === 'talk').every((l) => l.dialogue !== null && l.dialogue.question !== null)).toBe(true);
-      // a lesson works on a few lines: at most two to read, and nearly every lesson has two
+      // a lesson works on a few lines: at most two to read, and most new lessons have two
       expect(lessons.filter((l) => !l.dialogue).every((l) => l.sentences.length <= 2)).toBe(true);
-      expect(lessons.filter((l) => !l.dialogue && l.sentences.length < 2).length).toBeLessThanOrEqual(1);
+      expect(lessons.filter((l) => !l.dialogue && l.focus !== 'review' && l.sentences.length < 2).length, `chapter ${c.number}`).toBeLessThanOrEqual(3);
+      // each line is printed once in its chapter: never read aloud twice, nor read aloud as well as said in a conversation
+      const read = lessons.flatMap((l) => l.sentences.map((x) => x.ku));
+      expect(new Set(read).size, `chapter ${c.number}`).toBe(read.length);
+      const said = new Set(lessons.flatMap((l) => l.dialogue?.lines.map((x) => x.text) ?? []));
+      expect(read.filter((ku) => said.has(ku)), `chapter ${c.number}`).toEqual([]);
       // matching pairs, missing words, replies, translating and writing, and listening: the chapter's practice
       expect(c.practice.match, `chapter ${c.number}`).toHaveLength(8);
       expect(c.practice.replies.length).toBeLessThanOrEqual(4);

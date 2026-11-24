@@ -431,7 +431,9 @@ function peopleSheets(press: Press, people: readonly BookName[]): Sheet[] {
           row.forEach((c, k) => {
             const x = TEXT.x + k * (cw + 14);
             press.disc(x + r, y + r, r, VIOLET.tint);
-            if (c.picture) drawPicture(press, c.picture, x + 4, y + 4, r * 2 - 8, VIOLET);
+            // a person's silhouette fills the round and stands on its foot, as the friends' portraits do; an animal sits inside it
+            if (c.picture?.kind === 'silhouette') press.within(x, y, r * 2, r * 2, r, () => drawPicture(press, c.picture!, x, y, r * 2, VIOLET));
+            else if (c.picture) drawPicture(press, c.picture, x + 4, y + 4, r * 2 - 8, VIOLET);
             else press.line(c.p.name.slice(0, 1), x, y + r - 9, display(18, VIOLET.deep), 'center', r * 2);
             const tx = x + r * 2 + 12;
             const top = y + Math.max(0, (r * 2 - 15 - c.text.height) / 2);
