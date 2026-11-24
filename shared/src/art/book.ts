@@ -951,7 +951,7 @@ const MOUSTACHE_OF = (dx: number, dy: number, droop = 0): SilhouettePart =>
 /**
  * Each of the road's people the book has no portrait for, as a cut-paper bust in one ink: a laced headscarf, a knotted one,
  * a cowlick, a plait and its ribbon, a flat cap and a stalk of wheat, a turban and waistcoat, glasses and a stethoscope, a felt
- * cap, cloak and crook, and the blacksmith Kawa with his hammer against the Newroz fire.
+ * cap, cloak and crook, and the blacksmith Kawa's long hair and beard.
  */
 const SILHOUETTES = {
   // a woman, her headscarf framing her face and falling over her shoulders, a kilim border along its edge
@@ -1041,72 +1041,44 @@ const SILHOUETTES = {
     cut(2, [68, 147], [96, 152], [121, 157]),
     cut(2.6, [122, 166], [123, 176], [124, 186]),
   ],
-  // Kawa, the blacksmith of the Newroz tale: chin raised, a long beard, his hair and his headband's tails streaming back, the hammer on his shoulder
+  // Kawa, the blacksmith of the Newroz tale: long hair down his back, a long full beard and a band round his brow
   smith: [
-    { ink: [[62, 150], [44, 128], [26, 108]], width: 6.4 },
-    shape([26.4, 87.4, 1], [37.2, 99.2, 1], [13.6, 120.6, 1], [2.8, 108.8, 1]),
-    shape([46, 60], [32, 50], [18, 44, 1], [26, 56], [36, 66], [44, 68]),
-    shape([44, 68], [30, 70], [10, 66, 1], [22, 78], [36, 78], [46, 74]),
-    shape(
-      [18, 176, 1], [30, 160], [48, 150], [60, 140], [58, 128], [50, 112], [44, 92], [45, 68], [56, 44], [76, 28], [100, 20], [122, 24], [137, 36],
-      [144, 52], [146, 66], [151, 76], [147, 84], [153, 94], [161, 104], [167, 110, 1], [160, 114], [152, 115, 1], [154, 121], [150, 125, 1], [152, 129],
-      [148, 134], [146, 144], [136, 152], [126, 156], [124, 164], [134, 176], [152, 182], [168, 186, 1], [130, 197], [90, 199], [44, 192],
-    ),
-    shape([116, 126], [132, 134], [148, 130], [155, 138], [159, 152], [155, 168], [147, 180], [138, 192, 1], [131, 176], [121, 164], [111, 150], [108, 136]),
-    shape([150, 116], [160, 118], [165, 124], [162, 130, 1], [155, 126], [148, 126]),
-    shape([46, 94], [40, 72], [48, 46], [66, 28], [94, 18], [120, 20], [137, 32], [144, 48], [138, 52], [118, 44], [96, 42], [74, 48], [60, 62], [54, 84],
-      [56, 104], [54, 120], [48, 134], [38, 144, 1], [44, 124], [42, 108]),
-    cut(3.6, [44, 64], [80, 52], [114, 48], [146, 56]),
-    cut(2.4, [138, 140], [146, 156], [146, 172]),
-    cut(2.2, [126, 146], [132, 162], [136, 178]),
-    cut(2.8, [70, 154], [90, 164], [108, 178]),
+    shape(...PROFILE.man),
+    shape([104, 96], [108, 114], [118, 128], [132, 134], [146, 133], [152, 140], [156, 152], [156, 166], [151, 180], [143, 191], [134, 196, 1], [126, 186],
+      [120, 170], [114, 154], [106, 138], [100, 116]),
+    MOUSTACHE_OF(0, 0, 4),
+    shape([140, 48], [133, 32], [114, 19], [90, 16], [66, 23], [48, 40], [38, 64], [33, 88], [30, 106], [33, 122], [27, 140], [28, 156], [21, 168],
+      [26, 178, 1], [34, 173], [38, 184, 1], [48, 174], [56, 160], [62, 140], [66, 118], [72, 96], [88, 74], [112, 60], [136, 58]),
+    cut(3.2, [40, 68], [70, 56], [104, 50], [140, 55]),
+    cut(2.4, [114, 58], [102, 76], [96, 98], [96, 122], [92, 148], [86, 174]),
+    cut(1.8, [100, 22], [84, 36], [72, 54]),
+    cut(1.8, [68, 74], [60, 96], [58, 118], [50, 140], [46, 162]),
+    cut(1.6, [82, 80], [76, 102], [75, 126], [68, 150]),
+    cut(2, [142, 148], [146, 164], [142, 182]),
+    cut(1.8, [130, 146], [134, 164], [132, 184]),
+    cut(2.2, [110, 140], [116, 160], [124, 182]),
   ],
 } as const satisfies Record<string, readonly SilhouettePart[]>;
 
 export type BookSilhouette = keyof typeof SILHOUETTES;
 export const BOOK_SILHOUETTES: readonly BookSilhouette[] = Object.freeze(Object.keys(SILHOUETTES) as BookSilhouette[]);
 
-/** The Newroz fire behind Kawa: a night sky, the glow round his head, flames rising from below, and sparks. */
-const NEWROZ = { night: '#2a1020', glow: ['#4e1a2a', '#8a2a28', '#d4532a', '#f08a2b', '#fbbd4c'], flame: '#f08a2b', heart: '#fbc451', spark: '#ffe08f' } as const;
-
-function newrozFire(brush: Brush): void {
-  brush.fill('M-20 -20H230V230H-20Z', NEWROZ.night);
-  NEWROZ.glow.forEach((tone, i) => brush.fill(O(92, 88, 108 - i * 16), tone));
-  const tongue = (x: number, base: number, tip: number, w: number, lean: number): string =>
-    throughPoints([[x - w, base, 1], [x - w * 0.9, base - (base - tip) * 0.35], [x - w * 0.35 + lean * 0.5, base - (base - tip) * 0.7], [x + lean, tip, 1],
-      [x + w * 0.3 + lean * 0.4, base - (base - tip) * 0.62], [x + w * 0.85, base - (base - tip) * 0.3], [x + w, base, 1]], true);
-  let flames = '';
-  let hearts = '';
-  for (const [x, tip, w, lean] of [[6, 96, 22, -6], [34, 128, 18, 4], [170, 112, 22, 8], [194, 86, 18, 4], [144, 150, 16, -4], [62, 156, 14, 2]] as const) {
-    flames += tongue(x, 214, tip, w, lean);
-    hearts += tongue(x + lean * 0.2, 214, tip + (214 - tip) * 0.38, w * 0.55, lean * 0.6);
-  }
-  brush.fill(flames, NEWROZ.flame);
-  brush.fill(hearts, NEWROZ.heart);
-  let sparks = '';
-  for (const [x, y, r] of [[22, 40, 1.8], [160, 34, 1.6], [180, 58, 2.2], [12, 140, 1.6], [176, 140, 1.8], [70, 8, 1.4], [134, 6, 1.6], [190, 108, 1.4], [8, 78, 1.4]] as const) sparks += O(x, y, r);
-  brush.fill(sparks, NEWROZ.spark);
-}
-
 /**
  * One of the road's people as a cut-paper bust, facing right in the middle of the round it stands in, in one ink: `deep`
- * darkened toward black. Its cuts, lace and borders are `paper`, the colour of that round; Kawa stands against his fire instead.
+ * darkened toward black. Its cuts, lace and borders are `paper`, the colour of that round.
  */
 export function bookSilhouetteSvg(opts: BookArtOptions & { who: BookSilhouette; deep: string; paper: string }): string {
   const parts: readonly SilhouettePart[] | undefined = Object.hasOwn(SILHOUETTES, opts.who) ? SILHOUETTES[opts.who] : undefined;
   if (!parts) throw new RangeError(`art: the book has no silhouette ${String(opts.who)}`);
   for (const hex of [opts.deep, opts.paper]) if (!/^#[0-9a-f]{6}$/.test(hex)) throw new RangeError(`art: a silhouette's colours are six-digit colours, not ${String(hex)}`);
-  const fire = opts.who === 'smith';
-  const ink = mix(opts.deep, '#000000', fire ? 0.62 : 0.42);
-  const light = fire ? NEWROZ.glow[2] : opts.paper;
+  const ink = mix(opts.deep, '#000000', 0.42);
   const brush = new Brush();
   brush.group('translate(4.6 2.3) scale(0.56)', () => {
-    if (fire) newrozFire(brush);
     let cuts = '';
     let marks = '';
     const flush = (): void => {
-      if (cuts) brush.fill(cuts, light);
-      if (marks) brush.fill(marks, light);
+      if (cuts) brush.fill(cuts, opts.paper);
+      if (marks) brush.fill(marks, opts.paper);
       cuts = marks = '';
     };
     for (const part of parts) {
