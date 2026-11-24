@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Animated, ScrollView, StyleSheet, Text, View, type AccessibilityRole } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable } from '../theme/Pressable';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { timing } from '../theme/animate';
@@ -397,11 +398,13 @@ export function SettingsPage({
   overlay?: ReactNode;
   children: ReactNode;
 }): React.JSX.Element {
+  // The end of the list clears the home indicator or a phone's own button bar, whichever is taller, by a step.
+  const bottom = Math.max(spacing.xxl, useSafeAreaInsets().bottom + spacing.lg);
   return (
     <GradientBackground>
       {/* Never the search-and-bell pill: Settings has its own search, and the bell would lead away mid-change. */}
       <ScreenHeader title={title} onBack={onExit} right={right} browse={false} />
-      <ScrollView contentContainerStyle={styles.page} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ paddingBottom: bottom }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {children}
       </ScrollView>
       {overlay}
@@ -427,7 +430,6 @@ export function useOnOff(): (on: boolean) => string {
 }
 
 const styles = StyleSheet.create({
-  page: { paddingBottom: spacing.xxl },
   apart: { marginTop: spacing.md },
   // A card as the app's others are: a little lift off the page, clipped so a pressed row stays inside its corners.
   group: {
