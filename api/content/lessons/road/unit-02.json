@@ -693,7 +693,7 @@
                       {
                         "speaker": 0,
                         "text": "Ez mêr im.",
-                        "en": "I’m a man. (everyone says what they are)"
+                        "en": "I’m a man."
                       },
                       {
                         "speaker": 1,
@@ -1877,7 +1877,7 @@
                       {
                         "speaker": 0,
                         "text": "Em çar xwişk û bira ne.",
-                        "en": "There are four of us. (Hamo, his brother and his two sisters)"
+                        "en": "There are four of us."
                       },
                       {
                         "speaker": 1,
@@ -2935,7 +2935,7 @@
                       {
                         "speaker": 1,
                         "text": "Destê te sax be, Nazê!",
-                        "en": "Bless your hands, Nazê! (you say it to her, and she smiles)"
+                        "en": "Bless your hands, Nazê!"
                       },
                       {
                         "speaker": 0,
@@ -2960,7 +2960,7 @@
                       {
                         "speaker": 0,
                         "text": "Fermo! Noşî can be!",
-                        "en": "Here you are! Enjoy! (he fills your glass again)"
+                        "en": "Here you are! Have some more!"
                       },
                       {
                         "speaker": 1,
@@ -4081,7 +4081,7 @@
                       {
                         "speaker": 0,
                         "text": "Hêvî, sêv çend in?",
-                        "en": "Hêvî, how many apples are there? (she counts them, one by one)"
+                        "en": "Hêvî, how many apples are there?"
                       },
                       {
                         "speaker": 1,
@@ -4106,12 +4106,12 @@
                       {
                         "speaker": 1,
                         "text": "Na, Hevalo! Nanê min!",
-                        "en": "No, Hevalo! My bread! (he has eaten the bread you were holding)"
+                        "en": "No, Hevalo! My bread!"
                       },
                       {
                         "speaker": 0,
                         "text": "Kerem bike, Hevalo!",
-                        "en": "Help yourself, Hevalo! (a little late)"
+                        "en": "Help yourself, Hevalo!"
                       }
                     ],
                     "prompt": "Where is Hamo from?",

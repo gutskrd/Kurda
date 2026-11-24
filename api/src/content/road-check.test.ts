@@ -466,6 +466,17 @@ describe('the road’s check, on an example unit', () => {
     expect(text).toContain('u01s1l1 #8 payload.cue: a cue of 41 characters (at most 40)');
   });
 
+  it('keeps a conversation’s translations to translation, with no scene notes only the translation shows', () => {
+    const { text } = check((doc) => {
+      const talk = lessonOf(doc, 1).exercises[4]!;
+      const lines = (talk.payload.lines as Array<{ text: string; en: string }>).map((l, i) => (i === 1 ? { ...l, en: `${l.en} (she waves from the gate)` } : l));
+      talk.payload = { ...talk.payload, lines };
+    });
+    expect(text).toContain(
+      'u01s1l2 #5 payload.lines[1].en: translates its line and sets no scene: a note in brackets reaches only a learner who opens the translation, so say it in the lines',
+    );
+  });
+
   it('marks each new word where its lesson first meets it, and only the lesson’s own words', () => {
     const late = check((doc) => {
       const l = lessonOf(doc, 0);
