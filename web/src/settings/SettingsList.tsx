@@ -1,11 +1,12 @@
-import { useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckIcon, ChevronIcon, CloseIcon, SearchIcon } from '../components/icons';
+import { ArrowIcon, CheckIcon, ChevronIcon, CloseIcon, SearchIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 
 /**
  * The parts Settings is built from: rows in named groups, each with an icon, a title and its current value at the
- * end, opening its page on a tap. What cannot be undone comes last, in red.
+ * end, opening its page on a tap; and the frame of a page, its title with the way back above it. What cannot be undone
+ * comes last, in red.
  */
 
 /** A group of rows under a short heading; the last group has none. */
@@ -24,7 +25,8 @@ export function SettingsSection({ title, children }: { title?: string; children:
 }
 
 interface SettingsRowProps {
-  icon: React.ReactNode;
+  /** Left out for a row of plain words, such as one in a sheet. */
+  icon?: React.ReactNode;
   title: string;
   /** A line under the title saying what the row does, when its name does not. */
   subtitle?: React.ReactNode;
@@ -39,14 +41,30 @@ interface SettingsRowProps {
   destructive?: boolean;
   /** The page open beside the list on a wide screen. */
   current?: boolean;
+  /** Something about it wants a look, such as a limit on the account: its value is drawn heavier. */
+  attention?: boolean;
+  /** Its own look on top of a row's, such as a category on the home list. */
+  className?: string;
 }
 
 /** One row: a link to its page, an address, or a button that does it there and then. */
-export function SettingsRow({ icon, title, subtitle, value, to, href, onClick, destructive = false, current = false }: SettingsRowProps): React.JSX.Element {
-  const className = `settings-row${destructive ? ' is-danger' : ''}`;
+export function SettingsRow({
+  icon,
+  title,
+  subtitle,
+  value,
+  to,
+  href,
+  onClick,
+  destructive = false,
+  current = false,
+  attention = false,
+  className: extra,
+}: SettingsRowProps): React.JSX.Element {
+  const className = `settings-row${destructive ? ' is-danger' : ''}${attention ? ' is-attention' : ''}${extra ? ` ${extra}` : ''}`;
   const body = (
     <>
-      <span className="settings-row-icon">{icon}</span>
+      {icon !== undefined && <span className="settings-row-icon">{icon}</span>}
       <span className="settings-row-text">
         <span className="settings-row-title">{title}</span>
         {subtitle && <span className="settings-row-sub">{subtitle}</span>}
@@ -181,17 +199,81 @@ export function SettingsSwitch({
   );
 }
 
-/** The field at the top that narrows the list to the rows that match. */
-export function SettingsSearch({ value, onChange }: { value: string; onChange: (next: string) => void }): React.JSX.Element {
+/**
+ * A page of Settings: its title, with the way back above it where the list is not beside it, then what it holds. Opened
+ * from the list rather than landed on, the reader is taken to its title, as a new screen would.
+ */
+export function SettingsFrame({
+  title,
+  heading,
+  back,
+  focus = false,
+  className,
+  children,
+}: {
+  title: React.ReactNode;
+  heading: 'h1' | 'h2';
+  /** Where back leads and the name of that place. */
+  back?: { to: string; label: string };
+  focus?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const Heading = heading;
+  const ref = useRef<HTMLHeadingElement>(null);
+  // Only on opening: a frame is drawn afresh for each page, so this runs once per page.
+  const focusOnOpen = useRef(focus);
+  useEffect(() => {
+    if (focusOnOpen.current) ref.current?.focus({ preventScroll: true });
+  }, []);
+  return (
+    <section className={`settings-page${className ? ` ${className}` : ''}`} aria-labelledby="settings-page-title">
+      <div className="settings-page-head">
+        {back && (
+          <Link to={back.to} className="standing-back settings-back reach-line">
+            <ArrowIcon size={16} className="standing-back-icon" /> {back.label}
+          </Link>
+        )}
+        <Heading className={heading === 'h1' ? 'page-title' : 'settings-pane-title'} id="settings-page-title" ref={ref} tabIndex={-1}>
+          {title}
+        </Heading>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** The field that searches every setting, opened from the search button at the top of the list. */
+export function SettingsSearch({
+  value,
+  onChange,
+  onEscape,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  /** Escape closes the search rather than clearing the field, as the button beside it does. */
+  onEscape?: () => void;
+}): React.JSX.Element {
   const t = useT();
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    input.current?.focus({ preventScroll: true });
+  }, []);
   return (
     <div className="settings-search" role="search">
       <SearchIcon size={18} className="settings-search-icon" />
       <input
+        ref={input}
         type="search"
         className="settings-search-input"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key !== 'Escape' || !onEscape) return;
+          e.preventDefault();
+          e.stopPropagation();
+          onEscape();
+        }}
         placeholder={t('settings.search')}
         aria-label={t('settings.search')}
         enterKeyHint="search"
@@ -199,7 +281,15 @@ export function SettingsSearch({ value, onChange }: { value: string; onChange: (
         spellCheck={false}
       />
       {value && (
-        <button type="button" className="settings-search-clear" onClick={() => onChange('')} aria-label={t('search.clear')}>
+        <button
+          type="button"
+          className="settings-search-clear"
+          onClick={() => {
+            onChange('');
+            input.current?.focus();
+          }}
+          aria-label={t('search.clear')}
+        >
           <CloseIcon size={16} />
         </button>
       )}

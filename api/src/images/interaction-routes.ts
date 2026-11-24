@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
+import { requireParental } from '../parental/supervision.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
 import { ImageReactionService, REACTIONS } from './reaction-service.js';
@@ -44,7 +45,7 @@ export function registerImageInteractionRoutes(
   /** Set (or change) the caller's reaction on a post. */
   app.put(
     '/images/:id/reaction',
-    { schema: { params: idParam, body: reactionBody }, config: { rateLimit: { max: 60, windowMs: 60_000 } }, preHandler: requireAccount },
+    { schema: { params: idParam, body: reactionBody }, config: { rateLimit: { max: 60, windowMs: 60_000 } }, preHandler: [requireAccount, requireParental('posts')] },
     async (req, reply) => {
       const res = await reactions.set((req.params as { id: string }).id, req.user!.id, (req.body as z.infer<typeof reactionBody>).reaction);
       if (!res.ok) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such image' });
@@ -69,7 +70,7 @@ export function registerImageInteractionRoutes(
   /** Post a comment or reply (rate-limited + trust-gated + auto-screened). */
   app.post(
     '/images/:id/comments',
-    { schema: { params: idParam, body: commentBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')] },
+    { schema: { params: idParam, body: commentBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireParental('posts')] },
     async (req, reply) => {
       const postId = (req.params as { id: string }).id;
       const input = req.body as CreateCommentInput;
@@ -137,7 +138,7 @@ export function registerImageInteractionRoutes(
   /** Edit own comment (admins any). */
   app.patch(
     '/images/comments/:id',
-    { schema: { params: idParam, body: editBody }, preHandler: [requireAccount, requireUnrestricted('post')] },
+    { schema: { params: idParam, body: editBody }, preHandler: [requireAccount, requireUnrestricted('post'), requireParental('posts')] },
     async (req, reply) =>
       respond(reply, await comments.edit((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req), req.body as CreateCommentInput)),
   );

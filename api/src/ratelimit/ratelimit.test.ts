@@ -33,6 +33,14 @@ function limitedApp(store: RateLimitStore = new MemoryRateLimitStore()): Fastify
   route('/slide', { max: 2, windowMs: 200 });
   route('/health', { max: 1, windowMs: 60_000 });
   route('/signup', { max: 2, windowMs: 60_000, per: 'ip', wideNetwork: true, onStoreDown: 'local' });
+  app.get(
+    '/secret',
+    { config: { rateLimit: [{ max: 2, windowMs: 60_000 }, { max: 3, windowMs: 60_000, per: 'ip' }] } as { rateLimit?: RateLimitOptions[] } },
+    async () => ({ ok: true }),
+  );
+  for (const url of ['/look', '/use']) {
+    app.post(url, { config: { rateLimit: { max: 2, windowMs: 60_000, bucket: 'secret' } } as { rateLimit?: RateLimitOptions } }, async () => ({ ok: true }));
+  }
   return app;
 }
 
@@ -92,6 +100,27 @@ describe('rate limiting', () => {
     await a.inject({ url: '/two', headers: { 'x-user': 'zana' }, remoteAddress: '10.0.0.2' });
     const res = await a.inject({ url: '/two', headers: { 'x-user': 'zana' }, remoteAddress: '10.0.0.3' });
     expect(res.statusCode).toBe(429);
+  });
+
+  it('holds a route with several limits to each of them, the user’s and the network’s', async () => {
+    const a = limitedApp();
+    const as = (user: string, remoteAddress = '10.0.0.9') => a.inject({ url: '/secret', headers: { 'x-user': user }, remoteAddress });
+    expect((await as('alice')).statusCode).toBe(200);
+    expect((await as('alice')).statusCode).toBe(200);
+    // her own budget is spent, wherever she is
+    expect((await as('alice', '10.0.0.10')).statusCode).toBe(429);
+    // another account on her network has the network's last request, and then the network is spent too
+    expect((await as('berfin')).statusCode).toBe(200);
+    expect((await as('zana')).statusCode).toBe(429);
+    expect((await as('zana', '10.0.0.11')).statusCode).toBe(200);
+  });
+
+  it('counts routes that name the same bucket against one budget', async () => {
+    const a = limitedApp();
+    expect((await a.inject({ method: 'POST', url: '/look', headers: { 'x-user': 'rojda' } })).statusCode).toBe(200);
+    expect((await a.inject({ method: 'POST', url: '/use', headers: { 'x-user': 'rojda' } })).statusCode).toBe(200);
+    expect((await a.inject({ method: 'POST', url: '/look', headers: { 'x-user': 'rojda' } })).statusCode).toBe(429);
+    expect((await a.inject({ method: 'POST', url: '/use', headers: { 'x-user': 'rojda' } })).statusCode).toBe(429);
   });
 
   it("per: 'ip' routes ignore identity (login-style limits)", async () => {

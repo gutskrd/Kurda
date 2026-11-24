@@ -30,6 +30,20 @@ import type { Translate } from '../i18n/I18nProvider';
  */
 
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+type ParentalRefusal = (code: 'PARENTAL_PAUSED' | 'PARENTAL_BLOCKED', details: unknown) => void;
+const parentalListeners = new Set<ParentalRefusal>();
+
+/**
+ * Hears every refusal from a supervised teen's limits, so the app learns of a pause or a switched-off part the moment a
+ * write meets it rather than at the next usage beat (parental/Supervision.tsx). Returns the way to stop hearing.
+ */
+export function onParentalRefusal(listener: ParentalRefusal): () => void {
+  parentalListeners.add(listener);
+  return () => {
+    parentalListeners.delete(listener);
+  };
+}
 const TIMEOUT_MS = 30_000; // Render's free tier can take 20–40 s to cold-start.
 
 /** The answer for a path that would reach another endpoint than it names (shared `isPlainPath`); nothing is sent. */
@@ -303,6 +317,9 @@ export class ApiClient {
       if (notice) this.onMaintenance(notice);
     }
     if (res.status === 403 && envelope.code === ACCOUNT_HELD) this.onHeld();
+    if (res.status === 403 && (envelope.code === 'PARENTAL_PAUSED' || envelope.code === 'PARENTAL_BLOCKED')) {
+      for (const listener of parentalListeners) listener(envelope.code, envelope.details);
+    }
     if (res.status === 429) {
       const retryAfter = Number(res.headers.get('retry-after'));
       return {
@@ -382,6 +399,19 @@ export const CODE_COPY: Record<string, MessageKey> = {
   CANNOT_JOIN_YET: 'error.code.cannotJoinYet',
   // A copy of one's data, while there is nowhere private to keep it.
   EXPORT_NOT_AVAILABLE: 'error.code.exportNotAvailable',
+  // Parental controls: a part of Hevalo a teen's parent switched off, the rest it is taking, and connecting a parent.
+  PARENTAL_BLOCKED: 'parental.off',
+  PARENTAL_PAUSED: 'error.code.parentalPaused',
+  // Unknown, used, run out or replaced: one answer for all, since a code is a short secret.
+  PARENT_CODE_INVALID: 'error.code.parentCodeInvalid',
+  PARENTAL_NOT_TEEN: 'error.code.parentalNotTeen',
+  PARENTAL_TOO_MANY_PARENTS: 'error.code.parentalTooManyParents',
+  PARENTAL_PARENT_FULL: 'error.code.parentalParentFull',
+  PARENTAL_ALREADY_CONNECTED: 'error.code.parentalAlreadyConnected',
+  PARENTAL_SELF: 'error.code.parentalSelf',
+  PARENTAL_NOT_PARENT: 'error.code.parentalNotParent',
+  // Only the first parent connected may turn something back on or loosen it.
+  PARENTAL_FIRST_PARENT_ONLY: 'error.code.parentalFirstParentOnly',
 };
 /** Sentences for `WEAK_PASSWORD`'s `details.reason` (api/src/auth/password-policy.ts); the numbers are the policy's. */
 const PASSWORD_REASON: Record<string, [MessageKey, Record<string, number>?]> = {

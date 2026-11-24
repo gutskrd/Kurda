@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { DECLINE_REASONS, MAX_INVITEES_PER_REQUEST, PLAY_CARDS_PER_READ, PLAY_GAMES, type DeclineReason, type PlayGame } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
+import { requireParental } from '../parental/supervision.js';
 import type { XpService } from '../xp/service.js';
 import type { FriendService } from '../friends/service.js';
 import { WordleBattleService } from '../game/wordle-battle-service.js';
@@ -101,7 +102,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   /** Makes a lobby with the host in it, posts its card where it was started, and asks friends. */
   app.post(
     '/play/lobbies',
-    { schema: { body: createBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] },
+    { schema: { body: createBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth, requireParental('games')] },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
       const created = await play.createLobby(req.user!.id, body);
@@ -112,7 +113,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   /** Ask friends into your lobby: always ok, with how many were asked. */
   app.post(
     '/play/invites',
-    { schema: { body: inviteBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] },
+    { schema: { body: inviteBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth, requireParental('games')] },
     async (req) => {
       const body = req.body as z.infer<typeof inviteBody>;
       const { invited } = await play.invite(req.user!.id, body.game, body.lobbyId, body.userIds);
@@ -126,7 +127,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
    */
   app.post(
     '/play/join',
-    { schema: { body: joinBody }, config: { rateLimit: { max: 10, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] },
+    { schema: { body: joinBody }, config: { rateLimit: { max: 10, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth, requireParental('games')] },
     async (req) => play.joinByCode(req.user!.id, (req.body as z.infer<typeof joinBody>).code),
   );
 
@@ -136,7 +137,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   /** Yes: into the lobby (the game's own join). Saying yes twice is one yes. */
   app.post(
     '/play/invites/:id/accept',
-    { schema: { params: inviteParam }, config: { skipValidation: true, rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] },
+    { schema: { params: inviteParam }, config: { skipValidation: true, rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth, requireParental('games')] },
     async (req) => play.accept(req.user!.id, (req.params as { id: string }).id),
   );
 
@@ -184,7 +185,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   /** Play again: offer a rematch (two players), or open the next round (the host of more). */
   app.post(
     '/play/:game/:lobbyId/rematch',
-    { schema: { params: lobbyParams }, config: { skipValidation: true, rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] },
+    { schema: { params: lobbyParams }, config: { skipValidation: true, rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth, requireParental('games')] },
     async (req) => {
       const p = req.params as { game: PlayGame; lobbyId: string };
       return play.offerRematch(req.user!.id, p.game, p.lobbyId);

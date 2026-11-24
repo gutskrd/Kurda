@@ -213,6 +213,11 @@ import { DashboardService } from './analytics/dashboard-service.js';
 import { registerDashboardRoutes } from './analytics/dashboard-routes.js';
 import { ExperimentService } from './experiments/service.js';
 import { registerExperimentRoutes } from './experiments/routes.js';
+import { ParentalService } from './parental/service.js';
+import { pruneParental } from './parental/gdpr.js';
+import { setParentalPush } from './parental/notices.js';
+import { pushMutedByParent } from './parental/supervision.js';
+import { registerParentalRoutes } from './parental/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -422,7 +427,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // because league and badge news below goes through it.
     const deviceTokens = new DeviceTokenService(app.db);
     const notificationPrefs = new NotificationPrefsService(app.db);
-    const pushService = new PushService(deviceTokens, createPushProvider(config, app.log), notificationPrefs);
+    const pushService = new PushService(deviceTokens, createPushProvider(config, app.log), notificationPrefs, (uid, n) => pushMutedByParent(app.db, uid, n));
     const inbox = new InboxService(app.db);
     const notices = progressNotices({ inbox, push: pushService, jobs: app.jobs });
 
@@ -480,6 +485,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const ensurePartitions = async (): Promise<void> => {
       await upkeepPartitions(app.db, app.log);
       await pruneAnalyticsEvents(app.db).catch((err) => app.log.warn({ err }, 'analytics event retention failed'));
+      // and parental controls' minutes past keeping, and codes that can no longer be used
+      await pruneParental(app.db).catch((err) => app.log.warn({ err }, 'parental controls retention failed'));
     };
     void ensurePartitions();
     const partitionSweep = setInterval(() => void ensurePartitions(), 24 * 60 * 60 * 1000);
@@ -698,6 +705,18 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerNotificationRoutes(app, notificationPrefs);
     registerInboxRoutes(app, inbox);
     registerPushRoutes(app, deviceTokens, pushService, inbox);
+    // Parental controls: a parent's link to a teen, the teen's limits, and the minutes beat; notices through the inbox
+    // and push like any other, and the email a parent gets when a teen disconnects them.
+    setParentalPush(pushRecorded(pushService, app.jobs));
+    registerParentalRoutes(
+      app,
+      new ParentalService(app.db, {
+        push: pushRecorded(pushService, app.jobs),
+        jobs: app.jobs,
+        publicUrl: (k) => (app.storage ? app.storage.publicUrl(k) : null),
+        log: app.log,
+      }),
+    );
 
     // Personalized streak reminders, hourly, by local time.
     const streakReminders = new StreakReminderService(app.db, {

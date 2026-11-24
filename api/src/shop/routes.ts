@@ -8,6 +8,7 @@ import { SENSITIVE_PRICE } from '../admin/config-service.js';
 import type { ShopService } from './service.js';
 import type { RefreshedNotices } from './refreshed.js';
 import type { GiftService, SkipReason } from '../gifts/service.js';
+import { parentalAllows } from '../parental/supervision.js';
 
 const itemBody = z.object({
   sku: z.string().min(1).max(80),
@@ -135,6 +136,9 @@ export function registerShopRoutes(
       ...i,
       assetUrl: cosmeticAssetUrl(i.category, i.assetKey, publicUrl),
     })),
+    // false for a supervised teen whose parent switched buying with real money off, so the apps never start a purchase;
+    // a receipt already paid is still credited (iap/routes.ts)
+    purchasesAllowed: await parentalAllows(app.db, req.user!.id, 'purchases'),
   }));
 
   /** Buy an item. Atomic validate → debit → grant; idempotency key required. */

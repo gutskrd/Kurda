@@ -21,8 +21,8 @@ const src = new URL('../', here);
 const countsFile = new URL('reach-unreviewed.json', here);
 const update = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.REACH_UPDATE === '1';
 
-/** Shared buttons that always draw a reviewed class (components/Button.tsx, CloseButton.tsx, learn/Tile.tsx). */
-const REVIEWED_COMPONENTS = new Set(['Button', 'LinkButton', 'CloseButton', 'Tile']);
+/** Shared buttons that always draw a reviewed class (components/Button.tsx, CloseButton.tsx, learn/Tile.tsx, Settings' rows). */
+const REVIEWED_COMPONENTS = new Set(['Button', 'LinkButton', 'CloseButton', 'Tile', 'SettingsRow']);
 /** Elements that are clickable by what they are. */
 const CLICKABLE_TAGS = new Set(['button', 'a', 'summary', 'Link', 'NavLink', 'ConfirmButton', ...REVIEWED_COMPONENTS]);
 /** Roles that make anything clickable. */

@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
+import { requireParental } from '../parental/supervision.js';
 import { WordleBattleService, type WordleBattleDeps } from './wordle-battle-service.js';
 
 const createBody = z.object({
@@ -30,7 +31,7 @@ export function registerWordleBattleRoutes(app: FastifyInstance, deps: Omit<Word
   });
 
   /** Create a battle lobby (creator auto-joins); pick difficulty + player cap. */
-  app.post('/wordle/battles', { schema: { body: createBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] }, async (req, reply) => {
+  app.post('/wordle/battles', { schema: { body: createBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth, requireParental('games')] }, async (req, reply) => {
     const body = req.body as z.infer<typeof createBody>;
     const res = await battles.create(req.user!.id, body);
     if (!res.ok) {
@@ -43,7 +44,7 @@ export function registerWordleBattleRoutes(app: FastifyInstance, deps: Omit<Word
   });
 
   /** Join an open lobby. */
-  app.post('/wordle/battles/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireAccount, requireBirthMonth] }, async (req, reply) => {
+  app.post('/wordle/battles/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireAccount, requireBirthMonth, requireParental('games')] }, async (req, reply) => {
     const res = await battles.join((req.params as { id: string }).id, req.user!.id);
     if (res.ok) return res.battle;
     switch (res.reason) {

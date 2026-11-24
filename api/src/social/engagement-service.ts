@@ -54,13 +54,15 @@ export class EngagementService {
   /**
    * Adds or removes, and reports which. A toggle, because the client's idea of the state can be stale (two tabs, an old
    * poll), so the database decides from what is stored. Only a post the person can read can be engaged with
-   * (`readable`); removing always works, so a post since out of reach can be let go.
+   * (`readable`); removing always works, so a post since out of reach can be let go. `mayAdd` is asked only when the
+   * toggle would add, and refuses by throwing.
    */
   async toggle(
     userId: string,
     type: TargetType,
     id: string,
     kind: EngagementKind,
+    mayAdd?: () => Promise<void>,
   ): Promise<{ on: boolean }> {
     const removed = await this.pool.query(
       `DELETE FROM post_engagements
@@ -68,6 +70,7 @@ export class EngagementService {
       [userId, type, id, kind],
     );
     if (removed.rowCount && removed.rowCount > 0) return { on: false };
+    await mayAdd?.();
     if (!(await this.readable(userId, type, id))) throw new AppError('NOT_FOUND', 404, 'no such post');
 
     await this.pool.query(

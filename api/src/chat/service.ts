@@ -3,6 +3,7 @@ import type pg from 'pg';
 import { stripControlChars, type ChatGameRef, type ChatMessageExtras, type ChatMessageKind } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { assertUnrestricted } from '../moderation/restrictions.js';
+import { assertParentalAllowed, parentalAllows } from '../parental/supervision.js';
 import { giftCards } from '../gifts/cards.js';
 import { gameRef, previewText, type KindColumns } from './kinds.js';
 import { canonicalPair } from '../friends/pair.js';
@@ -81,6 +82,8 @@ export class ChatService {
     if (!trimmed || trimmed.length > MAX_MESSAGE_LEN) {
       throw new AppError('BAD_MESSAGE', 400, `message must be 1–${MAX_MESSAGE_LEN} characters`);
     }
+    // a supervised teen's parent may have switched messages off, or Hevalo may be resting
+    await assertParentalAllowed(this.pool, from, 'chat');
     // The escalation mute applies everywhere.
     if (this.moderation && (await this.moderation.isChatMuted(from))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
@@ -147,14 +150,12 @@ export class ChatService {
       gift: null,
       game: null,
     };
-    await this.notifier
-      .notifyUser(to, {
-        type: 'dm',
-        from,
-        fromUsername: row.rows[0]!.username,
-        message,
-      })
-      .catch(() => undefined);
+    await this.liveTo(to, {
+      type: 'dm',
+      from,
+      fromUsername: row.rows[0]!.username,
+      message,
+    });
     return message;
   }
 
@@ -167,6 +168,8 @@ export class ChatService {
   async sendCard(from: string, to: string, card: ChatGameRef, publicUrl: PublicUrl = () => null): Promise<DmMessage> {
     if (from === to) throw new AppError('SELF_DM', 400, 'you cannot message yourself');
     await assertUnrestricted(this.pool, from, 'chat');
+    // a card is a message, so a parent's switch for messages covers it too
+    await assertParentalAllowed(this.pool, from, 'chat');
     if (this.moderation && (await this.moderation.isChatMuted(from))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }
@@ -220,10 +223,17 @@ export class ChatService {
       gift: null,
       game: card,
     };
-    await this.notifier
-      .notifyUser(to, { type: 'dm', from, fromUsername: row.rows[0]!.username, message })
-      .catch(() => undefined);
+    await this.liveTo(to, { type: 'dm', from, fromUsername: row.rows[0]!.username, message });
     return message;
+  }
+
+  /**
+   * A new message to `to`'s open apps, unless a parent switched their messages off: it is kept, and shows when they are
+   * on again, but nothing arrives live meanwhile. A lost event only means the thread catches up on its next read.
+   */
+  private async liveTo(to: string, event: Record<string, unknown>): Promise<void> {
+    if (!(await parentalAllows(this.pool, to, 'chat'))) return;
+    await this.notifier.notifyUser(to, event).catch(() => undefined);
   }
 
   /** Paginated history, newest first before `before`; marks incoming messages delivered. */

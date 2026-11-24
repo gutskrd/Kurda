@@ -41,3 +41,11 @@ export function rootAbove(pathname: string): string | null {
   const path = trimmed(pathname);
   return ROOTS.find((root) => under(path, root)) ?? null;
 }
+
+/**
+ * Whether the top bar carries search and the bell on this page. Settings leaves both out: it has its own search, over
+ * settings, and a second magnifier and a bell there would only lead away from what is being set.
+ */
+export function barHasSearch(pathname: string): boolean {
+  return !under(trimmed(pathname), '/app/settings');
+}

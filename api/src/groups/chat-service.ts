@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { GROUP_UNREAD_CAP, stripControlChars, type ChatGameRef, type ChatMessageExtras } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { assertUnrestricted } from '../moderation/restrictions.js';
+import { assertParentalAllowed, switchedOffSql } from '../parental/supervision.js';
 import { gameRef, type KindColumns } from '../chat/kinds.js';
 import { giftCards } from '../gifts/cards.js';
 import type { GroupService } from './service.js';
@@ -111,6 +112,8 @@ export class GroupChatService {
    */
   async assertCanPost(groupId: string, userId: string): Promise<void> {
     await assertUnrestricted(this.pool, userId, 'chat');
+    // and a supervised teen's parent has not switched group chats off, nor is Hevalo resting
+    await assertParentalAllowed(this.pool, userId, 'chat');
     if ((await this.member(groupId, userId)).muted) throw new AppError('MUTED', 403, 'you are muted in this group');
     if (this.moderation && (await this.moderation.isChatMuted(userId))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
@@ -143,14 +146,15 @@ export class GroupChatService {
   }
 
   /**
-   * The members who blocked `authorId` or whom `authorId` blocked, who must not be sent what `authorId` posts. The
-   * event carries these ids and the gateway skips their connections (realtime/gateway.ts `hiddenFrom`). Asked per
-   * message, so a block or unblock counts from the next message.
+   * The members who blocked `authorId` or whom `authorId` blocked, who must not be sent what `authorId` posts, and those
+   * whose parent switched group chats off, who get it once the switch is on again. The event carries these ids and the
+   * gateway skips their connections (realtime/gateway.ts `hiddenFrom`). Asked per message, so a block or unblock counts
+   * from the next message.
    */
   async hiddenFrom(groupId: string, authorId: string): Promise<string[]> {
     const rows = await this.pool.query<{ user_id: string }>(
       `SELECT m.user_id FROM group_members m
-        WHERE m.group_id = $1 AND NOT ${notBlockedSql('m.user_id', '$2::uuid')}`,
+        WHERE m.group_id = $1 AND (NOT ${notBlockedSql('m.user_id', '$2::uuid')} OR ${switchedOffSql('m.user_id', 'chat')})`,
       [groupId, authorId],
     );
     return rows.rows.map((r) => r.user_id);

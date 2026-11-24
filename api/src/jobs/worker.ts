@@ -20,6 +20,7 @@ import { PushService } from '../push/service.js';
 import { DeviceTokenService } from '../push/tokens-service.js';
 import { createPushProvider } from '../push/provider.js';
 import { NotificationPrefsService } from '../notifications/prefs-service.js';
+import { pushMutedByParent } from '../parental/supervision.js';
 import { InboxService } from '../notifications/inbox-service.js';
 import { sendEmailJob, makeSendEmailJob } from './email.js';
 import { EmailService } from '../email/service.js';
@@ -64,11 +65,12 @@ export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistr
     if (storage) {
       registry.register(makeExportJob(gdpr));
     }
-    // Queued push delivery, gated by preferences at delivery time.
+    // Queued push delivery, gated by preferences and a parent's switches at delivery time.
     const push = new PushService(
       new DeviceTokenService(pool),
       createPushProvider(config, log),
       new NotificationPrefsService(pool),
+      (userId, notification) => pushMutedByParent(pool, userId, notification),
     );
     const queue = config.REDIS_URL ? JobQueue.create(config) : null;
     // A letter's push held by quiet hours is queued again for when they end, and goes only if the letter still waits.

@@ -5,6 +5,7 @@ import { requireAccount } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
+import { requireParental, requireSwitchOn } from '../parental/supervision.js';
 import type { LetterService } from './service.js';
 import { registerLetterWidgetRoutes } from './widget-routes.js';
 import { LetterWidgetService } from './widget.js';
@@ -50,7 +51,8 @@ function idempotencyKey(req: FastifyRequest): string | null {
  * are in widget-routes.ts.
  */
 export function registerLetterRoutes(app: FastifyInstance, letters: LetterService): void {
-  app.get('/letters', { schema: { querystring: homeQuery }, preHandler: requireAccount }, async (req) =>
+  // not while a parent has letters switched off; what arrives meanwhile waits for when they are on again
+  app.get('/letters', { schema: { querystring: homeQuery }, preHandler: [requireAccount, requireSwitchOn('letters')] }, async (req) =>
     letters.home(req.user!.id, { legacyWindow: (req.query as { landings?: string }).landings !== '1' }),
   );
 
@@ -76,7 +78,7 @@ export function registerLetterRoutes(app: FastifyInstance, letters: LetterServic
     {
       schema: { body: letterBody },
       config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat'), requireParental('letters')],
     },
     async (req) => letters.sendOut(req.user!.id, (req.body as LetterBody).body, (req.body as LetterBody).decor, { key: idempotencyKey(req) }),
   );
@@ -94,7 +96,7 @@ export function registerLetterRoutes(app: FastifyInstance, letters: LetterServic
     '/letters/call',
     {
       config: { skipValidation: true, rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat'), requireParental('letters')],
     },
     async (req) => ({ visitor: await letters.call(req.user!.id) }),
   );
@@ -104,7 +106,7 @@ export function registerLetterRoutes(app: FastifyInstance, letters: LetterServic
     {
       schema: { body: letterBody },
       config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat'), requireParental('letters')],
     },
     async (req) => letters.answer(req.user!.id, (req.body as LetterBody).body, (req.body as LetterBody).decor, { key: idempotencyKey(req) }),
   );
@@ -114,7 +116,7 @@ export function registerLetterRoutes(app: FastifyInstance, letters: LetterServic
     return reply.code(sent ? 204 : 404).send();
   });
 
-  app.get('/letters/threads/:threadId', { schema: { params: threadParam, querystring: threadQuery }, preHandler: requireAccount }, async (req) =>
+  app.get('/letters/threads/:threadId', { schema: { params: threadParam, querystring: threadQuery }, preHandler: [requireAccount, requireSwitchOn('letters')] }, async (req) =>
     letters.thread(req.user!.id, (req.params as { threadId: string }).threadId, req.query as z.infer<typeof threadQuery>),
   );
 
@@ -123,7 +125,7 @@ export function registerLetterRoutes(app: FastifyInstance, letters: LetterServic
     {
       schema: { params: threadParam, body: letterBody },
       config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat'), requireParental('letters')],
     },
     async (req) => {
       const { body, decor } = req.body as LetterBody;

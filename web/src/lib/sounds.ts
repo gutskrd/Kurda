@@ -22,6 +22,8 @@ export function lessonSoundsOn(): boolean {
   }
 }
 
+const soundListeners = new Set<() => void>();
+
 export function setLessonSounds(on: boolean): void {
   try {
     if (on) localStorage.removeItem(KEY);
@@ -29,6 +31,15 @@ export function setLessonSounds(on: boolean): void {
   } catch {
     // Private browsing without storage: the choice lasts as long as the page.
   }
+  for (const listener of soundListeners) listener();
+}
+
+/** Tells `listener` whenever lesson sounds are turned on or off, so Settings' tile and switch agree (`useSyncExternalStore`). */
+export function subscribeLessonSounds(listener: () => void): () => void {
+  soundListeners.add(listener);
+  return () => {
+    soundListeners.delete(listener);
+  };
 }
 
 const AUTOPLAY_KEY = 'hevalo_autoplay_audio';

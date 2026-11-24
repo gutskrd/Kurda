@@ -26,6 +26,8 @@ export const EMAIL_TEMPLATES = [
   'security-alert',
   'account-suspended',
   'account-closed',
+  'parental-ended',
+  'parental-parent-added',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -245,6 +247,28 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
       text: 'Silav {username},\n\nHesabê te yê Hevalo hatiye girtin, û tu êdî nikarî wî bi kar bînî. {statement}\n\nRêzik: {rule}.\n\n{content}\n\n{review}\n\nTu difikirî ku me şaşî kiriye? Di nav şeş mehan de tu dikarî bixwazî ku kesek dîsa lê binêre. Têkeve da ku sedemê bixwînî û daxwaza nirxandinê bikî: {link}\n\nJi wir tu dikarî kopiyeke daneyên xwe an jêbirina hesabê xwe jî bixwazî.\n\n— Tîma Hevalo',
     },
   },
+  /** To a parent a teen disconnected from parental controls: the one change a parent must not miss. */
+  'parental-ended': {
+    en: {
+      subject: 'Parental controls for {teen} have ended',
+      text: 'Hello {username},\n\n{teen} disconnected your account from their parental controls on Hevalo ({time}). You can no longer see their learning time and progress, or change their settings.\n\nIf you would like to be connected again, talk with them first. You can make a new code in Settings, then Parental controls, and they can enter it on their own account.\n\n— The Hevalo team',
+    },
+    ku: {
+      subject: 'Kontrolên dêûbavan ji bo {teen} bi dawî bûn',
+      text: 'Silav {username},\n\n{teen} hesabê te ji kontrolên dêûbavan qut kir li Hevalo ({time}). Êdî tu nikarî dema hînbûn û pêşketinê bibînî, an mîhengan biguherînî.\n\nHeke tu dixwazî hûn dîsa werin girêdan, pêşî pê re biaxive. Tu dikarî di Mîhengan de, paşê di Kontrolên dêûbavan de, kodeke nû çêkî, û ew dikare wê li ser hesabê xwe binivîse.\n\n— Tîma Hevalo',
+    },
+  },
+  /** To a teen's parents when another parent connects, so a second account cannot join unseen. */
+  'parental-parent-added': {
+    en: {
+      subject: 'Another parent was connected to {teen}',
+      text: 'Hello {username},\n\n{parent} was connected as a parent of {teen} on Hevalo ({time}). They can now see {teen}’s learning time and progress, and make the settings stricter, but not looser.\n\nIf you don’t know who this is, talk with {teen}: they can disconnect a parent in Settings, then Parental controls.\n\n— The Hevalo team',
+    },
+    ku: {
+      subject: 'Kesekî din wekî dêûbav bi {teen} ve hate girêdan',
+      text: 'Silav {username},\n\n{parent} li Hevalo wekî dêûbav bi {teen} ve hate girêdan ({time}). Niha ew dikare dema hînbûn û pêşketina {teen} bibîne, û dikare mîhengan hişktir bike, lê ne siviktir.\n\nHeke tu nizanî ev kî ye, bi {teen} re biaxive: ew dikare di Mîhengan de, paşê di Kontrolên dêûbavan de, dêûbavekî qut bike.\n\n— Tîma Hevalo',
+    },
+  },
   'deletion-notice': {
     en: {
       subject: 'Your account is scheduled for deletion',
@@ -288,6 +312,9 @@ const DESIGN: Record<EmailTemplate, { picture: EmailPicture; button?: Record<Ema
   // a decision about the account is something weighed, like a copyright decision
   'account-suspended': { picture: 'scales', button: { en: 'Sign in to Hevalo', ku: 'Têkeve Hevalo' } },
   'account-closed': { picture: 'scales', button: { en: 'Sign in to Hevalo', ku: 'Têkeve Hevalo' } },
+  // what looks after an account, as the sign-in notices are
+  'parental-ended': { picture: 'shield' },
+  'parental-parent-added': { picture: 'shield' },
 };
 
 /** The footer's two lines: where to write, and the link again for a button that will not press. */

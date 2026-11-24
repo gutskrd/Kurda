@@ -98,6 +98,8 @@ import { AccountWatch } from './reports/AccountWatch';
 // The screen shown in place of the app while Hevalo is taken offline from the admin console.
 import { MaintenanceGate } from './maintenance/MaintenanceGate';
 import { StandingWarnings } from './reports/StandingWarnings';
+// Parental controls: the usage beat for a supervised teen, and the pause screen while Hevalo rests.
+import { PauseGate, SupervisionProvider } from './parental/Supervision';
 import { GiftArrivals } from './gifts/GiftArrivals';
 import { BadgeCelebrations } from './badges/BadgeCelebrations';
 import { ProfileModalProvider } from './profile/ProfileModal';
@@ -356,8 +358,8 @@ export function AppRoutes(): React.JSX.Element {
         />
         <Route path="users/:id" element={<UserProfile />} />
         <Route path="settings" element={<RequireAccount what="gate.what.settings"><Settings /></RequireAccount>} />
-        {/* A settings page of its own (pages/Settings.tsx); reports and standing below are separate pages too. */}
-        <Route path="settings/:page" element={<RequireAccount what="gate.what.settings"><Settings /></RequireAccount>} />
+        {/* A settings page of its own (pages/Settings.tsx), and parental controls' pages under theirs; reports and standing below are separate pages too. */}
+        <Route path="settings/:page/*" element={<RequireAccount what="gate.what.settings"><Settings /></RequireAccount>} />
         <Route path="settings/reports" element={<RequireAccount what="gate.what.settings"><MyReports /></RequireAccount>} />
         <Route path="settings/standing" element={<RequireAccount what="gate.what.settings"><AccountStanding /></RequireAccount>} />
       </Route>
@@ -390,6 +392,9 @@ export function App(): React.JSX.Element {
         {/* Outermost: while Hevalo is offline nothing below can load, a suspension's reasons included. */}
         <MaintenanceGate>
         <SuspensionGate>
+        {/* A supervised teen's limits, beaten once a minute; while their parent has Hevalo resting, its pause screen stands in for the app. */}
+        <SupervisionProvider>
+        <PauseGate>
         {/* The social column's data and game invites, held once for every shell, so moving between a lesson and the app keeps the bar's counts. */}
         <RailProvider>
         {/* A limit given or lifted, a hold included, shows as soon as the server says so. */}
@@ -398,6 +403,8 @@ export function App(): React.JSX.Element {
         <AppRoutes />
         </PlayProvider>
         </RailProvider>
+        </PauseGate>
+        </SupervisionProvider>
         </SuspensionGate>
         </MaintenanceGate>
         </MessagesProvider>

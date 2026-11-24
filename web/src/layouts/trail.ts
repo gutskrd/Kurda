@@ -60,3 +60,19 @@ export function stepsBack(here: string): number | null {
   }
   return null;
 }
+
+/**
+ * How many entries back to step from here to the last page outside `base` (a place with pages of its own, such as
+ * Settings), as a negative count, or null when the visit began inside it or nothing behind was noted.
+ */
+export function stepsBackOutOf(base: string): number | null {
+  const at = pageNumber();
+  if (at === null || at <= 0) return null;
+  for (let i = at - 1; i >= 0; i--) {
+    const behind = trail.get(i);
+    if (behind === undefined) return null;
+    const path = behind.split('?')[0]!.replace(/\/+$/, '');
+    if (path !== base && !path.startsWith(`${base}/`) && !isFocusedPath(path)) return i - at;
+  }
+  return null;
+}

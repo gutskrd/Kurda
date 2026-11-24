@@ -7,6 +7,7 @@ import { MAX_GROUP_MESSAGE_LEN } from './chat-service.js';
 import type { TrustService } from '../trust/service.js';
 import { AppError } from '../plugins/errors.js';
 import { secondsToUtcMidnight, takeDaily } from '../limits/counters.js';
+import { parentalAllows, requireSwitchOn } from '../parental/supervision.js';
 
 const idParam = z.object({ id: z.uuid() });
 
@@ -55,7 +56,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
   /** Channel history and what the reader has cleared; membership is checked on every fetch, so removal revokes access at once. */
   app.get(
     '/groups/:id/chat',
-    { schema: { params: idParam, querystring: z.object({ before: z.string().datetime().optional() }) }, preHandler: requireAccount },
+    { schema: { params: idParam, querystring: z.object({ before: z.string().datetime().optional() }) }, preHandler: [requireAccount, requireSwitchOn('chat')] },
     async (req) => {
       const { id } = req.params as { id: string };
       const { before } = req.query as { before?: string };
@@ -144,6 +145,6 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
 
   /** Unread counts across the caller's groups. */
   app.get('/me/groups/unread', { preHandler: requireAccount }, async (req) => ({
-    unread: await chat.unread(req.user!.id),
+    unread: (await parentalAllows(app.db, req.user!.id, 'chat')) ? await chat.unread(req.user!.id) : [],
   }));
 }

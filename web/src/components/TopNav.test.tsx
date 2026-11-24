@@ -170,6 +170,22 @@ describe('TopNav', () => {
     expect(purse).toHaveAttribute('href', '/app/shop');
   });
 
+  it('leaves search and the bell out of the bar on Settings, which has its own search', async () => {
+    signIn();
+    railFetch(you());
+    const { container, unmount } = showReal('/app');
+    const bar = (): HTMLElement => container.querySelector<HTMLElement>('header.nav')!;
+    expect(await within(bar()).findByRole('button', { name: 'Notifications' })).toBeInTheDocument();
+    expect(within(bar()).getByRole('combobox', { name: 'Search for people or words' })).toBeInTheDocument();
+    unmount();
+
+    const settings = showReal('/app/settings/account');
+    const settingsBar = settings.container.querySelector<HTMLElement>('header.nav')!;
+    expect(await within(settingsBar).findByRole('link', { name: 'Profile' })).toBeInTheDocument();
+    expect(within(settingsBar).queryByRole('combobox', { name: 'Search for people or words' })).toBeNull();
+    expect(within(settingsBar).queryByRole('button', { name: 'Notifications' })).toBeNull();
+  });
+
   it('shows no balances until they have actually arrived', async () => {
     signIn();
     // A response from before the field existed, or the very first render.
@@ -448,7 +464,7 @@ describe('TopNav on a phone', () => {
     signIn();
     railFetch(you());
     onPhone();
-    const { container } = showPhone('/app/settings');
+    const { container } = showPhone('/app/badges');
     const bar = within(container.querySelector<HTMLElement>('header.nav')!);
     const back = bar.getByRole('button', { name: 'Back' });
     expect(bar.queryByRole('link', { name: 'Hevalo home' })).toBeNull();
@@ -457,8 +473,22 @@ describe('TopNav on a phone', () => {
     // The bell appears once the session is back, and with it the places a way back can lead to.
     await bar.findByRole('button', { name: 'Notifications' });
     await userEvent.click(back);
-    // Opened cold: back to the root of the place Settings is behind.
+    // Opened cold: back to the root of the place badges are behind.
     expect(screen.getByTestId('where').textContent).toBe('/app/profile');
+  });
+
+  it('leaves search and the bell out on Settings, which searches its own, keeping the way back', async () => {
+    signIn();
+    railFetch(you());
+    onPhone();
+    for (const at of ['/app/settings', '/app/settings/parental/teen/t1']) {
+      const { container, unmount } = showPhone(at);
+      const bar = within(container.querySelector<HTMLElement>('header.nav')!);
+      expect(bar.getByRole('button', { name: 'Back' })).toBeInTheDocument();
+      expect(container.querySelector('.nav-pill')).toBeNull();
+      expect(bar.queryByRole('button', { name: 'Notifications' })).toBeNull();
+      unmount();
+    }
   });
 
   it('keeps Get started for a visitor, and has no bell to show them', async () => {

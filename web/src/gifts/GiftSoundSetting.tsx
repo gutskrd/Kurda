@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useT } from '../i18n/I18nProvider';
 import { giftSoundOn, setGiftSound } from './motion';
-import { autoplayOn, characterVoicesOn, lessonSoundsOn, playLessonSound, setAutoplay, setCharacterVoices, setLessonSounds } from '../lib/sounds';
+import { autoplayOn, characterVoicesOn, lessonSoundsOn, playLessonSound, setAutoplay, setCharacterVoices, setLessonSounds, subscribeLessonSounds } from '../lib/sounds';
 
 /**
  * Settings → Sounds: the gift chime, lesson answer and end sounds (lib/sounds.ts), whether an answer's Kurdish is
@@ -11,7 +11,8 @@ import { autoplayOn, characterVoicesOn, lessonSoundsOn, playLessonSound, setAuto
 export function GiftSoundSetting(): React.JSX.Element {
   const t = useT();
   const [on, setOn] = useState(giftSoundOn);
-  const [lesson, setLesson] = useState(lessonSoundsOn);
+  // Shared with Settings' Sounds tile, which may sit beside this page on a wide screen.
+  const lesson = useSyncExternalStore(subscribeLessonSounds, lessonSoundsOn);
   const [autoplay, setAutoplayOn] = useState(autoplayOn);
   const [voices, setVoices] = useState(characterVoicesOn);
   return (
@@ -38,7 +39,6 @@ export function GiftSoundSetting(): React.JSX.Element {
           type="checkbox"
           checked={lesson}
           onChange={(e) => {
-            setLesson(e.target.checked);
             setLessonSounds(e.target.checked);
             if (e.target.checked) playLessonSound('correct');
           }}

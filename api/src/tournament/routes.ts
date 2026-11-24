@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAccount, requireRoles } from '../plugins/auth.js';
+import { requireParental } from '../parental/supervision.js';
 import type { TournamentService } from './service.js';
 import { MAX_CAPACITY, MIN_CAPACITY } from './service.js';
 
@@ -47,7 +48,7 @@ export function registerTournamentRoutes(app: FastifyInstance, tournaments: Tour
   /** Register the caller. */
   app.post(
     '/tournaments/:id/register',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireAccount, requireParental('games')] },
     async (req) => {
       await tournaments.register((req.params as { id: string }).id, req.user!.id);
       return { registered: true };

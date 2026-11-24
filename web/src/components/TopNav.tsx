@@ -13,7 +13,7 @@ import { useT } from '../i18n/I18nProvider';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { BackButton } from '../layouts/BackButton';
 import { useGlass } from '../glass/useGlass';
-import { PHONE_CHROME, isPlaceRoot } from '../layouts/roots';
+import { PHONE_CHROME, barHasSearch, isPlaceRoot } from '../layouts/roots';
 
 export interface NavItem {
   /** Identifies the place for tests and the menu. */
@@ -116,6 +116,7 @@ export function TopNav({
         : t('nav.menu');
 
   if (placesBelow && phone) return <PhoneBar links={links} />;
+  const searches = barHasSearch(pathname);
 
   return (
     <header className={`nav${open ? ' is-menu-open' : ''}`} onBlur={onBlur}>
@@ -213,7 +214,7 @@ export function TopNav({
           </ul>
         </nav>
 
-        <NavSearch />
+        {searches && <NavSearch />}
 
         <span className="nav-spacer" />
 
@@ -222,7 +223,7 @@ export function TopNav({
             <>
               <Purse />
               {/* Likes, comments, gifts, game invites and notices from Hevalo. */}
-              <NotificationsBell />
+              {searches && <NotificationsBell />}
               <RailToggle />
             </>
           ) : (
@@ -271,11 +272,13 @@ function PhoneBar({ links }: { links: NavItem[] }): React.JSX.Element {
     <header className="nav nav-phone">
       <div className="container nav-inner">
         {isPlaceRoot(pathname, search) ? <Brand to={signedIn ? '/app' : '/'} /> : <BackButton links={links} />}
-        <div ref={glass} className="nav-pill glass">
-          <NavSearch />
-          {/* Nothing for a visitor, whose pill is then search alone. */}
-          <NotificationsBell />
-        </div>
+        {barHasSearch(pathname) && (
+          <div ref={glass} className="nav-pill glass">
+            <NavSearch />
+            {/* Nothing for a visitor, whose pill is then search alone. */}
+            <NotificationsBell />
+          </div>
+        )}
         {!signedIn && (
           <LinkButton to="/register" variant="secondary" size="sm" className="nav-register">
             {t('nav.register')}

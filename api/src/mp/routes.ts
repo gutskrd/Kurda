@@ -5,6 +5,7 @@ import { requireAccount } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { gameNotFound } from '../play/errors.js';
 import { requireBirthMonth } from '../users/age.js';
+import { requireParental } from '../parental/supervision.js';
 import type { RoomBus } from '../realtime/bus.js';
 import type { XpService } from '../xp/service.js';
 import type { LobbyChange } from '../play/types.js';
@@ -126,7 +127,7 @@ export function registerMultiplayerRoutes(app: FastifyInstance, deps: Multiplaye
 
   app.post(
     '/mp/:game/:id/join',
-    { schema: { params: lobbyParams }, config: { ...perMinute(10), skipValidation: true }, preHandler: [requireAccount, requireBirthMonth] },
+    { schema: { params: lobbyParams }, config: { ...perMinute(10), skipValidation: true }, preHandler: [requireAccount, requireBirthMonth, requireParental('games')] },
     async (req) => {
       const { id } = req.params as z.infer<typeof lobbyParams>;
       const outcome = await mp.join(req.user!.id, id);

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
+import { requireParental } from '../parental/supervision.js';
 import { AppError } from '../plugins/errors.js';
 import type { AppConfig } from '../config/env.js';
 import { imagePostLimits } from '../media/mediaLimits.js';
@@ -102,7 +103,7 @@ export function registerImagePostRoutes(
         rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
         skipValidation: true,
       },
-      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireUnrestricted('media')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireUnrestricted('media'), requireParental('posts')],
     },
     async (req, reply) => {
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
@@ -139,7 +140,7 @@ export function registerImagePostRoutes(
 
   app.post(
     '/images',
-    { schema: { body: createBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireUnrestricted('media')] },
+    { schema: { body: createBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireUnrestricted('media'), requireParental('posts')] },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
       // A refused picture is turned away before anything counts; the create claims it and decides.
@@ -188,7 +189,7 @@ export function registerImagePostRoutes(
 
   app.patch(
     '/images/:id',
-    { schema: { params: idParam, body: editBody }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')] },
+    { schema: { params: idParam, body: editBody }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireParental('posts')] },
     async (req, reply) =>
       editCaption(req, reply),
   );

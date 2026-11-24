@@ -9,6 +9,7 @@ import { canonicalPair, FRIEND_CAP, REQUEST_TTL_DAYS } from './pair.js';
 import { isNotKnownAdultUser, notKnownAdultSql, shownToSql } from '../users/age.js';
 import { notBlockedSql } from './blocked.js';
 import { availableSql } from '../moderation/availability.js';
+import { parentalAllows } from '../parental/supervision.js';
 
 export type RequestOutcome = 'requested' | 'accepted' | 'already_friends' | 'silent';
 
@@ -179,6 +180,12 @@ export class FriendService {
           await client.query('COMMIT');
           return 'requested'; // idempotent re-send
         }
+        // A request sent before a parent switched adding friends off is not accepted on their behalf: it stays as it
+        // was, and the sender is answered as for any request.
+        if (!(await parentalAllows(client, to, 'friends'))) {
+          await client.query('COMMIT');
+          return 'requested';
+        }
         // they already requested me → mutual → accept (respect both caps)
         await this.assertUnderCap(client, from);
         await this.assertUnderCap(client, to, true);
@@ -260,6 +267,10 @@ export class FriendService {
       if (accept) {
         // A request to someone not known to be an adult never reached them, so accepting it answers as absent.
         if (await isNotKnownAdultUser(client, user)) {
+          throw new AppError('NO_REQUEST', 404, 'no pending request from that user');
+        }
+        // Nor one a teen sent before their parent switched adding friends off: it answers as absent, saying nothing of why.
+        if (!(await parentalAllows(client, other, 'friends'))) {
           throw new AppError('NO_REQUEST', 404, 'no pending request from that user');
         }
         // theirs too: a request sent while they had room is no way past their limit

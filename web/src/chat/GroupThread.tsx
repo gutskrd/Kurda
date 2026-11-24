@@ -22,6 +22,7 @@ import type { RealtimeEventEnvelope } from '../realtime/events';
 import { sendError } from './DmThread';
 import { byTime, THREAD_POLL_FALLBACK, THREAD_POLL_LIVE } from './threadShared';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
+import { ParentalOffPlace, useParentalOff } from '../parental/ParentalNote';
 import { ThreadSkeleton } from '../components/skeletons';
 import { Modal } from '../components/Modal';
 import { ArrowIcon, ChevronIcon, TrashIcon } from '../components/icons';
@@ -53,13 +54,7 @@ type Shown = GroupMessage & { pending?: Unsent['pending'] };
  * Groups are private: a banned reader sees the ban and may appeal, a reader removed while it is open sees that at the
  * next read or send, and anyone else is told there is no such group.
  */
-export function GroupThread({
-  groupId,
-  className,
-  onClose,
-  openInfo = false,
-  addFriends = false,
-}: {
+interface GroupThreadProps {
   groupId: string;
   /** extra class for the docked variant */
   className?: string;
@@ -69,7 +64,15 @@ export function GroupThread({
   openInfo?: boolean;
   /** open with the add-friends sheet up: the group was made a moment ago and has nobody else in it */
   addFriends?: boolean;
-}): React.JSX.Element {
+}
+
+export function GroupThread(props: GroupThreadProps): React.JSX.Element {
+  // A teen whose parent switched chats off cannot read group chats either, so the thread gives way to the calm line.
+  if (useParentalOff('chat')) return <ParentalOffPlace className={props.className} />;
+  return <Group {...props} />;
+}
+
+function Group({ groupId, className, onClose, openInfo = false, addFriends = false }: GroupThreadProps): React.JSX.Element {
   const navigateAway = useNavigate();
   const { client, user } = useAuth();
   const t = useT();

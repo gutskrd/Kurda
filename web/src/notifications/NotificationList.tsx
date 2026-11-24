@@ -21,6 +21,7 @@ import {
   TrashIcon,
   TrophyIcon,
   UsersIcon,
+  ParentalIcon,
 } from '../components/icons';
 import {
   badgeSvg,
@@ -40,6 +41,7 @@ import { socialNotification, type NoteView } from '../reports/notifications';
 import { playNotification } from '../play/notifications';
 import { progressNotification } from '../ranks/notifications';
 import { groupNotification } from '../groups/notifications';
+import { parentalNotification } from '../parental/notifications';
 import { usePlayInvites } from '../play/PlayProvider';
 import { useRail } from '../social/RailProvider';
 import { railEdits, type RailNotification } from '../social/useSocialRail';
@@ -122,6 +124,7 @@ const KIND_ICON: Record<NoteKind, (p: { size?: number }) => React.JSX.Element> =
   groupOut: RemovePersonIcon,
   groupBan: BlockIcon,
   groupAsk: InviteIcon,
+  parental: ParentalIcon,
   notice: BellIcon,
 };
 
@@ -222,7 +225,7 @@ export function NotificationList({
             {group.items.map((n) => {
               const actor = actorOf(n);
               const view: NoteView | null =
-                socialNotification(n, t, locale) ?? playNotification(n, t, incoming) ?? progressNotification(n, t) ?? groupNotification(n, t, locale);
+                socialNotification(n, t, locale) ?? playNotification(n, t, incoming) ?? progressNotification(n, t) ?? groupNotification(n, t, locale) ?? parentalNotification(n, t);
               // A gift from somebody the app can name says who it is from.
               const title = n.data?.kind === 'gift' && actor ? t('gift.fromLabel', { name: actor.name }) : (view?.title ?? n.title);
               const when = noteWhen(n.createdAt, group.key, t, shortDate);

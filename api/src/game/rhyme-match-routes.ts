@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
+import { requireParental } from '../parental/supervision.js';
 import { RhymeMatchService, type RhymeMatchDeps } from './rhyme-match-service.js';
 
 const createBody = z.object({
@@ -29,7 +30,7 @@ export function registerRhymeMatchRoutes(app: FastifyInstance, deps: Omit<RhymeM
   });
 
   /** Create a match lobby (creator auto-joins). */
-  app.post('/rhyme/matches', { schema: { body: createBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] }, async (req, reply) => {
+  app.post('/rhyme/matches', { schema: { body: createBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth, requireParental('games')] }, async (req, reply) => {
     const res = await matches.create(req.user!.id, req.body as z.infer<typeof createBody>);
     if (!res.ok) {
       if (res.reason === 'open-needs-adult') {
@@ -41,7 +42,7 @@ export function registerRhymeMatchRoutes(app: FastifyInstance, deps: Omit<RhymeM
   });
 
   /** Join an open lobby. */
-  app.post('/rhyme/matches/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireAccount, requireBirthMonth] }, async (req, reply) => {
+  app.post('/rhyme/matches/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireAccount, requireBirthMonth, requireParental('games')] }, async (req, reply) => {
     const res = await matches.join((req.params as { id: string }).id, req.user!.id);
     if (res.ok) return res.match;
     switch (res.reason) {

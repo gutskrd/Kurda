@@ -15,6 +15,7 @@ import { standaloneMultiplayer } from '../mp/standalone.js';
 import { eraseRanks, exportRanks } from '../ranks/gdpr.js';
 import { exportPosts } from './posts-export.js';
 import { exportProgress } from './progress-export.js';
+import { eraseParental, exportParental } from '../parental/gdpr.js';
 import { requestQuarantine, runQuarantine } from '../moderation/quarantine.js';
 import { userHash } from '../moderation/pseudonym.js';
 import type { AppleTokens } from '../auth/apple-tokens.js';
@@ -22,6 +23,9 @@ import { GUEST_IDLE_DAYS } from '../auth/guest.js';
 import { UNCONFIRMED_SIGNUP, UNCONFIRMED_SIGNUP_DAYS, forgetOldSends } from '../auth/pending-signups.js';
 
 export const DELETION_GRACE_DAYS = 14;
+
+/** An export not ready this long after it was asked for was lost on the way; a full build takes seconds. */
+export const EXPORT_LOST_AFTER_MIN = 60;
 
 /**
  * Cancels a deletion still in its grace period, since the app and the notice promise that signing in again keeps the
@@ -364,10 +368,12 @@ export class GdprService {
   }
 
   /**
-   * Creates an export request for the worker. One a day: asking again within 24 hours returns the existing request.
-   * Taken under the person's lock, so two taps make one export rather than two full builds.
+   * Creates an export request for the worker. One a day: asking again within 24 hours returns the existing request
+   * (`reused`). Taken under the person's lock, so two taps make one export rather than two full builds. A request still
+   * waiting after EXPORT_LOST_AFTER_MIN was lost on the way (its job failed or never ran) and is withdrawn here, so the
+   * person can ask again rather than wait out the day.
    */
-  async requestExport(userId: string): Promise<string> {
+  async requestExport(userId: string): Promise<{ id: string; reused: boolean }> {
     // Exports are kept only in a bucket readable through a signed link (media/storage.ts `putPrivate`); without one the
     // request is refused rather than promised.
     if (!this.deps.storage?.hasPrivateBucket) {
@@ -375,19 +381,23 @@ export class GdprService {
     }
     return inTransaction(this.pool, async (client) => {
       await lockPersonFor(client, 'export', userId);
+      await client.query(
+        `DELETE FROM user_exports WHERE user_id = $1 AND completed_at IS NULL AND requested_at <= now() - make_interval(mins => $2)`,
+        [userId, EXPORT_LOST_AFTER_MIN],
+      );
       const existing = await client.query<{ id: string }>(
         `SELECT id FROM user_exports
          WHERE user_id = $1 AND requested_at > now() - interval '24 hours'
          ORDER BY requested_at DESC LIMIT 1`,
         [userId],
       );
-      if (existing.rows[0]) return existing.rows[0].id;
+      if (existing.rows[0]) return { id: existing.rows[0].id, reused: true };
 
       const created = await client.query<{ id: string }>(
         `INSERT INTO user_exports (user_id) VALUES ($1) RETURNING id`,
         [userId],
       );
-      return (created.rows[0] as { id: string }).id;
+      return { id: (created.rows[0] as { id: string }).id, reused: false };
     });
   }
 
@@ -529,6 +539,8 @@ export class GdprService {
       pictureChecks: { profilePhotoWaiting: waitingPhoto.rows[0]?.waiting ?? false, pictures: pictureChecks.rows },
       // XP, leagues, streaks, badges, the story shelf and the saved words (gdpr/progress-export.ts)
       progress: await exportProgress(this.pool, userId),
+      // their parents or teens by name, their controls and their minutes (parental/gdpr.ts)
+      parentalControls: await exportParental(this.pool, userId),
     };
   }
 
@@ -556,10 +568,19 @@ export class GdprService {
     // Written privately with no-store headers, straight from here; the signed-upload path would store it as a public,
     // year-long cached object.
     await this.deps.storage.putPrivate(key, body, 'application/json');
-    await this.pool.query(
-      `UPDATE user_exports SET storage_key = $2, completed_at = now() WHERE id = $1`,
+    const finished = await this.pool.query(
+      `UPDATE user_exports SET storage_key = $2, completed_at = now() WHERE id = $1 AND completed_at IS NULL`,
       [exportId, key],
     );
+    if (!finished.rowCount) {
+      // Withdrawn as lost while it was being made, or finished twice: the file just written is nobody's unless another
+      // request holds the same bytes, and the person's other exports are not this run's to tidy.
+      const held = await this.pool.query(`SELECT 1 FROM user_exports WHERE storage_key = $1`, [key]);
+      if (!held.rowCount) {
+        await this.deps.storage.delete(key).catch((err: unknown) => this.deps.log?.warn({ err }, 'could not delete an export nobody waits for'));
+      }
+      return;
+    }
     await this.deleteEarlierExports(record.user_id, exportId, key);
   }
 
@@ -585,30 +606,50 @@ export class GdprService {
     if (deleted.length > 0) await this.pool.query(`UPDATE user_exports SET storage_key = NULL WHERE id = ANY($1::uuid[])`, [deleted]);
   }
 
-  /** Latest export status + fresh signed URL when ready. */
+  /**
+   * The latest export: none, pending, or ready with a fresh signed link that downloads as `hevalo-data-<day made>.json`.
+   * A request lost on the way (`requestExport`) reads as none, so the apps offer to ask again.
+   */
   async exportStatus(
     userId: string,
-  ): Promise<{ status: 'none' | 'pending' | 'ready'; downloadUrl?: string; requestedAt?: string }> {
+  ): Promise<{ status: 'none' | 'pending' | 'ready'; downloadUrl?: string; requestedAt?: string; completedAt?: string }> {
     const row = await this.pool.query<{
       storage_key: string | null;
       completed_at: Date | null;
       requested_at: Date;
+      lost: boolean;
     }>(
-      `SELECT storage_key, completed_at, requested_at FROM user_exports
-       WHERE user_id = $1 ORDER BY requested_at DESC LIMIT 1`,
-      [userId],
+      `SELECT storage_key, completed_at, requested_at,
+              completed_at IS NULL AND requested_at <= now() - make_interval(mins => $2) AS lost
+         FROM user_exports
+        WHERE user_id = $1 ORDER BY requested_at DESC LIMIT 1`,
+      [userId, EXPORT_LOST_AFTER_MIN],
     );
     const record = row.rows[0];
-    if (!record) return { status: 'none' };
+    if (!record || record.lost) return { status: 'none' };
     if (!record.completed_at || !record.storage_key) {
       return { status: 'pending', requestedAt: new Date(record.requested_at).toISOString() };
     }
+    const completedAt = new Date(record.completed_at);
     return {
       status: 'ready',
       requestedAt: new Date(record.requested_at).toISOString(),
-      downloadUrl: await this.deps.storage!.createPrivateDownloadUrl(record.storage_key),
+      completedAt: completedAt.toISOString(),
+      downloadUrl: await this.deps.storage!.createPrivateDownloadUrl(record.storage_key, {
+        download: { filename: exportFilename(completedAt), contentType: 'application/json' },
+      }),
     };
   }
+}
+
+/** The name a data export is saved under: the day it was made, so copies from different days sit side by side. */
+export function exportFilename(madeAt: Date): string {
+  return `hevalo-data-${madeAt.toISOString().slice(0, 10)}.json`;
+}
+
+/** The job that fulfils an export, one per request; a BullMQ job id may not hold a colon. */
+export function exportJobId(exportId: string): string {
+  return `export-${exportId}`;
 }
 
 /**
@@ -780,6 +821,8 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
 
   // the people they knew, and what reached them
   await q(`DELETE FROM friendships WHERE user_lo = $1 OR user_hi = $1`);
+  // and the parents or teens they were connected to, which ends those links (parental/gdpr.ts)
+  await eraseParental(executor, userId);
   await q(`DELETE FROM blocks WHERE blocker_id = $1 OR blocked_id = $1`);
   await q(`DELETE FROM device_tokens WHERE user_id = $1`);
   await q(`DELETE FROM notification_prefs WHERE user_id = $1`);

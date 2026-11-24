@@ -19,6 +19,7 @@ import { messagePreview, truncate, type Previewable } from './messagePreview';
 import { useT } from '../i18n/I18nProvider';
 import type { Translate } from '../i18n/I18nProvider';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
+import { onParentalRefusal } from '../lib/api';
 import { onNotice } from '../lib/notice';
 
 /**
@@ -75,7 +76,14 @@ function preview(message: Previewable, t: Translate): string {
 export function MessagesProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { client, user, status } = useAuth();
   const t = useT();
-  const signedIn = status === 'signedIn';
+  // A teen whose parent switched chats off may not read them, so nothing here is asked of the server for them: what the
+  // account says, or a refusal met since, which the account says too once it is read again.
+  const [refused, setRefused] = useState(false);
+  useEffect(() => onParentalRefusal((code, details) => setRefused((r) => r || (code === 'PARENTAL_BLOCKED' && (details as { control?: unknown } | null)?.control === 'chat'))), []);
+  // A fresh read of the account is the word on it again.
+  useEffect(() => setRefused(false), [user?.supervision]);
+  const chatOff = user?.supervision?.controls.chat === false || refused;
+  const signedIn = status === 'signedIn' && !chatOff;
   const location = useLocation();
   const [groups, setGroups] = useState<MyGroup[]>([]);
   /** Unread messages by conversation: people by their id, groups by theirs. */

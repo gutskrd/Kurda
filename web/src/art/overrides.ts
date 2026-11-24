@@ -144,6 +144,20 @@ function subscribe(listener: () => void): () => void {
   };
 }
 
+/**
+ * Settings → Clear cache: the browser's copy goes, and the list is read again and kept afresh; the pictures on screen
+ * stay until the answer comes, so nothing flickers back to the built-in art.
+ */
+export function rereadArtOverrides(): Promise<void> {
+  try {
+    localStorage.removeItem(ART_OVERRIDES_KEY);
+  } catch {
+    // Storage is blocked, so nothing was kept there either.
+  }
+  held = { version: null, overrides: current().overrides };
+  return refreshArtOverrides();
+}
+
 /** Every replaced picture by slot, as things stand. */
 export function currentArtOverrides(): ArtOverrides {
   return current().overrides;

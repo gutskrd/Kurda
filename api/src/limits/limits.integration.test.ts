@@ -596,8 +596,9 @@ describe.skipIf(!DATABASE_URL)('limits (integration)', () => {
     it('asking for an export twice at once makes one', async () => {
       const gdpr = new GdprService(pool, { storage: new FakeStorage().asStorage });
       const me = await person();
-      const ids = await Promise.all(Array.from({ length: 5 }, () => gdpr.requestExport(me)));
-      expect(new Set(ids).size).toBe(1);
+      const asked = await Promise.all(Array.from({ length: 5 }, () => gdpr.requestExport(me)));
+      expect(new Set(asked.map((a) => a.id)).size).toBe(1);
+      expect(asked.filter((a) => !a.reused)).toHaveLength(1);
       const n = await pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM user_exports WHERE user_id = $1`, [me]);
       expect(n.rows[0]!.n).toBe(1);
     });

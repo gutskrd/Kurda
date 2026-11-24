@@ -38,6 +38,7 @@ import { LettersHeroSkeleton } from '../components/skeletons';
 import { ChevronIcon, HelpIcon, PaletteIcon } from '../components/icons';
 import { ReportSheet } from '../reports/ReportSheet';
 import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
+import { ParentalOffPlace, useParentalOff } from '../parental/ParentalNote';
 import { LetterWindow, type WindowScene } from './LetterWindow';
 import { PictureRefusal } from '../pictures/PictureCheck';
 import { BirdBadge, LetterSheet, drawingHeld } from './LetterParts';
@@ -80,6 +81,22 @@ type Kept = { name: string; threadId: string } | { name: null; threadId: null };
  * whose drawing waits for a person to check it is said to be checked before it goes.
  */
 export function LettersPage(): React.JSX.Element {
+  const t = useT();
+  // With letters switched off by a teen's parent the server refuses even reading them, so nothing is asked.
+  if (useParentalOff('letters')) {
+    return (
+      <div className="container letters-page">
+        <header className="letters-head">
+          <h1 className="page-title">{t('letters.title')}</h1>
+        </header>
+        <ParentalOffPlace />
+      </div>
+    );
+  }
+  return <Window />;
+}
+
+function Window(): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
   const accountHeld = useAccountHeld();

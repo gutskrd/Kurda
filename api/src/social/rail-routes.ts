@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { requireAccount } from '../plugins/auth.js';
+import { parentalAllows } from '../parental/supervision.js';
 import type { FriendService } from '../friends/service.js';
 import type { InboxService } from '../notifications/inbox-service.js';
 import type { GroupChatService } from '../groups/chat-service.js';
@@ -27,12 +28,14 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
   app.get('/me/social', { preHandler: requireAccount }, async (req) => {
     const me = req.user!.id;
 
+    // group chats are not listed while a parent has them switched off
+    const chatOn = await parentalAllows(app.db, me, 'chat');
     const [friends, requests, groups, unreadGroups, inbox] = await Promise.all([
       // the rail needs every friend: it asks who is live, over the whole list
       deps.friends.list(me, publicUrl).then((page) => page.friends),
       deps.friends.incomingRequests(me, publicUrl),
-      deps.groups.myGroups(me, publicUrl),
-      deps.groupChat.unread(me),
+      chatOn ? deps.groups.myGroups(me, publicUrl) : [],
+      chatOn ? deps.groupChat.unread(me) : [],
       // the recent tail and the unread count, in one read
       deps.inbox.recent(me, RECENT_NOTIFICATIONS),
     ]);

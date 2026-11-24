@@ -26,6 +26,7 @@ import { userHash } from './pseudonym.js';
 import { closeReturnsOf } from './returns.js';
 import { settleTakedowns, takeDown, type TakedownCounts } from './takedown.js';
 import { afterCommit, inTransaction, type Executor } from './tx.js';
+import { endLinksOfBarredParent } from '../parental/supervision.js';
 
 /**
  * Sanctions: applying, lifting, enforcing and explaining them.
@@ -451,6 +452,9 @@ export class SanctionsService {
         });
       }
     }
+    // Someone barred for a child's safety supervises no teen from now, a ban waiting for its second admin included,
+    // and the teens are told.
+    if (ban && (input.policy === 'child_safety' || input.zeroTolerance === true)) await endLinksOfBarredParent(db, input.userId);
     if (ban && !pending) {
       // whoever is next keeps a group running; the new owner is told
       await handOverOwnedGroups(db, input.userId);

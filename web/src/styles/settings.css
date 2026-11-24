@@ -1,7 +1,7 @@
 /*
- * Settings (pages/Settings.tsx, settings/SettingsList.tsx): rows in named groups, like a phone's settings, each leading
- * to a page. No boxes: rows are full width, groups separated by a band of a slightly different surface. Icons and
- * titles are ink; values and chevrons grey.
+ * Settings (pages/Settings.tsx, settings/SettingsHome.tsx, settings/SettingsList.tsx): a home of two quick tiles and a
+ * flat list of categories, each a page of rows, like a phone's settings. No boxes but the tiles: rows are full width,
+ * groups separated by a band of a slightly different surface. Icons and titles are ink; values and chevrons grey.
  */
 
 /* how far a row reaches past the column, so its press and hover run edge to edge */
@@ -16,9 +16,6 @@
   }
 }
 
-.settings-head {
-  margin-bottom: var(--space-4);
-}
 
 /* ---- search ---------------------------------------------------------------- */
 .settings-search {
@@ -436,7 +433,7 @@
 .settings-wide {
   --bleed: 0px;
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
+  grid-template-columns: 392px minmax(0, 1fr);
   gap: 48px;
   align-items: start;
 }
@@ -448,12 +445,6 @@
   overscroll-behavior: contain;
   padding: 0 4px var(--space-4);
   scrollbar-width: thin;
-}
-.settings-nav-title {
-  margin: 0 0 var(--space-4);
-  font-size: var(--text-title);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
 }
 .settings-wide .settings-row {
   padding-inline: 12px;
@@ -487,4 +478,294 @@
 }
 .settings-pane .settings-page {
   --bleed: 12px;
+}
+
+/* ---- the home: the bar, the tiles, the categories ------------------------ */
+/* the way back, the title in the middle, and the search: three parts of one height, the title centred between equals */
+.settings-bar {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 52px;
+  margin-bottom: var(--space-4);
+}
+.settings-bar-title {
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--text-title);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* the same disc as the phone bar's way back (shell.css `.nav-back`), in the page; held above the bare icon button's look */
+.settings-bar .settings-circle {
+  width: 44px;
+  height: 44px;
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-control);
+  color: var(--ink);
+  transition:
+    background var(--dur-fast) ease,
+    transform var(--dur) var(--ease-spring);
+}
+.settings-bar .settings-circle:hover {
+  background: var(--surface-3);
+}
+.settings-bar .settings-circle:active:not(:disabled) {
+  transform: scale(var(--press-scale));
+  transition-duration: var(--dur-fast), 80ms;
+}
+.settings-circle:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.settings-circle-room {
+  width: 44px;
+  height: 44px;
+}
+/* searching: the field takes the bar, with the way out beside it */
+.settings-bar.is-searching {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.settings-bar.is-searching .settings-search {
+  margin: 0;
+  animation: settings-search-in var(--dur) var(--ease-out);
+}
+.settings-bar-cancel {
+  padding-inline: var(--space-3);
+}
+@keyframes settings-search-in {
+  from {
+    opacity: 0;
+    transform: scaleX(0.96);
+  }
+}
+.settings-results {
+  animation: settings-fade-in var(--dur) var(--ease-out);
+}
+@keyframes settings-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Two tiles side by side, a step up from the page: the glyph, the name, and its value fading into the next. */
+.settings-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.settings-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 0;
+  min-height: 104px;
+  padding: var(--space-4) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    transform var(--dur) var(--ease-spring);
+}
+:root[data-theme='light'] .settings-tile {
+  box-shadow: var(--shadow-sm);
+}
+.settings-tile:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+.settings-tile:active {
+  transform: scale(var(--press-scale));
+  transition-duration: var(--dur-fast), var(--dur-fast), 80ms;
+}
+.settings-tile:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.settings-tile-icon {
+  margin-bottom: var(--space-1);
+  color: var(--ink);
+  transition: color var(--dur) ease;
+}
+/* sounds off: the glyph steps back with the word */
+.settings-tile[aria-checked='false'] .settings-tile-icon {
+  color: var(--ink-3);
+}
+.settings-tile-name {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.settings-tile-value {
+  max-width: 100%;
+  color: var(--ink-3);
+  line-height: 1.3;
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-tile:active,
+  .settings-bar .settings-circle:active:not(:disabled) {
+    transform: none;
+    background: var(--surface-3);
+  }
+}
+
+/* one value in place of another: both in the same cell, the old leaving as the new arrives */
+.crossfade {
+  display: inline-grid;
+}
+.crossfade > * {
+  grid-area: 1 / 1;
+}
+.crossfade-in {
+  animation: crossfade-in var(--dur) var(--ease-out) both;
+}
+.crossfade-out {
+  animation: crossfade-out var(--dur) var(--ease-out) both;
+}
+@keyframes crossfade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes crossfade-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* a category: its glyph, its name over what it holds on one line, and the way in */
+.settings-cat {
+  gap: var(--space-4);
+  min-height: 68px;
+}
+.settings-cat .settings-row-title {
+  font-weight: 600;
+}
+.settings-cat .settings-row-sub {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+/* something about it wants a look, said in the ink's own weight (colour is the main button's) */
+.settings-row.is-attention .settings-row-value {
+  color: var(--ink);
+  font-weight: 600;
+}
+.settings-leave {
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--separator);
+  padding-top: var(--space-2);
+}
+.settings-version {
+  margin: var(--space-4) 0 0;
+  color: var(--ink-4);
+  text-align: center;
+}
+
+/* ---- a category's page ------------------------------------------------------ */
+/* the one row kept apart and last, such as deleting the account */
+.settings-apart {
+  margin-top: var(--space-4);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--separator);
+}
+/* something other than a row in a group: a page's own control with its words */
+.settings-block {
+  padding-block: var(--space-3);
+}
+
+/* ---- storage and data ------------------------------------------------------- */
+.settings-store {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+.settings-store > .settings-page-intro,
+.settings-store > .settings-page-note {
+  margin: 0;
+}
+.settings-store-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  justify-self: stretch;
+}
+.settings-store-title {
+  display: block;
+  font-weight: 600;
+}
+.settings-store-size {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.settings-store-sub {
+  display: block;
+  color: var(--ink-3);
+}
+.settings-store-actions,
+.settings-store-ready {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+.settings-store-said {
+  color: var(--ink-3);
+}
+.settings-store-said:empty {
+  display: none;
+}
+.settings-store-ready .settings-store-sub {
+  flex: 1 1 auto;
+}
+.settings-store-again {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.settings-store-pending {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  justify-self: stretch;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  animation: settings-fade-in var(--dur) var(--ease-out);
+}
+.settings-store-spinner {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border-width: 2px;
+}
+.settings-store-wait {
+  display: block;
+  height: 44px;
+}
+/* beside the list, a page's rows and group names start where its title does, and only a row's ground reaches past */
+.settings-pane .settings-row {
+  width: calc(100% + 2 * var(--bleed));
+  margin-inline: calc(-1 * var(--bleed));
+  padding-inline: var(--bleed);
+}
+.settings-pane .settings-section-title {
+  padding-inline: 0;
 }

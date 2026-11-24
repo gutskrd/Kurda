@@ -17,6 +17,7 @@ import { LetterComposer, type LetterToSend } from './LetterComposer';
 import { letterErrorText } from './errors';
 import { rememberedPaper } from './paper';
 import { keepDraft, threadDraft } from './drafts';
+import { ParentalOffPlace, useParentalOff } from '../parental/ParentalNote';
 import './letters.css';
 
 /** Coming back to the tab reads the correspondence again, but not more often than this. */
@@ -79,7 +80,20 @@ function useCorrespondence(threadId: string): CorrespondenceRead {
  * page says so in place of "with them"; a refused drawing says why.
  */
 export function LetterThreadPage(): React.JSX.Element {
+  const t = useT();
   const { threadId = '' } = useParams();
+  // With letters switched off by a teen's parent a correspondence cannot be read either, so nothing is asked.
+  if (useParentalOff('letters')) {
+    return (
+      <div className="container letters-page">
+        <Link to="/app/letters" className="letters-back reach-line">
+          <ChevronIcon size={16} className="letters-back-icon flip-rtl" />
+          {t('letters.title')}
+        </Link>
+        <ParentalOffPlace />
+      </div>
+    );
+  }
   // each correspondence is its own page: the letter just sent to one, or the paper being written to them, never
   // carries over to another reached by going back or forward from it
   return <Correspondence key={threadId} threadId={threadId} />;

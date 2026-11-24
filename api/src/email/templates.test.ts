@@ -162,6 +162,8 @@ describe('every email, designed', () => {
     rule: 'Bullying or harassment',
     content: 'Your posts, comments, pictures and profile are hidden from everyone until the suspension ends.',
     review: 'This came from a report by another member, and a person reviewed it.',
+    teen: '@dilan',
+    parent: '@berfin',
   };
   /** The words of an HTML email, as a reader gets them. */
   const words = (html: string): string =>

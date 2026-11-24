@@ -93,6 +93,8 @@ export const HAND_TUNED = [
 /** Reviewed, and at least 48px each way already. */
 export const LARGE_ENOUGH = [
   '.settings-row',
+  // Settings' two quick tiles, half the column wide and 104px tall (styles/settings.css).
+  '.settings-tile',
   '.list-row-main',
   '.places-link',
   '.nav-link',

@@ -35,6 +35,8 @@ const payloadSchema = z.object({
     'security-alert',
     'account-suspended',
     'account-closed',
+    'parental-ended',
+    'parental-parent-added',
   ]),
   vars: z.record(z.string(), z.string()).default({}),
   /** Recipient language; English when omitted. */

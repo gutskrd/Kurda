@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { failureText, useOptimistic } from '../lib/optimistic';
@@ -10,39 +10,52 @@ import { ErrorState } from '../components/states';
 import { Skeleton, SkeletonRegion } from '../components/Skeleton';
 import { Button } from '../components/Button';
 import {
-  ArrowIcon,
   AtIcon,
-  BellIcon,
   BlockIcon,
   BookIcon,
   CalendarIcon,
   ChatsIcon,
   CopyrightIcon,
   DeviceIcon,
-  DownloadIcon,
   EyeIcon,
   FlagIcon,
   HelpIcon,
   KeyIcon,
   KeyboardIcon,
   LanguageIcon,
+  LockIcon,
   MailIcon,
   ProfileIcon,
   RulesIcon,
   SignOutIcon,
-  SpeakerIcon,
   StandingIcon,
+  StarIcon,
   ThemeIcon,
   TrashIcon,
   TrophyIcon,
-  LockIcon,
 } from '../components/icons';
 import { MONTH_KEY } from '../auth/BirthMonthFields';
 import { BlockedUsers } from '../settings/BlockedUsers';
 import { ChangePassword } from '../settings/ChangePassword';
 import { ChangeUsername } from '../settings/ChangeUsername';
 import { SignedInDevices } from '../settings/SignedInDevices';
-import { SettingsChoices, SettingsRow, SettingsSearch, SettingsSection, SettingsSwitch, searchable } from '../settings/SettingsList';
+import { SettingsChoices, SettingsFrame, SettingsRow, SettingsSection, SettingsSwitch, searchable } from '../settings/SettingsList';
+import { SettingsHome, THEME_LABEL, useLimited } from '../settings/SettingsHome';
+import { StorageData } from '../settings/StorageData';
+import {
+  LEAF_CATEGORY,
+  MOVED,
+  PAGE_TITLE,
+  SETTINGS_HOME,
+  SUPPORT_EMAIL,
+  categoryOf,
+  isLeaf,
+  isSettingsPage,
+  readSettingsPath,
+  settingsPath,
+  type MeState,
+  type SettingsPage,
+} from '../settings/catalogue';
 import { GiftSoundSetting } from '../gifts/GiftSoundSetting';
 import { VibrationSetting } from '../settings/VibrationSetting';
 import { NotificationPrefsCard } from '../notifications/NotificationPrefsCard';
@@ -54,7 +67,9 @@ import { ACCENT_LABEL } from '../keyboard/KeyboardSettings';
 import { useKeyboardPrefs } from '../keyboard/prefs';
 import { SendFeedbackCard } from '../feedback/SendFeedbackCard';
 import { MY_REPORTS_PATH, STANDING_PATH } from '../reports/restriction';
-import { THEME_PREFERENCES, useThemePreference, type ThemePreference } from '../theme/theme';
+import { THEME_PREFERENCES, useThemePreference } from '../theme/theme';
+import { PARENTAL_PATH, type ParentalOverview } from '../parental/api';
+import { ParentalSettings } from '../parental/ParentalSettings';
 
 const VISIBILITIES = ['everyone', 'members', 'friends', 'nobody'] as const;
 type Visibility = (typeof VISIBILITIES)[number];
@@ -77,72 +92,16 @@ const VIS_HINT_KEY: Record<Visibility, MessageKey> = {
   nobody: 'settings.visibility.nobodyHint',
 };
 
-const THEME_LABEL: Record<ThemePreference, MessageKey> = {
-  dark: 'settings.appearance.dark',
-  light: 'settings.appearance.light',
-  system: 'settings.appearance.system',
-};
-
-/** Where to write to a person about anything. */
-const SUPPORT_EMAIL = 'support@hevalo.app';
-
-/** Every page Settings opens, each at /app/settings/<page>. */
-const PAGES = [
-  'username',
-  'birth-month',
-  'password',
-  'devices',
-  'notifications',
-  'language',
-  'theme',
-  'sounds',
-  'keyboard',
-  'leagues',
-  'visibility',
-  'blocked',
-  'feedback',
-  'data',
-  'delete',
-] as const;
-export type SettingsPage = (typeof PAGES)[number];
-
-const isPage = (value: string | undefined): value is SettingsPage => (PAGES as readonly string[]).includes(value ?? '');
-
-const PAGE_TITLE: Record<SettingsPage, MessageKey> = {
-  username: 'settings.username.title',
-  'birth-month': 'age.label',
-  password: 'settings.password.title',
-  devices: 'settings.devices.title',
-  notifications: 'notifications.title',
-  language: 'language.settingsTitle',
-  theme: 'settings.appearance.title',
-  sounds: 'settings.soundsVibration',
-  keyboard: 'keyboard.settings.title',
-  leagues: 'settings.leagues.title',
-  visibility: 'settings.privacy.title',
-  blocked: 'settings.blocked.title',
-  feedback: 'appFeedback.settingsTitle',
-  data: 'settings.data.title',
-  delete: 'settings.delete.title',
-};
-
 /** The page shown beside the list on a wide screen before one is picked: the one most often looked for. */
 const FIRST_PAGE: SettingsPage = 'notifications';
 
 /** From this width the list and its page sit side by side. */
 const WIDE = '(min-width: 960px)';
 
-const settingsPath = (page: SettingsPage): string => `/app/settings/${page}`;
-
-/** The page the address names (/app/settings/<page>), or none for the list. */
-function pageOf(pathname: string): string | undefined {
-  return /^\/app\/settings\/([^/]+)\/?$/.exec(pathname)?.[1];
-}
-
 /**
- * Settings as a short list in five groups (account, behaviour, visibility, about, leaving), each row showing its value
- * and opening its own page; on a wide screen the page opens beside the list. Signing out and deleting the account come
- * last and apart, deleting in red behind a second step.
+ * Settings: a home of quick tiles and ten categories (settings/SettingsHome.tsx), each category a page of the rows it
+ * holds, and each row its own page, at /app/settings/<page>; on a wide screen the open page sits beside the home.
+ * Parental controls keep their own pages under theirs. Old addresses still land.
  */
 export function Settings(): React.JSX.Element {
   const t = useT();
@@ -154,11 +113,13 @@ export function Settings(): React.JSX.Element {
   const [changed, setChanged] = useState<Partial<MeProfile>>({});
   const user = data ? { ...data.user, ...changed } : null;
   const me: MeState = { user, loading, error, reload, onChanged: (patch) => setChanged((c) => ({ ...c, ...patch })) };
+  // Read once for the home's line under Parental controls and for the page itself, so both say the same.
+  const parental = useApiGet<ParentalOverview>(PARENTAL_PATH);
 
-  const named = pageOf(location.pathname);
-  const page = isPage(named) ? named : undefined;
+  const { page: named, rest } = readSettingsPath(location.pathname);
+  const page = isSettingsPage(named) ? named : undefined;
   // What is on screen now; a page opened from the list takes the reader to its title, as a new screen would.
-  const showing = wide ? (page ?? FIRST_PAGE) : (page ?? 'list');
+  const showing = wide ? `${page ?? FIRST_PAGE}/${rest}` : page ? `${page}/${rest}` : 'home';
   const before = useRef<string | null>(null);
   const moved = before.current !== null && before.current !== showing;
   useEffect(() => {
@@ -167,18 +128,20 @@ export function Settings(): React.JSX.Element {
 
   // The notification settings' old address, from links already sent.
   if (!named && location.hash === '#notifications') return <Navigate to={settingsPath('notifications')} replace />;
-  if (named !== undefined && !page) return <Navigate to="/app/settings" replace />;
+  if (named && MOVED[named]) return <Navigate to={{ pathname: settingsPath(MOVED[named]), search: location.search }} replace />;
+  if (named !== undefined && !page) return <Navigate to={SETTINGS_HOME} replace />;
+  // Only parental controls have pages of their own below them.
+  if (page && rest && page !== 'parental') return <Navigate to={settingsPath(page)} replace />;
 
   if (wide) {
     const shown = page ?? FIRST_PAGE;
     return (
       <div className="container settings settings-wide">
         <nav className="settings-nav" aria-label={t('settings.title')}>
-          <h1 className="settings-nav-title">{t('settings.title')}</h1>
-          <SettingsIndex me={me} current={shown} />
+          <SettingsHome me={me} parental={parental.data} current={categoryOf(shown)} />
         </nav>
         <div className="settings-pane">
-          <SettingsPageView key={shown} page={shown} me={me} heading="h2" focus={moved} />
+          <SettingsPageView key={shown} page={shown} rest={rest} me={me} parental={parental} heading="h2" single={false} focus={moved} />
         </div>
       </div>
     );
@@ -187,262 +150,46 @@ export function Settings(): React.JSX.Element {
   if (page) {
     return (
       <div className="container container-narrow settings">
-        <SettingsPageView key={page} page={page} me={me} heading="h1" back focus={moved} />
+        <SettingsPageView key={page} page={page} rest={rest} me={me} parental={parental} heading="h1" single focus={moved} />
       </div>
     );
   }
 
   return (
     <div className="container container-narrow settings">
-      <div className="page-header settings-head">
-        <h1 className="page-title">{t('settings.title')}</h1>
-      </div>
-      <SettingsIndex me={me} />
+      <SettingsHome me={me} parental={parental.data} />
     </div>
   );
 }
 
-/** The account as Settings knows it, and how a page tells the list it changed something. */
-interface MeState {
-  user: MeProfile | null;
-  loading: boolean;
-  error: string | null;
-  reload: () => void;
-  onChanged: (patch: Partial<MeProfile>) => void;
-}
-
-interface Row {
-  key: string;
-  icon: React.ReactNode;
-  title: string;
-  subtitle?: string;
-  value?: React.ReactNode;
-  /** The value in words, for the search. */
-  valueText?: string;
-  to?: string;
-  href?: string;
-  onClick?: () => void;
-  destructive?: boolean;
-  /** Names of what its page holds, so a search finds the row by them. */
-  terms?: string[];
-  page?: SettingsPage;
-}
-
-/** The list: a search, then the groups; while searching only matching rows remain, and empty groups go. */
-function SettingsIndex({ me, current }: { me: MeState; current?: SettingsPage }): React.JSX.Element {
-  const t = useT();
-  const { locale } = useI18n();
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-  const [theme] = useThemePreference();
-  const [keyboard] = useKeyboardPrefs();
-  const [query, setQuery] = useState('');
-
-  const user = me.user;
-  /** A value from the account: a short grey bar until it answers, nothing if it failed. */
-  const fromAccount = (value: string | undefined): React.ReactNode =>
-    user ? value : me.loading ? <Skeleton line w={64} className="settings-row-value-skeleton" /> : undefined;
-  const username = user ? (
-    // A handle reads left to right in every language, @ first.
-    <span dir="ltr">@{user.username}</span>
-  ) : undefined;
-
-  const birth = user ? birthMonthText(t, user) : undefined;
-  const language = APP_LOCALES.find((l) => l.code === locale)?.nativeName ?? locale;
-  const visibility = user ? t(VIS_LABEL_KEY[user.profileVisibility]) : undefined;
-  const leagues = user ? t(user.leaguesEnabled !== false ? 'settings.on' : 'settings.off') : undefined;
-
-  const go = (page: SettingsPage): Pick<Row, 'to' | 'page'> => ({ to: settingsPath(page), page });
-
-  const sections: Array<{ key: string; title?: string; rows: Row[] }> = [
-    {
-      key: 'account',
-      title: t('settings.eyebrow'),
-      rows: [
-        {
-          key: 'profile',
-          icon: <ProfileIcon />,
-          title: t('profile.edit'),
-          to: '/app/profile/edit',
-        },
-        {
-          key: 'username',
-          icon: <AtIcon />,
-          title: t('settings.username.title'),
-          value: user ? username : fromAccount(undefined),
-          valueText: user?.username,
-          terms: [t('settings.username.change')],
-          ...go('username'),
-        },
-        { key: 'birthMonth', icon: <CalendarIcon />, title: t('age.label'), value: fromAccount(birth), valueText: birth, ...go('birth-month') },
-        { key: 'password', icon: <KeyIcon />, title: t('settings.password.title'), terms: [t('settings.password.change')], ...go('password') },
-        {
-          key: 'devices',
-          icon: <DeviceIcon />,
-          title: t('settings.devices.title'),
-          terms: [t('settings.sessions.signOut'), t('settings.sessions.signOutEverywhere')],
-          ...go('devices'),
-        },
-      ],
-    },
-    {
-      key: 'preferences',
-      title: t('settings.group.preferences'),
-      rows: [
-        { key: 'notifications', icon: <BellIcon />, title: t('notifications.title'), terms: [t('notifications.enableQuietHours')], ...go('notifications') },
-        {
-          key: 'language',
-          icon: <LanguageIcon />,
-          title: t('language.settingsTitle'),
-          value: language,
-          valueText: language,
-          terms: APP_LOCALES.flatMap((l) => [l.nativeName, l.englishName]),
-          ...go('language'),
-        },
-        {
-          key: 'theme',
-          icon: <ThemeIcon />,
-          title: t('settings.appearance.title'),
-          value: t(THEME_LABEL[theme]),
-          valueText: t(THEME_LABEL[theme]),
-          terms: THEME_PREFERENCES.map((p) => t(THEME_LABEL[p])),
-          ...go('theme'),
-        },
-        {
-          key: 'sounds',
-          icon: <SpeakerIcon />,
-          title: t('settings.soundsVibration'),
-          terms: [t('settings.sounds.title'), t('settings.sounds.giftChime'), t('settings.sounds.lesson'), t('settings.sounds.characterVoices'), t('settings.vibration.title')],
-          ...go('sounds'),
-        },
-        {
-          key: 'keyboard',
-          icon: <KeyboardIcon />,
-          title: t('keyboard.settings.title'),
-          value: t(ACCENT_LABEL[keyboard.accentMode]),
-          valueText: t(ACCENT_LABEL[keyboard.accentMode]),
-          terms: [t('keyboard.accent.title'), t('keyboard.keyBar.title'), t('keyboard.backtick.title'), t('keyboard.wordle.title'), t('keyboard.help')],
-          ...go('keyboard'),
-        },
-        {
-          key: 'leagues',
-          icon: <TrophyIcon />,
-          title: t('settings.leagues.title'),
-          value: fromAccount(leagues),
-          valueText: leagues,
-          terms: [t('settings.leagues.toggle')],
-          ...go('leagues'),
-        },
-      ],
-    },
-    {
-      key: 'privacy',
-      title: t('settings.group.privacy'),
-      rows: [
-        {
-          key: 'visibility',
-          icon: <EyeIcon size={22} />,
-          title: t('settings.privacy.title'),
-          value: fromAccount(visibility),
-          valueText: visibility,
-          terms: [t('settings.privacy.help'), ...VISIBILITIES.map((v) => t(VIS_LABEL_KEY[v]))],
-          ...go('visibility'),
-        },
-        { key: 'blocked', icon: <BlockIcon />, title: t('settings.blocked.title'), ...go('blocked') },
-        { key: 'reports', icon: <FlagIcon />, title: t('reports.mine.title'), to: MY_REPORTS_PATH },
-        { key: 'standing', icon: <StandingIcon />, title: t('standing.title'), to: STANDING_PATH },
-      ],
-    },
-    {
-      key: 'about',
-      title: t('settings.group.about'),
-      rows: [
-        { key: 'feedback', icon: <ChatsIcon />, title: t('appFeedback.settingsTitle'), ...go('feedback') },
-        { key: 'faq', icon: <HelpIcon />, title: t('footer.faq'), to: '/faq' },
-        { key: 'support', icon: <MailIcon />, title: t('settings.support'), subtitle: SUPPORT_EMAIL, href: `mailto:${SUPPORT_EMAIL}` },
-        { key: 'teaching', icon: <BookIcon />, title: t('footer.teach'), to: '/how-hevalo-teaches' },
-        { key: 'terms', icon: <RulesIcon />, title: t('settings.terms'), to: '/terms' },
-        { key: 'privacyPolicy', icon: <LockIcon />, title: t('settings.privacyPolicy'), to: '/privacy' },
-        { key: 'copyright', icon: <CopyrightIcon />, title: t('footer.copyright'), to: '/copyright' },
-      ],
-    },
-    {
-      key: 'leave',
-      rows: [
-        { key: 'data', icon: <DownloadIcon />, title: t('settings.data.title'), terms: [t('settings.data.request')], ...go('data') },
-        {
-          key: 'signOut',
-          icon: <SignOutIcon />,
-          title: t('settings.sessions.signOut'),
-          onClick: () => void logout().then(() => navigate('/')),
-        },
-        { key: 'delete', icon: <TrashIcon />, title: t('settings.delete.title'), destructive: true, ...go('delete') },
-      ],
-    },
-  ];
-
-  const q = searchable(query);
-  const matches = (row: Row): boolean =>
-    !q || [row.title, row.subtitle, row.valueText, ...(row.terms ?? [])].some((text) => text !== undefined && searchable(text).includes(q));
-  const shown = sections.map((s) => ({ ...s, rows: s.rows.filter(matches) })).filter((s) => s.rows.length > 0);
-
-  return (
-    <div className="settings-list">
-      <SettingsSearch value={query} onChange={setQuery} />
-      {shown.length === 0 ? (
-        <p className="settings-empty" role="status">
-          {t('settings.search.none', { query: query.trim() })}
-        </p>
-      ) : (
-        shown.map((s) => (
-          <SettingsSection key={s.key} title={s.title}>
-            {s.rows.map((row) => (
-              <SettingsRow
-                key={row.key}
-                icon={row.icon}
-                title={row.title}
-                subtitle={row.subtitle}
-                value={row.value}
-                to={row.to}
-                href={row.href}
-                onClick={row.onClick}
-                destructive={row.destructive}
-                current={row.page !== undefined && row.page === current}
-              />
-            ))}
-          </SettingsSection>
-        ))
-      )}
-    </div>
-  );
-}
-
-/** One page: its title and contents, with the way back to the list above the title on a phone. */
+/**
+ * One page: a category's rows or a setting's controls, under its title. On a phone a category goes back to the home and
+ * a setting to its category; beside the list only a setting needs a way back, to its category.
+ */
 function SettingsPageView({
   page,
+  rest,
   me,
+  parental,
   heading,
-  back = false,
-  focus = false,
+  single,
+  focus,
 }: {
   page: SettingsPage;
+  rest: string;
   me: MeState;
+  parental: ReturnType<typeof useApiGet<ParentalOverview>>;
   heading: 'h1' | 'h2';
-  back?: boolean;
+  /** A phone, where the list is not beside the page. */
+  single: boolean;
   /** Opened from the list rather than landed on, so focus goes to its title. */
-  focus?: boolean;
+  focus: boolean;
 }): React.JSX.Element {
   const t = useT();
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const Heading = heading;
-  const title = useRef<HTMLHeadingElement>(null);
 
-  // Only on opening: the page is keyed by name, so this runs once per page.
-  const focusOnOpen = useRef(focus);
-  useEffect(() => {
-    if (focusOnOpen.current) title.current?.focus({ preventScroll: true });
-  }, []);
+  if (page === 'parental') return <ParentalSettings rest={rest} overview={parental} heading={heading} single={single} focus={focus} />;
 
   /** A page needing the account waits for it in its own shape, and says so if it failed. */
   const needsAccount = (render: (user: MeProfile) => React.ReactNode): React.ReactNode =>
@@ -462,6 +209,38 @@ function SettingsPageView({
 
   let body: React.ReactNode;
   switch (page) {
+    case 'account':
+      body = <AccountRows me={me} />;
+      break;
+    case 'display':
+      body = <DisplayRows current={me.user?.locale} />;
+      break;
+    case 'privacy':
+      body = <PrivacyRows me={me} />;
+      break;
+    case 'sounds':
+      body = (
+        <>
+          <GiftSoundSetting />
+          <VibrationSetting />
+        </>
+      );
+      break;
+    case 'notifications':
+      body = <NotificationPrefsCard />;
+      break;
+    case 'safety':
+      body = <SafetyRows />;
+      break;
+    case 'storage':
+      body = <StorageData onCleared={me.reload} />;
+      break;
+    case 'help':
+      body = <HelpRows />;
+      break;
+    case 'about':
+      body = <AboutRows />;
+      break;
     case 'username':
       body = <ChangeUsername onChanged={(name) => me.onChanged({ username: name })} />;
       break;
@@ -474,22 +253,11 @@ function SettingsPageView({
     case 'devices':
       body = <SignedInDevices />;
       break;
-    case 'notifications':
-      body = <NotificationPrefsCard />;
-      break;
     case 'language':
       body = <Language current={me.user?.locale} />;
       break;
     case 'theme':
       body = <Appearance />;
-      break;
-    case 'sounds':
-      body = (
-        <>
-          <GiftSoundSetting />
-          <VibrationSetting />
-        </>
-      );
       break;
     case 'keyboard':
       body = <KeyboardCard />;
@@ -510,9 +278,6 @@ function SettingsPageView({
     case 'feedback':
       body = <SendFeedbackCard />;
       break;
-    case 'data':
-      body = <ExportData />;
-      break;
     case 'delete':
       body = (
         <DangerZone
@@ -524,23 +289,159 @@ function SettingsPageView({
       break;
   }
 
+  const parent = isLeaf(page) ? LEAF_CATEGORY[page] : null;
+  const back = parent ? { to: settingsPath(parent), label: t(PAGE_TITLE[parent]) } : single ? { to: SETTINGS_HOME, label: t('standing.backToSettings') } : undefined;
   return (
-    <section className={`settings-page settings-page-${page}`} aria-labelledby="settings-page-title">
-      <div className="settings-page-head">
-        {back && (
-          <Link to="/app/settings" className="standing-back">
-            <ArrowIcon size={16} className="standing-back-icon" /> {t('standing.backToSettings')}
-          </Link>
-        )}
-        <Heading className={heading === 'h1' ? 'page-title' : 'settings-pane-title'} id="settings-page-title" ref={title} tabIndex={-1}>
-          {t(PAGE_TITLE[page])}
-        </Heading>
-      </div>
+    <SettingsFrame title={t(PAGE_TITLE[page])} heading={heading} back={back} focus={focus} className={`settings-page-${page}`}>
       {/* The sounds page keeps its parts' headings, since it holds both sounds and vibration. */}
       <div className="settings-page-body" data-keep-headings={page === 'sounds' ? '' : undefined}>
         {body}
       </div>
-    </section>
+    </SettingsFrame>
+  );
+}
+
+/** A value from the account: a short grey bar until it answers, nothing if it failed. */
+function fromAccount(me: MeState, value: string | undefined): React.ReactNode {
+  return me.user ? value : me.loading ? <Skeleton line w={64} className="settings-row-value-skeleton" /> : undefined;
+}
+
+/** Account: who you are here and where you are signed in, then, apart and last, deleting it. */
+function AccountRows({ me }: { me: MeState }): React.JSX.Element {
+  const t = useT();
+  const user = me.user;
+  return (
+    <>
+      <SettingsSection>
+        <SettingsRow icon={<ProfileIcon />} title={t('profile.edit')} to="/app/profile/edit" />
+        <SettingsRow
+          icon={<AtIcon />}
+          title={t('settings.username.title')}
+          // A handle reads left to right in every language, @ first.
+          value={user ? <span dir="ltr">@{user.username}</span> : fromAccount(me, undefined)}
+          to={settingsPath('username')}
+        />
+        <SettingsRow icon={<CalendarIcon />} title={t('age.label')} value={fromAccount(me, user ? birthMonthText(t, user) : undefined)} to={settingsPath('birth-month')} />
+        <SettingsRow icon={<KeyIcon />} title={t('settings.password.title')} to={settingsPath('password')} />
+        <SettingsRow icon={<DeviceIcon />} title={t('settings.devices.title')} to={settingsPath('devices')} />
+        <SignOutEverywhere />
+      </SettingsSection>
+      <ul className="settings-rows settings-apart">
+        <SettingsRow icon={<TrashIcon />} title={t('settings.delete.title')} destructive to={settingsPath('delete')} />
+      </ul>
+    </>
+  );
+}
+
+/** How long "Sure?" waits for the second press, as the app's other two-step buttons do. */
+const ARMED_MS = 4_000;
+
+/** Signing out of every device, this one included: the first press asks, the second does it. */
+function SignOutEverywhere(): React.JSX.Element {
+  const t = useT();
+  const navigate = useNavigate();
+  const { client, logout } = useAuth();
+  const [armed, setArmed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const timer = window.setTimeout(() => setArmed(false), ARMED_MS);
+    return () => window.clearTimeout(timer);
+  }, [armed]);
+
+  async function press(): Promise<void> {
+    if (busy) return;
+    if (!armed) {
+      setArmed(true);
+      return;
+    }
+    setBusy(true);
+    await client.delete('/me/sessions');
+    await logout();
+    navigate('/');
+  }
+
+  return (
+    <SettingsRow
+      icon={<SignOutIcon />}
+      title={t('settings.sessions.signOutEverywhere')}
+      value={busy ? t('settings.devices.signingOut') : armed ? t('common.sure') : undefined}
+      attention={armed}
+      onClick={() => void press()}
+    />
+  );
+}
+
+/** Content and display: the interface's language, its look, and the keyboard for Kurdish letters. */
+function DisplayRows({ current }: { current?: string | null }): React.JSX.Element {
+  const t = useT();
+  const { locale } = useI18n();
+  const [theme] = useThemePreference();
+  const [keyboard] = useKeyboardPrefs();
+  const language = APP_LOCALES.find((l) => l.code === (isAppLocale(current) ? current : locale))?.nativeName ?? locale;
+  return (
+    <SettingsSection>
+      <SettingsRow icon={<LanguageIcon />} title={t('language.settingsTitle')} value={language} to={settingsPath('language')} />
+      <SettingsRow icon={<ThemeIcon />} title={t('settings.appearance.title')} value={t(THEME_LABEL[theme])} to={settingsPath('theme')} />
+      <SettingsRow icon={<KeyboardIcon />} title={t('keyboard.settings.title')} value={t(ACCENT_LABEL[keyboard.accentMode])} to={settingsPath('keyboard')} />
+    </SettingsSection>
+  );
+}
+
+/** Privacy and social: who sees your profile, who you have blocked, and the weekly leagues. */
+function PrivacyRows({ me }: { me: MeState }): React.JSX.Element {
+  const t = useT();
+  const user = me.user;
+  return (
+    <SettingsSection>
+      <SettingsRow icon={<EyeIcon size={22} />} title={t('settings.privacy.title')} value={fromAccount(me, user ? t(VIS_LABEL_KEY[user.profileVisibility]) : undefined)} to={settingsPath('visibility')} />
+      <SettingsRow icon={<BlockIcon />} title={t('settings.blocked.title')} to={settingsPath('blocked')} />
+      <SettingsRow
+        icon={<TrophyIcon />}
+        title={t('settings.leagues.title')}
+        value={fromAccount(me, user ? t(user.leaguesEnabled !== false ? 'settings.on' : 'settings.off') : undefined)}
+        to={settingsPath('leagues')}
+      />
+    </SettingsSection>
+  );
+}
+
+/** Safety: the reports you made and how each went, and whether anything is limited on the account. */
+function SafetyRows(): React.JSX.Element {
+  const t = useT();
+  const limited = useLimited();
+  return (
+    <SettingsSection>
+      <SettingsRow icon={<FlagIcon />} title={t('reports.mine.title')} to={MY_REPORTS_PATH} />
+      <SettingsRow icon={<StandingIcon />} title={t('standing.title')} value={limited ? t('settings.safety.limited') : undefined} attention={limited} to={STANDING_PATH} />
+    </SettingsSection>
+  );
+}
+
+/** Help and feedback: telling us what you think, the common questions, and a person to write to. */
+function HelpRows(): React.JSX.Element {
+  const t = useT();
+  return (
+    <SettingsSection>
+      <SettingsRow icon={<ChatsIcon />} title={t('appFeedback.settingsTitle')} to={settingsPath('feedback')} />
+      <SettingsRow icon={<HelpIcon />} title={t('footer.faq')} to="/faq" />
+      <SettingsRow icon={<MailIcon />} title={t('settings.support')} subtitle={SUPPORT_EMAIL} href={`mailto:${SUPPORT_EMAIL}`} />
+    </SettingsSection>
+  );
+}
+
+/** About: how Hevalo teaches and who makes it, the terms and policies, and whose work it uses. */
+function AboutRows(): React.JSX.Element {
+  const t = useT();
+  return (
+    <SettingsSection>
+      <SettingsRow icon={<BookIcon />} title={t('footer.teach')} to="/how-hevalo-teaches" />
+      <SettingsRow icon={<HelpIcon />} title={t('settings.group.about')} to="/about" />
+      <SettingsRow icon={<RulesIcon />} title={t('settings.terms')} to="/terms" />
+      <SettingsRow icon={<LockIcon />} title={t('settings.privacyPolicy')} to="/privacy" />
+      <SettingsRow icon={<CopyrightIcon />} title={t('footer.copyright')} to="/copyright" />
+      <SettingsRow icon={<StarIcon size={22} />} title={t('about.creditsTitle')} to="/about#credits" />
+    </SettingsSection>
   );
 }
 
@@ -650,7 +551,7 @@ function Appearance(): React.JSX.Element {
         name="theme"
         label={t('settings.appearance.title')}
         value={preference}
-        options={THEME_PREFERENCES.map((p) => ({ value: p, title: t(THEME_LABEL[p]) }))}
+        options={THEME_PREFERENCES.map((p) => ({ value: p, title: t(THEME_LABEL[p]), subtitle: p === 'system' ? t('settings.appearance.systemHint') : undefined }))}
         onChange={setPreference}
       />
     </>
@@ -734,35 +635,6 @@ function Privacy({ current, minor, onChanged }: { current: Visibility; minor: bo
           {msg}
         </p>
       )}
-    </>
-  );
-}
-
-function ExportData(): React.JSX.Element {
-  const { client } = useAuth();
-  const t = useT();
-  const [state, setState] = useState<'idle' | 'sending' | 'done' | 'error' | 'unavailable'>('idle');
-
-  return (
-    <>
-      <p className="settings-page-intro">{t('settings.data.help')}</p>
-      {state === 'done' ? (
-        <div className="msg msg-success">{t('settings.data.requested')}</div>
-      ) : (
-        <Button
-          variant="secondary"
-          disabled={state === 'sending'}
-          onClick={() => {
-            setState('sending');
-            // With nowhere private to keep a copy the server makes none, which is said as that rather than as a failure.
-            void client.post('/me/export').then((r) => setState(r.ok ? 'done' : r.error.code === 'EXPORT_NOT_AVAILABLE' ? 'unavailable' : 'error'));
-          }}
-        >
-          {state === 'sending' ? t('settings.data.requesting') : t('settings.data.request')}
-        </Button>
-      )}
-      {state === 'error' && <div className="msg msg-error" style={{ marginTop: 10 }}>{t('settings.data.failed')}</div>}
-      {state === 'unavailable' && <div className="msg" style={{ marginTop: 10 }}>{t('error.code.exportNotAvailable')}</div>}
     </>
   );
 }

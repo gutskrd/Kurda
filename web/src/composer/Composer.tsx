@@ -28,6 +28,7 @@ import { clearDraft, loadDraft, saveDraft } from './draftStore';
 import { accountLimitOf, composerErrorText, problemText } from './errors';
 import { SendError } from '../reports/SendError';
 import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
+import { ParentalNote, useParentalOff } from '../parental/ParentalNote';
 import { textDir } from './textDir';
 import type { ComposedPost, UploadedPicture } from './types';
 import type { ApiError } from '../lib/types';
@@ -67,6 +68,8 @@ export function Composer({ onClose, onPosted, editing = null }: ComposerProps): 
   const t = useT();
   // A held account is told before writing anything, rather than when Post is refused.
   const held = useAccountHeld();
+  // A teen whose parent switched posting off is told so before writing anything, as a held account is.
+  const postsOff = useParentalOff('posts');
   const titleId = useId();
   const titleFieldId = useId();
   const sourceFieldId = useId();
@@ -233,7 +236,7 @@ export function Composer({ onClose, onPosted, editing = null }: ComposerProps): 
         : failed
           ? t('composer.fixFailed')
           : null;
-  const ready = verdict.ok && !uploading && !failed && !busy && !held;
+  const ready = verdict.ok && !uploading && !failed && !busy && !held && !postsOff;
 
   const bodyUsed = postTextLength(body);
   const bodyLeft = POST_BODY_MAX - bodyUsed;
@@ -455,10 +458,8 @@ export function Composer({ onClose, onPosted, editing = null }: ComposerProps): 
             </button>
           </div>
         </div>
-      ) : held ? (
-        <div className="cmp-scroll">
-          <HeldNotice />
-        </div>
+      ) : held || postsOff ? (
+        <div className="cmp-scroll">{held ? <HeldNotice /> : <ParentalNote />}</div>
       ) : view === 'drafts' ? (
         <div className="cmp-scroll">
           <OldDrafts drafts={oldDrafts} onChoose={finishOldDraft} onBack={() => setView('write')} />
@@ -627,7 +628,7 @@ export function Composer({ onClose, onPosted, editing = null }: ComposerProps): 
         </div>
       )}
 
-      {!held && !pictureEditing && !confirmClose && view === 'write' && (
+      {!held && !postsOff && !pictureEditing && !confirmClose && view === 'write' && (
         <footer className="cmp-foot">
           <div className="cmp-tools" role="toolbar" aria-label={t('composer.tools')}>
             <button
