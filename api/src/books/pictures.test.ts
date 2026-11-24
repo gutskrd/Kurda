@@ -7,6 +7,7 @@ import {
   BOOK_PAINTS,
   BOOK_POSES,
   BOOK_SETTINGS,
+  BOOK_SILHOUETTES,
   BOOK_SPOTS,
   HUES,
   HUE_NAMES,
@@ -61,6 +62,7 @@ function drawable(p: BookPicture): boolean {
   if (p.kind === 'landmark') return PATH_LANDMARKS.includes(p.landmark);
   if (p.kind === 'cast') return Object.hasOwn(BOOK_POSES, p.who) && (BOOK_POSES[p.who] as readonly string[]).includes(p.pose);
   if (p.kind === 'figure') return /^\d+\.?$/.test(p.text);
+  if (p.kind === 'silhouette') return BOOK_SILHOUETTES.includes(p.who);
   return p.kind === 'sapling';
 }
 
@@ -93,9 +95,9 @@ describe('a word’s picture', () => {
     expect(pictureForWord(word('bajar', 'town, city'))).toEqual({ kind: 'spot', spot: 'town' });
     expect(pictureForWord(word('bazar', 'market'))).toEqual({ kind: 'landmark', landmark: 'bazaar' });
     expect(pictureForWord(word('şitil', 'sapling'))).toEqual({ kind: 'sapling' });
-    // the road's teacher is Xezo, and its friend is the deer whose name means "friend"
+    // the road's teacher is Xezo; a friend is no deer, so heval has no picture to be mistaken for its meaning
     expect(pictureForWord(word('mamoste', 'teacher'))).toEqual({ kind: 'cast', who: 'xezo', pose: 'smiling' });
-    expect(pictureForWord(word('heval', 'friend'))).toEqual({ kind: 'cast', who: 'hevalo', pose: 'pleased' });
+    expect(pictureForWord(word('heval', 'friend'))).toBeNull();
   });
 
   it('is nothing at all rather than a guess', () => {
@@ -124,11 +126,12 @@ describe('a word’s picture', () => {
 });
 
 describe('the people of the road', () => {
-  it('shows the three friends as themselves, and the others by the thing the road knows them by', async () => {
+  it('shows the three friends as themselves, every other person as a silhouette and never as a thing, and each animal itself', async () => {
     expect(pictureForName('Hamo')).toEqual({ kind: 'cast', who: 'hamo', pose: 'proud' });
     expect(pictureForName('Xezo')).toEqual({ kind: 'cast', who: 'xezo', pose: 'smiling' });
     expect(pictureForName('Hevalo')).toEqual({ kind: 'cast', who: 'hevalo', pose: 'caught' });
-    expect(pictureForName('Azad')).toEqual({ kind: 'spot', spot: 'doctorBag' });
+    expect(pictureForName('Azad')).toEqual({ kind: 'silhouette', who: 'doctor' });
+    expect(pictureForName('Nazê')).toEqual({ kind: 'silhouette', who: 'woman' });
     expect(pictureForName('Bozo')).toEqual({ kind: 'word', id: 'donkey' });
     expect(pictureForName('Nobody')).toBeNull();
     expect(pictureForName('toString')).toBeNull();
@@ -138,6 +141,9 @@ describe('the people of the road', () => {
     for (const p of emblems) if (p) expect(drawable(p), JSON.stringify(p)).toBe(true);
     // everyone the road names has one
     expect(cast.filter((_, i) => emblems[i] === null).map((who) => who.name)).toEqual([]);
+    // a person is a portrait or a silhouette; only the goats of the folk tale, who are goats, are drawn as one
+    const things = cast.filter((who, i) => who.kind === 'person' && !['cast', 'silhouette'].includes(emblems[i]!.kind)).map((who) => who.name);
+    expect(things).toEqual(['Şengê', 'Pengê']);
   });
 });
 

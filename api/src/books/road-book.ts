@@ -21,6 +21,8 @@ export interface BookPlanUnit {
   titleKu: string;
   titleEn: string;
   story: string;
+  /** the book's own opening paragraph for the chapter, from book-beats.json, where it has one */
+  bookStory?: unknown;
   skills: Array<{
     position: number;
     titleKu: string;
@@ -121,8 +123,10 @@ export interface BookLesson {
    */
   beat: string;
   words: BookWord[];
-  /** the line Hamo says for the learner to say after him */
+  /** the line to say out loud, in the speech bubble beside the scene */
   say: string | null;
+  /** what the bubble's line means, where the course gives it */
+  sayEn: string | null;
   /** a few of the lesson's lines with their meaning, to read aloud */
   sentences: BookPair[];
   dialogue: BookDialogue | null;
@@ -233,6 +237,31 @@ function dialogueOf(exercises: readonly BookExercise[]): BookDialogue | null {
 }
 
 /**
+ * What each Kurdish line of the course means, wherever an item gives it: a line to put into English or into Kurdish, a
+ * choice of its meaning, or a line of a conversation. A line said out loud is printed with its English from here.
+ */
+function meaningsOf(docs: ReadonlyMap<number, BookUnitDoc>): Map<string, string> {
+  const out = new Map<string, string>();
+  const add = (ku: string | null, en: string | null): void => {
+    if (ku && en && !out.has(ku)) out.set(ku, en);
+  };
+  for (const doc of docs.values()) {
+    for (const skill of doc.units[0]?.skills ?? []) {
+      for (const lesson of skill.lessons) {
+        for (const e of lesson.exercises) {
+          const p = e.payload;
+          if (p.ask === 'to-kurdish') add(str(strings(p.accepted)[0]), str(p.prompt));
+          else if (p.ask === 'choose-kurdish') add(rightOption(p), str(p.prompt));
+          else if (e.type === 'conversation') for (const l of Array.isArray(p.lines) ? p.lines : []) if (isRecord(l)) add(str(l.text), str(l.en));
+        }
+        for (const pair of pairsOf(lesson.exercises)) add(pair.ku, pair.en);
+      }
+    }
+  }
+  return out;
+}
+
+/**
  * A lesson's Kurdish lines with their meanings: items asking for the English of something Hamo says (a choice whose
  * right option is its English, or a translation into English).
  */
@@ -267,7 +296,14 @@ const bareLine = (text: string): string => text.toLowerCase().trim().replace(/[\
  * line; "what does it mean" and translations into English are the read-aloud lines; the conversation is printed whole
  * with its question. Other kinds go to the chapter's practice (`practiceOf`).
  */
-function lessonOf(plan: BookPlanUnit['skills'][number]['lessons'][number], index: number, exercises: readonly BookExercise[]): BookLesson {
+function lessonOf(
+  plan: BookPlanUnit['skills'][number]['lessons'][number],
+  index: number,
+  exercises: readonly BookExercise[],
+  context: { taken?: ReadonlySet<string>; grammar?: string; meanings?: ReadonlyMap<string, string> } = {},
+): BookLesson {
+  const taken = context.taken ?? new Set<string>();
+  const grammar = context.grammar ?? '';
   const pictures = new Map<string, string>();
   for (const e of exercises) {
     if (e.type !== 'multiple_choice' || e.payload.ask !== 'picture') continue;
@@ -276,13 +312,31 @@ function lessonOf(plan: BookPlanUnit['skills'][number]['lessons'][number], index
     if (word && right && !pictures.has(word)) pictures.set(word, right);
   }
   const dialogue = dialogueOf(exercises);
-  const speaking = exercises.find((e) => e.type === 'speaking');
-  // a line of one word is on the page already, as a word; a line of the conversation is in the conversation;
-  // and a line that is one of the lesson's own new sayings is on its word card just above, so other lines are read instead
   const spoken = new Set(dialogue?.lines.map((l) => l.text) ?? []);
   const carded = new Set(plan.new.map((w) => bareLine(w.ku)));
-  const all = pairsOf(exercises).filter((s) => !spoken.has(s.ku) && !carded.has(bareLine(s.ku)));
-  const whole = all.filter((s) => wordsIn(s.ku) > 1);
+  // the lines this lesson teaches first: those with one of its new words in them
+  const teaches = (text: string): boolean => plan.new.some((w) => text.toLowerCase().includes(w.ku.toLowerCase().split(/[\s/,(]/)[0]!.replace(/[!?.…]+$/u, '')));
+  const ranked = <T>(list: readonly T[], text: (t: T) => string): T[] => [...list.filter((t) => teaches(text(t))), ...list.filter((t) => !teaches(text(t)))];
+  // a line of one word is on the page already, as a word; a line of the conversation is in the conversation; a line
+  // that is one of the lesson's own new sayings is on its word card just above; and a line the chapter prints elsewhere
+  // (`taken`) is printed once, so other lines are read instead
+  const fresh = ranked(
+    pairsOf(exercises).filter((s) => !spoken.has(s.ku) && !taken.has(s.ku) && !carded.has(bareLine(s.ku))),
+    (s) => s.ku,
+  );
+  // the bubble: a line to say that is new to the chapter, not a grammar note's example, not a reply that opens on a bare
+  // "No." or "Yes.", and not one the conversation below says; failing those, a fresh line of the lesson's own
+  const opensOnAnswer = (t: string): boolean => /^(Na|Erê|Belê)[.!,]\s+\S+\s+\S+\s+\S+/u.test(t);
+  const sayings = ranked(
+    exercises.filter((e) => e.type === 'speaking').map((e) => str(e.payload.reference) ?? str(e.payload.prompt)).filter((t): t is string => t !== null),
+    (t) => t,
+  );
+  const fits = (t: string): boolean => !taken.has(t) && !grammar.includes(t) && !opensOnAnswer(t) && !carded.has(bareLine(t));
+  const own = sayings.find((t) => fits(t) && !spoken.has(t)) ?? null;
+  const borrowed = own === null && !dialogue ? (fresh.find((s) => wordsIn(s.ku) > 1 && fits(s.ku)) ?? null) : null;
+  const say = own ?? borrowed?.ku ?? null;
+  const rest = fresh.filter((s) => s.ku !== say);
+  const whole = rest.filter((s) => wordsIn(s.ku) > 1);
   return {
     key: plan.key,
     position: plan.position ?? index + 1,
@@ -292,8 +346,9 @@ function lessonOf(plan: BookPlanUnit['skills'][number]['lessons'][number], index
     // the plan's beat is written for the app and runs longer than the lines beside the drawing; the book's own telling fits them whole
     beat: str(plan.bookBeat) ?? plan.beat ?? '',
     words: plan.new.map((w) => ({ ku: w.ku, en: w.en, gender: genderOf(w.gender), pos: w.pos ?? null, picture: pictures.get(w.ku) ?? null })),
-    say: speaking ? (str(speaking.payload.reference) ?? str(speaking.payload.prompt)) : null,
-    sentences: dialogue ? [] : spread(whole.length >= READ_ALOUD ? whole : all, READ_ALOUD),
+    say,
+    sayEn: say === null ? null : (borrowed?.en ?? context.meanings?.get(say) ?? null),
+    sentences: dialogue ? [] : (whole.length >= READ_ALOUD ? whole : rest).slice(0, READ_ALOUD),
     dialogue,
   };
 }
@@ -336,7 +391,14 @@ const GAPS_AT_LEAST = 3;
  * replies, English to put into Kurdish (translating, writing or choosing), pictures to name, and say-aloud lines to
  * read alone. Only right answers are taken; wrong options stay in the app.
  */
-function practiceOf(exercises: readonly BookExercise[], printed: ReadonlySet<string>): BookPractice {
+function practiceOf(
+  exercises: readonly BookExercise[],
+  printed: ReadonlySet<string>,
+  context: { words?: ReadonlySet<string>; before?: ReadonlySet<string>; earlierWords?: ReadonlySet<string> } = {},
+): BookPractice {
+  const words = context.words ?? new Set<string>();
+  const before = context.before ?? new Set<string>();
+  const earlierWords = context.earlierWords ?? new Set<string>();
   const match: BookPair[] = [];
   const gaps: BookPractice['gaps'] = [];
   const replies: BookPractice['replies'] = [];
@@ -362,45 +424,77 @@ function practiceOf(exercises: readonly BookExercise[], printed: ReadonlySet<str
     } else if (p.ask === 'to-kurdish' || p.ask === 'choose-kurdish') {
       const en = str(p.prompt);
       const ku = p.ask === 'choose-kurdish' ? rightOption(p) : str(strings(p.accepted)[0]);
-      if (en && ku && !printed.has(ku) && first(`ku|${en}`)) toKurdish.push({ en, ku });
+      if (en && ku && first(`ku|${en}`)) toKurdish.push({ en, ku });
     } else if (e.type === 'multiple_choice' && p.ask === 'picture') {
       const ku = str(p.prompt);
       const picture = rightOption(p);
       if (ku && picture && first(`picture|${picture}`)) pictures.push({ picture, ku });
     } else if (e.type === 'listening') {
       const line = str(strings(p.accepted)[0]);
-      // a line read alone is new to the page: not one printed whole, nor one inside a longer printed line (“Spas! …” says it already)
-      if (line && ![...printed].some((p) => p.includes(line)) && first(`alone|${line}`)) alone.push(line);
+      // a line read alone is new to the page: not one printed whole, nor one inside a longer printed line (“Spas! …” says
+      // it already), nor one an earlier chapter printed with its English
+      if (line && ![...printed].some((p) => p.includes(line)) && !before.has(line) && first(`alone|${line}`)) alone.push(line);
     }
   }
-  // a reply with the lesson's own hint says what is going on, and a sentence is a fairer thing to translate than one word
-  const hinted = replies.filter((r) => r.cue !== null);
-  const sentences = toKurdish.filter((t) => wordsIn(t.ku) > 1);
-  const few = gaps.length < GAPS_AT_LEAST;
-  const into = PRACTICE.toKurdish + (few ? GAPS_AT_LEAST : 0);
+  // the chapter's own words and lines come first: the units mix in many from earlier chapters for review
+  const ownWord = (ku: string): boolean => words.has(ku.toLowerCase());
+  const hasOwnWord = (line: string): boolean => line.toLowerCase().split(/[^a-zçêîşû]+/u).some((w) => w !== '' && words.has(w));
+  const first_ = <T>(list: readonly T[], test: (t: T) => boolean): T[] => [...list.filter(test), ...list.filter((t) => !test(t))];
+  const opensOnAnswer = (t: string): boolean => /^(Na|Erê|Belê)[.!,]\s/u.test(t);
+  // a Kurdish line belongs to one task only, so no task's answer is printed in another
+  const used = new Set<string>();
+  const take = <T>(list: readonly T[], max: number, lines: (t: T) => string[]): T[] => {
+    const out: T[] = [];
+    for (const t of list) {
+      if (out.length >= max) break;
+      const ls = lines(t);
+      if (ls.some((l) => used.has(l))) continue;
+      ls.forEach((l) => used.add(l));
+      out.push(t);
+    }
+    return out;
+  };
   // what is joined with a line is a word and its meaning: a whole proverb is for reading, not for one end of a line;
   // and a word spelt nearly as its English (doktor, doctor) joins itself, so it teaches nothing there
   const fair = match.filter((m) => !givesAway(m));
   const short = fair.filter((m) => wordsIn(m.ku) <= 3 && m.ku.length <= 18 && m.en.length <= 26);
+  const pairs = first_(short.length >= PRACTICE.match ? short : fair, (m) => ownWord(m.ku));
+  const chosenGaps = gaps.length < GAPS_AT_LEAST ? [] : take(spread(first_(gaps, (g) => hasOwnWord(g.text)), gaps.length), PRACTICE.gaps, (g) => [g.text.replace('___', g.answer)]);
+  // a reply with the lesson's own hint says what is going on
+  const hinted = replies.filter((r) => r.cue !== null);
+  const chosenReplies = take(first_(hinted.length >= PRACTICE.replies ? hinted : replies, (r) => hasOwnWord(r.say)), PRACTICE.replies, (r) => [r.say, r.answer]);
+  // a sentence is a fairer thing to translate than one word, and a line the chapter has printed is one to bring back
+  const few = chosenGaps.length === 0;
+  const into = PRACTICE.toKurdish + (few ? GAPS_AT_LEAST : 0);
+  const sentences = toKurdish.filter((t) => wordsIn(t.ku) > 1);
+  const chosenInto = take(first_(first_(sentences.length >= into ? sentences : toKurdish, (t) => hasOwnWord(t.ku)), (t) => printed.has(t.ku)), into, (t) => [t.ku]);
+  // a picture to name is a word of this chapter's; with fewer than three, the task is left out
+  const ownPictures = pictures.filter((p) => !earlierWords.has(p.ku.toLowerCase()));
+  const readable = alone.filter((l) => wordsIn(l) > 2 && !opensOnAnswer(l));
   return {
-    match: spread(short.length >= PRACTICE.match ? short : fair, PRACTICE.match),
-    gaps: few ? [] : spread(gaps, PRACTICE.gaps),
-    replies: spread(hinted.length >= PRACTICE.replies ? hinted : replies, PRACTICE.replies),
-    toKurdish: spread(sentences.length >= into ? sentences : toKurdish, into),
-    pictures: spread(pictures, PRACTICE.pictures),
-    alone: spread(alone.filter((l) => wordsIn(l) > 2), PRACTICE.alone),
+    match: take(pairs, PRACTICE.match, (m) => [m.ku]),
+    gaps: chosenGaps,
+    replies: chosenReplies,
+    toKurdish: chosenInto,
+    pictures: ownPictures.length >= 3 ? spread(ownPictures, PRACTICE.pictures) : [],
+    alone: take(first_(readable, hasOwnWord), PRACTICE.alone, (l) => [l]),
   };
 }
 
 /**
- * The chapter's own line about Hevalo and his apples: the shortest line naming both, an exclamation before a plain one,
- * else the shortest that has him eating. Every road chapter has one; it is printed where the chapter ends.
+ * The chapter's own line about Hevalo and his apples, printed where it ends beside Hamo: the shortest line naming both,
+ * an exclamation before a plain one, else the shortest that has him eating or exclaiming. A line the chapter has not
+ * printed comes first, and never one of the learner's own, since Hamo says it.
  */
-function gagOf(pairs: readonly BookPair[]): BookPair | null {
+function gagOf(pairs: readonly BookPair[], printed: ReadonlySet<string> = new Set(), learner: ReadonlySet<string> = new Set()): BookPair | null {
   const shortest = (list: readonly BookPair[]): BookPair | null => list.reduce<BookPair | null>((best, s) => (best === null || s.ku.length < best.ku.length ? s : best), null);
-  const his = pairs.filter((s) => s.ku.includes('Hevalo'));
-  const apples = his.filter((s) => /sêv/i.test(s.ku));
-  return shortest(apples.filter((s) => s.ku.includes('!'))) ?? shortest(apples) ?? shortest(his.filter((s) => /birçî|dixwe|xwar/i.test(s.ku)));
+  const pick = (list: readonly BookPair[]): BookPair | null => {
+    const his = list.filter((s) => s.ku.includes('Hevalo'));
+    const apples = his.filter((s) => /sêv/i.test(s.ku));
+    return shortest(apples.filter((s) => s.ku.includes('!'))) ?? shortest(apples) ?? shortest(his.filter((s) => /birçî|dixwe|xwar/i.test(s.ku))) ?? shortest(his.filter((s) => s.ku.includes('!')));
+  };
+  const his = pairs.filter((s) => !learner.has(s.ku));
+  return pick(his.filter((s) => !printed.has(s.ku))) ?? pick(his);
 }
 
 /** The book's own telling of each lesson's beat, by lesson key, as content/lessons/road/book-beats.json has them. */
@@ -418,6 +512,8 @@ export function withBookBeats(plan: BookPlan, beats: BookBeats): BookPlan {
     ...plan,
     units: plan.units.map((unit) => ({
       ...unit,
+      // the chapter's opening paragraph is keyed by its unit alone ("u07"), its lessons' tellings by their lesson keys
+      ...(own(`u${String(unit.number).padStart(2, '0')}`) ? { bookStory: own(`u${String(unit.number).padStart(2, '0')}`) } : {}),
       skills: unit.skills.map((skill) => ({
         ...skill,
         lessons: skill.lessons.map((lesson) => {
@@ -435,21 +531,31 @@ export function withBookBeats(plan: BookPlan, beats: BookBeats): BookPlan {
  */
 export function roadBookChapters(plan: BookPlan, docs: ReadonlyMap<number, BookUnitDoc>, stories: readonly BookStory[], chapters: readonly number[]): BookChapter[] {
   const out: BookChapter[] = [];
+  const meanings = meaningsOf(docs);
+  // what the chapters before have printed and taught, so a chapter's practice works on its own
+  const printedBefore = new Set<string>();
+  const wordsBefore = new Set<string>();
   for (const n of [...new Set(chapters)].sort((a, b) => a - b)) {
     const unit = plan.units.find((u) => u.number === n);
     const doc = docs.get(n)?.units[0];
     if (!unit || !doc) continue;
     const everything: BookExercise[] = [];
     const lines: BookPair[] = [];
+    const exercisesOf = (skill: number, lesson: BookPlanUnit['skills'][number]['lessons'][number], i: number): BookExercise[] => {
+      const files = doc.skills.find((s) => s.position === skill)?.lessons ?? [];
+      const file = files.find((l) => l.key === lesson.key) ?? files.find((l) => l.position === (lesson.position ?? i + 1));
+      return sorted(file?.exercises ?? []);
+    };
+    // every line the chapter's conversations say, so that no lesson prints one again to read aloud or in a bubble
+    const taken = new Set(unit.skills.flatMap((skill) => skill.lessons.flatMap((lesson, i) => dialogueOf(exercisesOf(skill.position, lesson, i))?.lines.map((l) => l.text) ?? [])));
     const parts: BookPart[] = unit.skills.map((skill) => {
-      const files = doc.skills.find((s) => s.position === skill.position)?.lessons ?? [];
       const lessons = skill.lessons.map((lesson, i) => {
-        const file = files.find((l) => l.key === lesson.key) ?? files.find((l) => l.position === (lesson.position ?? i + 1));
-        const exercises = sorted(file?.exercises ?? []);
+        const exercises = exercisesOf(skill.position, lesson, i);
         everything.push(...exercises);
         lines.push(...pairsOf(exercises));
-        const made = lessonOf(lesson, i, exercises);
+        const made = lessonOf(lesson, i, exercises, { taken, grammar: skill.grammarMd ?? '', meanings });
         for (const l of made.dialogue?.lines ?? []) if (l.en) lines.push({ ku: l.text, en: l.en });
+        for (const t of [...made.sentences.map((x) => x.ku), ...(made.say ? [made.say] : [])]) taken.add(t);
         return made;
       });
       return { position: skill.position, titleKu: skill.titleKu, titleEn: skill.titleEn, grammar: skill.grammar ?? '', grammarMd: skill.grammarMd ?? '', lessons };
@@ -466,20 +572,27 @@ export function roadBookChapters(plan: BookPlan, docs: ReadonlyMap<number, BookU
         }
       : null;
 
-    // practice asks for nothing the chapter's pages already answer beside the question
+    // the chapter's own words, whole and word by word (Bi xêr hatî! teaches xêr and hatî)
+    const taught = parts.flatMap((p) => p.lessons.flatMap((l) => l.words.map((w) => w.ku.toLowerCase())));
+    const ownWords = new Set([...taught, ...taught.flatMap((ku) => ku.split(/[^a-zçêîşû]+/u).filter((w) => w.length > 1))]);
+    // what the chapter's pages print, which its practice brings back rather than repeats beside the question
+    const learnerLines = new Set(parts.flatMap((p) => p.lessons.flatMap((l) => l.dialogue?.lines.filter((d) => d.learner).map((d) => d.text) ?? [])));
     const printed = new Set(parts.flatMap((p) => p.lessons.flatMap((l) => [...l.sentences.map((s) => s.ku), ...(l.dialogue?.lines.map((d) => d.text) ?? []), ...(l.say ? [l.say] : [])])));
     out.push({
       number: n,
       cefr: unit.cefr,
       titleKu: unit.titleKu,
       titleEn: unit.titleEn,
-      summary: unit.story,
+      summary: str(unit.bookStory) ?? unit.story,
       land: PATH_LANDS[(n - 1) % PATH_LANDS.length]!,
       parts,
       tale,
-      practice: practiceOf(everything, printed),
-      gag: gagOf(lines),
+      practice: practiceOf(everything, printed, { words: ownWords, before: printedBefore, earlierWords: wordsBefore }),
+      gag: gagOf(lines, printed, learnerLines),
     });
+    const made = out[out.length - 1]!;
+    for (const line of [...printed, ...made.practice.alone, ...made.practice.toKurdish.map((t) => t.ku)]) printedBefore.add(line);
+    for (const ku of taught) wordsBefore.add(ku);
   }
   return out;
 }

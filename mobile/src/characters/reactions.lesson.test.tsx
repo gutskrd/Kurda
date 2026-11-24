@@ -86,7 +86,7 @@ describe('a verdict’s reaction line', () => {
   it('is Hevalo’s when he is the one at the window, and says what it means on a tap', async () => {
     lesson();
     await answerWrong();
-    const caption = await screen.findByRole('button', { name: 'Hevalo says “Ne xem e!”' });
+    const caption = await screen.findByRole('button', { name: 'Hevalo says “Xeman nexwe!”' });
     expect(FakeAudio.of(MISS)?.paused).toBe(false);
     // He is drawn there, so the caption has no face of its own.
     expect(screen.queryByTestId('reaction-caption-face')).toBeNull();

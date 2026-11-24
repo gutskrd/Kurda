@@ -457,7 +457,7 @@ describe('reaction lines in the script', () => {
     expect(hevalo).toMatchObject({
       id: `lesson|${reactionKey(both[0]!)}`,
       store: 'lesson',
-      text: 'Ne xem e!',
+      text: 'Xeman nexwe!',
       voice: 'hevalo',
       speaker: 'hevalo',
       meaning: 'No worries!',
@@ -468,7 +468,7 @@ describe('reaction lines in the script', () => {
     });
     expect(hevalo.cue).toMatch(/one wrong/);
     expect(hevalo.places).toEqual([{ kind: 'reaction', label: 'Reaction · A gentle miss', status: 'published', voice: 'hevalo', ref: null }]);
-    expect(lines.at(-1)).toMatchObject({ voice: 'xezo', speaker: 'xezo', text: 'Ne xem e, carek din.' });
+    expect(lines.at(-1)).toMatchObject({ voice: 'xezo', speaker: 'xezo', text: 'Xeman nexwe, carek din.' });
     // the lessons’ own lines keep their place and their reaction field is empty
     expect(lines[0]).toMatchObject({ text: 'Silav! Bi xêr hatî!', reaction: null });
   });
@@ -477,8 +477,8 @@ describe('reaction lines in the script', () => {
     const hers = { ...reactionLine('hevalo', 'miss-1')!, character: 'xezo' as const };
     const same = buildScript({ exercises: [], stories: [], games: [], plan: PLAN, letters: [], words: [], reactions: [reactionLine('hevalo', 'miss-1')!, hers] });
     expect(same.map((l) => [l.voice, l.text])).toEqual([
-      ['hevalo', 'Ne xem e!'],
-      ['xezo', 'Ne xem e!'],
+      ['hevalo', 'Xeman nexwe!'],
+      ['xezo', 'Xeman nexwe!'],
     ]);
     expect(same[0]!.key).not.toBe(same[1]!.key);
     const all = buildScript({ exercises: [], stories: [], games: [], plan: PLAN, letters: [], words: [], reactions: REACTION_LINES });

@@ -102,9 +102,9 @@ function coverSheet(press: Press, chapters: readonly BookChapter[], site: string
 
 const HOW: ReadonlyArray<readonly [BookPicture | 'bubble' | 'words' | 'pairs', string]> = [
   [{ kind: 'cast', who: 'hevalo', pose: 'curious' }, 'Every lesson opens with its little scene. Read it first: it tells you where you are and who is up to what.'],
-  ['bubble', 'The line in the speech bubble is Hamo’s. Say it out loud, as he says it in the app, until it comes out by itself.'],
-  ['words', 'New words come with a picture where there is one. A small m or f marks a masculine or a feminine noun: Kurdish cares.'],
-  ['pairs', 'Kurdish stands on the left and English on the right, everywhere. Cover the right side with your hand and see how far you get.'],
+  ['bubble', 'The line in the speech bubble is the one to say out loud, with its meaning under it. In the app Hamo says it first; say it after him until it comes out by itself.'],
+  ['words', 'New words come with a picture where there is one. A small m or f marks a masculine or a feminine noun, and m/f one that can be either: it changes the endings.'],
+  ['pairs', 'Kurdish comes first, and its English beside it or under it. Cover the English with your hand and see how far you get.'],
   [{ kind: 'spot', spot: 'notebook' }, 'Each chapter ends with a story, pencil practice, and a stamp for your passport. The answers wait at the back.'],
 ];
 
@@ -281,7 +281,7 @@ function alphabetSheets(press: Press, chapters: readonly BookChapter[]): Sheet[]
   const letters = drawn.map((l, i) => (l.word && pictureForWord(l.word) ? l : any[i]!));
   const intro = press.para(
     [
-      { text: 'Kurmancî is written as it is said: one letter, one sound, nearly always. The letters with a hat are long, ' },
+      { text: 'Kurmanji is written as it is said: one letter, one sound, nearly always. The letters with a hat are long, ' },
       { text: 'ê î û', font: 'semi' },
       { text: '; ' },
       { text: 'ç', font: 'semi' },
@@ -340,7 +340,7 @@ function alphabetSheets(press: Press, chapters: readonly BookChapter[]): Sheet[]
       draw: (): void => {
         let y = TEXT.top;
         if (pageIndex === 0) {
-          press.line('Thirty-one letters and their sounds', TEXT.x, y + 2, display(22));
+          press.line('The alphabet', TEXT.x, y + 2, display(22));
           press.set(intro.lines, TEXT.x, y + 35, T.body);
           y += head;
         }
@@ -355,7 +355,7 @@ function alphabetSheets(press: Press, chapters: readonly BookChapter[]): Sheet[]
           const [cx, cy] = [x + free - r - 8, top + (cell.h - 6) / 2];
           press.disc(cx, cy, r, VIOLET.wash);
           press.within(cx - r, cy - r, r * 2, r * 2, r, () => press.place(castArt(press, 'hevalo', 'curious'), cx - r + 3, cy - r + 7, r * 2 - 6));
-          const aside = press.para('Thirty-one letters, and not one of them is an apple. Hevalo has checked.', free - r * 2 - 30, T.caption);
+          const aside = press.para('Two letters to watch: c is the j of jam, and j is the s of measure.', free - r * 2 - 30, T.caption);
           press.set(aside.lines, x + 10, top + (cell.h - 6 - aside.height) / 2, T.caption);
         }
       },
@@ -431,7 +431,9 @@ function peopleSheets(press: Press, people: readonly BookName[]): Sheet[] {
           row.forEach((c, k) => {
             const x = TEXT.x + k * (cw + 14);
             press.disc(x + r, y + r, r, VIOLET.tint);
-            if (c.picture) drawPicture(press, c.picture, x + 4, y + 4, r * 2 - 8, VIOLET);
+            // a person's cut-paper bust fills the round; an animal sits inside it
+            if (c.picture?.kind === 'silhouette') press.within(x, y, r * 2, r * 2, r, () => drawPicture(press, c.picture!, x, y, r * 2, VIOLET));
+            else if (c.picture) drawPicture(press, c.picture, x + 4, y + 4, r * 2 - 8, VIOLET);
             else press.line(c.p.name.slice(0, 1), x, y + r - 9, display(18, VIOLET.deep), 'center', r * 2);
             const tx = x + r * 2 + 12;
             const top = y + Math.max(0, (r * 2 - 15 - c.text.height) / 2);
@@ -458,9 +460,9 @@ function answerSheets(press: Press, chapters: readonly BookChapter[], noted: (an
       anchor: 'answers',
       draw: (y) => {
         press.line('Answers', TEXT.x, y + 2, display(22));
-        press.line('No peeking, says Hamo. Hevalo is looking at the sky.', TEXT.x, y + 31, T.english);
+        press.line('Try every task in a chapter before you check it here.', TEXT.x, y + 31, T.english);
         // the key to the conversations' answers, which are named by the lesson they close
-        press.line('Conversations are listed by part and lesson: 2.3 is part 2, lesson 3.', TEXT.x, y + 43, T.english);
+        press.line('The conversation questions are listed by part and lesson: 2.3 is part 2, lesson 3.', TEXT.x, y + 43, T.english);
       },
     },
   ];
@@ -492,7 +494,7 @@ function answerSheets(press: Press, chapters: readonly BookChapter[], noted: (an
       rows.push(['Join them up', pr.match.flatMap((m, i): Span[] => [...(i > 0 ? [{ text: '\u00a0·\u2002', font: 'italic' as const, color: INK.soft }] : []), { text: m.ku, font: 'semi' }, { text: `\u00a0${m.en}`, font: 'italic', color: INK.soft }])]);
     }
     if (pr.gaps.length > 0) rows.push(['Fill the gap', kurdish(pr.gaps.map((g) => g.answer))]);
-    if (pr.replies.length > 0) rows.push(['What do you say?', kurdish(pr.replies.map((r) => r.answer))]);
+    if (pr.replies.length > 0) rows.push(['What you might say', kurdish(pr.replies.map((r) => r.answer))]);
     if (pr.toKurdish.length > 0) rows.push(['Into Kurdish', kurdish(pr.toKurdish.map((t) => t.ku))]);
     if (pr.pictures.length >= 3) rows.push(['The pictures', kurdish(pr.pictures.map((p) => p.ku))]);
     const made: Block[] = rows.map(([name, spans], i) => {
@@ -545,7 +547,8 @@ function wordListSheets(press: Press, chapters: readonly BookChapter[], start = 
       letter = first;
       entries.push({ letter });
     }
-    const en = glossFor(w.en, (text) => lines(w, text).length <= 2);
+    // a whole saying or sentence keeps its whole meaning, and so do the thank-yous it tells apart in a note
+    const en = /[.!?]$/u.test(w.ku.trim()) ? w.en : glossFor(w.en, (text) => lines(w, text).length <= 2);
     entries.push({ word: w, lines: lines(w, en) });
   }
   const heightOf = (e: Entry): number => ('letter' in e ? 20 : e.lines.length * type.lead + 1.4);
@@ -628,7 +631,7 @@ function wordListSheets(press: Press, chapters: readonly BookChapter[], start = 
           const r = 34;
           press.disc(PAGE.w / 2, mid - 12, r, VIOLET.wash);
           press.within(PAGE.w / 2 - r, mid - 12 - r, r * 2, r * 2, r, () => press.place(castArt(press, 'hevalo', 'asleep'), PAGE.w / 2 - r + 3, mid - 12 - r + 7, r * 2 - 6));
-          const count = `${words.length} words, and Hevalo slept through most of them.`;
+          const count = `${words.length} words.`;
           press.line(favourite ? `${count} His favourite is still ${favourite.ku}.` : count, TEXT.x, mid + r - 4, T.english, 'center', TEXT.w);
         }
       },
@@ -683,7 +686,7 @@ function lastSheet(press: Press, chapters: readonly BookChapter[], site: string)
       }
       const type: Type = { ...T.body, color: INK.soft };
       const about = press.para(
-        `Rêya Kurmancî, the Kurmanji Road: every word, line and story as the lessons have them, with Hamo’s voice in the app at ${site}. The drawings are Hevalo’s own, made for the app and for this book. Set in Fraunces and Literata, both under the SIL Open Font Licence.${chapters.length < ROAD_CHAPTERS ? ' New chapters arrive in the book as they go online.' : ''}`,
+        `Rêya Kurmancî, the Kurmanji Road: every word, line and story as the lessons have them, with Hamo’s voice in the app at ${site}. The drawings were made for the Hevalo app and for this book. Set in Fraunces and Literata, both under the SIL Open Font Licence.${chapters.length < ROAD_CHAPTERS ? ' New chapters arrive in the book as they go online.' : ''}`,
         TEXT.w - 76,
         type,
       );

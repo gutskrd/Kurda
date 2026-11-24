@@ -70,14 +70,13 @@ describe('the Hevalo book', () => {
     expect(first.beat).toBe(plan.units[0]!.skills[0]!.lessons[0]!.bookBeat);
     expect(first.beat).not.toBe(plan.units[0]!.skills[0]!.lessons[0]!.beat);
     expect(first.beat).toMatch(/^Hevalo, the deer who is your guide/);
-    // the lesson's "pick the picture" ties the apple to its drawing, and its line to repeat is the line to say
+    // the lesson's "pick the picture" ties the apple to its drawing; the line to say is one of its own, with its English,
+    // and not the grammar note's example, which is on the page already
     expect(first.words.find((w) => w.ku === 'sêv')).toMatchObject({ gender: 'f', pos: 'noun', picture: 'apple' });
-    expect(first.say).toBe('Ez sêvê dixwim.');
-    // two of its lines to read aloud with what they mean: here the first is the line to say, whose meaning the lesson also asks
-    expect(first.sentences).toEqual([
-      { ku: 'Ez sêvê dixwim.', en: 'I’m eating the apple.' },
-      { ku: 'Hevalo sêvê dixwe!', en: 'Hevalo is eating the apple!' },
-    ]);
+    expect(first.say).toBe('Hevalo sêvê dixwe!');
+    expect(first.sayEn).toBe('Hevalo is eating the apple!');
+    // its lines to read aloud with what they mean, never the line already in its bubble
+    expect(first.sentences).toEqual([{ ku: 'Ez sêvê dixwim.', en: 'I’m eating the apple.' }]);
     // a lesson with a conversation is read as that: Hamo talking with the learner, who is "You" in the book
     const talk = lessons[2]!;
     expect(talk.sentences).toEqual([]);
@@ -93,8 +92,8 @@ describe('the Hevalo book', () => {
     const q = one!.tale!.questions[0]!;
     expect(q).toMatchObject({ prompt: asked.prompt, promptEn: asked.promptEn });
     expect(q.options[q.answer]).toBe(asked.options[asked.correctIndex]);
-    // the chapter's own line about Hevalo and his apples, for the page it ends on
-    expect(one!.gag).toEqual({ ku: 'Hevalo sêvê dixwe!', en: 'Hevalo is eating the apple!' });
+    // the chapter's own line about Hevalo, for the page it ends on: one the chapter has not printed already
+    expect(one!.gag).toEqual({ ku: 'Hevalo birçî ye.', en: 'Hevalo is hungry.' });
   });
 
   it('takes something from every kind of exercise the lessons set', async () => {
@@ -104,12 +103,24 @@ describe('the Hevalo book', () => {
     for (const c of chapters) {
       const lessons = c.parts.flatMap((p) => p.lessons);
       expect(lessons, `chapter ${c.number}`).toHaveLength(16);
-      // speaking: a line to say in every lesson; meaning and translation: lines to read; conversation: one in every "talk" lesson
-      expect(lessons.every((l) => l.say !== null && l.beat !== '')).toBe(true);
+      // speaking: a line to say, with its English, in every lesson that brings new words; meaning and translation: lines to
+      // read; conversation: one in every "talk" lesson, whose lines are not said again in a bubble above it
+      expect(lessons.every((l) => l.beat !== '' && (l.say === null || l.sayEn !== null))).toBe(true);
+      expect(lessons.filter((l) => l.focus === 'meet').every((l) => l.say !== null)).toBe(true);
+      expect(lessons.filter((l) => l.dialogue && l.say).every((l) => !l.dialogue!.lines.some((d) => d.text === l.say))).toBe(true);
+      // no bubble says what the chapter has printed before, nor what the lesson prints again below it
+      const bubbles = lessons.flatMap((l) => (l.say ? [l.say] : []));
+      expect(new Set(bubbles).size, `chapter ${c.number}`).toBe(bubbles.length);
+      expect(lessons.filter((l) => l.say && l.sentences.some((x) => x.ku === l.say)).map((l) => l.key)).toEqual([]);
       expect(lessons.filter((l) => l.focus === 'talk').every((l) => l.dialogue !== null && l.dialogue.question !== null)).toBe(true);
-      // a lesson works on a few lines: at most two to read, and nearly every lesson has two
+      // a lesson works on a few lines: at most two to read, and most new lessons have two
       expect(lessons.filter((l) => !l.dialogue).every((l) => l.sentences.length <= 2)).toBe(true);
-      expect(lessons.filter((l) => !l.dialogue && l.sentences.length < 2).length).toBeLessThanOrEqual(1);
+      expect(lessons.filter((l) => !l.dialogue && l.focus !== 'review' && l.sentences.length < 2).length, `chapter ${c.number}`).toBeLessThanOrEqual(3);
+      // each line is printed once in its chapter: never read aloud twice, nor read aloud as well as said in a conversation
+      const read = lessons.flatMap((l) => l.sentences.map((x) => x.ku));
+      expect(new Set(read).size, `chapter ${c.number}`).toBe(read.length);
+      const said = new Set(lessons.flatMap((l) => l.dialogue?.lines.map((x) => x.text) ?? []));
+      expect(read.filter((ku) => said.has(ku)), `chapter ${c.number}`).toEqual([]);
       // matching pairs, missing words, replies, translating and writing, and listening: the chapter's practice
       expect(c.practice.match, `chapter ${c.number}`).toHaveLength(8);
       expect(c.practice.replies.length).toBeLessThanOrEqual(4);
@@ -123,10 +134,21 @@ describe('the Hevalo book', () => {
     expect(chapters.map((c) => c.practice.toKurdish.length)).toEqual([4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]);
     // "pick the picture": the pictures to name, in the chapters that have enough of them
     expect(chapters[0]!.practice.pictures.map((p) => [p.picture, p.ku])).toEqual([['apple', 'sêv'], ['tea', 'çay'], ['water', 'av'], ['bread', 'nan'], ['milk', 'şîr'], ['house', 'mal']]);
-    // practice asks for nothing that is printed beside its answer in the chapter
+    // practice brings back what the chapter taught, and never prints one task's answer in another
     for (const c of chapters) {
-      const printed = new Set(c.parts.flatMap((p) => p.lessons.flatMap((l) => [...l.sentences.map((s) => s.ku), ...(l.dialogue?.lines.map((d) => d.text) ?? [])])));
-      expect(c.practice.toKurdish.filter((t) => printed.has(t.ku))).toEqual([]);
+      const lines = [
+        ...c.practice.gaps.map((g) => g.text.replace('___', g.answer)),
+        ...c.practice.replies.flatMap((r) => [r.say, r.answer]),
+        ...c.practice.toKurdish.map((t) => t.ku),
+        ...c.practice.alone,
+      ];
+      expect(new Set(lines).size, `chapter ${c.number}`).toBe(lines.length);
+    }
+    // a line read alone, without its English, is never one an earlier chapter printed with it
+    const seen = new Set<string>();
+    for (const c of chapters) {
+      expect(c.practice.alone.filter((l) => seen.has(l)), `chapter ${c.number}`).toEqual([]);
+      for (const l of c.parts.flatMap((p) => p.lessons.flatMap((x) => [...x.sentences.map((s) => s.ku), ...(x.dialogue?.lines.map((d) => d.text) ?? [])]))) seen.add(l);
     }
   });
 
@@ -144,7 +166,9 @@ describe('the Hevalo book', () => {
     const lessons = roadBookChapters(plan, docs, stories, ALL).flatMap((c) => c.parts.flatMap((p) => p.lessons));
     expect(lessons).toHaveLength(192);
     // a telling for every lesson of the road, and for nothing else
-    expect(Object.keys(own).sort()).toEqual(lessons.map((l) => l.key).sort());
+    expect(Object.keys(own).filter((k) => !/^u\d{2}$/.test(k)).sort()).toEqual(lessons.map((l) => l.key).sort());
+    // and an opening paragraph of the book's own for each chapter
+    expect(Object.keys(own).filter((k) => /^u\d{2}$/.test(k))).toHaveLength(12);
     const press = new Press('beats');
     const width = TEXT.w - PANEL.w - 11;
     for (const l of lessons) {

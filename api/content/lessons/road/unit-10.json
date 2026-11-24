@@ -1176,7 +1176,7 @@
           "position": 2,
           "titleKu": "Jiyana zozanê",
           "titleEn": "Life on the zozan",
-          "grammarMd": "**Min sêv xwarin.** I ate apples. In the ergative past the verb agrees with the **object**, not the doer: *min sêvek xwar* (one apple) but *min sêv xwarin* (apples).\n\n- With a pronoun as the object it shows the person: *Min tu dîtî.* I saw you. · *Te ez dîtim.* You saw me. · *Me hûn dîtin.* We saw you all.\n- So *Wî ez dîtim* is “he saw me”, and *Min ew dît* is “I saw him”.",
+          "grammarMd": "**Min sêv xwarin.** I ate apples. In this past, with *min, te, wî*…, the verb agrees with the **thing done**, not the doer: *min sêvek xwar* (one apple) but *min sêv xwarin* (apples). Here *xwarin* is “ate”, for more than one thing, not “to eat”.\n\n- With a pronoun as the object it shows the person: *Min tu dîtî.* I saw you. · *Te ez dîtim.* You saw me. · *Me hûn dîtin.* We saw you all.\n- So *Wî ez dîtim* is “he saw me”, and *Min ew dît* is “I saw him”.",
           "lessons": [
             {
               "key": "u10s2l1",
@@ -2339,7 +2339,7 @@
           "position": 3,
           "titleKu": "Min dixwar, ez diçûm",
           "titleEn": "I was eating, I was going",
-          "grammarMd": "**Em her havîn diçûn zozanan.** We used to go to the pastures every summer. **di-** + the past stem says what used to happen, or what was going on: *ez diçûm* I used to go, *ew dihat* she used to come.\n\n- It is ergative like the simple past: *min dixwar* I used to eat, *wan digot* they used to say.\n- *Dema ku min çay vedixwar, …* While I was drinking tea, …",
+          "grammarMd": "**Em her havîn diçûn zozanan.** We used to go to the pastures every summer. **di-** + the past stem says what used to happen, or what was going on: *ez diçûm* I used to go, *ew dihat* she used to come.\n\n- With a verb that has an object it works like the simple past: *min dixwar* I used to eat, *wan digot* they used to say.\n- *Dema ku min çay vedixwar, …* While I was drinking tea, …",
           "lessons": [
             {
               "key": "u10s3l1",

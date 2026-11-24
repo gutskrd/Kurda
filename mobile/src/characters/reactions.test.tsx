@@ -109,7 +109,7 @@ describe('the caption', () => {
   it('leaves the face out when the character says it on screen', async () => {
     renderWithProviders(<ReactionCaption />);
     act(() => void sayReaction({ moment: 'miss', character: 'hevalo', drawn: true }));
-    await screen.findByRole('button', { name: 'Hevalo says “Ne xem e!”' });
+    await screen.findByRole('button', { name: 'Hevalo says “Xeman nexwe!”' });
     expect(screen.queryByTestId('reaction-caption-face')).toBeNull();
   });
 });

@@ -1154,7 +1154,7 @@
           "position": 2,
           "titleKu": "Me sêv berhev kirine",
           "titleEn": "We’ve picked the apples",
-          "grammarMd": "**Ez hatime.** I have come. The present perfect is the past stem + **-ime, -iyî, -iye, -ine** after a consonant, **-me, -yî, -ye, -ne** after a vowel: *ew hatiye* he has come, *em çûne* we have gone.\n\n- With an object it is ergative, like the past: *Min biryar daye.* I have decided. · *Me sêv berhev kirine.* We have picked the apples.\n- *Te hîç Amed dîtiye?* Have you ever seen Amed?",
+          "grammarMd": "**Ez hatime.** I have come. The present perfect is the past stem + **-ime, -iyî, -iye, -ine** after a consonant, **-me, -yî, -ye, -ne** after a vowel: *ew hatiye* he has come, *em çûne* we have gone.\n\n- With a verb that has an object it works like the past, with *min, te, wî*… as the doer: *Min biryar daye.* I have decided. · *Me sêv berhev kirine.* We have picked the apples.\n- *Te hîç Amed dîtiye?* Have you ever seen Amed?",
           "lessons": [
             {
               "key": "u11s2l1",
@@ -3479,7 +3479,7 @@
           "position": 4,
           "titleKu": "Planên me",
           "titleEn": "Our plans",
-          "grammarMd": "**Hêvî dikim ku tu bêyî.** I hope you’ll come. After **hêvî dikim ku** (I hope that) and **armanca min ev e ku** (my aim is to) the verb takes the bi- form.\n\n- **dema ku** + the bi- form looks ahead: *Dema ku ez vegerim malê, ez ê bi kurdî biaxivim.* When I go back home, I’ll speak Kurdish.\n- *Armanca min ev e ku ez her roj hinek bixwînim.* My aim is to read a little every day.",
+          "grammarMd": "**Hêvî dikim ku tu bêyî.** I hope you’ll come. After **hêvî dikim ku** (I hope that) and **armanca min ev e ku** (my aim is to) the verb takes the bi- form.\n\n- **dema ku** + the bi- form looks ahead: *Dema ku ez vegerim malê, ez ê bi kurdî biaxivim.* When I go back home, I’ll speak Kurdish.\n- With the past, **dema ku** looks back: *Dema ku ez hatim Sêvanê, …* When I came to Sêvan, …\n- *Armanca min ev e ku ez her roj hinek bixwînim.* My aim is to read a little every day.",
           "lessons": [
             {
               "key": "u11s4l1",

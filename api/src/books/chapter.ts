@@ -6,9 +6,9 @@
  *
  * The chapter wears its hue throughout, and the corner apple loses a bite every few pages until only the core is left.
  */
-import { BOOK_APPLE_BITES, BOOK_BACKDROP, WORD_PICTURES, bookBackdropSvg, bookSpotSvg, parseMarkdown, type BookPose, type BookSetting, type CharacterId, type HueSteps, type Span as MarkSpan } from '@kurda/shared';
+import { BOOK_APPLE_BITES, BOOK_BACKDROP, WORD_PICTURES, bookBackdropSvg, parseMarkdown, type BookPose, type BookSetting, type CharacterId, type HueSteps, type Span as MarkSpan } from '@kurda/shared';
 import { keepList, paginate } from './flow.js';
-import { T, appleArt, castArt, display, displayItalic, drawPicture, drawStamp, footOf, heavy, hueOf, label, runSheets, squareArt, STAMP, type Block, type Filler, type Places, type Sheet } from './page.js';
+import { T, castArt, display, displayItalic, drawPicture, drawStamp, footOf, heavy, hueOf, label, runSheets, STAMP, type Block, type Filler, type Places, type Sheet } from './page.js';
 import { PANEL, chapterEmblem, chapterHue, lessonScene, pictureForWord, sceneFor, sceneLayout, tellBeat, type BookPicture } from './pictures.js';
 import { chapterWords, type BookChapter, type BookDialogue, type BookLesson, type BookPair, type BookPart, type BookWord } from './road-book.js';
 import { INK, MARGIN, PAGE, Press, TEXT, blend, type Line, type Span, type Type } from './sheet.js';
@@ -22,7 +22,7 @@ const tones = (hue: HueSteps): { band: string; card: string; hill: string } => (
  * Who stands at the landmark on an opening page where it is not the road's own host for that land: Hamo, in his own
  * chapters.
  */
-const OPENER_HOST: Readonly<Record<number, CharacterId>> = { 4: 'hamo', 6: 'hamo', 8: 'hamo' };
+const OPENER_HOST: Readonly<Record<number, CharacterId>> = { 4: 'hamo', 6: 'hamo', 8: 'hamo', 10: 'hamo' };
 
 /** How Hevalo stands at each chapter's landmark, by chapter: the face of what the chapter does to him, from his own book poses. */
 const OPENER_DEER: readonly BookPose<'hevalo'>[] = ['curious', 'pleased', 'munching', 'caught', 'innocent', 'curious', 'pleased', 'innocent', 'curious', 'pleased', 'curious', 'innocent'];
@@ -253,7 +253,7 @@ function drawScene(press: Press, c: BookChapter, lesson: BookLesson, x: number, 
 /** How many lines of a beat a scene has room for beside its drawing. */
 const BEAT_LINES = 3;
 
-/** A lesson's opening: its scene, its name, the beat told beside it, and the line to say after Hamo. */
+/** A lesson's opening: its scene, its name, the beat told beside it, and the line to say out loud with what it means. */
 function lessonStrip(press: Press, c: BookChapter, lesson: BookLesson, follows: boolean): Block {
   const hue = hueOf(c);
   const side = lesson.position % 2 === 1 ? 'left' : 'right';
@@ -273,7 +273,10 @@ function lessonStrip(press: Press, c: BookChapter, lesson: BookLesson, follows: 
   // the line to say in even lines, so a bubble never ends on one word under a long line
   const bubble = lesson.say ? press.para(lesson.say, tw - 18, say, 3, true) : null;
   const bubbleH = bubble ? bubble.height + 6.4 : 0;
-  const textH = head + beat.height + (bubble ? 3.6 + bubbleH : 0);
+  // what the line means, small under its bubble, as the chapter's closing line has it
+  const means = bubble && lesson.sayEn ? press.para(lesson.sayEn, tw - 9, T.english, 2) : null;
+  const meansH = means ? means.height + 2.4 : 0;
+  const textH = head + beat.height + (bubble ? 3.6 + bubbleH + meansH : 0);
   const height = Math.max(PANEL.h, textH);
   return {
     height,
@@ -300,6 +303,7 @@ function lessonStrip(press: Press, c: BookChapter, lesson: BookLesson, follows: 
         const bx = side === 'left' ? tx : tx + tw - bw;
         press.bubble(bx, by, bw, bubbleH, hue.wash, { side, at: Math.min(9, bubbleH / 2) });
         press.set(bubble.lines, bx + 9, by + 3.2, say);
+        if (means) press.set(means.lines, side === 'left' ? tx + 9 : tx, by + bubbleH + 2.4, T.english, side === 'left' ? 'left' : 'right', tw - 9);
       }
     },
   };
@@ -399,7 +403,7 @@ function wordRows(press: Press, c: BookChapter, lesson: BookLesson, en: number):
 
 /** How far in a lesson's Kurdish lines start (`READ`), and its conversation's lines after the speaker's name (`SAID`); and the space before the English. */
 const READ = 9;
-const SAID = 30;
+const SAID = 36;
 const PAIR_GUTTER = 10;
 
 /** One line of Kurdish beside its English: the Kurdish from `left` up to the gutter before `en`, the English from `en` to the right edge. */
@@ -446,11 +450,12 @@ function pairRows(press: Press, c: BookChapter, pairs: readonly BookPair[], en: 
 }
 
 /**
- * A question's options as spans run on after it: each letter held to its first word by a no-break space, and an em
- * space between options, so a letter never ends a line alone.
+ * A question's options as spans run on after it: each letter held to its option by no-break spaces, and an em space
+ * between options, so a line breaks only between options (an option too long for a line of its own may still break).
  */
 function optionSpans(options: readonly string[], hue: HueSteps): Span[] {
-  return options.flatMap((o, k): Span[] => [...(k > 0 ? [{ text: '\u2003' }] : []), { text: 'abcdef'[k]!, font: 'bold', color: hue.deep }, { text: `\u00a0${o}` }]);
+  const whole = (o: string): string => (o.length <= 40 ? o.replace(/ /g, '\u00a0') : o);
+  return options.flatMap((o, k): Span[] => [...(k > 0 ? [{ text: '\u2003' }] : []), { text: 'abcdef'[k]!, font: 'bold', color: hue.deep }, { text: `\u00a0${whole(o)}` }]);
 }
 
 /** A conversation: who says what (named where the speaker changes), beside what it means, and the question the lesson asks about it. */
@@ -519,9 +524,9 @@ const TALE_PICTURES: Readonly<Record<number, readonly BookPicture[]>> = {
   7: [{ kind: 'spot', spot: 'flute' }, { kind: 'word', id: 'fire' }, { kind: 'word', id: 'drum' }],
   8: [{ kind: 'word', id: 'honey' }, { kind: 'spot', spot: 'moustache' }, { kind: 'word', id: 'moon' }],
   9: [{ kind: 'word', id: 'donkey' }, { kind: 'word', id: 'heart' }, { kind: 'word', id: 'spring' }],
-  10: [{ kind: 'spot', spot: 'doe' }, { kind: 'spot', spot: 'lake' }, { kind: 'spot', spot: 'flute' }],
-  11: [{ kind: 'word', id: 'apple' }, { kind: 'sapling' }, { kind: 'spot', spot: 'stove' }],
-  12: [{ kind: 'sapling' }, { kind: 'spot', spot: 'appleTree' }, { kind: 'word', id: 'basket' }],
+  10: [{ kind: 'spot', spot: 'doe' }, { kind: 'spot', spot: 'lake' }, { kind: 'spot', spot: 'whiteGoat' }],
+  11: [{ kind: 'word', id: 'apple' }, { kind: 'spot', spot: 'ladder' }, { kind: 'sapling' }],
+  12: [{ kind: 'word', id: 'wolf' }, { kind: 'word', id: 'kid' }, { kind: 'spot', spot: 'stove' }],
 };
 
 /** The things a story turns on, for the band over it. */
@@ -716,7 +721,7 @@ function practiceBlocks(press: Press, c: BookChapter, places: Places): Block[] {
       drawPicture(press, { kind: 'spot', spot: 'notebook' }, TEXT.x + TEXT.w - 48, y + 2, 36, hue);
       press.line('With a pencil', TEXT.x + 14, y + 4.5, display(16));
       const at = places.get('answers');
-      press.line(at === undefined ? 'The answers are at the back.' : `Cover the pages before this one. The answers are on page ${at}.`, TEXT.x + 14, y + 24.5, { ...T.english, color: hue.deep });
+      press.line(at === undefined ? 'The answers are at the back.' : `Try these without looking back. The answers are on page ${at}.`, TEXT.x + 14, y + 24.5, { ...T.english, color: hue.deep });
     },
   });
   let letter = 0;
@@ -847,7 +852,7 @@ function practiceBlocks(press: Press, c: BookChapter, places: Places): Block[] {
 
   const drawn = pr.pictures.filter((p) => Object.hasOwn(WORD_PICTURES, p.picture));
   if (drawn.length >= 3) {
-    blocks.push(taskHead(press, hue, next(), 'Name the pictures', 'in Kurdish, of course'));
+    blocks.push(taskHead(press, hue, next(), 'Name the pictures', 'write the Kurdish word under each'));
     const cw = (TEXT.w - inset) / Math.max(drawn.length, 5);
     blocks.push({
       height: 58,
@@ -867,7 +872,7 @@ function practiceBlocks(press: Press, c: BookChapter, places: Places): Block[] {
   }
 
   if (pr.alone.length > 0) {
-    blocks.push(taskHead(press, hue, next(), 'No English this time', 'Hevalo ate it. Read these aloud all the same'));
+    blocks.push(taskHead(press, hue, next(), 'No English this time', 'read each one aloud and work out what it means'));
     const rows: Block[] = pr.alone.map((line, i) => {
       const text = press.para(line, TEXT.w - inset - 14, T.kurdish);
       return {
@@ -887,9 +892,9 @@ function practiceBlocks(press: Press, c: BookChapter, places: Places): Block[] {
 // ───────────────────────────────────────────────────────────── how a chapter ends
 
 /**
- * How a chapter ends: its cancelled stamp, its line about Hevalo and his apples, and the apple core in the corner,
- * clear of the words. `small` uses a smaller stamp for a nearly full last page; `drop` is how far down its page the
- * block starts when it stands alone.
+ * How a chapter ends: its cancelled stamp and its line about Hevalo and his apples (the page's corner apple is a core by
+ * now). `small` uses a smaller stamp for a nearly full last page; `drop` is how far down its page the block starts when
+ * it stands alone.
  */
 function endBlock(press: Press, c: BookChapter, places: Places, small = false, drop = 0): Block {
   const hue = hueOf(c);
@@ -903,25 +908,14 @@ function endBlock(press: Press, c: BookChapter, places: Places, small = false, d
   const line = gag ? press.para(gag.ku, tw - 44, say, 3) : null;
   const meaning = gag ? press.para(gag.en, tw - 26, T.english, 3) : null;
   const at = places.get('passport');
-  const note = press.para(`Cancel its stamp in your passport${at === undefined ? '' : ` on page ${at}`}, then turn the page.`, tw, T.caption);
+  const note = press.para(`Cancel its stamp in your passport${at === undefined ? '' : ` on page ${at}`}.`, tw, T.caption);
   // where the words go, from the top of the block: the note, then Hamo's bubble and what it means under it
   const ny = small ? 37 : 46;
   const by = ny + note.height + (small ? 6 : 9);
   const bw = line ? Math.min(tw - 26, Math.max(...line.lines.map((l) => l.width)) + 18) : 0;
   const my = by + (line?.height ?? 0) + 11;
   const words = line && meaning ? my + meaning.height : ny + note.height;
-  // the core in the bottom corner, unless a line of the words reaches into it there; then in the top corner, beside the chapter's name, where that leaves it room; else under the words
-  const core = small ? 28 : 36;
-  const cx = TEXT.x + TEXT.w - core - 4;
-  const reach = (lines: readonly Line[], left: number, top: number, lead: number): number => lines.reduce((low, l, i) => (left + l.width > cx - 6 ? top + (i + 1) * lead : low), 0);
-  const crowd = Math.max(reach(note.lines, tx, ny, T.caption.lead), meaning ? reach(meaning.lines, tx + 25, my, T.english.lead) : 0, line && tx + 25 + bw > cx - 6 ? by + line.height + 8 : 0);
-  const base = h + (small ? 22 : 30);
-  const corner = base - core - 6;
-  const name = display(small ? 15 : 18);
-  const head = Math.max(press.measure(c.titleKu, name.font, name.size), press.measure(`CHAPTER ${c.number} IS YOURS`, label(hue.deep).font, label(hue.deep).size, label(hue.deep).tracking));
-  const top = tx + head <= cx - 8 && reach(note.lines, tx, ny, T.caption.lead) === 0;
-  const cy = crowd <= corner ? corner : top ? 2 : Math.max(corner, words + 6);
-  const height = drop + Math.max(base, cy + core + 4);
+  const height = drop + Math.max(h + (small ? 22 : 30), words + 4);
   return {
     height,
     gap: small ? 20 : 26,
@@ -938,56 +932,8 @@ function endBlock(press: Press, c: BookChapter, places: Places, small = false, d
         press.set(line.lines, tx + 34, y + by + 4, say);
         press.set(meaning.lines, tx + 25, y + my, T.english);
       }
-      press.place(appleArt(press, BOOK_APPLE_BITES), cx, y + cy, core);
     },
   };
-}
-
-/**
- * What stands at the foot of a page that ends early: Hevalo's tracks, or one of the two up to something, with a line
- * about it.
- */
-const ASIDES: ReadonlyArray<readonly [who: 'tracks' | 'hevalo' | 'hamo', pose: string, line: string]> = [
-  ['tracks', '', 'This way. There may be apples.'],
-  ['hevalo', 'innocent', 'It was like that when he found it.'],
-  ['hamo', 'asleep', 'Five minutes, says Hamo.'],
-  ['hevalo', 'caught', 'Nobody saw that. Turn the page.'],
-  ['hevalo', 'asleep', 'Shh. He is dreaming of an orchard.'],
-  ['hamo', 'proud', 'A moustache like this takes time. So does Kurdish.'],
-  ['tracks', '', 'Hevalo has gone on ahead.'],
-  ['hevalo', 'curious', 'Is the next page made of apples? He would like to know.'],
-  ['hamo', 'telling', 'Hamo has a story about this page. It is a long one.'],
-  ['hevalo', 'munching', 'He is not hungry, he says.'],
-  ['tracks', '', 'Somebody was here. Somebody with hooves.'],
-  ['hevalo', 'pleased', 'On you go. Hamo is putting the kettle on.'],
-  ['hamo', 'laughing', 'Hamo has read this page twice. He laughed both times.'],
-  ['hevalo', 'sad', 'No apples on this page either. He looked.'],
-];
-
-/** How many pages of a chapter may end on an aside, and how much room an aside needs: a short page is left plain rather than padded. */
-const ASIDES_PER_CHAPTER = 2;
-const ASIDE_ROOM = 90;
-
-/**
- * Which aside a book tells next, so they run on through chapters without repeating. Kept per press, so a book always
- * gets the same order.
- */
-const asidesTold = new WeakMap<Press, { next: number }>();
-
-/**
- * The pages of a chapter's run that end on an aside, from each page's leftover space (`slack`, by position in the run)
- * and the chapter's first page number: the roomiest, at most two, never two on one spread (an even page and the odd one
- * after), and never the last page, which ends on the chapter's pictures.
- */
-export function asidePages(slack: readonly number[], first: number): Set<number> {
-  const facing = (a: number, b: number): boolean => Math.abs(a - b) === 1 && (first + Math.min(a, b)) % 2 === 0;
-  const roomy = slack
-    .map((room, index) => ({ room, index }))
-    .filter((p) => p.index < slack.length - 1 && p.room >= ASIDE_ROOM)
-    .sort((a, b) => b.room - a.room || a.index - b.index);
-  const chosen: number[] = [];
-  for (const p of roomy) if (chosen.length < ASIDES_PER_CHAPTER && !chosen.some((c) => facing(c, p.index))) chosen.push(p.index);
-  return new Set(chosen);
 }
 
 /** The chapter's pictures at the end of its last page: a row of seven or more, or none. */
@@ -1020,42 +966,14 @@ export function chapterPictures(c: BookChapter): Array<{ picture: BookPicture; k
 }
 
 /**
- * What fills a page's leftover space: on the last page, under the stamp, the chapter in pictures (when they make a row
- * of at least seven); on a page ending early, one of the asides (at most two per chapter, never two on one spread, only
- * where there is room).
+ * What fills the last page's leftover space: under the stamp, the chapter in pictures (when they make a row of at least
+ * seven). A page that ends early elsewhere is left plain.
  */
-function chapterFiller(press: Press, c: BookChapter, slack: readonly number[]): Filler {
+function chapterFiller(press: Press, c: BookChapter): Filler {
   const hue = hueOf(c);
   const pictured = chapterPictures(c);
-  let chosen: Set<number> | null = null;
-  return (y, height, last, index, page) => {
-    if (!last) {
-      // which pages have an aside is settled once the chapter's first page has its number
-      chosen ??= asidePages(slack, page - index);
-      if (!chosen.has(index)) return;
-      const book = asidesTold.get(press) ?? { next: c.number * 5 };
-      asidesTold.set(press, book);
-      const [who, pose, line] = ASIDES[book.next++ % ASIDES.length]!;
-      const mid = y + height / 2 + 4;
-      // a page left half empty gets a larger one, so it reads as the close of what ends there
-      const large = height >= 200;
-      if (who === 'tracks') {
-        // the tracks once, as they were left: leading up the page toward the next
-        const size = large ? 84 : 64;
-        press.place(squareArt(press, 'spot|hoofprints', () => bookSpotSvg({ spot: 'hoofprints' })), PAGE.w / 2 - size / 2, mid - size + 6, size);
-        press.line(line, TEXT.x, mid + 12, T.english, 'center', TEXT.w);
-        return;
-      }
-      // a little round portrait, as the people of the road have theirs
-      const r = large ? 30 : 21;
-      const cy = mid - 8;
-      press.disc(PAGE.w / 2, cy, r, tones(hue).band);
-      press.within(PAGE.w / 2 - r, cy - r, r * 2, r * 2, r, () => press.place(castArt(press, who, pose), PAGE.w / 2 - r + 2, cy - r + 4.5, r * 2 - 4));
-      // what he says he found lies at the foot of the portrait, outside it, where it can be seen whole
-      if (pose === 'innocent') press.place(appleArt(press, BOOK_APPLE_BITES), PAGE.w / 2 + r * 0.55, cy + r * 0.3, r * 0.72);
-      press.line(line, TEXT.x, cy + r + 5, T.english, 'center', TEXT.w);
-      return;
-    }
+  return (y, height, last) => {
+    if (!last) return;
     const rows = stripRows(pictured.length, height - STRIP.gap);
     if (rows < 1) return;
     const shown = pictured.slice(0, rows * STRIP.per);
@@ -1129,8 +1047,7 @@ export function chapterSheets(press: Press, c: BookChapter, places: Places): { s
   const anchors: Array<[string, number]> = [[`${c.number}:opener`, 0]];
   const noted = (anchor: string, index: number): void => void anchors.push([anchor, index + 1]);
   const blocks = chapterBlocks(press, c, places);
-  const slack = paginate(blocks, TEXT.room).map((p) => TEXT.room - p.used);
-  const run = runSheets(press, blocks, (_, section) => ({ chapter: c, section, bites: 0 }), noted, chapterFiller(press, c, slack));
+  const run = runSheets(press, blocks, (_, section) => ({ chapter: c, section, bites: 0 }), noted, chapterFiller(press, c));
   const total = run.length + 1;
   run.forEach((sheet, i) => {
     if (sheet.furniture) sheet.furniture.bites = Math.min(BOOK_APPLE_BITES, Math.floor(((i + 1) * (BOOK_APPLE_BITES + 1)) / total));

@@ -10,6 +10,7 @@ import {
   bookCastSvg,
   bookPaintSvg,
   bookPostmarkSvg,
+  bookSilhouetteSvg,
   bookSpotSvg,
   characterArt,
   cropBox,
@@ -76,7 +77,7 @@ export function appleArt(press: Press, bites: number): Stamp {
 }
 
 /** The stamp of a drawing the book names (pictures.ts); a number has none, being set in type. A landmark casts `shade` where it stands on a page's own colour. */
-function pictureArt(press: Press, picture: BookPicture, shade?: string): Stamp | null {
+function pictureArt(press: Press, picture: BookPicture, hue: HueSteps, shade?: string): Stamp | null {
   switch (picture.kind) {
     case 'word':
       return squareArt(press, `word|${picture.id}`, () => wordPictureSvg({ id: picture.id }));
@@ -90,6 +91,8 @@ function pictureArt(press: Press, picture: BookPicture, shade?: string): Stamp |
       return castArt(press, picture.who, picture.pose);
     case 'sapling':
       return squareArt(press, 'sapling', () => treeSvg({ species: 'beru', stage: 2 }));
+    case 'silhouette':
+      return squareArt(press, `silhouette|${picture.who}|${hue.deep}`, () => bookSilhouetteSvg({ who: picture.who, deep: hue.deep, paper: hue.tint }));
     case 'figure':
       return null;
   }
@@ -97,7 +100,7 @@ function pictureArt(press: Press, picture: BookPicture, shade?: string): Stamp |
 
 /** A drawing in a square of `size` at (x, y); a number is set as its figure on a round of the hue's wash. */
 export function drawPicture(press: Press, picture: BookPicture, x: number, y: number, size: number, hue: HueSteps, shade?: string): void {
-  const art = pictureArt(press, picture, shade);
+  const art = pictureArt(press, picture, hue, shade);
   if (art) {
     press.place(art, x, y, size);
     return;
