@@ -6,6 +6,7 @@ import {
   PARENTAL_BEDTIMES,
   PARENTAL_DAILY_LIMITS,
   PARENTAL_SWITCHES,
+  fireLevel,
   isBelowMinimumAge,
   isMinor,
   weekdayName,
@@ -17,7 +18,8 @@ import {
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
-import { FlameIcon, ParentalIcon, RemovePersonIcon } from '../components/icons';
+import { Fire } from '../components/Fire';
+import { ParentalIcon, RemovePersonIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import { ErrorState } from '../components/states';
 import { useI18n, useT, type Translate } from '../i18n/I18nProvider';
@@ -352,7 +354,7 @@ function WeekCard({ week, streak, limit }: { week: TeenDay[]; streak: number; li
           {t('parental.week.title')}
         </h2>
         <span className="parental-week-streak">
-          <FlameIcon size={18} />
+          <Fire size={22} level={fireLevel(streak)} />
           {t('learn.today.streak', { count: streak })}
         </span>
       </div>

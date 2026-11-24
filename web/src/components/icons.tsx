@@ -38,7 +38,6 @@ import { ShareNetwork } from '@phosphor-icons/react/dist/icons/ShareNetwork';
 import { LinkSimple } from '@phosphor-icons/react/dist/icons/LinkSimple';
 import { PaperPlaneTilt } from '@phosphor-icons/react/dist/icons/PaperPlaneTilt';
 import { Repeat } from '@phosphor-icons/react/dist/icons/Repeat';
-import { Flame } from '@phosphor-icons/react/dist/icons/Flame';
 import { Heart } from '@phosphor-icons/react/dist/icons/Heart';
 import { Image as ImageGlyph } from '@phosphor-icons/react/dist/icons/Image';
 import { List } from '@phosphor-icons/react/dist/icons/List';
@@ -195,7 +194,6 @@ export const UsersIcon = named(Users, 22);
 /** A parent with a child in front of them: parental controls. */
 export const ParentalIcon = drawn('parental', 22);
 /** A streak, drawn as a flame as on the phone. */
-export const FlameIcon = named(Flame, 22);
 /** A streak freeze, which keeps a missed day, as on the phone. */
 export const IceIcon = named(Snowflake, 22);
 /** Zêr: a gold coin with Hevalo's deer carved into it. */

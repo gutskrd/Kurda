@@ -7,7 +7,6 @@ import {
   CareIcon,
   ChatsIcon,
   CheckIcon,
-  FlameIcon,
   GameIcon,
   GearIcon,
   GiftIcon,
@@ -32,6 +31,7 @@ import {
   noticeFiltersFor,
   noticePicture,
   noticeShows,
+  type FireLevel,
   type NoticeFilter,
   type NoticePicture,
 } from '@kurda/shared';
@@ -108,6 +108,12 @@ const FILTER_LABEL: Record<NoticeFilter, MessageKey> = {
   hevalo: 'notifications.filter.hevalo',
 };
 
+/** A streak notice's mark: Hevalo's own small fire, as beside every streak, rather than a generic flame. */
+const NOTE_FIRE: FireLevel = { stage: 'campfire', growth: 0.5 };
+function StreakFire({ size = 22 }: { size?: number }): React.JSX.Element {
+  return <Fire size={size} level={NOTE_FIRE} still />;
+}
+
 const KIND_ICON: Record<NoteKind, (p: { size?: number }) => React.JSX.Element> = {
   invite: TicketIcon,
   friendRequest: TicketIcon,
@@ -115,7 +121,7 @@ const KIND_ICON: Record<NoteKind, (p: { size?: number }) => React.JSX.Element> =
   gift: GiftIcon,
   badge: MedalIcon,
   league: TrophyIcon,
-  streak: FlameIcon,
+  streak: StreakFire,
   safety: SafetyIcon,
   care: CareIcon,
   picture: PhotoIcon,
@@ -448,7 +454,7 @@ function NotePicture({ picture }: { picture: NoticePicture }): React.JSX.Element
       ) : picture.kind === 'gift' ? (
         <GiftBox tier="rare" size={34} />
       ) : (
-        <Fire size={32} level={{ stage: 'campfire', growth: 0.5 }} still />
+        <Fire size={32} level={NOTE_FIRE} still />
       )}
     </span>
   );

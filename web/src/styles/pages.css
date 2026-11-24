@@ -1998,10 +1998,6 @@ button.mkp-fact {
   flex: none;
   line-height: 0;
 }
-/* a streak that is alive has its flame lit */
-.mkp-fact-lit {
-  color: var(--gold-ink);
-}
 /* a number with a page behind it is the way into that page */
 .mkp-fact--link {
   transition:
