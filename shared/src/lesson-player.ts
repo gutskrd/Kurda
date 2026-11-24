@@ -67,6 +67,8 @@ export interface DeliveredExercise {
   ask?: ExerciseAsk;
   /** a few words of context beside the line, where the line alone could be read two ways */
   cue?: string;
+  /** a word picture showing what the cue names ("a bowl of milk"), drawn in the cue's place */
+  cuePicture?: string;
   /** the words this item brings in for the first time, with their meanings */
   newWords?: NewWord[];
   /** multiple choice, in the order this session shows them (picture ids for a `picture` item) */
@@ -388,6 +390,15 @@ export function feedbackKind(feedback: Pick<Feedback, 'verdict' | 'accepted' | '
   }
   if (feedback.verdict === 'typo') return feedback.accepted ? 'almost' : 'almostStrict';
   return feedback.accepted ? 'correct' : 'notYet';
+}
+
+/**
+ * Whether a miss's right answer is one of the options on screen (a reply, a picture, a missing word), marked there once
+ * graded, so the verdict need not say it again.
+ */
+export function answerMarkedInPlace(exercise: Pick<DeliveredExercise, 'type' | 'options'>, feedback: Pick<Feedback, 'correction'>): boolean {
+  const correction = feedback.correction;
+  return (exercise.type === 'multiple_choice' || exercise.type === 'conversation') && !!correction && (exercise.options ?? []).includes(correction);
 }
 
 /**

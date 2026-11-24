@@ -1,7 +1,7 @@
 /**
  * Everything about an answer that is not about where the lesson is: the draft and its wire shape, match-pairs taps, the
- * Kurdish key bar, the letter-by-letter comparison feedback shows, and the kind of slip a typed miss was. Pure and shared
- * by both apps, like `lesson-player.ts`.
+ * Kurdish key bar, the comparison feedback shows (word by word, letters only inside a near miss), and the kind of slip
+ * a typed miss was. Pure and shared by both apps, like `lesson-player.ts`.
  */
 import { answerKey, foldDiacritics, foldLetter } from './kurdish-text.js';
 import type { ExerciseType, SelfRating } from './lesson-player.js';
@@ -300,6 +300,129 @@ export function letterDiff(given: string, expected: string): { given: DiffSegmen
     }
   }
   return { given: segments(a, aDiffers), expected: segments(b, bDiffers) };
+}
+
+/** Words as an answer is written: letters, marks and digits, with an apostrophe inside a word kept in it ("I’m"). */
+const WORD = /[\p{L}\p{M}\p{N}]+(?:['’ʼ][\p{L}\p{M}\p{N}]+)*/gu;
+
+/** An answer cut into its words and what lies between them, keeping every character. */
+function tokensOf(text: string): Array<{ text: string; word: boolean }> {
+  const out: Array<{ text: string; word: boolean }> = [];
+  let at = 0;
+  for (const m of text.matchAll(WORD)) {
+    if (m.index > at) out.push({ text: text.slice(at, m.index), word: false });
+    out.push({ text: m[0], word: true });
+    at = m.index + m[0].length;
+  }
+  if (at < text.length) out.push({ text: text.slice(at), word: false });
+  return out;
+}
+
+/** A word as grading compares it, with every apostrophe alike. */
+const wordKey = (word: string): string => answerKey(word).replace(/[’ʼ]/g, "'");
+
+/** Length of the longest common subsequence of two sequences. */
+function commonLength<T>(a: readonly T[], b: readonly T[]): number {
+  let row = new Array<number>(b.length + 1).fill(0);
+  for (let i = a.length - 1; i >= 0; i--) {
+    const next = new Array<number>(b.length + 1).fill(0);
+    for (let j = b.length - 1; j >= 0; j--) next[j] = a[i] === b[j] ? row[j + 1]! + 1 : Math.max(row[j]!, next[j + 1]!);
+    row = next;
+  }
+  return row[0]!;
+}
+
+/**
+ * Whether two stretches are one attempt at the same words, worth marking letter by letter: most of their letters agree
+ * once Kurdish marks are folded ("sev" and "sêv", "başim" and "baş im"). Different words ("tea", "the") are not.
+ */
+function nearMiss(given: string, expected: string): boolean {
+  const a = Array.from(foldDiacritics(answerKey(given)).replace(/[^\p{L}\p{N}]/gu, ''));
+  const b = Array.from(foldDiacritics(answerKey(expected)).replace(/[^\p{L}\p{N}]/gu, ''));
+  const longest = Math.max(a.length, b.length);
+  return longest > 0 && commonLength(a, b) / longest >= 0.7;
+}
+
+/**
+ * Both answers marked where they differ, word by word: words the two share are left plain, a word left out or added is
+ * marked whole, and only a near miss of the same word is marked letter by letter (`letterDiff`), so "I’m drinking tea"
+ * against "I’m drinking the tea." marks "the" and nothing else. Punctuation, which grading ignores, is never marked.
+ */
+export function answerDiff(given: string, expected: string): { given: DiffSegment[]; expected: DiffSegment[] } {
+  const a = tokensOf(given.normalize('NFC'));
+  const b = tokensOf(expected.normalize('NFC'));
+  const aw = a.flatMap((t, i) => (t.word ? [i] : []));
+  const bw = b.flatMap((t, i) => (t.word ? [i] : []));
+  const ak = aw.map((i) => wordKey(a[i]!.text));
+  const bk = bw.map((i) => wordKey(b[i]!.text));
+  // Which tokens are marked, and the letter marks a near-missed stretch is drawn with instead.
+  const aMarked = new Set<number>();
+  const bMarked = new Set<number>();
+  const aLetters = new Map<number, { to: number; segments: DiffSegment[] }>();
+  const bLetters = new Map<number, { to: number; segments: DiffSegment[] }>();
+
+  const settle = (ai: number, aj: number, bi: number, bj: number): void => {
+    if (ai === aj && bi === bj) return;
+    if (ai < aj && bi < bj) {
+      const aFrom = aw[ai]!;
+      const aTo = aw[aj - 1]!;
+      const bFrom = bw[bi]!;
+      const bTo = bw[bj - 1]!;
+      const aText = a.slice(aFrom, aTo + 1).map((t) => t.text).join('');
+      const bText = b.slice(bFrom, bTo + 1).map((t) => t.text).join('');
+      if (nearMiss(aText, bText)) {
+        const d = letterDiff(aText, bText);
+        aLetters.set(aFrom, { to: aTo, segments: d.given });
+        bLetters.set(bFrom, { to: bTo, segments: d.expected });
+        return;
+      }
+    }
+    for (let i = ai; i < aj; i++) aMarked.add(aw[i]!);
+    for (let j = bi; j < bj; j++) bMarked.add(bw[j]!);
+  };
+
+  // The shared words, a longest common subsequence of word keys; the stretches between them are settled one by one.
+  const lcs: number[][] = Array.from({ length: ak.length + 1 }, () => new Array<number>(bk.length + 1).fill(0));
+  for (let i = ak.length - 1; i >= 0; i--) {
+    for (let j = bk.length - 1; j >= 0; j--) lcs[i]![j] = ak[i] === bk[j] ? lcs[i + 1]![j + 1]! + 1 : Math.max(lcs[i + 1]![j]!, lcs[i]![j + 1]!);
+  }
+  let i = 0;
+  let j = 0;
+  let gapA = 0;
+  let gapB = 0;
+  while (i < ak.length && j < bk.length) {
+    if (ak[i] === bk[j]) {
+      settle(gapA, i, gapB, j);
+      i++;
+      j++;
+      gapA = i;
+      gapB = j;
+    } else if (lcs[i + 1]![j]! >= lcs[i]![j + 1]!) i++;
+    else j++;
+  }
+  settle(gapA, ak.length, gapB, bk.length);
+
+  const draw = (tokens: Array<{ text: string; word: boolean }>, marked: Set<number>, letters: Map<number, { to: number; segments: DiffSegment[] }>): DiffSegment[] => {
+    const out: DiffSegment[] = [];
+    const push = (seg: DiffSegment): void => {
+      const last = out[out.length - 1];
+      if (last && last.differs === seg.differs) last.text += seg.text;
+      else out.push({ ...seg });
+    };
+    for (let k = 0; k < tokens.length; k++) {
+      const near = letters.get(k);
+      if (near) {
+        near.segments.forEach(push);
+        k = near.to;
+      } else {
+        // The space between two marked words is marked with them, so they read as one stretch to fix.
+        const between = !tokens[k]!.word && /^\s+$/.test(tokens[k]!.text) && marked.has(k - 1) && marked.has(k + 1);
+        push({ text: tokens[k]!.text, differs: marked.has(k) || between });
+      }
+    }
+    return out;
+  };
+  return { given: draw(a, aMarked, aLetters), expected: draw(b, bMarked, bLetters) };
 }
 
 // ---------- what kind of slip it was ----------

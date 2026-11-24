@@ -14,6 +14,7 @@ import {
   isLeftMatched,
   isRightMatched,
   isSoraniDialect,
+  answerDiff,
   letterDiff,
   liftTile,
   pairKey,
@@ -242,5 +243,39 @@ describe('letterDiff', () => {
   it('compares composed and decomposed letters alike', () => {
     const decomposed = 's' + 'ê' + 'v';
     expect(letterDiff(decomposed, 'sêv').given).toEqual([{ text: 'sêv', differs: false }]);
+  });
+});
+
+describe('answerDiff', () => {
+  const marked = (segments: DiffSegment[]): string =>
+    segments.map((s) => (s.differs ? `[${s.text}]` : s.text)).join('');
+
+  it('marks a word left out as a whole word, and never the full stop', () => {
+    const d = answerDiff('I’m drinking tea', 'I’m drinking the tea.');
+    expect(marked(d.given)).toBe('I’m drinking tea');
+    expect(marked(d.expected)).toBe('I’m drinking [the] tea.');
+  });
+
+  it('marks a word added, and a different word, whole', () => {
+    expect(marked(answerDiff('I drink the milk', 'I drink tea').given)).toBe('I drink [the milk]');
+    expect(marked(answerDiff('I drink milk', 'I drink tea').expected)).toBe('I drink [tea]');
+  });
+
+  it('marks a near miss of the same word letter by letter', () => {
+    const d = answerDiff('Ez cayê vedixwim', 'Ez çayê vedixwim.');
+    expect(marked(d.given)).toBe('Ez [c]ayê vedixwim');
+    expect(marked(d.expected)).toBe('Ez [ç]ayê vedixwim.');
+    expect(marked(answerDiff('Ez başim', 'Ez baş im').expected)).toBe('Ez baş[ ]im');
+  });
+
+  it('reads an apostrophe, case and a keyboard’s letters as grading does', () => {
+    expect(marked(answerDiff("i'm drinking tea", 'I’m drinking tea').given)).toBe("i'm drinking tea");
+    expect(marked(answerDiff('كورد', 'کورد').given)).toBe('كورد');
+  });
+
+  it('keeps every character of both answers, in order', () => {
+    const d = answerDiff('Hevalo  sêv dixwe!', 'Hevalo sêvê dixwe.');
+    expect(d.given.map((s) => s.text).join('')).toBe('Hevalo  sêv dixwe!');
+    expect(d.expected.map((s) => s.text).join('')).toBe('Hevalo sêvê dixwe.');
   });
 });

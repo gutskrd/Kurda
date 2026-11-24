@@ -372,18 +372,30 @@ describe('a run of right answers', () => {
 
 describe('the verdict sheet', () => {
   it('rises in the verdict colour with a badge, the words in big type, the answer under its label, and Continue where Check was', async () => {
-    grade = () => ({ verdict: 'wrong', accepted: false, correction: 'Good day', duplicate: false });
-    lesson([{ id: 'mc', type: 'multiple_choice', prompt: '“Roj baş” tê çi wateyê?', options: ['Good night', 'Good day'] }]);
-    await userEvent.click(await screen.findByRole('button', { name: /Good night/ }));
+    grade = () => ({ verdict: 'wrong', accepted: false, correction: 'I drink tea.', duplicate: false });
+    lesson([{ id: 'tr', type: 'translate', prompt: 'Ez çayê vedixwim.', ask: 'to-english' }]);
+    await userEvent.type(await screen.findByRole('textbox'), 'I eat bread');
     await userEvent.click(screen.getByRole('button', { name: 'Check' }));
     const panel = await sheet();
     expect(panel.closest('.lesson-bar')).toHaveClass('is-sheet', 'is-notyet');
     expect(panel.querySelector('.lesson-verdict-mark svg')).not.toBeNull();
     expect(within(panel).getByText('Not yet')).toBeInTheDocument();
-    expect(within(panel).getByText('Answer:')).toHaveClass('lesson-correction-label');
-    expect(within(panel).getByText('Good day')).toBeInTheDocument();
+    expect(within(panel).getByText('Right answer')).toBeInTheDocument();
+    // the words that differ are marked whole, never the full stop
+    expect([...panel.querySelectorAll('.lesson-compare mark')].map((m) => m.textContent)).toEqual(['eat bread', 'drink tea']);
     const go = within(panel).getByRole('button', { name: 'Continue' });
     expect(go).toHaveClass('lesson-bar-go');
     expect(go).toHaveFocus();
+  });
+
+  it('does not repeat a right option that is marked where it stands', async () => {
+    grade = () => ({ verdict: 'wrong', accepted: false, correction: 'Good day', duplicate: false });
+    lesson([{ id: 'mc', type: 'multiple_choice', prompt: '“Roj baş” tê çi wateyê?', options: ['Good night', 'Good day'] }]);
+    await userEvent.click(await screen.findByRole('button', { name: /Good night/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Check' }));
+    const panel = await sheet();
+    expect(within(panel).getByText('Not yet')).toBeInTheDocument();
+    expect(within(panel).queryByText('Answer:')).toBeNull();
+    expect(screen.getByRole('button', { name: /Good day/ })).toHaveClass('is-right');
   });
 });

@@ -172,7 +172,8 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
 
     const feedback = await screen.findByRole('region', { name: 'Feedback' });
     expect(within(feedback).getByText('Not yet')).toBeInTheDocument();
-    expect(within(feedback).getByText('Good day')).toBeInTheDocument();
+    // The right option is marked where it stands, so the sheet does not say it again.
+    expect(within(feedback).queryByText('Good day')).toBeNull();
     expect(within(feedback).getByText('You will see this one again shortly.')).toBeInTheDocument();
     // The chosen option and the right one are told apart by more than colour.
     expect(screen.getByText('your answer')).toBeInTheDocument();

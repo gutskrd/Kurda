@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable, ReachReset } from '../theme/Pressable';
 import {
+  answerMarkedInPlace,
   feedbackKind,
   isSoraniDialect,
   nextLaunch,
@@ -455,6 +456,16 @@ function SessionPlayerBody({
   // A picture answer is already checked where it stands; its name in the bar would be a catalogue id.
   const picture = ex?.ask === 'picture';
   const shownFeedback = useMemo(() => (state.feedback && picture ? { ...state.feedback, correction: undefined } : state.feedback), [state.feedback, picture]);
+  // A miss whose right answer is an option on screen is marked there, so the bar does not say it again.
+  const answerInPlace = !!ex && !!state.feedback && answerMarkedInPlace(ex, state.feedback);
+
+  // The verdict bar rises under the exercise and takes room from it: the scroll goes to the exercise's foot, where the
+  // options and the answer are, so neither the choice nor the right one is left hidden under the bar.
+  const scroller = useRef<ScrollView>(null);
+  const grading = state.status === 'feedback';
+  const keepAnswerInView = useCallback(() => {
+    if (grading) scroller.current?.scrollToEnd({ animated: !reduceMotion });
+  }, [grading, reduceMotion]);
 
   // A verdict arriving: haptic and sound (`feelAnswer`), the run updated, and its reaction chosen: a run milestone,
   // Hevalo on the first answer, or Kurdish praise for a right one.
@@ -714,7 +725,7 @@ function SessionPlayerBody({
         </Modal>
       ) : null}
 
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scroller} onLayout={keepAnswerInView} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {fresh ? (
           // A new word in this question, shown in the lesson name's place in a line as tall, so nothing under it moves.
           <View style={[styles.kickerRow, styles.badged]}>
@@ -776,6 +787,7 @@ function SessionPlayerBody({
             answersItself={answersItself}
             staged={staged}
             standIn={standIn}
+            answerInPlace={answerInPlace}
             dialect={ex?.dialect ?? view.dialect}
             hint={hint}
             praise={praise}

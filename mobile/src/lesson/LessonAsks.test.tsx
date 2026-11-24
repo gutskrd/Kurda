@@ -148,6 +148,24 @@ describe('the bubble', () => {
     play([{ id: 'r', type: 'multiple_choice', ask: 'reply', prompt: 'Silav!', cue: 'to two people', options: ['Silav li we!', 'Silav!'] }]);
     expect((await screen.findByTestId('ask-cue')).textContent).toBe('to two people');
   });
+
+  it('draws what a cue names in the pill’s place, named by the cue', async () => {
+    play([{ id: 'r', type: 'multiple_choice', ask: 'reply', prompt: 'Ev çi ye?', cue: 'a bowl of milk', cuePicture: 'milk', options: ['Ev şîr e.', 'Ev çay e.'] }]);
+    const picture = await screen.findByTestId('ask-cue-picture');
+    expect(picture.getAttribute('aria-label')).toBe('a bowl of milk');
+    expect(screen.queryByTestId('ask-cue')).toBeNull();
+  });
+
+  it('does not repeat a right option in the bar, since it is marked where it stands', async () => {
+    play([{ id: 'r', type: 'multiple_choice', ask: 'reply', prompt: 'Ev çi ye?', options: ['Ev çay e.', 'Ev şîr e.'] }], {
+      routes: { 'POST /sessions/s1/answers': ok({ verdict: 'wrong', accepted: false, correction: 'Ev şîr e.', duplicate: false }) },
+    });
+    fireEvent.click(await screen.findByText('Ev çay e.'));
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    const bar = await screen.findByTestId('lesson-verdict');
+    expect(within(bar).queryByText('Ev şîr e.')).toBeNull();
+    expect(within(bar).queryByText('Answer')).toBeNull();
+  });
 });
 
 describe('the new word’s badge', () => {

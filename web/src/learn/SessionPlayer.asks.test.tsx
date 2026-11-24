@@ -179,6 +179,25 @@ describe('a reply, and the Kurdish for an English line', () => {
     expect(option.closest('.lesson-options')).toHaveClass('is-kurdish');
   });
 
+  it('draws what a cue names in its place, named for screen readers by the cue', async () => {
+    lesson([
+      {
+        id: 'r2',
+        type: 'multiple_choice',
+        ask: 'reply',
+        prompt: 'Ev çi ye?',
+        cue: 'a bowl of milk',
+        cuePicture: 'milk',
+        options: ['Ev şîr e.', 'Ev çay e.', 'Şîr xweş e.'],
+      },
+    ]);
+    expect(await headline()).toHaveTextContent('What do you answer?');
+    const picture = document.querySelector('.lesson-cue-picture')!;
+    expect(picture.querySelector('svg')).not.toBeNull();
+    expect(picture).toHaveTextContent('a bowl of milk');
+    expect(document.querySelector('.lesson-cue')).toBeNull();
+  });
+
   it('shows an English line in plain words with nothing to hear, and the options in Kurdish', async () => {
     lesson([
       {

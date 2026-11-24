@@ -204,6 +204,31 @@ describe('checkAnswer — translate (diacritic tolerance)', () => {
   });
 });
 
+describe('checkAnswer — translate into English', () => {
+  const tea = { ask: 'to-english', prompt: 'Ez çayê vedixwim.', accepted: ['I’m drinking the tea.', 'I am drinking the tea.', 'I drink tea.'] };
+
+  it('takes an answer without "the", which Kurmanji does not say', () => {
+    expect(grade('translate', tea, { text: 'I’m drinking tea' })).toEqual({ verdict: 'correct', accepted: true });
+    expect(grade('translate', tea, { text: 'I drink the tea' })).toEqual({ verdict: 'correct', accepted: true });
+  });
+
+  it('takes a contraction spelled out, and one made from it', () => {
+    expect(grade('translate', tea, { text: 'I am drinking tea.' }).accepted).toBe(true);
+    const hungry = { ask: 'to-english', prompt: 'Ez birçî me.', accepted: ['I am hungry.'] };
+    expect(grade('translate', hungry, { text: "I'm hungry" }).accepted).toBe(true);
+  });
+
+  it('still marks a different sentence wrong, with the first answer as the correction', () => {
+    expect(grade('translate', tea, { text: 'I’m eating bread' })).toEqual({ verdict: 'wrong', accepted: false, correction: 'I’m drinking the tea.' });
+    expect(grade('translate', tea, { text: 'the' }).accepted).toBe(false);
+  });
+
+  it('leaves a Kurdish answer as strict as before', () => {
+    const toKurdish = { ask: 'to-kurdish', prompt: 'I’m drinking the tea.', accepted: ['Ez çayê vedixwim.'] };
+    expect(grade('translate', toKurdish, { text: 'Ez çay vedixwim' }).accepted).toBe(false);
+  });
+});
+
 describe('checkAnswer — match_pairs', () => {
   const payload = {
     pairs: [

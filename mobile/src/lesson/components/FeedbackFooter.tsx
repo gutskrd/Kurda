@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
-import { isSoraniDialect, letterDiff, type DiffSegment, type ExerciseType, type RecordingVoice } from '@kurda/shared';
+import { answerDiff, isSoraniDialect, type DiffSegment, type ExerciseType, type RecordingVoice } from '@kurda/shared';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { PaletteScope, useTheme } from '../../theme/ThemeProvider';
 import { ClayButton } from '../../theme/glass';
@@ -34,7 +34,7 @@ const MARK = 24;
 /** The hairline along the bar's top, between the lesson and its foot. */
 const EDGE = CARD.edge;
 
-/** Answer types where the learner types Kurdish, compared letter by letter with the right answer (as on the website). */
+/** Answer types the learner types or builds, compared word by word with the right answer (`answerDiff`, as on the website). */
 const TYPED: ReadonlySet<ExerciseType | undefined> = new Set<ExerciseType | undefined>(['translate', 'writing', 'listening']);
 
 interface Props {
@@ -50,6 +50,8 @@ interface Props {
   staged?: boolean;
   /** Hevalo, reacting where nobody else is on screen: a cheer, or a curious tilt at a miss. */
   standIn?: CharacterReaction | null;
+  /** The right answer is marked where it was chosen from (an option, a picture, a word), so the bar does not repeat it. */
+  answerInPlace?: boolean;
   /** The course's variety of Kurdish, so answers are set in its direction. */
   dialect?: string | null;
   /** The kind of slip a typed miss was, in words: "Only the marks differ: e → ê". */
@@ -70,8 +72,8 @@ interface Props {
  * thumb never moves. Self-submitting exercises have no Check.
  *
  * The verdict sits beside Hevalo's small portrait in words and a mark (a check that pops and draws itself, or a quiet
- * cross), never colour alone, and is read as one sentence. A typed answer is shown above the right one with the
- * differing letters marked and the kind of slip explained; a miss says it will come back and offers the tips. The
+ * cross), never colour alone, and is read as one sentence. A typed answer is shown above the right one with what
+ * differs marked (a word left out, or the letters of a near miss) and the kind of slip explained; a miss says it will come back and offers the tips. The
  * native recording plays itself shortly after the verdict unless turned off (Settings → Sounds).
  *
  * Hevalo pops up in his window instead of the portrait only where nobody else is on screen: on the first answer, on
@@ -87,6 +89,7 @@ export function FeedbackFooter({
   answersItself = false,
   staged = false,
   standIn = null,
+  answerInPlace = false,
   dialect,
   hint = null,
   praise = null,
@@ -174,7 +177,7 @@ export function FeedbackFooter({
   // From just below the screen: its own height once measured, and further than any sheet until then.
   const translateY = reduce ? 0 : slide.interpolate({ inputRange: [0, 1], outputRange: [height || 600, 0] });
   const typed = TYPED.has(feedback.exerciseType) && feedback.given !== undefined && !!feedback.correction;
-  const diff = typed ? letterDiff(feedback.given!, feedback.correction!) : null;
+  const diff = typed ? answerDiff(feedback.given!, feedback.correction!) : null;
   const voice = staged ? null : knownVoice(feedback.modelAudioVoice);
 
   // Hevalo in his window when he comes in to react; otherwise quiet in his round portrait with the verdict's mark.
@@ -205,7 +208,7 @@ export function FeedbackFooter({
           <Compared label={t('lesson.fb.yours')} segments={diff.given} kurdish={kurdish} row={dir.row} />
           <Compared label={t('lesson.fb.right')} segments={diff.expected} kurdish={kurdish} row={dir.row} />
         </View>
-      ) : feedback.correction ? (
+      ) : feedback.correction && !answerInPlace ? (
         <View style={styles.answer}>
           <Text style={[styles.answerLabel, dir.text, { color: tint }]}>{t('lesson.answer')}</Text>
           <Text style={[styles.answerValue, dir.free, { color: colors.textPrimary }]}>{feedback.correction}</Text>
@@ -321,7 +324,7 @@ function Badge({ good, size = 32, rim }: { good: boolean; size?: number; rim?: s
   );
 }
 
-/** A typed answer, or the right one, with the differing letters underlined in gold, never colour alone. */
+/** A typed answer, or the right one, with what differs underlined in gold, never colour alone. */
 function Compared({ label, segments, kurdish, row }: { label: string; segments: DiffSegment[]; kurdish: TextStyle; row: ViewStyle['flexDirection'] }) {
   const { colors } = useTheme();
   return (
