@@ -353,9 +353,14 @@ function WeekCard({ week, streak, limit }: { week: TeenDay[]; streak: number; li
         <h2 className="parental-week-title" id="parental-week-title">
           {t('parental.week.title')}
         </h2>
+        {/* As the teen's own streak card shows it: the fire, the number, then what it counts, with no hyphen between. */}
         <span className="parental-week-streak">
-          <Fire size={22} level={fireLevel(streak)} />
-          {t('learn.today.streak', { count: streak })}
+          <Fire size={28} level={fireLevel(streak)} />
+          <span className="parental-week-days" aria-hidden="true">
+            <span className="parental-week-number">{new Intl.NumberFormat(locale).format(streak)}</span>
+            <span className="parental-week-unit">{streak === 1 ? t('daily.view.unitOne') : t('daily.view.unit')}</span>
+          </span>
+          <span className="sr-only">{t('learn.today.streak', { count: streak })}</span>
         </span>
       </div>
       <ol className="parental-bars">

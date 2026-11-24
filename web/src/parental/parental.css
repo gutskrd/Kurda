@@ -364,8 +364,39 @@
 .parental-week-streak {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  color: var(--ink-2);
+  gap: var(--space-2);
+}
+/* The parent's card reads as a summary, so its fire is drawn in ink like the figures beside it, its inner tongues
+   fading toward the page; the teen's own streak keeps its colours. Lifted so the flame sits level with the number. */
+.parental-week-streak .fire {
+  transform: translateY(-2px);
+}
+.parental-week-streak .fire .fire-loop:nth-of-type(1) {
+  fill: var(--ink);
+}
+.parental-week-streak .fire .fire-loop:nth-of-type(2) {
+  fill: color-mix(in srgb, var(--ink) 42%, var(--app-bg));
+}
+.parental-week-streak .fire .fire-loop:nth-of-type(3) {
+  fill: var(--app-bg);
+}
+.parental-week-streak .fire.is-unlit .fire-loop:nth-of-type(1) {
+  fill: var(--ink-3);
+}
+.parental-week-days {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3em;
+  white-space: nowrap;
+}
+.parental-week-number {
+  color: var(--ink);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.parental-week-unit {
+  color: var(--ink-3);
+  font-weight: 600;
 }
 .parental-bars {
   display: grid;
