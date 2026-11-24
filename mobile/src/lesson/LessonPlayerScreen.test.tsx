@@ -297,7 +297,8 @@ describe('a conversation', () => {
     });
     testAuth.client = client;
     renderWithProviders(<SessionPlayer view={talk} paths={paths} onExit={() => undefined} />);
-    expect(await screen.findByText('Çayekê, spas.')).toBeTruthy();
+    // the line's words are each a tap from their meaning, so the line is found by what it reads as a whole
+    expect(await screen.findByText((_, el) => !!el && el.textContent === 'Çayekê, spas.' && Array.from(el.children).every((c) => c.textContent !== 'Çayekê, spas.'))).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Check' }).getAttribute('aria-disabled')).toBe('true');
 
     fireEvent.click(screen.getByRole('radio', { name: 'Qehwe' }));

@@ -112,9 +112,10 @@ export function AskScene({
         ) : null}
         <View style={styles.grow}>
           {english ? (
-            <Text style={[ENGLISH, dir.rtl && styles.englishOnRtl, { color: colors.textPrimary }]} testID="ask-line">
-              {line}
-            </Text>
+            // An English line to put into Kurdish: its words with Kurdish to them open, the rest are plain.
+            <View testID="ask-line">
+              <PromptWords prompt={line} tokens={exercise.promptTokens} everyWord={false} style={[ENGLISH, dir.rtl && styles.englishOnRtl, { color: colors.textPrimary }]} />
+            </View>
           ) : (
             <View testID="ask-line">
               <PromptWords

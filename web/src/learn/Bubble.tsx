@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { PromptToken } from '@kurda/shared';
 import { SpeakerIcon } from '../components/icons';
 import { onPlaying, play } from '../lib/sound';
 import { useAutoplay } from './useAutoplay';
 import { useT } from '../i18n/I18nProvider';
-import type { LineToken } from './asks';
+import { lineTokens, type LineToken } from './asks';
 
 /**
  * A speech bubble for what an exercise asks, its tail pointing to the start side where the character chosen for its
@@ -15,16 +15,17 @@ export function Bubble({ className, children }: { className?: string; children: 
 }
 
 /**
- * The prompt with glossed words (`promptTokens`): dotted words open their meanings on a tap, click or Enter, and close on
- * Escape, an outside tap or a second tap; one is open at a time. Tokens that do not add up to the prompt are ignored.
+ * An item's question as a whole (`promptTokens`), for items that do not say what they ask: it may be English around
+ * Kurdish, so only the words something is known of open on a tap, click or Enter, and close on Escape, an outside tap
+ * or a second tap; one is open at a time. With none, it is plain text.
  */
 export function PromptWords({ text, tokens }: { text: string | undefined; tokens?: PromptToken[] }): React.JSX.Element | null {
   const [open, setOpen] = useState<number | null>(null);
   const base = useId();
   const toggle = useCallback((i: number, on: boolean) => setOpen((now) => (on ? i : now === i ? null : now)), []);
+  const words = useMemo(() => lineTokens(text ?? '', tokens, undefined), [text, tokens]);
   if (!text) return null;
-  const known = !!tokens && tokens.some((token) => !!token.meanings?.length) && tokens.map((token) => token.text).join('') === text;
-  if (!known)
+  if (!words.some(explained))
     return (
       <p className="lesson-prompt" dir="auto">
         {text}
@@ -32,14 +33,30 @@ export function PromptWords({ text, tokens }: { text: string | undefined; tokens
     );
   return (
     <div className="lesson-prompt" dir="auto">
-      {tokens.map((token, i) =>
-        token.meanings?.length ? (
-          <Word key={i} index={i} id={`${base}-w${i}`} text={token.text} meanings={token.meanings} open={open === i} onToggle={toggle} />
-        ) : (
-          <span key={i}>{token.text}</span>
-        ),
+      {words.map((token, i) =>
+        explained(token) ? <Word key={i} index={i} id={`${base}-w${i}`} token={token} open={open === i} onToggle={toggle} /> : <span key={i}>{token.text}</span>,
       )}
     </div>
+  );
+}
+
+/** A word something is known of: its meanings, or that they wait for the answer. */
+const explained = (token: LineToken): boolean => !!token.word && (!!token.meanings?.length || !!token.withheld);
+
+/**
+ * A conversation's line as words a tap explains, as the prompt's are (`PromptWords`), in the course's Kurdish.
+ */
+export function SaidWords({ text, tokens, lang, dir }: { text: string; tokens?: PromptToken[] | null; lang?: string; dir: 'ltr' | 'rtl' }): React.JSX.Element {
+  const [open, setOpen] = useState<number | null>(null);
+  const base = useId();
+  const toggle = useCallback((i: number, on: boolean) => setOpen((now) => (on ? i : now === i ? null : now)), []);
+  const words = useMemo(() => lineTokens(text, tokens, undefined), [text, tokens]);
+  return (
+    <span className="lesson-line-text" lang={lang} dir={dir}>
+      {words.map((token, i) =>
+        token.word ? <Word key={i} index={i} id={`${base}-w${i}`} token={token} open={open === i} onToggle={toggle} /> : <span key={i}>{token.text}</span>,
+      )}
+    </span>
   );
 }
 
@@ -86,8 +103,9 @@ export function LineWords({
           <span key={i} className={`lesson-gap${gap?.text ? ' is-filled' : ''}${gap?.verdict ? ` is-${gap.verdict}` : ''}`}>
             {gap?.text ? gap.text : <span className="sr-only">{t('lesson.ask.gap')}</span>}
           </span>
-        ) : token.meanings?.length ? (
-          <Word key={i} index={i} id={`${base}-w${i}`} text={token.text} meanings={token.meanings} isNew={token.isNew} open={open === i} onToggle={toggle} />
+        ) : token.word && (!english || explained(token)) ? (
+          // Every Kurdish word opens; an English line's open where there is Kurdish for them, which takes the course's face.
+          <Word key={i} index={i} id={`${base}-w${i}`} token={token} meaningLang={english ? lang : undefined} open={open === i} onToggle={toggle} />
         ) : (
           <span key={i}>{token.text}</span>
         ),
@@ -127,28 +145,31 @@ export function LinePlay({ src, auto = false }: { src: string; auto?: boolean })
 /** How close a word's meanings may come to the window's edge. */
 const EDGE = 8;
 
+/**
+ * One word of a line and, open, what is known of it: its meanings and the word an inflected form comes from; or that its
+ * meaning waits because it would give the answer away; or that the course has none for it yet.
+ */
 function Word({
   index,
   id,
-  text,
-  meanings,
+  token,
+  meaningLang,
   open,
   onToggle,
-  isNew = false,
 }: {
   index: number;
   id: string;
-  text: string;
-  meanings: string[];
+  token: LineToken;
+  /** The language the meanings are in, when it is not the interface's (Kurdish, for an English line). */
+  meaningLang?: string;
   open: boolean;
   onToggle: (index: number, on: boolean) => void;
-  /** A word the item introduces, underlined a little more strongly. */
-  isNew?: boolean;
 }): React.JSX.Element {
   const t = useT();
   const wrap = useRef<HTMLSpanElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const pop = useRef<HTMLSpanElement>(null);
+  const { text, meanings, base, withheld, isNew = false } = token;
   const label = t('lesson.words.meaningsOf', { word: text });
 
   // Escape closes them before the lesson takes it as "leave"; so does a tap anywhere else.
@@ -182,13 +203,14 @@ function Word({
     if (shift) el.style.setProperty('--shift', `${Math.round(shift)}px`);
   }, [open]);
 
+  const known = !!meanings?.length;
   return (
     <span className="lesson-word-wrap" ref={wrap}>
       <button
         ref={button}
         type="button"
         className={`lesson-word${isNew ? ' is-new' : ''}${open ? ' is-open' : ''}`}
-        aria-label={label}
+        // Named by the word itself, so a line of them still reads as the sentence; its list says what it is.
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         onClick={() => onToggle(index, !open)}
@@ -197,11 +219,22 @@ function Word({
       </button>
       {open && (
         <span id={id} ref={pop} className="lesson-meanings" role="list" aria-label={label}>
-          {meanings.map((meaning, i) => (
-            <span key={i} role="listitem" className="lesson-meaning" dir="auto">
-              {meaning}
+          {known ? (
+            meanings.map((meaning, i) => (
+              <span key={i} role="listitem" className="lesson-meaning" lang={meaningLang} dir="auto">
+                {meaning}
+              </span>
+            ))
+          ) : (
+            <span role="listitem" className="lesson-meaning is-note">
+              {t(withheld ? 'lesson.words.withheld' : 'lesson.words.none')}
             </span>
-          ))}
+          )}
+          {known && base && (
+            <span role="listitem" className="lesson-meaning is-base">
+              {t('lesson.words.from', { word: base })}
+            </span>
+          )}
         </span>
       )}
     </span>

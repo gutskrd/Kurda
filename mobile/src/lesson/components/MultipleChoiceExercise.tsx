@@ -90,7 +90,7 @@ export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled, f
               </Pressable>
             ) : null}
             <View style={styles.grow}>
-              <PromptWords prompt={exercise.prompt} tokens={exercise.promptTokens} style={[saidStyle(exercise.prompt), { color: colors.textPrimary }]} />
+              <PromptWords prompt={exercise.prompt} tokens={exercise.promptTokens} everyWord={false} style={[saidStyle(exercise.prompt), { color: colors.textPrimary }]} />
             </View>
           </View>
         </PromptScene>

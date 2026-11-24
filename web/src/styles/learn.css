@@ -1192,6 +1192,14 @@ html:has(.lesson-bar) {
 .lesson-meaning + .lesson-meaning {
   border-top: 2px solid var(--separator);
 }
+/* what a word has instead of meanings, and the word an inflected form comes from: quieter than a meaning */
+.lesson-meaning.is-note,
+.lesson-meaning.is-base {
+  color: var(--ink-2);
+}
+.lesson-meaning.is-base {
+  padding-block: 8px;
+}
 
 /* listening's bubble: the speaker and its waveform, "Slower" under it at the end */
 .lesson-sound {

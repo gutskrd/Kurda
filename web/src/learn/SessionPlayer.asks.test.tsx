@@ -125,13 +125,14 @@ describe('what does this mean', () => {
     expect(line()).toHaveTextContent(/^Silav!$/);
     expect(line()).toHaveAttribute('lang', 'ku');
     const inBubble = within(bubble());
-    expect(inBubble.getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Listen', 'Slower (0.75×)', 'What “Silav” means']);
+    // the line's word is a button named by the word itself, so the line still reads as the line
+    expect(inBubble.getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual(['Listen', 'Slower (0.75×)', 'Silav']);
     await userEvent.click(inBubble.getByRole('button', { name: 'Slower (0.75×)' }));
     expect(played.at(-1)).toEqual({ src: 'https://cdn.test/silav.mp3', rate: 0.75 });
     await userEvent.click(inBubble.getByRole('button', { name: 'Listen' }));
     expect(played.at(-1)).toEqual({ src: 'https://cdn.test/silav.mp3', rate: 1 });
     // The new word is marked, and its own meaning comes before the dictionary’s.
-    const word = inBubble.getByRole('button', { name: 'What “Silav” means' });
+    const word = inBubble.getByRole('button', { name: 'Silav' });
     expect(word).toHaveClass('is-new');
     await userEvent.click(word);
     const meanings = within(screen.getByRole('list', { name: 'What “Silav” means' })).getAllByRole('listitem');
@@ -153,8 +154,13 @@ describe('what does this mean', () => {
   it('says “New words” over an item that brings in more than one', async () => {
     lesson([{ ...meaning, prompt: 'Ez Hamo me.', promptTokens: undefined, newWords: [{ ku: 'ez', en: 'I' }, { ku: 'me', en: 'am' }] }]);
     expect(await screen.findByText('New words')).toBeInTheDocument();
-    expect(within(bubble()).getByRole('button', { name: 'What “Ez” means' })).toHaveClass('is-new');
-    expect(within(bubble()).getByRole('button', { name: 'What “me” means' })).toHaveClass('is-new');
+    expect(within(bubble()).getByRole('button', { name: 'Ez' })).toHaveClass('is-new');
+    expect(within(bubble()).getByRole('button', { name: 'me' })).toHaveClass('is-new');
+    // every other word of the line is a tap away too, and says when there is no meaning for it yet
+    const hamo = within(bubble()).getByRole('button', { name: 'Hamo' });
+    expect(hamo).not.toHaveClass('is-new');
+    await userEvent.click(hamo);
+    expect(screen.getByRole('list', { name: 'What “Hamo” means' })).toHaveTextContent('No meaning for this word yet.');
   });
 });
 

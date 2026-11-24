@@ -100,6 +100,8 @@ export interface DeliveredExercise {
   speakers?: ConversationSpeaker[];
   /** conversation: what is said, in order; `options` then holds the answers to `prompt`, the question about it */
   lines?: ConversationLine[];
+  /** conversation: each line as its words, as `promptTokens` gives the prompt, null for a line no word of which is known */
+  lineTokens?: Array<PromptToken[] | null>;
   /** conversation: each line's recording by its place, null when not recorded yet */
   lineAudio?: Array<string | null>;
   /** conversation: who says each line's recording, null where there is none or no character is chosen */
@@ -108,11 +110,18 @@ export interface DeliveredExercise {
   dialect?: string;
 }
 
-/** A piece of a prompt: a word, or what lies between two. */
+/**
+ * A piece of a line: a word, or what lies between two. In a Kurdish line a word's meanings are English; in an English
+ * line they are the Kurdish words it is said with, in their dictionary form.
+ */
 export interface PromptToken {
   text: string;
   /** what this word means, likeliest first (at most 3); absent for spaces, punctuation and words the course does not know */
   meanings?: string[];
+  /** the word an inflected form comes from ("çay" for "çayê"), when it is one */
+  base?: string;
+  /** the word has a meaning, held back because it would give the answer away */
+  withheld?: true;
 }
 
 /** An answer the server has already recorded in this session. */

@@ -616,10 +616,12 @@ describe('a conversation', () => {
       'Hamo: Çayekê, ji kerema xwe.',
     ]);
     expect(items.map((li) => li.classList.contains('is-end'))).toEqual([false, true, false, true]);
-    expect(within(items[1]!).getByText('Ez baş im, spas.')).toHaveAttribute('lang', 'ku');
+    // each line is its words, every one a tap from its meaning, in the course's Kurdish
+    expect(within(items[1]!).getByText((_, el) => el?.classList.contains('lesson-line-text') === true && el.textContent === 'Ez baş im, spas.')).toHaveAttribute('lang', 'ku');
+    expect(within(items[1]!).getByRole('button', { name: 'spas' })).toBeInTheDocument();
     // A small button for each recorded line, and none for the one not recorded yet.
     expect(within(items[0]!).getByRole('button', { name: 'Hear line 1 (Xezo)' })).toBeInTheDocument();
-    expect(within(items[2]!).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(items[2]!).queryByRole('button', { name: /^Hear line/ })).not.toBeInTheDocument();
     // Then the question, and its answers.
     expect(screen.getByText('What does Hamo want to drink?')).toBeInTheDocument();
     expect(within(screen.getByRole('group', { name: 'Answers' })).getAllByRole('button')).toHaveLength(3);
@@ -692,8 +694,8 @@ describe('a conversation', () => {
     expect(items[1]).toHaveClass('is-you', 'is-end');
     // The learner's name is in their own language, their line in Kurdish.
     expect(within(items[1]!).getByText('You')).not.toHaveAttribute('lang');
-    expect(within(items[1]!).getByText('Bi xêr bimînî!')).toHaveAttribute('lang', 'ku');
-    expect(within(items[1]!).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(items[1]!).getByText((_, el) => el?.classList.contains('lesson-line-text') === true && el.textContent === 'Bi xêr bimînî!')).toHaveAttribute('lang', 'ku');
+    expect(within(items[1]!).queryByRole('button', { name: /^Hear line/ })).not.toBeInTheDocument();
     expect([...document.querySelectorAll('.conversation-stage .speaking-character')].map((f) => f.getAttribute('data-speaker'))).toEqual(['hamo']);
   });
 

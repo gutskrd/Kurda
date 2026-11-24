@@ -1,5 +1,5 @@
 /** Lesson delivery + submission against real Postgres. */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { isArabicScript, pairKey, tileAnswer, type DeliveredExercise } from '@kurda/shared';
@@ -10,6 +10,12 @@ import { DictionaryRepository } from '../dictionary/repository.js';
 import { PracticeService } from '../practice/service.js';
 import { activate } from '../test/activate.js';
 import { wordsOf } from './item-words.js';
+
+// The road's word list would answer for the dictionary here: these items test the session's pairs and the dictionary.
+vi.mock('./road-glossary.js', async (actual) => ({
+  ...(await actual<typeof import('./road-glossary.js')>()),
+  roadGlossary: () => ({ dialect: 'kurmanji', words: new Map() }),
+}));
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -529,15 +535,16 @@ describe.skipIf(!DATABASE_URL)('word tiles, pairs answered as they are made, and
 
   it('gives no meaning that hands over a multiple-choice answer', async () => {
     const mc = find(await session('kurmanci'), ex.mc!);
-    // "Sêv" pairs with apple in the session, and apple is an option
-    expect(mc.promptTokens!.find((t) => t.text === 'Sêv')).toEqual({ text: 'Sêv' });
+    // "Sêv" pairs with apple in the session, and apple is an option: the word says its meaning waits
+    expect(mc.promptTokens!.find((t) => t.text === 'Sêv')).toEqual({ text: 'Sêv', withheld: true });
   });
 
   it('delivers items with nothing to build tiles or meanings from as before', async () => {
     const view = await session('bare');
     for (const e of view.exercises) {
       expect(e.bank).toBeUndefined();
-      expect(e.promptTokens).toBeUndefined();
+      // nothing to mean: a one-word translation's word is its answer, so at most it is marked as held back
+      expect(e.promptTokens?.some((t) => t.meanings)).toBeFalsy();
       expect(e.pairOf).toBeUndefined();
     }
     const graded = await authed('POST', `/sessions/${view.sessionId}/answers`, { exerciseId: ex.btr, answer: { text: 'sêv' } });

@@ -43,8 +43,14 @@ export function lineIsEnglish(exercise: DeliveredExercise): boolean {
 /** A piece of an item's line as the bubble shows it: a word, what lies between two, or the missing word's place. */
 export interface LineToken {
   text: string;
-  /** The word's meanings, the one it was introduced with first. */
+  /** A word, which a tap explains, as against the space or punctuation between two. */
+  word?: true;
+  /** The word's meanings, the one it was introduced with first; Kurdish words, for a word of an English line. */
   meanings?: string[];
+  /** The word an inflected form comes from. */
+  base?: string;
+  /** The word has a meaning that would give the answer away, so a tap says it waits. */
+  withheld?: true;
   /** A word this item introduces. */
   isNew?: boolean;
   /** The place of a missing-word item's gap. */
@@ -56,6 +62,9 @@ const MEANINGS_MAX = 3;
 
 /** A word as the server's tokenizer reads one: letters, marks, digits and ZWNJ, with an inner apostrophe or hyphen. */
 const WORD = /[\p{L}\p{M}\p{N}‌]+(?:['’-][\p{L}\p{M}\p{N}‌]+)*/gu;
+/** A piece with a letter or digit in it and no space at its ends is a word, or a phrase glossed whole; the rest lies between. */
+const WORDISH = /^\S(?:.*\S)?$/u;
+const LETTERED = /[\p{L}\p{N}]/u;
 
 /** How words are compared with new words: NFC, lower case, trimmed. */
 const wordKey = (word: string): string => word.normalize('NFC').toLowerCase().trim();
@@ -66,11 +75,23 @@ function wordsOf(line: string): LineToken[] {
   let at = 0;
   for (const m of line.matchAll(WORD)) {
     if (m.index > at) out.push({ text: line.slice(at, m.index) });
-    out.push({ text: m[0] });
+    out.push({ text: m[0], word: true });
     at = m.index + m[0].length;
   }
   if (at < line.length) out.push({ text: line.slice(at) });
   return out;
+}
+
+/** A server token as the bubble holds it: every word marked as one, whatever is known of it. */
+function fromServer(token: PromptToken): LineToken {
+  if (!WORDISH.test(token.text) || !LETTERED.test(token.text)) return { text: token.text };
+  return {
+    text: token.text,
+    word: true,
+    ...(token.meanings?.length ? { meanings: token.meanings } : {}),
+    ...(token.base ? { base: token.base } : {}),
+    ...(token.withheld ? { withheld: true as const } : {}),
+  };
 }
 
 /** Splits a piece containing the gap into before, the gap, and after. */
@@ -80,22 +101,21 @@ function splitAtGap(token: LineToken): LineToken[] {
 }
 
 /**
- * An item's line as the bubble lays it out: the server's words with meanings when they add up to the line
- * (`promptTokens`), else the line's own words. Words the item introduces (`newWords`) are marked new with the meaning the
- * lesson means first, and a missing-word gap is its own place.
+ * An item's line as the bubble lays it out: every word a tap from what is known of it. The server's words are used when
+ * they add up to the line (`promptTokens`, `lineTokens`), else the line's own words, which then say they have no meaning
+ * yet. Words the item introduces (`newWords`) are marked new with the meaning the lesson means first, even where that
+ * meaning is the answer, since meeting it is the point; a missing-word gap is its own place.
  */
-export function lineTokens(line: string, tokens: readonly PromptToken[] | undefined, newWords: readonly NewWord[] | undefined): LineToken[] {
+export function lineTokens(line: string, tokens: readonly PromptToken[] | null | undefined, newWords: readonly NewWord[] | undefined): LineToken[] {
   const trusted = !!tokens && tokens.map((token) => token.text).join('') === line;
-  const base: LineToken[] = trusted
-    ? tokens.map((token) => (token.meanings?.length ? { text: token.text, meanings: token.meanings } : { text: token.text }))
-    : wordsOf(line);
+  const base: LineToken[] = trusted ? tokens.map(fromServer) : wordsOf(line);
   const fresh = new Map((newWords ?? []).map((word) => [wordKey(word.ku), word.en.trim()]));
   return base
     .map((token): LineToken => {
-      const meaning = fresh.get(wordKey(token.text));
+      const meaning = token.word ? fresh.get(wordKey(token.text)) : undefined;
       if (!meaning) return token;
       const others = (token.meanings ?? []).filter((m) => wordKey(m) !== wordKey(meaning));
-      return { text: token.text, meanings: [meaning, ...others].slice(0, MEANINGS_MAX), isNew: true };
+      return { text: token.text, word: true, meanings: [meaning, ...others].slice(0, MEANINGS_MAX), ...(token.base ? { base: token.base } : {}), isNew: true };
     })
     .flatMap(splitAtGap);
 }

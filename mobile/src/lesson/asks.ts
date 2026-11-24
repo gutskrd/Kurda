@@ -79,27 +79,38 @@ export function freshWord(text: string, newWords: readonly NewWord[] | undefined
   return newWords.find((w) => bare(w.ku) === word) ?? null;
 }
 
+/** A word as the server's tokenizer reads one: letters, marks, digits and ZWNJ, with an inner apostrophe or hyphen. */
+const WORD = /[\p{L}\p{M}\p{N}\u200C]+(?:['’-][\p{L}\p{M}\p{N}\u200C]+)*/u;
+
+/** Whether a piece of a line is a word (or a phrase the course glosses whole), rather than the space or punctuation between two. */
+export const isWord = (text: string): boolean => /[\p{L}\p{N}]/u.test(text) && !/^\s|\s$/u.test(text);
+
+/** Whether something is known of a word: its meanings, or that they wait for the answer. */
+export const explained = (token: GlossToken): boolean => !!token.meanings?.length || !!token.withheld;
+
 /** Splits a line into words and what lies between them, for a line without tokens. */
 function tokenize(line: string): PromptToken[] {
   return line
-    .split(/([\p{L}\p{M}\p{N}'’-]+)/u)
+    .split(new RegExp(`(${WORD.source})`, 'u'))
     .filter((part) => part.length > 0)
     .map((text) => ({ text }));
 }
 
 /**
- * The line's words with their meanings. A new word (`newWords`) takes the item's own meaning, which suits the
- * context better than a dictionary's first sense, and is marked `fresh` so it can be drawn more strongly. A line
- * without tokens is split here, so its new words can still be tapped.
+ * The line's words with what is known of them. A new word (`newWords`) takes the item's own meaning, which suits the
+ * context better than a dictionary's first sense, even where it is the answer, since meeting it is the point; it is
+ * marked `fresh` so it can be drawn more strongly. Tokens that do not add up to the line are set aside for the line's
+ * own words, so its new words can still be tapped.
  */
-export function glossTokens(line: string, tokens: readonly PromptToken[] | undefined, newWords: readonly NewWord[] | undefined): GlossToken[] {
-  const base: readonly PromptToken[] = tokens && tokens.length > 0 ? tokens : tokenize(line);
+export function glossTokens(line: string, tokens: readonly PromptToken[] | null | undefined, newWords: readonly NewWord[] | undefined): GlossToken[] {
+  const trusted = !!tokens && tokens.length > 0 && tokens.map((token) => token.text).join('') === line;
+  const base: readonly PromptToken[] = trusted ? tokens : tokenize(line);
   if (!newWords || newWords.length === 0) return [...base];
   return base.map((token) => {
     const fresh = freshWord(token.text, newWords);
     if (!fresh) return token;
     const others = (token.meanings ?? []).filter((m) => m.toLowerCase() !== fresh.en.toLowerCase());
-    return { text: token.text, meanings: [fresh.en, ...others].slice(0, 3), fresh: true };
+    return { text: token.text, meanings: [fresh.en, ...others].slice(0, 3), ...(token.base ? { base: token.base } : {}), fresh: true };
   });
 }
 
