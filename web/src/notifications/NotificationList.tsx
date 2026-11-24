@@ -430,8 +430,8 @@ function NoteFace({ kind, actor, tone }: { kind: NoteKind; actor: Actor | null; 
   );
 }
 
-/** What a notification is about, drawn small at the end of its row. */
-function NotePicture({ picture }: { picture: NoticePicture }): React.JSX.Element {
+/** What a notification is about, drawn small at the end of its row, and on its toast (social/RailToasts.tsx). */
+export function NotePicture({ picture }: { picture: NoticePicture }): React.JSX.Element {
   const id = `np${useId().replace(/[^A-Za-z0-9]/g, '')}`;
   const svg = useMemo(() => {
     switch (picture.kind) {
