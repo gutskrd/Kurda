@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fakeClient, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from '../play/testing/navigation';
+import { SettingsPageScreen } from '../settings/SettingsPageScreen';
 import { SettingsScreen } from './SettingsScreen';
 
 vi.mock('react-native', () => import('../play/testing/native'));
@@ -24,7 +25,10 @@ describe('Settings → Security', () => {
   it('opens Password and Signed-in devices from Account, and offers Sign out everywhere', () => {
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
-    expect(screen.getByText('Account')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Account' }));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'account' });
+    cleanup();
+    renderWithProviders(<SettingsPageScreen page="account" onExit={() => undefined} />);
     fireEvent.click(screen.getByRole('button', { name: 'Password' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('ChangePassword');
     fireEvent.click(screen.getByRole('button', { name: 'Signed-in devices' }));

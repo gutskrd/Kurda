@@ -378,9 +378,9 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     const storage = createStorage(fullConfig);
     const service = new GdprService(pool, { storage });
 
-    const exportId = await service.requestExport(user.id);
+    const { id: exportId } = await service.requestExport(user.id);
     // duplicate request within 24h returns the same export
-    expect(await service.requestExport(user.id)).toBe(exportId);
+    expect(await service.requestExport(user.id)).toEqual({ id: exportId, reused: true });
 
     await service.fulfillExport(exportId);
     await service.fulfillExport(exportId); // idempotent
@@ -423,7 +423,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
 
     // Asked for while there was a private bucket, and processed after it was lost.
     storage.hasPrivateBucket = true;
-    const exportId = await service.requestExport(user.id);
+    const { id: exportId } = await service.requestExport(user.id);
     storage.hasPrivateBucket = false;
     await expect(service.fulfillExport(exportId)).rejects.toBeInstanceOf(PrivateStorageUnavailable);
     expect(storage.publicObjects.size).toBe(0);
@@ -438,20 +438,20 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     const service = new GdprService(pool, { storage: storage.asStorage });
     const keyOf = async (id: string) =>
       (await pool.query<{ storage_key: string | null }>(`SELECT storage_key FROM user_exports WHERE id = $1`, [id])).rows[0]!.storage_key;
-    const first = await service.requestExport(user.id);
+    const { id: first } = await service.requestExport(user.id);
     await service.fulfillExport(first);
     const firstKey = (await keyOf(first))!;
     expect([...storage.privateFiles.keys()]).toEqual([firstKey]);
 
     // a day later, another
     await pool.query(`UPDATE user_exports SET requested_at = now() - interval '25 hours' WHERE id = $1`, [first]);
-    const second = await service.requestExport(user.id);
+    const { id: second } = await service.requestExport(user.id);
     expect(second).not.toBe(first);
     await service.fulfillExport(second);
     const secondKey = (await keyOf(second))!;
     expect(secondKey).not.toBe(firstKey);
     expect([...storage.privateFiles.keys()]).toEqual([secondKey]);
     expect(await keyOf(first)).toBeNull();
-    expect(await service.exportStatus(user.id)).toMatchObject({ status: 'ready', downloadUrl: `https://signed.test/private/${secondKey}?ttl=900` });
+    expect(await service.exportStatus(user.id)).toMatchObject({ status: 'ready', downloadUrl: expect.stringContaining(`https://signed.test/private/${secondKey}?ttl=900`) });
   });
 });

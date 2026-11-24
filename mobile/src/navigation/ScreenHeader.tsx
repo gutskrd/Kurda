@@ -69,7 +69,8 @@ export function ScreenHeader({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const dir = useDirection();
-  // What stands opposite the way back: the page's own action, or search and the bell on a page to browse.
+  // What stands opposite the way back: the page's own action, or search and the bell on a page to browse. A page's own
+  // action always replaces the pill, so a page with a search of its own never shows a second magnifier.
   const trailing = right ?? (browse && onBack && leading === 'back' ? <GlobalActions /> : null);
   // A title that is a way in is a third control in the bar, one gap from each side.
   const titleControl = !!title && !!(titleAvatar || onTitlePress);

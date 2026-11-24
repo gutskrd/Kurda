@@ -87,8 +87,11 @@ export type RootStackParamList = {
   Notifications: undefined;
   NotificationCenter: undefined;
   Settings: undefined;
-  /** One page of Settings behind a row: language, theme, sounds, keyboard, leagues, profile visibility, credits (settings/SettingsPageScreen). */
-  SettingsPage: { page: SettingsPageKey };
+  /**
+   * One page of Settings: a category from its home, a parental page, or a choice behind a row
+   * (settings/SettingsPageScreen). `teenId` names the teen on a parent's pages about one.
+   */
+  SettingsPage: { page: SettingsPageKey; teenId?: string };
   BlockedUsers: undefined;
   /** Your reports and what became of them (reports/MyReportsScreen). */
   MyReports: undefined;
@@ -194,3 +197,10 @@ export const groupThreadRouteId = ({ params }: { params: RootStackParamList['Gro
  * front.
  */
 export const userProfileRouteId = ({ params }: { params: RootStackParamList['UserProfile'] }): string => params.userId;
+
+/**
+ * One route per Settings page (and per teen): a page opened from another Settings page is pushed over it rather than
+ * replacing it, and opening one already in the stack brings it forward.
+ */
+export const settingsPageRouteId = ({ params }: { params: RootStackParamList['SettingsPage'] }): string =>
+  params.teenId ? `${params.page}:${params.teenId}` : params.page;

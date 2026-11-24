@@ -28,9 +28,10 @@ import { useOptimisticSend } from '../lib/optimistic';
 import { PlayWithButton } from '../play/PlayButtons';
 import { countryName } from '../lib/countries';
 import { Flag } from '../components/Flag';
-import { ChevronIcon, EditIcon, FlameIcon, MedalIcon, SendIcon, TrophyIcon, XpIcon } from '../components/icons';
+import { Fire } from '../components/Fire';
+import { ChevronIcon, EditIcon, MedalIcon, SendIcon, TrophyIcon, XpIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
-import { compactCount, toLeagueTier } from '@kurda/shared';
+import { compactCount, fireLevel, toLeagueTier } from '@kurda/shared';
 import { leagueName } from '../ranks/names';
 import type { MessageKey } from '../i18n/en';
 
@@ -165,7 +166,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     key: 'streak',
     label: t('profile.stat.streak'),
     value: short(current),
-    icon: <FlameIcon size={15} className={current > 0 ? 'mkp-fact-lit' : undefined} />,
+    icon: <Fire size={18} level={fireLevel(current)} still />,
     spoken: days(current),
   });
 

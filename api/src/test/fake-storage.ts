@@ -1,5 +1,5 @@
 import { Readable } from 'node:stream';
-import { PrivateStorageUnavailable, type MediaStorage } from '../media/storage.js';
+import { PrivateStorageUnavailable, attachmentDisposition, type MediaStorage, type PrivateDownload } from '../media/storage.js';
 
 /**
  * An in-memory media bucket and private evidence storage for the moderation suites: what is public, what is private,
@@ -83,8 +83,10 @@ export class FakeStorage {
     return `https://signed.test/public/${key}?ttl=${ttl}`;
   }
 
-  async createPrivateDownloadUrl(key: string, ttl = 900): Promise<string> {
-    return `https://signed.test/private/${key}?ttl=${ttl}`;
+  async createPrivateDownloadUrl(key: string, opts: { download?: PrivateDownload; expiresInSeconds?: number } = {}): Promise<string> {
+    const ttl = opts.expiresInSeconds ?? 900;
+    const saved = opts.download ? `&disposition=${encodeURIComponent(attachmentDisposition(opts.download.filename))}&type=${encodeURIComponent(opts.download.contentType)}` : '';
+    return `https://signed.test/private/${key}?ttl=${ttl}${saved}`;
   }
 
   async createEvidenceDownloadUrl(target: string, ttl = 300): Promise<string> {

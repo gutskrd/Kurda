@@ -21,6 +21,7 @@ export type NoteKind =
   | 'groupOut'
   | 'groupBan'
   | 'groupAsk'
+  | 'parental'
   | 'notice';
 
 const BY_DATA: Record<string, NoteKind> = {
@@ -42,6 +43,13 @@ const BY_DATA: Record<string, NoteKind> = {
   group_request: 'groupAsk',
   group_request_approved: 'group',
   group_request_declined: 'group',
+  parental_connected: 'parental',
+  parental_ended: 'parental',
+  parental_changed: 'parental',
+  parental_parent_added: 'parental',
+  parental_zone: 'parental',
+  parental_leave: 'parental',
+  parental_birth: 'parental',
 };
 
 const BY_CATEGORY: Record<string, NoteKind> = {

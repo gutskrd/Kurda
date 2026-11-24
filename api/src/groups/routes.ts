@@ -13,6 +13,7 @@ import { requireAccount } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
+import { requireParental, requireSwitchOn } from '../parental/supervision.js';
 import type { AppConfig } from '../config/env.js';
 import { mediaLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
@@ -57,8 +58,8 @@ export function registerGroupRoutes(
           description: z.string().max(300).optional(),
         }),
       },
-      // a group's name and description are published text
-      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')],
+      // a group's name and description are published text, and a group is a chat
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireParental('chat')],
     },
     async (req, reply) => {
       const input = req.body as { name: string; description?: string };
@@ -81,13 +82,13 @@ export function registerGroupRoutes(
   // There are no groups to discover; kept for older apps that still request the list.
   app.get('/groups', { preHandler: requireAccount }, async () => ({ groups: [] }));
   /** The caller's own groups: the only list of groups there is. */
-  app.get('/me/groups', { preHandler: requireAccount }, async (req) => ({ groups: await groups.myGroups(req.user!.id, publicUrl) }));
+  app.get('/me/groups', { preHandler: [requireAccount, requireSwitchOn('chat')] }, async (req) => ({ groups: await groups.myGroups(req.user!.id, publicUrl) }));
 
   /**
    * A group with its roster, for a member. Someone banned gets its name, picture and their standing; anyone else gets
    * 404 GROUP_NOT_FOUND, as for an unknown id.
    */
-  app.get('/groups/:id', { schema: { params: idParam }, preHandler: requireAccount }, async (req) => {
+  app.get('/groups/:id', { schema: { params: idParam }, preHandler: [requireAccount, requireSwitchOn('chat')] }, async (req) => {
     const id = (req.params as { id: string }).id;
     // The new picture a person is still checking: for the group's owner and admins and whoever put it up, never for others.
     return groups.get(id, req.user!.id, publicUrl, app.hasDecorator('pictures') ? (key) => app.pictures.ownerLink(key) : undefined);
@@ -283,8 +284,8 @@ export function registerGroupRoutes(
     {
       schema: { params: idParam, body: z.object({ note: z.string().max(GROUP_REQUEST_NOTE_MAX).nullable().optional() }) },
       config: { rateLimit: { max: 5, windowMs: 24 * 60 * 60_000, per: 'user-or-ip' as const } },
-      // the note reaches the group's admins
-      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')],
+      // the note reaches the group's admins, and coming back is joining its chat again
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireParental('chat')],
     },
     async (req) => {
       const { id } = req.params as { id: string };

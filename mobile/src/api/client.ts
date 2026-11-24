@@ -33,6 +33,11 @@ export interface ApiClientOptions {
    * posts or messages shows it before the next try, without waiting for `/me`. The call still returns the refusal.
    */
   onHeld?: () => void;
+  /**
+   * Called when a refusal says a parent switched this off or Hevalo is resting for a supervised teen (403
+   * PARENTAL_BLOCKED or PARENTAL_PAUSED), so the app reads the teen's limits again. The call still returns the refusal.
+   */
+  onParental?: () => void;
   fetchFn?: FetchLike;
   /** Injectable for tests. */
   idGenerator?: () => string;
@@ -303,6 +308,7 @@ export class ApiClient {
     // A guest at a door only an account opens: the offer to make one goes up (auth/AccountGate).
     if (res.status === 403 && envelope.code === GUEST_ACCOUNT_CODE) this.opts.onGuestRefused?.();
     if (res.status === 403 && envelope.code === ACCOUNT_HELD) this.opts.onHeld?.();
+    if (res.status === 403 && (envelope.code === 'PARENTAL_BLOCKED' || envelope.code === 'PARENTAL_PAUSED')) this.opts.onParental?.();
 
     if (res.status === 429) {
       const retryAfter = Number(res.headers.get('retry-after'));

@@ -28,6 +28,7 @@ import { SendError } from '../reports/SendError';
 import { ReportSheet } from '../reports/ReportSheet';
 import { useChatGifts } from '../gifts/useChatGifts';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
+import { ParentalOffPlace, useParentalOff } from '../parental/ParentalNote';
 import { byTime, THREAD_POLL_FALLBACK, THREAD_POLL_LIVE } from './threadShared';
 
 /** A message as the thread draws it: the server's, or one of the reader's own that is not sent yet. */
@@ -56,20 +57,22 @@ export function sendError(err: ApiError, t: Translate): string {
  * One direct conversation, used by the Messages page and the social rail's dock so both share read receipts, typing
  * and realtime subscriptions. With `onClose` it is a dock, and the header offers a close button instead of a link back.
  */
-export function DmThread({
-  otherId,
-  otherName,
-  onSent,
-  onClose,
-  className = '',
-}: {
+interface DmThreadProps {
   otherId: string;
   otherName?: string;
   onSent: () => void;
   /** present when docked: closes the panel rather than navigating away */
   onClose?: () => void;
   className?: string;
-}): React.JSX.Element {
+}
+
+export function DmThread(props: DmThreadProps): React.JSX.Element {
+  // A teen whose parent switched chats off cannot read them either, so the thread gives way to the calm line unread.
+  if (useParentalOff('chat')) return <ParentalOffPlace className={props.className} />;
+  return <Thread {...props} />;
+}
+
+function Thread({ otherId, otherName, onSent, onClose, className = '' }: DmThreadProps): React.JSX.Element {
   const { client, user } = useAuth();
   const t = useT();
   const { state } = useRealtime();

@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react';
 import {
   RUN_SHOWN_FROM,
   VERDICT_TIMING,
+  answerDiff,
   feedbackKind,
-  letterDiff,
   runFireLevel,
   typedHint,
   type DiffSegment,
@@ -47,7 +47,7 @@ const HINT: Record<TypedHint['kind'], MessageKey> = {
   extra: 'lesson.hint.extra',
 };
 
-/** Kurdish answers the learner types, compared letter by letter with the right one. */
+/** Answers the learner types or builds, compared word by word with the right one (`answerDiff`). */
 const TYPED: ReadonlySet<ExerciseType | undefined> = new Set<ExerciseType | undefined>(['translate', 'writing', 'listening']);
 /** Exercise types whose right answer is Kurdish; other types' answers may be in any language. */
 export const KURDISH_ANSWER: ReadonlySet<ExerciseType | undefined> = new Set<ExerciseType | undefined>(['translate', 'writing', 'listening', 'speaking']);
@@ -92,13 +92,14 @@ export interface RunMark {
 
 /**
  * The verdict sheet (ActionBar.tsx): the verdict in words and a mark, never colour alone; a typed answer above the
- * right one with the differing letters marked and, for a single kind of slip, what it was ("only the marks differ: s →
- * ş"); the recording, which plays by itself after the verdict (Settings → Sounds); and Continue where Check was, focused
+ * right one with what differs marked (a word left out, or the letters of a near miss) and, for a single kind of slip,
+ * what it was ("only the marks differ: s → ş"); the recording, which plays by itself after the verdict (Settings → Sounds); and Continue where Check was, focused
  * so Enter goes on. A right answer may be praised in Kurdish, and runs count from three. Beside it stands the model's
  * speaker, or Hevalo on a lesson's first answer, every miss and milestones, so his cheer keeps its worth.
  */
 export function FeedbackPanel({
   feedback,
+  answerInPlace = false,
   kurdishAnswer = false,
   dialect,
   speaker = null,
@@ -109,6 +110,8 @@ export function FeedbackPanel({
   onContinue,
 }: {
   feedback: Feedback;
+  /** The right answer is marked where it was chosen from (an option, a picture, a word), so the sheet does not repeat it. */
+  answerInPlace?: boolean;
   /** The right answer is Kurdish whatever the item's type (a reply chosen in Kurdish, a missing word). */
   kurdishAnswer?: boolean;
   dialect: string | null | undefined;
@@ -130,7 +133,7 @@ export function FeedbackPanel({
   const tone = !feedback.accepted ? 'notyet' : feedback.verdict === 'correct' ? 'right' : 'almost';
   const { lang, dir } = kurdishText(dialect);
   const typed = TYPED.has(feedback.exerciseType) && feedback.given !== undefined && !!feedback.correction;
-  const diff = typed ? letterDiff(feedback.given!, feedback.correction!) : null;
+  const diff = typed ? answerDiff(feedback.given!, feedback.correction!) : null;
   const hint = typed ? hintLine(typedHint(feedback.given!, feedback.correction!, dialect), dir === 'rtl', t) : null;
   const kurdish = kurdishAnswer || KURDISH_ANSWER.has(feedback.exerciseType);
   const shownRun = run && run.count >= RUN_SHOWN_FROM ? run : null;
@@ -212,7 +215,8 @@ export function FeedbackPanel({
               </dd>
             </dl>
           ) : (
-            feedback.correction && (
+            feedback.correction &&
+            !answerInPlace && (
               <p className="lesson-correction">
                 <span className="lesson-correction-label">{t('lesson.fb.answer')}</span>{' '}
                 <strong lang={kurdish ? lang : undefined} dir="auto">

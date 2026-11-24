@@ -359,6 +359,24 @@ describe('ApiClient', () => {
     expect(await storage.get()).toEqual({ accessToken: 'acc-1', refreshToken: 'ref-1' });
   });
 
+  /* A parent's switch or pause met at a write is reported, so the teen's limits are read again at once. */
+  it('passes a parental refusal to onParental, and keeps the refusal', async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(403, { code: 'PARENTAL_BLOCKED', message: 'switched off', details: { control: 'chat' } }))
+      .mockResolvedValueOnce(jsonResponse(403, { code: 'PARENTAL_PAUSED', message: 'resting', details: { paused: 'bedtime', resumesAt: null } }))
+      .mockResolvedValueOnce(jsonResponse(403, { code: 'FORBIDDEN', message: 'not yours' }));
+    const storage = new MemoryTokenStorage();
+    await storage.set({ accessToken: 'acc-1', refreshToken: 'ref-1' });
+    const onParental = vi.fn();
+    const client = new ApiClient({ baseUrl: 'https://api.test', storage, onLogout: () => undefined, onParental, fetchFn: fetchFn as never });
+    const first = await client.post('/chat/u2/messages', { body: 'Silav' });
+    expect(first).toMatchObject({ ok: false, error: { kind: 'client', code: 'PARENTAL_BLOCKED', status: 403, details: { control: 'chat' } } });
+    await client.post('/letters', { body: 'Silav' });
+    await client.delete('/library/posts/p1');
+    expect(onParental).toHaveBeenCalledTimes(2);
+  });
+
   it('ends the session on the server with the stored refresh token', async () => {
     const fetchFn = vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }));
     const { client, storage, ready } = makeClient(fetchFn);

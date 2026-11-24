@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted, voiceAttachable } from '../moderation/restrictions.js';
+import { requireParental } from '../parental/supervision.js';
 import { LibraryCommentService, type CreateCommentInput } from './comment-service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
@@ -47,7 +48,7 @@ export function registerLibraryCommentRoutes(
     {
       schema: { params: postIdParam, body: createBody },
       config: { rateLimit: { max: 30, windowMs: 60_000 } },
-      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireParental('posts')],
     },
     async (req, reply) => {
       const { postId } = req.params as { postId: string };
@@ -127,7 +128,7 @@ export function registerLibraryCommentRoutes(
   /** Edit own comment (admins any). */
   app.patch(
     '/library/comments/:id',
-    { schema: { params: idParam, body: editBody }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')] },
+    { schema: { params: idParam, body: editBody }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireParental('posts')] },
     async (req, reply) => {
       const input = req.body as CreateCommentInput;
       // A voice note added in an edit is checked like a new one; resending the existing one is not a new attachment.

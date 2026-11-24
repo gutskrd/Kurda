@@ -10,7 +10,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../../theme/tokens';
 import { useValley } from '../ValleyScope';
 import { CARD } from '../valley';
-import { aroundGap, glossTokens, type GlossToken } from '../asks';
+import { aroundGap, explained, glossTokens, isWord, type GlossToken } from '../asks';
 
 /** The popover's edge and the rule between meanings: the lesson's hairline. */
 const EDGE = CARD.edge;
@@ -46,23 +46,29 @@ interface Opened {
 }
 
 /**
- * A prompt whose words can be looked up. A word with known meanings (`promptTokens`) has a dotted underline, and a
- * tap opens a popover under it listing them; tapping elsewhere closes it. For screen readers each such word is a
- * button whose hint reads the meanings. Soranî lines start from the right. New words (`newWords`) lead with the
- * item's meaning and have heavier gold dots. A 'missing' item draws `gap` in the gap's place.
+ * A line whose words can be looked up. In a Kurdish line every word has a dotted underline, and a tap opens a popover
+ * under it with what is known of it: its meanings and the word an inflected form comes from, or that its meaning waits
+ * because it would give the answer away, or that there is none yet. In an English line, or a question that may mix the
+ * two (`everyWord` off), only words with something to show are underlined; their meanings are Kurdish. Tapping
+ * elsewhere closes it. For screen readers each such word is a button whose hint reads what the popover shows. Soranî
+ * lines start from the right. New words (`newWords`) lead with the item's meaning and have heavier gold dots. A
+ * 'missing' item draws `gap` in the gap's place.
  */
 export function PromptWords({
   prompt,
   tokens,
   newWords,
   gap,
+  everyWord = true,
   style,
 }: {
   prompt: string;
-  tokens?: PromptToken[];
+  tokens?: PromptToken[] | null;
   newWords?: NewWord[];
   /** What stands in the line's gap (`GAP`): the slot for the chosen or typed word. */
   gap?: ReactNode;
+  /** Every word opens, as in a Kurdish line; off, only words with something to show do. */
+  everyWord?: boolean;
   style?: StyleProp<TextStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -86,9 +92,12 @@ export function PromptWords({
   const hasGap = pieces.includes(null);
   const reach = wordReach(StyleSheet.flatten(style)?.lineHeight);
 
-  if (!hasGap && !glossed.some((token) => token.meanings && token.meanings.length > 0)) {
+  const opens = (token: GlossToken): boolean => isWord(token.text) && (everyWord || explained(token));
+  if (!hasGap && !glossed.some(opens)) {
     return <Text style={[style, direction]}>{prompt}</Text>;
   }
+  // What a word's popover says when it has no meanings to list.
+  const noteOf = (token: GlossToken): string => t(token.withheld ? 'lesson.words.withheld' : 'lesson.words.none');
 
   const show = (index: number): void => {
     const word = words.current[index];
@@ -98,7 +107,8 @@ export function PromptWords({
   };
   const close = (): void => setOpen(null);
 
-  const meanings = open ? (pieces[open.index]?.meanings ?? []) : [];
+  const shown = open ? pieces[open.index] : null;
+  const meanings = shown?.meanings ?? [];
   // Centred under the word and kept within the screen's margins; placed once its own width is known.
   const left = open && width > 0 ? Math.max(layout.gutter, Math.min(screen.width - layout.gutter - width, open.x + open.w / 2 - width / 2)) : 0;
   const arrowAt = open ? open.x + open.w / 2 - left - ARROW / 2 : 0;
@@ -109,7 +119,7 @@ export function PromptWords({
         {pieces.map((token, i) =>
           token === null ? (
             <View key="gap">{gap}</View>
-          ) : token.meanings && token.meanings.length > 0 ? (
+          ) : opens(token) ? (
             <Pressable
               key={i}
               ref={(el) => {
@@ -118,7 +128,7 @@ export function PromptWords({
               onPress={() => show(i)}
               accessibilityRole="button"
               accessibilityLabel={token.text}
-              accessibilityHint={token.meanings.join(', ')}
+              accessibilityHint={token.meanings?.length ? token.meanings.join(', ') : noteOf(token)}
               hitSlop={reach}
               style={({ pressed }) => pressed && heldDim}
             >
@@ -160,14 +170,23 @@ export function PromptWords({
               <MenuIn>
                 <View style={[styles.arrow, { left: arrowAt, backgroundColor: face, borderColor: edge }]} />
                 <View style={[styles.list, { backgroundColor: face, borderColor: edge }]}>
-                  {meanings.map((meaning, i) => (
-                    <Text
-                      key={meaning}
-                      style={[styles.meaning, i > 0 && { borderTopWidth: EDGE, borderTopColor: edge }, { color: colors.textPrimary }]}
-                    >
-                      {meaning}
+                  {meanings.length > 0 ? (
+                    meanings.map((meaning, i) => (
+                      <Text
+                        key={meaning}
+                        style={[styles.meaning, i > 0 && { borderTopWidth: EDGE, borderTopColor: edge }, { color: colors.textPrimary }]}
+                      >
+                        {meaning}
+                      </Text>
+                    ))
+                  ) : shown ? (
+                    <Text style={[styles.meaning, { color: colors.textSecondary }]}>{noteOf(shown)}</Text>
+                  ) : null}
+                  {meanings.length > 0 && shown?.base ? (
+                    <Text style={[styles.meaning, styles.base, { borderTopWidth: EDGE, borderTopColor: edge, color: colors.textSecondary }]}>
+                      {t('lesson.words.from', { word: shown.base })}
                     </Text>
-                  ))}
+                  ) : null}
                 </View>
               </MenuIn>
             </View>
@@ -201,4 +220,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.lg,
   },
+  base: { paddingVertical: spacing.sm },
 });

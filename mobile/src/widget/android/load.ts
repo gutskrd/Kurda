@@ -151,6 +151,11 @@ export async function loadLetterWidget(place: WidgetPlace, opts: { fresh: boolea
       await dropKept();
       return { shows: { kind: 'signedOut' }, locale: config.locale };
     }
+    if (answer.kind === 'off') {
+      // Letters switched off by a parent: no letter is shown, not even the last one, and the token stays.
+      await dropKept();
+      return { shows: { kind: 'off' }, locale: config.locale };
+    }
     if (answer.kind === 'feed') {
       kept = { owner, feed: answer.feed, fetchedAt: now.getTime(), images: kept?.images ?? {} };
       await writeKept(kept);

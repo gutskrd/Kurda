@@ -5,6 +5,7 @@ import { requireAccount } from '../plugins/auth.js';
 import { MemoryRateLimitStore, RedisRateLimitStore, type RateLimitStore } from '../ratelimit/store.js';
 import { widgetImage, widgetImageEtag, widgetImageKey, widgetPixels } from './widget-image.js';
 import type { LetterWidgetService, WidgetCaller } from './widget.js';
+import { assertSwitchOn } from '../parental/supervision.js';
 
 const side = z.coerce.number().int().min(WIDGET_IMAGE.minSide).max(WIDGET_IMAGE.maxSide);
 const imageQuery = z.object({
@@ -88,9 +89,14 @@ export function registerLetterWidgetRoutes(app: FastifyInstance, widget: LetterW
     async (req) => widget.setPrefs(req.user!.id, req.body as z.infer<typeof prefsBody>),
   );
 
-  app.get('/letters/widget/feed', { config: BY_ADDRESS, preHandler: requireWidget }, async (req) => widget.feed(callerOf(req).userId));
+  // the widget shows letters, so not while a parent has them switched off
+  app.get('/letters/widget/feed', { config: BY_ADDRESS, preHandler: requireWidget }, async (req) => {
+    await assertSwitchOn(app.db, callerOf(req).userId, 'letters');
+    return widget.feed(callerOf(req).userId);
+  });
 
   app.get('/letters/widget/image', { schema: { querystring: imageQuery }, config: BY_ADDRESS, preHandler: requireWidget }, async (req, reply) => {
+    await assertSwitchOn(app.db, callerOf(req).userId, 'letters');
     const q = req.query as z.infer<typeof imageQuery>;
     const sky: WidgetSky = q.sky ?? 'day';
     const picture = await widget.picture(callerOf(req).userId);

@@ -67,6 +67,8 @@ export function About(): React.JSX.Element {
           ),
         },
         {
+          // Settings → About → Credits opens here.
+          id: 'credits',
           title: 'about.creditsTitle',
           body: (
             <>

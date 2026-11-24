@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import type { FavoriteRef, LevelInfo, ProfileBackground, ProfileIcon } from '../lib/types';
 import { Flag } from '../components/Flag';
 import { GiftedNote } from './cosmetic-parts';
-import { compactCount, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
+import { compactCount, fireLevel, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import { ProfileHead } from './ProfileHead';
 import { ProfileHighlights } from './ProfileHighlights';
-import { CalendarIcon, ChevronIcon, EyeIcon, FlameIcon, LockIcon } from '../components/icons';
+import { Fire } from '../components/Fire';
+import { CalendarIcon, ChevronIcon, EyeIcon, LockIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { useWordFit } from '../lib/useWordFit';
@@ -228,8 +229,8 @@ export function FullProfile({
       key: 'streak',
       label: t('profile.stat.streak'),
       value: short(view.streakDays),
-      // the flame is lit only while there is a streak to speak of
-      icon: <FlameIcon size={15} className={view.streakDays > 0 ? 'mkp-fact-lit' : undefined} />,
+      // Hevalo's own fire, burning as big as the streak; cold and still without one
+      icon: <Fire size={18} level={fireLevel(view.streakDays)} still />,
       spoken: t(view.streakDays === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: number(view.streakDays) }),
       onOpen: own ? onStreak : undefined,
     },

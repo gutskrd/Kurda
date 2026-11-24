@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
-import type { NewWord } from '@kurda/shared';
+import { WORD_PICTURES, type NewWord } from '@kurda/shared';
 import { Pressable } from '../../theme/Pressable';
 import { reachSlop } from '../../a11y/a11y';
 import { useI18n } from '../../i18n/I18nContext';
@@ -18,6 +18,8 @@ import type { AudioControls } from '../useAudio';
 import { useAutoplayOnce } from '../useAutoplay';
 import { autoplayOn } from '../../feedback/autoplayPref';
 import { useValley } from '../ValleyScope';
+import { CARD } from '../valley';
+import { PictureOf } from './AskChoices';
 import { PlayDisc } from './ModelButton';
 import { PromptScene, saidStyle } from './SpeechBubble';
 import { PromptWords } from './PromptWords';
@@ -84,11 +86,12 @@ export function AskScene({
 
   const line = exercise.prompt ?? '';
   if (!line) return null;
+  const cuePicture = exercise.cuePicture && Object.prototype.hasOwnProperty.call(WORD_PICTURES, exercise.cuePicture) ? exercise.cuePicture : null;
   const face: StyleProp<TextStyle> = [exercise.ask === 'picture' ? PICTURE_WORD : saidStyle(line), { color: colors.textPrimary }];
   const below =
-    exercise.cue || playable ? (
+    exercise.cue || cuePicture || playable ? (
       <View style={[styles.below, { flexDirection: dir.row }]}>
-        {exercise.cue ? <CuePill cue={exercise.cue} /> : <View />}
+        {cuePicture ? <CuePicture id={cuePicture} label={exercise.cue} /> : exercise.cue ? <CuePill cue={exercise.cue} /> : <View />}
         {playable ? <SlowButton onPress={saySlowly} lit={slow && playing} /> : null}
       </View>
     ) : undefined;
@@ -109,9 +112,10 @@ export function AskScene({
         ) : null}
         <View style={styles.grow}>
           {english ? (
-            <Text style={[ENGLISH, dir.rtl && styles.englishOnRtl, { color: colors.textPrimary }]} testID="ask-line">
-              {line}
-            </Text>
+            // An English line to put into Kurdish: its words with Kurdish to them open, the rest are plain.
+            <View testID="ask-line">
+              <PromptWords prompt={line} tokens={exercise.promptTokens} everyWord={false} style={[ENGLISH, dir.rtl && styles.englishOnRtl, { color: colors.textPrimary }]} />
+            </View>
           ) : (
             <View testID="ask-line">
               <PromptWords
@@ -160,6 +164,23 @@ function CuePill({ cue }: { cue: string }): React.JSX.Element {
       <Text style={[styles.cueText, { color: valley.muted }]} numberOfLines={2}>
         {cue}
       </Text>
+    </View>
+  );
+}
+
+/** What a reply's cue names, drawn on a small card as if held up to be named; screen readers hear the cue's words. */
+function CuePicture({ id, label }: { id: string; label?: string }): React.JSX.Element {
+  const valley = useValley();
+  const prefix = `cue${useId().replace(/[^A-Za-z0-9]/g, '')}`;
+  return (
+    <View
+      style={[styles.cuePicture, { backgroundColor: valley.card, borderColor: valley.line }]}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={label ?? id}
+      testID="ask-cue-picture"
+    >
+      <PictureOf option={id} size={CUE_PICTURE} ink={valley.muted} idPrefix={prefix} />
     </View>
   );
 }
@@ -216,6 +237,9 @@ const SLOW = 30;
  */
 const SLOW_REACH = reachSlop(null, SLOW, { limit: { top: spacing.xs } });
 
+/** A cue's drawing: big enough to read at a glance, small enough to leave the options in view. */
+const CUE_PICTURE = 64;
+
 /** The gap's minimum width, about a short word's; it grows with the word in it. */
 const GAP_WIDTH = 64;
 
@@ -241,6 +265,7 @@ const styles = StyleSheet.create({
   slowText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.3 },
   cue: { flexShrink: 1, paddingVertical: spacing.xs, paddingHorizontal: spacing.sm + 4, borderRadius: radii.pill },
   cueText: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
+  cuePicture: { padding: spacing.xs + 2, borderRadius: CARD.radius, borderWidth: CARD.edge },
   gap: { minWidth: GAP_WIDTH, alignItems: 'center' },
   gapWord: { paddingHorizontal: 2 },
   rule: { alignSelf: 'stretch', height: 2.5, borderRadius: radii.pill, marginTop: -1 },

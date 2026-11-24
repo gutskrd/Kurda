@@ -65,7 +65,7 @@ export function TranslateExercise({ exercise, text, onChangeText, disabled, dial
         <AskScene exercise={exercise} model={model} reaction={reaction} />
       ) : exercise.prompt ? (
         <PromptScene voice={null} audio={null} reaction={reaction}>
-          <PromptWords prompt={exercise.prompt} tokens={exercise.promptTokens} style={[saidStyle(exercise.prompt), { color: colors.textPrimary }]} />
+          <PromptWords prompt={exercise.prompt} tokens={exercise.promptTokens} everyWord={false} style={[saidStyle(exercise.prompt), { color: colors.textPrimary }]} />
         </PromptScene>
       ) : null}
       {tiles && bank ? (

@@ -31,6 +31,7 @@ import { limitReached, lockPersonFor } from '../limits/limits.js';
 import { unconfirmIfUnused } from '../media/groupPhoto.js';
 import { filterText } from '../moderation/filter.js';
 import { recordNotifications } from '../notifications/inbox-service.js';
+import { parentalAllows } from '../parental/supervision.js';
 import type { Notification } from '../push/service.js';
 import { notBlockedSql } from '../friends/blocked.js';
 import { isNotKnownAdultUser } from '../users/age.js';
@@ -266,7 +267,12 @@ export class GroupService {
     return g.rows[0]?.was_open === true && (await isNotKnownAdultUser(client, userId));
   }
 
+  /**
+   * Every way into a group comes here, so a teen whose parent switched group chats off is kept out whichever way it is
+   * (added by an admin, or let back after asking while it was on), told as a held account is so nobody learns why.
+   */
   private async addMember(client: Pick<pg.Pool, 'query'>, groupId: string, userId: string): Promise<void> {
+    if (!(await parentalAllows(client, userId, 'chat'))) throw new AppError('CANNOT_JOIN_YET', 409, 'they can’t join groups right now');
     const g = await client.query<{ archived_at: Date | null; n: number }>(
       `SELECT archived_at,
               (SELECT count(*)::int FROM group_members m WHERE m.group_id = groups.id) AS n

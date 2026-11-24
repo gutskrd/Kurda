@@ -49,6 +49,8 @@ import { clearDraft, dropPicture, keepPicture, loadDraft, pictureExists, saveDra
 import { accountLimitOf, describePostError } from './errors';
 import { SendErrorNotice } from '../reports/SendError';
 import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
+import { ParentalNote } from '../parental/ParentalNote';
+import { useParentalOff } from '../parental/supervision';
 import type { ApiError } from '../api/types';
 import { postSaved } from './postSaved';
 import {
@@ -134,6 +136,8 @@ export function ComposeScreen({
   const { client, user } = useAuth();
   // A held account is told before writing anything, rather than when Post is refused.
   const held = useAccountHeld();
+  // A supervised teen whose parent turned posting off is told the same way.
+  const postsOff = useParentalOff('posts');
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   // In right-to-left languages the rows start on the right and typing runs right to left, as on every other screen.
@@ -481,9 +485,9 @@ export function ComposeScreen({
             <Skeleton width="40%" height={20} />
             <SkeletonLines count={3} />
           </View>
-        ) : held ? (
+        ) : held || postsOff ? (
           <View style={[styles.body, styles.column]}>
-            <HeldNotice />
+            {held ? <HeldNotice /> : <ParentalNote />}
           </View>
         ) : (
           <ScrollView contentContainerStyle={[styles.body, styles.column]} keyboardShouldPersistTaps="handled">

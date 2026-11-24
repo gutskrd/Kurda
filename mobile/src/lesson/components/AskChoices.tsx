@@ -118,7 +118,7 @@ export function PictureChoices({ options, choice, onSelect, disabled, isRight, g
 }
 
 /** One card's picture, or its name when the app has no such picture. */
-function PictureOf({ option, size, ink, idPrefix }: { option: string; size: number; ink: string; idPrefix: string }): React.JSX.Element {
+export function PictureOf({ option, size, ink, idPrefix }: { option: string; size: number; ink: string; idPrefix: string }): React.JSX.Element {
   const { scheme } = useTheme();
   const known = Object.prototype.hasOwnProperty.call(WORD_PICTURES, option);
   const xml = useMemo(

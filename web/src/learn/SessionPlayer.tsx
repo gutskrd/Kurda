@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   NO_LESSON_MOMENTS,
   RUN_SHOWN_FROM,
+  answerMarkedInPlace,
   currentExercise,
   initPlayer,
   isReask,
@@ -498,14 +499,17 @@ export function SessionPlayer({
     return () => window.removeEventListener('keydown', onKey);
   }, [navigate, exitTo, mainAudio, tips]);
 
-  // The verdict rises over the foot of the page, so what was answered is kept in view above it.
+  // The verdict rises over the foot of the page, so what was answered, and the right option when it was another, are kept
+  // in view above it: the lowest of them is brought clear of the sheet, and the header stays where it is.
   useEffect(() => {
     if (state.status !== 'feedback') return;
     const frame = requestAnimationFrame(() => {
-      const answered = document.querySelector<HTMLElement>(
-        '.lesson-option.is-chosen, .lesson-picture.is-chosen, .lesson-chip.is-chosen, .lesson-input, .lesson-answer-line, .lesson-match, .lesson-rate',
+      const answered = document.querySelectorAll<HTMLElement>(
+        '.tile.is-chosen, .lesson-options .tile.is-right, .lesson-pictures .tile.is-right, .lesson-chips .tile.is-right, .lesson-input, .lesson-answer-line, .lesson-match, .lesson-rate',
       );
-      answered?.scrollIntoView?.({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+      let lowest: HTMLElement | null = null;
+      for (const el of answered) if (!lowest || el.getBoundingClientRect().bottom > lowest.getBoundingClientRect().bottom) lowest = el;
+      lowest?.scrollIntoView?.({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     });
     return () => cancelAnimationFrame(frame);
   }, [state.status]);
@@ -660,6 +664,7 @@ export function SessionPlayer({
           <FeedbackPanel
             key={`feedback-${state.index}`}
             feedback={shownFeedback}
+            answerInPlace={answerMarkedInPlace(ex, shownFeedback)}
             kurdishAnswer={KURDISH_ASKS.has(ex.ask)}
             dialect={exDialect}
             speaker={feedbackClip(ex, shownFeedback)}

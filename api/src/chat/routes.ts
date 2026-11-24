@@ -4,6 +4,7 @@ import type { ChatUnread } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
+import { parentalAllows, requireSwitchOn } from '../parental/supervision.js';
 import type { ChatService } from './service.js';
 import { MAX_MESSAGE_LEN } from './service.js';
 import type { TrustService } from '../trust/service.js';
@@ -19,8 +20,8 @@ export function registerChatRoutes(
   trust?: TrustService,
   aiMod?: AiModerationService,
 ): void {
-  /** Conversation list with last message + unread counts. */
-  app.get('/chat/conversations', { preHandler: requireAccount }, async (req) => ({
+  /** Conversation list with last message + unread counts; not while a parent has messages switched off. */
+  app.get('/chat/conversations', { preHandler: [requireAccount, requireSwitchOn('chat')] }, async (req) => ({
     conversations: await chat.conversations(req.user!.id, (k) => (app.storage ? app.storage.publicUrl(k) : null)),
   }));
 
@@ -32,7 +33,7 @@ export function registerChatRoutes(
         params: userParam,
         querystring: z.object({ before: z.string().datetime().optional() }),
       },
-      preHandler: requireAccount,
+      preHandler: [requireAccount, requireSwitchOn('chat')],
     },
     async (req) => {
       const { userId } = req.params as { userId: string };
@@ -123,6 +124,8 @@ export function registerChatRoutes(
  */
 export function registerChatUnreadRoute(app: FastifyInstance, chat: ChatService, groupChat: GroupChatService): void {
   app.get('/chat/unread', { preHandler: requireAccount }, async (req): Promise<ChatUnread> => {
+    // nothing to read while a parent has messages switched off, so no badge either
+    if (!(await parentalAllows(app.db, req.user!.id, 'chat'))) return { direct: [], groups: [] };
     const [direct, groups] = await Promise.all([chat.unread(req.user!.id), groupChat.unread(req.user!.id)]);
     return { direct, groups: groups.filter((g) => g.unread > 0) };
   });

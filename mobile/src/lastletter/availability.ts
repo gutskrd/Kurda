@@ -9,7 +9,7 @@ import { useAuth } from '../auth/AuthContext';
  */
 let cached: Promise<LastLetterAvailability[]> | null = null;
 
-/** Test seam: forget the answer read earlier. */
+/** Forget the answer read earlier, so the next screen asks again (tests, and Settings → Clear cache). */
 export function forgetLastLetterAvailability(): void {
   cached = null;
 }

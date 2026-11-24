@@ -65,6 +65,7 @@ const visit = (at: string) =>
           <Route path="messages" element={<h1>Messages</h1>} />
           <Route path="alphabet" element={<h1>The alphabet</h1>} />
           <Route path="settings" element={<h1>Settings</h1>} />
+          <Route path="badges" element={<h1>Badges</h1>} />
           <Route path="users/:id" element={<h1>Somebody</h1>} />
         </Route>
       </Routes>
@@ -129,11 +130,11 @@ describe('the app’s shell on a phone', () => {
     signIn();
     serve();
     width(true);
-    visit('/app/settings');
+    visit('/app/badges');
     // the bell is there once the session is back, and with the session the places a way back can lead to
     await screen.findByRole('button', { name: 'Notifications' });
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-    // Settings is behind your profile; this shell has no page there, but the address is the profile's
+    // Badges are behind your profile; this shell has no page there, but the address is the profile's
     await waitFor(() => expect(where()).toBe('/app/profile'));
   });
 

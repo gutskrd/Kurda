@@ -8,6 +8,7 @@ import { useMediaQuery } from '../lib/useMediaQuery';
 import { useT } from '../i18n/I18nProvider';
 import { Ask, Choices, Prompt, verdictOf, type ExerciseProps } from './Exercises';
 import { kurdishText } from './map';
+import { SaidWords } from './Bubble';
 import { PlayButton } from './PlayButton';
 import { useAutoplay } from './useAutoplay';
 
@@ -184,9 +185,7 @@ export function Conversation(props: ExerciseProps): React.JSX.Element {
                     <span className="sr-only">: </span>
                   </span>
                 )}
-                <span className="lesson-line-text" lang={lang} dir={dir}>
-                  {line.text}
-                </span>
+                <SaidWords text={line.text} tokens={exercise.lineTokens?.[i]} lang={lang} dir={dir} />
                 {translated && line.en && (
                   <span className="lesson-line-meaning" lang="en" dir="ltr">
                     {line.en}

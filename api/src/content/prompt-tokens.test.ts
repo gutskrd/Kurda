@@ -1,16 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import type { PromptToken } from '@kurda/shared';
 import { lexiconOf, type SessionItem } from './item-words.js';
-import { dictionaryKeys, promptTokens, tokenize, wordLangs } from './prompt-tokens.js';
+import { dictionaryKeys, promptTokens, tokenize, wordLangs, type ItemTokens } from './prompt-tokens.js';
 import type { ExerciseType } from './repository.js';
+import { parseGlossary, type Glossary } from './road-glossary.js';
 
 const item = (type: ExerciseType, payload: unknown, dialect = 'kurmanji'): SessionItem => ({ type, payload, dialect, seed: 's1:e1' });
 
-/** The tokens of each item, with the dictionary answering from `dictionary` (by lookup key). */
-function tokensOf(items: SessionItem[], dictionary: Record<string, string[]> = {}): Array<PromptToken[] | undefined> {
-  const plan = promptTokens(items);
+/** A course word list for a test; the road's own is not used, so these hold whatever the course says. */
+const glossaryOf = (words: Record<string, { en: string[]; base?: string }> = {}): Glossary => parseGlossary({ dialect: 'kurmanji', words });
+
+/** Each item's words, with the dictionary answering from `dictionary` (by lookup key) and the course list `glossary`. */
+function wordsOf(items: SessionItem[], dictionary: Record<string, string[]> = {}, glossary = glossaryOf()): ItemTokens[] {
+  const plan = promptTokens(items, glossary);
   return plan.finish(plan.lookups.map((l) => dictionary[l.key] ?? []));
 }
+
+/** The prompt tokens of each item. */
+const tokensOf = (items: SessionItem[], dictionary: Record<string, string[]> = {}, glossary = glossaryOf()): Array<PromptToken[] | undefined> =>
+  wordsOf(items, dictionary, glossary).map((w) => w.prompt);
 
 /** Each word of a token list that has meanings, with them. */
 const known = (tokens: PromptToken[] | undefined): Record<string, string[]> =>
@@ -77,12 +85,15 @@ describe('promptTokens', () => {
   });
 
   it('looks up each Kurdish word of the session once, and no English one', () => {
-    const plan = promptTokens([
-      item('multiple_choice', { prompt: '"keç" tê çi wateyê?', options: ['girl', 'boy'], correctIndex: 0 }),
+    const plan = promptTokens(
+      [
+        item('multiple_choice', { prompt: '"keç" tê çi wateyê?', options: ['girl', 'boy'], correctIndex: 0 }),
       item('multiple_choice', { prompt: '"kur" tê çi wateyê?', options: ['girl', 'boy'], correctIndex: 1 }),
       item('translate', { say: 'Ez ji Amedê me.', prompt: '“Ez ji Amedê me.” in English', accepted: ['I am from Amed'] }),
-      item('translate', { prompt: 'Where is the bread?', accepted: ['Nan li ku ye?'] }),
-    ]);
+        item('translate', { prompt: 'Where is the bread?', accepted: ['Nan li ku ye?'] }),
+      ],
+      glossaryOf(),
+    );
     expect(plan.lookups.map((l) => l.key)).toEqual(['keç', 'tê', 'çi', 'wateyê', 'kur', 'ez', 'ji', 'amedê', 'me']);
     expect(new Set(plan.lookups.map((l) => l.variety))).toEqual(new Set(['kurmanji']));
   });
@@ -103,10 +114,14 @@ describe('promptTokens', () => {
     expect(known(day)).toEqual({ tê: ['comes'], çi: ['what'] });
   });
 
-  it('never gives a word of a translation a meaning that is its whole answer', () => {
+  it('holds back the meaning of a word of a translation that is its whole answer, and says so', () => {
     const translate = item('translate', { prompt: 'apple', accepted: ['sêv'] });
     const fromKurdish = item('translate', { say: 'Spas', prompt: 'Spas', accepted: ['Thanks', 'Thank you'] });
-    expect(tokensOf([translate, fromKurdish, pairs(['sêv', 'apple'], ['Spas', 'Thanks'])])).toEqual([undefined, undefined, undefined]);
+    expect(tokensOf([translate, fromKurdish, pairs(['sêv', 'apple'], ['Spas', 'Thanks'])])).toEqual([
+      [{ text: 'apple', withheld: true }],
+      [{ text: 'Spas', withheld: true }],
+      undefined,
+    ]);
   });
 
   it('keeps the words of a Soranî course to its own prompts in a practice session', () => {
@@ -117,8 +132,10 @@ describe('promptTokens', () => {
     const [, tokens, , asked] = tokensOf([kurmanci, sentence, sorani, soraniQuestion]);
     expect(known(tokens)).toEqual({});
     expect(tokens).toBeUndefined();
-    expect(asked).toBeUndefined();
-    const plan = promptTokens([sorani, soraniQuestion]);
+    // the question's own word is its answer, so it is held back, not given
+    expect(known(asked)).toEqual({});
+    expect(asked?.find((t) => t.text === 'سێو')).toEqual({ text: 'سێو', withheld: true });
+    const plan = promptTokens([sorani, soraniQuestion], glossaryOf());
     expect(plan.lookups).toEqual([
       { variety: 'sorani', key: 'سێو' },
       { variety: 'sorani', key: 'بە' },
@@ -147,5 +164,62 @@ describe('promptTokens', () => {
   it('reads a word typed on an Arabic or Persian keyboard as the Kurdish letters it stands for', () => {
     expect(dictionaryKeys('كتێب')).toEqual(['كتێب', 'کتێب']);
     expect(dictionaryKeys('Sêv')).toEqual(['sêv']);
+  });
+});
+
+describe('promptTokens with the course’s word list', () => {
+  const road = glossaryOf({
+    ez: { en: ['I'] },
+    çayê: { en: ['tea'], base: 'çay' },
+    vedixwim: { en: ['I drink', 'I’m drinking'], base: 'vexwarin' },
+    sêvê: { en: ['the apple'], base: 'sêv' },
+    dixwim: { en: ['I eat', 'I’m eating'], base: 'xwarin' },
+    silav: { en: ['hello'] },
+    tu: { en: ['you'] },
+    çawa: { en: ['how'] },
+    yî: { en: ['are (you)'] },
+  });
+
+  it('gives every word of a Kurdish line its meaning, an inflected one with the word it comes from, and asks the dictionary for none of them', () => {
+    const line = item('translate', { ask: 'to-english', say: 'Ez çayê vedixwim.', prompt: 'Ez çayê vedixwim.', accepted: ['I’m drinking tea.'] });
+    const plan = promptTokens([line], road);
+    expect(plan.lookups).toEqual([]);
+    expect(plan.finish([])[0]!.prompt).toEqual([
+      { text: 'Ez', meanings: ['I'] },
+      { text: ' ' },
+      { text: 'çayê', meanings: ['tea'], base: 'çay' },
+      { text: ' ' },
+      { text: 'vedixwim', meanings: ['I drink', 'I’m drinking'], base: 'vexwarin' },
+      { text: '.' },
+    ]);
+  });
+
+  it('gives the words of a line to put into Kurdish the dictionary form of what they are said with, and the article nothing', () => {
+    const line = item('translate', { ask: 'to-kurdish', prompt: 'I’m eating the apple.', accepted: ['Ez sêvê dixwim.'] });
+    expect(known(tokensOf([line], {}, road)[0])).toEqual({ 'I’m': ['ez'], eating: ['xwarin'], apple: ['sêv'] });
+  });
+
+  it('marks a word whose meaning is the answer as held back rather than leaving it dead', () => {
+    const question = item('multiple_choice', { ask: 'meaning', say: 'Silav!', prompt: 'Silav!', options: ['Hello!', 'Thanks!'], correctIndex: 0 });
+    const written = item('writing', { ask: 'to-kurdish', prompt: 'Hello!', accepted: ['Silav!'] });
+    const [asked, typed] = tokensOf([question, written], {}, road);
+    expect(asked).toEqual([{ text: 'Silav', withheld: true }, { text: '!' }]);
+    expect(typed).toEqual([{ text: 'Hello', withheld: true }, { text: '!' }]);
+  });
+
+  it('gives a line to say back, and every line of a conversation, its words', () => {
+    const spoken = item('speaking', { ask: 'repeat', prompt: 'Tu çawa yî?', reference: 'Tu çawa yî?' });
+    const talk = item('conversation', {
+      lines: [
+        { speaker: 0, text: 'Silav!', en: 'Hello!' },
+        { speaker: 1, text: 'Hmm…', en: 'Hmm…' },
+      ],
+      prompt: 'Who says hello?',
+      options: ['Hamo', 'Hevalo'],
+      correctIndex: 0,
+    });
+    const [said, conversation] = wordsOf([spoken, talk], {}, road);
+    expect(known(said!.prompt)).toEqual({ Tu: ['you'], çawa: ['how'], yî: ['are (you)'] });
+    expect(conversation!.lines).toEqual([[{ text: 'Silav', meanings: ['hello'] }, { text: '!' }], null]);
   });
 });

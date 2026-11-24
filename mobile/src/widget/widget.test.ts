@@ -160,6 +160,8 @@ describe('what the iPhone extension reads', () => {
     expect(feed).toContain(`static let rejectedKey = "${WIDGET_KEYS.rejected}"`);
     // And it marks a refused token the way the app reads it.
     expect(feed).toContain('defaults?.set("1", forKey: rejectedKey)');
+    // A parent's switch is not a revoked token: the iPhone widget tells them apart as the Android one does.
+    expect(feed).toContain('case 403 where refusalCode(data) == "PARENTAL_BLOCKED":');
   });
 
   it('is the widget kind the app reloads, and asks the same two routes with the widget’s own header', () => {

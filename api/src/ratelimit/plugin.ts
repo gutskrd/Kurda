@@ -21,9 +21,14 @@ export interface RateLimitOptions {
    * email or texts, where letting everything through is what an attacker would wait for.
    */
   onStoreDown?: 'allow' | 'local';
+  /**
+   * A name counted in place of the route, so routes giving the same one share a budget: two steps of one secret's use
+   * (looking a code up, then using it) are one budget, not two.
+   */
+  bucket?: string;
 }
 
-export const DEFAULT_RATE_LIMIT: Required<Omit<RateLimitOptions, 'wideNetwork' | 'onStoreDown'>> = {
+export const DEFAULT_RATE_LIMIT: Required<Omit<RateLimitOptions, 'wideNetwork' | 'onStoreDown' | 'bucket'>> = {
   max: 100,
   windowMs: 60_000,
   per: 'user-or-ip',
@@ -46,7 +51,7 @@ function limitKey(req: FastifyRequest, route: string, opts: RateLimitOptions): s
   const principal = opts.per === 'user-or-ip' && req.user?.id ? `user:${req.user.id}` : `ip:${network ?? req.ip}`;
   // Reads and writes at the same address have separate budgets, so reloading a correspondence never uses up the few
   // replies a minute writing to it allows.
-  return `ratelimit:${req.method}:${route}:${principal}`;
+  return `ratelimit:${req.method}:${opts.bucket ?? route}:${principal}`;
 }
 
 export interface RateLimitHooks {
@@ -58,8 +63,9 @@ export interface RateLimitHooks {
 
 /**
  * Sliding-window rate limiting: 100 requests a minute per user by default; routes override it with
- * `{ config: { rateLimit: { max, windowMs, per, wideNetwork, onStoreDown } } }`. Exceeding answers the standard envelope
- * with 429 and Retry-After.
+ * `{ config: { rateLimit: { max, windowMs, per, wideNetwork, onStoreDown } } }`, or with a list of them where one
+ * budget is not enough (a short secret guessed per account and per network alike), each counted under its own key.
+ * Exceeding any answers the standard envelope with 429 and Retry-After.
  */
 export function setupRateLimit(app: FastifyInstance, store: RateLimitStore, hooks: RateLimitHooks = {}): void {
   const fallback = hooks.fallback ?? new MemoryRateLimitStore();
@@ -67,36 +73,39 @@ export function setupRateLimit(app: FastifyInstance, store: RateLimitStore, hook
     const route = req.routeOptions?.url ?? NO_ROUTE;
     if (EXEMPT_ROUTES.has(route)) return;
 
-    const override = (req.routeOptions?.config as { rateLimit?: RateLimitOptions } | undefined)
-      ?.rateLimit;
-    const opts = { ...DEFAULT_RATE_LIMIT, ...override };
+    const configured = (req.routeOptions?.config as { rateLimit?: RateLimitOptions | readonly RateLimitOptions[] } | undefined)?.rateLimit;
+    const overrides = Array.isArray(configured) ? configured : [configured as RateLimitOptions | undefined];
 
     const now = Date.now();
-    const key = limitKey(req, route, opts);
-    let result;
-    try {
-      result = await store.hit(key, opts.windowMs, now, opts.max);
-    } catch (err) {
-      if (opts.onStoreDown !== 'local') {
-        // limiter outage must not take the API down — log and let through
-        req.log.warn({ err }, 'rate limit store failed; allowing request');
-        return;
+    for (const [i, override] of overrides.entries()) {
+      const opts = { ...DEFAULT_RATE_LIMIT, ...override };
+      // the first limit keeps the key it always had; the others count apart from it
+      const key = `${limitKey(req, route, opts)}${i > 0 ? `#${i}` : ''}`;
+      let result;
+      try {
+        result = await store.hit(key, opts.windowMs, now, opts.max);
+      } catch (err) {
+        if (opts.onStoreDown !== 'local') {
+          // limiter outage must not take the API down — log and let through
+          req.log.warn({ err }, 'rate limit store failed; allowing request');
+          continue;
+        }
+        req.log.warn({ err }, 'rate limit store failed; counting this request in this process');
+        result = await fallback.hit(key, opts.windowMs, now, opts.max);
       }
-      req.log.warn({ err }, 'rate limit store failed; counting this request in this process');
-      result = await fallback.hit(key, opts.windowMs, now, opts.max);
-    }
 
-    if (result.count > opts.max) {
-      const retryAfterSec = Math.max(1, Math.ceil((result.oldestMs + opts.windowMs - now) / 1_000));
-      void hooks.onLimited?.(req, { max: opts.max, windowSec: Math.round(opts.windowMs / 1_000), per: opts.per });
-      return reply
-        .code(429)
-        .header('retry-after', String(retryAfterSec))
-        .send({
-          code: 'RATE_LIMITED',
-          message: 'too many requests',
-          requestId: req.id,
-        });
+      if (result.count > opts.max) {
+        const retryAfterSec = Math.max(1, Math.ceil((result.oldestMs + opts.windowMs - now) / 1_000));
+        void hooks.onLimited?.(req, { max: opts.max, windowSec: Math.round(opts.windowMs / 1_000), per: opts.per });
+        return reply
+          .code(429)
+          .header('retry-after', String(retryAfterSec))
+          .send({
+            code: 'RATE_LIMITED',
+            message: 'too many requests',
+            requestId: req.id,
+          });
+      }
     }
   });
 }

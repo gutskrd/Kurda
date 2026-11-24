@@ -35,6 +35,7 @@ import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
 import {
   chatRouteId,
   groupThreadRouteId,
+  settingsPageRouteId,
   userProfileRouteId,
   type RootNavigation,
   type RootStackParamList,
@@ -98,7 +99,7 @@ import { PushRegistration } from './src/push/PushRegistration';
 import { PushHost } from './src/push/PushHost';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
 import { EventThemeProvider, useEventTheme } from './src/theme/EventThemeContext';
-import { I18nProvider } from './src/i18n/I18nContext';
+import { I18nProvider, useI18n } from './src/i18n/I18nContext';
 import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScreen';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { Arrive, originOf } from './src/theme/origin';
@@ -153,6 +154,10 @@ import { GazeArea } from './src/characters/gaze';
 import { ArtOverridesLoader } from './src/art/ArtOverridesLoader';
 import { MaintenanceScreen } from './src/maintenance/MaintenanceScreen';
 import { onMaintenanceOver, useMaintenance } from './src/maintenance/maintenance';
+import { noteCurrentRoute } from './src/navigation/currentRoute';
+import { ParentalWall } from './src/parental/ParentalNote';
+import { PauseHost } from './src/parental/PauseScreen';
+import { SupervisionProvider } from './src/parental/supervision';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -297,6 +302,7 @@ function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof us
 
 function SignedInTabs() {
   const navigation = useNavigation<RootNavigation>();
+  const { t } = useI18n();
   const { require } = useAccountGate();
   const groups = useMenuGroups(navigation, require);
   const reduceMotion = useReducedMotion();
@@ -349,7 +355,16 @@ function SignedInTabs() {
           </Tab.Screen>
         ) : (
           <Tab.Screen key={tab.name} name={tab.name}>
-            {() => (tab.name === 'Messages' ? <MessagesScreen /> : <ProfileScreen />)}
+            {/* With chat switched off by a parent, Messages is one calm page rather than a list the server refuses. */}
+            {() =>
+              tab.name === 'Messages' ? (
+                <ParentalWall part="chat" tabTitle={t('nav.messages')}>
+                  <MessagesScreen />
+                </ParentalWall>
+              ) : (
+                <ProfileScreen />
+              )
+            }
           </Tab.Screen>
         ),
       )}
@@ -495,12 +510,14 @@ function SignedInRoot() {
       <RootStack.Screen name="Chat" options={card} getId={chatRouteId}>
         {({ route, navigation }) => (
           <GuestWall reason="message" onBack={backFrom(navigation)}>
-            <ChatScreen
-              userId={route.params.userId}
-              username={route.params.username}
-              openGift={route.params.openGift}
-              onExit={backFrom(navigation)}
-            />
+            <ParentalWall part="chat" onBack={backFrom(navigation)}>
+              <ChatScreen
+                userId={route.params.userId}
+                username={route.params.username}
+                openGift={route.params.openGift}
+                onExit={backFrom(navigation)}
+              />
+            </ParentalWall>
           </GuestWall>
         )}
       </RootStack.Screen>
@@ -562,16 +579,18 @@ function SignedInRoot() {
       <RootStack.Screen name="GroupThread" options={card} getId={groupThreadRouteId}>
         {({ route, navigation }) => (
           <GuestWall reason="groups" onBack={backFrom(navigation)}>
-            <GroupThreadScreen
-              groupId={route.params.groupId}
-              name={route.params.name}
-              openGift={route.params.openGift}
-              addFriends={route.params.addFriends}
-              onFindPeople={() => navigation.navigate('Search')}
-              onLeft={() => navigation.popTo('Tabs', { screen: 'Messages' })}
-              onExit={backFrom(navigation)}
-              onOpenMembers={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
-            />
+            <ParentalWall part="chat" onBack={backFrom(navigation)}>
+              <GroupThreadScreen
+                groupId={route.params.groupId}
+                name={route.params.name}
+                openGift={route.params.openGift}
+                addFriends={route.params.addFriends}
+                onFindPeople={() => navigation.navigate('Search')}
+                onLeft={() => navigation.popTo('Tabs', { screen: 'Messages' })}
+                onExit={backFrom(navigation)}
+                onOpenMembers={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
+              />
+            </ParentalWall>
           </GuestWall>
         )}
       </RootStack.Screen>
@@ -587,21 +606,27 @@ function SignedInRoot() {
         {({ route, navigation }) => (
           <GuestWall reason="message" onBack={backFrom(navigation)}>
             {/* A notification's bird is cleared once the window has acted on it, so returning does not act on it again. */}
-            <LettersScreen bird={route.params?.bird} onBirdUsed={() => navigation.setParams({ bird: undefined })} onExit={backFrom(navigation)} />
+            <ParentalWall part="letters" onBack={backFrom(navigation)}>
+              <LettersScreen bird={route.params?.bird} onBirdUsed={() => navigation.setParams({ bird: undefined })} onExit={backFrom(navigation)} />
+            </ParentalWall>
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="LetterThread" options={card} getId={({ params }) => params.threadId}>
         {({ route, navigation }) => (
           <GuestWall reason="message" onBack={backFrom(navigation)}>
-            <LetterThreadScreen threadId={route.params.threadId} onExit={backFrom(navigation)} />
+            <ParentalWall part="letters" onBack={backFrom(navigation)}>
+              <LetterThreadScreen threadId={route.params.threadId} onExit={backFrom(navigation)} />
+            </ParentalWall>
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="LetterWidget" options={card}>
         {({ navigation }) => (
           <GuestWall reason="message" onBack={backFrom(navigation)}>
-            <LetterWidgetScreen onExit={backFrom(navigation)} />
+            <ParentalWall part="letters" onBack={backFrom(navigation)}>
+              <LetterWidgetScreen onExit={backFrom(navigation)} />
+            </ParentalWall>
           </GuestWall>
         )}
       </RootStack.Screen>
@@ -625,8 +650,8 @@ function SignedInRoot() {
       <RootStack.Screen name="Settings" options={card}>
         {({ navigation }) => <SettingsScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
-      <RootStack.Screen name="SettingsPage" options={card}>
-        {({ route, navigation }) => <SettingsPageScreen page={route.params.page} onExit={backFrom(navigation)} />}
+      <RootStack.Screen name="SettingsPage" options={card} getId={settingsPageRouteId}>
+        {({ route, navigation }) => <SettingsPageScreen page={route.params.page} teenId={route.params.teenId} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Wordle" options={card}>
         {({ navigation }) => <WordleScreen onExit={backFrom(navigation)} />}
@@ -966,8 +991,15 @@ function ThemedNavigation() {
       ),
     [navigation],
   );
-  // The open screen, for crash reports: the route name only, never its params.
-  const onScreen = () => noteScreen(navigation.getCurrentRoute()?.name);
+  // The open screen, for crash reports (the route name only, never its params) and for what is drawn over the stack.
+  const onScreen = () => {
+    const route = navigation.getCurrentRoute();
+    noteScreen(route?.name);
+    noteCurrentRoute(route);
+  };
+  const openParental = useCallback(() => {
+    if (navigation.isReady()) navigation.navigate('SettingsPage', { page: 'parental' });
+  }, [navigation]);
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
   const navTheme: Theme = {
     ...base,
@@ -996,6 +1028,8 @@ function ThemedNavigation() {
             <Root />
           </AppErrorBoundary>
         </View>
+        {/* A supervised teen's bedtime or used-up day, over the app but never over a lesson under way. */}
+        <PauseHost onOpenControls={openParental} />
         {/* Over every screen, the crash screen included: maintenance. */}
         <MaintenanceScreen />
         <OfflineBanner />
@@ -1030,9 +1064,12 @@ export default function App() {
               <ArtOverridesLoader />
               {/* The letter widget's token, made at sign-in and removed at any sign-out, outside the screens so none is missed. */}
               <LetterWidgetSync />
-              <EventThemeProvider>
-                <ThemedNavigation />
-              </EventThemeProvider>
+              {/* A supervised teen's limits and the minute beat, for every screen (parental/). */}
+              <SupervisionProvider>
+                <EventThemeProvider>
+                  <ThemedNavigation />
+                </EventThemeProvider>
+              </SupervisionProvider>
             </AuthProvider>
           </I18nProvider>
         </ThemeProvider>

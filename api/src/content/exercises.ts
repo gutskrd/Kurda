@@ -17,6 +17,7 @@ import {
   type ExerciseAsk,
 } from '@kurda/shared';
 import type { ExerciseType } from './repository.js';
+import { englishKey } from './english-answer.js';
 import { SELF_RATINGS, defaultScorer } from './speaking-scorer.js';
 
 /**
@@ -69,12 +70,19 @@ function checkGap(line: string, answers: readonly string[], whole: string | unde
   }
 }
 
+/** A word picture (shared art/word-pictures.ts) that shows what a cue names, drawn in its place. */
+const cuePicture = z
+  .string()
+  .refine((id) => Object.hasOwn(WORD_PICTURES, id), { message: 'is not a word picture' })
+  .optional();
+
 export const multipleChoicePayloadSchema = z
   .object({
     say,
     voice,
     ask: askOf('multiple_choice'),
     cue,
+    picture: cuePicture,
     new: newWords,
     prompt: z.string().min(1).max(500),
     options: z.array(z.string().min(1).max(200)).min(2).max(6),
@@ -402,7 +410,12 @@ export function sanitizeExercise(
       // the answer comes back as an index into THIS order; grading maps it
       // back with the same seed
       const p = parsed.data as MultipleChoicePayload;
-      return { prompt: p.prompt, ...asked(p), options: optionOrder(p.options.length, seed).map((i) => p.options[i]!) };
+      return {
+        prompt: p.prompt,
+        ...asked(p),
+        ...(p.picture ? { cuePicture: p.picture } : {}),
+        options: optionOrder(p.options.length, seed).map((i) => p.options[i]!),
+      };
     }
     case 'translate': {
       const p = parsed.data as TranslatePayload;
@@ -497,14 +510,19 @@ export function gradingKey(text: string): string {
 /**
  * Diacritic-tolerant text check. Answers compare by `gradingKey`, so case, punctuation, spacing, invisible formatting
  * and the Soranî keyboard used do not matter (a tile-built answer has no punctuation and is as right as the sentence).
- * An exact match with any accepted answer is correct. A match only after folding Kurdish diacritics (ê→e, ş→s, …) is a
- * 'typo', accepted with a nudge unless the item is strict. Otherwise wrong.
+ * An exact match with any accepted answer is correct, and so, for an English answer, is one that differs only in its
+ * articles or contractions (`englishKey`). A match only after folding Kurdish diacritics (ê→e, ş→s, …) is a 'typo',
+ * accepted with a nudge unless the item is strict. Otherwise wrong.
  */
-function gradeText(acceptedAnswers: string[], text: string, strict = false): CheckResult {
+function gradeText(acceptedAnswers: string[], text: string, { strict = false, english = false }: { strict?: boolean; english?: boolean } = {}): CheckResult {
   const answer = gradingKey(text);
   const accepted = acceptedAnswers.map(gradingKey);
   if (answer.length > 0 && accepted.includes(answer)) {
     return { verdict: 'correct', accepted: true };
+  }
+  if (english && answer.length > 0) {
+    const key = englishKey(answer);
+    if (key.length > 0 && accepted.some((a) => englishKey(a) === key)) return { verdict: 'correct', accepted: true };
   }
   const foldedAnswer = foldDiacritics(answer);
   const foldedAccepted = accepted.map((a) => foldDiacritics(a));
@@ -515,12 +533,12 @@ function gradeText(acceptedAnswers: string[], text: string, strict = false): Che
 }
 
 function checkTranslate(payload: TranslatePayload, text: string): CheckResult {
-  return gradeText(payload.accepted, text, payload.strict);
+  return gradeText(payload.accepted, text, { strict: payload.strict, english: payload.ask === 'to-english' });
 }
 
 /** Listening is graded on the transcription, same rules as translate. */
 function checkListening(payload: ListeningPayload, text: string): CheckResult {
-  return gradeText(payload.accepted, text, payload.strict);
+  return gradeText(payload.accepted, text, { strict: payload.strict });
 }
 
 /**
@@ -551,7 +569,7 @@ function checkWriting(payload: WritingPayload, text: string): CheckResult {
     // pasted the prompt — no credit
     return { verdict: 'wrong', accepted: false, correction: payload.accepted[0] };
   }
-  return gradeText(payload.accepted, text, payload.strict);
+  return gradeText(payload.accepted, text, { strict: payload.strict });
 }
 
 /**

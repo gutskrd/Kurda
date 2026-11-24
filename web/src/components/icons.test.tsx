@@ -13,7 +13,7 @@ describe('icons', () => {
     // The ones screens use by name; a rename should fail here rather than leave a hole in a toolbar.
     for (const expected of [
       'PersonGlyph', 'BookIcon', 'FeatherIcon', 'GameIcon', 'PhotoIcon', 'HeartIcon',
-      'CommentIcon', 'TrophyIcon', 'UserIcon', 'UsersIcon', 'FlameIcon', 'CoinIcon',
+      'CommentIcon', 'TrophyIcon', 'UserIcon', 'UsersIcon', 'CoinIcon',
       'TilesIcon', 'WaveformIcon', 'ChevronIcon', 'GiftIcon', 'MenuIcon', 'CloseIcon',
       'MoonIcon', 'GearIcon', 'ArrowIcon', 'BookmarkIcon', 'TextIcon', 'EyeIcon',
     ]) {

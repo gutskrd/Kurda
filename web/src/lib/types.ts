@@ -1,5 +1,5 @@
 /** API contract types for the web client, matching the phone's (mobile/src/api/types.ts). */
-import type { AccountHold, FeedImage, LeagueTier, PendingPicture, PictureRejection, PictureReviewState, ProfileLeague, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
+import type { AccountHold, FeedImage, SupervisionState, LeagueTier, PendingPicture, PictureRejection, PictureReviewState, ProfileLeague, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
 
 import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding } from '@kurda/shared';
 
@@ -47,6 +47,8 @@ export interface SessionUser {
   leaguesEnabled?: boolean;
   /** Set while a person checks the account before it may post or message (/me only); null or absent for nearly everyone. */
   accountHold?: AccountHold | null;
+  /** A supervised teen's limits and where they stand today (/me only); null or absent for everyone else. */
+  supervision?: SupervisionState | null;
 }
 
 export interface AuthPayload {

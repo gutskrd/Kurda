@@ -20,6 +20,7 @@ import type { Exercise } from '../types';
 import { canPlayAudio, useAudio } from '../useAudio';
 import { ExerciseHeadline } from './ExerciseHeadline';
 import { MultipleChoiceExercise } from './MultipleChoiceExercise';
+import { PromptWords } from './PromptWords';
 import { pressedDim } from '../../theme/motion';
 import { autoplayOn } from '../../feedback/autoplayPref';
 import { AUTOPLAY_MS } from '../useAutoplay';
@@ -161,7 +162,8 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
                 {/* Speaker, words and meaning, read as one. */}
                 <View accessible style={styles.said}>
                   <Text style={[styles.name, yours ? null : kurdish, { color: colors.textSecondary }]}>{name}</Text>
-                  <Text style={[styles.text, kurdish, { color: colors.textPrimary }]}>{line.text}</Text>
+                  {/* Each word a tap from what it means, as in the lesson's other Kurdish lines. */}
+                  <PromptWords prompt={line.text} tokens={exercise.lineTokens?.[i]} style={[styles.text, kurdish, { color: colors.textPrimary }]} />
                   {translated && line.en ? <Text style={[styles.meaning, styles.ltr, { color: colors.textSecondary }]}>{line.en}</Text> : null}
                 </View>
                 {url ? (

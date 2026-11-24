@@ -28,6 +28,7 @@ import { useHistory } from '../images/useHistory';
 import { prefersReducedMotion } from '../lib/motion';
 import { useMemoryOwner } from '../lib/useApi';
 import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
+import { ParentalNote, useParentalOff } from '../parental/ParentalNote';
 import { BaselineProbe, PaperArt, noteStyle, sheetStyle, useBaseline, useScheme, useUnitsTall } from './PaperSheet';
 import { DrawPanel, PaperPanel, TextPanel, ToolSwitch, type Tool } from './PaperTools';
 import { DECOR_PROBLEM, NO_DRAWING, PAGE_FOOT, START_WIDTH, onPage, pagePoint, pointsLeft, rememberPaper, rememberedPaper, roomForNote, turnFor, widthFor, type Drawing } from './paper';
@@ -112,8 +113,10 @@ interface LetterComposerProps {
 
 export function LetterComposer(props: LetterComposerProps): React.JSX.Element {
   const held = useAccountHeld();
-  // A held account reads its letters as usual; the paper waits until a person has checked the account.
-  return held ? <HeldNotice /> : <LetterPaperComposer {...props} />;
+  const off = useParentalOff('letters');
+  // A held account reads its letters as usual; the paper waits until a person has checked the account, or for good
+  // while a teen's parent has letters switched off.
+  return held ? <HeldNotice /> : off ? <ParentalNote /> : <LetterPaperComposer {...props} />;
 }
 
 function LetterPaperComposer({

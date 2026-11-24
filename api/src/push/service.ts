@@ -35,6 +35,9 @@ const FRESH_FOR: Partial<Record<NotificationCategory, number>> = {
 export const HELD_IN_QUIET: ReadonlySet<NotificationCategory> = new Set(['letters']);
 
 /** The delivery-time preference gate. */
+/** Whether something other than the person's own settings keeps a push from them: a parent's switch (parental/supervision.ts). */
+export type PushMute = (userId: string, notification: Notification) => Promise<boolean>;
+
 export interface NotificationGate {
   allows(userId: string, category: NotificationCategory, at?: Date): Promise<boolean>;
   /** when a push held back only by quiet hours could go (notifications/prefs-service.ts) */
@@ -51,6 +54,7 @@ export class PushService {
     private readonly tokens: DeviceTokenService,
     private readonly provider: PushProvider,
     private readonly gate?: NotificationGate,
+    private readonly muted?: PushMute,
   ) {}
 
   /** Send to every device of `userId`; returns counts sent + pruned. */
@@ -60,6 +64,8 @@ export class PushService {
       const heldUntil = HELD_IN_QUIET.has(notification.category) ? await this.gate.quietUntil?.(userId, notification.category) : null;
       return { sent: 0, pruned: 0, suppressed: true, ...(heldUntil ? { heldUntil } : {}) };
     }
+    // a teen whose parent switched letters, messages, games or friends off is not pushed about them; the inbox keeps it
+    if (this.muted && (await this.muted(userId, notification))) return { sent: 0, pruned: 0, suppressed: true };
 
     const devices = await this.tokens.forUser(userId);
     if (devices.length === 0) return { sent: 0, pruned: 0 };

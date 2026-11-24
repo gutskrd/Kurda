@@ -16,6 +16,7 @@ import {
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { assertUnrestricted } from '../moderation/restrictions.js';
+import { assertParentalAllowed, parentalAllows } from '../parental/supervision.js';
 import { assertEconomyNotHeld } from '../economy/standing.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { FriendService } from '../friends/service.js';
@@ -140,6 +141,8 @@ export class GiftService {
     }
     // Muted from chat is refused as a message would be; the group's own rules are checked by assertCanPost below.
     await assertUnrestricted(this.pool, fromId, 'chat');
+    // and a gift is a message, so a parent's switch for messages covers it (in a group, by assertCanPost)
+    if (chat?.kind !== 'group') await assertParentalAllowed(this.pool, fromId, 'chat');
     if (chat?.kind !== 'group' && this.deps.moderation && (await this.deps.moderation.isChatMuted(fromId))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }
@@ -495,7 +498,8 @@ export class GiftService {
     // Each recipient's events in order, the recipients side by side.
     await Promise.all(
       told.map(async ({ toId, giftId, card }) => {
-        if (settled.posted && !inGroup) {
+        // a gift in a message is a message: not live to someone whose parent switched messages off
+        if (settled.posted && !inGroup && (await parentalAllows(this.pool, toId, 'chat'))) {
           const message = this.message(settled.posted, fromId, sender, card, 'dm');
           await realtime
             .notifyUser(toId, { type: 'dm', from: fromId, fromUsername: sender.username, message })

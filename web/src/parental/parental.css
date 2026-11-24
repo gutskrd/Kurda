@@ -1,0 +1,513 @@
+/*
+ * Parental controls (parental/): the calm note in place of something switched off or over a teen's request to stop,
+ * the pages on both sides of a link, a teen's week as slim bars, the code a parent reads out, and the pause screen. Ink
+ * and greys only; the main button keeps the one accent.
+ */
+
+/* ---- the note in place of a switched-off part ------------------------------- */
+.parental-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink);
+  line-height: 1.45;
+}
+.parental-note-icon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--ink-2);
+}
+.parental-note-text {
+  margin: 0;
+  min-width: 0;
+}
+.parental-note-link {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* in the room a button had: the sentence alone, quiet */
+.parental-note.is-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+}
+.parental-note.is-compact .parental-note-icon {
+  margin-top: 0;
+  color: var(--ink-3);
+}
+/* in place of a message box, it sits where the box was */
+.parental-note.is-inline {
+  flex: 1;
+  margin: 0;
+}
+
+/* a teen's request to stop, at the top of their page: the same calm note, with the way to let them go now */
+.parental-leaving {
+  margin-bottom: var(--space-4);
+}
+.parental-leaving .parental-note-text {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+.parental-leaving .parental-note-text p {
+  margin: 0;
+}
+
+/* ---- the start of either side ------------------------------------------------ */
+.parental-lead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) 0 var(--space-2);
+  text-align: center;
+  animation: parental-rise var(--dur-slow) var(--ease-out);
+}
+.parental-lead-glyph {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  margin-bottom: var(--space-2);
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.parental-lead-title {
+  margin: 0;
+  font-size: var(--text);
+  font-weight: 600;
+}
+.parental-lead-body {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+.settings-page-body > .btn.parental-lead-go {
+  align-self: center;
+  margin-top: var(--space-4);
+}
+@keyframes parental-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ---- people in rows ---------------------------------------------------------- */
+.parental-person {
+  min-height: 64px;
+}
+.parental-person .settings-row-icon {
+  width: 40px;
+}
+.parental-face .friend-avatar {
+  width: 40px;
+  height: 40px;
+}
+.parental-privacy {
+  margin-top: var(--space-4);
+}
+
+/* today's share of the limit: the words, then a thin bar filling in ink */
+.parental-today {
+  display: grid;
+  gap: var(--space-2);
+}
+.parental-today-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.parental-today-value {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.parental-meter {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+}
+.parental-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ink);
+  transform-origin: left center;
+  transition: transform var(--dur-progress) var(--ease-out);
+}
+[dir='rtl'] .parental-meter-fill {
+  transform-origin: right center;
+}
+
+/* ---- sheets: confirming a parent, asking to stop, stopping, a birth month ----- */
+.parental-sheet .report-heading {
+  padding-inline-end: 48px;
+}
+.parental-birth {
+  margin-top: var(--space-3);
+}
+.parental-confirm-who {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding-top: var(--space-2);
+  text-align: center;
+}
+.parental-confirm-face {
+  position: relative;
+  margin-bottom: var(--space-2);
+}
+.parental-confirm-face .friend-avatar {
+  width: 72px;
+  height: 72px;
+}
+/* a connection made: a tick lands on the parent's face */
+.parental-confirm-tick {
+  position: absolute;
+  inset-inline-end: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--panel-bg);
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--app-bg);
+  animation: parental-pop var(--dur-slow) var(--ease-spring) both;
+}
+.parental-confirm .report-heading.parental-confirm-name {
+  margin: 0;
+  padding-inline-end: 0;
+}
+.parental-confirm-handle {
+  margin: 0;
+  color: var(--ink-3);
+  unicode-bidi: plaintext;
+}
+.parental-confirm.is-done .parental-confirm-who {
+  padding-block: var(--space-4);
+}
+.parental-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding-inline-start: 1.2em;
+  color: var(--ink);
+}
+.parental-never {
+  margin: 0;
+  color: var(--ink-3);
+}
+@keyframes parental-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+/* ---- the teen's code entry --------------------------------------------------- */
+.parental-code-form {
+  gap: var(--space-2);
+}
+.parental-code-input {
+  max-width: 300px;
+  font-size: var(--text-title);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-align: center;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+.parental-code-input.is-wrong {
+  border-color: var(--danger);
+}
+.parental-code-problem {
+  margin: 0;
+  color: var(--danger);
+}
+.settings-page-body > .parental-code-go {
+  margin-top: var(--space-3);
+}
+
+/* ---- the parent's code, to read out ------------------------------------------ */
+.parental-code {
+  align-self: stretch;
+  margin: var(--space-2) 0 0;
+  padding: var(--space-5) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  font-size: var(--text-title);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  animation: parental-rise var(--dur-slow) var(--ease-out);
+  transition: opacity var(--dur) ease;
+}
+.parental-code.is-making {
+  opacity: 0.4;
+}
+.parental-code-works {
+  text-align: center;
+  align-self: stretch;
+}
+.parental-code-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.settings-page-body > .parental-code-new {
+  align-self: center;
+  min-height: 44px;
+  margin-top: var(--space-2);
+}
+.parental-code-waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  color: var(--ink-3);
+}
+.parental-code-spinner {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+.parental-arrived {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) 0;
+  text-align: center;
+  animation: parental-pop var(--dur-slow) var(--ease-spring) both;
+}
+.parental-arrived-tick {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--app-bg);
+}
+.parental-arrived-name {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* ---- a teen's page, as their parent sees it ---------------------------------- */
+.parental-teen-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.parental-teen-face .friend-avatar {
+  width: 56px;
+  height: 56px;
+}
+.parental-teen-who {
+  display: grid;
+  min-width: 0;
+}
+.parental-teen-handle {
+  color: var(--ink-2);
+  unicode-bidi: plaintext;
+}
+.parental-teen-since {
+  color: var(--ink-3);
+}
+
+/* the week: seven slim bars, today's in ink, the totals under them */
+.parental-week {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+:root[data-theme='light'] .parental-week {
+  box-shadow: var(--shadow-sm);
+}
+.parental-week-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.parental-week-title {
+  margin: 0;
+  font-size: var(--text);
+  font-weight: 600;
+}
+.parental-week-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--ink-2);
+}
+.parental-bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.parental-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+.parental-bar-track {
+  position: relative;
+  width: 10px;
+  height: 88px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+.parental-bar-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--ink-4);
+  transform: scaleY(var(--bar, 0));
+  transform-origin: bottom center;
+  animation: parental-bar-grow var(--dur-progress) var(--ease-out) both;
+}
+.parental-bar:nth-child(2) .parental-bar-fill {
+  animation-delay: 30ms;
+}
+.parental-bar:nth-child(3) .parental-bar-fill {
+  animation-delay: 60ms;
+}
+.parental-bar:nth-child(4) .parental-bar-fill {
+  animation-delay: 90ms;
+}
+.parental-bar:nth-child(5) .parental-bar-fill {
+  animation-delay: 120ms;
+}
+.parental-bar:nth-child(6) .parental-bar-fill {
+  animation-delay: 150ms;
+}
+.parental-bar:nth-child(7) .parental-bar-fill {
+  animation-delay: 180ms;
+}
+.parental-bar.is-today .parental-bar-fill {
+  background: var(--ink);
+}
+.parental-bar-day {
+  color: var(--ink-3);
+}
+.parental-bar.is-today .parental-bar-day {
+  color: var(--ink);
+  font-weight: 600;
+}
+.parental-week-sum {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+@keyframes parental-bar-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+.parental-week + .settings-section {
+  margin-top: var(--space-2);
+}
+
+/* ---- the pause screen -------------------------------------------------------- */
+.parental-pause {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  /* clear of the camera cutout and the home indicator when the screen is short or the text is large */
+  padding: calc(var(--space-6) + env(safe-area-inset-top, 0px)) var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
+  background: var(--app-bg);
+  color: var(--ink);
+}
+.parental-pause-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  animation: parental-rise var(--dur-slow) var(--ease-out);
+}
+.parental-pause-glyph {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: var(--space-2);
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.parental-pause-title {
+  margin: 0;
+  font-size: var(--text-title);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.parental-pause-title:focus {
+  outline: none;
+}
+.parental-pause-line {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.parental-pause-actions {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 300px;
+  margin-top: var(--space-4);
+}
+
+/* a whole place switched off: the glyph, the sentence and the way to see why, in the middle of where it would be */
+.parental-off {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  animation: parental-rise var(--dur-slow) var(--ease-out);
+}
+.parental-off .parental-lead-glyph {
+  margin-bottom: 0;
+}
+.parental-off-text {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--ink-2);
+}

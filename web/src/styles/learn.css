@@ -126,16 +126,20 @@ body:has(.lesson) {
 }
 
 /*
- * Alone on the screen (layouts/FocusLayout.tsx), clearing only the notch: a screen-high column with the action bar
- * (ActionBar.tsx) at its foot, stuck there while a long exercise scrolls. The hills are decorative.
+ * Alone on the screen (layouts/FocusLayout.tsx): a screen-high column with its header (`.lesson-top`) stuck under the
+ * notch and the action bar (ActionBar.tsx) at its foot, both staying put while a long exercise scrolls. The hills are
+ * decorative.
  */
 .lesson {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
-  padding-top: calc(16px + env(safe-area-inset-top));
   background: var(--lesson-hills) center top / 100% calc(120px + env(safe-area-inset-top)) no-repeat, var(--app-bg);
+}
+/* a lesson screen without its header (the results) clears the notch itself */
+.lesson:not(:has(.lesson-top)) {
+  padding-top: calc(16px + env(safe-area-inset-top));
 }
 @media (min-width: 720px) {
   .lesson {
@@ -149,15 +153,51 @@ body:has(.lesson) {
   margin: 0 auto;
   padding: 0 16px 28px;
 }
-/* a field or an option scrolled to, by a key or by the verdict rising, is brought clear of the bar */
+/* a field or an option scrolled to, by a key or by the verdict rising, is brought clear of the bar and the header */
 html:has(.lesson-bar) {
+  scroll-padding-top: calc(76px + env(safe-area-inset-top));
   scroll-padding-bottom: calc(var(--lesson-bar-h, 0px) + 12px);
 }
+/* The way out, the progress and the Tips: clear of the notch, and stuck there so they never scroll out of reach. */
 .lesson-top {
+  position: sticky;
+  top: 0;
+  z-index: 4;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 14px;
+  padding-top: calc(16px + env(safe-area-inset-top));
+  padding-bottom: 10px;
+}
+/*
+ * The header's backing, the page's own colour from edge to edge: clear over the hills at the top, it comes in as the
+ * page scrolls so nothing slides under the controls. Without scroll-linked animation it is simply there.
+ */
+.lesson-top::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--app-bg);
+  box-shadow: 0 0 0 100vmax var(--app-bg);
+  clip-path: inset(0 -100vmax);
+  pointer-events: none;
+}
+@supports (animation-timeline: scroll()) {
+  .lesson-top::before {
+    animation: lesson-top-backing linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 24px;
+  }
+}
+@keyframes lesson-top-backing {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 /* the bar takes the row, with the run named over it (Run.tsx) */
 .lesson-progress-wrap {
@@ -301,7 +341,7 @@ html:has(.lesson-bar) {
 /* a short screen keeps the answer in view: a little less air between the parts */
 @media (max-height: 700px) {
   .lesson-top {
-    margin-bottom: 16px;
+    margin-bottom: 8px;
   }
   .lesson-exercise {
     gap: 14px;
@@ -821,6 +861,8 @@ html:has(.lesson-bar) {
   min-width: 0;
   font-size: var(--text);
   line-height: 1.32;
+  /* a line breaks between words, and inside one only when a single word is wider than the bubble */
+  overflow-wrap: break-word;
 }
 /* the speaker at the start of what is said: a round red button, its reach still a fingertip's */
 .lesson-bubble .lesson-play-round {
@@ -950,6 +992,22 @@ html:has(.lesson-bar) {
   .lesson-bubble.is-line:not(:has(.lesson-line-play)) {
     padding-inline-start: 16px;
   }
+  /* beside a speaker the bubble is narrow: its two buttons go in a row over the line, which gets the whole width */
+  .character-stage .lesson-bubble.is-line:has(.lesson-line-play) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding-inline: 14px;
+  }
+  .character-stage .lesson-bubble.is-line .lesson-line-play {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .character-stage .lesson-bubble .lesson-line-play .lesson-play-round {
+    width: 38px;
+    height: 38px;
+  }
 }
 
 /* a missing word's gap: an empty slot the width of a word, ruled under, which takes the word chosen or typed */
@@ -993,6 +1051,30 @@ html:has(.lesson-bar) {
   font-weight: 650;
   line-height: 1.4;
   overflow-wrap: anywhere;
+}
+/* what a reply's cue names, drawn: a small card under the bubble, as if held up to be named */
+.lesson-cue-picture {
+  justify-self: start;
+  margin: 0;
+  padding: 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  background: var(--bg);
+  animation: lesson-cue-in var(--dur) var(--ease-out) both;
+}
+.lesson-cue-picture .lesson-picture-art {
+  width: 72px;
+}
+@keyframes lesson-cue-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.94);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lesson-cue-picture {
+    animation: none;
+  }
 }
 /* The speaker stands on the page with a faint sun behind; the stage grows with the line so it never overruns the answers. */
 .lesson .character-stage {
@@ -1110,6 +1192,14 @@ html:has(.lesson-bar) {
 .lesson-meaning + .lesson-meaning {
   border-top: 2px solid var(--separator);
 }
+/* what a word has instead of meanings, and the word an inflected form comes from: quieter than a meaning */
+.lesson-meaning.is-note,
+.lesson-meaning.is-base {
+  color: var(--ink-2);
+}
+.lesson-meaning.is-base {
+  padding-block: 8px;
+}
 
 /* listening's bubble: the speaker and its waveform, "Slower" under it at the end */
 .lesson-sound {
@@ -1208,6 +1298,12 @@ html:has(.lesson-bar) {
 .lesson .lesson-answer-line {
   --row: 58px;
   background-image: linear-gradient(to bottom, transparent calc(var(--row) - 1.5px), var(--border-strong) calc(var(--row) - 1.5px));
+}
+/* on a short screen the answer starts as one line and gains one for each row of tiles, so the bank stays in view */
+@media (max-height: 700px) {
+  .lesson .lesson-answer-line {
+    min-height: var(--row);
+  }
 }
 .lesson-bank {
   display: flex;

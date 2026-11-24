@@ -3,6 +3,7 @@ import { SendIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
+import { ParentalNote, useParentalOff } from '../parental/ParentalNote';
 
 /**
  * The message box shared by the direct and group threads: a textarea that grows with its content, joined with a round
@@ -29,13 +30,11 @@ interface ComposerProps {
 
 export function Composer(props: ComposerProps): React.JSX.Element {
   const held = useAccountHeld();
-  // A held account can read the thread but not write in it, so the box gives way to what is happening.
-  if (held) {
-    return (
-      <div className="chat-compose">
-        <HeldNotice className="is-inline" />
-      </div>
-    );
+  const off = useParentalOff('chat');
+  // A held account can read the thread but not write in it, so the box gives way to what is happening; so does a teen
+  // whose parent switched messages off.
+  if (held || off) {
+    return <div className="chat-compose">{held ? <HeldNotice className="is-inline" /> : <ParentalNote className="is-inline" />}</div>;
   }
   return <MessageBox {...props} />;
 }

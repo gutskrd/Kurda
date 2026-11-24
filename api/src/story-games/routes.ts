@@ -12,6 +12,7 @@ import {
 } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
+import { assertParentalAllowed, requireParental } from '../parental/supervision.js';
 import type { RoomBus } from '../realtime/bus.js';
 import type { XpService } from '../xp/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
@@ -134,14 +135,17 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
     '/story-games',
     { schema: { body: createBody }, config: perMinute(20), preHandler: [requireAccount, requireBirthMonth] },
     async (req, reply) => {
-      const view = await games.create(req.user!.id, req.body as z.infer<typeof createBody>);
+      const body = req.body as z.infer<typeof createBody>;
+      // a story read alone is learning; one with other people is an online game a parent may have switched off
+      if (body.mode !== 'solo') await assertParentalAllowed(app.db, req.user!.id, 'games');
+      const view = await games.create(req.user!.id, body);
       return reply.code(201).send(view);
     },
   );
 
   app.post(
     '/story-games/join',
-    { schema: { body: joinBody }, config: perMinute(10), preHandler: [requireAccount, requireBirthMonth] },
+    { schema: { body: joinBody }, config: perMinute(10), preHandler: [requireAccount, requireBirthMonth, requireParental('games')] },
     async (req) => {
       const body = req.body as z.infer<typeof joinBody>;
       const target = 'code' in body ? { code: body.code } : { id: body.id };

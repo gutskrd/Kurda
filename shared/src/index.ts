@@ -42,6 +42,7 @@ export {
   RUN_SHOWN_FROM,
   VERDICT_TIMING,
   AnswerQueue,
+  answerMarkedInPlace,
   currentExercise,
   currentStep,
   feedbackKind,
@@ -266,6 +267,7 @@ export {
   MIN_RECORDING_BYTES,
   MIN_RECORDING_MS,
   SORANI_KEYS,
+  answerDiff,
   emptyDraft,
   emptyLiveMatch,
   emptyMatch,
@@ -979,3 +981,8 @@ export * from './pending-signup.js';
 export * from './notices.js';
 export { GLASS, bendAt, bendImage, bezelFor, glassField, roundedEdge, shineAt, shineImage, veilAt, veilImage, type GlassField, type GlassShape } from './glass.js';
 export * from './counts.js';
+
+/** Parental controls: the options a parent has, the pause they make, and the codes that connect a parent and a teen. */
+export * from './parental.js';
+/** Icons Hevalo draws itself in the icon family's weight, where the family has none for the job. */
+export * from './glyphs.js';

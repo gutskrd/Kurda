@@ -9,6 +9,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { LearnHeader } from '../learn/LearnHeader';
 import { ChevronIcon, TrophyIcon } from '../components/icons';
 import { JoinCodeEntry } from '../play/JoinCode';
+import { ParentalNote, useParentalOff } from '../parental/ParentalNote';
 import { WEB_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
 import { GameArt } from '../games/GameArt';
 import { GameStamp } from '../games/GameStamp';
@@ -164,6 +165,8 @@ function useRoom(): [React.RefObject<HTMLDivElement | null>, number] {
  */
 function Ways({ game, signedIn }: { game: GameEntry; signedIn: boolean }): React.JSX.Element {
   const t = useT();
+  // A teen whose parent switched online games off keeps the solo ways in, and is told why the others are gone.
+  const onlineOff = useParentalOff('games');
   if (!signedIn) {
     return (
       <div className="gp-ways">
@@ -174,9 +177,11 @@ function Ways({ game, signedIn }: { game: GameEntry; signedIn: boolean }): React
     );
   }
   const name = t(game.nameKey);
+  const ways = onlineOff ? game.ways.filter((w) => w.labelKey !== 'games.mode.online') : game.ways;
   return (
     <div className="gp-ways">
-      {game.ways.map((way, i) => (
+      {onlineOff && ways.length < game.ways.length && <ParentalNote compact />}
+      {ways.map((way, i) => (
         // Named with the game, since "Play" alone names no game.
         <Link key={way.href} to={way.href} className={`btn btn-lg ${i === 0 ? 'btn-primary' : 'btn-secondary'}`} aria-label={`${name}, ${t(way.labelKey)}`}>
           {t(way.labelKey)}
@@ -277,6 +282,7 @@ export function Games(): React.JSX.Element {
   const { status } = useAuth();
   const signedIn = status === 'signedIn';
   const t = useT();
+  const gamesOff = useParentalOff('games');
   // The game whose ways in are offered, while its dialog is up.
   const [offered, setOffered] = useState<GameEntry | null>(null);
   // A session ending closes the offer, so it is not open again on the next sign-in.
@@ -331,8 +337,8 @@ export function Games(): React.JSX.Element {
       )}
 
       <div className="gp-quick">
-        {/* A friend's code into their game: one way in for every online game. */}
-        <JoinCodeEntry />
+        {/* A friend's code into their game: one way in for every online game, unless a teen's parent switched those off. */}
+        {gamesOff ? <ParentalNote compact /> : <JoinCodeEntry />}
         {/* XP, the weekly league, Zêr and Gewher. */}
         <Link to="/app/rankings" className="games-rankings">
           <TrophyIcon size={20} />

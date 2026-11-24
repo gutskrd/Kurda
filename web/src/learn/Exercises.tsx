@@ -25,7 +25,7 @@ import { PlayButton } from './PlayButton';
 import { askHeadline, lineIsEnglish, lineTokens } from './asks';
 import { Bubble, LinePlay, LineWords, PromptWords, SoundBubble, type GapFill } from './Bubble';
 import { useAutoplay } from './useAutoplay';
-import { PictureArt, pictureName } from './Pictures';
+import { PictureArt, isWordPicture, pictureName } from './Pictures';
 import { Tile, type TileState } from './Tile';
 import { ExerciseVoice, exerciseClips } from './Voice';
 import { BuiltAnswer, useAnswerMode } from './WordTiles';
@@ -116,8 +116,18 @@ function Said({ exercise }: { exercise: DeliveredExercise }): React.JSX.Element 
   );
 }
 
-/** A few words of context under the bubble, where the line alone could be read two ways ("to two people"). */
-export function Cue({ text }: { text: string | undefined }): React.JSX.Element | null {
+/**
+ * A few words of context under the bubble, where the line alone could be read two ways ("to two people"); when they name
+ * a thing Hevalo has a drawing of ("a bowl of milk"), the drawing stands there instead, named for screen readers.
+ */
+export function Cue({ text, picture }: { text: string | undefined; picture?: string }): React.JSX.Element | null {
+  if (picture && isWordPicture(picture))
+    return (
+      <figure className="lesson-cue-picture">
+        <PictureArt id={picture} />
+        <figcaption className="sr-only">{text ?? pictureName(picture)}</figcaption>
+      </figure>
+    );
   if (!text) return null;
   return (
     <p className="lesson-cue" dir="auto">
@@ -135,7 +145,7 @@ function AskedLine({ exercise, dialect, gap }: { exercise: DeliveredExercise; di
   const { lang, dir } = kurdishText(dialect);
   const line = exercise.prompt ?? '';
   const tokens = useMemo(() => lineTokens(line, exercise.promptTokens, exercise.newWords), [line, exercise.promptTokens, exercise.newWords]);
-  if (!line) return <Cue text={exercise.cue} />;
+  if (!line) return <Cue text={exercise.cue} picture={exercise.cuePicture} />;
   const english = lineIsEnglish(exercise);
   const model = english ? undefined : exercise.modelAudioUrl;
   return (
@@ -144,7 +154,7 @@ function AskedLine({ exercise, dialect, gap }: { exercise: DeliveredExercise; di
         {model && <LinePlay src={model} auto />}
         <LineWords tokens={tokens} english={english} lang={lang} dir={dir} big={exercise.ask === 'picture'} gap={gap} />
       </Bubble>
-      <Cue text={exercise.cue} />
+      <Cue text={exercise.cue} picture={exercise.cuePicture} />
     </>
   );
 }

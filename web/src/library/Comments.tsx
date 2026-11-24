@@ -10,6 +10,7 @@ import { PostAuthor, type Author } from './PostAuthor';
 import { useT } from '../i18n/I18nProvider';
 import { SendError } from '../reports/SendError';
 import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
+import { ParentalNote, useParentalOff } from '../parental/ParentalNote';
 import type { ApiError } from '../lib/types';
 import { ReportAction } from '../reports/ReportAction';
 import { useOutbox, type Unsent } from '../chat/useOutbox';
@@ -389,6 +390,7 @@ function CommentNode({
 function CommentForm({ box, placeholder, onSent }: { box: CommentBox; placeholder: string; onSent?: () => void }): React.JSX.Element {
   const t = useT();
   const held = useAccountHeld();
+  const off = useParentalOff('posts');
   const reply = Boolean(onSent);
 
   function submit(e: React.FormEvent): void {
@@ -399,6 +401,7 @@ function CommentForm({ box, placeholder, onSent }: { box: CommentBox; placeholde
   }
 
   if (held) return <HeldNotice className="comment-form" />;
+  if (off) return <ParentalNote className="comment-form" />;
 
   return (
     <form className="comment-form" onSubmit={submit}>

@@ -28,9 +28,14 @@ export const SearchField = forwardRef<TextInput, {
   maxLength?: number;
   /** The search page's own field: a pill of glass floating off the page like the back button beside it. */
   floating?: boolean;
+  /** Escape on a hardware keyboard, for a search that can be closed (Settings). */
+  onEscape?: () => void;
   /** Where the field sits (a margin), not how it looks. */
   style?: StyleProp<ViewStyle>;
-}>(function SearchField({ value, onChangeText, label, placeholder, onSubmit, returnKeyType = 'search', autoFocus, maxLength, floating: lifted = false, style }, ref) {
+}>(function SearchField(
+  { value, onChangeText, label, placeholder, onSubmit, returnKeyType = 'search', autoFocus, maxLength, floating: lifted = false, onEscape, style },
+  ref,
+) {
   const { colors } = useTheme();
   const input = useRef<TextInput>(null);
   useImperativeHandle(ref, () => input.current as TextInput);
@@ -68,6 +73,7 @@ export const SearchField = forwardRef<TextInput, {
         onSubmitEditing={onSubmit}
         autoFocus={autoFocus}
         maxLength={maxLength}
+        onKeyPress={onEscape ? (e) => e.nativeEvent.key === 'Escape' && onEscape() : undefined}
         accessibilityLabel={label}
         style={[styles.input, dir.text, { color: colors.textPrimary }]}
       />

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAccount } from '../plugins/auth.js';
+import { assertParentalAllowed } from '../parental/supervision.js';
 import { VISIBILITIES, type SocialService, type Visibility } from './service.js';
 import { toPublicProfileDto } from './profile-dto.js';
 import { AppError } from '../plugins/errors.js';
@@ -211,8 +212,12 @@ export function registerSocialRoutes(
       if (!isEngagementKind(kind)) throw new AppError('BAD_KIND', 400, 'unknown engagement');
 
       const wanted = (req.body as { on?: boolean } | null | undefined)?.on;
+      // A like or a repost is a reaction others see, which a parent may have switched off; a bookmark is the reader's
+      // own, and taking anything back is always allowed, by a plain toggle too.
+      const reacting = kind !== 'bookmark' ? () => assertParentalAllowed(app.db, req.user!.id, 'posts') : undefined;
+      if (reacting && wanted === true) await reacting();
       const { on } =
-        wanted === undefined ? await engagement.toggle(req.user!.id, type, id, kind) : await engagement.set(req.user!.id, type, id, kind, wanted);
+        wanted === undefined ? await engagement.toggle(req.user!.id, type, id, kind, reacting) : await engagement.set(req.user!.id, type, id, kind, wanted);
       const counts = await engagement.forPosts(req.user!.id, type, [id]);
       return { on, engagement: counts.get(id) };
     },

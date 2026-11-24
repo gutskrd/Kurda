@@ -30,6 +30,10 @@ const XEZO: RecordingVoice = {
   }),
 };
 
+/** A said line, found by what it reads: its words are each a tap from their meaning, so the line is several pieces. */
+const saidLine = (text: string) => (_: string, el: Element | null): boolean =>
+  !!el && el.textContent === text && Array.from(el.children).every((child) => child.textContent !== text);
+
 /** Xezo greets Hamo; the middle line has no recording yet, and only the first has a mouth timeline. */
 function conversation(extra: Partial<Exercise> = {}): Exercise {
   return {
@@ -107,7 +111,7 @@ describe('a conversation in a lesson', () => {
     await settle();
     expect(screen.getByText('Listen to the conversation, then answer')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Li kafeyê' })).toBeTruthy();
-    const said = ['Silav, tu çawa yî?', 'Ez baş im, spas.', 'Ez jî baş im.'].map((text) => screen.getByText(text));
+    const said = ['Silav, tu çawa yî?', 'Ez baş im, spas.', 'Ez jî baş im.'].map((text) => screen.getByText(saidLine(text)));
     // In the order they are said.
     expect(said[0]!.compareDocumentPosition(said[1]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(said[1]!.compareDocumentPosition(said[2]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -137,7 +141,7 @@ describe('a conversation in a lesson', () => {
     );
     await settle();
     expect(screen.getByText('You')).toBeTruthy();
-    expect(screen.getByText('Bi xêr bimînî!')).toBeTruthy();
+    expect(screen.getByText(saidLine('Bi xêr bimînî!'))).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Play line 1, said by Hamo' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Play line 2/ })).toBeNull();
     // Hamo alone stands on the stage, facing the learner.
@@ -170,7 +174,7 @@ describe('a conversation in a lesson', () => {
   it('plays the first line by itself, then one more line per tap, lighting the one heard and passing over the one not recorded', async () => {
     show(conversation());
     await waitFor(() => expect(FakeAudio.of(SILAV)?.paused).toBe(false));
-    expect(within(screen.getByTestId('conversation-heard')).getByText('Silav, tu çawa yî?')).toBeTruthy();
+    expect(within(screen.getByTestId('conversation-heard')).getByText(saidLine('Silav, tu çawa yî?'))).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Next line' })).toBeTruthy();
 
     // The first line ends and nothing follows it until the learner asks.
@@ -182,7 +186,7 @@ describe('a conversation in a lesson', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next line' }));
     await settle();
     expect(FakeAudio.of(BAS)!.paused).toBe(false);
-    expect(within(screen.getByTestId('conversation-heard')).getByText('Ez jî baş im.')).toBeTruthy();
+    expect(within(screen.getByTestId('conversation-heard')).getByText(saidLine('Ez jî baş im.'))).toBeTruthy();
     // One sound at a time.
     expect(FakeAudio.made.filter((a) => !a.paused)).toHaveLength(1);
 
@@ -191,7 +195,7 @@ describe('a conversation in a lesson', () => {
     await settle();
     fireEvent.click(screen.getByRole('button', { name: 'Start again' }));
     await settle();
-    expect(within(screen.getByTestId('conversation-heard')).getByText('Silav, tu çawa yî?')).toBeTruthy();
+    expect(within(screen.getByTestId('conversation-heard')).getByText(saidLine('Silav, tu çawa yî?'))).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Next line' })).toBeTruthy();
   });
 
@@ -215,7 +219,7 @@ describe('a conversation in a lesson', () => {
     act(() => FakeAudio.of(SILAV)!.finish());
     await settle();
     // The learner's turn: their line waits for them, and Hamo says nothing more until they have said it.
-    expect(within(screen.getByTestId('conversation-turn')).getByText('Xêra Xwedê li we bê!')).toBeTruthy();
+    expect(within(screen.getByTestId('conversation-turn')).getByText(saidLine('Xêra Xwedê li we bê!'))).toBeTruthy();
     expect(FakeAudio.made.filter((a) => !a.paused)).toHaveLength(0);
 
     fireEvent.click(screen.getByRole('button', { name: 'I said it' }));
@@ -251,7 +255,7 @@ describe('a conversation in a lesson', () => {
     expect(figures.map((el) => el.getAttribute('aria-label'))).toEqual(['Said by Xezo', 'Said by Hamo']);
     // The lines below already say who says what.
     expect(screen.queryByRole('img', { name: /^Said by/ })).toBeNull();
-    expect(stage.compareDocumentPosition(screen.getByText('Silav, tu çawa yî?')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(stage.compareDocumentPosition(screen.getByText(saidLine('Silav, tu çawa yî?'))) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // Each drawn whole, for the stage's foot to cut at the waist.
     for (const who of ['xezo', 'hamo'] as const) expect(markups()).toContain(sameIds(characterLayers(who, 'full')).body);
     // The initials stay beside the lines.
@@ -358,7 +362,7 @@ describe('a conversation in a lesson', () => {
     show(conversation({ speakers }));
     await settle();
     expect(screen.queryByTestId('conversation-stage')).toBeNull();
-    expect(screen.getByText('Silav, tu çawa yî?')).toBeTruthy();
+    expect(screen.getByText(saidLine('Silav, tu çawa yî?'))).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Play line 1, said by Xezo' })).toBeTruthy();
   });
 

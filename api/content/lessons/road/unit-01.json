@@ -1375,6 +1375,7 @@
                     "voice": "hamo",
                     "prompt": "Ev çi ye?",
                     "cue": "a glass of tea",
+                    "picture": "tea",
                     "options": [
                       "Ev çay e.",
                       "Ev Hevalo ye.",
@@ -2000,6 +2001,7 @@
                     "voice": "hamo",
                     "prompt": "Ev çi ye?",
                     "cue": "a bowl of milk",
+                    "picture": "milk",
                     "options": [
                       "Ev şîr e.",
                       "Ev çay e.",
@@ -2708,6 +2710,7 @@
                     "voice": "hamo",
                     "prompt": "Ev bi kurdî çi ye?",
                     "cue": "he points at the door",
+                    "picture": "door",
                     "options": [
                       "Derî.",
                       "Ez baş im.",
@@ -2949,6 +2952,7 @@
                     "voice": "hamo",
                     "prompt": "Bi kurdî çi ye?",
                     "cue": "he holds up an apple",
+                    "picture": "apple",
                     "options": [
                       "Sêv.",
                       "Ez baş im.",

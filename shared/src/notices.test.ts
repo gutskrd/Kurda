@@ -8,6 +8,8 @@ describe('a notification in the list', () => {
     expect(noticeFilterOf({ category: 'games', data: { kind: 'play_invite', game: 'impostor' } })).toBe('games');
     expect(noticeFilterOf({ category: 'progress', data: { kind: 'league_promotion', tier: 'kani' } })).toBe('progress');
     expect(noticeFilterOf({ category: 'streak' })).toBe('progress');
+    expect(noticeFilterOf({ category: 'friends', data: { kind: 'parental_leave', state: 'asked' } })).toBe('people');
+    expect(noticeFilterOf({ category: 'friends', data: { kind: 'parental_birth' } })).toBe('people');
     // what moderators and care say is from Hevalo, whichever category carried it
     expect(noticeFilterOf({ category: 'friends', data: { kind: 'caring_message' } })).toBe('hevalo');
     expect(noticeFilterOf({ category: 'events' })).toBe('hevalo');

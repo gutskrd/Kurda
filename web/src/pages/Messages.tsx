@@ -29,6 +29,7 @@ import { pollWhileVisible } from '../lib/pollWhileVisible';
 import { BirdBadge } from '../letters/LetterParts';
 import { LETTERS_HOME_PATH } from '../letters/useLettersHome';
 import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
+import { ParentalNote, ParentalOffPlace, useParentalOff } from '../parental/ParentalNote';
 
 // With the realtime socket live, polling is only a slow safety net; without it a brisk poll keeps chat live. Neither
 // runs while the tab is hidden.
@@ -71,6 +72,24 @@ function convoTime(iso: string, t: Translate, locale: string, now = Date.now()):
  * screen the open conversation sits beside the list; on a phone it takes the screen and the tab bar steps aside.
  */
 export function Messages(): React.JSX.Element {
+  const t = useT();
+  // With chats switched off by a teen's parent the server refuses even reading them, so nothing is asked: the calm line
+  // stands where the conversations would be, and letters keep their own way in.
+  if (useParentalOff('chat')) {
+    return (
+      <div className="container chat-page">
+        <div className="page-header">
+          <h1 className="page-title">{t('chat.title')}</h1>
+        </div>
+        <LettersRow />
+        <ParentalOffPlace />
+      </div>
+    );
+  }
+  return <Inbox />;
+}
+
+function Inbox(): React.JSX.Element {
   const t = useT();
   const [params] = useSearchParams();
   const activeId = params.get('to');
@@ -232,6 +251,11 @@ function FriendRequestsRow(): React.JSX.Element | null {
  * answer, your bird out), or what letters are.
  */
 function LettersRow(): React.JSX.Element | null {
+  // With letters switched off there is nothing to read here, so nothing is asked.
+  return useParentalOff('letters') ? null : <LettersWay />;
+}
+
+function LettersWay(): React.JSX.Element | null {
   const t = useT();
   // Read as the window reads it: a plain read would mark letters as landed and use up a bird before the window shows it.
   const { data } = useApiGet<LettersHome>(LETTERS_HOME_PATH);
@@ -578,8 +602,9 @@ function CreateGroupForm({ onCreated }: { onCreated: (id: string) => void }): Re
   const navigate = useNavigate();
   const { data: mine } = useApiGet<{ groups: MyGroup[] }>('/me/groups');
   const limit: LimitDetails | null = groupLimits(mine?.groups ?? []).create;
-  // Starting a group is joining one, which a held account waits for.
+  // Starting a group is joining one, which a held account waits for, and which a teen's parent may have switched off.
   const held = useAccountHeld();
+  const chatOff = useParentalOff('chat');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [busy, setBusy] = useState(false);
@@ -587,7 +612,7 @@ function CreateGroupForm({ onCreated }: { onCreated: (id: string) => void }): Re
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    if (busy || name.trim().length < 2 || limit || held) return;
+    if (busy || name.trim().length < 2 || limit || held || chatOff) return;
     setBusy(true);
     setErr(null);
     const res = await client.post<{ id: string }>('/groups', {
@@ -608,6 +633,8 @@ function CreateGroupForm({ onCreated }: { onCreated: (id: string) => void }): Re
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('groups.new')}</h2>
       {held ? (
         <HeldNotice />
+      ) : chatOff ? (
+        <ParentalNote />
       ) : (
         limit && (
           <div className="msg" role="status" id="g-limit">
@@ -625,7 +652,7 @@ function CreateGroupForm({ onCreated }: { onCreated: (id: string) => void }): Re
         <input id="g-desc" className="input" value={description} maxLength={300} onChange={(e) => setDescription(e.target.value)} placeholder={t('groups.descriptionPlaceholder')} />
       </div>
       <p className="field-hint">{t('groups.privateHint')}</p>
-      <Button type="submit" disabled={busy || held || name.trim().length < 2 || limit !== null} aria-describedby={limit && !held ? 'g-limit' : undefined}>
+      <Button type="submit" disabled={busy || held || chatOff || name.trim().length < 2 || limit !== null} aria-describedby={limit && !held ? 'g-limit' : undefined}>
         {busy ? t('groups.creating') : t('groups.create')}
       </Button>
     </form>

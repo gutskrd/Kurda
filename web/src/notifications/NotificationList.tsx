@@ -7,7 +7,6 @@ import {
   CareIcon,
   ChatsIcon,
   CheckIcon,
-  FlameIcon,
   GameIcon,
   GearIcon,
   GiftIcon,
@@ -21,6 +20,7 @@ import {
   TrashIcon,
   TrophyIcon,
   UsersIcon,
+  ParentalIcon,
 } from '../components/icons';
 import {
   badgeSvg,
@@ -31,6 +31,7 @@ import {
   noticeFiltersFor,
   noticePicture,
   noticeShows,
+  type FireLevel,
   type NoticeFilter,
   type NoticePicture,
 } from '@kurda/shared';
@@ -40,6 +41,7 @@ import { socialNotification, type NoteView } from '../reports/notifications';
 import { playNotification } from '../play/notifications';
 import { progressNotification } from '../ranks/notifications';
 import { groupNotification } from '../groups/notifications';
+import { parentalNotification } from '../parental/notifications';
 import { usePlayInvites } from '../play/PlayProvider';
 import { useRail } from '../social/RailProvider';
 import { railEdits, type RailNotification } from '../social/useSocialRail';
@@ -106,6 +108,12 @@ const FILTER_LABEL: Record<NoticeFilter, MessageKey> = {
   hevalo: 'notifications.filter.hevalo',
 };
 
+/** A streak notice's mark: Hevalo's own small fire, as beside every streak, rather than a generic flame. */
+const NOTE_FIRE: FireLevel = { stage: 'campfire', growth: 0.5 };
+function StreakFire({ size = 22 }: { size?: number }): React.JSX.Element {
+  return <Fire size={size} level={NOTE_FIRE} still />;
+}
+
 const KIND_ICON: Record<NoteKind, (p: { size?: number }) => React.JSX.Element> = {
   invite: TicketIcon,
   friendRequest: TicketIcon,
@@ -113,7 +121,7 @@ const KIND_ICON: Record<NoteKind, (p: { size?: number }) => React.JSX.Element> =
   gift: GiftIcon,
   badge: MedalIcon,
   league: TrophyIcon,
-  streak: FlameIcon,
+  streak: StreakFire,
   safety: SafetyIcon,
   care: CareIcon,
   picture: PhotoIcon,
@@ -122,6 +130,7 @@ const KIND_ICON: Record<NoteKind, (p: { size?: number }) => React.JSX.Element> =
   groupOut: RemovePersonIcon,
   groupBan: BlockIcon,
   groupAsk: InviteIcon,
+  parental: ParentalIcon,
   notice: BellIcon,
 };
 
@@ -222,7 +231,11 @@ export function NotificationList({
             {group.items.map((n) => {
               const actor = actorOf(n);
               const view: NoteView | null =
-                socialNotification(n, t, locale) ?? playNotification(n, t, incoming) ?? progressNotification(n, t) ?? groupNotification(n, t, locale);
+                socialNotification(n, t, locale) ??
+                playNotification(n, t, incoming) ??
+                progressNotification(n, t) ??
+                groupNotification(n, t, locale) ??
+                parentalNotification(n, t, locale);
               // A gift from somebody the app can name says who it is from.
               const title = n.data?.kind === 'gift' && actor ? t('gift.fromLabel', { name: actor.name }) : (view?.title ?? n.title);
               const when = noteWhen(n.createdAt, group.key, t, shortDate);
@@ -441,7 +454,7 @@ function NotePicture({ picture }: { picture: NoticePicture }): React.JSX.Element
       ) : picture.kind === 'gift' ? (
         <GiftBox tier="rare" size={34} />
       ) : (
-        <Fire size={32} level={{ stage: 'campfire', growth: 0.5 }} still />
+        <Fire size={32} level={NOTE_FIRE} still />
       )}
     </span>
   );

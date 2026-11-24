@@ -8,7 +8,7 @@ import { useAutoplayPref } from '../feedback/autoplayPref';
 import { useCharacterVoicesPref } from '../feedback/voicesPref';
 import { useVibrationPref } from '../feedback/vibrationPref';
 import { useI18n } from '../i18n/I18nContext';
-import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
+import { LOCALES, LOCALE_LABEL, type Locale, type TranslationKey } from '../i18n/translations';
 import { KeyboardSettingsList } from '../keyboard/KeyboardSettings';
 import { SUPPORT_EMAIL } from '../legal/links';
 import { useDirection } from '../reports/direction';
@@ -20,67 +20,81 @@ import { useEventTheme } from '../theme/EventThemeContext';
 import type { IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, spacing, typography } from '../theme/tokens';
+import { CodePage } from '../parental/CodePage';
+import { ConnectPage } from '../parental/ConnectPage';
+import { ParentalPage } from '../parental/ParentalPage';
+import { BedtimePage, LimitPage, TeenPage } from '../parental/TeenPage';
 import { useMyAccount } from './account';
+import { AboutPage, AccountPage, DisplayPage, HelpPage, PrivacyPage, SafetyPage } from './CategoryPages';
 import { SettingsChoice, SettingsNote, SettingsPage, SettingsRow, SettingsSection, SettingsSwitch } from './list';
+import { StoragePage } from './StoragePage';
 
-/** The pages behind Settings' rows that are not screens of their own elsewhere. */
-export const SETTINGS_PAGES = ['birthMonth', 'language', 'theme', 'sounds', 'keyboard', 'leagues', 'visibility', 'credits'] as const;
+/**
+ * The pages behind Settings: one per category on the home, the parental pages behind those, and the choices with
+ * several answers behind a row. Opened through the one `SettingsPage` route; a page about one teen also takes its id.
+ */
+export const SETTINGS_PAGES = [
+  'account',
+  'parental',
+  'parentalConnect',
+  'parentalCode',
+  'parentalTeen',
+  'parentalLimit',
+  'parentalBedtime',
+  'display',
+  'privacy',
+  'safety',
+  'storage',
+  'help',
+  'about',
+  'birthMonth',
+  'language',
+  'theme',
+  'sounds',
+  'keyboard',
+  'leagues',
+  'visibility',
+  'credits',
+] as const;
 export type SettingsPageKey = (typeof SETTINGS_PAGES)[number];
 
 /** One Settings page: a short list of one kind of choice, each explained beside it and saved as soon as it changes. */
-export function SettingsPageScreen({ page, onExit }: { page: SettingsPageKey; onExit: () => void }): React.JSX.Element {
+export function SettingsPageScreen({ page, teenId = '', onExit }: { page: SettingsPageKey; teenId?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
-  switch (page) {
-    case 'birthMonth':
-      return (
-        <SettingsPage title={t('age.label')} onExit={onExit}>
-          <BirthMonth />
-        </SettingsPage>
-      );
-    case 'language':
-      return (
-        <SettingsPage title={t('settings.language')} onExit={onExit}>
-          <LanguageList />
-        </SettingsPage>
-      );
-    case 'theme':
-      return (
-        <SettingsPage title={t('appearance.theme')} onExit={onExit}>
-          <ThemeList />
-        </SettingsPage>
-      );
-    case 'sounds':
-      return (
-        <SettingsPage title={t('settings.soundsVibration')} onExit={onExit}>
-          <SoundsList />
-        </SettingsPage>
-      );
-    case 'keyboard':
-      return (
-        <SettingsPage title={t('keyboard.settings.title')} onExit={onExit}>
-          <KeyboardSettingsList />
-        </SettingsPage>
-      );
-    case 'leagues':
-      return (
-        <SettingsPage title={t('settings.leagues.title')} onExit={onExit}>
-          <LeaguesList />
-        </SettingsPage>
-      );
-    case 'visibility':
-      return (
-        <SettingsPage title={t('settings.privacy.title')} onExit={onExit}>
-          <VisibilityList />
-        </SettingsPage>
-      );
-    case 'credits':
-      return (
-        <SettingsPage title={t('settings.credits.title')} onExit={onExit}>
-          <Credits />
-        </SettingsPage>
-      );
-  }
+  // The two pages with a moment over their header draw their own frame.
+  if (page === 'parentalConnect') return <ConnectPage onExit={onExit} />;
+  if (page === 'parentalCode') return <CodePage onExit={onExit} />;
+  const { title, Body } = PAGES[page];
+  return (
+    <SettingsPage title={t(title)} onExit={onExit}>
+      <Body key={teenId} teenId={teenId} />
+    </SettingsPage>
+  );
 }
+
+/** Each page's title and list; a page about one teen is drawn afresh for another. */
+type Page = { title: TranslationKey; Body: (props: { teenId: string }) => React.JSX.Element };
+const PAGES: Record<Exclude<SettingsPageKey, 'parentalConnect' | 'parentalCode'>, Page> = {
+  account: { title: 'settings.group.account', Body: AccountPage },
+  parental: { title: 'parental.title', Body: ParentalPage },
+  parentalTeen: { title: 'parental.title', Body: TeenPage },
+  parentalLimit: { title: 'parental.dailyLimit', Body: LimitPage },
+  parentalBedtime: { title: 'parental.bedtime', Body: BedtimePage },
+  display: { title: 'settings.cat.display', Body: DisplayPage },
+  privacy: { title: 'settings.cat.privacy', Body: PrivacyPage },
+  safety: { title: 'settings.cat.safety', Body: SafetyPage },
+  storage: { title: 'settings.cat.storage', Body: StoragePage },
+  help: { title: 'settings.cat.help', Body: HelpPage },
+  about: { title: 'settings.cat.about', Body: AboutPage },
+  birthMonth: { title: 'age.label', Body: BirthMonth },
+  language: { title: 'settings.language', Body: LanguageList },
+  theme: { title: 'appearance.theme', Body: ThemeList },
+  sounds: { title: 'settings.soundsVibration', Body: SoundsList },
+  keyboard: { title: 'keyboard.settings.title', Body: KeyboardSettingsList },
+  leagues: { title: 'settings.leagues.title', Body: LeaguesList },
+  visibility: { title: 'settings.privacy.title', Body: VisibilityList },
+  credits: { title: 'settings.credits.title', Body: Credits },
+};
 
 /**
  * The birth month on record, given once. With none on record, the way to the one-time question, which the app shows

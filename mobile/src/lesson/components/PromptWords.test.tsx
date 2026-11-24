@@ -39,10 +39,34 @@ describe('the words of a prompt', () => {
     expect(screen.queryByTestId('prompt-meanings')).toBeNull();
   });
 
-  it('is only its text when the course knows none of its words', () => {
+  it('makes every word of a Kurdish line a tap away, saying when there is no meaning for it yet', async () => {
     renderWithProviders(<PromptWords prompt="Spas!" tokens={[{ text: 'Spas' }, { text: '!' }]} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Spas' }));
+    });
+    expect((await screen.findByTestId('prompt-meanings')).textContent).toContain('No meaning for this word yet.');
+  });
+
+  it('is only its text where only known words open and none is known', () => {
+    renderWithProviders(<PromptWords prompt="Spas!" tokens={[{ text: 'Spas' }, { text: '!' }]} everyWord={false} />);
     expect(screen.getByText('Spas!')).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('says a word’s meaning waits when it would give the answer away, and names the word an inflected one comes from', async () => {
+    const line: PromptToken[] = [{ text: 'Çayê', meanings: ['tea'], base: 'çay' }, { text: ' ' }, { text: 'vedixwim', withheld: true }];
+    renderWithProviders(<PromptWords prompt="Çayê vedixwim" tokens={line} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Çayê' }));
+    });
+    const meanings = await screen.findByTestId('prompt-meanings');
+    expect(meanings.textContent).toContain('tea');
+    expect(meanings.textContent).toContain('from çay');
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'vedixwim' }));
+    });
+    expect((await screen.findByTestId('prompt-meanings')).textContent).toContain('Its meaning would give the answer away.');
   });
 
   it('runs right to left for a prompt in Soranî', () => {

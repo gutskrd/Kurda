@@ -46,8 +46,8 @@ export function AccountStanding(): React.JSX.Element {
   return (
     <div className="container container-narrow">
       <div className="page-header">
-        <Link to="/app/settings" className="standing-back">
-          <ArrowIcon size={16} className="standing-back-icon" /> {t('standing.backToSettings')}
+        <Link to="/app/settings/safety" className="standing-back">
+          <ArrowIcon size={16} className="standing-back-icon" /> {t('settings.safety.title')}
         </Link>
         <h1 className="page-title">{t('standing.title')}</h1>
         <p className="page-sub">{t('standing.intro')}</p>

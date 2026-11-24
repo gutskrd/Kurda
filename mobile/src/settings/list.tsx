@@ -1,6 +1,11 @@
-import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Animated, ScrollView, StyleSheet, Text, View, type AccessibilityRole } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable } from '../theme/Pressable';
+import { useReducedMotion } from '../a11y/useReducedMotion';
+import { timing } from '../theme/animate';
+import { PressableScale } from '../theme/MotionParts';
+import { duration } from '../theme/motion';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useFontScale } from '../a11y/useFontScale';
 import { haptic } from '../feedback/haptics';
@@ -18,7 +23,7 @@ import { usePageWidth } from '../theme/pageWidth';
  * Settings and the app's other lists of rows. Each row shows an icon, a name, the current value and a chevron when a
  * page is behind it. A section is a rounded card on the page under a plain name, as the app's other pages lay out
  * their cards, so a list page and a card page look like one app. Sections stay short, and values are shown on the
- * row.
+ * row. The Settings home adds two pieces of its own: quick tiles, and categories drawn on the page itself.
  */
 
 /** A group of rows on a card under a plain name. */
@@ -157,7 +162,13 @@ export function SettingsRow({
   ) : (
     chevron
   ));
-  if (!onPress) return <RowBody {...look} end={end} />;
+  if (!onPress) {
+    return (
+      <View testID={testID}>
+        <RowBody {...look} end={end} />
+      </View>
+    );
+  }
   return (
     <Pressable
       onPress={onPress}
@@ -257,15 +268,158 @@ export function SettingsChoice<T extends string>({
   );
 }
 
-/** A page of settings behind a row: its name in the header, the way back, and its list. */
-export function SettingsPage({ title, onExit, children }: { title: string; onExit: () => void; children: ReactNode }): React.JSX.Element {
+/**
+ * A kind of setting on the Settings home: its icon, its name, what is inside it in grey, and a chevron. Drawn on the
+ * page itself rather than a card, a little taller than a row, so the list reads as a table of contents.
+ */
+export function SettingsCategory({
+  icon,
+  title,
+  subtitle,
+  attention = false,
+  destructive = false,
+  opens = true,
+  onPress,
+  testID,
+}: {
+  icon: IconName;
+  title: string;
+  subtitle?: string;
+  /** Something inside needs acting on (a limited account): the icon and subtitle in the ink kept for that. */
+  attention?: boolean;
+  destructive?: boolean;
+  /** A page behind it, so a chevron. */
+  opens?: boolean;
+  onPress: () => void;
+  testID?: string;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const dir = useDirection();
+  const ink = destructive ? colors.danger : colors.textPrimary;
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityHint={subtitle}
+      testID={testID}
+      style={({ pressed }) => [styles.category, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack }]}
+    >
+      <Icon name={icon} size={24} color={attention ? colors.primary : ink} />
+      <View style={styles.words}>
+        <Text style={[styles.categoryTitle, dir.text, { color: ink }]} numberOfLines={1}>
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text style={[styles.subtitle, dir.text, { color: attention ? colors.primary : colors.textSecondary }]} numberOfLines={2}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      {opens ? <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip ?? undefined} /> : null}
+    </Pressable>
+  );
+}
+
+/**
+ * One of the two quick settings at the top of the home: an icon over its name and value, on a tile a step up from the
+ * page. A tap changes the value in place; the new value fades in over the old.
+ */
+export function QuickTile({
+  icon,
+  name,
+  value,
+  onPress,
+  role = 'button',
+  checked,
+  testID,
+}: {
+  icon: IconName;
+  name: string;
+  value: string;
+  onPress: () => void;
+  role?: AccessibilityRole;
+  /** For a tile that is a switch. */
+  checked?: boolean;
+  testID?: string;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const reduce = useReducedMotion();
+  const [shown, setShown] = useState(value);
+  const fade = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (value === shown) return;
+    if (reduce) {
+      setShown(value);
+      return;
+    }
+    const out = timing(fade, 0, duration.quick);
+    out.start(() => {
+      setShown(value);
+      timing(fade, 1, duration.base).start();
+    });
+    return () => out.stop();
+  }, [value, shown, reduce, fade]);
+  return (
+    <PressableScale
+      onPress={onPress}
+      accessibilityRole={role}
+      accessibilityLabel={`${name}, ${value}`}
+      accessibilityState={checked === undefined ? undefined : { checked }}
+      aria-checked={checked}
+      testID={testID}
+      style={[styles.tile, { backgroundColor: colors.glassFill, shadowColor: colors.softShadow }]}
+    >
+      <Icon name={icon} size={26} color={colors.textPrimary} />
+      <Text style={[styles.tileName, { color: colors.textPrimary }]} numberOfLines={1}>
+        {name}
+      </Text>
+      <Animated.Text style={[styles.tileValue, { color: colors.textSecondary, opacity: fade }]} numberOfLines={1}>
+        {shown}
+      </Animated.Text>
+    </PressableScale>
+  );
+}
+
+/**
+ * A page of settings behind a row: its name in the header, the way back, any action of its own opposite, and its list.
+ * `overlay` is drawn over the whole page, header included (a moment of success).
+ */
+export function SettingsPage({
+  title,
+  onExit,
+  right,
+  overlay,
+  children,
+}: {
+  title: string;
+  onExit: () => void;
+  right?: ReactNode;
+  overlay?: ReactNode;
+  children: ReactNode;
+}): React.JSX.Element {
+  // The end of the list clears the home indicator or a phone's own button bar, whichever is taller, by a step.
+  const bottom = Math.max(spacing.xxl, useSafeAreaInsets().bottom + spacing.lg);
   return (
     <GradientBackground>
-      <ScreenHeader title={title} onBack={onExit} />
-      <ScrollView contentContainerStyle={styles.page} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      {/* Never the search-and-bell pill: Settings has its own search, and the bell would lead away mid-change. */}
+      <ScreenHeader title={title} onBack={onExit} right={right} browse={false} />
+      <ScrollView contentContainerStyle={{ paddingBottom: bottom }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {children}
       </ScrollView>
+      {overlay}
     </GradientBackground>
+  );
+}
+
+/** A page's data could not be read: the reason and Try again, rather than a page left empty or a switch greyed out. */
+export function SettingsNotRead({ failed, retry }: { failed: string; retry: () => void }): React.JSX.Element {
+  const { t } = useI18n();
+  return (
+    <SettingsSection first>
+      <SettingsNote>{failed}</SettingsNote>
+      <SettingsRow icon="history" title={t('common.retry')} opens={false} onPress={retry} />
+    </SettingsSection>
   );
 }
 
@@ -276,7 +430,6 @@ export function useOnOff(): (on: boolean) => string {
 }
 
 const styles = StyleSheet.create({
-  page: { paddingBottom: spacing.xxl },
   apart: { marginTop: spacing.md },
   // A card as the app's others are: a little lift off the page, clipped so a pressed row stays inside its corners.
   group: {
@@ -312,4 +465,31 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   note: { fontSize: typography.sizes.text, lineHeight: 20, paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
   disabled: { opacity: 0.45 },
+  // Inset by a step so the held fill keeps clear of the screen's edges, the words still on the gutter.
+  category: {
+    alignItems: 'center',
+    gap: spacing.md,
+    minHeight: 68,
+    marginHorizontal: spacing.sm,
+    paddingHorizontal: layout.gutter - spacing.sm,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radii.md,
+  },
+  categoryTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  tile: {
+    flex: 1,
+    minHeight: 108,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.md,
+    borderRadius: radii.lg,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+  tileName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
+  tileValue: { fontSize: typography.sizes.text },
 });

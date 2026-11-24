@@ -6,6 +6,7 @@ import {
   MediaStorage,
   PRIVATE_CACHE_CONTROL,
   PrivateStorageUnavailable,
+  attachmentDisposition,
   cloudflarePurge,
   createStorage,
   mediaKey,
@@ -231,6 +232,27 @@ describe('the private bucket', () => {
     expect(b.keys('pub')).toEqual([]);
     expect(b.meta('priv', EXPORT)!.cacheControl).toBe(PRIVATE_CACHE_CONTROL);
     expect(await storage.createPrivateDownloadUrl(EXPORT)).toContain(`/priv/${EXPORT}?`);
+  });
+
+  /* A link that only showed the file left some browsers with a page of raw JSON, or nothing, instead of a saved copy. */
+  it('signs an export’s link to save it as a named JSON file', async () => {
+    const b = buckets({ priv: [EXPORT] });
+    const storage = new MediaStorage(b.s3, 'pub', 'https://media.hevalo.app', { evidenceBucket: 'priv' });
+    const download = { filename: 'hevalo-data-2026-11-24.json', contentType: 'application/json' };
+    const url = new URL(await storage.createPrivateDownloadUrl(EXPORT, { download }));
+    expect(url.pathname).toBe(`/priv/${EXPORT}`);
+    expect(url.searchParams.get('response-content-disposition')).toBe('attachment; filename="hevalo-data-2026-11-24.json"');
+    expect(url.searchParams.get('response-content-type')).toBe('application/json');
+    expect(url.searchParams.get('X-Amz-Expires')).toBe('900');
+    // part of what is signed, so the link cannot be changed to show the file instead
+    const plain = new URL(await storage.createPrivateDownloadUrl(EXPORT));
+    expect(plain.searchParams.get('response-content-disposition')).toBeNull();
+    expect(plain.searchParams.get('X-Amz-Signature')).not.toBe(url.searchParams.get('X-Amz-Signature'));
+  });
+
+  it('keeps a download’s file name to characters every browser reads alike', () => {
+    expect(attachmentDisposition('hevalo-data-2026-11-24.json')).toBe('attachment; filename="hevalo-data-2026-11-24.json"');
+    expect(attachmentDisposition('a"b;c\r\nd.json')).toBe('attachment; filename="a_b_c__d.json"');
   });
 
   it('still finds an export or evidence kept in the public bucket before there was a private one', async () => {

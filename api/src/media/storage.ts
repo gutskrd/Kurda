@@ -55,6 +55,17 @@ const isPrivateKey = (key: string): boolean => PRIVATE_PREFIXES.some((prefix) =>
  */
 const refusedPrivateBuckets = new Set<string>();
 
+/** How a private file is handed over: under this name, as this type. */
+export interface PrivateDownload {
+  filename: string;
+  contentType: string;
+}
+
+/** `attachment; filename="…"` for a name the server chose, kept to characters every browser reads alike. */
+export function attachmentDisposition(filename: string): string {
+  return `attachment; filename="${filename.replace(/[^\w.-]/g, '_')}"`;
+}
+
 /**
  * No private bucket takes writes, so a personal file is not kept at all: an export is never written to the public
  * bucket, which the CDN serves to anyone with the address.
@@ -116,11 +127,19 @@ export class MediaStorage {
     return `${this.cdnBaseUrl}/${key}`;
   }
 
-  /** Short-lived signed GET for a private file (a data export), wherever it is kept. */
-  async createPrivateDownloadUrl(key: string, expiresInSeconds = 900): Promise<string> {
-    return getSignedUrl(this.s3, new GetObjectCommand({ Bucket: await this.bucketOfPrivate(key), Key: key }), {
-      expiresIn: expiresInSeconds,
+  /**
+   * Short-lived signed GET for a private file (a data export), wherever it is kept. With `download`, the link answers
+   * with that file name as an attachment and that type, signed into the link, so every browser saves the file rather
+   * than showing it, whatever the object was stored with.
+   */
+  async createPrivateDownloadUrl(key: string, opts: { download?: PrivateDownload; expiresInSeconds?: number } = {}): Promise<string> {
+    const { download, expiresInSeconds = 900 } = opts;
+    const command = new GetObjectCommand({
+      Bucket: await this.bucketOfPrivate(key),
+      Key: key,
+      ...(download ? { ResponseContentDisposition: attachmentDisposition(download.filename), ResponseContentType: download.contentType } : {}),
     });
+    return getSignedUrl(this.s3, command, { expiresIn: expiresInSeconds });
   }
 
   /** Short-lived signed GET for an object in the public bucket (a case's media, read by a moderator). */

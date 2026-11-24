@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { APP_LOCALE_CODES, normalizeKurdish } from '@kurda/shared';
 import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
-import { DELETION_GRACE_DAYS, GdprService } from '../gdpr/service.js';
+import { DELETION_GRACE_DAYS, GdprService, exportJobId } from '../gdpr/service.js';
 import { appleTokens } from '../auth/apple-tokens.js';
 import { makeExportJob } from '../jobs/gdpr-jobs.js';
 import { AppError } from '../plugins/errors.js';
@@ -25,6 +25,7 @@ import { BirthMonthService, birthDateBodySchema } from './birth-month.js';
 import { leaveThisWeek, returnThisWeek } from '../leagues/service.js';
 import { TIME_ZONE_MESSAGE, storableTimeZone } from '../streaks/time-zones.js';
 import { RequestValidationError } from '../plugins/validation.js';
+import { knownUnsupervised, supervisionOf } from '../parental/supervision.js';
 
 export { USERNAME_CHANGE_COOLDOWN_DAYS };
 /** The time zone can change at most once a week, so a streak cannot be farmed by hopping zones. */
@@ -183,9 +184,11 @@ export function createMeReader(app: FastifyInstance): (userId: string) => Promis
   return async (userId) => {
     // Reuse the enriched profile query and resolver for cosmetics, level and favourites (self view: details always
     // visible); ranks and badges are not part of the account.
-    const [row, profile] = await Promise.all([
+    const [row, profile, supervision] = await Promise.all([
       app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [userId]).then((r) => r.rows[0] as MeRow),
       social.profile(userId, userId, { badges: false }),
+      // null for everyone but a supervised teen; read only when the session found a live parent link (parental/supervision.ts)
+      knownUnsupervised(userId) ? null : supervisionOf(app.db, userId),
     ]);
     // Settle the streak on read so a lapsed day shows as broken.
     const streak = await streaks.get(row.id, row.timezone);
@@ -211,6 +214,7 @@ export function createMeReader(app: FastifyInstance): (userId: string) => Promis
       equippedBackgroundSku: row.equipped_background_sku,
       equippedIconSku: row.equipped_icon_sku,
       premiumUntil: row.premium_until,
+      supervision,
     };
   };
 }
@@ -461,7 +465,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     return { deletionScheduled: true, graceDays: DELETION_GRACE_DAYS };
   });
 
-  /** GDPR: request a data export (fulfilled by the worker). */
+  /** GDPR: request a data export, fulfilled by the worker (in this process unless RUN_WORKER_IN_API=false). */
   app.post(
     '/me/export',
     {
@@ -469,11 +473,14 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     },
     async (req, reply) => {
       const caller = await requireAccountCaller(config, req);
-      const exportId = await gdpr.requestExport(caller.id);
+      const { id: exportId, reused } = await gdpr.requestExport(caller.id);
+      // Queued again for a request already made: one job per request, so this is nothing while that job is kept, and
+      // starts it again once the queue has let it go.
       if (app.jobs) {
-        await app.jobs.enqueue(makeExportJob(gdpr), { exportId }, { idempotencyKey: `export:${exportId}` });
+        await app.jobs.enqueue(makeExportJob(gdpr), { exportId }, { idempotencyKey: exportJobId(exportId) });
       }
-      return reply.code(202).send({ requested: true });
+      // `reused`: a copy asked for in the last day stands, and no second one is made until the day is out
+      return reply.code(202).send({ requested: true, reused });
     },
   );
 

@@ -22,7 +22,7 @@ afterEach(() => {
   sessionStorage.clear();
 });
 
-/** A row of the list, by its title. */
+/** A row of a list, by its title. */
 const row = (title: string): HTMLElement => {
   const found = screen.getAllByText(title, { selector: '.settings-row-title' })[0]!;
   return found.closest('a, button')! as HTMLElement;
@@ -38,72 +38,167 @@ function wideScreen(): void {
   }));
 }
 
-describe('Settings: the list', () => {
-  it('shows every setting as a row in a few named groups, each saying what it is set to', async () => {
+describe('Settings: the home', () => {
+  it('shows two quick tiles and ten categories, each naming what is inside it', async () => {
     vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me({ leaguesEnabled: true }) })));
     renderApp(<Settings />, ['/app/settings']);
 
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument();
-    for (const group of [en['settings.eyebrow'], en['settings.group.preferences'], en['settings.group.privacy'], en['settings.group.about']]) {
-      expect(screen.getByRole('heading', { name: group, level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: en['settings.search'] })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: en['settings.sounds.title'] })).toBeChecked();
+    expect(screen.getByRole('button', { name: /Appearance/ })).toHaveTextContent(en['settings.appearance.dark']);
+
+    const categories: Array<[string, string, string]> = [
+      [en['settings.eyebrow'], en['settings.account.sub'], '/app/settings/account'],
+      [en['parental.title'], en['parental.sub'], '/app/settings/parental'],
+      [en['settings.display.title'], en['settings.display.sub'], '/app/settings/display'],
+      [en['settings.social.title'], en['settings.social.sub'], '/app/settings/privacy'],
+      [en['settings.soundsVibration'], en['settings.sounds.sub'], '/app/settings/sounds'],
+      [en['notifications.title'], en['notifications.sub'], '/app/settings/notifications'],
+      [en['settings.safety.title'], en['settings.safety.sub'], '/app/settings/safety'],
+      [en['settings.storage.title'], en['settings.storage.sub'], '/app/settings/storage'],
+      [en['settings.help.title'], en['settings.help.sub'], '/app/settings/help'],
+      [en['settings.about.title'], en['settings.about.sub'], '/app/settings/about'],
+    ];
+    for (const [title, sub, href] of categories) {
+      expect(row(title)).toHaveAttribute('href', href);
+      expect(within(row(title)).getByText(sub)).toBeInTheDocument();
     }
-    // What each is set to now, at the end of its row, so most of the page is read without opening anything.
-    expect(await within(row(en['settings.privacy.title'])).findByText(en['settings.visibility.members'])).toBeInTheDocument();
-    expect(within(row(en['settings.leagues.title'])).getByText(en['settings.on'])).toBeInTheDocument();
-    expect(within(row(en['settings.appearance.title'])).getByText(en['settings.appearance.dark'])).toBeInTheDocument();
-    expect(within(row(en['language.settingsTitle'])).getByText('English')).toBeInTheDocument();
-    expect(within(row(en['settings.username.title'])).getByText('@ada')).toBeInTheDocument();
-    expect(row(en['settings.username.title'])).toHaveAttribute('href', '/app/settings/username');
-    // Each opens its own page.
-    expect(row(en['settings.privacy.title'])).toHaveAttribute('href', '/app/settings/visibility');
-    expect(row(en['settings.blocked.title'])).toHaveAttribute('href', '/app/settings/blocked');
-    expect(row(en['reports.mine.title'])).toHaveAttribute('href', '/app/settings/reports');
-    expect(row(en['standing.title'])).toHaveAttribute('href', '/app/settings/standing');
-    // Signing out is a row of its own, last, beside deleting — which is red and behind a page of its own.
+    // No group headings on the home: one flat list.
+    expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
+    // Signing out is a row of its own at the foot.
     expect(screen.getByRole('button', { name: /^sign out$/i })).toBeInTheDocument();
-    expect(row(en['settings.delete.title'])).toHaveClass('is-danger');
-    expect(row(en['settings.delete.title'])).toHaveAttribute('href', '/app/settings/delete');
+    expect(screen.getByText(en['settings.versionLine'])).toBeInTheDocument();
   });
 
-  it('finds a setting by what is inside its page, and says so when nothing matches', async () => {
+  it('says who a teen is connected to, and how many teens a parent looks after', async () => {
+    const overview = { role: 'teen', parents: [{ userId: 'p', username: 'dilan', displayName: 'Dilan', avatarUrl: null, since: '2026-09-01T00:00:00.000Z' }] };
+    vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me/parental': overview, '/me': me() })));
+    const { unmount } = renderApp(<Settings />, ['/app/settings']);
+    expect(await within(row(en['parental.title'])).findByText('Connected to Dilan')).toBeInTheDocument();
+    unmount();
+
+    const teens = { role: 'parent', teens: ['a', 'b', 'c'].map((id) => ({ teen: { userId: id, username: id, displayName: null, avatarUrl: null }, since: '2026-09-01T00:00:00.000Z', today: { minutes: 0, lessons: 0 } })) };
+    vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me/parental': teens, '/me': me() })));
+    renderApp(<Settings />, ['/app/settings']);
+    expect(await within(row(en['parental.title'])).findByText('3 teens')).toBeInTheDocument();
+  });
+
+  it('marks Safety when something on the account is limited', async () => {
+    vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me/standing': { status: 'limited' }, '/me': me() })));
+    renderApp(<Settings />, ['/app/settings']);
+    expect(await within(row(en['settings.safety.title'])).findByText(en['settings.safety.limited'])).toBeInTheDocument();
+    expect(row(en['settings.safety.title'])).toHaveClass('is-attention');
+  });
+
+  it('turns sounds off and on from its tile, and cycles the look Automatic, Light, Dark', async () => {
+    vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me() })));
+    localStorage.setItem('hevalo_theme', 'system');
+    renderApp(<Settings />, ['/app/settings']);
+
+    const sounds = await screen.findByRole('switch', { name: en['settings.sounds.title'] });
+    await userEvent.click(sounds);
+    expect(sounds).not.toBeChecked();
+    expect(localStorage.getItem('hevalo_lesson_sounds')).toBe('off');
+    await userEvent.click(sounds);
+    expect(sounds).toBeChecked();
+    expect(localStorage.getItem('hevalo_lesson_sounds')).toBeNull();
+
+    const look = screen.getByRole('button', { name: /Appearance/ });
+    expect(look).toHaveTextContent(en['settings.appearance.system']);
+    await userEvent.click(look);
+    expect(localStorage.getItem('hevalo_theme')).toBe('light');
+    expect(document.documentElement.dataset.theme).toBe('light');
+    await userEvent.click(look);
+    expect(localStorage.getItem('hevalo_theme')).toBe('dark');
+    await userEvent.click(look);
+    expect(localStorage.getItem('hevalo_theme')).toBe('system');
+    delete document.documentElement.dataset.theme;
+  });
+
+  it('searches every setting from its button, each found one under the page it is on, and Escape closes it', async () => {
     vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me() })));
     renderApp(<Settings />, ['/app/settings']);
-    const search = await screen.findByRole('searchbox', { name: en['settings.search'] });
+    await userEvent.click(await screen.findByRole('button', { name: en['settings.search'] }));
+    const search = screen.getByRole('searchbox', { name: en['settings.search'] });
+    expect(search).toHaveFocus();
 
-    // "accent" is the keyboard page's first choice, not the row's own name.
+    // "accent" is the keyboard page's first choice, not its name; the result says which page it is on.
     await userEvent.type(search, 'accent');
-    expect(row(en['keyboard.settings.title'])).toBeInTheDocument();
+    expect(row(en['keyboard.settings.title'])).toHaveAttribute('href', '/app/settings/keyboard');
+    expect(within(row(en['keyboard.settings.title'])).getByText(en['settings.display.title'])).toBeInTheDocument();
     expect(screen.queryByText(en['settings.privacy.title'])).not.toBeInTheDocument();
-    // A group with nothing left in it goes too.
-    expect(screen.queryByRole('heading', { name: en['settings.group.privacy'] })).not.toBeInTheDocument();
 
-    // "light" is one of the themes, without its capital.
+    // "light" is one of the looks, without its capital.
     await userEvent.clear(search);
     await userEvent.type(search, 'light');
     expect(row(en['settings.appearance.title'])).toBeInTheDocument();
 
     await userEvent.clear(search);
     await userEvent.type(search, 'block');
-    expect(row(en['settings.blocked.title'])).toBeInTheDocument();
+    expect(row(en['settings.blocked.title'])).toHaveAttribute('href', '/app/settings/blocked');
+
+    // What lives on a page of its own outside Settings is found too.
+    await userEvent.clear(search);
+    await userEvent.type(search, 'cache');
+    expect(row(en['settings.cache.clear'])).toHaveAttribute('href', '/app/settings/storage');
 
     await userEvent.clear(search);
     await userEvent.type(search, 'zebra');
     expect(screen.getByText('No settings match “zebra”.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: en['search.clear'] }));
     expect(search).toHaveValue('');
-    expect(row(en['settings.privacy.title'])).toBeInTheDocument();
+
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: en['settings.search'] })).toHaveFocus();
+    expect(row(en['settings.eyebrow'])).toBeInTheDocument();
   });
 
-  it('opens a page from its row, with the way back above its title', async () => {
+  it('opens a category, then a setting in it, each with the way back to where it came from', async () => {
     vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me() })));
     renderApp(<Settings />, ['/app/settings']);
-    await userEvent.click(await screen.findByText(en['settings.appearance.title']));
+    await userEvent.click(await screen.findByText(en['settings.display.title']));
 
-    expect(await screen.findByRole('heading', { name: en['settings.appearance.title'], level: 1 })).toBeInTheDocument();
     // Opened from the list, so the reader is taken to the new page's title.
-    expect(screen.getByRole('heading', { name: en['settings.appearance.title'], level: 1 })).toHaveFocus();
+    expect(await screen.findByRole('heading', { name: en['settings.display.title'], level: 1 })).toHaveFocus();
+    expect(within(row(en['settings.appearance.title'])).getByText(en['settings.appearance.dark'])).toBeInTheDocument();
+    expect(within(row(en['language.settingsTitle'])).getByText('English')).toBeInTheDocument();
+    await userEvent.click(row(en['settings.appearance.title']));
+
+    expect(await screen.findByRole('heading', { name: en['settings.appearance.title'], level: 1 })).toHaveFocus();
+    // A setting goes back to its category, and a category to the home.
+    await userEvent.click(screen.getByRole('link', { name: en['settings.display.title'] }));
+    expect(await screen.findByRole('heading', { name: en['settings.display.title'], level: 1 })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('link', { name: en['standing.backToSettings'] }));
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument();
+  });
+
+  it('keeps every setting the old list had within its category', async () => {
+    vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me({ leaguesEnabled: true, birthYear: 2001, birthMonth: 3 }) })));
+    const { unmount } = renderApp(<Settings />, ['/app/settings/account']);
+    expect(await within(row(en['settings.username.title'])).findByText('@ada')).toBeInTheDocument();
+    expect(within(row(en['age.label'])).getByText('March 2001')).toBeInTheDocument();
+    expect(row(en['profile.edit'])).toHaveAttribute('href', '/app/profile/edit');
+    expect(row(en['settings.password.title'])).toHaveAttribute('href', '/app/settings/password');
+    expect(row(en['settings.devices.title'])).toHaveAttribute('href', '/app/settings/devices');
+    expect(row(en['settings.sessions.signOutEverywhere'])).toBeInTheDocument();
+    // Deleting is last, apart and red, behind a page of its own.
+    expect(row(en['settings.delete.title'])).toHaveClass('is-danger');
+    expect(row(en['settings.delete.title'])).toHaveAttribute('href', '/app/settings/delete');
+    unmount();
+
+    const pages: Array<[string, Array<[string, string]>]> = [
+      ['/app/settings/privacy', [[en['settings.privacy.title'], '/app/settings/visibility'], [en['settings.blocked.title'], '/app/settings/blocked'], [en['settings.leagues.title'], '/app/settings/leagues']]],
+      ['/app/settings/safety', [[en['reports.mine.title'], '/app/settings/reports'], [en['standing.title'], '/app/settings/standing']]],
+      ['/app/settings/help', [[en['appFeedback.settingsTitle'], '/app/settings/feedback'], [en['footer.faq'], '/faq'], [en['settings.support'], 'mailto:support@hevalo.app']]],
+      ['/app/settings/about', [[en['footer.teach'], '/how-hevalo-teaches'], [en['settings.terms'], '/terms'], [en['settings.privacyPolicy'], '/privacy'], [en['footer.copyright'], '/copyright'], [en['about.creditsTitle'], '/about#credits']]],
+    ];
+    for (const [path, rows] of pages) {
+      const view = renderApp(<Settings />, [path]);
+      for (const [title, href] of rows) expect(await screen.findByText(title, { selector: '.settings-row-title' }).then((el) => el.closest('a'))).toHaveAttribute('href', href);
+      view.unmount();
+    }
   });
 
   it('sends the old address of the notification settings to their page', async () => {
@@ -112,30 +207,42 @@ describe('Settings: the list', () => {
     expect(await screen.findByRole('heading', { name: en['notifications.title'], level: 1 })).toBeInTheDocument();
   });
 
-  it('sends an address it does not know back to the list', async () => {
+  it('sends the old data page to Storage and data', async () => {
+    vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me/export': { status: 'none' }, '/me': me() })));
+    renderApp(<Settings />, ['/app/settings/data']);
+    expect(await screen.findByRole('heading', { name: en['settings.storage.title'], level: 1 })).toBeInTheDocument();
+  });
+
+  it('sends an address it does not know back to the home', async () => {
     vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me() })));
     renderApp(<Settings />, ['/app/settings/nowhere']);
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument();
   });
 
-  it('on a wide screen, keeps the list beside the page, the open one marked', async () => {
+  it('on a wide screen, keeps the home beside the page, the open category marked', async () => {
     wideScreen();
-    vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me(), '/me/notification-prefs': { prefs: {} } })));
+    vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me/notification-prefs': { prefs: {} }, '/me': me() })));
     renderApp(<Settings />, ['/app/settings']);
 
-    // Nothing picked yet: the notifications page, beside the list.
+    // Nothing picked yet: the notifications page, beside the home.
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument();
     const paneTitle = (): HTMLElement | null => document.getElementById('settings-page-title');
     expect(paneTitle()).toHaveTextContent(en['notifications.title']);
     expect(paneTitle()!.tagName).toBe('H2');
     expect(row(en['notifications.title'])).toHaveAttribute('aria-current', 'page');
 
+    await userEvent.click(row(en['settings.display.title']));
+    await waitFor(() => expect(paneTitle()).toHaveTextContent(en['settings.display.title']));
+    expect(row(en['settings.display.title'])).toHaveAttribute('aria-current', 'page');
+    expect(row(en['notifications.title'])).not.toHaveAttribute('aria-current');
+
+    // A setting opens in the pane with the way back to its category, which stays marked.
     await userEvent.click(row(en['settings.appearance.title']));
     await waitFor(() => expect(paneTitle()).toHaveTextContent(en['settings.appearance.title']));
-    expect(row(en['settings.appearance.title'])).toHaveAttribute('aria-current', 'page');
-    expect(row(en['notifications.title'])).not.toHaveAttribute('aria-current');
-    // The list is still there.
-    expect(screen.getByRole('searchbox', { name: en['settings.search'] })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: en['settings.display.title'] })).toHaveAttribute('href', '/app/settings/display');
+    expect(row(en['settings.display.title'])).toHaveAttribute('aria-current', 'page');
+    // The home is still there, its tiles included.
+    expect(screen.getByRole('switch', { name: en['settings.sounds.title'] })).toBeInTheDocument();
   });
 });
 
@@ -168,7 +275,9 @@ describe('Settings: the pages', () => {
     expect(await screen.findByText(en['common.saved'])).toBeInTheDocument();
     const put = fetchMock.mock.calls.find(([, i]) => (i as RequestInit | undefined)?.method === 'PUT');
     expect(JSON.parse(String((put![1] as RequestInit).body))).toEqual({ visibility: 'friends' });
-    expect(within(row(en['settings.privacy.title'])).getByText('Friends only')).toBeInTheDocument();
+    // Its category says the new value at once, without reading the account again.
+    await userEvent.click(screen.getByRole('link', { name: en['settings.social.title'] }));
+    expect(await within(row(en['settings.privacy.title'])).findByText('Friends only')).toBeInTheDocument();
   });
 
   it('moves the visibility at once, and puts it back with the reason when the server refuses', async () => {
@@ -288,22 +397,10 @@ describe('Settings: the pages', () => {
     await user.click(screen.getAllByRole('button', { name: en['settings.password.change'] }).at(-1)!);
     expect(await screen.findByText(en['settings.password.changed'])).toBeInTheDocument();
 
-    await user.click(screen.getByRole('link', { name: en['standing.backToSettings'] }));
+    await user.click(screen.getByRole('link', { name: en['settings.eyebrow'] }));
     await user.click(await screen.findByText(en['settings.devices.title']));
     expect(await screen.findByText(en['settings.devices.onlyThis'])).toBeInTheDocument();
     expect(screen.queryByText('Safari on iPhone')).not.toBeInTheDocument();
-  });
-
-  it('asks for a copy of your data, and says it has been asked for', async () => {
-    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.endsWith('/me/export')) return jsonResponse(202, { requested: true });
-      void init;
-      return jsonResponse(200, url.endsWith('/me') ? me() : {});
-    });
-    vi.stubGlobal('fetch', fetchMock);
-    renderApp(<Settings />, ['/app/settings/data']);
-    await userEvent.click(await screen.findByRole('button', { name: /request data export/i }));
-    expect(await screen.findByText(en['settings.data.requested'])).toBeInTheDocument();
   });
 
   it('deletes the account only after a second, plainly worded step', async () => {
@@ -323,7 +420,7 @@ describe('Settings: the pages', () => {
 
   it('shows the birth month on record, given once, and whom to write to if it is wrong', async () => {
     vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me({ birthYear: 2001, birthMonth: 3 }) })));
-    renderApp(<Settings />, ['/app/settings']);
+    renderApp(<Settings />, ['/app/settings/account']);
     expect(await within(row(en['age.label'])).findByText('March 2001')).toBeInTheDocument();
     await userEvent.click(row(en['age.label']));
 

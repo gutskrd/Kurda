@@ -5,6 +5,7 @@ import { requireBirthMonth } from '../users/age.js';
 import { isWrittenPostType } from '@kurda/shared';
 import { checkPostPictures } from '../media/postMedia.js';
 import { assertUnrestricted, requireUnrestricted, voiceAttachable } from '../moderation/restrictions.js';
+import { requireParental } from '../parental/supervision.js';
 import {
   LibraryService,
   addedPictures,
@@ -138,7 +139,7 @@ export function registerLibraryRoutes(
     {
       schema: { body: createBody },
       config: { rateLimit: { max: 20, windowMs: 60_000 } },
-      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireParental('posts')],
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
@@ -203,7 +204,7 @@ export function registerLibraryRoutes(
   app.patch(
     '/library/posts/:id',
     // An edit can put new words before readers, so it needs a birth month like a new post; unpublish and delete never do.
-    { schema: { params: idParam, body: updateBody }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')] },
+    { schema: { params: idParam, body: updateBody }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireParental('posts')] },
     async (req, reply) => {
       const patch = req.body as z.infer<typeof updateBody>;
       const current = await editable(req, reply);
@@ -244,7 +245,7 @@ export function registerLibraryRoutes(
   /** Publish a draft (author or admin). */
   app.post(
     '/library/posts/:id/publish',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')] },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireParental('posts')] },
     async (req, reply) => {
       const current = await editable(req, reply);
       if (!current) return reply;

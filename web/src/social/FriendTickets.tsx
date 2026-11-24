@@ -9,6 +9,7 @@ import { prefersReducedMotion } from '../lib/motion';
 import { showNotice } from '../lib/notice';
 import { failureText, useOptimistic } from '../lib/optimistic';
 import { Ticket, TicketBody, TicketStamp, TicketStub, ticketClass } from '../ui/Ticket';
+import { ParentalNote, useParentalOff } from '../parental/ParentalNote';
 
 /**
  * Friend requests as tickets (ui/Ticket.tsx) in the heart colour. Sending: Add sends a small ticket away and becomes
@@ -55,6 +56,8 @@ export function AddFriendButton({
   const [moment, setMoment] = useState<{ way: 'away' | 'back'; n: number } | null>(null);
   const [said, setSaid] = useState('');
   const [still] = useState(prefersReducedMotion);
+  // A teen whose parent switched friend requests off sees why in place of the button; a request already sent can still be taken back.
+  const off = useParentalOff('friends');
   const [state, want] = useOptimistic<'none' | 'pending_out'>(
     status,
     (next) => (next === 'pending_out' ? client.post('/friends/requests', { userId }) : client.delete(`/friends/requests/${userId}`)),
@@ -74,6 +77,8 @@ export function AddFriendButton({
     setMoment((m) => ({ way: next === 'pending_out' ? 'away' : 'back', n: (m?.n ?? 0) + 1 }));
     setSaid(next === 'pending_out' ? t('profile.requestSent') : '');
   }
+
+  if (off && state === 'none') return <ParentalNote compact className="friend-ask" />;
 
   return (
     <span className={`friend-ask${block ? ' is-block' : ''}`}>

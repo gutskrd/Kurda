@@ -259,10 +259,10 @@ describe('a prompt word and its meanings', () => {
 
   it('opens the meanings under a word, and closes them on Escape without leaving the lesson, on a second tap and on a tap elsewhere', async () => {
     lesson([mc]);
-    const word = await screen.findByRole('button', { name: 'What “Sêv” means' });
+    const word = await screen.findByRole('button', { name: 'Sêv' });
     expect(word).toHaveAttribute('aria-expanded', 'false');
-    // A word the course does not know is plain text.
-    expect(screen.queryByRole('button', { name: 'What “e” means' })).not.toBeInTheDocument();
+    // In a question that may be English around Kurdish, a word nothing is known of is plain text.
+    expect(screen.queryByRole('button', { name: 'e' })).not.toBeInTheDocument();
 
     await userEvent.click(word);
     const list = screen.getByRole('list', { name: 'What “Sêv” means' });
@@ -278,10 +278,10 @@ describe('a prompt word and its meanings', () => {
     // From the keyboard: Enter on the word opens it, another word takes its place.
     await userEvent.keyboard('{Enter}');
     expect(screen.getByRole('list', { name: 'What “Sêv” means' })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'What “sor” means' }));
+    await userEvent.click(screen.getByRole('button', { name: 'sor' }));
     expect(screen.queryByRole('list', { name: 'What “Sêv” means' })).not.toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'What “sor” means' })).toHaveTextContent('red');
-    await userEvent.click(screen.getByRole('button', { name: 'What “sor” means' }));
+    await userEvent.click(screen.getByRole('button', { name: 'sor' }));
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
 
     await userEvent.click(word);
@@ -294,7 +294,21 @@ describe('a prompt word and its meanings', () => {
   it('shows the prompt as it is when its pieces do not add up to it', async () => {
     lesson([{ ...mc, promptTokens: [{ text: 'Sêv', meanings: ['apple'] }] }]);
     expect(await screen.findByText('Sêv sor e')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /means/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sêv' })).not.toBeInTheDocument();
+  });
+
+  it('says a word’s meaning waits when it would give the answer away, and names the word an inflected one comes from', async () => {
+    lesson([
+      {
+        ...mc,
+        prompt: 'Çayê vedixwim',
+        promptTokens: [{ text: 'Çayê', meanings: ['tea'], base: 'çay' }, { text: ' ' }, { text: 'vedixwim', withheld: true }],
+      },
+    ]);
+    await userEvent.click(await screen.findByRole('button', { name: 'Çayê' }));
+    expect(within(screen.getByRole('list', { name: 'What “Çayê” means' })).getAllByRole('listitem').map((i) => i.textContent)).toEqual(['tea', 'from çay']);
+    await userEvent.click(screen.getByRole('button', { name: 'vedixwim' }));
+    expect(screen.getByRole('list', { name: 'What “vedixwim” means' })).toHaveTextContent('Its meaning would give the answer away.');
   });
 });
 
@@ -372,18 +386,30 @@ describe('a run of right answers', () => {
 
 describe('the verdict sheet', () => {
   it('rises in the verdict colour with a badge, the words in big type, the answer under its label, and Continue where Check was', async () => {
-    grade = () => ({ verdict: 'wrong', accepted: false, correction: 'Good day', duplicate: false });
-    lesson([{ id: 'mc', type: 'multiple_choice', prompt: '“Roj baş” tê çi wateyê?', options: ['Good night', 'Good day'] }]);
-    await userEvent.click(await screen.findByRole('button', { name: /Good night/ }));
+    grade = () => ({ verdict: 'wrong', accepted: false, correction: 'I drink tea.', duplicate: false });
+    lesson([{ id: 'tr', type: 'translate', prompt: 'Ez çayê vedixwim.', ask: 'to-english' }]);
+    await userEvent.type(await screen.findByRole('textbox'), 'I eat bread');
     await userEvent.click(screen.getByRole('button', { name: 'Check' }));
     const panel = await sheet();
     expect(panel.closest('.lesson-bar')).toHaveClass('is-sheet', 'is-notyet');
     expect(panel.querySelector('.lesson-verdict-mark svg')).not.toBeNull();
     expect(within(panel).getByText('Not yet')).toBeInTheDocument();
-    expect(within(panel).getByText('Answer:')).toHaveClass('lesson-correction-label');
-    expect(within(panel).getByText('Good day')).toBeInTheDocument();
+    expect(within(panel).getByText('Right answer')).toBeInTheDocument();
+    // the words that differ are marked whole, never the full stop
+    expect([...panel.querySelectorAll('.lesson-compare mark')].map((m) => m.textContent)).toEqual(['eat bread', 'drink tea']);
     const go = within(panel).getByRole('button', { name: 'Continue' });
     expect(go).toHaveClass('lesson-bar-go');
     expect(go).toHaveFocus();
+  });
+
+  it('does not repeat a right option that is marked where it stands', async () => {
+    grade = () => ({ verdict: 'wrong', accepted: false, correction: 'Good day', duplicate: false });
+    lesson([{ id: 'mc', type: 'multiple_choice', prompt: '“Roj baş” tê çi wateyê?', options: ['Good night', 'Good day'] }]);
+    await userEvent.click(await screen.findByRole('button', { name: /Good night/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Check' }));
+    const panel = await sheet();
+    expect(within(panel).getByText('Not yet')).toBeInTheDocument();
+    expect(within(panel).queryByText('Answer:')).toBeNull();
+    expect(screen.getByRole('button', { name: /Good day/ })).toHaveClass('is-right');
   });
 });

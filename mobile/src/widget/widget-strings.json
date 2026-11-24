@@ -7,7 +7,8 @@
     "emptyMore": "When a pen pal writes, their letter will show here.",
     "signedOut": "Open Hevalo to see your letters",
     "waiting": "Your letters will show here",
-    "pinned": "Kept on your widget"
+    "pinned": "Kept on your widget",
+    "off": "Your parent turned letters off"
   },
   "ku": {
     "name": "Name",
@@ -17,7 +18,8 @@
     "emptyMore": "Gava hevalekî nameyan binivîse, name dê li vir xuya bibe.",
     "signedOut": "Hevalo veke da ku nameyên xwe bibînî",
     "waiting": "Nameyên te dê li vir xuya bibin",
-    "pinned": "Li ser ekrana te ya sereke hatiye hiştin"
+    "pinned": "Li ser ekrana te ya sereke hatiye hiştin",
+    "off": "Dêûbavê te name girtine"
   },
   "ckb": {
     "name": "نامە",
@@ -27,7 +29,8 @@
     "emptyMore": "کاتێک هاوڕێیەکی نامە دەنووسێت، نامەکەی لێرە دەردەکەوێت.",
     "signedOut": "Hevalo بکەرەوە بۆ بینینی نامەکانت",
     "waiting": "نامەکانت لێرە دەردەکەون",
-    "pinned": "لەسەر شاشەی سەرەکیت هێڵراوەتەوە"
+    "pinned": "لەسەر شاشەی سەرەکیت هێڵراوەتەوە",
+    "off": "دایک یان باوکت نامەگۆڕینەوەی کوژاندووەتەوە"
   },
   "ar": {
     "name": "رسالة",
@@ -37,7 +40,8 @@
     "emptyMore": "حين يكتب لك صديق مراسلة، تظهر رسالته هنا.",
     "signedOut": "افتح Hevalo لترى رسائلك",
     "waiting": "ستظهر رسائلك هنا",
-    "pinned": "مثبّتة على أداتك"
+    "pinned": "مثبّتة على أداتك",
+    "off": "أوقف وليّ أمرك الخطابات"
   },
   "tr": {
     "name": "Mektup",
@@ -47,7 +51,8 @@
     "emptyMore": "Bir mektup arkadaşın yazdığında mektubu burada görünecek.",
     "signedOut": "Mektuplarını görmek için Hevalo’yu aç",
     "waiting": "Mektupların burada görünecek",
-    "pinned": "Widget’ına sabitlendi"
+    "pinned": "Widget’ına sabitlendi",
+    "off": "Ebeveynin mektupları kapattı"
   },
   "de": {
     "name": "Brief",
@@ -57,7 +62,8 @@
     "emptyMore": "Wenn dir ein Brieffreund schreibt, erscheint der Brief hier.",
     "signedOut": "Öffne Hevalo, um deine Briefe zu sehen",
     "waiting": "Hier erscheinen deine Briefe",
-    "pinned": "Auf deinem Widget angeheftet"
+    "pinned": "Auf deinem Widget angeheftet",
+    "off": "Deine Eltern haben Briefe ausgeschaltet"
   },
   "fr": {
     "name": "Lettre",
@@ -67,7 +73,8 @@
     "emptyMore": "Quand un correspondant t’écrira, sa lettre apparaîtra ici.",
     "signedOut": "Ouvre Hevalo pour voir tes lettres",
     "waiting": "Tes lettres s’afficheront ici",
-    "pinned": "Épinglée sur ton widget"
+    "pinned": "Épinglée sur ton widget",
+    "off": "Tes parents ont désactivé les lettres"
   },
   "nl": {
     "name": "Brief",
@@ -77,7 +84,8 @@
     "emptyMore": "Als een penvriend je schrijft, verschijnt de brief hier.",
     "signedOut": "Open Hevalo om je brieven te zien",
     "waiting": "Je brieven verschijnen hier",
-    "pinned": "Vastgezet op je widget"
+    "pinned": "Vastgezet op je widget",
+    "off": "Je ouders hebben brieven uitgezet"
   },
   "es": {
     "name": "Carta",
@@ -87,6 +95,7 @@
     "emptyMore": "Cuando un amigo por carta te escriba, su carta aparecerá aquí.",
     "signedOut": "Abre Hevalo para ver tus cartas",
     "waiting": "Tus cartas aparecerán aquí",
-    "pinned": "Fijada en tu widget"
+    "pinned": "Fijada en tu widget",
+    "off": "Tus padres han desactivado las cartas"
   }
 }
