@@ -845,7 +845,7 @@ export function bookPaintSvg(opts: BookArtOptions & { colour: BookPaint }): stri
 
 // ───────────────────────────────────────────────────────────── the road's other people
 
-/** A point of a profile: x, y on a 200 canvas, and 1 where the outline turns a corner (a nose tip, the lips). */
+/** A point of a figure's outline: x, y on a 200 canvas, and 1 where the outline turns a corner (a hem, a cap's brim). */
 type ProfilePoint = readonly [x: number, y: number, corner?: 1];
 
 /** A Catmull-Rom curve through the points, as cubic Béziers; closed, or open from the first point to the last. */
@@ -887,7 +887,7 @@ function sliverPath(pts: readonly ProfilePoint[], width: number): string {
   return throughPoints([[line[0]![0], line[0]![1], 1], ...left, [end[0], end[1], 1], ...right], true);
 }
 
-/** Marks spaced along a line: a lace edge's dots, or the small lozenges of a kilim border. */
+/** Marks spaced along a line: the small lozenges of a kilim border. */
 function marksAlong(pts: readonly ProfilePoint[], every: number, mark: (x: number, y: number, tx: number, ty: number) => string): string {
   let d = '';
   for (let i = 0; i < pts.length - 1; i++) {
@@ -901,199 +901,245 @@ function marksAlong(pts: readonly ProfilePoint[], every: number, mark: (x: numbe
 const lozenge = (x: number, y: number, tx: number, ty: number): string =>
   `M${f(x + tx * 2.6)} ${f(y + ty * 2.6)}L${f(x - ty * 1.5)} ${f(y + tx * 1.5)}L${f(x - tx * 2.6)} ${f(y - ty * 2.6)}L${f(x + ty * 1.5)} ${f(y - tx * 1.5)}Z`;
 
-/**
- * The profiles, facing right, each ending in the curved foot of a cut-paper bust: a man's, a woman's and a child's, and
- * an older man's and woman's with the nose a little longer and the mouth drawn in.
- */
-const PROFILE = {
-  man: [
-    [30, 174, 1], [40, 162], [52, 154], [60, 146], [60, 134], [52, 118], [45, 96], [45, 70], [55, 46], [74, 30], [98, 22], [120, 25], [134, 36],
-    [141, 52], [143, 66], [147, 77], [143, 85], [149, 95], [157, 105], [163, 112, 1], [156, 116], [148, 117, 1], [151, 123], [146, 127, 1], [149, 131],
-    [145, 137], [150, 146], [146, 154], [136, 157], [124, 160], [121, 168], [126, 178], [136, 183], [146, 186, 1], [126, 195], [90, 197], [52, 190],
-  ],
-  woman: [
-    [34, 174, 1], [44, 163], [56, 155], [63, 147], [62, 134], [54, 119], [48, 98], [48, 74], [57, 50], [75, 34], [98, 27], [118, 30], [131, 41],
-    [137, 56], [138, 68], [141, 78], [138, 86], [143, 96], [149, 106], [152, 111, 1], [147, 114], [141, 115, 1], [145, 121], [140, 125, 1], [144, 129],
-    [139, 135], [143, 143], [138, 150], [128, 152], [119, 155], [117, 166], [122, 176], [134, 182], [144, 185, 1], [120, 195], [86, 196], [54, 190],
-  ],
-  child: [
-    [38, 176, 1], [48, 166], [60, 159], [68, 151], [67, 140], [58, 126], [50, 104], [50, 78], [60, 54], [78, 38], [100, 31], [121, 34], [135, 46],
-    [141, 62], [142, 76], [144, 86], [141, 92], [145, 100], [150, 108], [152, 112, 1], [147, 115], [142, 115, 1], [144, 120], [140, 123, 1], [143, 127],
-    [139, 132], [142, 139], [136, 146], [126, 148], [118, 151], [117, 162], [122, 172], [134, 180], [142, 184, 1], [118, 194], [84, 195], [56, 190],
-  ],
-  oldMan: [
-    [30, 174, 1], [40, 162], [52, 154], [60, 146], [60, 134], [52, 118], [45, 96], [45, 70], [55, 46], [74, 30], [98, 22], [120, 25], [134, 36],
-    [141, 52], [143, 66], [147, 77], [143, 86], [150, 97], [158, 108], [163, 116, 1], [156, 120], [148, 119, 1], [150, 125], [145, 128, 1], [147, 132],
-    [144, 137], [149, 146], [145, 154], [135, 157], [124, 160], [121, 168], [126, 178], [136, 183], [146, 186, 1], [126, 195], [90, 197], [52, 190],
-  ],
-  oldWoman: [
-    [34, 174, 1], [44, 163], [56, 155], [63, 147], [62, 134], [54, 119], [48, 98], [48, 74], [57, 50], [75, 34], [98, 27], [118, 30], [131, 41],
-    [137, 56], [138, 68], [141, 78], [138, 87], [144, 98], [150, 108], [152, 114, 1], [147, 117], [141, 117, 1], [143, 122], [139, 125, 1], [142, 129],
-    [139, 134], [144, 142], [139, 150], [128, 152], [119, 155], [117, 166], [122, 176], [134, 182], [144, 185, 1], [120, 195], [86, 196], [54, 190],
-  ],
-} as const satisfies Record<string, readonly ProfilePoint[]>;
-
-/** One piece of a silhouette: a shape in the ink, a knife cut, a line in the ink, the dots of a lace edge, a kilim border's lozenges, or a hole. */
+/** One piece of a figure: a shape in the ink, a knife cut, a line in the ink, a kilim border's lozenges, a hole, or a thin ring cut out. */
 type SilhouettePart =
   | { shape: readonly ProfilePoint[] }
+  | { oval: readonly [x: number, y: number, rx: number, ry: number] }
   | { cut: readonly ProfilePoint[]; width: number }
   | { ink: readonly ProfilePoint[]; width: number }
-  | { lace: readonly ProfilePoint[] }
   | { kilim: readonly ProfilePoint[] }
-  | { hole: readonly [x: number, y: number, r: number] };
+  | { hole: readonly [x: number, y: number, r: number] }
+  | { ring: readonly [x: number, y: number, r: number] };
 
 const shape = (...pts: ProfilePoint[]): SilhouettePart => ({ shape: pts });
+const head = (x: number, y: number, rx: number, ry: number): SilhouettePart => ({ oval: [x, y, rx, ry] });
 const cut = (width: number, ...pts: ProfilePoint[]): SilhouettePart => ({ cut: pts, width });
-const lash = (x: number, y: number): SilhouettePart => ({ ink: [[x, y], [x + 3, y - 2], [x + 6, y - 2.6]], width: 1.4 });
-const MOUSTACHE_OF = (dx: number, dy: number, droop = 0): SilhouettePart =>
-  shape([146 + dx, 117 + dy], [153 + dx, 118 + dy], [156 + dx, 122 + dy], [155 + dx, 127 + dy + droop / 2], [151 + dx, 130 + dy + droop, 1], [148 + dx, 126 + dy], [143 + dx, 124 + dy]);
+const ink = (width: number, ...pts: ProfilePoint[]): SilhouettePart => ({ ink: pts, width });
+const flip = (pts: readonly ProfilePoint[]): ProfilePoint[] => pts.map(([x, y, c]) => (c ? [200 - x, y, c] : [200 - x, y]));
+/** The same cut on both sides of the figure. */
+const cuts = (width: number, ...pts: ProfilePoint[]): SilhouettePart[] => [cut(width, ...pts), cut(width, ...flip(pts))];
+/**
+ * A figure's outline from its right side, top to bottom, as distances from its middle; the left side mirrors it unless
+ * given, as for an arm that holds something.
+ */
+function body(right: readonly ProfilePoint[], left: readonly ProfilePoint[] = right): SilhouettePart {
+  const side = (pts: readonly ProfilePoint[], sign: number): ProfilePoint[] => pts.map(([dx, y, c]) => (c ? [100 + sign * dx, y, c] : [100 + sign * dx, y]));
+  return shape(...side(right, 1), ...side(left, -1).reverse());
+}
+const feet = (dx: number, y = 193, rx = 7): SilhouettePart[] => [head(100 - dx, y, rx, 3.6), head(100 + dx, y, rx, 3.6)];
 
 /**
- * Each of the road's people the book has no portrait for, as a cut-paper bust in one ink: a laced headscarf, a knotted one,
- * a cowlick, a plait and its ribbon, a flat cap and a stalk of wheat, a turban and waistcoat, glasses and a stethoscope, a felt
- * cap, cloak and crook, and the blacksmith Kawa's long hair and beard.
+ * Each of the road's people the book has no portrait for, standing as a cut-paper figure in one ink and dressed for who
+ * they are: a headscarf and an embroidered hem, a walking stick, an apple, plaits and ribbons, a cap and a pitchfork, a
+ * turban and a basket of fruit, a doctor's coat and bag, a shepherd's head cloth, striped coat and crook, and the
+ * blacksmith Kawa's hair, beard, apron and hammer.
  */
 const SILHOUETTES = {
-  // a woman, her headscarf framing her face and falling over her shoulders, a kilim border along its edge
+  // a woman in a headscarf and a long dress with a belt and an embroidered hem
   woman: [
-    shape(...PROFILE.woman),
-    shape([136, 50], [128, 33], [106, 21], [80, 21], [57, 33], [42, 56], [37, 88], [35, 120], [30, 148], [26, 172, 1], [54, 189], [96, 195], [124, 192],
-      [140, 185, 1], [128, 170], [120, 152], [119, 132], [121, 110], [124, 88], [128, 68]),
-    cut(2.6, [134, 52], [127, 70], [123, 90], [120, 112], [119, 134], [121, 152], [128, 168], [138, 182]),
-    { kilim: [[127, 60], [121, 80], [117, 102], [115, 124], [116, 146], [122, 164]] },
-    cut(2.2, [64, 40], [50, 74], [46, 112], [40, 150], [36, 176]),
-    lash(138, 84),
+    body([[6, 38], [14, 44], [22, 48], [26, 56], [27, 76], [28, 98], [29, 114, 1], [30, 120], [27, 126], [23, 124], [22, 114], [21, 98], [20, 76, 1],
+      [16, 88], [17, 102], [22, 116], [27, 150], [32, 186, 1]]),
+    shape([104, 5], [113, 8], [119, 15], [122, 27], [123, 40], [126, 52], [130, 62, 1], [118, 58], [110, 44], [90, 44], [82, 58], [70, 62, 1], [74, 52],
+      [77, 40], [78, 27], [81, 15], [87, 8], [96, 5]),
+    ...feet(9),
+    cut(2.4, [89, 16], [88, 28], [92, 38], [100, 42], [108, 38], [112, 28], [111, 16]),
+    ...cuts(2, [116, 46], [121, 54], [126, 60]),
+    cut(3, [84, 92], [100, 95], [116, 92]),
+    ...cuts(2, [96, 50], [97, 72], [99, 90]),
+    { kilim: [[74, 178], [100, 180], [126, 178]] },
   ],
-  // a grandmother, her headscarf knotted at the nape with its two ends hanging
+  // a grandmother in a headscarf with an embroidered band, leaning on her stick
   grandmother: [
-    shape(...PROFILE.oldWoman),
-    shape([136, 52], [128, 34], [106, 23], [80, 23], [58, 35], [45, 58], [42, 88], [45, 112], [56, 128], [74, 136], [98, 142], [114, 150], [120, 156],
-      [117, 138], [118, 116], [121, 96], [125, 76], [130, 62]),
-    shape([58, 118], [48, 106], [32, 106], [22, 118], [24, 134], [38, 142], [54, 136]),
-    shape([32, 138], [24, 150], [20, 164], [26, 168], [34, 156], [42, 142]),
-    shape([42, 142], [40, 158], [42, 172], [50, 170], [50, 156], [50, 142]),
-    cut(2.2, [42, 108], [36, 122], [42, 138]),
-    cut(2.6, [134, 54], [127, 72], [122, 92], [119, 114], [118, 134], [119, 152]),
-    { kilim: [[127, 62], [121, 82], [117, 104], [115, 126], [115, 146]] },
+    ink(3.4, [136, 196], [136, 150], [135, 112], [131, 106], [125, 106]),
+    body([[6, 40], [15, 46], [24, 50], [29, 58], [33, 74], [36, 92], [37, 104], [35, 110], [30, 108], [28, 98], [24, 84, 1], [21, 96], [22, 112], [28, 150],
+      [32, 186, 1]], [[6, 40], [15, 46], [24, 50], [28, 58], [29, 78], [30, 100], [31, 114, 1], [31, 120], [28, 126], [24, 124], [23, 114], [22, 98],
+      [21, 80, 1], [19, 92], [21, 112], [28, 150], [32, 186, 1]]),
+    shape([104, 7], [113, 10], [119, 17], [122, 29], [124, 42], [128, 54], [132, 64, 1], [118, 60], [110, 46], [90, 46], [82, 60], [68, 64, 1], [72, 54],
+      [76, 42], [78, 29], [81, 17], [87, 10], [96, 7]),
+    ...feet(9),
+    cut(2.4, [89, 20], [88, 30], [92, 40], [100, 44], [108, 40], [112, 30], [111, 20]),
+    cut(3.4, [86, 16], [100, 13], [114, 16]),
+    ...cuts(2, [117, 48], [123, 56], [128, 62]),
+    cut(2.6, [82, 96], [100, 99], [118, 96]),
   ],
-  // a boy of about nine: short hair with a cowlick and a fringe, his ear showing
+  // a boy of about nine in a shirt and trousers, an apple in his hand
   boy: [
-    shape(...PROFILE.child),
-    shape([58, 126], [50, 104], [50, 78], [58, 54], [76, 38], [94, 30], [98, 18, 1], [108, 28], [122, 32], [136, 44], [143, 56], [148, 62, 1], [139, 62],
-      [141, 70, 1], [132, 65], [118, 60], [100, 60], [84, 64], [72, 74], [66, 92], [64, 116]),
-    cut(2.2, [76, 52], [96, 42], [118, 42], [132, 50]),
-    cut(2, [64, 72], [72, 56], [90, 48]),
-    cut(2.4, [100, 86], [92, 88], [89, 97], [93, 106], [101, 107]),
+    body([[5, 76], [12, 81], [19, 85], [21, 92], [22, 108], [23, 122, 1], [24, 128], [21, 133], [17, 130], [16, 122], [16, 108], [15, 94, 1], [14, 106],
+      [15, 126], [16, 142], [15, 170], [14, 186, 1], [5, 186, 1], [4, 160], [2, 140, 1]]),
+    head(100, 63, 11.5, 13),
+    shape([88, 62], [87, 54], [92, 48], [100, 46], [105, 44], [110, 40, 1], [109, 46], [112, 50], [113, 58], [112, 64, 1], [106, 56], [96, 56]),
+    shape([119, 129], [124, 130], [129, 129], [132, 136], [128, 144], [124, 143], [120, 144], [116, 136]),
+    ink(1.6, [124, 130], [125, 124]),
+    shape([125, 125], [130, 120], [134, 121, 1], [130, 126]),
+    ...feet(9, 190, 7),
+    cut(2, [94, 80], [100, 88], [106, 80]),
+    cut(2, [86, 128], [100, 129], [114, 128]),
   ],
-  // a girl of about six: a fringe, and a plait tied with a ribbon
+  // a girl of about six in a dress, her two plaits tied with ribbons
   girl: [
-    shape(...PROFILE.child),
-    shape([56, 124], [50, 102], [50, 76], [58, 52], [76, 37], [98, 29], [120, 31], [136, 43], [144, 58], [146, 70, 1], [137, 66], [124, 61], [108, 59],
-      [92, 63], [80, 74], [72, 92], [68, 114]),
-    shape([62, 116], [52, 128], [46, 142], [45, 154], [54, 157], [57, 144], [62, 132], [70, 122]),
-    shape([50, 156, 1], [34, 143], [24, 148], [27, 161], [50, 157, 1], [32, 171], [37, 182], [50, 174], [50, 158, 1], [58, 176], [68, 179, 1], [63, 164]),
-    cut(1.8, [50, 130], [62, 134]),
-    cut(1.8, [47, 142], [58, 145]),
-    cut(2, [70, 54], [90, 46], [112, 46]),
-    lash(141, 91),
+    body([[5, 94], [11, 98], [16, 101], [18, 108], [19, 122], [20, 134, 1], [21, 140], [18, 144], [15, 140], [15, 132], [14, 120], [13, 110, 1], [16, 128],
+      [22, 146], [27, 162, 1], [9, 163, 1], [8, 188, 1], [3, 188, 1], [3, 163, 1]]),
+    head(100, 82, 11, 12),
+    shape([89, 80], [88, 72], [93, 67], [100, 65], [107, 67], [112, 72], [111, 80], [104, 74], [96, 74]),
+    shape([110, 78], [114, 88], [117, 100], [118, 112], [113, 112], [112, 100], [109, 90]),
+    shape([90, 78], [86, 88], [83, 100], [82, 112], [87, 112], [88, 100], [91, 90]),
+    shape([115, 112, 1], [108, 108], [107, 116], [115, 113, 1], [122, 118], [123, 110]),
+    shape([85, 112, 1], [92, 108], [93, 116], [85, 113, 1], [78, 118], [77, 110]),
+    ...feet(6, 191, 5.5),
+    ...cuts(1.6, [111, 92], [116, 93]),
+    ...cuts(1.6, [112, 102], [117, 103]),
+    cut(2.4, [86, 118], [100, 120], [114, 118]),
+    { kilim: [[78, 156], [100, 158], [122, 156]] },
   ],
-  // a farmer in a flat cap, a stalk of wheat in his mouth
+  // a farmer in a flat cap and a waistcoat, his pitchfork beside him
   farmer: [
-    shape(...PROFILE.man),
-    shape([43, 82], [44, 58], [54, 38], [74, 24], [100, 16], [124, 19], [140, 30], [151, 42], [162, 50, 1], [152, 55], [141, 56], [118, 56], [92, 58],
-      [66, 64], [50, 76]),
-    cut(2.8, [46, 74], [70, 63], [102, 57], [140, 55]),
-    cut(2, [64, 34], [92, 25], [122, 26]),
-    { ink: [[146, 126], [162, 118], [178, 108]], width: 1.6 },
-    shape([176, 110], [180, 100], [186, 92, 1], [186, 102], [180, 110, 1]),
-    cut(2.4, [121, 166], [129, 174], [138, 178]),
+    ink(3.4, [58, 196], [58, 120], [58, 46]),
+    ink(3, [48, 46], [58, 48], [68, 46]),
+    ink(2.4, [48, 46], [48, 26]),
+    ink(2.4, [58, 48], [58, 22]),
+    ink(2.4, [68, 46], [68, 26]),
+    body([[5, 38], [15, 44], [25, 47], [29, 55], [30, 76], [31, 98], [31, 112, 1], [32, 118], [29, 124], [25, 122], [25, 114], [24, 100], [23, 82, 1],
+      [20, 96], [20, 112], [21, 124], [20, 160], [19, 186, 1], [6, 186, 1], [5, 160], [3, 132, 1]], [[5, 38], [15, 44], [25, 47], [31, 56], [34, 70],
+      [38, 86], [42, 96], [43, 104], [37, 106], [32, 98], [28, 90], [24, 82, 1], [20, 96], [20, 112], [21, 124], [20, 160], [19, 186, 1], [6, 186, 1], [5, 160],
+      [3, 132, 1]]),
+    head(100, 25, 11, 13.5),
+    shape([106, 8], [114, 9], [119, 13], [120, 19, 1], [113, 21], [100, 22], [87, 21], [80, 19, 1], [81, 13], [86, 9], [94, 8]),
+    ...feet(12, 191, 8),
+    cut(2.4, [83, 19], [100, 22], [117, 19]),
+    ...cuts(2.4, [106, 42], [107, 70], [107, 110]),
+    cut(2.2, [80, 112], [100, 114], [120, 112]),
   ],
-  // a market seller: a wrapped turban with its fringe, a full moustache, a waistcoat over his shirt
+  // a market seller in a turban and a wide sash, a basket of fruit in his hand
   seller: [
-    shape(...PROFILE.man),
-    shape([42, 86], [40, 58], [48, 36], [66, 20], [94, 11], [122, 14], [140, 26], [150, 44], [150, 60], [140, 63], [124, 57], [98, 56], [72, 61], [52, 74]),
-    cut(3, [46, 66], [68, 46], [100, 37], [148, 46]),
-    cut(2.6, [50, 42], [76, 26], [112, 20], [140, 30]),
-    { kilim: [[54, 72], [72, 63], [98, 59], [124, 60], [142, 63]] },
-    MOUSTACHE_OF(0, 0, 2),
-    cut(3.4, [121, 163], [128, 175], [137, 185]),
+    body([[5, 38], [15, 44], [25, 47], [29, 55], [30, 76], [31, 98], [32, 112, 1], [33, 118], [30, 124], [26, 122], [25, 114], [24, 100], [23, 82, 1], [20, 96],
+      [21, 112], [23, 126], [23, 160], [21, 186, 1], [6, 186, 1], [5, 160], [3, 134, 1]]),
+    head(100, 25, 11, 13.5),
+    shape([100, 3.6], [106, 4.2], [113, 6.4], [118, 11], [119.5, 17], [116, 22.5, 1], [108, 21], [100, 20.5], [92, 21], [84, 22.5, 1], [80.5, 17], [82, 11],
+      [87, 6.4], [94, 4.2]),
+    ink(2.6, [121, 134], [124, 120], [132, 115], [140, 120], [143, 134]),
+    head(124, 130, 5, 4.6), head(132, 128, 5.4, 5), head(140, 130, 4.8, 4.4),
+    shape([116, 133, 1], [148, 133, 1], [145, 150], [132, 155], [119, 150]),
+    ...feet(13, 191, 8),
+    cut(2, [84, 12], [100, 8], [116, 12]),
+    cut(2.2, [82, 19], [100, 15], [118, 19]),
+    cut(1.8, [118, 137], [132, 138], [146, 137]),
+    cut(1.2, [126, 140], [127, 151]),
+    cut(1.2, [138, 140], [137, 151]),
+    ...cuts(2.2, [105, 42], [106, 70], [107, 102]),
+    cut(3.6, [78, 108], [100, 110], [122, 108]),
+    cut(1.6, [79, 115], [100, 117], [121, 115]),
   ],
-  // an old doctor: bushy brows, round glasses, a moustache, and a stethoscope round his neck
+  // an old doctor: bald, in round glasses and a long coat, a stethoscope round his neck and his bag in his hand
   doctor: [
-    shape(...PROFILE.oldMan),
-    shape([140, 73], [148, 72], [154, 74, 1], [147, 79], [141, 80]),
-    MOUSTACHE_OF(0, 3),
-    { ink: [[140, 82], [147, 81], [150, 88], [147, 95], [140, 95], [137, 88], [140, 82]], width: 3.4 },
-    cut(1.6, [141, 83], [147, 83], [148, 88], [146, 93], [141, 93], [138, 88], [141, 83]),
-    cut(2, [137, 86], [116, 85], [96, 88]),
-    cut(2.8, [60, 152], [72, 170], [96, 182], [118, 178], [126, 168]),
-    { hole: [127, 180, 3.6] },
+    body([[5, 40], [15, 45], [24, 48], [28, 56], [29, 76], [30, 100], [30, 114, 1], [30, 120], [27, 125], [23, 122], [23, 114], [22, 98], [21, 80, 1],
+      [19, 96], [22, 142, 1], [14, 144, 1], [13, 186, 1], [4, 186, 1], [3, 146, 1]], [[5, 40], [15, 45], [24, 48], [28, 56], [29, 76], [30, 96], [31, 108, 1],
+      [33, 114], [30, 118], [26, 116], [25, 108], [22, 96], [21, 80, 1], [19, 96], [22, 142, 1], [14, 144, 1], [13, 186, 1], [4, 186, 1], [3, 146, 1]]),
+    head(100, 25, 11.5, 14),
+    shape([58, 122, 1], [82, 122, 1], [83, 144, 1], [57, 144, 1]),
+    ink(2.4, [63, 122], [65, 113], [75, 113], [77, 122]),
+    ...feet(9, 191, 7),
+    { ring: [95, 24, 3.6] },
+    { ring: [105, 24, 3.6] },
+    cut(1.2, [98.6, 23.4], [101.4, 23.4]),
+    cut(2.4, [94, 44], [97, 62], [100, 78]),
+    cut(2.4, [106, 44], [103, 62], [100, 78]),
+    cut(2, [100, 78], [100, 140]),
+    cut(1.8, [89, 44], [86, 60], [90, 74], [94, 80]),
+    { hole: [95, 83, 2.8] },
+    cut(1.6, [60, 130], [80, 130]),
   ],
-  // a shepherd: a tall felt cap, a moustache, the stiff felt cloak with square shoulders, and his crook behind him
+  // a shepherd in a head cloth tied with a cord, a long striped coat over his robe and a rope belt, his crook in his hand
   shepherd: [
-    { ink: [[42, 190], [38, 130], [32, 70], [30, 40], [33, 24], [44, 19], [52, 26], [50, 34]], width: 4.4 },
-    shape(...PROFILE.man),
-    shape([44, 72], [46, 46], [56, 22], [72, 6], [94, -2], [116, 2], [132, 16], [140, 36], [143, 58], [118, 56], [88, 58], [62, 64]),
-    cut(2.8, [46, 64], [84, 54], [118, 52], [142, 55]),
-    cut(2, [92, 4], [98, 22], [100, 44]),
-    MOUSTACHE_OF(0, 0, 3),
-    shape([118, 148], [126, 157], [152, 161], [182, 163, 1], [172, 175], [166, 186, 1], [100, 197], [32, 186, 1], [24, 176], [14, 165, 1], [40, 154], [62, 144], [70, 138]),
-    cut(2, [68, 147], [96, 152], [121, 157]),
-    cut(2.6, [122, 166], [123, 176], [124, 186]),
+    ink(4.4, [143, 196], [143, 140], [142.5, 80], [142, 40], [142, 26], [145, 16], [153, 12], [160, 15], [162, 24], [160, 30]),
+    body([[6, 40], [16, 46], [26, 50], [32, 56], [38, 70], [42, 86], [46, 96], [46, 104], [39, 106], [34, 98], [29, 86, 1], [24, 98], [24, 130], [25, 160],
+      [27, 186, 1]], [[6, 40], [16, 46], [26, 50], [30, 58], [32, 80], [34, 104], [35, 118, 1], [30, 120], [28, 128], [24, 130], [21, 125], [22, 118],
+      [23, 96, 1], [24, 130], [25, 160], [27, 186, 1]]),
+    shape([104, 5], [113, 7], [120, 14], [123, 26], [125, 40], [128, 56], [130, 72], [128, 80, 1], [118, 78], [112, 60], [88, 60], [82, 78], [72, 80, 1],
+      [70, 72], [72, 56], [75, 40], [77, 26], [80, 14], [87, 7], [96, 5]),
+    ...feet(9),
+    cut(2.2, [89, 18], [88, 29], [92, 38], [100, 42], [108, 38], [112, 29], [111, 18]),
+    cut(2.4, [86, 14], [100, 11], [114, 14]),
+    cut(1.6, [87, 18], [100, 15], [113, 18]),
+    ...cuts(2, [113, 32], [116, 50], [121, 66], [127, 80]),
+    ...cuts(2.4, [106, 46], [108, 92], [110, 170]),
+    ...cuts(2, [110, 170], [118, 171], [124, 172]),
+    ...cuts(1.4, [115, 84], [117, 128], [118, 166]),
+    ...cuts(1.4, [120, 84], [122, 128], [123, 166]),
+    cut(2.4, [92, 98], [100, 100], [108, 98]),
+    cut(1.8, [98, 100], [97, 118], [98, 132]),
+    cut(1.6, [102, 100], [103, 114]),
+    { hole: [98, 135, 2.4] },
+    { hole: [103, 117, 2] },
   ],
-  // Kawa, the blacksmith of the Newroz tale: long hair down his back, a long full beard and a band round his brow
+  // Kawa, the blacksmith of the Newroz tale: long hair, a long beard and a band round his brow, his apron on and his hammer in his hand
   smith: [
-    shape(...PROFILE.man),
-    shape([104, 96], [108, 114], [118, 128], [132, 134], [146, 133], [152, 140], [156, 152], [156, 166], [151, 180], [143, 191], [134, 196, 1], [126, 186],
-      [120, 170], [114, 154], [106, 138], [100, 116]),
-    MOUSTACHE_OF(0, 0, 4),
-    shape([140, 48], [133, 32], [114, 19], [90, 16], [66, 23], [48, 40], [38, 64], [33, 88], [30, 106], [33, 122], [27, 140], [28, 156], [21, 168],
-      [26, 178, 1], [34, 173], [38, 184, 1], [48, 174], [56, 160], [62, 140], [66, 118], [72, 96], [88, 74], [112, 60], [136, 58]),
-    cut(3.2, [40, 68], [70, 56], [104, 50], [140, 55]),
-    cut(2.4, [114, 58], [102, 76], [96, 98], [96, 122], [92, 148], [86, 174]),
-    cut(1.8, [100, 22], [84, 36], [72, 54]),
-    cut(1.8, [68, 74], [60, 96], [58, 118], [50, 140], [46, 162]),
-    cut(1.6, [82, 80], [76, 102], [75, 126], [68, 150]),
-    cut(2, [142, 148], [146, 164], [142, 182]),
-    cut(1.8, [130, 146], [134, 164], [132, 184]),
-    cut(2.2, [110, 140], [116, 160], [124, 182]),
+    ink(3.8, [58, 106], [58, 172]),
+    shape([48, 171, 1], [68, 171, 1], [70, 173, 1], [70, 188, 1], [68, 190, 1], [48, 190, 1], [46, 188, 1], [46, 173, 1]),
+    body([[6, 40], [17, 45], [28, 48], [32, 56], [34, 76], [35, 100], [35, 116, 1], [34, 122], [30, 126], [27, 122], [27, 112], [26, 96], [25, 80, 1], [23, 98],
+      [24, 120], [25, 150, 1], [16, 152], [15, 186, 1], [5, 186, 1], [4, 156, 1]], [[6, 40], [17, 45], [28, 48], [32, 56], [36, 72], [39, 90], [41, 104],
+      [43, 112], [39, 117], [34, 114], [32, 102], [29, 90], [26, 80, 1], [23, 98], [24, 120], [25, 150, 1], [16, 152], [15, 186, 1], [5, 186, 1], [4, 156, 1]]),
+    head(100, 24, 11, 14),
+    shape([100, 8.4], [106, 9.2], [111, 11.4], [113.6, 16], [113.5, 24], [116, 34], [119, 44], [121, 52], [124, 60], [127, 67, 1], [120, 63], [117, 69, 1], [112, 58], [88, 58],
+      [83, 69, 1], [80, 63], [73, 67, 1], [76, 60], [79, 52], [81, 44], [84, 34], [86.5, 24], [86.4, 16], [89, 11.4], [94, 9.2]),
+    shape([110, 28], [112, 40], [113, 52], [111, 64], [106, 74], [100, 79, 1], [94, 74], [89, 64], [87, 52], [88, 40], [90, 28], [100, 34]),
+    ...feet(10, 191, 7.5),
+    cut(2.6, [87, 13], [100, 10], [113, 13]),
+    ...cuts(1.8, [111, 15], [112, 24], [111, 31]),
+    cut(2, [89, 30], [88, 46], [90, 60], [95, 72], [100, 78], [105, 72], [110, 60], [112, 46], [111, 30]),
+    cut(1.6, [93, 34], [100, 31], [107, 34]),
+    ...cuts(1.4, [114, 32], [117, 44], [119, 54], [122, 63]),
+    cut(1.5, [96, 50], [97, 68]),
+    cut(1.5, [104, 50], [103, 68]),
+    ...cuts(2.2, [114, 66], [115, 110], [116, 146]),
+    cut(2.2, [84, 146], [100, 147], [116, 146]),
+    cut(2.6, [76, 108], [100, 110], [124, 108]),
   ],
 } as const satisfies Record<string, readonly SilhouettePart[]>;
 
 export type BookSilhouette = keyof typeof SILHOUETTES;
+
+/** The children are drawn a little larger than life from their feet up, so a six-year-old still reads at the size of a page's round. */
+const GROW: Partial<Record<BookSilhouette, number>> = { boy: 1.08, girl: 1.18 };
 export const BOOK_SILHOUETTES: readonly BookSilhouette[] = Object.freeze(Object.keys(SILHOUETTES) as BookSilhouette[]);
 
 /**
- * One of the road's people as a cut-paper bust, facing right in the middle of the round it stands in, in one ink: `deep`
- * darkened toward black. Its cuts, lace and borders are `paper`, the colour of that round.
+ * One of the road's people as a cut-paper figure standing in the middle of the round it stands in, in one ink: `deep`
+ * darkened toward black. Its cuts, borders and rings are `paper`, the colour of that round, and it stands on a soft shadow.
  */
 export function bookSilhouetteSvg(opts: BookArtOptions & { who: BookSilhouette; deep: string; paper: string }): string {
   const parts: readonly SilhouettePart[] | undefined = Object.hasOwn(SILHOUETTES, opts.who) ? SILHOUETTES[opts.who] : undefined;
   if (!parts) throw new RangeError(`art: the book has no silhouette ${String(opts.who)}`);
   for (const hex of [opts.deep, opts.paper]) if (!/^#[0-9a-f]{6}$/.test(hex)) throw new RangeError(`art: a silhouette's colours are six-digit colours, not ${String(hex)}`);
-  const ink = mix(opts.deep, '#000000', 0.42);
+  const inked = mix(opts.deep, '#000000', 0.42);
   const brush = new Brush();
-  brush.group('translate(4.6 2.3) scale(0.56)', () => {
-    let cuts = '';
-    let marks = '';
+  brush.group('translate(4 4) scale(0.56)', () => {
+    brush.fill(E(100, 196, 38, 4.5), mix(opts.paper, opts.deep, 0.14));
+    const k = GROW[opts.who] ?? 1;
+    brush.group(`translate(${f(100 * (1 - k))} ${f(196 * (1 - k))}) scale(${k})`, () => {
+    let cutting = '';
     const flush = (): void => {
-      if (cuts) brush.fill(cuts, opts.paper);
-      if (marks) brush.fill(marks, opts.paper);
-      cuts = marks = '';
+      if (cutting) brush.fill(cutting, opts.paper);
+      cutting = '';
     };
     for (const part of parts) {
       if ('shape' in part) {
         flush();
-        brush.fill(throughPoints(part.shape, true), ink);
+        brush.fill(throughPoints(part.shape, true), inked);
+      } else if ('oval' in part) {
+        flush();
+        brush.fill(E(...part.oval), inked);
       } else if ('ink' in part) {
         flush();
-        brush.line(throughPoints(part.ink, false), ink, part.width);
-      } else if ('cut' in part) cuts += sliverPath(part.cut, part.width);
-      else if ('lace' in part) marks += marksAlong(part.lace, 7, (x, y) => O(x, y, 1.3));
-      else if ('kilim' in part) marks += marksAlong(part.kilim, 8, lozenge);
-      else marks += O(...part.hole);
+        brush.line(throughPoints(part.ink, false), inked, part.width);
+      } else if ('ring' in part) {
+        flush();
+        brush.line(O(...part.ring), opts.paper, 1.4);
+      } else if ('cut' in part) cutting += sliverPath(part.cut, part.width);
+      else if ('kilim' in part) cutting += marksAlong(part.kilim, 8, lozenge);
+      else cutting += O(...part.hole);
     }
     flush();
+    });
   });
   return picture(String(brush), prefixFor(opts.idPrefix, 'book-silhouette', `${opts.who}-${opts.deep.slice(1)}`), opts.size, opts.title);
 }
