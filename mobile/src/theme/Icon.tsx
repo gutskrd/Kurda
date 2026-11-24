@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path, SvgXml } from 'react-native-svg';
-import { coinSvg, gemSvg } from '@kurda/shared';
+import { HEVALO_GLYPHS, coinSvg, gemSvg, type HevaloGlyph } from '@kurda/shared';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { timing } from './animate';
 import { PULSE_MS } from './motion';
 import { useTheme } from './ThemeProvider';
-import { ICON_PATHS, ICON_VIEWBOX, type IconName } from './icon-paths';
+import { ICON_PATHS, ICON_VIEWBOX, type IconName as FamilyIconName } from './icon-paths';
 
-export type { IconName };
+/** A glyph from the icon family, or one Hevalo draws in its weight where the family has none (shared `HEVALO_GLYPHS`). */
+export type IconName = FamilyIconName | HevaloGlyph;
+
+const pathsOf = (name: IconName): readonly string[] => (name in HEVALO_GLYPHS ? HEVALO_GLYPHS[name as HevaloGlyph] : ICON_PATHS[name as FamilyIconName]);
 
 /**
  * The app's icons, from the same family at the same weight as the website's, drawn flat in one tint. The path data
@@ -47,7 +50,7 @@ export function Icon({
   return (
     <View style={[{ width: size, height: size }, style]}>
       <Svg width={size} height={size} viewBox={`0 0 ${ICON_VIEWBOX} ${ICON_VIEWBOX}`}>
-        {ICON_PATHS[name].map((d) => (
+        {pathsOf(name).map((d) => (
           <Path key={d} d={d} fill={fill} stroke={edge} strokeWidth={edge ? 10 : undefined} />
         ))}
       </Svg>

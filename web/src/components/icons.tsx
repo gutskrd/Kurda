@@ -127,7 +127,7 @@ import { Highlighter } from '@phosphor-icons/react/dist/icons/Highlighter';
 import { Swatches } from '@phosphor-icons/react/dist/icons/Swatches';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 import { useMemo } from 'react';
-import { coinSvg, gemSvg, type CurrencyOptions } from '@kurda/shared';
+import { HEVALO_GLYPHS, coinSvg, gemSvg, type CurrencyOptions, type HevaloGlyph } from '@kurda/shared';
 
 /** `regular` is closest to the 1.7px strokes of the earlier hand-drawn set. */
 export const ICON_WEIGHT: IconWeight = 'regular';
@@ -164,6 +164,19 @@ function currency(draw: (opts: CurrencyOptions) => string, fallbackSize: number)
   };
 }
 
+/** One of Hevalo's own glyphs (shared `HEVALO_GLYPHS`), drawn as the family's are: in the text's colour, hidden from readers. */
+function drawn(glyph: HevaloGlyph, fallbackSize: number) {
+  return function DrawnIcon({ size = fallbackSize, className }: P): React.JSX.Element {
+    return (
+      <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor" className={className} aria-hidden="true" focusable="false">
+        {HEVALO_GLYPHS[glyph].map((d) => (
+          <path key={d} d={d} />
+        ))}
+      </svg>
+    );
+  };
+}
+
 /** A filled head-and-shoulders, for an avatar with no picture behind it. */
 export const PersonGlyph = named(User, 128, 'fill');
 
@@ -179,6 +192,8 @@ export const TrophyIcon = named(Trophy, 22);
 export const UserIcon = named(User, 22);
 /** More than one person: friends, the social panel, a group. */
 export const UsersIcon = named(Users, 22);
+/** A parent with a child in front of them: parental controls. */
+export const ParentalIcon = drawn('parental', 22);
 /** A streak, drawn as a flame as on the phone. */
 export const FlameIcon = named(Flame, 22);
 /** A streak freeze, which keeps a missed day, as on the phone. */

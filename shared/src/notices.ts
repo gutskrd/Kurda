@@ -30,6 +30,10 @@ const BY_KIND: Readonly<Record<string, Exclude<NoticeFilter, 'all'>>> = {
   group_request_declined: 'people',
   group_removed: 'people',
   group_banned: 'people',
+  // A parent and a teen connecting, parting, or a parent changing the teen's limits.
+  parental_connected: 'people',
+  parental_ended: 'people',
+  parental_changed: 'people',
   badge: 'progress',
   league_safe: 'progress',
   league_promotion: 'progress',
