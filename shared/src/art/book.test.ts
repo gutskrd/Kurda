@@ -175,7 +175,8 @@ describe('the drawings of Hevalo’s book', () => {
     for (const [what, svg] of FLAT.filter(([name]) => !name.startsWith('backdrop'))) {
       const root = parse(svg);
       expect(root.attrs.viewBox, what).toBe('0 0 120 120');
-      expect(svg.length, what).toBeLessThan(4 * 1024);
+      // The portraits stand only on the people page, so they may carry a little more detail than a word picture.
+      expect(svg.length, what).toBeLessThan((what.startsWith('silhouette') ? 8 : 4) * 1024);
       let count = 0;
       walk(root, () => (count += 1));
       expect(count, what).toBeLessThan(60);
