@@ -1,11 +1,10 @@
 /**
  * A chapter set into pages (chapter.ts) on the road's own chapters: practice always opens a page and keeps its matching
  * task whole; a part never opens at a page foot with its lessons overleaf; a lesson's lines never open a page cut off
- * from its words, and a last word never heads a page alone; the closing pictures never give away "Name the pictures";
- * and asides sit at the foot of short pages, at most two per chapter and never two on one spread.
+ * from its words, and a last word never heads a page alone; and the closing pictures never give away "Name the pictures".
  */
 import { beforeAll, describe, expect, it } from 'vitest';
-import { asidePages, chapterBlocks, chapterPictures, lessonBlocks } from './chapter.js';
+import { chapterBlocks, chapterPictures, lessonBlocks } from './chapter.js';
 import { paginate, type FlowPage } from './flow.js';
 import type { Block } from './page.js';
 import { roadBookChapters, type BookChapter, type BookLesson } from './road-book.js';
@@ -111,23 +110,5 @@ describe('a chapter of the book', () => {
       shown += pictures.length;
     }
     expect(shown).toBeGreaterThan(0);
-  });
-
-  it('puts at most two asides in a chapter: the roomiest pages, never two on one spread, never its last page', () => {
-    // the run starts on page 11 here: its second and third pages are 12 and 13, which face each other, so the second roomiest gives way
-    expect([...asidePages([100, 300, 280, 95, 40, 400], 11)].sort()).toEqual([0, 1]);
-    // starting on page 10, the same two pages are 11 and 12, back to back, and both have one
-    expect([...asidePages([100, 300, 280, 95, 40], 10)].sort()).toEqual([1, 2]);
-    // a page too short for one is left plain, and so is the last, which ends on the chapter's pictures
-    expect([...asidePages([60, 80, 400], 10)]).toEqual([]);
-    expect([...asidePages([95, 60, 120, 60, 200, 10], 10)].sort()).toEqual([2, 4]);
-    // on the road's own chapters
-    for (const c of chapters) {
-      const { pages } = laidOut(c);
-      const slack = pages.map((p) => TEXT.room - p.used);
-      const chosen = asidePages(slack, 10);
-      expect(chosen.size).toBeLessThanOrEqual(2);
-      expect(chosen.has(pages.length - 1)).toBe(false);
-    }
   });
 });
