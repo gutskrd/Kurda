@@ -166,7 +166,9 @@ describe('the Hevalo book', () => {
     const lessons = roadBookChapters(plan, docs, stories, ALL).flatMap((c) => c.parts.flatMap((p) => p.lessons));
     expect(lessons).toHaveLength(192);
     // a telling for every lesson of the road, and for nothing else
-    expect(Object.keys(own).sort()).toEqual(lessons.map((l) => l.key).sort());
+    expect(Object.keys(own).filter((k) => !/^u\d{2}$/.test(k)).sort()).toEqual(lessons.map((l) => l.key).sort());
+    // and an opening paragraph of the book's own for each chapter
+    expect(Object.keys(own).filter((k) => /^u\d{2}$/.test(k))).toHaveLength(12);
     const press = new Press('beats');
     const width = TEXT.w - PANEL.w - 11;
     for (const l of lessons) {

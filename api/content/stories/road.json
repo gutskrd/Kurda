@@ -114,7 +114,7 @@
         {
           "kind": "vocabulary",
           "prompt": "«Ez birçî me.» Hamo çi dixwaze?",
-          "promptEn": "“Ez birçî me.” What does Hamo want?",
+          "promptEn": "“I’m hungry.” What does Hamo want?",
           "options": [
             "Sêvekê",
             "Çayê",
@@ -1872,7 +1872,7 @@
         {
           "kind": "detail",
           "prompt": "Berbangê çi amade bû?",
-          "promptEn": "What was ready at dawn?",
+          "promptEn": "What was ready at berbang?",
           "options": [
             "Nan, çay û penîr",
             "Kon, werîs û sêv",
@@ -2398,7 +2398,7 @@
         {
           "kind": "vocabulary",
           "prompt": "«Ferhad cotkar e: ew zeviyan diçîne.» Cotkar çi dike?",
-          "promptEn": "“Ferhad is a cotkar: he sows the fields.” What does a cotkar do?",
+          "promptEn": "What does a cotkar do?",
           "options": [
             "Li zeviyan dixebite",
             "Li dikanê fêkî û sêvan difiroşe",
@@ -2661,7 +2661,7 @@
         {
           "kind": "vocabulary",
           "prompt": "«Îro êvarê şevbêrk li mala min e.» Şevbêrk çi ye?",
-          "promptEn": "“This evening the şevbêrk is at my house.” What is a şevbêrk?",
+          "promptEn": "What is a şevbêrk?",
           "options": [
             "Êvara çîrok û cîranan",
             "Rojeke havînê li zozanan",
@@ -2721,7 +2721,7 @@
         {
           "kind": "vocabulary",
           "prompt": "«Şengê pê dihese.» Pê hesîn çi ye?",
-          "promptEn": "“Şengê pê dihese.” What does pê hesîn mean?",
+          "promptEn": "What does pê hesîn mean?",
           "options": [
             "Ew dizane ka çi heye",
             "Ew li derî dixe",
@@ -2841,7 +2841,7 @@
         {
           "kind": "vocabulary",
           "prompt": "«Fêrbûn jî mîna avê ye: dilop dilop.» Ango çi?",
-          "promptEn": "“Learning is like water too: drop by drop.” What does that mean?",
+          "promptEn": "What does that mean?",
           "options": [
             "Tu roj bi roj, hêdî hêdî fêr dibî",
             "Tu di rojekê de her tiştî fêr dibî",

@@ -21,6 +21,8 @@ export interface BookPlanUnit {
   titleKu: string;
   titleEn: string;
   story: string;
+  /** the book's own opening paragraph for the chapter, from book-beats.json, where it has one */
+  bookStory?: unknown;
   skills: Array<{
     position: number;
     titleKu: string;
@@ -510,6 +512,8 @@ export function withBookBeats(plan: BookPlan, beats: BookBeats): BookPlan {
     ...plan,
     units: plan.units.map((unit) => ({
       ...unit,
+      // the chapter's opening paragraph is keyed by its unit alone ("u07"), its lessons' tellings by their lesson keys
+      ...(own(`u${String(unit.number).padStart(2, '0')}`) ? { bookStory: own(`u${String(unit.number).padStart(2, '0')}`) } : {}),
       skills: unit.skills.map((skill) => ({
         ...skill,
         lessons: skill.lessons.map((lesson) => {
@@ -579,7 +583,7 @@ export function roadBookChapters(plan: BookPlan, docs: ReadonlyMap<number, BookU
       cefr: unit.cefr,
       titleKu: unit.titleKu,
       titleEn: unit.titleEn,
-      summary: unit.story,
+      summary: str(unit.bookStory) ?? unit.story,
       land: PATH_LANDS[(n - 1) % PATH_LANDS.length]!,
       parts,
       tale,

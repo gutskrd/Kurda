@@ -67,7 +67,7 @@
           "titleKu": "Silav!",
           "titleEn": "Hello!",
           "grammar": "“to be” as an ending: ez … im / me, tu … î / yî (Ez baş im. Tu çawa yî?); and Ez sêvê dixwim, I eat the apple, learnt whole",
-          "grammarMd": "**Ez baş im.** I am well. In Kurmancî “am” and “are” are not words of their own: they are short endings after the word they go with.\n\n- **ez … im** after a consonant, **ez … me** after a vowel: *Ez baş im.* · *Ez Hamo me.*\n- **tu … î** after a consonant, **tu … yî** after a vowel: *Tu baş î?* · *Tu çawa yî?*\n- *Sêv* → **Ez sêvê dixwim.** I’m eating the apple: the verb comes last, and the apple you eat takes **-ê**.",
+          "grammarMd": "**Ez baş im.** I am well. In Kurmanji “am” and “are” are not words of their own: they are short endings after the word they go with.\n\n- **ez … im** after a consonant, **ez … me** after a vowel: *Ez baş im.* · *Ez Hamo me.*\n- **tu … î** after a consonant, **tu … yî** after a vowel: *Tu baş î?* · *Tu çawa yî?*\n- *Sêv* → **Ez sêvê dixwim.** I’m eating the apple: the verb comes last, and *sêv*, a feminine noun, takes **-ê** as the thing you eat.",
           "lessons": [
             {
               "key": "u01s1l1",
@@ -467,7 +467,7 @@
           "titleKu": "Taştê",
           "titleEn": "Breakfast",
           "grammar": "ne before the word for “not”: Ez ne birçî me; and the thanks of the table",
-          "grammarMd": "**Ez ne tî me.** I am not thirsty. *Ne* goes before the word it says no to, and the ending stays: *Ez birçî me* → *Ez ne birçî me*. · *Ev ne çay e.* This isn’t tea.\n\n- **Noşî can be!** Enjoy! Said to someone who is eating or drinking.\n- **Destê te sax be!** Thank you! To the one who cooked or served (word for word: may your hand be healthy).",
+          "grammarMd": "**Ez ne tî me.** I am not thirsty. *Ne* goes before the word it says no to, and the ending stays: *Ez birçî me* → *Ez ne birçî me*. · *Ev ne çay e.* This isn’t tea.\n\n- Do not mix it up with **ne** meaning “are” after a vowel: *Em çar xwişk û bira ne.* We are four brothers and sisters.\n\n- **Noşî can be!** Enjoy! Said to someone who is eating or drinking.\n- **Destê te sax be!** Thank you! To the one who cooked or served (word for word: may your hand be healthy).",
           "lessons": [
             {
               "key": "u02s3l1",
@@ -607,7 +607,7 @@
           "titleKu": "Ev mala me ye",
           "titleEn": "This is our house",
           "grammar": "this and that after li: li vê odeyê (feminine, -ê), li vî …-î (masculine); li vir, li wir",
-          "grammarMd": "**Li vê odeyê.** In this room. After *li* and the other little words of place, *ev* becomes **vê** with a feminine noun, which takes **-ê**, and **vî** with a masculine noun, which takes **-î**: *li vê malê*, *ji vî deriyî*.\n\n- *Ew* becomes **wê** and **wî** in the same way: *li wê odeyê* in that room.\n- With more than one: **van** and **wan**, and the noun takes **-an**. · *li vir* here, *li wir* there.",
+          "grammarMd": "**Li vê odeyê.** In this room. **Li** means in or at, and **ji** from. After them and the other little words of place, *ev* becomes **vê** with a feminine noun, which takes **-ê**, and **vî** with a masculine noun, which takes **-î**: *li vê malê*, *ji vî deriyî*.\n\n- *Ew* becomes **wê** and **wî** in the same way: *li wê odeyê* in that room.\n- With more than one: **van** and **wan**, and the noun takes **-an**. · *li vir* here, *li wir* there.",
           "lessons": [
             {
               "key": "u03s1l1",
@@ -1101,7 +1101,7 @@
                 {"ku": "na-", "en": "not (the negative present: naçim, nakim)", "pos": "particle", "forms": ["naçim", "naçî", "naçe", "naçin", "nayêm", "nayî", "nayê", "nayên", "nakim", "nakî", "nake", "nakin", "nabînim", "nabînî", "nabîne", "nabînin", "nabêjim", "nabêjî", "nabêje", "nabêjin", "nanêrim", "nanêrî", "nanêre", "nanêrin", "naxivim", "naxivî", "naxive", "naxivin", "nakirim", "nakirî", "nakire", "nakirin", "nafiroşim", "nafiroşî", "nafiroşe", "nafiroşin", "nadim", "nadî", "nade", "nadin", "nagerim", "nagerî", "nagere", "nagerin", "naxebitim", "naxebitî", "naxebite", "naxebitin", "naxwazim", "naxwazî", "naxwaze", "naxwazin", "naxwim", "naxwî", "naxwe", "naxwin", "venaxwim", "venaxwî", "venaxwe", "venaxwin"]},
                 {"ku": "ni-", "en": "not (with zanîn and karîn: nizanim, nikarim)", "pos": "particle", "forms": ["nizanim", "nizanî", "nizane", "nizanin", "nikarim", "nikarî", "nikare", "nikarin"]},
                 {"ku": "hîç", "en": "(not) at all; (in a question) ever", "pos": "adv", "forms": ["hîç"]},
-                {"ku": "kes", "en": "person; anyone", "pos": "noun", "gender": "m", "forms": ["kes", "kesên", "kesan", "kesek", "kesê", "kesekî", "kesî"]},
+                {"ku": "kes", "en": "person; anyone (with a negative verb: nobody)", "pos": "noun", "gender": "m", "forms": ["kes", "kesên", "kesan", "kesek", "kesê", "kesekî", "kesî"]},
                 {"ku": "çima", "en": "why", "pos": "question", "forms": ["çima"]},
                 {"ku": "vala", "en": "empty", "pos": "adj", "forms": ["vala"]}
               ]
@@ -1181,7 +1181,7 @@
                 {"ku": "hefte", "en": "week", "pos": "noun", "gender": "f", "forms": ["hefte", "hefteyên", "hefteyan", "hefteyek", "hefteya", "hefteyê", "hefteyeke", "hefteyekê"]},
                 {"ku": "duh", "en": "yesterday", "pos": "adv", "forms": ["duh"]},
                 {"ku": "kengî", "en": "when", "pos": "question", "forms": ["kengî"]},
-                {"ku": "betlane", "en": "holiday, vacation", "pos": "noun", "gender": "f", "forms": ["betlane", "betlaneyên", "betlaneyan", "betlaneyek", "betlaneya", "betlaneyê", "betlaneyeke"]}
+                {"ku": "betlane", "en": "holiday; day off", "pos": "noun", "gender": "f", "forms": ["betlane", "betlaneyên", "betlaneyan", "betlaneyek", "betlaneya", "betlaneyê", "betlaneyeke"]}
               ]
             },
             {
@@ -1594,7 +1594,7 @@
               "voice": "hamo",
               "new": [
                 {"ku": "divê", "en": "must, should", "pos": "verb", "forms": ["divê"]},
-                {"ku": "bi-", "en": "the subjunctive (biçim: that I go)", "pos": "particle", "forms": ["biçim", "biçî", "biçe", "biçin", "bêm", "bêyî", "bê", "bên", "bikim", "bikî", "bike", "bikin", "bibînim", "bibînî", "bibîne", "bibînin", "bibêjim", "bibêjî", "bibêje", "bibêjin", "bizanim", "bizanî", "bizane", "bizanin", "binêrim", "binêrî", "binêre", "binêrin", "biaxivim", "biaxivî", "biaxive", "biaxivin", "bikirim", "bikirî", "bikire", "bikirin", "bifiroşim", "bifiroşe", "bidim", "bidî", "bide", "bidin", "bigerim", "bigere", "bixebitim", "bixebite", "bixwazim", "bixwaze", "bixwim", "bixwî", "bixwe", "bixwin", "vexwim", "vexwî", "vexwe", "vexwin", "bikenim", "bikene", "bimînim", "bimînî", "bimîne", "bimînin", "binivîsim", "binivîse", "bixwînim", "bixwîne", "bibim", "bibî", "bibe", "bibin", "rabim", "rabî", "rabe", "rabin", "razim", "raze", "bişom", "bişo", "bilîzim", "bilîze", "bibezim", "bibeze", "bisekinim", "bisekine", "derkevim", "derkeve", "rûnim", "rûnî", "rûne", "rûnin", "neçim", "neçe", "neyêm", "neyê", "nekim", "neke"]},
+                {"ku": "bi-", "en": "the form after divê, dikarim and dixwazim (biçim: go)", "pos": "particle", "forms": ["biçim", "biçî", "biçe", "biçin", "bêm", "bêyî", "bê", "bên", "bikim", "bikî", "bike", "bikin", "bibînim", "bibînî", "bibîne", "bibînin", "bibêjim", "bibêjî", "bibêje", "bibêjin", "bizanim", "bizanî", "bizane", "bizanin", "binêrim", "binêrî", "binêre", "binêrin", "biaxivim", "biaxivî", "biaxive", "biaxivin", "bikirim", "bikirî", "bikire", "bikirin", "bifiroşim", "bifiroşe", "bidim", "bidî", "bide", "bidin", "bigerim", "bigere", "bixebitim", "bixebite", "bixwazim", "bixwaze", "bixwim", "bixwî", "bixwe", "bixwin", "vexwim", "vexwî", "vexwe", "vexwin", "bikenim", "bikene", "bimînim", "bimînî", "bimîne", "bimînin", "binivîsim", "binivîse", "bixwînim", "bixwîne", "bibim", "bibî", "bibe", "bibin", "rabim", "rabî", "rabe", "rabin", "razim", "raze", "bişom", "bişo", "bilîzim", "bilîze", "bibezim", "bibeze", "bisekinim", "bisekine", "derkevim", "derkeve", "rûnim", "rûnî", "rûne", "rûnin", "neçim", "neçe", "neyêm", "neyê", "nekim", "neke"]},
                 {"ku": "bila", "en": "let (bila ew bê: let him come)", "pos": "particle", "forms": ["bila"]},
                 {"ku": "pêwîst", "en": "necessary", "pos": "adj", "forms": ["pêwîst"]},
                 {"ku": "pirtûk", "en": "book", "pos": "noun", "gender": "f", "forms": ["pirtûk", "pirtûkên", "pirtûkan", "pirtûkek", "pirtûka", "pirtûkê", "pirtûkeke"]},
@@ -1682,7 +1682,7 @@
                 {"ku": "nas kirin", "en": "to know (a person), to recognise", "pos": "verb", "forms": ["nas", "kirin"]},
                 {"ku": "telefon kirin", "en": "to phone (telefonî … kirin)", "pos": "verb", "forms": ["telefon", "kirin", "telefonî"]},
                 {"ku": "yê / ya / yên", "en": "the one of (ya min: mine)", "pos": "particle", "forms": ["yê", "ya", "yên", "a", "ê", "ên"]},
-                {"ku": "kê", "en": "whose; whom (kî after a preposition or the ezafe)", "pos": "question", "forms": ["kê"]}
+                {"ku": "kê", "en": "whose; whom (kî after a preposition or a link)", "pos": "question", "forms": ["kê"]}
               ]
             },
             {
@@ -1727,7 +1727,7 @@
           "titleKu": "Hewa çawa ye?",
           "titleEn": "What’s the weather like?",
           "grammar": "the weather: baran dibare, berf dibare, ba tê, hewa sar e; the seasons bihar, havîn, payîz, zivistan",
-          "grammarMd": "**Baran dibare.** It is raining (word for word: rain falls). Kurdish says what the weather does: **berf dibare** it is snowing, **ba tê** the wind is blowing, *hewa sar e* it is cold.\n\n- The seasons: *bihar* spring, *havîn* summer, *payîz* autumn, *zivistan* winter.\n- “In winter” is **di zivistanê de**, or just **zivistanê**.",
+          "grammarMd": "**Baran dibare.** It is raining (word for word: rain falls). Kurdish says what the weather does: **berf dibare** it is snowing, **ba tê** the wind is blowing, *hewa sar e* it is cold.\n\n- **Baran** is rain, and it is also a boy’s name, like Nazê’s son.\n- The seasons: *bihar* spring, *havîn* summer, *payîz* autumn, *zivistan* winter.\n- “In winter” is **di zivistanê de**, or just **zivistanê**.",
           "lessons": [
             {
               "key": "u07s1l1",
@@ -1882,7 +1882,7 @@
                 {"ku": "govend", "en": "govend, the circle dance", "pos": "noun", "gender": "f", "forms": ["govend", "govendên", "govendan", "govendek", "govenda", "govendê", "govendeke"]},
                 {"ku": "stran", "en": "song", "pos": "noun", "gender": "f", "forms": ["stran", "stranên", "stranan", "stranek", "strana", "stranê", "straneke"]},
                 {"ku": "def", "en": "frame drum", "pos": "noun", "gender": "f", "forms": ["def", "defên", "defan", "defek", "defa", "defê", "defeke"]},
-                {"ku": "zirne", "en": "shawm (the zurna)", "pos": "noun", "gender": "f", "forms": ["zirne", "zirneyên", "zirneyan", "zirneyek", "zirneya", "zirneyê", "zirneyeke"]},
+                {"ku": "zirne", "en": "zurna, a loud reed pipe", "pos": "noun", "gender": "f", "forms": ["zirne", "zirneyên", "zirneyan", "zirneyek", "zirneya", "zirneyê", "zirneyeke"]},
                 {"ku": "lêxistin", "en": "to play (an instrument); to hit", "pos": "verb", "forms": ["lêxistin", "lêdixim", "lêdixî", "lêdixe", "lêdixin", "lêxim", "lêxe"]},
                 {"ku": "govend girtin", "en": "to dance (word for word: to hold the govend)", "pos": "verb", "forms": ["govend", "govendê", "girtin", "digirin", "bigirin"]},
                 {"ku": "destmal", "en": "handkerchief", "pos": "noun", "gender": "f", "forms": ["destmal", "destmalên", "destmalan", "destmalek", "destmala", "destmalê", "destmaleke"]}
@@ -2229,7 +2229,7 @@
           "titleKu": "Ez ditirsim",
           "titleEn": "I’m afraid",
           "grammar": "feelings in the present (ez ditirsim, ez dihizirim, ez tê digihîjim); xwe for oneself (ew li xwe dinêre); guhdariya min bike",
-          "grammarMd": "**Ez ditirsim.** I’m afraid. Fear, thought and understanding are verbs in Kurdish, not adjectives: *ditirsim* I’m afraid, *dihizirim* I think, *tê digihîjim* I understand.\n\n- **xwe** is oneself, whoever that is: *Ez li xwe dinêrim.* I look at myself. · *Ew li xwe dinêre.* He looks at himself.\n- **Guhdariya min bike!** Listen to me! (word for word: do my listening)",
+          "grammarMd": "**Ez ditirsim.** I’m afraid. Kurdish says this with a verb, *ditirsim* (word for word: I fear), where English uses an adjective. *Dihizirim* I think and *tê digihîjim* I understand are verbs too; *tê digihîjim* comes in two pieces.\n\n- **xwe** is oneself, whoever that is: *Ez li xwe dinêrim.* I look at myself. · *Ew li xwe dinêre.* He looks at himself.\n- **Guhdariya min bike!** Listen to me! (word for word: do my listening)",
           "lessons": [
             {
               "key": "u08s4l1",
@@ -2378,7 +2378,7 @@
           "titleKu": "Berê",
           "titleEn": "In the old days",
           "grammar": "time in the past: duh, pêr, par, berê, hefteya borî; dema ku … (when …) with the past",
-          "grammarMd": "**Dema ku ez zarok bûm, …** When I was a child, … *Dema ku* (when) starts a time in the past, and what happened then follows: *Dema ku ez vegeriyam, ew li malê bû.* When I came back, he was at home.\n\n- *duh* yesterday · *pêr* the day before yesterday · *par* last year · *berê* before, in the old days · *hefteya borî* last week",
+          "grammarMd": "**Dema ku ez zarok bûm, …** When I was a child, … *Dema ku* (when) sets the time something happens, and what happened then follows; *ku* is often left out: *Dema ku ez vegeriyam, ew li malê bû.* When I came back, he was at home.\n\n- *duh* yesterday · *pêr* the day before yesterday · *par* last year · *berê* before, in the old days · *hefteya borî* last week",
           "lessons": [
             {
               "key": "u09s2l1",
@@ -2669,7 +2669,7 @@
           "titleKu": "Jiyana zozanê",
           "titleEn": "Life on the zozan",
           "grammar": "in the ergative past the verb agrees with the object: min sêvek xwar (one apple), min sêv xwarin (apples); min tu dîtî (I saw you)",
-          "grammarMd": "**Min sêv xwarin.** I ate apples. In the ergative past the verb agrees with the **object**, not the doer: *min sêvek xwar* (one apple) but *min sêv xwarin* (apples).\n\n- With a pronoun as the object it shows the person: *Min tu dîtî.* I saw you. · *Te ez dîtim.* You saw me. · *Me hûn dîtin.* We saw you all.\n- So *Wî ez dîtim* is “he saw me”, and *Min ew dît* is “I saw him”.",
+          "grammarMd": "**Min sêv xwarin.** I ate apples. In this past, with *min, te, wî*…, the verb agrees with the **thing done**, not the doer: *min sêvek xwar* (one apple) but *min sêv xwarin* (apples). Here *xwarin* is “ate”, for more than one thing, not “to eat”.\n\n- With a pronoun as the object it shows the person: *Min tu dîtî.* I saw you. · *Te ez dîtim.* You saw me. · *Me hûn dîtin.* We saw you all.\n- So *Wî ez dîtim* is “he saw me”, and *Min ew dît* is “I saw him”.",
           "lessons": [
             {
               "key": "u10s2l1",
@@ -2740,7 +2740,7 @@
           "titleKu": "Min dixwar, ez diçûm",
           "titleEn": "I was eating, I was going",
           "grammar": "the past continuous: di- + the past stem, for what used to happen or was happening (ez diçûm, min dixwar, wan digot)",
-          "grammarMd": "**Em her havîn diçûn zozanan.** We used to go to the pastures every summer. **di-** + the past stem says what used to happen, or what was going on: *ez diçûm* I used to go, *ew dihat* she used to come.\n\n- It is ergative like the simple past: *min dixwar* I used to eat, *wan digot* they used to say.\n- *Dema ku min çay vedixwar, …* While I was drinking tea, …",
+          "grammarMd": "**Em her havîn diçûn zozanan.** We used to go to the pastures every summer. **di-** + the past stem says what used to happen, or what was going on: *ez diçûm* I used to go, *ew dihat* she used to come.\n\n- With a verb that has an object it works like the simple past: *min dixwar* I used to eat, *wan digot* they used to say.\n- *Dema ku min çay vedixwar, …* While I was drinking tea, …",
           "lessons": [
             {
               "key": "u10s3l1",
@@ -2962,7 +2962,7 @@
           "titleKu": "Me sêv berhev kirine",
           "titleEn": "We’ve picked the apples",
           "grammar": "the present perfect: past stem + -ime, -iyî, -iye, -ine, after a vowel -me, -yî, -ye, -ne (ez hatime, ew çûye); ergative with an object (min kiriye)",
-          "grammarMd": "**Ez hatime.** I have come. The present perfect is the past stem + **-ime, -iyî, -iye, -ine** after a consonant, **-me, -yî, -ye, -ne** after a vowel: *ew hatiye* he has come, *em çûne* we have gone.\n\n- With an object it is ergative, like the past: *Min biryar daye.* I have decided. · *Me sêv berhev kirine.* We have picked the apples.\n- *Te hîç Amed dîtiye?* Have you ever seen Amed?",
+          "grammarMd": "**Ez hatime.** I have come. The present perfect is the past stem + **-ime, -iyî, -iye, -ine** after a consonant, **-me, -yî, -ye, -ne** after a vowel: *ew hatiye* he has come, *em çûne* we have gone.\n\n- With a verb that has an object it works like the past, with *min, te, wî*… as the doer: *Min biryar daye.* I have decided. · *Me sêv berhev kirine.* We have picked the apples.\n- *Te hîç Amed dîtiye?* Have you ever seen Amed?",
           "lessons": [
             {
               "key": "u11s2l1",
@@ -2994,7 +2994,7 @@
               "new": [
                 {"ku": "berhev kirin", "en": "to gather, to pick (fruit, the harvest)", "pos": "verb", "forms": ["berhev", "kirin"]},
                 {"ku": "nêrdewan", "en": "ladder", "pos": "noun", "gender": "f", "forms": ["nêrdewan", "nêrdewanên", "nêrdewanan", "nêrdewanek", "nêrdewana", "nêrdewanê", "nêrdewaneke"]},
-                {"ku": "sindoq", "en": "box, chest", "pos": "noun", "gender": "f", "forms": ["sindoq", "sindoqên", "sindoqan", "sindoqek", "sindoqa", "sindoqê", "sindoqeke"]},
+                {"ku": "sindoq", "en": "box, crate", "pos": "noun", "gender": "f", "forms": ["sindoq", "sindoqên", "sindoqan", "sindoqek", "sindoqa", "sindoqê", "sindoqeke"]},
                 {"ku": "bar", "en": "load", "pos": "noun", "gender": "m", "forms": ["bar", "barên", "baran", "barek", "barê", "barekî", "barî"]},
                 {"ku": "giran", "en": "heavy", "pos": "adj", "forms": ["giran"]},
                 {"ku": "sivik", "en": "light (not heavy)", "pos": "adj", "forms": ["sivik"]},
@@ -3105,7 +3105,7 @@
           "titleKu": "Planên me",
           "titleEn": "Our plans",
           "grammar": "plans and hopes: hêvî dikim ku … and armanca min ev e ku … + the bi- form; dema ku … + the bi- form for the future (dema ku ez vegerim malê, …)",
-          "grammarMd": "**Hêvî dikim ku tu bêyî.** I hope you’ll come. After **hêvî dikim ku** (I hope that) and **armanca min ev e ku** (my aim is to) the verb takes the bi- form.\n\n- **dema ku** + the bi- form looks ahead: *Dema ku ez vegerim malê, ez ê bi kurdî biaxivim.* When I go back home, I’ll speak Kurdish.\n- *Armanca min ev e ku ez her roj hinek bixwînim.* My aim is to read a little every day.",
+          "grammarMd": "**Hêvî dikim ku tu bêyî.** I hope you’ll come. After **hêvî dikim ku** (I hope that) and **armanca min ev e ku** (my aim is to) the verb takes the bi- form.\n\n- **dema ku** + the bi- form looks ahead: *Dema ku ez vegerim malê, ez ê bi kurdî biaxivim.* When I go back home, I’ll speak Kurdish.\n- With the past, **dema ku** looks back: *Dema ku ez hatim Sêvanê, …* When I came to Sêvan, …\n- *Armanca min ev e ku ez her roj hinek bixwînim.* My aim is to read a little every day.",
           "lessons": [
             {
               "key": "u11s4l1",
@@ -3214,7 +3214,7 @@
               "beat": "The wolf knocks at the door and sings like their mother. Hamo stops to ask the children: what will happen if they open the door? Şengê sees through the trick: the voice is sweet, but under the door are grey paws. Good sense and cleverness, says Hamo, are worth more than strong legs, and Baran says that if he were the kid he would have opened the door, just to see the wolf.",
               "voice": "hamo",
               "new": [
-                {"ku": "bim / bî / be / bin", "en": "(that I) be; (if) I am (the subjunctive of “to be”)", "pos": "verb", "forms": ["bim", "bî", "be", "bin"]},
+                {"ku": "bim / bî / be / bin", "en": "(that I) be; (if) I am: the bi- form of “to be”", "pos": "verb", "forms": ["bim", "bî", "be", "bin"]},
                 {"ku": "dek", "en": "trick", "pos": "noun", "gender": "f", "forms": ["dek", "dekên", "dekan", "dekek", "deka", "dekê", "dekeke"]},
                 {"ku": "zîrekî", "en": "cleverness", "pos": "noun", "gender": "f", "forms": ["zîrekî", "zîrekiyên", "zîrekiyan", "zîrekiyek", "zîrekiya", "zîrekiyê", "zîrekiyeke"]},
                 {"ku": "pê hesîn", "en": "to notice, to find out", "pos": "verb", "forms": ["pê", "hesîn", "dihese", "hesiya"]},
@@ -3322,7 +3322,7 @@
           "titleKu": "Gotinên pêşiyan",
           "titleEn": "Proverbs",
           "grammar": "proverbs and how they are built: the plain present for what is always true (… dibe, … derdixe), and … çiqas … be (however … may be)",
-          "grammarMd": "**Av dilop dilop dibe gol.** Drop by drop, water becomes a lake. Proverbs speak in the plain present, because they are true every day: *dibe* becomes, *derdixe* brings out.\n\n- **çiqas … be** however … it may be (often with **jî**: *çiqas bilind be jî*): *Çiya çiqas bilind be, wê rê pê keve.* However high the mountain, a road will cross it.\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.",
+          "grammarMd": "**Av dilop dilop dibe gol.** Drop by drop, water becomes a lake. Proverbs speak in the plain present, because they are true every day: *dibe* becomes, *derdixe* brings out.\n\n- **çiqas … be** however … it may be (often with **jî**: *çiqas bilind be jî*): *Çiya çiqas bilind be, wê rê pê keve.* However high the mountain, a road will cross it. Here **wê** is another way to say **dê**, will.\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.",
           "lessons": [
             {
               "key": "u12s3l1",

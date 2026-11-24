@@ -22,7 +22,7 @@ const tones = (hue: HueSteps): { band: string; card: string; hill: string } => (
  * Who stands at the landmark on an opening page where it is not the road's own host for that land: Hamo, in his own
  * chapters.
  */
-const OPENER_HOST: Readonly<Record<number, CharacterId>> = { 4: 'hamo', 6: 'hamo', 8: 'hamo' };
+const OPENER_HOST: Readonly<Record<number, CharacterId>> = { 4: 'hamo', 6: 'hamo', 8: 'hamo', 10: 'hamo' };
 
 /** How Hevalo stands at each chapter's landmark, by chapter: the face of what the chapter does to him, from his own book poses. */
 const OPENER_DEER: readonly BookPose<'hevalo'>[] = ['curious', 'pleased', 'munching', 'caught', 'innocent', 'curious', 'pleased', 'innocent', 'curious', 'pleased', 'curious', 'innocent'];
@@ -403,7 +403,7 @@ function wordRows(press: Press, c: BookChapter, lesson: BookLesson, en: number):
 
 /** How far in a lesson's Kurdish lines start (`READ`), and its conversation's lines after the speaker's name (`SAID`); and the space before the English. */
 const READ = 9;
-const SAID = 30;
+const SAID = 36;
 const PAIR_GUTTER = 10;
 
 /** One line of Kurdish beside its English: the Kurdish from `left` up to the gutter before `en`, the English from `en` to the right edge. */
@@ -450,11 +450,12 @@ function pairRows(press: Press, c: BookChapter, pairs: readonly BookPair[], en: 
 }
 
 /**
- * A question's options as spans run on after it: each letter held to its first word by a no-break space, and an em
- * space between options, so a letter never ends a line alone.
+ * A question's options as spans run on after it: each letter held to its option by no-break spaces, and an em space
+ * between options, so a line breaks only between options (an option too long for a line of its own may still break).
  */
 function optionSpans(options: readonly string[], hue: HueSteps): Span[] {
-  return options.flatMap((o, k): Span[] => [...(k > 0 ? [{ text: '\u2003' }] : []), { text: 'abcdef'[k]!, font: 'bold', color: hue.deep }, { text: `\u00a0${o}` }]);
+  const whole = (o: string): string => (o.length <= 40 ? o.replace(/ /g, '\u00a0') : o);
+  return options.flatMap((o, k): Span[] => [...(k > 0 ? [{ text: '\u2003' }] : []), { text: 'abcdef'[k]!, font: 'bold', color: hue.deep }, { text: `\u00a0${whole(o)}` }]);
 }
 
 /** A conversation: who says what (named where the speaker changes), beside what it means, and the question the lesson asks about it. */
@@ -523,9 +524,9 @@ const TALE_PICTURES: Readonly<Record<number, readonly BookPicture[]>> = {
   7: [{ kind: 'spot', spot: 'flute' }, { kind: 'word', id: 'fire' }, { kind: 'word', id: 'drum' }],
   8: [{ kind: 'word', id: 'honey' }, { kind: 'spot', spot: 'moustache' }, { kind: 'word', id: 'moon' }],
   9: [{ kind: 'word', id: 'donkey' }, { kind: 'word', id: 'heart' }, { kind: 'word', id: 'spring' }],
-  10: [{ kind: 'spot', spot: 'doe' }, { kind: 'spot', spot: 'lake' }, { kind: 'spot', spot: 'flute' }],
-  11: [{ kind: 'word', id: 'apple' }, { kind: 'sapling' }, { kind: 'spot', spot: 'stove' }],
-  12: [{ kind: 'sapling' }, { kind: 'spot', spot: 'appleTree' }, { kind: 'word', id: 'basket' }],
+  10: [{ kind: 'spot', spot: 'doe' }, { kind: 'spot', spot: 'lake' }, { kind: 'spot', spot: 'whiteGoat' }],
+  11: [{ kind: 'word', id: 'apple' }, { kind: 'spot', spot: 'ladder' }, { kind: 'sapling' }],
+  12: [{ kind: 'word', id: 'wolf' }, { kind: 'word', id: 'kid' }, { kind: 'spot', spot: 'stove' }],
 };
 
 /** The things a story turns on, for the band over it. */
@@ -720,7 +721,7 @@ function practiceBlocks(press: Press, c: BookChapter, places: Places): Block[] {
       drawPicture(press, { kind: 'spot', spot: 'notebook' }, TEXT.x + TEXT.w - 48, y + 2, 36, hue);
       press.line('With a pencil', TEXT.x + 14, y + 4.5, display(16));
       const at = places.get('answers');
-      press.line(at === undefined ? 'The answers are at the back.' : `Cover the pages before this one. The answers are on page ${at}.`, TEXT.x + 14, y + 24.5, { ...T.english, color: hue.deep });
+      press.line(at === undefined ? 'The answers are at the back.' : `Try these without looking back. The answers are on page ${at}.`, TEXT.x + 14, y + 24.5, { ...T.english, color: hue.deep });
     },
   });
   let letter = 0;
@@ -851,7 +852,7 @@ function practiceBlocks(press: Press, c: BookChapter, places: Places): Block[] {
 
   const drawn = pr.pictures.filter((p) => Object.hasOwn(WORD_PICTURES, p.picture));
   if (drawn.length >= 3) {
-    blocks.push(taskHead(press, hue, next(), 'Name the pictures', 'in Kurdish, of course'));
+    blocks.push(taskHead(press, hue, next(), 'Name the pictures', 'write the Kurdish word under each'));
     const cw = (TEXT.w - inset) / Math.max(drawn.length, 5);
     blocks.push({
       height: 58,
@@ -871,7 +872,7 @@ function practiceBlocks(press: Press, c: BookChapter, places: Places): Block[] {
   }
 
   if (pr.alone.length > 0) {
-    blocks.push(taskHead(press, hue, next(), 'No English this time', 'Hevalo ate it. Read these aloud all the same'));
+    blocks.push(taskHead(press, hue, next(), 'No English this time', 'read each one aloud and work out what it means'));
     const rows: Block[] = pr.alone.map((line, i) => {
       const text = press.para(line, TEXT.w - inset - 14, T.kurdish);
       return {
