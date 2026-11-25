@@ -82,72 +82,68 @@ export function cay(dr: Drawing, rnd: Rnd): void {
     for (const t of [-1, 0, 1]) paint(dr, touch(gx + t * 1.6 * near, gy - Math.abs(t) * 0.5, 2.4 * near, 0.8 * near, t * 42), '#b5862e');
     paint(dr, ellipse(gx, gy + 0.9 * near, 0.55 * near, 0.5 * near), '#6a4a1e');
   }
-  // what the glass casts: grey to its right, and before its foot the light that has come through the tea
+  // what the glass casts: grey to its right, and before its foot the warm light that has come through the tea
   paint(dr, outline(roundish(X + 15, row(442), 17, 4.6, rnd)), CHINA.shade);
-  paint(dr, outline(roundish(X + 6, row(466), 9.5, 2.8, rnd)), '#ee9645', 0.75);
-  paint(dr, outline(roundish(X, row(441), 15, 2.6, rnd)), '#3a2418', 0.4);
+  paint(dr, outline(roundish(X + 7, row(464), 13, 3.8, rnd)), '#f4a04a', 0.45);
+  paint(dr, outline(roundish(X + 5, row(462), 8, 2.2, rnd)), '#ffc676', 0.7);
+  paint(dr, outline(roundish(X, row(441), 15, 2.6, rnd)), '#3a2418', 0.25);
 
   // a sugar cube on the plate, for the glass is drunk through one held in the teeth
   sugar(dr, rnd, ...plate(-0.67, 0.34), 6.4, CHINA.shade);
 
-  // the glass above the tea is clear: its far wall pale, with the room's light lying on it
+  // the glass above the tea is clear: barely a tint of its own, the room's light lying on it
   const outside = tremble(body(0, 85, 438, 61 * k, 11 * k), rnd, 0.1);
   const RIM = { y: row(85), rx: 140 * k, ry: 61 * k };
   const mouth = roundish(X, RIM.y, RIM.rx, RIM.ry, rnd, { wobble: 0.005, tremor: 0.1 });
-  paint(dr, outline(outside), '#e4dfe7', 0.8);
+  paint(dr, outline(outside), '#e3ecf0', 0.78);
   within(dr, outline(mouth), () => {
-    paint(dr, brush([[X - 4, row(36)], [X + 14, row(34)], [X + 24, row(58)]], 5, rnd, { start: 0.5, end: 0.2 }), '#ffffff', 0.9);
-    paint(dr, brush([[X - 25, row(80)], [X - 20, row(50)], [X - 12, row(36)]], 3.4, rnd, { start: 0.6, end: 0.2 }), '#ffffff', 0.6);
-    paint(dr, brush([[X - 10, row(32)], [X - 6, row(58)], [X - 5, row(84)]], 3, rnd), '#9a94a0', 0.4);
+    paint(dr, brush([[X - 4, row(36)], [X + 14, row(34)], [X + 24, row(58)]], 4, rnd, { start: 0.5, end: 0.2 }), '#ffffff', 0.85);
+    paint(dr, brush([[X - 25, row(80)], [X - 20, row(50)], [X - 12, row(36)]], 2.6, rnd, { start: 0.6, end: 0.2 }), '#ffffff', 0.55);
   });
 
-  // the tea: red, dark where the round glass turns it from the light, amber where the light comes through
-  const tea = tremble(body(1.1, 121, 428, 25 * k, 9 * k), rnd, 0.08);
-  const lens = (v: number, depth: number, reach: number, off: number): string => {
-    const w = (halfAt(v) + 1.4) * reach;
-    const cx = X + off * halfAt(v);
-    const sag = w * 0.36;
-    const y = row(v);
-    const pts: Pt[] = [];
-    for (let i = 0; i <= 10; i++) {
-      const t = i / 10;
-      pts.push([cx - w + 2 * w * t, y + (sag + depth * k) * 4 * t * (1 - t)]);
-    }
-    for (let i = 9; i > 0; i--) {
-      const t = i / 10;
-      pts.push([cx - w + 2 * w * t, y + (sag - depth * k) * 4 * t * (1 - t)]);
-    }
-    return outline(tremble(pts, rnd, 1.1));
-  };
-  paint(dr, outline(tea), TEA.base);
+  // the tea: strong and glowing, ruby where it is deepest, amber where the light comes through it, brightest high on
+  // the side the light is on; held up to the light, nothing in it is muddy
+  const tea = tremble(body(1.1, 128, 428, 25 * k, 9 * k), rnd, 0.08);
+  paint(dr, outline(tea), '#b2261a');
   within(dr, outline(tea), () => {
-    paint(dr, lens(148, 28, 0.94, 0), TEA.light);
-    paint(dr, lens(204, 46, 0.84, -0.08), TEA.shade, 0.85);
-    paint(dr, lens(298, 38, 0.6, 0.32), TEA.shade, 0.8);
-    paint(dr, lens(390, 30, 0.76, -0.04), TEA.light);
-    dr.add(`<path d="${outline(tea)}${outline(scaleAbout(tea, X, row(280), 0.82, 1))}" fill="${TEA.shade}" fill-rule="evenodd" fill-opacity="0.55"/>`);
-    paint(dr, streaks(rnd, [X - 24, row(130), X + 24, row(420)], 34, 88, 10, 0.8), TEA.shade, 0.3);
-    paint(dr, streaks(rnd, [X - 20, row(170), X + 20, row(340)], 14, 92, 9, 0.7), TEA.light, 0.25);
+    const glow = (cx: number, cy: number, rx: number, ry: number): string => outline(roundish(cx, cy, rx, ry, rnd, { wobble: 0.08, count: 16, tremor: 0.6 }));
+    paint(dr, glow(X - 5, row(205), 19, 15), '#cc3c1e', 0.85);
+    paint(dr, glow(X - 9, row(188), 12, 10.4), '#e2682a', 0.8);
+    paint(dr, glow(X - 11.6, row(176), 6.4, 7), '#f49a40', 0.8);
+    paint(dr, glow(X + 2, row(392), 17, 5.4), '#d4502a', 0.45);
+    // the round of the glass bends the far edge of the tea to a deeper ruby, in a thin even crescent, not a stripe
+    dr.add(`<path d="${outline(tea)}${outline(scaleAbout(shift(tea, -1.4, 0), X, row(280), 0.88, 1))}" fill="#93201a" fill-rule="evenodd" fill-opacity="0.5"/>`);
+    paint(dr, streaks(rnd, [X - 20, row(150), X + 16, row(400)], 16, 90, 12, 0.7), '#f6a24c', 0.28);
   });
-  // its surface in the mouth of the glass, lit along its far edge
-  within(dr, outline(mouth), () => {
-    const top = roundish(X, row(121), 111 * k, 25 * k, rnd, { wobble: 0.005, tremor: 0.15 });
-    paint(dr, outline(top), TEA.light);
-    paint(dr, outline(roundish(X + 5, row(127), 12, 1.8, rnd)), TEA.shade, 0.5);
-    paint(dr, brush(along([[X - 19, row(115)], [X, row(98)], [X + 19, row(115)]], 8), 0.9, rnd, { start: 0.3, end: 0.3, peak: 0.5 }), '#f8b768');
-  });
+  // its surface: a clean ellipse in the mouth of the glass, the meniscus bright where it climbs the glass
+  const top = roundish(X, row(128), 108 * k, 24 * k, rnd, { wobble: 0.004, tremor: 0.08 });
+  paint(dr, outline(top), '#dc6428');
+  paint(dr, outline(scaleAbout(top, X + 2, row(132), 0.82, 0.6)), '#c4401c', 0.8);
+  paint(dr, brush(along([[X - 21, row(130)], [X - 12, row(110)], [X, row(104)], [X + 12, row(110)], [X + 21, row(130)]], 10), 1, rnd,
+    { start: 0.3, end: 0.3, peak: 0.5 }), '#ffc56e');
+  paint(dr, brush(along([[X - 20.6, row(132)], [X - 10, row(150)], [X + 6, row(152)], [X + 20.6, row(132)]], 10), 0.6, rnd,
+    { start: 0.2, end: 0.2, peak: 0.5 }), '#f7a24a', 0.8);
 
-  // the glass itself: its foot, the line round it, the lip, and the white lights down it
+  // the glass's thick foot, clear: the saucer's ring seen through it, bent by the glass
   const foot = body(0, 424, 438, 0, 11 * k);
-  paint(dr, outline(foot), '#a59d98', 0.95);
-  paint(dr, brush([[X - 10, row(441)], [X - 1, row(450)], [X + 7, row(444)]], 0.8, rnd), '#fbf7f0', 0.85);
+  paint(dr, outline(foot), '#d9e3e8', 0.5);
+  within(dr, outline(foot), () => {
+    paint(dr, brush([[X - 16, row(436)], [X - 4, row(446)], [X + 10, row(445)], [X + 16, row(436)]], 1.1, rnd,
+      { start: 0.8, end: 0.8, peak: 0.5, count: 10 }), CHINA.shade, 0.9);
+    paint(dr, touch(X + 8, row(440), 4.4, 1.6, 10), '#dc6748', 0.75);
+    paint(dr, touch(X - 9, row(441), 3.4, 1.2, -12), '#b5862e', 0.75);
+    paint(dr, outline(roundish(X, row(431), 12, 1.6, rnd)), '#c4321c', 0.4);
+  });
+  paint(dr, brush([[X - 10, row(441)], [X - 1, row(450)], [X + 7, row(444)]], 0.8, rnd), '#ffffff', 0.9);
+  // its edges: fine lines of the glass, not ink, and a bright line round the lip
   const left = TEA_GLASS.map(([r, w]): Pt => [X - w * k, row(r)]);
   const right = TEA_GLASS.map(([r, w]): Pt => [X + w * k, row(r)]);
   const footArc: Pt[] = [];
   for (let i = 0; i <= 8; i++) footArc.push([X - 69 * k * Math.cos((i / 8) * Math.PI), row(438) + 11 * k * Math.sin((i / 8) * Math.PI)]);
-  paint(dr, brush(left, 1.05, rnd, { start: 0.7, end: 0.6, peak: 0.5, count: 30 }), INK);
-  paint(dr, brush(right, 1.05, rnd, { start: 0.7, end: 0.6, peak: 0.5, count: 30 }), INK);
-  paint(dr, brush(footArc, 0.8, rnd, { start: 0.6, end: 0.6, peak: 0.5 }), INK);
+  const GLASS_EDGE = '#6e7c88';
+  paint(dr, brush(left, 0.8, rnd, { start: 0.7, end: 0.6, peak: 0.5, count: 30 }), GLASS_EDGE);
+  paint(dr, brush(right, 0.9, rnd, { start: 0.7, end: 0.6, peak: 0.5, count: 30 }), GLASS_EDGE);
+  paint(dr, brush(footArc, 0.7, rnd, { start: 0.6, end: 0.6, peak: 0.5 }), GLASS_EDGE);
   const near: Pt[] = [];
   const far: Pt[] = [];
   for (let i = 0; i <= 12; i++) {
@@ -155,29 +151,29 @@ export function cay(dr: Drawing, rnd: Rnd): void {
     near.push([X - RIM.rx * Math.cos(a), RIM.y + RIM.ry * Math.sin(a)]);
     far.push([X - RIM.rx * Math.cos(a), RIM.y - RIM.ry * Math.sin(a)]);
   }
-  paint(dr, brush(near, 1, rnd, { start: 0.6, end: 0.6, peak: 0.5, count: 24 }), INK);
-  paint(dr, brush(far, 0.6, rnd, { start: 0.8, end: 0.5, peak: 0.4, count: 24 }), INK, 0.8);
-  paint(dr, brush(near.slice(1, 6), 0.8, rnd), '#ffffff', 0.9);
+  paint(dr, brush(near, 0.9, rnd, { start: 0.6, end: 0.6, peak: 0.5, count: 24 }), GLASS_EDGE);
+  paint(dr, brush(far, 0.55, rnd, { start: 0.8, end: 0.5, peak: 0.4, count: 24 }), GLASS_EDGE, 0.8);
+  paint(dr, brush(near.slice(1, 9), 1, rnd, { start: 0.3, end: 0.3, peak: 0.4, count: 16 }) + brush(far.slice(3, 10), 0.5, rnd,
+    { start: 0.3, end: 0.3, peak: 0.5, count: 12 }), '#ffffff');
+  // two sharp lights down the glass, the near one long and white, a thinner one on the far side
   const light = (at: number, from: number, to: number, width: number, opacity: number): void => {
     const pts: Pt[] = [];
     for (let v = from; v <= to; v += 14) pts.push([X + at * halfAt(v), row(v)]);
-    paint(dr, brush(pts, width, rnd, { start: 0.3, end: 0.05 }), '#fffaf3', opacity);
+    paint(dr, brush(pts, width, rnd, { start: 0.5, end: 0.2, peak: 0.4, count: 14 }), '#ffffff', opacity);
   };
-  light(-0.8, 150, 262, 1.4, 0.85);
-  light(-0.62, 170, 356, 0.7, 0.75);
-  light(-0.18, 168, 320, 0.5, 0.6);
-  light(0.82, 300, 392, 0.7, 0.5);
-  paint(dr, brush([[X + 11, row(330)], [X + 11.6, row(340)], [X + 11, row(350)]], 0.8, rnd), '#f6b83a', 0.9);
+  light(-0.74, 96, 300, 1.9, 0.95);
+  light(-0.56, 140, 340, 0.6, 0.8);
+  light(0.78, 120, 300, 0.8, 0.75);
 
-  // steam rising off the tea, curling as it goes: a pale wisp with its shaded side
+  // steam rising off the tea, soft and light, curling as it goes
   const wisps: Array<[Pt[], number]> = [
     [[[51.5, 34.5], [48.6, 27], [53, 19.4], [48.4, 11], [51, 3.2]], 2.6],
     [[[61, 35.4], [64.6, 28.6], [61.2, 22], [65.4, 15.6], [64, 11]], 2],
     [[[70, 33.4], [72.6, 29], [70.2, 24.6]], 1.4],
   ];
   for (const [pts, w] of wisps) {
-    paint(dr, brush(shift(pts, 0.6, 0.2), w, rnd, { start: 0.5, end: 0.05, peak: 0.3 }), '#b9aca3', 0.8);
-    paint(dr, brush(pts, w, rnd, { start: 0.5, end: 0.05, peak: 0.3 }), '#e2d9d1', 0.95);
+    paint(dr, brush(shift(pts, 0.6, 0.2), w, rnd, { start: 0.5, end: 0.05, peak: 0.3 }), '#c9bdb4', 0.4);
+    paint(dr, brush(pts, w, rnd, { start: 0.5, end: 0.05, peak: 0.3 }), '#efe8e2', 0.8);
   }
 }
 

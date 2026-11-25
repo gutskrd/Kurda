@@ -64,87 +64,124 @@ export function heyv(dr: Drawing, rnd: Rnd): void {
 
 // ─────────────────────────────────────────────────────────────── rêya kadizê
 
-const GALAXY_NIGHT: Tone = { base: '#201a45', light: '#2e2763', shade: '#17132f' };
-
 export function kadiz(dr: Drawing, rnd: Rnd): void {
+  // the night it hangs in: near black at the rim, a blue-violet haze of far light behind it, brushed on in layers
   const sky = roundish(60, 60, 55, 54, rnd, { wobble: 0.035, tremor: 0.7, count: 44 });
-  paint(dr, outline(sky), GALAXY_NIGHT.base);
-  within(dr, outline(sky), () => paint(dr, streaks(rnd, [6, 6, 114, 114], 36, -24, 16, 1.6), GALAXY_NIGHT.light, 0.45));
-  side(dr, sky, 1.3, 1.3, GALAXY_NIGHT.light);
-  const TILT = -24;
-  const SQUASH = 0.56;
+  paint(dr, outline(sky), '#0c0a20');
+  const TILT = -26;
+  const SQUASH = 0.42;
+  const tilt = (TILT * Math.PI) / 180;
+  // a point of the galaxy's own disc, seen tipped away from us and turned
   const place = (x: number, y: number): Pt => {
-    const a = (TILT * Math.PI) / 180;
     const yy = y * SQUASH;
-    return [60 + x * Math.cos(a) - yy * Math.sin(a), 60 + x * Math.sin(a) + yy * Math.cos(a)];
+    return [60 + x * Math.cos(tilt) - yy * Math.sin(tilt), 60 + x * Math.sin(tilt) + yy * Math.cos(tilt)];
   };
-  // the colours out from the heart: cream, gold, peach, rose, lilac, blue
-  const COLOURS = ['#fff2d4', '#f5cd6e', '#f1a985', '#d98aa8', '#a89be2', '#86aee8'];
-  const laid: string[] = COLOURS.map(() => '');
-  const lay = (band: number, d: string): void => {
-    const i = Math.max(0, Math.min(COLOURS.length - 1, band));
-    laid[i] += d;
-  };
+  const disc = (r: number, w = 1): string => outline(turn(roundish(60, 60, r * w, r * SQUASH, rnd, { wobble: 0.1, count: 18, tremor: r * 0.05 }), 60, 60, TILT));
   within(dr, outline(sky), () => {
-    paint(dr, outline(turn(roundish(60, 60, 49, 27, rnd, { wobble: 0.08, tremor: 0.8 }), 60, 60, TILT)), GALAXY_NIGHT.light);
-    // the dust between the arms, dim
-    let dust = '';
-    for (let i = 0; i < 80; i++) {
-      const r = 6 + Math.sqrt(rnd()) * 42;
-      const a = rnd() * Math.PI * 2;
-      const [x, y] = place(r * Math.cos(a), r * Math.sin(a));
-      dust += touch(x, y, 1.8 + rnd() * 1.6, 0.6 + rnd() * 0.4, rnd() * 180);
+    let haze = '';
+    for (let i = 0; i < 7; i++) haze += outline(roundish(60 + (rnd() - 0.5) * 50, 60 + (rnd() - 0.5) * 50, 18 + rnd() * 22, 12 + rnd() * 16, rnd,
+      { wobble: 0.2, count: 12, tremor: 2 }));
+    paint(dr, haze, '#221c58', 0.3);
+    paint(dr, outline(roundish(60, 60, 44, 40, rnd, { wobble: 0.08, count: 20, tremor: 2 })), '#1a1648', 0.7);
+    paint(dr, streaks(rnd, [6, 6, 114, 114], 40, TILT, 14, 1.4), '#2c2670', 0.4);
+    // stars of every size, the far ones many and faint
+    let faint = '';
+    let clear = '';
+    for (let i = 0; i < 120; i++) {
+      const r = 0.18 + rnd() * rnd() * 0.7;
+      const star = ellipse(6 + rnd() * 108, 6 + rnd() * 108, r, r);
+      if (rnd() < 0.6) faint += star;
+      else clear += star;
     }
-    paint(dr, dust, '#5a4f9e', 0.8);
-    // stars far off
-    let far = '';
-    for (let i = 0; i < 34; i++) {
-      const x = 8 + rnd() * 104;
-      const y = 8 + rnd() * 104;
-      const r = 0.3 + rnd() * rnd() * 0.9;
-      far += ellipse(x, y, r, r);
+    paint(dr, faint, '#c9c4ec', 0.6);
+    paint(dr, clear, '#fbf4e4');
+    // two far galaxies, small smudges tipped their own ways
+    for (const [x, y, r, deg] of [[22, 30, 4.2, 30], [96, 92, 3.2, -50]] as const) {
+      paint(dr, outline(turn(roundish(x, y, r, r * 0.4, rnd, { count: 10, tremor: 0.2 }), x, y, deg)), '#b8a6e0', 0.35);
+      paint(dr, outline(turn(roundish(x, y, r * 0.45, r * 0.2, rnd, { count: 8, tremor: 0.1 }), x, y, deg)), '#f2e2c4', 0.7);
     }
-    paint(dr, far, '#efe6d0');
+    // the galaxy's outer light, built up from many thin veils, wider and fainter outward
+    for (const [r, w, colour, alpha] of [[53, 1.04, '#342c86', 0.26], [44, 1.02, '#433a9a', 0.18], [34, 1, '#5e50b0', 0.16], [24, 1, '#8a74c8', 0.18],
+      [16, 1, '#c49cbc', 0.24],
+      [11, 1, '#e8b8a0', 0.3]] as const) paint(dr, disc(r, w), colour, alpha);
+    // the arms: two great ones and two fainter between, each a log spiral laid on in touches along the way it turns
+    const lanes: string[] = ['', ''];
+    const veils = ['', '', ''];
+    let spines = '';
+    const knots = ['', ''];
+    const young = ['', ''];
+    let armStars = '';
+    const arm = (phase: number, turns: number, count: number, strength: number): void => {
+      for (let s = 0; s < count; s++) {
+        const f = (s + rnd()) / count;
+        const theta = f * Math.PI * 2 * turns;
+        const r = 5 + 46 * (Math.exp(1.15 * f) - 1) / (Math.exp(1.15) - 1);
+        const phi = theta + phase;
+        const jitter = (rnd() - 0.5) * (2 + 6 * f);
+        const at = (dr0: number, dphi = 0): Pt => place((r + dr0) * Math.cos(phi + dphi), (r + dr0) * Math.sin(phi + dphi));
+        const [x, y] = at(jitter);
+        const [x2, y2] = at(jitter + 0.8, 0.08);
+        const deg = (Math.atan2(y2 - y, x2 - x) * 180) / Math.PI;
+        const len = (4.6 + rnd() * 3) * (1 - 0.35 * f);
+        veils[Math.min(2, Math.floor(f * 3))] += touch(x, y, len * 2.2, len * (0.7 + strength * 0.4), deg);
+        if (strength < 1) continue;
+        if (rnd() < 0.6) spines += touch(...at(jitter * 0.3), len * 1.4, len * 0.32, deg);
+        // the dust lane runs along the inside of each arm, dark and ragged
+        if (rnd() < 0.7) {
+          const [lx, ly] = at(-3.6 - f * 2.4 + (rnd() - 0.5) * 1.6);
+          lanes[rnd() < 0.5 ? 0 : 1] += touch(lx, ly, len * (1 + rnd()), 1.1 + rnd() * 1.4, deg + (rnd() - 0.5) * 16);
+        }
+        // rose knots where stars are being born, and blue-white young clusters along the outer edge
+        if (f > 0.2 && rnd() < 0.14) {
+          const [kx, ky] = at(jitter * 0.5);
+          for (let k = 0; k < 1 + Math.floor(rnd() * 3); k++) {
+            const size = 0.4 + rnd() * rnd() * 1.3;
+            knots[rnd() < 0.6 ? 0 : 1] += outline(roundish(kx + (rnd() - 0.5) * 2.4, ky + (rnd() - 0.5) * 1.6, size, size * 0.8, rnd, { count: 7, tremor: 0.15 }));
+          }
+        }
+        if (f > 0.3 && rnd() < 0.22) {
+          const [bx, by] = at(2.4 + rnd() * 2);
+          young[rnd() < 0.5 ? 0 : 1] += ellipse(bx, by, 0.35 + rnd() * 0.45, 0.35 + rnd() * 0.45);
+        }
+        if (rnd() < 0.5) armStars += ellipse(x + (rnd() - 0.5) * 2, y + (rnd() - 0.5) * 2, 0.2 + rnd() * 0.3, 0.2 + rnd() * 0.3);
+      }
+    };
+    arm(0.3, 1.4, 130, 1);
+    arm(0.3 + Math.PI, 1.4, 130, 1);
+    arm(0.3 + Math.PI / 2, 0.9, 50, 0.5);
+    arm(0.3 + Math.PI * 1.5, 0.9, 50, 0.5);
+    paint(dr, veils[2]!, '#8a96ec', 0.28);
+    paint(dr, veils[1]!, '#c0b0f2', 0.3);
+    paint(dr, veils[0]!, '#f4d6c2', 0.32);
+    paint(dr, spines, '#ece6ff', 0.32);
+    paint(dr, lanes[0]!, '#120c26', 0.7);
+    paint(dr, lanes[1]!, '#28163a', 0.6);
+    paint(dr, armStars, '#f4f0ff', 0.85);
+    paint(dr, young[0]!, '#bcd8ff');
+    paint(dr, young[1]!, '#eef6ff');
+    paint(dr, knots[0]!, '#ef7fa8', 0.85);
+    paint(dr, knots[1]!, '#ffb0c8', 0.9);
+    // the heart: a bulge of old gold light, laid on thick and warm, brightest at its very middle, its warmth spilling out
+    paint(dr, disc(22, 1.05), '#e0a878', 0.12);
+    paint(dr, disc(16, 1.05), '#f0c48a', 0.16);
+    for (const [r, colour, alpha] of [[11, '#e6a85c', 0.35], [8.2, '#f4c272', 0.5], [6, '#fbd890', 0.7], [4, '#ffe9bc', 0.85], [2.4, '#fff8e6', 1]] as const) {
+      paint(dr, outline(turn(roundish(60, 60, r, r * 0.62, rnd, { wobble: 0.1, count: 14, tremor: r * 0.06 }), 60, 60, TILT)), colour, alpha);
+    }
+    // and the dust lane crossing in front of the heart on its near side, which is what shows the disc for a disc
+    const front: Pt[] = [place(-14, 3.4), place(-6, 5.6), place(0, 6.4), place(7, 5.6), place(15, 3.2)];
+    paint(dr, brush(front, 2.4, rnd, { start: 0.1, end: 0.1, peak: 0.5, count: 14 }), '#2a1830', 0.55);
+    paint(dr, brush(front.map(([x, y]): Pt => [x + 0.3, y + 1.3]), 1.2, rnd, { start: 0.1, end: 0.1, peak: 0.5, count: 12 }), '#140e2a', 0.45);
   });
-  // the heart: gold touches laid thick over a small gold blot
-  let glow = outline(turn(roundish(60, 60, 6.4, 4.2, rnd, { wobble: 0.14, count: 14, tremor: 0.6 }), 60, 60, TILT));
-  for (let i = 0; i < 34; i++) {
-    const r = Math.sqrt(rnd()) * 8;
-    const a = rnd() * Math.PI * 2;
-    const [x, y] = place(r * Math.cos(a), r * Math.sin(a));
-    glow += touch(x, y, 2.6 + rnd() * 1.6, 1.1 + rnd() * 0.4, TILT + (rnd() - 0.5) * 70);
+  side(dr, sky, 1.3, 1.3, '#2e2763');
+  // the brightest near stars, each with a small four-pointed glint
+  let glints = '';
+  let cores = '';
+  for (const [x, y, s] of [[26, 22, 1.2], [98, 34, 1], [20, 84, 0.9], [88, 100, 0.8]] as const) {
+    glints += touch(x, y, 6 * s, 0.7 * s, 0) + touch(x, y, 6 * s, 0.7 * s, 90) + touch(x, y, 3 * s, 0.5 * s, 45) + touch(x, y, 3 * s, 0.5 * s, -45);
+    cores += ellipse(x, y, 0.8 * s, 0.8 * s);
   }
-  paint(dr, glow, COLOURS[1]!);
-  // two arms wound once and a half round the heart, laid on in touches of the brush along the way they turn
-  for (let arm = 0; arm < 2; arm++) {
-    const COUNT = 190;
-    for (let s = 0; s < COUNT; s++) {
-      const f = (s + rnd()) / COUNT;
-      const theta = f * Math.PI * 1.55;
-      const r = 6 + 40 * Math.pow(f, 0.9);
-      const phi = theta + arm * Math.PI + 0.4;
-      const rr = r + (rnd() - 0.5) * (3 + 9 * f);
-      const swing = (rnd() - 0.5) * 0.14;
-      const [x, y] = place(rr * Math.cos(phi + swing), rr * Math.sin(phi + swing));
-      const [x2, y2] = place((rr + 1.4) * Math.cos(phi + swing + 0.12), (rr + 1.4) * Math.sin(phi + swing + 0.12));
-      const deg = (Math.atan2(y2 - y, x2 - x) * 180) / Math.PI;
-      const len = 3.8 - 1.6 * f + rnd() * 0.9;
-      lay(1 + Math.floor((f + (rnd() - 0.5) * 0.2) * (COLOURS.length - 1)), touch(x, y, len, len * 0.42, deg));
-    }
-  }
-  for (let i = COLOURS.length - 1; i >= 1; i--) paint(dr, laid[i]!, COLOURS[i]!);
-  let heart = '';
-  for (let i = 0; i < 20; i++) {
-    const r = Math.sqrt(rnd()) * 4.6;
-    const a = rnd() * Math.PI * 2;
-    const [x, y] = place(r * Math.cos(a), r * Math.sin(a));
-    heart += touch(x, y, 2.2 + rnd() * 1.4, 1, TILT + (rnd() - 0.5) * 60);
-  }
-  paint(dr, outline(turn(roundish(60, 60, 3.4, 2.2, rnd, { wobble: 0.14, count: 10, tremor: 0.4 }), 60, 60, TILT)) + heart, COLOURS[0]!);
-  // a few near stars, brighter
-  let near = '';
-  for (const [x, y, r] of [[24, 30, 1.2], [94, 86, 1.1], [98, 30, 0.9], [22, 88, 0.8]] as const) near += outline(roundish(x, y, r, r, rnd, { count: 7, tremor: 0.15 }));
-  paint(dr, near, '#fff4da');
+  paint(dr, glints, '#e8e6ff', 0.85);
+  paint(dr, cores, '#ffffff');
 }
 
 /** A night sky cut out as its own patch: brushed in, its cut edge catching the light, stars far off in it. */

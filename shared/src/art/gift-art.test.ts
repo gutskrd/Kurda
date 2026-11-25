@@ -13,7 +13,7 @@ import { describe, expect, it } from 'vitest';
 import * as shared from '../index.js';
 import { characterSvg } from '../characters/index.js';
 import { GIFT_ART_IDS, giftArtKey, giftArtSvg, isGiftArtId, type GiftArtId } from './gift-art.js';
-import { SAHMARAN_DABS, SAHMARAN_EDGES, SAHMARAN_INKS, SAHMARAN_PATHS } from './gift-art-sahmaran.js';
+import { SAHMARAN_DABS, SAHMARAN_EDGES, SAHMARAN_FACE, SAHMARAN_INKS, SAHMARAN_PATHS } from './gift-art-sahmaran.js';
 import { pigeon } from './pigeon.js';
 import { Drawing } from './svg.js';
 
@@ -87,15 +87,16 @@ describe('the gifts’ pictures', () => {
   });
 
   it('stays light enough to inline a chat of them', () => {
-    // the two legends are shown as their PNGs, so Kawa's Damascus may carry more paint, and the traced Şahmaran painting more still
-    const budget: Partial<Record<GiftArtId, number>> = { kawa: 160, sahmaran: 300 };
+    // the dearest gifts are shown as their PNGs, so Kawa's Damascus and the galaxy may carry more paint, the traced Şahmaran painting more still
+    const budget: Partial<Record<GiftArtId, number>> = { kadiz: 160, kawa: 160, sahmaran: 300 };
     for (const id of GIFT_ART_IDS) expect(giftArtSvg({ id }).length, id).toBeLessThan((budget[id] ?? 48) * 1024);
   });
 
-  it('copies the Şahmaran painting from a whole trace: scales in fives, edge points in threes, every ink drawn', () => {
+  it('copies the Şahmaran painting from a whole trace: scales in fives, edge points in threes, every ink and her face drawn', () => {
     for (const dabs of Object.values(SAHMARAN_DABS)) expect(dabs.length % 5).toBe(0);
     for (const run of SAHMARAN_EDGES) expect(run.length % 3).toBe(0);
     for (const ink of SAHMARAN_INKS) expect(SAHMARAN_PATHS[ink], ink).toMatch(/^M\d/);
+    for (const [part, d] of Object.entries(SAHMARAN_FACE)) expect(d, part).toMatch(/^M\d/);
   });
 
   it('draws Hevalo and the pen pal pigeon from their own drawings, never a copy redrawn', () => {

@@ -4,7 +4,7 @@
  * (gift-art-sahmaran.ts), gone over by hand and aged as it has been on a village wall, in its worn wooden frame.
  */
 import { n2, n3, type Drawing, type Pt } from './svg.js';
-import { SAHMARAN_DABS, SAHMARAN_EDGES, SAHMARAN_INKS, SAHMARAN_PATHS, type SahmaranInk } from './gift-art-sahmaran.js';
+import { SAHMARAN_DABS, SAHMARAN_EDGES, SAHMARAN_FACE, SAHMARAN_INKS, SAHMARAN_PATHS, type SahmaranInk } from './gift-art-sahmaran.js';
 import { along, brush, ellipse, floor, FLOOR, lerp, outline, paint, polygon, roundish, runs, streaks, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
 
 // ────────────────────────────────────────────────────────────────────── kawa
@@ -327,6 +327,7 @@ export function sahmaran(dr: Drawing, rnd: Rnd): void {
     agedPaper(dr, rnd);
     painting(dr, rnd);
     years(dr, rnd);
+    face(dr, rnd);
     dr.add('</g>');
   });
 }
@@ -475,23 +476,6 @@ function touches(dr: Drawing, rnd: Rnd): void {
   paint(dr, chains, '#7a5a26');
   paint(dr, beads, '#d6a340');
   paint(dr, rosettes, '#c98680');
-  // her eyes and brows, gone over so they stay clear at a small size
-  for (const [x0, x1, y] of [[287.6, 298.4, 113], [310.6, 321.4, 113]] as const) {
-    const mid = (x0 + x1) / 2;
-    const toward = x0 < 300 ? 1 : -1;
-    paint(dr, polygon(tremble(ats([[x0, y], [mid - 2, y - 2.2], [mid + 2, y - 2.2], [x1, y], [mid + 2, y + 1.7], [mid - 2, y + 1.7]]), rnd, 0.3)), '#e9ddc6');
-    paint(dr, ellipse(...at([mid + toward * 0.6, y - 0.1]), 2.4, 2.5), '#6b7385');
-    paint(dr, ellipse(...at([mid + toward * 0.6, y - 0.1]), 1.1, 1.1), '#1d1712');
-    line([[x0 - 1.4, y + 0.4], [mid, y - 2.7], [x1 + 1.4, y]], 1.6, '#2a1d16');
-    line([[x0 + 1, y + 1.1], [mid, y + 2.3], [x1 - 1, y + 0.9]], 0.8, '#7a5a48', 0.6);
-  }
-  line([[286, 106.6], [292, 104.2], [299, 106]], 1.4, '#3a2620');
-  line([[310, 106], [316, 104.2], [322, 106.6]], 1.4, '#3a2620');
-  line([[305.4, 112], [304, 121], [301.4, 126.6], [304, 128.6]], 1, '#8a5a44', 0.8);
-  paint(dr, polygon(tremble(ats([[297.4, 135.6], [301.6, 133], [304, 134], [306.4, 133], [310.6, 135.6], [304, 137.2]]), rnd, 0.2)), '#9e2a26');
-  paint(dr, polygon(tremble(ats([[298.2, 136.2], [304, 137], [309.8, 136.2], [307.4, 140], [304, 140.8], [300.6, 140]]), rnd, 0.2)), '#b83a34');
-  paint(dr, touch(...at([304, 138.6]), 7, 1.8, 0), '#e0857a', 0.75);
-  paint(dr, touch(...at([291, 129]), 10, 5.6, 0) + touch(...at([318, 129]), 10, 5.6, 0), '#e2988a', 0.22);
   // the lights, painted on: a pale gold along the crowns and the cape's gold, a cool green along the ram's horns
   let gold = '';
   for (const pts of [[[52, 34], [70, 24], [84, 12]], [[112, 20], [130, 13], [146, 5]], [[284, 76], [286, 56], [288, 44]], [[324, 76], [325, 58], [327, 44]],
@@ -513,6 +497,109 @@ function touches(dr: Drawing, rnd: Rnd): void {
   const lick = { start: 0.3, end: 0.1, count: 12 };
   paint(dr, brush(ats([[256, 62], [240, 60], [230, 68], [234, 80]]), 2.6, rnd, lick) +
     brush(ats([[352, 66], [368, 63], [380, 72], [378, 86]]), 2.6, rnd, lick), '#c8cd80', 0.8);
+}
+
+/**
+ * Her face, neck and necklace as the painting has them, laid last so nothing crosses her features: the pale ground
+ * between the hair, the skin's shading and the drawn lines of brows and nose, all traced close; and what is too small in
+ * the photograph to trace, laid on as measured there: almond eyes with a brown iris and a grey one under heavy lids, the
+ * small full lips, the round of the chin, the choker, the gold drops and the heart. The years touch it only as a veil.
+ */
+function face(dr: Drawing, rnd: Rnd): void {
+  dr.add('<g transform="scale(0.1)">');
+  paintHoles(dr, SAHMARAN_FACE.skin, '#eedfcd');
+  paintHoles(dr, SAHMARAN_FACE.shade, '#dcc4b2', 0.32);
+  dr.add('</g>');
+  // the shade along her cheeks where the hair falls close, as the painter rounded the face
+  paint(dr, brush(ats([[285.4, 104], [284.4, 116], [285, 128], [288.4, 138], [294, 145]]), 9, rnd, { start: 0.3, end: 0.1, peak: 0.5, count: 16 }) +
+    brush(ats([[322.4, 104], [323.4, 116], [322.6, 128], [319.6, 138], [314, 145]]), 9, rnd, { start: 0.3, end: 0.1, peak: 0.5, count: 16 }), '#dbc2b0', 0.4);
+  const lid = { start: 0.35, end: 0.6, peak: 0.7, count: 14 };
+  for (const [inner, outer, apex, low, iris, ring] of [
+    [[299, 112.4], [285.6, 112.2], [292.4, 110.4], [292.6, 114.6], [293.4, 112.6], '#6e5660'],
+    [[309.6, 112.6], [322.8, 112.6], [316, 110.8], [316, 114.8], [316.2, 113.2], '#7c8698'],
+  ] as const) {
+    const towardOuter = Math.sign(outer[0] - inner[0]);
+    const almond = ats([outer, [outer[0] - towardOuter * 2.6, apex[1] + 0.6], apex, [inner[0] + towardOuter * 2.4, apex[1] + 0.5], inner,
+      [inner[0] + towardOuter * 2.6, low[1] - 0.6], low, [outer[0] - towardOuter * 3, low[1] - 0.7]]);
+    paint(dr, outline(almond), '#efe5d4');
+    within(dr, outline(almond), () => {
+      paint(dr, ellipse(...at(iris), 4.4, 4.4), ring);
+      paint(dr, ellipse(...at(iris), 2.2, 2.2), '#1d1416');
+      paint(dr, ellipse(iris[0] * 2 - 1.4, iris[1] * 2 - 1.5, 0.9, 0.9), '#f6efe4');
+      paint(dr, polygon(ats([[outer[0], apex[1] - 1], [inner[0], apex[1] - 1], [inner[0], apex[1] + 1], [outer[0], apex[1] + 1.2]])), '#b8988a', 0.35);
+    });
+    const upper = ats([[outer[0] + towardOuter * 0.8, outer[1] - 0.2], [outer[0] - towardOuter * 2.6, apex[1] + 0.3], apex, [inner[0] +
+      towardOuter * 2.2, apex[1] + 0.5],
+      [inner[0] - towardOuter * 0.2, inner[1] - 0.1]]);
+    paint(dr, brush(towardOuter > 0 ? upper.reverse() : upper, 2.7, rnd, lid), '#2a1a1c');
+    paint(dr, brush(ats([[outer[0] - towardOuter * 0.6, outer[1] + 0.4], [outer[0] - towardOuter * 3, low[1] - 0.5], low, [inner[0] +
+      towardOuter * 2.2, low[1] - 0.6]]), 0.8, rnd,
+      { start: 0.6, end: 0.2, peak: 0.4, count: 10 }), '#8e6a5e', 0.7);
+  }
+  dr.add('<g transform="scale(0.1)">');
+  paintHoles(dr, SAHMARAN_FACE.line, '#4a2a24', 0.9);
+  paintHoles(dr, SAHMARAN_FACE.skin, '#c8a978', 0.07);
+  dr.add('</g>');
+  // her lips, small and full, measured on the painting: a bowed upper lip, a fuller lower one, the line between them
+  const upperLip = ats([[297, 136.6], [299, 134.8], [301.2, 133.1], [302.8, 133.4], [303.8, 134.2], [304.9, 133.3], [306.6, 133.1], [308.8, 134.6], [310.6, 136.2],
+    [306, 136.7], [303.6, 136.9], [300.4, 136.8]]);
+  const lowerLip = ats([[297.8, 136.8], [300.6, 137.1], [303.6, 137.2], [306.8, 137], [310, 136.4], [309.2, 138.8], [306.8, 140.6], [303.8, 141.2], [300.8, 140.6],
+    [298.8, 139]]);
+  paint(dr, outline(lowerLip), '#9a3430');
+  paint(dr, outline(upperLip), '#7e2826');
+  paint(dr, brush(ats([[297.4, 136.6], [300.4, 136.9], [303.6, 137.2], [307, 136.9], [310.2, 136.3]]), 0.9, rnd,
+    { start: 0.2, end: 0.2, peak: 0.5, count: 12 }), '#4e1414');
+  // the nose: a fine shade down its left side and the two nostrils
+  paint(dr, brush(ats([[300.2, 116.6], [299.8, 121.6], [300.4, 125.6]]), 1, rnd, { start: 0.1, end: 0.6, peak: 0.7, count: 8 }), '#b08878', 0.7);
+  paint(dr, touch(...at([301.2, 127.6]), 2.6, 1.3, 20) + touch(...at([306.4, 127.6]), 2.6, 1.3, -20), '#7a4a3e', 0.85);
+  paint(dr, touch(...at([304.4, 138.8]), 6, 1.4, -4), '#cf7a6e', 0.65);
+  // the round of her chin, the soft shade under it, and the choker's cord
+  const chin = ats([[284, 134], [286.4, 140.6], [290.4, 144.8], [296, 147.6], [302, 148.6], [308, 148], [314, 145.8], [318, 142.4], [321.4, 136]]);
+  paint(dr, touch(...at([302, 150.6]), 28, 3.4, 0), '#d6bca8', 0.55);
+  paint(dr, brush(chin, 1.6, rnd, { start: 0.1, end: 0.1, peak: 0.5, count: 24 }), '#8c5a4a', 0.75);
+  // the choker close under her chin: beads between two red cords
+  const choker = along(ats([[284, 148.6], [290, 153.2], [297, 155.8], [304, 156.4], [311, 155.6], [317, 152.6], [322.4, 147.6]]), 48);
+  let cords = '';
+  for (const off of [-3, 3]) cords += brush(choker.map(([x, y]): Pt => [x, y + off]), 0.9, rnd, { start: 0.5, end: 0.5, peak: 0.5, count: 20 });
+  paint(dr, cords, '#7a3020');
+  let choke = '';
+  for (let i = 1; i < 48; i += 3) choke += ellipse(choker[i]![0], choker[i]![1], 2.5, 2.5);
+  paint(dr, choke, '#c0602e');
+  // the beads strung below it, and gold drops hanging from them, fanned out as the string curves
+  const string = along(ats([[281.6, 153.6], [287, 159.6], [294, 163.8], [302, 165.6], [310, 164.6], [317, 160.6], [323.4, 154.6]]), 60);
+  let beads = '';
+  let glints = '';
+  for (let i = 0; i <= 60; i += 4) {
+    const [x, y] = string[i]!;
+    beads += ellipse(x, y, 2, 2);
+    glints += ellipse(x - 0.6, y - 0.7, 0.6, 0.6);
+  }
+  let gold = '';
+  let rims = '';
+  let lights = '';
+  for (const i of [3, 10, 17, 24, 36, 43, 50, 57]) {
+    const [x, y] = string[i]!;
+    const [nx, ny] = normalAt(string, i);
+    const [ox, oy] = ny > 0 ? [nx, ny] : [-nx, -ny];
+    const [dx, dy] = [ox * 0.55 / Math.hypot(ox * 0.55, oy * 0.55 + 0.45), (oy * 0.55 + 0.45) / Math.hypot(ox * 0.55, oy * 0.55 + 0.45)];
+    const drop: Pt[] = [[x + dx * 2, y + dy * 2], [x + dx * 8 - dy * 3.6, y + dy * 8 + dx * 3.6], [x + dx * 17, y + dy * 17], [x + dx * 8 + dy * 3.6, y +
+      dy * 8 - dx * 3.6]];
+    gold += outline(drop);
+    rims += brush([...drop, drop[0]!, drop[1]!], 1.1, rnd, { start: 0.6, end: 0.6, peak: 0.5, count: 14 });
+    lights += touch(x + dx * 8 - dy * 1.2, y + dy * 8 + dx * 1.2, 5.6, 1, (Math.atan2(dy, dx) * 180) / Math.PI);
+  }
+  // the heart below them all, on a ring from the middle bead
+  const heart: Pt[] = ats([[301, 176.4], [304, 174], [308, 174.2], [310, 177], [309.4, 181.4], [306, 186], [300.8, 191.6], [295.6, 186], [292.2, 181.4], [291.8, 177],
+    [293.8, 174.2], [297.8, 174]]);
+  paint(dr, ellipse(...at([301.4, 170.4]), 2.6, 3), '#7a3020');
+  paint(dr, ellipse(...at([301.4, 170.4]), 1.3, 1.7), '#eedfcd');
+  paint(dr, gold, '#d8a24c');
+  paint(dr, outline(heart), '#d4893a');
+  paint(dr, outline(heart.map(([x, y]): Pt => [x + (602 - x) * 0.32, y + (362 - y) * 0.36])), '#e8b45a');
+  paint(dr, rims + brush([...heart, heart[0]!, heart[1]!], 1.3, rnd, { start: 0.6, end: 0.6, peak: 0.5, count: 30 }), '#7a3a1e');
+  paint(dr, lights + touch(...at([297, 178.6]), 7, 1.6, -60), '#f3d68e', 0.85);
+  paint(dr, beads, '#a8462a');
+  paint(dr, glints, '#e8b066', 0.9);
 }
 
 /** A hundred years on its wall: fine cracks in the black and the green, the colour worn chalky in places, a crease, a rubbed corner. */
