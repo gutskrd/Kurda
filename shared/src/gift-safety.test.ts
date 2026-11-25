@@ -39,11 +39,20 @@ describe('an adult’s own spending limit', () => {
     expect(limitAppliesAtOnce(week(5_000), month(2_000))).toBe(true);
   });
 
-  it('waits a day when raised, removed, or moved to a shorter window', () => {
+  it('applies at once when moved to a shorter window that allows no more over the old one', () => {
+    // 100 a day is at most 700 a week
+    expect(limitAppliesAtOnce(week(1_000), day(100))).toBe(true);
+    expect(limitAppliesAtOnce(week(700), day(100))).toBe(true);
+    // 200 a week is at most 1,000 over the five weeks that cover thirty days
+    expect(limitAppliesAtOnce(month(1_000), week(200))).toBe(true);
+  });
+
+  it('waits a day when raised, removed, or moved to a shorter window that allows more', () => {
     expect(limitAppliesAtOnce(day(1_000), day(1_001))).toBe(false);
     expect(limitAppliesAtOnce(day(1_000), null)).toBe(false);
     expect(limitAppliesAtOnce(month(1_000), week(1_000))).toBe(false);
-    expect(limitAppliesAtOnce(week(1_000), day(100))).toBe(false);
+    expect(limitAppliesAtOnce(week(699), day(100))).toBe(false);
+    expect(limitAppliesAtOnce(month(999), week(200))).toBe(false);
   });
 
   it('takes whole Zêr from one euro to ten thousand, in a known window', () => {

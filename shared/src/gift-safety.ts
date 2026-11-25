@@ -6,7 +6,7 @@
 
 /** Someone under 18 gives gifts of at most this many Zêr each (€5)... */
 export const MINOR_GIFT_MAX_PRICE = 500;
-/** ...and spends at most this many Zêr on gifts in a calendar month (€20). */
+/** ...and spends at most this many Zêr on gifts in a calendar month (€20), counted from the 1st at midnight UTC. */
 export const MINOR_GIFT_MONTHLY_ZER = 2_000;
 /** A gift to someone under 18 is at most this many Zêr, from anyone, and only from a friend. */
 export const TO_MINOR_GIFT_MAX_PRICE = 500;
@@ -34,14 +34,19 @@ export interface SpendLimit {
 }
 
 /**
- * Whether changing a limit from `current` to `next` (null for none) is a lowering that applies at once: any limit where
- * there was none, or the same or a longer window with the same or a smaller amount, which allows no more in any window
- * than before. Anything else (a shorter window, a larger amount, no limit at all) waits `SPEND_LIMIT_RAISE_DELAY_HOURS`.
+ * Whether changing a limit from `current` to `next` (null for none) is a lowering that applies at once, allowing no more
+ * in any window than before: any limit where there was none; the same or a longer window with the same or a smaller
+ * amount; or a shorter window whose amount, over as many of its windows as cover the old one, is still no more than the
+ * old amount (100 a day against 1,000 a week: at most 700 a week). Anything else (more, or no limit at all) waits
+ * `SPEND_LIMIT_RAISE_DELAY_HOURS`.
  */
 export function limitAppliesAtOnce(current: SpendLimit | null, next: SpendLimit | null): boolean {
   if (!current) return true;
   if (!next) return false;
-  return SPEND_LIMIT_PERIOD_DAYS[next.period] >= SPEND_LIMIT_PERIOD_DAYS[current.period] && next.zer <= current.zer;
+  const was = SPEND_LIMIT_PERIOD_DAYS[current.period];
+  const will = SPEND_LIMIT_PERIOD_DAYS[next.period];
+  if (will >= was) return next.zer <= current.zer;
+  return next.zer * Math.ceil(was / will) <= current.zer;
 }
 
 /** Whether a limit is one that can be set. */
