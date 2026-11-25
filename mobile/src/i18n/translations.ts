@@ -4073,7 +4073,29 @@ export type TranslationKey =
   | 'parental.notice.addedTitle'
   | 'parental.notice.added'
   | 'parental.notice.zoneTitle'
-  | 'parental.notice.zone';
+  | 'parental.notice.zone'
+  | 'collection.title.own'
+  | 'collection.title.other'
+  | 'collection.gifts'
+  | 'collection.leagueLine'
+  | 'collection.unlock'
+  | 'collection.customise'
+  | 'collection.viewYours'
+  | 'collection.noBadges'
+  | 'collection.wearing'
+  | 'collection.wearHint'
+  | 'collection.noIcons'
+  | 'collection.toShop'
+  | 'collection.received'
+  | 'collection.sent'
+  | 'collection.noReceived'
+  | 'collection.noSent'
+  | 'collection.giftFrom'
+  | 'collection.giftFromMember'
+  | 'collection.giftTo'
+  | 'collection.giftToMember'
+  | 'collection.andMore'
+  | 'collection.times';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -8113,6 +8135,28 @@ const en: Catalog = {
   'parental.notice.endedAge': 'Parental controls ended now that {teen} is 18.',
   'parental.notice.endedAccount': 'Parental controls with {parent} have ended.',
   'parental.teenGone': 'This teen isn’t connected to you any more.',
+  'collection.title.own': 'Your collection',
+  'collection.title.other': '{name}’s collection',
+  'collection.gifts': 'Gifts',
+  'collection.leagueLine': 'Weekly league {n} of {total}',
+  'collection.unlock': 'Available to unlock',
+  'collection.customise': 'Customise your badges',
+  'collection.viewYours': 'View your collection',
+  'collection.noBadges': 'No badges yet',
+  'collection.wearing': 'Wearing',
+  'collection.wearHint': 'Choose an icon to wear it, or choose it again to take it off.',
+  'collection.noIcons': 'No icons yet',
+  'collection.toShop': 'Visit the shop',
+  'collection.received': 'Received',
+  'collection.sent': 'Sent',
+  'collection.noReceived': 'No gifts received yet',
+  'collection.noSent': 'No gifts sent yet',
+  'collection.giftFrom': 'Gift from {name}',
+  'collection.giftFromMember': 'Gift from a Hevalo member',
+  'collection.giftTo': 'Gift to {name}',
+  'collection.giftToMember': 'Gift to a Hevalo member',
+  'collection.andMore': 'and {count} more',
+  'collection.times': '×{count}',
 };
 
 const ku: Catalog = {
@@ -12150,6 +12194,28 @@ const ku: Catalog = {
   'parental.notice.endedAge': 'Çavdêriya dêûbavan bi dawî bû, ji ber ku {teen} niha 18 salî ye.',
   'parental.notice.endedAccount': 'Çavdêriya dêûbavan bi {parent} re bi dawî bû.',
   'parental.teenGone': 'Ev ciwan êdî bi te re ne girêdayî ye.',
+  'collection.title.own': 'Berhevoka te',
+  'collection.title.other': 'Berhevoka {name}',
+  'collection.gifts': 'Diyarî',
+  'collection.leagueLine': 'Lîga heftane {n} ji {total}',
+  'collection.unlock': 'Yên ku dikarî bi dest bixî',
+  'collection.customise': 'Nîşanên xwe hilbijêre',
+  'collection.viewYours': 'Berhevoka xwe bibîne',
+  'collection.noBadges': 'Hê nîşan tune ne',
+  'collection.wearing': 'Li ser',
+  'collection.wearHint': 'Îkonekê hilbijêre da ku li ser profîla te be, an dîsa hilbijêre da ku jê rabe.',
+  'collection.noIcons': 'Hê îkon tune ne',
+  'collection.toShop': 'Here firoşgehê',
+  'collection.received': 'Wergirtî',
+  'collection.sent': 'Şandî',
+  'collection.noReceived': 'Hê diyarî nehatine',
+  'collection.noSent': 'Hê tu diyarî nehatine şandin',
+  'collection.giftFrom': 'Diyarî ji {name}',
+  'collection.giftFromMember': 'Diyarî ji endamekî Hevalo',
+  'collection.giftTo': 'Diyarî ji bo {name}',
+  'collection.giftToMember': 'Diyarî ji bo endamekî Hevalo',
+  'collection.andMore': 'û {count} yên din',
+  'collection.times': '×{count}',
 };
 
 const de: Catalog = {
@@ -16187,6 +16253,28 @@ const de: Catalog = {
   'parental.notice.endedAge': 'Die Elternkontrolle ist beendet, weil {teen} jetzt 18 ist.',
   'parental.notice.endedAccount': 'Die Elternkontrolle mit {parent} ist beendet.',
   'parental.teenGone': 'Du bist nicht mehr mit diesem Kind verbunden.',
+  'collection.title.own': 'Deine Sammlung',
+  'collection.title.other': 'Sammlung von {name}',
+  'collection.gifts': 'Geschenke',
+  'collection.leagueLine': 'Wochenliga {n} von {total}',
+  'collection.unlock': 'Noch zu verdienen',
+  'collection.customise': 'Passe deine Abzeichen an',
+  'collection.viewYours': 'Deine Sammlung ansehen',
+  'collection.noBadges': 'Noch keine Abzeichen',
+  'collection.wearing': 'Getragen',
+  'collection.wearHint': 'Wähle ein Symbol, um es zu tragen, oder wähle es noch einmal, um es abzulegen.',
+  'collection.noIcons': 'Noch keine Symbole',
+  'collection.toShop': 'Zum Shop',
+  'collection.received': 'Erhalten',
+  'collection.sent': 'Verschenkt',
+  'collection.noReceived': 'Noch keine Geschenke erhalten',
+  'collection.noSent': 'Noch keine Geschenke verschenkt',
+  'collection.giftFrom': 'Geschenk von {name}',
+  'collection.giftFromMember': 'Geschenk von einem Hevalo-Mitglied',
+  'collection.giftTo': 'Geschenk an {name}',
+  'collection.giftToMember': 'Geschenk an ein Hevalo-Mitglied',
+  'collection.andMore': 'und {count} weitere',
+  'collection.times': '×{count}',
 };
 
 const es: Catalog = {
@@ -20224,6 +20312,28 @@ const es: Catalog = {
   'parental.notice.endedAge': 'El control parental ha terminado porque {teen} ya tiene 18 años.',
   'parental.notice.endedAccount': 'El control parental con {parent} ha terminado.',
   'parental.teenGone': 'Ya no estás conectado con este hijo.',
+  'collection.title.own': 'Tu colección',
+  'collection.title.other': 'Colección de {name}',
+  'collection.gifts': 'Regalos',
+  'collection.leagueLine': 'Liga semanal {n} de {total}',
+  'collection.unlock': 'Por conseguir',
+  'collection.customise': 'Personaliza tus insignias',
+  'collection.viewYours': 'Ver tu colección',
+  'collection.noBadges': 'Aún no hay insignias',
+  'collection.wearing': 'En uso',
+  'collection.wearHint': 'Elige un icono para usarlo, o vuelve a elegirlo para quitarlo.',
+  'collection.noIcons': 'Aún no hay iconos',
+  'collection.toShop': 'Ir a la tienda',
+  'collection.received': 'Recibidos',
+  'collection.sent': 'Enviados',
+  'collection.noReceived': 'Aún no hay regalos recibidos',
+  'collection.noSent': 'Aún no hay regalos enviados',
+  'collection.giftFrom': 'Regalo de {name}',
+  'collection.giftFromMember': 'Regalo de un miembro de Hevalo',
+  'collection.giftTo': 'Regalo para {name}',
+  'collection.giftToMember': 'Regalo para un miembro de Hevalo',
+  'collection.andMore': 'y {count} más',
+  'collection.times': '×{count}',
 };
 
 const tr: Catalog = {
@@ -24261,6 +24371,28 @@ const tr: Catalog = {
   'parental.notice.endedAge': '{teen} artık 18 yaşında, ebeveyn denetimleri sona erdi.',
   'parental.notice.endedAccount': '{parent} ile ebeveyn denetimleri sona erdi.',
   'parental.teenGone': 'Artık bu çocukla bağlı değilsin.',
+  'collection.title.own': 'Koleksiyonun',
+  'collection.title.other': '{name} koleksiyonu',
+  'collection.gifts': 'Hediyeler',
+  'collection.leagueLine': 'Haftalık lig {n}/{total}',
+  'collection.unlock': 'Kazanılabilecekler',
+  'collection.customise': 'Rozetlerini düzenle',
+  'collection.viewYours': 'Koleksiyonunu gör',
+  'collection.noBadges': 'Henüz rozet yok',
+  'collection.wearing': 'Kullanımda',
+  'collection.wearHint': 'Kullanmak için bir simge seç; kaldırmak için yeniden seç.',
+  'collection.noIcons': 'Henüz simge yok',
+  'collection.toShop': 'Mağazaya git',
+  'collection.received': 'Alınanlar',
+  'collection.sent': 'Gönderilenler',
+  'collection.noReceived': 'Henüz alınan hediye yok',
+  'collection.noSent': 'Henüz gönderilen hediye yok',
+  'collection.giftFrom': 'Gönderen: {name}',
+  'collection.giftFromMember': 'Gönderen: bir Hevalo üyesi',
+  'collection.giftTo': 'Alıcı: {name}',
+  'collection.giftToMember': 'Alıcı: bir Hevalo üyesi',
+  'collection.andMore': 've {count} kişi daha',
+  'collection.times': '×{count}',
 };
 
 const ar: Catalog = {
@@ -28298,6 +28430,28 @@ const ar: Catalog = {
   'parental.notice.endedAge': 'انتهت الرقابة الأبوية لأن {teen} بلغ 18 عامًا.',
   'parental.notice.endedAccount': 'انتهت الرقابة الأبوية مع {parent}.',
   'parental.teenGone': 'لم تعد مرتبطًا بهذا الابن أو الابنة.',
+  'collection.title.own': 'مجموعتك',
+  'collection.title.other': 'مجموعة {name}',
+  'collection.gifts': 'الهدايا',
+  'collection.leagueLine': 'الدوري الأسبوعي {n} من {total}',
+  'collection.unlock': 'بانتظار أن تكسبها',
+  'collection.customise': 'خصّص شاراتك',
+  'collection.viewYours': 'اعرض مجموعتك',
+  'collection.noBadges': 'لا شارات بعد',
+  'collection.wearing': 'قيد الاستخدام',
+  'collection.wearHint': 'اختر أيقونة لاستخدامها، أو اخترها مرة أخرى لإزالتها.',
+  'collection.noIcons': 'لا أيقونات بعد',
+  'collection.toShop': 'زُر المتجر',
+  'collection.received': 'المستلَمة',
+  'collection.sent': 'المرسَلة',
+  'collection.noReceived': 'لا هدايا مستلَمة بعد',
+  'collection.noSent': 'لا هدايا مرسَلة بعد',
+  'collection.giftFrom': 'هدية من {name}',
+  'collection.giftFromMember': 'هدية من عضو في Hevalo',
+  'collection.giftTo': 'هدية إلى {name}',
+  'collection.giftToMember': 'هدية إلى عضو في Hevalo',
+  'collection.andMore': 'و{count} آخرون',
+  'collection.times': '×{count}',
 };
 
 const fr: Catalog = {
@@ -32335,6 +32489,28 @@ const fr: Catalog = {
   'parental.notice.endedAge': 'Le contrôle parental est terminé : {teen} a maintenant 18 ans.',
   'parental.notice.endedAccount': 'Le contrôle parental avec {parent} est terminé.',
   'parental.teenGone': 'Tu n’es plus associé à cet enfant.',
+  'collection.title.own': 'Ta collection',
+  'collection.title.other': 'Collection de {name}',
+  'collection.gifts': 'Cadeaux',
+  'collection.leagueLine': 'Ligue hebdomadaire {n} sur {total}',
+  'collection.unlock': 'À débloquer',
+  'collection.customise': 'Personnalise tes badges',
+  'collection.viewYours': 'Voir ta collection',
+  'collection.noBadges': 'Pas encore de badges',
+  'collection.wearing': 'Porté',
+  'collection.wearHint': 'Choisis une icône pour la porter, ou choisis-la à nouveau pour la retirer.',
+  'collection.noIcons': 'Pas encore d’icônes',
+  'collection.toShop': 'Aller à la boutique',
+  'collection.received': 'Reçus',
+  'collection.sent': 'Envoyés',
+  'collection.noReceived': 'Aucun cadeau reçu pour l’instant',
+  'collection.noSent': 'Aucun cadeau envoyé pour l’instant',
+  'collection.giftFrom': 'Cadeau de {name}',
+  'collection.giftFromMember': 'Cadeau d’un membre de Hevalo',
+  'collection.giftTo': 'Cadeau pour {name}',
+  'collection.giftToMember': 'Cadeau pour un membre de Hevalo',
+  'collection.andMore': 'et {count} de plus',
+  'collection.times': '×{count}',
 };
 
 const nl: Catalog = {
@@ -36372,6 +36548,28 @@ const nl: Catalog = {
   'parental.notice.endedAge': 'Ouderlijk toezicht is gestopt nu {teen} 18 is.',
   'parental.notice.endedAccount': 'Ouderlijk toezicht met {parent} is gestopt.',
   'parental.teenGone': 'Je bent niet meer gekoppeld aan dit kind.',
+  'collection.title.own': 'Jouw verzameling',
+  'collection.title.other': 'Verzameling van {name}',
+  'collection.gifts': 'Cadeaus',
+  'collection.leagueLine': 'Weekcompetitie {n} van {total}',
+  'collection.unlock': 'Nog te verdienen',
+  'collection.customise': 'Pas je badges aan',
+  'collection.viewYours': 'Bekijk je verzameling',
+  'collection.noBadges': 'Nog geen badges',
+  'collection.wearing': 'In gebruik',
+  'collection.wearHint': 'Kies een icoon om het te gebruiken, of kies het nog eens om het weg te halen.',
+  'collection.noIcons': 'Nog geen iconen',
+  'collection.toShop': 'Naar de winkel',
+  'collection.received': 'Ontvangen',
+  'collection.sent': 'Verstuurd',
+  'collection.noReceived': 'Nog geen cadeaus ontvangen',
+  'collection.noSent': 'Nog geen cadeaus verstuurd',
+  'collection.giftFrom': 'Cadeau van {name}',
+  'collection.giftFromMember': 'Cadeau van een Hevalo-lid',
+  'collection.giftTo': 'Cadeau voor {name}',
+  'collection.giftToMember': 'Cadeau voor een Hevalo-lid',
+  'collection.andMore': 'en nog {count}',
+  'collection.times': '×{count}',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -40410,6 +40608,28 @@ const ckb: Catalog = {
   'parental.notice.endedAge': 'چاودێریی دایک و باوک کۆتایی هات، چونکە {teen} ئێستا 18 ساڵە.',
   'parental.notice.endedAccount': 'چاودێریی دایک و باوک لەگەڵ {parent} کۆتایی هات.',
   'parental.teenGone': 'ئەم هەرزەکارە چیتر بە تۆوە نەبەستراوە.',
+  'collection.title.own': 'کۆکراوەکەت',
+  'collection.title.other': 'کۆکراوەی {name}',
+  'collection.gifts': 'دیارییەکان',
+  'collection.leagueLine': 'لیگی هەفتانە {n} لە {total}',
+  'collection.unlock': 'ئەوانەی دەتوانیت بەدەستیان بهێنیت',
+  'collection.customise': 'نیشانەکانت هەڵبژێرە',
+  'collection.viewYours': 'کۆکراوەکەت ببینە',
+  'collection.noBadges': 'هێشتا نیشانە نییە',
+  'collection.wearing': 'بەکارهێنراو',
+  'collection.wearHint': 'ئایکۆنێک هەڵبژێرە بۆ بەکارهێنانی، یان دووبارە هەڵیبژێرەوە بۆ لابردنی.',
+  'collection.noIcons': 'هێشتا ئایکۆن نییە',
+  'collection.toShop': 'بڕۆ بۆ فرۆشگا',
+  'collection.received': 'وەرگیراوەکان',
+  'collection.sent': 'نێردراوەکان',
+  'collection.noReceived': 'هێشتا هیچ دیارییەک نەگەیشتووە',
+  'collection.noSent': 'هێشتا هیچ دیارییەک نەنێردراوە',
+  'collection.giftFrom': 'دیاری لەلایەن {name}',
+  'collection.giftFromMember': 'دیاری لەلایەن ئەندامێکی Hevalo',
+  'collection.giftTo': 'دیاری بۆ {name}',
+  'collection.giftToMember': 'دیاری بۆ ئەندامێکی Hevalo',
+  'collection.andMore': 'و {count}ی تر',
+  'collection.times': '×{count}',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
