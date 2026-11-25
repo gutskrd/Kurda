@@ -18,6 +18,7 @@ import { isPremiumActive, premiumUntilSql } from '../cosmetics/access.js';
 import { AppError } from '../plugins/errors.js';
 import { WalletService } from '../wallet/service.js';
 import { earnReason, earnWithin } from '../earn/service.js';
+import { grantBagGiftWithin } from '../gifts/bag.js';
 import {
   answeredTodaySql,
   countsAsLearningSql,
@@ -268,7 +269,8 @@ export class StreakService {
    * Pays the streak milestones a run passed growing from `before` to `after` days, in the caller's transaction. Each
    * pays only when it last paid at least STREAK_MILESTONE_REPEAT_DAYS before today, so only a new streak two months on
    * reaches it again; its row is written first, so a retry pays nothing. Only a member is paid, and nothing is kept for
-   * anyone else, so a milestone first reached as a member still pays. Returns the largest paid now, if any.
+   * anyone else, so a milestone first reached as a member still pays. Everyone, members too, gets a small gift in their
+   * gift bag for each milestone reached (gifts/bag.ts), once a milestone a day. Returns the largest paid now, if any.
    */
   private async payMilestones(
     tx: Executor,
@@ -280,6 +282,10 @@ export class StreakService {
     now: Date,
   ): Promise<{ days: number; zer: number } | null> {
     let paid: { days: number; zer: number } | null = null;
+    for (const m of streakMilestonesBetween(before, after)) {
+      // a transaction is always open here (`within`), so the bag's lock holds until the milestone's own write
+      await grantBagGiftWithin(tx as pg.PoolClient, { userId, source: 'streak', ref: `${m.days}:${today}` });
+    }
     if (!plus) return paid;
     for (const m of streakMilestonesBetween(before, after)) {
       const last = await tx.query<{ last: string | null }>(`SELECT max(paid_on)::text AS last FROM streak_milestones WHERE user_id = $1 AND days = $2`, [

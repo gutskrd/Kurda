@@ -3,7 +3,7 @@
  * (`library`) or an old picture post (`image`), as the wall knows them (feed/service.ts).
  */
 import type pg from 'pg';
-import type { PostGifts, PostGiftSender } from '@kurda/shared';
+import { GRAND_GIFT_PRICE, giftTierFor, type PostGifts, type PostGiftSender } from '@kurda/shared';
 import { cosmeticAssetUrl, type PublicUrl } from '../cosmetics/access.js';
 import { notBlockedSql } from '../friends/blocked.js';
 import { notKnownAdultSql, writtenForSql } from '../users/age.js';
@@ -63,12 +63,14 @@ export async function postGiftsFor(db: Executor, posts: readonly PostRef[], view
   const on = [posts.map((p) => p.type), posts.map((p) => p.id)];
   const ON_POSTS = `(g.post_type, g.post_id) IN (SELECT * FROM unnest($1::text[], $2::uuid[]))`;
   const [items, givers] = await Promise.all([
-    db.query<{ post_type: PostType; post_id: string; sku: string; name: string; category: string; asset_key: string | null; n: number }>(
-      `SELECT g.post_type, g.post_id, g.sku, i.name, i.category, i.asset_key, count(*)::int AS n
+    db.query<{ post_type: PostType; post_id: string; sku: string; name: string; category: string; asset_key: string | null; n: number; price: number; limited: boolean }>(
+      // a grand gift first, as the post shows it large; then most given first
+      `SELECT g.post_type, g.post_id, g.sku, i.name, i.category, i.asset_key, count(*)::int AS n,
+              max(g.price)::int AS price, i.available_to IS NOT NULL AS limited
          FROM gifts g JOIN shop_items i ON i.sku = g.sku
         WHERE ${ON_POSTS}
-        GROUP BY g.post_type, g.post_id, g.sku, i.name, i.category, i.asset_key
-        ORDER BY n DESC, min(g.created_at)`,
+        GROUP BY g.post_type, g.post_id, g.sku, i.name, i.category, i.asset_key, i.available_to
+        ORDER BY max(g.price) >= ${GRAND_GIFT_PRICE} DESC, n DESC, min(g.created_at)`,
       on,
     ),
     db.query<SenderRow & { post_type: PostType; post_id: string; senders: number }>(
@@ -89,7 +91,13 @@ export async function postGiftsFor(db: Executor, posts: readonly PostRef[], view
     const key = `${r.post_type}:${r.post_id}`;
     const gifts = out.get(key) ?? { count: 0, items: [], senders: 0, from: null };
     gifts.count += r.n;
-    gifts.items.push({ sku: r.sku, name: r.name, assetUrl: cosmeticAssetUrl(r.category, r.asset_key, publicUrl), count: r.n });
+    gifts.items.push({
+      sku: r.sku,
+      name: r.name,
+      assetUrl: cosmeticAssetUrl(r.category, r.asset_key, publicUrl, r.sku),
+      count: r.n,
+      tier: giftTierFor({ price: r.price, limited: r.limited }),
+    });
     out.set(key, gifts);
   }
   for (const r of givers.rows) {
@@ -125,7 +133,7 @@ export async function postGiftSenders(db: Executor, post: PostRef, viewer: strin
     from: toSender(r, publicUrl),
     sku: r.sku,
     itemName: r.name,
-    assetUrl: cosmeticAssetUrl(r.category, r.asset_key, publicUrl),
+    assetUrl: cosmeticAssetUrl(r.category, r.asset_key, publicUrl, r.sku),
     at: new Date(r.created_at).toISOString(),
   }));
 }

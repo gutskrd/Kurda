@@ -582,6 +582,9 @@ export * from './lore.js';
 /** Inviting friends to online games and playing again (play), gifts in the chat (gifts) and the chat messages that carry them (chat-cards). */
 export * from './play.js';
 export * from './gifts.js';
+/** The gifts themselves, their meanings, and the gift bag; the safeguards on spending Zêr on them. */
+export * from './gift-catalogue.js';
+export * from './gift-safety.js';
 
 /** The learning games: the registry, the two varieties as 'kmr' | 'ckb' with their script rules, content schemas and round shapes. */
 export * from './games/index.js';

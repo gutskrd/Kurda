@@ -24,6 +24,12 @@ export interface ZerPack {
   priceCents: number;
 }
 
+/**
+ * Whether the apps may offer to buy Zêr. Off until the phone stores sell the packs, as with `PLUS_ON_SALE`: a "Get Zêr"
+ * that leads nowhere would only mislead. Never shown to anyone under 18, whatever it says.
+ */
+export const ZER_ON_SALE = false;
+
 /** The packs, smallest first; a product id names the Zêr the pack lands, its bonus included. */
 export const ZER_PACKS: readonly ZerPack[] = [
   { productId: 'app.hevalo.zer.100', zer: 100, bonus: 0, priceCents: 99 },

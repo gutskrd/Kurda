@@ -838,6 +838,10 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   // Gift rows stay: given ones belong to the recipient, received ones stay with the anonymised row like its other
   // history. Only the link back to this account goes, so they read as from a former member.
   await q(`UPDATE gifts SET from_user_id = NULL WHERE from_user_id = $1`);
+  // The gift bag and what landed in it, and their own limit on gifts: nothing in a bag outlives the account.
+  await q(`DELETE FROM gift_bag WHERE user_id = $1`);
+  await q(`DELETE FROM gift_bag_grants WHERE user_id = $1`);
+  await q(`DELETE FROM gift_spend_limits WHERE user_id = $1`);
 
   // groups: hand on the ones they own, then leave them all
   const owned = await executor.query<{ group_id: string }>(

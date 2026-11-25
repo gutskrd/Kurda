@@ -10,8 +10,9 @@
 export const ITEM_CATEGORIES = ['background', 'icon', 'frame', 'tag', 'sticker', 'other'] as const;
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 
-/** The kind a shop category belongs to; anything not a named kind is 'other'. */
+/** The kind a shop category belongs to; the gifts sit with the gift stickers they replaced, and anything not a named kind is 'other'. */
 export function itemCategory(raw: string): ItemCategory {
+  if (raw === 'gift') return 'sticker';
   return (ITEM_CATEGORIES as readonly string[]).includes(raw) && raw !== 'other' ? (raw as ItemCategory) : 'other';
 }
 

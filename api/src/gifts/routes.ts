@@ -1,11 +1,14 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { MAX_GIFT_RECIPIENTS } from '@kurda/shared';
+import { MAX_GIFT_RECIPIENTS, SPEND_LIMIT_MAX_ZER, SPEND_LIMIT_MIN_ZER, SPEND_LIMIT_PERIODS } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { requireBirthMonth } from '../users/age.js';
 import type { GiftService } from './service.js';
 import { POST_TYPES, postGiftSenders, postGiftsFor, visiblePostAuthor } from './posts.js';
+import { bagArrivals, bagEntries, markArrivalsSeen } from './bag.js';
+import { giftLimitView, setGiftLimit } from './safety.js';
+import { earnsZer } from '../earn/service.js';
 
 const postRef = z.object({ type: z.enum(POST_TYPES), id: z.uuid() });
 
@@ -26,6 +29,10 @@ const sendBody = z
     expectedPrice: z.number().int().min(0).max(10_000_000).optional(),
     /** pay with free gifts from the members' box */
     useFreeGift: z.boolean().optional(),
+    /** give it from the gift bag */
+    fromBag: z.boolean().optional(),
+    /** a big gift's second confirmation, from the GIFT_NEEDS_CONFIRM refusal of this same send */
+    confirmToken: z.string().min(1).max(120).optional(),
   })
   .refine((b) => (b.post ? !b.chat && !b.toUserIds : !!b.chat && !!b.toUserIds), 'a gift goes to friends in a chat, or onto a post');
 
@@ -48,6 +55,13 @@ const catalogQuery = z.union([
 ]);
 
 const idParam = z.object({ id: z.uuid() });
+
+/** A spending limit, or null for none. */
+const limitBody = z.object({
+  limit: z
+    .object({ period: z.enum(SPEND_LIMIT_PERIODS), zer: z.number().int().min(SPEND_LIMIT_MIN_ZER).max(SPEND_LIMIT_MAX_ZER) })
+    .nullable(),
+});
 
 /**
  * Gifts in the chat and onto posts: send one from a direct message, a group or a post, open one, list what can be given,
@@ -79,6 +93,8 @@ export function registerGiftRoutes(app: FastifyInstance, gifts: GiftService): vo
         idempotencyKey: body.idempotencyKey,
         expectedPrice: body.expectedPrice,
         useFreeGift: body.useFreeGift,
+        fromBag: body.fromBag,
+        confirmToken: body.confirmToken,
       });
       return {
         batchId: result.batchId,
@@ -86,6 +102,7 @@ export function registerGiftRoutes(app: FastifyInstance, gifts: GiftService): vo
         skipped: result.skipped,
         balance: result.balance,
         freeGifts: result.freeGifts,
+        bag: result.bag,
         message: result.message,
       };
     },
@@ -102,7 +119,6 @@ export function registerGiftRoutes(app: FastifyInstance, gifts: GiftService): vo
     const post = req.params as z.infer<typeof postRef>;
     const viewer = req.user?.id ?? null;
     if (!(await visiblePostAuthor(app.db, post, viewer))) throw new AppError('POST_NOT_FOUND', 404, 'no such post');
-    const publicUrl = (key: string) => (app.storage ? app.storage.publicUrl(key) : null);
     const [summary, senders] = await Promise.all([postGiftsFor(app.db, [post], viewer, publicUrl), postGiftSenders(app.db, post, viewer, publicUrl)]);
     return { gifts: summary.get(`${post.type}:${post.id}`) ?? { count: 0, items: [], senders: 0, from: null }, senders };
   });
@@ -116,6 +132,36 @@ export function registerGiftRoutes(app: FastifyInstance, gifts: GiftService): vo
       preHandler: requireAccount,
     },
     async (req) => gifts.open(req.user!.id, (req.params as { id: string }).id),
+  );
+
+  const publicUrl = (key: string) => (app.storage ? app.storage.publicUrl(key) : null);
+
+  /**
+   * The caller's gift bag (shared `GiftBagView`): what it holds, what landed since they last looked, and whether they
+   * earn Zêr at the same moments, so the apps say members do only to someone who does not.
+   */
+  app.get('/gifts/bag', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => {
+    const userId = req.user!.id;
+    const [items, arrivals, member] = await Promise.all([bagEntries(app.db, userId, publicUrl), bagArrivals(app.db, userId, publicUrl), earnsZer(app.db, userId)]);
+    return { items, arrivals, earnsZer: member };
+  });
+
+  /** What landed in the bag has been told of. */
+  app.post('/gifts/bag/seen', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => ({
+    seen: await markArrivalsSeen(app.db, req.user!.id),
+  }));
+
+  /** The caller's own limit on Zêr spent on gifts (shared `GiftSpendLimitView`). */
+  app.get('/me/gift-limit', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => giftLimitView(app.db, req.user!.id));
+
+  /**
+   * Sets, changes or removes it: lower applies at once, higher or none a day later (`delayed`, with `pending.from`).
+   * Under 18 the fixed limits apply and cannot be changed (403 MINOR_GIFT_LIMITS).
+   */
+  app.put(
+    '/me/gift-limit',
+    { schema: { body: limitBody }, config: { rateLimit: { max: 20, windowMs: 60_000, per: 'user-or-ip' as const } }, preHandler: requireAccount },
+    async (req) => setGiftLimit(app.db, req.user!.id, (req.body as z.infer<typeof limitBody>).limit),
   );
 
   /** One gift card as the caller sees it, for whoever can see the message it is on. */

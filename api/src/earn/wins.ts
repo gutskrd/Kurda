@@ -1,7 +1,8 @@
 /**
  * Zêr for beating other people: a win in an online game, and a quiz night's podium. Both pay only when the room had
  * enough accounts and skip a pair that looks like one person on two accounts (a shared device or a quiet shared network,
- * net/evidence.ts, the evidence the ban-evasion checks weigh), so nobody farms Zêr by playing themselves.
+ * net/evidence.ts, the evidence the ban-evasion checks weigh), so nobody farms Zêr by playing themselves. The same wins
+ * put a small gift in the winner's gift bag (gifts/bag.ts), members and free accounts alike, under the same checks.
  */
 import type pg from 'pg';
 import { PAID_PODIUMS_PER_DAY, PAID_WINS_PER_DAY, WIN_MIN_ACCOUNTS, onlineWinZer, quizPodiumZer } from '@kurda/shared';
@@ -9,6 +10,7 @@ import { isPremiumActive, memberZerUntilSql } from '../cosmetics/access.js';
 import { pairEvidence } from '../net/evidence.js';
 import type { WalletService } from '../wallet/service.js';
 import { earnReason, earnWithin, type GrantResult } from './service.js';
+import { grantBagGiftWithin } from '../gifts/bag.js';
 
 export const ONLINE_WIN_REASON = earnReason('online_win');
 export const QUIZ_PODIUM_REASON = earnReason('quiz_podium');
@@ -79,10 +81,11 @@ export async function payOnlineWin(
   const first = game.players.filter((p) => p.place === 1);
   if (first.length !== 1) return null;
   const winner = first[0]!.userId;
-  if ((await paidToday(client, winner, ONLINE_WIN_REASON)) >= PAID_WINS_PER_DAY) return null;
   for (const other of accounts) {
     if (other !== winner && (await looksLikeOnePerson(client, winner, other))) return null;
   }
+  await grantBagGiftWithin(client, { userId: winner, source: 'win', ref: game.ref });
+  if ((await paidToday(client, winner, ONLINE_WIN_REASON)) >= PAID_WINS_PER_DAY) return null;
   const result = await earnWithin(client, wallet, {
     userId: winner,
     amount: onlineWinZer(await isMember(client, winner, now)),
@@ -117,6 +120,7 @@ export async function payQuizPodium(
       if (other.userId !== p.userId && (await looksLikeOnePerson(client, p.userId, other.userId))) alone = false;
     }
     if (!alone) continue;
+    await grantBagGiftWithin(client, { userId: p.userId, source: 'podium', ref: night.ref });
     const result = await earnWithin(client, wallet, {
       userId: p.userId,
       amount: quizPodiumZer(p.place, night.accounts, await isMember(client, p.userId, now)),

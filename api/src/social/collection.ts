@@ -148,7 +148,7 @@ export class CollectionService {
         sku: g.sku,
         name: g.name,
         category: g.category,
-        assetUrl: cosmeticAssetUrl(g.category, g.asset_key, publicUrl),
+        assetUrl: cosmeticAssetUrl(g.category, g.asset_key, publicUrl, g.sku),
         count: g.n,
         lastAt: g.last_at.toISOString(),
         people: people?.get(g.sku) ?? [],

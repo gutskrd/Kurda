@@ -24,7 +24,7 @@ import { storeArt } from './art.js';
 import { CatalogueEditor } from './catalogue.js';
 import type { ShopItem, ShopService } from './service.js';
 
-const CATEGORIES = ['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'tag', 'sticker', 'misc'] as const;
+const CATEGORIES = ['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'tag', 'sticker', 'gift', 'misc'] as const;
 
 const skuParams = z.object({ sku: z.string().min(1).max(80) });
 
@@ -76,7 +76,7 @@ export function registerShopAdminRoutes(app: FastifyInstance, shop: ShopService,
   const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
   const withArt = <T extends ShopItem>(item: T): T & { assetUrl: string | null } => ({
     ...item,
-    assetUrl: cosmeticAssetUrl(item.category, item.assetKey, publicUrl),
+    assetUrl: cosmeticAssetUrl(item.category, item.assetKey, publicUrl, item.sku),
   });
 
   /**

@@ -158,7 +158,7 @@ function cardsFrom(rows: readonly CardRow[], viewerId: string | null, publicUrl:
       sku: first.sku,
       name: first.name,
       category: first.category,
-      assetUrl: cosmeticAssetUrl(first.category, first.asset_key, publicUrl),
+      assetUrl: cosmeticAssetUrl(first.category, first.asset_key, publicUrl, first.sku),
       tier: giftTierFor({ price: first.price, limited: first.limited }),
       recipients,
       from: toSender(first, publicUrl),
