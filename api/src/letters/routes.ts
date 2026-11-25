@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { LANDINGS_MAX, LETTERS_PAGE_MAX, LETTER_MAX } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
@@ -10,7 +11,7 @@ import type { LetterService } from './service.js';
 import { registerLetterWidgetRoutes } from './widget-routes.js';
 import { LetterWidgetService } from './widget.js';
 
-const threadParam = z.object({ threadId: z.uuid() });
+const threadParam = z.object({ threadId: lowerUuid() });
 const birdBody = z.object({ bird: z.number().int().min(0).max(99) });
 // A little room over the letter's limit, since the service counts after trimming and names the rule broken; decor is
 // checked in the service as the apps check it (checkLetterDecor), so here it only has to be present or not.
@@ -18,9 +19,9 @@ const letterBody = z.object({ body: z.string().min(1).max(LETTER_MAX + 200), dec
 type LetterBody = { body: string; decor?: unknown };
 // Apps that read `landings` and report what they landed send `landings=1`; without it the request is from an older build.
 const homeQuery = z.object({ landings: z.string().optional() });
-const landedBody = z.object({ letterIds: z.array(z.uuid()).min(1).max(LANDINGS_MAX) });
+const landedBody = z.object({ letterIds: z.array(lowerUuid()).min(1).max(LANDINGS_MAX) });
 // Without either, every letter, as builds from before paging read it.
-const threadQuery = z.object({ before: z.uuid().optional(), limit: z.coerce.number().int().min(1).max(LETTERS_PAGE_MAX).optional() });
+const threadQuery = z.object({ before: lowerUuid().optional(), limit: z.coerce.number().int().min(1).max(LETTERS_PAGE_MAX).optional() });
 
 /** The key an app sent a letter under (`Idempotency-Key`), or none, so a resend finds the letter already sent. */
 function idempotencyKey(req: FastifyRequest): string | null {

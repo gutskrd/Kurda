@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { GiftCard, GiftTier } from '@kurda/shared';
+import { giftMeaning, type GiftCard, type GiftTier } from '@kurda/shared';
 import { Button } from '../components/Button';
 import { wrapTab } from '../components/Sheet';
 import { CheckIcon } from '../components/icons';
-import { useT } from '../i18n/I18nProvider';
+import { useI18n, useT } from '../i18n/I18nProvider';
 import type { ApiError } from '../lib/types';
 import { lockPageScroll } from '../lib/scrollLock';
 import { useOptimisticSend } from '../lib/optimistic';
 import { SendError } from '../reports/SendError';
-import { Confetti, GiftBox, GiftItemArt, NewrozFlame } from './GiftArt';
+import { Confetti, GiftBox, GiftItemArt, NewrozFlame, NightSky } from './GiftArt';
 
 /** What a thread lets a gift do: open it, say thanks in the chat, or wear it. */
 export interface GiftActions {
@@ -19,9 +19,14 @@ export interface GiftActions {
   thank(): Promise<ApiError | null>;
   /** Wears the gift (a background or icon); null when done. */
   wear(card: GiftCard): Promise<ApiError | null>;
+  /** Opens the gift sheet for the sender, the bag first; absent where nothing can be sent back. */
+  sendBack?(card: GiftCard): void;
 }
 
-/** The opened gift: the item, who it is from, and Wear it (when wearable), Say thanks and Close. No "send one back". */
+/**
+ * The opened gift: the item with its Kurmancî name and meaning, who it is from, and Wear it (when wearable), Say thanks,
+ * Send one back (the gift sheet for the sender, opening on the free gifts of the bag) and Close.
+ */
 export function GiftReveal({
   card,
   from,
@@ -37,6 +42,8 @@ export function GiftReveal({
   compact?: boolean;
 }): React.JSX.Element {
   const t = useT();
+  const { locale } = useI18n();
+  const meaning = giftMeaning(card.sku, locale);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const sendShown = useOptimisticSend();
   const [worn, setWorn] = useState(false);
@@ -64,12 +71,14 @@ export function GiftReveal({
   }
 
   const Heading = compact ? 'h3' : 'h2';
+  const artSize = compact ? 88 : card.tier === 'grand' ? 200 : 132;
   return (
     <div className={`gift-reveal${compact ? ' is-compact' : ''} gift-reveal-${card.tier}`}>
-      <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={compact ? 88 : 132} className="gift-reveal-art" />
-      <Heading className="gift-reveal-name" ref={headingRef} tabIndex={-1}>
+      <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={artSize} className="gift-reveal-art" />
+      <Heading className="gift-reveal-name" ref={headingRef} tabIndex={-1} lang={meaning ? 'ku' : undefined}>
         {card.name}
       </Heading>
+      {meaning && <p className="gift-reveal-meaning">{meaning}</p>}
       <p className="gift-reveal-from">{from ? t('gift.from', { name: from }) : t('gift.fromMember')}</p>
       <p className="sr-only" role="status">
         {t('gift.revealed', { item: card.name, name: from || t('gift.someone') })}
@@ -94,6 +103,18 @@ export function GiftReveal({
             {t('gift.sayThanks')}
           </Button>
         )}
+        {actions.sendBack && card.from && (
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              onClose();
+              actions.sendBack!(card);
+            }}
+          >
+            {t('gift.sendBack')}
+          </Button>
+        )}
         <Button size="sm" variant="ghost" onClick={onClose}>
           {t('gift.close')}
         </Button>
@@ -105,8 +126,10 @@ export function GiftReveal({
 }
 
 /**
- * The stage a rare or legendary gift opens on: a confetti sheet for rare, a full-screen Newroz fire for legendary. It
- * plays for its tier's time (or fades under Reduce Motion), then gives way to the reveal; a tap or Skip jumps ahead.
+ * The stage a rare, legendary or grand gift opens on: a confetti sheet for rare, a full-screen Newroz fire for
+ * legendary, and for a grand gift the whole screen going to night as the stars come out and the gift rises into its
+ * glow. It plays for its tier's time (or fades under Reduce Motion), then gives way to the reveal; a tap or Skip jumps
+ * ahead.
  */
 export function GiftStage({
   tier,
@@ -163,11 +186,12 @@ export function GiftStage({
       onClick={revealed ? undefined : onSkip}
     >
       <div className="gift-stage-panel" onClick={(e) => revealed && e.stopPropagation()}>
+        {tier === 'grand' && <NightSky className={revealed ? 'is-settled' : undefined} />}
         {!revealed ? (
           <div className="gift-stage-play">
             {tier === 'legendary' && <NewrozFlame className="gift-stage-flame" />}
-            <GiftBox tier={tier} size={tier === 'legendary' ? 200 : 150} className="gift-opening" />
-            <Confetti count={tier === 'legendary' ? 30 : 20} spread={tier === 'legendary' ? 1.6 : 1.1} />
+            <GiftBox tier={tier} size={tier === 'rare' ? 150 : 200} className="gift-opening" />
+            <Confetti count={tier === 'rare' ? 20 : 30} spread={tier === 'rare' ? 1.1 : 1.6} />
             <p className="gift-stage-label" role="status">
               {t('gift.unwrapping')}
             </p>

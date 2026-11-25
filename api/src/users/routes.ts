@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { APP_LOCALE_CODES, normalizeKurdish } from '@kurda/shared';
 import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
 import { DELETION_GRACE_DAYS, GdprService, exportJobId } from '../gdpr/service.js';
@@ -159,6 +160,11 @@ function toMe(row: MeRow) {
     kind: row.kind === 'child' ? 'child' : 'person',
     /** 13–17 today, worked out now rather than stored (users/age.ts). */
     minor: isMinorRow(row),
+    /**
+     * Known to be 18 or over, and neither a guest nor a child's profile: the one flag the apps read before suggesting a
+     * purchase, Hevalo+ or giving a gift back. An unknown age is never an adult's.
+     */
+    knownAdult: !row.guest && row.kind !== 'child' && isKnownAdultRow(row),
     /** Under the age of digital consent (16) today, so consent choices such as analytics need a parent; the name is historical. */
     restrictedMode: isBelowConsentAgeRow(row),
     /** Never chosen means in for adults and out for minors and unknown ages, read from age each time. */
@@ -360,7 +366,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   app.delete(
     '/me/sessions/:id',
     {
-      schema: { params: z.object({ id: z.uuid() }) },
+      schema: { params: z.object({ id: lowerUuid() }) },
       preHandler: requireAuth,
     },
     async (req) => {

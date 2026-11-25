@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type pg from 'pg';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { logAdminAction } from '../moderation/sanctions-service.js';
@@ -175,7 +176,7 @@ export function registerTrustedNetworkRoutes(app: FastifyInstance, service: Trus
   });
   app.delete(
     '/admin/trusted-networks/:id',
-    { schema: { params: z.object({ id: z.uuid() }), body: removeBody }, preHandler: guard },
+    { schema: { params: z.object({ id: lowerUuid() }), body: removeBody }, preHandler: guard },
     async (req) => {
       await service.remove(req.user!.id, (req.params as { id: string }).id, (req.body as z.infer<typeof removeBody>).reason);
       return { removed: true };

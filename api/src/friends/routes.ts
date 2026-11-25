@@ -1,11 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireParental } from '../parental/supervision.js';
 import { BLOCKS_PAGE_MAX, FRIENDS_PAGE_MAX, type FriendService } from './service.js';
 
-const targetParam = z.object({ userId: z.uuid() });
+const targetParam = z.object({ userId: lowerUuid() });
 
 // Tighter than the global default: friend requests are a spam and harassment vector, and suggestions are expensive.
 const REQUEST_LIMIT = { max: 20, windowMs: 60_000, per: 'user-or-ip' as const };
@@ -62,7 +63,7 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
   /** Send a friend request (auto-accepts a mutual pending request). */
   app.post(
     '/friends/requests',
-    { schema: { body: z.object({ userId: z.uuid() }) }, config: { rateLimit: REQUEST_LIMIT }, preHandler: [requireAccount, requireBirthMonth, requireParental('friends')] },
+    { schema: { body: z.object({ userId: lowerUuid() }) }, config: { rateLimit: REQUEST_LIMIT }, preHandler: [requireAccount, requireBirthMonth, requireParental('friends')] },
     async (req) => {
       const to = (req.body as { userId: string }).userId;
       const outcome = await friends.request(req.user!.id, to);

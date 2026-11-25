@@ -2,39 +2,62 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { useEffect, useState } from 'react';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { GiftCatalogItem } from '@kurda/shared';
+import type { BagEntry, GiftCatalogItem, GiftSendLimits } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
 import { GiftPicker } from './GiftPicker';
 
 afterEach(() => vi.restoreAllMocks());
 
-const item = (over: Partial<GiftCatalogItem> = {}): GiftCatalogItem => ({
-  sku: 'bg-sunset',
-  name: 'Sunset over Amed',
-  category: 'background',
-  assetUrl: null,
-  price: 500,
-  tier: 'common',
+const gift = (id: string, name: string, price: number, over: Partial<GiftCatalogItem> = {}): GiftCatalogItem => ({
+  sku: `gift-${id}`,
+  name,
+  category: 'gift',
+  assetUrl: `/cosmetics/gifts/${id}.png`,
+  price,
+  tier: price >= 20_000 ? 'grand' : 'common',
   alreadyOwnedBy: [],
-  freeGiftEligible: false,
+  freeGiftEligible: price <= 150,
   ...over,
 });
+
+const CAY = gift('cay', 'Çay', 1);
+const QEHWE = gift('qehwe', 'Qehwe', 2);
+const GUL = gift('gul', 'Gul', 25);
+const PISIK = gift('pisik', 'Pisîk', 150);
+const BELEM = gift('belem', 'Belem', 2_000);
+const HEYV = gift('heyv', 'Heyv', 20_000);
+const SHELF = [CAY, QEHWE, GUL, PISIK, BELEM, HEYV];
+const OPEN: GiftSendLimits = { maxPrice: null, left: null, confirmFrom: 2_000 };
 
 interface Call {
   url: string;
   method: string;
-  body: unknown;
+  body: Record<string, unknown> | null;
 }
 
-function stub(items: GiftCatalogItem[], send: unknown = null, balance = { zer: 1200 }): Call[] {
+interface Stub {
+  items?: GiftCatalogItem[];
+  bag?: BagEntry[];
+  balance?: number;
+  limits?: GiftSendLimits;
+  hold?: string | null;
+  /** answers each POST /gifts in turn; the last one repeats */
+  sends?: Array<[number, unknown]>;
+}
+
+function stub({ items = SHELF, bag = [], balance = 30_000, limits = OPEN, hold = null, sends }: Stub = {}): Call[] {
   const calls: Call[] = [];
+  const answers = sends ?? [[200, { batchId: 'b1', sent: ['u-rojda'], skipped: [], balance: { zer: balance - 25 }, freeGifts: 0, message: null }]];
+  let n = 0;
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string, init?: RequestInit) => {
-      calls.push({ url, method: init?.method ?? 'GET', body: init?.body ? JSON.parse(init.body as string) : null });
-      if (url.includes('/gifts/catalog')) return jsonResponse(200, { items, balance });
+      const body = init?.body ? JSON.parse(init.body as string) : null;
+      calls.push({ url, method: init?.method ?? 'GET', body });
+      if (url.includes('/gifts/catalog')) return jsonResponse(200, { items, bag, balance: { zer: balance }, freeGifts: 0, hold, limits, nudges: true });
       if (url.endsWith('/gifts')) {
-        return jsonResponse(200, send ?? { batchId: 'b1', sent: ['u-rojda'], skipped: [], balance: { zer: 700 }, message: null });
+        const [status, answer] = answers[Math.min(n++, answers.length - 1)]!;
+        return jsonResponse(status, answer);
       }
       return jsonResponse(200, {});
     }),
@@ -43,285 +66,219 @@ function stub(items: GiftCatalogItem[], send: unknown = null, balance = { zer: 1
 }
 
 const rojda = { userId: 'u-rojda', name: 'rojda', avatarUrl: null };
+const dm = { kind: 'dm' as const, userId: 'u-rojda' };
+const sends = (calls: Call[]) => calls.filter((c) => c.url.endsWith('/gifts'));
 
-describe('GiftPicker in a direct message', () => {
-  it('shows what can be given, its price, what they already have, and your balance', async () => {
-    const calls = stub([item(), item({ sku: 'ic-1', name: 'Pomegranate', category: 'icon', alreadyOwnedBy: ['u-rojda'] }), item({ sku: 'bg-night', name: 'Night sky', price: 2000, tier: 'rare' })]);
-    renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'dm', userId: 'u-rojda' }} people={[rojda]} onSent={() => undefined} />);
+describe('the gift sheet', () => {
+  it('opens on the bag with its counts, then the gifts by shelf, cheapest first, each named in Kurmancî with its meaning and its worth', async () => {
+    stub({ bag: [{ sku: CAY.sku, name: 'Çay', assetUrl: CAY.assetUrl, count: 3 }] });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
 
     expect(screen.getByRole('dialog', { name: 'A gift for rojda' })).toBeInTheDocument();
-    const sunset = (await screen.findByText('Sunset over Amed')).closest('button')!;
-    expect(within(sunset).getByText('500')).toBeInTheDocument();
-    // What the price is worth in money, beside it.
-    expect(within(sunset).getByText('≈ €5')).toBeInTheDocument();
-    const owned = screen.getByText('Pomegranate').closest('button')!;
-    expect(owned).toBeDisabled();
-    expect(within(owned).getByText('Already has it')).toBeInTheDocument();
-    // More than the balance: shown and priced, but not sendable.
-    const night = screen.getByText('Night sky').closest('button')!;
-    expect(within(night).getByText('Rare')).toBeInTheDocument();
-    expect(screen.getByLabelText('You have 1,200 Zêr')).toBeInTheDocument();
-    expect(calls[0]!.url).toContain('/gifts/catalog?to=u-rojda');
+    const headings = (await screen.findAllByRole('heading', { level: 3 })).map((h) => h.textContent);
+    expect(headings).toEqual(['Your bag', 'Tea and treats', 'Flowers', 'Animals', 'The sky', 'Boats']);
+    const bag = screen.getByRole('list', { name: 'Your bag' });
+    expect(within(bag).getByText('3 in your bag')).toBeInTheDocument();
+    expect(within(bag).getByText('A glass of tea')).toBeInTheDocument();
+
+    const rose = screen.getByText('Gul').closest('button')!;
+    expect(within(rose).getByText('A red rose')).toBeInTheDocument();
+    expect(within(rose).getByText('25')).toBeInTheDocument();
+    expect(within(rose).getByText('≈ €0.25')).toBeInTheDocument();
+    // the Kurmancî name is marked as Kurmancî, whatever the page's language
+    expect(screen.getByText('Gul')).toHaveAttribute('lang', 'ku');
+    const moon = screen.getByText('Heyv').closest('button')!;
+    expect(within(moon).getByText('≈ €200')).toBeInTheDocument();
+    expect(within(moon).getByText('Grand')).toBeInTheDocument();
+    expect(screen.getByLabelText('You have 30,000 Zêr')).toBeInTheDocument();
   });
 
-  it('sends the chosen item to them, in this chat, with a key a retry reuses', async () => {
-    const calls = stub([item()]);
-    const onSent = vi.fn();
-    renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'dm', userId: 'u-rojda' }} people={[rojda]} onSent={onSent} />);
+  it('says what fills an empty bag, rather than leaving a blank', async () => {
+    stub();
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    expect(await screen.findByText(/Your bag is empty\. Daily lessons, streaks, wins/)).toBeInTheDocument();
+  });
 
-    await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
-    expect(screen.getByText('Sunset over Amed for rojda')).toBeInTheDocument();
-    // Beside the send button: a gift is as final as any purchase.
+  it('gives from the bag for free, saying so by the send button', async () => {
+    const calls = stub({ bag: [{ sku: CAY.sku, name: 'Çay', assetUrl: CAY.assetUrl, count: 2 }] });
+    const onSent = vi.fn();
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={onSent} />);
+    await userEvent.click(within(await screen.findByRole('list', { name: 'Your bag' })).getByRole('button', { name: /Çay/ }));
+    expect(screen.getByText('From your bag, free')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    expect(sends(calls)[0]!.body).toMatchObject({ sku: CAY.sku, fromBag: true, toUserIds: ['u-rojda'], chat: dm });
+    expect(onSent).toHaveBeenCalledWith(expect.objectContaining({ item: expect.objectContaining({ sku: CAY.sku }) }));
+  });
+
+  it('sends a paid gift to them in this chat, with its price and a key a retry reuses', async () => {
+    const calls = stub();
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
+    expect(screen.getByText('Gul for rojda')).toBeInTheDocument();
     expect(screen.getByText('Gifts are final too: once it’s sent, it’s theirs to keep.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    const sent = sends(calls)[0]!.body!;
+    expect(sent).toMatchObject({ sku: GUL.sku, toUserIds: ['u-rojda'], chat: dm, expectedPrice: 25 });
+    expect(sent.fromBag).toBeUndefined();
+    expect(String(sent.idempotencyKey).length).toBeGreaterThanOrEqual(8);
+  });
 
-    const sent = calls.find((c) => c.url.endsWith('/gifts'))!;
-    expect(sent.body).toMatchObject({
-      sku: 'bg-sunset',
-      toUserIds: ['u-rojda'],
-      chat: { kind: 'dm', userId: 'u-rojda' },
-      expectedPrice: 500,
+  it('locks what the Zêr cannot cover, and never offers to buy Zêr on the website', async () => {
+    stub({ balance: 100 });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    const kitten = (await screen.findByText('Pisîk')).closest('button')!;
+    expect(within(kitten).getByText('Not enough Zêr')).toBeInTheDocument();
+    await userEvent.click(kitten);
+    expect(screen.getByRole('button', { name: 'Send gift' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /Get Zêr/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /Get Zêr/ })).toBeNull();
+  });
+
+  it('locks what the safeguards rule out for these recipients, and says how far is left to spend', async () => {
+    stub({ limits: { maxPrice: 500, left: 120, confirmFrom: 2_000 } });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    const boat = (await screen.findByText('Belem')).closest('button')!;
+    expect(boat).toBeDisabled();
+    expect(within(boat).getByText('Up to 500 Zêr here')).toBeInTheDocument();
+    const kitten = screen.getByText('Pisîk').closest('button')!;
+    expect(kitten).toBeDisabled();
+    expect(within(kitten).getByText('Over your gift limit')).toBeInTheDocument();
+    expect(screen.getByText('You can spend 120 more Zêr on gifts for now.')).toBeInTheDocument();
+    expect(screen.getByText('Gul').closest('button')).toBeEnabled();
+  });
+
+  it('asks a second time for a big gift, with the money amount said large, and sends it with the server’s token', async () => {
+    const calls = stub({
+      sends: [
+        [409, { code: 'GIFT_NEEDS_CONFIRM', message: 'confirm', details: { confirmToken: 'tok-1', total: 20_000, recipients: 1, expiresAt: '2030-01-01T00:00:00Z' } }],
+        [200, { batchId: 'b9', sent: ['u-rojda'], skipped: [], balance: { zer: 10_000 }, freeGifts: 0, message: null }],
+      ],
     });
-    expect((sent.body as { idempotencyKey: string }).idempotencyKey.length).toBeGreaterThanOrEqual(8);
-    expect(onSent).toHaveBeenCalledWith(expect.objectContaining({ batchId: 'b1', item: expect.objectContaining({ sku: 'bg-sunset' }) }));
+    const onSent = vi.fn();
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={onSent} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Heyv/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+
+    const check = await screen.findByRole('region', { name: 'One more look before it goes' });
+    expect(within(check).getByText('≈ €200')).toBeInTheDocument();
+    expect(within(check).getByText('20,000 Zêr')).toBeInTheDocument();
+    expect(within(check).getByText(/for rojda/)).toBeInTheDocument();
+    expect(onSent).not.toHaveBeenCalled();
+    await userEvent.click(within(check).getByRole('button', { name: /Send it/ }));
+
+    const [first, second] = sends(calls);
+    expect(first!.body!.confirmToken).toBeUndefined();
+    expect(second!.body).toMatchObject({ sku: HEYV.sku, confirmToken: 'tok-1', idempotencyKey: first!.body!.idempotencyKey });
+    expect(onSent).toHaveBeenCalledWith(expect.objectContaining({ batchId: 'b9' }));
+  });
+
+  it('goes back from the second look without sending, and nothing is chosen for them', async () => {
+    const calls = stub({
+      sends: [[409, { code: 'GIFT_NEEDS_CONFIRM', message: 'confirm', details: { confirmToken: 'tok-2', total: 2_000, recipients: 1, expiresAt: '2030-01-01T00:00:00Z' } }]],
+    });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Belem/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    const check = await screen.findByRole('region', { name: 'One more look before it goes' });
+    // both choices weigh the same: neither is pre-chosen and "Go back" says only that
+    expect(within(check).getByRole('button', { name: 'Go back' })).toBeEnabled();
+    await userEvent.click(within(check).getByRole('button', { name: 'Go back' }));
+    expect(screen.queryByRole('region', { name: 'One more look before it goes' })).toBeNull();
+    expect(sends(calls)).toHaveLength(1);
+  });
+
+  it('says calmly what a safeguard refused', async () => {
+    stub({ sends: [[409, { code: 'GIFT_SPEND_LIMIT', message: 'no', details: { left: 40, by: 'minor_month' } }]] });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('That’s more than this month’s gift limit leaves: 40 Zêr.');
+  });
+
+  it('says why nobody could be given it, and stays open', async () => {
+    stub({ sends: [[200, { batchId: 'b1', sent: [], skipped: [{ userId: 'u-rojda', reason: 'daily_limit' }], balance: { zer: 1200 }, message: null }]] });
+    const onSent = vi.fn();
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={onSent} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    const why = await screen.findByRole('alert');
+    expect(why).toHaveTextContent('You’ve reached today’s gift limit for rojda.');
+    expect(why.closest('.gift-confirm')).not.toBeNull();
+    expect(onSent).not.toHaveBeenCalled();
   });
 
   it('finds its recipient when the friend arrives after the sheet has opened', async () => {
-    // The chat opens the sheet at once; the friend arrives a moment later.
-    const calls = stub([item()]);
+    const calls = stub();
     function Thread(): React.JSX.Element {
       const [people, setPeople] = useState<(typeof rojda)[] | null>(null);
       useEffect(() => {
         const id = window.setTimeout(() => setPeople([rojda]), 10);
         return () => window.clearTimeout(id);
       }, []);
-      return <GiftPicker open onClose={() => undefined} chat={{ kind: 'dm', userId: 'u-rojda' }} people={people} onSent={() => undefined} />;
+      return <GiftPicker open onClose={() => undefined} chat={dm} people={people} onSent={() => undefined} />;
     }
     renderApp(<Thread />);
-
-    expect(await screen.findByText('Sunset over Amed')).toBeInTheDocument();
+    expect(await screen.findByText('Gul')).toBeInTheDocument();
     expect(calls.some((c) => c.url.includes('/gifts/catalog?to=u-rojda'))).toBe(true);
   });
 
-  it('says why nobody could be given it, and stays open', async () => {
-    stub([item()], { batchId: 'b1', sent: [], skipped: [{ userId: 'u-rojda', reason: 'daily_limit' }], balance: { zer: 1200 }, message: null });
-    const onSent = vi.fn();
-    renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'dm', userId: 'u-rojda' }} people={[rojda]} onSent={onSent} />);
-    await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
-    const why = await screen.findByRole('alert');
-    expect(why).toHaveTextContent('You’ve reached today’s gift limit for rojda.');
-    // Beside the Send button, which stays on screen, not under a long shelf.
-    expect(why.closest('.gift-confirm')).not.toBeNull();
-    expect(onSent).not.toHaveBeenCalled();
+  it('says in one calm line when a gift cannot go yet', async () => {
+    stub({ hold: 'new_friend' });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    expect(await screen.findByText('You can give rojda a gift once you’ve been friends for a day.')).toBeInTheDocument();
+    expect(screen.queryByText('Gul')).toBeNull();
   });
 
-  it('after a price change, shows and sends the new price', async () => {
-    const calls: Call[] = [];
-    let price = 520;
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (url: string, init?: RequestInit) => {
-        const body = init?.body ? JSON.parse(init.body as string) : null;
-        calls.push({ url, method: init?.method ?? 'GET', body });
-        if (url.includes('/gifts/catalog')) return jsonResponse(200, { items: [item({ price })], balance: { zer: 1200 } });
-        if (body?.expectedPrice !== price) return jsonResponse(409, { code: 'PRICE_CHANGED', message: 'price changed' });
-        return jsonResponse(200, { batchId: 'b1', sent: ['u-rojda'], skipped: [], balance: { zer: 670 }, message: null });
-      }),
-    );
-    const onSent = vi.fn();
-    renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'dm', userId: 'u-rojda' }} people={[rojda]} onSent={onSent} />);
-    await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
-    price = 530; // The price changes while they look.
+  it('gives onto a post, to its author', async () => {
+    const calls = stub();
+    renderApp(<GiftPicker open onClose={() => undefined} post={{ type: 'library', id: 'p1' }} people={[rojda]} onSent={() => undefined} />);
+    expect(screen.getByRole('dialog', { name: 'A gift on rojda’s post' })).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('The price just changed.');
-
-    // The shelf is refetched, and the choice now costs what it says.
-    const bar = (await screen.findByRole('button', { name: 'Send gift' })).closest('.gift-confirm') as HTMLElement;
-    expect(await within(bar).findByText('530')).toBeInTheDocument();
-    await userEvent.click(within(bar).getByRole('button', { name: 'Send gift' }));
-    const sends = calls.filter((c) => c.url.endsWith('/gifts'));
-    expect(sends.map((c) => (c.body as { expectedPrice: number }).expectedPrice)).toEqual([520, 530]);
-    expect(onSent).toHaveBeenCalledTimes(1);
-  });
-
-  it('says calmly when a chat mute stops it', async () => {
-    stub([item()]);
-    vi.mocked(fetch).mockImplementation(async (url) =>
-      String(url).endsWith('/gifts')
-        ? jsonResponse(403, { code: 'MUTED', message: 'no', details: { scope: 'chat', until: null } })
-        : jsonResponse(200, { items: [item()], balance: { zer: 1200 } }),
-    );
-    renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'dm', userId: 'u-rojda' }} people={[rojda]} onSent={() => undefined} />);
-    await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('You can’t send messages right now.');
-    expect(screen.getByRole('link', { name: 'See your account standing' })).toBeInTheDocument();
+    expect(calls[0]!.url).toContain('/gifts/catalog?post=library%3Ap1');
+    expect(sends(calls)[0]!.body).toMatchObject({ sku: GUL.sku, post: { type: 'library', id: 'p1' } });
+    expect(sends(calls)[0]!.body!.chat).toBeUndefined();
   });
 });
 
-describe('GiftPicker in a group', () => {
+describe('the gift sheet in a group', () => {
   const people = [rojda, { userId: 'u-baran', name: 'baran', avatarUrl: null }];
+  const group = { kind: 'group' as const, groupId: 'g1' };
 
   it('asks who first — your friends here, with Select all — then what', async () => {
-    const calls = stub([item({ alreadyOwnedBy: ['u-baran'] })]);
-    renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'group', groupId: 'g1' }} people={people} onSent={() => undefined} />);
-
+    const calls = stub();
+    renderApp(<GiftPicker open onClose={() => undefined} chat={group} people={people} onSent={() => undefined} />);
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
     await userEvent.click(screen.getByLabelText('Select all'));
-    expect(screen.getByLabelText('rojda')).toBeChecked();
-    expect(screen.getByLabelText('baran')).toBeChecked();
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-
-    expect(await screen.findByText('Already has it: baran')).toBeInTheDocument();
-    expect(calls.find((c) => c.url.includes('/gifts/catalog'))!.url).toContain('to=u-rojda,u-baran');
-    // Only the friend without it gets it, and only they are paid for.
-    await userEvent.click(screen.getByRole('button', { name: /Sunset over Amed/ }));
-    expect(screen.getByText('Sunset over Amed for rojda')).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
+    expect(screen.getByText('Gul for rojda, baran')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
-    expect(calls.find((c) => c.url.endsWith('/gifts'))!.body).toMatchObject({ toUserIds: ['u-rojda'], chat: { kind: 'group', groupId: 'g1' } });
+    expect(calls.find((c) => c.url.includes('/gifts/catalog'))!.url).toContain('to=u-rojda,u-baran');
+    expect(sends(calls)[0]!.body).toMatchObject({ toUserIds: ['u-rojda', 'u-baran'], chat: group });
+  });
+
+  it('opens on what to give when sending one back to a friend here', async () => {
+    stub();
+    renderApp(<GiftPicker open onClose={() => undefined} chat={group} people={people} onSent={() => undefined} initialChosen={['u-baran']} />);
+    expect(await screen.findByText('Gul')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Next' })).toBeNull();
   });
 
   it('says who got it and why the others did not, when only some could be given it', async () => {
-    stub([item()], {
-      batchId: 'b1',
-      sent: ['u-rojda'],
-      skipped: [{ userId: 'u-baran', reason: 'not_allowed' }],
-      balance: { zer: 700 },
-      message: null,
-    });
+    stub({ sends: [[200, { batchId: 'b1', sent: ['u-rojda'], skipped: [{ userId: 'u-baran', reason: 'not_allowed' }], balance: { zer: 700 }, message: null }]] });
     const onSent = vi.fn();
-    renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'group', groupId: 'g1' }} people={people} onSent={onSent} />);
+    renderApp(<GiftPicker open onClose={() => undefined} chat={group} people={people} onSent={onSent} />);
     await userEvent.click(screen.getByLabelText('Select all'));
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-    await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
     expect(onSent).toHaveBeenCalledWith(expect.objectContaining({ partialNote: 'Sent to rojda. You can’t send baran a gift yet.' }));
   });
 
-  it('has nothing to add when everyone chosen was given it', async () => {
-    stub([item()]);
-    const onSent = vi.fn();
-    renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'group', groupId: 'g1' }} people={[rojda]} onSent={onSent} />);
-    await userEvent.click(screen.getByLabelText('rojda'));
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-    await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
-    expect(onSent).toHaveBeenCalledWith(expect.objectContaining({ partialNote: null }));
-  });
-
   it('says so when none of your friends are in the group', () => {
-    stub([]);
-    renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'group', groupId: 'g1' }} people={[]} onSent={() => undefined} />);
-    expect(screen.getByText('None of your friends are in this group yet. Gifts only go to friends.')).toBeInTheDocument();
-  });
-});
-
-describe('GiftPicker’s shelf, by kind', () => {
-  /** The shelf as `/gifts/catalog` sends it, in the shop's order with every priced kind. */
-  const shelf = (): GiftCatalogItem[] => [
-    item({ sku: 'bg-sunset', name: 'Sunset over Amed', price: 500 }),
-    item({ sku: 'bg-kilim', name: 'Kilîma Sor', price: 600, alreadyOwnedBy: ['u-rojda'] }),
-    item({ sku: 'icon-caydan', name: 'Îstîkan', category: 'icon', price: 900 }),
-    item({ sku: 'icon-roj', name: 'Roj', category: 'icon', price: 600 }),
-    item({ sku: 'bg-night', name: 'Night sky', price: 2000, tier: 'rare' }),
-    item({ sku: 'tag_kurdish', name: 'Kurdish Tag', category: 'tag', price: 500 }),
-  ];
-  const tiles = (): string[] => [...document.querySelectorAll('.gift-tile .gift-tile-name')].map((el) => el.textContent ?? '');
-  const open = (people = [rojda], chat: { kind: 'dm'; userId: string } | { kind: 'group'; groupId: string } = { kind: 'dm', userId: 'u-rojda' }) =>
-    renderApp(<GiftPicker open onClose={() => undefined} chat={chat} people={people} onSent={() => undefined} />);
-
-  it('puts each kind on a tab with its count, and under All gives each its own titled shelf', async () => {
-    stub(shelf());
-    open();
-    await screen.findByText('Sunset over Amed');
-
-    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['All6', 'Backgrounds3', 'Icons2', 'Tags1']);
-    expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Backgrounds3', 'Icons2', 'Tags1']);
-    // Each shelf is a list named by its heading.
-    expect(screen.getByRole('list', { name: /Icons/ })).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('tab', { name: /Icons/ }));
-    expect(tiles()).toEqual(['Îstîkan', 'Roj']);
-    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
-  });
-
-  it('finds a Kurdish name typed without its Kurdish letters', async () => {
-    stub(shelf());
-    open();
-    await screen.findByText('Sunset over Amed');
-    await userEvent.type(screen.getByLabelText('Search gifts'), 'istikan');
-    expect(tiles()).toEqual(['Îstîkan']);
-    expect(screen.getByRole('status')).toHaveTextContent('1 item');
-  });
-
-  it('sorts by price, dearest first when asked', async () => {
-    stub(shelf());
-    open();
-    await screen.findByText('Sunset over Amed');
-    await userEvent.click(screen.getByRole('tab', { name: /Backgrounds/ }));
-    await userEvent.selectOptions(screen.getByLabelText('Sort'), 'price-desc');
-    expect(tiles()).toEqual(['Night sky', 'Kilîma Sor', 'Sunset over Amed']);
-    await userEvent.selectOptions(screen.getByLabelText('Sort'), 'price-asc');
-    expect(tiles()).toEqual(['Sunset over Amed', 'Kilîma Sor', 'Night sky']);
-  });
-
-  it('holds each gift against the Zêr, for everyone it would go to', async () => {
-    // 1,200 Zêr; two friends chosen, so each gift costs twice its price.
-    stub(shelf(), null, { zer: 1200 });
-    open([rojda, { userId: 'u-baran', name: 'baran', avatarUrl: null }], { kind: 'group', groupId: 'g1' });
-    await userEvent.click(screen.getByLabelText('Select all'));
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-    await screen.findByText('Sunset over Amed');
-
-    await userEvent.click(screen.getByLabelText('Within my balance'));
-    // 2 × 500 and 2 × 600 fit in 1,200 Zêr; Kilîma Sor is 600 for baran alone (rojda has it); 2 × 900 and 2 × 2,000
-    // do not.
-    expect(tiles()).toEqual(['Sunset over Amed', 'Kilîma Sor', 'Roj', 'Kurdish Tag']);
-  });
-
-  it('hides what everyone chosen already has, and only that', async () => {
-    stub(shelf());
-    open();
-    await screen.findByText('Sunset over Amed');
-    expect(screen.getByText('Kilîma Sor').closest('button')).toBeDisabled();
-
-    await userEvent.click(screen.getByLabelText('Hide ones they already have'));
-    expect(screen.queryByText('Kilîma Sor')).not.toBeInTheDocument();
-    expect(tiles()).toHaveLength(5);
-  });
-
-  it('keeps a hidden choice chosen, and says so by the Send button', async () => {
-    const calls = stub(shelf());
-    open();
-    await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
-    const bar = screen.getByRole('button', { name: 'Send gift' }).closest('.gift-confirm') as HTMLElement;
-    expect(within(bar).queryByText('Your filters hide it, but it’s still chosen.')).not.toBeInTheDocument();
-
-    // A filter that hides it from the shelf.
-    await userEvent.click(screen.getByRole('tab', { name: /Icons/ }));
-    expect(screen.queryByRole('button', { name: /Sunset over Amed/ })).not.toBeInTheDocument();
-    // The bar still shows what is chosen, and that the filter hides it.
-    expect(within(bar).getByText('Sunset over Amed for rojda')).toBeInTheDocument();
-    expect(within(bar).getByText('Your filters hide it, but it’s still chosen.')).toBeInTheDocument();
-    expect(bar.querySelector('.gift-confirm-art')).not.toBeNull();
-
-    await userEvent.click(within(bar).getByRole('button', { name: 'Send gift' }));
-    expect(calls.find((c) => c.url.endsWith('/gifts'))!.body).toMatchObject({ sku: 'bg-sunset', toUserIds: ['u-rojda'] });
-  });
-
-  it('clears every narrowing at once, and says so when nothing matches', async () => {
-    stub(shelf());
-    open();
-    await screen.findByText('Sunset over Amed');
-    await userEvent.click(screen.getByLabelText('Within my balance'));
-    await userEvent.type(screen.getByLabelText('Search gifts'), 'zzzz');
-    expect(screen.getByText(/Nothing matches that/)).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
-    expect(tiles()).toHaveLength(6);
-    expect(screen.getByLabelText('Within my balance')).not.toBeChecked();
-    expect(screen.getByLabelText('Search gifts')).toHaveValue('');
-    expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
+    stub();
+    renderApp(<GiftPicker open onClose={() => undefined} chat={group} people={[]} onSent={() => undefined} />);
+    expect(screen.getByText(/None of your friends are in this group yet/)).toBeInTheDocument();
   });
 });

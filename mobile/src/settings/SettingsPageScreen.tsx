@@ -31,6 +31,7 @@ import { useMyAccount } from './account';
 import { AboutPage, AccountPage, DisplayPage, HelpPage, PrivacyPage, SafetyPage } from './CategoryPages';
 import { SettingsChoice, SettingsNote, SettingsPage, SettingsRow, SettingsSection, SettingsSwitch } from './list';
 import { StoragePage } from './StoragePage';
+import { GiftLimitPage } from '../gifts/GiftLimitPage';
 
 /**
  * The pages behind Settings: one per category on the home, the parental pages behind those, and the choices with
@@ -61,6 +62,7 @@ export const SETTINGS_PAGES = [
   'keyboard',
   'leagues',
   'visibility',
+  'giftLimit',
   'credits',
 ] as const;
 export type SettingsPageKey = (typeof SETTINGS_PAGES)[number];
@@ -104,6 +106,7 @@ const PAGES: Record<Exclude<SettingsPageKey, 'parentalConnect' | 'parentalCode' 
   keyboard: { title: 'keyboard.settings.title', Body: KeyboardSettingsList },
   leagues: { title: 'settings.leagues.title', Body: LeaguesList },
   visibility: { title: 'settings.privacy.title', Body: VisibilityList },
+  giftLimit: { title: 'settings.giftLimit.title', Body: GiftLimitPage },
   credits: { title: 'settings.credits.title', Body: Credits },
 };
 

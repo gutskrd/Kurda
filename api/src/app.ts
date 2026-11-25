@@ -37,6 +37,7 @@ import { registerArtRoutes } from './art/routes.js';
 import { RefreshedNotices } from './shop/refreshed.js';
 import { GiftService } from './gifts/service.js';
 import { registerGiftRoutes } from './gifts/routes.js';
+import { confirmSecretFrom } from './gifts/safety.js';
 import { CosmeticsService } from './cosmetics/service.js';
 import { registerCosmeticsRoutes } from './cosmetics/routes.js';
 import { IapService } from './iap/service.js';
@@ -614,7 +615,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     }
     registerLessonRoutes(app, earnService, xpService, badges);
     registerDailyGoalRoutes(app);
-    registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
+    registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db), (k) => (app.storage ? app.storage.publicUrl(k) : null)));
     // a Hevalo+ member's monthly box: Zêr, free gifts and that month's members-only item
     registerMembersBoxRoutes(app);
     // a streak that ended, won back by a day's learning (or a Hevalo+ member's free restore of the month)
@@ -920,6 +921,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
         moderation,
         badges,
         log: app.log,
+        // big gifts' confirmations, signed apart from the access tokens the same secret signs
+        confirmSecret: confirmSecretFrom(config.JWT_SECRET),
       },
       (k) => (app.storage ? app.storage.publicUrl(k) : null),
     );

@@ -1,4 +1,4 @@
-/** Daily Zêr rewards, a Hevalo+ member's, against real Postgres. */
+/** The daily cycle against real Postgres: a Hevalo+ member's Zêr, and everyone's gift for the gift bag. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -129,20 +129,48 @@ describe.skipIf(!DATABASE_URL)('daily rewards (integration)', () => {
     expect(ready).toMatchObject({ canClaim: true, learnedToday: true, claimableDay: 2 });
   });
 
-  describe('only for Hevalo+ members', () => {
-    it('is not there for anyone else, learning or not', async () => {
+  describe('Zêr for Hevalo+ members, a gift for the bag for everyone', () => {
+    const bag = async (id: string) => (await pool.query<{ sku: string; count: number }>(`SELECT sku, count FROM gift_bag WHERE user_id = $1`, [id])).rows;
+
+    it('pays anyone else no Zêr, and puts a glass of tea in their bag', async () => {
       const plain = await member('plain', null);
       await streaks.recordActivity(plain, 'UTC', at('2026-06-01'));
-      expect(await rewards.status(plain, at('2026-06-01'))).toMatchObject({ member: false, canClaim: false, learnedToday: true });
-      await expect(rewards.claim(plain, at('2026-06-01'))).rejects.toMatchObject({ code: 'MEMBERS_ONLY', statusCode: 403 });
+      expect(await rewards.status(plain, at('2026-06-01'))).toMatchObject({ member: false, canClaim: true, learnedToday: true });
+      const claimed = await rewards.claim(plain, at('2026-06-01'));
+      expect(claimed).toMatchObject({ claimed: true, reward: 0, member: false, nudges: true, bagGift: { sku: 'gift-cay', name: 'Çay', assetUrl: '/cosmetics/gifts/made-01-cay.png' } });
       expect((await wallet.balances(plain)).zer).toBe(0);
+      expect(await bag(plain)).toEqual([{ sku: 'gift-cay', count: 1 }]);
+      // shown with the claim, so not told of again
+      const unseen = await pool.query(`SELECT 1 FROM gift_bag_grants WHERE user_id = $1 AND seen_at IS NULL`, [plain]);
+      expect(unseen.rowCount).toBe(0);
     });
 
-    it('stops when membership ends', async () => {
+    it('says what Hevalo+ adds only to a known adult, never to someone under 18 or of unknown age', async () => {
+      const teen = (await makeLearner(pool, `daily_teen_${suffix}`, { age: 15 })).id;
+      const unknown = (await makeLearner(pool, `daily_unknown_${suffix}`, { age: null })).id;
+      expect(await claimOn(teen, '2026-06-01')).toMatchObject({ claimed: true, nudges: false });
+      expect(await claimOn(unknown, '2026-06-01')).toMatchObject({ claimed: true, nudges: false });
+    });
+
+    it('gives a member the bag’s gift beside the Zêr', async () => {
+      const id = await member('both', '2030-01-01T00:00:00Z');
+      expect(await claimOn(id, '2026-06-01')).toMatchObject({ reward: rewardForDay(1), member: true, bagGift: { sku: 'gift-cay' } });
+    });
+
+    it('stops paying Zêr when membership ends, and keeps the bag’s gift', async () => {
       const lapsed = await member('lapsed', '2026-06-02T00:00:00Z');
       expect(await claimOn(lapsed, '2026-06-01')).toMatchObject({ claimed: true, reward: rewardForDay(1) });
-      await streaks.recordActivity(lapsed, 'UTC', at('2026-06-02'));
-      await expect(rewards.claim(lapsed, at('2026-06-02'))).rejects.toMatchObject({ code: 'MEMBERS_ONLY' });
+      expect(await claimOn(lapsed, '2026-06-02')).toMatchObject({ claimed: true, reward: 0, member: false, bagGift: { sku: 'gift-cay' } });
+      expect(await bag(lapsed)).toEqual([{ sku: 'gift-cay', count: 2 }]);
+    });
+
+    it('gives a child’s profile nothing', async () => {
+      const child = await member('child', null);
+      await pool.query(`UPDATE users SET kind = 'child' WHERE id = $1`, [child]);
+      await streaks.recordActivity(child, 'UTC', at('2026-06-01'));
+      expect((await rewards.status(child, at('2026-06-01'))).canClaim).toBe(false);
+      await expect(rewards.claim(child, at('2026-06-01'))).rejects.toMatchObject({ statusCode: 403 });
+      expect(await bag(child)).toEqual([]);
     });
 
     it('is paid once when the claims arrive together', async () => {

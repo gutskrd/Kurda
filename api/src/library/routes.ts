@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { isWrittenPostType } from '@kurda/shared';
@@ -64,7 +65,7 @@ const page = z.object({
   offset: z.coerce.number().int().min(0).max(10_000).optional(),
 });
 
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 
 /**
  * Library writing and browsing. Reads are public; writing needs an account and an ownership or staff check. A post is

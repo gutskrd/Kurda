@@ -57,6 +57,7 @@ const NEEDS_NO_GUARD: Record<string, string> = {
   'DELETE /letters/widget/tokens/current': 'the home screen widget’s own sign-in',
   'PUT /letters/widget/prefs': 'the home screen widget’s settings',
   'POST /gifts/:id/open': 'opening a gift one was given',
+  'POST /gifts/bag/seen': 'marking what landed in one’s own gift bag as told, which nobody else sees',
   // running a group one is already in is neither joining it nor posting in it; adding someone checks their hold
   'DELETE /groups/:id/photo': 'taking a group photo down',
   'POST /groups/:id/invite': 'the added person’s hold is checked in groups/service.ts `invite`',

@@ -1,10 +1,11 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount } from '../plugins/auth.js';
 import type { ReportsService } from '../moderation/reports-service.js';
 import { LibraryModerationService, type LibraryTargetType } from './moderation-service.js';
 
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 const reportBody = z.object({ reason: z.string().max(500).optional() });
 
 /** Library post and comment reports, feeding the shared moderation queue. Rate limited; one report per user per item. */

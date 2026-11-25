@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { BAN_CONTENT_CHOICES, MAX_STATEMENT_LEN, REPORT_CATEGORY_KEYS } from '@kurda/shared';
 import { parseContentChoice } from '../moderation/takedown.js';
 import { requireAuth } from '../plugins/auth.js';
@@ -12,7 +13,7 @@ import type { RoleResult, UserAdminService } from './user-admin-service.js';
 import { VOICES_PER_ACCOUNT_MAX, setVoices, voicesOf } from '../recording/links.js';
 import { VOICE_ID } from '../recording/script.js';
 
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 const reasonBody = z.object({ reason: z.string() });
 const muteBody = z.object({ reason: z.string(), hours: z.number().int().min(1) });
 /**
@@ -46,7 +47,7 @@ const plusBody = z.object({
   idempotencyKey: z.string().min(8).max(120).optional(),
 });
 const itemBody = z.object({ reason: z.string(), sku: z.string().min(1).max(80) });
-const itemParams = z.object({ id: z.uuid(), sku: z.string().min(1).max(80) });
+const itemParams = z.object({ id: lowerUuid(), sku: z.string().min(1).max(80) });
 const editorBody = z.object({ on: z.boolean(), reason: z.string() });
 const voicesBody = z.object({ voices: z.array(z.string().regex(VOICE_ID)).max(VOICES_PER_ACCOUNT_MAX), reason: z.string() });
 

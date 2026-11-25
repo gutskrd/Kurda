@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  PLUS_ON_SALE,
   badgeDef,
   badgeTierKey,
   fireLadder,
@@ -26,7 +25,7 @@ import type { MessageKey } from '../i18n/en';
 import { FIRE_NEXT, FIRE_STAGE_NAME } from '../learn/fireWords';
 import type { StreakSummary } from '../lib/types';
 import { badgeNamed, badgeTierNamed } from '../ranks/names';
-import { DailyZer, hasDailyZer } from './DailyZer';
+import { DailyZer } from './DailyZer';
 import { Insights } from './Insights';
 import { RepairOffer, Restored, takeWonBack } from './Repair';
 import type { Today, TodayView } from './today';
@@ -104,11 +103,8 @@ function DailyBody({ today, onStreak }: { today: Today; onStreak?: (streak: Stre
           }}
         />
       )}
-      {hasDailyZer(view.daily) ? (
-        <DailyZer daily={view.daily} onClaimed={(daily) => today.change({ daily })} />
-      ) : PLUS_ON_SALE ? (
-        <p className="daily-plus-pitch">{t('daily.plusPitch')}</p>
-      ) : null}
+      {/* everyone claims the day: a member for Zêr and a gift for the bag, anyone else for the gift */}
+      <DailyZer daily={view.daily} onClaimed={(daily) => today.change({ daily })} />
       <WeekStatsCard view={view} />
       {insights.length > 0 && (
         <button type="button" className="daily-row" onClick={() => setStep('insights')}>

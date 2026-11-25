@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { ACCENT_MODES, DEFAULT_ACCENT_MODE, TYPING_DIALECTS, type RaceLength } from '@kurda/shared';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
@@ -77,7 +78,7 @@ export function registerRaceRoutes(
   app.post(
     '/race/:id/finish',
     {
-      schema: { params: z.object({ id: z.uuid() }), body: finishBody },
+      schema: { params: z.object({ id: lowerUuid() }), body: finishBody },
       config: { rateLimit: { max: 60, windowMs: 60_000, per: 'user-or-ip' as const } },
       preHandler: requireAuth,
     },
@@ -109,7 +110,7 @@ export function registerRaceRoutes(
 
   app.put(
     '/admin/race/texts/:id',
-    { schema: { params: z.object({ id: z.uuid() }), body: textBody }, preHandler: canEdit },
+    { schema: { params: z.object({ id: lowerUuid() }), body: textBody }, preHandler: canEdit },
     async (req) => {
       const { id } = req.params as { id: string };
       const updated = await texts.update(id, req.body as z.infer<typeof textBody>);
@@ -120,7 +121,7 @@ export function registerRaceRoutes(
 
   app.delete(
     '/admin/race/texts/:id',
-    { schema: { params: z.object({ id: z.uuid() }) }, config: { skipValidation: true }, preHandler: canEdit },
+    { schema: { params: z.object({ id: lowerUuid() }) }, config: { skipValidation: true }, preHandler: canEdit },
     async (req) => {
       const { id } = req.params as { id: string };
       if (!(await texts.remove(id))) throw new AppError('NOT_FOUND', 404, 'no such text');

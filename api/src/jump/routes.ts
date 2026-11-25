@@ -1,10 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth } from '../plugins/auth.js';
 import { PathJumpService } from './service.js';
 
-const params = z.object({ courseId: z.uuid() });
-const body = z.object({ unitId: z.uuid() });
+const params = z.object({ courseId: lowerUuid() });
+const body = z.object({ unitId: lowerUuid() });
 
 /**
  * Jumping ahead on the lesson path (jump/service.ts). Only the start is here: the test is answered and finished as a

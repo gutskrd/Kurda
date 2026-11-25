@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import {
-  PLUS_ON_SALE,
   badgeDef,
   badgeTierKey,
   fireLadder,
@@ -35,7 +34,6 @@ import { useTheme } from '../theme/ThemeProvider';
 import { ClayButton } from '../theme/glass';
 import { pressedDim } from '../theme/motion';
 import { layout, radii, spacing, typography, wash } from '../theme/tokens';
-import { hasDailyZer } from '../rewards/daily';
 import { DailyZer } from './DailyZer';
 import { Insights } from './Insights';
 import { RepairOffer, Restored, takeWonBack } from './Repair';
@@ -156,11 +154,8 @@ function DailyBody({
           }}
         />
       ) : null}
-      {hasDailyZer(view.daily) ? (
-        <DailyZer daily={view.daily} onClaimed={(daily) => today.change({ daily })} onLearn={onLearn} />
-      ) : PLUS_ON_SALE ? (
-        <Text style={[styles.quiet, { color: colors.textSecondary }]}>{t('daily.plusPitch')}</Text>
-      ) : null}
+      {/* everyone claims the day: a member for Zêr and a gift for the bag, anyone else for the gift */}
+      <DailyZer daily={view.daily} onClaimed={(daily) => today.change({ daily })} onLearn={onLearn} />
       <WeekStatsCard view={view} />
       {insights.length > 0 ? (
         <Row onPress={onInsights} testID="daily-insights-row" label={insights.length === 1 ? t('daily.insights.availableOne') : t('daily.insights.available', { count: insights.length })}>

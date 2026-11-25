@@ -2,7 +2,7 @@ import type pg from 'pg';
 
 /**
  * A learner's progress for their data export: XP and what counted, league tier and weeks, streaks, repairs and
- * milestones, their Zêr and its ledger, members' boxes, badges, old achievements, the rated games behind ranked badges,
+ * milestones, their Zêr and its ledger, members' boxes, the gift bag and their gift limit, badges, old achievements, the rated games behind ranked badges,
  * archived league seasons, shelved stories and reading progress, saved words, learning-game rounds and ladders, riddles,
  * and the village's levels. Stories and words are named by what the learner saw (slug, title, headword, dialect), not
  * row ids. Only their own rows; ratings and Game Ranks seasons are the export's `gameRanks` (ranks/gdpr.ts).
@@ -47,6 +47,13 @@ export async function exportProgress(db: Executor, userId: string): Promise<Reco
     membersBoxes: await q(
       `SELECT to_char(month, 'YYYY-MM') AS month, zer, free_gifts, free_gifts_left, item_sku, granted_at FROM members_boxes WHERE user_id = $1 ORDER BY month`,
     ),
+    // The gift bag: what it holds, every gift that landed in it and why, and their own limit on spending on gifts.
+    giftBag: {
+      items: await q(`SELECT sku, count, updated_at FROM gift_bag WHERE user_id = $1 ORDER BY sku`),
+      landed: await q(`SELECT sku, source, ref, granted_on, created_at FROM gift_bag_grants WHERE user_id = $1 ORDER BY created_at`),
+      spendingLimit:
+        (await q(`SELECT period, zer, pending_period, pending_zer, pending_from, updated_at FROM gift_spend_limits WHERE user_id = $1`))[0] ?? null,
+    },
     badges: await q(
       `SELECT badge_key, tier, progress, earned_at, tier_earned_at FROM user_badges WHERE user_id = $1 ORDER BY badge_key`,
     ),

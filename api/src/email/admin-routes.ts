@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireRoles } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import type { AppConfig } from '../config/env.js';
@@ -24,7 +25,7 @@ const listQuery = z.object({
   before: z.string().datetime({ offset: true }).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
-const idParams = z.object({ id: z.uuid() });
+const idParams = z.object({ id: lowerUuid() });
 const replyBody = z.object({ body: z.string().trim().min(1).max(20_000) });
 const flagBody = z.object({ value: z.boolean() });
 /** Opening a mail needs nothing but its id. */

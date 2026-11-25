@@ -2,7 +2,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { GIFT_STICKERS, type CollectionGift, type CollectionResponse } from '@kurda/shared';
+import { giftArtKey, giftSku, type CollectionGift, type CollectionResponse } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
@@ -200,8 +200,9 @@ describe.skipIf(!DATABASE_URL)('a profile’s collection (integration)', () => {
     expect((await read(owner, blocked.id)).status).toBe(404);
   });
 
-  it('counts a gift sticker however it came, in a chat or onto a post, with its picture and who gave it', async () => {
-    const sticker = GIFT_STICKERS[0]!;
+  it('counts a retired gift sticker however it came, in a chat or onto a post, with its picture and who gave it', async () => {
+    // retired from sale for the gifts, and still everyone's who holds or gave one
+    const sticker = { sku: 'sticker-kevok', price: 20, assetKey: 'icons/made-10-kevok.png' };
     // Two from a friend, one in their chat and one onto a post paid with a free gift; the newest from a teenage friend's post gift.
     const given = await pool.query<{ id: string }>(
       `INSERT INTO gifts (from_user_id, to_user_id, sku, price, currency, post_type, post_id, paid_with, created_at)
@@ -223,6 +224,19 @@ describe.skipIf(!DATABASE_URL)('a profile’s collection (integration)', () => {
       const sent = (await read(friend, friend.id)).body.sent?.items.find((g) => g.sku === sticker.sku);
       expect(sent).toMatchObject({ count: 2, assetUrl: `/cosmetics/${sticker.assetKey}` });
       expect(sent?.people.map((p) => p.person?.id ?? null)).toEqual([owner.id, owner.id]);
+    } finally {
+      await pool.query(`DELETE FROM gifts WHERE id = ANY($1::uuid[])`, [given.rows.map((r) => r.id)]);
+    }
+  });
+
+  it('shows a gift with its drawn picture among what was received', async () => {
+    const given = await pool.query<{ id: string }>(
+      `INSERT INTO gifts (from_user_id, to_user_id, sku, price, currency, paid_with) VALUES ($1, $2, $3, 20000, 'zer', 'zer') RETURNING id`,
+      [friend.id, owner.id, giftSku('heyv')],
+    );
+    try {
+      const own = (await read(owner, owner.id)).body;
+      expect(own.received.items[0]).toMatchObject({ sku: giftSku('heyv'), category: 'gift', count: 1, assetUrl: `/cosmetics/${giftArtKey('heyv')}` });
     } finally {
       await pool.query(`DELETE FROM gifts WHERE id = ANY($1::uuid[])`, [given.rows.map((r) => r.id)]);
     }

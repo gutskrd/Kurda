@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount, requireRoles } from '../plugins/auth.js';
 import { TagService } from './service.js';
 import { SocialService } from '../social/service.js';
@@ -30,7 +31,7 @@ export function registerTagRoutes(app: FastifyInstance, tags = new TagService(ap
    * follow the profile's privacy (its block, visibility and minor rules): a profile whose detail you
    * cannot see shows only its main tag.
    */
-  app.get('/users/:id/tags', { schema: { params: z.object({ id: z.uuid() }) } }, async (req) => {
+  app.get('/users/:id/tags', { schema: { params: z.object({ id: lowerUuid() }) } }, async (req) => {
     const id = (req.params as { id: string }).id;
     const access = await social.access(req.user?.id ?? null, id);
     const shown = await tags.profileTags(id);

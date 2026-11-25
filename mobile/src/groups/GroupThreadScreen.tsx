@@ -34,6 +34,7 @@ import { giftBatchCard, openGift as openGiftApi, withCard, type ChatMessage } fr
 import { useGiftEvents, useOpenChat } from '../gifts/events';
 import { GiftPickerSheet, skippedText, type GiftFriend } from '../gifts/GiftPickerSheet';
 import { canGiveGifts } from '../gifts/access';
+import { isKnownAdult } from '../gifts/nudges';
 import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftUnwrap, type UnwrapTarget } from '../gifts/GiftUnwrap';
 import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
@@ -503,7 +504,10 @@ export function GroupThreadScreen({
     [post, refusedSend],
   );
 
-  const openPicker = (): void => {
+  /** The friend a gift is being sent back to, chosen already when the sheet opens. */
+  const [backTo, setBackTo] = useState<string[] | undefined>(undefined);
+  const openPicker = (to?: string): void => {
+    setBackTo(to ? [to] : undefined);
     setPicking(true);
     if (friends === null) void loadFriends();
   };
@@ -657,7 +661,7 @@ export function GroupThreadScreen({
           <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
             {canGiveGifts(user) ? (
               <Pressable
-                onPress={openPicker}
+                onPress={() => openPicker()}
                 accessibilityRole="button"
                 accessibilityLabel={t('gift.button')}
                 style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
@@ -694,6 +698,7 @@ export function GroupThreadScreen({
         visible={picking && friends !== null}
         chat={{ kind: 'group', groupId }}
         friends={friends ?? []}
+        initialChosen={backTo}
         onClose={() => setPicking(false)}
         onSent={(result, item, to) => {
           setPicking(false);
@@ -715,6 +720,8 @@ export function GroupThreadScreen({
           onClose={() => setUnwrapping(null)}
           onOpened={(card) => setMessages((prev) => withCard(prev, card))}
           onThanks={() => post(t('gift.thanksMessage'))}
+          // to whoever sent it, if they are a friend here (the sheet checks), the bag first; a known adult only, as a prompt to spend
+          onSendBack={canGiveGifts(user) && isKnownAdult(user) && unwrapping.card.from ? () => openPicker(unwrapping.card.from!.userId) : undefined}
         />
       ) : null}
 

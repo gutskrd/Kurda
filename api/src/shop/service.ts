@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { isGiftSticker } from '@kurda/shared';
+import { isGiftOnly } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { WalletService, type Currency } from '../wallet/service.js';
 import type { Cache } from '../cache/cache.js';
@@ -173,14 +173,14 @@ export class ShopService {
   }
 
   /**
-   * Hold the art an item is being saved with (shop/art.ts), or refuse the save. New art for a background or an icon
-   * must be uploaded art or a file the site ships, as an edit requires (shop/catalogue.ts); a key kept from before is
-   * left as it is.
+   * Hold the art an item is being saved with (shop/art.ts), or refuse the save. New art for a background, an icon or a
+   * gift must be uploaded art or a file the site ships, as an edit requires (shop/catalogue.ts); a key kept from before
+   * is left as it is.
    */
   private async claim(client: pg.PoolClient, assetKey: string | null, category: string, before: string | null = null): Promise<void> {
-    if (assetKey && assetKey !== before && (category === 'background' || category === 'icon')) {
-      if (!isUploadedArtKey(assetKey) && !isBuiltInArtKey(category, assetKey)) {
-        throw new AppError('BAD_ART_KEY', 400, `that is not ${category === 'icon' ? 'an icon' : 'a background'}'s picture`);
+    if (assetKey && assetKey !== before && (category === 'background' || category === 'icon' || category === 'gift')) {
+      if (!isUploadedArtKey(assetKey) && !isBuiltInArtKey(category === 'background' ? 'background' : 'icon', assetKey)) {
+        throw new AppError('BAD_ART_KEY', 400, `that is not ${category === 'background' ? 'a background' : 'a square'} picture`);
       }
     }
     const claimed = await claimArt(client, assetKey, category);
@@ -345,7 +345,7 @@ export class ShopService {
       }));
   }
 
-  /** The catalogue this user can see and buy: in window, in stock, without unique items they own or gift stickers, which are only given. */
+  /** The catalogue this user can see and buy: in window, in stock, without unique items they own or gifts, which are only given. */
   async catalog(userId: string, now: Date = new Date()): Promise<ShopItem[]> {
     const live = await this.liveItems(now);
     const ownedRes = await this.pool.query<{ sku: string }>(
@@ -353,7 +353,7 @@ export class ShopService {
       [userId],
     );
     const owned = new Set(ownedRes.rows.map((r) => r.sku));
-    return live.filter((i) => !(i.isUnique && owned.has(i.sku)) && !isGiftSticker(i.category));
+    return live.filter((i) => !(i.isUnique && owned.has(i.sku)) && !isGiftOnly(i.category));
   }
 
   /**
@@ -375,7 +375,7 @@ export class ShopService {
       const item = itemRes.rows[0];
       if (!item) throw new AppError('ITEM_NOT_FOUND', 404, 'no such item');
       if (!isPurchasable(item, now)) throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
-      if (isGiftSticker(item.category)) throw new AppError('GIFT_ONLY', 409, 'a gift sticker is given to someone, not bought for yourself');
+      if (isGiftOnly(item.category)) throw new AppError('GIFT_ONLY', 409, 'a gift is given to someone, not bought for yourself');
       // The price the client saw must still hold, so the UI can reconfirm rather than charge a changed price.
       if (expectedPrice != null && item.price !== expectedPrice) {
         throw new AppError('PRICE_CHANGED', 409, 'the price changed; please review and try again');

@@ -228,7 +228,7 @@ describe('gifts in a group thread', () => {
       if (url.includes('/groups/g1/chat')) return jsonResponse(200, { messages: [] });
       if (url.includes('/gifts/catalog')) {
         return jsonResponse(200, {
-          items: [{ sku: 'bg-sunset', name: 'Sunset over Amed', category: 'background', assetUrl: null, currency: 'zer', price: 100, tier: 'common', alreadyOwnedBy: [] }],
+          items: [{ sku: 'gift-gul', name: 'Gul', category: 'gift', assetUrl: null, currency: 'zer', price: 25, tier: 'common', alreadyOwnedBy: [] }],
           balance: { zer: 1000, gems: 0 },
         });
       }
@@ -240,7 +240,7 @@ describe('gifts in a group thread', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Send a gift' }));
     await userEvent.click(await screen.findByLabelText('Select all'));
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-    await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
 
     const note = 'Sent to rojda. You’ve reached today’s gift limit for dilan.';

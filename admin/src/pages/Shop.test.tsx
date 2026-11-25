@@ -220,6 +220,42 @@ describe('the shop', () => {
 
 describe('an item’s sale state', () => {
   const now = Date.parse('2030-06-01T12:00:00Z');
+  it('shows the gifts on a tab of their own, with their pictures, meanings and worth, and says which are not drawn yet', async () => {
+    const user = userEvent.setup();
+    const moon = item({ sku: 'gift-heyv', name: 'Heyv', category: 'gift', price: 20_000, assetKey: null, assetUrl: '/cosmetics/gifts/made-07-heyv.png', isUnique: false, premiumOnly: false, description: null } as Partial<ShopItem>);
+    const tulip = item({ sku: 'gift-lale', name: 'Lale', category: 'gift', price: 10, assetKey: null, assetUrl: null, isUnique: false, premiumOnly: false, description: null } as Partial<ShopItem>);
+    fakeApi(...shop([item(), moon, tulip]));
+    renderUi(<Shop />);
+    await user.click(await screen.findByRole('tab', { name: /gifts/i }));
+    const gifts = await screen.findByRole('list', { name: 'Gifts' });
+    const cards = within(gifts).getAllByRole('listitem');
+    // cheapest first, and only the gifts
+    expect(cards.map((c) => within(c).getByRole('heading').textContent)).toEqual(['Lale', 'Heyv']);
+    expect(within(cards[0]!).getByText('Not drawn yet')).toBeTruthy();
+    expect(within(cards[0]!).getByText('Not offered')).toBeTruthy();
+    expect(within(cards[1]!).getByText(/The full moon/)).toBeTruthy();
+    expect(within(cards[1]!).getByText('≈ €200')).toBeTruthy();
+    expect(within(cards[1]!).queryByRole('button', { name: /Delete/ })).toBeNull();
+    // and the table of other items leaves them out
+    await openOthers(user);
+    expect(screen.queryByText('Heyv')).toBeNull();
+  });
+
+  it('sends a gift’s new price of 500 or more to Approvals, as for any item', async () => {
+    const user = userEvent.setup();
+    const kitten = item({ sku: 'gift-pisik', name: 'Pisîk', category: 'gift', price: 150, assetKey: null, assetUrl: '/cosmetics/gifts/made-04-pisik.png', isUnique: false, premiumOnly: false, description: null } as Partial<ShopItem>);
+    const { calls } = fakeApi(...shop([kitten]), on('POST', '/admin/config/changes', json({ status: 'pending' })));
+    renderUi(<Shop />);
+    await user.click(await screen.findByRole('tab', { name: /gifts/i }));
+    await user.click(await screen.findByRole('button', { name: 'Edit “Pisîk”' }));
+    const price = screen.getByLabelText(/^price/i);
+    await user.clear(price);
+    await user.type(price, '600');
+    await user.click(screen.getByRole('button', { name: 'Send for approval' }));
+    await waitFor(() => expect(posts(calls, '/admin/config/changes')).toHaveLength(1));
+    expect(posts(calls, '/admin/config/changes')[0]!.body).toMatchObject({ target: 'shop_item', payload: { sku: 'gift-pisik', category: 'gift', price: 600 } });
+  });
+
   it('tells retired, hidden, off sale, not yet and ended apart', () => {
     expect(saleState(item({ active: false, inStock: false, retiredAt: '2030-01-01T00:00:00Z' }), now)).toBe('retired');
     expect(saleState(item({ active: false, inStock: false }), now)).toBe('hidden');

@@ -3,8 +3,12 @@ import type {
   EquippableCategory,
   GiftCard,
   GiftCatalog,
+  GiftBagView,
   GiftChatRef,
+  GiftSpendLimitChange,
+  GiftSpendLimitView,
   PostGifts,
+  SpendLimit,
   PostGiftSender,
   SendGiftResult,
 } from '@kurda/shared';
@@ -45,6 +49,26 @@ export function giftCatalog(client: ApiClient, to: readonly string[] | PostTarge
   return client.get<GiftCatalog>(`/gifts/catalog?to=${to.map(encodeURIComponent).join(',')}`);
 }
 
+/** The gift bag: what it holds, what landed since it was last looked at, and whether this account earns Zêr too. */
+export function giftBag(client: ApiClient): Promise<ApiResult<GiftBagView>> {
+  return client.get<GiftBagView>('/gifts/bag');
+}
+
+/** What landed in the bag has been told of. */
+export function bagSeen(client: ApiClient): Promise<ApiResult<{ seen: number }>> {
+  return client.post<{ seen: number }>('/gifts/bag/seen');
+}
+
+/** The account's own limit on Zêr spent on gifts. */
+export function giftLimit(client: ApiClient): Promise<ApiResult<GiftSpendLimitView>> {
+  return client.get<GiftSpendLimitView>('/me/gift-limit');
+}
+
+/** Sets, changes or removes it: lower at once, higher or none a day later (`delayed`). */
+export function setGiftLimit(client: ApiClient, limit: SpendLimit | null): Promise<ApiResult<GiftSpendLimitChange>> {
+  return client.put<GiftSpendLimitChange>('/me/gift-limit', { limit });
+}
+
 /** A post's gifts and who gave them, as this reader may see them. */
 export function postGifts(client: ApiClient, post: PostTarget): Promise<ApiResult<{ gifts: PostGifts; senders: PostGiftSender[] }>> {
   return client.get(`/gifts/posts/${post.type}/${encodeURIComponent(post.id)}`);
@@ -61,7 +85,7 @@ export interface SentGift extends SendGiftResult {
  */
 export function sendGift(
   client: ApiClient,
-  input: { sku: string; idempotencyKey: string; expectedPrice: number; useFreeGift?: boolean } & (
+  input: { sku: string; idempotencyKey: string; expectedPrice: number; useFreeGift?: boolean; fromBag?: boolean; confirmToken?: string } & (
     | { toUserIds: readonly string[]; chat: GiftChatRef }
     | { post: PostTarget }
   ),

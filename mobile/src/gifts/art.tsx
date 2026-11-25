@@ -1,4 +1,4 @@
-import Svg, { Circle, Defs, G, LinearGradient, Path, Polygon, Polyline, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, G, LinearGradient, Path, Polygon, Polyline, RadialGradient, Rect, Stop } from 'react-native-svg';
 import type { GiftTier } from '@kurda/shared';
 
 /**
@@ -13,10 +13,14 @@ const SEED_LIGHT = '#F07A8C';
 const CREAM = '#F3E3C3';
 const INDIGO = '#24356A';
 
+const NIGHT = '#141A3C';
+
 const PAPER: Record<GiftTier, { paper: string; motif: string }> = {
   common: { paper: CREAM, motif: POMEGRANATE },
   rare: { paper: POMEGRANATE, motif: CREAM },
   legendary: { paper: INDIGO, motif: '#E0475E' },
+  // the night sky, for the moon, the sun and the galaxy
+  grand: { paper: NIGHT, motif: CREAM },
 };
 
 /** The kilim band: a row of stepped diamonds between two zigzags. */
@@ -96,6 +100,36 @@ export function Spark({ size, gold }: { size: number; gold: string }): React.JSX
   return (
     <Svg width={size} height={size} viewBox="0 0 16 16">
       <Path d="M8 0 L9.8 6.2 L16 8 L9.8 9.8 L8 16 L6.2 9.8 L0 8 L6.2 6.2Z" fill={gold} />
+    </Svg>
+  );
+}
+
+/** Where the stars of the night sky sit, seeded so the sky is the same each time. */
+const STARS = Array.from({ length: 40 }, (_, i) => {
+  const r = (n: number) => {
+    const x = Math.sin((i + 1) * 12.9898 + n * 78.233) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  return { x: r(11) * 100, y: r(13) * 100, size: 0.25 + r(17) * 0.5 };
+});
+
+/**
+ * The night a grand gift opens on: stars across the screen and a glow of the app's gold rising behind the gift. The
+ * stars are the gold too, so the sky follows the palette.
+ */
+export function NightSky({ width, height, gold }: { width: number; height: number; gold: string }): React.JSX.Element {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+      <Defs>
+        <RadialGradient id="sky-glow" cx="50" cy="55" r="45" gradientUnits="userSpaceOnUse">
+          <Stop offset="0" stopColor={gold} stopOpacity={0.45} />
+          <Stop offset="1" stopColor={gold} stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <Circle cx={50} cy={55} r={45} fill="url(#sky-glow)" />
+      {STARS.map((s, i) => (
+        <Circle key={i} cx={s.x} cy={s.y} r={s.size} fill={gold} opacity={0.85} />
+      ))}
     </Svg>
   );
 }

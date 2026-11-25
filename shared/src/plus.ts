@@ -22,7 +22,7 @@ export function memberPay(amount: number, plus: boolean): number {
 export const MEMBERS_BOX_ZER = 250;
 export const MEMBERS_BOX_FREE_GIFTS = 3;
 
-/** A free gift from the box pays for one gift priced up to this, every gift sticker included. */
+/** A free gift from the box pays for one gift priced up to this: the gifts from a glass of tea to the kitten. */
 export const FREE_GIFT_MAX_PRICE = 150;
 
 /**

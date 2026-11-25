@@ -16,6 +16,7 @@ import {
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { earnWithin } from '../earn/service.js';
+import { grantBagGiftWithin } from '../gifts/bag.js';
 import { localDate, safeTimeZone } from '../streaks/streak-logic.js';
 import type { WalletService } from '../wallet/service.js';
 
@@ -57,6 +58,8 @@ export interface Watered {
   /** Zêr the harvests paid */
   zer: number;
   revived: boolean;
+  /** the small gift a harvest put in the gift bag, for everyone but a child */
+  bagGift: { sku: string; name: string } | null;
 }
 
 /** What a finished lesson reports about the tree: the water earned, and what is held now. */
@@ -230,8 +233,18 @@ export class TreeService {
         });
         zer = paid.granted;
       }
+      // and a gift for the bag, for members and everyone else alike, keyed like the harvest's Zêr
+      const bag = watering.harvests > 0 ? await grantBagGiftWithin(client, { userId, source: 'harvest', ref: `${row.id}:${watering.tree.harvests}` }) : null;
       await client.query('COMMIT');
-      return { tree: treeView(watering.tree, today), poured: watering.poured, grew: watering.grew, harvests: watering.harvests, zer, revived: watering.revived };
+      return {
+        tree: treeView(watering.tree, today),
+        poured: watering.poured,
+        grew: watering.grew,
+        harvests: watering.harvests,
+        zer,
+        revived: watering.revived,
+        bagGift: bag ? { sku: bag.sku, name: bag.name } : null,
+      };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;

@@ -1,7 +1,7 @@
 /**
- * The gifts on a post, read-only on the website: a small row with the first pictures, how many, and who gave them
- * ("Gifts from Hamo and 3 others"), as the server lets this reader see them. A press lists every gift with its giver.
- * Gifts are given from the phone.
+ * The gifts on a post: a small row with the first pictures, how many, and who gave them ("Gifts from Hamo and 3
+ * others"), as the server lets this reader see them, with a grand gift shown large ahead of the row so it stays on show.
+ * A press lists every gift with its giver. The post's gift button opens the gift sheet for its author.
  */
 import { useEffect, useState } from 'react';
 import { giftSenderName, postGiftsLine, type PostGiftSender } from '@kurda/shared';
@@ -9,6 +9,9 @@ import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { Sheet } from '../components/Sheet';
 import { GiftItemArt } from '../gifts/GiftArt';
+import { GiftPicker } from '../gifts/GiftPicker';
+import { canGiveGifts } from '../gifts/access';
+import { GiftIcon } from '../components/icons';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { FeedItem } from '../lib/types';
 
@@ -26,11 +29,20 @@ export function PostGiftsRow({ item }: { item: Pick<FeedItem, 'targetType' | 'id
       ? t(line.many ? 'post.gifts.fromMany' : 'post.gifts.from', { name })
       : t(line.others === 1 ? 'post.gifts.fromOther' : 'post.gifts.fromOthers', { name, count: others });
   const count = gifts.count.toLocaleString(locale);
+  const grand = gifts.items.filter((g) => g.tier === 'grand').slice(0, 3);
+  const small = gifts.items.filter((g) => g.tier !== 'grand').slice(0, 3);
   return (
     <>
       <button type="button" className="fcard-gifts" aria-label={`${words}, ${t('post.gifts.count', { count })}`} onClick={() => setOpen(true)}>
+        {grand.length > 0 && (
+          <span className="fcard-gifts-grand" aria-hidden="true">
+            {grand.map((g) => (
+              <GiftItemArt key={g.sku} assetUrl={g.assetUrl} category="gift" size={56} />
+            ))}
+          </span>
+        )}
         <span className="fcard-gifts-art" aria-hidden="true">
-          {gifts.items.slice(0, 3).map((g) => (
+          {small.map((g) => (
             <GiftItemArt key={g.sku} assetUrl={g.assetUrl} category="sticker" size={22} />
           ))}
         </span>
@@ -79,5 +91,33 @@ function GiftSenders({ post, onClose }: { post: Pick<FeedItem, 'targetType' | 'i
         })}
       </ul>
     </Sheet>
+  );
+}
+
+/**
+ * The gift button on someone else's post, for a signed-in account that may give gifts; the sheet goes to the author,
+ * and the server holds the post rule (friends of a day, or both known adults).
+ */
+export function PostGiftButton({ item, onGiven }: { item: Pick<FeedItem, 'targetType' | 'id' | 'author'>; onGiven?: () => void }): React.JSX.Element | null {
+  const t = useT();
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  if (!canGiveGifts(user) || item.author.id === user?.id || item.author.unavailable) return null;
+  return (
+    <>
+      <button type="button" className="fcard-act fcard-gift-btn" aria-label={t('post.gifts.give')} title={t('post.gifts.give')} onClick={() => setOpen(true)}>
+        <GiftIcon size={20} />
+      </button>
+      <GiftPicker
+        open={open}
+        onClose={() => setOpen(false)}
+        post={{ type: item.targetType, id: item.id }}
+        people={[{ userId: item.author.id, name: item.author.username, avatarUrl: item.author.avatarUrl }]}
+        onSent={() => {
+          setOpen(false);
+          onGiven?.();
+        }}
+      />
+    </>
   );
 }

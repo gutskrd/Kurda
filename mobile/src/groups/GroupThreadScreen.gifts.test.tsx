@@ -29,9 +29,9 @@ patchReactNativeWeb();
 afterEach(cleanup);
 
 const item: GiftCatalogItem = {
-  sku: 'bg_mountain',
-  name: 'Mountain dawn',
-  category: 'background',
+  sku: 'gift-pisik',
+  name: 'Pisîk',
+  category: 'gift',
   assetUrl: null,
   price: 300,
   tier: 'common',
@@ -68,7 +68,7 @@ describe('GroupThreadScreen gifts', () => {
     expect(screen.queryByRole('checkbox', { name: 'kawa' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     // The gifts are fetched as the step opens, behind the group's own reads: give a busy run time to draw them.
-    fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }, { timeout: 3000 }));
+    fireEvent.click(await screen.findByRole('radio', { name: /^Pisîk/ }, { timeout: 3000 }));
     fireEvent.click(screen.getByRole('button', { name: 'Send · 600 Zêr · ≈ €6' }));
     // It reached Şîlan; Azad is named, with why, under the thread.
     expect(await screen.findByText('azad already has it.')).toBeTruthy();

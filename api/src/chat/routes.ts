@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import type { ChatUnread } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
@@ -11,7 +12,7 @@ import type { TrustService } from '../trust/service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { GroupChatService } from '../groups/chat-service.js';
 
-const userParam = z.object({ userId: z.uuid() });
+const userParam = z.object({ userId: lowerUuid() });
 
 /** Direct messages: sent over HTTP, received and acknowledged over the WebSocket. */
 export function registerChatRoutes(

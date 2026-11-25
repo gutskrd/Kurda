@@ -1,7 +1,8 @@
 /**
  * Zêr for beating other people: a win in an online game, and a quiz night's podium. Both pay only when the room had
  * enough accounts and skip a pair that looks like one person on two accounts (a shared device or a quiet shared network,
- * net/evidence.ts, the evidence the ban-evasion checks weigh), so nobody farms Zêr by playing themselves.
+ * net/evidence.ts, the evidence the ban-evasion checks weigh), so nobody farms Zêr by playing themselves. The same wins
+ * put a small gift in the winner's gift bag (gifts/bag.ts), members and free accounts alike, under the same checks.
  */
 import type pg from 'pg';
 import { PAID_PODIUMS_PER_DAY, PAID_WINS_PER_DAY, WIN_MIN_ACCOUNTS, onlineWinZer, quizPodiumZer } from '@kurda/shared';
@@ -9,6 +10,7 @@ import { isPremiumActive, memberZerUntilSql } from '../cosmetics/access.js';
 import { pairEvidence } from '../net/evidence.js';
 import type { WalletService } from '../wallet/service.js';
 import { earnReason, earnWithin, type GrantResult } from './service.js';
+import { grantBagGiftWithin } from '../gifts/bag.js';
 
 export const ONLINE_WIN_REASON = earnReason('online_win');
 export const QUIZ_PODIUM_REASON = earnReason('quiz_podium');
@@ -79,9 +81,12 @@ export async function payOnlineWin(
   const first = game.players.filter((p) => p.place === 1);
   if (first.length !== 1) return null;
   const winner = first[0]!.userId;
-  if ((await paidToday(client, winner, ONLINE_WIN_REASON)) >= PAID_WINS_PER_DAY) return null;
   for (const other of accounts) {
     if (other !== winner && (await looksLikeOnePerson(client, winner, other))) return null;
+  }
+  if ((await paidToday(client, winner, ONLINE_WIN_REASON)) >= PAID_WINS_PER_DAY) {
+    await grantBagGiftWithin(client, { userId: winner, source: 'win', ref: game.ref });
+    return null;
   }
   const result = await earnWithin(client, wallet, {
     userId: winner,
@@ -92,6 +97,8 @@ export async function payOnlineWin(
     perDay: PAID_WINS_PER_DAY,
     now,
   });
+  // after the Zêr, the order every path takes (gifts/bag.ts)
+  await grantBagGiftWithin(client, { userId: winner, source: 'win', ref: game.ref });
   return { userId: winner, result };
 }
 
@@ -126,6 +133,7 @@ export async function payQuizPodium(
       perDay: PAID_PODIUMS_PER_DAY,
       now,
     });
+    await grantBagGiftWithin(client, { userId: p.userId, source: 'podium', ref: night.ref });
     paid.push({ userId: p.userId, place: p.place, result });
   }
   return paid;

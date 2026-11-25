@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { CollectionService } from './collection.js';
 import type { SocialService } from './service.js';
 
@@ -12,7 +13,7 @@ export function registerCollectionRoutes(app: FastifyInstance, social: Pick<Soci
    * What the profile's collection sheet shows besides badges. Readable signed out, as the profile is, and gated the
    * same way; each giver is named only as the reader may see them, and what was sent is the owner's alone.
    */
-  app.get('/users/:id/collection', { schema: { params: z.object({ id: z.uuid() }) } }, async (req) =>
+  app.get('/users/:id/collection', { schema: { params: z.object({ id: lowerUuid() }) } }, async (req) =>
     collection.collection(req.user?.id ?? null, (req.params as { id: string }).id, publicUrl),
   );
 }

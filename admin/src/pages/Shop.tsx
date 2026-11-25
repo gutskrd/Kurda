@@ -27,6 +27,7 @@ import {
   type Column,
 } from '../ui';
 import { ArtCatalogue } from '../shop/ArtCatalogue';
+import { GiftCatalogue } from '../shop/GiftCatalogue';
 import { ArtForm } from '../shop/ArtForm';
 import { ArtPicker } from '../shop/ArtPicker';
 import { KIND_NAME } from '../shop/art';
@@ -50,8 +51,11 @@ export { APPROVAL_PRICE, CATEGORIES, needsApproval, priceText, saleState, type S
 
 const PAGE = 50;
 
-/** Everything that is not a background or an icon: the table's categories. */
+/** Everything that is not a background or an icon: the table's categories, and the form's for a gift. */
 const OTHER_CATEGORIES = CATEGORIES.filter((c) => !isArtKind(c.value));
+
+/** Whether an item is in the table: not a picture with its own view, and not a gift, which has one too. */
+const inTable = (category: string): boolean => !isArtKind(category) && category !== 'gift';
 
 function windowText(item: ShopItem): string | null {
   const from = item.availableFrom ? shortDate(new Date(item.availableFrom)) : null;
@@ -65,11 +69,11 @@ function windowText(item: ShopItem): string | null {
 /** 'listed' is everything not retired: what the shop has, or will have, on its shelves. */
 type StateFilter = 'listed' | 'all' | SaleState;
 
-type View = ArtKind | 'other';
+type View = ArtKind | 'gift' | 'other';
 
 /**
- * The shop's catalogue: what is on sale, at what price, and when. Backgrounds and icons have views of their own with
- * their art (admin/src/shop); everything else is in the table. A purchase sends only the SKU and is refused if the
+ * The shop's catalogue: what is on sale, at what price, and when. Backgrounds, icons and gifts have views of their own
+ * with their art (admin/src/shop); everything else is in the table. A purchase sends only the SKU and is refused if the
  * price moved, so a change is safe at once; a new price of 500 or more waits for a second admin (Approvals).
  */
 export function Shop(): React.JSX.Element {
@@ -88,7 +92,7 @@ export function Shop(): React.JSX.Element {
   const all = items.data;
   const taken = useMemo(() => new Set((all ?? []).map((i) => i.sku)), [all]);
   const count = (v: View): number | undefined =>
-    all ? all.filter((i) => (v === 'other' ? !isArtKind(i.category) : i.category === v) && !i.retiredAt).length : undefined;
+    all ? all.filter((i) => (v === 'other' ? inTable(i.category) : i.category === v) && !i.retiredAt).length : undefined;
   const reload = (): Promise<unknown> => Promise.all([items.reload(), pending.reload()]);
   const saved = async (message: string): Promise<void> => {
     setEditing(null);
@@ -108,9 +112,11 @@ export function Shop(): React.JSX.Element {
             <Button icon="refresh" onClick={() => void reload()} disabled={items.loading}>
               Refresh
             </Button>
-            <Button variant="primary" icon="plus" onClick={() => setEditing('new')}>
-              {view === 'other' ? 'New item' : `New ${KIND_NAME[view].one}`}
-            </Button>
+            {view !== 'gift' && (
+              <Button variant="primary" icon="plus" onClick={() => setEditing('new')}>
+                {view === 'other' ? 'New item' : `New ${KIND_NAME[view].one}`}
+              </Button>
+            )}
           </>
         }
       />
@@ -132,12 +138,15 @@ export function Shop(): React.JSX.Element {
         items={[
           { key: 'background', label: 'Backgrounds', count: count('background') },
           { key: 'icon', label: 'Icons', count: count('icon') },
+          { key: 'gift', label: 'Gifts', count: count('gift') },
           { key: 'other', label: 'Other items', count: count('other') },
         ]}
       />
       <TabPanel idBase="shop" value={view}>
         {view === 'other' ? (
           <OtherItems items={all ?? null} loading={items.loading} error={items.error} onReload={reload} onEdit={setEditing} />
+        ) : view === 'gift' ? (
+          <GiftCatalogue items={all ?? null} error={items.error} onRetry={() => void items.reload()} onEdit={setEditing} />
         ) : (
           <ArtCatalogue
             key={view}
@@ -153,7 +162,7 @@ export function Shop(): React.JSX.Element {
         )}
       </TabPanel>
 
-      {editing && view !== 'other' && (
+      {editing && view !== 'other' && view !== 'gift' && (
         <ArtForm
           key={editing === 'new' ? `new-${view}` : editing.sku}
           kind={view}
@@ -164,7 +173,7 @@ export function Shop(): React.JSX.Element {
           onSaved={saved}
         />
       )}
-      {editing && view === 'other' && (
+      {editing && (view === 'other' || view === 'gift') && (
         <ItemForm
           key={editing === 'new' ? 'new' : editing.sku}
           item={editing === 'new' ? null : editing}
@@ -212,7 +221,7 @@ function OtherItems({
   const [page, setPage] = useState(0);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const all = useMemo(() => (items ? items.filter((i) => !isArtKind(i.category)) : null), [items]);
+  const all = useMemo(() => (items ? items.filter((i) => inTable(i.category)) : null), [items]);
   const shown = useMemo(() => {
     if (!all) return null;
     // (Kurdish letters folded, as the shop folds them: "istikan" finds Îstîkan).

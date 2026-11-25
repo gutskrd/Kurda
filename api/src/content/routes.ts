@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { ContentRepository } from './repository.js';
@@ -8,7 +9,7 @@ import type { XpService } from '../xp/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 
 const answerBodySchema = z.object({
-  exerciseId: z.uuid(),
+  exerciseId: lowerUuid(),
   /** Shape depends on the exercise type; graded server-side. */
   answer: z.unknown(),
 });
@@ -26,7 +27,7 @@ export function registerLessonRoutes(
   /** A skill's markdown grammar note for the "Tips" tab, and the words its lessons bring in, for its guide. */
   app.get(
     '/skills/:id/grammar',
-    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: z.object({ id: lowerUuid() }) }, preHandler: requireAuth },
     async (req) => {
       const { id } = req.params as { id: string };
       const grammarMd = await content.grammarForSkill(id);
@@ -38,14 +39,14 @@ export function registerLessonRoutes(
   /** Start (or resume) a session for a published lesson. */
   app.get(
     '/lessons/:id/session',
-    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: z.object({ id: lowerUuid() }) }, preHandler: requireAuth },
     async (req) => sessions.startOrResume(req.user!.id, (req.params as { id: string }).id),
   );
 
   /** Reconnect / refresh a session (resume). */
   app.get(
     '/sessions/:id',
-    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: z.object({ id: lowerUuid() }) }, preHandler: requireAuth },
     async (req) => sessions.view((req.params as { id: string }).id, req.user!.id),
   );
 
@@ -53,7 +54,7 @@ export function registerLessonRoutes(
   app.post(
     '/sessions/:id/answers',
     {
-      schema: { params: z.object({ id: z.uuid() }), body: answerBodySchema },
+      schema: { params: z.object({ id: lowerUuid() }), body: answerBodySchema },
       preHandler: requireAuth,
     },
     async (req) => {
@@ -70,7 +71,7 @@ export function registerLessonRoutes(
   app.post(
     '/sessions/:id/retry',
     {
-      schema: { params: z.object({ id: z.uuid() }), body: answerBodySchema },
+      schema: { params: z.object({ id: lowerUuid() }), body: answerBodySchema },
       preHandler: requireAuth,
     },
     async (req) => {
@@ -87,7 +88,7 @@ export function registerLessonRoutes(
   app.post(
     '/sessions/:id/complete',
     {
-      schema: { params: z.object({ id: z.uuid() }) },
+      schema: { params: z.object({ id: lowerUuid() }) },
       config: { skipValidation: true },
       preHandler: requireAuth,
     },

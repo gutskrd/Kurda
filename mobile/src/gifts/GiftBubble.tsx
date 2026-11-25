@@ -17,7 +17,7 @@ import { GiftBox } from './art';
  * A gift in the chat. To you, unopened: a wrapped present that breathes a little (still under Reduce Motion) and "Tap
  * to open"; opened: what it was and from whom. To the sender: what they gave and whether it was opened ("Opened ✓", or
  * how many recipients have in a group). To everyone else in a group: the wrapped present and whom it is for. The price
- * is never shown.
+ * is never shown. A grand gift, once opened, stays on show for everyone in the chat, its picture large.
  */
 export function GiftBubble({
   card,
@@ -40,8 +40,9 @@ export function GiftBubble({
   const dir = useDirection();
   const report = useReportAction(onReport);
   const forMe = card.myGiftId !== null;
-  const wrapped = forMe ? !card.myOpened : !mine;
   const opened = card.recipients.filter((r) => r.opened).length;
+  const showpiece = card.tier === 'grand' && (forMe ? card.myOpened : opened > 0);
+  const wrapped = showpiece ? false : forMe ? !card.myOpened : !mine;
   const status = mine
     ? card.recipients.length > 1
       ? t('gift.bubble.openedCount', { opened, total: card.recipients.length })
@@ -55,7 +56,7 @@ export function GiftBubble({
   const sender = (card as { from?: GiftCard['from'] }).from;
   const fromName = sender === undefined ? senderName || null : giftSenderName(sender);
   const fromLine = fromName ? t('gift.from', { name: fromName }) : t('gift.fromMember');
-  const title = forMe ? (card.myOpened ? card.name : fromLine) : mine ? card.name : recipientsLine(card, t);
+  const title = forMe ? (card.myOpened ? card.name : fromLine) : mine || showpiece ? card.name : recipientsLine(card, t);
   const hint = forMe ? (card.myOpened ? fromLine : t('gift.bubble.tapToOpen')) : mine ? recipientsLine(card, t) : fromLine;
   const label = forMe && !card.myOpened ? t('gift.bubble.openA11y', { name: fromName ?? t('gift.someone') }) : [title, hint, status].filter(Boolean).join('. ');
 
@@ -63,12 +64,13 @@ export function GiftBubble({
     <View
       style={[
         styles.bubble,
-        // The art leads on the reading side, and the roomier edge is the text's.
-        { flexDirection: dir.row, backgroundColor: colors.glassFill, borderColor: colors.gold },
-        dir.row === 'row-reverse' ? styles.textLeft : styles.textRight,
+        // The art leads on the reading side, and the roomier edge is the text's; a grand gift stands above its words.
+        { flexDirection: showpiece ? 'column' : dir.row, backgroundColor: colors.glassFill, borderColor: colors.gold },
+        showpiece ? styles.showpiece : dir.row === 'row-reverse' ? styles.textLeft : styles.textRight,
       ]}
+      testID={showpiece ? 'gift-showpiece' : undefined}
     >
-      <View style={styles.art}>{wrapped ? <Breathing card={card} /> : <ItemThumb card={card} />}</View>
+      <View style={showpiece ? styles.artLarge : styles.art}>{wrapped ? <Breathing card={card} /> : <ItemThumb card={card} large={showpiece} />}</View>
       <View style={styles.text}>
         <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
           {title}
@@ -150,13 +152,13 @@ function Breathing({ card }: { card: GiftCard }): React.JSX.Element {
   );
 }
 
-function ItemThumb({ card }: { card: GiftCard }): React.JSX.Element {
+function ItemThumb({ card, large = false }: { card: GiftCard; large?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const uri = assetUrl(card.assetUrl);
   return uri ? (
     <Image
       source={{ uri }}
-      style={[styles.thumb, { borderRadius: card.category === 'icon' ? radii.pill : radii.md }]}
+      style={[large ? styles.thumbLarge : styles.thumb, { borderRadius: card.category === 'icon' ? radii.pill : radii.md }]}
       accessibilityIgnoresInvertColors
     />
   ) : (
@@ -185,5 +187,8 @@ const styles = StyleSheet.create({
   statusRow: { alignItems: 'center', gap: 4, marginTop: 2 },
   status: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   thumb: { width: 56, height: 56 },
+  thumbLarge: { width: 132, height: 132 },
+  artLarge: { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
+  showpiece: { alignItems: 'center', paddingHorizontal: spacing.md, paddingBottom: spacing.md },
   thumbFallback: { alignItems: 'center', justifyContent: 'center', borderRadius: radii.md },
 });

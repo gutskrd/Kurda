@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { weekStart } from '@kurda/shared';
 import { requireAccount, requireRoles } from '../plugins/auth.js';
 import { PROGRESS_TOOL_ROLES } from '../admin/roles.js';
@@ -28,7 +29,7 @@ export function registerLeagueRoutes(app: FastifyInstance, leagues: LeagueServic
   /** Admin: one group's table, with names, and what the week would mean for each member now. */
   app.get(
     '/admin/leagues/groups/:id',
-    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireRoles(...PROGRESS_TOOL_ROLES) },
+    { schema: { params: z.object({ id: lowerUuid() }) }, preHandler: requireRoles(...PROGRESS_TOOL_ROLES) },
     async (req) => {
       const group = await leagues.adminGroup((req.params as { id: string }).id);
       if (!group) throw new AppError('NOT_FOUND', 404, 'no such league group');

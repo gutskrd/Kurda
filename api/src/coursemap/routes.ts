@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { CourseMapService } from './service.js';
@@ -15,7 +16,7 @@ export function registerCourseMapRoutes(app: FastifyInstance): void {
   /** The scrollable skill-tree map for a course, with per-skill state. */
   app.get(
     '/courses/:id/map',
-    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: z.object({ id: lowerUuid() }) }, preHandler: requireAuth },
     async (req) => {
       const { id } = req.params as { id: string };
       const map = await maps.forUser(req.user!.id, id);

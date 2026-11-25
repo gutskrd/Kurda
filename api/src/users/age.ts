@@ -100,6 +100,18 @@ export async function isNotKnownAdultUser(executor: Pick<pg.Pool, 'query'>, user
   return r.rows[0]?.shielded ?? true;
 }
 
+/**
+ * Known to be an adult now, and an account of a person's own: not a guest, whose age nobody asked, and not a child's
+ * profile. What decides whether the apps may suggest buying or giving back; false for an unknown id.
+ */
+export async function isKnownAdultAccount(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<boolean> {
+  const r = await executor.query<{ adult: boolean }>(
+    `SELECT NOT u.guest AND u.kind <> 'child' AND NOT ${notKnownAdultSql('u')} AS adult FROM users u WHERE u.id = $1`,
+    [userId],
+  );
+  return r.rows[0]?.adult ?? false;
+}
+
 /** Whether the user has a birth month on record. False for an unknown id. */
 export async function hasBirthMonth(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<boolean> {
   const r = await executor.query<{ known: boolean }>(

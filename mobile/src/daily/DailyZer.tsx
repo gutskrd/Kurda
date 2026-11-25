@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
-import { reactionDelayMs } from '@kurda/shared';
+import { giftMeaning, reactionDelayMs } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useAuth } from '../auth/AuthContext';
 import { sayReactionLater } from '../characters/reactions';
 import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
-import { cellState, dailyAction, dailyClaimed, type DailyClaim, type DailyStatus } from '../rewards/daily';
+import { cellState, dailyAction, dailyClaimed, hasDailyZer, type DailyClaim, type DailyStatus } from '../rewards/daily';
+import { plusPitchAllowed } from '../gifts/nudges';
 import { ConfettiBurst, GlowRing, useCelebration } from '../theme/CelebrationParts';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -21,13 +22,16 @@ const COIN_STAGE = 44;
  * Today's Zêr inside the daily view, as on the website: the day's reward with a claim button (the server sets the
  * amount), a lesson first until one is finished today, or tomorrow once taken, and the cycle as a quiet row of coins.
  * A claim plays the app's celebration around the coin once, with a word from Xezo, and tells the rest of the app
- * (`dailyClaimed`), so Learn's purse shows the new Zêr. It is a Hevalo+ member's; the view leaves it out for anyone else.
+ * (`dailyClaimed`), so Learn's purse shows the new Zêr. The Zêr is a Hevalo+ member's; everyone claims the day for a
+ * small gift in the gift bag, said with the claim, and a free account the server knows is an adult hears with its claim
+ * that members also earn Zêr here, while Hevalo+ is on sale.
  */
 export function DailyZer({ daily, onClaimed, onLearn }: { daily: DailyStatus; onClaimed: (daily: DailyStatus) => void; onLearn?: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
+  const member = hasDailyZer(daily);
   const [busy, setBusy] = useState(false);
   const [landed, setLanded] = useState<DailyClaim | null>(null);
   const action = dailyAction(daily);
@@ -49,27 +53,43 @@ export function DailyZer({ daily, onClaimed, onLearn }: { daily: DailyStatus; on
     onClaimed(daily);
   }, [client, daily, onClaimed]);
 
-  const words = landed
-    ? t('rewards.claimedZer', { amount: n(landed.reward) })
-    : action === 'claim'
-      ? t('daily.dayReward', { day: n(daily.claimableDay), amount: n(daily.reward) })
-      : action === 'learnFirst'
-        ? t('daily.learnFirst', { amount: n(daily.reward) })
-        : t('daily.comeBack');
+  const gift = landed?.bagGift ?? null;
+  const giftMeant = gift ? giftMeaning(gift.sku, locale) : null;
+  const giftWords = gift ? t('daily.gift.landed', { item: giftMeant ? `${gift.name} (${giftMeant})` : gift.name }) : null;
+  const words = member
+    ? landed
+      ? t('rewards.claimedZer', { amount: n(landed.reward) })
+      : action === 'claim'
+        ? t('daily.dayReward', { day: n(daily.claimableDay), amount: n(daily.reward) })
+        : action === 'learnFirst'
+          ? t('daily.learnFirst', { amount: n(daily.reward) })
+          : t('daily.comeBack')
+    : landed
+      ? (giftWords ?? t('daily.gift.full'))
+      : action === 'claim'
+        ? t('daily.gift.claim')
+        : action === 'learnFirst'
+          ? t('daily.gift.learnFirst')
+          : t('daily.comeBack');
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surface }]} testID="daily-zer">
       <View style={[styles.top, { flexDirection: dir.row }]}>
         <View style={[styles.coin, { backgroundColor: wash(colors.gold) }]} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-          {landed ? <ClaimedCoin /> : <Icon name="coin" size={COIN} />}
+          {member ? landed ? <ClaimedCoin /> : <Icon name="coin" size={COIN} /> : <Icon name="gift" size={COIN - 12} color={colors.goldText} />}
         </View>
         <View style={styles.words}>
           <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
-            {t('daily.title')}
+            {t(member ? 'daily.title' : 'daily.gift.title')}
           </Text>
           <Text style={[styles.line, dir.text, { color: colors.textSecondary }]} accessibilityLiveRegion={landed ? 'polite' : undefined}>
             {words}
           </Text>
+          {member && giftWords ? <Text style={[styles.line, dir.text, { color: colors.textSecondary }]}>{giftWords}</Text> : null}
+          {!member && landed && plusPitchAllowed(landed.nudges) ? (
+            <Text style={[styles.line, dir.text, { color: colors.textSecondary }]}>{t('gift.membersEarnZer')}</Text>
+          ) : null}
+          {member ? (
           <View style={[styles.cycle, { flexDirection: dir.row }]} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
             {daily.schedule.map((_, i) => {
               const cell = cellState(daily, i + 1);
@@ -86,6 +106,7 @@ export function DailyZer({ daily, onClaimed, onLearn }: { daily: DailyStatus; on
               );
             })}
           </View>
+          ) : null}
         </View>
         {action === 'claim' ? (
           <ClayButton label={t('daily.claimNow')} tone="primary" busy={busy} onPress={() => void claim()} testID="daily-claim" />

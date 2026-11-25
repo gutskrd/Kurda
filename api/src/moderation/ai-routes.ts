@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth } from '../plugins/auth.js';
 import { requireCapability } from '../admin/routes.js';
 
@@ -24,7 +25,7 @@ export function registerAiModerationRoutes(app: FastifyInstance, ai: AiModeratio
     '/admin/moderation/flags/:id/resolve',
     {
       schema: {
-        params: z.object({ id: z.uuid() }),
+        params: z.object({ id: lowerUuid() }),
         body: z.object({ outcome: z.enum(['actioned', 'reversed']) }),
       },
       preHandler: moderators,
@@ -56,7 +57,7 @@ export function registerImageModerationRoutes(app: FastifyInstance, images: Imag
     '/admin/moderation/image-flags/:id/resolve',
     {
       schema: {
-        params: z.object({ id: z.uuid() }),
+        params: z.object({ id: lowerUuid() }),
         body: z.object({ outcome: z.enum(['actioned', 'reversed']) }),
       },
       preHandler: moderators,

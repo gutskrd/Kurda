@@ -3,13 +3,14 @@
  * referenced by owners' entitlements, gifts and refresh history (all cascading) and by what people wear (set to
  * null), so deleting an item someone has would take it, and what they paid for, from them. An item is therefore
  * deleted only when nothing references it; otherwise it is retired: off sale, out of the admin list, and kept and
- * wearable for its owners (`hasAccess`). Shipped items (api/content/cosmetics.json) are always retired, since the seed
- * script would recreate a deleted row.
+ * wearable for its owners (`hasAccess`). Shipped items (api/content/cosmetics.json) and the gifts (shared GIFTS) are
+ * always retired, since the seed would recreate a deleted row and a gift may wait in someone's gift bag.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type pg from 'pg';
+import { GIFTS, giftSku } from '@kurda/shared';
 import { isBuiltInArtKey, isUploadedArtKey, type ArtKind } from '../cosmetics/access.js';
 import { SENSITIVE_PRICE } from '../admin/config-service.js';
 import type { AuditService } from '../admin/audit-service.js';
@@ -65,9 +66,9 @@ function loadBuiltInSkus(): ReadonlySet<string> {
   try {
     const p = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'content', 'cosmetics.json');
     const manifest = JSON.parse(readFileSync(p, 'utf8')) as { icons?: { sku: string }[]; backgrounds?: { sku: string }[]; frames?: { sku: string }[] };
-    return new Set([...(manifest.icons ?? []), ...(manifest.backgrounds ?? []), ...(manifest.frames ?? [])].map((i) => i.sku));
+    return new Set([...[...(manifest.icons ?? []), ...(manifest.backgrounds ?? []), ...(manifest.frames ?? [])].map((i) => i.sku), ...GIFTS.map((g) => giftSku(g.id))]);
   } catch {
-    return new Set();
+    return new Set(GIFTS.map((g) => giftSku(g.id)));
   }
 }
 const BUILT_IN = loadBuiltInSkus();
@@ -134,6 +135,10 @@ export class CatalogueEditor {
           if (!isUploadedArtKey(next.assetKey) && !isBuiltInArtKey(next.category, next.assetKey)) {
             throw new AppError('BAD_ART_KEY', 400, `that is not ${next.category === 'icon' ? 'an icon' : 'a background'}'s picture`);
           }
+        }
+        // a gift is drawn by its sku, so it may have no picture of its own; one it is given must be square
+        if (next.category === 'gift' && next.assetKey && !isUploadedArtKey(next.assetKey) && !isBuiltInArtKey('icon', next.assetKey)) {
+          throw new AppError('BAD_ART_KEY', 400, 'that is not a square picture');
         }
         // new art is held for the item; art it keeps is held already
         const claimed = await claimArt(client, next.assetKey, next.category);

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import type { BadgeNotices, BadgeService } from '../badges/service.js';
 import type { Notification, PushService } from '../push/service.js';
 import type { JobQueue } from './queue.js';
@@ -27,7 +28,7 @@ export function makeBadgeRarityJob(badges: BadgeService): JobDefinition<BadgeRar
   });
 }
 
-const pushSchema = z.object({ userId: z.uuid(), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) });
+const pushSchema = z.object({ userId: lowerUuid(), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) });
 export type BadgePushPayload = z.infer<typeof pushSchema>;
 
 /** The day's bundled push, gated by the learner's settings and quiet hours at delivery like every push. */

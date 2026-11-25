@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount } from '../plugins/auth.js';
 import { requireParental } from '../parental/supervision.js';
 import type { ActivityService } from './service.js';
@@ -9,7 +10,7 @@ export function registerActivityRoutes(app: FastifyInstance, activity: ActivityS
   /** Congratulate a friend's milestone (idempotent). */
   app.post(
     '/activity/:eventId/congrats',
-    { schema: { params: z.object({ eventId: z.uuid() }) }, config: { skipValidation: true }, preHandler: [requireAccount, requireParental('posts')] },
+    { schema: { params: z.object({ eventId: lowerUuid() }) }, config: { skipValidation: true }, preHandler: [requireAccount, requireParental('posts')] },
     async (req, reply) => {
       const congrats = await activity.congratulate(req.user!.id, (req.params as { eventId: string }).eventId);
       // An event the caller is not shown answers like an id that does not exist.

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireRoles } from '../plugins/auth.js';
 import type { FraudService } from './service.js';
 
@@ -18,7 +19,7 @@ export function registerFraudRoutes(app: FastifyInstance, fraud: FraudService): 
   app.post(
     '/admin/fraud/reviews/:id/resolve',
     {
-      schema: { params: z.object({ id: z.uuid() }), body: resolveBody },
+      schema: { params: z.object({ id: lowerUuid() }), body: resolveBody },
       // clearing a review grants the Zêr it held: an economy write like any other
       config: { rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const } },
       preHandler: requireRoles('admin'),

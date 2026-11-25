@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { COPYRIGHT_NOTICES_PER_HOUR, COUNTER_NOTICES_PER_HOUR } from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 import { verifyCaptcha } from '../auth/captcha.js';
@@ -42,7 +43,7 @@ const counterBody = z.object({
   signature: text(1000),
 });
 
-const idParams = z.object({ id: z.uuid() });
+const idParams = z.object({ id: lowerUuid() });
 
 /**
  * Copyright notice routes. `POST /copyright/notices` needs no sign-in, since rights holders are rarely members; the

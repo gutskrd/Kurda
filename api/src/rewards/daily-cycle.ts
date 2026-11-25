@@ -3,7 +3,7 @@ import { dayDiff } from '../streaks/streak-logic.js';
 /**
  * The pure daily Zêr reward cycle: from the last claim date and today (local 'YYYY-MM-DD' dates), whether a claim is
  * available and which cycle day it lands on; day 7 pays the bonus. The daily Zêr is a Hevalo+ member's (the money model
- * in docs/money). Server time only. A claim needs a lesson or practice session finished that day, since paying for
+ * in docs/money); everyone's claim also puts a small gift in their gift bag. Server time only. A claim needs a lesson or practice session finished that day, since paying for
  * showing up is risky while recognising learning is not (the roadmap in docs/research). A missed day never resets the
  * cycle, which would punish exactly the lapse a learner needs to recover from.
  */
@@ -62,12 +62,12 @@ export function statusFor(state: DailyRewardState, today: string, learnedToday: 
 
 /**
  * What GET /rewards/daily answers, and the daily view repeats: the status, the last claimed day, and whether this learner
- * has the daily Zêr at all (`member`); for anyone else nothing can be claimed and the apps show no daily Zêr.
+ * has the daily Zêr (`member`). Anyone else claims the day too, for a small gift in their gift bag and no Zêr.
  */
 export type DailyRewardView = DailyRewardStatus & { cycleDay: number; member: boolean };
 
-/** The status for `today`, claimable only by a Hevalo+ member. */
+/** The status for `today`: claimable by everyone, paying Zêr only to a Hevalo+ member. */
 export function dailyRewardView(state: DailyRewardState, today: string, learnedToday: boolean, plus: boolean): DailyRewardView {
   const status = statusFor(state, today, learnedToday);
-  return { ...status, canClaim: status.canClaim && plus, cycleDay: state.cycleDay, member: plus };
+  return { ...status, cycleDay: state.cycleDay, member: plus };
 }

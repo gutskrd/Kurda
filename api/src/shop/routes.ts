@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount, requireAuth, requireRoles } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { cosmeticAssetUrl } from '../cosmetics/access.js';
@@ -15,7 +16,7 @@ const itemBody = z.object({
   name: z.string().min(1).max(120),
   description: z.string().max(500).optional(),
   // 'tag' is the Kurdish identity tag (tag_kurdish); without it the item could be listed but never saved again.
-  category: z.enum(['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'tag', 'sticker', 'misc']).optional(),
+  category: z.enum(['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'tag', 'sticker', 'gift', 'misc']).optional(),
   /** every price is in Zêr; the field stays so older consoles keep working */
   currency: z.literal('zer').default('zer'),
   price: z.number().int().min(0).max(10_000_000),
@@ -32,9 +33,11 @@ const itemBody = z.object({
 
 const giftBody = z.object({
   sku: z.string().min(1).max(80),
-  toUserId: z.uuid(),
+  toUserId: lowerUuid(),
   idempotencyKey: z.string().min(8).max(120),
   expectedPrice: z.number().int().min(0).max(10_000_000).optional(),
+  /** a big gift's second confirmation, as `POST /gifts` takes it */
+  confirmToken: z.string().min(1).max(120).optional(),
 });
 
 const purchaseBody = z.object({
@@ -122,7 +125,7 @@ export function registerShopRoutes(
       return {
         items: (await shop.allItems({ retired })).map((i) => ({
           ...i,
-          assetUrl: cosmeticAssetUrl(i.category, i.assetKey, publicUrl),
+          assetUrl: cosmeticAssetUrl(i.category, i.assetKey, publicUrl, i.sku),
         })),
       };
     },
@@ -132,7 +135,7 @@ export function registerShopRoutes(
   app.get('/shop', { preHandler: requireAuth }, async (req) => ({
     items: (await shop.catalog(req.user!.id)).map((i) => ({
       ...i,
-      assetUrl: cosmeticAssetUrl(i.category, i.assetKey, publicUrl),
+      assetUrl: cosmeticAssetUrl(i.category, i.assetKey, publicUrl, i.sku),
     })),
     // false for a supervised teen whose parent switched buying with real money off, so the apps never start a purchase;
     // a receipt already paid is still credited (iap/routes.ts)
@@ -166,7 +169,7 @@ export function registerShopRoutes(
       preHandler: [requireAccount, requireBirthMonth],
     },
     async (req) => {
-      const { sku, toUserId, idempotencyKey, expectedPrice } = req.body as z.infer<typeof giftBody>;
+      const { sku, toUserId, idempotencyKey, expectedPrice, confirmToken } = req.body as z.infer<typeof giftBody>;
       const result = await deps.gifts.send({
         fromId: req.user!.id,
         toIds: [toUserId],
@@ -174,6 +177,7 @@ export function registerShopRoutes(
         chat: null,
         idempotencyKey,
         expectedPrice,
+        confirmToken,
       });
       const refused = result.skipped[0];
       if (refused) throw SHOP_GIFT_REFUSALS[refused.reason]();
@@ -190,7 +194,7 @@ export function registerShopRoutes(
   app.get('/me/gifts', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => ({
     gifts: (await shop.giftsReceived(req.user!.id)).map((g) => ({
       ...g,
-      assetUrl: cosmeticAssetUrl(g.category, g.assetKey, publicUrl),
+      assetUrl: cosmeticAssetUrl(g.category, g.assetKey, publicUrl, g.sku),
     })),
     unseen: await shop.unseenGiftCount(req.user!.id),
   }));
@@ -215,7 +219,7 @@ export function registerShopRoutes(
     return {
       items: items.map((i) => ({
         ...i,
-        assetUrl: cosmeticAssetUrl(i.category, i.assetKey, publicUrl),
+        assetUrl: cosmeticAssetUrl(i.category, i.assetKey, publicUrl, i.sku),
       })),
       refreshedItems: refreshedItems ?? [],
     };

@@ -195,6 +195,7 @@ export { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg, type PathLandmarkOpti
 export { chapterBannerSvg, type ChapterBannerOptions } from './chapter-banner.js';
 export { WORD_PICTURES, WORD_PICTURE_IDS, wordPictureSvg, type WordPictureId, type WordPictureOptions } from './word-pictures.js';
 export { DICTIONARY_CANVAS, DICTIONARY_TILE, dictionarySvg, dictionaryStillSvg, dictionaryTileSvg, dictionaryTiles, type DictionaryArtOptions, type DictionaryTile } from './dictionary.js';
+export { GIFT_ART_IDS, giftArtKey, giftArtSvg, isGiftArtId, type GiftArtId, type GiftArtOptions } from './gift-art.js';
 export {
   BOOK_APPLE_BITES,
   BOOK_BACKDROP,

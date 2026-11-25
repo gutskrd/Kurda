@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import {
   APPEAL_STATUSES,
   BAN_CONTENT_CHOICES,
@@ -23,7 +24,7 @@ import type { ModerationQueueService, QueueFilters } from './queue-service.js';
 import { logAdminAction, type SanctionsService } from './sanctions-service.js';
 import { inTransaction } from './tx.js';
 
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 // an empty POST arrives with no body at all
 const noBody = z.object({}).nullish();
 const reasonBody = z.object({ reason: z.string().trim().min(1).max(2000) });

@@ -123,7 +123,7 @@ export class MembersBoxService {
       freeGifts: r.free_gifts,
       item:
         r.item_sku && r.item_name && r.item_category
-          ? { sku: r.item_sku, name: r.item_name, category: r.item_category, assetUrl: cosmeticAssetUrl(r.item_category, r.item_asset, this.publicUrl) }
+          ? { sku: r.item_sku, name: r.item_name, category: r.item_category, assetUrl: cosmeticAssetUrl(r.item_category, r.item_asset, this.publicUrl, r.item_sku) }
           : null,
       grantedAt: new Date(r.granted_at).toISOString(),
       seen: r.seen_at !== null,

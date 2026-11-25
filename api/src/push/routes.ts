@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { makePushSendJob } from '../jobs/push-jobs.js';
 import { NOTIFICATION_CATEGORIES } from '../notifications/prefs.js';
@@ -17,7 +18,7 @@ const registerBody = z.object({
 const tokenBody = z.object({ token: pushToken });
 
 const testBody = z.object({
-  userId: z.uuid().optional(),
+  userId: lowerUuid().optional(),
   category: z.enum(NOTIFICATION_CATEGORIES).default('events'),
   title: z.string().min(1).max(120),
   body: z.string().min(1).max(500),

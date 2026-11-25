@@ -9,21 +9,22 @@ import {
   type ReviewConversationKind,
 } from '@kurda/shared';
 import { requireAdmin, requireCapability } from '../admin/routes.js';
+import { lowerUuid } from '../http/ids.js';
 import { ADMIN_ROLES, LEGACY_ADMIN_ROLE } from '../admin/roles.js';
 import type { AdminTotpService } from '../admin/totp-service.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import type { MessageAccessService, Viewer } from './service.js';
 
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 const grantBody = z.object({
   reason: z.enum(SAFETY_REVIEW_REASONS),
   note: z.string().trim().min(SAFETY_REVIEW_NOTE_MIN).max(SAFETY_REVIEW_NOTE_MAX),
-  reviewerId: z.uuid().optional(),
-  caseId: z.uuid().optional(),
+  reviewerId: lowerUuid().optional(),
+  caseId: lowerUuid().optional(),
 });
-const conversationParams = z.object({ id: z.uuid(), kind: z.enum(REVIEW_CONVERSATION_KINDS), conversationId: z.uuid() });
-const pageQuery = z.object({ before: z.uuid().optional() });
-const logQuery = z.object({ before: z.uuid().optional(), limit: z.coerce.number().int().min(1).max(200).optional() });
+const conversationParams = z.object({ id: lowerUuid(), kind: z.enum(REVIEW_CONVERSATION_KINDS), conversationId: lowerUuid() });
+const pageQuery = z.object({ before: lowerUuid().optional() });
+const logQuery = z.object({ before: lowerUuid().optional(), limit: z.coerce.number().int().min(1).max(200).optional() });
 // an empty POST arrives with no body at all
 const noBody = z.object({}).nullish();
 
