@@ -88,6 +88,25 @@ describe('the Access log', () => {
     expect(granted).toHaveTextContent(NOTE);
   });
 
+  it('shows other admins the reason alone, without the note or the case', async () => {
+    setToken('tok');
+    const hidden: AccessLogPage = {
+      open: [{ ...open, note: null }],
+      entries: [
+        entry({ id: 'e-3', kind: 'case', basis: 'report', review: null, caseId: null }),
+        entry({ id: 'e-1', kind: 'granted', staff: { id: 'o-1', username: 'owner' }, review: { ...review, note: null } }),
+      ],
+      nextCursor: null,
+    };
+    fakeApi(on('GET', '/admin/message-access/log?limit=50', json(hidden)));
+    renderUi(<AccessLog />);
+    const log = await screen.findByRole('table', { name: 'Access log entries' });
+    expect(within(log).getByText('Read a reported letter or message in its case')).toBeInTheDocument();
+    expect(within(log).queryByRole('link', { name: /^Case / })).not.toBeInTheDocument();
+    expect(screen.queryByText(NOTE)).not.toBeInTheDocument();
+    expect(screen.getAllByText('A legal request from the authorities').length).toBe(2);
+  });
+
   it('pages back to older entries only when asked', async () => {
     const user = userEvent.setup();
     setToken('tok');

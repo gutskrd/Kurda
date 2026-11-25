@@ -313,7 +313,10 @@ function GrantForm({ initialUserId, onGranted }: { initialUserId: string | null;
         />
         <Textarea
           label="Why this account, and why now"
-          hint="Every admin reads this note on the Access log. Say what makes the review necessary, with no more about the person than that needs."
+          hint={
+            'Superadmins and the reader see this note; other admins see the reason alone. ' +
+            'Say what makes the review necessary, with no more about the person than that needs.'
+          }
           rows={4}
           maxLength={SAFETY_REVIEW_NOTE_MAX}
           value={note}
@@ -346,18 +349,21 @@ function ReviewReader({ id, open }: { id: string; open: { kind: ReviewConversati
   if (loaded.error != null && !loaded.data) {
     const ended = loaded.error instanceof ApiError && loaded.error.status === 410;
     const missing = loaded.error instanceof ApiError && loaded.error.status === 404;
+    const involved = loaded.error instanceof ApiError && loaded.error.code === 'REVIEWER_INVOLVED';
     return (
       <div>
         <PageHeader back={back} title="Safety review" />
-        {ended || missing ? (
+        {ended || missing || involved ? (
           <EmptyState
-            title={ended ? 'This review has ended' : 'There is no review here for you'}
+            title={ended ? 'This review has ended' : involved ? 'You write with this account' : 'There is no review here for you'}
             icon="lock"
             action={<a href={back.href}>Back to safety reviews</a>}
           >
             {ended
               ? 'Its 24 hours are over, or it was ended early. Nothing under it can be opened any more.'
-              : 'Only the person a review was opened for can read it.'}
+              : involved
+                ? 'Someone who writes with an account never reads it. Ask a superadmin to open a review for another reader.'
+                : 'Only the person a review was opened for can read it.'}
           </EmptyState>
         ) : (
           <ErrorState error={loaded.error} onRetry={() => void loaded.reload()} what="this safety review" />
@@ -421,10 +427,12 @@ function ReviewReader({ id, open }: { id: string; open: { kind: ReviewConversati
             <dt>Reason</dt>
             <dd>{reasonLabel(review.reason)}</dd>
           </div>
-          <div>
-            <dt>Note</dt>
-            <dd dir="auto">{review.note}</dd>
-          </div>
+          {review.note && (
+            <div>
+              <dt>Note</dt>
+              <dd dir="auto">{review.note}</dd>
+            </div>
+          )}
           {review.caseId && (
             <div>
               <dt>Case</dt>
@@ -549,9 +557,12 @@ function ReviewLine({ message: m, subjectName, sensitive }: { message: ReviewMes
         {m.fromSubject && <Badge tone="info">{`Written by ${subjectName}`}</Badge>}
         {m.status && STATUS_TEXT[m.status] && <Badge tone="warn">{STATUS_TEXT[m.status]}</Badge>}
       </div>
-      <div className="chat-line-body" dir="auto">
-        {m.body ?? <span className="subtle">{m.kind === 'text' ? 'No text' : `A ${m.kind.replace(/_/g, ' ')}`}</span>}
-      </div>
+      {/* A message someone deleted shows only that it was: a review never reads what was taken back. */}
+      {m.status !== 'deleted' && (
+        <div className="chat-line-body" dir="auto">
+          {m.body ?? <span className="subtle">{m.kind === 'text' ? 'No text' : `A ${m.kind.replace(/_/g, ' ')}`}</span>}
+        </div>
+      )}
       {letter && m.decor && <LetterPaperEvidence raw={m.decor} sensitive={sensitive} />}
     </li>
   );

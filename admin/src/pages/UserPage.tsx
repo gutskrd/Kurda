@@ -265,7 +265,7 @@ function SafetyReviewPanel({ user: u }: { user: UserDetail }): React.JSX.Element
     >
       <p className="section-text">
         For a child’s safety, a threat to someone, a legal request or a report that needs more context, a superadmin can open a safety review:
-        read-only, for 24 hours, on the Access log for every admin to see. @{u.username} is not told.
+        read-only, for 24 hours, on the Access log every admin can see. @{u.username} is not told.
       </p>
     </Section>
   );

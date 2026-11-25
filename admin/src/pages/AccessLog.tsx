@@ -46,9 +46,11 @@ export function AccessLog(): React.JSX.Element {
       cell: (r) => (
         <>
           <strong>{reasonLabel(r.reason)}</strong>
-          <span className="cell-sub" dir="auto">
-            {r.note}
-          </span>
+          {r.note && (
+            <span className="cell-sub" dir="auto">
+              {r.note}
+            </span>
+          )}
         </>
       ),
     },
@@ -80,7 +82,7 @@ export function AccessLog(): React.JSX.Element {
       cell: (e) => (
         <>
           {accessWhy(e)}
-          {e.kind === 'granted' && e.review && (
+          {e.kind === 'granted' && e.review?.note && (
             <span className="cell-sub" dir="auto">
               {e.review.note}
             </span>
@@ -96,7 +98,8 @@ export function AccessLog(): React.JSX.Element {
         title="Access log"
         subtitle={
           'Every time staff opened someone’s letters or private messages: who, whose, when and why. ' +
-          'Every admin can read it, and nothing here can be changed. What was read is never kept in it.'
+          'Every admin can read it, and nothing here can be changed. What was read is never kept in it; the note behind each review ' +
+          'and the case it names are for superadmins.'
         }
       />
       {first.error != null && !first.data ? (

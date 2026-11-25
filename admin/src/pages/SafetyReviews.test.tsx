@@ -225,6 +225,28 @@ describe('reading under a review', () => {
     expect(screen.queryByRole('button', { name: 'Older' })).not.toBeInTheDocument();
   });
 
+  it('shows that a message was deleted, and nothing of what it said', async () => {
+    const GROUP_ID = '9e2f0000-0000-4000-8000-0000000000d1';
+    const page: ReviewConversationPage = {
+      conversation: { kind: 'group', id: GROUP_ID, with: null, title: 'Kurmancî beginners', messages: 2, firstAt: ago(3), lastAt: ago(1) },
+      messages: [
+        { id: 'g-1', sender: { id: FRIEND_ID, username: 'dilan' }, fromSubject: false, kind: 'text', body: null, createdAt: ago(3), status: 'deleted' },
+        { id: 'g-2', sender: { id: SUBJECT_ID, username: 'baran' }, fromSubject: true, kind: 'text', body: 'Silav hemû', createdAt: ago(1), status: null },
+      ],
+      olderCursor: null,
+    };
+    show(`#/safety-reviews/${REVIEW_ID}/group/${GROUP_ID}`, MODERATOR, on('GET', base, json(opened)), on('GET', `${base}/conversations/group/${GROUP_ID}`, json(page)));
+    const deleted = (await screen.findByText('Deleted')).closest('li')!;
+    expect(within(deleted).queryByText('No text')).not.toBeInTheDocument();
+    expect(deleted.querySelector('.chat-line-body')).toBeNull();
+    expect(screen.getByText('Silav hemû')).toBeInTheDocument();
+  });
+
+  it('says when the reader has come to write with the account', async () => {
+    show(`#/safety-reviews/${REVIEW_ID}`, MODERATOR, on('GET', base, failure(403, 'REVIEWER_INVOLVED', 'you write with this account now')));
+    expect(await screen.findByText('You write with this account')).toBeInTheDocument();
+  });
+
   it('says when a review has ended', async () => {
     show(`#/safety-reviews/${REVIEW_ID}`, MODERATOR, on('GET', base, failure(410, 'REVIEW_ENDED', 'this safety review has ended')));
     expect(await screen.findByText('This review has ended')).toBeInTheDocument();
