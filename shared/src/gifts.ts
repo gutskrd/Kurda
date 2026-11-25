@@ -15,10 +15,10 @@ export interface GiftTierInput {
   limited: boolean;
 }
 
-/** Limited items are legendary, items of 1,500 Zêr or more rare, the rest common. The API decides; clients only animate it. */
+/** Limited items are legendary, items of 750 Zêr or more rare, the rest common. The API decides; clients only animate it. */
 export function giftTierFor(item: GiftTierInput): GiftTier {
   if (item.limited) return 'legendary';
-  if (item.price >= 1500) return 'rare';
+  if (item.price >= 750) return 'rare';
   return 'common';
 }
 
@@ -27,15 +27,15 @@ export const GIFT_STICKER_CATEGORY = 'sticker';
 
 /** The gift stickers, three at each size, smallest first; the art is the matching app icon's picture. */
 export const GIFT_STICKERS: ReadonlyArray<{ sku: string; name: string; assetKey: string; price: number }> = [
-  { sku: 'sticker-kevok', name: 'Kevok', assetKey: 'icons/made-10-kevok.png', price: 40 },
-  { sku: 'sticker-lale', name: 'Lale', assetKey: 'icons/made-04-lale.png', price: 40 },
-  { sku: 'sticker-piyan', name: 'Piyan', assetKey: 'icons/made-08-caydan.png', price: 40 },
-  { sku: 'sticker-hinar', name: 'Hinar', assetKey: 'icons/made-01-hinar.png', price: 120 },
-  { sku: 'sticker-roj', name: 'Roj', assetKey: 'icons/made-02-roj.png', price: 120 },
-  { sku: 'sticker-saz', name: 'Saz', assetKey: 'icons/made-09-saz.png', price: 120 },
-  { sku: 'sticker-ask', name: 'Ask', assetKey: 'icons/made-06-ask.png', price: 400 },
-  { sku: 'sticker-pet', name: 'Pêta Newrozê', assetKey: 'icons/made-13-pet.png', price: 400 },
-  { sku: 'sticker-heyv', name: 'Heyv', assetKey: 'icons/made-14-heyv.png', price: 400 },
+  { sku: 'sticker-kevok', name: 'Kevok', assetKey: 'icons/made-10-kevok.png', price: 20 },
+  { sku: 'sticker-lale', name: 'Lale', assetKey: 'icons/made-04-lale.png', price: 20 },
+  { sku: 'sticker-piyan', name: 'Piyan', assetKey: 'icons/made-08-caydan.png', price: 20 },
+  { sku: 'sticker-hinar', name: 'Hinar', assetKey: 'icons/made-01-hinar.png', price: 50 },
+  { sku: 'sticker-roj', name: 'Roj', assetKey: 'icons/made-02-roj.png', price: 50 },
+  { sku: 'sticker-saz', name: 'Saz', assetKey: 'icons/made-09-saz.png', price: 50 },
+  { sku: 'sticker-ask', name: 'Ask', assetKey: 'icons/made-06-ask.png', price: 150 },
+  { sku: 'sticker-pet', name: 'Pêta Newrozê', assetKey: 'icons/made-13-pet.png', price: 150 },
+  { sku: 'sticker-heyv', name: 'Heyv', assetKey: 'icons/made-14-heyv.png', price: 150 },
 ];
 
 /** Whether a shop category is a gift sticker, which is given rather than bought for oneself or worn. */

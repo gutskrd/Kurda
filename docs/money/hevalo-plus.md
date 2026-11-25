@@ -6,43 +6,74 @@ phone stores. The website shows what people own and what things are worth, and s
 
 ## One currency: Zêr
 
-Gewher is retired. Zêr is the only currency: earned by learning, bought in packs, spent on looks and gifts.
+Gewher is retired. Zêr is the only currency: earned by Hevalo+ members through learning, bought in packs by anyone,
+spent on looks and gifts.
 
-- **What a Zêr is worth.** The smallest pack sets it: 400 Zêr for €0.99. Every price in Zêr is shown with its
-  real-money value next to it ("600 Zêr · ≈ €1.49"), in the store's own currency when the phone has the store's prices
-  and in euros otherwise. This follows the price-disclosure rule in the proposed EU Digital Fairness Act.
-- **Packs** (phone stores only): 400 Zêr €0.99 · 2,200 Zêr €4.99 · 4,800 Zêr €9.99 · 10,400 Zêr €19.99.
-- **The switch from Gewher.** Each Gewher becomes 5 Zêr, in balances, in prices set in Gewher, and in event rewards.
-  League promotion pays 50 Zêr (was 10 Gewher), a tournament win 250 Zêr (was 50 Gewher).
+- **What a Zêr is worth.** 100 Zêr is one unit of the store's currency: €1, or $1 in the US store, as the big games
+  price their coins. Every price in Zêr is shown with its real-money value next to it ("300 Zêr · ≈ €3", "250 Zêr ·
+  ≈ €2.50"), in the store's own currency when the phone has the store's price for the smallest pack and in euros
+  otherwise. This follows the price-disclosure rule in the proposed EU Digital Fairness Act.
+- **Packs** (phone stores only, nothing sold yet; shared `ZER_PACKS`). The bigger packs carry bonus Zêr, shown apart
+  from the pack's own, so a Zêr keeps one price:
+
+  | Pack | Bonus | Lands | Price | Store id |
+  |---|---|---|---|---|
+  | 100 Zêr | | 100 | €0.99 | `app.hevalo.zer.100` |
+  | 500 Zêr | | 500 | €4.99 | `app.hevalo.zer.500` |
+  | 1,000 Zêr | + 100 | 1,100 | €9.99 | `app.hevalo.zer.1100` |
+  | 2,000 Zêr | + 400 | 2,400 | €19.99 | `app.hevalo.zer.2400` |
+  | 5,000 Zêr | + 1,500 | 6,500 | €49.99 | `app.hevalo.zer.6500` |
+
+- **The switch from Gewher.** Each Gewher held becomes 5 Zêr. What was priced or paid in Gewher is set at the new rate:
+  league promotion pays 25 Zêr (was 10 Gewher), a tournament win 125 Zêr (was 50 Gewher).
+- **The move to 100 Zêr to the euro.** Every Zêr price and earning was halved and rounded to a tidy 5. Balances were
+  not: nobody's number went down, and what early learners saved buys twice as much, as a thank-you.
 - **Nothing random is sold.** No paid chests, wheels or packs with unknown contents. Free rewards may vary in size.
 - **Looks only.** Zêr never buys XP, answers, streak protection, league places or quiz advantages.
 
 ## Earning
 
-| Source | Everyone | Hevalo+ member |
-|---|---|---|
-| Daily Zêr (the 7-day cycle 10, 15, 20, 25, 30, 40, 100) | none | yes |
-| Members' box, once each paid month | none | 500 Zêr, 3 free gifts, that month's members-only icon or background |
-| Daily quest chests | as today | twice as much |
-| Tree harvest | 25 | 25 |
-| Streak milestones: 7, 14, 30, 60, 100, 200, 365 days | 40, 60, 120, 150, 250, 400, 800 | twice as much |
-| Wins against other people (online games and quiz nights, rooms of 2+ accounts) | 10 a win, 3 paid wins a day | 20 a win |
-| Quiz night podium (rooms of 4+ accounts) | 30 / 20 / 10 | 60 / 40 / 20 |
-| League promotion | 50 | 50 |
+Only Hevalo+ members earn Zêr (a family plan counts; a child's profile never earns). Anyone else keeps the Zêr they
+have, spends it and can buy more; where the apps would show earned Zêr to them, they say once that it comes with
+Hevalo+.
+
+| Source | Hevalo+ member |
+|---|---|
+| Daily Zêr (the 7-day cycle) | 5, 10, 10, 15, 15, 20, 50 |
+| Members' box, once each paid month | 250 Zêr, 3 free gifts, that month's members-only icon or background |
+| Daily quest chests | common 6–10, rare 10–20, epic 20–35 |
+| Tree harvest | 15 |
+| Streak milestones: 7, 14, 30, 60, 100, 200, 365 days | 40, 60, 120, 150, 250, 400, 800 |
+| Wins against other people (online games and quiz nights, rooms of 2+ accounts) | 10 a win, 3 paid wins a day |
+| Quiz night podium (rooms of 4+ accounts) | 30 / 20 / 10 |
+| League promotion | 25 |
+| Tournament win | 125 |
+| Newroz event quests | 75, 100 and 175, and 250 for the event |
 
 - A streak milestone pays again only when a new streak reaches it at least 60 days after it last paid.
 - Paid wins skip pairs that look like one person (same device or network, per the existing ban-evasion signals).
-- Earned Zêr is capped per day (purchases and the members' box are not), so nothing can be farmed.
+- Earned Zêr is capped at 1,000 a day (purchases and the members' box are not), so nothing can be farmed.
 
 ## Spending
 
-Shop looks, trees, changing the letter bird, the Kurdish tag, and gifts. Streak restore is no longer bought: a member
-gets one free restore a month (as today), and anyone wins a broken streak back by finishing three lessons or practice
-sessions in one day within the three-day window.
+| What | Zêr |
+|---|---|
+| Backgrounds | 200–300 |
+| Icons | 300–450 |
+| Frames | 600–1,000 |
+| Trees | 400–1,100 |
+| Changing the letter bird | 250 |
+| The Kurdish tag | 250 |
+| Gift stickers | 20, 50, 150 |
+
+Streak restore is no longer bought: a member gets one free restore a month (as today), and anyone wins a broken streak
+back by finishing three lessons or practice sessions in one day within the three-day window. A price of 500 Zêr or
+more needs a second admin's approval.
 
 ## Gifts
 
-- Shop items as today, plus gift stickers: the app's icon pictures as small gifts at 40, 120 and 400 Zêr.
+- Shop items as today, plus gift stickers: the app's icon pictures as small gifts at 20, 50 and 150 Zêr. A free gift
+  from the members' box pays for one gift of up to 150 Zêr.
 - Sent to one to seven friends (in a chat) or onto a post. A post shows its gifts as a small row with a count; its
   author is told. Gifts onto a post come only from the author's friends of a day or more, or from anyone when both
   people are known adults.
@@ -58,11 +89,11 @@ sessions in one day within the three-day window.
 | Family monthly, up to 6 people | €6.99 | `app.hevalo.family.monthly` |
 | Family yearly, up to 6 people | €59.99 | `app.hevalo.family.yearly` |
 
-Members get: the daily Zêr and the members' box; members-only icons and backgrounds to wear; two streak freezes and a
-free restore a month; bigger quiz rooms (up to 50 players, others 8); lessons and audio downloaded for offline use;
-new culture-library collections first. Paying is through the phone stores (renewal terms, restore and manage links on
-the paywall). The server checks every store receipt and every renewal or refund notice; the apps never decide who is
-a member.
+Members get: Zêr from learning and playing (only members earn it), the daily Zêr and the members' box; members-only
+icons and backgrounds to wear; two streak freezes and a free restore a month; bigger quiz rooms (up to 50 players,
+others 8); lessons and audio downloaded for offline use; new culture-library collections first. Paying is through the
+phone stores (renewal terms, restore and manage links on the paywall). The server checks every store receipt and every
+renewal or refund notice; the apps never decide who is a member.
 
 ## Families and children
 

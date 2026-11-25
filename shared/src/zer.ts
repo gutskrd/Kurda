@@ -1,7 +1,8 @@
 /**
- * What Zêr is worth in money, so every price can show its real value beside it ("600 Zêr · ≈ €1.49"). The smallest pack
- * sets the rate; a phone that has the store's own price for that pack passes it as the rate, so the value is in the
- * reader's store currency, and everyone else sees euros.
+ * What Zêr is worth in money, so every price can show its real value beside it ("300 Zêr · ≈ €3"), and the packs the
+ * phone stores will sell. 100 Zêr is one unit of the store's currency, a euro or a dollar, so a price reads at a glance;
+ * a phone that has the store's own price for the smallest pack passes it as the rate, so the value is in the reader's
+ * store currency, and everyone else sees euros.
  */
 
 /** A rate: `amountMinor` of `currency` (ISO 4217, counted in its minor units, such as cents) buys `zer` Zêr. */
@@ -11,16 +12,34 @@ export interface ZerRate {
   zer: number;
 }
 
-/** The packs the phone stores will sell, smallest first, with their euro prices in cents. */
-export const ZER_PACKS: ReadonlyArray<{ zer: number; eurCents: number }> = [
-  { zer: 400, eurCents: 99 },
-  { zer: 2200, eurCents: 499 },
-  { zer: 4800, eurCents: 999 },
-  { zer: 10400, eurCents: 1999 },
+/**
+ * A pack the phone stores will sell (nothing is sold yet). The bigger packs add `bonus` Zêr on top, shown apart from the
+ * pack's own, so a Zêr keeps one price everywhere. `priceCents` is the store price point, the same number of cents in
+ * euros and in dollars.
+ */
+export interface ZerPack {
+  productId: string;
+  zer: number;
+  bonus: number;
+  priceCents: number;
+}
+
+/** The packs, smallest first; a product id names the Zêr the pack lands, its bonus included. */
+export const ZER_PACKS: readonly ZerPack[] = [
+  { productId: 'app.hevalo.zer.100', zer: 100, bonus: 0, priceCents: 99 },
+  { productId: 'app.hevalo.zer.500', zer: 500, bonus: 0, priceCents: 499 },
+  { productId: 'app.hevalo.zer.1100', zer: 1000, bonus: 100, priceCents: 999 },
+  { productId: 'app.hevalo.zer.2400', zer: 2000, bonus: 400, priceCents: 1999 },
+  { productId: 'app.hevalo.zer.6500', zer: 5000, bonus: 1500, priceCents: 4999 },
 ];
 
-/** The smallest pack's price, which is what a Zêr is worth: 400 Zêr for €0.99. */
-export const ZER_BASE_RATE: ZerRate = { amountMinor: ZER_PACKS[0]!.eurCents, currency: 'EUR', zer: ZER_PACKS[0]!.zer };
+/** All the Zêr a pack lands: its own and its bonus. */
+export function packZer(pack: Pick<ZerPack, 'zer' | 'bonus'>): number {
+  return pack.zer + pack.bonus;
+}
+
+/** What a Zêr is worth: 100 Zêr for €1.00. */
+export const ZER_BASE_RATE: ZerRate = { amountMinor: 100, currency: 'EUR', zer: 100 };
 
 /** How many decimals a currency's minor unit has (2 for euros, 0 for yen), as Intl knows it; 2 when it does not. */
 export function minorDigits(currency: string): number {
@@ -46,12 +65,14 @@ export function zerValue(zer: number, rate: ZerRate = ZER_BASE_RATE): { amountMi
   return { amountMinor: Math.max(1, Math.round((zer * r.amountMinor) / r.zer)), currency: r.currency };
 }
 
-/** "≈ €1.49": what `zer` Zêr is worth, formatted for the reader's locale; empty for nothing. */
+/** "≈ €6" for a whole amount, "≈ €0.50" otherwise: what `zer` Zêr is worth, formatted for the reader's locale; empty for nothing. */
 export function formatZerValue(zer: number, locale: string, rate: ZerRate = ZER_BASE_RATE): string {
   const value = zerValue(zer, rate);
   if (value.amountMinor <= 0) return '';
-  const digits = minorDigits(value.currency);
-  const amount = value.amountMinor / 10 ** digits;
+  const unit = 10 ** minorDigits(value.currency);
+  // a whole amount drops its cents, as a price tag would; anything else keeps them all, never "€0.5"
+  const digits = value.amountMinor % unit === 0 ? 0 : minorDigits(value.currency);
+  const amount = value.amountMinor / unit;
   let text: string;
   try {
     const options = { style: 'currency', currency: value.currency, minimumFractionDigits: digits, maximumFractionDigits: digits } as const;

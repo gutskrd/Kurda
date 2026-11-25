@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import type { WalletService } from '../wallet/service.js';
 import { isEconomyBlocked } from '../economy/standing.js';
+import { earnsZer } from '../earn/service.js';
 import { shownToSql } from '../users/age.js';
 import {
   firstRoundMatches,
@@ -342,8 +343,8 @@ export class TournamentService {
     // Nobody the economy does not pay gets a prize (economy/standing.ts); the bracket still names the winner, and an admin
     // can pay by hand once a review clears them.
     if (await isEconomyBlocked(this.pool, userId)) return;
-    // idempotent: the (idempotencyKey) guard makes a retry a no-op
-    if (reward.zer > 0) {
+    // idempotent: the (idempotencyKey) guard makes a retry a no-op; a prize is Zêr won, so only a member is paid it
+    if (reward.zer > 0 && (await earnsZer(this.pool, userId))) {
       await this.wallet.credit({
         userId,
         currency: 'zer',

@@ -267,7 +267,8 @@ export class StreakService {
   /**
    * Pays the streak milestones a run passed growing from `before` to `after` days, in the caller's transaction. Each
    * pays only when it last paid at least STREAK_MILESTONE_REPEAT_DAYS before today, so only a new streak two months on
-   * reaches it again; its row is written first, so a retry pays nothing. Returns the largest paid now, if any.
+   * reaches it again; its row is written first, so a retry pays nothing. Only a member is paid, and nothing is kept for
+   * anyone else, so a milestone first reached as a member still pays. Returns the largest paid now, if any.
    */
   private async payMilestones(
     tx: Executor,
@@ -276,8 +277,10 @@ export class StreakService {
     after: number,
     today: string,
     plus: boolean,
+    now: Date,
   ): Promise<{ days: number; zer: number } | null> {
     let paid: { days: number; zer: number } | null = null;
+    if (!plus) return paid;
     for (const m of streakMilestonesBetween(before, after)) {
       const last = await tx.query<{ last: string | null }>(`SELECT max(paid_on)::text AS last FROM streak_milestones WHERE user_id = $1 AND days = $2`, [
         userId,
@@ -296,6 +299,7 @@ export class StreakService {
         reason: STREAK_MILESTONE_REASON,
         refId: String(m.days),
         idempotencyKey: `streak-milestone:${userId}:${m.days}:${today}`,
+        now,
       });
       await tx.query(`UPDATE streak_milestones SET zer = $4 WHERE user_id = $1 AND days = $2 AND paid_on = $3::date`, [userId, m.days, today, result.granted]);
       if (result.granted > 0) paid = { days: m.days, zer: result.granted };
@@ -420,7 +424,7 @@ export class StreakService {
       }
       await this.saveWithTally(tx, userId, streak, tally);
       await tx.query(`UPDATE user_streaks SET sessions_on = $2::date, sessions_today = $3 WHERE user_id = $1`, [userId, today, sessions]);
-      const milestone = await this.payMilestones(tx, userId, settle(before.state, today).currentStreak, streak.currentStreak, today, plus);
+      const milestone = await this.payMilestones(tx, userId, settle(before.state, today).currentStreak, streak.currentStreak, today, plus, now);
       return { ...(await this.summary(tx, userId, before, streak, tally, now, timeZone, sessions)), milestone };
     });
   }
@@ -441,7 +445,7 @@ export class StreakService {
       const { state } = record(before.state, today);
       await this.save(tx, userId, state);
       const plus = isPremiumActive(before.premiumUntil, now);
-      const milestone = await this.payMilestones(tx, userId, settle(before.state, today).currentStreak, state.currentStreak, today, plus);
+      const milestone = await this.payMilestones(tx, userId, settle(before.state, today).currentStreak, state.currentStreak, today, plus, now);
       return { ...(await this.summary(tx, userId, before, state, before.tally, now, timeZone)), milestone };
     });
   }
@@ -513,7 +517,7 @@ export class StreakService {
       // A run recorded as restored whose row says otherwise is corrected here too, without using another restore.
       state = standing === 'open' ? restore(settled, today) : settled;
       if (state !== settled || moved(loaded.state, settled)) await this.save(client, userId, state);
-      if (state !== settled) await this.payMilestones(client, userId, settled.currentStreak, state.currentStreak, today, plus);
+      if (state !== settled) await this.payMilestones(client, userId, settled.currentStreak, state.currentStreak, today, plus, now);
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);

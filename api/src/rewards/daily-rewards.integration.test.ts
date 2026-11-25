@@ -113,7 +113,7 @@ describe.skipIf(!DATABASE_URL)('daily rewards (integration)', () => {
   it('pays the day-7 bonus then wraps to day 1', async () => {
     for (let i = 5; i <= 7; i++) await learnAndClaim(`2026-03-0${i}`);
     const day7 = await learnAndClaim('2026-03-08');
-    expect(day7).toMatchObject({ cycleDay: 7, reward: 100 });
+    expect(day7).toMatchObject({ cycleDay: 7, reward: 50 });
 
     const wrap = await learnAndClaim('2026-03-09');
     expect(wrap.cycleDay).toBe(1);

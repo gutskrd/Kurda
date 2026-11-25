@@ -47,6 +47,8 @@ describe.skipIf(!DATABASE_URL)('event quests (integration)', () => {
       remoteAddress: '10.91.0.1',
     });
     userId = res.json().user.id;
+    // only members earn Zêr; the claims under test are a member's
+    await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [userId]);
 
     await events.upsert({
       key: eventKey,

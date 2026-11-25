@@ -9,7 +9,7 @@ import { dayDiff } from '../streaks/streak-logic.js';
  */
 
 /** Zêr paid on each day of the cycle (index 0 = day 1 … index 6 = day 7 bonus). */
-export const CYCLE_REWARDS = [10, 15, 20, 25, 30, 40, 100] as const;
+export const CYCLE_REWARDS = [5, 10, 10, 15, 15, 20, 50] as const;
 export const CYCLE_LENGTH = CYCLE_REWARDS.length;
 
 export interface DailyRewardState {

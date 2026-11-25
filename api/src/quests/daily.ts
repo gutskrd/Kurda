@@ -17,9 +17,9 @@ export interface PickedQuest {
 /** The kinds a day's second and third quests are picked from; `streak` is always the first. */
 const PICKABLE: readonly QuestKind[] = QUEST_KINDS.filter((k) => k !== 'streak');
 
-/** Zêr a chest holds, by tier, both ends included. */
+/** Zêr a chest holds for a member, by tier, both ends included; anyone else's holds none. */
 export const CHEST_ZER: Readonly<Record<ChestTier, { min: number; max: number }>> = {
-  common: { min: 5, max: 10 },
+  common: { min: 6, max: 10 },
   rare: { min: 10, max: 20 },
   epic: { min: 20, max: 35 },
 };

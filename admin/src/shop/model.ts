@@ -45,7 +45,7 @@ export const CATEGORIES: ReadonlyArray<{ value: string; label: string }> = [
 export const categoryName = (c: string): string => CATEGORIES.find((x) => x.value === c)?.label ?? c;
 
 /** The price at which a change waits for a second admin (SENSITIVE_PRICE on the server). */
-export const APPROVAL_PRICE = 1000;
+export const APPROVAL_PRICE = 500;
 
 export function priceText(price: number, currency: Currency): string {
   return price === 0 ? 'Free' : `${price.toLocaleString()} ${currency === 'zer' ? 'Zêr' : currency}`;

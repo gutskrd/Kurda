@@ -31,7 +31,7 @@ An event has three data pieces, wired by shared keys:
   "priority": 10,            // higher wins when events overlap (KUR-089)
   "lessonCourseSlug": "newroz-culture",
   "quests": [ /* opaque quest config read by KUR-091 */ ],
-  "rewards": { "completionBadge": "newroz", "zer": 500 }
+  "rewards": { "completionBadge": "newroz", "zer": 250 }
 }
 ```
 

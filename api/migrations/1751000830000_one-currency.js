@@ -1,39 +1,50 @@
 /**
  * One currency: Gewher is retired and Zêr is the only money (docs/money/hevalo-plus.md).
  *
- * Every Gewher becomes 5 Zêr: balances, prices set in Gewher, event rewards,
- * the earning rules, store packs and the records that say what was paid. The
- * wallet ledger keeps its history and stays append-only: each balance moves by
- * two new rows, the Gewher taken out ('gewher_retired') and the Zêr put in
- * ('gewher_converted'), so every balance still equals its ledger's sum. From
- * here on only Zêr may be written; old Gewher rows stay as they were.
+ * Every Gewher held or paid becomes 5 Zêr: balances, store packs and the
+ * records that say what was paid. What the economy prices and pays from here
+ * on (prices set in Gewher, the earning rules, event rewards and prizes) is set
+ * at the new rate of 100 Zêr to the euro (1751000825000): half that, rounded to
+ * a tidy 5. The wallet ledger keeps its history and stays append-only: each
+ * balance moves by two new rows, the Gewher taken out ('gewher_retired') and
+ * the Zêr put in ('gewher_converted'), so every balance still equals its
+ * ledger's sum. From here on only Zêr may be written; old Gewher rows stay as
+ * they were.
  *
  * `gewher_retirement` records what was converted, so the change can be read
  * back by anyone auditing it and undone exactly by `down`.
  *
  * It also adds what the new economy keeps: the members' box, streak
  * milestones, a streak won back by learning, gifts onto posts and paid with a
- * free gift, and the gift stickers.
+ * free gift, the gift stickers, and a quest chest that may hold nothing.
  */
 
 const RATE = 5;
 
+/** A Gewher amount the economy prices or pays from here on, in Zêr at 100 to the euro: 5 each, halved, rounded half up to 5. */
+const priced = (g) => `(5 * ROUND((${g}) / 2.0))::int`;
+
 /** The gift stickers (shared/src/gifts.ts `GIFT_STICKERS`), as they were first put on sale. */
 const STICKERS = [
-  ['sticker-kevok', 'Kevok', 'icons/made-10-kevok.png', 40],
-  ['sticker-lale', 'Lale', 'icons/made-04-lale.png', 40],
-  ['sticker-piyan', 'Piyan', 'icons/made-08-caydan.png', 40],
-  ['sticker-hinar', 'Hinar', 'icons/made-01-hinar.png', 120],
-  ['sticker-roj', 'Roj', 'icons/made-02-roj.png', 120],
-  ['sticker-saz', 'Saz', 'icons/made-09-saz.png', 120],
-  ['sticker-ask', 'Ask', 'icons/made-06-ask.png', 400],
-  ['sticker-pet', 'Pêta Newrozê', 'icons/made-13-pet.png', 400],
-  ['sticker-heyv', 'Heyv', 'icons/made-14-heyv.png', 400],
+  ['sticker-kevok', 'Kevok', 'icons/made-10-kevok.png', 20],
+  ['sticker-lale', 'Lale', 'icons/made-04-lale.png', 20],
+  ['sticker-piyan', 'Piyan', 'icons/made-08-caydan.png', 20],
+  ['sticker-hinar', 'Hinar', 'icons/made-01-hinar.png', 50],
+  ['sticker-roj', 'Roj', 'icons/made-02-roj.png', 50],
+  ['sticker-saz', 'Saz', 'icons/made-09-saz.png', 50],
+  ['sticker-ask', 'Ask', 'icons/made-06-ask.png', 150],
+  ['sticker-pet', 'Pêta Newrozê', 'icons/made-13-pet.png', 150],
+  ['sticker-heyv', 'Heyv', 'icons/made-14-heyv.png', 150],
 ];
 
-/** A jsonb reward's Gewher folded into its Zêr, for an expression `r` holding a reward object. */
-const foldReward = (r) =>
-  `((${r}) - 'gems') || jsonb_build_object('zer', COALESCE((${r}->>'zer')::numeric, 0) + (${r}->>'gems')::numeric * ${RATE})`;
+/**
+ * A jsonb reward's Gewher folded into its Zêr, for an expression `r` holding a reward object: at the new rate for what
+ * an event will pay, at 5 for a record of what was paid.
+ */
+const foldReward = (r, paid = false) => {
+  const gewher = `(${r}->>'gems')::numeric`;
+  return `((${r}) - 'gems') || jsonb_build_object('zer', COALESCE((${r}->>'zer')::numeric, 0) + ${paid ? `${gewher} * ${RATE}` : priced(gewher)})`;
+};
 
 export const up = (pgm) => {
   pgm.createTable('gewher_retirement', {
@@ -75,8 +86,8 @@ export const up = (pgm) => {
   // Prices set in Gewher, and what gifts and refunds recorded in it.
   pgm.sql(`
     INSERT INTO gewher_retirement (kind, ref, gewher, zer)
-    SELECT 'shop_item', sku, price, price * ${RATE} FROM shop_items WHERE currency = 'gems'`);
-  pgm.sql(`UPDATE shop_items SET price = price * ${RATE}, currency = 'zer' WHERE currency = 'gems'`);
+    SELECT 'shop_item', sku, price, ${priced('price')} FROM shop_items WHERE currency = 'gems'`);
+  pgm.sql(`UPDATE shop_items SET price = ${priced('price')}, currency = 'zer' WHERE currency = 'gems'`);
   pgm.sql(`ALTER TABLE shop_items ADD CONSTRAINT shop_items_zer_only CHECK (currency = 'zer')`);
   pgm.sql(`
     INSERT INTO gewher_retirement (kind, ref, gewher, zer)
@@ -89,13 +100,13 @@ export const up = (pgm) => {
   pgm.sql(`UPDATE cosmetic_refreshes SET refund_amount = refund_amount * ${RATE}, refund_currency = 'zer' WHERE refund_currency = 'gems'`);
   pgm.sql(`ALTER TABLE cosmetic_refreshes ADD CONSTRAINT cosmetic_refreshes_zer_only CHECK (refund_currency = 'zer')`);
 
-  // The earning rules pay Zêr: a league promotion 50, a tournament win 250.
+  // The earning rules pay Zêr at the new rate: a league promotion 25, a tournament win 125.
   pgm.renameTable('gem_rules', 'earn_rules');
   pgm.sql(`ALTER TABLE earn_rules RENAME CONSTRAINT gem_rules_amount_check TO earn_rules_amount_check`);
   pgm.sql(`
     INSERT INTO gewher_retirement (kind, ref, gewher, zer, before)
-    SELECT 'rule', key, amount, amount * ${RATE}, jsonb_build_object('daily_cap', daily_cap) FROM earn_rules`);
-  pgm.sql(`UPDATE earn_rules SET amount = amount * ${RATE}, daily_cap = daily_cap * ${RATE}, updated_at = now()`);
+    SELECT 'rule', key, amount, ${priced('amount')}, jsonb_build_object('daily_cap', daily_cap) FROM earn_rules`);
+  pgm.sql(`UPDATE earn_rules SET amount = ${priced('amount')}, daily_cap = ${priced('daily_cap')}, updated_at = now()`);
 
   // Store packs and receipts count Zêr; a refund then claws back what the converted balance holds.
   pgm.renameTable('gem_packs', 'zer_packs');
@@ -110,8 +121,8 @@ export const up = (pgm) => {
   // What tournaments, seasons and leagues pay or paid, in Zêr.
   pgm.sql(`
     INSERT INTO gewher_retirement (kind, ref, gewher, zer)
-    SELECT 'tournament', id::text, reward_gems, reward_gems * ${RATE} FROM tournaments WHERE reward_gems > 0`);
-  pgm.sql(`UPDATE tournaments SET reward_zer = reward_zer + reward_gems * ${RATE} WHERE reward_gems > 0`);
+    SELECT 'tournament', id::text, reward_gems, ${priced('reward_gems')} FROM tournaments WHERE reward_gems > 0`);
+  pgm.sql(`UPDATE tournaments SET reward_zer = reward_zer + ${priced('reward_gems')} WHERE reward_gems > 0`);
   pgm.dropColumns('tournaments', ['reward_gems']);
   pgm.renameColumn('seasons', 'reward_gems', 'reward_zer');
   pgm.sql(`UPDATE seasons SET reward_zer = reward_zer * ${RATE}`);
@@ -139,7 +150,7 @@ export const up = (pgm) => {
     INSERT INTO gewher_retirement (kind, ref, before)
     SELECT 'event_claim', user_id::text || ':' || event_key || ':' || quest_id, reward FROM event_quest_claims
      WHERE jsonb_typeof(reward->'gems') = 'number'`);
-  pgm.sql(`UPDATE event_quest_claims SET reward = ${foldReward('reward')} WHERE jsonb_typeof(reward->'gems') = 'number'`);
+  pgm.sql(`UPDATE event_quest_claims SET reward = ${foldReward('reward', true)} WHERE jsonb_typeof(reward->'gems') = 'number'`);
 
   // A restore is never bought now: a member's free one, or a streak won back by learning.
   pgm.renameColumn('streak_repairs', 'cost_gems', 'cost');
@@ -154,6 +165,10 @@ export const up = (pgm) => {
     sessions_on: { type: 'date' },
     sessions_today: { type: 'integer', notNull: true, default: 0 },
   });
+
+  // A chest can open with nothing in it: the day's cap was reached, or the account earns no Zêr.
+  pgm.dropConstraint('user_quests', 'user_quests_amount_check');
+  pgm.addConstraint('user_quests', 'user_quests_amount_check', { check: 'amount >= 0' });
 
   // When each streak milestone last paid, so it pays again only for a new streak two months on.
   pgm.createTable('streak_milestones', {
@@ -212,6 +227,10 @@ export const down = (pgm) => {
   pgm.dropTable('members_boxes');
   pgm.dropTable('streak_milestones');
   pgm.dropColumns('user_streaks', ['sessions_on', 'sessions_today']);
+  // The old rule had no empty chest, so one opened with nothing waits to be opened again.
+  pgm.sql(`UPDATE user_quests SET amount = NULL, claimed_at = NULL WHERE amount = 0`);
+  pgm.dropConstraint('user_quests', 'user_quests_amount_check');
+  pgm.addConstraint('user_quests', 'user_quests_amount_check', { check: 'amount > 0' });
 
   pgm.dropConstraint('streak_repairs', 'streak_repairs_how');
   // A restore won back by learning has no place in the old rules, which only knew bought and free ones.

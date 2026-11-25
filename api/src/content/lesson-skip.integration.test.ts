@@ -63,6 +63,8 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
     });
     await activate(app, pool, reg);
     const player = { id: reg.json().user.id as string, token: reg.json().tokens.accessToken as string };
+    // the perfect-lesson rule pays Zêr, which only members earn, so a lesson paying none says something only for them
+    await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [player.id]);
     players.push(player);
     return player;
   }
@@ -176,7 +178,7 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
     const results = await play(learner, [ex.mc, ex.tr, ex.li, ex.sp]);
     expect(results).toMatchObject({ correct: 4, total: 4, accuracy: 1, xpAwarded: lessonCompletionXp(1, false) });
     // paid because this suite switched the rule on; switched off, as it is for everyone, nobody is
-    expect(await zerEarned(learner.id)).toBe(25);
+    expect(await zerEarned(learner.id)).toBe(15);
     expect(await perfectLessons(learner)).toBe(1);
   });
 

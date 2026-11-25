@@ -100,15 +100,15 @@ describe('the cosmetic catalogue', () => {
     expect(files('frames').sort()).toEqual(manifest.frames.map((r) => r.assetKey).sort());
     for (const r of manifest.frames) {
       // dearer than an icon, and bought outright: a frame shows only while it is owned
-      expect(r.price, r.sku).toBeGreaterThanOrEqual(1200);
-      expect(r.price, r.sku).toBeLessThanOrEqual(2000);
+      expect(r.price, r.sku).toBeGreaterThanOrEqual(600);
+      expect(r.price, r.sku).toBeLessThanOrEqual(1000);
       expect(r.premiumOnly, r.sku).toBe(false);
     }
   });
 
-  it('is the list of frames migration 1751000431000 puts on sale', () => {
+  it('is the list of frames migration 1751000431000 puts on sale, at the prices Zêr at 100 to the euro halved', () => {
     const fromManifest = manifest.frames.map((r) => [r.sku, r.name, r.description ?? '', r.assetKey, r.price, r.displayOrder]);
-    expect(framesOnSale.FRAMES).toEqual(fromManifest);
+    expect(framesOnSale.FRAMES.map(([sku, name, description, assetKey, price, order]) => [sku, name, description, assetKey, price / 2, order])).toEqual(fromManifest);
   });
 
   it('has a row for every background and icon on disk', () => {
@@ -139,14 +139,14 @@ describe('the cosmetic catalogue', () => {
         expect(r.type).toBe('image');
         if (r.price === 0) expect(r.premiumOnly).toBe(false);
         else {
-          expect(r.price).toBeGreaterThanOrEqual(400);
-          expect(r.price).toBeLessThanOrEqual(600);
+          expect(r.price).toBeGreaterThanOrEqual(200);
+          expect(r.price).toBeLessThanOrEqual(300);
           expect(r.premiumOnly).toBe(true);
         }
       } else {
         expect(r.sku.startsWith('icon-made-')).toBe(true);
-        expect(r.price).toBeGreaterThanOrEqual(600);
-        expect(r.price).toBeLessThanOrEqual(900);
+        expect(r.price).toBeGreaterThanOrEqual(300);
+        expect(r.price).toBeLessThanOrEqual(450);
         expect(r.premiumOnly).toBe(true);
       }
     }
@@ -169,11 +169,12 @@ describe('the cosmetic catalogue', () => {
     }
   });
 
-  it('is the catalogue migration 1751000161000 applies, under the names later migrations gave its pieces', () => {
+  it('is the catalogue migration 1751000161000 applies, under the names later migrations gave its pieces and at half its prices', () => {
     const fromManifest = made().map((r): MadeRow => [r.sku, r.category, r.name, r.description ?? '', r.assetKey, r.price, r.premiumOnly, r.displayOrder]);
     const renamed = (row: MadeRow): MadeRow =>
       renames.flatMap((m) => m.RENAMED).reduce<MadeRow>((acc, r) => (acc[4] === r.assetKey && acc[2] === r.from[0] && acc[3] === r.from[1] ? [acc[0], acc[1], r.to[0], r.to[1], acc[4], acc[5], acc[6], acc[7]] : acc), row);
-    expect(migration.MADE.map(renamed).sort()).toEqual(fromManifest.sort());
+    const halved = (row: MadeRow): MadeRow => [row[0], row[1], row[2], row[3], row[4], row[5] / 2, row[6], row[7]];
+    expect(migration.MADE.map(renamed).map(halved).sort()).toEqual(fromManifest.sort());
     const madeByAsset = new Map(made().map((r) => [r.assetKey, r.sku]));
     const fromRetired = Object.fromEntries(retired().map((r) => [r.sku, madeByAsset.get(r.assetKey)]));
     expect(migration.REPLACED_BY).toEqual(fromRetired);

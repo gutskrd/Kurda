@@ -1198,7 +1198,7 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       expect(res.statusCode).toBe(200);
       const { items, balance } = res.json();
       const bySku = new Map(items.map((i: { sku: string }) => [i.sku, i]));
-      expect(bySku.get(BG)).toMatchObject({ price: 300, tier: 'common', alreadyOwnedBy: [mae.id], freeGiftEligible: true });
+      expect(bySku.get(BG)).toMatchObject({ price: 300, tier: 'common', alreadyOwnedBy: [mae.id], freeGiftEligible: false });
       expect(bySku.get(POWER)).toMatchObject({ alreadyOwnedBy: [] });
       // never free, and owning something yourself does not stop you giving it
       expect(bySku.has(FREE)).toBe(false);

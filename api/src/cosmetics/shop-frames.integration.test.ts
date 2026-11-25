@@ -71,7 +71,7 @@ describe.skipIf(!DATABASE_URL)('frames bought in the shop (integration)', () => 
     expect(frames.length).toBeGreaterThanOrEqual(30);
     for (const f of frames) {
       expect(f.currency).toBe('zer');
-      expect(f.price).toBeGreaterThanOrEqual(1200);
+      expect(f.price).toBeGreaterThanOrEqual(600);
       expect(f.premiumOnly).toBe(false);
       expect(f.assetUrl).toBe(`/cosmetics/${CATALOGUE.find((c) => c.sku === f.sku)!.assetKey}`);
       expect(f.assetUrl).toMatch(/^\/cosmetics\/frames\/made-\d\d-[a-z-]+\.png$/);
@@ -88,7 +88,7 @@ describe.skipIf(!DATABASE_URL)('frames bought in the shop (integration)', () => 
     const before = (await wallet.balances(ids.buyer!)).zer;
     const bought = await call('POST', '/shop/purchase', 'buyer', { sku: FRAME, idempotencyKey: `frm-${s}` });
     expect(bought.statusCode).toBe(200);
-    expect((await wallet.balances(ids.buyer!)).zer).toBe(before - 1400);
+    expect((await wallet.balances(ids.buyer!)).zer).toBe(before - 700);
     // in what they own, with its picture, for the tile
     const owned = ((await call('GET', '/me/inventory', 'buyer')).json().items as Array<{ sku: string; category: string; assetUrl: string | null }>).find((i) => i.sku === FRAME);
     expect(owned).toMatchObject({ category: 'frame', assetUrl: FRAME_ART });
@@ -129,7 +129,7 @@ describe.skipIf(!DATABASE_URL)('frames bought in the shop (integration)', () => 
     const before = (await wallet.balances(ids.buyer!)).zer;
     const gifted = await call('POST', '/shop/gift', 'buyer', { sku: 'frame-made-genim', toUserId: ids.other, idempotencyKey: `frm-gift-${s}` });
     expect(gifted.statusCode).toBe(200);
-    expect((await wallet.balances(ids.buyer!)).zer).toBe(before - 1200);
+    expect((await wallet.balances(ids.buyer!)).zer).toBe(before - 600);
     // the giver paid for it and does not own it
     expect((await call('PUT', '/me/cosmetics/frame', 'buyer', { sku: 'frame-made-genim' })).statusCode).toBe(403);
     expect((await call('PUT', '/me/cosmetics/frame', 'other', { sku: 'frame-made-genim' })).statusCode).toBe(200);

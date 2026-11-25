@@ -36,12 +36,12 @@ export const TREE_KINDS: Readonly<Record<TreeSpecies, TreeKind>> = {
   hinar: { species: 'hinar', starter: true, price: 0 },
   behiv: { species: 'behiv', starter: true, price: 0 },
   bi: { species: 'bi', starter: true, price: 0 },
-  tu: { species: 'tu', starter: false, price: 800 },
-  spindar: { species: 'spindar', starter: false, price: 800 },
-  kaj: { species: 'kaj', starter: false, price: 1000 },
-  payiz: { species: 'payiz', starter: false, price: 1400 },
-  miraz: { species: 'miraz', starter: false, price: 1800 },
-  sev: { species: 'sev', starter: false, price: 2200 },
+  tu: { species: 'tu', starter: false, price: 400 },
+  spindar: { species: 'spindar', starter: false, price: 400 },
+  kaj: { species: 'kaj', starter: false, price: 500 },
+  payiz: { species: 'payiz', starter: false, price: 700 },
+  miraz: { species: 'miraz', starter: false, price: 900 },
+  sev: { species: 'sev', starter: false, price: 1100 },
 };
 
 /** Waterings needed to reach each stage: the seed comes up at once and the last stages take weeks, so a tree is soon worth seeing and slow to finish. */
@@ -49,7 +49,7 @@ export const TREE_GROWTH: readonly [number, number, number, number, number, numb
 
 /** A full-grown tree bears every this many waterings; what a harvest pays in Zêr. */
 export const TREE_HARVEST_EVERY = 10;
-export const TREE_HARVEST_ZER = 25;
+export const TREE_HARVEST_ZER = 15;
 
 /** Water a new tree is planted with: enough to bring its seed up. */
 export const TREE_FIRST_WATER = 1;

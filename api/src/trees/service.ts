@@ -226,6 +226,7 @@ export class TreeService {
           reason: TREE_HARVEST_REASON,
           refId: row.id,
           idempotencyKey: `tree-harvest:${row.id}:${watering.tree.harvests}`,
+          now,
         });
         zer = paid.granted;
       }

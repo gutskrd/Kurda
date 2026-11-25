@@ -218,22 +218,26 @@ describe.skipIf(!DATABASE_URL)('winning a streak back (integration)', () => {
   });
 
   describe('milestones', () => {
-    it('pays a streak reaching seven days, once, and twice as much to a member', async () => {
+    it('pays a member a streak reaching seven days, once, and nobody else anything', async () => {
       const who = await learner();
+      await plus(who.id, '2030-01-01T00:00:00Z');
       await seed(who.id, 6, '2026-03-07');
       const seventh = await streaks.recordActivity(who.id, 'UTC', at('2026-03-08'));
       expect(seventh).toMatchObject({ current: 7, milestone: { days: 7, zer: 40 } });
       expect(await streaks.recordActivity(who.id, 'UTC', at('2026-03-08'))).toMatchObject({ milestone: null });
       expect(await milestonesPaid(who.id)).toEqual([40]);
 
-      const member = await learner();
-      await plus(member.id, '2030-01-01T00:00:00Z');
-      await seed(member.id, 13, '2026-03-07');
-      expect(await streaks.recordActivity(member.id, 'UTC', at('2026-03-08'))).toMatchObject({ current: 14, milestone: { days: 14, zer: 120 } });
+      // someone not a member keeps the streak, earns nothing, and has nothing kept that would stop a later payment
+      const free = await learner();
+      await seed(free.id, 13, '2026-03-07');
+      expect(await streaks.recordActivity(free.id, 'UTC', at('2026-03-08'))).toMatchObject({ current: 14, milestone: null });
+      expect(await milestonesPaid(free.id)).toEqual([]);
+      expect((await wallet.balances(free.id)).zer).toBe(0);
     });
 
     it('pays again only for a new streak reaching it sixty days or more after it last paid', async () => {
       const who = await learner();
+      await plus(who.id, '2030-01-01T00:00:00Z');
       await seed(who.id, 6, '2026-03-07');
       await streaks.recordActivity(who.id, 'UTC', at('2026-03-08'));
       // broken, and a new streak reaches seven again a month later: nothing
@@ -247,6 +251,7 @@ describe.skipIf(!DATABASE_URL)('winning a streak back (integration)', () => {
 
     it('pays the milestones a streak passes when it is won back', async () => {
       const who = await learner();
+      await plus(who.id, '2030-01-01T00:00:00Z');
       await seed(who.id, 13, '2026-03-07');
       // the run was paid its seven days when it reached them
       await pool.query(`INSERT INTO streak_milestones (user_id, days, paid_on, zer) VALUES ($1, 7, '2026-03-01', 40)`, [who.id]);

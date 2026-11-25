@@ -70,7 +70,7 @@ type View = ArtKind | 'other';
 /**
  * The shop's catalogue: what is on sale, at what price, and when. Backgrounds and icons have views of their own with
  * their art (admin/src/shop); everything else is in the table. A purchase sends only the SKU and is refused if the
- * price moved, so a change is safe at once; a new price of 1,000 or more waits for a second admin (Approvals).
+ * price moved, so a change is safe at once; a new price of 500 or more waits for a second admin (Approvals).
  */
 export function Shop(): React.JSX.Element {
   const toast = useToast();
@@ -102,7 +102,7 @@ export function Shop(): React.JSX.Element {
     <div>
       <PageHeader
         title="Shop"
-        subtitle="Backgrounds, icons and everything else on sale, at what price, and when. A price of 1,000 or more waits for a second admin."
+        subtitle="Backgrounds, icons and everything else on sale, at what price, and when. A price of 500 or more waits for a second admin."
         actions={
           <>
             <Button icon="refresh" onClick={() => void reload()} disabled={items.loading}>
@@ -117,7 +117,7 @@ export function Shop(): React.JSX.Element {
 
       {(pending.data ?? 0) > 0 && (
         <Banner tone="info" title={`${pending.data} shop ${pending.data === 1 ? 'change waits' : 'changes wait'} for a second admin`} actions={<a href="#/approvals">Open Approvals</a>}>
-          A price of 1,000 or more takes effect once another admin approves it.
+          A price of 500 or more takes effect once another admin approves it.
         </Banner>
       )}
 
@@ -509,7 +509,7 @@ function ItemForm({
         </FieldRow>
         {dear && (
           <Banner tone="info" title="A second admin approves this price">
-            A price of 1,000 or more is applied once another admin approves it in Approvals. Until then the item stays as it is.
+            A price of 500 or more is applied once another admin approves it in Approvals. Until then the item stays as it is.
           </Banner>
         )}
         <FieldRow>

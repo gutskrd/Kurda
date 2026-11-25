@@ -100,8 +100,8 @@ describe('chestAmount', () => {
     }
   });
 
-  it('holds 5 to 10 Zêr in a common chest, 10 to 20 in a rare one and 20 to 35 in an epic one', () => {
-    expect(CHEST_ZER).toEqual({ common: { min: 5, max: 10 }, rare: { min: 10, max: 20 }, epic: { min: 20, max: 35 } });
+  it('holds 6 to 10 Zêr in a member’s common chest, 10 to 20 in a rare one and 20 to 35 in an epic one', () => {
+    expect(CHEST_ZER).toEqual({ common: { min: 6, max: 10 }, rare: { min: 10, max: 20 }, epic: { min: 20, max: 35 } });
   });
 });
 

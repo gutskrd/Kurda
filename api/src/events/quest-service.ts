@@ -1,7 +1,7 @@
 import type pg from 'pg';
 import type { WalletService } from '../wallet/service.js';
 import { assertEconomyNotHeld } from '../economy/standing.js';
-import { earnWithin } from '../earn/service.js';
+import { earnWithin, earnsZer } from '../earn/service.js';
 import type { EventDef } from './window.js';
 import {
   claimBlock,
@@ -36,6 +36,8 @@ export interface EventQuestsView {
   endsAt: string;
   claimDeadline: string;
   quests: QuestView[];
+  /** the quests pay Zêr, which only members earn, so for this viewer their Zêr is left out */
+  zerForMembers: boolean;
 }
 
 export type ClaimResult =
@@ -128,13 +130,19 @@ export class QuestService {
       }
       return m;
     };
+    const member = await earnsZer(this.pool, userId, this.now());
+    let zerForMembers = false;
     const quests: QuestView[] = [];
     for (const def of defs) {
       const metric = await metricOf(def.type);
       const prog = evaluateQuest(def, metric);
       const isClaimed = claimed.has(def.id);
+      // a reward nobody but a member can have is not shown to anyone else as theirs to win
+      const zer = (prog.reward.zer ?? 0) > 0;
+      if (zer && !member) zerForMembers = true;
       quests.push({
         ...prog,
+        reward: zer && !member ? {} : prog.reward,
         claimed: isClaimed,
         claimable: !isClaimed && claimBlock(prog.complete, endsMs, nowMs) === null,
       });
@@ -146,6 +154,7 @@ export class QuestService {
       endsAt: event.endsAt,
       claimDeadline: new Date(claimDeadline(endsMs)).toISOString(),
       quests,
+      zerForMembers,
     };
   }
 
@@ -186,6 +195,7 @@ export class QuestService {
           reason: 'event_quest',
           refId: `${eventKey}:${questId}`,
           idempotencyKey: `quest:${eventKey}:${questId}:${userId}:zer`,
+          now: this.now(),
         });
         // the claim records what was paid, which the daily cap can make less than the quest offers
         if (paid.granted !== def.reward.zer) {

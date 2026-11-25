@@ -1,6 +1,7 @@
 /**
  * Earned Zêr against real Postgres: rule grants (amount, caps, cooldown and the once-per-event key on rules made for
- * this suite, and which seeded rules still pay), the daily cap over every earned source, and a per-day count.
+ * this suite, and which seeded rules still pay), the daily cap over every earned source, a per-day count, and that only
+ * Hevalo+ members earn at all.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -46,6 +47,9 @@ describe.skipIf(!DATABASE_URL)('earning Zêr (integration)', () => {
     wallet = new WalletService(pool);
     earn = new EarnService(pool, wallet);
     ids.push(await register('a'), await register('b'), await register('c'), await register('d'));
+    // Only members earn Zêr; the suite's earners are members, and one account is left free.
+    await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = ANY($1)`, [ids]);
+    ids.push(await register('free'));
     // Rules of this suite's own, independent of seeded amounts and switches.
     await earn.upsertRule({ key: `earn_${suffix}`, amount: 15, dailyCap: null, cooldownSeconds: 0, active: true });
     await earn.upsertRule({ key: `off_${suffix}`, amount: 15, dailyCap: null, cooldownSeconds: 0, active: false });
@@ -96,11 +100,20 @@ describe.skipIf(!DATABASE_URL)('earning Zêr (integration)', () => {
     expect(await earn.grant(u, 'achievement_milestone', `a:${u}`)).toEqual({ granted: 0, cappedBy: 'no_rule' });
   });
 
-  it('pays 50 Zêr for moving up a league and 250 for winning a tournament', async () => {
+  it('pays 25 Zêr for moving up a league and 125 for winning a tournament', async () => {
     const u = ids[3]!;
-    expect(await earn.grant(u, 'league_promotion', `season:tier:${u}`)).toEqual({ granted: 50, cappedBy: 'none' });
-    expect(await earn.grant(u, 'tournament_win', `tournament:${u}`)).toEqual({ granted: 250, cappedBy: 'none' });
-    expect((await wallet.balances(u)).zer).toBe(300);
+    expect(await earn.grant(u, 'league_promotion', `season:tier:${u}`)).toEqual({ granted: 25, cappedBy: 'none' });
+    expect(await earn.grant(u, 'tournament_win', `tournament:${u}`)).toEqual({ granted: 125, cappedBy: 'none' });
+    expect((await wallet.balances(u)).zer).toBe(150);
+  });
+
+  it('pays nobody who is not a member, and takes nothing from what they have', async () => {
+    const u = ids[4]!;
+    await wallet.credit({ userId: u, currency: 'zer', amount: 400, reason: 'iap_purchase', idempotencyKey: `buy-free:${suffix}:${u}` });
+    expect(await earn.grant(u, `earn_${suffix}`, `free:${suffix}`)).toEqual({ granted: 0, cappedBy: 'members_only' });
+    expect(await earn.grant(u, 'league_promotion', `season:tier:${u}`)).toEqual({ granted: 0, cappedBy: 'members_only' });
+    expect(await earn.pay({ userId: u, amount: 10, reason: 'daily_quest', idempotencyKey: `chest-free:${suffix}:${u}` })).toEqual({ granted: 0, cappedBy: 'members_only' });
+    expect((await wallet.balances(u)).zer).toBe(400);
   });
 
   it('clamps to the per-rule daily cap then blocks further grants', async () => {
@@ -146,8 +159,8 @@ describe.skipIf(!DATABASE_URL)('earning Zêr (integration)', () => {
     expect(rules).toMatchObject({
       perfect_lesson: { active: false },
       achievement_milestone: { active: false },
-      league_promotion: { active: true, amount: 50 },
-      tournament_win: { active: true, amount: 250 },
+      league_promotion: { active: true, amount: 25 },
+      tournament_win: { active: true, amount: 125 },
     });
   });
 });

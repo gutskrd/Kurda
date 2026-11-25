@@ -152,7 +152,7 @@ already through it.
   > never lead to the App Store, and the store's rating prompt is the system's.
   >
   > Sign in with Apple is offered wherever Google is.
-  > Nothing is sold: Zêr is earned by learning and cannot be bought.
+  > Nothing is sold: Zêr cannot be bought, and only Hevalo+ members earn it by learning.
   > The app has no advertising and no third-party analytics.
 
   Do not say that pictures are scanned automatically unless a scanner has been
@@ -316,16 +316,20 @@ created in App Store Connect first:
 |---|---|---|---|
 | Hevalo+ monthly | auto-renewing subscription | `app.hevalo.plus.monthly` | €3.99 a month, with an introductory offer: first month €0.99 (pay as you go, 1 month) |
 | Hevalo+ yearly | auto-renewing subscription, same group | `app.hevalo.plus.yearly` | €29.99 a year |
-| 400 Zêr | consumable | `app.hevalo.zer.400` | €0.99 |
-| 2,200 Zêr | consumable | `app.hevalo.zer.2200` | €4.99 |
-| 4,800 Zêr | consumable | `app.hevalo.zer.4800` | €9.99 |
-| 10,400 Zêr | consumable | `app.hevalo.zer.10400` | €19.99 |
+| 100 Zêr | consumable | `app.hevalo.zer.100` | €0.99 |
+| 500 Zêr | consumable | `app.hevalo.zer.500` | €4.99 |
+| 1,000 Zêr + 100 bonus | consumable | `app.hevalo.zer.1100` | €9.99 |
+| 2,000 Zêr + 400 bonus | consumable | `app.hevalo.zer.2400` | €19.99 |
+| 5,000 Zêr + 1,500 bonus | consumable | `app.hevalo.zer.6500` | €49.99 |
 
-Zêr is the one currency: Gewher was folded into it at five Zêr to one. Every
-Zêr price in the apps and on the website already shows what it is worth,
-"≈ €0.99" for 400 Zêr (shared `zerValue`, from the smallest pack); once the
-store's own price for that pack is known on the phone it is said in the
-reader's store currency instead.
+The packs are shared `ZER_PACKS`; each product grants the Zêr its id names,
+bonus included, and the same price points serve the US store in dollars.
+Zêr is the one currency: Gewher was folded into it at five Zêr to one, and
+100 Zêr is one euro (or dollar). Every Zêr price in the apps and on the
+website already shows what it is worth, "≈ €3" for 300 Zêr and "≈ €2.50" for
+250 (shared `zerValue`); once the store's own price for the smallest pack is
+known on the phone it is said in the reader's store currency instead. Only
+Hevalo+ members earn Zêr; anyone can buy it.
 
 The paywall must show the price, the period, that it renews until cancelled,
 the introductory price and what follows it, and links to the Terms and the

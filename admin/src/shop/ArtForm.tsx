@@ -1,6 +1,6 @@
 /**
  * Add or edit a background or an icon. An edit sends only what changed (PATCH /shop/items/:sku), so fields it does not
- * show are never cleared; a new item uses POST /admin/shop/items, which refuses a taken SKU. A price of 1,000 or more
+ * show are never cleared; a new item uses POST /admin/shop/items, which refuses a taken SKU. A price of 500 or more
  * goes to a second admin in Approvals, the whole change with it.
  */
 import { useState } from 'react';
@@ -12,7 +12,7 @@ import { needsApproval, type ArtKind, type Currency, type ShopItem } from './mod
 import './shop.css';
 
 /** What a new item of each kind starts at: what most of the shop's own cost. */
-const DEFAULT_PRICE: Record<ArtKind, number> = { background: 500, icon: 700 };
+const DEFAULT_PRICE: Record<ArtKind, number> = { background: 250, icon: 350 };
 
 type Changes = Partial<Pick<ShopItem, 'name' | 'description' | 'currency' | 'price' | 'premiumOnly' | 'displayOrder' | 'assetKey' | 'active' | 'inStock'>>;
 
@@ -242,7 +242,7 @@ export function ArtForm({
         </FieldRow>
         {dear && (
           <Banner tone="info" title="A second admin approves this price">
-            A price of 1,000 or more is applied once another admin approves it in Approvals. Until then the item stays as it is.
+            A price of 500 or more is applied once another admin approves it in Approvals. Until then the item stays as it is.
           </Banner>
         )}
         <Checkbox

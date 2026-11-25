@@ -75,7 +75,7 @@
       "name": "Hinar",
       "description": "Pomegranate",
       "assetKey": "icons/made-01-hinar.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 0
     },
@@ -84,7 +84,7 @@
       "name": "Roj",
       "description": "Sun",
       "assetKey": "icons/made-02-roj.png",
-      "price": 600,
+      "price": 300,
       "premiumOnly": true,
       "displayOrder": 1
     },
@@ -93,7 +93,7 @@
       "name": "Çiya",
       "description": "Mountain",
       "assetKey": "icons/made-03-ciya.png",
-      "price": 600,
+      "price": 300,
       "premiumOnly": true,
       "displayOrder": 2
     },
@@ -102,7 +102,7 @@
       "name": "Lale",
       "description": "Tulip",
       "assetKey": "icons/made-04-lale.png",
-      "price": 700,
+      "price": 350,
       "premiumOnly": true,
       "displayOrder": 3
     },
@@ -111,7 +111,7 @@
       "name": "Laleya Mor",
       "description": "Purple tulip",
       "assetKey": "icons/made-05-laleya-mor.png",
-      "price": 700,
+      "price": 350,
       "premiumOnly": true,
       "displayOrder": 4
     },
@@ -120,7 +120,7 @@
       "name": "Ask",
       "description": "Deer",
       "assetKey": "icons/made-06-ask.png",
-      "price": 900,
+      "price": 450,
       "premiumOnly": true,
       "displayOrder": 5
     },
@@ -129,7 +129,7 @@
       "name": "Mohra Rojê",
       "description": "Sun seal",
       "assetKey": "icons/made-07-sterk.png",
-      "price": 600,
+      "price": 300,
       "premiumOnly": true,
       "displayOrder": 6
     },
@@ -138,7 +138,7 @@
       "name": "Piyan",
       "description": "Tea glass",
       "assetKey": "icons/made-08-caydan.png",
-      "price": 900,
+      "price": 450,
       "premiumOnly": true,
       "displayOrder": 7
     },
@@ -147,7 +147,7 @@
       "name": "Saz",
       "description": "Saz",
       "assetKey": "icons/made-09-saz.png",
-      "price": 900,
+      "price": 450,
       "premiumOnly": true,
       "displayOrder": 8
     },
@@ -156,7 +156,7 @@
       "name": "Kevok",
       "description": "Dove",
       "assetKey": "icons/made-10-kevok.png",
-      "price": 700,
+      "price": 350,
       "premiumOnly": true,
       "displayOrder": 9
     },
@@ -165,7 +165,7 @@
       "name": "Genim",
       "description": "Wheat",
       "assetKey": "icons/made-11-genim.png",
-      "price": 700,
+      "price": 350,
       "premiumOnly": true,
       "displayOrder": 10
     },
@@ -174,7 +174,7 @@
       "name": "Kilîm",
       "description": "Kilim diamond",
       "assetKey": "icons/made-12-kilim.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 11
     },
@@ -183,7 +183,7 @@
       "name": "Pêta Newrozê",
       "description": "Newroz flame",
       "assetKey": "icons/made-13-pet.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 12
     },
@@ -192,7 +192,7 @@
       "name": "Heyv",
       "description": "Crescent moon",
       "assetKey": "icons/made-14-heyv.png",
-      "price": 600,
+      "price": 300,
       "premiumOnly": true,
       "displayOrder": 13
     },
@@ -201,7 +201,7 @@
       "name": "Lale",
       "description": "Tulip",
       "assetKey": "icons/made-04-lale.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 0,
       "active": false
@@ -211,7 +211,7 @@
       "name": "Genim",
       "description": "Wheat",
       "assetKey": "icons/made-11-genim.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 1,
       "active": false
@@ -221,7 +221,7 @@
       "name": "Laleya Mor",
       "description": "Purple tulip",
       "assetKey": "icons/made-05-laleya-mor.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 2,
       "active": false
@@ -231,7 +231,7 @@
       "name": "Piyan",
       "description": "Tea glass",
       "assetKey": "icons/made-08-caydan.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 3,
       "active": false
@@ -241,7 +241,7 @@
       "name": "Hinar",
       "description": "Pomegranate",
       "assetKey": "icons/made-01-hinar.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 4,
       "active": false
@@ -251,7 +251,7 @@
       "name": "Ask",
       "description": "Deer",
       "assetKey": "icons/made-06-ask.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 6,
       "active": false
@@ -261,7 +261,7 @@
       "name": "Kevok",
       "description": "Dove",
       "assetKey": "icons/made-10-kevok.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 7,
       "active": false
@@ -271,7 +271,7 @@
       "name": "Ask",
       "description": "Deer",
       "assetKey": "icons/made-06-ask.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 8,
       "active": false
@@ -281,7 +281,7 @@
       "name": "Saz",
       "description": "Saz",
       "assetKey": "icons/made-09-saz.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 9,
       "active": false
@@ -291,7 +291,7 @@
       "name": "Pêta Newrozê",
       "description": "Newroz flame",
       "assetKey": "icons/made-13-pet.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 10,
       "active": false
@@ -301,7 +301,7 @@
       "name": "Kevok",
       "description": "Dove",
       "assetKey": "icons/made-10-kevok.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 11,
       "active": false
@@ -311,7 +311,7 @@
       "name": "Heyv",
       "description": "Crescent moon",
       "assetKey": "icons/made-14-heyv.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 12,
       "active": false
@@ -321,7 +321,7 @@
       "name": "Heyv",
       "description": "Crescent moon",
       "assetKey": "icons/made-14-heyv.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 13,
       "active": false
@@ -331,7 +331,7 @@
       "name": "Roj",
       "description": "Sun",
       "assetKey": "icons/made-02-roj.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 14,
       "active": false
@@ -341,7 +341,7 @@
       "name": "Mohra Rojê",
       "description": "Sun seal",
       "assetKey": "icons/made-07-sterk.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 15,
       "active": false
@@ -351,7 +351,7 @@
       "name": "Kilîm",
       "description": "Kilim diamond",
       "assetKey": "icons/made-12-kilim.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 16,
       "active": false
@@ -361,7 +361,7 @@
       "name": "Çiya",
       "description": "Mountain",
       "assetKey": "icons/made-03-ciya.png",
-      "price": 800,
+      "price": 400,
       "premiumOnly": true,
       "displayOrder": 17,
       "active": false
@@ -384,7 +384,7 @@
       "description": "Night on the high pastures",
       "assetKey": "backgrounds/made-02-seva-zozanan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 1
     },
@@ -394,7 +394,7 @@
       "description": "Sky full of stars",
       "assetKey": "backgrounds/made-03-ezmane-sterkan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 2
     },
@@ -404,7 +404,7 @@
       "description": "Silver moon",
       "assetKey": "backgrounds/made-04-heyva-zivin.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 3
     },
@@ -414,7 +414,7 @@
       "description": "Snow on the mountains",
       "assetKey": "backgrounds/made-05-berfa-ciyayan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 4
     },
@@ -424,7 +424,7 @@
       "description": "Blue lake",
       "assetKey": "backgrounds/made-06-gola-sin.webp",
       "type": "image",
-      "price": 400,
+      "price": 200,
       "premiumOnly": true,
       "displayOrder": 5
     },
@@ -434,7 +434,7 @@
       "description": "Northern lights",
       "assetKey": "backgrounds/made-07-ronahiya-bakur.webp",
       "type": "image",
-      "price": 600,
+      "price": 300,
       "premiumOnly": true,
       "displayOrder": 6
     },
@@ -444,7 +444,7 @@
       "description": "Under the Judas trees",
       "assetKey": "backgrounds/made-08-bin-erxewanan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 7
     },
@@ -464,7 +464,7 @@
       "description": "Rose mist",
       "assetKey": "backgrounds/made-10-mija-gulan.webp",
       "type": "image",
-      "price": 400,
+      "price": 200,
       "premiumOnly": true,
       "displayOrder": 9
     },
@@ -474,7 +474,7 @@
       "description": "Golden evening",
       "assetKey": "backgrounds/made-11-evara-zerin.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 10
     },
@@ -484,7 +484,7 @@
       "description": "Newroz fire",
       "assetKey": "backgrounds/made-12-agire-newroze.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 11
     },
@@ -494,7 +494,7 @@
       "description": "Red evening",
       "assetKey": "backgrounds/made-13-evara-sor.webp",
       "type": "image",
-      "price": 400,
+      "price": 200,
       "premiumOnly": true,
       "displayOrder": 12
     },
@@ -504,7 +504,7 @@
       "description": "Red night",
       "assetKey": "backgrounds/made-14-seva-sor.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 13
     },
@@ -514,7 +514,7 @@
       "description": "Tulip field",
       "assetKey": "backgrounds/made-15-lalezar.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 14
     },
@@ -534,7 +534,7 @@
       "description": "Spring",
       "assetKey": "backgrounds/made-17-bihar.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 16
     },
@@ -544,7 +544,7 @@
       "description": "Forest at night",
       "assetKey": "backgrounds/made-18-daristana-seve.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 17
     },
@@ -554,7 +554,7 @@
       "description": "Mist",
       "assetKey": "backgrounds/made-19-mij.webp",
       "type": "image",
-      "price": 400,
+      "price": 200,
       "premiumOnly": true,
       "displayOrder": 18
     },
@@ -564,7 +564,7 @@
       "description": "The colours of Newroz",
       "assetKey": "backgrounds/made-20-newroz.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 19
     },
@@ -574,7 +574,7 @@
       "description": "Red kilim",
       "assetKey": "backgrounds/made-21-kilima-sor.webp",
       "type": "image",
-      "price": 600,
+      "price": 300,
       "premiumOnly": true,
       "displayOrder": 20
     },
@@ -584,7 +584,7 @@
       "description": "Purple kilim",
       "assetKey": "backgrounds/made-22-kilima-mor.webp",
       "type": "image",
-      "price": 600,
+      "price": 300,
       "premiumOnly": true,
       "displayOrder": 21
     },
@@ -594,7 +594,7 @@
       "description": "Gold kilim",
       "assetKey": "backgrounds/made-23-kilima-zer.webp",
       "type": "image",
-      "price": 600,
+      "price": 300,
       "premiumOnly": true,
       "displayOrder": 22
     },
@@ -604,7 +604,7 @@
       "description": "Green kilim",
       "assetKey": "backgrounds/made-24-kilima-kesk.webp",
       "type": "image",
-      "price": 600,
+      "price": 300,
       "premiumOnly": true,
       "displayOrder": 23
     },
@@ -614,7 +614,7 @@
       "description": "Blue kilim",
       "assetKey": "backgrounds/made-25-kilima-sin.webp",
       "type": "image",
-      "price": 600,
+      "price": 300,
       "premiumOnly": true,
       "displayOrder": 24
     },
@@ -624,7 +624,7 @@
       "description": "Rose kilim",
       "assetKey": "backgrounds/made-26-kilima-gulan.webp",
       "type": "image",
-      "price": 600,
+      "price": 300,
       "premiumOnly": true,
       "displayOrder": 25
     },
@@ -634,7 +634,7 @@
       "description": "Night kilim",
       "assetKey": "backgrounds/made-27-kilima-seve.webp",
       "type": "image",
-      "price": 600,
+      "price": 300,
       "premiumOnly": true,
       "displayOrder": 26
     },
@@ -644,7 +644,7 @@
       "description": "Golden evening",
       "assetKey": "backgrounds/made-11-evara-zerin.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 0,
       "active": false
@@ -655,7 +655,7 @@
       "description": "Daybreak",
       "assetKey": "backgrounds/made-09-berbang.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 1,
       "active": false
@@ -666,7 +666,7 @@
       "description": "Spring",
       "assetKey": "backgrounds/made-17-bihar.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 2,
       "active": false
@@ -677,7 +677,7 @@
       "description": "High pasture",
       "assetKey": "backgrounds/made-16-zozan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 3,
       "active": false
@@ -688,7 +688,7 @@
       "description": "Blue lake",
       "assetKey": "backgrounds/made-06-gola-sin.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 4,
       "active": false
@@ -699,7 +699,7 @@
       "description": "High pasture",
       "assetKey": "backgrounds/made-16-zozan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 5,
       "active": false
@@ -710,7 +710,7 @@
       "description": "Spring",
       "assetKey": "backgrounds/made-17-bihar.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 6,
       "active": false
@@ -721,7 +721,7 @@
       "description": "Spring",
       "assetKey": "backgrounds/made-17-bihar.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 7,
       "active": false
@@ -732,7 +732,7 @@
       "description": "Snow on the mountains",
       "assetKey": "backgrounds/made-05-berfa-ciyayan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 8,
       "active": false
@@ -743,7 +743,7 @@
       "description": "Forest at night",
       "assetKey": "backgrounds/made-18-daristana-seve.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 9,
       "active": false
@@ -754,7 +754,7 @@
       "description": "Red evening",
       "assetKey": "backgrounds/made-13-evara-sor.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 10,
       "active": false
@@ -765,7 +765,7 @@
       "description": "Red kilim",
       "assetKey": "backgrounds/made-21-kilima-sor.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 11,
       "active": false
@@ -776,7 +776,7 @@
       "description": "Red evening",
       "assetKey": "backgrounds/made-13-evara-sor.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 12,
       "active": false
@@ -787,7 +787,7 @@
       "description": "Tulip field",
       "assetKey": "backgrounds/made-15-lalezar.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 13,
       "active": false
@@ -798,7 +798,7 @@
       "description": "Red kilim",
       "assetKey": "backgrounds/made-21-kilima-sor.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 14,
       "active": false
@@ -809,7 +809,7 @@
       "description": "Rose mist",
       "assetKey": "backgrounds/made-10-mija-gulan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 15,
       "active": false
@@ -820,7 +820,7 @@
       "description": "Night on the high pastures",
       "assetKey": "backgrounds/made-02-seva-zozanan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 16,
       "active": false
@@ -831,7 +831,7 @@
       "description": "Forest at night",
       "assetKey": "backgrounds/made-18-daristana-seve.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 17,
       "active": false
@@ -842,7 +842,7 @@
       "description": "Under the Judas trees",
       "assetKey": "backgrounds/made-08-bin-erxewanan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 18,
       "active": false
@@ -853,7 +853,7 @@
       "description": "Forest at night",
       "assetKey": "backgrounds/made-18-daristana-seve.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 19,
       "active": false
@@ -864,7 +864,7 @@
       "description": "Newroz fire",
       "assetKey": "backgrounds/made-12-agire-newroze.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 20,
       "active": false
@@ -875,7 +875,7 @@
       "description": "Red evening",
       "assetKey": "backgrounds/made-13-evara-sor.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 21,
       "active": false
@@ -886,7 +886,7 @@
       "description": "Newroz fire",
       "assetKey": "backgrounds/made-12-agire-newroze.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 22,
       "active": false
@@ -897,7 +897,7 @@
       "description": "Blue lake",
       "assetKey": "backgrounds/made-06-gola-sin.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 23,
       "active": false
@@ -908,7 +908,7 @@
       "description": "Northern lights",
       "assetKey": "backgrounds/made-07-ronahiya-bakur.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 24,
       "active": false
@@ -919,7 +919,7 @@
       "description": "Blue kilim",
       "assetKey": "backgrounds/made-25-kilima-sin.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 25,
       "active": false
@@ -930,7 +930,7 @@
       "description": "Night on the high pastures",
       "assetKey": "backgrounds/made-02-seva-zozanan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 26,
       "active": false
@@ -941,7 +941,7 @@
       "description": "Sky full of stars",
       "assetKey": "backgrounds/made-03-ezmane-sterkan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 27,
       "active": false
@@ -952,7 +952,7 @@
       "description": "Snow on the mountains",
       "assetKey": "backgrounds/made-05-berfa-ciyayan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 28,
       "active": false
@@ -963,7 +963,7 @@
       "description": "Gold kilim",
       "assetKey": "backgrounds/made-23-kilima-zer.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 29,
       "active": false
@@ -974,7 +974,7 @@
       "description": "Mist",
       "assetKey": "backgrounds/made-19-mij.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 30,
       "active": false
@@ -985,7 +985,7 @@
       "description": "Night kilim",
       "assetKey": "backgrounds/made-27-kilima-seve.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 31,
       "active": false
@@ -996,7 +996,7 @@
       "description": "Silver moon",
       "assetKey": "backgrounds/made-04-heyva-zivin.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 32,
       "active": false
@@ -1007,7 +1007,7 @@
       "description": "Red night",
       "assetKey": "backgrounds/made-14-seva-sor.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 33,
       "active": false
@@ -1018,7 +1018,7 @@
       "description": "Daybreak",
       "assetKey": "backgrounds/made-09-berbang.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 34,
       "active": false
@@ -1029,7 +1029,7 @@
       "description": "Rose mist",
       "assetKey": "backgrounds/made-10-mija-gulan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 35,
       "active": false
@@ -1040,7 +1040,7 @@
       "description": "Northern lights",
       "assetKey": "backgrounds/made-07-ronahiya-bakur.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 36,
       "active": false
@@ -1051,7 +1051,7 @@
       "description": "Under the Judas trees",
       "assetKey": "backgrounds/made-08-bin-erxewanan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 37,
       "active": false
@@ -1062,7 +1062,7 @@
       "description": "Rose kilim",
       "assetKey": "backgrounds/made-26-kilima-gulan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 38,
       "active": false
@@ -1073,7 +1073,7 @@
       "description": "Rose kilim",
       "assetKey": "backgrounds/made-26-kilima-gulan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 39,
       "active": false
@@ -1084,7 +1084,7 @@
       "description": "Hevalo violet",
       "assetKey": "backgrounds/made-01-hevalo.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 40,
       "active": false
@@ -1095,7 +1095,7 @@
       "description": "Under the Judas trees",
       "assetKey": "backgrounds/made-08-bin-erxewanan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 41,
       "active": false
@@ -1106,7 +1106,7 @@
       "description": "Under the Judas trees",
       "assetKey": "backgrounds/made-08-bin-erxewanan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 42,
       "active": false
@@ -1117,7 +1117,7 @@
       "description": "Tulip field",
       "assetKey": "backgrounds/made-15-lalezar.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 43,
       "active": false
@@ -1128,7 +1128,7 @@
       "description": "Night kilim",
       "assetKey": "backgrounds/made-27-kilima-seve.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 45,
       "active": false
@@ -1139,7 +1139,7 @@
       "description": "Silver moon",
       "assetKey": "backgrounds/made-04-heyva-zivin.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 46,
       "active": false
@@ -1150,7 +1150,7 @@
       "description": "Mist",
       "assetKey": "backgrounds/made-19-mij.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 47,
       "active": false
@@ -1161,7 +1161,7 @@
       "description": "Sky full of stars",
       "assetKey": "backgrounds/made-03-ezmane-sterkan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 48,
       "active": false
@@ -1172,7 +1172,7 @@
       "description": "Snow on the mountains",
       "assetKey": "backgrounds/made-05-berfa-ciyayan.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 49,
       "active": false
@@ -1183,7 +1183,7 @@
       "description": "Mist",
       "assetKey": "backgrounds/made-19-mij.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 50,
       "active": false
@@ -1194,7 +1194,7 @@
       "description": "Red night",
       "assetKey": "backgrounds/made-14-seva-sor.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 51,
       "active": false
@@ -1205,7 +1205,7 @@
       "description": "Red night",
       "assetKey": "backgrounds/made-14-seva-sor.webp",
       "type": "image",
-      "price": 500,
+      "price": 250,
       "premiumOnly": true,
       "displayOrder": 52,
       "active": false
@@ -1217,7 +1217,7 @@
       "name": "Xeleka Laleyan",
       "description": "Tulip wreath",
       "assetKey": "frames/made-01-lale.png",
-      "price": 1400,
+      "price": 700,
       "premiumOnly": false,
       "displayOrder": 0
     },
@@ -1226,7 +1226,7 @@
       "name": "Xeleka Genim",
       "description": "Wheat wreath",
       "assetKey": "frames/made-02-genim.png",
-      "price": 1200,
+      "price": 600,
       "premiumOnly": false,
       "displayOrder": 1
     },
@@ -1235,7 +1235,7 @@
       "name": "Xeleka Kilîmê",
       "description": "Kilim band",
       "assetKey": "frames/made-03-kilim.png",
-      "price": 1600,
+      "price": 800,
       "premiumOnly": false,
       "displayOrder": 2
     },
@@ -1244,7 +1244,7 @@
       "name": "Xeleka Rojê",
       "description": "Sun rays",
       "assetKey": "frames/made-04-roj.png",
-      "price": 2000,
+      "price": 1000,
       "premiumOnly": false,
       "displayOrder": 3
     },
@@ -1253,7 +1253,7 @@
       "name": "Xeleka Şevê",
       "description": "Night sky",
       "assetKey": "frames/made-05-sev.png",
-      "price": 1800,
+      "price": 900,
       "premiumOnly": false,
       "displayOrder": 4
     },
@@ -1262,7 +1262,7 @@
       "name": "Xeleka Newrozê",
       "description": "Newroz fire",
       "assetKey": "frames/made-06-newroz.png",
-      "price": 2000,
+      "price": 1000,
       "premiumOnly": false,
       "displayOrder": 5
     },
@@ -1271,7 +1271,7 @@
       "name": "Xeleka Biharê",
       "description": "Spring vine",
       "assetKey": "frames/made-07-bihar.png",
-      "price": 1300,
+      "price": 650,
       "premiumOnly": false,
       "displayOrder": 6
     },
@@ -1280,7 +1280,7 @@
       "name": "Xeleka Gulan",
       "description": "Rose wreath",
       "assetKey": "frames/made-08-gul.png",
-      "price": 1400,
+      "price": 700,
       "premiumOnly": false,
       "displayOrder": 7
     },
@@ -1289,7 +1289,7 @@
       "name": "Xeleka Binefşan",
       "description": "Violet wreath",
       "assetKey": "frames/made-09-binefs.png",
-      "price": 1500,
+      "price": 750,
       "premiumOnly": false,
       "displayOrder": 8
     },
@@ -1298,7 +1298,7 @@
       "name": "Xeleka Nêrgizan",
       "description": "Narcissus wreath",
       "assetKey": "frames/made-10-nergiz.png",
-      "price": 1400,
+      "price": 700,
       "premiumOnly": false,
       "displayOrder": 9
     },
@@ -1307,7 +1307,7 @@
       "name": "Xeleka Behîvê",
       "description": "Almond blossom",
       "assetKey": "frames/made-11-behiv.png",
-      "price": 1700,
+      "price": 850,
       "premiumOnly": false,
       "displayOrder": 10
     },
@@ -1316,7 +1316,7 @@
       "name": "Xeleka Askê",
       "description": "Fawn",
       "assetKey": "frames/made-12-ask.png",
-      "price": 1600,
+      "price": 800,
       "premiumOnly": false,
       "displayOrder": 11
     },
@@ -1325,7 +1325,7 @@
       "name": "Xeleka Rovî",
       "description": "Sleeping fox",
       "assetKey": "frames/made-13-rovi.png",
-      "price": 1600,
+      "price": 800,
       "premiumOnly": false,
       "displayOrder": 12
     },
@@ -1334,7 +1334,7 @@
       "name": "Xeleka Marî",
       "description": "Serpent",
       "assetKey": "frames/made-14-mar.png",
-      "price": 1800,
+      "price": 900,
       "premiumOnly": false,
       "displayOrder": 13
     },
@@ -1343,7 +1343,7 @@
       "name": "Baskên Spî",
       "description": "White wings",
       "assetKey": "frames/made-15-bask-spi.png",
-      "price": 1900,
+      "price": 950,
       "premiumOnly": false,
       "displayOrder": 14
     },
@@ -1352,7 +1352,7 @@
       "name": "Baskên Reş",
       "description": "Black wings",
       "assetKey": "frames/made-16-bask-res.png",
-      "price": 1900,
+      "price": 950,
       "premiumOnly": false,
       "displayOrder": 15
     },
@@ -1361,7 +1361,7 @@
       "name": "Xeleka Stêrkan",
       "description": "Ring of stars",
       "assetKey": "frames/made-17-sterkan.png",
-      "price": 1700,
+      "price": 850,
       "premiumOnly": false,
       "displayOrder": 16
     },
@@ -1370,7 +1370,7 @@
       "name": "Xeleka Ronahiya Bakur",
       "description": "Northern lights",
       "assetKey": "frames/made-18-ronahiya-bakur.png",
-      "price": 2000,
+      "price": 1000,
       "premiumOnly": false,
       "displayOrder": 17
     },
@@ -1379,7 +1379,7 @@
       "name": "Xeleka Demê",
       "description": "Clock face",
       "assetKey": "frames/made-19-dem.png",
-      "price": 1500,
+      "price": 750,
       "premiumOnly": false,
       "displayOrder": 18
     },
@@ -1388,7 +1388,7 @@
       "name": "Xeleka Efsûnê",
       "description": "Enchanted ring",
       "assetKey": "frames/made-20-efsun.png",
-      "price": 1800,
+      "price": 900,
       "premiumOnly": false,
       "displayOrder": 19
     },
@@ -1397,7 +1397,7 @@
       "name": "Xeleka Reş",
       "description": "Black scrollwork",
       "assetKey": "frames/made-21-res.png",
-      "price": 1700,
+      "price": 850,
       "premiumOnly": false,
       "displayOrder": 20
     },
@@ -1406,7 +1406,7 @@
       "name": "Xeleka Neqşê",
       "description": "Inlaid band",
       "assetKey": "frames/made-22-neqs.png",
-      "price": 1500,
+      "price": 750,
       "premiumOnly": false,
       "displayOrder": 21
     },
@@ -1415,7 +1415,7 @@
       "name": "Pelên Zêrîn",
       "description": "Golden leaves",
       "assetKey": "frames/made-23-zerin.png",
-      "price": 2000,
+      "price": 1000,
       "premiumOnly": false,
       "displayOrder": 22
     },
@@ -1424,7 +1424,7 @@
       "name": "Nîşangeh",
       "description": "Crosshair",
       "assetKey": "frames/made-24-nisan.png",
-      "price": 1300,
+      "price": 650,
       "premiumOnly": false,
       "displayOrder": 23
     },
@@ -1433,7 +1433,7 @@
       "name": "Wêne",
       "description": "Instant photo",
       "assetKey": "frames/made-25-wene.png",
-      "price": 1300,
+      "price": 650,
       "premiumOnly": false,
       "displayOrder": 24
     },
@@ -1442,7 +1442,7 @@
       "name": "Xeleka Tarî",
       "description": "Black thorns",
       "assetKey": "frames/made-26-tari.png",
-      "price": 1800,
+      "price": 900,
       "premiumOnly": false,
       "displayOrder": 25
     },
@@ -1451,7 +1451,7 @@
       "name": "Stiriyên Zîvîn",
       "description": "Silver thorns",
       "assetKey": "frames/made-27-ziv.png",
-      "price": 1900,
+      "price": 950,
       "premiumOnly": false,
       "displayOrder": 26
     },
@@ -1460,7 +1460,7 @@
       "name": "Xeleka Stiriyan",
       "description": "Ring of thorns",
       "assetKey": "frames/made-28-stiri.png",
-      "price": 1700,
+      "price": 850,
       "premiumOnly": false,
       "displayOrder": 27
     },
@@ -1469,7 +1469,7 @@
       "name": "Xeleka Dûkelê",
       "description": "Smoke ring",
       "assetKey": "frames/made-29-dukel.png",
-      "price": 1600,
+      "price": 800,
       "premiumOnly": false,
       "displayOrder": 28
     },
@@ -1478,7 +1478,7 @@
       "name": "Rojgirtin",
       "description": "Eclipse",
       "assetKey": "frames/made-30-rojgirtin.png",
-      "price": 2000,
+      "price": 1000,
       "premiumOnly": false,
       "displayOrder": 29
     }
