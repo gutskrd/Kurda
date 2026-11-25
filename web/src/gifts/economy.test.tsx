@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type { GiftCard } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
 import { GiftBubble } from './GiftBubble';
-import type { GiftActions } from './GiftReveal';
+import type { GiftActions } from './GiftMoment';
 import { GiftLimitSetting } from './GiftLimitSetting';
 import { BagNews } from './BagNews';
 import { isKnownAdult, plusPitchAllowed } from './nudges';
@@ -41,17 +41,19 @@ function actions(sendBack?: (c: GiftCard) => void): GiftActions {
 }
 
 describe('a grand gift', () => {
-  it('opens on the whole screen as night, then shows the gift with its meaning and Send one back', async () => {
+  it('opens on the night sky with its rays, then shows the gift with its meaning and Send one back', async () => {
     const sendBack = vi.fn();
     renderApp(<GiftBubble card={moon()} mine={false} senderName="rojda" actions={actions(sendBack)} />);
     await userEvent.click(screen.getByRole('button', { name: 'Open the gift from rojda' }));
     const stage = screen.getByRole('dialog', { name: 'A gift from rojda' });
-    expect(stage).toHaveClass('gift-stage-grand');
+    expect(stage).toHaveClass('gift-moment-grand');
     expect(stage.querySelector('.night-sky')).not.toBeNull();
+    expect(stage.querySelector('.gift-light-rays path')).not.toBeNull();
     await userEvent.click(within(stage).getByRole('button', { name: 'Skip' }));
 
-    expect(await screen.findByRole('heading', { name: 'Heyv' })).toHaveAttribute('lang', 'ku');
-    expect(screen.getByText('The full moon')).toBeInTheDocument();
+    expect(await within(stage).findByText('Heyv')).toHaveAttribute('lang', 'ku');
+    expect(within(stage).getByText(/The full moon/)).toBeInTheDocument();
+    expect(within(stage).getByRole('heading', { name: 'Gift from rojda' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Send one back' }));
     expect(sendBack).toHaveBeenCalledWith(expect.objectContaining({ sku: 'gift-heyv' }));
     // the moment closes so the sheet opens on top of the chat, not under it
@@ -66,7 +68,7 @@ describe('a grand gift', () => {
     expect(bubble.querySelector('.gift-item-art')).toHaveStyle({ width: '132px' });
   });
 
-  it('keeps its quiet fade under Reduce Motion, with no stars to come out', async () => {
+  it('keeps its light still under Reduce Motion, with no stars to come out', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('reduce'), media: query, addEventListener: () => undefined, removeEventListener: () => undefined, addListener: () => undefined, removeListener: () => undefined, onchange: null, dispatchEvent: () => false }));
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
@@ -76,7 +78,9 @@ describe('a grand gift', () => {
       await act(async () => {
         vi.advanceTimersByTime(250);
       });
-      expect(await screen.findByRole('heading', { name: 'Heyv' })).toBeInTheDocument();
+      expect(await screen.findByText('Heyv', { selector: 'b' })).toBeInTheDocument();
+      expect(document.querySelector('.gift-light')).toHaveClass('is-still');
+      expect(document.querySelector('.night-sky')).toHaveClass('is-settled');
     } finally {
       vi.useRealTimers();
     }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type RefObject, type SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { giftSenderName, type GiftCard, type GiftChatRef, type GiftUserEvent } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
@@ -10,15 +10,14 @@ import { useT } from '../i18n/I18nProvider';
 import { giftsWereOpened } from '../shop/useUnseenGifts';
 import { canGiveGifts } from './access';
 import { GiftBubble } from './GiftBubble';
-import { GiftFlight } from './GiftFlight';
 import { GiftPicker, type GiftPerson, type GiftSent } from './GiftPicker';
-import type { GiftActions } from './GiftReveal';
+import { GiftSentMoment, type GiftActions } from './GiftMoment';
 import { isKnownAdult } from './nudges';
 
 type ChatMessage = DmMessage | GroupMessage;
 
 /**
- * Everything a chat thread needs for gifts: `button` for the composer, `overlays` (picker, flight, announcements),
+ * Everything a chat thread needs for gifts: `button` for the composer, `overlays` (picker, the sender's moment, announcements),
  * `renderBody` to draw gift messages, and `notice` for who was skipped in a group gift.
  *
  * Cards stay current without a reload: the reader's own unwrap updates at once, and `gift_opened` (sender's channel)
@@ -32,7 +31,6 @@ export function useChatGifts<M extends ChatMessage>({
   loadPeople,
   setMessages,
   sendText,
-  threadRef,
   onSentScroll,
 }: {
   chat: GiftChatRef;
@@ -41,8 +39,6 @@ export function useChatGifts<M extends ChatMessage>({
   setMessages: Dispatch<SetStateAction<M[] | null>>;
   /** Sends a text message in this thread (the thanks); null when sent, else the refusal. */
   sendText: (body: string) => Promise<ApiError | null>;
-  /** The scrolling message list, which the sent gift flies into. */
-  threadRef: RefObject<HTMLElement | null>;
   /** Scrolls the thread to its end once the sent gift is in it. */
   onSentScroll: () => void;
 }): {
@@ -59,7 +55,7 @@ export function useChatGifts<M extends ChatMessage>({
   const [people, setPeople] = useState<GiftPerson[] | null>(null);
   /** The friend a gift is being sent back to, chosen already when the sheet opens. */
   const [backTo, setBackTo] = useState<string[] | undefined>(undefined);
-  const [flight, setFlight] = useState<{ sent: GiftSent; target: DOMRect | null } | null>(null);
+  const [sentMoment, setSentMoment] = useState<GiftSent | null>(null);
   const [announce, setAnnounce] = useState('');
   /** Who got the last gift and why the others did not, when some were skipped. */
   const [partial, setPartial] = useState<string | null>(null);
@@ -212,12 +208,12 @@ export function useChatGifts<M extends ChatMessage>({
           return now.some((m) => m.id === message.id) ? now.map((m) => (m.id === message.id ? message : m)) : [...now, message];
         });
       }
-      setFlight({ sent, target: threadRef.current?.getBoundingClientRect() ?? null });
+      setSentMoment(sent);
       // The note is announced once and stays on screen until dismissed.
       setPartial(sent.partialNote);
       setAnnounce(sent.partialNote ?? t('gift.sentAnnounce', { item: sent.item.name }));
     },
-    [setMessages, t, threadRef],
+    [setMessages, t],
   );
 
   const renderBody = useCallback(
@@ -249,12 +245,12 @@ export function useChatGifts<M extends ChatMessage>({
   const overlays = (
     <>
       <GiftPicker open={picking} onClose={() => setPicking(false)} chat={chat} people={people} onSent={onSent} initialChosen={backTo} />
-      {flight && (
-        <GiftFlight
-          item={flight.sent.item}
-          target={flight.target}
+      {sentMoment && (
+        <GiftSentMoment
+          item={sentMoment.item}
+          line={sentLine(sentMoment, people, t)}
           onDone={() => {
-            setFlight(null);
+            setSentMoment(null);
             onSentScroll();
           }}
         />
@@ -275,4 +271,10 @@ export function useChatGifts<M extends ChatMessage>({
   ) : null;
 
   return { button, overlays, renderBody, adopt, notice };
+}
+
+/** Who a gift went to, for the sender's moment: "Sent to Rojda.", or what was sent when the names are not known here. */
+function sentLine(sent: GiftSent, people: readonly GiftPerson[] | null, t: ReturnType<typeof useT>): string {
+  const names = sent.sent.map((id) => people?.find((p) => p.userId === id)?.name).filter((n): n is string => !!n);
+  return names.length > 0 ? t('gift.sentTo', { names: names.join(', ') }) : t('gift.sentAnnounce', { item: sent.item.name });
 }

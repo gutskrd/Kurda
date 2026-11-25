@@ -9,7 +9,8 @@ import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { Sheet } from '../components/Sheet';
 import { GiftItemArt } from '../gifts/GiftArt';
-import { GiftPicker } from '../gifts/GiftPicker';
+import { GiftSentMoment } from '../gifts/GiftMoment';
+import { GiftPicker, type GiftSent } from '../gifts/GiftPicker';
 import { canGiveGifts } from '../gifts/access';
 import { GiftIcon } from '../components/icons';
 import { useI18n, useT } from '../i18n/I18nProvider';
@@ -96,12 +97,13 @@ function GiftSenders({ post, onClose }: { post: Pick<FeedItem, 'targetType' | 'i
 
 /**
  * The gift button on someone else's post, for a signed-in account that may give gifts; the sheet goes to the author,
- * and the server holds the post rule (friends of a day, or both known adults).
+ * and the server holds the post rule (friends of a day, or both known adults). A gift given shows the sender's moment.
  */
 export function PostGiftButton({ item, onGiven }: { item: Pick<FeedItem, 'targetType' | 'id' | 'author'>; onGiven?: () => void }): React.JSX.Element | null {
   const t = useT();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [given, setGiven] = useState<GiftSent | null>(null);
   if (!canGiveGifts(user) || item.author.id === user?.id || item.author.unavailable) return null;
   return (
     <>
@@ -113,11 +115,13 @@ export function PostGiftButton({ item, onGiven }: { item: Pick<FeedItem, 'target
         onClose={() => setOpen(false)}
         post={{ type: item.targetType, id: item.id }}
         people={[{ userId: item.author.id, name: item.author.username, avatarUrl: item.author.avatarUrl }]}
-        onSent={() => {
+        onSent={(sent) => {
           setOpen(false);
+          setGiven(sent);
           onGiven?.();
         }}
       />
+      {given && <GiftSentMoment item={given.item} line={t('gift.sentTo', { names: item.author.username })} announce onDone={() => setGiven(null)} />}
     </>
   );
 }
