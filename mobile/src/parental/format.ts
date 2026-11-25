@@ -4,6 +4,7 @@
  */
 import { PARENT_CODE_LENGTH, type Bedtime } from '@kurda/shared';
 import type { Translate } from '../api/errors';
+import { MONTH_KEYS } from '../auth/birthMonth';
 import type { Locale } from '../i18n/translations';
 import type { TeenDay } from './api';
 
@@ -24,14 +25,24 @@ export function bedtimeLabel(bedtime: Bedtime | null, t: Translate, locale: Loca
   return t('parental.bedtime.range', { from: formatClock(bedtime.from, locale), to: formatClock(bedtime.to, locale) });
 }
 
-/** A date as a day of the year ("14 September 2026"), for since when two accounts have been connected. */
-export function formatDate(iso: string, locale: Locale): string {
-  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+/** Whether the phone has the words to write dates in this language; without them (Kurdish, often) it would use another's. */
+function namesDates(locale: Locale): boolean {
   try {
-    return new Intl.DateTimeFormat(locale, options).format(new Date(iso));
+    return Intl.DateTimeFormat.supportedLocalesOf([locale]).length > 0;
   } catch {
-    return new Intl.DateTimeFormat(undefined, options).format(new Date(iso));
+    return false;
   }
+}
+
+/**
+ * A date as a day of the year ("14 September 2026"): since when two accounts are connected, or when a request to stop
+ * ends. The month is named from the catalogue where the phone has no words for the language.
+ */
+export function formatDate(iso: string, locale: Locale, t: Translate): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return iso.slice(0, 10);
+  if (namesDates(locale)) return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' }).format(at);
+  return `${at.getDate()} ${t(MONTH_KEYS[at.getMonth()]!)} ${at.getFullYear()}`;
 }
 
 /** "30 minutes", or "1 minute". */

@@ -53,8 +53,19 @@ export function isGroupNotice(data: Record<string, unknown>): boolean {
   return (GROUP_NOTICES as readonly unknown[]).includes(data.kind);
 }
 
-/** What parental controls tell a parent or a teen: connected, ended, changed, another parent added, a new time zone. */
-const PARENTAL_NOTICES = ['parental_connected', 'parental_ended', 'parental_changed', 'parental_parent_added', 'parental_zone'] as const;
+/**
+ * What parental controls tell a parent or a teen: connected, ended, changed, another parent added, a new time zone, a
+ * teen asking to stop or staying after all, and a birth month corrected.
+ */
+const PARENTAL_NOTICES = [
+  'parental_connected',
+  'parental_ended',
+  'parental_changed',
+  'parental_parent_added',
+  'parental_zone',
+  'parental_leave',
+  'parental_birth',
+] as const;
 
 export function isParentalNotice(data: Record<string, unknown>): boolean {
   return (PARENTAL_NOTICES as readonly unknown[]).includes(data.kind);
@@ -97,7 +108,7 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
   // Parental controls: news to a parent about a teen opens that teen's page; the teen's own news, and an ending, open
   // the parental page as it stands now.
   if (isParentalNotice(data)) {
-    const toParent = data.kind === 'parental_changed' ? data.to === 'parent' : data.kind !== 'parental_ended';
+    const toParent = data.kind === 'parental_changed' || data.kind === 'parental_birth' ? data.to === 'parent' : data.kind !== 'parental_ended';
     const teenId = toParent ? str(data.teenId) : null;
     return { screen: 'SettingsPage', params: teenId ? { page: 'parentalTeen', teenId } : { page: 'parental' } };
   }

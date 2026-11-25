@@ -1,6 +1,8 @@
 import type { ApiClient } from '../api/client';
 import type { Translate } from '../api/errors';
-import type { TranslationKey } from '../i18n/translations';
+import type { Locale, TranslationKey } from '../i18n/translations';
+import { birthMonthLabel } from '../auth/birthMonth';
+import { formatDate } from '../parental/format';
 import type { RootNavigation } from '../navigation/rootStack';
 import { acceptInvite } from '../play/api';
 import { GAME_NAME_KEY } from '../play/labels';
@@ -78,7 +80,7 @@ export function notificationText(item: Pick<InboxItem, 'title' | 'body' | 'data'
       ? { title: t('letters.notify.homeTitle'), body: t('letters.notify.homeBody') }
       : { title: t('letters.notify.title'), body: t('letters.notify.body') };
   }
-  const progress = progressText(item.data, t) ?? groupText(item.data, t, locale) ?? parentalText(item.data, t);
+  const progress = progressText(item.data, t) ?? groupText(item.data, t, locale) ?? parentalText(item.data, t, locale as Locale);
   if (progress) return progress;
   return { title: item.title, body: item.body };
 }
@@ -87,16 +89,18 @@ export function notificationText(item: Pick<InboxItem, 'title' | 'body' | 'data'
  * Parental news in the reader's language, from the names in `data`. A change says who made it, worded for whoever it
  * went to (`to`); an ending says how, never why an account went. Without the names it needs, the server's line stays.
  */
-function parentalText(data: Record<string, unknown>, t: Translate): { title: string; body: string } | null {
+function parentalText(data: Record<string, unknown>, t: Translate, locale: Locale): { title: string; body: string } | null {
   if (!isParentalNotice(data)) return null;
   const said = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
-  const teen = said(data.teenName);
-  const parent = said(data.parentName);
+  const teen = said(data.teenName) ?? said(data.teenUsername);
+  const parent = said(data.parentName) ?? said(data.parentUsername);
   const line = (title: TranslationKey, body: TranslationKey | null, vars: Record<string, string>) => (body ? { title: t(title), body: t(body, vars) } : null);
   switch (data.kind) {
     case 'parental_connected':
       return teen ? line('parental.notice.connectedTitle', 'parental.notice.connected', { teen }) : null;
     case 'parental_ended': {
+      // To the teen whose own request ran its days: the parent it was about, by name.
+      if (data.by === 'teen' && !teen && parent) return { title: t('parental.notice.endedLeft', { name: parent }), body: '' };
       const body: TranslationKey | null =
         data.by === 'teen' && teen
           ? 'parental.notice.endedByTeen'
@@ -116,6 +120,22 @@ function parentalText(data: Record<string, unknown>, t: Translate): { title: str
         : line('parental.notice.changedTitle', 'parental.notice.changedTeen', { parent });
     case 'parental_parent_added':
       return teen && parent ? line('parental.notice.addedTitle', 'parental.notice.added', { parent, teen }) : null;
+    case 'parental_leave': {
+      if (!teen) return null;
+      if (data.state === 'kept') return { title: t('parental.notice.kept', { name: teen }), body: '' };
+      const ends = said(data.endsAt);
+      return ends ? { title: t('parental.notice.leave', { name: teen }), body: t('parental.notice.leave.body', { date: formatDate(ends, locale, t) }) } : null;
+    }
+    case 'parental_birth': {
+      const year = Number(data.birthYear);
+      const month = Number(data.birthMonth);
+      if (!parent || !Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return null;
+      const when = birthMonthLabel(t, year, month);
+      // Another parent reads it about the teen, the teen about themselves.
+      return data.to === 'parent' && teen
+        ? { title: t('parental.notice.birthFor', { parent, teen, month: when }), body: '' }
+        : { title: t('parental.notice.birth', { name: parent, month: when }), body: t('parental.notice.birth.body') };
+    }
     default: {
       // A time zone named as its place ("Europe/Berlin" as "Berlin").
       const zone = said(data.timeZone)?.split('/').pop()?.replace(/_/g, ' ');

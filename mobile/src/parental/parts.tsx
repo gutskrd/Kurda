@@ -15,8 +15,23 @@ import { nameOf, type PersonRef } from './api';
 
 /** The pieces the parental pages share: a person's row, the page's opening, and the moment two accounts connect. */
 
-/** A parent or teen in a list: their face, their name and a line under it; a button when there is somewhere to go. */
-export function PersonRow({ person, detail, onPress, testID }: { person: PersonRef; detail?: string; onPress?: () => void; testID?: string }): React.JSX.Element {
+/**
+ * A parent or teen in a list: their face, their name and a line under it; a button when there is somewhere to go, or
+ * one action of its own at the end (`action`), never both.
+ */
+export function PersonRow({
+  person,
+  detail,
+  onPress,
+  action,
+  testID,
+}: {
+  person: PersonRef;
+  detail?: string;
+  onPress?: () => void;
+  action?: ReactNode;
+  testID?: string;
+}): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   const name = nameOf(person);
@@ -34,9 +49,10 @@ export function PersonRow({ person, detail, onPress, testID }: { person: PersonR
         ) : null}
       </View>
       {onPress ? <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip ?? undefined} /> : null}
+      {!onPress && action ? action : null}
     </View>
   );
-  if (!onPress) return body;
+  if (!onPress) return testID ? <View testID={testID}>{body}</View> : body;
   return (
     <Pressable
       onPress={onPress}

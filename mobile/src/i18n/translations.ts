@@ -4009,10 +4009,6 @@ export type TranslationKey =
   | 'parental.switch.purchases'
   | 'parental.switch.purchases.hint'
   | 'parental.privacy.teen'
-  | 'parental.disconnect'
-  | 'parental.disconnect.title'
-  | 'parental.disconnect.confirm'
-  | 'parental.willBeTold'
   | 'parental.parent.intro'
   | 'parental.addTeen'
   | 'parental.teens'
@@ -4033,9 +4029,6 @@ export type TranslationKey =
   | 'parental.duration.minutes'
   | 'parental.duration.hours'
   | 'parental.duration.hoursMinutes'
-  | 'parental.streak'
-  | 'parental.streakOne'
-  | 'parental.streakNone'
   | 'parental.bar'
   | 'parental.time'
   | 'parental.safety'
@@ -4056,6 +4049,30 @@ export type TranslationKey =
   | 'parental.error.self'
   | 'parental.error.notParent'
   | 'parental.teenGone'
+  | 'parental.leave.ask'
+  | 'parental.leave.asking'
+  | 'parental.leave.title'
+  | 'parental.leave.body'
+  | 'parental.leave.endsOn'
+  | 'parental.leave.stay'
+  | 'parental.leave.asked'
+  | 'parental.leave.letGo'
+  | 'parental.leavingOn'
+  | 'parental.birth.title'
+  | 'parental.birth.help'
+  | 'parental.birth.done'
+  | 'parental.birth.firstOnly'
+  | 'parental.birth.under13'
+  | 'parental.birth.adult'
+  | 'parental.stop.body'
+  | 'parental.stopping'
+  | 'parental.notice.leave'
+  | 'parental.notice.leave.body'
+  | 'parental.notice.kept'
+  | 'parental.notice.birth'
+  | 'parental.notice.birth.body'
+  | 'parental.notice.birthFor'
+  | 'parental.notice.endedLeft'
   | 'parental.notice.endedAge'
   | 'parental.notice.endedAccount'
   | 'parental.firstOnly'
@@ -8048,10 +8065,6 @@ const en: Catalog = {
   'parental.switch.purchases': 'Purchases',
   'parental.switch.purchases.hint': 'Off hides buying with real money in the app.',
   'parental.privacy.teen': 'Your parents see your learning time and progress. Never your messages, letters, posts or friends.',
-  'parental.disconnect': 'Disconnect a parent',
-  'parental.disconnect.title': 'Disconnect {name}?',
-  'parental.disconnect.confirm': 'Disconnect',
-  'parental.willBeTold': '{name} will be told.',
   'parental.parent.intro': 'Add your teen to set a daily limit and a bedtime on their account, and switch off parts of Hevalo for them. You’ll see their learning time and progress, never their messages, letters or posts.',
   'parental.addTeen': 'Add a teen',
   'parental.teens': 'Your teens',
@@ -8072,9 +8085,6 @@ const en: Catalog = {
   'parental.duration.minutes': '{minutes} min',
   'parental.duration.hours': '{hours} h',
   'parental.duration.hoursMinutes': '{hours} h {minutes} min',
-  'parental.streak': '{count}-day streak',
-  'parental.streakOne': '1-day streak',
-  'parental.streakNone': 'No streak right now',
   'parental.bar': '{day}: {minutes}, {lessons}',
   'parental.time': 'Time',
   'parental.safety': 'Safety',
@@ -8113,6 +8123,30 @@ const en: Catalog = {
   'parental.notice.endedAge': 'Parental controls ended now that {teen} is 18.',
   'parental.notice.endedAccount': 'Parental controls with {parent} have ended.',
   'parental.teenGone': 'This teen isn’t connected to you any more.',
+  'parental.leave.ask': 'Ask to stop',
+  'parental.leave.asking': 'Asking…',
+  'parental.leave.title': 'Stop supervision by {name}?',
+  'parental.leave.body': '{name} is told now and can let you go straight away. Otherwise it ends on {date}. Until then, everything stays as it is.',
+  'parental.leave.endsOn': 'Ends on {date}',
+  'parental.leave.stay': 'Stay connected',
+  'parental.leave.asked': '{name} asked to stop supervision. It ends on {date}.',
+  'parental.leave.letGo': 'Let {name} go now',
+  'parental.leavingOn': 'Leaving on {date}',
+  'parental.birth.title': 'Birth month',
+  'parental.birth.help': 'You can correct this once. {name} will be told. Hevalo stays for ages 13 to 17 under supervision.',
+  'parental.birth.done': 'Already corrected',
+  'parental.birth.firstOnly': 'Only {name} can correct this',
+  'parental.birth.under13': 'Hevalo is for people aged 13 and over. To fix this, write to support.',
+  'parental.birth.adult': 'That would make {name} an adult. If they are, you can stop supervising instead.',
+  'parental.stop.body': 'Their limits are lifted at once, and {name} will be told.',
+  'parental.stopping': 'Stopping…',
+  'parental.notice.leave': '{name} asked to stop supervision',
+  'parental.notice.leave.body': 'It ends on {date}.',
+  'parental.notice.kept': '{name} chose to stay connected',
+  'parental.notice.birth': '{name} corrected your birth month to {month}',
+  'parental.notice.birth.body': 'If this is wrong, write to support.',
+  'parental.notice.birthFor': '{parent} corrected {teen}’s birth month to {month}',
+  'parental.notice.endedLeft': 'Supervision by {name} has ended.',
 };
 
 const ku: Catalog = {
@@ -12085,10 +12119,6 @@ const ku: Catalog = {
   'parental.switch.purchases': 'Kirîn',
   'parental.switch.purchases.hint': 'Girtî: kirîna bi pereyê rastîn di sepanê de nayê nîşandan.',
   'parental.privacy.teen': 'Dêûbavên te dema fêrbûn û pêşketina te dibînin. Ew qet peyam, name, şandî û hevalên te nabînin.',
-  'parental.disconnect': 'Girêdana dêûbavekî rake',
-  'parental.disconnect.title': 'Girêdana {name} rakî?',
-  'parental.disconnect.confirm': 'Girêdanê rake',
-  'parental.willBeTold': 'Dê ji {name} re bê gotin.',
   'parental.parent.intro': 'Ciwanê xwe zêde bike da ku li ser hesabê wî sînorekî rojane û demeke xewê deynî û hin beşên Hevalo jê re bigirî. Tu dê dema fêrbûn û pêşketina wî bibînî, lê qet peyam, name û şandiyên wî nabînî.',
   'parental.addTeen': 'Ciwanekî zêde bike',
   'parental.teens': 'Ciwanên te',
@@ -12109,9 +12139,6 @@ const ku: Catalog = {
   'parental.duration.minutes': '{minutes} deq',
   'parental.duration.hours': '{hours} st',
   'parental.duration.hoursMinutes': '{hours} st {minutes} deq',
-  'parental.streak': 'Rêzeya {count} rojan',
-  'parental.streakOne': 'Rêzeya rojekê',
-  'parental.streakNone': 'Niha rêze tune ye',
   'parental.bar': '{day}: {minutes}, {lessons}',
   'parental.time': 'Dem',
   'parental.safety': 'Ewlehî',
@@ -12150,6 +12177,30 @@ const ku: Catalog = {
   'parental.notice.endedAge': 'Çavdêriya dêûbavan bi dawî bû, ji ber ku {teen} niha 18 salî ye.',
   'parental.notice.endedAccount': 'Çavdêriya dêûbavan bi {parent} re bi dawî bû.',
   'parental.teenGone': 'Ev ciwan êdî bi te re ne girêdayî ye.',
+  'parental.leave.ask': 'Daxwaza rawestandinê bike',
+  'parental.leave.asking': 'Tê xwestin…',
+  'parental.leave.title': 'Bila {name} êdî çavdêriya te neke?',
+  'parental.leave.body': 'Dê niha ji {name} re bê gotin, û ew dikare te yekser berde. An na, ew di {date} de diqede. Heta wê demê her tişt wek xwe dimîne.',
+  'parental.leave.endsOn': 'Di {date} de diqede',
+  'parental.leave.stay': 'Girêdayî bimîne',
+  'parental.leave.asked': '{name} xwest ku çavdêrî bi dawî bibe. Ew di {date} de diqede.',
+  'parental.leave.letGo': 'Niha {name} berde',
+  'parental.leavingOn': 'Di {date} de diçe',
+  'parental.birth.title': 'Meha jidayikbûnê',
+  'parental.birth.help': 'Tu dikarî vê tenê carekê rast bikî. Dê ji {name} re bê gotin. Bi çavdêriyê, Hevalo ji bo temenê 13 heta 17 salî ye.',
+  'parental.birth.done': 'Jixwe hatiye rastkirin',
+  'parental.birth.firstOnly': 'Tenê {name} dikare vê rast bike',
+  'parental.birth.under13': 'Hevalo ji bo kesên 13 salî û mezintir e. Ji bo rastkirina vê, ji tîma piştgiriyê re binivîse.',
+  'parental.birth.adult': 'Bi vê yekê {name} dibe kesekî mezin. Eger wisa be, tu dikarî li şûna vê çavdêriyê rawestînî.',
+  'parental.stop.body': 'Sînorên wî di cih de radibin, û dê ji {name} re bê gotin.',
+  'parental.stopping': 'Tê rawestandin…',
+  'parental.notice.leave': '{name} xwest ku çavdêrî bi dawî bibe',
+  'parental.notice.leave.body': 'Ew di {date} de diqede.',
+  'parental.notice.kept': '{name} biryar da ku girêdayî bimîne',
+  'parental.notice.birth': '{name} meha jidayikbûna te wek {month} rast kir',
+  'parental.notice.birth.body': 'Eger ev ne rast be, ji tîma piştgiriyê re binivîse.',
+  'parental.notice.birthFor': '{parent} meha jidayikbûna {teen} wek {month} rast kir',
+  'parental.notice.endedLeft': 'Çavdêriya {name} bi dawî bû.',
 };
 
 const de: Catalog = {
@@ -16122,10 +16173,6 @@ const de: Catalog = {
   'parental.switch.purchases': 'Käufe',
   'parental.switch.purchases.hint': 'Aus: Kaufen mit echtem Geld ist in der App ausgeblendet.',
   'parental.privacy.teen': 'Deine Eltern sehen deine Lernzeit und deinen Fortschritt. Nie deine Nachrichten, Briefe, Beiträge oder Freunde.',
-  'parental.disconnect': 'Elternteil trennen',
-  'parental.disconnect.title': '{name} trennen?',
-  'parental.disconnect.confirm': 'Trennen',
-  'parental.willBeTold': '{name} wird darüber informiert.',
   'parental.parent.intro': 'Füge dein Kind hinzu, um auf seinem Konto ein Tageslimit und eine Schlafenszeit festzulegen und Teile von Hevalo auszuschalten. Du siehst seine Lernzeit und seinen Fortschritt, aber nie seine Nachrichten, Briefe oder Beiträge.',
   'parental.addTeen': 'Kind hinzufügen',
   'parental.teens': 'Deine Kinder',
@@ -16146,9 +16193,6 @@ const de: Catalog = {
   'parental.duration.minutes': '{minutes} Min.',
   'parental.duration.hours': '{hours} Std.',
   'parental.duration.hoursMinutes': '{hours} Std. {minutes} Min.',
-  'parental.streak': 'Serie von {count} Tagen',
-  'parental.streakOne': 'Serie von 1 Tag',
-  'parental.streakNone': 'Gerade keine Serie',
   'parental.bar': '{day}: {minutes}, {lessons}',
   'parental.time': 'Zeit',
   'parental.safety': 'Sicherheit',
@@ -16187,6 +16231,30 @@ const de: Catalog = {
   'parental.notice.endedAge': 'Die Elternkontrolle ist beendet, weil {teen} jetzt 18 ist.',
   'parental.notice.endedAccount': 'Die Elternkontrolle mit {parent} ist beendet.',
   'parental.teenGone': 'Du bist nicht mehr mit diesem Kind verbunden.',
+  'parental.leave.ask': 'Beenden anfragen',
+  'parental.leave.asking': 'Wird angefragt…',
+  'parental.leave.title': 'Begleitung durch {name} beenden?',
+  'parental.leave.body': '{name} erfährt es sofort und kann dich gleich gehen lassen. Sonst endet die Begleitung am {date}. Bis dahin bleibt alles, wie es ist.',
+  'parental.leave.endsOn': 'Endet am {date}',
+  'parental.leave.stay': 'Verbunden bleiben',
+  'parental.leave.asked': '{name} möchte die Begleitung beenden. Sie endet am {date}.',
+  'parental.leave.letGo': '{name} jetzt gehen lassen',
+  'parental.leavingOn': 'Begleitung endet am {date}',
+  'parental.birth.title': 'Geburtsmonat',
+  'parental.birth.help': 'Du kannst das einmal korrigieren. {name} wird darüber informiert. Mit Begleitung ist Hevalo für 13- bis 17-Jährige.',
+  'parental.birth.done': 'Bereits korrigiert',
+  'parental.birth.firstOnly': 'Nur {name} kann das korrigieren',
+  'parental.birth.under13': 'Hevalo ist für Menschen ab 13 Jahren. Um das zu klären, schreib an den Support.',
+  'parental.birth.adult': 'Damit wäre {name} volljährig. Wenn das stimmt, kannst du stattdessen die Begleitung beenden.',
+  'parental.stop.body': 'Alle Grenzen fallen sofort weg, und {name} wird darüber informiert.',
+  'parental.stopping': 'Wird beendet…',
+  'parental.notice.leave': '{name} möchte die Begleitung beenden',
+  'parental.notice.leave.body': 'Sie endet am {date}.',
+  'parental.notice.kept': '{name} bleibt doch verbunden',
+  'parental.notice.birth': '{name} hat deinen Geburtsmonat auf {month} korrigiert',
+  'parental.notice.birth.body': 'Wenn das nicht stimmt, schreib an den Support.',
+  'parental.notice.birthFor': '{parent} hat den Geburtsmonat von {teen} auf {month} korrigiert',
+  'parental.notice.endedLeft': 'Die Begleitung durch {name} ist beendet.',
 };
 
 const es: Catalog = {
@@ -20159,10 +20227,6 @@ const es: Catalog = {
   'parental.switch.purchases': 'Compras',
   'parental.switch.purchases.hint': 'Desactivado: las compras con dinero real se ocultan en la app.',
   'parental.privacy.teen': 'Tus padres ven tu tiempo de aprendizaje y tu progreso. Nunca tus mensajes, cartas, publicaciones ni amigos.',
-  'parental.disconnect': 'Desconectar a un padre o madre',
-  'parental.disconnect.title': '¿Desconectar a {name}?',
-  'parental.disconnect.confirm': 'Desconectar',
-  'parental.willBeTold': 'Se lo diremos a {name}.',
   'parental.parent.intro': 'Añade a tu hijo para ponerle un límite diario y una hora de dormir en su cuenta, y desactivar partes de Hevalo. Verás su tiempo de aprendizaje y su progreso, nunca sus mensajes, cartas ni publicaciones.',
   'parental.addTeen': 'Añadir un hijo',
   'parental.teens': 'Tus hijos',
@@ -20183,9 +20247,6 @@ const es: Catalog = {
   'parental.duration.minutes': '{minutes} min',
   'parental.duration.hours': '{hours} h',
   'parental.duration.hoursMinutes': '{hours} h {minutes} min',
-  'parental.streak': 'Racha de {count} días',
-  'parental.streakOne': 'Racha de 1 día',
-  'parental.streakNone': 'Sin racha por ahora',
   'parental.bar': '{day}: {minutes}, {lessons}',
   'parental.time': 'Tiempo',
   'parental.safety': 'Seguridad',
@@ -20224,6 +20285,30 @@ const es: Catalog = {
   'parental.notice.endedAge': 'El control parental ha terminado porque {teen} ya tiene 18 años.',
   'parental.notice.endedAccount': 'El control parental con {parent} ha terminado.',
   'parental.teenGone': 'Ya no estás conectado con este hijo.',
+  'parental.leave.ask': 'Pedir que termine',
+  'parental.leave.asking': 'Pidiendo…',
+  'parental.leave.title': '¿Terminar la supervisión por parte de {name}?',
+  'parental.leave.body': 'Se le avisa ahora a {name}, que puede dejarte ir enseguida. Si no, termina el {date}. Hasta entonces, todo sigue igual.',
+  'parental.leave.endsOn': 'Termina el {date}',
+  'parental.leave.stay': 'Mantener la conexión',
+  'parental.leave.asked': '{name} ha pedido dejar la supervisión. Termina el {date}.',
+  'parental.leave.letGo': 'Dejar ir a {name} ahora',
+  'parental.leavingOn': 'Se va el {date}',
+  'parental.birth.title': 'Mes de nacimiento',
+  'parental.birth.help': 'Puedes corregirlo una sola vez. Se le avisará a {name}. Con supervisión, Hevalo es para edades de 13 a 17 años.',
+  'parental.birth.done': 'Ya corregido',
+  'parental.birth.firstOnly': 'Solo {name} puede corregirlo',
+  'parental.birth.under13': 'Hevalo es para personas de 13 años o más. Para arreglarlo, escribe a soporte.',
+  'parental.birth.adult': 'Con esa fecha, {name} sería mayor de edad. Si es así, puedes dejar de supervisar.',
+  'parental.stop.body': 'Sus límites se quitan al instante y se le avisará a {name}.',
+  'parental.stopping': 'Dejando de supervisar…',
+  'parental.notice.leave': '{name} ha pedido dejar la supervisión',
+  'parental.notice.leave.body': 'Termina el {date}.',
+  'parental.notice.kept': '{name} ha decidido mantener la conexión',
+  'parental.notice.birth': '{name} ha corregido tu mes de nacimiento a {month}',
+  'parental.notice.birth.body': 'Si no es correcto, escribe a soporte.',
+  'parental.notice.birthFor': '{parent} ha corregido el mes de nacimiento de {teen} a {month}',
+  'parental.notice.endedLeft': 'La supervisión de {name} ha terminado.',
 };
 
 const tr: Catalog = {
@@ -24196,10 +24281,6 @@ const tr: Catalog = {
   'parental.switch.purchases': 'Satın almalar',
   'parental.switch.purchases.hint': 'Kapalıyken: gerçek parayla satın alma uygulamada gizlenir.',
   'parental.privacy.teen': 'Ebeveynlerin öğrenme süreni ve ilerlemeni görür. Mesajlarını, mektuplarını, gönderilerini ya da arkadaşlarını asla görmez.',
-  'parental.disconnect': 'Ebeveyn bağlantısını kaldır',
-  'parental.disconnect.title': '{name} ile bağlantı kaldırılsın mı?',
-  'parental.disconnect.confirm': 'Bağlantıyı kaldır',
-  'parental.willBeTold': '{name} bilgilendirilecek.',
   'parental.parent.intro': 'Çocuğunu ekleyerek hesabında günlük bir sınır ve uyku saati belirleyebilir, Hevalo’nun bazı bölümlerini kapatabilirsin. Öğrenme süresini ve ilerlemesini görürsün; mesajlarını, mektuplarını ya da gönderilerini asla görmezsin.',
   'parental.addTeen': 'Çocuk ekle',
   'parental.teens': 'Çocukların',
@@ -24220,9 +24301,6 @@ const tr: Catalog = {
   'parental.duration.minutes': '{minutes} dk',
   'parental.duration.hours': '{hours} sa',
   'parental.duration.hoursMinutes': '{hours} sa {minutes} dk',
-  'parental.streak': '{count} günlük seri',
-  'parental.streakOne': '1 günlük seri',
-  'parental.streakNone': 'Şu an seri yok',
   'parental.bar': '{day}: {minutes}, {lessons}',
   'parental.time': 'Süre',
   'parental.safety': 'Güvenlik',
@@ -24261,6 +24339,30 @@ const tr: Catalog = {
   'parental.notice.endedAge': '{teen} artık 18 yaşında, ebeveyn denetimleri sona erdi.',
   'parental.notice.endedAccount': '{parent} ile ebeveyn denetimleri sona erdi.',
   'parental.teenGone': 'Artık bu çocukla bağlı değilsin.',
+  'parental.leave.ask': 'Bitirmeyi iste',
+  'parental.leave.asking': 'İsteniyor…',
+  'parental.leave.title': '{name} denetimi bıraksın mı?',
+  'parental.leave.body': '{name} şimdi bilgilendirilir ve seni hemen bırakabilir. Aksi halde denetim {date} tarihinde sona erer. O zamana kadar her şey olduğu gibi kalır.',
+  'parental.leave.endsOn': '{date} tarihinde sona erer',
+  'parental.leave.stay': 'Bağlı kal',
+  'parental.leave.asked': '{name} denetimin bitmesini istedi. Denetim {date} tarihinde sona erecek.',
+  'parental.leave.letGo': '{name} için denetimi şimdi bırak',
+  'parental.leavingOn': '{date} tarihinde ayrılıyor',
+  'parental.birth.title': 'Doğum ayı',
+  'parental.birth.help': 'Bunu bir kez düzeltebilirsin. {name} bilgilendirilecek. Denetimle Hevalo 13–17 yaş içindir.',
+  'parental.birth.done': 'Zaten düzeltildi',
+  'parental.birth.firstOnly': 'Bunu yalnızca {name} düzeltebilir',
+  'parental.birth.under13': 'Hevalo 13 yaş ve üzeri içindir. Bunu düzeltmek için destek ekibine yaz.',
+  'parental.birth.adult': 'Bu tarihle {name} yetişkin olur. Öyleyse bunun yerine denetimi bırakabilirsin.',
+  'parental.stop.body': 'Sınırları hemen kalkar ve {name} bilgilendirilir.',
+  'parental.stopping': 'Bırakılıyor…',
+  'parental.notice.leave': '{name} denetimin bitmesini istedi',
+  'parental.notice.leave.body': 'Denetim {date} tarihinde sona erecek.',
+  'parental.notice.kept': '{name} bağlı kalmayı seçti',
+  'parental.notice.birth': '{name} doğum ayını {month} olarak düzeltti',
+  'parental.notice.birth.body': 'Yanlışsa destek ekibine yaz.',
+  'parental.notice.birthFor': '{parent}, {teen} için doğum ayını {month} olarak düzeltti',
+  'parental.notice.endedLeft': '{name} tarafından yapılan denetim sona erdi.',
 };
 
 const ar: Catalog = {
@@ -28233,10 +28335,6 @@ const ar: Catalog = {
   'parental.switch.purchases': 'المشتريات',
   'parental.switch.purchases.hint': 'عند الإيقاف: يُخفى الشراء بمال حقيقي في التطبيق.',
   'parental.privacy.teen': 'يرى أولياء أمرك وقت تعلّمك وتقدّمك، ولا يرون أبدًا رسائلك أو خطاباتك أو منشوراتك أو أصدقاءك.',
-  'parental.disconnect': 'فك الارتباط بوليّ أمر',
-  'parental.disconnect.title': 'هل تفك الارتباط بـ{name}؟',
-  'parental.disconnect.confirm': 'فك الارتباط',
-  'parental.willBeTold': 'سيتم إبلاغ {name}.',
   'parental.parent.intro': 'أضف ابنك أو ابنتك لتحديد حدّ يومي ووقت للنوم على حسابه، وإيقاف أجزاء من Hevalo له. سترى وقت تعلّمه وتقدّمه، ولن ترى أبدًا رسائله أو خطاباته أو منشوراته.',
   'parental.addTeen': 'إضافة ابن أو ابنة',
   'parental.teens': 'أبناؤك',
@@ -28257,9 +28355,6 @@ const ar: Catalog = {
   'parental.duration.minutes': '{minutes} د',
   'parental.duration.hours': '{hours} س',
   'parental.duration.hoursMinutes': '{hours} س {minutes} د',
-  'parental.streak': 'سلسلة {count} أيام',
-  'parental.streakOne': 'سلسلة يوم واحد',
-  'parental.streakNone': 'لا توجد سلسلة الآن',
   'parental.bar': '{day}: {minutes}، {lessons}',
   'parental.time': 'الوقت',
   'parental.safety': 'الأمان',
@@ -28298,6 +28393,30 @@ const ar: Catalog = {
   'parental.notice.endedAge': 'انتهت الرقابة الأبوية لأن {teen} بلغ 18 عامًا.',
   'parental.notice.endedAccount': 'انتهت الرقابة الأبوية مع {parent}.',
   'parental.teenGone': 'لم تعد مرتبطًا بهذا الابن أو الابنة.',
+  'parental.leave.ask': 'اطلب الإيقاف',
+  'parental.leave.asking': 'جارٍ الطلب…',
+  'parental.leave.title': 'إيقاف إشراف {name} عليك؟',
+  'parental.leave.body': 'سيُبلَّغ {name} الآن، ويمكنه أن يتركك فورًا. وإلا فسينتهي الإشراف في {date}. وحتى ذلك الحين يبقى كل شيء كما هو.',
+  'parental.leave.endsOn': 'ينتهي في {date}',
+  'parental.leave.stay': 'ابقَ مرتبطًا',
+  'parental.leave.asked': 'طلب {name} إيقاف الإشراف. ينتهي في {date}.',
+  'parental.leave.letGo': 'دع {name} يذهب الآن',
+  'parental.leavingOn': 'يغادر في {date}',
+  'parental.birth.title': 'شهر الميلاد',
+  'parental.birth.help': 'يمكنك تصحيح هذا مرة واحدة. سيُبلَّغ {name} بذلك. مع الإشراف، Hevalo للأعمار من 13 إلى 17 عامًا.',
+  'parental.birth.done': 'صُحّح من قبل',
+  'parental.birth.firstOnly': 'وحده {name} يستطيع تصحيح هذا',
+  'parental.birth.under13': 'Hevalo مخصّص لمن بلغوا 13 عامًا فأكثر. لتصحيح ذلك، اكتب إلى الدعم.',
+  'parental.birth.adult': 'بهذا التاريخ سيكون {name} بالغًا. إن كان كذلك، فيمكنك إيقاف الإشراف بدلًا من ذلك.',
+  'parental.stop.body': 'تُرفع حدوده فورًا، وسيُبلَّغ {name} بذلك.',
+  'parental.stopping': 'جارٍ الإيقاف…',
+  'parental.notice.leave': 'طلب {name} إيقاف الإشراف',
+  'parental.notice.leave.body': 'ينتهي في {date}.',
+  'parental.notice.kept': 'اختار {name} البقاء مرتبطًا',
+  'parental.notice.birth': 'صحّح {name} شهر ميلادك إلى {month}',
+  'parental.notice.birth.body': 'إن كان هذا خطأً، فاكتب إلى الدعم.',
+  'parental.notice.birthFor': 'صحّح {parent} شهر ميلاد {teen} إلى {month}',
+  'parental.notice.endedLeft': 'انتهى إشراف {name}.',
 };
 
 const fr: Catalog = {
@@ -32270,10 +32389,6 @@ const fr: Catalog = {
   'parental.switch.purchases': 'Achats',
   'parental.switch.purchases.hint': 'Désactivé : les achats avec de l’argent réel sont masqués dans l’app.',
   'parental.privacy.teen': 'Tes parents voient ton temps d’apprentissage et ta progression. Jamais tes messages, tes lettres, tes publications ni tes amis.',
-  'parental.disconnect': 'Dissocier un parent',
-  'parental.disconnect.title': 'Dissocier {name} ?',
-  'parental.disconnect.confirm': 'Dissocier',
-  'parental.willBeTold': '{name} en sera informé.',
   'parental.parent.intro': 'Ajoute ton enfant pour fixer une limite quotidienne et une heure de coucher sur son compte, et désactiver certaines parties de Hevalo. Tu verras son temps d’apprentissage et sa progression, jamais ses messages, ses lettres ni ses publications.',
   'parental.addTeen': 'Ajouter un enfant',
   'parental.teens': 'Tes enfants',
@@ -32294,9 +32409,6 @@ const fr: Catalog = {
   'parental.duration.minutes': '{minutes} min',
   'parental.duration.hours': '{hours} h',
   'parental.duration.hoursMinutes': '{hours} h {minutes} min',
-  'parental.streak': 'Série de {count} jours',
-  'parental.streakOne': 'Série de 1 jour',
-  'parental.streakNone': 'Pas de série en ce moment',
   'parental.bar': '{day} : {minutes}, {lessons}',
   'parental.time': 'Temps',
   'parental.safety': 'Sécurité',
@@ -32335,6 +32447,30 @@ const fr: Catalog = {
   'parental.notice.endedAge': 'Le contrôle parental est terminé : {teen} a maintenant 18 ans.',
   'parental.notice.endedAccount': 'Le contrôle parental avec {parent} est terminé.',
   'parental.teenGone': 'Tu n’es plus associé à cet enfant.',
+  'parental.leave.ask': 'Demander l’arrêt',
+  'parental.leave.asking': 'Demande en cours…',
+  'parental.leave.title': 'Arrêter le suivi par {name} ?',
+  'parental.leave.body': 'Nous le disons tout de suite à {name}, qui peut te laisser partir sans attendre. Sinon, le suivi prend fin le {date}. D’ici là, rien ne change.',
+  'parental.leave.endsOn': 'Prend fin le {date}',
+  'parental.leave.stay': 'Garder le lien',
+  'parental.leave.asked': '{name} a demandé l’arrêt du suivi. Il prend fin le {date}.',
+  'parental.leave.letGo': 'Laisser partir {name} maintenant',
+  'parental.leavingOn': 'Part le {date}',
+  'parental.birth.title': 'Mois de naissance',
+  'parental.birth.help': 'Tu peux corriger ceci une seule fois. Nous le dirons à {name}. Avec le suivi, Hevalo est pour les 13 à 17 ans.',
+  'parental.birth.done': 'Déjà corrigé',
+  'parental.birth.firstOnly': '{name} est la seule personne à pouvoir corriger ceci',
+  'parental.birth.under13': 'Hevalo est réservé aux personnes de 13 ans et plus. Pour corriger cela, écris à l’assistance.',
+  'parental.birth.adult': 'Avec cette date, {name} aurait 18 ans ou plus. Si c’est le cas, tu peux plutôt arrêter le suivi.',
+  'parental.stop.body': 'Ses limites sont levées tout de suite, et nous le dirons à {name}.',
+  'parental.stopping': 'Arrêt…',
+  'parental.notice.leave': '{name} a demandé l’arrêt du suivi',
+  'parental.notice.leave.body': 'Il prend fin le {date}.',
+  'parental.notice.kept': '{name} a choisi de garder le lien',
+  'parental.notice.birth': '{name} a corrigé ton mois de naissance en {month}',
+  'parental.notice.birth.body': 'Si c’est faux, écris à l’assistance.',
+  'parental.notice.birthFor': '{parent} a corrigé le mois de naissance de {teen} en {month}',
+  'parental.notice.endedLeft': 'Le suivi par {name} a pris fin.',
 };
 
 const nl: Catalog = {
@@ -36307,10 +36443,6 @@ const nl: Catalog = {
   'parental.switch.purchases': 'Aankopen',
   'parental.switch.purchases.hint': 'Uit: kopen met echt geld is verborgen in de app.',
   'parental.privacy.teen': 'Je ouders zien je leertijd en voortgang. Nooit je berichten, brieven, posts of vrienden.',
-  'parental.disconnect': 'Ouder ontkoppelen',
-  'parental.disconnect.title': '{name} ontkoppelen?',
-  'parental.disconnect.confirm': 'Ontkoppelen',
-  'parental.willBeTold': '{name} krijgt hier bericht van.',
   'parental.parent.intro': 'Voeg je kind toe om op het account een daglimiet en een bedtijd in te stellen en delen van Hevalo uit te zetten. Je ziet de leertijd en voortgang, nooit berichten, brieven of posts.',
   'parental.addTeen': 'Kind toevoegen',
   'parental.teens': 'Je kinderen',
@@ -36331,9 +36463,6 @@ const nl: Catalog = {
   'parental.duration.minutes': '{minutes} min',
   'parental.duration.hours': '{hours} u',
   'parental.duration.hoursMinutes': '{hours} u {minutes} min',
-  'parental.streak': 'Reeks van {count} dagen',
-  'parental.streakOne': 'Reeks van 1 dag',
-  'parental.streakNone': 'Nu geen reeks',
   'parental.bar': '{day}: {minutes}, {lessons}',
   'parental.time': 'Tijd',
   'parental.safety': 'Veiligheid',
@@ -36372,6 +36501,30 @@ const nl: Catalog = {
   'parental.notice.endedAge': 'Ouderlijk toezicht is gestopt nu {teen} 18 is.',
   'parental.notice.endedAccount': 'Ouderlijk toezicht met {parent} is gestopt.',
   'parental.teenGone': 'Je bent niet meer gekoppeld aan dit kind.',
+  'parental.leave.ask': 'Vragen om te stoppen',
+  'parental.leave.asking': 'Wordt gevraagd…',
+  'parental.leave.title': 'Toezicht door {name} stoppen?',
+  'parental.leave.body': '{name} hoort het nu en kan je meteen laten gaan. Anders stopt het op {date}. Tot dan blijft alles zoals het is.',
+  'parental.leave.endsOn': 'Stopt op {date}',
+  'parental.leave.stay': 'Gekoppeld blijven',
+  'parental.leave.asked': '{name} heeft gevraagd het toezicht te stoppen. Het stopt op {date}.',
+  'parental.leave.letGo': '{name} nu laten gaan',
+  'parental.leavingOn': 'Vertrekt op {date}',
+  'parental.birth.title': 'Geboortemaand',
+  'parental.birth.help': 'Je kunt dit één keer corrigeren. {name} krijgt dit te horen. Met toezicht is Hevalo voor 13 tot 17 jaar.',
+  'parental.birth.done': 'Al gecorrigeerd',
+  'parental.birth.firstOnly': 'Alleen {name} kan dit corrigeren',
+  'parental.birth.under13': 'Hevalo is voor mensen van 13 jaar en ouder. Schrijf naar support om dit recht te zetten.',
+  'parental.birth.adult': 'Dan zou {name} volwassen zijn. Klopt dat, dan kun je in plaats daarvan het toezicht stoppen.',
+  'parental.stop.body': 'De limieten vervallen meteen, en {name} krijgt dit te horen.',
+  'parental.stopping': 'Stoppen…',
+  'parental.notice.leave': '{name} heeft gevraagd het toezicht te stoppen',
+  'parental.notice.leave.body': 'Het stopt op {date}.',
+  'parental.notice.kept': '{name} blijft toch gekoppeld',
+  'parental.notice.birth': '{name} heeft je geboortemaand gecorrigeerd naar {month}',
+  'parental.notice.birth.body': 'Klopt dit niet, schrijf dan naar support.',
+  'parental.notice.birthFor': '{parent} heeft de geboortemaand van {teen} gecorrigeerd naar {month}',
+  'parental.notice.endedLeft': 'Het toezicht door {name} is gestopt.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -40345,10 +40498,6 @@ const ckb: Catalog = {
   'parental.switch.purchases': 'کڕین',
   'parental.switch.purchases.hint': 'کوژاوە: کڕین بە پارەی ڕاستەقینە لە ئەپەکەدا دەشاردرێتەوە.',
   'parental.privacy.teen': 'دایک و باوکت کاتی فێربوون و پێشکەوتنت دەبینن. هەرگیز نامە، نامەگۆڕینەوە، پۆست و هاوڕێکانت نابینن.',
-  'parental.disconnect': 'دایک یان باوکێک جیا بکەرەوە',
-  'parental.disconnect.title': '{name} جیا بکەیتەوە؟',
-  'parental.disconnect.confirm': 'جیا بکەرەوە',
-  'parental.willBeTold': '{name} ئاگادار دەکرێتەوە.',
   'parental.parent.intro': 'هەرزەکارەکەت زیاد بکە بۆ ئەوەی لە هەژمارەکەیدا سنوورێکی ڕۆژانە و کاتێکی خەوتن دابنێیت و هەندێک بەشی Hevalo بۆی بکوژێنیتەوە. کاتی فێربوون و پێشکەوتنی دەبینیت، بەڵام هەرگیز نامە و نامەگۆڕینەوە و پۆستەکانی نابینیت.',
   'parental.addTeen': 'هەرزەکارێک زیاد بکە',
   'parental.teens': 'هەرزەکارەکانت',
@@ -40369,9 +40518,6 @@ const ckb: Catalog = {
   'parental.duration.minutes': '{minutes} خولەک',
   'parental.duration.hours': '{hours} کاتژمێر',
   'parental.duration.hoursMinutes': '{hours} کاتژمێر و {minutes} خولەک',
-  'parental.streak': 'زنجیرەی {count} ڕۆژ',
-  'parental.streakOne': 'زنجیرەی یەک ڕۆژ',
-  'parental.streakNone': 'ئێستا زنجیرە نییە',
   'parental.bar': '{day}: {minutes}، {lessons}',
   'parental.time': 'کات',
   'parental.safety': 'سەلامەتی',
@@ -40410,6 +40556,30 @@ const ckb: Catalog = {
   'parental.notice.endedAge': 'چاودێریی دایک و باوک کۆتایی هات، چونکە {teen} ئێستا 18 ساڵە.',
   'parental.notice.endedAccount': 'چاودێریی دایک و باوک لەگەڵ {parent} کۆتایی هات.',
   'parental.teenGone': 'ئەم هەرزەکارە چیتر بە تۆوە نەبەستراوە.',
+  'parental.leave.ask': 'داوای ڕاگرتن بکە',
+  'parental.leave.asking': 'داوا دەکرێت…',
+  'parental.leave.title': 'با {name} چیتر چاودێریت نەکات؟',
+  'parental.leave.body': '{name} ئێستا ئاگادار دەکرێتەوە و دەتوانێت یەکسەر ڕێگەت بدات بڕۆیت. ئەگەرنا لە {date} کۆتایی دێت. تا ئەو کاتە هەموو شتێک وەک خۆی دەمێنێتەوە.',
+  'parental.leave.endsOn': 'لە {date} کۆتایی دێت',
+  'parental.leave.stay': 'بەستراوە بمێنەوە',
+  'parental.leave.asked': '{name} داوای کرد چاودێری ڕابگیرێت. لە {date} کۆتایی دێت.',
+  'parental.leave.letGo': 'ئێستا ڕێگە بدە {name} بڕوات',
+  'parental.leavingOn': 'لە {date} دەڕوات',
+  'parental.birth.title': 'مانگی لەدایکبوون',
+  'parental.birth.help': 'تەنها یەک جار دەتوانیت ئەمە ڕاست بکەیتەوە. {name} ئاگادار دەکرێتەوە. لە ژێر چاودێریدا Hevalo بۆ تەمەنی 13 تا 17 ساڵە.',
+  'parental.birth.done': 'پێشتر ڕاستکراوەتەوە',
+  'parental.birth.firstOnly': 'تەنها {name} دەتوانێت ئەمە ڕاست بکاتەوە',
+  'parental.birth.under13': 'Hevalo بۆ کەسانی 13 ساڵ و سەرووترە. بۆ ڕاستکردنەوەی ئەمە، بۆ تیمی پشتگیری بنووسە.',
+  'parental.birth.adult': 'بەمە {name} دەبێتە کەسێکی گەورە. ئەگەر وایە، دەتوانیت لە جیاتی ئەمە چاودێری ڕابگریت.',
+  'parental.stop.body': 'سنوورەکانی یەکسەر لادەبرێن، و {name} ئاگادار دەکرێتەوە.',
+  'parental.stopping': 'ڕادەگیرێت…',
+  'parental.notice.leave': '{name} داوای کرد چاودێری ڕابگیرێت',
+  'parental.notice.leave.body': 'لە {date} کۆتایی دێت.',
+  'parental.notice.kept': '{name} بڕیاری دا بەستراوە بمێنێتەوە',
+  'parental.notice.birth': '{name} مانگی لەدایکبوونەکەتی ڕاستکردەوە بۆ {month}',
+  'parental.notice.birth.body': 'ئەگەر ئەمە هەڵەیە، بۆ تیمی پشتگیری بنووسە.',
+  'parental.notice.birthFor': '{parent} مانگی لەدایکبوونی {teen}ی ڕاستکردەوە بۆ {month}',
+  'parental.notice.endedLeft': 'چاودێریی {name} کۆتایی هات.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
