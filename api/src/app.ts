@@ -187,6 +187,7 @@ import { installRequestContext } from './security/context.js';
 import { setupSecurityLog, type SecurityLogOptions } from './security/wire.js';
 import { registerSecurityLogRoutes } from './security/routes.js';
 import { SecurityLogReader } from './security/search.js';
+import { registerMessageAccessRoutes } from './message-access/routes.js';
 import { installScannerShield } from './security/shield.js';
 import { installRawBodyGate } from './plugins/raw-body-gate.js';
 import { MaintenanceService } from './maintenance/service.js';
@@ -797,6 +798,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerAuditLog(app, new AuditService(app.db), adminTotp!);
     // the security log: sign-ins, lockouts, attacks and staff access, for superadmins
     registerSecurityLogRoutes(app, new SecurityLogReader(app.db, config.JWT_SECRET, app.securityLog), adminTotp!);
+    // safety reviews of one account's letters and chats, and the Access log every admin can read
+    registerMessageAccessRoutes(app, moderationKit.access, adminTotp!);
     // Behavioural event tracking: schema-validated, deduplicated, day-partitioned.
     const droppedEvents = new Counter({
       name: 'analytics_events_dropped_total',

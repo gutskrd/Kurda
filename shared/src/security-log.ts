@@ -1,15 +1,15 @@
 /**
- * The security log's vocabulary: every kind of event the API records about getting in, being kept out and changing access,
- * with its severity and how the admin panel names it. Severity decides what the panel does: info is kept for the record,
- * notice is worth seeing when investigating, warning goes on "Needs attention" until reviewed, and critical also emails the
- * superadmins at once. A kind marked `staffEscalates` is one step more serious for a staff account: a wrong password is a
- * typo on an ordinary account and may be an attack on the owner's.
+ * The security log's vocabulary: every kind of event the API records about getting in, being kept out, changing access
+ * and staff reading private messages, with its severity and how the admin panel names it. Severity decides what the
+ * panel does: info is kept for the record, notice is worth seeing when investigating, warning goes on "Needs attention"
+ * until reviewed, and critical also emails the superadmins at once. A kind marked `staffEscalates` is one step more
+ * serious for a staff account: a wrong password is a typo on an ordinary account and may be an attack on the owner's.
  */
 
 export const SECURITY_SEVERITIES = ['info', 'notice', 'warning', 'critical'] as const;
 export type SecuritySeverity = (typeof SECURITY_SEVERITIES)[number];
 
-export const SECURITY_CATEGORIES = ['sign-in', 'console', 'account', 'abuse', 'access'] as const;
+export const SECURITY_CATEGORIES = ['sign-in', 'console', 'account', 'abuse', 'access', 'messages'] as const;
 export type SecurityCategory = (typeof SECURITY_CATEGORIES)[number];
 
 /** How the panel names each category. */
@@ -19,6 +19,7 @@ export const SECURITY_CATEGORY_LABELS: Record<SecurityCategory, string> = {
   account: 'Account changes',
   abuse: 'Attacks and abuse',
   access: 'Staff access',
+  messages: 'Reading messages',
 };
 
 export interface SecurityEventInfo {
@@ -271,6 +272,31 @@ export const SECURITY_EVENTS = {
     category: 'access',
     title: 'Staff role taken away',
     meaning: 'An account lost a staff role.',
+  },
+  'messages.review_granted': {
+    severity: 'warning',
+    category: 'messages',
+    title: 'Safety review opened',
+    meaning:
+      'A superadmin let one staff member read one account’s letters and private chats, read-only, for 24 hours, for a reason from the fixed list with a note. The person is not told. Check the reason on the Access log page.',
+  },
+  'messages.review_ended': {
+    severity: 'notice',
+    category: 'messages',
+    title: 'Safety review ended early',
+    meaning: 'Its reader or a superadmin closed a safety review before its 24 hours were up.',
+  },
+  'messages.review_read': {
+    severity: 'notice',
+    category: 'messages',
+    title: 'Messages read under a safety review',
+    meaning: 'The reader opened the account’s list of conversations, or one conversation. Which one and how many messages are recorded, never what they say.',
+  },
+  'messages.case_read': {
+    severity: 'info',
+    category: 'messages',
+    title: 'A reported or flagged message read in its case',
+    meaning: 'A moderator opened a case about a letter or private message that someone in the conversation reported or an automatic check flagged. Recorded once per moderator and case every 15 minutes.',
   },
 } as const satisfies Record<string, SecurityEventInfo>;
 
