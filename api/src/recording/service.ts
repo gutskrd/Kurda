@@ -28,7 +28,8 @@ export interface Take {
 export interface BuiltScript {
   lines: ScriptLine[];
   people: Person[];
-  byId: ReadonlyMap<string, ScriptLine>;
+  /** each line by every key it is filed under (`store|key`): its own first, then its others (`ScriptLine.also`) */
+  byKey: ReadonlyMap<string, ScriptLine>;
 }
 
 interface ExerciseRow {
@@ -172,7 +173,9 @@ export class RecordingPeopleService {
       plan,
       reactions: REACTION_LINES,
     });
-    return { lines, people: peopleOf(lines, plan), byId: new Map(lines.map((l) => [l.id, l])) };
+    const byKey = new Map(lines.map((l) => [l.id, l]));
+    for (const l of lines) for (const f of l.also) if (!byKey.has(`${f.store}|${f.key}`)) byKey.set(`${f.store}|${f.key}`, l);
+    return { lines, people: peopleOf(lines, plan), byKey };
   }
 
   /**
@@ -252,10 +255,13 @@ export class RecordingPeopleService {
     return out;
   }
 
-  /** Whether a take of `key` in `store` is one of the lines of the voices linked to this account. */
+  /**
+   * Whether a take of `key` in `store` is one of the lines of the voices linked to this account, under any key the line
+   * is filed under, so a page opened before a line moved to its words' key still saves it.
+   */
   async mayRecord(userId: string, store: LineStore, key: string): Promise<boolean> {
     const [voices, built] = await Promise.all([voicesOf(this.pool, userId), this.script()]);
-    const line = built.byId.get(`${store}|${key}`);
+    const line = built.byKey.get(`${store}|${key}`);
     return line !== undefined && voices.includes(line.voice);
   }
 

@@ -1,7 +1,7 @@
 /**
  * Which Kurdish texts in an exercise want a native recording, and the key a recording is filed under. The audio studio
- * and the API's delivery must agree on which text is which. One recording serves every exercise with the same sentence,
- * so "Spas." and "spas" share it.
+ * and the API's delivery must agree on which text is which. One recording serves every place a sentence is said, so
+ * "Spas, Hamo!", "spas hamo" and "Hamo: Spas, Hamo." share it: the key is what is said, not how it is written.
  */
 import { normalizeKurdish } from './kurdish-text.js';
 import { isRecord } from './sanitize.js';
@@ -49,11 +49,18 @@ export function isInvisibleChar(ch: string): boolean {
 const EDGE_QUOTES = /^["“”«»„]+|["“”«»„]+$/g;
 /** Sentence punctuation at the end, Latin and Arabic-script alike. */
 const TRAILING_PUNCTUATION = /[\s.!?…؟۔,،;؛:]+$/;
+/** A character's name written in front of their line as a label ("Hamo: …"), which nobody reads aloud. */
+const SPEAKER_LABEL = /^(?:hamo|xezo|hevalo)\s*:\s*(?=\S)/u;
+/**
+ * Punctuation and quotes inside a sentence, Latin and Arabic-script alike: they shape how it is written, not which
+ * words are said, so "Spas, Hamo" and "Spas Hamo" are one recording.
+ */
+const INNER_MARKS = /[\s"“”«»„‘’'`.!?…,;:·()[\]{}/—–\-؟۔،؛]+/gu;
 
 /**
  * The key a recording of `text` is filed under: `normalizeKurdish`, lower case, variants folded, invisible characters
- * dropped, surrounding quotes and trailing punctuation removed. Diacritics stay: sêv and sev are said differently. Empty
- * when nothing is left to say ("?", "  ").
+ * dropped, a character's name label in front dropped, and every quote and punctuation mark read as a word break.
+ * Diacritics stay: sêv and sev are said differently. Empty when nothing is left to say ("?", "  ").
  */
 export function lessonAudioKey(text: string): string {
   let key = normalizeKurdish(
@@ -67,7 +74,7 @@ export function lessonAudioKey(text: string): string {
     before = key;
     key = key.replace(EDGE_QUOTES, '').replace(TRAILING_PUNCTUATION, '').trim();
   }
-  return key;
+  return key.replace(SPEAKER_LABEL, '').replace(INNER_MARKS, ' ').trim();
 }
 
 /**

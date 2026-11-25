@@ -847,15 +847,23 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "xezo",
-                    "prompt": "I’m a woman.",
+                    "ask": "meaning",
+                    "say": "Şêr şêr e, çi jin e, çi mêr e.",
+                    "voice": "hamo",
+                    "cue": "Hamo’s favourite saying",
+                    "prompt": "Şêr şêr e, çi jin e, çi mêr e.",
                     "options": [
-                      "Ez jin im.",
-                      "Ez jin me.",
-                      "Ez mêr im."
+                      "A lion is a lion, whether woman or man.",
+                      "A man is a lion, and a woman is a guest.",
+                      "An animal is an animal, whether big or small."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "şêr",
+                        "en": "lion"
+                      }
+                    ]
                   }
                 },
                 {

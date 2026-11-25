@@ -119,6 +119,17 @@ export interface RoadLesson {
   beat: string;
   voice: RoadVoice;
   new: RoadItem[];
+  /**
+   * Sayings the lesson quotes whole, such as Hamo's proverbs: a word in one the road has not taught yet is glossed for
+   * that line alone and may be marked new there, but is never taught, asked again or brought back.
+   */
+  sayings?: RoadSaying[];
+}
+
+export interface RoadSaying {
+  ku: string;
+  en: string;
+  words: Array<{ ku: string; en: string }>;
 }
 
 export interface RoadSkill {
@@ -516,6 +527,17 @@ export function checkRoadPlan(plan: RoadPlan): RoadProblem[] {
           const affix = /^-|-$/.test(item.ku ?? '');
           if (!affix) for (const w of kurdishWords(item.ku ?? '')) if (!item.forms?.includes(w)) add(`item “${item.ku}”: its word “${w}” is missing from its forms`, lat);
         }
+        for (const saying of lesson.sayings ?? []) {
+          if (!saying.ku || !saying.en || !Array.isArray(saying.words) || saying.words.length === 0 || saying.words.length > 2) {
+            add(`saying “${saying.ku ?? ''}”: it needs its Kurdish, its meaning and one or two glossed words`, lat);
+            continue;
+          }
+          for (const p of orthographyProblems(saying.ku, true)) add(`saying “${saying.ku}”: ${p}`, lat);
+          for (const w of saying.words) {
+            if (!HAWAR_FORM.test(w.ku ?? '') || !w.en) add(`saying “${saying.ku}”: “${w.ku ?? ''}” needs to be a lower-case Hawar word with its meaning`, lat);
+            else if (!kurdishWords(saying.ku).includes(w.ku)) add(`saying “${saying.ku}”: it does not say “${w.ku}”`, lat);
+          }
+        }
       });
     });
   });
@@ -527,6 +549,12 @@ export function checkRoadPlan(plan: RoadPlan): RoadProblem[] {
 const LISTENING = (ex: RawExercise): boolean => ex.type === 'listening' || (ex.type === 'multiple_choice' && typeof ex.payload.say === 'string' && ex.payload.say.trim() !== '');
 const PRODUCTION = (ex: RawExercise): boolean =>
   ex.type === 'writing' || ex.type === 'speaking' || (ex.type === 'translate' && !(typeof ex.payload.say === 'string' && ex.payload.say.trim() !== ''));
+
+/** The saying of `lesson` that `text` quotes whole, if any (`RoadLesson.sayings`). */
+function sayingOf(lesson: RoadLesson, text: string): RoadSaying | undefined {
+  const said = lessonAudioKey(text);
+  return said === '' ? undefined : lesson.sayings?.find((s) => lessonAudioKey(s.ku) === said);
+}
 
 /** The kinds whose `say` is the sentence they ask about, shown to the learner only in their prompt. */
 const QUOTES_SAY: ReadonlySet<string> = new Set(['multiple_choice', 'translate', 'writing']);
@@ -1118,17 +1146,19 @@ function checkUnit(
         const used = new Set<number>();
         for (const f of kurdishFields(ex, n)) {
           const words = kurdishWords(f.text);
+          // a saying the lesson quotes whole may bring a word the road has not taught, glossed for that line alone
+          const glossed = new Set(sayingOf(planLesson, f.text)?.words.map((w) => w.ku) ?? []);
           if (f.strict) {
             for (const p of orthographyProblems(f.text, f.line === true || isSentence(f.text))) add(p, { ...eat, field: f.field });
             for (const p of soundProblems(f.text)) add(p, { ...eat, field: f.field });
             const unknown = new Set<string>();
-            for (const w of words) if (!/^\d+$/.test(w) && (lex.firstUse.get(w) ?? Infinity) > entry.index) unknown.add(w);
+            for (const w of words) if (!/^\d+$/.test(w) && !glossed.has(w) && (lex.firstUse.get(w) ?? Infinity) > entry.index) unknown.add(w);
             for (const w of unknown) {
               const later = lex.firstUse.get(w);
               add(later === undefined ? `unknown word “${w}”` : `“${w}” is not introduced until ${lex.lessons[later - 1]!.lesson.key}`, { ...eat, field: f.field });
             }
             for (const len of sentenceLengths(f.text)) if (len > limit) add(`a sentence of ${len} words (at most ${limit} in unit ${n})`, { ...eat, field: f.field });
-          } else if (!words.every((w) => /^\d+$/.test(w) || (lex.firstUse.get(w) ?? Infinity) <= entry.index)) {
+          } else if (!words.every((w) => /^\d+$/.test(w) || glossed.has(w) || (lex.firstUse.get(w) ?? Infinity) <= entry.index)) {
             continue;
           }
           if (!f.counts) continue;
@@ -1159,7 +1189,10 @@ function checkUnit(
         for (const w of Array.isArray(ex.payload.new) ? ex.payload.new : []) {
           const ku = isRecord(w) && typeof w.ku === 'string' ? w.ku : '';
           const words = kurdishWords(ku);
-          const mine = lex.items.some((ie) => ie.lesson === key && ie.item.forms.some((f) => words.includes(f)));
+          const said = sayingOf(planLesson, typeof ex.payload.say === 'string' ? ex.payload.say : '');
+          const mine =
+            lex.items.some((ie) => ie.lesson === key && ie.item.forms.some((f) => words.includes(f))) ||
+            (said !== undefined && words.length > 0 && words.every((x) => said.words.some((w) => w.ku === x)));
           if (!mine) add(`“${ku}” is marked new but is not one of ${key}’s new words`, { ...eat, field: 'payload.new' });
           else if (words.length > 0 && words.every((x) => (firstMet.get(x) ?? Infinity) < ei)) {
             add(`“${ku}” is marked new after it was already met in exercise ${Math.max(...words.map((x) => firstMet.get(x)!)) + 1}`, { ...eat, field: 'payload.new' });
@@ -1226,6 +1259,10 @@ function checkUnit(
         // the learner sees each new word marked new where it first comes
         if (ie.lesson === key && !ie.item.forms.some((f) => marked.has(f))) add(`new item “${ie.item.ku}” is never marked new`, at);
       });
+      // a saying the plan gives the lesson is quoted whole in it
+      for (const saying of planLesson.sayings ?? []) {
+        if (!exercises.some((ex) => typeof ex.payload.say === 'string' && sayingOf(planLesson, ex.payload.say) === saying)) add(`saying “${saying.ku}” is not said in the lesson`, at);
+      }
       const asks = new Set(exercises.map((e) => e.payload.ask).filter((a): a is string => typeof a === 'string'));
       if (asks.size < 4) add(`asks ${asks.size} kinds of question (at least 4)`, at);
       if (entry.index >= 4) {

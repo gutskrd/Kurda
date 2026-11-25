@@ -88,12 +88,16 @@ describe.skipIf(!DATABASE_URL)('recording by person (integration)', () => {
     options: ['Erzan in', 'Biha ne'],
     correctIndex: 0,
   };
-  const hamoLine = conversationLineKey(id, 0, conversation.lines[0]!.text);
-  const xezoLine = conversationLineKey(id, 1, conversation.lines[1]!.text);
+  // a character's line is filed by its words, so one take serves wherever the character says them
+  const hamoLine = lessonAudioKey(conversation.lines[0]!.text);
+  const xezoLine = lessonAudioKey(conversation.lines[1]!.text);
+  // the scene's own keys, which older takes and pages use
+  const hamoScene = conversationLineKey(id, 0, conversation.lines[0]!.text);
+  const xezoScene = conversationLineKey(id, 1, conversation.lines[1]!.text);
   const narrated = `Baran ${s} li baxçe dilîze.`;
   const cheer = reactionLine('hevalo', 'run-3-1')!;
   const kind = reactionLine('xezo', 'miss-1')!;
-  const ourKeys = [hamoLine, xezoLine, lessonAudioKey(narrated), reactionKey(cheer), reactionKey(kind)];
+  const ourKeys = [hamoLine, xezoLine, hamoScene, xezoScene, lessonAudioKey(narrated), reactionKey(cheer), reactionKey(kind)];
 
   async function register(name: string, ip: string, roles: string): Promise<{ token: string; userId: string }> {
     const res = await app.inject({
@@ -208,7 +212,8 @@ describe.skipIf(!DATABASE_URL)('recording by person (integration)', () => {
   it('gives each voice its lines in course order, keyed as the studio keys them, drafts marked', async () => {
     const hamo = await allLines(editor, 'hamo');
     const mine = hamo.find((l) => l.key === hamoLine)!;
-    expect(mine).toMatchObject({ text: conversation.lines[0]!.text, meaning: 'Xezo, how much are the apples?', conversation: { id, part: 0 }, take: null });
+    expect(mine).toMatchObject({ text: conversation.lines[0]!.text, meaning: 'Xezo, how much are the apples?', conversation: null, take: null });
+    expect(mine.cue).toBe(`In the conversation ‘${conversation.title}’.`);
     expect(mine.places[0]).toMatchObject({ status: 'published' });
     const xezal = await allLines(editor, 'xezo');
     expect(xezal.find((l) => l.key === xezoLine)).toMatchObject({ before: { name: 'Hamo', text: conversation.lines[0]!.text } });
@@ -224,6 +229,7 @@ describe.skipIf(!DATABASE_URL)('recording by person (integration)', () => {
   });
 
   it('shows a take made in the studio as done, wherever it was made', async () => {
+    // made under the scene's key, as the studio's conversation page saves it
     expect((await record(editor, conversation.lines[0]!.text, `&line=${id}:0&speaker=hamo`)).statusCode).toBe(201);
     const done = await allLines(editor, 'hamo', '&status=done');
     expect(done.find((l) => l.key === hamoLine)?.take).toMatchObject({ speaker: 'hamo', by: `rpeditor_${s}`.slice(0, 30) });
@@ -256,15 +262,21 @@ describe.skipIf(!DATABASE_URL)('recording by person (integration)', () => {
   });
 
   it('lets a voice actor record their own lines, and refuses anyone else’s before anything is stored', async () => {
-    const hers = await record(actor, conversation.lines[1]!.text, `&line=${id}:1&speaker=xezo`, 2);
+    const hers = await record(actor, conversation.lines[1]!.text, `&speaker=xezo`, 2);
     expect(hers.statusCode, hers.body).toBe(201);
     expect(hers.json().key).toBe(xezoLine);
-    const his = await record(actor, conversation.lines[0]!.text, `&line=${id}:0&speaker=xezo`, 3);
-    expect(his.statusCode).toBe(403);
-    expect(his.json().code).toBe('NOT_YOUR_LINE');
+    // a page opened before the line was filed by its words still saves it, under the scene's key
+    const before = await record(actor, conversation.lines[1]!.text, `&line=${id}:1&speaker=xezo`, 8);
+    expect(before.statusCode, before.body).toBe(201);
+    expect(before.json().key).toBe(xezoScene);
+    for (const query of ['&speaker=xezo', `&line=${id}:0&speaker=xezo`]) {
+      const his = await record(actor, conversation.lines[0]!.text, query, 3);
+      expect(his.statusCode).toBe(403);
+      expect(his.json().code).toBe('NOT_YOUR_LINE');
+    }
     // nor a phrase no lesson asks for
     expect((await record(actor, `Tiştekî din ${s}`, '', 4)).json().code).toBe('NOT_YOUR_LINE');
-    const stored = await pool.query<{ url: string }>(`SELECT url FROM lesson_audio WHERE key = $1`, [hamoLine]);
+    const stored = await pool.query<{ url: string }>(`SELECT url FROM lesson_audio WHERE key = $1`, [hamoScene]);
     expect(stored.rows).toHaveLength(1);
     // the alphabet's words are the narrator's: not hers either
     const letter = await app.inject({

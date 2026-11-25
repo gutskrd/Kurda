@@ -255,6 +255,9 @@ function sourceStatus(status: string): SourceStatus {
 
 const STATUS_RANK: Record<SourceStatus, number> = { draft: 0, in_review: 1, published: 2 };
 
+/** A line written with a character's name in front as a label ("Hamo: …"), which is not said (`lessonAudioKey`). */
+const LABELLED = /^\s*(?:hamo|xezo|hevalo)\s*:\s*\S/iu;
+
 /** The character an exercise's payload plans its Kurdish for, when it names one. */
 export function plannedVoice(payload: unknown): SpeakerId | null {
   const voice = isRecord(payload) ? payload.voice : undefined;
@@ -404,6 +407,8 @@ class Builder {
     const id = `${e.store}|${e.key}`;
     const found = this.drafts.get(id);
     if (found) {
+      // the voice actor reads the line without a speaker's name written in front of it, where any place has it so
+      if (LABELLED.test(found.text) && !LABELLED.test(e.text)) found.text = e.text;
       const same = found.places.find((p) => p.kind === e.place.kind && p.label === e.place.label);
       if (same) {
         if (STATUS_RANK[e.place.status] > STATUS_RANK[same.status]) same.status = e.place.status;
@@ -542,11 +547,14 @@ function addLessons(builder: Builder, exercises: readonly ExerciseInput[], after
         const voice = c.character ?? castVoice(c.name);
         const own = lines[c.index];
         const prev = c.index > 0 ? lines[c.index - 1] : undefined;
-        // A road line is recorded once under its words, so a line the lesson taught is not recorded again for its scene.
-        const plain = onRoad && c.character !== null;
+        // A character's line is recorded once under its words, so a sentence they say in an exercise or another
+        // conversation is not recorded again for this scene; a take filed earlier under the scene still counts. An
+        // uncast part's line is played only in its own scene, so it stays filed there.
+        const plain = c.character !== null;
         builder.add({
           store: 'lesson',
           key: plain ? lessonAudioKey(c.text) : c.key,
+          also: plain && c.key !== '' ? [{ store: 'lesson', key: c.key }] : [],
           text: c.text,
           dialect,
           planned: voice,
@@ -700,8 +708,9 @@ function addGames(builder: Builder, games: readonly GameInput[]): void {
     ): void => {
       if (typeof ku !== 'string' || !sayable(ku)) return;
       const found = gameLineKey(ku, recording);
-      // a road conversation's lines are recorded under their words (see addLessons), and so is a card copied from one
-      const { key, conversation } = found.conversation?.id.startsWith('road') ? { key: lessonAudioKey(ku), conversation: null } : found;
+      // a character's conversation lines are recorded under their words (see addLessons), and so is a card copied from one
+      const byWords = found.conversation !== null && (found.conversation.id.startsWith('road') || planned !== null);
+      const { key, conversation } = byWords ? { key: lessonAudioKey(ku), conversation: null } : found;
       const voice = planned ?? NARRATOR[dialect];
       builder.add({
         store: 'lesson',
