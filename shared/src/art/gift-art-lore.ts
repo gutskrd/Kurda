@@ -1,9 +1,9 @@
 /**
  * The gifts from the old stories (gift-art.ts): Kawa's hammer, from the Newroz legend of the smith who rose against the
  * tyrant, forged in Damascus steel; and Şahmaran, queen of the serpents, the owner's old folk painting of her traced
- * (gift-art-sahmaran.ts), gone over by hand and aged as it has been on a village wall, in its worn wooden frame.
+ * (gift-art-sahmaran.ts) and gone over by hand, its years only a light patina at its edges, in its worn wooden frame.
  */
-import { n2, n3, type Drawing, type Pt } from './svg.js';
+import { n2, type Drawing, type Pt } from './svg.js';
 import { SAHMARAN_DABS, SAHMARAN_EDGES, SAHMARAN_FACE, SAHMARAN_INKS, SAHMARAN_PATHS, type SahmaranInk } from './gift-art-sahmaran.js';
 import { along, brush, ellipse, floor, FLOOR, lerp, outline, paint, polygon, roundish, runs, streaks, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
 
@@ -216,19 +216,19 @@ export function kawa(dr: Drawing, rnd: Rnd): void {
 /** A number to a tenth, as a path writes it. */
 const n1 = (v: number): string => String(Math.round(v * 10) / 10);
 
-/** The painting's paints as a hundred years on a village wall left them: the black gone warm, the colours a little chalky. */
+/** The painting's paints as fresh as the photograph shows them: true black, rich gold, orange and red, deep green, clean cream. */
 const INK: Readonly<Record<SahmaranInk, string>> = {
-  black: '#1d1712', skin: '#ecdbc2', white: '#f1e6d0', gold: '#d4a748', orange: '#c4773a', rust: '#a2502d', crimson: '#7e2c1e',
-  umber: '#4c3f27', khaki: '#86764a', olive: '#8e9352',
+  black: '#110d0a', skin: '#f4e9da', white: '#f8f1e4', gold: '#efb530', orange: '#ea7b26', rust: '#cc4a22', crimson: '#a32617',
+  umber: '#4a3a1c', khaki: '#a89838', olive: '#86a83a',
 };
 /** The scales' own paints, a few of each so no two neighbours are quite the same. */
 const SCALE: Readonly<Record<'umber' | 'khaki' | 'olive', readonly string[]>> = {
-  umber: ['#4c3f27', '#56462a', '#443823'],
-  khaki: ['#86764a', '#927f4e', '#7a6b42', '#9a8a55'],
-  olive: ['#8e9352', '#9aa05a', '#82894a', '#a3a463'],
+  umber: ['#4a3a1c', '#56421e', '#3e3118'],
+  khaki: ['#a89838', '#b8a640', '#9a8a32', '#c6b450'],
+  olive: ['#86a83a', '#98b844', '#76962f', '#a8c450'],
 };
-const PAPER = '#e7d7b2';
-const TONED = '#9a8566';
+const PAPER = '#f2e9d4';
+const TONED = '#b49a6a';
 const FOXING = '#94673a';
 const WOOD: Tone = { base: '#3a2516', light: '#583922', shade: '#21140a' };
 const WORN_WOOD = '#7a5536';
@@ -323,7 +323,7 @@ export function sahmaran(dr: Drawing, rnd: Rnd): void {
   const picture = tremble(runs([[X0, Y0], [X0 + W, Y0], [X0 + W, Y0 + H], [X0, Y0 + H]], 6), rnd, 0.1);
   paint(dr, outline(picture), PAPER);
   within(dr, outline(picture), () => {
-    dr.add(`<g transform="translate(${X0} ${Y0}) scale(${n3(W / PW)})">`);
+    dr.add(`<g transform="translate(${X0} ${Y0}) scale(${(W / PW).toFixed(7)})">`);
     agedPaper(dr, rnd);
     painting(dr, rnd);
     years(dr, rnd);
@@ -332,41 +332,24 @@ export function sahmaran(dr: Drawing, rnd: Rnd): void {
   });
 }
 
-/** The paper: yellowed, toned darker toward its edges, a little uneven, with two old tide marks and the brown spots of foxing. */
+/** The paper: clean cream with a little life in it, and only at its edges and corners the patina of its years. */
 function agedPaper(dr: Drawing, rnd: Rnd): void {
-  for (let i = 0; i < 4; i++) {
-    const hole = outline(roundish(PW / 2, PH / 2, PW * (0.6 - i * 0.04), PH * (0.62 - i * 0.045), rnd, { wobble: 0.08, count: 18, tremor: 8 }));
-    dr.add(`<path d="M-20 -20H${PW + 20}V${PH + 20}H-20Z${hole}" fill="${TONED}" fill-rule="evenodd" fill-opacity="0.1"/>`);
+  for (let i = 0; i < 2; i++) {
+    const hole = outline(roundish(PW / 2, PH / 2, PW * (0.64 - i * 0.025), PH * (0.66 - i * 0.03), rnd, { wobble: 0.06, count: 18, tremor: 8 }));
+    dr.add(`<path d="M-20 -20H${PW + 20}V${PH + 20}H-20Z${hole}" fill="${TONED}" fill-rule="evenodd" fill-opacity="0.08"/>`);
   }
   let light = '';
-  let dark = '';
-  for (let i = 0; i < 12; i++) {
-    const blot = outline(roundish(rnd() * PW, rnd() * PH, 50 + rnd() * 110, 40 + rnd() * 80, rnd, { wobble: 0.2, count: 12, tremor: 6 }));
-    if (i % 3) light += blot;
-    else dark += blot;
-  }
-  paint(dr, light, '#f1e5c6', 0.3);
-  paint(dr, dark, '#cdb68a', 0.18);
-  // two tide marks where water once stood on it, each paler inside its ring
-  for (const [x, y, r] of [[330, 240, 60], [762, 560, 38]] as const) {
-    const blot = roundish(x, y, r, r * 0.8, rnd, { wobble: 0.2, count: 16, tremor: 3 });
-    const inner = blot.map(([px, py]): Pt => [x + (px - x) * 0.9 + (rnd() - 0.5) * 3, y + (py - y) * 0.9 + (rnd() - 0.5) * 3]);
-    paint(dr, outline(blot), '#c9a978', 0.08);
-    paint(dr, outline(inner), '#f0e4c6', 0.1);
-  }
+  for (let i = 0; i < 6; i++) light += outline(roundish(rnd() * PW, rnd() * PH, 50 + rnd() * 110, 40 + rnd() * 80, rnd, { wobble: 0.2, count: 12, tremor: 6 }));
+  paint(dr, light, '#faf4e6', 0.35);
   let spots = '';
-  let faint = '';
-  for (const [cx, cy, n] of [[640, 60, 9], [40, 300, 7], [500, 590, 8], [230, 40, 5], [790, 330, 6]] as const) {
-    for (let i = 0; i < n; i++) {
-      const r = 1 + rnd() * 3.4;
-      const blot = outline(roundish(cx + (rnd() - 0.5) * 70, cy + (rnd() - 0.5) * 50, r, r * (0.7 + rnd() * 0.3), rnd, { count: 7, tremor: 0.6 }));
-      if (rnd() < 0.5) spots += blot;
-      else faint += blot;
+  for (const [cx, cy] of [[40, 30], [790, 40], [30, 590], [800, 585]] as const) {
+    for (let i = 0; i < 4; i++) {
+      const r = 1 + rnd() * 2.6;
+      spots += outline(roundish(cx + (rnd() - 0.5) * 50, cy + (rnd() - 0.5) * 36, r, r * (0.7 + rnd() * 0.3), rnd, { count: 7, tremor: 0.6 }));
     }
   }
-  paint(dr, spots, FOXING, 0.55);
-  paint(dr, faint, FOXING, 0.3);
-  paint(dr, streaks(rnd, [0, 0, PW, PH], 40, 0, 14, 0.9), '#d6c49b', 0.45);
+  paint(dr, spots, FOXING, 0.3);
+  paint(dr, streaks(rnd, [0, 0, PW, PH], 24, 0, 14, 0.9), '#e2d4b4', 0.35);
 }
 
 /** The painting itself: its traced inks, gone over by hand with the brush. */
@@ -389,12 +372,12 @@ function painting(dr: Drawing, rnd: Rnd): void {
       const g = along(guide.map(at), 30);
       strokes += flow(rnd, g, g.map(() => half * 2), 9, 5, pools, 0.6);
     }
-    paint(dr, strokes, '#3a2e21', 0.75);
-    paint(dr, pools.d, '#0b0806', 0.85);
+    paint(dr, strokes, '#2e2620', 0.65);
+    paint(dr, pools.d, '#000000', 0.85);
     // the horns: a dull light along the outer curve of each, brushed on
     const sheen = { start: 0.3, end: 0.1, peak: 0.4, count: 12 };
     paint(dr, brush(ats([[258, 96], [257, 60], [246, 40], [222, 16]]), 3.6, rnd, sheen) +
-      brush(ats([[331, 92], [338, 64], [356, 40], [384, 14]]), 3.6, rnd, sheen), '#4a3f35', 0.7);
+      brush(ats([[331, 92], [338, 64], [356, 40], [384, 14]]), 3.6, rnd, sheen), '#3e3630', 0.65);
     paint(dr, brush([at([84, 58]), at([120, 48]), at([160, 42])], 3.4, rnd, { start: 0.2, end: 0.2, count: 10 }), '#5c5244', 0.7);
   });
   // the colours, each laid over the black a hair off true, as a hand fills a drawn shape
@@ -452,8 +435,8 @@ function scales(dr: Drawing, rnd: Rnd): void {
     }
   }
   for (const [tone, d] of tones) paint(dr, d, tone);
-  paint(dr, eyes, '#2a2117', 0.85);
-  paint(dr, lights, '#cdbf7c', 0.75);
+  paint(dr, eyes, '#1e170f', 0.85);
+  paint(dr, lights, '#e6dc86', 0.8);
 }
 
 /** What the trace cannot carry: her tongue, the chains of beads, her eyes and lips gone over finely, and the painted lights. */
@@ -482,7 +465,7 @@ function touches(dr: Drawing, rnd: Rnd): void {
     [[270, 88], [290, 82], [305, 79]], [[228, 188], [250, 180], [264, 180]], [[282, 204], [310, 207], [336, 205]], [[296, 14], [314, 14]]] as const) {
     gold += brush(ats(pts), 2.4 + rnd(), rnd, { start: 0.2, end: 0.1, peak: 0.4, count: 10 });
   }
-  paint(dr, gold, '#f0d68a', 0.8);
+  paint(dr, gold, '#ffe39a', 0.85);
   // the ram's horns, striped across their coils as the painter banded them
   let bands = '';
   for (const [cx, cy, s, r0] of [[244, 75, 1, 16], [366, 80, -1, 18]] as const) {
@@ -493,66 +476,40 @@ function touches(dr: Drawing, rnd: Rnd): void {
       bands += touch(x + s * Math.cos(a) * r, y - Math.sin(a) * r, 15, 3.4, (Math.atan2(-Math.cos(a), -s * Math.sin(a)) * 180) / Math.PI + 90);
     }
   }
-  within(dr, SAHMARAN_PATHS.olive, () => paint(dr, bands, '#4f5628', 0.85));
+  within(dr, SAHMARAN_PATHS.olive, () => paint(dr, bands, '#3e5a1c', 0.85));
   const lick = { start: 0.3, end: 0.1, count: 12 };
   paint(dr, brush(ats([[256, 62], [240, 60], [230, 68], [234, 80]]), 2.6, rnd, lick) +
-    brush(ats([[352, 66], [368, 63], [380, 72], [378, 86]]), 2.6, rnd, lick), '#c8cd80', 0.8);
+    brush(ats([[352, 66], [368, 63], [380, 72], [378, 86]]), 2.6, rnd, lick), '#d8e08a', 0.85);
 }
 
 /**
  * Her face, neck and necklace as the painting has them, laid last so nothing crosses her features: the pale ground
- * between the hair, the skin's shading and the drawn lines of brows and nose, all traced close; and what is too small in
- * the photograph to trace, laid on as measured there: almond eyes with a brown iris and a grey one under heavy lids, the
- * small full lips, the round of the chin, the choker, the gold drops and the heart. The years touch it only as a veil.
+ * between the hair and its shading, the eyes, brows, nose and smudged lipstick, all traced from the painting enlarged;
+ * and the round of the chin, the choker, the gold drops and the heart, laid on as measured there.
  */
 function face(dr: Drawing, rnd: Rnd): void {
   dr.add('<g transform="scale(0.1)">');
-  paintHoles(dr, SAHMARAN_FACE.skin, '#eedfcd');
-  paintHoles(dr, SAHMARAN_FACE.shade, '#dcc4b2', 0.32);
+  paintHoles(dr, SAHMARAN_FACE.skin, '#f2e6d6');
+  paintHoles(dr, SAHMARAN_FACE.shade, '#dcc4b2', 0.3);
   dr.add('</g>');
   // the shade along her cheeks where the hair falls close, as the painter rounded the face
   paint(dr, brush(ats([[285.4, 104], [284.4, 116], [285, 128], [288.4, 138], [294, 145]]), 9, rnd, { start: 0.3, end: 0.1, peak: 0.5, count: 16 }) +
     brush(ats([[322.4, 104], [323.4, 116], [322.6, 128], [319.6, 138], [314, 145]]), 9, rnd, { start: 0.3, end: 0.1, peak: 0.5, count: 16 }), '#dbc2b0', 0.4);
-  const lid = { start: 0.35, end: 0.6, peak: 0.7, count: 14 };
-  for (const [inner, outer, apex, low, iris, ring] of [
-    [[299, 112.4], [285.6, 112.2], [292.4, 110.4], [292.6, 114.6], [293.4, 112.6], '#6e5660'],
-    [[309.6, 112.6], [322.8, 112.6], [316, 110.8], [316, 114.8], [316.2, 113.2], '#7c8698'],
-  ] as const) {
-    const towardOuter = Math.sign(outer[0] - inner[0]);
-    const almond = ats([outer, [outer[0] - towardOuter * 2.6, apex[1] + 0.6], apex, [inner[0] + towardOuter * 2.4, apex[1] + 0.5], inner,
-      [inner[0] + towardOuter * 2.6, low[1] - 0.6], low, [outer[0] - towardOuter * 3, low[1] - 0.7]]);
-    paint(dr, outline(almond), '#efe5d4');
-    within(dr, outline(almond), () => {
-      paint(dr, ellipse(...at(iris), 4.4, 4.4), ring);
-      paint(dr, ellipse(...at(iris), 2.2, 2.2), '#1d1416');
-      paint(dr, ellipse(iris[0] * 2 - 1.4, iris[1] * 2 - 1.5, 0.9, 0.9), '#f6efe4');
-      paint(dr, polygon(ats([[outer[0], apex[1] - 1], [inner[0], apex[1] - 1], [inner[0], apex[1] + 1], [outer[0], apex[1] + 1.2]])), '#b8988a', 0.35);
-    });
-    const upper = ats([[outer[0] + towardOuter * 0.8, outer[1] - 0.2], [outer[0] - towardOuter * 2.6, apex[1] + 0.3], apex, [inner[0] +
-      towardOuter * 2.2, apex[1] + 0.5],
-      [inner[0] - towardOuter * 0.2, inner[1] - 0.1]]);
-    paint(dr, brush(towardOuter > 0 ? upper.reverse() : upper, 2.7, rnd, lid), '#2a1a1c');
-    paint(dr, brush(ats([[outer[0] - towardOuter * 0.6, outer[1] + 0.4], [outer[0] - towardOuter * 3, low[1] - 0.5], low, [inner[0] +
-      towardOuter * 2.2, low[1] - 0.6]]), 0.8, rnd,
-      { start: 0.6, end: 0.2, peak: 0.4, count: 10 }), '#8e6a5e', 0.7);
-  }
+  // her features as the painting has them: whites, the brown iris and the grey, the nose, then the dark of brows and lids
+  // over them, and her lipstick laid on and smudged past its line
   dr.add('<g transform="scale(0.1)">');
-  paintHoles(dr, SAHMARAN_FACE.line, '#4a2a24', 0.9);
-  paintHoles(dr, SAHMARAN_FACE.skin, '#c8a978', 0.07);
+  paintHoles(dr, SAHMARAN_FACE.white, '#f8f3ec');
+  paintHoles(dr, SAHMARAN_FACE.irisL, '#9a7a7e');
+  paintHoles(dr, SAHMARAN_FACE.irisR, '#9aa0ae');
+  paintHoles(dr, SAHMARAN_FACE.nose, '#b88e80', 0.8);
+  paintHoles(dr, SAHMARAN_FACE.brow, '#957565');
+  paintHoles(dr, SAHMARAN_FACE.eyeDark, '#3c2830');
+  paintHoles(dr, SAHMARAN_FACE.dark, '#26181a');
+  paintHoles(dr, SAHMARAN_FACE.smudge, '#c84e4a', 0.58);
+  paintHoles(dr, SAHMARAN_FACE.lip, '#9c2424');
+  paintHoles(dr, SAHMARAN_FACE.lipDark, '#5e1214');
   dr.add('</g>');
-  // her lips, small and full, measured on the painting: a bowed upper lip, a fuller lower one, the line between them
-  const upperLip = ats([[297, 136.6], [299, 134.8], [301.2, 133.1], [302.8, 133.4], [303.8, 134.2], [304.9, 133.3], [306.6, 133.1], [308.8, 134.6], [310.6, 136.2],
-    [306, 136.7], [303.6, 136.9], [300.4, 136.8]]);
-  const lowerLip = ats([[297.8, 136.8], [300.6, 137.1], [303.6, 137.2], [306.8, 137], [310, 136.4], [309.2, 138.8], [306.8, 140.6], [303.8, 141.2], [300.8, 140.6],
-    [298.8, 139]]);
-  paint(dr, outline(lowerLip), '#9a3430');
-  paint(dr, outline(upperLip), '#7e2826');
-  paint(dr, brush(ats([[297.4, 136.6], [300.4, 136.9], [303.6, 137.2], [307, 136.9], [310.2, 136.3]]), 0.9, rnd,
-    { start: 0.2, end: 0.2, peak: 0.5, count: 12 }), '#4e1414');
-  // the nose: a fine shade down its left side and the two nostrils
-  paint(dr, brush(ats([[300.2, 116.6], [299.8, 121.6], [300.4, 125.6]]), 1, rnd, { start: 0.1, end: 0.6, peak: 0.7, count: 8 }), '#b08878', 0.7);
-  paint(dr, touch(...at([301.2, 127.6]), 2.6, 1.3, 20) + touch(...at([306.4, 127.6]), 2.6, 1.3, -20), '#7a4a3e', 0.85);
-  paint(dr, touch(...at([304.4, 138.8]), 6, 1.4, -4), '#cf7a6e', 0.65);
+  paint(dr, touch(...at([304.6, 139.4]), 4, 0.9, -4), '#d8847a', 0.55);
   // the round of her chin, the soft shade under it, and the choker's cord
   const chin = ats([[284, 134], [286.4, 140.6], [290.4, 144.8], [296, 147.6], [302, 148.6], [308, 148], [314, 145.8], [318, 142.4], [321.4, 136]]);
   paint(dr, touch(...at([302, 150.6]), 28, 3.4, 0), '#d6bca8', 0.55);
@@ -602,12 +559,12 @@ function face(dr: Drawing, rnd: Rnd): void {
   paint(dr, glints, '#e8b066', 0.9);
 }
 
-/** A hundred years on its wall: fine cracks in the black and the green, the colour worn chalky in places, a crease, a rubbed corner. */
+/** A few years on its wall, lightly: faint cracks in the black, its edges a little rubbed, a crease across one corner. */
 function years(dr: Drawing, rnd: Rnd): void {
   inBlack(dr, () => {
     let cracks = '';
-    for (let k = 0; k < 64; k++) {
-      // a crack wanders a few short steps, turning a little at each, and now and then forks
+    for (let k = 0; k < 18; k++) {
+      // a crack wanders a few short steps, turning a little at each
       let [x, y] = [40 + rnd() * 700, 90 + rnd() * 480];
       let a = rnd() * Math.PI * 2;
       const pts: Pt[] = [[x, y]];
@@ -616,33 +573,22 @@ function years(dr: Drawing, rnd: Rnd): void {
         x += Math.cos(a) * (6 + rnd() * 9);
         y += Math.sin(a) * (6 + rnd() * 9);
         pts.push([x, y]);
-        if (rnd() < 0.2) cracks += brush([[x, y], [x + Math.cos(a + 1.2) * 8, y + Math.sin(a + 1.2) * 8]], 0.7, rnd, { start: 1, end: 0.2, count: 3 });
       }
-      cracks += brush(pts, 0.8, rnd, { start: 0.6, end: 0.3, peak: 0.5, count: pts.length * 2 });
+      cracks += brush(pts, 0.7, rnd, { start: 0.6, end: 0.3, peak: 0.5, count: pts.length * 2 });
     }
-    paint(dr, cracks, '#8a7a5c', 0.42);
-    let chalk = '';
-    for (let i = 0; i < 90; i++) chalk += ellipse(40 + rnd() * 700, 90 + rnd() * 480, 0.6 + rnd() * 1.2, 0.5 + rnd() * 0.8);
-    paint(dr, chalk, '#d8c8a2', 0.5);
+    paint(dr, cracks, '#6a5a44', 0.25);
   });
-  // the colour worn thin and chalky where it was handled most, along the bottom and over the serpent's crown
-  let worn = '';
-  for (const [x, y, rx, ry] of [[110, 420, 70, 110], [400, 500, 150, 30], [150, 60, 110, 50], [560, 572, 80, 24]] as const) {
-    worn += outline(roundish(x, y, rx, ry, rnd, { wobble: 0.25, count: 14, tremor: 6 }));
-  }
-  paint(dr, worn, '#efe2c2', 0.09);
-  // the paint rubbed from the picture's edges, and a rubbed corner at its foot
+  // the paint rubbed a little from the picture's edges, and a rubbed corner at its foot
   let rubbed = '';
-  for (let i = 0; i < 70; i++) {
+  for (let i = 0; i < 34; i++) {
     const side = Math.floor(rnd() * 4);
     const t = rnd();
-    const [x, y] = side === 0 ? [t * PW, rnd() * 8] : side === 1 ? [PW - rnd() * 8, t * PH] : side === 2 ? [t * PW, PH - rnd() * 8] : [rnd() * 8, t * PH];
+    const [x, y] = side === 0 ? [t * PW, rnd() * 7] : side === 1 ? [PW - rnd() * 7, t * PH] : side === 2 ? [t * PW, PH - rnd() * 7] : [rnd() * 7, t * PH];
     rubbed += touch(x, y, 4 + rnd() * 10, 1 + rnd() * 2, side % 2 ? 90 : 0);
   }
-  rubbed += outline(roundish(0, PH, 34, 30, rnd, { wobble: 0.2, count: 12, tremor: 3 }));
-  paint(dr, rubbed, '#f2e7cb', 0.5);
-  paint(dr, streaks(rnd, [0, PH - 34, 40, PH], 8, -35, 10, 1), TONED, 0.3);
+  rubbed += outline(roundish(0, PH, 26, 22, rnd, { wobble: 0.2, count: 12, tremor: 3 }));
+  paint(dr, rubbed, '#f7eedb', 0.4);
   // a crease across the top right corner, where it was once folded: a pale ridge with its shadow beside it
-  paint(dr, brush([[PW - 150, 0], [PW - 90, 40], [PW, 104]], 1.8, rnd, { start: 0.6, end: 0.8, peak: 0.5, count: 12 }), '#f6ecd2', 0.6);
-  paint(dr, brush([[PW - 148, 3], [PW - 88, 43], [PW, 107.6]], 1.6, rnd, { start: 0.6, end: 0.8, peak: 0.5, count: 12 }), '#7d6340', 0.28);
+  paint(dr, brush([[PW - 150, 0], [PW - 90, 40], [PW, 104]], 1.6, rnd, { start: 0.6, end: 0.8, peak: 0.5, count: 12 }), '#fbf4e2', 0.5);
+  paint(dr, brush([[PW - 148, 3], [PW - 88, 43], [PW, 107.6]], 1.4, rnd, { start: 0.6, end: 0.8, peak: 0.5, count: 12 }), '#8a7050', 0.18);
 }
