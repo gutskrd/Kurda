@@ -50,12 +50,13 @@ const BAG_SOURCES = "('daily', 'streak', 'win', 'podium', 'harvest')";
 const PERIODS = "('day', 'week', 'month')";
 
 export const up = (pgm) => {
+  // a gift kept by an earlier `down` for those who hold one is listed again
   GIFTS.forEach(([id, name, price], i) => {
     const [from, to] = id === 'pet' ? NEWROZ : ['NULL', 'NULL'];
     pgm.sql(
       `INSERT INTO shop_items (sku, name, category, currency, price, is_unique, active, in_stock, asset_key, display_order, available_from, available_to)
        VALUES ('gift-${id}', '${name}', 'gift', 'zer', ${price}, false, true, true, NULL, ${i}, ${from}, ${to})
-       ON CONFLICT (sku) DO NOTHING`,
+       ON CONFLICT (sku) DO UPDATE SET active = true, in_stock = true, retired_at = NULL WHERE shop_items.category = 'gift'`,
     );
   });
   // Off sale and out of the admin's list, kept for their owners and their gifts' history.

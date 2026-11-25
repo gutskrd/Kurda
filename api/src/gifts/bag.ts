@@ -1,7 +1,7 @@
 /**
  * The gift bag: small gifts everyone earns from the moments that pay members Zêr (shared `BAG_SOURCES`), members and free
  * accounts alike, to give to friends and for nothing else. Nothing here sells, converts or trades what a bag holds; the
- * only way out of a bag is a gift (`takeFromBagWithin`, under the gift rules). A child's profile, or an account the
+ * only way out of a bag is a gift (`takeFromBagWithin`, under the gift rules). A child's profile, a guest, or an account the
  * economy does not pay, is given nothing. Each moment gives once (`gift_bag_grants`), at most `BAG_GIFTS_PER_DAY` a UTC
  * day and `BAG_MAX_EACH` of one kind, decided under a lock on the bag so two moments at once cannot both pass the cap.
  */
@@ -64,8 +64,9 @@ export async function grantBagGiftWithin(
 
 async function grant1(client: pg.PoolClient, { userId, source, ref, seen = false }: BagGrantInput): Promise<BagGrant | null> {
   await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`gift-bag:${userId}`]);
-  const who = await client.query<{ child: boolean }>(`SELECT kind = 'child' AS child FROM users WHERE id = $1 AND deleted_at IS NULL`, [userId]);
-  if (!who.rows[0] || who.rows[0].child) return null;
+  // a child's profile is given nothing, and a guest, who has no friends to give to, nothing either
+  const who = await client.query<{ out: boolean }>(`SELECT (kind = 'child' OR guest) AS out FROM users WHERE id = $1 AND deleted_at IS NULL`, [userId]);
+  if (!who.rows[0] || who.rows[0].out) return null;
   if (await isEconomyBlocked(client, userId)) return null;
 
   const state = await client.query<{ given: boolean; today: number }>(
