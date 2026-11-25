@@ -81,8 +81,6 @@ export const HAND_TUNED = [
   // A lesson's words and its slow chip, in running text (styles/learn.css).
   '.lesson-word',
   '.lesson-slow-chip',
-  // Seen-by, under a message (styles/pages.css).
-  '.mkp-seen',
   // A memory game's gaps, whose ::before is their glow (games/memory-thief.css).
   '.mt-gap',
   // A story's replay and glossed words, in running text where every word is a target.

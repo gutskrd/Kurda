@@ -15,7 +15,6 @@ import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { EmptyState, ErrorState } from '../components/states';
 import { ProfileCardSkeleton } from '../components/skeletons';
-import { GiftedNote } from './cosmetic-parts';
 import { ProfileCard } from '../ui/ProfileCard';
 import { UserActions } from './UserActions';
 import { ProfileFacts, type ProfileFact } from './FullProfile';
@@ -304,8 +303,6 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
           </>
         }
       >
-        <GiftedNote background={background} icon={icon} />
-
         {bio && (
           <p className="pc-bio" dir="auto">
             {bio}

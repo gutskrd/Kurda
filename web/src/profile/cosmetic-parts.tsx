@@ -1,5 +1,4 @@
 import type { LevelInfo, ProfileBackground, ProfileIcon } from '../lib/types';
-import { GiftIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 
 /**
@@ -70,33 +69,5 @@ export function IconOverlay({ icon }: { icon: ProfileIcon }): React.JSX.Element 
       role="img"
       aria-label={t('profile.premiumIcon')}
     />
-  );
-}
-
-/** Who gave the equipped cosmetics, on both profile surfaces; nothing when nothing was gifted. */
-export function GiftedNote({
-  background,
-  icon,
-}: {
-  background?: ProfileBackground | null;
-  icon?: ProfileIcon | null;
-}): React.JSX.Element | null {
-  const t = useT();
-  // Whole sentences per kind, since word order and noun forms differ between languages.
-  const notes: Array<{ key: string; text: string }> = [];
-  if (background?.giftedBy)
-    notes.push({ key: 'background', text: t('profile.backgroundGiftedBy', { name: background.giftedBy.username }) });
-  if (icon?.giftedBy) notes.push({ key: 'icon', text: t('profile.iconGiftedBy', { name: icon.giftedBy.username }) });
-  if (notes.length === 0) return null;
-
-  return (
-    <ul className="gifted-notes">
-      {notes.map((n) => (
-        <li key={n.key} className="gifted-note">
-          <GiftIcon size={14} />
-          <span>{n.text}</span>
-        </li>
-      ))}
-    </ul>
   );
 }

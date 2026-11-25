@@ -1857,7 +1857,7 @@ button.chat-run-avatar:hover {
   padding: 0 16px 80px;
 }
 
-/* The profile's about line, wrapping: origin, join date, and on one's own profile who can open it, linking to that setting. */
+/* The profile's about line, wrapping: where they are from, and the year they joined. */
 .mkp-about {
   display: flex;
   flex-wrap: wrap;
@@ -1869,8 +1869,7 @@ button.chat-run-avatar:hover {
   color: var(--ink-2);
   font-size: var(--text);
 }
-.mkp-about > li,
-.mkp-seen {
+.mkp-about > li {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1879,23 +1878,6 @@ button.chat-run-avatar:hover {
 .mkp-about svg {
   flex: none;
   color: var(--ink-3);
-}
-.mkp-seen {
-  /* a fingertip tall where it is pressed, without making the line taller than its neighbours */
-  position: relative;
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: var(--border-strong);
-  text-underline-offset: 3px;
-}
-.mkp-seen::before {
-  content: '';
-  position: absolute;
-  inset: -12px -6px;
-}
-.mkp-seen:hover {
-  color: var(--ink);
-  text-decoration-color: currentColor;
 }
 /* a level, said as a word on the popup, where there is no bar for it */
 .pc-level-chip {
@@ -2407,6 +2389,17 @@ button.mkp-fact {
   display: block;
   color: var(--ink-3);
   font-size: var(--text);
+}
+
+/* who can open your profile, Settings' own row as a card at the top of Edit profile, pressed edge to edge */
+.edit-visibility {
+  --bleed: var(--space-5);
+  margin-bottom: var(--space-6);
+  padding-block: 0;
+  overflow: hidden;
+}
+.edit-visibility a.settings-row:hover {
+  background: var(--surface-2);
 }
 
 /* edit-profile page photo controls */
@@ -4153,34 +4146,6 @@ button.mkp-fact {
   margin: 0;
   font-size: var(--text);
   color: var(--ink-2);
-}
-
-/* ---- who gave them what they are wearing --------------------------------- */
-
-/* A quiet attribution for gifted cosmetics. */
-.gifted-notes {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.gifted-note {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--ink-3);
-  font-size: var(--text);
-  line-height: 1.35;
-}
-.gifted-note svg {
-  flex: none;
-  color: var(--gold-ink);
-}
-.gifted-note strong {
-  color: var(--ink-2);
-  font-weight: 600;
 }
 
 /* ---- the community, on the home page ------------------------------------- */

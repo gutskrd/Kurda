@@ -30,6 +30,11 @@ export interface CollectionIcon {
   assetUrl: string | null;
   /** the icon worn on their profile now */
   worn: boolean;
+  /**
+   * who gave it, where it came as a gift (the newest giver of it) and the viewer may see them; null otherwise, and
+   * absent from an older server
+   */
+  giftedBy?: CollectionPerson | null;
 }
 
 /** One kind of gift item, however many times it came or went. */

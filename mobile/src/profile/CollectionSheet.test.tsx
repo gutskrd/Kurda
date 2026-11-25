@@ -186,6 +186,32 @@ describe('the collection', () => {
     expect(screen.queryByRole('button', { name: 'Moon' })).toBeNull();
   });
 
+  it('says under the worn icon who gave it, and follows the icon worn next', async () => {
+    const gifted = collection({
+      icons: {
+        items: [
+          { sku: 'icon-star', name: 'Star', assetUrl: null, worn: true, giftedBy: { id: 'u3', username: 'zana', displayName: 'Zana', avatarUrl: null } },
+          { sku: 'icon-moon', name: 'Moon', assetUrl: null, worn: false, giftedBy: { id: 'u4', username: 'hejar', displayName: null, avatarUrl: null } },
+          { sku: 'icon-sun', name: 'Sun', assetUrl: null, worn: false, giftedBy: null },
+        ],
+        total: 3,
+      },
+    });
+    testAuth.client = fakeClient({ 'GET /users/me/collection': ok(gifted), 'GET /me/badges': ok(badgesPage()), 'PUT /me/cosmetics/icon': ok({}) });
+    renderWithProviders(<CollectionSheet visible onClose={() => {}} owner={yours} />);
+    fireEvent.click(screen.getByRole('radio', { name: 'Icons' }));
+    expect(await screen.findByText('Gift from Zana')).toBeTruthy();
+    // Only the worn one says it: the moon’s giver shows once it is worn, by their handle where they have no name.
+    expect(screen.queryByText('Gift from hejar')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Moon' }));
+    expect(await screen.findByText('Gift from hejar')).toBeTruthy();
+    expect(screen.queryByText('Gift from Zana')).toBeNull();
+    // An icon that was not a gift says nothing of where it came from.
+    fireEvent.click(screen.getByRole('button', { name: 'Sun' }));
+    expect(await screen.findByRole('button', { name: 'Sun, Wearing' })).toBeTruthy();
+    expect(screen.queryByText(/^Gift from/)).toBeNull();
+  });
+
   it('says who each gift came from, a member the reader may not see without a name, and opens the giver’s profile', async () => {
     testAuth.client = fakeClient({ 'GET /users/u2/collection': ok(collection()) });
     const onClose = vi.fn();

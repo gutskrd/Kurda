@@ -2459,7 +2459,6 @@ export type TranslationKey =
   | 'profile.xpToLevel'
   | 'profile.yourProgress'
   | 'profile.onlyYou'
-  | 'profile.seenBy'
   | 'profile.addBio'
   | 'profile.stat.streak'
   | 'profile.tab.posts'
@@ -2548,8 +2547,6 @@ export type TranslationKey =
   | 'nav.home'
   | 'profile.premium'
   | 'profile.premiumIcon'
-  | 'profile.backgroundGiftedBy'
-  | 'profile.iconGiftedBy'
   | 'profile.favoritePoem'
   | 'profile.favoriteStory'
   | 'profile.stat.icons'
@@ -6129,7 +6126,6 @@ const en: Catalog = {
   'profile.xpToLevel': '{xp} XP to level {level}',
   'profile.yourProgress': 'Your progress',
   'profile.onlyYou': 'Only you can see this',
-  'profile.seenBy': 'Who can see this: {who}',
   'profile.addBio': 'Add a few words about yourself',
   'profile.stat.streak': 'Streak',
   'profile.tab.posts': 'Posts',
@@ -6196,8 +6192,6 @@ const en: Catalog = {
   'nav.home': 'Home',
   'profile.premium': 'Hevalo+',
   'profile.premiumIcon': 'Profile icon',
-  'profile.backgroundGiftedBy': 'Background gifted by @{name}',
-  'profile.iconGiftedBy': 'Icon gifted by @{name}',
   'profile.favoritePoem': 'Favourite poem',
   'profile.favoriteStory': 'Favourite story',
   'profile.stat.icons': 'Icons',
@@ -10218,7 +10212,6 @@ const ku: Catalog = {
   'profile.xpToLevel': '{xp} XP heta asta {level}',
   'profile.yourProgress': 'Pêşketina te',
   'profile.onlyYou': 'Tenê tu dikarî vê bibînî',
-  'profile.seenBy': 'Kî dikare bibîne: {who}',
   'profile.addBio': 'Çend peyvan li ser xwe binivîse',
   'profile.stat.streak': 'Rêze',
   'profile.tab.posts': 'Şandî',
@@ -10285,8 +10278,6 @@ const ku: Catalog = {
   'nav.home': 'Mal',
   'profile.premium': 'Hevalo+',
   'profile.premiumIcon': 'Îkona profîlê',
-  'profile.backgroundGiftedBy': 'Paşxane ji aliyê @{name} ve hatiye diyarîkirin',
-  'profile.iconGiftedBy': 'Îkon ji aliyê @{name} ve hatiye diyarîkirin',
   'profile.favoritePoem': 'Helbesta bijare',
   'profile.favoriteStory': 'Çîroka bijare',
   'profile.stat.icons': 'Îkon',
@@ -14307,7 +14298,6 @@ const de: Catalog = {
   'profile.xpToLevel': '{xp} XP bis Stufe {level}',
   'profile.yourProgress': 'Dein Fortschritt',
   'profile.onlyYou': 'Nur du siehst das',
-  'profile.seenBy': 'Wer es sehen kann: {who}',
   'profile.addBio': 'Schreib ein paar Worte über dich',
   'profile.stat.streak': 'Serie',
   'profile.tab.posts': 'Beiträge',
@@ -14374,8 +14364,6 @@ const de: Catalog = {
   'nav.home': 'Start',
   'profile.premium': 'Hevalo+',
   'profile.premiumIcon': 'Profilsymbol',
-  'profile.backgroundGiftedBy': 'Hintergrund geschenkt von @{name}',
-  'profile.iconGiftedBy': 'Symbol geschenkt von @{name}',
   'profile.favoritePoem': 'Lieblingsgedicht',
   'profile.favoriteStory': 'Lieblingsgeschichte',
   'profile.stat.icons': 'Symbole',
@@ -18396,7 +18384,6 @@ const es: Catalog = {
   'profile.xpToLevel': '{xp} XP para el nivel {level}',
   'profile.yourProgress': 'Tu progreso',
   'profile.onlyYou': 'Solo tú lo ves',
-  'profile.seenBy': 'Quién puede verlo: {who}',
   'profile.addBio': 'Añade unas palabras sobre ti',
   'profile.stat.streak': 'Racha',
   'profile.tab.posts': 'Publicaciones',
@@ -18463,8 +18450,6 @@ const es: Catalog = {
   'nav.home': 'Inicio',
   'profile.premium': 'Hevalo+',
   'profile.premiumIcon': 'Icono de perfil',
-  'profile.backgroundGiftedBy': 'Fondo regalado por @{name}',
-  'profile.iconGiftedBy': 'Icono regalado por @{name}',
   'profile.favoritePoem': 'Poema favorito',
   'profile.favoriteStory': 'Relato favorito',
   'profile.stat.icons': 'Iconos',
@@ -22485,7 +22470,6 @@ const tr: Catalog = {
   'profile.xpToLevel': '{level}. seviyeye {xp} XP',
   'profile.yourProgress': 'İlerlemen',
   'profile.onlyYou': 'Bunu yalnızca sen görürsün',
-  'profile.seenBy': 'Kimler görebilir: {who}',
   'profile.addBio': 'Kendin hakkında birkaç söz ekle',
   'profile.stat.streak': 'Seri',
   'profile.tab.posts': 'Gönderiler',
@@ -22552,8 +22536,6 @@ const tr: Catalog = {
   'nav.home': 'Ana sayfa',
   'profile.premium': 'Hevalo+',
   'profile.premiumIcon': 'Profil simgesi',
-  'profile.backgroundGiftedBy': 'Arka planı @{name} hediye etti',
-  'profile.iconGiftedBy': 'Simgeyi @{name} hediye etti',
   'profile.favoritePoem': 'Favori şiir',
   'profile.favoriteStory': 'Favori hikâye',
   'profile.stat.icons': 'Simgeler',
@@ -26574,7 +26556,6 @@ const ar: Catalog = {
   'profile.xpToLevel': '{xp} XP للوصول إلى المستوى {level}',
   'profile.yourProgress': 'تقدّمك',
   'profile.onlyYou': 'أنت وحدك من يراه',
-  'profile.seenBy': 'من يمكنه رؤيته: {who}',
   'profile.addBio': 'أضف بضع كلمات عن نفسك',
   'profile.stat.streak': 'السلسلة',
   'profile.tab.posts': 'المنشورات',
@@ -26641,8 +26622,6 @@ const ar: Catalog = {
   'nav.home': 'الرئيسية',
   'profile.premium': 'Hevalo+',
   'profile.premiumIcon': 'أيقونة الملف الشخصي',
-  'profile.backgroundGiftedBy': 'الخلفية هدية من @{name}',
-  'profile.iconGiftedBy': 'الأيقونة هدية من @{name}',
   'profile.favoritePoem': 'القصيدة المفضلة',
   'profile.favoriteStory': 'القصة المفضلة',
   'profile.stat.icons': 'الأيقونات',
@@ -30663,7 +30642,6 @@ const fr: Catalog = {
   'profile.xpToLevel': '{xp} XP jusqu’au niveau {level}',
   'profile.yourProgress': 'Ta progression',
   'profile.onlyYou': 'Toi seul le vois',
-  'profile.seenBy': 'Qui peut le voir : {who}',
   'profile.addBio': 'Ajoute quelques mots sur toi',
   'profile.stat.streak': 'Série',
   'profile.tab.posts': 'Publications',
@@ -30730,8 +30708,6 @@ const fr: Catalog = {
   'nav.home': 'Accueil',
   'profile.premium': 'Hevalo+',
   'profile.premiumIcon': 'Icône de profil',
-  'profile.backgroundGiftedBy': 'Arrière-plan offert par @{name}',
-  'profile.iconGiftedBy': 'Icône offerte par @{name}',
   'profile.favoritePoem': 'Poème préféré',
   'profile.favoriteStory': 'Histoire préférée',
   'profile.stat.icons': 'Icônes',
@@ -34752,7 +34728,6 @@ const nl: Catalog = {
   'profile.xpToLevel': '{xp} XP tot niveau {level}',
   'profile.yourProgress': 'Jouw voortgang',
   'profile.onlyYou': 'Alleen jij ziet dit',
-  'profile.seenBy': 'Wie dit kan zien: {who}',
   'profile.addBio': 'Schrijf een paar woorden over jezelf',
   'profile.stat.streak': 'Reeks',
   'profile.tab.posts': 'Berichten',
@@ -34819,8 +34794,6 @@ const nl: Catalog = {
   'nav.home': 'Start',
   'profile.premium': 'Hevalo+',
   'profile.premiumIcon': 'Profielicoon',
-  'profile.backgroundGiftedBy': 'Achtergrond cadeau gedaan door @{name}',
-  'profile.iconGiftedBy': 'Icoon cadeau gedaan door @{name}',
   'profile.favoritePoem': 'Favoriet gedicht',
   'profile.favoriteStory': 'Favoriet verhaal',
   'profile.stat.icons': 'Iconen',
@@ -38842,7 +38815,6 @@ const ckb: Catalog = {
   'profile.xpToLevel': '{xp} XP بۆ ئاستی {level}',
   'profile.yourProgress': 'پێشکەوتنی تۆ',
   'profile.onlyYou': 'تەنها تۆ دەیبینیت',
-  'profile.seenBy': 'کێ دەتوانێت بیبینێت: {who}',
   'profile.addBio': 'چەند وشەیەک دەربارەی خۆت بنووسە',
   'profile.stat.streak': 'زنجیرە',
   'profile.tab.posts': 'پۆستەکان',
@@ -38909,8 +38881,6 @@ const ckb: Catalog = {
   'nav.home': 'سەرەتا',
   'profile.premium': 'Hevalo+',
   'profile.premiumIcon': 'ئایکۆنی پرۆفایل',
-  'profile.backgroundGiftedBy': 'پاشبنەما لەلایەن @{name} بە دیاری دراوە',
-  'profile.iconGiftedBy': 'ئایکۆن لەلایەن @{name} بە دیاری دراوە',
   'profile.favoritePoem': 'هۆنراوەی دڵخواز',
   'profile.favoriteStory': 'چیرۆکی دڵخواز',
   'profile.stat.icons': 'ئایکۆنەکان',

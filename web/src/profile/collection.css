@@ -220,6 +220,18 @@ button.coll-tile:hover {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+/* who gave the worn icon, under its name: two short lines at most in a tile's width */
+.coll-worn-from {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  color: var(--ink-3);
+  text-align: center;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
 /* how many of one gift, at the tile's far foot */
 .coll-count {
   position: absolute;

@@ -72,6 +72,18 @@ describe('Edit Profile page', () => {
     expect(screen.getByRole('link', { name: /back to your profile/i })).toHaveAttribute('href', '/app/profile');
   });
 
+  it('starts with who can see your profile, in Settings’ words, leading to where it is changed', async () => {
+    vi.stubGlobal('fetch', editFetch([], { ...meUser, profileVisibility: 'friends' }));
+    renderApp(<ProfileEdit />, ['/app/profile/edit']);
+
+    const row = await screen.findByRole('link', { name: /Profile visibility/ });
+    expect(row).toHaveAttribute('href', '/app/settings/visibility');
+    expect(row).toHaveTextContent('Friends only');
+    // Before every other part of the page.
+    expect(row.compareDocumentPosition(screen.getByLabelText('Display name')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(row.compareDocumentPosition(screen.getByRole('button', { name: /upload your own/i })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('picks a free default avatar via PUT /me/cosmetics/avatar', async () => {
     const calls: Array<{ url: string; body: unknown }> = [];
     vi.stubGlobal('fetch', editFetch(calls));

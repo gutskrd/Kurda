@@ -14,22 +14,13 @@ import { FullProfileSkeleton } from '../components/skeletons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { DailySheet } from '../daily/DailySheet';
 import { useToday } from '../daily/today';
-import type { MessageKey } from '../i18n/en';
 import { PendingPhoto } from '../pictures/PictureCheck';
-
-/** Who can open a profile, in the words Settings says it in. */
-const SEEN_BY: Record<MeProfile['profileVisibility'], MessageKey> = {
-  everyone: 'settings.visibility.everyone',
-  members: 'settings.visibility.members',
-  friends: 'settings.visibility.friends',
-  nobody: 'settings.visibility.nobody',
-};
 
 /**
  * Your own profile: the page everyone else sees (profile/FullProfile) with your actions instead of the friend ones (edit
  * and share, and a corner menu of shop, friends, badges and settings), plus a section only you see: streak numbers,
- * freezes and Zêr. It also says who can open it, with the way to change that. Editing is on /app/profile/edit. A new
- * photo still being checked shows small under the card, since everyone else still sees the old one.
+ * freezes and Zêr. Editing, and who can open it, are on /app/profile/edit. A new photo still being checked shows small
+ * under the card, since everyone else still sees the old one.
  */
 export function Profile(): React.JSX.Element {
   const { client, user } = useAuth();
@@ -112,7 +103,6 @@ export function Profile(): React.JSX.Element {
     frameSku: shown?.frameSku ?? null,
     frameUrl: shown?.frameUrl ?? null,
     joinedYear: Number.isNaN(joined.getTime()) ? null : joined.getFullYear(),
-    seenBy: SEEN_BY[me.profileVisibility] ? { who: t(SEEN_BY[me.profileVisibility]), to: '/app/settings/visibility' } : null,
   };
   const number = (n: number): string => n.toLocaleString(locale);
   const maxFreezes = me.streak.maxFreezes ?? 1;

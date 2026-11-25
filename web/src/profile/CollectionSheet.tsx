@@ -472,7 +472,10 @@ function CustomiseStep({ badges, initial, onSave }: { badges: readonly ShowcaseB
   );
 }
 
-/** The icons they own, the worn one marked; yours are worn with a tap, and tapping the worn one takes it off. */
+/**
+ * The icons they own, the worn one marked, with who gave it where it was a gift; yours are worn with a tap, and tapping
+ * the worn one takes it off.
+ */
 function IconsTab({ icons, own, onWorn }: { icons: CollectionResponse['icons']['items']; own: boolean; onWorn?: () => void }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
@@ -498,6 +501,7 @@ function IconsTab({ icons, own, onWorn }: { icons: CollectionResponse['icons']['
         {icons.map((icon) => {
           const on = icon.sku === worn;
           const art = icon.assetUrl ? <ItemPicture src={icon.assetUrl} /> : <ItemGlyph category="icon" />;
+          const giver = on && icon.giftedBy ? (icon.giftedBy.displayName ?? icon.giftedBy.username) : null;
           return (
             <li key={icon.sku}>
               {own ? (
@@ -510,6 +514,11 @@ function IconsTab({ icons, own, onWorn }: { icons: CollectionResponse['icons']['
                 </span>
               )}
               {on && <span className="coll-worn">{t('collection.wearing')}</span>}
+              {giver && (
+                <span className="coll-worn-from" dir="auto">
+                  {t('collection.giftFrom', { name: giver })}
+                </span>
+              )}
             </li>
           );
         })}

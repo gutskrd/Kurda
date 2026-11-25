@@ -821,14 +821,9 @@ function ProfileHeadSkeleton({ own }: { own: boolean }): React.JSX.Element {
           <Skeleton line w={own ? 96 : 112} />
         </li>
         {own && (
-          <>
-            <li>
-              <Skeleton line w={104} />
-            </li>
-            <li>
-              <Skeleton line w={240} />
-            </li>
-          </>
+          <li>
+            <Skeleton line w={104} />
+          </li>
         )}
       </ul>
       {own ? (
@@ -926,7 +921,10 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
   );
 }
 
-/** Editing your profile (pages/ProfileEdit) while it loads: the picture card, then the details form and its Save. */
+/**
+ * Editing your profile (pages/ProfileEdit) while it loads: who can open it, the picture card, then the details form
+ * and its Save.
+ */
 export function ProfileEditSkeleton({ label }: { label: MessageKey }): React.JSX.Element {
   const t = useT();
   // A field's box at its own height and corner (ui.css `.input`); the bio's is taller, as the form sets it.
@@ -943,6 +941,15 @@ export function ProfileEditSkeleton({ label }: { label: MessageKey }): React.JSX
   );
   return (
     <SkeletonRegion label={t(label)}>
+      <section className="card edit-visibility">
+        <span className="settings-row is-held">
+          <Skeleton w={22} h={22} radius="var(--r-sm)" />
+          <span className="settings-row-text">
+            <Skeleton line w={136} />
+          </span>
+          <Skeleton line w={96} />
+        </span>
+      </section>
       <section className="card">
         <h2 className="friend-heading" style={{ marginTop: 0 }}>
           <Skeleton line w={124} />

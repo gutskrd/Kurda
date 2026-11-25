@@ -23,7 +23,7 @@ import { useDirection } from '../reports/direction';
 import { useUnread } from '../messages/unread';
 import { SITE_ORIGIN } from '../feed/api';
 import { Avatar, ownAvatarUrl } from '../profile/Avatar';
-import { Flag, GiftedNote, IconOverlay } from '../profile/cosmetic-parts';
+import { Flag, IconOverlay } from '../profile/cosmetic-parts';
 import type { ProfileCosmetics } from '../profile/types';
 import {
   badgesInOrder,
@@ -43,7 +43,6 @@ import { CollectionSheet } from '../profile/CollectionSheet';
 import { Favourites } from '../profile/Favourites';
 import { Framed, frameTierOf } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
-import { VISIBILITY_LABEL } from '../social/format';
 import { useFreshBadges } from '../badges/BadgeCelebrationHost';
 import { ActivityGrid, ActivityTabs, nearEnd, useProfileActivity } from '../profile/ProfileActivity';
 import { uploadProfilePhoto } from '../profile/photoUpload';
@@ -133,11 +132,11 @@ function GuestProfile(): React.JSX.Element {
 }
 
 /**
- * Your own profile, laid out as the website's: identity (banner, avatar, name, handle, year joined, who can see it,
- * bio), actions (Edit, Share, find friends), the level and four figures, then the tree, badges, league and writing,
- * the numbers only you see, and activity. Nothing is written over the banner, since text on someone's artwork is only
- * as readable as the artwork allows. Places rather than profile actions (shop, settings, saved, badges, tags,
- * library) live in the menu.
+ * Your own profile, laid out as the website's: identity (banner, avatar, name, handle, year joined, bio), actions
+ * (Edit, Share, find friends), the level and four figures, then the tree, badges, league and writing, the numbers only
+ * you see, and activity. Nothing is written over the banner, since text on someone's artwork is only as readable as
+ * the artwork allows. Places rather than profile actions (shop, settings, saved, badges, tags, library) live in the
+ * menu; who can see it is set from Edit profile.
  */
 function AccountProfile() {
   const { user, client, refreshUser } = useAuth();
@@ -339,7 +338,6 @@ function AccountProfile() {
     { key: 'freezes', label: t('profile.stat.freezes'), value: stats ? number(stats.freezes) : null },
     { key: 'zer', label: 'Zêr', value: settled ? (number(zer) ?? '—') : null, onPress: () => navigation.navigate('Shop') },
   ];
-  const visibility = me?.profileVisibility ? VISIBILITY_LABEL[me.profileVisibility] : null;
 
   // What you posted, played, liked, reposted and saved; a pull asks for it again.
   const activity = useProfileActivity({ userId: me?.id ?? user?.id, sections: progress?.sections, own: true, reload: reloadKey });
@@ -490,21 +488,6 @@ function AccountProfile() {
                 ) : null}
               </View>
             ) : null}
-            {/* Who can open this page, said on the page itself, and one tap from where it is changed. */}
-            {visibility ? (
-              <Pressable
-                onPress={() => navigation.navigate('SettingsPage', { page: 'visibility' })}
-                accessibilityRole="link"
-                // A line of small text, reached for as a finger-sized target.
-                reachSize={{ height: 20 }}
-                style={({ pressed }) => [styles.about, { flexDirection: dir.row }, pressed && heldDim]}
-                testID="profile-seen-by"
-              >
-                <Icon name="eye" size={15} tone="secondary" />
-                <Text style={[styles.seenText, { color: colors.textSecondary }]}>{t('profile.seenBy', { who: t(visibility) })}</Text>
-              </Pressable>
-            ) : null}
-            <GiftedNote background={me?.background} icon={me?.icon} />
             {me?.bio ? (
               <Text style={[styles.bio, dir.text, { color: colors.textPrimary }]}>{me.bio}</Text>
             ) : me ? (
@@ -570,7 +553,7 @@ function AccountProfile() {
   );
 }
 
-/** The lines under your handle while your profile loads: where you are from and since when, who can see it, the bio. */
+/** The lines under your handle while your profile loads: where you are from and since when, then the bio. */
 function AboutSkeleton(): React.JSX.Element {
   const dir = useDirection();
   return (
@@ -579,7 +562,6 @@ function AboutSkeleton(): React.JSX.Element {
         <SkeletonText size={typography.sizes.text} width={96} />
         <SkeletonText size={typography.sizes.text} width={104} />
       </View>
-      <SkeletonText size={typography.sizes.text} width={232} />
       <View style={styles.addBioWrap}>
         <SkeletonText size={typography.sizes.text} width={212} />
       </View>
@@ -597,7 +579,6 @@ const styles = StyleSheet.create({
   aboutRow: { flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.md, rowGap: spacing.xs },
   about: { alignItems: 'center', gap: spacing.xs },
   aboutText: { fontSize: typography.sizes.text },
-  seenText: { fontSize: typography.sizes.text, textDecorationLine: 'underline' },
   bio: { fontSize: typography.sizes.text, lineHeight: 21 },
   addBioWrap: { paddingVertical: 2 },
   addBio: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },

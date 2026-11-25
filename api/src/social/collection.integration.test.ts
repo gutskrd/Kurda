@@ -146,6 +146,27 @@ describe.skipIf(!DATABASE_URL)('a profile’s collection (integration)', () => {
     expect(body.sent?.items).toEqual([expect.objectContaining({ sku: sku('moon'), count: 1, people: [expect.objectContaining({ person: expect.objectContaining({ id: friend.id }) })] })]);
   });
 
+  it('names who gave each icon that came as a gift, the newest giver, as each reader may see them', async () => {
+    const giverOf = (body: CollectionResponse): Record<string, string | null> =>
+      Object.fromEntries(body.icons.items.map((i) => [i.sku, i.giftedBy?.id ?? null]));
+    // The newest star came from somebody the owner blocked, so the owner is told no name; the moon’s teenage giver is
+    // the owner’s friend, and a stranger’s no friend of theirs.
+    expect(giverOf((await read(owner, owner.id)).body)).toEqual({ [sku('star')]: null, [sku('moon')]: teen.id });
+    expect(giverOf((await read(stranger, owner.id)).body)).toEqual({ [sku('star')]: blocked.id, [sku('moon')]: null });
+    expect((await read(stranger, owner.id)).body.icons.items[0]!.giftedBy).toMatchObject({
+      id: blocked.id,
+      username: expect.stringMatching(/^coll_blocked_/),
+      avatarUrl: expect.any(String),
+    });
+    // A gift from an account since deleted names nobody once it is the newest of its kind.
+    await gift(gone.id, owner.id, sku('star'), 1);
+    try {
+      expect(giverOf((await read(stranger, owner.id)).body)[sku('star')]).toBeNull();
+    } finally {
+      await pool.query(`DELETE FROM gifts WHERE to_user_id = $1 AND sku = $2 AND created_at > now() - interval '5 minutes'`, [owner.id, sku('star')]);
+    }
+  });
+
   it('names each giver to anyone else as they may see them, and keeps what the owner sent to the owner', async () => {
     // A stranger is told the adults, the one the owner blocked included, and not the teenager they are no friend of.
     const strangers = (await read(stranger, owner.id)).body;

@@ -179,6 +179,33 @@ describe('the collection sheet', () => {
     expect(within(sheet).queryByRole('button', { name: 'Moon' })).toBeNull();
   });
 
+  it('says under the worn icon who gave it, and follows the icon worn next', async () => {
+    const gifted = collection({
+      icons: {
+        items: [
+          { sku: 'icon-star', name: 'Star', assetUrl: null, worn: true, giftedBy: person('u3', 'Zana') },
+          { sku: 'icon-moon', name: 'Moon', assetUrl: null, worn: false, giftedBy: { ...person('u4', 'Hejar'), displayName: null } },
+          { sku: 'icon-sun', name: 'Sun', assetUrl: null, worn: false, giftedBy: null },
+        ],
+        total: 3,
+      },
+    });
+    serve([['/users/me1/collection', gifted]]);
+    renderApp(<CollectionSheet open onClose={() => {}} owner={yours} />);
+    const sheet = screen.getByRole('dialog', { name: 'Your collection' });
+    await userEvent.click(within(sheet).getByRole('radio', { name: 'Icons' }));
+    expect(await within(sheet).findByText('Gift from Zana')).toBeInTheDocument();
+    // Only the worn one says it: the moon’s giver shows once it is worn, by their handle where they have no name.
+    expect(within(sheet).queryByText('Gift from hejar')).toBeNull();
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Moon' }));
+    expect(within(sheet).getByText('Gift from hejar')).toBeInTheDocument();
+    expect(within(sheet).queryByText('Gift from Zana')).toBeNull();
+    // An icon that was not a gift says nothing of where it came from.
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Sun' }));
+    expect(within(sheet).getByRole('button', { name: 'Sun', pressed: true })).toBeInTheDocument();
+    expect(within(sheet).queryByText(/^Gift from/)).toBeNull();
+  });
+
   it('sends you to the shop from an empty case of icons', async () => {
     serve([['/users/me1/collection', collection({ icons: { items: [], total: 0 } })]]);
     renderApp(<CollectionSheet open onClose={() => {}} owner={yours} />);

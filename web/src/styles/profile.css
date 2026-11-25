@@ -233,9 +233,6 @@
 .ph .mkp-bio {
   color: var(--ink);
 }
-.ph .gifted-note {
-  margin: 0;
-}
 
 /* the actions, shared evenly as a social app's two grey buttons are */
 .ph-actions {

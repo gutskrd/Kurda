@@ -2,13 +2,12 @@ import { useLayoutEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { FavoriteRef, LevelInfo, ProfileBackground, ProfileIcon } from '../lib/types';
 import { Flag } from '../components/Flag';
-import { GiftedNote } from './cosmetic-parts';
 import { badgesInOrder, compactCount, fireLevel, toLeagueTier, type ProfileBadge, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import { ProfileHead } from './ProfileHead';
 import { BadgePill } from './BadgeRow';
 import { CollectionSheet } from './CollectionSheet';
 import { Fire } from '../components/Fire';
-import { BookIcon, CalendarIcon, ChevronIcon, EyeIcon, FeatherIcon, LockIcon } from '../components/icons';
+import { BookIcon, CalendarIcon, ChevronIcon, FeatherIcon, LockIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { useWordFit } from '../lib/useWordFit';
@@ -40,8 +39,6 @@ export interface FullProfileView {
   frameUrl?: string | null;
   /** the year they joined, where it is theirs to know: your own profile says it */
   joinedYear?: number | null;
-  /** your own profile only: who can open it, in the words Settings uses, and the page that changes it */
-  seenBy?: { who: string; to: string } | null;
 }
 
 /** One number about somebody, with the word for it; a link where there is a page behind the number. */
@@ -284,7 +281,7 @@ export function FullProfile({
           actions={headerAction}
           meta={
             <>
-              {(view.country || view.joinedYear || view.seenBy) && (
+              {(view.country || view.joinedYear) && (
                 <ul className="mkp-about">
                   {view.country && (
                     <li className="mkp-country">
@@ -298,18 +295,8 @@ export function FullProfile({
                       <span>{t('profile.joined', { year: view.joinedYear })}</span>
                     </li>
                   )}
-                  {/* who can open this page, said on the page itself, and one press from where it is changed */}
-                  {view.seenBy && (
-                    <li>
-                      <Link to={view.seenBy.to} className="mkp-seen">
-                        <EyeIcon size={15} />
-                        <span>{t('profile.seenBy', { who: view.seenBy.who })}</span>
-                      </Link>
-                    </li>
-                  )}
                 </ul>
               )}
-              <GiftedNote background={view.background} icon={view.icon} />
               {/* The bio: others' empty bios show nothing, and the owner's offers to be written. */}
               {view.bio ? (
                 <p className="mkp-bio" dir="auto">

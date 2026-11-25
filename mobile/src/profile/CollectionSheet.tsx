@@ -566,7 +566,10 @@ function CustomiseStep({ badges, initial, onSave }: { badges: readonly BadgeView
   );
 }
 
-/** The icons they own, the worn one marked; yours are worn with a tap, and tapping the worn one takes it off. */
+/**
+ * The icons they own, the worn one marked, with who gave it where it was a gift; yours are worn with a tap, and tapping
+ * the worn one takes it off.
+ */
 function IconsTab({
   icons,
   own,
@@ -585,10 +588,15 @@ function IconsTab({
   const dir = useDirection();
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
-  const heard = icons.find((i) => i.worn)?.sku ?? null;
+  // What the server last said is worn: the list as read, then each change it took, so the mark stays once saved.
+  const [saved, setSaved] = useState<{ sku: string | null } | null>(null);
+  const heard = saved ? saved.sku : (icons.find((i) => i.worn)?.sku ?? null);
   const wearing = useIntents<'icon', string | null>(async (_key, sku) => {
     const res = await equip(client, 'icon', sku);
-    if (res.ok) onWorn?.();
+    if (res.ok) {
+      setSaved({ sku });
+      onWorn?.();
+    }
     return res;
   });
   const worn = wearing.shown('icon', heard);
@@ -617,6 +625,7 @@ function IconsTab({
         {icons.map((icon) => {
           const on = icon.sku === worn;
           const art = assetUrl(icon.assetUrl);
+          const giver = on && icon.giftedBy ? (icon.giftedBy.displayName ?? icon.giftedBy.username) : null;
           return (
             <View key={icon.sku} style={[styles.cell, { width: size }]}>
               <Tile size={size} label={on ? `${icon.name}, ${t('collection.wearing')}` : icon.name} on={on} onPress={own ? () => wearing.want('icon', on ? null : icon.sku, heard) : undefined}>
@@ -625,6 +634,11 @@ function IconsTab({
               {on ? (
                 <Text style={[styles.worn, { color: colors.textSecondary }]} numberOfLines={1} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
                   {t('collection.wearing')}
+                </Text>
+              ) : null}
+              {giver ? (
+                <Text style={[styles.wornFrom, { color: colors.textSecondary }]} numberOfLines={2} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
+                  {t('collection.giftFrom', { name: giver })}
                 </Text>
               ) : null}
             </View>
@@ -831,6 +845,7 @@ const styles = StyleSheet.create({
   barTrack: { opacity: 0.25 },
   barFill: { height: '100%', borderRadius: radii.pill },
   worn: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  wornFrom: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center' },
   count: { position: 'absolute', bottom: 5, right: 5, paddingHorizontal: 6, borderRadius: radii.pill },
   countRtl: { right: undefined, left: 5 },
   countText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },

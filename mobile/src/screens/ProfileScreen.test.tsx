@@ -69,7 +69,7 @@ function open({ league = null as { tier: string } | null, bio = 'Fêrî Kurmanc�
 }
 
 describe('your profile', () => {
-  it('shows the face with the name, the handle, the year and who can see it, then the level and three figures', async () => {
+  it('shows the face with the name, the handle and the year, then the level and three figures', async () => {
     open();
     expect(await screen.findByText('23')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Profile' })).toBeTruthy();
@@ -91,12 +91,24 @@ describe('your profile', () => {
     expect(screen.queryByText('1,240 Zêr')).toBeNull();
   });
 
-  it('says who can see it and opens where that is changed, and offers to write a bio where there is none', async () => {
+  it('offers to write a bio where there is none', async () => {
     open({ bio: null });
-    fireEvent.click(await screen.findByRole('link', { name: 'Who can see this: Hevalo members' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('SettingsPage', { page: 'visibility' });
-    fireEvent.click(screen.getByRole('link', { name: 'Add a few words about yourself' }));
+    fireEvent.click(await screen.findByRole('link', { name: 'Add a few words about yourself' }));
     expect(navigation.navigate).toHaveBeenCalledWith('EditProfile');
+  });
+
+  // Who can open it is set from Edit profile, and who gave what you wear is told in your collection, not here.
+  it('says neither who can see it nor who gave what you wear', async () => {
+    const gifter = { id: 'u9', username: 'zana' };
+    open({
+      me: {
+        icon: { sku: 'icon-star', assetKey: 'icons/star.png', url: '/cosmetics/icons/star.png', giftedBy: gifter },
+        background: { sku: 'bg-sky', assetKey: 'backgrounds/sky.webp', type: 'image', url: '/cosmetics/backgrounds/sky.webp', giftedBy: gifter },
+      },
+    });
+    expect(await screen.findByText('Joined 2026')).toBeTruthy();
+    expect(screen.queryByText(/Hevalo members/)).toBeNull();
+    expect(screen.queryByText(/zana/)).toBeNull();
   });
 
   it('keeps the numbers only you see behind a row that says so, Zêr leading to the shop', async () => {

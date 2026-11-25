@@ -78,6 +78,17 @@ describe('the details', () => {
   });
 });
 
+describe('who can see your profile', () => {
+  it('comes first, in Settings’ words, and opens where it is changed', async () => {
+    testAuth.client = fakeClient({ 'GET /me': ok({ user: { ...ME, profileVisibility: 'friends' } }), 'GET /cosmetics/avatars': ok({ avatars: [] }) });
+    await openEdit();
+    const row = await screen.findByRole('button', { name: 'Profile visibility, Friends only' });
+    expect(row.compareDocumentPosition(screen.getByText('Details')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(row);
+    expect(nav.navigation.navigate).toHaveBeenCalledWith('SettingsPage', { page: 'visibility' });
+  });
+});
+
 describe('leaving Edit profile', () => {
   it('leaves at once when nothing was changed', async () => {
     await openEdit();

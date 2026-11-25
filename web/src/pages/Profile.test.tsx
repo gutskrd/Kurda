@@ -279,23 +279,33 @@ describe('Profile view (full, read-only)', () => {
     expect(menu).toHaveFocus();
   });
 
-  // Who can open your profile is said on it, in Settings' words, one press from changing it.
-  it('says who can see your profile, with the way to change it, and the year you joined', async () => {
+  // Who can open it is set from Edit profile, and who gave what you wear is told in your collection, not here.
+  it('says the year you joined, and neither who can see it nor who gave what you wear', async () => {
+    const gifter = { id: 'u9', username: 'zana' };
     vi.stubGlobal(
       'fetch',
       vi.fn(
         routedFetch({
           '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
           '/friends': { friends: [], total: 0 },
-          '/me': { user: { ...meUser, profileVisibility: 'friends' } },
+          '/me': {
+            user: {
+              ...meUser,
+              profileVisibility: 'friends',
+              icon: { sku: 'icon-star', assetKey: 'icons/star.png', url: '/cosmetics/icons/star.png', giftedBy: gifter },
+              background: { sku: 'bg-sky', assetKey: 'backgrounds/sky.webp', type: 'image', url: '/cosmetics/backgrounds/sky.webp', giftedBy: gifter },
+            },
+          },
         }),
       ),
     );
     renderApp(<Profile />, ['/app/profile']);
     await screen.findByText('Ada Lovelace');
 
-    expect(screen.getByRole('link', { name: 'Who can see this: Friends only' })).toHaveAttribute('href', '/app/settings/visibility');
     expect(screen.getByText('Joined 2026')).toBeInTheDocument();
+    expect(screen.queryByText('Friends only')).toBeNull();
+    expect(screen.queryByRole('link', { name: /Friends only|Profile visibility/ })).toBeNull();
+    expect(screen.queryByText(/zana/)).toBeNull();
   });
 
   it('draws your own horizon in the banner while you wear no background', async () => {

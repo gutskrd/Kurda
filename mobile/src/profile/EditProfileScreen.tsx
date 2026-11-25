@@ -25,6 +25,9 @@ import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { SearchField } from '../theme/SearchField';
+import { useMyAccount } from '../settings/account';
+import { SettingsRow, SettingsSection } from '../settings/list';
+import { VISIBILITY_LABEL } from '../social/format';
 import { Avatar } from './Avatar';
 import { CosmeticPicker } from './CosmeticPicker';
 import { FavoritesPicker } from './FavoritesPicker';
@@ -60,9 +63,9 @@ interface AvatarOption {
 const MAX_BIO = 1000;
 
 /**
- * Everything about you that you can change: display name, bio, country, username, photo and avatar. What a save or a
- * choice did is said where it was done (under Save, or under the avatars) and read out, not at the top of a page
- * scrolled away from.
+ * Everything about you that you can change: who can see your profile (Settings' own row, at the top), display name,
+ * bio, country, username, photo and avatar. What a save or a choice did is said where it was done (under Save, or under
+ * the avatars) and read out, not at the top of a page scrolled away from.
  */
 export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client, user, refreshUser } = useAuth();
@@ -89,6 +92,8 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
   const [limit, setLimit] = useState<ApiError | null>(null);
   const [avatars, setAvatars] = useState<AvatarOption[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  // Read again whenever the page comes back into view, so a change made in Settings shows on its row.
+  const account = useMyAccount();
 
   const load = useCallback(async () => {
     const [mine, registry] = await Promise.all([
@@ -236,8 +241,21 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
 
         <AsyncBoundary loading={me === null && error === null} error={me === null ? error : null} onRetry={() => void load()}>
           <ScrollView ref={scroller} contentContainerStyle={[styles.body, { paddingBottom: bottom }]} keyboardShouldPersistTaps="handled">
+            {/* Who can see all of this, first, and one tap from where it is changed. */}
+            <View style={styles.rows}>
+              <SettingsSection first>
+                <SettingsRow
+                  icon="eye"
+                  title={t('settings.privacy.title')}
+                  value={account.visibility ? t(VISIBILITY_LABEL[account.visibility]) : undefined}
+                  onPress={() => navigation.navigate('SettingsPage', { page: 'visibility' })}
+                  testID="edit-visibility"
+                />
+              </SettingsSection>
+            </View>
+
             {/* The page's sections share one heading style, the small one the rest of the profile uses. */}
-            <Text style={[sectionLabel, styles.firstSection, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+            <Text style={[sectionLabel, styles.section, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
               {t('edit.details')}
             </Text>
 
@@ -444,7 +462,8 @@ const styles = StyleSheet.create({
 
   body: { gap: spacing.sm },
   notice: { fontSize: typography.sizes.text, marginTop: spacing.xs },
-  firstSection: { marginTop: spacing.md },
+  // Settings' card brings its own gutter, so the page's is taken back here and the card lines up with the fields.
+  rows: { marginTop: spacing.sm, marginHorizontal: -layout.gutter },
   section: { marginTop: spacing.lg },
   label: { fontSize: typography.sizes.text, marginTop: spacing.sm },
   hint: { fontSize: typography.sizes.text, lineHeight: 22 },
