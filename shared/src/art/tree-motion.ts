@@ -17,6 +17,12 @@ export const TREE_SWAY = { ms: 6400, deg: 1.5 } as const;
  */
 export const TREE_SWING = { ms: TREE_SWAY.ms, deg: 4.5, lag: 0.16 } as const;
 
+/**
+ * A grown crown's leaves stirring on their boughs: its layer turns a little about its own foot, twice to each sway of the
+ * breeze and a little after it (`lag`, a share of its own period), so the pads move against the trunk as leaves do.
+ */
+export const TREE_RUSTLE = { ms: TREE_SWAY.ms / 2, deg: 0.6, lag: 0.12 } as const;
+
 /** A touch: the plant leans away, back past rest, and settles; each turn in degrees, at evenly spaced moments. */
 export const TREE_SHAKE = { ms: 680, turns: [0, -2.8, 2.3, -1.3, 0.6, 0] } as const;
 
@@ -77,6 +83,9 @@ export function treeWave(lag = 0): number[] {
 /** The breeze's wave as samples over one period. */
 export const TREE_WAVE: readonly number[] = treeWave();
 export const TREE_WAVE_AT: readonly number[] = Array.from({ length: 17 }, (_, i) => i / 16);
+
+/** The crown's stir over one period of the breeze, at the same moments as `TREE_WAVE`: two of its own, each a little late. */
+export const TREE_RUSTLE_WAVE: readonly number[] = Array.from({ length: 17 }, (_, i) => Math.round(-Math.cos((i / 8 - TREE_RUSTLE.lag) * Math.PI * 2) * 1000) / 1000);
 
 /**
  * The scale a stage's plant starts at when it grows out of the previous stage: the one that puts its top where the old

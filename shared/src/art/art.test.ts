@@ -1698,7 +1698,7 @@ describe('the learner’s tree', () => {
         const whole = treeSvg({ species, stage, title: 'A tree' });
         const ground = treeSvg({ species, stage, part: 'ground', title: 'A tree' });
         const plant = treeSvg({ species, stage, part: 'plant', title: 'A tree' });
-        const more = (['swing', 'front'] as const).map((part) => treeSvg({ species, stage, part, title: 'A tree' }));
+        const more = (['crown', 'swing', 'front'] as const).map((part) => treeSvg({ species, stage, part, title: 'A tree' }));
         checkSvg(ground, 240);
         checkSvg(plant, 240);
         for (const tag of ['path', 'ellipse']) expect(count(ground, tag) + count(plant, tag) + more.reduce((a, svg) => a + count(svg, tag), 0), `${species} ${stage} ${tag}`).toBe(count(whole, tag));
@@ -1707,8 +1707,10 @@ describe('the learner’s tree', () => {
         for (const id of checkSvg(plant, 240)) expect(ids.has(id)).toBe(false);
       }
     }
-    // the island is the ground's, the trunk and crown the plant's
-    expect(count(treeSvg({ species: 'beru', stage: 6, part: 'plant', title: 'x' }), 'path')).toBeGreaterThan(count(treeSvg({ species: 'beru', stage: 6, part: 'ground', title: 'x' }), 'path'));
+    // the island is the ground's, the trunk the plant's and the nearer leaves the crown's
+    const grows = (['plant', 'crown'] as const).reduce((a, part) => a + count(treeSvg({ species: 'beru', stage: 6, part, title: 'x' }), 'path'), 0);
+    expect(grows).toBeGreaterThan(count(treeSvg({ species: 'beru', stage: 6, part: 'ground', title: 'x' }), 'path'));
+    expect(count(treeSvg({ species: 'beru', stage: 6, part: 'crown', title: 'x' }), 'path')).toBeGreaterThan(count(treeSvg({ species: 'beru', stage: 6, part: 'plant', title: 'x' }), 'path') / 2);
     // a plant turns about its foot, which is inside the picture and low in it
     expect(TREE_FOOT.x).toBe(0.5);
     expect(TREE_FOOT.y).toBeGreaterThan(0.7);
@@ -1731,16 +1733,26 @@ describe('the learner’s tree', () => {
     expect(() => wateringCanSvg({ size: -1 })).toThrow(RangeError);
   });
 
-  it('draws the willow as a fountain of sprays: most of its crown is leaves hung on curved twigs, not masses', () => {
-    // a crown of masses is clipped mass by mass; the willow's has none to clip, only its island and its wood
-    expect(count(treeSvg({ species: 'bi', stage: 6, title: 'x' }), 'clipPath')).toBe(2);
-    expect(count(treeSvg({ species: 'beru', stage: 6, title: 'x' }), 'clipPath')).toBeGreaterThan(8);
+  it('paints a grown crown as hundreds of leaves laid one by one, the same each time, thinning as the tree dries', () => {
+    // each leaf is a small almond of two curves; nothing of the crown is a clipped mass, so only the island and the wood clip
+    const leaves = (svg: string): number => (svg.match(/Q/g) ?? []).length / 2;
+    const grown = (species: (typeof TREE_SPECIES)[number], health: (typeof TREE_HEALTHS)[number] = 'fresh'): string =>
+      (['plant', 'crown'] as const).map((part) => treeSvg({ species, stage: 6, health, part, title: 'x' })).join('');
+    for (const species of TREE_SPECIES) {
+      expect(leaves(grown(species)), species).toBeGreaterThan(300);
+      expect(count(treeSvg({ species, stage: 6, title: 'x' }), 'clipPath'), species).toBe(2);
+      expect(leaves(grown(species, 'wilting')), species).toBeLessThan(leaves(grown(species)) * 0.85);
+    }
+    expect(treeSvg({ species: 'kaj', stage: 5, part: 'crown', title: 'x' })).toBe(treeSvg({ species: 'kaj', stage: 5, part: 'crown', title: 'x' }));
+  });
+
+  it('draws the willow as a fountain of sprays: most of its crown is leaves hung on curved twigs', () => {
     // more sprays at every stage
     for (const stage of [4, 5, 6] as const) expect(count(treeSvg({ species: 'bi', stage, title: 'x' }), 'path')).toBeGreaterThan(count(treeSvg({ species: 'bi', stage: (stage - 1) as 3 | 4 | 5, title: 'x' }), 'path'));
     // withered, its twigs are bare: the wood's colours only, none of its greens
     const bare = treeSvg({ species: 'bi', stage: 6, health: 'withered', title: 'x' });
-    expect(bare).not.toContain('#80ba45');
-    expect(treeSvg({ species: 'bi', stage: 6, title: 'x' })).toContain('#80ba45');
+    expect(bare).not.toContain('#7ca24e');
+    expect(treeSvg({ species: 'bi', stage: 6, title: 'x' })).toContain('#7ca24e');
   });
 
   it('knows the sky of an hour: dawn, day, dusk and night, round the clock', () => {

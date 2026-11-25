@@ -1,6 +1,7 @@
 import { useId, useMemo } from 'react';
 import {
   TREE_FOOT,
+  TREE_RUSTLE,
   TREE_SWAY,
   TREE_SWING,
   hasTreeArt,
@@ -21,8 +22,8 @@ import './tree.css';
  * A tree drawn from shared `art/trees.ts`, as on the phone, in the given season or today's. With `alive` it is drawn
  * in layers: the still ground, the plant (with `.tree-art-plant` and `.tree-art-start` wrappers for the page's own
  * animations, so they never cut each other short) swaying in the shared `TREE_SWAY` breeze from the shared clock, a
- * great tree's swing hanging from it, and the still front. Otherwise it is one still picture. A kind this build has no
- * drawing for is not drawn.
+ * grown tree's crown stirring on it, a great tree's swing hanging from it, and the still front. Otherwise it is one
+ * still picture. A kind this build has no drawing for is not drawn.
  *
  * `title` names it for screen readers; leave it empty when nearby text does. With `fluid` it fills its square holder
  * and `size` only sets the drawing's resolution.
@@ -57,8 +58,16 @@ export function TreeArt({
     const base = { species, stage, health, size, season: drawnIn };
     if (!alive) return { whole: { __html: treeSvg({ ...base, idPrefix: id }) } };
     const rig = treeRig({ species, stage, health });
-    const part = (p: 'ground' | 'plant' | 'swing' | 'front', key: string) => ({ __html: treeSvg({ ...base, part: p, idPrefix: `${id}${key}` }) });
-    return { ground: part('ground', 'g'), plant: part('plant', 'p'), swing: rig.swing ? part('swing', 's') : null, front: rig.front ? part('front', 'f') : null, hang: rig.swing };
+    const part = (p: 'ground' | 'plant' | 'crown' | 'swing' | 'front', key: string) => ({ __html: treeSvg({ ...base, part: p, idPrefix: `${id}${key}` }) });
+    return {
+      ground: part('ground', 'g'),
+      plant: part('plant', 'p'),
+      crown: rig.crown ? part('crown', 'c') : null,
+      stir: rig.crown,
+      swing: rig.swing ? part('swing', 's') : null,
+      front: rig.front ? part('front', 'f') : null,
+      hang: rig.swing,
+    };
   }, [species, stage, health, size, alive, id, drawnIn]);
   // The breeze's phase, read once, so every tree on the page sways in step.
   const phase = useMemo(() => treePhase(Date.now()), []);
@@ -68,6 +77,14 @@ export function TreeArt({
   const still = health === 'withered' || treeSwayDeg(stage) === 0;
   const foot = `${TREE_FOOT.x * 100}% ${TREE_FOOT.y * 100}%`;
   const breeze = { transformOrigin: foot, animationDuration: `${TREE_SWAY.ms}ms`, animationDelay: `${Math.round(-phase * TREE_SWAY.ms)}ms`, '--sway': `${treeSwayDeg(stage)}deg` } as React.CSSProperties;
+  // The crown stirs about its own foot, twice to each breeze and a little after it.
+  const stirring = (stir: { x: number; y: number }): React.CSSProperties =>
+    ({
+      transformOrigin: `${stir.x * 100}% ${stir.y * 100}%`,
+      animationDuration: `${TREE_RUSTLE.ms}ms`,
+      animationDelay: `${Math.round(-((((phase * 2 - TREE_RUSTLE.lag) % 1) + 1) % 1) * TREE_RUSTLE.ms)}ms`,
+      '--rustle': `${TREE_RUSTLE.deg}deg`,
+    }) as React.CSSProperties;
   // The swing leans about the line its ropes are tied to, in the same breeze a little later.
   const swinging = (hang: { x: number; y: number }): React.CSSProperties =>
     ({
@@ -87,6 +104,7 @@ export function TreeArt({
             <span className="tree-art-layer tree-art-start" style={{ transformOrigin: foot }}>
               <span className={`tree-art-layer tree-art-sway${still ? '' : ' is-swaying'}`} style={breeze}>
                 <span className="tree-art-layer" dangerouslySetInnerHTML={layers.plant} />
+                {layers.crown && layers.stir ? <span className="tree-art-layer tree-art-crown" style={stirring(layers.stir)} dangerouslySetInnerHTML={layers.crown} /> : null}
                 {layers.swing && layers.hang ? <span className="tree-art-layer tree-art-swing" style={swinging(layers.hang)} dangerouslySetInnerHTML={layers.swing} /> : null}
               </span>
             </span>

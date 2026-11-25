@@ -55,6 +55,8 @@ describe('the tree’s screen, moving', () => {
     testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 130 }))) });
     const well = renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByTestId('tree-art-swing')).toBeTruthy();
+    // and its crown stirs on the plant, under the swing
+    expect(screen.getByTestId('tree-art-crown')).toBeTruthy();
     well.unmount();
     testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 130, lastWateredOn: '2026-11-08' }))) });
     renderWithProviders(<TreeScreen onExit={() => undefined} />);

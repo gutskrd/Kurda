@@ -143,8 +143,9 @@ describe('TreePage', () => {
     const { container, unmount } = renderApp(<TreePage />);
     await screen.findByRole('heading', { name: 'Berû' });
     const plant = container.querySelector('.tree-stage-art .tree-art-plant');
-    // The swing hangs from the swaying plant; the front stays still with the ground.
+    // The swing hangs from the swaying plant, its crown stirs on it under the swing, and the front stays still with the ground.
     expect(plant?.querySelector('.tree-art-sway.is-swaying > .tree-art-swing')).not.toBeNull();
+    expect(plant?.querySelector('.tree-art-sway.is-swaying > .tree-art-crown + .tree-art-swing')).not.toBeNull();
     expect(container.querySelector('.tree-stage-art .tree-art > .tree-art-front')).not.toBeNull();
     unmount();
     server({ 'GET /me/tree': mine(view({ waterings: 130, lastWateredOn: '2026-11-08' })) });
