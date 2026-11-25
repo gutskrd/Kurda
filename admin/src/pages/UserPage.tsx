@@ -160,6 +160,7 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
         {current === 'profile' && <ProfileTab user={u} />}
         {current === 'profile' && moderation && canModerate && <SamePersonPanel user={u} />}
         {current === 'profile' && canAdjust && <TeamRole user={u} onChanged={reload} />}
+        {current === 'profile' && canAdjust && (u.kind ?? 'person') === 'person' && <SafetyReviewPanel user={u} />}
         {current === 'profile' && canAdjust && <VoiceRole user={u} onChanged={reload} />}
         {current === 'standing' && moderation && <StandingTab user={u} canModerate={canModerate} onChanged={reload} />}
         {current === 'reports' && moderation && <ReportsTab user={u} />}
@@ -244,6 +245,29 @@ function ProfileTab({ user: u }: { user: UserDetail }): React.JSX.Element {
         </dl>
       </Section>
     </>
+  );
+}
+
+/**
+ * Where a superadmin opens a safety review of this account's letters and private chats (SafetyReviews.tsx). Nothing
+ * of them is read here: the review page asks for the reason first.
+ */
+function SafetyReviewPanel({ user: u }: { user: UserDetail }): React.JSX.Element {
+  return (
+    <Section
+      title="Letters and private chats"
+      description="Read only in their cases, when someone in the conversation reports one or an automatic check flags it."
+      actions={
+        <a className="button-link" href={`#/safety-reviews?user=${encodeURIComponent(u.id)}`}>
+          Open a safety review…
+        </a>
+      }
+    >
+      <p className="section-text">
+        For a child’s safety, a threat to someone, a legal request or a report that needs more context, a superadmin can open a safety review:
+        read-only, for 24 hours, on the Access log for every admin to see. @{u.username} is not told.
+      </p>
+    </Section>
   );
 }
 
