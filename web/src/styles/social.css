@@ -1042,6 +1042,9 @@ button.gift-bubble:active {
   padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
   overflow: hidden auto;
   background: var(--stage-dim);
+  /* what was open stays felt behind, not read through the words */
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   color: var(--ink);
   animation: gift-fade var(--dur) var(--ease-out);
   cursor: pointer;
@@ -1052,6 +1055,7 @@ button.gift-bubble:active {
 .gift-moment-panel {
   position: relative;
   z-index: 1;
+  min-width: 0;
   width: 100%;
   max-width: 420px;
   display: grid;
@@ -1139,16 +1143,21 @@ button.gift-bubble:active {
 .gift-moment.gift-moment-grand .night-sky {
   position: fixed;
 }
+/* the gift's own glow lights the night here, not the stage's lamp */
+.gift-moment .night-sky-glow {
+  display: none;
+}
 
 /* The light behind a gift: its glow, the rays and the sparkles, in the gift's colour (`--glow`). The rays turn by a
    transform, and come up to full as the gift is out (`is-lit`). */
 .gift-light {
+  /* as wide as the gift's halo, never wider than the screen it is on */
+  --light-size: min(var(--light), calc(100vw - 32px));
   position: relative;
   display: grid;
   place-items: center;
-  width: var(--light);
-  height: var(--light);
-  max-width: 100%;
+  width: var(--light-size);
+  height: var(--light-size);
   isolation: isolate;
 }
 .gift-light-glow {
@@ -1256,7 +1265,7 @@ button.gift-bubble:active {
   justify-items: center;
   gap: 4px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--stage-dim) 55%, transparent);
+  background: color-mix(in srgb, var(--stage-dim) 80%, transparent);
   color: var(--ink);
   animation: gift-fade var(--dur) var(--ease-out);
   transition: opacity var(--sent-fade) var(--ease-out);

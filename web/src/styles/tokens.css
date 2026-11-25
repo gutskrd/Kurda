@@ -71,7 +71,7 @@
   --stage-gold-lip: #a8791a;
   --stage-gold-ink: #2a1d05;
   /* the screen dimmed to the warm night behind a gift as it is opened, the same in both schemes */
-  --stage-dim: rgba(14, 12, 10, 0.86);
+  --stage-dim: rgba(14, 12, 10, 0.92);
   /*
    * Chat bubbles: the reader's in the theme's second colour (set with the theme, below), the other person's a step off
    * the page, each with its ink, so the thread, typing bubble and send button agree.
