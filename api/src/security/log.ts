@@ -30,6 +30,8 @@ export interface SecurityEventInput {
   ip?: string | null;
   /** more of what makes two events the same, for the kinds recorded once in a while */
   dedupe?: string;
+  /** about a child's profile (family/): kept with no address, network or device, as every event of a child's session is */
+  child?: boolean;
 }
 
 /** What services are handed: they record, and never wait on or fail over the log. */
@@ -83,7 +85,8 @@ export class SecurityLog implements SecurityRecorder {
   private async write(kind: SecurityEventKind, input: SecurityEventInput): Promise<void> {
     const info: SecurityEventInfo = SECURITY_EVENTS[kind];
     const req = currentRequest();
-    const ip = input.ip !== undefined ? input.ip : (req?.ip ?? null);
+    const child = input.child === true || req?.user?.child === true;
+    const ip = child ? null : input.ip !== undefined ? input.ip : (req?.ip ?? null);
     const network = networkHashOf(ip);
     const route = req?.routeOptions?.url ?? null;
     if (info.dedupeSeconds) {
@@ -110,8 +113,8 @@ export class SecurityLog implements SecurityRecorder {
         req?.user?.id ?? null,
         network,
         ip && network ? seal(this.options.secret, ADDRESS_PURPOSE, ip) : null,
-        req && cameThroughCloudflare(req) ? countryOf(req.headers['cf-ipcountry']) : null,
-        req ? (sessionNameFromAgent(req.headers['user-agent']) ?? null) : null,
+        req && !child && cameThroughCloudflare(req) ? countryOf(req.headers['cf-ipcountry']) : null,
+        req && !child ? (sessionNameFromAgent(req.headers['user-agent']) ?? null) : null,
         req ? String(req.id) : null,
         JSON.stringify(details),
       ],

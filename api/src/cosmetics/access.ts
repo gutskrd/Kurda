@@ -136,6 +136,16 @@ export function isPremiumActive(premiumUntil: Date | null, now: Date = new Date(
 }
 
 /**
+ * SQL: when the user behind `alias` stops being a Hevalo+ member, their own membership or their family's plan
+ * (family/), whichever lasts longer; read in place of `premium_until`, so `isPremiumActive` decides for both. NULL when
+ * neither was ever had. `alias` is always a literal from this codebase.
+ */
+export function premiumUntilSql(alias: string): string {
+  return `GREATEST(${alias}.premium_until, (
+    SELECT f.plus_until FROM family_members fm JOIN families f ON f.id = fm.family_id WHERE fm.user_id = ${alias}.id))`;
+}
+
+/**
  * A user's display avatar URL: uploaded photo, else the selected default avatar, else default-01; never null. A
  * premium-gated avatar falls back once premium lapses (`premiumActive` defaults to true for callers that do not
  * track it). Shared by the profile and the social and chat lists so avatars match everywhere.

@@ -45,6 +45,7 @@ import { activeRestriction, IN_FORCE_SQL } from '../moderation/sanctions-service
 import { inTransaction } from '../moderation/tx.js';
 import type { WalletService } from '../wallet/service.js';
 import { letterNoticeText, type LetterNoticeHow } from './notice.js';
+import { unseenByOthersSql } from '../users/kind.js';
 
 /**
  * Letters by bird (shared/src/letters.ts). A bird sent out waits with its letter until somebody calls it to their
@@ -132,10 +133,10 @@ export const CHAT_MUTED_SQL = (alias: string): string => `(COALESCE(${alias}.mut
 
 /**
  * SQL: the person behind `alias` can write and be written back to now: an open account not being closed (signing in
- * within the grace period reopens their letters), not banned, not a guest, not muted.
+ * within the grace period reopens their letters), not banned, not a guest or a child's profile, not muted.
  */
 const CAN_WRITE_SQL = (alias: string): string =>
-  `(${alias}.deleted_at IS NULL AND ${alias}.deletion_requested_at IS NULL AND ${NOT_BANNED_SQL(alias)} AND NOT ${alias}.guest AND NOT ${CHAT_MUTED_SQL(alias)})`;
+  `(${alias}.deleted_at IS NULL AND ${alias}.deletion_requested_at IS NULL AND ${NOT_BANNED_SQL(alias)} AND NOT ${unseenByOthersSql(alias)} AND NOT ${CHAT_MUTED_SQL(alias)})`;
 
 interface MeRow {
   id: string;

@@ -16,6 +16,7 @@ import { eraseRanks, exportRanks } from '../ranks/gdpr.js';
 import { exportPosts } from './posts-export.js';
 import { exportProgress } from './progress-export.js';
 import { eraseParental, exportParental } from '../parental/gdpr.js';
+import { childrenOf, deleteChildRows, exportFamily, leaveFamilyOnErase } from '../family/gdpr.js';
 import { requestQuarantine, runQuarantine } from '../moderation/quarantine.js';
 import { userHash } from '../moderation/pseudonym.js';
 import type { AppleTokens } from '../auth/apple-tokens.js';
@@ -253,14 +254,45 @@ export class GdprService {
     });
   }
 
+  /**
+   * Deletes a child's profile now and for good, as their parent asks or as an unused one lapses (family/): everything
+   * in it, learning included, with no anonymous row left. One transaction, then the files.
+   */
+  async deleteChildProfile(childId: string): Promise<boolean> {
+    const client = await this.pool.connect();
+    let files: string[] = [];
+    let deleted = false;
+    try {
+      await client.query('BEGIN');
+      const found = await client.query(`SELECT 1 FROM child_profiles WHERE user_id = $1 FOR UPDATE`, [childId]);
+      if (found.rowCount) {
+        files = await eraseChildProfile(client, childId);
+        deleted = true;
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+    await this.deleteFiles(files);
+    await runQuarantine(this.pool, this.deps.storage, { log: this.deps.log });
+    if (deleted) this.deps.log?.info({ userId: childId, files: files.length }, 'child profile deleted with everything in it');
+    return deleted;
+  }
+
   /** `eraseAccountData` and the anonymizing in one transaction, then the files. */
   private async eraseAndAnonymize(userId: string): Promise<number> {
     const client = await this.pool.connect();
-    let files: string[] = [];
+    const files: string[] = [];
     try {
       await client.query('BEGIN');
+      // A parent's child profiles go with the parent's account, whole, and the parent leaves their family.
+      for (const childId of await childrenOf(client, userId)) files.push(...(await eraseChildProfile(client, childId)));
+      await leaveFamilyOnErase(client, userId);
       // the purge reads keys and ownerships the anonymizing would clear
-      files = await eraseAccountData(client, userId);
+      files.push(...(await eraseAccountData(client, userId)));
       await this.anonymize(userId, client);
       await client.query('COMMIT');
     } catch (err) {
@@ -404,9 +436,9 @@ export class GdprService {
   /** Gathers everything stored about the user into one document, birth month and year included. */
   async buildExport(userId: string): Promise<Record<string, unknown>> {
     const user = await this.pool.query(
-      `SELECT id, email, username, display_name, bio, locale, timezone, roles,
+      `SELECT id, kind, email, username, display_name, bio, locale, timezone, roles,
               email_verified_at, phone_verified_at, phone_masked,
-              birth_year, birth_month,
+              selected_avatar_key, birth_year, birth_month,
               created_at, updated_at, deletion_requested_at
        FROM users WHERE id = $1`,
       [userId],
@@ -541,6 +573,8 @@ export class GdprService {
       progress: await exportProgress(this.pool, userId),
       // their parents or teens by name, their controls and their minutes (parental/gdpr.ts)
       parentalControls: await exportParental(this.pool, userId),
+      // their family, the child profiles they made with each consent, and a child's own consent record (family/gdpr.ts)
+      family: await exportFamily(this.pool, userId),
     };
   }
 
@@ -662,6 +696,16 @@ export async function eraseSupportMail(executor: Pick<pg.Pool, 'query'>, userId:
       WHERE from_address = (SELECT lower(u.email::text) FROM users u WHERE u.id = $1 AND u.deleted_at IS NULL)`,
     [userId],
   );
+}
+
+/**
+ * Deletes a child's profile in the caller's transaction: everything the account holds, then the account itself and
+ * every row that names it (family/gdpr.ts `deleteChildRows`). Returns the files to delete after the commit.
+ */
+export async function eraseChildProfile(executor: Pick<pg.Pool, 'query'>, childId: string): Promise<string[]> {
+  const files = await eraseAccountData(executor, childId);
+  await deleteChildRows(executor, childId);
+  return files;
 }
 
 /**

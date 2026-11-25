@@ -29,6 +29,7 @@ import {
   hashRefreshToken,
   issueAccessToken,
   issueTokenPair,
+  sessionDeviceHash,
   type IssuedTokens,
 } from './tokens.js';
 import { verifyCaptcha } from './captcha.js';
@@ -104,6 +105,8 @@ export interface PublicUser {
   birthDateRequired: boolean;
   /** a guest account (auth/guest.ts): learning only, until claimed */
   guest: boolean;
+  /** a child's profile (family/), which the phone opens in child mode; absent for everyone else */
+  kind?: 'child';
   createdAt: string;
 }
 
@@ -118,6 +121,7 @@ export function toPublicUser(row: UserRow): PublicUser {
     emailVerified: row.email_verified_at !== null,
     birthDateRequired: row.birth_year == null && !row.guest,
     guest: row.guest,
+    ...(row.kind === 'child' ? { kind: 'child' as const } : {}),
     createdAt: new Date(row.created_at).toISOString(),
   };
 }
@@ -916,10 +920,18 @@ export class AuthService {
         await client.query('ROLLBACK');
         throw new AppError('INVALID_REFRESH', 401, 'invalid refresh token');
       }
+      // A child's session is bound to the phone it was opened on (family/sessions.ts): from anywhere else it ends.
+      const child = user.kind === 'child';
+      if (child && (!from.deviceId || !row.device_hash || sessionDeviceHash(this.config, user.id, from.deviceId) !== row.device_hash)) {
+        await client.query(`UPDATE refresh_tokens SET revoked_at = now() WHERE family_id = $1 AND revoked_at IS NULL`, [row.family_id]);
+        await client.query('COMMIT');
+        throw new AppError('INVALID_REFRESH', 401, 'invalid refresh token');
+      }
 
       const tokens = await issueTokenPair(this.config, client, user, {
         familyId: row.family_id,
-        deviceName: row.device_name ?? from.deviceName,
+        // a child's phone is kept without its name
+        deviceName: child ? undefined : (row.device_name ?? from.deviceName),
         deviceHash: row.device_hash,
         deviceId: from.deviceId,
         shortLived: row.short_lived,
@@ -931,8 +943,8 @@ export class AuthService {
         [row.id, tokens.refreshTokenId],
       );
       await client.query('COMMIT');
-      // the install id refreshing this session, as evidence for 180 days (net/device-sightings.ts); never fails the refresh
-      if (from.deviceId) await writeDeviceSighting(this.pool, user.id, from.deviceId).catch(() => undefined);
+      // the install id refreshing this session, as evidence for 180 days (net/device-sightings.ts), never a child's; never fails the refresh
+      if (from.deviceId && !child) await writeDeviceSighting(this.pool, user.id, from.deviceId).catch(() => undefined);
       return tokens;
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);

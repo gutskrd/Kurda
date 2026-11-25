@@ -20,6 +20,8 @@ export interface UserRow {
   birth_month: number | null;
   /** a guest account, until claimed (auth/guest.ts); migration 1751000210000 */
   guest: boolean;
+  /** 'child' for a child's profile made by their parent (family/); absent on rows read without it */
+  kind?: string;
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;

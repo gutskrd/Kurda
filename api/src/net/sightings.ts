@@ -72,7 +72,8 @@ export class NetworkSightings {
 export function setupNetworkSightings(app: FastifyInstance, opts: { pruneAtStart: boolean }): void {
   const sightings = new NetworkSightings(app.db, app.log);
   app.addHook('onResponse', async (req) => {
-    if (req.user?.id) void sightings.seen(req.user.id, req.ip);
+    // a child's profile keeps no network (family/)
+    if (req.user?.id && req.user.child !== true) void sightings.seen(req.user.id, req.ip);
   });
 
   // Deleting by age is idempotent, so every instance may run it, and it needs no separate worker.
