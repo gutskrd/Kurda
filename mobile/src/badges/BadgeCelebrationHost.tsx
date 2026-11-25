@@ -192,7 +192,7 @@ function BadgeMoment({ badge, felt, onClose }: { badge: PendingBadge; felt: bool
             }}
           />
           {/* Under the ways on and quieter than either: the badge's name and the site's address, nothing about who earned it. */}
-          <ShareWin text={badgeShare(t, name)} testID="badge-share" />
+          <ShareWin text={badgeShare(t, locale, name)} testID="badge-share" />
         </>
       }
     />

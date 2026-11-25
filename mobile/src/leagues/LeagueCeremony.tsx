@@ -210,7 +210,7 @@ export function LeagueCeremony({
                 )}
                 <View style={styles.actions}>
                   <ClayButton label={t('common.continue')} tone="primary" size="large" onPress={beat === 1 ? () => setBeat(2) : onClose} />
-                  {beat === 1 && win ? <ShareWin text={leagueShare(t, win, leagueName(t, win.tier))} testID="league-share" /> : null}
+                  {beat === 1 && win ? <ShareWin text={leagueShare(t, locale, win, leagueName(t, win.tier))} testID="league-share" /> : null}
                 </View>
               </Animated.View>
             </View>

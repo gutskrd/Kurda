@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, isAppLocale, localeFromTag, type AppLocale } from '@kurda/shared';
+import { DEFAULT_LOCALE, isAppLocale, localeFromTag, parseWinLink, winLinkLocale, type AppLocale } from '@kurda/shared';
 import { en, type Catalogue } from './en';
 import { readRenamed } from '../lib/renamedKey';
 
@@ -50,11 +50,19 @@ export async function loadCatalogue(locale: AppLocale): Promise<Catalogue> {
 }
 
 /**
- * The visitor's language before rendering: this device's choice, else the browser's, else the default. Shared by
- * `main.tsx` and the provider so they agree; the account's choice comes later via `AccountLocale`.
+ * The visitor's language before rendering: this device's choice, else the language a shared win's link was sent in,
+ * else the browser's, else the default. Shared by `main.tsx` and the provider so they agree; the account's choice comes
+ * later via `AccountLocale`.
  */
 export function resolveLocale(): AppLocale {
-  return readStoredLocale() ?? localeFromTag(typeof navigator === 'undefined' ? null : navigator.language) ?? DEFAULT_LOCALE;
+  return readStoredLocale() ?? sentLocale() ?? localeFromTag(typeof navigator === 'undefined' ? null : navigator.language) ?? DEFAULT_LOCALE;
+}
+
+/** A win's link names its sender's language (`?l=ku`), so a friend who has chosen none reads the page as its card was written. */
+function sentLocale(): AppLocale | null {
+  if (typeof window === 'undefined') return null;
+  const { pathname, search } = window.location;
+  return parseWinLink(pathname) ? winLinkLocale(search) : null;
 }
 
 /** Where this device keeps the language choice; signed-in accounts also keep theirs on the server. */

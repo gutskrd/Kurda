@@ -5,7 +5,7 @@ import { ShareWin, shareOut } from './ShareWin';
 
 /* Sharing a win: the device's share sheet where it has one, the clipboard where it has not. */
 
-const TEXT = 'I finished a Kurdish lesson on Hevalo. 🍎\nhttps://hevalo.test/win/lesson';
+const TEXT = 'Look, I just finished a Kurdish lesson! Come learn with me on Hevalo 🍎\nhttps://hevalo.test/win/lesson?l=en';
 
 afterEach(() => {
   vi.useRealTimers();

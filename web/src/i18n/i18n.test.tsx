@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { APP_LOCALES, GAME_NAMES, STORY_LEVELS, levelHintKey, levelNameKey } from '@kurda/shared';
+import { APP_LOCALES, GAME_NAMES, STORY_LEVELS, WIN_LEAGUES, levelHintKey, levelNameKey, winLeagueName, winWords, type AppLocale } from '@kurda/shared';
 import { I18nProvider, useI18n, useT } from './I18nProvider';
 import { preloadCatalogue } from './catalogues';
 import { LanguagePicker } from './LanguagePicker';
@@ -343,6 +343,24 @@ describe('the games’ names', () => {
       for (const key of [...Object.values(NAME_KEY), 'games.wordle.name', 'games.sentence.name', 'games.hear.name', ...MEANING_KEYS.map((stem) => `${stem}.meaning` as const)] as const) {
         expect(catalogue[key], `${locale} ${key}`).not.toMatch(kurdish);
       }
+    }
+  });
+});
+
+/** A win's card is written outside the catalogues (shared win-words.ts), as the edge script cannot carry them; it must still name things as they do. */
+describe('the words on a shared win’s card', () => {
+  const all = { en, ...CATALOGUES };
+
+  it('name each league as the reader’s catalogue does', () => {
+    for (const [locale, catalogue] of Object.entries(all) as Array<[AppLocale, typeof ku]>) {
+      for (const tier of WIN_LEAGUES) expect(winLeagueName(tier, locale), `${locale} ${tier}`).toBe(catalogue[`leagues.tier.${tier}`] ?? en[`leagues.tier.${tier}`]);
+    }
+  });
+
+  it('name the word game as the reader’s catalogue does', () => {
+    for (const [locale, catalogue] of Object.entries(all) as Array<[AppLocale, typeof ku]>) {
+      expect(winWords({ kind: 'peyvok', result: null }, locale).title, locale).toContain(catalogue['games.wordle.name']!);
+      expect(winWords({ kind: 'peyvok', result: { tries: 4, of: 6, practice: false } }, locale).title, locale).toContain(catalogue['games.wordle.name']!);
     }
   });
 });

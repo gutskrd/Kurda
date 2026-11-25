@@ -340,7 +340,7 @@ describe('sharing the lesson', () => {
     show({ results: went, exercises: asked, lesson });
     fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
     expect(share).toHaveBeenCalledTimes(1);
-    expect(share.mock.calls[0]?.[0]).toEqual({ message: 'I finished “Hello!” in Kurdish on Hevalo. 🍎\nhttps://hevalo.app/win/lesson' });
+    expect(share.mock.calls[0]?.[0]).toEqual({ message: 'Look, I just finished “Hello!” in Kurdish! Come learn with me on Hevalo 🍎\nhttps://hevalo.app/win/lesson?l=en' });
   });
 
   it('stands over the ways on, once, and leaves the main one the foot of the screen', async () => {
@@ -365,14 +365,14 @@ describe('sharing the lesson', () => {
     const who = testAuth.user;
     for (const theirs of [who.username, who.email, '/users/', '/profile', '@']) expect(text, theirs).not.toContain(theirs);
     // One address: the page of a finished lesson, which is about nobody.
-    expect(text.match(/https?:\/\/\S+/g)).toEqual(['https://hevalo.app/win/lesson']);
+    expect(text.match(/https?:\/\/\S+/g)).toEqual(['https://hevalo.app/win/lesson?l=en']);
   });
 
   it('says a Kurdish lesson when it has no name to give, and nothing of how the lesson went', async () => {
     const share = sheet();
     show({ results: { ...went, correct: 4, total: 5, accuracy: 0.8 }, exercises: asked, skipped: 1, lesson: { title: null } });
     fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
-    expect(said(share)).toBe('I finished a Kurdish lesson on Hevalo. 🍎\nhttps://hevalo.app/win/lesson');
+    expect(said(share)).toBe('Look, I just finished a Kurdish lesson! Come learn with me on Hevalo 🍎\nhttps://hevalo.app/win/lesson?l=en');
   });
 
   it('is no way on: sharing opens neither the streak’s moment nor anything after it', async () => {

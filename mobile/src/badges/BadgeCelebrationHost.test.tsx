@@ -144,7 +144,7 @@ describe('sharing a badge', () => {
     fireEvent.click(button);
     expect(share).toHaveBeenCalledTimes(1);
     const { message } = share.mock.calls[0]?.[0] as { message: string };
-    expect(message).toBe('I earned the “Agir” badge on Hevalo. 🏅\nhttps://hevalo.app/win/badge');
+    expect(message).toBe('I just earned the “Agir” badge on Hevalo! 🏅\nhttps://hevalo.app/win/badge?l=en');
     // The account is "rojda": neither the name nor a page about them is in it.
     for (const theirs of [testAuth.user.username, testAuth.user.email, '/users/', '/profile', '@']) expect(message).not.toContain(theirs);
 
@@ -160,6 +160,6 @@ describe('sharing a badge', () => {
     renderWithProviders(<BadgeCelebrationHost>{null}</BadgeCelebrationHost>);
     expect(await screen.findByText('Secret found', {}, { timeout: 3000 })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect((share.mock.calls[0]?.[0] as { message: string }).message).toBe('I earned the “Tîrê rast” badge on Hevalo. 🏅\nhttps://hevalo.app/win/badge');
+    expect((share.mock.calls[0]?.[0] as { message: string }).message).toBe('I just earned the “Tîrê rast” badge on Hevalo! 🏅\nhttps://hevalo.app/win/badge?l=en');
   });
 });
