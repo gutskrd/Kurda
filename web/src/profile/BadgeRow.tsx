@@ -7,7 +7,7 @@ import { TreeArt } from '../tree/TreeArt';
 import './collection.css';
 
 /** The pictures in the row, small enough to sit beside the handle and still read. */
-const ICON = 22;
+const ICON = 32;
 
 /** One picture of the row, decorative: the pill's own name says what it holds. */
 function RowArt({ item }: { item: BadgeRowItem }): React.JSX.Element {

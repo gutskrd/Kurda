@@ -12,10 +12,10 @@ import { useTheme } from '../theme/ThemeProvider';
 import { fontScaleCap, radii, spacing, typography } from '../theme/tokens';
 import { TreeArt } from '../tree/TreeArt';
 
-/** The pictures in the row, small enough to sit beside the handle and still read. */
-const ICON = 22;
+/** The pictures in the row, big enough to tell apart at a glance beside the handle. */
+const ICON = 32;
 /** The pill's drawn height; it answers a fingertip past it (theme/Pressable). */
-const PILL = 34;
+const PILL = 44;
 
 /** One picture of the row, unnamed: the pill's own name says what it holds. */
 function RowArt({ item }: { item: BadgeRowItem }): React.JSX.Element | null {
@@ -88,7 +88,7 @@ export function BadgePillSkeleton(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  pill: { alignSelf: 'flex-start', alignItems: 'center', gap: spacing.xs, height: PILL, paddingHorizontal: spacing.sm + 2, borderRadius: radii.pill },
+  pill: { alignSelf: 'flex-start', alignItems: 'center', gap: spacing.sm - 2, height: PILL, paddingStart: spacing.sm, paddingEnd: spacing.md - 2, borderRadius: radii.pill },
   icon: { width: ICON, height: ICON, alignItems: 'center', justifyContent: 'center' },
   word: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   // "+7" reads the same way round in every direction.
