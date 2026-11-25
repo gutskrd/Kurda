@@ -4,8 +4,8 @@
  * (gift-art-sahmaran.ts) and gone over by hand, its years only a light patina at its edges, in its worn wooden frame.
  */
 import { n2, type Drawing, type Pt } from './svg.js';
-import { SAHMARAN_DABS, SAHMARAN_EDGES, SAHMARAN_FACE, SAHMARAN_INKS, SAHMARAN_PATHS, type SahmaranInk } from './gift-art-sahmaran.js';
-import { along, brush, ellipse, floor, FLOOR, lerp, outline, paint, polygon, roundish, runs, streaks, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
+import { SAHMARAN_DABS, SAHMARAN_EDGES, SAHMARAN_FACE_GROUND, SAHMARAN_FEATURES, SAHMARAN_INKS, SAHMARAN_PATHS, type SahmaranInk, type SahmaranStroke } from './gift-art-sahmaran.js';
+import { along, brush, ellipse, floor, FLOOR, lerp, outline, paint, polygon, roundish, runs, streaks, touch, tremble, turn, within, type Rnd, type Tone } from './gift-paint.js';
 
 // ────────────────────────────────────────────────────────────────────── kawa
 
@@ -484,32 +484,80 @@ function touches(dr: Drawing, rnd: Rnd): void {
 
 /**
  * Her face, neck and necklace as the painting has them, laid last so nothing crosses her features: the pale ground
- * between the hair and its shading, the eyes, brows, nose and smudged lipstick, all traced from the painting enlarged;
- * and the round of the chin, the choker, the gold drops and the heart, laid on as measured there.
+ * between the hair, then eyes, brows, nose and smudged lipstick painted as clean shapes fitted to their trace from the
+ * painting enlarged; and the round of the chin, the choker, the gold drops and the heart, laid on as measured there.
  */
 function face(dr: Drawing, rnd: Rnd): void {
+  const pairs = (v: readonly number[]): Pt[] => {
+    const out: Pt[] = [];
+    for (let i = 0; i + 1 < v.length; i += 2) out.push(at([v[i]!, v[i + 1]!]));
+    return out;
+  };
   dr.add('<g transform="scale(0.1)">');
-  paintHoles(dr, SAHMARAN_FACE.skin, '#f2e6d6');
-  paintHoles(dr, SAHMARAN_FACE.shade, '#dcc4b2', 0.3);
+  paintHoles(dr, SAHMARAN_FACE_GROUND, '#f2e6d6');
   dr.add('</g>');
-  // the shade along her cheeks where the hair falls close, as the painter rounded the face
-  paint(dr, brush(ats([[285.4, 104], [284.4, 116], [285, 128], [288.4, 138], [294, 145]]), 9, rnd, { start: 0.3, end: 0.1, peak: 0.5, count: 16 }) +
-    brush(ats([[322.4, 104], [323.4, 116], [322.6, 128], [319.6, 138], [314, 145]]), 9, rnd, { start: 0.3, end: 0.1, peak: 0.5, count: 16 }), '#dbc2b0', 0.4);
-  // her features as the painting has them: whites, the brown iris and the grey, the nose, then the dark of brows and lids
-  // over them, and her lipstick laid on and smudged past its line
-  dr.add('<g transform="scale(0.1)">');
-  paintHoles(dr, SAHMARAN_FACE.white, '#f8f3ec');
-  paintHoles(dr, SAHMARAN_FACE.irisL, '#9a7a7e');
-  paintHoles(dr, SAHMARAN_FACE.irisR, '#9aa0ae');
-  paintHoles(dr, SAHMARAN_FACE.nose, '#b88e80', 0.8);
-  paintHoles(dr, SAHMARAN_FACE.brow, '#957565');
-  paintHoles(dr, SAHMARAN_FACE.eyeDark, '#3c2830');
-  paintHoles(dr, SAHMARAN_FACE.dark, '#26181a');
-  paintHoles(dr, SAHMARAN_FACE.smudge, '#c84e4a', 0.58);
-  paintHoles(dr, SAHMARAN_FACE.lip, '#9c2424');
-  paintHoles(dr, SAHMARAN_FACE.lipDark, '#5e1214');
-  dr.add('</g>');
-  paint(dr, touch(...at([304.6, 139.4]), 4, 0.9, -4), '#d8847a', 0.55);
+  // the shade along her cheeks where the hair falls close, beside her nose and under her lip, as the painter rounded the face
+  const soft = { start: 0.3, end: 0.1, peak: 0.5, count: 16 };
+  paint(dr, brush(ats([[285.4, 104], [284.4, 116], [285, 128], [288.4, 138], [294, 145]]), 9, rnd, soft) +
+    brush(ats([[322.4, 104], [323.4, 116], [322.6, 128], [319.6, 138], [314, 145]]), 9, rnd, soft), '#dbc2b0', 0.4);
+  paint(dr, touch(...at([299, 122]), 14, 4, 84) + touch(...at([304, 145]), 16, 3, 0), '#e2cdbc', 0.5);
+  // the nose: its soft shadows, and the nostrils
+  for (const shadow of SAHMARAN_FEATURES.nose) paint(dr, outline(pairs(shadow)), '#c49a8a', 0.75);
+  // a stroke of the brush as the painting has it: its thickness eased between the measured ones, drawn to a point at each end
+  const laidStroke = (s: SahmaranStroke, colour: string, opacity = 1, full = 1): void => {
+    const count = 32;
+    const line = along(pairs(s.points), count);
+    const left: Pt[] = [];
+    const right: Pt[] = [];
+    for (let i = 0; i <= count; i++) {
+      const t = i / count;
+      const f = t * (s.widths.length - 1);
+      const k = Math.min(s.widths.length - 2, Math.floor(f));
+      const w = (s.widths[k]! + (s.widths[k + 1]! - s.widths[k]!) * (f - k)) * full * Math.min(1, Math.min(t, 1 - t) / 0.18) ** 0.6;
+      const [nx, ny] = normalAt(line, i);
+      left.push([line[i]![0] + nx * w, line[i]![1] + ny * w]);
+      right.push([line[i]![0] - nx * w, line[i]![1] - ny * w]);
+    }
+    paint(dr, outline([...left, ...right.reverse()]), colour, opacity);
+  };
+  // each eye: the dark its lids hold, the opening and its iris, the pupil, the whites and a catch of light
+  SAHMARAN_FEATURES.eyes.forEach((eye, i) => {
+    const outer = outline(pairs(eye.outer));
+    const inner = outline(pairs(eye.inner));
+    const [cx, cy, r] = eye.iris;
+    // a soft edge where the dark of the lids meets the skin, as the paint thinned there
+    const [ox, oy] = at([cx, cy]);
+    paint(dr, outline(pairs(eye.outer).map(([x, y]): Pt => [ox + (x - ox) * 1.07, oy + (y - oy) * 1.12])), '#a88c90', 0.45);
+    paint(dr, outer, '#20151a');
+    // the opening: its white, the iris, violet-brown in one eye and grey ringed in dark in the other, and the pupil
+    paint(dr, inner, '#f3ece2');
+    within(dr, inner, () => {
+      paint(dr, ellipse(cx * 2, cy * 2, r * 2, r * 2), eye.deep ? '#4a3038' : '#20151a');
+      if (!eye.deep) paint(dr, ellipse(cx * 2, cy * 2, (r - eye.rim) * 2, (r - eye.rim) * 2), '#9aa0ae');
+      paint(dr, ellipse(cx * 2, cy * 2, eye.pupil * 2, eye.pupil * 2), '#140c10');
+    });
+    let lights = '';
+    for (let k = 0; k + 4 < eye.lights.length; k += 5) {
+      const [lx, ly] = at([eye.lights[k]!, eye.lights[k + 1]!]);
+      lights += outline(turn(roundish(lx, ly, eye.lights[k + 2]! * 2, eye.lights[k + 3]! * 2, rnd, { count: 10, wobble: 0, tremor: 0 }), lx, ly, eye.lights[k + 4]!));
+    }
+    paint(dr, lights, i === 0 ? '#f6eee6' : '#f8f2ea');
+  });
+  // the brows: each one smooth arc tapering to a point at both ends, its darkest line laid along it
+  for (const brow of SAHMARAN_FEATURES.brows) {
+    laidStroke(brow.arc, '#a8887a', 0.9);
+    laidStroke(brow.core, '#24171a');
+  }
+  // her lipstick, put on and smudged past the line of her lips: two soft halos of it, the red, its darkest part, the parting
+  const lips = SAHMARAN_FEATURES.lips;
+  const smudge = pairs(lips.smudge);
+  const [mx, my] = at([304, 137]);
+  paint(dr, outline(smudge), '#d06a62', 0.45);
+  paint(dr, outline(smudge.map(([x, y]): Pt => [mx + (x - mx) * 0.9, my + (y - my) * 0.88])), '#c85a54', 0.3);
+  paint(dr, outline(pairs(lips.core)), '#9c2626');
+  paint(dr, outline(pairs(lips.dark)), '#6a1618', 0.85);
+  paint(dr, brush(pairs(lips.parting), 1.3, rnd, { start: 0.2, end: 0.2, peak: 0.5, count: 20 }), '#3e0c0e', 0.9);
+  paint(dr, touch(...at([304.6, 139.6]), 5, 1, -4), '#e08c82', 0.6);
   // the round of her chin, the soft shade under it, and the choker's cord
   const chin = ats([[284, 134], [286.4, 140.6], [290.4, 144.8], [296, 147.6], [302, 148.6], [308, 148], [314, 145.8], [318, 142.4], [321.4, 136]]);
   paint(dr, touch(...at([302, 150.6]), 28, 3.4, 0), '#d6bca8', 0.55);

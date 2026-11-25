@@ -13,7 +13,7 @@ import { describe, expect, it } from 'vitest';
 import * as shared from '../index.js';
 import { characterSvg } from '../characters/index.js';
 import { GIFT_ART_IDS, giftArtKey, giftArtSvg, isGiftArtId, type GiftArtId } from './gift-art.js';
-import { SAHMARAN_DABS, SAHMARAN_EDGES, SAHMARAN_FACE, SAHMARAN_INKS, SAHMARAN_PATHS } from './gift-art-sahmaran.js';
+import { SAHMARAN_DABS, SAHMARAN_EDGES, SAHMARAN_FACE_GROUND, SAHMARAN_FEATURES, SAHMARAN_INKS, SAHMARAN_PATHS } from './gift-art-sahmaran.js';
 import { pigeon } from './pigeon.js';
 import { Drawing } from './svg.js';
 
@@ -96,7 +96,11 @@ describe('the gifts’ pictures', () => {
     for (const dabs of Object.values(SAHMARAN_DABS)) expect(dabs.length % 5).toBe(0);
     for (const run of SAHMARAN_EDGES) expect(run.length % 3).toBe(0);
     for (const ink of SAHMARAN_INKS) expect(SAHMARAN_PATHS[ink], ink).toMatch(/^M\d/);
-    for (const [part, d] of Object.entries(SAHMARAN_FACE)) expect(d, part).toMatch(/^M\d/);
+    expect(SAHMARAN_FACE_GROUND).toMatch(/^M\d/);
+    const strokes = SAHMARAN_FEATURES.brows.flatMap((b) => [b.arc, b.core]);
+    for (const s of strokes) expect(s.points.length).toBe(s.widths.length * 2);
+    for (const line of [...SAHMARAN_FEATURES.eyes.flatMap((e) => [e.outer, e.inner]), ...Object.values(SAHMARAN_FEATURES.lips)]) expect(line.length % 2).toBe(0);
+    for (const eye of SAHMARAN_FEATURES.eyes) expect(eye.lights.length % 5).toBe(0);
   });
 
   it('draws Hevalo and the pen pal pigeon from their own drawings, never a copy redrawn', () => {
