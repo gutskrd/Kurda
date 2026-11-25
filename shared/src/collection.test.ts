@@ -16,12 +16,18 @@ describe('the badge row', () => {
     expect(badgesInOrder()).toEqual([]);
   });
 
-  it('leads with the league and the tree, and counts what does not fit', () => {
+  it('shows the top three, the chosen badges first, and counts the rest', () => {
     const badges = ['a', 'b', 'c', 'd', 'e', 'f'].map(earned);
     const row = badgeRow({ league: 'cem', tree, badges });
-    expect(row.shown.map((i) => i.kind)).toEqual(['league', 'tree', 'badge', 'badge', 'badge', 'badge']);
+    expect(row.shown.map((i) => i.kind)).toEqual(['badge', 'badge', 'badge']);
     expect(row.shown).toHaveLength(BADGE_ROW_MAX);
-    expect(row.more).toBe(2);
+    expect(row.more).toBe(5);
+  });
+
+  it('fills the three with the league and the tree when there are few badges', () => {
+    const row = badgeRow({ league: 'cem', tree, badges: [earned('a')] });
+    expect(row.shown.map((i) => i.kind)).toEqual(['badge', 'league', 'tree']);
+    expect(row.more).toBe(0);
   });
 
   it('leaves out a tree it cannot draw, and a league nobody is in', () => {

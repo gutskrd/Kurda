@@ -98,12 +98,12 @@ const yours: CollectionOwner = { userId: 'me', name: '', own: true, league: { ti
 const theirs: CollectionOwner = { userId: 'u2', name: 'Hamo', own: false, league: { tier: 'gol' }, tree, showcase: [], earned: [earned('roj')] };
 
 describe('the badge row', () => {
-  it('holds the league, the tree and the badges, six at most, counts the rest, and opens the collection', () => {
+  it('holds the top three, counts the rest, and opens the collection', () => {
     const onOpen = vi.fn();
     const badges = ['ders', 'agir', 'roj', 'dubare', 'rewi', 'bekemasi'].map(earned);
     renderWithProviders(<BadgePill league="cem" tree={tree} badges={badges} title="Hamo’s collection" onOpen={onOpen} />);
     const pill = screen.getByRole('button', { name: 'Hamo’s collection, Badges: 6' });
-    expect(pill.textContent).toContain('+2');
+    expect(pill.textContent).toContain('+5');
     fireEvent.click(pill);
     expect(onOpen).toHaveBeenCalledOnce();
   });

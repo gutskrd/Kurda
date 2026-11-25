@@ -64,8 +64,8 @@ export interface CollectionResponse {
   sent?: CollectionList<CollectionGift>;
 }
 
-/** Most pictures the badge row beside a profile's handle holds; the rest are counted as "+N". */
-export const BADGE_ROW_MAX = 6;
+/** Most pictures the badge row beside a profile's handle holds; the rest are counted as "+N", so the row stays quiet. */
+export const BADGE_ROW_MAX = 3;
 
 export type BadgeRowItem = { kind: 'league'; tier: LeagueTier } | { kind: 'tree'; tree: TreeGlimpse } | { kind: 'badge'; badge: ShowcaseBadge };
 
@@ -89,10 +89,11 @@ export function badgeRow({
   tree?: TreeGlimpse | null;
   badges: readonly ShowcaseBadge[];
 }): { shown: BadgeRowItem[]; more: number } {
+  // The badges the person chose come first, since three pictures are the person's top three; then the league and the tree.
   const all: BadgeRowItem[] = [
+    ...badges.map((badge) => ({ kind: 'badge' as const, badge })),
     ...(league ? [{ kind: 'league' as const, tier: league }] : []),
     ...(tree && hasTreeArt(tree.species) ? [{ kind: 'tree' as const, tree }] : []),
-    ...badges.map((badge) => ({ kind: 'badge' as const, badge })),
   ];
   return { shown: all.slice(0, BADGE_ROW_MAX), more: Math.max(0, all.length - BADGE_ROW_MAX) };
 }

@@ -198,7 +198,8 @@ const styles = StyleSheet.create({
   top: { alignItems: 'flex-start', gap: spacing.sm },
   face: { borderRadius: radii.pill, borderWidth: RING },
   stats: { flex: 1, minWidth: 0 },
-  names: { gap: 2 },
+  // Room between the name with its level ring and the handle with its badge row, so neither crowds the other.
+  names: { gap: spacing.sm },
   // The handle and the badge row on one line that wraps, the row under the handle where the line is short.
   handleRow: { alignItems: 'center', flexWrap: 'wrap', columnGap: spacing.sm + 2, rowGap: spacing.xs },
   nameRow: { alignItems: 'center', flexWrap: 'wrap', columnGap: spacing.sm + 2, rowGap: spacing.xs },
