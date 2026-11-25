@@ -18,8 +18,8 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 
 /**
- * Rankings: XP this week with your league as a card first, XP of all time, Zêr and Gewher held, rows a page at a
- * time, your place pinned until a page reaches it, and the boards' states.
+ * Rankings: XP this week with your league as a card first, XP of all time and Zêr held, rows a page at a time, your
+ * place pinned until a page reaches it, and the boards' states.
  */
 
 const week = (over: Partial<LeagueView> = {}): LeagueView => ({
@@ -57,15 +57,15 @@ const ZER = {
   me: { rank: 4, score: 100 },
   depth: 4,
 };
-const GEWHER_FIRST = {
-  type: 'gewher',
+const ZER_FIRST = {
+  type: 'zer',
   scope: 'global',
-  top: Array.from({ length: 25 }, (_, i) => entry(i + 1, `gem${i + 1}`, 1000 - i)),
+  top: Array.from({ length: 25 }, (_, i) => entry(i + 1, `zer${i + 1}`, 1000 - i)),
   total: 26,
   me: { rank: null, score: 35 },
   depth: 1000,
 };
-const GEWHER_REST = { ...GEWHER_FIRST, top: [entry(26, 'gem26', 40)] };
+const ZER_REST = { ...ZER_FIRST, top: [entry(26, 'zer26', 40)] };
 
 const asked = (client: ReturnType<typeof fakeClient>) => client.calls.map((c) => `${c.method} ${c.path}`);
 
@@ -147,7 +147,7 @@ describe('rankings by XP', () => {
   });
 });
 
-describe('rankings by Zêr and Gewher', () => {
+describe('rankings by Zêr', () => {
   it('switches the board to Zêr, asks for it, and ranks a tie as one place', async () => {
     const client = fakeClient({ 'GET /me/league': ok(week()), [page('weekly_xp', 0)]: ok(XP), [page('zer', 0)]: ok(ZER) });
     testAuth.client = client;
@@ -175,24 +175,24 @@ describe('rankings by Zêr and Gewher', () => {
   it('pins your own balance below a page that does not reach you, and shows the next page when asked', async () => {
     const client = fakeClient({
       'GET /me/league': ok(week()),
-      [page('gewher', 0)]: ok(GEWHER_FIRST),
-      [page('gewher', 25)]: ok(GEWHER_REST),
+      [page('zer', 0)]: ok(ZER_FIRST),
+      [page('zer', 25)]: ok(ZER_REST),
     });
     testAuth.client = client;
-    renderWithProviders(<RankingsScreen board="gewher" onExit={() => undefined} />);
+    renderWithProviders(<RankingsScreen board="zer" onExit={() => undefined} />);
 
     // Below the cut of a board of a thousand: your balance, a dash for the place, and why.
-    expect(await screen.findByLabelText('You, 35 Gems, Not in the top 1,000 yet.')).toBeTruthy();
+    expect(await screen.findByLabelText('You, 35 Zêr, Not in the top 1,000 yet.')).toBeTruthy();
     expect(within(screen.getByTestId('rankings-pinned')).getByText('Not in the top 1,000 yet.')).toBeTruthy();
-    expect(screen.getByLabelText('#2, gem2, 999 Gems')).toBeTruthy();
-    expect(asked(client)).not.toContain(page('gewher', 25));
+    expect(screen.getByLabelText('#2, zer2, 999 Zêr')).toBeTruthy();
+    expect(asked(client)).not.toContain(page('zer', 25));
 
     // One page at a time: the button offers what is left, up to a page, and goes once nothing is.
     fireEvent.click(screen.getByRole('button', { name: 'Show 1 more' }));
     await waitFor(() => expect(screen.queryByRole('button', { name: /^Show \d+ more$/ })).toBeNull());
-    expect(asked(client)).toContain(page('gewher', 25));
+    expect(asked(client)).toContain(page('zer', 25));
     // The page is added to the one shown, not put in its place.
-    expect(screen.getByLabelText('#2, gem2, 999 Gems')).toBeTruthy();
+    expect(screen.getByLabelText('#2, zer2, 999 Zêr')).toBeTruthy();
   });
 
   it('says a balance board is empty in its own words, and offers to try again when it cannot be read', async () => {
@@ -212,21 +212,21 @@ describe('rankings by Zêr and Gewher', () => {
 });
 
 describe('the board switch', () => {
-  it('is one choice of three, read out as a group, with the chosen one checked', () => {
+  it('is one choice of two, read out as a group, with the chosen one checked', () => {
     const onChange = vi.fn();
-    renderWithProviders(<BoardSwitch value="gewher" onChange={onChange} />);
+    renderWithProviders(<BoardSwitch value="zer" onChange={onChange} />);
     expect(screen.getByRole('radiogroup', { name: 'Rank by' })).toBeTruthy();
-    expect(screen.getAllByRole('radio').map((r) => r.getAttribute('aria-label'))).toEqual(['XP', 'Zêr', 'Gems']);
-    expect(screen.getByRole('radio', { name: 'Gems' }).getAttribute('aria-checked')).toBe('true');
-    expect(screen.getByRole('radio', { name: 'Zêr' }).getAttribute('aria-checked')).toBe('false');
+    expect(screen.getAllByRole('radio').map((r) => r.getAttribute('aria-label'))).toEqual(['XP', 'Zêr']);
+    expect(screen.getByRole('radio', { name: 'Zêr' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('radio', { name: 'XP' }).getAttribute('aria-checked')).toBe('false');
     fireEvent.click(screen.getByRole('radio', { name: 'XP' }));
     expect(onChange).toHaveBeenCalledWith('xp');
   });
 
-  // A long name in a third of a 360-point phone takes a second line, never an ellipsis.
+  // A long name in half of a 360-point phone takes a second line, never an ellipsis.
   it('lets a long board name take a second line rather than cutting it short', () => {
     renderWithProviders(<BoardSwitch value="xp" onChange={() => undefined} />);
-    for (const name of ['XP', 'Zêr', 'Gems']) {
+    for (const name of ['XP', 'Zêr']) {
       const label = within(screen.getByRole('radio', { name })).getByText(name);
       expect(getComputedStyle(label).whiteSpace).not.toBe('nowrap');
       expect(getComputedStyle(label).textAlign).toBe('center');

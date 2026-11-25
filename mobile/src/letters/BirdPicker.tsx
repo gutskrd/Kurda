@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { LETTER_BIRD_ORDER, LETTER_BIRD_PRICE } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
+import { useZerValue } from '../shop/value';
 import type { TranslationKey } from '../i18n/translations';
 import { formatNumber } from '../i18n/format';
 import { ClayButton } from '../theme/glass';
@@ -55,6 +56,7 @@ export function BirdPicker({
   // Right to left, the first bird is on the right, as on the website and in the shop.
   const dir = useDirection();
   const number = (n: number): string => formatNumber(n, locale);
+  const value = useZerValue();
   const short = first ? 0 : Math.max(0, LETTER_BIRD_PRICE - zer);
   const same = !first && picked === current;
   const title = first ? t('letters.bird.chooseTitle') : t('letters.bird.changeTitle');
@@ -66,6 +68,8 @@ export function BirdPicker({
       <Text style={[styles.status, { color: colors.textSecondary }]}>
         {first ? t('letters.bird.chooseLead', { price: number(LETTER_BIRD_PRICE) }) : t('letters.bird.changeLead', { price: number(LETTER_BIRD_PRICE), zer: number(zer) })}
       </Text>
+      {/* What the price is worth, on its own line so it is never read as the balance's. */}
+      <Text style={[styles.status, { color: colors.textSecondary }]}>{`${number(LETTER_BIRD_PRICE)} Zêr · ${value(LETTER_BIRD_PRICE)}`}</Text>
       <View style={[styles.birds, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={title}>
         {LETTER_BIRD_ORDER.map((bird) => {
           const name = t(BIRD_NAMES[bird]!);

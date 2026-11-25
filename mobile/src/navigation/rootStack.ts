@@ -42,8 +42,8 @@ export type RootStackParamList = {
   /** The short test that jumps ahead on the path to `unitId` (coursemap/JumpTestScreen). */
   JumpTest: { courseId: string; unitId: string };
   Shop: undefined;
-  /** By XP (this week or all time), Zêr or Gewher; XP this week opens with your league (leagues/RankingsScreen). */
-  Rankings: { board?: 'xp' | 'zer' | 'gewher'; span?: 'week' | 'all' } | undefined;
+  /** By XP (this week or all time) or Zêr; XP this week opens with your league (leagues/RankingsScreen). */
+  Rankings: { board?: 'xp' | 'zer'; span?: 'week' | 'all' } | undefined;
   /** The whole league this week: the ladder, the goal ring and the group's table (leagues/LeagueScreen). */
   LeagueTable: undefined;
   /** Older names, opened as Rankings (navigation/returnTo.ts `RENAMED`): the league on XP this week, ranks and season as is. */

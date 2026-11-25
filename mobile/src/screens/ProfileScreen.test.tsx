@@ -46,7 +46,7 @@ function open({ league = null as { tier: string } | null, bio = 'Fêrî Kurmanc�
         ...me,
       },
     }),
-    'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
+    'GET /me/wallet': ok({ balances: { zer: 1240 } }),
     'GET /friends?limit=1': ok({ friends: [], total: 23 }),
     'GET /me/inventory': ok({ items: [] }),
     // The badge count comes from the public profile; `/me` does not send one.

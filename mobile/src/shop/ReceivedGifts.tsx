@@ -66,7 +66,7 @@ export function ReceivedGifts(): React.JSX.Element | null {
               {art ? (
                 <Image source={{ uri: art }} style={styles.art} resizeMode="cover" accessibilityIgnoresInvertColors />
               ) : (
-                <Icon name="gem" size={20} color={colors.textSecondary} />
+                <Icon name="gift" size={20} color={colors.textSecondary} />
               )}
             </View>
             <View style={styles.main}>
@@ -74,7 +74,7 @@ export function ReceivedGifts(): React.JSX.Element | null {
                 {g.name}
               </Text>
               <Text style={[styles.from, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
-                {g.from ? t('shop.giftFrom', { name: g.from.username }) : t('shop.giftFromFormer')}
+                {g.from ? t('gift.from', { name: g.from.displayName?.trim() || g.from.username }) : t('gift.fromMember')}
               </Text>
             </View>
           </View>

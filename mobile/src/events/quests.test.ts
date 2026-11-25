@@ -53,18 +53,14 @@ describe('questTitle', () => {
 });
 
 describe('rewardParts and rewardSpoken', () => {
-  it('lists the currencies a reward pays, Zêr first, and none for nothing', () => {
-    expect(rewardParts({ zer: 200, gems: 30 })).toEqual([
-      { currency: 'zer', amount: 200 },
-      { currency: 'gems', amount: 30 },
-    ]);
-    expect(rewardParts({ gems: 40 })).toEqual([{ currency: 'gems', amount: 40 }]);
+  it('lists the Zêr a reward pays, and nothing for nothing', () => {
+    expect(rewardParts({ zer: 200 })).toEqual([{ currency: 'zer', amount: 200 }]);
     expect(rewardParts({ zer: 0 })).toEqual([]);
     expect(rewardParts({})).toEqual([]);
   });
 
   it('says the reward in words, never as emoji', () => {
-    expect(rewardSpoken({ zer: 200, gems: 30 }, t)).toBe('+200 Zêr, +30 Gems');
+    expect(rewardSpoken({ zer: 200 }, t)).toBe('+200 Zêr');
     expect(rewardSpoken({ zer: 1500 }, t, (n) => n.toLocaleString('en'))).toBe('+1,500 Zêr');
     expect(rewardSpoken({}, t)).toBe('');
   });

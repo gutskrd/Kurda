@@ -35,9 +35,10 @@ import { restrictionOf } from '../reports/sendErrors';
 import { SendErrorNotice } from '../reports/SendError';
 import { useDirection } from '../reports/direction';
 import { EmptyState } from '../theme/EmptyState';
-import { KIND_LABEL, kindWithCount, withinBalance } from '../shop/format';
+import { KIND_LABEL, ZER, kindWithCount, withinBalance } from '../shop/format';
 import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SEARCH_MAX, SortChip, ToggleChip } from '../shop/ItemFilters';
-import { giftCatalog, newGiftKey, sendGift, type GiftCatalog, type SentGift } from './api';
+import { ZerValue, useZerValue } from '../shop/value';
+import { giftCatalog, newGiftKey, sendGift, type GiftCatalog, type PostTarget, type SentGift } from './api';
 import { Loading } from '../theme/Loading';
 import { pressedDim } from '../theme/motion';
 
@@ -49,28 +50,34 @@ export interface GiftFriend {
 }
 
 /**
- * Choosing a gift, the sheet behind a chat's gift button. In a direct message the friend is already chosen; in a group
- * it starts with who (only your friends among the members, the server's rule too, with "All my friends here"). Then
- * what: everything on sale, by kind as the shop sorts it, with search, order, "Within my balance" and "Hide ones they
- * already have"; each with its price, your balance, which recipients already own a unique item, and what you cannot
- * afford. Send closes the sheet on the send animation.
+ * Choosing a gift, the sheet behind a chat's gift button and a post's. In a direct message the friend is already chosen,
+ * and on a post its author; in a group it starts with who (only your friends among the members, the server's rule too,
+ * with "All my friends here"). Then what: the gift stickers first, then everything on sale, by kind as the shop sorts
+ * it, with search, order, "Within my Zêr" and "Hide ones they already have"; each with its price and what it is worth,
+ * your Zêr, which recipients already own a unique item, and what you cannot afford. A member's free gifts can pay for
+ * a small one. When the rules do not let a gift go yet, one calm line says why instead. Send closes the sheet on the
+ * send animation.
  */
 export function GiftPickerSheet({
   visible,
   chat,
+  post,
   friends,
   onClose,
   onSent,
 }: {
   visible: boolean;
-  chat: GiftChatRef;
-  /** DM: the one friend. Group: your friends among the members (may be empty). */
+  /** the chat the gift is posted in; left out for a gift onto a post */
+  chat?: GiftChatRef;
+  /** a post the gift is given onto, with its author's name for the title */
+  post?: PostTarget;
+  /** DM: the one friend. Group: your friends among the members (may be empty). A post: its author. */
   friends: GiftFriend[];
   onClose: () => void;
   onSent: (result: SentGift, item: GiftCatalogItem, to: GiftFriend[]) => void;
 }): React.JSX.Element {
   const { t } = useI18n();
-  const group = chat.kind === 'group';
+  const group = chat?.kind === 'group';
   const [step, setStep] = useState<'who' | 'what'>(group ? 'who' : 'what');
   const [chosen, setChosen] = useState<string[]>(group ? [] : friends.map((f) => f.userId));
 
@@ -81,7 +88,8 @@ export function GiftPickerSheet({
   }, [visible, group, friends]);
 
   const recipients = friends.filter((f) => chosen.includes(f.userId));
-  const title = group ? t('gift.button') : t('gift.picker.titleFor', { name: friends[0]?.name ?? '' });
+  const name = friends[0]?.name ?? '';
+  const title = group ? t('gift.button') : post ? t('gift.post.titleFor', { name }) : t('gift.picker.titleFor', { name });
 
   return (
     <BottomSheet
@@ -95,7 +103,7 @@ export function GiftPickerSheet({
       {step === 'who' ? (
         <WhoStep friends={friends} chosen={chosen} onChange={setChosen} onNext={() => setStep('what')} />
       ) : visible && recipients.length > 0 ? (
-        <WhatStep chat={chat} recipients={recipients} onSent={onSent} onClose={onClose} />
+        <WhatStep chat={chat} post={post} recipients={recipients} onSent={onSent} onClose={onClose} />
       ) : null}
     </BottomSheet>
   );
@@ -207,15 +215,15 @@ function CheckRow({
   );
 }
 
-const CURRENCY_ICON = { zer: 'coin', gems: 'gem' } as const;
-
 function WhatStep({
   chat,
+  post,
   recipients,
   onSent,
   onClose,
 }: {
-  chat: GiftChatRef;
+  chat?: GiftChatRef;
+  post?: PostTarget;
   recipients: GiftFriend[];
   onSent: (result: SentGift, item: GiftCatalogItem, to: GiftFriend[]) => void;
   /** The sheet closes before Account standing opens, or it would open underneath. */
@@ -230,7 +238,8 @@ function WhatStep({
   const idKey = recipients.map((r) => r.userId).join(',');
   const ids = useMemo(() => (idKey ? idKey.split(',') : []), [idKey]);
   const [catalog, setCatalog] = useState<GiftCatalog | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  // A rule that keeps this gift from going is one calm line; only a failure to reach the server offers a retry.
+  const [loadError, setLoadError] = useState<{ text: string; rule: boolean } | null>(null);
   const [picked, setPicked] = useState<GiftCatalogItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [sendError, setSendError] = useState<ApiError | null>(null);
@@ -239,6 +248,8 @@ function WhatStep({
   const [filter, setFilter] = useState<ItemFilter>(DEFAULT_ITEM_FILTER);
   const [affordableOnly, setAffordableOnly] = useState(false);
   const [hideOwned, setHideOwned] = useState(false);
+  const [useFree, setUseFree] = useState(false);
+  const value = useZerValue();
   // One key per choice, so a retry of the same gift replays it and never pays twice (a fresh key only if the server
   // says this one already named another request).
   const [keyRound, setKeyRound] = useState(0);
@@ -246,15 +257,16 @@ function WhatStep({
 
   const load = useCallback(() => {
     setLoadError(null);
-    void giftCatalog(client, ids).then((res) => {
+    void giftCatalog(client, post ?? ids).then((res) => {
       if (res.ok) setCatalog(res.data);
-      else setLoadError(giftErrorText(res.error, t));
+      else setLoadError({ text: giftErrorText(res.error, t), rule: GIFT_RULES.has(res.error.code ?? '') });
     });
-  }, [client, ids, t]);
+  }, [client, ids, post, t]);
 
   useEffect(load, [load]);
 
-  const owners = useCallback((item: GiftCatalogItem) => item.alreadyOwnedBy.filter((id) => ids.includes(id)), [ids]);
+  // On a post the author is the one recipient, whom the server names in `alreadyOwnedBy`.
+  const owners = useCallback((item: GiftCatalogItem) => (post ? item.alreadyOwnedBy : item.alreadyOwnedBy.filter((id) => ids.includes(id))), [ids, post]);
   const total = picked ? picked.price * (recipients.length - owners(picked).length) : 0;
   const affordable = useCallback(
     (item: GiftCatalogItem) =>
@@ -282,6 +294,10 @@ function WhatStep({
   };
   // A choice the filters have hidden stays chosen, and is named by the Send button.
   const pickedHidden = picked !== null && !shown.some((i) => i.sku === picked.sku);
+  // A member's free gifts pay for a small gift, one a recipient, only when there are enough for everyone it goes to.
+  const giving = picked ? Math.max(1, recipients.length - owners(picked).length) : 1;
+  const canUseFree = picked !== null && picked.freeGiftEligible && (catalog?.freeGifts ?? 0) >= giving;
+  const free = useFree && canUseFree;
   // A new filter shows its results from the top, not from the longer list's scroll position.
   const scroller = useRef<ScrollView>(null);
   const filterKey = JSON.stringify([filter, affordableOnly, hideOwned]);
@@ -299,13 +315,11 @@ function WhatStep({
     setNote(null);
     // Given: felt as it goes, and felt as an error if it did not go.
     haptic('tap');
-    void sendGift(client, {
-      sku: picked.sku,
-      toUserIds: ids.filter((id) => !owners(picked).includes(id)),
-      chat,
-      idempotencyKey: key,
-      expectedPrice: picked.price,
-    }).then((res) => {
+    const base = { sku: picked.sku, idempotencyKey: key, expectedPrice: picked.price, ...(free ? { useFreeGift: true } : {}) };
+    void sendGift(
+      client,
+      post ? { ...base, post } : { ...base, toUserIds: ids.filter((id) => !owners(picked).includes(id)), chat: chat! },
+    ).then((res) => {
       setBusy(false);
       if (res.ok) {
         if (res.data.sent.length === 0) {
@@ -332,24 +346,41 @@ function WhatStep({
     });
   };
 
+  if (loadError?.rule) {
+    return (
+      <View style={styles.body} testID="gift-hold">
+        <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{loadError.text}</Text>
+      </View>
+    );
+  }
   if (loadError) {
     return (
       <View style={styles.body}>
-        <Text style={[styles.note, dir.text, { color: colors.danger }]}>{loadError}</Text>
+        <Text style={[styles.note, dir.text, { color: colors.danger }]}>{loadError.text}</Text>
         <ClayButton label={t('common.retry')} onPress={load} />
       </View>
     );
   }
   if (!catalog) return <Loading style={styles.spinner} />;
+  // The rules do not let a gift go to this one person yet: one calm line, rather than a catalogue that would fail.
+  if (catalog.hold) {
+    return (
+      <View style={styles.body} testID="gift-hold">
+        <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>
+          {t(catalog.hold === 'new_friend' ? 'gift.hold.newFriend' : 'gift.hold.friendsOnly', { name: recipients[0]?.name ?? '' })}
+        </Text>
+      </View>
+    );
+  }
 
   // Every amount is grouped and in the reader's own digits, as in the shop.
   const amount = (n: number): string => formatNumber(n, locale);
-  const priceWords = (item: GiftCatalogItem): string => `${amount(item.price)} ${item.currency === 'zer' ? 'Zêr' : t('gift.picker.gems')}`;
+  const priceWords = (item: GiftCatalogItem): string => `${amount(item.price)} ${ZER}, ${value(item.price)}`;
 
   const tile = (item: GiftCatalogItem): React.JSX.Element => {
     const own = owners(item);
     const everyone = own.length >= recipients.length;
-    const canPay = affordable(item);
+    const canPay = affordable(item) || (item.freeGiftEligible && catalog.freeGifts >= Math.max(1, recipients.length - own.length));
     const disabled = everyone || !canPay;
     const selected = picked?.sku === item.sku;
     const wide = itemCategory(item.category) === 'background';
@@ -395,9 +426,10 @@ function WhatStep({
           {item.name}
         </Text>
         <View style={[styles.priceRow, { flexDirection: dir.row }]}>
-          <Icon name={CURRENCY_ICON[item.currency]} size={14} color={item.currency === 'zer' ? colors.gold : colors.primary} />
+          <Icon name="coin" size={14} color={colors.gold} />
           <Text style={[styles.price, { color: colors.textPrimary }]}>{amount(item.price)}</Text>
         </View>
+        <ZerValue zer={item.price} style={dir.text} />
         {ownedLine ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{ownedLine}</Text> : null}
         {!canPay && !everyone ? (
           <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{t('gift.picker.cantAfford')}</Text>
@@ -408,16 +440,18 @@ function WhatStep({
 
   return (
     <>
-      <View style={[styles.balance, { flexDirection: dir.row }]} accessibilityLabel={t('gift.picker.balance', { zer: amount(catalog.balance.zer), gems: amount(catalog.balance.gems) })}>
+      <View style={[styles.balance, { flexDirection: dir.row }]} accessibilityLabel={t('gift.picker.balance', { zer: amount(catalog.balance.zer) })}>
         <Text style={[styles.balanceLabel, { color: colors.textSecondary }]}>{t('gift.picker.youHave')}</Text>
         <View style={[styles.chip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
           <Icon name="coin" size={14} color={colors.gold} />
           <Text style={[styles.chipText, { color: colors.textPrimary }]}>{amount(catalog.balance.zer)}</Text>
         </View>
-        <View style={[styles.chip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
-          <Icon name="gem" size={14} color={colors.primary} />
-          <Text style={[styles.chipText, { color: colors.textPrimary }]}>{amount(catalog.balance.gems)}</Text>
-        </View>
+        {catalog.freeGifts > 0 ? (
+          <View style={[styles.chip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
+            <Icon name="gift" size={14} color={colors.gold} />
+            <Text style={[styles.chipText, { color: colors.textPrimary }]}>{t('gift.picker.freeGifts', { count: amount(catalog.freeGifts) })}</Text>
+          </View>
+        ) : null}
       </View>
 
       {/* The search and the kinds stay put while the gifts scroll under them. */}
@@ -447,7 +481,7 @@ function WhatStep({
           <>
             <OptionRow inset={layout.gutter}>
               <SortChip value={filter.sort} onChange={(sort) => setFilter((f) => ({ ...f, sort }))} />
-              <ToggleChip label={t('shop.filter.withinBalance')} value={affordableOnly} onChange={setAffordableOnly} />
+              <ToggleChip label={t('shop.filter.withinZer')} value={affordableOnly} onChange={setAffordableOnly} />
               <ToggleChip label={t('gift.picker.hideOwned')} value={hideOwned} onChange={setHideOwned} />
             </OptionRow>
             {/* The All chip says how many there are; narrowed, the count and the way back are worth a line. */}
@@ -484,8 +518,13 @@ function WhatStep({
             <Text style={[styles.selectedText, { color: colors.textPrimary }]} numberOfLines={1}>
               {t('gift.picker.selected', { name: picked.name })}
             </Text>
-            <Icon name={CURRENCY_ICON[picked.currency]} size={14} color={picked.currency === 'zer' ? colors.gold : colors.primary} />
+            <Icon name="coin" size={14} color={colors.gold} />
             <Text style={[styles.price, { color: colors.textPrimary }]}>{amount(picked.price)}</Text>
+          </View>
+        ) : null}
+        {canUseFree ? (
+          <View style={[styles.freeRow, { flexDirection: dir.row }]}>
+            <ToggleChip label={t('gift.picker.useFree')} value={useFree} onChange={setUseFree} />
           </View>
         ) : null}
         <Text style={[styles.limits, styles.center, { color: colors.textSecondary }]}>
@@ -494,9 +533,11 @@ function WhatStep({
         <ClayButton
           label={
             picked
-              ? recipients.length > 1
-                ? t('gift.picker.sendTotal', { total: amount(total), currency: picked.currency === 'zer' ? 'Zêr' : t('gift.picker.gems') })
-                : t('gift.picker.send')
+              ? free
+                ? t('gift.picker.sendFree')
+                : recipients.length > 1
+                  ? `${t('gift.picker.sendTotal', { total: amount(total), currency: ZER })} · ${value(total)}`
+                  : t('gift.picker.send')
               : t('gift.picker.pick')
           }
           icon="gift"
@@ -533,6 +574,9 @@ export function skippedText(
     .join('\n');
 }
 
+/** Refusals that are the gift rules rather than a failure: asking again would only be refused again. */
+const GIFT_RULES = new Set(['NOT_FRIENDS', 'GIFT_TO_SELF', 'POST_NOT_FOUND', 'BAD_RECIPIENTS']);
+
 /** An item that can no longer be given: off sale, priceless, or gone from the shop. */
 const GONE = new Set(['ITEM_UNAVAILABLE', 'NOT_GIFTABLE', 'ITEM_NOT_FOUND']);
 
@@ -544,6 +588,8 @@ export function giftErrorText(error: ApiError, t: (key: TranslationKey) => strin
   switch (error.code) {
     case 'NOT_FRIENDS':
       return t('gift.picker.onlyFriends');
+    case 'POST_NOT_FOUND':
+      return t('gift.post.gone');
     case 'INSUFFICIENT_FUNDS':
       return t('gift.picker.cantAfford');
     case 'ITEM_UNAVAILABLE':
@@ -582,6 +628,7 @@ const styles = StyleSheet.create({
   itemArt: { alignItems: 'center', justifyContent: 'center' },
   itemArtSquare: { height: 72 },
   selected: { alignItems: 'center', gap: spacing.sm, minHeight: 28 },
+  freeRow: { justifyContent: 'center' },
   selectedText: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   tier: { position: 'absolute', top: 0, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radii.pill },
   tierRight: { right: 0 },

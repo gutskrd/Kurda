@@ -316,6 +316,7 @@ const KIND_GLYPH: Record<ItemCategory, IconName> = {
   icon: 'star',
   frame: 'crown',
   tag: 'tag',
+  sticker: 'gift',
   other: 'star',
 };
 

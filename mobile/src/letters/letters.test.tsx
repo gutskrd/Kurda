@@ -308,6 +308,7 @@ describe('the letters screen', () => {
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByTestId('letters-bird-change'));
     expect(screen.getByText('A new bird costs 500 Zêr. You have 120 Zêr.')).toBeTruthy();
+    expect(screen.getByText('500 Zêr · ≈ €1.24')).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Sky-blue bird, your bird now' })).toBeTruthy();
     fireEvent.click(screen.getByRole('radio', { name: 'Green bird' }));
     expect(screen.getByText('You need 380 more Zêr.')).toBeTruthy();

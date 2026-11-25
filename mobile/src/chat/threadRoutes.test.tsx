@@ -75,6 +75,7 @@ const gift = (id: string, over: Partial<GiftCard> = {}): GiftCard => ({
   assetUrl: null,
   tier: 'common',
   recipients: [{ name: null, avatarUrl: null, isMe: true, opened: false }],
+  from: null,
   myGiftId: id,
   myOpened: false,
   equippable: 'background',

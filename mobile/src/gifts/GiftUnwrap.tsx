@@ -146,7 +146,7 @@ export function GiftUnwrap({
     if (!revealed) return;
     Animated.timing(details, { toValue: 1, duration: reduce ? 0 : 220, useNativeDriver: true }).start();
     AccessibilityInfo.announceForAccessibility?.(
-      target.fromName ? t('gift.unwrap.announce', { item: card.name, name: target.fromName }) : card.name,
+      t('gift.unwrap.announce', { item: card.name, name: target.fromName || t('gift.someone') }),
     );
   }, [revealed, details, reduce, t, card.name, target.fromName]);
 
@@ -220,10 +220,8 @@ export function GiftUnwrap({
           <Text style={[styles.name, { color: colors.textPrimary }]} accessibilityRole="header">
             {card.name}
           </Text>
-          {/* Unnamed only when the gift is older than the loaded messages and its sender unknown here. */}
-          {target.fromName ? (
-            <Text style={[styles.from, { color: colors.textSecondary }]}>{t('gift.unwrap.from', { name: target.fromName })}</Text>
-          ) : null}
+          {/* Unnamed when the viewer may not see who sent it (blocked, closed, or hidden from them). */}
+          <Text style={[styles.from, { color: colors.textSecondary }]}>{target.fromName ? t('gift.from', { name: target.fromName }) : t('gift.fromMember')}</Text>
           {openError ? (
             <Text style={[styles.error, dir.text, { color: colors.danger }]} accessibilityRole="alert">
               {openError}

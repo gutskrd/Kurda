@@ -84,12 +84,12 @@ describe('event quests', () => {
     expect(screen.queryByText(/request failed/)).toBeNull();
   });
 
-  /* Rewards use the app's coin and gem art and are read out in words; a claim gets the reward feedback on a full-height button. */
-  it('shows the reward with the app’s coin and gem, and celebrates a claim that goes through', async () => {
+  /* Rewards use the app's coin art and are read out in words; a claim gets the reward feedback on a full-height button. */
+  it('shows the reward with the app’s coin, and celebrates a claim that goes through', async () => {
     let claimed = false;
     const quests = (): EventQuestsView => {
       const v = view('newroz', 'Newroz', !claimed);
-      return { ...v, quests: v.quests.map((q) => ({ ...q, reward: { zer: 50, gems: 5 }, claimed, claimable: !claimed })) };
+      return { ...v, quests: v.quests.map((q) => ({ ...q, reward: { zer: 250 }, claimed, claimable: !claimed })) };
     };
     testAuth.client = fakeClient({
       'GET /events/active': ok({ events: [{ key: 'newroz', name: 'Newroz' }] }),
@@ -105,7 +105,7 @@ describe('event quests', () => {
     const stopHear = onSound((file) => heard.push(String(file)));
     try {
       renderWithProviders(<EventQuestsScreen onExit={() => undefined} />);
-      expect(await screen.findByLabelText('+50 Zêr, +5 Gems')).toBeTruthy();
+      expect(await screen.findByLabelText('+250 Zêr')).toBeTruthy();
       expect(document.body.textContent).not.toMatch(/🪙|💎/u);
       const claim = screen.getByRole('button', { name: 'Claim' });
       await act(async () => {

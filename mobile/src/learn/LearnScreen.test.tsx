@@ -106,7 +106,7 @@ function client(
     'GET /me/daily-goal': ok({ goal: 20, effectiveGoal: 20, earnedXp: 12, progress: 0.6, completed: false }),
     'GET /me': ok({ user: { streak } }),
     [TODAY_PATH]: ok(todayView({ streak })),
-    'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
+    'GET /me/wallet': ok({ balances: { zer: 1240 } }),
     'GET /practice/due': ok(due),
     // The library asks for one variety; with nothing chosen and an English interface that is Kurmancî.
     'GET /stories/library?dialect=kurmanci': ok(LIBRARY),
@@ -371,7 +371,7 @@ describe('Learn', () => {
   it('shows the Zêr a daily reward claimed on Home brings, in the corner at once', async () => {
     let zer = 1240;
     client(STREAK, undefined, {
-      'GET /me/wallet': () => ok({ balances: { zer, gems: 3 } }),
+      'GET /me/wallet': () => ok({ balances: { zer } }),
       [TODAY_PATH]: ok(fourDayView({ daily: { canClaim: true, learnedToday: true, claimableDay: 3, reward: 15, cycleDay: 2 } })),
       'POST /rewards/daily/claim': () => {
         zer += 15;
