@@ -22,6 +22,7 @@ import { userHash } from '../moderation/pseudonym.js';
 import type { AppleTokens } from '../auth/apple-tokens.js';
 import { GUEST_IDLE_DAYS } from '../auth/guest.js';
 import { UNCONFIRMED_SIGNUP, UNCONFIRMED_SIGNUP_DAYS, forgetOldSends } from '../auth/pending-signups.js';
+import { exportGifts } from '../gifts/gdpr.js';
 
 export const DELETION_GRACE_DAYS = 14;
 
@@ -569,6 +570,8 @@ export class GdprService {
       letterWidget: { prefs: widgetPrefs.rows[0] ?? null, phones: widgets.rows },
       supportEmails: support.rows,
       pictureChecks: { profilePhotoWaiting: waitingPhoto.rows[0]?.waiting ?? false, pictures: pictureChecks.rows },
+      // the gifts they gave and were given, with the other person by name (gifts/gdpr.ts)
+      gifts: await exportGifts(this.pool, userId),
       // XP, leagues, streaks, badges, the story shelf and the saved words (gdpr/progress-export.ts)
       progress: await exportProgress(this.pool, userId),
       // their parents or teens by name, their controls and their minutes (parental/gdpr.ts)
@@ -840,6 +843,8 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`UPDATE gifts SET from_user_id = NULL WHERE from_user_id = $1`);
   // The gift bag and what landed in it, and their own limit on gifts: nothing in a bag outlives the account.
   await q(`DELETE FROM gift_bag WHERE user_id = $1`);
+  // what landed in a bag is append-only; this transaction's own flag lets an erase take it
+  await executor.query(`SELECT set_config('kurda.gift_bag_erase', 'on', true)`);
   await q(`DELETE FROM gift_bag_grants WHERE user_id = $1`);
   await q(`DELETE FROM gift_spend_limits WHERE user_id = $1`);
 

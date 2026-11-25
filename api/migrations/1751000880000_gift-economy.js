@@ -3,12 +3,14 @@
  * gift bag that everyone fills from the moments that pay members Zêr, and an adult's own limit on spending Zêr on gifts.
  *
  * The stickers are retired, not deleted: whoever holds or was given one keeps it, and every gift of one still reads in
- * its chat, on its post and in a collection. The gifts carry no picture of their own; the server finds each one's drawn
- * picture by its sku, so a gift goes on offer when its picture is drawn. A gift sent from the bag is recorded with the
- * rest, as paid with the bag.
+ * its chat, on its post and in a collection; the ones this migration retired are listed so `down` puts back only those.
+ * The gifts carry no picture of their own; the server finds each one's drawn picture by its sku, so a gift goes on offer
+ * when its picture is drawn, and the Newroz fire's March is kept in code (shared `giftInSeason`), every year. A gift
+ * sent from the bag is recorded with the rest, as paid with the bag. What landed in a bag is append-only: only when it
+ * was seen may change, and its rows go only with the account.
  */
 
-/** The gifts as first put on sale: id, Kurmancî name, Zêr. The Newroz fire is sold for Newroz only. */
+/** The gifts as first put on sale: id, Kurmancî name, Zêr. */
 const GIFTS = [
   ['cay', 'Çay', 1],
   ['qehwe', 'Qehwe', 2],
@@ -43,24 +45,29 @@ const GIFTS = [
   ['kadiz', 'Rêya Kadizê', 100000],
 ];
 
-/** The Newroz fire's season: all of March, around Newroz on the 21st. */
-const NEWROZ = ["'2027-03-01T00:00:00Z'", "'2027-04-01T00:00:00Z'"];
+/**
+ * The retired time `down` gives a gift it has to keep for those who hold one, which no admin's retiring can give, so a
+ * later `up` lists again those gifts and no gift an admin retired.
+ */
+const KEPT_BY_DOWN = "'1970-01-01T00:00:00Z'";
 
 const BAG_SOURCES = "('daily', 'streak', 'win', 'podium', 'harvest')";
 const PERIODS = "('day', 'week', 'month')";
 
 export const up = (pgm) => {
-  // a gift kept by an earlier `down` for those who hold one is listed again
+  // a gift an earlier `down` kept for those who hold one is listed again, and nothing an admin retired
   GIFTS.forEach(([id, name, price], i) => {
-    const [from, to] = id === 'pet' ? NEWROZ : ['NULL', 'NULL'];
     pgm.sql(
-      `INSERT INTO shop_items (sku, name, category, currency, price, is_unique, active, in_stock, asset_key, display_order, available_from, available_to)
-       VALUES ('gift-${id}', '${name}', 'gift', 'zer', ${price}, false, true, true, NULL, ${i}, ${from}, ${to})
-       ON CONFLICT (sku) DO UPDATE SET active = true, in_stock = true, retired_at = NULL WHERE shop_items.category = 'gift'`,
+      `INSERT INTO shop_items (sku, name, category, currency, price, is_unique, active, in_stock, asset_key, display_order)
+       VALUES ('gift-${id}', '${name}', 'gift', 'zer', ${price}, false, true, true, NULL, ${i})
+       ON CONFLICT (sku) DO UPDATE SET active = true, in_stock = true, retired_at = NULL
+        WHERE shop_items.category = 'gift' AND shop_items.retired_at = ${KEPT_BY_DOWN}`,
     );
   });
-  // Off sale and out of the admin's list, kept for their owners and their gifts' history.
-  pgm.sql(`UPDATE shop_items SET active = false, in_stock = false, retired_at = COALESCE(retired_at, now()) WHERE category = 'sticker'`);
+  // Off sale and out of the admin's list, kept for their owners and their gifts' history; which ones, for `down`.
+  pgm.createTable('gift_stickers_retired', { sku: { type: 'text', primaryKey: true } });
+  pgm.sql(`INSERT INTO gift_stickers_retired (sku) SELECT sku FROM shop_items WHERE category = 'sticker' AND retired_at IS NULL`);
+  pgm.sql(`UPDATE shop_items SET active = false, in_stock = false, retired_at = now() WHERE sku IN (SELECT sku FROM gift_stickers_retired)`);
 
   pgm.dropConstraint('gifts', 'gifts_paid_with_check');
   pgm.addConstraint('gifts', 'gifts_paid_with_check', { check: "paid_with IN ('zer', 'free_gift', 'bag')" });
@@ -88,6 +95,28 @@ export const up = (pgm) => {
     seen_at: { type: 'timestamptz' },
   });
   pgm.addConstraint('gift_bag_grants', 'gift_bag_grants_once', { unique: ['user_id', 'source', 'ref'] });
+  // Append-only: only seen_at changes; a row goes only with its account (the user row gone, as a cascade deletes it, or
+  // an account's erase under its own transaction's flag); and nothing empties the table at once.
+  pgm.sql(`
+    CREATE FUNCTION gift_bag_grants_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      IF TG_OP = 'UPDATE' THEN
+        IF (to_jsonb(NEW) - 'seen_at') = (to_jsonb(OLD) - 'seen_at') THEN
+          RETURN NEW;
+        END IF;
+        RAISE EXCEPTION 'gift_bag_grants is append-only: only seen_at may change';
+      END IF;
+      IF TG_OP = 'DELETE' THEN
+        IF NOT EXISTS (SELECT 1 FROM users u WHERE u.id = OLD.user_id) OR current_setting('kurda.gift_bag_erase', true) = 'on' THEN
+          RETURN OLD;
+        END IF;
+        RAISE EXCEPTION 'gift_bag_grants keeps what landed in a bag for as long as the account lasts';
+      END IF;
+      RAISE EXCEPTION 'gift_bag_grants cannot be truncated';
+    END;
+    $$`);
+  pgm.sql(`CREATE TRIGGER gift_bag_grants_guard BEFORE UPDATE OR DELETE ON gift_bag_grants FOR EACH ROW EXECUTE FUNCTION gift_bag_grants_guard()`);
+  pgm.sql(`CREATE TRIGGER gift_bag_grants_no_truncate BEFORE TRUNCATE ON gift_bag_grants FOR EACH STATEMENT EXECUTE FUNCTION gift_bag_grants_guard()`);
   pgm.createIndex('gift_bag_grants', ['user_id', 'granted_on']);
   pgm.createIndex('gift_bag_grants', ['user_id'], { name: 'gift_bag_grants_unseen_idx', where: 'seen_at IS NULL' });
 
@@ -111,15 +140,18 @@ export const up = (pgm) => {
 export const down = (pgm) => {
   pgm.dropTable('gift_spend_limits');
   pgm.dropTable('gift_bag_grants');
+  pgm.sql(`DROP FUNCTION gift_bag_grants_guard()`);
   pgm.dropTable('gift_bag');
-  // The old rule knew no bag: a gift sent from one reads as a free gift, which it was.
-  pgm.sql(`UPDATE gifts SET paid_with = 'free_gift' WHERE paid_with = 'bag'`);
+  // The old rule knew no bag; checked only for rows written from now on, so a gift given from a bag keeps saying so.
   pgm.dropConstraint('gifts', 'gifts_paid_with_check');
-  pgm.addConstraint('gifts', 'gifts_paid_with_check', { check: "paid_with IN ('zer', 'free_gift')" });
-  pgm.sql(`UPDATE shop_items SET active = true, in_stock = true, retired_at = NULL WHERE category = 'sticker'`);
+  pgm.sql(`ALTER TABLE gifts ADD CONSTRAINT gifts_paid_with_check CHECK (paid_with IN ('zer', 'free_gift')) NOT VALID`);
+  // the stickers this migration retired, and no other
+  pgm.sql(`UPDATE shop_items SET active = true, in_stock = true, retired_at = NULL WHERE sku IN (SELECT sku FROM gift_stickers_retired)`);
+  pgm.dropTable('gift_stickers_retired');
   pgm.sql(`
     DELETE FROM shop_items s WHERE s.category = 'gift'
        AND NOT EXISTS (SELECT 1 FROM user_entitlements e WHERE e.sku = s.sku)
        AND NOT EXISTS (SELECT 1 FROM gifts g WHERE g.sku = s.sku)`);
-  pgm.sql(`UPDATE shop_items SET active = false, in_stock = false, retired_at = COALESCE(retired_at, now()) WHERE category = 'gift'`);
+  // kept for those who hold one, marked so a later `up` lists them again; one an admin retired keeps its own time
+  pgm.sql(`UPDATE shop_items SET active = false, in_stock = false, retired_at = ${KEPT_BY_DOWN} WHERE category = 'gift' AND retired_at IS NULL`);
 };
