@@ -55,6 +55,7 @@ const Register = lazy(() => import('./pages/Register').then((m) => ({ default: m
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then((m) => ({ default: m.ForgotPassword })));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail').then((m) => ({ default: m.VerifyEmail })));
 const ResetPassword = lazy(() => import('./pages/ResetPassword').then((m) => ({ default: m.ResetPassword })));
+const FamilyChildLink = lazy(() => import('./pages/FamilyChildLink').then((m) => ({ default: m.FamilyChildLink })));
 const Learn = lazy(() => import('./pages/Learn').then((m) => ({ default: m.Learn })));
 const CourseMap = lazy(() => import('./pages/CourseMap').then((m) => ({ default: m.CourseMap })));
 const Lesson = lazy(() => import('./pages/Lesson').then((m) => ({ default: m.Lesson })));
@@ -207,6 +208,8 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         {/* Where the emailed reset link lands (token in the query). */}
         <Route path="/reset-password" element={<ResetPassword />} />
+        {/* Where the links in a parent's emails about a child's profile land: delete it, or keep an unused one. */}
+        <Route path="/family/child" element={<FamilyChildLink />} />
         {/* Signed in but unverified: the only page reachable until confirmed. */}
         <Route
           path="/verify-email"

@@ -4716,6 +4716,17 @@ export const en = {
   'notify.parentalBirth.body': 'If this is wrong, write to support.',
   'notify.parentalBirthFor': '{parent} corrected {teen}’s birth month to {month}',
   'notify.parentalEnded.left': 'Supervision by {name} has ended',
+  'error.code.childPhoneOnly': 'Child profiles are used in the Hevalo phone app, not on the website.',
+  'family.link.removeTitle': 'Delete this child profile?',
+  'family.link.removeBody': 'This deletes the child profile your email was about, with all its learning, straight away. It can’t be undone.',
+  'family.link.removeAction': 'Delete the profile',
+  'family.link.keepTitle': 'Keep this child profile?',
+  'family.link.keepBody': 'The profile and its learning stay, and the year it may go unused starts again from today.',
+  'family.link.keepAction': 'Keep the profile',
+  'family.link.removed': 'The profile was deleted, with everything in it.',
+  'family.link.kept': 'The profile is kept.',
+  'family.link.gone': 'This profile had already been deleted.',
+  'family.link.invalid': 'This link doesn’t work any more. Open Hevalo on your phone, then Settings, then Family.',
 } as const;
 
 export type MessageKey = keyof typeof en;

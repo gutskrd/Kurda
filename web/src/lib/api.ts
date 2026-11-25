@@ -214,6 +214,12 @@ export class ApiClient {
     };
 
     const first = await attempt();
+    // A child's profile is the phone app's alone: the website never keeps one signed in, and says why.
+    if (!first.ok && first.error.code === 'CHILD_PROFILE_PHONE_ONLY' && this.storage.get()) {
+      this.storage.clear();
+      this.onLogout();
+      return first;
+    }
     if (!first.ok && first.error.code === 'ACCOUNT_DISABLED' && this.storage.get()) {
       // Suspended mid-session: the refresh answers ACCOUNT_SUSPENDED with the reasons for onSuspended, or a fresh token
       // when the suspension has just ended.
@@ -363,6 +369,8 @@ export const CODE_COPY: Record<string, MessageKey> = {
   ACCOUNT_NOT_ACTIVATED: 'error.notActivated',
   VERIFICATION_EMAIL_LIMIT: 'error.code.verificationEmailLimit',
   ACCOUNT_DISABLED: 'error.code.accountDisabled',
+  CHILD_PROFILE_PHONE_ONLY: 'error.code.childPhoneOnly',
+  FAMILY_LINK_INVALID: 'family.link.invalid',
   CODE_EXPIRED: 'error.code.codeExpired',
   INVALID_CODE: 'error.code.invalidCode',
   INVALID_CREDENTIALS: 'error.code.invalidCredentials',
