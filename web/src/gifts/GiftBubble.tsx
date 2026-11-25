@@ -16,6 +16,7 @@ type Phase = 'idle' | 'unwrapping' | 'revealed';
  * Motion, then shows the item with Wear it, Say thanks and Close. The sender sees whether it was opened, live. In a
  * group everyone sees who it was for and who opened theirs; the item stays a surprise to anyone who has not. Everyone
  * else sees who it is from ("Gift from Hamo"), or "a Hevalo member" when the server does not name the sender to them.
+ * A grand gift, once opened, stays on show in the chat for everyone in it: its picture large, in its glow.
  */
 export function GiftBubble({
   card,
@@ -110,6 +111,20 @@ export function GiftBubble({
   // ---- The sender's view, and a group member's who was not given one ----
   if (!recipient) {
     const anyOpened = card.recipients.some((r) => r.opened);
+    if (card.tier === 'grand' && anyOpened) {
+      return (
+        <div className="gift-bubble is-sent is-opened gift-showpiece">
+          <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={132} />
+          <span className="gift-bubble-text">
+            <span className="gift-bubble-title" lang="ku">
+              {card.name}
+            </span>
+            <span className="gift-bubble-sub">{mine ? t('gift.youSent', { item: card.name }) : fromLine}</span>
+            <Recipients recipients={card.recipients} named={inGroup} />
+          </span>
+        </div>
+      );
+    }
     return (
       <div className={`gift-bubble is-sent${anyOpened ? ' is-opened' : ''}`}>
         <span className="gift-bubble-art">
@@ -153,13 +168,13 @@ export function GiftBubble({
         <button
           ref={bubbleRef}
           type="button"
-          className={`gift-bubble is-mine-to-open${shown.myOpened ? ' is-opened' : ' is-wrapped'} gift-bubble-${card.tier}`}
+          className={`gift-bubble is-mine-to-open${shown.myOpened ? ' is-opened' : ' is-wrapped'} gift-bubble-${card.tier}${shown.myOpened && card.tier === 'grand' ? ' gift-showpiece' : ''}`}
           onClick={unwrap}
           aria-label={shown.myOpened ? t('gift.seeAgain', { item: shown.name }) : t('gift.openFrom', { name: fromName })}
         >
           <span className="gift-bubble-art">
             {shown.myOpened ? (
-              <GiftItemArt assetUrl={shown.assetUrl} category={shown.category} size={64} />
+              <GiftItemArt assetUrl={shown.assetUrl} category={shown.category} size={card.tier === 'grand' ? 132 : 64} />
             ) : (
               <GiftBox tier={card.tier} size={72} className="gift-waiting" />
             )}
@@ -177,7 +192,7 @@ export function GiftBubble({
       )}
       {legendaryOrRare && phase !== 'idle' && (
         <GiftStage
-          tier={card.tier as 'rare' | 'legendary'}
+          tier={card.tier as 'rare' | 'legendary' | 'grand'}
           card={shown}
           from={senderName}
           revealed={phase === 'revealed'}

@@ -102,6 +102,7 @@ import { StandingWarnings } from './reports/StandingWarnings';
 // Parental controls: the usage beat for a supervised teen, and the pause screen while Hevalo rests.
 import { PauseGate, SupervisionProvider } from './parental/Supervision';
 import { GiftArrivals } from './gifts/GiftArrivals';
+import { BagNews } from './gifts/BagNews';
 import { BadgeCelebrations } from './badges/BadgeCelebrations';
 import { ProfileModalProvider } from './profile/ProfileModal';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
@@ -388,6 +389,7 @@ export function App(): React.JSX.Element {
         <StandingWarnings />
         {/* "Rojda sent you a gift — Open", anywhere in the app. */}
         <GiftArrivals />
+        <BagNews />
         {/* A badge earned, celebrated wherever you are, after a game's own result. */}
         <BadgeCelebrations />
         {/* Hevalo's and Xezo's reaction lines, captioned wherever they are said. */}

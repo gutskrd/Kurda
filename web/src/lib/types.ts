@@ -511,6 +511,9 @@ export interface ClaimResult {
   cycleDay: number;
   reward: number;
   balance: number;
+  /** The small gift the day put in the gift bag, for everyone; null when the bag was full, absent from an older server. */
+  bagGift?: { sku: string; name: string; assetUrl: string | null } | null;
+  member?: boolean;
 }
 
 /** A community library post (story or poem), from the public browse endpoint. */

@@ -11,12 +11,15 @@ import { prefersReducedMotion } from '../lib/motion';
 import { sayReactionLater } from '../characters/reactions';
 import type { ClaimResult, DailyRewardStatus } from '../lib/types';
 import { dailyAction } from './today';
+import { giftMeaning } from '@kurda/shared';
+import { plusPitchAllowed } from '../gifts/nudges';
 
 /**
  * Today's Zêr inside the daily view: the day's reward with a claim button (POST /rewards/daily/claim, the server sets
  * the amount), a lesson first until one is finished today, or tomorrow once taken, and the week's cycle as a quiet row of
- * coins. A claim pops the coin with its sparks (styles/motion.css) once, and Xezo says a word for it. Only a Hevalo+
- * member has it (`hasDailyZer`).
+ * coins. A claim pops the coin with its sparks (styles/motion.css) once, and Xezo says a word for it. A Hevalo+ member
+ * gets the Zêr (`hasDailyZer`); everyone gets a small gift for the gift bag with the claim, said with it, and a free
+ * adult account hears once that members also earn Zêr here, while Hevalo+ is on sale.
  */
 /** Whether this learner has the daily Zêr at all: a Hevalo+ member's, read from an older server as before. */
 export function hasDailyZer(daily: Pick<DailyRewardStatus, 'member'>): boolean {
@@ -26,7 +29,8 @@ export function hasDailyZer(daily: Pick<DailyRewardStatus, 'member'>): boolean {
 export function DailyZer({ daily, onClaimed }: { daily: DailyRewardStatus; onClaimed: (daily: DailyRewardStatus) => void }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
-  const { client } = useAuth();
+  const { client, user } = useAuth();
+  const member = hasDailyZer(daily);
   const number = (n: number): string => new Intl.NumberFormat(locale).format(n);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -49,13 +53,23 @@ export function DailyZer({ daily, onClaimed }: { daily: DailyRewardStatus; onCla
     onClaimed({ ...daily, canClaim: false, alreadyClaimedToday: true, cycleDay: res.data.cycleDay });
   }
 
-  const words = landed
-    ? t('daily.claimed', { amount: number(landed.reward) })
-    : action === 'claim'
-      ? t('daily.dayReward', { day: number(daily.claimableDay), amount: number(daily.reward) })
-      : action === 'learnFirst'
-        ? t('daily.learnFirst', { amount: number(daily.reward) })
-        : t('daily.comeBack');
+  const gift = landed?.bagGift ?? null;
+  const giftWords = gift ? t('daily.gift.landed', { item: giftMeaning(gift.sku, locale) ? `${gift.name} (${giftMeaning(gift.sku, locale)})` : gift.name }) : null;
+  const words = member
+    ? landed
+      ? t('daily.claimed', { amount: number(landed.reward) })
+      : action === 'claim'
+        ? t('daily.dayReward', { day: number(daily.claimableDay), amount: number(daily.reward) })
+        : action === 'learnFirst'
+          ? t('daily.learnFirst', { amount: number(daily.reward) })
+          : t('daily.comeBack')
+    : landed
+      ? (giftWords ?? t('daily.gift.full'))
+      : action === 'claim'
+        ? t('daily.gift.claim')
+        : action === 'learnFirst'
+          ? t('daily.gift.learnFirst')
+          : t('daily.comeBack');
   // The cycle's days taken so far, counting today's once it is claimed.
   const taken = action === 'claimed' ? daily.cycleDay : daily.claimableDay - 1;
 
@@ -67,12 +81,15 @@ export function DailyZer({ daily, onClaimed }: { daily: DailyRewardStatus; onCla
       </span>
       <div className="daily-zer-words">
         <h3 className="daily-zer-title" id="daily-zer-title">
-          {t('daily.title')}
+          {t(member ? 'daily.title' : 'daily.gift.title')}
         </h3>
         <p className="daily-zer-line" role={landed ? 'status' : undefined}>
           {words}
         </p>
-        {daily.schedule.length > 0 && (
+        {/* a member hears of the bag's gift beside the Zêr; anyone else, once, that members also earn Zêr here */}
+        {member && giftWords && <p className="daily-zer-line">{giftWords}</p>}
+        {!member && landed && plusPitchAllowed(user) && <p className="daily-zer-line daily-zer-pitch">{t('gift.membersEarnZer')}</p>}
+        {member && daily.schedule.length > 0 && (
           <span className="daily-zer-cycle" aria-hidden="true">
             {daily.schedule.map((_, i) => (
               <span key={i} className={`daily-zer-day${i < taken ? ' is-taken' : i === taken && action !== 'claimed' ? ' is-next' : ''}`} />

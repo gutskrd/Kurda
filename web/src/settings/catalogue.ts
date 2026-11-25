@@ -10,7 +10,7 @@ import type { MeProfile } from '../lib/types';
 export const CATEGORIES = ['account', 'parental', 'display', 'privacy', 'sounds', 'notifications', 'safety', 'storage', 'help', 'about'] as const;
 export type SettingsCategory = (typeof CATEGORIES)[number];
 
-export const LEAVES = ['username', 'birth-month', 'password', 'devices', 'delete', 'language', 'theme', 'keyboard', 'leagues', 'visibility', 'blocked', 'feedback'] as const;
+export const LEAVES = ['username', 'birth-month', 'password', 'devices', 'delete', 'language', 'theme', 'keyboard', 'leagues', 'visibility', 'blocked', 'gift-limit', 'feedback'] as const;
 export type SettingsLeaf = (typeof LEAVES)[number];
 
 export type SettingsPage = SettingsCategory | SettingsLeaf;
@@ -28,6 +28,7 @@ export const LEAF_CATEGORY: Record<SettingsLeaf, SettingsCategory> = {
   leagues: 'privacy',
   visibility: 'privacy',
   blocked: 'privacy',
+  'gift-limit': 'privacy',
   feedback: 'help',
 };
 
@@ -56,6 +57,7 @@ export const PAGE_TITLE: Record<SettingsPage, MessageKey> = {
   leagues: 'settings.leagues.title',
   visibility: 'settings.privacy.title',
   blocked: 'settings.blocked.title',
+  'gift-limit': 'settings.giftLimit.title',
   feedback: 'appFeedback.settingsTitle',
 };
 

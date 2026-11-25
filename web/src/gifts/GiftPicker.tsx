@@ -1,18 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  applyItemFilter,
-  categoriesIn,
-  countByCategory,
-  DEFAULT_ITEM_FILTER,
-  groupByCategory,
-  isFiltered,
-  itemCategory,
   MAX_GIFT_RECIPIENTS,
-  shopItemDescription,
+  giftLockFor,
+  giftMeaning,
+  giftShelves,
+  type BagEntry,
   type GiftCatalog,
   type GiftCatalogItem,
   type GiftChatRef,
-  type ItemFilter,
+  type GiftConfirmDetails,
+  type GiftGroup,
+  type GiftLock,
   type SendGiftResult,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
@@ -21,41 +19,26 @@ import type { ApiError, DmMessage, GroupMessage } from '../lib/types';
 import { Sheet } from '../components/Sheet';
 import { Button } from '../components/Button';
 import { Avatar } from '../components/Avatar';
-import { CheckIcon, CoinIcon } from '../components/icons';
+import { CheckIcon, CoinIcon, GiftIcon, LockIcon } from '../components/icons';
 import { Skeleton, SkeletonRegion } from '../components/Skeleton';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { SendError } from '../reports/SendError';
-import {
-  FilterToggle,
-  ItemSearch,
-  ItemSort,
-  ItemToolbar,
-  KindHeading,
-  KindPanel,
-  KindTabs,
-  NoMatches,
-  ResultsLine,
-  useIdPrefix,
-  type KindTab,
-} from '../shop/ItemBrowser';
 import { ZerValue } from '../shop/ZerValue';
 import { GiftItemArt } from './GiftArt';
 
-/** A shelf item, with a description when the catalogue sends one. */
-type ShelfItem = GiftCatalogItem & { description?: string | null };
-
-/** The shelf as GET /gifts/catalog sends it; an older server leaves out the hold. */
-type Shelf = Omit<GiftCatalog, 'items' | 'hold' | 'freeGifts'> & { items: ShelfItem[]; hold?: GiftCatalog['hold']; freeGifts?: number };
+/** The shelf as GET /gifts/catalog sends it; an older server leaves out the bag, the hold and the limits. */
+type Shelf = Omit<GiftCatalog, 'bag' | 'hold' | 'freeGifts' | 'limits' | 'nudges'> & Partial<Pick<GiftCatalog, 'bag' | 'hold' | 'freeGifts' | 'limits' | 'nudges'>>;
 
 /** Refusals of the shelf that are the gift rules rather than a failure: one calm line, nothing to retry. */
 const RULES: Partial<Record<string, MessageKey>> = {
   NOT_FRIENDS: 'gift.error.friendsOnly',
   GIFT_TO_SELF: 'gift.error.friendsOnly',
   BAD_RECIPIENTS: 'gift.error.friendsOnly',
+  POST_NOT_FOUND: 'gift.error.postGone',
 };
 
-/** Someone a gift can go to: the friend in a DM, or a friend in the group. */
+/** Someone a gift can go to: the friend in a DM, a friend in the group, or a post's author. */
 export interface GiftPerson {
   userId: string;
   name: string;
@@ -70,9 +53,20 @@ export interface GiftSent extends SendGiftResult {
   partialNote: string | null;
 }
 
-const TIER_LABEL: Record<'rare' | 'legendary', MessageKey> = {
+const TIER_LABEL: Record<'rare' | 'legendary' | 'grand', MessageKey> = {
   rare: 'gift.tier.rare',
   legendary: 'gift.tier.legendary',
+  grand: 'gift.tier.grand',
+};
+
+const GROUP_LABEL: Record<GiftGroup, MessageKey> = {
+  warm: 'gift.group.warm',
+  flowers: 'gift.group.flowers',
+  animals: 'gift.group.animals',
+  music: 'gift.group.music',
+  sky: 'gift.group.sky',
+  boats: 'gift.group.boats',
+  houses: 'gift.group.houses',
 };
 
 const SKIP_REASON: Record<SendGiftResult['skipped'][number]['reason'], MessageKey> = {
@@ -81,8 +75,11 @@ const SKIP_REASON: Record<SendGiftResult['skipped'][number]['reason'], MessageKe
   not_allowed: 'gift.skipped.notYet',
 };
 
+type Translate = (key: MessageKey, vars?: Record<string, string>) => string;
+
 /** Refusals of the send itself, in plain words; anything else is said by SendError. */
-function pickerError(error: ApiError, t: (key: MessageKey) => string): string | null {
+function pickerError(error: ApiError, t: Translate, fmt: (n: number) => string): string | null {
+  const details = (error.details ?? {}) as { maxPrice?: number; left?: number; by?: string };
   switch (error.code) {
     case 'INSUFFICIENT_FUNDS':
       return t('gift.error.funds');
@@ -94,118 +91,165 @@ function pickerError(error: ApiError, t: (key: MessageKey) => string): string | 
       return t('gift.error.unavailable');
     case 'NOT_FRIENDS':
       return t('gift.error.friendsOnly');
+    case 'BAG_EMPTY':
+      return t('gift.error.bagEmpty');
+    case 'GIFT_OVER_LIMIT':
+      return t('gift.error.overLimit', { zer: fmt(details.maxPrice ?? 0) });
+    case 'GIFT_SPEND_LIMIT':
+      return t(details.by === 'minor_month' ? 'gift.error.monthLimit' : 'gift.error.ownLimit', { zer: fmt(details.left ?? 0) });
     default:
       return null;
   }
 }
 
+/** The second confirmation's details, checked before they are trusted. */
+function confirmDetails(details: unknown): GiftConfirmDetails | null {
+  const d = details as Partial<GiftConfirmDetails> | null;
+  return d && typeof d.confirmToken === 'string' && typeof d.total === 'number' ? (d as GiftConfirmDetails) : null;
+}
+
+/** What is chosen: a gift from the bag, or one paid for in Zêr. */
+interface Choice {
+  item: GiftCatalogItem;
+  fromBag: boolean;
+}
+
 /**
- * The gift picker from the chat's gift button. In a DM the gift is for the friend; in a group the sender first picks
- * among the members who are friends (with "Select all"). The shelf (`GET /gifts/catalog?to=…`) has the gift stickers
- * first, then every priced item, each with what it is worth, who already owns one-of-a-kind items, and the Zêr. When
- * the rules do not let a gift go yet, one calm line says why instead. Nothing is preselected.
+ * The gift sheet, from a chat's gift button or a post's. In a DM the gift is for the friend and on a post for its
+ * author; in a group the sender first picks among the members who are friends (with "Select all"). It opens with the
+ * gift bag, the small gifts everyone earns, with how many of each; then the gifts by shelf, cheapest first, each with
+ * its Kurmancî name and what it means in the reader's language, its price in Zêr with what that is worth in money, and a
+ * lock with the reason where it cannot go: not enough Zêr, or the safeguards (gift-safety.ts). The website sells
+ * nothing, so it never offers to buy Zêr. A big send is confirmed once more with its money amount, by the server's own
+ * token. Nothing is preselected.
  */
 export function GiftPicker({
   open,
   onClose,
   chat,
+  post,
   people,
   onSent,
+  initialChosen,
 }: {
   open: boolean;
   onClose: () => void;
-  chat: GiftChatRef;
-  /** Who may be chosen: the friend in a DM, or the sender's friends among a group's members. */
+  /** the chat the gift is posted in; left out for a gift onto a post */
+  chat?: GiftChatRef;
+  /** a post the gift is given onto; its author is `people[0]` */
+  post?: { type: 'library' | 'image'; id: string };
+  /** Who may be chosen: the friend in a DM, the sender's friends among a group's members, or a post's author. */
   people: GiftPerson[] | null;
   onSent: (sent: GiftSent) => void;
+  /** Someone already chosen in a group, such as the friend a gift is sent back to. */
+  initialChosen?: string[];
 }): React.JSX.Element | null {
   if (!open) return null;
-  return <PickerFlow onClose={onClose} chat={chat} people={people} onSent={onSent} />;
+  return <PickerFlow onClose={onClose} chat={chat} post={post} people={people} onSent={onSent} initialChosen={initialChosen} />;
 }
 
 function PickerFlow({
   onClose,
   chat,
+  post,
   people,
   onSent,
+  initialChosen,
 }: {
   onClose: () => void;
-  chat: GiftChatRef;
+  chat?: GiftChatRef;
+  post?: { type: 'library' | 'image'; id: string };
   people: GiftPerson[] | null;
   onSent: (sent: GiftSent) => void;
+  initialChosen?: string[];
 }): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
   const { client } = useAuth();
-  const group = chat.kind === 'group';
-  const [chosen, setChosen] = useState<string[]>(() => (!group && people?.[0] ? [people[0].userId] : []));
-  const [step, setStep] = useState<'who' | 'what'>(group ? 'who' : 'what');
+  const group = chat?.kind === 'group';
+  const preset = group && initialChosen && initialChosen.length > 0 ? initialChosen.slice(0, MAX_GIFT_RECIPIENTS) : null;
+  const [chosen, setChosen] = useState<string[]>(() => preset ?? (!group && people?.[0] ? [people[0].userId] : []));
+  const [step, setStep] = useState<'who' | 'what'>(group && !preset ? 'who' : 'what');
   const [shelf, setShelf] = useState<Shelf | null>(null);
   const [shelfError, setShelfError] = useState<ApiError | null>(null);
-  const [picked, setPicked] = useState<ShelfItem | null>(null);
+  const [picked, setPicked] = useState<Choice | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError | string | null>(null);
   const [skippedNote, setSkippedNote] = useState<string | null>(null);
+  /** The server asked for the second confirmation of a big gift: what to show, and its token. */
+  const [confirming, setConfirming] = useState<GiftConfirmDetails | null>(null);
   // One idempotency key per choice, so a retry of the same send never pays twice.
   const [key, setKey] = useState(() => requestId());
-  // The shelf's kind, search and order, plus the gift-only filters (balance, and who already owns it).
-  const [filter, setFilter] = useState<ItemFilter>(DEFAULT_ITEM_FILTER);
-  const [affordOnly, setAffordOnly] = useState(false);
-  const [hideOwned, setHideOwned] = useState(false);
-  const ids = useIdPrefix('gift-shelf');
 
-  // In a DM the friend is the recipient as soon as known; the list arrives just after the sheet opens.
+  // In a DM or on a post the person is the recipient as soon as known; the list arrives just after the sheet opens.
   const only = !group ? people?.[0]?.userId : undefined;
   useEffect(() => {
     if (only) setChosen((now) => (now.length === 0 ? [only] : now));
   }, [only]);
 
   const nameOf = useMemo(() => new Map((people ?? []).map((p) => [p.userId, p.name])), [people]);
-  const fmt = (n: number): string => n.toLocaleString(locale);
+  const fmt = useCallback((n: number): string => n.toLocaleString(locale), [locale]);
 
   const loadShelf = useCallback(async () => {
     setShelf(null);
     setShelfError(null);
-    const res = await client.get<Shelf>(`/gifts/catalog?to=${chosen.join(',')}`);
+    const query = post ? `post=${encodeURIComponent(`${post.type}:${post.id}`)}` : `to=${chosen.join(',')}`;
+    const res = await client.get<Shelf>(`/gifts/catalog?${query}`);
     if (res.ok) {
       const items = res.data.items ?? [];
-      setShelf({ items, balance: res.data.balance ?? { zer: 0 }, hold: res.data.hold ?? null });
+      setShelf({ ...res.data, items, balance: res.data.balance ?? { zer: 0 } });
       // A reload after a price change keeps the choice at its new price, so everything reads the fresh item.
-      setPicked((p) => (p ? (items.find((i) => i.sku === p.sku) ?? null) : null));
+      setPicked((p) => {
+        const fresh = p ? items.find((i) => i.sku === p.item.sku) : undefined;
+        return p && fresh ? { ...p, item: fresh } : null;
+      });
     } else setShelfError(res.error);
-  }, [client, chosen]);
+  }, [client, chosen, post]);
 
   useEffect(() => {
     if (step === 'what' && chosen.length > 0) void loadShelf();
   }, [step, loadShelf, chosen.length]);
 
   // A different choice is a different send.
-  useEffect(() => setKey(requestId()), [picked, chosen]);
+  useEffect(() => setKey(requestId()), [picked?.item.sku, picked?.fromBag, chosen]);
 
-  const getting = (item: GiftCatalogItem): string[] => chosen.filter((id) => !item.alreadyOwnedBy.includes(id));
+  const getting = (item: GiftCatalogItem): string[] => (post ? chosen : chosen.filter((id) => !item.alreadyOwnedBy.includes(id)));
   const cost = (item: GiftCatalogItem): number => item.price * getting(item).length;
-  const affordable = (item: GiftCatalogItem): boolean => !!shelf && cost(item) <= shelf.balance.zer;
+  const lockOf = (item: GiftCatalogItem): GiftLock | 'funds' | null =>
+    giftLockFor(item, getting(item).length, shelf?.limits) ?? (shelf && cost(item) > shelf.balance.zer ? 'funds' : null);
+  const bagCount = (sku: string): number => shelf?.bag?.find((b) => b.sku === sku)?.count ?? 0;
 
-  async function send(): Promise<void> {
+  async function send(confirmToken?: string): Promise<void> {
     if (!picked || busy) return;
-    const to = getting(picked);
+    const to = getting(picked.item);
     if (to.length === 0) return;
     setBusy(true);
     setError(null);
     setSkippedNote(null);
-    const res = await client.post<SendGiftResult & { message: DmMessage | GroupMessage | null }>('/gifts', {
-      sku: picked.sku,
-      toUserIds: to,
-      chat,
+    const base = {
+      sku: picked.item.sku,
       idempotencyKey: key,
-      expectedPrice: picked.price,
-    });
+      expectedPrice: picked.item.price,
+      ...(picked.fromBag ? { fromBag: true } : {}),
+      ...(confirmToken ? { confirmToken } : {}),
+    };
+    const res = await client.post<SendGiftResult & { message: DmMessage | GroupMessage | null }>(
+      '/gifts',
+      post ? { ...base, post } : { ...base, toUserIds: to, chat },
+    );
     setBusy(false);
     if (!res.ok) {
-      if (res.error.code === 'PRICE_CHANGED') void loadShelf();
-      setError(pickerError(res.error, t) ?? res.error);
+      const asked = res.error.code === 'GIFT_NEEDS_CONFIRM' ? confirmDetails(res.error.details) : null;
+      if (asked) {
+        setConfirming(asked);
+        return;
+      }
+      setConfirming(null);
+      if (res.error.code === 'PRICE_CHANGED' || res.error.code === 'BAG_EMPTY') void loadShelf();
+      setError(pickerError(res.error, t, fmt) ?? res.error);
       return;
     }
+    setConfirming(null);
     const why = res.data.skipped.map((s) => t(SKIP_REASON[s.reason], { name: nameOf.get(s.userId) ?? '' })).join(' ');
     if (res.data.sent.length === 0) {
       // Nobody could be given it: say why and let them choose again.
@@ -216,88 +260,44 @@ function PickerFlow({
       res.data.skipped.length > 0
         ? `${t('gift.sentTo', { names: res.data.sent.map((id) => nameOf.get(id) ?? '').filter(Boolean).join(', ') })} ${why}`
         : null;
-    onSent({ ...res.data, item: picked, partialNote });
+    onSent({ ...res.data, item: picked.item, partialNote });
   }
 
-  // ---- The shelf by kind: what the tabs count and the panel shows ----
-  // each description in the reader's language, so what is searched is what is read
-  const items = (shelf?.items ?? []).map((item) => ({ ...item, description: shopItemDescription(item, locale) }));
-  // Everyone chosen already has it, so there is nobody to give it to.
-  const everyoneHasIt = (item: ShelfItem): boolean => getting(item).length === 0;
-  const keep = (item: ShelfItem): boolean => (!affordOnly || affordable(item)) && (!hideOwned || !everyoneHasIt(item));
-  const kinds = categoriesIn(items);
-  const matching = applyItemFilter(items, { ...filter, category: 'all' }, keep, locale);
-  const counts = countByCategory(matching);
-  const active: KindTab = filter.category !== 'all' && kinds.includes(filter.category) ? filter.category : 'all';
-  const shown = active === 'all' ? matching : matching.filter((item) => itemCategory(item.category) === active);
-  const filtered = isFiltered(filter) || affordOnly || hideOwned;
-  const clear = (): void => {
-    setFilter(DEFAULT_ITEM_FILTER);
-    setAffordOnly(false);
-    setHideOwned(false);
-  };
-  // The choice stays when a filter hides it; the bar by Send says so.
-  const pickedHidden = picked !== null && !shown.some((item) => item.sku === picked.sku);
-
-  const renderTile = (item: ShelfItem): React.JSX.Element => {
-    const owners = item.alreadyOwnedBy;
-    const canPay = affordable(item);
-    const selected = picked?.sku === item.sku;
-    return (
-      <li key={item.sku}>
-        <button
-          type="button"
-          className={`gift-tile${selected ? ' is-picked' : ''} gift-tile-${item.tier}`}
-          aria-pressed={selected}
-          disabled={everyoneHasIt(item)}
-          onClick={() => {
-            setPicked(selected ? null : item);
-            setError(null);
-            setSkippedNote(null);
-          }}
-        >
-          <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={72} />
-          <span className="gift-tile-name">{item.name}</span>
-          {item.description && <span className="gift-tile-desc">{item.description}</span>}
-          <span className={`gift-tile-price${canPay ? '' : ' is-short'}`}>
-            <CoinIcon size={13} /> {fmt(item.price)}
-            <span className="sr-only">Zêr</span> <ZerValue zer={item.price} />
-          </span>
-          {item.tier !== 'common' && <span className={`gift-tier gift-tier-${item.tier}`}>{t(TIER_LABEL[item.tier])}</span>}
-          {owners.length > 0 && (
-            <span className="gift-tile-owned">
-              {group
-                ? t('gift.picker.someHaveIt', { names: owners.map((id) => nameOf.get(id) ?? '').join(', ') })
-                : t('gift.picker.hasIt')}
-            </span>
-          )}
-          {selected && (
-            <span className="gift-tile-check" aria-hidden>
-              <CheckIcon size={14} />
-            </span>
-          )}
-        </button>
-      </li>
-    );
+  const choose = (next: Choice | null): void => {
+    setPicked(next);
+    setError(null);
+    setSkippedNote(null);
   };
 
   const names = chosen.map((id) => nameOf.get(id) ?? '').filter(Boolean);
-  const title = group ? t('gift.picker.titleGroup') : t('gift.picker.title', { name: people?.[0]?.name ?? '' });
+  const person = people?.[0]?.name ?? '';
+  const title = post ? t('gift.post.title', { name: person }) : group ? t('gift.picker.titleGroup') : t('gift.picker.title', { name: person });
+  const items = shelf?.items ?? [];
+  // The bag's gifts that can be given here, in the order the shelf has them.
+  const bag = (shelf?.bag ?? []).filter((b) => b.count > 0 && items.some((i) => i.sku === b.sku));
 
   return (
     <Sheet open onClose={onClose} label={title} className="gift-picker">
       <h2 className="gift-picker-title">{title}</h2>
 
-      {step === 'who' && (
-        <WhoStep
-          people={people}
-          chosen={chosen}
-          onChange={setChosen}
-          onNext={() => setStep('what')}
+      {step === 'who' && <WhoStep people={people} chosen={chosen} onChange={setChosen} onNext={() => setStep('what')} />}
+
+      {step === 'what' && confirming && picked && (
+        <BigGiftConfirm
+          item={picked.item}
+          names={getting(picked.item).map((id) => nameOf.get(id) ?? '').filter(Boolean)}
+          details={confirming}
+          busy={busy}
+          error={error}
+          onConfirm={() => void send(confirming.confirmToken)}
+          onBack={() => {
+            setConfirming(null);
+            setError(null);
+          }}
         />
       )}
 
-      {step === 'what' && (
+      {step === 'what' && !confirming && (
         <>
           <div className="gift-picker-meta">
             {group && (
@@ -322,78 +322,85 @@ function PickerFlow({
             <ShelfSkeleton count={6} />
           ) : shelf.hold ? (
             // The rules do not let a gift go to this one friend yet: one calm line, rather than a shelf that would fail.
-            <p className="muted gift-hold">
-              {t(shelf.hold === 'new_friend' ? 'gift.hold.newFriend' : 'gift.hold.friendsOnly', { name: people?.[0]?.name ?? '' })}
-            </p>
-          ) : shelf.items.length === 0 ? (
+            <p className="muted gift-hold">{t(shelf.hold === 'new_friend' ? 'gift.hold.newFriend' : 'gift.hold.friendsOnly', { name: person })}</p>
+          ) : items.length === 0 ? (
             <p className="muted">{t('gift.picker.empty')}</p>
           ) : (
-            <>
-              <KindTabs
-                kinds={['all', ...kinds]}
-                value={active}
-                counts={counts}
-                idPrefix={ids}
-                onChange={(category) => setFilter((f) => ({ ...f, category }))}
-              />
-              <ItemToolbar>
-                <ItemSearch
-                  value={filter.query}
-                  label={t('gift.picker.searchLabel')}
-                  placeholder={t('items.searchByName')}
-                  onChange={(query) => setFilter((f) => ({ ...f, query }))}
-                />
-                <ItemSort value={filter.sort} onChange={(sort) => setFilter((f) => ({ ...f, sort }))} />
-                <div className="item-toggles">
-                  <FilterToggle checked={affordOnly} onChange={setAffordOnly}>
-                    {t('items.withinBalance')}
-                  </FilterToggle>
-                  <FilterToggle checked={hideOwned} onChange={setHideOwned}>
-                    {t('gift.picker.hideOwned')}
-                  </FilterToggle>
-                </div>
-              </ItemToolbar>
-              <ResultsLine count={shown.length} filtered={filtered && shown.length > 0} onClear={clear} />
-
-              <KindPanel idPrefix={ids} kind={active}>
-                {shown.length === 0 ? (
-                  <NoMatches onClear={clear} />
-                ) : active === 'all' ? (
-                  groupByCategory(shown).map((g) => (
-                    <section key={g.category} className="gift-shelf-section" aria-labelledby={`${ids}-${g.category}`}>
-                      <KindHeading kind={g.category} count={g.items.length} id={`${ids}-${g.category}`} level={3} />
-                      <ul className="gift-shelf" aria-labelledby={`${ids}-${g.category}`}>
-                        {g.items.map(renderTile)}
-                      </ul>
-                    </section>
-                  ))
+            <div className="gift-shelves">
+              {shelf.limits?.left != null && <p className="gift-limit-line">{t('gift.limit.leftLine', { zer: fmt(shelf.limits.left) })}</p>}
+              <section className="gift-shelf-section gift-bag" aria-labelledby="gift-bag-title">
+                <h3 className="gift-shelf-title" id="gift-bag-title">
+                  {t('gift.bag.title')}
+                </h3>
+                {bag.length === 0 ? (
+                  <p className="muted gift-bag-empty">{t('gift.bag.empty')}</p>
                 ) : (
-                  <ul className="gift-shelf" aria-label={t('gift.picker.shelf')}>
-                    {shown.map(renderTile)}
+                  <ul className="gift-shelf" aria-labelledby="gift-bag-title">
+                    {bag.map((entry) => {
+                      const item = items.find((i) => i.sku === entry.sku)!;
+                      return (
+                        <BagTile
+                          key={entry.sku}
+                          entry={entry}
+                          meaning={giftMeaning(entry.sku, locale)}
+                          enough={bagCount(entry.sku) >= getting(item).length}
+                          selected={picked?.fromBag === true && picked.item.sku === entry.sku}
+                          onChoose={(on) => choose(on ? { item, fromBag: true } : null)}
+                        />
+                      );
+                    })}
                   </ul>
                 )}
-              </KindPanel>
-            </>
+              </section>
+              {giftShelves(items).map((s) => (
+                <section key={s.group} className="gift-shelf-section" aria-labelledby={`gift-group-${s.group}`}>
+                  <h3 className="gift-shelf-title" id={`gift-group-${s.group}`}>
+                    {t(GROUP_LABEL[s.group])}
+                  </h3>
+                  <ul className="gift-shelf" aria-labelledby={`gift-group-${s.group}`}>
+                    {s.items.map((item) => (
+                      <GiftTile
+                        key={item.sku}
+                        item={item}
+                        meaning={giftMeaning(item.sku, locale)}
+                        lock={lockOf(item)}
+                        maxPrice={shelf.limits?.maxPrice ?? null}
+                        everyoneHasIt={getting(item).length === 0}
+                        ownedNote={
+                          item.alreadyOwnedBy.length > 0 && !post
+                            ? group
+                              ? t('gift.picker.someHaveIt', { names: item.alreadyOwnedBy.map((id) => nameOf.get(id) ?? '').join(', ') })
+                              : t('gift.picker.hasIt')
+                            : null
+                        }
+                        selected={picked?.fromBag === false && picked.item.sku === item.sku}
+                        onChoose={(on) => choose(on ? { item, fromBag: false } : null)}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
           )}
 
           {picked && (
             <div className="gift-confirm">
-              {/* The chosen item beside the send button, even when the filters hide it from the shelf. */}
-              <GiftItemArt assetUrl={picked.assetUrl} category={picked.category} size={44} className="gift-confirm-art" />
+              {/* The chosen gift beside the send button, as it will go. */}
+              <GiftItemArt assetUrl={picked.item.assetUrl} category={picked.item.category} size={44} className="gift-confirm-art" />
               <span className="gift-confirm-text">
-                {t('gift.picker.confirm', {
-                  item: picked.name,
-                  names: getting(picked).map((id) => nameOf.get(id) ?? '').join(', '),
-                })}
-                <strong className="gift-confirm-cost">
-                  <CoinIcon size={14} /> {fmt(cost(picked))} <ZerValue zer={cost(picked)} />
-                </strong>
-                {pickedHidden && <span className="gift-confirm-hidden">{t('gift.picker.pickHidden')}</span>}
+                {t('gift.picker.confirm', { item: picked.item.name, names: getting(picked.item).map((id) => nameOf.get(id) ?? '').join(', ') })}
+                {picked.fromBag ? (
+                  <strong className="gift-confirm-cost">{t('gift.bag.free')}</strong>
+                ) : (
+                  <strong className="gift-confirm-cost">
+                    <CoinIcon size={14} /> {fmt(cost(picked.item))} <ZerValue zer={cost(picked.item)} />
+                  </strong>
+                )}
                 {/* Beside the button that spends: a gift, like any purchase, is final. */}
                 <span className="gift-confirm-hidden">{t('shop.giftFinal')}</span>
               </span>
-              {!affordable(picked) && <span className="gift-confirm-short">{t('gift.error.funds')}</span>}
-              <Button onClick={() => void send()} disabled={busy || !affordable(picked)}>
+              {!picked.fromBag && lockOf(picked.item) === 'funds' && <span className="gift-confirm-short">{t('gift.error.funds')}</span>}
+              <Button onClick={() => void send()} disabled={busy || (!picked.fromBag && lockOf(picked.item) !== null)}>
                 {busy ? t('gift.sending') : t('gift.send')}
               </Button>
               {/* The result sits by the send button, not under a shelf that may be scrolled away. */}
@@ -403,6 +410,169 @@ function PickerFlow({
         </>
       )}
     </Sheet>
+  );
+}
+
+/** One kind of gift in the bag: free to give, with how many are left. */
+function BagTile({
+  entry,
+  meaning,
+  enough,
+  selected,
+  onChoose,
+}: {
+  entry: BagEntry;
+  meaning: string | null;
+  enough: boolean;
+  selected: boolean;
+  onChoose: (on: boolean) => void;
+}): React.JSX.Element {
+  const t = useT();
+  const { locale } = useI18n();
+  return (
+    <li>
+      <button
+        type="button"
+        className={`gift-tile gift-tile-bag${selected ? ' is-picked' : ''}`}
+        aria-pressed={selected}
+        disabled={!enough}
+        onClick={() => onChoose(!selected)}
+      >
+        <GiftItemArt assetUrl={entry.assetUrl} category="gift" size={64} />
+        <span className="gift-tile-name" lang="ku">
+          {entry.name}
+        </span>
+        {meaning && <span className="gift-tile-desc">{meaning}</span>}
+        <span className="gift-tile-price">{t('gift.bag.count', { count: entry.count.toLocaleString(locale) })}</span>
+        {!enough && <span className="gift-tile-owned">{t('gift.bag.notEnough')}</span>}
+        {selected && (
+          <span className="gift-tile-check" aria-hidden>
+            <CheckIcon size={14} />
+          </span>
+        )}
+      </button>
+    </li>
+  );
+}
+
+/** A gift on a shelf: its Kurmancî name and meaning, its price and worth, and a lock with the reason when it cannot go. */
+function GiftTile({
+  item,
+  meaning,
+  lock,
+  maxPrice,
+  everyoneHasIt,
+  ownedNote,
+  selected,
+  onChoose,
+}: {
+  item: GiftCatalogItem;
+  meaning: string | null;
+  lock: GiftLock | 'funds' | null;
+  maxPrice: number | null;
+  everyoneHasIt: boolean;
+  ownedNote: string | null;
+  selected: boolean;
+  onChoose: (on: boolean) => void;
+}): React.JSX.Element {
+  const t = useT();
+  const { locale } = useI18n();
+  const fmt = (n: number): string => n.toLocaleString(locale);
+  const why =
+    lock === 'over_limit'
+      ? t('gift.lock.overLimit', { zer: fmt(maxPrice ?? 0) })
+      : lock === 'spend_limit'
+        ? t('gift.lock.spendLimit')
+        : lock === 'funds'
+          ? t('gift.lock.funds')
+          : null;
+  // A gift the safeguards rule out cannot be chosen; one only beyond the balance still can be looked at and chosen,
+  // and says so by the send button.
+  const blocked = everyoneHasIt || lock === 'over_limit' || lock === 'spend_limit';
+  return (
+    <li>
+      <button
+        type="button"
+        className={`gift-tile gift-tile-${item.tier}${selected ? ' is-picked' : ''}${lock ? ' is-locked' : ''}`}
+        aria-pressed={selected}
+        disabled={blocked}
+        onClick={() => onChoose(!selected)}
+      >
+        <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={72} />
+        <span className="gift-tile-name" lang="ku">
+          {item.name}
+        </span>
+        {meaning && <span className="gift-tile-desc">{meaning}</span>}
+        <span className={`gift-tile-price${lock ? ' is-short' : ''}`}>
+          {lock ? <LockIcon size={13} /> : <CoinIcon size={13} />} {fmt(item.price)}
+          <span className="sr-only">Zêr</span> <ZerValue zer={item.price} />
+        </span>
+        {item.tier !== 'common' && <span className={`gift-tier gift-tier-${item.tier}`}>{t(TIER_LABEL[item.tier])}</span>}
+        {why && <span className="gift-tile-owned gift-tile-lock">{why}</span>}
+        {ownedNote && <span className="gift-tile-owned">{ownedNote}</span>}
+        {selected && (
+          <span className="gift-tile-check" aria-hidden>
+            <CheckIcon size={14} />
+          </span>
+        )}
+      </button>
+    </li>
+  );
+}
+
+/**
+ * The second look at a big gift, asked for by the server: the gift, who it is for, and what it costs in Zêr and in
+ * money, said large, with "Send it" and a plain "Go back" that changes nothing.
+ */
+function BigGiftConfirm({
+  item,
+  names,
+  details,
+  busy,
+  error,
+  onConfirm,
+  onBack,
+}: {
+  item: GiftCatalogItem;
+  names: string[];
+  details: GiftConfirmDetails;
+  busy: boolean;
+  error: ApiError | string | null;
+  onConfirm: () => void;
+  onBack: () => void;
+}): React.JSX.Element {
+  const t = useT();
+  const { locale } = useI18n();
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => heading.current?.focus(), []);
+  return (
+    <section className="gift-big-confirm" aria-labelledby="gift-big-confirm-title">
+      <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={120} className="gift-big-confirm-art" />
+      <h3 className="gift-big-confirm-title" id="gift-big-confirm-title" ref={heading} tabIndex={-1}>
+        {t('gift.confirm.title')}
+      </h3>
+      <p className="gift-big-confirm-what">
+        <span lang="ku">{item.name}</span> · {t('gift.confirm.for', { names: names.join(', ') })}
+      </p>
+      <p className="gift-big-confirm-amount">
+        <span className="gift-big-confirm-money">
+          <ZerValue zer={details.total} />
+        </span>
+        <span className="gift-big-confirm-zer">
+          <CoinIcon size={14} /> {t('gift.confirm.zer', { zer: details.total.toLocaleString(locale) })}
+        </span>
+      </p>
+      <p className="muted gift-big-confirm-note">{t('gift.confirm.note')}</p>
+      <div className="gift-big-confirm-actions">
+        <Button variant="secondary" onClick={onBack} disabled={busy}>
+          {t('gift.confirm.back')}
+        </Button>
+        <Button onClick={onConfirm} disabled={busy}>
+          <GiftIcon size={16} /> {busy ? t('gift.sending') : t('gift.confirm.send')}
+        </Button>
+      </div>
+      <SendError error={error} className="gift-confirm-note" />
+    </section>
   );
 }
 
@@ -462,7 +632,7 @@ function WhoStep({
   );
 }
 
-/** The shelf while loading: empty tiles with placeholders for picture, name, subtitle and price. */
+/** The shelf while loading: empty tiles with placeholders for picture, name, meaning and price. */
 function ShelfSkeleton({ count }: { count: number }): React.JSX.Element {
   const t = useT();
   return (

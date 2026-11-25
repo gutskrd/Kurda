@@ -56,6 +56,8 @@ export function useChatGifts<M extends ChatMessage>({
   const { client, user } = useAuth();
   const [picking, setPicking] = useState(false);
   const [people, setPeople] = useState<GiftPerson[] | null>(null);
+  /** The friend a gift is being sent back to, chosen already when the sheet opens. */
+  const [backTo, setBackTo] = useState<string[] | undefined>(undefined);
   const [flight, setFlight] = useState<{ sent: GiftSent; target: DOMRect | null } | null>(null);
   const [announce, setAnnounce] = useState('');
   /** Who got the last gift and why the others did not, when some were skipped. */
@@ -144,6 +146,31 @@ export function useChatGifts<M extends ChatMessage>({
   );
   useRealtimeEvent('group_msg_gift_opened', onGroupOpened);
 
+  // Recipients are fetched each time the picker opens, since a group's members change while the thread is open.
+  const openPicker = useCallback(() => {
+    setBackTo(undefined);
+    setPicking(true);
+    setPartial(null);
+    setPeople(null);
+    void loadPeople().then(setPeople, () => setPeople([]));
+  }, [loadPeople]);
+
+  /** Opens the sheet for the one who sent a gift, once they are known to be a friend here, so it opens on what to give. */
+  const sendBackTo = useCallback(
+    (senderId: string) => {
+      setPartial(null);
+      void loadPeople().then(
+        (list) => {
+          setPeople(list);
+          setBackTo(list.some((p) => p.userId === senderId) ? [senderId] : undefined);
+          setPicking(true);
+        },
+        () => undefined,
+      );
+    },
+    [loadPeople],
+  );
+
   const actions: GiftActions = useMemo(
     () => ({
       open: async (giftId) => {
@@ -159,17 +186,18 @@ export function useChatGifts<M extends ChatMessage>({
         const res = await client.put(`/me/cosmetics/${card.equippable}`, { sku: card.sku });
         return res.ok ? null : res.error;
       },
+      // a gift back to whoever sent this one, from the bag first; a child's profile gives nothing
+      ...(canGiveGifts(user)
+        ? {
+            sendBack: (card: GiftCard) => {
+              const from = card.from?.userId;
+              if (from && from !== user?.id) sendBackTo(from);
+            },
+          }
+        : {}),
     }),
-    [client, sendText, setCard, t],
+    [client, sendText, setCard, t, user, sendBackTo],
   );
-
-  // Recipients are fetched each time the picker opens, since a group's members change while the thread is open.
-  const openPicker = useCallback(() => {
-    setPicking(true);
-    setPartial(null);
-    setPeople(null);
-    void loadPeople().then(setPeople, () => setPeople([]));
-  }, [loadPeople]);
 
   const onSent = useCallback(
     (sent: GiftSent) => {
@@ -218,7 +246,7 @@ export function useChatGifts<M extends ChatMessage>({
 
   const overlays = (
     <>
-      <GiftPicker open={picking} onClose={() => setPicking(false)} chat={chat} people={people} onSent={onSent} />
+      <GiftPicker open={picking} onClose={() => setPicking(false)} chat={chat} people={people} onSent={onSent} initialChosen={backTo} />
       {flight && (
         <GiftFlight
           item={flight.sent.item}

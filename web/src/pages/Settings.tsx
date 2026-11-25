@@ -12,6 +12,7 @@ import { Button } from '../components/Button';
 import {
   AtIcon,
   BlockIcon,
+  GiftIcon,
   BookIcon,
   CalendarIcon,
   ChatsIcon,
@@ -57,6 +58,7 @@ import {
   type SettingsPage,
 } from '../settings/catalogue';
 import { GiftSoundSetting } from '../gifts/GiftSoundSetting';
+import { GiftLimitSetting } from '../gifts/GiftLimitSetting';
 import { VibrationSetting } from '../settings/VibrationSetting';
 import { NotificationPrefsCard } from '../notifications/NotificationPrefsCard';
 import { APP_LOCALES, isAppLocale, type AppLocale } from '@kurda/shared';
@@ -275,6 +277,9 @@ function SettingsPageView({
     case 'blocked':
       body = <BlockedUsers />;
       break;
+    case 'gift-limit':
+      body = <GiftLimitSetting />;
+      break;
     case 'feedback':
       body = <SendFeedbackCard />;
       break;
@@ -396,6 +401,7 @@ function PrivacyRows({ me }: { me: MeState }): React.JSX.Element {
     <SettingsSection>
       <SettingsRow icon={<EyeIcon size={22} />} title={t('settings.privacy.title')} value={fromAccount(me, user ? t(VIS_LABEL_KEY[user.profileVisibility]) : undefined)} to={settingsPath('visibility')} />
       <SettingsRow icon={<BlockIcon />} title={t('settings.blocked.title')} to={settingsPath('blocked')} />
+      <SettingsRow icon={<GiftIcon />} title={t('settings.giftLimit.title')} to={settingsPath('gift-limit')} />
       <SettingsRow
         icon={<TrophyIcon />}
         title={t('settings.leagues.title')}

@@ -25,6 +25,8 @@ const KILIM: Readonly<Record<GiftTier, Palette>> = {
   rare: { base: '#22305e', motif: '#f0c24a', inner: '#b8324a', cream: '#f6e7c8', lid: '#1a2549' },
   // Newroz: fire-gold ground, deep red and night.
   legendary: { base: '#d39a1c', motif: '#8f1d2c', inner: '#2a1a10', cream: '#fff3c4', lid: '#b07f12' },
+  // The night sky: deep indigo with silver-gold stars, for the moon, the sun and the galaxy.
+  grand: { base: '#141a3c', motif: '#e8c66a', inner: '#3b4aa0', cream: '#f4eedb', lid: '#0d1230' },
 };
 
 /** An id usable inside url(#…), since React's ids contain characters a fragment would need escaped. */
@@ -143,6 +145,35 @@ export function NewrozFlame({ className }: { className?: string }): React.JSX.El
       <path className="flame-outer" d="M60 150 C24 150 18 112 34 86 C40 98 46 100 48 92 C46 70 56 44 70 26 C70 52 92 66 94 98 C96 124 84 150 60 150 Z" fill="#d9381e" />
       <path className="flame-mid" d="M60 150 C36 150 34 122 44 104 C48 112 54 112 54 104 C54 90 62 76 70 66 C72 86 86 98 84 120 C82 140 74 150 60 150 Z" fill="#f28c28" />
       <path className="flame-core" d="M60 150 C46 150 44 134 50 122 C54 128 58 126 58 120 C60 112 64 104 68 100 C70 114 78 124 74 138 C72 146 66 150 60 150 Z" fill="#ffd75e" />
+    </svg>
+  );
+}
+
+/**
+ * The night a grand gift opens on: a sky of stars that come out one by one and a slow glow rising behind the gift, in
+ * the stage's own gold (`--stage-gold`); CSS twinkles it, and under Reduce Motion it is simply there.
+ */
+export function NightSky({ className }: { className?: string }): React.JSX.Element {
+  const glow = useSvgId('skyglow');
+  const stars = Array.from({ length: 46 }, (_, i) => ({
+    x: Math.round(scatter(i, 11) * 1000) / 10,
+    y: Math.round(scatter(i, 13) * 900) / 10,
+    r: 0.18 + scatter(i, 17) * 0.42,
+    delay: Math.round(scatter(i, 19) * 1800),
+  }));
+  return (
+    <svg className={`night-sky${className ? ` ${className}` : ''}`} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <defs>
+        {/* the stage's lamp gold, the same in both schemes, fading into the night */}
+        <radialGradient id={glow} cx="0.5" cy="0.55" r="0.5">
+          <stop offset="0" style={{ stopColor: 'var(--stage-gold)', stopOpacity: 0.5 }} />
+          <stop offset="1" style={{ stopColor: 'var(--stage-gold)', stopOpacity: 0 }} />
+        </radialGradient>
+      </defs>
+      <circle className="night-sky-glow" cx="50" cy="55" r="48" fill={`url(#${glow})`} />
+      {stars.map((star, i) => (
+        <circle key={i} className="night-sky-star" cx={star.x} cy={star.y} r={star.r} fill="currentColor" style={{ animationDelay: `${star.delay}ms` } as CSSProperties} />
+      ))}
     </svg>
   );
 }
