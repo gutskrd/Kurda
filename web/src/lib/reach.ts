@@ -105,6 +105,10 @@ export const LARGE_ENOUGH = [
   '.post-plus',
   '.ffilter-btn',
   '.shop-gift-btn',
+  // A gift on the gift sheet, at least 150px tall in a grid of 118px columns, and the gift limit's fields, each 44px
+  // tall (styles/social.css).
+  '.gift-tile',
+  '.gift-limit-field',
   '.user-actions-btn',
   '.editor-history-btn',
   '.framer-zoom-btn',

@@ -150,7 +150,7 @@ export function GiftLimitSetting(): React.JSX.Element {
           else setError(t('settings.giftLimit.invalid', { min: fmt(SPEND_LIMIT_MIN_ZER), max: fmt(SPEND_LIMIT_MAX_ZER) }));
         }}
       >
-        <label>
+        <label className="gift-limit-field">
           {t('settings.giftLimit.amount')}
           <input
             type="number"
@@ -162,7 +162,7 @@ export function GiftLimitSetting(): React.JSX.Element {
             onChange={(e) => setAmount(e.target.value)}
           />
         </label>
-        <label>
+        <label className="gift-limit-field">
           {t('settings.giftLimit.period')}
           <select value={period} onChange={(e) => setPeriod(e.target.value as SpendLimitPeriod)}>
             {SPEND_LIMIT_PERIODS.map((p) => (
