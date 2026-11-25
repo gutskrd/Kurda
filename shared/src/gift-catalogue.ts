@@ -163,7 +163,7 @@ const MEANINGS: Readonly<Record<string, Readonly<Record<AppLocale, string>>>> = 
     tr: 'Çay bardaklarıyla bir semaver', ar: 'سماور مع كؤوس الشاي',
   },
   def: {
-    en: 'A frame drum', ku: 'Defa govendê', ckb: 'دەف', de: 'Eine Rahmentrommel', es: 'Un pandero', fr: 'Un tambour sur cadre',
+    en: 'A frame drum', ku: 'Defa govendê', ckb: 'دەف', de: 'Eine Rahmentrommel', es: 'Un tambor de marco', fr: 'Un tambour sur cadre',
     nl: 'Een lijsttrommel', tr: 'Bir def', ar: 'دفّ',
   },
   'deste-gul': {
