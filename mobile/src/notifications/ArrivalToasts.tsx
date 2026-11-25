@@ -30,7 +30,7 @@ const FLING_PX = 28;
 /**
  * Pushes that arrive while the app is open (arrivals.ts), each as Hevalo's own toast: the notification's picture or its
  * kind's glyph, its words in the reader's language, and a thin bar running down its time. A badge or league result is a
- * reward, its medal lit by a soft glow and three sparkles. A tap opens what it is about; a flick up or the close button
+ * reward: its medal pops in and three sparkles light round it. A tap opens what it is about; a flick up or the close button
  * sends it away sooner. At most three at once, the newest last.
  */
 export function useArrivals(): { arrivals: Arrival[]; dismiss: (id: string) => void } {
@@ -126,14 +126,15 @@ export function ArrivalCard({ arrival, onClose }: { arrival: Arrival; onClose: (
           testID="arrival-open"
         >
           <View style={styles.art} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            {reward ? <Glow color={colors.gold} reduce={reduce} /> : null}
-            {picture ? (
-              <NoticeArt picture={picture} />
-            ) : (
-              <View style={[styles.glyph, { backgroundColor: colors.controlTrack }]}>
-                <Icon name={kind.icon} size={22} color={colors.textPrimary} />
-              </View>
-            )}
+            <Pop on={reward && !reduce}>
+              {picture ? (
+                <NoticeArt picture={picture} />
+              ) : (
+                <View style={[styles.glyph, { backgroundColor: colors.controlTrack }]}>
+                  <Icon name={kind.icon} size={22} color={colors.textPrimary} />
+                </View>
+              )}
+            </Pop>
             {reward ? <Sparkles color={colors.gold} reduce={reduce} /> : null}
           </View>
           <View style={styles.words}>
@@ -165,17 +166,17 @@ export function ArrivalCard({ arrival, onClose }: { arrival: Arrival; onClose: (
   );
 }
 
-/** The soft light behind a reward's medal, swelling once as it lands. */
-function Glow({ color, reduce }: { color: string; reduce: boolean }): React.JSX.Element {
-  const p = useRef(new Animated.Value(reduce ? 1 : 0)).current;
+/** A reward's medal landing: it grows a little past its size and settles, once. */
+function Pop({ on, children }: { on: boolean; children: React.ReactNode }): React.JSX.Element {
+  const p = useRef(new Animated.Value(on ? 0 : 1)).current;
   useEffect(() => {
-    if (reduce) return;
+    if (!on) return;
     const run = springTo(p, 1, 'release');
     run.start();
     return () => run.stop();
-  }, [p, reduce]);
-  const scale = p.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] });
-  return <Animated.View pointerEvents="none" style={[styles.glow, { backgroundColor: color, transform: [{ scale }] }]} />;
+  }, [p, on]);
+  const scale = p.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] });
+  return <Animated.View style={{ transform: [{ scale }] }}>{children}</Animated.View>;
 }
 
 /** Where the three sparkles sit round the medal, and when each lights. */
@@ -227,7 +228,6 @@ const styles = StyleSheet.create({
   main: { flex: 1, alignItems: 'center', gap: spacing.sm + 4, paddingVertical: spacing.sm + 2, paddingStart: spacing.sm + 2 },
   art: { width: ART, height: ART, alignItems: 'center', justifyContent: 'center' },
   glyph: { width: ART, height: ART, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  glow: { position: 'absolute', width: ART + 14, height: ART + 14, borderRadius: radii.pill, opacity: 0.28 },
   spark: { position: 'absolute' },
   words: { flex: 1, gap: 2 },
   title: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, lineHeight: 20 },

@@ -17,7 +17,7 @@ import { nameOf, type PersonRef } from './api';
 
 /**
  * A parent or teen in a list: their face, their name and a line under it; a button when there is somewhere to go, or
- * one action of its own at the end (`action`), never both.
+ * one action of its own (`action`) under the line, never both, so the line is never cut short to make room for it.
  */
 export function PersonRow({
   person,
@@ -47,9 +47,9 @@ export function PersonRow({
             {detail}
           </Text>
         ) : null}
+        {!onPress && action ? <View style={[styles.action, { alignSelf: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' }]}>{action}</View> : null}
       </View>
       {onPress ? <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip ?? undefined} /> : null}
-      {!onPress && action ? action : null}
     </View>
   );
   if (!onPress) return testID ? <View testID={testID}>{body}</View> : body;
@@ -158,6 +158,7 @@ const styles = StyleSheet.create({
   words: { flex: 1, gap: 2 },
   name: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   detail: { fontSize: typography.sizes.text, lineHeight: 20 },
+  action: { marginTop: spacing.sm },
   hero: { alignItems: 'center', gap: spacing.md, paddingHorizontal: layout.gutter + spacing.sm, paddingTop: spacing.lg, paddingBottom: spacing.sm },
   glyph: { width: 88, height: 88, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   heroTitle: { ...display(typography.sizes.title) },
