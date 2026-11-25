@@ -4,32 +4,35 @@
  */
 
 /* ---- the badge row: a chip holding small pictures and "+N" ---- */
+/* Taller than a plain chip, so the pictures inside are big enough to tell apart at a glance. */
 .bdg-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  height: 44px;
   max-width: 100%;
-  padding: 0 10px;
+  padding-inline: 8px 14px;
   font-variant-numeric: tabular-nums;
 }
 .bdg-pill-art {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
 }
 .bdg-pill-icon {
   display: inline-grid;
   flex: none;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 32px;
+  height: 32px;
   line-height: 0;
 }
 .bdg-pill-more {
   color: var(--ink-2);
 }
 .bdg-pill.is-quiet {
+  padding: 0 14px;
   color: var(--ink-3);
 }
 .bdg-pill.is-quiet svg {
