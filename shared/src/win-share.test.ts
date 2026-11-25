@@ -10,7 +10,7 @@ import {
   shareMessage,
   streakMilestone,
   winLine,
-  wordGameHeader,
+  wordGameResult,
   wordGameShareText,
   wordGrid,
   type LetterFeedback,
@@ -60,62 +60,46 @@ describe('the word game’s fruit', () => {
   });
 });
 
-describe('the line over the grid', () => {
-  const base: WordGameShare = { rows: win, solved: true, maxAttempts: 6, name: 'Hevalo Peyvok' };
+describe('how the word game went, as its link says it', () => {
+  const base: WordGameShare = { rows: win, solved: true, maxAttempts: 6, practice: false };
 
-  it('gives the day’s word its number and the guesses it took', () => {
-    expect(wordGameHeader({ ...base, dayNumber: 123 })).toBe('Hevalo Peyvok #123 3/6');
+  it('is the guesses it took of those allowed', () => {
+    expect(wordGameResult(base)).toEqual({ tries: 3, of: 6, practice: false });
   });
 
-  it('says how hard it was, in the word the app gives', () => {
-    expect(wordGameHeader({ ...base, dayNumber: 123, difficulty: 'Hard' })).toBe('Hevalo Peyvok #123 (Hard) 3/6');
-    expect(wordGameHeader({ ...base, difficulty: 'Dijwar' })).toBe('Hevalo Peyvok (Dijwar) 3/6');
+  it('takes no count of guesses from a word that was not found', () => {
+    expect(wordGameResult({ ...base, solved: false })).toEqual({ tries: null, of: 6, practice: false });
   });
 
-  it('names a practice game as one, and gives it no number', () => {
-    expect(wordGameHeader({ ...base, practice: 'Practice', dayNumber: 123 })).toBe('Hevalo Peyvok Practice 3/6');
-    expect(wordGameHeader({ ...base, practice: 'Practice', difficulty: 'Medium' })).toBe('Hevalo Peyvok Practice (Medium) 3/6');
-  });
-
-  it('writes an X for a word that was not found', () => {
-    expect(wordGameHeader({ ...base, solved: false, dayNumber: 123 })).toBe('Hevalo Peyvok #123 X/6');
-  });
-
-  it('has no words of its own: with none handed to it, only the score is left', () => {
-    expect(wordGameHeader({ ...base, name: '' }).trim()).toBe('3/6');
+  it('says whether it was a practice word', () => {
+    expect(wordGameResult({ ...base, practice: true })).toEqual({ tries: 3, of: 6, practice: true });
   });
 });
 
 describe('the word game’s share', () => {
-  it('is the header, an empty line, and the grid', () => {
-    const text = wordGameShareText({ rows: win, solved: true, maxAttempts: 6, name: 'Hevalo Peyvok', dayNumber: 7 });
-    const [header, blank, ...gridLines] = text.split('\n');
-    expect(header).toBe('Hevalo Peyvok #7 3/6');
+  const line = 'Look, I just solved today’s Peyvok in 3/6! Can you beat me?';
+  const game: WordGameShare = { rows: win, solved: true, maxAttempts: 6, practice: false };
+
+  it('opens on the app’s line, then an empty line and the grid', () => {
+    const [first, blank, ...gridLines] = wordGameShareText(line, game).split('\n');
+    expect(first).toBe(line);
     expect(blank).toBe('');
     expect(gridLines).toEqual(['⚪🍋⚪⚪⚪', '🍏⚪🍋⚪⚪', '🍏🍏🍏🍏🍏']);
   });
 
-  it('reads as one message: the score, and under it how the game went', () => {
-    expect(wordGameShareText({ rows: win, solved: true, maxAttempts: 6, name: 'Hevalo Peyvok', difficulty: 'Medium' })).toBe(
-      'Hevalo Peyvok (Medium) 3/6\n\n⚪🍋⚪⚪⚪\n🍏⚪🍋⚪⚪\n🍏🍏🍏🍏🍏',
-    );
-  });
-
   it('ends on the address when it is handed one, set apart under the grid', () => {
-    const input: WordGameShare = { rows: win, solved: true, maxAttempts: 6, name: 'Hevalo Peyvok', difficulty: 'Medium' };
-    expect(wordGameShareText(input, 'https://example.org')).toBe(`${wordGameShareText(input)}\n\nhttps://example.org`);
-    expect(wordGameShareText(input, null)).toBe(wordGameShareText(input));
+    expect(wordGameShareText(line, game, 'https://example.org')).toBe(`${wordGameShareText(line, game)}\n\nhttps://example.org`);
+    expect(wordGameShareText(line, game, null)).toBe(wordGameShareText(line, game));
   });
 
   it('gives nothing of the word away: no letter is in the grid', () => {
-    const text = wordGameShareText({ rows: win, solved: false, maxAttempts: 6, name: 'Hevalo Peyvok', practice: 'Practice' });
-    const grid = text.split('\n\n')[1] ?? '';
+    const grid = wordGameShareText(line, { ...game, solved: false }).split('\n\n')[1] ?? '';
     expect(grid.length).toBeGreaterThan(0);
     expect(LETTERS.test(grid)).toBe(false);
   });
 
   it('draws the high-contrast fruit when asked', () => {
-    const text = wordGameShareText({ rows: [['green', 'yellow', 'gray']], solved: true, maxAttempts: 6, name: 'Hevalo Peyvok', highContrast: true });
+    const text = wordGameShareText(line, { ...game, rows: [['green', 'yellow', 'gray']], highContrast: true });
     expect(text.split('\n\n')[1]).toBe('🍊🍇⚪');
   });
 });
@@ -131,7 +115,7 @@ describe('the mark at the end of a line', () => {
       if (kind === 'peyvok') expect(WIN_MARKS[kind]).toBe('');
       else expect(WIN_MARKS[kind], kind).not.toBe('');
     }
-    expect(winLine('Hevalo Peyvok 3/6', 'peyvok')).toBe('Hevalo Peyvok 3/6');
+    expect(winLine('Look, I just solved today’s Peyvok in 3/6!', 'peyvok')).toBe('Look, I just solved today’s Peyvok in 3/6!');
     expect(new Set(WIN_KINDS.filter((k) => k !== 'peyvok').map((k) => WIN_MARKS[k])).size).toBe(WIN_KINDS.length - 1);
   });
 

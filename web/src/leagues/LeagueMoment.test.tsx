@@ -64,7 +64,7 @@ describe('sharing a league week', () => {
     const moment = await screen.findByRole('dialog', { name: en['leagues.celebrate.up'] });
     await userEvent.click(within(moment).getByRole('button', { name: 'Share' }));
     expect(share).toHaveBeenCalledTimes(1);
-    expect(said()).toBe(`I moved up to the Çem League on Hevalo. 🏆\n${SITE}/win/league/cem`);
+    expect(said()).toBe(`I just moved up to the Çem League on Hevalo! 🏆\n${SITE}/win/league/cem?l=en`);
     // Not the group size, the XP or the account.
     for (const theirs of ['16', '240', 'rojda', 'u-4471', '/users/', '@']) expect(said()).not.toContain(theirs);
     // Sharing does not close the moment or mark the week seen.
@@ -77,7 +77,7 @@ describe('sharing a league week', () => {
     renderApp(<LeagueMoment week={week({ tier: 'okyanus', tierAfter: 'okyanus', rank: 2, trophy: true })} />);
     const moment = await screen.findByRole('dialog', { name: en['leagues.celebrate.up'] });
     await userEvent.click(within(moment).getByRole('button', { name: 'Share' }));
-    expect(said()).toBe(`I finished #2 in the Okyanûs League on Hevalo. 🏆\n${SITE}/win/league/okyanus`);
+    expect(said()).toBe(`I finished #2 in the Okyanûs League this week! 🏆\n${SITE}/win/league/okyanus?l=en`);
   });
 
   it('offers nothing to share where the place cannot be said', async () => {

@@ -97,13 +97,13 @@ describe('Peyvok’s result', () => {
 });
 
 /*
- * The result's Share: the grid of squares with the score above and the site's address below, as the web game
- * sends. Squares and counts only, so no guess or word leaks.
+ * The result's Share: a line telling how it went, the grid of fruit, and the game's address with the score in it, as
+ * the web game sends. Fruit and counts only, so no guess or word leaks.
  */
 describe('Peyvok’s result, shared', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('shares the day’s word as its score, its guesses as rows of fruit and the game’s address, and nothing of the word or of who played', async () => {
+  it('shares the day’s word as news and a challenge, its guesses as rows of fruit and the game’s address, and nothing of the word or of who played', async () => {
     const share = vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
     testAuth.client = serving(over('won'));
     renderWithProviders(<WordleScreen onExit={() => undefined} />);
@@ -112,13 +112,13 @@ describe('Peyvok’s result, shared', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     expect(share).toHaveBeenCalledTimes(1);
     const { message } = share.mock.calls[0]?.[0] as { message: string };
-    expect(message).toBe('Hevalo Peyvok (Medium) 2/6\n\n🍋🍏⚪\n🍏🍏🍏\n\nhttps://hevalo.app/win/peyvok');
+    expect(message).toBe('Look, I just solved today’s Peyvok in 2/6! Can you beat me?\n\n🍋🍏⚪\n🍏🍏🍏\n\nhttps://hevalo.app/win/peyvok/2-6?l=en');
     // "mal" and "dar" were the guesses, "dar" the word; the account is "rojda".
     expect(message).not.toMatch(/mal|dar/i);
     for (const theirs of [testAuth.user.username, testAuth.user.email, '/users/', '@']) expect(message).not.toContain(theirs);
   });
 
-  it('shares a practice word that was not found the same way, with an X for the score', async () => {
+  it('shares a practice word that was not found as one that got the better of the player', async () => {
     const share = vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
     testAuth.client = serving(over('lost', 'practice'));
     renderWithProviders(<WordleScreen onExit={() => undefined} />);
@@ -126,7 +126,7 @@ describe('Peyvok’s result, shared', () => {
     await screen.findByText('Out of tries.');
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     const { message } = share.mock.calls[0]?.[0] as { message: string };
-    expect(message).toBe(`Hevalo Peyvok Practice (Medium) X/6\n\n${Array.from({ length: 6 }, () => '⚪🍏⚪').join('\n')}\n\nhttps://hevalo.app/win/peyvok`);
+    expect(message).toBe(`This Peyvok got the better of me… can you crack it?\n\n${Array.from({ length: 6 }, () => '⚪🍏⚪').join('\n')}\n\nhttps://hevalo.app/win/peyvok/practice-x-6?l=en`);
     expect(message).not.toMatch(/dar/i);
   });
 });

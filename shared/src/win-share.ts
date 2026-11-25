@@ -1,15 +1,16 @@
 /**
- * A win as it is shared, and which wins are offered for sharing. A share is one modest line in the sender's language with
- * a small Hevalo mark at its end (an apple for a lesson, the fire for a streak) and the win's own address under it
- * (win-link.ts), which chats draw as a postcard. The word game also shares a grid, since that is how its result is told
- * without giving the word away, drawn in fruit. Only marks every phone and browser draws, and figures; the words are the
- * apps', and nothing here knows who the sender is.
+ * A win as it is shared. A share opens on one warm line in the sender's language, so the first words under a chat's card
+ * are a person telling a friend their news and asking them along ("Look, I just solved today’s Peyvok in 4/6! Can you
+ * beat me?"); a small Hevalo mark ends it (an apple for a lesson, the fire for a streak), and the win's own address
+ * comes last (win-link.ts), which chats draw as a postcard. The word game also shares a grid, since that is how its
+ * result is told without giving the word away, drawn in fruit. Only marks every phone and browser draws, and figures;
+ * the words are the apps', and nothing here knows who the sender is.
  */
 
 import { FIRE_STAGE_DAYS, fireGrewToday, whole } from './fire-stages.js';
 import type { LeagueTier, LeagueWeekResult } from './leagues.js';
 import { isLeagueTier } from './leagues.js';
-import type { WinKind } from './win-link.js';
+import type { PeyvokResult, WinKind } from './win-link.js';
 
 // ---- the word game's grid ------------------------------------------------------------
 
@@ -39,30 +40,19 @@ export interface WordGameShare {
   rows: readonly (readonly LetterFeedback[])[];
   solved: boolean;
   maxAttempts: number;
-  /** the game's name, as the app writes it */
-  name: string;
-  /** the app's word for a practice game; absent for the day's word */
-  practice?: string;
-  /** the day's word by its number, where there is one; a practice game has none */
-  dayNumber?: number;
-  /** the app's word for how hard the game was */
-  difficulty?: string;
+  /** a practice word, rather than the day's */
+  practice: boolean;
   highContrast?: boolean;
 }
 
-/** The line over the grid: the game, which one, and guesses taken of allowed, X when not found ("Hevalo Peyvok #123 (Hard) 4/6"). */
-export function wordGameHeader(input: WordGameShare): string {
-  const parts = [input.name];
-  if (input.practice) parts.push(input.practice);
-  else if (input.dayNumber !== undefined) parts.push(`#${input.dayNumber}`);
-  if (input.difficulty) parts.push(`(${input.difficulty})`);
-  parts.push(`${input.solved ? input.rows.length : 'X'}/${input.maxAttempts}`);
-  return parts.join(' ');
+/** How the game went, as its link says it: the guesses it took of those allowed, none when the word was not found. */
+export function wordGameResult(game: WordGameShare): PeyvokResult {
+  return { tries: game.solved ? game.rows.length : null, of: game.maxAttempts, practice: game.practice };
 }
 
-/** The header, an empty line, the grid, and the address set apart under them when given; only fruit and counts, never a letter. */
-export function wordGameShareText(input: WordGameShare, link?: string | null): string {
-  return shareMessage({ line: wordGameHeader(input), picture: wordGrid(input.rows, input.highContrast ?? false), link });
+/** The app's line, an empty line, the grid, and the address set apart under them when given; only fruit in the grid, never a letter. */
+export function wordGameShareText(line: string, game: WordGameShare, link?: string | null): string {
+  return shareMessage({ line, picture: wordGrid(game.rows, game.highContrast ?? false), link });
 }
 
 // ---- the mark at the end of a line -----------------------------------------------------

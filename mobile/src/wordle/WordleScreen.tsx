@@ -99,7 +99,7 @@ interface WordleStats {
 export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const insets = useSafeAreaInsets();
   const reduce = useReducedMotion();
 
@@ -223,10 +223,10 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     saving.want(id, true, false);
   };
 
-  // The result as the grid of squares with the score above and the site's address below, as the web sends (share/winText.ts).
+  // A line telling how it went, the grid of fruit, and the game's address with the score in it, as the web sends (share/winText.ts).
   const shareResult = () => {
     if (!game || game.status === 'playing') return;
-    shareOut(wordGameShare(game, { practice: t('games.wordle.practice'), difficulty: t(DIFFICULTY_KEY[game.difficulty]) }));
+    shareOut(wordGameShare(t, locale, game));
   };
 
   // ---- render ----------------------------------------------------------------

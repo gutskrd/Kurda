@@ -2333,22 +2333,21 @@ export const en = {
   'share.sendFailed': 'That message did not send. Try again.',
   'share.signInToSend': 'Sign in to send this to a friend.',
 
-  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
-  'share.win.lesson': 'I finished “{title}” in Kurdish on Hevalo.',
-  'share.win.lessonPlain': 'I finished a Kurdish lesson on Hevalo.',
-  'share.win.streak': '{count} days of Kurdish in a row.',
-  'share.win.badge': 'I earned the “{badge}” badge on Hevalo.',
-  'share.win.leagueUp': 'I moved up to the {tier} League on Hevalo.',
-  'share.win.leaguePlace': 'I finished #{rank} in the {tier} League on Hevalo.',
-  // the page a shared win's link opens (share/WinPage.tsx): what was done, said to whoever it was sent to
+  /* a win sent to somebody outside Hevalo: one warm line in the sharer's own voice telling the news and asking them along, with nothing in it that names the sharer; a streak's is only ever said of a week or more, and the word game names its difficulty only when it was hard */
+  'share.win.lesson': 'Look, I just finished “{title}” in Kurdish! Come learn with me on Hevalo',
+  'share.win.lessonPlain': 'Look, I just finished a Kurdish lesson! Come learn with me on Hevalo',
+  'share.win.streak': '{count} days of Kurdish in a row, and I’m not stopping! Join me on Hevalo',
+  'share.win.badge': 'I just earned the “{badge}” badge on Hevalo!',
+  'share.win.leagueUp': 'I just moved up to the {tier} League on Hevalo!',
+  'share.win.leaguePlace': 'I finished #{rank} in the {tier} League this week!',
+  'share.win.peyvok': 'Look, I just solved today’s Peyvok in {score}! Can you beat me?',
+  'share.win.peyvokHard': 'Look, I just solved today’s Peyvok in {score} on Hard! Can you beat me?',
+  'share.win.peyvokLost': 'Today’s Peyvok got the better of me… can you crack it?',
+  'share.win.peyvokPractice': 'Look, I just solved a Peyvok in {score}! Can you beat me?',
+  'share.win.peyvokPracticeHard': 'Look, I just solved a Peyvok in {score} on Hard! Can you beat me?',
+  'share.win.peyvokPracticeLost': 'This Peyvok got the better of me… can you crack it?',
+  // the page a shared win's link opens (share/WinPage.tsx), around the card's own words (shared win-words.ts)
   'win.kicker': 'A postcard from Hevalo',
-  'win.lesson': 'One more lesson done',
-  'win.streak': '{count} days in a row',
-  'win.streakPlain': 'A streak kept alive',
-  'win.badge': 'A new badge earned',
-  'win.league': 'A good week in the {league}',
-  'win.leaguePlain': 'A good week in the league',
-  'win.body': 'Somebody you know is learning Kurdish here, a few minutes at a time. Come and learn along.',
   'win.picture': 'A postcard: Hamo and Hevalo on a hillside, and a bird flying off with a letter.',
 
   /* putting somebody else's post on your own profile */

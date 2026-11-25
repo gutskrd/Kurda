@@ -342,7 +342,7 @@ export function LessonResults({
                 <Text style={[styles.backText, { color: colors.textSecondary }]}>{t('lesson.results.backToPath')}</Text>
               </Pressable>
             ) : null}
-            {lesson ? <ShareWin text={lessonShare(t, lesson.title)} testID="lesson-share" /> : null}
+            {lesson ? <ShareWin text={lessonShare(t, locale, lesson.title)} testID="lesson-share" /> : null}
           </View>
         ) : null}
         {actions.secondary ? <ClayButton label={t(ACTION_WORDS[actions.secondary])} tone="primary" variant="outline" size="large" onPress={run(actions.secondary)} /> : null}

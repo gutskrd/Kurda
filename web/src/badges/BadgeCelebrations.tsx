@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { badgeDef, badgeTierKey, type BadgeUnlockedEvent, type BadgeTierKey, type UnseenBadge } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import { useInvitesQuiet } from '../play/quietInvites';
 import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
@@ -29,6 +29,7 @@ interface Unlock {
 export function BadgeCelebrations(): React.JSX.Element | null {
   const { client, status } = useAuth();
   const t = useT();
+  const locale = useLocale();
   const [queue, setQueue] = useState<Unlock[]>([]);
   const held = useCelebrationsHeld();
   const playing = useInvitesQuiet();
@@ -107,7 +108,7 @@ export function BadgeCelebrations(): React.JSX.Element | null {
         </>
       }
       action={queue.length > 1 ? t('badges.next') : t('rankResult.continue')}
-      below={<ShareWin text={badgeShare(t, named.name)} />}
+      below={<ShareWin text={badgeShare(t, locale, named.name)} />}
       onClose={done}
     />
   );

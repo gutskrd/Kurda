@@ -232,7 +232,7 @@ export function Results({
   // The quiet Share for the screen in front: the lesson on its results, the streak on its big days, otherwise none.
   const shareButton =
     stage === 'results' && kind === 'lesson' ? (
-      <ShareWin text={lessonShare(t, lessonName)} />
+      <ShareWin text={lessonShare(t, locale, lessonName)} />
     ) : stage === 'week' && streakMilestone(results.streak.current) ? (
       <ShareWin text={streakShare(t, locale, results.streak.current)} />
     ) : null;
