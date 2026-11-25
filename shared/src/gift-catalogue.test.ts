@@ -58,8 +58,8 @@ describe('the gift catalogue', () => {
   it('offers each gift once its picture is painted, with the picture it is drawn as', () => {
     for (const g of GIFTS) expect(drawnGiftArtKey(giftSku(g.id)), g.id).toBe(isGiftArtId(g.id) ? giftArtKey(g.id) : null);
     expect(drawnGifts().map((g) => g.id)).toEqual(GIFTS.filter((g) => isGiftArtId(g.id)).map((g) => g.id));
-    // every gift is painted but the two legends, whose pictures come next
-    expect(GIFTS.filter((g) => !isGiftArtId(g.id)).every((g) => g.group === 'legends')).toBe(true);
+    // all thirty-three are painted
+    expect(drawnGifts()).toHaveLength(GIFTS.length);
     expect(drawnGiftArtKey('sticker-lale')).toBeNull();
     expect(drawnGiftArtKey('gift-unknown')).toBeNull();
   });
