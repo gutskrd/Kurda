@@ -27,7 +27,7 @@ describe('a segmented control', () => {
         <BoardSwitch value="zer" onChange={() => {}} />
       </I18nProvider>,
     );
-    expect(labels(container)).toEqual([en['rankings.board.xp'], 'Zêr', en['rankings.board.gewher']]);
+    expect(labels(container)).toEqual([en['rankings.board.xp'], 'Zêr']);
   });
 
   it('puts the name of each variety in a label of its own', () => {

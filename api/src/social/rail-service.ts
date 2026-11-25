@@ -87,7 +87,7 @@ export interface RailSelf {
   displayName: string | null;
   avatarUrl: string | null;
   level: LevelInfo;
-  balances: { zer: number; gems: number };
+  balances: { zer: number };
 }
 
 /** `self`, and the gifts you have not opened yet, which ride along on the same read. */
@@ -128,12 +128,10 @@ export class SocialRailService {
       selected_avatar_key: string | null;
       xp: number;
       zer: string | null;
-      gems: string | null;
       unseen_gifts: string;
     }>(
       `SELECT u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.xp,
-              max(w.balance) FILTER (WHERE w.currency = 'zer')  AS zer,
-              max(w.balance) FILTER (WHERE w.currency = 'gems') AS gems,
+              max(w.balance) FILTER (WHERE w.currency = 'zer') AS zer,
               ${unseenGiftsSql('u.id')} AS unseen_gifts
          FROM users u
          LEFT JOIN wallet_balances w ON w.user_id = u.id
@@ -152,7 +150,7 @@ export class SocialRailService {
         // Computed on the server only, so level has one formula.
         level: levelInfo(row.xp),
         // a missing wallet row is a zero balance, not a missing balance
-        balances: { zer: Number(row.zer ?? 0), gems: Number(row.gems ?? 0) },
+        balances: { zer: Number(row.zer ?? 0) },
       },
       unseenGifts: Number(row.unseen_gifts ?? 0),
     };

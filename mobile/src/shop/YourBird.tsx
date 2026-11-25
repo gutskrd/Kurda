@@ -8,6 +8,7 @@ import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
+import { ZerValue, useZerValue } from './value';
 import { BIRD_NAMES } from '../letters/BirdPicker';
 import { BirdBadge } from '../letters/LetterParts';
 import { useDirection } from '../reports/direction';
@@ -117,6 +118,7 @@ function BirdSheet({
   // Made yours from this sheet: the bird takes a bow and the sheet says so, with one button to close it.
   const [done, setDone] = useState(false);
   const number = (n: number): string => formatNumber(n, locale);
+  const value = useZerValue();
   const first = !data.birdChosen;
   const same = !first && picked === data.bird;
   const missing = first ? 0 : Math.max(0, LETTER_BIRD_PRICE - zer);
@@ -162,7 +164,7 @@ function BirdSheet({
     }
     Alert.alert(
       t('shop.confirmPurchase'),
-      `${t('shop.spendOn', { price: number(LETTER_BIRD_PRICE), currency: 'Zêr', name: name(picked) })}\n${t('shop.balance', { zer: number(zer) })}\n\n${t('shop.finalNote')}`,
+      `${t('shop.spendOn', { price: number(LETTER_BIRD_PRICE), currency: 'Zêr', name: name(picked) })} ${value(LETTER_BIRD_PRICE)}\n${t('shop.balance', { zer: number(zer) })}\n\n${t('shop.finalNote')}`,
       [
         { text: t('common.cancel'), style: 'cancel' },
         { text: t('shop.buy'), onPress: () => void choose() },
@@ -192,6 +194,7 @@ function BirdSheet({
       <Text style={[styles.lead, { color: colors.textSecondary }]}>
         {first ? t('letters.bird.chooseLead', { price: number(LETTER_BIRD_PRICE) }) : t('letters.bird.changeLead', { price: number(LETTER_BIRD_PRICE), zer: number(zer) })}
       </Text>
+      <ZerValue zer={LETTER_BIRD_PRICE} style={styles.lead} />
       <View style={[styles.birds, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={title}>
         {LETTER_BIRD_ORDER.map((bird) => {
           const mine = !first && bird === data.bird;

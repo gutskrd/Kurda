@@ -299,7 +299,7 @@ describe.skipIf(!DATABASE_URL)('shop art and catalogue editing (integration)', (
         sku: sku('dear'),
         name: 'Dear',
         category: 'icon',
-        currency: 'gems',
+        currency: 'zer',
         price: 1000,
         assetKey: art.json().key,
       });
@@ -363,10 +363,10 @@ describe.skipIf(!DATABASE_URL)('shop art and catalogue editing (integration)', (
       const dear = await call(admin, 'PATCH', `/shop/items/${edited}`, { price: 1500 });
       expect(dear.statusCode).toBe(409);
       expect(dear.json().code).toBe('PRICE_NEEDS_APPROVAL');
-      // an item already at a dear price keeps its other edits; a new currency is a new price
+      // an item already at a dear price keeps its other edits; there is no other currency to price it in
       await pool.query(`UPDATE shop_items SET price = 2000 WHERE sku = $1`, [edited]);
       expect((await call(admin, 'PATCH', `/shop/items/${edited}`, { name: 'Very pricey' })).statusCode).toBe(200);
-      expect((await call(admin, 'PATCH', `/shop/items/${edited}`, { currency: 'gems' })).json().code).toBe('PRICE_NEEDS_APPROVAL');
+      expect((await call(admin, 'PATCH', `/shop/items/${edited}`, { currency: 'gems' })).statusCode).toBe(400);
       expect((await pool.query(`SELECT price, currency FROM shop_items WHERE sku = $1`, [edited])).rows[0]).toEqual({ price: 2000, currency: 'zer' });
     });
 

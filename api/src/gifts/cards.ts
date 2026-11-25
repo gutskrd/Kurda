@@ -5,9 +5,46 @@ import {
   type EquippableCategory,
   type GiftCard,
   type GiftRecipient,
+  type GiftSender,
 } from '@kurda/shared';
 import { cosmeticAssetUrl, resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
-import { shownToSql } from '../users/age.js';
+import { notBlockedSql } from '../friends/blocked.js';
+import { areFriendsSql, notKnownAdultSql, shownToSql } from '../users/age.js';
+
+/**
+ * SQL: a gift's sender `s` (joined on the gift's `from_user_id`, so null when it was deleted) may be named to `viewer`:
+ * the viewer themself, or an open account with no block either way that the viewer may see, which is everyone in a
+ * shared group or direct message (`seesEveryone`), a friend, or a known adult who has not hidden their profile.
+ */
+export function giftSenderShownSql(s: string, viewer: string, seesEveryone = 'false'): string {
+  return `(${s}.id IS NOT NULL AND (${s}.id = ${viewer} OR (${s}.deleted_at IS NULL AND ${notBlockedSql(`${s}.id`, viewer)}
+            AND (${seesEveryone} OR ${areFriendsSql(`${s}.id`, viewer)}
+                 OR (NOT ${notKnownAdultSql(s)} AND ${s}.profile_visibility <> 'nobody')))))`;
+}
+
+/** A sender row as the queries read it, and the shape the apps get. */
+export interface SenderRow {
+  sender_id: string | null;
+  sender_username: string | null;
+  sender_display_name: string | null;
+  sender_photo: string | null;
+  sender_avatar: string | null;
+  sender_shown: boolean;
+}
+
+/** The sender columns of a query that joins the sender as `s`, for `toSender`. */
+export const SENDER_COLUMNS = `s.id AS sender_id, s.username AS sender_username, s.display_name AS sender_display_name,
+            s.profile_photo_key AS sender_photo, s.selected_avatar_key AS sender_avatar`;
+
+export function toSender(r: SenderRow, publicUrl: PublicUrl): GiftSender | null {
+  if (!r.sender_shown || !r.sender_id || !r.sender_username) return null;
+  return {
+    userId: r.sender_id,
+    username: r.sender_username,
+    displayName: r.sender_display_name,
+    avatarUrl: resolveAvatarUrl(r.sender_photo, r.sender_avatar, publicUrl),
+  };
+}
 
 /**
  * Who is looking at a gift card. `id` is null for an event published to a whole group room, where nobody is "me";
@@ -19,12 +56,11 @@ export interface CardViewer {
   seesEveryone: boolean;
 }
 
-interface CardRow {
+interface CardRow extends SenderRow {
   id: string;
   batch_id: string;
   to_user_id: string;
   price: number;
-  currency: 'zer' | 'gems';
   opened_at: Date | null;
   sku: string;
   name: string;
@@ -68,6 +104,7 @@ export async function giftCardsForEach(
   viewerIds: ReadonlyArray<string | null>,
   publicUrl: PublicUrl = () => null,
 ): Promise<Map<string | null, GiftCard | null>> {
+  // Everyone told of one send shares its chat, and a block between members already keeps the message from them.
   const rows = await cardRows(executor, [batchId], { id: null, seesEveryone: true });
   return new Map(viewerIds.map((id) => [id, cardsFrom(rows, id, publicUrl).get(batchId) ?? null]));
 }
@@ -76,13 +113,15 @@ async function cardRows(executor: Pick<pg.Pool, 'query'>, batchIds: readonly str
   if (batchIds.length === 0) return [];
   // created_at, then id: the order the recipients were given their gifts in
   const rows = await executor.query<CardRow>(
-    `SELECT g.id, g.batch_id, g.to_user_id, g.price, g.currency, g.opened_at,
+    `SELECT g.id, g.batch_id, g.to_user_id, g.price, g.opened_at,
             i.sku, i.name, i.category, i.asset_key, i.active, i.available_to IS NOT NULL AS limited,
             u.username, u.profile_photo_key, u.selected_avatar_key, u.deleted_at IS NOT NULL AS gone,
-            COALESCE($3::boolean OR ${shownToSql('u', '$2::uuid')}, false) AS shown
+            COALESCE($3::boolean OR ${shownToSql('u', '$2::uuid')}, false) AS shown,
+            ${SENDER_COLUMNS}, COALESCE(${giftSenderShownSql('s', '$2::uuid', '$3::boolean')}, false) AS sender_shown
        FROM gifts g
        JOIN shop_items i ON i.sku = g.sku
        JOIN users u ON u.id = g.to_user_id
+       LEFT JOIN users s ON s.id = g.from_user_id
       WHERE g.batch_id = ANY($1::uuid[])
       ORDER BY g.batch_id, g.created_at, g.id`,
     [[...new Set(batchIds)], viewer.id, viewer.seesEveryone],
@@ -120,8 +159,9 @@ function cardsFrom(rows: readonly CardRow[], viewerId: string | null, publicUrl:
       name: first.name,
       category: first.category,
       assetUrl: cosmeticAssetUrl(first.category, first.asset_key, publicUrl),
-      tier: giftTierFor({ currency: first.currency, price: first.price, limited: first.limited }),
+      tier: giftTierFor({ price: first.price, limited: first.limited }),
       recipients,
+      from: toSender(first, publicUrl),
       myGiftId: mine?.id ?? null,
       myOpened: mine ? mine.opened_at !== null : false,
       // Something to wear straight from the unwrap: theirs, wearable and still on sale, since equipping a withdrawn item

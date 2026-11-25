@@ -22,9 +22,9 @@ import { TODAY_PATH, todayView } from './testing/today';
 import { useToday } from './today';
 
 /*
- * An ended streak in the daily view: one sentence naming the streak and the last day it can be restored, one button
- * with the cost, and after a restore the streak back with the app's celebration. The server decides; the request has
- * no body.
+ * An ended streak in the daily view: one sentence naming the streak, what wins it back and the last day, with today's
+ * sessions as marks; a member's free restore as one button; and the streak back with the app's celebration, whether a
+ * restore or the day's learning brought it. Nothing is bought. The server decides; the request has no body.
  */
 
 // Full motion here, so the celebration is seen to play; one test asks for none.
@@ -37,9 +37,9 @@ afterEach(() => {
 Object.defineProperty(window, 'visualViewport', { value: { height: 800, width: 320, scale: 1 }, configurable: true });
 window.dispatchEvent(new Event('resize'));
 
-/** The offer ends as the 12th begins: the last day is the 11th. */
-const UNTIL = '2026-11-12T00:00:00.000Z';
-const LAST_DAY = formatDay(new Date('2026-11-11T23:59:00.000Z'), 'en');
+/** The offer ends as the 21st begins: the last day is the 20th. */
+const UNTIL = '2026-11-21T00:00:00.000Z';
+const LAST_DAY = formatDay(new Date('2026-11-20T23:59:00.000Z'), 'en');
 
 const ended = (repair: Streak['repair']): Streak => ({
   current: 0,
@@ -50,10 +50,16 @@ const ended = (repair: Streak['repair']): Streak => ({
   sessionsPerFreeze: 5,
   repair,
 });
-const paid = { days: 12, costGems: 50, free: false, until: UNTIL };
+const offer = (over: Partial<NonNullable<Streak['repair']>> = {}): NonNullable<Streak['repair']> => ({
+  days: 12,
+  free: false,
+  sessionsToday: 1,
+  sessionsNeeded: 3,
+  until: UNTIL,
+  ...over,
+});
 const back: Streak = { current: 12, longest: 12, freezes: 0, lastActiveOn: '2026-11-09', daysLearned: 41, sessionsPerFreeze: 5, repair: null };
-const restoredAnswer = ok({ restored: true, duplicate: false, days: 12, costGems: 50, free: false, gems: 30, streak: back });
-const wallet = (gems: number) => ok({ balances: { zer: 0, gems }, history: [] });
+const restoredAnswer = ok({ restored: true, duplicate: false, days: 12, free: true, streak: back });
 
 /** A client answering the daily view with `streak` (in English and in Soranî, whose weeks start on Saturday), and `more`. */
 function routes(streak: Streak, more: Parameters<typeof fakeClient>[0] = {}) {
@@ -68,8 +74,9 @@ function Opened({ onRestored }: { onRestored?: (s: Streak) => void }): React.JSX
 
 /** The daily view, once its answer is in. */
 async function open(onRestored?: (s: Streak) => void) {
-  renderWithProviders(<Opened onRestored={onRestored} />);
+  const view = renderWithProviders(<Opened onRestored={onRestored} />);
   await screen.findByTestId('daily-week');
+  return view;
 }
 
 /** Every buzz from here to the end of `run`. */
@@ -84,17 +91,15 @@ async function feeling(run: (felt: HapticEvent[]) => Promise<void>): Promise<voi
   }
 }
 
-describe('a streak that can be restored', () => {
-  it('says which streak ended and through which day, with the price on one button', async () => {
-    const client = routes(ended(paid), { 'GET /me/wallet': wallet(80) });
-    testAuth.client = client;
+describe('a streak that can be won back', () => {
+  it('says which streak ended, what wins it back and through which day, with today’s sessions so far', async () => {
+    testAuth.client = routes(ended(offer()));
     await open();
-    expect(screen.getByText(`Your 12-day streak ended. You can bring it back until the end of ${LAST_DAY}.`)).toBeTruthy();
-    const restore = screen.getByRole('button', { name: 'Restore for 50 gems' });
-    await waitFor(() => expect(client.calls.map((c) => `${c.method} ${c.path}`)).toContain('GET /me/wallet'));
-    expect(restore.getAttribute('aria-disabled')).not.toBe('true');
-    // Enough gems: nothing about the balance, and nothing is said that hurries.
-    expect(screen.queryByText(/^Your gems:/)).toBeNull();
+    expect(screen.getByText(`Your 12-day streak ended. Finish 3 lessons or practice sessions in one day, by the end of ${LAST_DAY}, to win it back.`)).toBeTruthy();
+    expect(screen.getByLabelText('1 of 3 today')).toBeTruthy();
+    // Nothing to press and nothing to buy: the day's learning wins it back, and nothing is said that hurries.
+    expect(screen.queryByRole('button', { name: /^Restore/ })).toBeNull();
+    expect(screen.queryByText(/gems|buy|purchase/i)).toBeNull();
     expect(screen.queryByText(/hurry|lose|last chance|hours? left|minutes? left/i)).toBeNull();
     // The streak's own story is still all there under it.
     expect(screen.getByText('A lesson today starts a streak')).toBeTruthy();
@@ -102,19 +107,33 @@ describe('a streak that can be restored', () => {
     expect(screen.getByTestId('fire-steps')).toBeTruthy();
   });
 
-  it('offers nothing when there is nothing to restore', async () => {
+  it('offers nothing when there is nothing to win back', async () => {
     testAuth.client = routes(ended(null));
     await open();
     expect(screen.queryByTestId('streak-repair')).toBeNull();
   });
 
-  it('restores on one tap: a request with nothing in it, then the streak back, celebrated and felt once', async () => {
-    const client = routes(ended(paid), { 'GET /me/wallet': wallet(80), 'POST /me/streak/repair': restoredAnswer });
+  it('greets a streak won back by today’s learning once, with how it came back', async () => {
+    const wonBack: Streak = { ...back, restored: { days: 12, on: '2026-11-18' } };
+    testAuth.client = routes(wonBack);
+    const first = await open();
+    expect(await screen.findByRole('heading', { name: 'Your 12-day streak is back' })).toBeTruthy();
+    expect(screen.getByText('You won it back with today’s learning. The days you missed are kept.')).toBeTruthy();
+    expect(screen.queryByTestId('streak-repair')).toBeNull();
+    first.unmount();
+
+    // A second look the same day is the plain streak again.
+    await open();
+    expect(screen.queryByRole('heading', { name: 'Your 12-day streak is back' })).toBeNull();
+  });
+
+  it('restores a member’s streak on one tap: a request with nothing in it, then the streak back, celebrated and felt once', async () => {
+    const client = routes(ended(offer({ free: true })), { 'POST /me/streak/repair': restoredAnswer });
     testAuth.client = client;
     const handed: Streak[] = [];
     await feeling(async (felt) => {
       await open((s) => handed.push(s));
-      fireEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Restore, free with Hevalo+' }));
       expect(await screen.findByRole('heading', { name: 'Your 12-day streak is back' })).toBeTruthy();
       expect(screen.getByText('The days you missed are kept. It goes on with your next lesson.')).toBeTruthy();
       // The offer is gone, the fire is the restored streak's, and the numbers and the ladder are its own.
@@ -133,10 +152,10 @@ describe('a streak that can be restored', () => {
   it('brings the streak back without anything thrown or travelling under Reduce Motion', async () => {
     patchReactNativeWeb({ reduceMotion: true });
     try {
-      testAuth.client = routes(ended(paid), { 'GET /me/wallet': wallet(80), 'POST /me/streak/repair': restoredAnswer });
+      testAuth.client = routes(ended(offer({ free: true })), { 'POST /me/streak/repair': restoredAnswer });
       await feeling(async (felt) => {
         await open();
-        fireEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
+        fireEvent.click(await screen.findByRole('button', { name: 'Restore, free with Hevalo+' }));
         expect(await screen.findByRole('heading', { name: 'Your 12-day streak is back' })).toBeTruthy();
         await waitFor(() => expect(screen.queryByTestId('streak-restored-burst')).toBeNull());
         // Still felt: Reduce Motion is about what moves, not about the buzz.
@@ -147,62 +166,27 @@ describe('a streak that can be restored', () => {
     }
   });
 
-  it('shows the balance and where gems come from when they are short, and a button that cannot be pressed', async () => {
-    const client = routes(ended(paid), { 'GET /me/wallet': wallet(20) });
-    testAuth.client = client;
-    await open();
-    expect(await screen.findByText('Your gems: 20')).toBeTruthy();
-    expect(screen.getByText('Gems come from moving up a league and from events.')).toBeTruthy();
-    const restore = screen.getByRole('button', { name: 'Restore for 50 gems' });
-    expect(restore.getAttribute('aria-disabled')).toBe('true');
-    fireEvent.click(restore);
-    expect(client.calls.some((c) => c.method === 'POST')).toBe(false);
-    // And nothing about buying any.
-    expect(screen.queryByText(/buy|purchase/i)).toBeNull();
-  });
-
-  it('says a Hevalo+ member’s restore is free, and asks for no balance', async () => {
-    const client = routes(ended({ days: 12, costGems: 0, free: true, until: UNTIL }), {
-      'POST /me/streak/repair': ok({ restored: true, duplicate: false, days: 12, costGems: 0, free: true, gems: 0, streak: back }),
+  it('keeps the offer to win it back when this month’s free restore turns out to be used', async () => {
+    testAuth.client = routes(ended(offer({ free: true })), {
+      'POST /me/streak/repair': fail({ code: 'WIN_IT_BACK', status: 409, message: 'win it back by learning' }),
     });
-    testAuth.client = client;
-    await open();
-    const restore = screen.getByRole('button', { name: 'Restore, free with Hevalo+' });
-    expect(screen.queryByText(/^Your gems:/)).toBeNull();
-    fireEvent.click(restore);
-    expect(await screen.findByRole('heading', { name: 'Your 12-day streak is back' })).toBeTruthy();
-    expect(client.calls.filter((c) => c.path !== '/me/today?weekStart=1').map((c) => `${c.method} ${c.path}`)).toEqual(['POST /me/streak/repair']);
-  });
-
-  it('reads the balance again when the server says the gems were short after all', async () => {
-    let gems = 80;
-    const client = routes(ended(paid), {
-      'GET /me/wallet': () => wallet(gems),
-      'POST /me/streak/repair': () => {
-        gems = 10; // Spent somewhere else since the sheet opened.
-        return fail({ code: 'INSUFFICIENT_FUNDS', status: 402, message: 'not enough Gems' });
-      },
-    });
-    testAuth.client = client;
     await feeling(async (felt) => {
       await open();
-      fireEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
-      expect(await screen.findByText('Your gems: 10')).toBeTruthy();
-      expect(screen.getByRole('button', { name: 'Restore for 50 gems' }).getAttribute('aria-disabled')).toBe('true');
+      fireEvent.click(await screen.findByRole('button', { name: 'Restore, free with Hevalo+' }));
+      await waitFor(() => expect(screen.queryByRole('button', { name: /^Restore/ })).toBeNull());
       expect(felt).toEqual(['error']);
     });
-    // The offer stays: it is still theirs to take once the gems are there.
     expect(screen.getByTestId('streak-repair')).toBeTruthy();
-    expect(screen.queryByRole('heading', { name: /is back$/ })).toBeNull();
+    expect(screen.getByLabelText('1 of 3 today')).toBeTruthy();
+    expect(screen.queryByText(/win it back by learning/)).toBeNull();
   });
 
   it('says plainly when the streak can no longer be restored', async () => {
-    testAuth.client = routes(ended(paid), {
-      'GET /me/wallet': wallet(80),
+    testAuth.client = routes(ended(offer({ free: true })), {
       'POST /me/streak/repair': fail({ code: 'RESTORE_EXPIRED', status: 409, message: 'the days in which that streak could be restored have passed' }),
     });
     await open();
-    fireEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Restore, free with Hevalo+' }));
     expect(await screen.findByText('This streak can no longer be brought back.')).toBeTruthy();
     // In the catalogue's words, not the server's, with nothing left to press that could only fail again.
     expect(screen.queryByText(/have passed/)).toBeNull();
@@ -212,9 +196,9 @@ describe('a streak that can be restored', () => {
 
   it('says the offer in Sorani, right to left', async () => {
     localStorage.setItem('kurda_locale_v1', 'ckb');
-    testAuth.client = routes(ended(paid), { 'GET /me/wallet': wallet(80) });
+    testAuth.client = routes(ended(offer({ free: true })));
     await open();
-    expect(await screen.findByRole('button', { name: /^بە .+ گەوهەر بیگەڕێنەوە$/ })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'بیگەڕێنەوە، لەگەڵ Hevalo+ بەخۆڕاییە' })).toBeTruthy();
     const sentence = screen.getByText(/^زنجیرەی .+ ڕۆژەکەت کۆتایی هات\./);
     expect(getComputedStyle(sentence).textAlign).toBe('right');
   });

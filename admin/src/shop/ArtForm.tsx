@@ -5,7 +5,7 @@
  */
 import { useState } from 'react';
 import { api, ApiError } from '../api';
-import { Banner, Button, Checkbox, Drawer, FieldRow, FormActions, Select, TextInput, Textarea, errorLine } from '../ui';
+import { Banner, Button, Checkbox, Drawer, FieldRow, FormActions, TextInput, Textarea, errorLine } from '../ui';
 import { ArtPicker, type UploadedArt } from './ArtPicker';
 import { KIND_NAME, skuFrom } from './art';
 import { needsApproval, type ArtKind, type Currency, type ShopItem } from './model';
@@ -40,7 +40,7 @@ export function ArtForm({
   const [name, setName] = useState(item?.name ?? '');
   const [sku, setSku] = useState<string | null>(null);
   const [description, setDescription] = useState(item?.description ?? '');
-  const [currency, setCurrency] = useState<Currency>(item?.currency ?? 'zer');
+  const currency: Currency = 'zer';
   const [price, setPrice] = useState(String(item?.price ?? DEFAULT_PRICE[kind]));
   const [order, setOrder] = useState(String(item?.displayOrder ?? nextOrder));
   const [premiumOnly, setPremiumOnly] = useState(item?.premiumOnly ?? true);
@@ -238,15 +238,6 @@ export function ArtForm({
             required
             error={errors.price}
             hint={value === 0 && price !== '' ? 'Free.' : undefined}
-          />
-          <Select
-            label="Currency"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value as Currency)}
-            options={[
-              { value: 'zer', label: 'Zêr' },
-              { value: 'gems', label: 'Gems' },
-            ]}
           />
         </FieldRow>
         {dear && (

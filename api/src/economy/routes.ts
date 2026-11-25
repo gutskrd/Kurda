@@ -5,7 +5,7 @@ import type { EconomyService } from './service.js';
 import { RECONCILE_LIST_MAX, WalletReconciler } from '../wallet/reconcile.js';
 
 const currencyQuery = z.object({
-  currency: z.enum(['zer', 'gems']).default('zer'),
+  currency: z.literal('zer').default('zer'),
   days: z.coerce.number().int().min(1).max(365).optional(),
 });
 
@@ -47,7 +47,7 @@ export function registerEconomyRoutes(app: FastifyInstance, economy: EconomyServ
       preHandler: requireRoles('admin'),
     },
     async (req) => {
-      const { currency, target } = req.query as { currency: 'zer' | 'gems'; target?: number };
+      const { currency, target } = req.query as { currency: 'zer'; target?: number };
       return economy.drift(currency, target ?? 1);
     },
   );

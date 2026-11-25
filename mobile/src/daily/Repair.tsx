@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, StyleSheet, Text, View } from 'react-native';
-import { fireLevel, fireSizeToFit, type StreakRepairOffer } from '@kurda/shared';
+import { PLUS_ON_SALE, fireLevel, fireSizeToFit, type StreakRepairOffer } from '@kurda/shared';
 import { describeError } from '../api/errors';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
@@ -8,41 +8,40 @@ import { formatDay, formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import type { Streak } from '../streak/format';
-import { gemsShort, repairLastDay, repairRefusal, type RepairResult } from '../streak/repair';
+import { repairLastDay, repairRefusal, winBackProgress, wonBackToday, type RepairResult } from '../streak/repair';
 import { ConfettiBurst, GlowRing, SoftGlow, useCelebration } from '../theme/CelebrationParts';
 import { Fire } from '../theme/Fire';
 import { display } from '../theme/fonts';
 import { ClayButton } from '../theme/glass';
-import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 
+/** The days whose won-back streak this app has greeted, so the moment plays once a day rather than at every look. */
+const greeted = new Set<string>();
+
+/** Whether to greet a streak won back today, once; a restore the learner made here counts as greeted. */
+export function takeWonBack(streak: Pick<Streak, 'restored'>, today: string): boolean {
+  if (!wonBackToday(streak, today) || greeted.has(today)) return false;
+  greeted.add(today);
+  return true;
+}
+
 /**
- * The offer to restore an ended streak, quietly: one sentence naming the streak and the last day, and one button with
- * the gem price, or free for a Hevalo+ member's monthly restore. No countdown and nothing about loss. When gems are
- * known to be short the button is disabled, with the balance and the shop's line on earning gems. The server decides:
- * a refusal is read by `repairRefusal`, reloading the balance if gems were short after all, or replacing the offer with
- * a sentence if the streak can no longer be restored.
+ * The offer to win an ended streak back, quietly: one sentence naming the streak, what wins it back (three lessons or
+ * practice sessions in one day) and the last day, with today's sessions as a row of marks. A restore is never bought;
+ * a Hevalo+ member with this month's free restore also has one button. No countdown and nothing about loss. The server
+ * decides: a refusal is read by `repairRefusal`, and the offer gives way to a sentence once the streak can no longer
+ * be won back.
  */
 export function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestored: (streak: Streak) => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
-  const [gems, setGems] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [gone, setGone] = useState(false);
-
-  const readGems = useCallback(async () => {
-    const res = await client.get<{ balances: { gems: number } }>('/me/wallet');
-    if (res.ok) setGems(res.data.balances.gems);
-  }, [client]);
-
-  // A free restore needs no balance; a priced one says it only when the gems are short.
-  useEffect(() => {
-    if (!offer.free) void readGems();
-  }, [offer.free, readGems]);
+  const [free, setFree] = useState(offer.free);
 
   const restore = useCallback(async () => {
     setBusy(true);
@@ -56,13 +55,13 @@ export function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; o
     // Asked for and refused: felt as the error it is, and said in words.
     haptic('error');
     const why = repairRefusal(res.error.code);
-    if (why === 'short') await readGems();
+    if (why === 'learn') setFree(false);
     else if (why === 'gone') setGone(true);
     else setProblem(describeError(res.error, t));
-  }, [client, onRestored, readGems, t]);
+  }, [client, onRestored, t]);
 
   const lastDay = repairLastDay(offer);
-  const short = gemsShort(offer, gems);
+  const { done, needed } = winBackProgress(offer);
   const count = (n: number) => formatNumber(n, locale);
   if (gone) {
     return (
@@ -73,30 +72,30 @@ export function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; o
       </View>
     );
   }
+  const progress = t('streak.repair.progress', { done: count(done), needed: count(needed) });
   return (
     <View style={[styles.offer, { backgroundColor: colors.surface }]} testID="streak-repair">
       <Text style={[styles.offerText, dir.text, { color: colors.textPrimary }]}>
-        {t('streak.repair.offer', { count: count(offer.days), date: lastDay ? formatDay(lastDay, locale) : '' })}
+        {t('streak.repair.offer', { count: count(offer.days), sessions: count(needed), date: lastDay ? formatDay(lastDay, locale) : '' })}
       </Text>
-      {short && gems !== null ? (
-        <View style={styles.shortLines}>
-          <View style={[styles.balance, { flexDirection: dir.row }]}>
-            <Icon name="gem" size={18} color={colors.textSecondary} />
-            <Text style={[styles.balanceText, dir.text, { color: colors.textPrimary }]}>{t('streak.repair.gems', { count: count(gems) })}</Text>
-          </View>
-          <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('shop.earnMoreGems')}</Text>
+      <View style={[styles.progress, { flexDirection: dir.row }]} accessible accessibilityLabel={progress} testID="streak-repair-progress">
+        <View style={[styles.marks, { flexDirection: dir.row }]}>
+          {Array.from({ length: needed }, (_, i) => (
+            <View
+              key={i}
+              style={[styles.mark, i < done ? { backgroundColor: colors.textPrimary } : { borderWidth: 1.5, borderColor: colors.lockedMark }]}
+            />
+          ))}
         </View>
-      ) : null}
-      <View style={{ flexDirection: dir.row }}>
-        <ClayButton
-          label={offer.free ? t('streak.repair.restoreFree') : t('streak.repair.restoreFor', { count: count(offer.costGems) })}
-          icon={offer.free ? undefined : 'gem'}
-          variant="outline"
-          busy={busy}
-          disabled={short}
-          onPress={() => void restore()}
-        />
+        <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{progress}</Text>
       </View>
+      {free ? (
+        <View style={{ flexDirection: dir.row }}>
+          <ClayButton label={t('streak.repair.restoreFree')} variant="outline" busy={busy} onPress={() => void restore()} />
+        </View>
+      ) : PLUS_ON_SALE ? (
+        <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('streak.repair.plusPitch')}</Text>
+      ) : null}
       {problem ? (
         <Text style={[styles.hint, dir.text, { color: colors.danger }]} accessibilityRole="alert" accessibilityLiveRegion="polite">
           {problem}
@@ -112,9 +111,10 @@ const BACK_STAGE = 150;
 
 /**
  * The restored streak, in the head's place: its fire arrives with `useCelebration` (spring, ring, flecks, success
- * haptic and chime), then the text. Under Reduce Motion the fire fades in. The headline is announced as it lands.
+ * haptic and chime), then the text, which says how it came back. Under Reduce Motion the fire fades in. The headline is
+ * announced as it lands.
  */
-export function Restored({ streak }: { streak: Streak }): React.JSX.Element {
+export function Restored({ streak, wonBack = false }: { streak: Streak; wonBack?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const moment = useCelebration();
@@ -143,7 +143,7 @@ export function Restored({ streak }: { streak: Streak }): React.JSX.Element {
       <Text style={[styles.backTitle, { color: colors.textPrimary }]} accessibilityRole="header">
         {title}
       </Text>
-      <Text style={[styles.backLine, { color: colors.textSecondary }]}>{t('streak.repair.restoredBody')}</Text>
+      <Text style={[styles.backLine, { color: colors.textSecondary }]}>{t(wonBack ? 'streak.repair.wonBackBody' : 'streak.repair.restoredBody')}</Text>
     </View>
   );
 }
@@ -151,9 +151,9 @@ export function Restored({ streak }: { streak: Streak }): React.JSX.Element {
 const styles = StyleSheet.create({
   offer: { gap: spacing.sm + 2, padding: spacing.md, borderRadius: radii.lg },
   offerText: { fontSize: typography.sizes.text, lineHeight: 21 },
-  shortLines: { gap: 2 },
-  balance: { alignItems: 'center', gap: spacing.xs + 2 },
-  balanceText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
+  progress: { alignItems: 'center', gap: spacing.sm },
+  marks: { gap: spacing.xs + 2 },
+  mark: { width: 10, height: 10, borderRadius: radii.pill },
   hint: { fontSize: typography.sizes.text, lineHeight: 22 },
   back: { alignItems: 'center', gap: spacing.xs },
   backStage: { width: BACK_STAGE, height: BACK_STAGE, alignItems: 'center', justifyContent: 'center' },

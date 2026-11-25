@@ -230,7 +230,7 @@ function EventForm({ event, onClose, onSaved }: { event: GameEvent | null; onClo
       return setProblem('Quests and rewards must be valid JSON.');
     }
     if (!Array.isArray(questList)) return setProblem('Quests are a JSON array: [ … ].');
-    if (!rewardMap || typeof rewardMap !== 'object' || Array.isArray(rewardMap)) return setProblem('Rewards are a JSON object: { "gems": 50 }.');
+    if (!rewardMap || typeof rewardMap !== 'object' || Array.isArray(rewardMap)) return setProblem('Rewards are a JSON object: { "zer": 250 }.');
     const body = {
       key: key.trim(),
       name: name.trim(),
@@ -321,7 +321,7 @@ function EventForm({ event, onClose, onSaved }: { event: GameEvent | null; onClo
         />
         <Textarea
           label="Rewards (JSON)"
-          hint={'For example { "gems": 50 }. A change of rewards waits in Approvals for a second admin.'}
+          hint={'For example { "zer": 250 }. A change of rewards waits in Approvals for a second admin.'}
           className="code-area"
           rows={3}
           spellCheck={false}

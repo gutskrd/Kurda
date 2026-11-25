@@ -5,22 +5,24 @@ import {
   GIFTS_PER_DAY,
   GIFTS_PER_FRIEND_PER_DAY,
   GIFTS_RECEIVED_PER_DAY,
+  GIFT_STICKERS,
   MAX_GIFT_RECIPIENTS,
   giftTierFor,
+  isGiftSticker,
 } from './gifts.js';
+import { FREE_GIFT_MAX_PRICE } from './plus.js';
 
 describe('gift tiers', () => {
   it('makes a limited item legendary whatever it costs', () => {
-    expect(giftTierFor({ currency: 'zer', price: 100, limited: true })).toBe('legendary');
+    expect(giftTierFor({ price: 100, limited: true })).toBe('legendary');
   });
 
-  it('makes gem items and dear Zêr items rare', () => {
-    expect(giftTierFor({ currency: 'gems', price: 20, limited: false })).toBe('rare');
-    expect(giftTierFor({ currency: 'zer', price: 1500, limited: false })).toBe('rare');
+  it('makes dear items rare', () => {
+    expect(giftTierFor({ price: 1500, limited: false })).toBe('rare');
   });
 
   it('leaves the rest common', () => {
-    expect(giftTierFor({ currency: 'zer', price: 500, limited: false })).toBe('common');
+    expect(giftTierFor({ price: 500, limited: false })).toBe('common');
   });
 
   it('plays a bigger moment for a bigger gift, and never long', () => {
@@ -39,5 +41,25 @@ describe('gift tiers', () => {
     expect(GIFTS_RECEIVED_PER_DAY).toBeGreaterThan(GIFTS_PER_FRIEND_PER_DAY);
     // and no more than one sender’s whole day, so many senders cannot multiply it
     expect(GIFTS_RECEIVED_PER_DAY).toBeLessThanOrEqual(GIFTS_PER_DAY);
+  });
+});
+
+describe('gift stickers', () => {
+  it('come at three sizes, three of each, and any one can be a member’s free gift', () => {
+    const prices = [...new Set(GIFT_STICKERS.map((s) => s.price))];
+    expect(prices).toEqual([40, 120, 400]);
+    for (const price of prices) expect(GIFT_STICKERS.filter((s) => s.price === price)).toHaveLength(3);
+    expect(Math.max(...prices)).toBeLessThanOrEqual(FREE_GIFT_MAX_PRICE);
+  });
+
+  it('use the app icons’ own pictures, each sticker once', () => {
+    for (const s of GIFT_STICKERS) expect(s.assetKey).toMatch(/^icons\/made-\d\d-[a-z-]+\.png$/);
+    expect(new Set(GIFT_STICKERS.map((s) => s.sku)).size).toBe(GIFT_STICKERS.length);
+    expect(new Set(GIFT_STICKERS.map((s) => s.assetKey)).size).toBe(GIFT_STICKERS.length);
+  });
+
+  it('are told apart by their category', () => {
+    expect(isGiftSticker('sticker')).toBe(true);
+    expect(isGiftSticker('icon')).toBe(false);
   });
 });

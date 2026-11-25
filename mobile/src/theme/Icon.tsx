@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path, SvgXml } from 'react-native-svg';
-import { HEVALO_GLYPHS, coinSvg, gemSvg, type HevaloGlyph } from '@kurda/shared';
+import { HEVALO_GLYPHS, coinSvg, type HevaloGlyph } from '@kurda/shared';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { timing } from './animate';
@@ -35,8 +35,8 @@ export function Icon({
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  // The two currencies are pictures in their own colours, not tinted glyphs.
-  if (name === 'coin' || name === 'gem') return <CurrencyIcon name={name} size={size} style={style} />;
+  // The currency is a picture in its own colours, not a tinted glyph.
+  if (name === 'coin') return <CurrencyIcon size={size} style={style} />;
   const fill =
     color ??
     (tone === 'onPrimary'
@@ -58,9 +58,9 @@ export function Icon({
   );
 }
 
-/** Zêr and gems in colour (shared `coinSvg`, `gemSvg`), the same pictures as the website's whatever tint is asked for. */
-function CurrencyIcon({ name, size, style }: { name: 'coin' | 'gem'; size: number; style?: StyleProp<ViewStyle> }): React.JSX.Element {
-  const xml = useMemo(() => (name === 'coin' ? coinSvg : gemSvg)({ size }), [name, size]);
+/** Zêr in colour (shared `coinSvg`), the same picture as the website's whatever tint is asked for. */
+function CurrencyIcon({ size, style }: { size: number; style?: StyleProp<ViewStyle> }): React.JSX.Element {
+  const xml = useMemo(() => coinSvg({ size }), [size]);
   return (
     <View style={[{ width: size, height: size }, style]}>
       <SvgXml xml={xml} width={size} height={size} />

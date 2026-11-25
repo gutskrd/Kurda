@@ -11,8 +11,8 @@ import {
 
 describe('parseQuest', () => {
   it('normalizes a valid quest and floors counts/rewards', () => {
-    const q = parseQuest({ id: 'x', type: 'earn_xp', count: 300.9, reward: { gems: 30.5, zer: 0 }, titleEn: 'Earn' });
-    expect(q).toEqual({ id: 'x', type: 'earn_xp', count: 300, reward: { gems: 30 }, titleEn: 'Earn', titleKu: undefined });
+    const q = parseQuest({ id: 'x', type: 'earn_xp', count: 300.9, reward: { zer: 150.5 }, titleEn: 'Earn' });
+    expect(q).toEqual({ id: 'x', type: 'earn_xp', count: 300, reward: { zer: 150 }, titleEn: 'Earn', titleKu: undefined });
   });
 
   it('rejects unknown types, missing id, and non-positive counts', () => {
@@ -33,12 +33,12 @@ describe('parseQuest', () => {
 
   // ranked-quiz wins went with the quiz: such a quest could never be completed
   it('no longer reads a quest of ranked-quiz wins', () => {
-    expect(parseQuest({ id: 'w', type: 'win_games', count: 3, reward: { gems: 40 } })).toBeNull();
+    expect(parseQuest({ id: 'w', type: 'win_games', count: 3, reward: { zer: 200 } })).toBeNull();
   });
 });
 
 describe('evaluateQuest', () => {
-  const def: QuestDef = { id: 'g', type: 'story_quizzes', count: 3, reward: { gems: 40 } };
+  const def: QuestDef = { id: 'g', type: 'story_quizzes', count: 3, reward: { zer: 200 } };
 
   it('caps current at the target and flags completion', () => {
     expect(evaluateQuest(def, 1)).toMatchObject({ current: 1, target: 3, complete: false });

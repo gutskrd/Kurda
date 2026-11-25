@@ -73,6 +73,10 @@ export function notificationText(item: Pick<InboxItem, 'title' | 'body' | 'data'
     return { title: t('play.notification.inviteTitle'), body: t('play.notification.inviteBody', { game: t(GAME_NAME_KEY[item.data.game]) }) };
   }
   if (item.data.kind === 'gift') return { title: t('play.notification.giftTitle'), body: t('play.notification.giftBody') };
+  if (item.data.kind === 'post_gift') {
+    const name = typeof item.data.fromName === 'string' && item.data.fromName ? item.data.fromName : null;
+    return { title: name ? t('post.gifts.notice', { name }) : t('post.gifts.noticeSomeone'), body: '' };
+  }
   // Your own bird home with an answer is said as that, so the tap promises what the window then shows.
   const letter = letterNoticeOf(item.data);
   if (letter) {

@@ -226,6 +226,7 @@ export function noticeKind(item: Pick<InboxItem, 'category' | 'data'>): NoticeKi
     case 'play_invite':
       return isPlayGame(item.data.game) ? { icon: 'ticket', reward: false, game: item.data.game } : { icon: 'ticket', reward: false };
     case 'gift':
+    case 'post_gift':
       return { icon: 'gift', reward: true };
     case 'letter':
       return { icon: 'mail', reward: false };
@@ -311,9 +312,11 @@ export function noticeActor(item: Pick<InboxItem, 'data'>, invites: readonly Inc
     const invite = invites.find((i) => i.id === data.inviteId);
     return invite ? { name: invite.from.name, photoUrl: invite.from.avatarUrl } : null;
   }
-  if ((data.kind === 'gift' || data.kind === 'letter') && typeof data.fromUserId === 'string') {
+  if ((data.kind === 'gift' || data.kind === 'post_gift' || data.kind === 'letter') && typeof data.fromUserId === 'string') {
     const who = friends.find((f) => f.userId === data.fromUserId);
-    return who ? { name: who.displayName || who.username, photoUrl: who.avatarUrl ?? null } : null;
+    if (who) return { name: who.displayName || who.username, photoUrl: who.avatarUrl ?? null };
+    // A gift names its sender in its data, as the server lets the recipient see them.
+    return data.kind !== 'letter' && typeof data.fromName === 'string' && data.fromName ? { name: data.fromName, photoUrl: null } : null;
   }
   if (data.screen === 'Chat' && typeof data.username === 'string' && data.username && typeof data.userId === 'string') {
     return { name: data.username, photoUrl: null };

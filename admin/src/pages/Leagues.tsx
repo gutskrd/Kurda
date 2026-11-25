@@ -261,7 +261,7 @@ function RunDialog({ kind, onClose, onDone }: { kind: 'settle' | 'merge'; onClos
       <div className="dialog-text">
         {settle ? (
           <p>
-            It settles every group of the weeks that have ended — promotions and their Gems, the Pêla trophy, the season’s drop — and records the personal weeks.
+            It settles every group of the weeks that have ended — promotions and their Zêr, the Pêla trophy, the season’s drop — and records the personal weeks.
             It runs for this week, whatever week the page shows.
           </p>
         ) : (

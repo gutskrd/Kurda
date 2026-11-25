@@ -24,6 +24,8 @@ import { gameNotFound, openGamesAdultsOnly, parseSettings } from '../play/errors
 import { seatId, tallySeries } from '../play/lobby.js';
 import type { JoinOutcome, LobbyChange, LobbyFacts, LobbyPhase, Series } from '../play/types.js';
 import { XpService } from '../xp/service.js';
+import { WalletService } from '../wallet/service.js';
+import { payOnlineWinSafely } from '../earn/wins.js';
 import { Presence } from '../story-games/presence.js';
 import type { StoryGameNotifier } from '../story-games/notifier.js';
 import { awayAfter, controllerOf, dueStep, isAway, lobbyClosesAt, nextDue, type EngineSeat } from './engine.js';
@@ -1062,6 +1064,12 @@ export class MultiplayerService {
           const paid = amount > 0 ? await award({ userId: p.user_id!, source: m.xpSource, amount, refId: `mp:${t.lobby.id}:${p.user_id}` }) : 0;
           await t.client.query(`UPDATE game_lobby_players SET xp_awarded = $3 WHERE lobby_id = $1 AND seat = $2`, [t.lobby.id, p.seat, paid]);
         }
+        // a win against the others who played it out pays Zêr too (earn/wins.ts)
+        const players = active.flatMap((p) => {
+          const placeOf = placed.find((x) => x.seat === p.seat);
+          return placeOf ? [{ userId: p.user_id!, place: placeOf.place }] : [];
+        });
+        await payOnlineWinSafely(t.client, new WalletService(this.pool), { ref: `mp:${t.lobby.id}`, players }, this.log, t.now);
       }
     }
     // A game against Hevalo pays nothing: there is nobody to play against, and XP is for games with other people.

@@ -6,6 +6,16 @@ import { giftChatPath, socialNotification } from './notifications';
 const note = (data: Record<string, unknown> | null) => ({ title: 'English title', body: 'English body', data });
 
 describe('socialNotification', () => {
+  it('says who gave a post a gift, as the server lets its author see them, and opens the post', () => {
+    const named = socialNotification(note({ kind: 'post_gift', postType: 'library', postId: 'p1', fromUserId: 'u1', fromName: 'Hamo' }), t);
+    expect(named).toEqual({ title: 'Hamo gave your post a gift', body: null, to: '/app/library/p1' });
+    // Once the giver may not be named to the author, the notice says nothing about who.
+    expect(socialNotification(note({ kind: 'post_gift', postType: 'library', postId: 'p1', fromUserId: 'u1' }), t)?.title).toBe('Your post was given a gift');
+    expect(socialNotification(note({ kind: 'post_gift', postType: 'library', postId: 'p1', fromName: 'Hamo' }), translator(ku))?.title).toBe(
+      'Hamo diyariyek da şandiya te',
+    );
+  });
+
   it('sends a report’s outcome to My reports, in the reader’s words', () => {
     const view = socialNotification(note({ kind: 'report_outcome', reportIds: ['r1'], outcome: 'actioned' }), t);
     expect(view).toEqual({

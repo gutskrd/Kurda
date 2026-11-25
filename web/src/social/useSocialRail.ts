@@ -53,7 +53,7 @@ interface RailSelf {
   avatarUrl: string | null;
   /** Derived server-side from XP; `progress` runs from 0 to 1 toward the next level. */
   level: { level: number; progress: number; xp: number; currentLevelXp: number; nextLevelXp: number };
-  balances: { zer: number; gems: number };
+  balances: { zer: number };
 }
 
 export interface SocialRailData {
@@ -192,7 +192,7 @@ const FALLBACK_MS = 2 * 60_000;
 const EVENT_DELAY_MS = 1_000;
 /** Reads for events are at least this far apart, so a busy group chat costs no more than the old poll. */
 const EVENT_GAP_MS = POLL_MS;
-/** Writes that spend or earn zêr or gems, after which the purse in the top bar is read again at once. */
+/** Writes that spend or earn Zêr, after which the purse in the top bar is read again at once. */
 const PURSE_WRITES = ['/shop/', '/me/tree/', '/letters/bird', '/me/streak/', '/rewards/', '/me/quests/'];
 
 /**

@@ -47,7 +47,7 @@ function editFetch(calls: Array<{ url: string; body: unknown }>, user: unknown =
       return jsonResponse(200, { userId: '1', username: 'ada', frameSku: null, sections: { posts: true, games: true, likes: true, saved: true, reposts: true } });
     }
     if (url.includes('/me/inventory')) return jsonResponse(200, { items: [] });
-    if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 0, gems: 0 } });
+    if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 0 } });
     if (url.includes('/shop')) return jsonResponse(200, { items: [] });
     if (url.includes('/me')) {
       if (init?.method === 'PATCH') calls.push({ url: 'PATCH /me', body: init.body ? JSON.parse(init.body as string) : null });

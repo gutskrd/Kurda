@@ -7,7 +7,7 @@ import { sayReactionLater } from '../characters/reactions';
 import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
-import { cellState, dailyAction, dailyClaimed, plusGemsOf, type DailyClaim, type DailyStatus } from '../rewards/daily';
+import { cellState, dailyAction, dailyClaimed, type DailyClaim, type DailyStatus } from '../rewards/daily';
 import { ConfettiBurst, GlowRing, useCelebration } from '../theme/CelebrationParts';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -21,7 +21,7 @@ const COIN_STAGE = 44;
  * Today's Zêr inside the daily view, as on the website: the day's reward with a claim button (the server sets the
  * amount), a lesson first until one is finished today, or tomorrow once taken, and the cycle as a quiet row of coins.
  * A claim plays the app's celebration around the coin once, with a word from Xezo, and tells the rest of the app
- * (`dailyClaimed`), so Learn's purse shows the new Zêr. A Hevalo+ member sees the gems a claim adds.
+ * (`dailyClaimed`), so Learn's purse shows the new Zêr. It is a Hevalo+ member's; the view leaves it out for anyone else.
  */
 export function DailyZer({ daily, onClaimed, onLearn }: { daily: DailyStatus; onClaimed: (daily: DailyStatus) => void; onLearn?: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -56,7 +56,6 @@ export function DailyZer({ daily, onClaimed, onLearn }: { daily: DailyStatus; on
       : action === 'learnFirst'
         ? t('daily.learnFirst', { amount: n(daily.reward) })
         : t('daily.comeBack');
-  const plusGems = landed ? plusGemsOf(landed) : action === 'claim' ? plusGemsOf(daily) : null;
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surface }]} testID="daily-zer">
@@ -101,12 +100,6 @@ export function DailyZer({ daily, onClaimed, onLearn }: { daily: DailyStatus; on
           <ClayButton label={t('daily.goLearn')} variant="outline" onPress={onLearn} />
         </View>
       ) : null}
-      {plusGems !== null ? (
-        <View style={[styles.under, styles.plus, { flexDirection: dir.row }]} testID="daily-plus-gems">
-          <Icon name="gem" size={16} color={colors.textSecondary} />
-          <Text style={[styles.plusText, { color: colors.textSecondary }]}>{t('rewards.plusGems', { count: plusGems })}</Text>
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -140,6 +133,4 @@ const styles = StyleSheet.create({
   cycleDay: { width: 8, height: 8, borderRadius: radii.pill },
   done: { width: 32, height: 32, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   under: { paddingStart: COIN_STAGE + spacing.sm + 4 },
-  plus: { alignItems: 'center', gap: spacing.xs },
-  plusText: { fontSize: typography.sizes.text },
 });

@@ -5,7 +5,7 @@ import { useRail } from '../social/RailProvider';
 import { Brand } from './Brand';
 import { LinkButton } from './Button';
 import { Skeleton } from './Skeleton';
-import { CoinIcon, GemIcon, GearIcon, MenuIcon, CloseIcon, ShopIcon, UserIcon, UsersIcon } from './icons';
+import { CoinIcon, GearIcon, MenuIcon, CloseIcon, ShopIcon, UserIcon, UsersIcon } from './icons';
 import { RailToggle } from '../social/RailToggle';
 import { NotificationsBell } from '../notifications/NotificationsBell';
 import { NavSearch } from '../search/NavSearch';
@@ -290,8 +290,8 @@ function PhoneBar({ links }: { links: NavItem[] }): React.JSX.Element {
 }
 
 /**
- * Zêr and gems stacked, linking to the shop. The numbers come from the rail's poll; until they arrive, two grey bars of
- * the same size hold the place, since a zero that turns into 13,880 is worse than a moment of nothing.
+ * Your Zêr, linking to the shop. The number comes from the rail's poll; until it arrives, a grey bar of the same size
+ * holds the place, since a zero that turns into 13,880 is worse than a moment of nothing.
  */
 function Purse(): React.JSX.Element | null {
   const t = useT();
@@ -305,10 +305,6 @@ function Purse(): React.JSX.Element | null {
           <CoinIcon size={15} />
           <Skeleton line w={34} />
         </span>
-        <span className="purse-row purse-gems">
-          <GemIcon size={15} />
-          <Skeleton line w={20} />
-        </span>
       </span>
     );
   }
@@ -320,18 +316,12 @@ function Purse(): React.JSX.Element | null {
         <span className="purse-amount">{you.balances.zer.toLocaleString()}</span>
         <span className="sr-only">Zêr</span>
       </span>
-      <span className="purse-row purse-gems">
-        <GemIcon size={15} />
-        <span className="purse-amount">{you.balances.gems.toLocaleString()}</span>
-        <span className="sr-only">{t('shop.gems')}</span>
-      </span>
     </Link>
   );
 }
 
 /** The purse on one line, at the end of the menu's Shop row on a phone. */
 function PurseAmounts(): React.JSX.Element | null {
-  const t = useT();
   const { data } = useRail();
   const you = data.you;
   if (!you) return null;
@@ -341,11 +331,6 @@ function PurseAmounts(): React.JSX.Element | null {
         <CoinIcon size={15} />
         <span className="purse-amount">{you.balances.zer.toLocaleString()}</span>
         <span className="sr-only">Zêr</span>
-      </span>
-      <span className="purse-row purse-gems">
-        <GemIcon size={15} />
-        <span className="purse-amount">{you.balances.gems.toLocaleString()}</span>
-        <span className="sr-only">{t('shop.gems')}</span>
       </span>
     </span>
   );

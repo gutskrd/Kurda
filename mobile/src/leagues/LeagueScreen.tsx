@@ -208,7 +208,7 @@ function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
                 {[
                   league.lastWeek.rank && league.lastWeek.groupSize ? t('leagues.place', { rank: league.lastWeek.rank, count: league.lastWeek.groupSize }) : null,
                   t('leagues.xpCount', { xp: formatNumber(league.lastWeek.weeklyXp, locale) }),
-                  league.lastWeek.gems > 0 ? t('leagues.gems', { count: league.lastWeek.gems }) : null,
+                  league.lastWeek.zer > 0 ? t('leagues.zer', { count: league.lastWeek.zer }) : null,
                 ]
                   .filter(Boolean)
                   .join(' · ')}

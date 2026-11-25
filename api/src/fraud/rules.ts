@@ -14,7 +14,7 @@ export type FraudFlag = 'VELOCITY' | 'REFUND_ABUSE' | 'RECEIPT_REUSE';
 export interface FraudSignals {
   /** redemptions by this account in the last hour (including the current one). */
   purchasesLastHour: number;
-  /** past refunds where Gems had already been (partly) spent. */
+  /** past refunds where Zêr had already been (partly) spent. */
   refundsAfterSpend: number;
   /** a different account already redeemed this exact store transaction. */
   receiptReusedAcrossAccounts: boolean;

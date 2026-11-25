@@ -1,13 +1,13 @@
 import { useId } from 'react';
-import { CoinIcon, GemIcon, XpIcon } from '../components/icons';
+import { CoinIcon, XpIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
 /** What a leaderboard ranks. The ids are the API's (`GET /leaderboards/:type`). */
-export type BoardType = 'weekly_xp' | 'all_time_xp' | 'zer' | 'gewher';
+export type BoardType = 'weekly_xp' | 'all_time_xp' | 'zer';
 
-/** What the Rankings page ranks by: XP (this week or all time), Zêr or Gewher. */
-export type RankKind = 'xp' | 'zer' | 'gewher';
+/** What the Rankings page ranks by: XP (this week or all time) or Zêr. */
+export type RankKind = 'xp' | 'zer';
 
 /** Over what span the XP board counts. */
 export type XpSpan = 'week' | 'all';
@@ -21,7 +21,6 @@ interface KindMeta {
 export const RANK_KINDS: readonly KindMeta[] = [
   { key: 'xp', labelKey: 'rankings.board.xp' },
   { key: 'zer', labelKey: 'rankings.board.zer' },
-  { key: 'gewher', labelKey: 'rankings.board.gewher' },
 ];
 
 export function isRankKind(value: string | null): value is RankKind {
@@ -39,14 +38,11 @@ export const BOARD_NAME: Readonly<Record<BoardType, MessageKey>> = {
   weekly_xp: 'rankings.board.weeklyXp',
   all_time_xp: 'rankings.board.allTimeXp',
   zer: 'rankings.board.zer',
-  gewher: 'rankings.board.gewher',
 };
 
-
-/** Each kind's icon: the XP bolt, the coin or the gem. */
+/** Each kind's icon: the XP bolt or the coin. */
 function KindIcon({ kind, size }: { kind: RankKind; size: number }): React.JSX.Element {
   if (kind === 'zer') return <CoinIcon size={size} />;
-  if (kind === 'gewher') return <GemIcon size={size} />;
   return <XpIcon size={size} className="rank-by-xp" />;
 }
 
@@ -95,8 +91,8 @@ export function SpanSwitch({ value, onChange }: { value: XpSpan; onChange: (next
 }
 
 /**
- * An amount on a board: XP as a number and unit, Zêr and Gewher as a number beside the currency's icon, as in the
- * purse. The icon is decorative; screen readers hear the number and the currency's name.
+ * An amount on a board: XP as a number and unit, Zêr as a number beside the coin, as in the purse. The icon is
+ * decorative; screen readers hear the number and the currency's name.
  */
 export function BoardAmount({ type, amount }: { type: BoardType; amount: number }): React.JSX.Element {
   const t = useT();
@@ -107,7 +103,7 @@ export function BoardAmount({ type, amount }: { type: BoardType; amount: number 
     <span className="rank-amount">
       <KindIcon kind={type} size={16} />
       <span>{number}</span>
-      <span className="sr-only">{t(type === 'zer' ? 'rankings.board.zer' : 'rankings.board.gewher')}</span>
+      <span className="sr-only">{t('rankings.board.zer')}</span>
     </span>
   );
 }

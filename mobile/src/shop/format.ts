@@ -3,7 +3,8 @@
 import type { ItemCategory, ItemSort } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 
-export type Currency = 'zer' | 'gems';
+/** Zêr is the only currency; items still say so, for servers and builds that sent another. */
+export type Currency = 'zer';
 
 export interface ShopItem {
   sku: string;
@@ -22,7 +23,6 @@ export interface ShopItem {
 
 export interface Balances {
   zer: number;
-  gems: number;
 }
 
 type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
@@ -40,6 +40,7 @@ export const KIND_LABEL: Record<ItemCategory | 'all', TranslationKey> = {
   icon: 'shop.kind.icon',
   frame: 'shop.kind.frame',
   tag: 'shop.kind.tag',
+  sticker: 'shop.kind.sticker',
   other: 'shop.kind.other',
 };
 
@@ -61,20 +62,12 @@ export function kindWithCount(t: Translate, kind: ItemCategory | 'all', count: n
   return t('shop.kind.a11y', { kind: t(KIND_LABEL[kind]), items: itemsText(t, count) });
 }
 
-/**
- * A currency's name inside a sentence. Zêr is a name and never translated; gems are a common noun, so they take the
- * reader's word.
- */
-export function currencyLabel(t: Translate, currency: Currency): string {
-  return currency === 'zer' ? 'Zêr' : t('gift.picker.gems');
-}
+/** The currency's name inside a sentence: Zêr is a name and never translated. */
+export const ZER = 'Zêr';
 
-/**
- * Whether a balance covers an item in its own currency (a gem item against the gems, never the Zêr). `times` is how
- * many are paid for (a gift to several friends).
- */
-export function withinBalance(item: { currency: Currency; price: number }, balances: Balances, times = 1): boolean {
-  return balances[item.currency] >= item.price * times;
+/** Whether a balance covers an item. `times` is how many are paid for (a gift to several friends). */
+export function withinBalance(item: { price: number }, balances: Balances, times = 1): boolean {
+  return balances.zer >= item.price * times;
 }
 
 /** Whether the current balances cover this item. */
@@ -82,13 +75,9 @@ export function canAfford(item: ShopItem, balances: Balances): boolean {
   return withinBalance(item, balances);
 }
 
-/**
- * Purchases that ask once more: dear Zêr ones, and anything in gems, the scarcer currency. Every purchase is final, so
- * the question repeats that.
- */
+/** Purchases that ask once more: dear ones. Every purchase is final, so the question repeats that. */
 export function needsConfirmation(item: ShopItem): boolean {
-  if (item.price <= 0) return false;
-  return item.currency === 'gems' || item.price > CONFIRM_THRESHOLD_ZER;
+  return item.price > CONFIRM_THRESHOLD_ZER;
 }
 
 /** Whether an item can be sent as a gift from the shop. A free one cannot (the API refuses it with NOT_GIFTABLE). */

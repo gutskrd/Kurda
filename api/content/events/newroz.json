@@ -16,7 +16,7 @@
       "count": 300,
       "titleEn": "Welcome spring — earn 300 XP",
       "titleKu": "Bi xêr hatî bihar — 300 XP bi dest bixe",
-      "reward": { "gems": 30 }
+      "reward": { "zer": 150 }
     },
     {
       "id": "newroz-play-3",
@@ -24,7 +24,7 @@
       "count": 3,
       "titleEn": "Finish 3 story quizzes during Newroz",
       "titleKu": "Di rojên Newrozê de pirsên 3 çîrokan bibersivîne",
-      "reward": { "gems": 40 }
+      "reward": { "zer": 200 }
     },
     {
       "id": "newroz-lessons-2",
@@ -32,8 +32,8 @@
       "count": 2,
       "titleEn": "Complete 2 lessons over Newroz",
       "titleKu": "Di Newrozê de 2 dersan biqedîne",
-      "reward": { "gems": 30, "zer": 200 }
+      "reward": { "zer": 350 }
     }
   ],
-  "rewards": { "completionBadge": "newroz", "gems": 100 }
+  "rewards": { "completionBadge": "newroz", "zer": 500 }
 }

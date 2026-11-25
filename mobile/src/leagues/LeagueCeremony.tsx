@@ -121,7 +121,7 @@ export function LeagueCeremony({
         : kind === 'trophy'
           ? t('leagues.ceremony.trophy')
           : t('leagues.lastWeek.title');
-  const detail = [t('leagues.xpCount', { xp: formatNumber(week.weeklyXp, locale) }), week.gems > 0 ? t('leagues.gems', { count: week.gems }) : null]
+  const detail = [t('leagues.xpCount', { xp: formatNumber(week.weeklyXp, locale) }), week.zer > 0 ? t('leagues.zer', { count: week.zer }) : null]
     .filter(Boolean)
     .join(' · ');
 

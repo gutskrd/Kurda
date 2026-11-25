@@ -15,7 +15,7 @@ import {
   type TreeView,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import { isEconomyBlocked } from '../economy/standing.js';
+import { earnWithin } from '../earn/service.js';
 import { localDate, safeTimeZone } from '../streaks/streak-logic.js';
 import type { WalletService } from '../wallet/service.js';
 
@@ -218,17 +218,16 @@ export class TreeService {
         today,
       ]);
       let zer = 0;
-      if (watering.zer > 0 && !(await isEconomyBlocked(client, userId))) {
-        // one ledger row for this pour's harvests, named by the last of them
-        await this.wallet.creditWithin(client, {
+      if (watering.zer > 0) {
+        // one ledger row for this pour's harvests, named by the last of them, as earned Zêr under the daily cap
+        const paid = await earnWithin(client, this.wallet, {
           userId,
-          currency: 'zer',
           amount: watering.zer,
           reason: TREE_HARVEST_REASON,
           refId: row.id,
           idempotencyKey: `tree-harvest:${row.id}:${watering.tree.harvests}`,
         });
-        zer = watering.zer;
+        zer = paid.granted;
       }
       await client.query('COMMIT');
       return { tree: treeView(watering.tree, today), poured: watering.poured, grew: watering.grew, harvests: watering.harvests, zer, revived: watering.revived };

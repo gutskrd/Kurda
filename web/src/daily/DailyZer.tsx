@@ -3,7 +3,7 @@ import { reactionDelayMs } from '@kurda/shared';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
-import { CheckIcon, CoinIcon, GemIcon } from '../components/icons';
+import { CheckIcon, CoinIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { describeError } from '../lib/api';
 import { haptic } from '../lib/haptics';
@@ -15,9 +15,14 @@ import { dailyAction } from './today';
 /**
  * Today's Zêr inside the daily view: the day's reward with a claim button (POST /rewards/daily/claim, the server sets
  * the amount), a lesson first until one is finished today, or tomorrow once taken, and the week's cycle as a quiet row of
- * coins. A claim pops the coin with its sparks (styles/motion.css) once, and Xezo says a word for it. A Hevalo+ member
- * sees the gems a claim adds.
+ * coins. A claim pops the coin with its sparks (styles/motion.css) once, and Xezo says a word for it. Only a Hevalo+
+ * member has it (`hasDailyZer`).
  */
+/** Whether this learner has the daily Zêr at all: a Hevalo+ member's, read from an older server as before. */
+export function hasDailyZer(daily: Pick<DailyRewardStatus, 'member'>): boolean {
+  return daily.member !== false;
+}
+
 export function DailyZer({ daily, onClaimed }: { daily: DailyRewardStatus; onClaimed: (daily: DailyRewardStatus) => void }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -51,8 +56,6 @@ export function DailyZer({ daily, onClaimed }: { daily: DailyRewardStatus; onCla
       : action === 'learnFirst'
         ? t('daily.learnFirst', { amount: number(daily.reward) })
         : t('daily.comeBack');
-  // What a claim adds for a member before it, and what this one added after it.
-  const plusGems = landed ? (landed.plusGems ?? 0) : action === 'claim' ? (daily.plusGems ?? 0) : 0;
   // The cycle's days taken so far, counting today's once it is claimed.
   const taken = action === 'claimed' ? daily.cycleDay : daily.claimableDay - 1;
 
@@ -92,12 +95,6 @@ export function DailyZer({ daily, onClaimed }: { daily: DailyRewardStatus; onCla
           </span>
         )}
       </div>
-      {plusGems > 0 && (
-        <p className="daily-zer-plus">
-          <GemIcon size={16} />
-          {t('daily.plusGems', { count: number(plusGems) })}
-        </p>
-      )}
       {problem && (
         <p className="daily-zer-problem" role="alert">
           {problem}

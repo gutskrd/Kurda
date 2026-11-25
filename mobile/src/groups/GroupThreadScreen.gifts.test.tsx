@@ -33,10 +33,10 @@ const item: GiftCatalogItem = {
   name: 'Mountain dawn',
   category: 'background',
   assetUrl: null,
-  currency: 'zer',
   price: 300,
   tier: 'common',
   alreadyOwnedBy: [],
+  freeGiftEligible: true,
 };
 
 describe('GroupThreadScreen gifts', () => {
@@ -53,8 +53,8 @@ describe('GroupThreadScreen gifts', () => {
           { userId: 'u4', username: 'kawa', displayName: null },
         ],
       }),
-      'GET /gifts/catalog?to=u2,u3': ok({ items: [item], balance: { zer: 1000, gems: 0 } }),
-      'POST /gifts': ok({ batchId: 'b1', sent: ['u2'], skipped: [{ userId: 'u3', reason: 'already_owned' }], balance: { zer: 700, gems: 0 }, message: null }),
+      'GET /gifts/catalog?to=u2,u3': ok({ items: [item], balance: { zer: 1000 }, freeGifts: 0, hold: null }),
+      'POST /gifts': ok({ batchId: 'b1', sent: ['u2'], skipped: [{ userId: 'u3', reason: 'already_owned' }], balance: { zer: 700 }, freeGifts: 0, message: null }),
     });
     testAuth.client = client;
     renderWithProviders(
@@ -69,7 +69,7 @@ describe('GroupThreadScreen gifts', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     // The gifts are fetched as the step opens, behind the group's own reads: give a busy run time to draw them.
     fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }, { timeout: 3000 }));
-    fireEvent.click(screen.getByRole('button', { name: 'Send · 600 Zêr' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send · 600 Zêr · ≈ €1.49' }));
     // It reached Şîlan; Azad is named, with why, under the thread.
     expect(await screen.findByText('azad already has it.')).toBeTruthy();
     await waitFor(() => expect(client.calls.find((c) => c.path === '/gifts')?.body).toMatchObject({ toUserIds: ['u2', 'u3'] }));

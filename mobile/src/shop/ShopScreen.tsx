@@ -38,7 +38,7 @@ import {
   KIND_LABEL,
   canAfford,
   canGift,
-  currencyLabel,
+  ZER,
   kindWithCount,
   needsConfirmation,
   type Balances,
@@ -57,6 +57,8 @@ import { FrameArt } from './FrameArt';
 import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SEARCH_MAX, SortChip, ToggleChip } from './ItemFilters';
 import { YourBird, useLettersHome } from './YourBird';
 import { YourTree, useShopTree } from './YourTree';
+import { MembersBox } from './MembersBox';
+import { ZerValue, useZerValue } from './value';
 import { useNarrowPage } from '../theme/pageWidth';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
@@ -77,8 +79,8 @@ const GUTTER = layout.gutter;
  * catalogue, and the search and kinds stick at the top once scrolled past. Over the search, rows for your pen pal bird
  * and your tree (YourBird, YourTree), read with the catalogue.
  *
- * Every purchase is final and the item's sheet says so beside Buy; dear items and anything bought with gems ask once
- * more.
+ * Every purchase is final and the item's sheet says so beside Buy; dear items ask once more. Every price has its money
+ * value beside it (`ZerValue`), and a Hevalo+ member finds the month's box above the catalogue.
  */
 export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnMore: () => void }) {
   const { client } = useAuth();
@@ -88,7 +90,8 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   // A folded phone's cover screen leaves the title little room beside the purse.
   const narrow = useNarrowPage();
   const [items, setItems] = useState<ShopItem[]>([]);
-  const [balances, setBalances] = useState<Balances>({ zer: 0, gems: 0 });
+  const [balances, setBalances] = useState<Balances>({ zer: 0 });
+  const value = useZerValue();
   // Whether the purse has been read: until it has, the bird and the tree go by the Zêr their own reads report.
   const [purseRead, setPurseRead] = useState(false);
   const letters = useLettersHome();
@@ -156,7 +159,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         // Said in the sheet it was bought from, where its picture pops and the purse counts down; a system alert would
         // be a second thing to dismiss.
         setBought(item.sku);
-        if (typeof res.data.balance === 'number') setBalances((b) => ({ ...b, [item.currency]: res.data.balance }));
+        if (typeof res.data.balance === 'number') setBalances({ zer: res.data.balance });
         void load();
       } else if (res.error.code === 'PRICE_CHANGED') {
         setSelected(null);
@@ -183,7 +186,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
       if (needsConfirmation(item)) {
         Alert.alert(
           t('shop.confirmPurchase'),
-          `${t('shop.spendOn', { price: formatNumber(item.price, locale), currency: currencyLabel(t, item.currency), name: item.name })}\n\n${t('shop.finalNote')}`,
+          `${t('shop.spendOn', { price: formatNumber(item.price, locale), currency: ZER, name: item.name })} ${value(item.price)}\n\n${t('shop.finalNote')}`,
           [
             { text: t('common.cancel'), style: 'cancel' },
             { text: t('shop.buy'), onPress: () => void buy(item) },
@@ -193,7 +196,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         void buy(item);
       }
     },
-    [buy, t, locale],
+    [buy, t, locale, value],
   );
 
   // The kinds on offer come from the catalogue, not the search, so a chip never vanishes from under a finger; a kind
@@ -201,7 +204,6 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const kinds = useMemo(() => categoriesIn(items), [items]);
   // A kind that has gone (the one tag, bought) falls back to all of them.
   const category: ItemCategory | 'all' = filter.category === 'all' || kinds.includes(filter.category) ? filter.category : 'all';
-  // What each currency covers: a gem item against the gems, never the Zêr.
   const keep = useCallback((item: ShopItem) => !affordableOnly || canAfford(item, balances), [affordableOnly, balances]);
   const counts = useMemo(() => countByCategory(applyItemFilter(items, { ...filter, category: 'all' }, keep)), [items, filter, keep]);
   const shown = useMemo(() => applyItemFilter(items, { ...filter, category }, keep, locale), [items, filter, category, keep, locale]);
@@ -220,8 +222,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
     if (scrollY.current > inboxHeight) scroller.current?.scrollTo({ y: inboxHeight, animated: false });
   }, [filterKey, inboxHeight]);
 
-  // "Within my Zêr" while everything is priced in Zêr; "my balance" once gems are on sale too.
-  const withinLabel = items.some((i) => i.currency === 'gems') ? t('shop.filter.withinBalance') : t('shop.filter.withinZer');
+  const withinLabel = t('shop.filter.withinZer');
 
   const kindOptions = useMemo(
     () =>
@@ -242,8 +243,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           leading="close"
           style={stuck ? { backgroundColor: colors.background } : null}
           right={
-            // Each balance names its currency, so the second is not a number nobody can place; on the narrowest phones the
-            // coin and the gem alone name them, leaving the title room.
+            // The purse names its currency; on the narrowest phones the coin alone names it, leaving the title room.
             <View style={styles.balances}>
               <View style={styles.balanceChip} accessible accessibilityLabel={`${formatNumber(balances.zer, locale)} Zêr`}>
                 <Icon name="coin" size={18} color={colors.gold} />
@@ -253,15 +253,6 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                   <Counted value={balances.zer} style={[styles.balance, { color: colors.textPrimary }]} />
                 )}
                 {narrow ? null : <Text style={[styles.balanceUnit, { color: colors.textSecondary }]}>Zêr</Text>}
-              </View>
-              <View style={styles.balanceChip} accessible accessibilityLabel={`${formatNumber(balances.gems, locale)} ${t('gift.picker.gems')}`}>
-                <Icon name="gem" size={18} color={colors.primary} />
-                {loading ? (
-                  <SkeletonText size={typography.sizes.text} width={20} />
-                ) : (
-                  <Counted value={balances.gems} style={[styles.balance, { color: colors.textPrimary }]} />
-                )}
-                {narrow ? null : <Text style={[styles.balanceUnit, { color: colors.textSecondary }]}>{t('gift.picker.gems')}</Text>}
               </View>
             </View>
           }
@@ -287,6 +278,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         >
           <View style={[styles.inbox, styles.column]} onLayout={(e) => setInboxHeight(e.nativeEvent.layout.height)}>
             <ReceivedGifts />
+            <MembersBox />
             <View style={styles.ownRows}>
               <YourBird home={letters} zer={purse} onZer={learnZer} />
               <YourTree tree={tree} zer={purse} onZer={learnZer} />
@@ -379,13 +371,12 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
 
         {gifting ? (
           <GiftSheet
-            item={{ sku: gifting.sku, name: gifting.name, price: gifting.price, currency: currencyLabel(t, gifting.currency) }}
+            item={{ sku: gifting.sku, name: gifting.name, price: gifting.price, currency: ZER }}
             onClose={() => setGifting(null)}
             onSent={(balance, to) => {
               const item = gifting;
               setGifting(null);
-              // The balance that moved is the item's currency, which is not always Zêr.
-              setBalances((b) => ({ ...b, [item.currency]: balance }));
+              setBalances({ zer: balance });
               setSentGift({ item, to, flying: true });
             }}
           />
@@ -395,7 +386,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           <GiftSendAnimation
             // The shop's list does not say which items are limited, so a gift flies as a rare one here; the recipient's
             // unwrap shows its real tier.
-            tier={giftTierFor({ currency: sentGift.item.currency, price: sentGift.item.price, limited: false })}
+            tier={giftTierFor({ price: sentGift.item.price, limited: false })}
             announce={t('gift.sent', { name: sentGift.to.name })}
             onDone={() => setSentGift((g) => (g ? { ...g, flying: false } : g))}
           />
@@ -471,10 +462,10 @@ function CatalogueSkeleton(): React.JSX.Element {
   );
 }
 
-/** The price as it is read: "Free", or the number and the currency (Zêr keeps its name; gems are translated, as the gift picker says them). */
-function priceWords(item: ShopItem, t: (key: 'shop.free' | 'gift.picker.gems') => string, locale: Locale): string {
+/** The price as it is read: "Free", or the number, Zêr (a name, never translated) and what it is worth. */
+function priceWords(item: ShopItem, t: (key: 'shop.free') => string, locale: Locale, value: (zer: number) => string): string {
   if (item.price === 0) return t('shop.free');
-  return `${formatNumber(item.price, locale)} ${item.currency === 'zer' ? 'Zêr' : t('gift.picker.gems')}`;
+  return `${formatNumber(item.price, locale)} ${ZER} · ${value(item.price)}`;
 }
 
 /**
@@ -500,11 +491,12 @@ function ShopCard({ item, balances, onPress }: { item: ShopItem; balances: Balan
   const dir = useDirection();
   const kind = itemCategory(item.category);
   const affordable = canAfford(item, balances);
+  const value = useZerValue();
   return (
     <PressableScale
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={[item.name, item.description, priceWords(item, t, locale)].filter(Boolean).join(', ')}
+      accessibilityLabel={[item.name, item.description, priceWords(item, t, locale, value)].filter(Boolean).join(', ')}
       style={[styles.card, { backgroundColor: colors.glassFill }]}
     >
       {/* Every card's picture takes the same height, so names and prices line up across a row. */}
@@ -534,11 +526,12 @@ function ShopCard({ item, balances, onPress }: { item: ShopItem; balances: Balan
           <Text style={[styles.price, { color: colors.textPrimary }]}>{t('shop.free')}</Text>
         ) : (
           <>
-            <Icon name={item.currency === 'zer' ? 'coin' : 'gem'} size={16} color={item.currency === 'zer' ? colors.gold : colors.primary} />
+            <Icon name="coin" size={16} color={colors.gold} />
             <Text style={[styles.price, { color: affordable ? colors.textPrimary : colors.textSecondary }]}>{formatNumber(item.price, locale)}</Text>
           </>
         )}
       </View>
+      {item.price > 0 ? <ZerValue zer={item.price} style={dir.text} /> : null}
     </PressableScale>
   );
 }
@@ -573,6 +566,7 @@ function ItemDetail({
   const dir = useDirection();
   const { width } = useWindowDimensions();
   const affordable = canAfford(item, balances);
+  const value = useZerValue();
   const wide = itemCategory(item.category) === 'background';
   // A background as wide as the sheet allows; a square item at a fixed size.
   const artWidth = wide ? Math.min(Math.min(width, SHEET_MAX_WIDTH) - layout.gutter * 2, 400) : 128;
@@ -590,7 +584,7 @@ function ItemDetail({
       </Text>
       {item.description ? <Text style={[styles.detailDesc, { color: colors.textSecondary }]}>{item.description}</Text> : null}
       {bought ? null : (
-        <Text style={[styles.detailPrice, { color: colors.textPrimary }]}>{priceWords(item, t, locale)}</Text>
+        <Text style={[styles.detailPrice, { color: colors.textPrimary }]}>{priceWords(item, t, locale, value)}</Text>
       )}
 
       {bought ? (
@@ -603,8 +597,8 @@ function ItemDetail({
           {item.price > 0 ? (
             // What is left in the purse, counting down from what was there.
             <View style={[styles.left, { flexDirection: dir.row }]}>
-              <Icon name={item.currency === 'zer' ? 'coin' : 'gem'} size={18} color={item.currency === 'zer' ? colors.gold : colors.primary} />
-              <Counted value={balances[item.currency]} style={[styles.leftText, { color: colors.textPrimary }]} />
+              <Icon name="coin" size={18} color={colors.gold} />
+              <Counted value={balances.zer} style={[styles.leftText, { color: colors.textPrimary }]} />
             </View>
           ) : null}
           <ClayButton label={t('common.done')} tone="primary" size="large" onPress={onDone} style={styles.stretch} />
@@ -638,12 +632,9 @@ function ItemDetail({
       ) : (
         <View style={styles.insufficient}>
           <Text style={[styles.insufficientText, { color: colors.textSecondary }]}>
-            {t('shop.notEnough', { currency: currencyLabel(t, item.currency) })}{' '}
-            {item.currency === 'zer' ? t('shop.earnMoreZer') : t('shop.earnMoreGems')}
+            {t('shop.notEnough', { currency: ZER })} {t('shop.earnMoreZer')}
           </Text>
-          {item.currency === 'zer' ? (
-            <ClayButton label={t('shop.earnZer')} tone="primary" onPress={onEarnMore} />
-          ) : null}
+          <ClayButton label={t('shop.earnZer')} tone="primary" onPress={onEarnMore} />
         </View>
       )}
     </View>

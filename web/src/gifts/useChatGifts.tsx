@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type RefObject, type SetStateAction } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import type { GiftCard, GiftChatRef, GiftUserEvent } from '@kurda/shared';
+import { giftSenderName, type GiftCard, type GiftChatRef, type GiftUserEvent } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import type { ApiError, DmMessage, GroupMessage } from '../lib/types';
 import { CloseIcon, GiftIcon } from '../components/icons';
@@ -8,6 +8,7 @@ import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { useT } from '../i18n/I18nProvider';
 import { giftsWereOpened } from '../shop/useUnseenGifts';
+import { canGiveGifts } from './access';
 import { GiftBubble } from './GiftBubble';
 import { GiftFlight } from './GiftFlight';
 import { GiftPicker, type GiftPerson, type GiftSent } from './GiftPicker';
@@ -196,7 +197,8 @@ export function useChatGifts<M extends ChatMessage>({
         <GiftBubble
           card={m.gift}
           mine={m.senderId === user?.id}
-          senderName={m.username}
+          // As the server names the sender to this viewer; an older server sends no sender, and the message's stands in.
+          senderName={m.gift.from === undefined ? m.username : (giftSenderName(m.gift.from) ?? '')}
           actions={actions}
           autoOpen={autoGift !== null && m.gift.myGiftId === autoGift}
           onAutoOpened={autoOpened}
@@ -207,17 +209,12 @@ export function useChatGifts<M extends ChatMessage>({
     [actions, autoGift, autoOpened, chat.kind, user?.id],
   );
 
-  const button = (
-    <button
-      type="button"
-      className="chat-gift-btn"
-      onClick={openPicker}
-      aria-label={t('gift.button')}
-      title={t('gift.button')}
-    >
+  // A child's profile never gives gifts (gifts/access.ts).
+  const button = canGiveGifts(user) ? (
+    <button type="button" className="chat-gift-btn" onClick={openPicker} aria-label={t('gift.button')} title={t('gift.button')}>
       <GiftIcon size={20} />
     </button>
-  );
+  ) : null;
 
   const overlays = (
     <>

@@ -2,12 +2,12 @@ import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 
 /**
- * Who may be paid Zêr or Gewher, and who may move value to someone else: the one place the economy asks bans, the
+ * Who may be paid Zêr, and who may move value to someone else: the one place the economy asks bans, the
  * bot scorer, the anti-cheat shadow flag and the payment-fraud hold.
  *
  * - `economyBlockedSql`: may the system pay this account at all? Asked by unrequested payouts (league promotions,
- *   achievements, tournament prizes), which skip a blocked account silently, and by the Zêr and
- *   Gewher boards. Closed or banned accounts, confirmed bots, shadow-flagged cheaters and fraud-held accounts are
+ *   achievements, tournament prizes, earned Zêr), which skip a blocked account silently, and by the Zêr board.
+ *   Closed or banned accounts, confirmed bots, shadow-flagged cheaters and fraud-held accounts are
  *   blocked. Silence matters: a cheater must not learn of the shadow flag from a refusal.
  * - `economyHeldSql`: is the account paused from moving value, where the person asked and must be told? A
  *   confirmed bot or a fraud hold, both already known to the owner. Asked on reward claims and gifts, so a caught

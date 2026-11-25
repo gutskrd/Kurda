@@ -37,9 +37,9 @@ export function questTitle(q: QuestView, t: Translate): string {
   return q.titleEn ?? t(DEFAULT_TITLE[q.type]);
 }
 
-/** The reward in words for screen readers ("+200 Zêr, +30 Gems"); `count` formats each amount for the locale. */
+/** The reward in words for screen readers ("+200 Zêr"); `count` formats the amount for the locale. */
 export function rewardSpoken(reward: QuestReward, t: Translate, count: (n: number) => string = String): string {
   return rewardParts(reward)
-    .map((p) => (p.currency === 'zer' ? t('quests.chest.reward', { amount: count(p.amount) }) : t('leagues.gems', { count: count(p.amount) })))
+    .map((p) => t('quests.chest.reward', { amount: count(p.amount) }))
     .join(', ');
 }

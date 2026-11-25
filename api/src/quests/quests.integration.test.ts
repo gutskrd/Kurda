@@ -519,5 +519,16 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
       const row = await pool.query(`SELECT amount FROM user_quests WHERE user_id = $1 AND day = $2 AND kind = 'listening'`, [ned.id, day]);
       expect(row.rows[0]).toEqual({ amount });
     });
+
+    it('holds twice as much for a Hevalo+ member', async () => {
+      const kit = await learner('member');
+      await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [kit.id]);
+      const day = today();
+      await finished(kit, day, 'streak', 1);
+      const id = questId(day, 'streak');
+      const opened = await call(kit, 'POST', `/me/quests/${encodeURIComponent(id)}/claim`);
+      expect(opened.json()).toMatchObject({ tier: 'common', amount: 2 * chestAmount('common', kit.id, id) });
+      expect((await wallet.balances(kit.id)).zer).toBe(2 * chestAmount('common', kit.id, id));
+    });
   });
 });

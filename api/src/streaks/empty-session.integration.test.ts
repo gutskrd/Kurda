@@ -78,7 +78,8 @@ describe.skipIf(!DATABASE_URL)('empty sessions are not learning (integration)', 
     await activate(app, pool, reg);
     token = reg.json().tokens.accessToken;
     userId = reg.json().user.id;
-    await pool.query(`UPDATE users SET timezone = 'UTC' WHERE id = $1`, [userId]);
+    // a member, whose daily Zêr is what these sessions must not unlock
+    await pool.query(`UPDATE users SET timezone = 'UTC', premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [userId]);
   });
 
   afterAll(async () => {

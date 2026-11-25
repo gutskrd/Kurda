@@ -18,7 +18,7 @@ const redeemBody = z.object({
 const packBody = z.object({
   platform,
   productId: z.string().min(1).max(120),
-  gems: z.number().int().min(1).max(1_000_000),
+  zer: z.number().int().min(1).max(1_000_000),
   active: z.boolean().optional(),
 });
 
@@ -27,7 +27,7 @@ export function registerIapRoutes(app: FastifyInstance, iap: IapService, config:
   // Webhooks are authenticated with a constant-time shared secret; store signature verification would plug in here.
   const webhookVerifier = new SharedSecretWebhookVerifier(config.IAP_WEBHOOK_SECRET);
 
-  /** Admin: define a gem pack. */
+  /** Admin: define a Zêr pack. */
   app.post(
     '/iap/packs',
     { schema: { body: packBody }, preHandler: requireRoles('admin') },
@@ -37,7 +37,7 @@ export function registerIapRoutes(app: FastifyInstance, iap: IapService, config:
     },
   );
 
-  /** Redeem a validated store receipt for Gems (idempotent per transaction). */
+  /** Redeem a validated store receipt for Zêr (idempotent per transaction). */
   app.post(
     '/iap/redeem',
     {
@@ -57,7 +57,7 @@ export function registerIapRoutes(app: FastifyInstance, iap: IapService, config:
   }));
 
   /**
-   * Store refund webhook, which claws back Gems. Guarded by a shared secret and refused with 503 when none is
+   * Store refund webhook, which claws back Zêr. Guarded by a shared secret and refused with 503 when none is
    * configured, so a clawback is never unauthenticated.
    */
   app.post(

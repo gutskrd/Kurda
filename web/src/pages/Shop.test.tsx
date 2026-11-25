@@ -25,7 +25,7 @@ const CATALOGUE: ShopItem[] = [
 function makeFetch(
   calls: Array<{ url: string; body: unknown }>,
   owned: string[] = [],
-  { items = CATALOGUE, balances = { zer: 1000 } }: { items?: ShopItem[]; balances?: { zer: number; gems?: number } } = {},
+  { items = CATALOGUE, balances = { zer: 1000 } }: { items?: ShopItem[]; balances?: { zer: number } } = {},
 ) {
   return vi.fn(async (url: string, init?: RequestInit) => {
     if (url.includes('/shop/purchase')) {
@@ -312,20 +312,15 @@ describe('Shop', () => {
     expect(screen.queryByText('Pricey')).not.toBeInTheDocument(); // 5000
   });
 
-  it('holds a gem-priced item against the gems, not the Zêr', async () => {
-    // Plenty of Zêr, few gems: a 40-gem item must not pass on 1,000 Zêr.
-    const night: ShopItem = { sku: 'bg-gem', name: 'Night sky', description: null, category: 'background', currency: 'gems', price: 40, isUnique: true, premiumOnly: false, assetUrl: null };
-    vi.stubGlobal('fetch', makeFetch([], [], { items: [...CATALOGUE, night], balances: { zer: 1000, gems: 10 } }));
+  it('says what each price is worth in money, beside it', async () => {
+    vi.stubGlobal('fetch', makeFetch([]));
     renderApp(<Shop />, ['/app/shop']);
-
-    const tile = (await screen.findByText('Night sky')).closest('figure')!;
-    expect(within(tile).getByText(/40 Gems/)).toBeInTheDocument();
-    expect(within(tile).getByRole('button', { name: 'Buy' })).toBeDisabled();
-    expect(within(tile).getByText(/30 more/)).toBeInTheDocument();
-
-    await userEvent.click(screen.getByLabelText('Within my balance'));
-    expect(screen.queryByText('Night sky')).not.toBeInTheDocument();
-    expect(screen.getByText('Sunset')).toBeInTheDocument();
+    const tile = (await screen.findByText('Îstîkan')).closest('figure')!;
+    expect(within(tile).getByText(/900 Zêr/)).toBeInTheDocument();
+    expect(within(tile).getByText('≈ €2.23')).toBeInTheDocument();
+    const pricey = screen.getByText('Pricey').closest('figure')!;
+    expect(within(pricey).getByText('≈ €12.38')).toBeInTheDocument();
+    expect(within(pricey).getByText(/4,000 more/)).toBeInTheDocument();
   });
 
   it('keeps something you already own, however dear it was', async () => {

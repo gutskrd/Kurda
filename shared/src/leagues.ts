@@ -298,8 +298,8 @@ export interface LeagueWeekResult {
   goalXp: number;
   goalMet: boolean;
   trophy: boolean;
-  /** Gems paid for the promotion; 0 for the tier's second promotion this season */
-  gems: number;
+  /** Zêr paid for the promotion; 0 for the tier's second promotion this season */
+  zer: number;
 }
 
 /** "You vs last week": the goal ring's history, newest last. */

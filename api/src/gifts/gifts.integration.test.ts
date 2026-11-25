@@ -1,11 +1,12 @@
 /**
- * Gifts in the chat against real Postgres: every rule a send goes through, what it changes, who is told, a retry
- * that must not pay twice, two friends gifting at once, and unwrapping.
+ * Gifts in the chat and onto posts against real Postgres: every rule a send goes through, what it changes, who is told,
+ * a retry that must not pay twice, two friends gifting at once, unwrapping, gift stickers and a member's free gifts.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { GIFTS_PER_DAY, GIFTS_PER_FRIEND_PER_DAY, GIFTS_RECEIVED_PER_DAY } from '@kurda/shared';
+import { GIFT_STICKERS, GIFTS_PER_DAY, GIFTS_PER_FRIEND_PER_DAY, GIFTS_RECEIVED_PER_DAY, MEMBERS_BOX_FREE_GIFTS } from '@kurda/shared';
+import { MembersBoxService } from '../plus/members-box.js';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { WalletService } from '../wallet/service.js';
@@ -315,6 +316,8 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       expect(res.statusCode).toBe(200);
       expect(res.json().equippable).toBe('background');
       expect(res.json().card).toMatchObject({ batchId, myGiftId: giftId, myOpened: true, recipients: [{ opened: true }] });
+      // and says who it is from
+      expect(res.json().card.from).toMatchObject({ userId: alan.id, username: alan.username });
       const row = await pool.query(`SELECT opened_at IS NOT NULL AS opened, seen_at IS NOT NULL AS seen FROM gifts WHERE id = $1`, [
         giftId,
       ]);
@@ -1150,12 +1153,34 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       expect(res.statusCode).toBe(200);
       const { items, balance } = res.json();
       const bySku = new Map(items.map((i: { sku: string }) => [i.sku, i]));
-      expect(bySku.get(BG)).toMatchObject({ price: 300, currency: 'zer', tier: 'common', alreadyOwnedBy: [mae.id] });
+      expect(bySku.get(BG)).toMatchObject({ price: 300, tier: 'common', alreadyOwnedBy: [mae.id], freeGiftEligible: true });
       expect(bySku.get(POWER)).toMatchObject({ alreadyOwnedBy: [] });
       // never free, and owning something yourself does not stop you giving it
       expect(bySku.has(FREE)).toBe(false);
       expect(bySku.has(RACE[0])).toBe(true);
-      expect(balance.zer).toBe(10_000);
+      expect(balance).toEqual({ zer: 10_000 });
+      expect(res.json().freeGifts).toBe(0);
+    });
+
+    it('offers the gift stickers first, at their three sizes, and never sells them to oneself', async () => {
+      type Item = { sku: string; category: string; price: number; assetUrl: string };
+      const { items } = (await call('GET', `/gifts/catalog?to=${mae.id}`, lou)).json() as { items: Item[] };
+      const stickers = items.slice(0, GIFT_STICKERS.length);
+      expect(stickers.map((i) => i.category)).toEqual(GIFT_STICKERS.map(() => 'sticker'));
+      expect(stickers.map((i) => [i.sku, i.price])).toEqual(GIFT_STICKERS.map((s) => [s.sku, s.price]));
+      expect(stickers[0]!.assetUrl).toBe(`/cosmetics/${GIFT_STICKERS[0]!.assetKey}`);
+      expect((await call('GET', '/shop', lou)).json().items.some((i: { category: string }) => i.category === 'sticker')).toBe(false);
+      const bought = await call('POST', '/shop/purchase', lou, { sku: GIFT_STICKERS[0]!.sku, idempotencyKey: key() });
+      expect(bought.statusCode).toBe(409);
+      expect(bought.json().code).toBe('GIFT_ONLY');
+    });
+
+    it('sends a sticker to a friend, as many as the day allows', async () => {
+      const sticker = GIFT_STICKERS[0]!;
+      const before = await zer(lou);
+      for (let i = 0; i < 2; i++) expect((await giftDm(lou, mae, sticker.sku)).statusCode).toBe(200);
+      expect(await zer(lou)).toBe(before - 2 * sticker.price);
+      expect(await owns(mae, sticker.sku)).toMatchObject({ quantity: 2, source: 'gift' });
     });
 
     it('refuses to pick for yourself', async () => {
@@ -1167,7 +1192,8 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
     it('a gift from the shop arrives in the chat too, with the answer the shop always gave', async () => {
       const res = await call('POST', '/shop/gift', lou, { sku: POWER, toUserId: ned.id, idempotencyKey: key() });
       expect(res.statusCode).toBe(200);
-      expect(res.json()).toEqual({ gifted: true, duplicate: false, sku: POWER, balance: 10_000 - 20 });
+      // the two stickers lou gave above, and this
+      expect(res.json()).toEqual({ gifted: true, duplicate: false, sku: POWER, balance: 10_000 - 2 * GIFT_STICKERS[0]!.price - 20 });
       const { lo, hi } = canonicalPair(lou.id, ned.id);
       const m = await pool.query(`SELECT kind FROM dm_messages WHERE user_lo = $1 AND user_hi = $2`, [lo, hi]);
       expect(m.rows).toEqual([{ kind: 'gift' }]);
@@ -1180,6 +1206,149 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       expect(before.unread.gifts).toBe(1);
       await call('POST', '/me/gifts/seen', ned);
       expect((await call('GET', '/me/social', ned)).json().unread.gifts).toBe(0);
+    });
+  });
+  describe('a gift onto a post', () => {
+    let author: Account;
+    let friend: Account;
+    let newFriend: Account;
+    let stranger: Account;
+    let teen: Account;
+    let postId = '';
+
+    const giftPost = (from: Account, item: string, extra: Record<string, unknown> = {}) =>
+      call('POST', '/gifts', from, { sku: item, post: { type: 'library', id: postId }, idempotencyKey: key(), ...extra });
+
+    beforeAll(async () => {
+      author = await signUp('pauthor');
+      friend = await signUp('pfriend');
+      newFriend = await signUp('pnew', bornYearsAgo(15));
+      stranger = await signUp('pstranger');
+      teen = await signUp('pteen', bornYearsAgo(15));
+      await befriend(author, friend, 48);
+      await befriend(author, newFriend, 2);
+      await befriend(author, teen, 48);
+      for (const who of [friend, newFriend, stranger, teen]) await fund(who);
+      postId = (
+        await pool.query<{ id: string }>(
+          `INSERT INTO library_posts (author_id, author_role, type, title, body, language, status, published_at)
+           VALUES ($1, 'user', 'poem', $2, 'Helbesteke kurt.', 'kmr', 'published', now()) RETURNING id`,
+          [author.id, `Gifted ${suffix}`],
+        )
+      ).rows[0]!.id;
+    });
+
+    it('takes a gift from a friend of a day or more, tells the author, and posts nothing in a chat', async () => {
+      const sticker = GIFT_STICKERS[3]!;
+      const res = await giftPost(friend, sticker.sku);
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toMatchObject({ sent: [author.id], skipped: [], message: null });
+      expect(await zer(friend)).toBe(10_000 - sticker.price);
+      expect(await owns(author, sticker.sku)).toMatchObject({ quantity: 1 });
+      expect(pushedTo(author.id, 'post_gift')[0]).toMatchObject({ postType: 'library', postId, sku: sticker.sku });
+      const note = await pool.query(`SELECT data FROM notifications WHERE user_id = $1 AND data->>'kind' = 'post_gift'`, [author.id]);
+      expect(note.rows[0]!.data).toMatchObject({ postId, sku: sticker.sku, fromUserId: friend.id });
+      const { lo, hi } = canonicalPair(friend.id, author.id);
+      expect((await pool.query(`SELECT 1 FROM dm_messages WHERE user_lo = $1 AND user_hi = $2`, [lo, hi])).rowCount).toBe(0);
+    });
+
+    it('takes one from anyone when both are known adults, and from nobody else not yet a day a friend', async () => {
+      expect((await giftPost(stranger, GIFT_STICKERS[0]!.sku)).json()).toMatchObject({ sent: [author.id], skipped: [] });
+      // a minor a friend for two hours, and a minor who is a friend of two days
+      expect((await giftPost(newFriend, GIFT_STICKERS[0]!.sku)).json()).toMatchObject({ sent: [], skipped: [{ userId: author.id, reason: 'not_allowed' }] });
+      expect(await zer(newFriend)).toBe(10_000);
+      expect((await giftPost(teen, GIFT_STICKERS[1]!.sku)).json()).toMatchObject({ sent: [author.id] });
+    });
+
+    it('shows the post’s gifts on the wall, and who gave them, as each reader may see them', async () => {
+      type Card = { id: string; gifts: { count: number; senders: number; from: { userId: string } | null; items: Array<{ sku: string; count: number }> } };
+      const wall = (await call('GET', '/feed?limit=50', stranger)).json().items as Card[];
+      const card = wall.find((i) => i.id === postId)!;
+      expect(card.gifts).toMatchObject({ count: 3, senders: 3 });
+      expect(card.gifts.items.map((i) => i.count).reduce((a, b) => a + b, 0)).toBe(3);
+      // the latest giver is the teen, whom a stranger may not see, so the line names the latest one they may
+      expect(card.gifts.from).toMatchObject({ userId: stranger.id });
+      const authorsWall = (await call('GET', '/feed?limit=50', author)).json().items as Card[];
+      expect(authorsWall.find((i) => i.id === postId)!.gifts.from).toMatchObject({ userId: teen.id });
+
+      const list = (await call('GET', `/gifts/posts/library/${postId}`, stranger)).json();
+      expect(list.gifts.count).toBe(3);
+      expect(list.senders).toHaveLength(3);
+      // a minor who gave is not a name a stranger can read: "a Hevalo member"
+      const teenGift = list.senders.find((s: { sku: string }) => s.sku === GIFT_STICKERS[1]!.sku);
+      expect(teenGift.from).toBeNull();
+      expect(list.senders.find((s: { from: { userId: string } | null }) => s.from?.userId === stranger.id).from).toMatchObject({ username: stranger.username });
+      // and a giver the reader has blocked is never named to them
+      await pool.query(`INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2)`, [author.id, friend.id]);
+      const blocked = (await call('GET', `/gifts/posts/library/${postId}`, author)).json();
+      expect(blocked.senders.find((s: { sku: string }) => s.sku === GIFT_STICKERS[3]!.sku).from).toBeNull();
+      await pool.query(`DELETE FROM blocks WHERE blocker_id = $1 AND blocked_id = $2`, [author.id, friend.id]);
+    });
+
+    it('says before anything is picked when a gift cannot go yet', async () => {
+      expect((await call('GET', `/gifts/catalog?post=library:${postId}`, stranger)).json().hold).toBeNull();
+      expect((await call('GET', `/gifts/catalog?post=library:${postId}`, newFriend)).json().hold).toBe('new_friend');
+      const outsider = await signUp('poutsider', bornYearsAgo(15));
+      expect((await call('GET', `/gifts/catalog?post=library:${postId}`, outsider)).json().hold).toBe('friends_only');
+    });
+
+    it('refuses a gift onto your own post, or one nobody can read', async () => {
+      expect((await giftPost(author, GIFT_STICKERS[0]!.sku)).json().code).toBe('GIFT_TO_SELF');
+      const nowhere = { type: 'library', id: '00000000-0000-4000-8000-000000000000' };
+      const gone = await call('POST', '/gifts', friend, { sku: GIFT_STICKERS[0]!.sku, post: nowhere, idempotencyKey: key() });
+      expect(gone.statusCode).toBe(404);
+      expect(gone.json().code).toBe('POST_NOT_FOUND');
+    });
+
+    it('counts toward the day’s limits like any gift', async () => {
+      const giver = await signUp('plimit');
+      await fund(giver);
+      for (let i = 0; i < GIFTS_PER_FRIEND_PER_DAY; i++) expect((await giftPost(giver, GIFT_STICKERS[0]!.sku)).json().sent).toEqual([author.id]);
+      expect((await giftPost(giver, GIFT_STICKERS[0]!.sku)).json().skipped).toEqual([{ userId: author.id, reason: 'daily_limit' }]);
+    });
+  });
+
+  describe('a member’s free gifts', () => {
+    let member: Account;
+    let pal: Account;
+    let pal2: Account;
+    const freeGift = (item: string, to: Account) =>
+      call('POST', '/gifts', member, { sku: item, toUserIds: [to.id], chat: { kind: 'dm', userId: to.id }, idempotencyKey: key(), useFreeGift: true });
+
+    beforeAll(async () => {
+      member = await signUp('freegift');
+      pal = await signUp('freepal');
+      pal2 = await signUp('freepal2');
+      await befriend(member, pal, 48);
+      await befriend(member, pal2, 48);
+      await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [member.id]);
+      await new MembersBoxService(pool, wallet).ensure(member.id);
+      await pool.query(
+        `INSERT INTO shop_items (sku, name, category, currency, price, is_unique, active, in_stock)
+         VALUES ($1, 'Gift Test Dear', 'powerup', 'zer', 900, false, true, true)`,
+        [sku('dear')],
+      );
+    });
+
+    it('pays for a small gift instead of Zêr, three a box', async () => {
+      const before = await zer(member);
+      expect((await call('GET', `/gifts/catalog?to=${pal.id}`, member)).json().freeGifts).toBe(MEMBERS_BOX_FREE_GIFTS);
+      const sent = await freeGift(GIFT_STICKERS[6]!.sku, pal);
+      expect(sent.statusCode).toBe(200);
+      expect(sent.json()).toMatchObject({ sent: [pal.id], freeGifts: MEMBERS_BOX_FREE_GIFTS - 1, balance: { zer: before } });
+      const row = await pool.query(`SELECT paid_with FROM gifts WHERE from_user_id = $1`, [member.id]);
+      expect(row.rows).toEqual([{ paid_with: 'free_gift' }]);
+    });
+
+    it('does not pay for a dear gift, or more gifts than are left', async () => {
+      const dear = await freeGift(sku('dear'), pal);
+      expect(dear.json().code).toBe('NOT_A_FREE_GIFT');
+      for (let i = 0; i < MEMBERS_BOX_FREE_GIFTS - 1; i++) {
+        await freeGift(GIFT_STICKERS[0]!.sku, pal);
+      }
+      // to another friend, since the day's three to one friend are given
+      const none = await freeGift(GIFT_STICKERS[0]!.sku, pal2);
+      expect(none.json().code).toBe('NO_FREE_GIFTS');
     });
   });
 });

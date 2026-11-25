@@ -141,6 +141,15 @@ describe.skipIf(!DATABASE_URL)('shop gifts (integration)', () => {
     expect(gift.from.username).toContain('gift_giver');
     expect(gift.seenAt).toBeNull();
 
+    // A block either way hides who sent it, as a closed account does: it is then from "a Hevalo member".
+    await pool.query('INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2)', [ids.taker!, ids.giver!]);
+    try {
+      const hidden = (await call('GET', '/me/gifts', tokens.taker!)).json().gifts.find((g: { sku: string }) => g.sku === SKU);
+      expect(hidden.from).toBeNull();
+    } finally {
+      await pool.query('DELETE FROM blocks WHERE blocker_id = $1 AND blocked_id = $2', [ids.taker!, ids.giver!]);
+    }
+
     // opening them clears the badge
     expect((await call('POST', '/me/gifts/seen', tokens.taker!)).json().seen).toBeGreaterThanOrEqual(1);
     expect((await call('GET', '/me/gifts', tokens.taker!)).json().unseen).toBe(0);

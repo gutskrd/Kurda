@@ -13,7 +13,7 @@ import { LeagueMoment } from './LeagueMoment';
 import { Leaderboard, type RankKind, type Scope, type XpSpan } from './Leaderboard';
 
 /**
- * Rankings: by XP, Zêr or Gewher. XP is this week's by default, with your league first as a card that opens the whole
+ * Rankings: by XP or Zêr. XP is this week's by default, with your league first as a card that opens the whole
  * league (LeagueScreen), or all time's. A link may name what to open on (`board`, `span`); the old league address
  * opens on XP this week.
  */

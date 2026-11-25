@@ -121,9 +121,6 @@
   /* the glyph carries the colour; the number stays readable ink */
   color: var(--gold-ink);
 }
-.purse-gems {
-  color: var(--gems);
-}
 .purse-amount {
   color: var(--ink-2);
   font-weight: 600;
@@ -423,7 +420,7 @@ button.nav-link {
   }
 }
 
-/* your Zêr and gems at the end of the menu's Shop row */
+/* your Zêr at the end of the menu's Shop row */
 .nav-menu-purse {
   display: inline-flex;
   align-items: center;

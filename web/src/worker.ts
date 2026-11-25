@@ -445,7 +445,7 @@ const STATIC_PAGES: ReadonlyArray<StaticPage> = [
     path: '/terms',
     title: 'Terms · Hevalo',
     description:
-      'The rules for using Hevalo, in plain words: your account, how to treat other people, what you post, and how Zêr and gems work.',
+      'The rules for using Hevalo, in plain words: your account, how to treat other people, what you post, and how Zêr works.',
   },
   /* Where a rights holder without an account sends a copyright notice. */
   {

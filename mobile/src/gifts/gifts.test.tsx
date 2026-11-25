@@ -54,6 +54,7 @@ const card = (over: Partial<GiftCard> = {}): GiftCard => ({
   assetUrl: null,
   tier: 'common',
   recipients: [{ name: 'Rojda', avatarUrl: null, isMe: false, opened: false }],
+  from: null,
   myGiftId: null,
   myOpened: false,
   equippable: 'background',
@@ -65,20 +66,26 @@ const item = (over: Partial<GiftCatalogItem> = {}): GiftCatalogItem => ({
   name: 'Mountain dawn',
   category: 'background',
   assetUrl: null,
-  currency: 'zer',
   price: 300,
   tier: 'common',
   alreadyOwnedBy: [],
+  freeGiftEligible: true,
   ...over,
 });
 
+/** The catalogue as GET /gifts/catalog answers it. */
+const catalogOf = (items: GiftCatalogItem[], zer = 1000, more: { freeGifts?: number; hold?: 'new_friend' | 'friends_only' | null } = {}) =>
+  ok({ items, balance: { zer }, freeGifts: more.freeGifts ?? 0, hold: more.hold ?? null });
+
+const AZAD = { userId: 'u-azad', username: 'azad', displayName: 'Azad', avatarUrl: null };
+const POST = { type: 'library' as const, id: 'p1' };
+const forMe = [{ name: null, avatarUrl: null, isMe: true, opened: false }];
+
 describe('GiftBubble', () => {
-  it('is a wrapped present to its recipient, and opens on a tap', () => {
+  it('is a wrapped present to its recipient that says who it is from, and opens on a tap', () => {
     const onOpen = vi.fn();
-    renderWithProviders(
-      <GiftBubble card={card({ myGiftId: 'g1', recipients: [{ name: null, avatarUrl: null, isMe: true, opened: false }] })} mine={false} senderName="Azad" onOpen={onOpen} />,
-    );
-    expect(screen.getByText('A gift for you')).toBeTruthy();
+    renderWithProviders(<GiftBubble card={card({ myGiftId: 'g1', from: AZAD, recipients: forMe })} mine={false} senderName="azad" onOpen={onOpen} />);
+    expect(screen.getByText('Gift from Azad')).toBeTruthy();
     expect(screen.getByText('Tap to open')).toBeTruthy();
     // What is inside stays a surprise until it is opened.
     expect(screen.queryByText('Newroz fire')).toBeNull();
@@ -88,11 +95,30 @@ describe('GiftBubble', () => {
 
   it('shows its recipient what it was, and from whom, once opened', () => {
     renderWithProviders(
-      <GiftBubble card={card({ myGiftId: 'g1', myOpened: true, recipients: [{ name: null, avatarUrl: null, isMe: true, opened: true }] })} mine={false} senderName="Azad" onOpen={() => undefined} />,
+      <GiftBubble
+        card={card({ myGiftId: 'g1', myOpened: true, from: AZAD, recipients: [{ name: null, avatarUrl: null, isMe: true, opened: true }] })}
+        mine={false}
+        senderName="azad"
+        onOpen={() => undefined}
+      />,
     );
     expect(screen.getByText('Newroz fire')).toBeTruthy();
-    expect(screen.getByText('From Azad')).toBeTruthy();
+    expect(screen.getByText('Gift from Azad')).toBeTruthy();
     expect(screen.queryByText('Tap to open')).toBeNull();
+  });
+
+  it('says a Hevalo member sent it when the server does not name the sender to this reader', () => {
+    renderWithProviders(<GiftBubble card={card({ myGiftId: 'g1', from: null, recipients: forMe })} mine={false} senderName="azad" onOpen={() => undefined} />);
+    expect(screen.getByText('Gift from a Hevalo member')).toBeTruthy();
+    expect(screen.queryByText(/azad/i)).toBeNull();
+    expect(screen.getByRole('button', { name: 'A gift from a Hevalo member. Tap to open.' })).toBeTruthy();
+  });
+
+  it('names the giver to the rest of a group too', () => {
+    const recipients = [{ name: 'Rojda', avatarUrl: null, isMe: false, opened: false }];
+    renderWithProviders(<GiftBubble card={card({ from: AZAD, recipients })} mine={false} senderName="azad" onOpen={() => undefined} />);
+    expect(screen.getByText('For Rojda')).toBeTruthy();
+    expect(screen.getByText('Gift from Azad')).toBeTruthy();
   });
 
   it('tells the sender whether it has been opened, and never the price', () => {
@@ -120,11 +146,12 @@ describe('GiftBubble', () => {
 describe('GiftPickerSheet', () => {
   it('gives a friend in a DM something, showing price, balance and what they own', async () => {
     const client = fakeClient({
-      'GET /gifts/catalog?to=u2': ok({
-        items: [item(), item({ sku: 'icon_star', name: 'Star', alreadyOwnedBy: ['u2'] }), item({ sku: 'bg_gold', name: 'Gold', price: 5000 })],
-        balance: { zer: 1000, gems: 2 },
-      }),
-      'POST /gifts': ok({ batchId: 'b9', sent: ['u2'], skipped: [], balance: { zer: 700, gems: 2 }, message: null }),
+      'GET /gifts/catalog?to=u2': catalogOf([
+        item(),
+        item({ sku: 'icon_star', name: 'Star', alreadyOwnedBy: ['u2'] }),
+        item({ sku: 'bg_gold', name: 'Gold', price: 5000 }),
+      ]),
+      'POST /gifts': ok({ batchId: 'b9', sent: ['u2'], skipped: [], balance: { zer: 700 }, freeGifts: 0, message: null }),
     });
     testAuth.client = client;
     const onSent = vi.fn();
@@ -136,6 +163,8 @@ describe('GiftPickerSheet', () => {
     expect(screen.getByText('Already has it')).toBeTruthy();
     expect(screen.getByText('Not enough to give this')).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Star/ }).getAttribute('aria-disabled')).toBe('true');
+    // Each price says what it is worth in money as well.
+    expect(screen.getByRole('radio', { name: 'Mountain dawn, 300 Zêr, ≈ €0.74' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('radio', { name: /^Mountain dawn/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
@@ -147,8 +176,15 @@ describe('GiftPickerSheet', () => {
 
   it('chooses friends in a group first, all at once if you like', async () => {
     const client = fakeClient({
-      'GET /gifts/catalog?to=u2,u3': ok({ items: [item()], balance: { zer: 1000, gems: 0 } }),
-      'POST /gifts': ok({ batchId: 'b9', sent: [], skipped: [{ userId: 'u3', reason: 'daily_limit' }, { userId: 'u2', reason: 'not_allowed' }], balance: { zer: 1000, gems: 0 }, message: null }),
+      'GET /gifts/catalog?to=u2,u3': catalogOf([item()]),
+      'POST /gifts': ok({
+        batchId: 'b9',
+        sent: [],
+        skipped: [{ userId: 'u3', reason: 'daily_limit' }, { userId: 'u2', reason: 'not_allowed' }],
+        balance: { zer: 1000 },
+        freeGifts: 0,
+        message: null,
+      }),
     });
     testAuth.client = client;
     const onSent = vi.fn();
@@ -168,7 +204,7 @@ describe('GiftPickerSheet', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
 
     fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Send · 600 Zêr' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send · 600 Zêr · ≈ €1.49' }));
     // Nobody could be given it: the sheet says why, by name, and nothing flies.
     expect(await screen.findByText(/That’s today’s limit for Azad\.\s+A gift to Rojda isn’t possible yet\./)).toBeTruthy();
     expect(onSent).not.toHaveBeenCalled();
@@ -182,7 +218,7 @@ describe('GiftPickerSheet', () => {
 
   it('says what a chat mute stops, with the way to Account standing — closing itself first', async () => {
     testAuth.client = fakeClient({
-      'GET /gifts/catalog?to=u2': ok({ items: [item()], balance: { zer: 1000, gems: 0 } }),
+      'GET /gifts/catalog?to=u2': catalogOf([item()]),
       'POST /gifts': fail({ code: 'MUTED', details: { scope: 'chat', until: null } }),
     });
     const onClose = vi.fn();
@@ -199,7 +235,7 @@ describe('GiftPickerSheet', () => {
   });
 
   it('asks for the catalog once, however often the chat behind it redraws', async () => {
-    const client = fakeClient({ 'GET /gifts/catalog?to=u2': ok({ items: [item()], balance: { zer: 1000, gems: 0 } }) });
+    const client = fakeClient({ 'GET /gifts/catalog?to=u2': catalogOf([item()]) });
     testAuth.client = client;
     const sheet = () => (
       <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={() => undefined} />
@@ -222,6 +258,8 @@ describe('GiftPickerSheet', () => {
     );
     expect(await screen.findByText('Gifts go to friends only.')).toBeTruthy();
     expect(screen.queryByText('you can only send gifts to friends')).toBeNull();
+    // A rule, not a failure: no retry that would only be refused again.
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
     first.unmount();
 
     // A Newroz item that ended while the sheet was open: said so, and the catalogue asked for again.
@@ -230,7 +268,7 @@ describe('GiftPickerSheet', () => {
     const client = fakeClient({
       'GET /gifts/catalog?to=u2': () => {
         catalogs += 1;
-        return ok({ items: [item()], balance: { zer: 1000, gems: 0 } });
+        return catalogOf([item()]);
       },
       'POST /gifts': () => {
         sends += 1;
@@ -254,6 +292,64 @@ describe('GiftPickerSheet', () => {
     expect(await screen.findByText('The gift didn’t go. Please try again.')).toBeTruthy();
     expect(screen.queryByText('a gift goes to 1–20 friends')).toBeNull();
   });
+
+  it('says in one calm line when a new friendship is too young for a gift, with nothing to pick', async () => {
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?to=u2': catalogOf([item()], 1000, { hold: 'new_friend' }) });
+    renderWithProviders(
+      <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={() => undefined} />,
+    );
+    expect(await screen.findByText('You can give Rojda a gift once you’ve been friends for a day.')).toBeTruthy();
+    expect(screen.queryByRole('radio', { name: /^Mountain dawn/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Pick a gift' })).toBeNull();
+  });
+
+  it('lets a member pay for a small gift with a free one from their box', async () => {
+    const client = fakeClient({
+      'GET /gifts/catalog?to=u2': catalogOf([item(), item({ sku: 'bg_gold', name: 'Gold', price: 5000, freeGiftEligible: false })], 100, { freeGifts: 2 }),
+      'POST /gifts': ok({ batchId: 'b9', sent: ['u2'], skipped: [], balance: { zer: 100 }, freeGifts: 1, message: null }),
+    });
+    testAuth.client = client;
+    const onSent = vi.fn();
+    renderWithProviders(
+      <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={onSent} />,
+    );
+    expect(await screen.findByText('2 free')).toBeTruthy();
+    // 300 Zêr against 100: a free gift still pays for it, but not for the dear one.
+    expect(screen.getByRole('radio', { name: /^Mountain dawn/ }).getAttribute('aria-disabled')).not.toBe('true');
+    expect(screen.getByRole('radio', { name: /^Gold/ }).getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(screen.getByRole('radio', { name: /^Mountain dawn/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Use a free gift' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send as a free gift' }));
+    await waitFor(() => expect(onSent).toHaveBeenCalled());
+    expect(client.calls.find((c) => c.path === '/gifts')?.body).toMatchObject({ sku: 'bg_mountain', useFreeGift: true });
+  });
+
+  it('gives onto a post, asking for its catalogue by the post and sending to it', async () => {
+    const client = fakeClient({
+      'GET /gifts/catalog?post=library%3Ap1': catalogOf([item()]),
+      'POST /gifts': ok({ batchId: 'b9', sent: ['u2'], skipped: [], balance: { zer: 700 }, freeGifts: 0, message: null }),
+    });
+    testAuth.client = client;
+    const onSent = vi.fn();
+    renderWithProviders(
+      <GiftPickerSheet visible post={POST} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={onSent} />,
+    );
+    expect(screen.getByText('A gift on Rojda’s post')).toBeTruthy();
+    fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    await waitFor(() => expect(onSent).toHaveBeenCalled());
+    const body = client.calls.find((c) => c.path === '/gifts')?.body as Record<string, unknown>;
+    expect(body).toMatchObject({ sku: 'bg_mountain', post: { type: 'library', id: 'p1' } });
+    expect(body.toUserIds).toBeUndefined();
+  });
+
+  it('says calmly that friends only may give onto this post', async () => {
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?post=library%3Ap1': catalogOf([item()], 1000, { hold: 'friends_only' }) });
+    renderWithProviders(
+      <GiftPickerSheet visible post={POST} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={() => undefined} />,
+    );
+    expect(await screen.findByText('Gifts on this post come from Rojda’s friends.')).toBeTruthy();
+  });
 });
 
 describe('GiftPickerSheet, finding the gift', () => {
@@ -263,14 +359,14 @@ describe('GiftPickerSheet, finding the gift', () => {
     item({ sku: 'bg-made-gola-sin', name: 'Gola Şîn', price: 400, alreadyOwnedBy: ['u2'] }),
     item({ sku: 'bg_gold', name: 'Gold', price: 5000 }),
     item({ sku: 'icon-made-caydan', name: 'Îstîkan', category: 'icon', price: 900, assetUrl: '/cosmetics/icons/made-08-caydan.png' }),
-    item({ sku: 'icon_star', name: 'Star', category: 'icon', currency: 'gems', price: 5, alreadyOwnedBy: ['u2'] }),
+    item({ sku: 'icon_star', name: 'Star', category: 'icon', price: 50, alreadyOwnedBy: ['u2'] }),
     item({ sku: 'tag_kurdish', name: 'Kurdish Tag', category: 'tag', price: 500 }),
   ];
 
-  const sheet = (balance = { zer: 1000, gems: 2 }) => {
+  const sheet = (zer = 1000) => {
     const client = fakeClient({
-      'GET /gifts/catalog?to=u2': ok({ items: CATALOG, balance }),
-      'POST /gifts': ok({ batchId: 'b9', sent: ['u2'], skipped: [], balance, message: null }),
+      'GET /gifts/catalog?to=u2': catalogOf(CATALOG, zer),
+      'POST /gifts': ok({ batchId: 'b9', sent: ['u2'], skipped: [], balance: { zer }, freeGifts: 0, message: null }),
     });
     testAuth.client = client;
     const onSent = vi.fn();
@@ -317,18 +413,18 @@ describe('GiftPickerSheet, finding the gift', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Sort: Featured' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Price: high to low' }));
-    // Within each kind the dearest first, and gems, the dearer currency, before Zêr.
-    expect(gifts()).toEqual(['Gold', 'Gola Şîn', 'Mountain dawn', 'Star', 'Îstîkan', 'Kurdish Tag']);
+    // Within each kind the dearest first.
+    expect(gifts()).toEqual(['Gold', 'Gola Şîn', 'Mountain dawn', 'Îstîkan', 'Star', 'Kurdish Tag']);
   });
 
   it('hides what they already have, and what the balance cannot cover', async () => {
-    sheet({ zer: 1000, gems: 2 });
+    sheet(1000);
     await screen.findByRole('heading', { name: 'Backgrounds, 3 items' });
     fireEvent.click(screen.getByRole('checkbox', { name: 'Hide ones they already have' }));
     expect(gifts()).toEqual(['Mountain dawn', 'Gold', 'Îstîkan', 'Kurdish Tag']);
     expect(screen.getByRole('radio', { name: 'Icons, 1 item' })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Within my balance' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Within my Zêr' }));
     // Gold is 5000 Zêr against 1000.
     expect(gifts()).toEqual(['Mountain dawn', 'Îstîkan', 'Kurdish Tag']);
 
@@ -393,7 +489,7 @@ describe('GiftUnwrap', () => {
     await waitFor(() => expect(onOpened).toHaveBeenCalledWith(opened));
     // Skip the moment.
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
-    expect(await screen.findByText('From Azad')).toBeTruthy();
+    expect(await screen.findByText('Gift from Azad')).toBeTruthy();
     expect(screen.getByText('Newroz fire')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
 
@@ -471,7 +567,7 @@ describe('GiftUnwrap', () => {
     );
     expect(screen.getByRole('button', { name: 'Skip' })).toBeTruthy();
     act(() => finish[0]?.({ finished: true }));
-    expect(await screen.findByText('From Azad')).toBeTruthy();
+    expect(await screen.findByText('Gift from Azad')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
   });
 
@@ -517,14 +613,14 @@ describe('GiftUnwrap', () => {
     }
   });
 
-  it('leaves out "From" when the sender is not known here, rather than "From " and nothing', async () => {
+  it('says a Hevalo member sent it when the sender may not be named here, rather than a blank name', async () => {
     testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
     renderWithProviders(
       <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: '' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
     expect(await screen.findByText('Newroz fire')).toBeTruthy();
-    expect(screen.queryByText(/^From/)).toBeNull();
+    expect(screen.getByText('Gift from a Hevalo member')).toBeTruthy();
   });
 });
 

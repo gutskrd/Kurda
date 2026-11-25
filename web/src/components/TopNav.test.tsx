@@ -26,7 +26,7 @@ const you = (over: Record<string, unknown> = {}) => ({
   displayName: 'Ada',
   avatarUrl: null,
   level: { level: 58, progress: 0.42, xp: 1240, currentLevelXp: 1000, nextLevelXp: 1600 },
-  balances: { zer: 13880, gems: 90 },
+  balances: { zer: 13880 },
   ...over,
 });
 
@@ -157,16 +157,15 @@ describe('TopNav', () => {
     }
   });
 
-  it('stacks the two currencies with their amounts, and opens the shop from them', async () => {
+  it('shows the Zêr with its amount, and opens the shop from it', async () => {
     signIn();
     railFetch(you());
     show();
 
-    const purse = await screen.findByTitle('Your Zêr and gems');
+    const purse = await screen.findByTitle('Your Zêr');
     expect(purse.textContent).toContain('13,880');
-    expect(purse.textContent).toContain('90');
-    // Both on one control, one above the other, so they read as a pair.
-    expect(purse.querySelectorAll('.purse-row')).toHaveLength(2);
+    // One currency, one row.
+    expect(purse.querySelectorAll('.purse-row')).toHaveLength(1);
     expect(purse).toHaveAttribute('href', '/app/shop');
   });
 
@@ -194,7 +193,7 @@ describe('TopNav', () => {
 
     await screen.findByRole('link', { name: 'Home' });
     // A zero that later becomes 13,880 is worse than a moment of nothing.
-    expect(screen.queryByTitle('Your Zêr and gems')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Your Zêr')).not.toBeInTheDocument();
   });
 
   it('draws Profile as your face, with your level around it', async () => {
@@ -261,7 +260,7 @@ describe('TopNav', () => {
     expect(bar.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
     expect(bar.getByRole('link', { name: 'Get started' })).toBeInTheDocument();
     // Nothing to spend until there is an account.
-    expect(screen.queryByTitle('Your Zêr and gems')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Your Zêr')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Notifications/ })).not.toBeInTheDocument();
   });
 
@@ -457,7 +456,7 @@ describe('TopNav on a phone', () => {
     expect(screen.queryByRole('link', { name: 'Learn' })).toBeNull();
     expect(screen.queryByRole('button', { name: /^Menu/ })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Settings' })).toBeNull();
-    expect(screen.queryByTitle('Your Zêr and gems')).toBeNull();
+    expect(screen.queryByTitle('Your Zêr')).toBeNull();
   });
 
   it('has the way back in the brand’s place on a page you went into', async () => {

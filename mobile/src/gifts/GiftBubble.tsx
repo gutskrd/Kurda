@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
-import type { GiftCard } from '@kurda/shared';
+import { giftSenderName, type GiftCard } from '@kurda/shared';
 import { assetUrl } from '../api/env';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import type { Translate } from '../api/errors';
@@ -50,17 +50,14 @@ export function GiftBubble({
         : t('gift.bubble.notOpened')
     : null;
 
-  const title = forMe ? (card.myOpened ? card.name : t('gift.bubble.forYou')) : mine ? card.name : recipientsLine(card, t);
-  const hint = forMe
-    ? card.myOpened
-      ? senderName
-        ? t('gift.unwrap.from', { name: senderName })
-        : null
-      : t('gift.bubble.tapToOpen')
-    : mine
-      ? recipientsLine(card, t)
-      : null;
-  const label = forMe && !card.myOpened ? t('gift.bubble.openA11y', { name: senderName }) : [title, hint, status].filter(Boolean).join('. ');
+  // Who it is from, as the server lets this viewer see them; "a Hevalo member" when it may not (`GiftCard.from`). An
+  // older server sends no sender, and the message's own sender stands in.
+  const sender = (card as { from?: GiftCard['from'] }).from;
+  const fromName = sender === undefined ? senderName || null : giftSenderName(sender);
+  const fromLine = fromName ? t('gift.from', { name: fromName }) : t('gift.fromMember');
+  const title = forMe ? (card.myOpened ? card.name : fromLine) : mine ? card.name : recipientsLine(card, t);
+  const hint = forMe ? (card.myOpened ? fromLine : t('gift.bubble.tapToOpen')) : mine ? recipientsLine(card, t) : fromLine;
+  const label = forMe && !card.myOpened ? t('gift.bubble.openA11y', { name: fromName ?? t('gift.someone') }) : [title, hint, status].filter(Boolean).join('. ');
 
   const body = (
     <View

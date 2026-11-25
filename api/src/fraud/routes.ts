@@ -14,12 +14,12 @@ export function registerFraudRoutes(app: FastifyInstance, fraud: FraudService): 
     async () => ({ reviews: await fraud.pendingReviews() }),
   );
 
-  /** Clear (release hold + grant held Gems) or confirm (keep hold) a review. */
+  /** Clear (release hold + grant held Zêr) or confirm (keep hold) a review. */
   app.post(
     '/admin/fraud/reviews/:id/resolve',
     {
       schema: { params: z.object({ id: z.uuid() }), body: resolveBody },
-      // clearing a review grants the Gems it held: an economy write like any other
+      // clearing a review grants the Zêr it held: an economy write like any other
       config: { rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const } },
       preHandler: requireRoles('admin'),
     },

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { ContentRepository } from './repository.js';
-import { LessonSessionService, type GemGranter } from './sessions.js';
+import { LessonSessionService, type EarnGranter } from './sessions.js';
 import type { XpService } from '../xp/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 
@@ -15,12 +15,12 @@ const answerBodySchema = z.object({
 
 export function registerLessonRoutes(
   app: FastifyInstance,
-  gems?: GemGranter,
+  earn?: EarnGranter,
   xp?: XpService,
   milestones?: MilestoneRecorder,
 ): void {
-  // perfect first completions ask for their Gems inside `complete`; the rule is switched off, so none are paid unless an admin switches it on
-  const sessions = new LessonSessionService(app.db, { xp, gems, milestones });
+  // perfect first completions ask for their Zêr inside `complete`; the rule is switched off, so none is paid unless an admin switches it on
+  const sessions = new LessonSessionService(app.db, { xp, earn, milestones });
   const content = new ContentRepository(app.db);
 
   /** A skill's markdown grammar note for the "Tips" tab, and the words its lessons bring in, for its guide. */
@@ -65,7 +65,7 @@ export function registerLessonRoutes(
 
   /**
    * A second try at an item already answered in this session (the re-ask a client makes a few exercises after a miss).
-   * Graded like an answer but records nothing, so no score, XP, review or Gems move (see `retry`).
+   * Graded like an answer but records nothing, so no score, XP, review or Zêr move (see `retry`).
    */
   app.post(
     '/sessions/:id/retry',
@@ -81,7 +81,7 @@ export function registerLessonRoutes(
   );
 
   /**
-   * Finish the session and get the results summary. A perfect first completion pays Gems; a replay never does (see
+   * Finish the session and get the results summary. A perfect first completion pays Zêr while its rule is on; a replay never does (see
    * `complete`).
    */
   app.post(

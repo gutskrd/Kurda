@@ -10,7 +10,6 @@ const createBody = z.object({
   capacity: z.number().int().min(MIN_CAPACITY).max(MAX_CAPACITY),
   startsAt: z.coerce.date(),
   rewardZer: z.number().int().min(0).max(1_000_000).optional(),
-  rewardGems: z.number().int().min(0).max(1_000_000).optional(),
 });
 
 const idParam = z.object({ id: z.uuid() });

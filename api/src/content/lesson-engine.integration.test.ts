@@ -1,9 +1,9 @@
 /**
  * Lesson results and rewards that follow learning, not replays, against real Postgres: first completion (of any
- * version), revealed mistakes, perfect-lesson Gems at most once per learner and lesson, first-perfect, honest spacing
+ * version), revealed mistakes, perfect-lesson Zêr at most once per learner and lesson, first-perfect, honest spacing
  * on replays, and speaking kept out of review.
  *
- * The perfect-lesson gem rule is switched off, so a perfect lesson pays none (the last test checks this). The rule can
+ * The perfect-lesson earning rule is switched off, so a perfect lesson pays none (the last test checks this). The rule can
  * still be switched back on, so this suite enables it for itself to keep covering the once-per-learner payment.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -13,8 +13,8 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from './repository.js';
 import { activate } from '../test/activate.js';
-import { switchOnGemRule } from '../test/gem-rules.js';
-import { GemService } from '../gems/service.js';
+import { switchOnEarnRule } from '../test/earn-rules.js';
+import { EarnService } from '../earn/service.js';
 import { WalletService } from '../wallet/service.js';
 import { lessonCompletionXp } from '../xp/service.js';
 
@@ -92,13 +92,13 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     return { sid, graded, results: results.json() };
   }
 
-  const gemsEarned = async (userId: string, rule: string) =>
+  const zerEarned = async (userId: string, rule: string) =>
     Number(
       (
         await pool.query<{ n: string }>(
           `SELECT COALESCE(SUM(amount), 0)::text n FROM wallet_ledger
-           WHERE user_id = $1 AND currency = 'gems' AND reason = $2`,
-          [userId, `gem_earn:${rule}`],
+           WHERE user_id = $1 AND currency = 'zer' AND reason = $2`,
+          [userId, `earn:${rule}`],
         )
       ).rows[0]!.n,
     );
@@ -116,7 +116,7 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     repo = new ContentRepository(pool);
-    perfectRuleOff = await switchOnGemRule(pool, 'perfect_lesson');
+    perfectRuleOff = await switchOnEarnRule(pool, 'perfect_lesson');
 
     courseId = await repo.createCourse({ slug: `eng-${suffix}`, titleKu: 'K', titleEn: 'Engine' });
     const unitId = await repo.createUnit(courseId, 1, 'Y', 'Unit');
@@ -134,7 +134,7 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
 
   afterAll(async () => {
     await perfectRuleOff();
-    // XP and Gems were awarded → deleting the users cascades into append-only
+    // XP and Zêr were awarded → deleting the users cascades into append-only
     // ledgers, which only permit DELETE under the admin flag
     const client = await pool.connect();
     try {
@@ -160,13 +160,13 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
 
   // deliberately changed (contract 4 §B): first-perfect became a count on the
   // Bêkêmasî badge, read from /me/badges
-  it('a perfect first completion is a first completion, pays Gems and counts as a perfect lesson', async () => {
+  it('a perfect first completion is a first completion, pays Zêr and counts as a perfect lesson', async () => {
     learner = await register('eng1');
     const { graded, results } = await play(learner, true);
     expect(graded.map((g) => g.verdict)).toEqual(['correct', 'correct', 'correct']);
     expect(results).toMatchObject({ correct: 3, total: 3, accuracy: 1, firstCompletion: true, mistakes: [] });
 
-    expect(await gemsEarned(learner.id, 'perfect_lesson')).toBe(5);
+    expect(await zerEarned(learner.id, 'perfect_lesson')).toBe(25);
     const page = await authed(learner, 'GET', '/me/badges');
     const perfect = page.json().badges.find((b: { key: string }) => b.key === 'bekemasi');
     expect(perfect.progress).toBe(1);
@@ -216,10 +216,10 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     expect(await reviewState(learner.id, ex.sp)).toBeUndefined();
   });
 
-  it('a perfect replay pays no Gems: an easy lesson cannot be farmed', async () => {
+  it('a perfect replay pays no Zêr: an easy lesson cannot be farmed', async () => {
     const { results } = await play(learner, true);
     expect(results).toMatchObject({ accuracy: 1, firstCompletion: false });
-    expect(await gemsEarned(learner.id, 'perfect_lesson')).toBe(5);
+    expect(await zerEarned(learner.id, 'perfect_lesson')).toBe(25);
   });
 
   it('re-asking for a first completion’s results still says it was the first', async () => {
@@ -229,13 +229,13 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     );
     const again = await authed(learner, 'POST', `/sessions/${first.rows[0]!.id}/complete`);
     expect(again.json()).toMatchObject({ firstCompletion: true, xpAwarded: 0 });
-    expect(await gemsEarned(learner.id, 'perfect_lesson')).toBe(5);
+    expect(await zerEarned(learner.id, 'perfect_lesson')).toBe(25);
   });
 
   let legacy: Player;
 
   /**
-   * Gems once paid per session under the session id must not be paid again under the current per-learner key when the
+   * Zêr once paid per session under the session id must not be paid again under the current per-learner key when the
    * results are asked for again.
    */
   it('re-completing a session paid under the old per-session key pays nothing more', async () => {
@@ -252,16 +252,16 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     }
     // completed and paid the way the route used to do it
     await pool.query(`UPDATE lesson_sessions SET completed_at = now() WHERE id = $1`, [sid]);
-    await new GemService(pool, new WalletService(pool)).grant(legacy.id, 'perfect_lesson', sid);
-    expect(await gemsEarned(legacy.id, 'perfect_lesson')).toBe(5);
+    await new EarnService(pool, new WalletService(pool)).grant(legacy.id, 'perfect_lesson', sid);
+    expect(await zerEarned(legacy.id, 'perfect_lesson')).toBe(25);
 
     const again = await authed(legacy, 'POST', `/sessions/${sid}/complete`);
     expect(again.json()).toMatchObject({ accuracy: 1, firstCompletion: true, xpAwarded: 0 });
-    expect(await gemsEarned(legacy.id, 'perfect_lesson')).toBe(5);
+    expect(await zerEarned(legacy.id, 'perfect_lesson')).toBe(25);
   });
 
   /** A corrected lesson's new version (new id, same slot) is the lesson the learner already finished. */
-  it('a new version of a finished lesson is not a first completion and pays no Gems again', async () => {
+  it('a new version of a finished lesson is not a first completion and pays no Zêr again', async () => {
     const unitId = await repo.createUnit(courseId, 2, 'Y2', 'Unit two');
     const skillId = await repo.createSkill(unitId, 1, 'A', 'Water');
     const version = async (accepted: string[]) => {
@@ -278,18 +278,18 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
       }
       return { sid, results: (await authed(legacy, 'POST', `/sessions/${sid}/complete`)).json() };
     };
-    const before = await gemsEarned(legacy.id, 'perfect_lesson');
+    const before = await zerEarned(legacy.id, 'perfect_lesson');
 
     const v1 = await version(['av']);
     const first = await finish(v1);
     expect(first.results).toMatchObject({ accuracy: 1, firstCompletion: true, xpAwarded: lessonCompletionXp(1, false) });
-    expect(await gemsEarned(legacy.id, 'perfect_lesson')).toBe(before + 5);
+    expect(await zerEarned(legacy.id, 'perfect_lesson')).toBe(before + 25);
 
     const v2 = await version(['av', 'ava']);
     expect(v2).not.toBe(v1);
     const second = await finish(v2);
     expect(second.results).toMatchObject({ accuracy: 1, firstCompletion: false, xpAwarded: lessonCompletionXp(1, true) });
-    expect(await gemsEarned(legacy.id, 'perfect_lesson')).toBe(before + 5);
+    expect(await zerEarned(legacy.id, 'perfect_lesson')).toBe(before + 25);
     // asked again, the answer is the same
     expect((await authed(legacy, 'POST', `/sessions/${second.sid}/complete`)).json().firstCompletion).toBe(false);
   });
@@ -315,15 +315,15 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   });
 
   /**
-   * The Gem idempotency key is global, so a key without the learner would pay only the first person ever. Each learner
-   * is paid and counted on their own (contract 4 §B: lessons report to the badges, which pay no Gems).
+   * The ledger's idempotency key is global, so a key without the learner would pay only the first person ever. Each learner
+   * is paid and counted on their own (contract 4 §B: lessons report to the badges, which pay no Zêr).
    */
   it('every learner who finishes a perfect lesson is paid, and counted, on their own', async () => {
     const second = await register('eng2');
     const { results } = await play(second, true);
     expect(results).toMatchObject({ accuracy: 1, firstCompletion: true });
-    expect(await gemsEarned(second.id, 'perfect_lesson')).toBe(5);
-    expect(await gemsEarned(second.id, 'achievement_milestone')).toBe(0);
+    expect(await zerEarned(second.id, 'perfect_lesson')).toBe(25);
+    expect(await zerEarned(second.id, 'achievement_milestone')).toBe(0);
     for (const who of [learner.id, second.id]) {
       const perfect = await pool.query<{ progress: number }>(
         `SELECT progress FROM user_badges WHERE user_id = $1 AND badge_key = 'bekemasi'`,
@@ -334,21 +334,21 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   });
 
   /**
-   * With the rule off, a perfect first completion pays no Gems; the XP, the first completion and the perfect-lesson
+   * With the rule off, a perfect first completion pays no Zêr; the XP, the first completion and the perfect-lesson
    * badge count are unchanged.
    */
-  it('a perfect first completion pays no Gems while the rule is switched off, as the migration left it', async () => {
+  it('a perfect first completion pays no Zêr while the rule is switched off, as the migration left it', async () => {
     await perfectRuleOff();
     try {
       const plain = await register('eng_off', '10.31.0.3');
       const { results } = await play(plain, true);
       expect(results).toMatchObject({ accuracy: 1, firstCompletion: true, xpAwarded: lessonCompletionXp(1, false) });
-      expect(await gemsEarned(plain.id, 'perfect_lesson')).toBe(0);
-      expect((await new WalletService(pool).balances(plain.id)).gems).toBe(0);
+      expect(await zerEarned(plain.id, 'perfect_lesson')).toBe(0);
+      expect((await new WalletService(pool).balances(plain.id)).zer).toBe(0);
       const page = await authed(plain, 'GET', '/me/badges');
       expect(page.json().badges.find((b: { key: string }) => b.key === 'bekemasi').progress).toBe(1);
     } finally {
-      perfectRuleOff = await switchOnGemRule(pool, 'perfect_lesson');
+      perfectRuleOff = await switchOnEarnRule(pool, 'perfect_lesson');
     }
   });
 });

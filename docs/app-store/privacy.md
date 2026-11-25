@@ -81,7 +81,7 @@ asking; the last column is where each app says it.
 | Posts, comments, messages, letters, group posts | their composers | the feature itself | no | the people it is written to | until deleted, or deletion of the account | — |
 | Feedback (stars, choices, comment, app version, platform, language) | the rating box, Settings → Send feedback | improving the app | no; the comment says "(optional)" | the team | deleted with the account | — |
 | Reports and appeals | report sheets, Account standing | moderation | no | moderators | kept as moderation records after deletion | — |
-| Purchases | Shop (Zêr and Gewher); store receipts once in-app purchases open | what was bought | — | the person | until deletion | — |
+| Purchases | Shop (Zêr); store receipts once in-app purchases open | what was bought | — | the person | until deletion | — |
 | Friend search | Friends | finding people | — | nobody; not stored | not kept | — |
 | Crash reports | release builds, on their own | fixing crashes | automatic | the team | in server logs, with no account or device id | — |
 | Phone number | neither app asks; the API keeps an optional, unused route (`api/src/auth/phone-routes.ts`) | — | — | — | — | — |
@@ -159,7 +159,7 @@ two agree). The name in the first column is the one App Store Connect shows.
 | User Content → Other User Content | `OtherUserContent` | yes | no | App Functionality | posts, comments, captions, bio, saved words |
 | Identifiers → User ID | `UserID` | yes | no | App Functionality | the account's id |
 | Identifiers → Device ID | `DeviceID` | yes | no | App Functionality | the random per-install id that names a signed-in device, and the push token; both also keep people who were banned from coming back on the same phone (fraud prevention, never tracking) |
-| Purchases → Purchase History | `PurchaseHistory` | yes | no | App Functionality | what was bought in the shop with Zêr and Gewher; receipts of in-app purchases once those open (none are sold today) |
+| Purchases → Purchase History | `PurchaseHistory` | yes | no | App Functionality | what was bought in the shop with Zêr; receipts of in-app purchases once those open (none are sold today) |
 | Usage Data → Product Interaction | `ProductInteraction` | yes | no | Analytics, App Functionality | lessons done, streak, XP, and the owner's first-party counts of active learners; never for ads |
 | Diagnostics → Crash Data | `CrashData` | **no** | no | App Functionality | crash reports, sent first-party without the account |
 | Other Data → Other Data Types | `OtherDataTypes` | yes | no | App Functionality | the birth month and year asked at sign-up, and the phone's time zone for streak days |

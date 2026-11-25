@@ -1100,7 +1100,7 @@ a.league-card-mini:focus-visible {
 .league-card-mini-go {
   color: var(--ink-3);
 }
-/* a Zêr or Gewher amount on a board: the currency's picture, then the number */
+/* a Zêr amount on a board: the coin, then the number */
 .rank-amount {
   display: inline-flex;
   align-items: center;

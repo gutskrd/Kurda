@@ -15,7 +15,7 @@ import {
   type FilterableItem,
 } from './shop-items.js';
 
-const item = (name: string, category: string, price = 0, extra: Partial<FilterableItem> = {}): FilterableItem => ({ name, category, price, currency: 'zer', ...extra });
+const item = (name: string, category: string, price = 0, extra: Partial<FilterableItem> = {}): FilterableItem => ({ name, category, price, ...extra });
 
 const hevalo = item('Hevalo', 'background', 0, { description: 'Hevalo violet' });
 const glass = item('Îstîkan', 'icon', 900, { description: 'Tea glass' });
@@ -35,7 +35,7 @@ describe('kinds of item', () => {
   });
 
   it('counts each kind, and all of them', () => {
-    expect(countByCategory(shelf)).toEqual({ all: 7, background: 2, icon: 2, frame: 1, tag: 1, other: 1 });
+    expect(countByCategory(shelf)).toEqual({ all: 7, background: 2, icon: 2, frame: 1, tag: 1, sticker: 0, other: 1 });
   });
 
   it('offers only the kinds a list holds, in the shown order', () => {
@@ -82,10 +82,10 @@ describe('ordering', () => {
     expect(shelf.map((i) => i.name)).toEqual(before);
   });
 
-  it('orders by price either way, ties in the shop order, Zêr before gems', () => {
-    const items = [item('a', 'icon', 600), item('b', 'icon', 50, { currency: 'gems' }), item('c', 'icon', 400), item('d', 'icon', 600)];
-    expect(sortItems(items, 'price-asc').map((i) => i.name)).toEqual(['c', 'a', 'd', 'b']);
-    expect(sortItems(items, 'price-desc').map((i) => i.name)).toEqual(['b', 'a', 'd', 'c']);
+  it('orders by price either way, ties in the shop order', () => {
+    const items = [item('a', 'icon', 600), item('b', 'icon', 50), item('c', 'icon', 400), item('d', 'icon', 600)];
+    expect(sortItems(items, 'price-asc').map((i) => i.name)).toEqual(['b', 'c', 'a', 'd']);
+    expect(sortItems(items, 'price-desc').map((i) => i.name)).toEqual(['a', 'd', 'c', 'b']);
   });
 
   it('orders by name the way people read it, a letter with marks read as the plain one', () => {

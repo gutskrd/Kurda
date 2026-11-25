@@ -2,8 +2,10 @@ import type {
   ChatMessageExtras,
   EquippableCategory,
   GiftCard,
-  GiftCatalogItem,
+  GiftCatalog,
   GiftChatRef,
+  PostGifts,
+  PostGiftSender,
   SendGiftResult,
 } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
@@ -26,14 +28,26 @@ export interface ChatMessage extends ChatMessageExtras {
   deleted?: boolean;
 }
 
-export interface GiftCatalog {
-  items: GiftCatalogItem[];
-  balance: { zer: number; gems: number };
+export type { GiftCatalog };
+
+/** A post a gift is given onto, as the wall names it. */
+export interface PostTarget {
+  type: 'library' | 'image';
+  id: string;
 }
 
-/** What can be given to these friends, who owns what already, and the sender's balance. */
-export function giftCatalog(client: ApiClient, toUserIds: readonly string[]): Promise<ApiResult<GiftCatalog>> {
-  return client.get<GiftCatalog>(`/gifts/catalog?to=${toUserIds.map(encodeURIComponent).join(',')}`);
+/** What can be given to these friends or onto this post, who owns what already, the sender's Zêr and free gifts. */
+export function giftCatalog(client: ApiClient, to: readonly string[] | PostTarget): Promise<ApiResult<GiftCatalog>> {
+  if (!Array.isArray(to)) {
+    const post = to as PostTarget;
+    return client.get<GiftCatalog>(`/gifts/catalog?post=${encodeURIComponent(`${post.type}:${post.id}`)}`);
+  }
+  return client.get<GiftCatalog>(`/gifts/catalog?to=${to.map(encodeURIComponent).join(',')}`);
+}
+
+/** A post's gifts and who gave them, as this reader may see them. */
+export function postGifts(client: ApiClient, post: PostTarget): Promise<ApiResult<{ gifts: PostGifts; senders: PostGiftSender[] }>> {
+  return client.get(`/gifts/posts/${post.type}/${encodeURIComponent(post.id)}`);
 }
 
 export interface SentGift extends SendGiftResult {
@@ -47,7 +61,10 @@ export interface SentGift extends SendGiftResult {
  */
 export function sendGift(
   client: ApiClient,
-  input: { sku: string; toUserIds: readonly string[]; chat: GiftChatRef; idempotencyKey: string; expectedPrice: number },
+  input: { sku: string; idempotencyKey: string; expectedPrice: number; useFreeGift?: boolean } & (
+    | { toUserIds: readonly string[]; chat: GiftChatRef }
+    | { post: PostTarget }
+  ),
 ): Promise<ApiResult<SentGift>> {
   return client.post<SentGift>('/gifts', input);
 }

@@ -31,7 +31,7 @@ const self = (over: Record<string, unknown> = {}) => ({
   displayName: 'Ada',
   avatarUrl: null,
   level: { level: 58, progress: 0.42, xp: 1240, currentLevelXp: 1000, nextLevelXp: 1600 },
-  balances: { zer: 13880, gems: 90 },
+  balances: { zer: 13880 },
   ...over,
 });
 

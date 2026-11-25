@@ -86,7 +86,7 @@ export { PIGEON_POSES, type PigeonPose } from './pigeon.js';
 export type { SongbirdPose } from './songbird.js';
 export { rankEmblemSvg, placementEmblemSvg, PLACEMENT_GAMES, SMALL_EMBLEM, type PlacementEmblemOptions, type RankEmblemOptions } from './ranks.js';
 export { leagueEmblemSvg, SMALL_LEAGUE, type LeagueEmblemOptions } from './leagues.js';
-export { coinSvg, gemSvg, CURRENCY_CANVAS, type CurrencyOptions } from './currency.js';
+export { coinSvg, CURRENCY_CANVAS, type CurrencyOptions } from './currency.js';
 export { wordSetSvg, type WordSetArtOptions, type WordsCardId } from './word-sets.js';
 export {
   IMPOSTOR_CATEGORY_PICTURES,

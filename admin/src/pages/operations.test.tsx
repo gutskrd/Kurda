@@ -266,7 +266,7 @@ describe('the audit log', () => {
     expect(describeAction('POST /admin/users/:id/ban')).toEqual({ verb: 'Ban', where: 'users' });
     expect(describeAction('DELETE /admin/tags/:key')).toEqual({ verb: 'Delete', where: 'tags' });
     expect(describeAction('POST /admin/events/:key/enabled')).toEqual({ verb: 'Switch on/off', where: 'events' });
-    expect(describeAction('POST /admin/gem-rules (dry run)').verb).toBe('Create (dry run)');
+    expect(describeAction('POST /admin/earn-rules (dry run)').verb).toBe('Create (dry run)');
     expect(describeAction('POST /admin/ranks/games/:game/:ref/void')).toEqual({ verb: 'Void', where: 'ranks › games' });
     expect(describeAction('POST /admin/ranks/players/:userId/:game/reset')).toEqual({ verb: 'Reset', where: 'ranks › players' });
     expect(describeAction('POST /admin/seasons/end')).toEqual({ verb: 'End', where: 'seasons' });
@@ -276,11 +276,11 @@ describe('the audit log', () => {
 describe('Fraud', () => {
   const review = { id: 'r1', userId: 'u1', username: 'rojin', receiptId: 'rcpt-1', flags: ['VELOCITY'], evidence: { purchasesLastHour: 9 }, status: 'open', createdAt: '2026-10-13T10:00:00.000Z' };
 
-  it('gives the held Gems only after asking', async () => {
+  it('gives the held Zêr only after asking', async () => {
     const user = userEvent.setup();
     const { calls } = fakeApi(
       on('GET', '/admin/fraud/reviews', json({ reviews: [review] })),
-      on('POST', '/admin/fraud/reviews/r1/resolve', json({ status: 'cleared', grantedGems: 120 })),
+      on('POST', '/admin/fraud/reviews/r1/resolve', json({ status: 'cleared', grantedZer: 400 })),
     );
     renderUi(<Fraud />);
     expect(await screen.findByText('Many purchases fast')).toBeInTheDocument();
@@ -291,9 +291,9 @@ describe('Fraud', () => {
     expect(posts(calls, /resolve$/)).toHaveLength(0);
 
     await user.click(screen.getByRole('button', { name: 'Clear' }));
-    await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Clear and give the Gems' }));
+    await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Clear and give the Zêr' }));
     await waitFor(() => expect(posts(calls, /resolve$/)[0]?.body).toEqual({ decision: 'clear' }));
-    expect(await screen.findByText('Cleared: 120 Gems given.')).toBeInTheDocument();
+    expect(await screen.findByText('Cleared: 400 Zêr given.')).toBeInTheDocument();
   });
 
   it('says what each flag means and what the check saw', async () => {

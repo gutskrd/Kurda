@@ -26,7 +26,7 @@ export async function exportRanks(db: Executor, userId: string): Promise<Record<
          FROM rank_season_results WHERE user_id = $1 ORDER BY season_id, game`,
     ),
     seasonRewards: await q(
-      `SELECT season_id, best_game, best_tier, gems, frame_sku, title, granted_at
+      `SELECT season_id, best_game, best_tier, zer, frame_sku, title, granted_at
          FROM rank_season_rewards WHERE user_id = $1 ORDER BY season_id`,
     ),
   };

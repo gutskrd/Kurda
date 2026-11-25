@@ -9,6 +9,7 @@ import {
   itemCategory,
   MAX_GIFT_RECIPIENTS,
   shopItemDescription,
+  type GiftCatalog,
   type GiftCatalogItem,
   type GiftChatRef,
   type ItemFilter,
@@ -20,7 +21,7 @@ import type { ApiError, DmMessage, GroupMessage } from '../lib/types';
 import { Sheet } from '../components/Sheet';
 import { Button } from '../components/Button';
 import { Avatar } from '../components/Avatar';
-import { CheckIcon, CoinIcon, GemIcon } from '../components/icons';
+import { CheckIcon, CoinIcon } from '../components/icons';
 import { Skeleton, SkeletonRegion } from '../components/Skeleton';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -38,10 +39,21 @@ import {
   useIdPrefix,
   type KindTab,
 } from '../shop/ItemBrowser';
+import { ZerValue } from '../shop/ZerValue';
 import { GiftItemArt } from './GiftArt';
 
 /** A shelf item, with a description when the catalogue sends one. */
 type ShelfItem = GiftCatalogItem & { description?: string | null };
+
+/** The shelf as GET /gifts/catalog sends it; an older server leaves out the hold. */
+type Shelf = Omit<GiftCatalog, 'items' | 'hold' | 'freeGifts'> & { items: ShelfItem[]; hold?: GiftCatalog['hold']; freeGifts?: number };
+
+/** Refusals of the shelf that are the gift rules rather than a failure: one calm line, nothing to retry. */
+const RULES: Partial<Record<string, MessageKey>> = {
+  NOT_FRIENDS: 'gift.error.friendsOnly',
+  GIFT_TO_SELF: 'gift.error.friendsOnly',
+  BAD_RECIPIENTS: 'gift.error.friendsOnly',
+};
 
 /** Someone a gift can go to: the friend in a DM, or a friend in the group. */
 export interface GiftPerson {
@@ -89,8 +101,9 @@ function pickerError(error: ApiError, t: (key: MessageKey) => string): string | 
 
 /**
  * The gift picker from the chat's gift button. In a DM the gift is for the friend; in a group the sender first picks
- * among the members who are friends (with "Select all"). The shelf (`GET /gifts/catalog?to=…`) has every priced item,
- * who already owns one-of-a-kind items, and the balance. Nothing is preselected.
+ * among the members who are friends (with "Select all"). The shelf (`GET /gifts/catalog?to=…`) has the gift stickers
+ * first, then every priced item, each with what it is worth, who already owns one-of-a-kind items, and the Zêr. When
+ * the rules do not let a gift go yet, one calm line says why instead. Nothing is preselected.
  */
 export function GiftPicker({
   open,
@@ -127,7 +140,7 @@ function PickerFlow({
   const group = chat.kind === 'group';
   const [chosen, setChosen] = useState<string[]>(() => (!group && people?.[0] ? [people[0].userId] : []));
   const [step, setStep] = useState<'who' | 'what'>(group ? 'who' : 'what');
-  const [shelf, setShelf] = useState<{ items: ShelfItem[]; balance: { zer: number; gems: number } } | null>(null);
+  const [shelf, setShelf] = useState<Shelf | null>(null);
   const [shelfError, setShelfError] = useState<ApiError | null>(null);
   const [picked, setPicked] = useState<ShelfItem | null>(null);
   const [busy, setBusy] = useState(false);
@@ -153,12 +166,10 @@ function PickerFlow({
   const loadShelf = useCallback(async () => {
     setShelf(null);
     setShelfError(null);
-    const res = await client.get<{ items: ShelfItem[]; balance: { zer: number; gems: number } }>(
-      `/gifts/catalog?to=${chosen.join(',')}`,
-    );
+    const res = await client.get<Shelf>(`/gifts/catalog?to=${chosen.join(',')}`);
     if (res.ok) {
       const items = res.data.items ?? [];
-      setShelf({ items, balance: res.data.balance ?? { zer: 0, gems: 0 } });
+      setShelf({ items, balance: res.data.balance ?? { zer: 0 }, hold: res.data.hold ?? null });
       // A reload after a price change keeps the choice at its new price, so everything reads the fresh item.
       setPicked((p) => (p ? (items.find((i) => i.sku === p.sku) ?? null) : null));
     } else setShelfError(res.error);
@@ -173,8 +184,7 @@ function PickerFlow({
 
   const getting = (item: GiftCatalogItem): string[] => chosen.filter((id) => !item.alreadyOwnedBy.includes(id));
   const cost = (item: GiftCatalogItem): number => item.price * getting(item).length;
-  const affordable = (item: GiftCatalogItem): boolean =>
-    !!shelf && cost(item) <= (item.currency === 'gems' ? shelf.balance.gems : shelf.balance.zer);
+  const affordable = (item: GiftCatalogItem): boolean => !!shelf && cost(item) <= shelf.balance.zer;
 
   async function send(): Promise<void> {
     if (!picked || busy) return;
@@ -250,8 +260,8 @@ function PickerFlow({
           <span className="gift-tile-name">{item.name}</span>
           {item.description && <span className="gift-tile-desc">{item.description}</span>}
           <span className={`gift-tile-price${canPay ? '' : ' is-short'}`}>
-            {item.currency === 'gems' ? <GemIcon size={13} /> : <CoinIcon size={13} />} {fmt(item.price)}
-            <span className="sr-only">{item.currency === 'gems' ? t('shop.gems') : 'Zêr'}</span>
+            <CoinIcon size={13} /> {fmt(item.price)}
+            <span className="sr-only">Zêr</span> <ZerValue zer={item.price} />
           </span>
           {item.tier !== 'common' && <span className={`gift-tier gift-tier-${item.tier}`}>{t(TIER_LABEL[item.tier])}</span>}
           {owners.length > 0 && (
@@ -296,21 +306,25 @@ function PickerFlow({
               </button>
             )}
             {shelf && (
-              <span className="gift-balance" aria-label={t('gift.picker.balance', { zer: fmt(shelf.balance.zer), gems: fmt(shelf.balance.gems) })}>
+              <span className="gift-balance" aria-label={t('gift.picker.balance', { zer: fmt(shelf.balance.zer) })}>
                 <span>
                   <CoinIcon size={15} /> {fmt(shelf.balance.zer)}
-                </span>
-                <span>
-                  <GemIcon size={15} /> {fmt(shelf.balance.gems)}
                 </span>
               </span>
             )}
           </div>
 
-          {shelfError ? (
+          {shelfError && RULES[shelfError.code ?? ''] ? (
+            <p className="muted gift-hold">{t(RULES[shelfError.code ?? '']!)}</p>
+          ) : shelfError ? (
             <SendError error={shelfError} />
           ) : shelf === null ? (
             <ShelfSkeleton count={6} />
+          ) : shelf.hold ? (
+            // The rules do not let a gift go to this one friend yet: one calm line, rather than a shelf that would fail.
+            <p className="muted gift-hold">
+              {t(shelf.hold === 'new_friend' ? 'gift.hold.newFriend' : 'gift.hold.friendsOnly', { name: people?.[0]?.name ?? '' })}
+            </p>
           ) : shelf.items.length === 0 ? (
             <p className="muted">{t('gift.picker.empty')}</p>
           ) : (
@@ -372,7 +386,7 @@ function PickerFlow({
                   names: getting(picked).map((id) => nameOf.get(id) ?? '').join(', '),
                 })}
                 <strong className="gift-confirm-cost">
-                  {picked.currency === 'gems' ? <GemIcon size={14} /> : <CoinIcon size={14} />} {fmt(cost(picked))}
+                  <CoinIcon size={14} /> {fmt(cost(picked))} <ZerValue zer={cost(picked)} />
                 </strong>
                 {pickedHidden && <span className="gift-confirm-hidden">{t('gift.picker.pickHidden')}</span>}
                 {/* Beside the button that spends: a gift, like any purchase, is final. */}

@@ -66,8 +66,9 @@ import { DailyQuestService } from './quests/service.js';
 import { registerTreeRoutes } from './trees/routes.js';
 import { TreeService } from './trees/service.js';
 import { registerDailyQuestRoutes } from './quests/routes.js';
-import { GemService } from './gems/service.js';
-import { registerGemRoutes } from './gems/routes.js';
+import { EarnService } from './earn/service.js';
+import { registerEarnRoutes } from './earn/routes.js';
+import { registerMembersBoxRoutes } from './plus/routes.js';
 import { createProgression } from './badges/progression.js';
 import { registerBadgeRoutes } from './badges/routes.js';
 import { badgeNotices, scheduleBadgeJobs } from './jobs/badge-jobs.js';
@@ -425,9 +426,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
   // auth + user endpoints need the database
   if (config.DATABASE_URL) {
-    // Config-driven Gem grants, shared by achievements, lessons and tournaments.
-    const gemService = new GemService(app.db, new WalletService(app.db));
-    registerGemRoutes(app, gemService);
+    // Earned Zêr under the daily cap, and the staff-tunable rules shared by leagues, achievements, lessons and tournaments.
+    const earnService = new EarnService(app.db, new WalletService(app.db));
+    registerEarnRoutes(app, earnService);
 
     // Friends and friend milestones, needed by the services below.
     const friends = new FriendService(app.db);
@@ -446,7 +447,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // through the list, a realtime `badge_unlocked` (the gateway is looked up later, since it is set up further down) and
     // one push a day.
     const { xp: xpService, leagues, badges } = createProgression(app.db, {
-      gems: gemService,
+      earn: earnService,
       activity,
       notices,
       badgeNotices: (badgeService) =>
@@ -516,10 +517,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // The shared raw-image body parser for every through-server upload.
     registerImageUploadParser(app, mediaLimits(config).maxUploadBytes);
     registerUserRoutes(app, config);
-    registerAchievementRoutes(app, gemService, activity);
+    registerAchievementRoutes(app, earnService, activity);
     // The old achievements: only the tournament win still awards one; lessons, practice, Peyvok and Stories report to the
     // badges above.
-    const achievements = new AchievementsService(app.db, gemService, activity);
+    const achievements = new AchievementsService(app.db, earnService, activity);
     registerWalletRoutes(app);
 
     // friend + social + activity-feed routes
@@ -610,10 +611,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       const economyRollup = setInterval(rollupDay, 6 * 60 * 60 * 1000);
       app.addHook('onClose', async () => clearInterval(economyRollup));
     }
-    registerLessonRoutes(app, gemService, xpService, badges);
+    registerLessonRoutes(app, earnService, xpService, badges);
     registerDailyGoalRoutes(app);
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
-    // a streak that ended, restored for gems (or a Hevalo+ member's free one of the month)
+    // a Hevalo+ member's monthly box: Zêr, free gifts and that month's members-only item
+    registerMembersBoxRoutes(app);
+    // a streak that ended, won back by a day's learning (or a Hevalo+ member's free restore of the month)
     registerStreakRoutes(app, new StreakService(app.db, new WalletService(app.db)));
     // today's three quests, moved by finished lessons and practice, each paying a chest of Zêr
     registerDailyQuestRoutes(app, new DailyQuestService(app.db, new WalletService(app.db)));
@@ -780,8 +783,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
         events,
       }),
     );
-    // Event quests and reward claims: progress from the ledgers over the event window, claims paying Zêr or Gems with a
-    // 72-hour grace period.
+    // Event quests and reward claims: progress from the ledgers over the event window, claims paying Zêr with a 72-hour
+    // grace period.
     registerQuestRoutes(
       app,
       new QuestService(app.db, events, new WalletService(app.db), new DbQuestMetrics(app.db)),
@@ -947,7 +950,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerSocialRailRoutes(app, { friends, groups, groupChat, inbox });
 
     // Tournaments: admin brackets with admin-entered results, shown by no client until there is a game to play.
-    const tournaments = new TournamentService(app.db, new WalletService(app.db), gemService, achievements);
+    const tournaments = new TournamentService(app.db, new WalletService(app.db), earnService, achievements);
     registerTournamentRoutes(app, tournaments);
   }
 

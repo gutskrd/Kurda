@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import type { Notification } from '../push/service.js';
 import { notBlockedSql } from '../friends/blocked.js';
+import { giftSenderShownSql } from '../gifts/cards.js';
 
 export const INBOX_LIMIT = 50;
 
@@ -22,19 +23,37 @@ interface InboxRow {
   data: Record<string, unknown>;
   created_at: Date;
   read_at: Date | null;
+  sender_hidden?: boolean;
 }
 
+/** What a gift's notice says once its sender may no longer be named to the reader. */
+const UNNAMED_GIFT_BODY: Record<string, string> = {
+  gift: 'A Hevalo member sent you a gift.',
+  post_gift: 'A Hevalo member gave your post a gift.',
+};
+
 function toItem(row: InboxRow): InboxItem {
+  const data = { ...(row.data ?? {}) };
+  const hidden = row.sender_hidden === true;
+  if (hidden) delete data.fromName;
   return {
     id: row.id,
     category: row.category,
     title: row.title,
-    body: row.body,
-    data: row.data ?? {},
+    body: hidden ? (UNNAMED_GIFT_BODY[String(data.kind)] ?? row.body) : row.body,
+    data,
     createdAt: row.created_at,
     readAt: row.read_at,
   };
 }
+
+/**
+ * SQL column: a gift's notice whose sender the reader may no longer see (deleted, blocked either way, or hidden from
+ * them since) loses the name. A gift in chat came from someone in that conversation, so only a post gift asks more.
+ */
+const SENDER_HIDDEN_SQL = `(n.data->>'kind' IN ('gift', 'post_gift') AND NOT EXISTS (
+         SELECT 1 FROM users s
+          WHERE s.id = (n.data->>'fromUserId')::uuid AND ${giftSenderShownSql('s', 'n.user_id', "n.data->>'kind' = 'gift'")})) AS sender_hidden`;
 
 /**
  * Writes notifications in one statement through `executor`, the caller's transaction when a change and its
@@ -86,8 +105,8 @@ export class InboxService {
   /** The last 50 notifications, newest first. */
   async list(userId: string, limit = INBOX_LIMIT): Promise<InboxItem[]> {
     const res = await this.pool.query<InboxRow>(
-      `SELECT id, category, title, body, data, created_at, read_at
-       FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2`,
+      `SELECT n.id, n.category, n.title, n.body, n.data, n.created_at, n.read_at, ${SENDER_HIDDEN_SQL}
+       FROM notifications n WHERE n.user_id = $1 ORDER BY n.created_at DESC LIMIT $2`,
       [userId, Math.min(limit, INBOX_LIMIT)],
     );
     return res.rows.map(toItem);
@@ -96,9 +115,9 @@ export class InboxService {
   /** The newest `limit` notifications and the unread total in one query, which the social rail polls; each row carries the count. */
   async recent(userId: string, limit: number): Promise<{ items: InboxItem[]; unread: number }> {
     const res = await this.pool.query<InboxRow & { unread: number }>(
-      `SELECT id, category, title, body, data, created_at, read_at,
+      `SELECT n.id, n.category, n.title, n.body, n.data, n.created_at, n.read_at, ${SENDER_HIDDEN_SQL},
               (SELECT COUNT(*)::int FROM notifications WHERE user_id = $1 AND read_at IS NULL) AS unread
-       FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2`,
+       FROM notifications n WHERE n.user_id = $1 ORDER BY n.created_at DESC LIMIT $2`,
       [userId, Math.min(limit, INBOX_LIMIT)],
     );
     return { items: res.rows.map(toItem), unread: res.rows[0]?.unread ?? 0 };

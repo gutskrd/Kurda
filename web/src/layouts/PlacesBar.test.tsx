@@ -23,7 +23,7 @@ const you = {
   displayName: 'Ada',
   avatarUrl: null,
   level: { level: 3, progress: 0.4, xp: 120, currentLevelXp: 100, nextLevelXp: 200 },
-  balances: { zer: 40, gems: 2 },
+  balances: { zer: 40 },
 };
 
 /** The API as the bar's list reads it: who is signed in, and what is waiting for them. */

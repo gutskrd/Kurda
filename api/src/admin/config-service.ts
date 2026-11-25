@@ -186,7 +186,7 @@ export class ConfigService {
         name: p.name as string,
         description: pick('description', was?.description ?? undefined),
         category: pick('category', was?.category),
-        currency: p.currency as 'zer' | 'gems',
+        currency: 'zer',
         price: p.price as number,
         isUnique: pick('isUnique', was?.is_unique),
         active: pick('active', was?.active),

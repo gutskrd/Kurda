@@ -339,7 +339,7 @@ export function Games(): React.JSX.Element {
       <div className="gp-quick">
         {/* A friend's code into their game: one way in for every online game, unless a teen's parent switched those off. */}
         {gamesOff ? <ParentalNote compact /> : <JoinCodeEntry />}
-        {/* XP, the weekly league, Zêr and Gewher. */}
+        {/* XP, the weekly league and Zêr. */}
         <Link to="/app/rankings" className="games-rankings">
           <TrophyIcon size={20} />
           <span className="games-rankings-text">

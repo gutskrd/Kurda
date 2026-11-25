@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import { canModerateGroup, type GiftCard, type GiftTier, type GroupChatCleared } from '@kurda/shared';
+import { canModerateGroup, giftSenderName, type GiftCard, type GiftTier, type GroupChatCleared } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError, isMaintenance, notReached } from '../api/errors';
@@ -33,6 +33,7 @@ import { useTypingSignal, useTypingWatch } from '../chat/typing';
 import { giftBatchCard, openGift as openGiftApi, withCard, type ChatMessage } from '../gifts/api';
 import { useGiftEvents, useOpenChat } from '../gifts/events';
 import { GiftPickerSheet, skippedText, type GiftFriend } from '../gifts/GiftPickerSheet';
+import { canGiveGifts } from '../gifts/access';
 import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftUnwrap, type UnwrapTarget } from '../gifts/GiftUnwrap';
 import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
@@ -383,11 +384,11 @@ export function GroupThreadScreen({
     (giftId: string) => {
       const message = messages.find((m) => m.gift?.myGiftId === giftId);
       if (message?.gift) {
-        setUnwrapping({ giftId, card: message.gift, fromName: message.username });
+        setUnwrapping({ giftId, card: message.gift, fromName: giftSenderName(message.gift.from) ?? '' });
         return;
       }
       void openGiftApi(client, giftId).then((res) => {
-        if (res.ok) setUnwrapping({ giftId, card: res.data.card, fromName: '' });
+        if (res.ok) setUnwrapping({ giftId, card: res.data.card, fromName: giftSenderName(res.data.card.from) ?? '' });
         // A gift that cannot be opened now says so, rather than the tap doing nothing.
         else if (!isMaintenance(res.error)) Alert.alert(t('error.generic'), describeError(res.error, t));
       });
@@ -654,14 +655,16 @@ export function GroupThreadScreen({
           </View>
         ) : (
           <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
-            <Pressable
-              onPress={openPicker}
-              accessibilityRole="button"
-              accessibilityLabel={t('gift.button')}
-              style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
-            >
-              <Icon name="gift" size={22} color={colors.goldText} />
-            </Pressable>
+            {canGiveGifts(user) ? (
+              <Pressable
+                onPress={openPicker}
+                accessibilityRole="button"
+                accessibilityLabel={t('gift.button')}
+                style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
+              >
+                <Icon name="gift" size={22} color={colors.goldText} />
+              </Pressable>
+            ) : null}
             <ChatGameButton target={{ kind: 'group', groupId }} />
             <MessageField
               value={draft}

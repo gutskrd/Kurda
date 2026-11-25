@@ -21,6 +21,7 @@ const KIND_LABEL: Readonly<Record<KindTab, MessageKey>> = {
   icon: 'items.kind.icon',
   frame: 'items.kind.frame',
   tag: 'items.kind.tag',
+  sticker: 'items.kind.sticker',
   other: 'items.kind.other',
 };
 

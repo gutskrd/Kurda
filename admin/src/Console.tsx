@@ -24,7 +24,7 @@ import { AiModeration } from './pages/AiModeration';
 import { Lessons } from './pages/Lessons';
 import { Experiments } from './pages/Experiments';
 import { Events } from './pages/Events';
-import { GemRules } from './pages/GemRules';
+import { EarnRules } from './pages/EarnRules';
 import { System } from './pages/System';
 import { Audit } from './pages/Audit';
 import { SecurityLog } from './pages/SecurityLog';
@@ -74,7 +74,7 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   economy: () => <Economy />,
   shop: () => <Shop />,
   pictures: () => <Pictures />,
-  'gem-rules': () => <GemRules />,
+  'earn-rules': () => <EarnRules />,
   fraud: () => <Fraud />,
   approvals: () => <Approvals />,
   flags: () => <Experiments />,

@@ -67,7 +67,7 @@ describe.skipIf(!DATABASE_URL)('admin config approval (integration)', () => {
     const sku = `cfg_pricey_${suffix}`; skus.push(sku);
     const proposed = await call('POST', '/admin/config/changes', adminTok, {
       target: 'shop_item',
-      payload: { sku, name: 'Premium Bundle', currency: 'gems', price: 5000 },
+      payload: { sku, name: 'Premium Bundle', currency: 'zer', price: 5000 },
     });
     expect(proposed.statusCode).toBe(202);
     expect(proposed.json().status).toBe('pending');
@@ -161,28 +161,28 @@ describe.skipIf(!DATABASE_URL)('admin config approval (integration)', () => {
       app.inject({ method: 'POST', url: '/shop/items', headers: { authorization: `Bearer ${adminTok}` }, payload, remoteAddress: '10.80.0.9' });
 
     // a new item at 1,000 or more, and a cheap item raised to it, are both refused
-    const fresh = await post({ sku, name: 'Dear', currency: 'gems', price: 1000 });
+    const fresh = await post({ sku, name: 'Dear', currency: 'zer', price: 1000 });
     expect(fresh.statusCode).toBe(409);
     expect(fresh.json().code).toBe('PRICE_NEEDS_APPROVAL');
     expect((await pool.query(`SELECT 1 FROM shop_items WHERE sku = $1`, [sku])).rowCount).toBe(0);
-    expect((await post({ sku, name: 'Dear', currency: 'gems', price: 999 })).statusCode).toBe(200);
-    expect((await post({ sku, name: 'Dear', currency: 'gems', price: 1500 })).statusCode).toBe(409);
+    expect((await post({ sku, name: 'Dear', currency: 'zer', price: 999 })).statusCode).toBe(200);
+    expect((await post({ sku, name: 'Dear', currency: 'zer', price: 1500 })).statusCode).toBe(409);
     expect((await pool.query(`SELECT price FROM shop_items WHERE sku = $1`, [sku])).rows[0]!.price).toBe(999);
 
     // once a second admin has approved the price, the rest of the item is still edited here
-    const proposed = await call('POST', '/admin/config/changes', adminTok, { target: 'shop_item', payload: { sku, name: 'Dear', currency: 'gems', price: 1500 } });
+    const proposed = await call('POST', '/admin/config/changes', adminTok, { target: 'shop_item', payload: { sku, name: 'Dear', currency: 'zer', price: 1500 } });
     expect((await call('POST', `/admin/config/changes/${proposed.json().id}/approve`, admin2Tok)).statusCode).toBe(200);
-    const renamed = await post({ sku, name: 'Dearer', currency: 'gems', price: 1500 });
+    const renamed = await post({ sku, name: 'Dearer', currency: 'zer', price: 1500 });
     expect(renamed.statusCode).toBe(200);
-    // the same number in the other currency is a new price
-    expect((await post({ sku, name: 'Dearer', currency: 'zer', price: 1500 })).statusCode).toBe(409);
-    expect((await pool.query(`SELECT name, price, currency FROM shop_items WHERE sku = $1`, [sku])).rows[0]).toEqual({ name: 'Dearer', price: 1500, currency: 'gems' });
+    // a price is only ever in Zêr
+    expect((await post({ sku, name: 'Dearer', currency: 'gems', price: 1500 })).statusCode).toBe(400);
+    expect((await pool.query(`SELECT name, price, currency FROM shop_items WHERE sku = $1`, [sku])).rows[0]).toEqual({ name: 'Dearer', price: 1500, currency: 'zer' });
   });
 
   it('lists pending changes and can reject one', async () => {
     const sku = `cfg_reject_${suffix}`; skus.push(sku);
     const p = await call('POST', '/admin/config/changes', adminTok, {
-      target: 'shop_item', payload: { sku, name: 'Nope', currency: 'gems', price: 9999 },
+      target: 'shop_item', payload: { sku, name: 'Nope', currency: 'zer', price: 9999 },
     });
     const id = p.json().id;
     const pending = (await call('GET', '/admin/config/changes', admin2Tok)).json().pending as Array<{ id: string }>;

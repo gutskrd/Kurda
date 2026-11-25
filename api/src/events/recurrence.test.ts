@@ -11,7 +11,7 @@ const newroz: AnnualEventTemplate = {
   durationDays: 3,
   priority: 10,
   quests: [{ id: 'q1' }],
-  rewards: { gems: 50 },
+  rewards: { zer: 250 },
 };
 
 describe('occurrenceForYear', () => {
@@ -22,7 +22,7 @@ describe('occurrenceForYear', () => {
     expect(occ.endsAt).toBe('2027-03-24T00:00:00.000Z'); // +3 days
     expect(occ.priority).toBe(10);
     expect(occ.quests).toEqual([{ id: 'q1' }]);
-    expect(occ.rewards).toEqual({ gems: 50 });
+    expect(occ.rewards).toEqual({ zer: 250 });
   });
 
   it('lands on March 21 regardless of leap year', () => {

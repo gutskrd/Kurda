@@ -92,7 +92,7 @@ describe('the shop', () => {
 
   it('saves the rest of a dear item at once when its price stays', async () => {
     const user = userEvent.setup();
-    const dear = item({ price: 2000, currency: 'gems' });
+    const dear = item({ price: 2000 });
     const { calls } = fakeApi(...shop([dear]), on('POST', '/shop/items', json(dear)));
     renderUi(<Shop />);
     await openOthers(user);
@@ -232,8 +232,7 @@ describe('an item’s sale state', () => {
   it('needs a second admin only for a new price at or over 1,000', () => {
     expect(needsApproval(null, 999, 'zer')).toBe(false);
     expect(needsApproval(null, 1000, 'zer')).toBe(true);
-    expect(needsApproval({ price: 1500, currency: 'gems' }, 1500, 'gems')).toBe(false);
-    expect(needsApproval({ price: 1500, currency: 'gems' }, 1500, 'zer')).toBe(true);
+    expect(needsApproval({ price: 1500, currency: 'zer' }, 1500, 'zer')).toBe(false);
     expect(needsApproval({ price: 500, currency: 'zer' }, 1200, 'zer')).toBe(true);
   });
 });

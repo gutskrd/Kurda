@@ -13,6 +13,7 @@ import { TreePicture } from '../tree/TreeScene';
 import { treeNamed } from '../tree/names';
 import type { MyTree, TreeKindOffer, TreeState } from '../tree/useTree';
 import { BuyConfirm } from './BuyConfirm';
+import { ZerValue } from './ZerValue';
 import './yours.css';
 
 /**
@@ -195,6 +196,7 @@ export function YourTree({ tree, zer, onZer }: { tree: TreeState; zer: number | 
                     <span className={`shop-price${missing > 0 ? ' is-short' : ''}`}>
                       <CoinIcon size={14} />
                       {`${number(kind.price)} Zêr`}
+                      <ZerValue zer={kind.price} />
                       {missing > 0 && <span className="shop-short">{t('shop.amountMore', { amount: number(missing) })}</span>}
                     </span>
                   )}

@@ -183,7 +183,7 @@ describe('a league week that is good news', () => {
     goalXp: 200,
     goalMet: true,
     trophy: false,
-    gems: 0,
+    zer: 0,
     ...over,
   });
 

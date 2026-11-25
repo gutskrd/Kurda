@@ -62,6 +62,7 @@ describe('a gift of something other than a background or an icon', () => {
     assetUrl,
     tier: 'common',
     recipients: [{ name: 'Rojda', avatarUrl: null, isMe: false, opened: true }],
+    from: null,
     myGiftId: null,
     myOpened: false,
     equippable: null,

@@ -1,12 +1,11 @@
-import { PLUS_DAILY_GEMS } from '@kurda/shared';
 import { dayDiff } from '../streaks/streak-logic.js';
 
 /**
  * The pure daily Zêr reward cycle: from the last claim date and today (local 'YYYY-MM-DD' dates), whether a claim is
- * available and which cycle day it lands on; day 7 pays the bonus. Server time only. A claim needs a lesson or practice
- * session finished that day, since paying for showing up is risky while recognising learning is not (the roadmap in
- * docs/research). A missed day never resets the cycle, which would punish exactly the lapse a learner needs to recover
- * from.
+ * available and which cycle day it lands on; day 7 pays the bonus. The daily Zêr is a Hevalo+ member's (the money model
+ * in docs/money). Server time only. A claim needs a lesson or practice session finished that day, since paying for
+ * showing up is risky while recognising learning is not (the roadmap in docs/research). A missed day never resets the
+ * cycle, which would punish exactly the lapse a learner needs to recover from.
  */
 
 /** Zêr paid on each day of the cycle (index 0 = day 1 … index 6 = day 7 bonus). */
@@ -61,10 +60,14 @@ export function statusFor(state: DailyRewardState, today: string, learnedToday: 
   };
 }
 
-/** What GET /rewards/daily answers, and the daily view repeats: the status, the last claimed day, and a member's gems. */
-export type DailyRewardView = DailyRewardStatus & { cycleDay: number; plusGems: number };
+/**
+ * What GET /rewards/daily answers, and the daily view repeats: the status, the last claimed day, and whether this learner
+ * has the daily Zêr at all (`member`); for anyone else nothing can be claimed and the apps show no daily Zêr.
+ */
+export type DailyRewardView = DailyRewardStatus & { cycleDay: number; member: boolean };
 
-/** The status for `today`, with the gems a claim adds for a Hevalo+ member (0 for everyone else). */
+/** The status for `today`, claimable only by a Hevalo+ member. */
 export function dailyRewardView(state: DailyRewardState, today: string, learnedToday: boolean, plus: boolean): DailyRewardView {
-  return { ...statusFor(state, today, learnedToday), cycleDay: state.cycleDay, plusGems: plus ? PLUS_DAILY_GEMS : 0 };
+  const status = statusFor(state, today, learnedToday);
+  return { ...status, canClaim: status.canClaim && plus, cycleDay: state.cycleDay, member: plus };
 }

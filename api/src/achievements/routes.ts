@@ -1,9 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import { requireAuth } from '../plugins/auth.js';
-import { AchievementsService, type ActivityPublisher, type GemGranter } from './service.js';
+import { AchievementsService, type ActivityPublisher, type EarnGranter } from './service.js';
 
-export function registerAchievementRoutes(app: FastifyInstance, gems?: GemGranter, activity?: ActivityPublisher): void {
-  const achievements = new AchievementsService(app.db, gems, activity);
+export function registerAchievementRoutes(app: FastifyInstance, earn?: EarnGranter, activity?: ActivityPublisher): void {
+  const achievements = new AchievementsService(app.db, earn, activity);
 
   /** All achievements with earned state (profile display). */
   app.get('/me/achievements', { preHandler: requireAuth }, async (req) => {

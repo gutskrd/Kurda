@@ -19,7 +19,7 @@ export interface FraudReview {
 
 /**
  * Payment-fraud pipeline: gathers per-account signals and runs the rules; when a purchase trips one, records a review
- * and holds the account's purchases, never banning it. Admins clear a hold, releasing held Gems, or confirm it.
+ * and holds the account's purchases, never banning it. Admins clear a hold, releasing held Zêr, or confirm it.
  */
 export class FraudService {
   constructor(
@@ -39,7 +39,7 @@ export class FraudService {
     );
     const refunds = await client.query<{ n: number }>(
       `SELECT count(*)::int n FROM iap_receipts
-        WHERE user_id = $1 AND status = 'refunded' AND clawed_back < gems`,
+        WHERE user_id = $1 AND status = 'refunded' AND clawed_back < zer`,
       [userId],
     );
     return { purchasesLastHour: velocity.rows[0]!.n, refundsAfterSpend: refunds.rows[0]!.n };
@@ -106,12 +106,12 @@ export class FraudService {
     }));
   }
 
-  /** Resolves a review: 'clear' releases the hold and grants any held Gems; 'confirm' keeps the hold and grants nothing. */
+  /** Resolves a review: 'clear' releases the hold and grants any held Zêr; 'confirm' keeps the hold and grants nothing. */
   async resolve(
     reviewId: string,
     decision: 'clear' | 'confirm',
     adminId: string,
-  ): Promise<{ status: string; grantedGems: number }> {
+  ): Promise<{ status: string; grantedZer: number }> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -123,9 +123,9 @@ export class FraudService {
       if (!review) throw new AppError('REVIEW_NOT_FOUND', 404, 'no such review');
       if (review.status !== 'open') throw new AppError('REVIEW_RESOLVED', 409, 'review already resolved');
 
-      let grantedGems = 0;
+      let grantedZer = 0;
       if (decision === 'clear') {
-        grantedGems = await this.grantHeldReceipt(client, review.receipt_id);
+        grantedZer = await this.grantHeldReceipt(client, review.receipt_id);
         // release the hold only if this account has no other open reviews
         await client.query(
           `DELETE FROM account_holds a WHERE a.user_id = $1
@@ -143,7 +143,7 @@ export class FraudService {
         [reviewId, decision === 'clear' ? 'cleared' : 'confirmed', adminId],
       );
       await client.query('COMMIT');
-      return { status: decision === 'clear' ? 'cleared' : 'confirmed', grantedGems };
+      return { status: decision === 'clear' ? 'cleared' : 'confirmed', grantedZer };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;
@@ -152,28 +152,28 @@ export class FraudService {
     }
   }
 
-  /** Grants a held receipt's Gems, idempotently. */
+  /** Grants a held receipt's Zêr, idempotently. */
   private async grantHeldReceipt(client: pg.PoolClient, receiptId: string | null): Promise<number> {
     if (!receiptId) return 0;
     const res = await client.query<{
       user_id: string;
       platform: string;
       transaction_id: string;
-      gems: number;
+      zer: number;
       status: string;
-    }>(`SELECT user_id, platform, transaction_id, gems, status FROM iap_receipts WHERE id = $1 FOR UPDATE`, [
+    }>(`SELECT user_id, platform, transaction_id, zer, status FROM iap_receipts WHERE id = $1 FOR UPDATE`, [
       receiptId,
     ]);
     const receipt = res.rows[0];
     if (!receipt || receipt.status !== 'held') return 0;
     await this.wallet.creditWithin(client, {
       userId: receipt.user_id,
-      currency: 'gems',
-      amount: receipt.gems,
+      currency: 'zer',
+      amount: receipt.zer,
       reason: 'iap_purchase',
       idempotencyKey: `iap:${receipt.platform}:${receipt.transaction_id}`,
     });
     await client.query(`UPDATE iap_receipts SET status = 'granted' WHERE id = $1`, [receiptId]);
-    return receipt.gems;
+    return receipt.zer;
   }
 }

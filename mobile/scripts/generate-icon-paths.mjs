@@ -60,7 +60,6 @@ const MAP = {
   send: { glyph: 'PaperPlaneTilt', note: 'web SendIcon — sending, to a person' },
   image: { glyph: 'Image', note: 'web PhotoIcon' },
   coin: { glyph: 'Coin', note: 'web CoinIcon — Zêr' },
-  gem: { glyph: 'DiamondsFour', note: 'web GemIcon — the harder currency' },
   cart: { glyph: 'Storefront', note: 'web ShopIcon' },
   trophy: { glyph: 'Trophy', note: 'web TrophyIcon' },
   speaker: { glyph: 'Waveform', note: 'web WaveformIcon — hear it said' },
@@ -72,7 +71,7 @@ const MAP = {
   'bookmark-fill': { glyph: 'BookmarkSimple', weight: 'fill', note: 'the same bookmark, already kept' },
 
   // --- Gifts in chat, and safety (reports, account standing) ---
-  gift: { glyph: 'Gift', note: 'web GiftIcon — a present, in the chat and in the shop; the gem stood in for it' },
+  gift: { glyph: 'Gift', note: 'web GiftIcon — a present, in the chat, the shop and on posts' },
   more: { glyph: 'DotsThree', weight: 'bold', note: 'more things you can do with this — report, block — behind one quiet button' },
   shield: { glyph: 'ShieldCheck', note: 'your account standing: what is limited, why, and asking for a review' },
   lifebuoy: { glyph: 'Lifebuoy', note: 'help, shown first when someone may hurt themselves' },

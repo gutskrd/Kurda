@@ -20,15 +20,15 @@ import { heldDim } from '../theme/MotionParts';
 import { useDirection } from '../reports/direction';
 
 /**
- * Rankings' boards: by XP (this week or all time), Zêr or Gewher, compared with everyone, friends or your country, a
+ * Rankings' boards: by XP (this week or all time) or Zêr, compared with everyone, friends or your country, a
  * page at a time. What is ranked is the first choice, the span a quieter one under it for XP, and who you are compared
  * with the last; the screen keeps all three. `header` goes above the rows, where XP this week puts your league.
  */
 
 /** What a board ranks; the ids are the API's (`GET /leaderboards/:type`). */
-export type BoardType = 'weekly_xp' | 'all_time_xp' | 'zer' | 'gewher';
+export type BoardType = 'weekly_xp' | 'all_time_xp' | 'zer';
 /** What Rankings ranks by. */
-export type RankKind = 'xp' | 'zer' | 'gewher';
+export type RankKind = 'xp' | 'zer';
 /** Over what span the XP board counts. */
 export type XpSpan = 'week' | 'all';
 
@@ -43,7 +43,6 @@ const SCOPES: { key: Scope; labelKey: TranslationKey }[] = [
 const KINDS: { key: RankKind; labelKey: TranslationKey }[] = [
   { key: 'xp', labelKey: 'rankings.board.xp' },
   { key: 'zer', labelKey: 'rankings.board.zer' },
-  { key: 'gewher', labelKey: 'rankings.board.gewher' },
 ];
 
 const SPANS: { key: XpSpan; labelKey: TranslationKey }[] = [
@@ -200,13 +199,10 @@ type I18n = ReturnType<typeof useI18n>;
 export function amountLabel(t: I18n['t'], type: BoardType, amount: number, locale: I18n['locale']): string {
   const n = formatNumber(amount, locale);
   if (isXp(type)) return t('leagues.xpCount', { xp: n });
-  return `${n} ${t(type === 'zer' ? 'rankings.board.zer' : 'rankings.board.gewher')}`;
+  return `${n} ${t('rankings.board.zer')}`;
 }
 
-/**
- * An amount short enough for a row's end: XP as the league table writes it, Zêr and Gewher as the coin or gem
- * beside the number, as in the shop's purse.
- */
+/** An amount short enough for a row's end: XP as the league table writes it, Zêr with the coin, as in the shop's purse. */
 export function BoardAmount({ type, amount }: { type: BoardType; amount: number }): React.JSX.Element {
   const { t, locale } = useI18n();
   const { colors } = useTheme();
@@ -214,7 +210,7 @@ export function BoardAmount({ type, amount }: { type: BoardType; amount: number 
   if (isXp(type)) return <Text style={[styles.score, { color: colors.textPrimary }]}>{t('leagues.xpCount', { xp: short })}</Text>;
   return (
     <View style={styles.amount}>
-      <Icon name={type === 'zer' ? 'coin' : 'gem'} size={16} color={type === 'zer' ? colors.gold : colors.primary} />
+      <Icon name="coin" size={16} color={colors.gold} />
       <Text style={[styles.score, { color: colors.textPrimary }]}>{short}</Text>
     </View>
   );
