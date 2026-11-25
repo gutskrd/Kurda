@@ -14,6 +14,7 @@ import {
   type BadgeUnlockedEvent,
   type BadgeView,
   type BadgesResponse,
+  type ProfileBadge,
   type ShowcaseBadge,
   type UnseenBadge,
 } from '@kurda/shared';
@@ -733,33 +734,64 @@ export class BadgeService implements MilestoneRecorder {
 }
 
 /**
- * The three badges a profile shows. A minor's, or one with no age on record, only to themselves and their
- * friends, like the rest of their profile; a revoked badge drops out. Separate so the profile can read it
- * without the badge service.
+ * The three badges a profile shows (see `profileBadges`). Separate so the badge service can read it without the rest.
  */
 export async function profileShowcase(db: Executor, targetId: string, viewerId: string | null): Promise<ShowcaseBadge[]> {
-  // the showcase, who may see it, and the tiers of what is on it, in one read
+  return (await profileBadges(db, targetId, viewerId)).showcase;
+}
+
+/**
+ * The badges a profile shows: the three chosen, and every one earned, newest first, with how rare its tier is once
+ * enough people are active. A minor's, or one with no age on record, only to themselves and their friends, like the
+ * rest of their profile; a revoked badge drops out. Separate so the profile can read it without the badge service.
+ */
+export async function profileBadges(
+  db: Executor,
+  targetId: string,
+  viewerId: string | null,
+): Promise<{ showcase: ShowcaseBadge[]; earned: ProfileBadge[] }> {
+  // who may see them, the showcase, and every earned tier with its date and rarity, in one read
   const r = await db.query<{
     badge_keys: string[] | null;
     birth_year: number | null;
     birth_month: number | null;
     friends: boolean;
-    tiers: Record<string, number> | null;
+    earned: Array<{ key: string; tier: number; at: string | null; rarity: number | null }> | null;
   }>(
     `SELECT s.badge_keys, u.birth_year, u.birth_month, ${areFriendsSql('u.id', '$2::uuid')} AS friends,
-            (SELECT jsonb_object_agg(b.badge_key, b.tier) FROM user_badges b
-              WHERE b.user_id = u.id AND b.badge_key = ANY(s.badge_keys) AND b.tier > 0) AS tiers
+            (SELECT jsonb_agg(jsonb_build_object('key', b.badge_key, 'tier', b.tier, 'at', COALESCE(b.tier_earned_at[b.tier], b.earned_at),
+                                                 'rarity', round(1000.0 * br.holders / br.active_users) / 10)
+                              ORDER BY COALESCE(b.tier_earned_at[b.tier], b.earned_at) DESC NULLS LAST, b.badge_key)
+               FROM user_badges b
+               LEFT JOIN badge_rarity br ON br.badge_key = b.badge_key AND br.tier = b.tier AND br.active_users >= $3
+              WHERE b.user_id = u.id AND b.tier > 0) AS earned
        FROM users u LEFT JOIN badge_showcase s ON s.user_id = u.id WHERE u.id = $1`,
-    [targetId, viewerId],
+    [targetId, viewerId, RARITY_MIN_ACTIVE_USERS],
   );
   const row = r.rows[0];
-  if (!row?.badge_keys?.length) return [];
+  const none = { showcase: [], earned: [] };
+  if (!row?.earned?.length) return none;
   const self = viewerId !== null && viewerId === targetId;
-  if (!self && !row.friends && !isKnownAdultRow(row)) return [];
-  const byKey = new Map(Object.entries(row.tiers ?? {}));
-  return row.badge_keys.flatMap((key) => {
-    const def = badgeDef(key);
-    const tier = byKey.get(key);
-    return def && tier ? [{ key, family: def.family, tier, tierKey: badgeTierKey(def, tier) }] : [];
+  if (!self && !row.friends && !isKnownAdultRow(row)) return none;
+  const earned = row.earned.flatMap((b): ProfileBadge[] => {
+    const def = badgeDef(b.key);
+    if (!def) return [];
+    const at = b.at ? new Date(b.at) : null;
+    return [
+      {
+        key: b.key,
+        family: def.family,
+        tier: b.tier,
+        tierKey: badgeTierKey(def, b.tier),
+        earnedAt: at && !Number.isNaN(at.getTime()) ? at.toISOString() : null,
+        rarity: b.rarity === null ? null : Number(b.rarity),
+      },
+    ];
   });
+  const byKey = new Map(earned.map((b) => [b.key, b]));
+  const showcase = (row.badge_keys ?? []).flatMap((key) => {
+    const b = byKey.get(key);
+    return b ? [{ key, family: b.family, tier: b.tier, tierKey: b.tierKey }] : [];
+  });
+  return { showcase, earned };
 }

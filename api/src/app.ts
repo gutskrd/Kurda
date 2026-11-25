@@ -82,6 +82,7 @@ import { registerFriendRoutes } from './friends/routes.js';
 import { SocialService } from './social/service.js';
 import { registerSocialRoutes } from './social/routes.js';
 import { registerSocialRailRoutes } from './social/rail-routes.js';
+import { registerCollectionRoutes } from './social/collection-routes.js';
 import { registerFeedRoutes } from './feed/routes.js';
 import { ActivityService } from './activity/service.js';
 import { registerActivityRoutes } from './activity/routes.js';
@@ -518,7 +519,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const moderationKit = registerModeration(app, config, { ...options.moderation, registry: metricsRegistry });
     // Copyright notices from the public /copyright page land in the same queue.
     registerCopyright(app, config, options.copyright);
-    registerSocialRoutes(app, new SocialService(app.db, friends), { reports: moderationKit.reports, trees: new TreeService(app.db, new WalletService(app.db)) });
+    const social = new SocialService(app.db, friends);
+    registerSocialRoutes(app, social, { reports: moderationKit.reports, trees: new TreeService(app.db, new WalletService(app.db)) });
+    // A profile's icons and gifts, behind the same gate as the profile.
+    registerCollectionRoutes(app, social);
     registerActivityRoutes(app, activity);
     // one wall for stories, poems and pictures — public, like the pages it replaces
     registerFeedRoutes(app);
