@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { Translate } from '../i18n/I18nProvider';
-import { LETTERS_CHANGED, letterNoticeOf } from '@kurda/shared';
+import { LETTERS_CHANGED, letterNoticeOf, noticePicture, type NoticePicture } from '@kurda/shared';
 import { pageVisible } from '../lib/pollWhileVisible';
 import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
@@ -77,6 +77,8 @@ export interface Arrival {
   who: RailFriend | null;
   /** For a letter's notification, its correspondence, or null when it names none. */
   letter?: { threadId: string | null };
+  /** What a notification is about, drawn (a badge, a league, a game, a letter), or null where nothing is. */
+  picture?: NoticePicture | null;
 }
 
 /** The arrivals worth a toast at `pathname`; a letter is not announced on the letters page or in its own correspondence. */
@@ -388,6 +390,7 @@ function arrivalKeys(data: SocialRailData, t: Translate, locale: string): Arriva
           title: view?.title ?? n.title,
           body: (view ? view.body : n.body) ?? '',
           who: null,
+          picture: noticePicture(n),
           ...(letter ? { letter: { threadId: letter.threadId } } : {}),
         };
       }),

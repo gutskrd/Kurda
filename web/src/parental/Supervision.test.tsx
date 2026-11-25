@@ -83,6 +83,8 @@ describe('the usage beat', () => {
 
   it('beats with the device’s time zone for a supervised teen, and stops when the server says supervision ended', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
+    // midday, outside the bedtime, so the test reads the same at any hour
+    vi.setSystemTime(new Date('2026-11-25T12:00:00Z'));
     const fetchMock = teenServer(supervision(), () => null);
     renderApp(<App />, ['/app']);
     expect(await screen.findByText('The app')).toBeInTheDocument();
@@ -95,6 +97,23 @@ describe('the usage beat', () => {
       await vi.advanceTimersByTimeAsync(5 * BEAT_MS);
     });
     expect(beats(fetchMock)).toHaveLength(1);
+  });
+
+  it('keeps a supervision the server ended gone when a bedtime begins in the same minute', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date('2026-11-25T06:40:00Z'));
+    const fetchMock = teenServer(supervision(), () => null);
+    renderApp(<App />, ['/app']);
+    expect(await screen.findByText('The app')).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(BEAT_MS + 6_000);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5 * BEAT_MS);
+    });
+    expect(beats(fetchMock)).toHaveLength(1);
+    expect(screen.getByText('The app')).toBeInTheDocument();
   });
 
   it('never beats for anyone who is not supervised', async () => {

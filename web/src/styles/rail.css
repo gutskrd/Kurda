@@ -412,6 +412,144 @@
   color: var(--t-ink);
   box-shadow: inset 0 0 0 1px var(--border);
 }
+/* what a notification is about, drawn where the bell would be: a letter, a game, a league, a badge */
+.rail-toast-icon.has-picture .note-picture {
+  width: 40px;
+  height: 40px;
+}
+.rail-toast-icon.has-picture .note-picture-art,
+.rail-toast-icon.has-picture .note-picture-art svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* ---- a reward: a badge or a league, its medal large and lit by its own colours ---- */
+.rail-toast.is-reward {
+  isolation: isolate;
+}
+/* the medal drawn again behind the card, blurred into a glow, so the light is always the badge's own colour */
+.rail-toast-glow {
+  position: absolute;
+  z-index: -1;
+  inset-block: -40%;
+  inset-inline-start: -28px;
+  width: 150px;
+  pointer-events: none;
+  filter: blur(24px) saturate(1.6);
+  opacity: 0.5;
+}
+.rail-toast-glow .note-picture,
+.rail-toast-glow .note-picture-art,
+.rail-toast-glow .note-picture-art svg {
+  width: 100%;
+  height: 100%;
+  background: none;
+  border-radius: 0;
+}
+:root:not([data-theme='light']) .rail-toast-glow {
+  opacity: 0.42;
+}
+:root:not([data-theme='light']) .rail-toast-spark {
+  fill: #fff4d6;
+}
+.rail-toast.is-reward .rail-toast-main {
+  gap: 14px;
+  padding-block: 14px;
+  padding-inline: 14px 6px;
+}
+.rail-toast.is-reward .rail-toast-icon {
+  display: grid;
+  place-items: center;
+  align-self: center;
+  width: 60px;
+  height: 60px;
+}
+.rail-toast.is-reward .rail-toast-icon .note-picture,
+.rail-toast.is-reward .rail-toast-icon .note-picture-art,
+.rail-toast.is-reward .rail-toast-icon .note-picture-art svg {
+  width: 60px;
+  height: 60px;
+  background: none;
+  border-radius: 0;
+  overflow: visible;
+}
+/* the medal's drawing leaves room round itself for small sizes; here it may fill its place */
+.rail-toast.is-reward .rail-toast-icon .note-picture-art svg {
+  transform: scale(1.22);
+}
+.rail-toast.is-reward .rail-toast-icon .note-picture {
+  animation: rail-medal-in 560ms var(--ease-emphasis) both;
+}
+@keyframes rail-medal-in {
+  0% { opacity: 0; transform: scale(0.35) rotate(-14deg); }
+  60% { opacity: 1; transform: scale(1.1) rotate(3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+/* one sweep of light across the medal once it has landed */
+.rail-toast-shine {
+  position: absolute;
+  inset: 4px;
+  overflow: hidden;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.rail-toast-shine::after {
+  content: '';
+  position: absolute;
+  inset: -20% -60%;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.8) 50%, transparent 62%);
+  transform: translateX(-70%);
+  animation: rail-shine 900ms ease-out 480ms both;
+}
+@keyframes rail-shine {
+  from { transform: translateX(-70%); }
+  to { transform: translateX(70%); }
+}
+/* three glints round the medal, twinkling twice */
+.rail-toast-spark {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  fill: #ffc94d;
+  filter: drop-shadow(0 0 2px rgba(255, 170, 40, 0.9));
+  opacity: 0;
+  animation: rail-spark 1300ms ease-out 2 both;
+  pointer-events: none;
+}
+.rail-toast-spark--a {
+  top: -4px;
+  inset-inline-end: -4px;
+  animation-delay: 420ms;
+}
+.rail-toast-spark--b {
+  bottom: 0;
+  inset-inline-start: -6px;
+  width: 7px;
+  height: 7px;
+  animation-delay: 640ms;
+}
+.rail-toast-spark--c {
+  top: 8px;
+  inset-inline-start: -9px;
+  width: 6px;
+  height: 6px;
+  animation-delay: 860ms;
+}
+@keyframes rail-spark {
+  0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  35% { opacity: 1; transform: scale(1.15) rotate(45deg); }
+  100% { opacity: 0; transform: scale(0.6) rotate(90deg); }
+}
+.rail-toast.is-reward .rail-toast-title {
+  font-weight: 700;
+  line-height: 1.25;
+}
+.rail-toast.is-reward .rail-toast-body {
+  margin-top: 2px;
+  color: var(--ink-2);
+  white-space: normal;
+}
+
 .rail-toast-text {
   min-width: 0;
 }
@@ -543,8 +681,13 @@
   .rail-card-in,
   .rail-toast,
   .rail-toast-timer,
+  .rail-toast.is-reward .rail-toast-icon .note-picture,
+  .rail-toast-shine::after,
   .rail-scrim {
     animation: none;
+  }
+  .rail-toast-spark {
+    display: none;
   }
   .social-rail,
   .app-main,
