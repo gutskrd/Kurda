@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterText, normalize } from './filter.js';
+import { filterText, normalize, seriousCategory } from './filter.js';
 
 describe('normalize', () => {
   it('folds diacritics, case, leetspeak and strips separators', () => {
@@ -32,6 +32,12 @@ describe('filterText', () => {
 
   it('names each listed word once, as the list spells it, never as it was written', () => {
     expect(filterText('fuuuuck, F.U.C.K and sh1t').hits).toEqual(['fuck', 'shit']);
+  });
+
+  it('tells sexual words apart from plain swearing', () => {
+    expect(seriousCategory(filterText('shit, you bastard').hits)).toBeNull();
+    expect(seriousCategory(filterText('send me your d1ck pic').hits)).toBe('sexual');
+    expect(seriousCategory([])).toBeNull();
   });
 
   it('flags spaced-out evasion even if it cannot cleanly mask it', () => {

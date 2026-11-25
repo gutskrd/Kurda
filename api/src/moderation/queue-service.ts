@@ -207,10 +207,10 @@ export class ModerationQueueService {
     const r = await this.pool.query<{
       id: string; author_id: string | null; action: string; top_category: string | null; top_score: string;
       model_version: string; surface: string; content_type: string; content_ref: string | null; created_at: Date; minor: boolean | null;
-      matched: string[] | null;
+      matched: string[] | null; minor_target: boolean;
     }>(
       `SELECT f.id, f.author_id, f.action, f.top_category, f.top_score, f.model_version, f.surface, f.content_type,
-              f.content_ref, f.created_at, f.matched, ${minorSql('u')} AS minor
+              f.content_ref, f.created_at, f.matched, f.minor_target, ${minorSql('u')} AS minor
          FROM moderation_flags f LEFT JOIN users u ON u.id = f.author_id
         WHERE f.status = 'pending'
           AND NOT EXISTS (SELECT 1 FROM moderation_cases c WHERE c.source = 'text_flag' AND c.source_ref = f.id::text)
@@ -243,7 +243,8 @@ export class ModerationQueueService {
         reporterCount: 0,
         targetType: target,
         targetId: target ? f.content_ref : null,
-        minor: f.minor === true,
+        // written by a minor, or sent to one
+        minor: f.minor === true || f.minor_target,
       });
     }
     return out;
@@ -695,7 +696,7 @@ export class ModerationQueueService {
    * After that the snapshot becomes a stub that still says what was reported, and its media (report snapshots, the
    * case's own, files a CSAM action took down) lose cleanup protection unless another live snapshot holds them. A
    * released file that was quarantined (public copy gone) or is unused becomes an orphan, which the orphan sweep
-   * deletes with its private copy; one still in use stays.
+   * deletes with its private copy; one still in use stays. Decided text flags go after the same year.
    */
   async pruneEvidence(): Promise<number> {
     const pruned = await this.pool.query<{ k: string }>(
@@ -739,7 +740,13 @@ export class ModerationQueueService {
     );
     const keys = [...new Set([...reportKeys, ...cases.rows.flatMap((c) => c.keys)])];
     if (keys.length > 0) await releaseEvidenceMedia(this.pool, keys);
-    return reportKeys.length + cases.rows.length;
+    // and the text flags behind decided cases, kept as long as the evidence they led to
+    const flags = await this.pool.query(
+      `DELETE FROM moderation_flags WHERE id IN (
+         SELECT id FROM moderation_flags WHERE status <> 'pending' AND resolved_at < now() - make_interval(days => $1::int) LIMIT 5000)`,
+      [EVIDENCE_RETENTION_DAYS],
+    );
+    return reportKeys.length + cases.rows.length + (flags.rowCount ?? 0);
   }
 }
 

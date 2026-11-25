@@ -82,8 +82,10 @@ export function registerChatRoutes(
       const msg = await chat.send(req.user!.id, userId, body, (k) =>
         app.storage ? app.storage.publicUrl(k) : null,
       );
-      // a flagged message that was sent is the one its case shows
-      if (aiMod && flagId) await aiMod.attach(flagId, msg.id).catch((err: unknown) => req.log.warn({ err }, 'a flag could not be pointed at its message'));
+      // a flagged message that was sent is the one its case shows, when a moderator must read it
+      if (aiMod && flagId) {
+        await aiMod.attachMessage(flagId, msg.id, userId).catch((err: unknown) => req.log.warn({ err }, 'a flag could not be pointed at its message'));
+      }
       if (trust) await trust.recordAction(req.user!.id, 'message');
       return msg;
     },

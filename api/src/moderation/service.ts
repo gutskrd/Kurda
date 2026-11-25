@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
-import { filterText, type FilterResult } from './filter.js';
+import { minorSql } from '../users/age.js';
+import { filterText, seriousCategory, type FilterResult } from './filter.js';
 import { ReportsService } from './reports-service.js';
 import { CHAT_FLAG_CONTENT, WORDLIST_MODEL } from './sources.js';
 
@@ -25,21 +26,11 @@ export interface FlaggedMessage {
   words: readonly string[];
 }
 
-export interface ReportRow {
-  id: string;
-  reporterId: string;
-  reportedUserId: string | null;
-  messageType: MessageType;
-  messageId: string;
-  context: unknown;
-  status: string;
-  createdAt: Date;
-}
-
 /**
  * Chat moderation: profanity masking on delivery, message reporting with captured context, and repeat-offender
  * auto-mute escalation. The mute is global (enforced by the DM and group send paths). A flagged letter or private
- * message also becomes a text flag, which the queue opens a case for (queue-service.ts), so a moderator sees it.
+ * message becomes a text flag, which the queue opens a case for (queue-service.ts), only when a moderator must see it:
+ * sexual words or slurs, or anything sent to a minor. Plain swearing between adults only counts against its writer.
  */
 export class ModerationService {
   private readonly reports: ReportsService;
@@ -67,15 +58,9 @@ export class ModerationService {
     return row.perm_muted || (row.muted_until !== null && row.muted_until > new Date());
   }
 
-  /** Record a flagged message and apply escalating auto-mute; a stored letter or message is flagged for a moderator too. */
+  /** Record a flagged message and apply escalating auto-mute; a stored letter or message goes to a moderator when it must. */
   async recordOffense(userId: string, flagged?: FlaggedMessage): Promise<OffenseResult> {
-    if (flagged) {
-      await this.pool.query(
-        `INSERT INTO moderation_flags (surface, content_type, content_ref, author_id, action, top_category, top_score, scores, model_version, matched)
-         VALUES ('chat', $1, $2, $3, 'flag', 'profanity', 1, '{"profanity":1}'::jsonb, $4, $5)`,
-        [CHAT_FLAG_CONTENT[flagged.targetType], flagged.id, userId, WORDLIST_MODEL, [...flagged.words]],
-      );
-    }
+    if (flagged) await this.flagForModerator(userId, flagged);
     const inc = await this.pool.query<{ offense_count: number }>(
       `INSERT INTO chat_offenses (user_id, offense_count) VALUES ($1, 1)
        ON CONFLICT (user_id) DO UPDATE SET offense_count = chat_offenses.offense_count + 1, updated_at = now()
@@ -100,6 +85,30 @@ export class ModerationService {
   }
 
   /**
+   * A text flag for a moderator on a letter or private message with sexual words or slurs, or sent to a minor (a teen
+   * band's letter, a direct message to a minor, a group with a minor in it); anything else is not flagged at all.
+   */
+  private async flagForModerator(userId: string, flagged: FlaggedMessage): Promise<void> {
+    const category = seriousCategory(flagged.words);
+    const reader = minorSql('u');
+    const toMinor = {
+      dm_message: `SELECT EXISTS (SELECT 1 FROM dm_messages m JOIN users u ON u.id = CASE WHEN m.user_lo = m.sender_id THEN m.user_hi ELSE m.user_lo END
+                                   WHERE m.id = $1 AND ${reader}) AS minor`,
+      group_message: `SELECT EXISTS (SELECT 1 FROM group_messages m JOIN group_members gm ON gm.group_id = m.group_id AND gm.user_id <> m.sender_id
+                                      JOIN users u ON u.id = gm.user_id WHERE m.id = $1 AND ${reader}) AS minor`,
+      letter: `SELECT EXISTS (SELECT 1 FROM letters l LEFT JOIN users u ON u.id = l.recipient_id
+                               WHERE l.id = $1 AND (l.age_band IN ('13-15','16-17') OR ${reader})) AS minor`,
+    }[flagged.targetType];
+    const minor = (await this.pool.query<{ minor: boolean }>(toMinor, [flagged.id])).rows[0]?.minor === true;
+    if (!category && !minor) return;
+    await this.pool.query(
+      `INSERT INTO moderation_flags (surface, content_type, content_ref, author_id, action, top_category, top_score, scores, model_version, matched, minor_target)
+       VALUES ('chat', $1, $2, $3, 'flag', $4, 1, jsonb_build_object($4::text, 1), $5, $6, $7)`,
+      [CHAT_FLAG_CONTENT[flagged.targetType], flagged.id, userId, category ?? 'profanity', WORDLIST_MODEL, [...flagged.words], minor],
+    );
+  }
+
+  /**
    * Report a message through the single report service (reports-service.ts): only a participant may report it, the
    * message is snapshotted with the ten before and five after it (with usernames), and the report joins its case at
    * once. `chat_reports` keeps its history and takes no new rows. Returns the new report's id.
@@ -117,24 +126,6 @@ export class ModerationService {
       if (err instanceof AppError && err.code === 'TARGET_NOT_FOUND') throw new AppError('MESSAGE_NOT_FOUND', 404, 'no such message');
       throw err;
     }
-  }
-
-  /**
-   * Open reports from the old table, oldest first (the old admin feed; new reports are cases). A moderator is not shown
-   * reports about themselves, since they name the reporter.
-   */
-  async pendingReports(viewerId: string | null = null): Promise<ReportRow[]> {
-    const rows = await this.pool.query<{
-      id: string; reporter_id: string; reported_user_id: string | null; message_type: MessageType; message_id: string; context: unknown; status: string; created_at: Date;
-    }>(
-      `SELECT id, reporter_id, reported_user_id, message_type, message_id, context, status, created_at
-         FROM chat_reports WHERE status = 'open' AND reported_user_id IS DISTINCT FROM $1::uuid ORDER BY created_at`,
-      [viewerId],
-    );
-    return rows.rows.map((r) => ({
-      id: r.id, reporterId: r.reporter_id, reportedUserId: r.reported_user_id, messageType: r.message_type,
-      messageId: r.message_id, context: r.context, status: r.status, createdAt: r.created_at,
-    }));
   }
 
   /** Resolve a report; 'actioned' also records an offense against the author. */
