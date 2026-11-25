@@ -11,7 +11,10 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import * as shared from '../index.js';
+import { characterSvg } from '../characters/index.js';
 import { GIFT_ART_IDS, giftArtKey, giftArtSvg, isGiftArtId, type GiftArtId } from './gift-art.js';
+import { pigeon } from './pigeon.js';
+import { Drawing } from './svg.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const GIFT_DIR = 'web/public/cosmetics/gifts';
@@ -86,10 +89,23 @@ describe('the gifts’ pictures', () => {
     for (const id of GIFT_ART_IDS) expect(giftArtSvg({ id }).length, id).toBeLessThan(48 * 1024);
   });
 
+  it('draws Hevalo and the pen pal pigeon from their own drawings, never a copy redrawn', () => {
+    const paths = (svg: string): string[] => [...svg.matchAll(/<path d="([^"]+)"/g)].map((m) => m[1]!);
+    const ask = giftArtSvg({ id: 'ask' });
+    const deer = paths(characterSvg('hevalo', { crop: 'full', idPrefix: 'rig' }));
+    expect(deer.length).toBeGreaterThan(10);
+    for (const d of deer) expect(ask).toContain(d);
+    const bird = new Drawing('rig');
+    pigeon(bird, 'grey', 'perched', true, false);
+    const kevok = giftArtSvg({ id: 'kevok' });
+    for (const d of paths(bird.parts().body)) expect(kevok).toContain(d);
+  });
+
   it('refuses a gift nobody has drawn and a size that is not one', () => {
     expect(isGiftArtId('kadiz')).toBe(true);
-    expect(isGiftArtId('roj')).toBe(false);
-    expect(() => giftArtSvg({ id: 'roj' as GiftArtId })).toThrow(RangeError);
+    expect(isGiftArtId('deste-gul')).toBe(true);
+    expect(isGiftArtId('stran')).toBe(false);
+    expect(() => giftArtSvg({ id: 'stran' as GiftArtId })).toThrow(RangeError);
     expect(() => giftArtSvg({ id: 'cay', size: 0 })).toThrow(RangeError);
     expect(() => giftArtSvg({ id: 'cay', size: Number.NaN })).toThrow(RangeError);
     expect(() => giftArtSvg({ id: 'cay', idPrefix: '1 bad' })).toThrow(RangeError);
@@ -104,8 +120,15 @@ describe('the gifts’ pictures', () => {
 describe('the gifts’ files', () => {
   it('names each file by its place in the list and its id, under the shop’s art', () => {
     expect(giftArtKey('cay')).toBe('gifts/made-01-cay.png');
-    expect(giftArtKey('kadiz')).toBe(`gifts/made-${String(GIFT_ART_IDS.length).padStart(2, '0')}-kadiz.png`);
+    expect(giftArtKey('deste-gul')).toBe('gifts/made-18-deste-gul.png');
+    const last = GIFT_ART_IDS[GIFT_ART_IDS.length - 1]!;
+    expect(giftArtKey(last)).toBe(`gifts/made-${String(GIFT_ART_IDS.length).padStart(2, '0')}-${last}.png`);
     expect(new Set(GIFT_ART_IDS.map(giftArtKey)).size).toBe(GIFT_ART_IDS.length);
+  });
+
+  it('keeps every file it has shipped where it was: new gifts only go on the end', () => {
+    expect(GIFT_ART_IDS.slice(0, 8)).toEqual(['cay', 'qehwe', 'gul', 'pisik', 'belem', 'mal', 'heyv', 'kadiz']);
+    expect(GIFT_ART_IDS).toHaveLength(31);
   });
 
   it('ships one square PNG with its transparency for every gift, within the icons’ budget, and nothing else', async () => {
