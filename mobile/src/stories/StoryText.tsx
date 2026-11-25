@@ -23,7 +23,7 @@ export function storyLineHeight(fontSize: number): number {
   return Math.round(fontSize * 1.65);
 }
 
-/** The band behind the sentence being read: the violet wash, as for everything that says "here". Text keeps 14:1 by day and 11:1 by night. */
+/** The band behind the sentence being read: the page's warm wash, as for everything that says "here". Text keeps 14:1 by day and 11:1 by night. */
 function readingTint(scheme: HueScheme): string {
   return hueSteps(scheme, 'violet').wash;
 }
@@ -38,7 +38,7 @@ interface TextPoint {
  * leading. Text follows Dynamic Type on top of the reader's own control; line height is given for the reader's size
  * only, since React Native scales it by the system factor itself.
  *
- * Glossary words have a dotted violet underline and open their meaning when tapped. Screen readers cannot reach a
+ * Glossary words have a dotted ink underline and open their meaning when tapped. Screen readers cannot reach a
  * word inside a paragraph, which is why the reader also lists them under "Key vocabulary". A paragraph with a
  * translation gets a small "Translation" toggle.
  *
@@ -165,11 +165,11 @@ export function StoryText({
                   }
                   style={({ pressed }) => [
                     styles.listen,
-                    { backgroundColor: active ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+                    { backgroundColor: active ? colors.pickedFill : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
                   ]}
                 >
-                  <Icon name={active && playing ? 'audio-pause' : 'headphones'} size={16} color={active ? colors.textOnPrimary : colors.primary} />
-                  <Text style={[styles.listenText, { color: active ? colors.textOnPrimary : colors.primary }]}>
+                  <Icon name={active && playing ? 'audio-pause' : 'headphones'} size={16} color={active ? colors.pickedInk : colors.primary} />
+                  <Text style={[styles.listenText, { color: active ? colors.pickedInk : colors.primary }]}>
                     {active && playing ? t('stories.reader.pause') : t('stories.reader.listen')}
                   </Text>
                 </Pressable>
@@ -186,7 +186,7 @@ export function StoryText({
                     <Text
                       key={si}
                       onPress={() => onGloss(entry)}
-                      // A tappable word's dotted underline is the violet of what can be pressed.
+                      // A tappable word's dotted underline is the ink of what can be pressed.
                       style={[styles.gloss, { textDecorationColor: colors.primary, color: colors.textPrimary }, bg]}
                       suppressHighlighting={false}
                     >

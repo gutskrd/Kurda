@@ -77,7 +77,7 @@ const IN_SIGHT = { top: 96, bottom: 168 } as const;
 
 /**
  * A story's text as the reader and the game show it. Every string carries the story's `lang` and `dir`, so a Soranî
- * story reads right to left in an Arabic-script face inside any page. Glossary words have a dotted violet line and open
+ * story reads right to left in an Arabic-script face inside any page. Glossary words have a dotted ink line and open
  * their meaning, part of speech, pronunciation and Save word. Only the sentence being read aloud responds to a tap (and
  * a small button), replaying itself. Paragraphs with recordings have a Listen button, and a Translation toggle when the
  * reader's language has one. `observe` hands each paragraph's element to the reading-progress watcher.

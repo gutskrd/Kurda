@@ -8,7 +8,7 @@
 import { GLASS, bendImage, glassField, shineImage, veilImage, type GlassShape } from './glass.js';
 
 /** The tint's colour by day and by night: white, and the page's ink taken almost to black. */
-const TINT = { light: [255, 255, 255], dark: [30, 27, 46] } as const;
+const TINT = { light: [255, 255, 255], dark: [32, 29, 26] } as const;
 
 /**
  * Whether this browser draws an SVG filter behind an element. Chromium does; the others parse `url()` in

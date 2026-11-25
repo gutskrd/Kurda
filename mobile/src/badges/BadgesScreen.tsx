@@ -556,7 +556,7 @@ export function ShowcaseChoices({ badges, keys, onChange }: { badges: readonly B
               accessibilityLabel={badgeLabel(t, b)}
               style={({ pressed }) => [
                 styles.pick,
-                // A chosen badge is ringed in violet like every selected choice, with its place number in violet beside it.
+                // A chosen badge is ringed in the ink like every selected choice, with its place number in the ink beside it.
                 { backgroundColor: colors.controlTrack, borderColor: on ? colors.primary : 'transparent', opacity: pressed ? pressedDim : !on && full ? 0.5 : 1 },
               ]}
             >

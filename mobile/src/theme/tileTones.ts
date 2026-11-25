@@ -104,6 +104,6 @@ export function tileButtonTone(colors: Palette, tone: TileButtonTone, enabled: b
     return { face, edge: face, lip: null, ink: readableOn(colors.textSecondary, face) };
   }
   const fill = tone === 'success' ? colors.success : tone === 'danger' ? colors.danger : colors.accent;
-  return { face: fill, edge: fill, lip: lipOf(fill, colors), ink: readableOn(colors.textOnPrimary, fill) };
+  return { face: fill, edge: fill, lip: lipOf(fill, colors), ink: readableOn(fill === colors.accent ? colors.textOnAccent : colors.textOnPrimary, fill) };
 }
 

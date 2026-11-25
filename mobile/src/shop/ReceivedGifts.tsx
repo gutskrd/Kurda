@@ -56,7 +56,7 @@ export function ReceivedGifts(): React.JSX.Element | null {
               {
                 flexDirection: dir.row,
                 backgroundColor: colors.glassFill,
-                // An unopened one is worth pointing at, once: in violet, as anything new is (gold is for what is
+                // An unopened one is worth pointing at, once: in the ink, as anything new is (gold is for what is
                 // earned).
                 borderColor: g.seenAt ? colors.glassBorder : colors.primary,
               },

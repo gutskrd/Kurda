@@ -7,40 +7,40 @@
 
 /* Every unit wears the ink, as what is chosen or earned does everywhere; only the drawn stops keep their colours. */
 [class*='lp-tone-'] {
-  --u-fill: #f3f1fb;
-  --u-lip: #a9a6bb;
-  --u-ink: #14112e;
-  --u-text: #f3f1fb;
+  --u-fill: #f4eee6;
+  --u-lip: #b0a69b;
+  --u-ink: #1c1814;
+  --u-text: #f4eee6;
 }
 :root[data-theme='light'] [class*='lp-tone-'] {
-  --u-fill: #14112e;
-  --u-lip: #050410;
-  --u-ink: #ffffff;
-  --u-text: #14112e;
+  --u-fill: #2b2621;
+  --u-lip: #14110e;
+  --u-ink: #fffdf9;
+  --u-text: #2b2621;
 }
 
 .lp {
   /* The grey of what is not open yet, and of the line still ahead. */
-  --lp-rest: #2b283c;
-  --lp-rest-lip: #1a1828;
+  --lp-rest: #2e2a26;
+  --lp-rest-lip: #1e1b18;
   --lp-rest-ink: rgba(255, 255, 255, 0.5);
   --lp-line: rgba(255, 255, 255, 0.2);
   /* The gold rim and trophy: the sun, as everywhere it marks something earned. */
   --lp-gold-lip: #b88d1f;
   --lp-gold-ink: #3a2a00;
   /* A ring's unfilled track and the edge under every piece (as the phone's coursemap/path.ts RING). */
-  --lp-ring-track: #2b283c;
-  --lp-ring-edge: rgba(6, 4, 16, 0.6);
+  --lp-ring-track: #2e2a26;
+  --lp-ring-edge: rgba(10, 8, 6, 0.6);
   --node: 72px;
 }
 :root[data-theme='light'] .lp {
-  --lp-rest: #e3e1ec;
-  --lp-rest-lip: #cac8d7;
-  --lp-rest-ink: #716e85;
-  --lp-line: rgba(20, 17, 46, 0.18);
+  --lp-rest: #e8e1d7;
+  --lp-rest-lip: #d3cabd;
+  --lp-rest-ink: #736a5f;
+  --lp-line: rgba(43, 38, 33, 0.18);
   --lp-gold-lip: #b07f00;
   --lp-ring-track: #fffaf0;
-  --lp-ring-edge: rgba(36, 24, 70, 0.32);
+  --lp-ring-edge: rgba(58, 44, 30, 0.32);
 }
 
 /* ---- the top of the page ---------------------------------------------------- */
@@ -695,7 +695,7 @@ button.lp-scard:focus-visible {
 }
 /* On a closed stop's field stone. */
 .lp-node.is-locked .lp-node-glyph {
-  color: #d6d2dc;
+  color: #dad3c9;
 }
 :root[data-theme='light'] .lp-node.is-locked .lp-node-glyph {
   color: #857861;
@@ -715,7 +715,7 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * A topic's ring (learn/PathRing.tsx): a piece per lesson, the track until finished in the current round, violet then,
+ * A topic's ring (learn/PathRing.tsx): a piece per lesson, the track until finished in the current round, the main colour then,
  * and gold all round after three rounds, each piece edged a step darker. Returning from a lesson the new pieces fill in
  * turn (`--d`); right-to-left pages fill the other way.
  */
@@ -1127,7 +1127,7 @@ button.lp-scard:focus-visible {
 
 /* ---- the stop to do now ------------------------------------------------------ */
 
-/* The road's main button: its ring fills in the main button's violet, as its face is drawn. */
+/* The road's main button: its ring fills in the main button's colour, as its face is drawn. */
 .lp-node.is-current .lp-ring-piece.is-filled {
   stroke: var(--accent);
 }
@@ -1289,7 +1289,7 @@ button.lp-scard:focus-visible {
   display: block;
   height: 100%;
   border-radius: inherit;
-  /* A place on the road, not a reward: violet, as the ring's pieces are. */
+  /* A place on the road, not a reward: the ink, never gold. */
   background: var(--primary);
 }
 /* The chapter complete, on its story's card, in gold. */
@@ -1309,7 +1309,7 @@ button.lp-scard:focus-visible {
   justify-self: center;
   gap: 6px;
 }
-/* A topic to play now: the card is the road's main button, in its violet, with one light button that says what the
+/* A topic to play now: the card is the road's main button, in its main colour, with one light button that says what the
    lesson pays and that a glint crosses now and then. */
 .lp-pop.is-go {
   border-color: transparent;
@@ -1338,15 +1338,13 @@ button.lp-scard:focus-visible {
   gap: var(--space-2);
   margin-top: var(--space-1);
   border: 0;
-  background: #ffffff;
-  color: var(--accent-ink);
+  background: #fffdf9;
+  /* the main colour on the button's warm white, by day and by night */
+  color: var(--accent);
   box-shadow: 0 4px 0 rgb(0 0 0 / 0.18);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-}
-:root[data-theme='light'] .lp-pop.is-go .lp-pop-start {
-  color: var(--accent);
 }
 .lp-pop.is-go .lp-pop-start:active {
   translate: 0 3px;

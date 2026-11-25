@@ -132,6 +132,7 @@ import { letterPaperSvg } from './letter-paper.js';
 import { WORD_PICTURES, WORD_PICTURE_IDS, wordPictureSvg, type WordPictureId } from './word-pictures.js';
 import { VALLEY, warm } from './valley.js';
 import { WORD_PICTURES as SHARED_WORD_PICTURES, wordPictureSvg as sharedWordPictureSvg } from '../index.js';
+import { themeColors } from '../themes.js';
 import { DRAW_TOOLS, PAINTS, PAPER_H, PAPER_STYLES, PAPER_TONES, PAPER_W, paperColors, type PaperStroke } from '../letter-paper.js';
 import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
 import { escapeXml } from './svg.js';
@@ -1579,12 +1580,12 @@ describe('the lesson path’s world', () => {
         }
       }
     }
-    // every look its own: the stop to do now in the app's violet in every chapter, a finished one in gold
+    // every look its own: the stop to do now in the theme's main colour in every chapter, a finished one in gold
     const looks = PATH_STOP_LOOKS.map((look) => (['base', 'face'] as const).map((part) => pathStopSvg({ look, tone: 'clay', part, idPrefix: 's' })).join(''));
     expect(new Set(looks).size).toBe(PATH_STOP_LOOKS.length);
     expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'current', tone: 'river', part: 'face', idPrefix: 's' }));
-    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain('#862be2');
-    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', dark: true })).toContain('#bf9bfe');
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain(themeColors('light').primary.toLowerCase());
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', dark: true })).toContain(themeColors('dark').primary.toLowerCase());
     expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).not.toContain(PATH_STOP_TONES.light.clay.fill);
     // gold is gold in every chapter: what was earned looks the same wherever it was earned
     expect(pathStopSvg({ look: 'done', tone: 'river', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'done', tone: 'clay', part: 'face', idPrefix: 's' }));
@@ -1835,8 +1836,24 @@ describe('the horizon over a profile', () => {
     for (const seed of PEOPLE) expect(TREE_SKIES).toContain(horizonSky(seed));
     expect(new Set(PEOPLE.map(horizonSky)).size).toBeGreaterThanOrEqual(3);
     // the sky can be asked for, and is then the one drawn
-    expect(horizonSvg({ seed: 'dilan', sky: 'night' })).toContain('#0b1130');
+    expect(horizonSvg({ seed: 'dilan', sky: 'night' })).toContain(SKIES.night.air[0]);
     expect(horizonSvg({ seed: 'dilan', sky: 'day' })).toContain('#52aeee');
+  });
+
+  // The banner sits in the app's warm palette by day and by night, so no sky or ridge turns lilac or violet.
+  it('paints every sky without violet', () => {
+    const purple = (hex: string): boolean => {
+      const [r, g, b] = [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)) as [number, number, number];
+      const max = Math.max(r, g, b);
+      const chroma = max - Math.min(r, g, b);
+      if (chroma < 12) return false;
+      const hue = 60 * (max === r ? ((g - b) / chroma + 6) % 6 : max === g ? (b - r) / chroma + 2 : (r - g) / chroma + 4);
+      return hue >= 245 && hue <= 330;
+    };
+    for (const sky of TREE_SKIES) {
+      const { air, ridges, cloud, glow, orb } = SKIES[sky];
+      for (const colour of [...air, ...ridges, ...cloud, glow[0], orb[3], orb[4]]) expect(purple(colour), `${sky} ${colour}`).toBe(false);
+    }
   });
 
   it('keeps the sun and the first ridge inside the middle band, which is all a short banner shows', () => {

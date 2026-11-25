@@ -333,9 +333,9 @@ function BirthSheet({
               accessibilityRole="radio"
               accessibilityState={{ checked: chosen, disabled: busy }}
               accessibilityLabel={String(y)}
-              style={[styles.yearChip, { backgroundColor: chosen ? colors.primary : colors.controlTrack }, busy && styles.dim]}
+              style={[styles.yearChip, { backgroundColor: chosen ? colors.pickedFill : colors.controlTrack }, busy && styles.dim]}
             >
-              <Text style={[styles.yearText, { color: chosen ? colors.textOnPrimary : colors.textPrimary }, chosen && styles.yearChosen]}>{y}</Text>
+              <Text style={[styles.yearText, { color: chosen ? colors.pickedInk : colors.textPrimary }, chosen && styles.yearChosen]}>{y}</Text>
             </PressableScale>
           );
         })}

@@ -24,7 +24,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 
 /**
  * The small parts word sets are drawn with, on tiles, sheets and practice alike: a colour swatch, a number's
- * digits (Soranî's beside the Western ones), a day name with its number marked in violet and underlined (as the
+ * digits (Soranî's beside the Western ones), a day name with its number marked in the ink and underlined (as the
  * alphabet marks a letter in its word), and a word with its Soranî Latin underneath.
  */
 
@@ -111,7 +111,7 @@ export function WordText({
   );
 }
 
-/** How many of this set's words have been opened here, as the alphabet shows its letters, in the violet of every progress bar. */
+/** How many of this set's words have been opened here, as the alphabet shows its letters, in the ink of every progress bar. */
 export function Progress({ explored, total }: { explored: number; total: number }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();

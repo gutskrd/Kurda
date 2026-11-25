@@ -210,8 +210,8 @@ export function Question({
             >
               {(ink) => (
                 <>
-                  <View style={[styles.badge, { backgroundColor: on ? colors.primary : colors.controlTrack }]}>
-                    <Text style={[styles.badgeText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>{i + 1}</Text>
+                  <View style={[styles.badge, { backgroundColor: on ? colors.pickedFill : colors.controlTrack }]}>
+                    <Text style={[styles.badgeText, { color: on ? colors.pickedInk : colors.textPrimary }]}>{i + 1}</Text>
                   </View>
                   <View style={styles.optionMain}>
                     <Text {...storyTextProps(dialect)} style={[styles.optionText, { color: ink }, storyTextStyle(dialect)]}>
@@ -232,7 +232,7 @@ export function Question({
 
       {status ? (
         <View style={styles.statusRow}>
-          {/* Sent but not judged: violet, so no tick says "right" before the reveal. */}
+          {/* Sent but not judged: ink, so no tick says "right" before the reveal. */}
           {locked ? <Icon name="check" size={16} color={colors.primary} /> : null}
           <Text style={[styles.status, { color: colors.textPrimary }]}>{status}</Text>
         </View>

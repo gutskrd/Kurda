@@ -44,7 +44,7 @@ export function ToolBar({ tool, onTool, canDraw }: { tool: PaperTool; onTool: (t
         const atRight = mirrored ? i === 0 : i === TOOLS.length - 1;
         const reach = { top: BAR_PAD, bottom: BAR_PAD, left: atLeft ? BAR_PAD : BAR_GAP / 2, right: atRight ? BAR_PAD : BAR_GAP / 2 };
         const locked = each === 'draw' && !canDraw;
-        // The active tool is solid violet, like the segmented controls.
+        // The active tool is solid ink, like the segmented controls.
         const tint = active ? colors.textOnPrimary : colors.textSecondary;
         return (
           <PressableScale
@@ -118,7 +118,7 @@ export function SwatchRow({ label, shown = false, children, testID }: { label: s
   );
 }
 
-/** One choice in a row: a fingertip-wide round, ringed in violet when chosen. */
+/** One choice in a row: a fingertip-wide round, ringed in the ink when chosen. */
 export function Choice({
   label,
   checked,

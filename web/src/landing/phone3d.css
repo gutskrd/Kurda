@@ -398,9 +398,9 @@
   --u-lip: #b07a20;
   --u-ink: #221200;
   --u-text: #f5c076;
-  --ps-rest: #2b283c;
-  --ps-rest-lip: #1a1828;
-  --ps-rest-ink: #9e9cb0;
+  --ps-rest: #2e2a26;
+  --ps-rest-lip: #1e1b18;
+  --ps-rest-ink: #a39a8f;
   --ps-line: rgba(255, 255, 255, 0.2);
   position: relative;
   display: flex;
@@ -420,10 +420,10 @@
   --u-lip: #8f5d04;
   --u-ink: #241600;
   --u-text: #885703;
-  --ps-rest: #e3e1ec;
-  --ps-rest-lip: #cac8d7;
-  --ps-rest-ink: #716e85;
-  --ps-line: rgba(20, 17, 46, 0.18);
+  --ps-rest: #e8e1d7;
+  --ps-rest-lip: #d3cabd;
+  --ps-rest-ink: #736a5f;
+  --ps-line: rgba(43, 38, 33, 0.18);
 }
 
 .ps-head {
@@ -776,8 +776,8 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #ffffff;
-  color: #14112e;
+  background: #fffdf9;
+  color: #2b2621;
 }
 .ps-read {
   position: absolute;

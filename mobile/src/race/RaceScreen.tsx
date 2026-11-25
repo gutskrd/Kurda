@@ -484,7 +484,7 @@ function Result({
         {/* The card's style dresses its outside; what is in it is laid out here. */}
         <View style={styles.card}>
           <Text
-            // The result heading uses the page's ink: violet is for what can be pressed.
+            // The result heading is plain ink: a heading, not something to press.
             style={[styles.verdict, { color: result.implausible ? colors.danger : colors.textPrimary }]}
             accessibilityRole="header"
             accessibilityLiveRegion="polite"

@@ -1,7 +1,7 @@
 /**
  * The light over the lesson road and its chapters' banners. By day the painted valley's colours are drawn a little
- * deeper, so the land holds its own beside the page; by night every colour is seen under the moon: blue, dim and
- * nearly grey, with a trace of what it is by day. A whole drawing is relit at once by recolouring its hex colours.
+ * deeper, so the land holds its own beside the page; by night every colour is seen under the moon: a deep teal, dim
+ * and nearly grey, with a trace of what it is by day, as the app's own night is. A whole drawing is relit at once by recolouring its hex colours.
  */
 import { mix } from './svg.js';
 
@@ -41,7 +41,7 @@ export function sunlit(hex: string): string {
 }
 
 /** The hue the moon gives everything, and how much of a colour's own hue survives it. */
-const MOON = { hue: 220, keep: 0.1 } as const;
+const MOON = { hue: 190, keep: 0.12 } as const;
 
 /**
  * The road's moonlight: every colour turned toward the moon's blue, its saturation mostly lost, and its brightness
@@ -49,7 +49,7 @@ const MOON = { hue: 220, keep: 0.1 } as const;
  */
 export function moonlit(hex: string): string {
   const [h, s, l] = hslOf(hex);
-  // Warm colours turn through green to the moon's blue, as cool ones already lean; only purples and reds come back the
+  // Warm colours turn through green to the moon's teal, as cool ones already lean; only purples and reds come back the
   // other way, so no brown field goes violet.
   const turn = (MOON.hue - h) * (1 - MOON.keep);
   return hexOfHsl((h + turn + 360) % 360, Math.min(0.42, 0.14 + s * 0.28), 0.06 + l * l * 0.48);
@@ -68,7 +68,7 @@ export function moonlitKeepingLamps(hex: string): string {
 
 /** A light that is its own (a lit window, a lantern, a fire): left warm at night, only a little dimmed. */
 export function lamplit(hex: string): string {
-  return mix(hex, '#0d1430', 0.08);
+  return mix(hex, '#0c1c1e', 0.08);
 }
 
 /** The drawing with every hex colour passed through `light`. */

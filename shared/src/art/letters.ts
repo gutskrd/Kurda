@@ -61,7 +61,7 @@ const HOURS: Record<TreeSky, Hour> = {
     sky: ['#f2b9a4', '#fde7d2'],
     orb: [36, 50, 5.6, '#fff1cf', '#ffd59a'],
     cloud: '#fff4ec',
-    mountains: ['#d6c3d6', '#bfa9c8'],
+    mountains: ['#dcc6ad', '#c4a98e'],
     snow: '#fff6f0',
     hills: ['#c4cf7e', '#a9c464'],
     trees: ['#6d9a4c', '#7b5a3c'],
@@ -78,10 +78,10 @@ const HOURS: Record<TreeSky, Hour> = {
     light: ['#ffe9d2', 0.5],
   },
   dusk: {
-    sky: ['#b06a98', '#f7bf9c'],
+    sky: ['#c0664f', '#f7bf9c'],
     orb: [86, 52, 6, '#ffd9a0', '#ff9f70'],
     cloud: '#fcd8c8',
-    mountains: ['#a882a8', '#8b6996'],
+    mountains: ['#b4866f', '#986a58'],
     snow: '#fbe6e2',
     hills: ['#a6b86a', '#8eaa58'],
     trees: ['#5a8644', '#6e4f36'],
@@ -98,24 +98,24 @@ const HOURS: Record<TreeSky, Hour> = {
     light: ['#ffdcc0', 0.45],
   },
   night: {
-    sky: ['#121a44', '#2d3b7a'],
-    orb: [80, 28, 4.6, '#f6f1d6', '#a9b8ff'],
-    cloud: '#36427c',
-    mountains: ['#27346a', '#202b5a'],
-    snow: '#8e9ccc',
+    sky: ['#0b1d22', '#1e464a'],
+    orb: [80, 28, 4.6, '#f6f1d6', '#9fd3c6'],
+    cloud: '#2c5356',
+    mountains: ['#1f3f43', '#183236'],
+    snow: '#8fb7b0',
     hills: ['#2b4a44', '#25413a'],
-    trees: ['#1f3a33', '#2a2a3a'],
+    trees: ['#1f3a33', '#2a2e2a'],
     meadow: ['#264236', '#2c4c3c'],
     grass: '#1c3329',
     flowers: ['#d9c35a', '#c9667f', '#8fb0d6'],
     heart: '#c25a74',
-    wall: ['#343c66', '#262d52'],
-    soffit: '#1c2244',
-    jamb: ['#2e3660', '#222a4e'],
-    frame: ['#d8dbec', '#aeb3cc'],
-    sill: ['#d2d6e8', '#a7acc6'],
-    glass: '#3c4a86',
-    light: ['#c4d2ff', 0.22],
+    wall: ['#3a332c', '#2c2621'],
+    soffit: '#211c18',
+    jamb: ['#352e27', '#29231e'],
+    frame: ['#e6ddd0', '#c2b6a6'],
+    sill: ['#e0d6c8', '#bcae9c'],
+    glass: '#24484c',
+    light: ['#f3d9a8', 0.2],
     night: true,
   },
 };
@@ -704,7 +704,7 @@ function cloudsPart(dr: Drawing, h: Hour): void {
   cloud(dr, 40, 30, 0.6, h.cloud);
   cloud(dr, 76, 40, 0.86, h.cloud);
   cloud(dr, 104, 26, 0.5, h.cloud);
-  const far = h.night ? mix(h.cloud, '#ffffff', 0.3) : mix(h.mountains[1], '#2a3050', 0.5);
+  const far = h.night ? mix(h.cloud, '#ffffff', 0.3) : mix(h.mountains[1], '#33403e', 0.5);
   dr.add(`<path d="M55 24.4Q56.4 23 57.6 24.2Q58.8 23 60.2 24.4M61.6 21.2Q62.7 20.2 63.6 21.1Q64.5 20.2 65.6 21.2" fill="none" stroke="${far}" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round"/>`);
 }
 
@@ -743,7 +743,7 @@ function nearPart(dr: Drawing, h: Hour): void {
 /** A clay pot on the sill at `x`, `y`: its shade, body and rim. Its plant is drawn separately (`plant`). */
 function pot(dr: Drawing, x: number, y: number): void {
   const clay: Tones = { light: '#eea17a', base: '#d9825b', shade: '#b8663f' };
-  dr.add(`<ellipse cx="${n(x)}" cy="${n(y + 0.4)}" rx="7.4" ry="1.4" fill="#1d1838" opacity="0.16"/>`);
+  dr.add(`<ellipse cx="${n(x)}" cy="${n(y + 0.4)}" rx="7.4" ry="1.4" fill="#1f1a16" opacity="0.16"/>`);
   form(dr, `M${n(x - 5.6)} ${n(y - 7)}L${n(x + 5.6)} ${n(y - 7)}L${n(x + 4.2)} ${n(y)}L${n(x - 4.2)} ${n(y)}Z`, clay, 0.8, 0.6);
   dr.add(`<path d="${rr(x - 6.6, y - 8.6, 13.2, 2.6, 1)}" fill="${clay.light}"/>`);
 }
@@ -784,11 +784,11 @@ function roomPart(dr: Drawing, h: Hour): void {
   const s = SILL_FRONT;
   dr.add(`<path d="M${FRAME.x0} ${FRAME.y1}H${FRAME.x1}L${s.x1} ${s.y}H${s.x0}Z" fill="${h.sill[0]}"/>`);
   const under = dr.id('u');
-  dr.def(linearAt(under, [[0, '#1d1838', 0.16], [1, '#1d1838', 0]], 0, s.y + s.depth, 0, s.y + s.depth + 7));
+  dr.def(linearAt(under, [[0, '#1f1a16', 0.16], [1, '#1f1a16', 0]], 0, s.y + s.depth, 0, s.y + s.depth + 7));
   dr.add(`<path d="M${s.x0 + 1} ${n(s.y + s.depth)}H${s.x1 - 1}C${s.x1 - 4} ${n(s.y + s.depth + 4)} ${s.x1 - 8} ${n(s.y + s.depth + 7)} ${s.x1 - 14} ${n(s.y + s.depth + 7)}H${s.x0 + 14}C${s.x0 + 8} ${n(s.y + s.depth + 7)} ${s.x0 + 4} ${n(s.y + s.depth + 4)} ${s.x0 + 1} ${n(s.y + s.depth)}Z" fill="url(#${under})"/>`);
   dr.add(`<path d="${rr(s.x0, s.y, s.x1 - s.x0, s.depth, 1.6)}" fill="${h.sill[1]}"/>`);
   // A few seeds on the sill either side of the pigeon's place, for it to peck at.
-  const seed = h.night ? '#b8b4c8' : '#f1dfbd';
+  const seed = h.night ? '#c2b8a8' : '#f1dfbd';
   for (const [x, y, turn] of [[64.6, 94.6, 20], [67.4, 95.4, -30], [69.2, 94.2, 60], [35.4, 94.8, -20], [32.8, 95.6, 35], [31, 94.4, -60]] as const) {
     dr.add(`<ellipse cx="${n(x)}" cy="${n(y)}" rx="0.95" ry="0.6" fill="${seed}" transform="rotate(${turn} ${n(x)} ${n(y)})"/>`);
   }
@@ -965,7 +965,7 @@ export function letterEnvelopeSvg(opts: LetterEnvelopeOptions = {}): string {
   if (opts.shadow) {
     // Lying flat on the sill with the window's light behind it: a close shade round the paper, deeper toward the room.
     const soft = dr.id('shadow');
-    dr.def(radialBox(soft, [[0, '#1d1838', 1], [0.74, '#1d1838', 0.8], [1, '#1d1838', 0]]));
+    dr.def(radialBox(soft, [[0, '#1f1a16', 1], [0.74, '#1f1a16', 0.8], [1, '#1f1a16', 0]]));
     dr.add(`<ellipse cx="61" cy="66" rx="56" ry="38" fill="url(#${soft})" opacity="0.3"/>`);
     return dr.svg(size, opts.title ?? 'A shadow');
   }

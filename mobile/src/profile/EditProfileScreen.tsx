@@ -344,7 +344,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
             {pendingOf(me?.profilePhotoPending) ? (
               <PendingPhoto pending={pendingOf(me?.profilePhotoPending)} body="picture.held.profile" testID="edit-photo-pending" />
             ) : null}
-            {/* The chosen one is ringed in the violet every choice wears, the empty choice and a face alike. */}
+            {/* The chosen one is ringed in the ink every choice wears, the empty choice and a face alike. */}
             <View style={[styles.avatars, { flexDirection: dir.row }]} accessibilityLabel={t('edit.chooseAvatar')}>
               <PressableScale
                 onPress={() => void pick(null)}
@@ -412,7 +412,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
 }
 
 /**
- * A country as a choice to tap, or (without `onPress`) as the one chosen, in solid violet as every chosen option
+ * A country as a choice to tap, or (without `onPress`) as the one chosen, in solid ink as every chosen option
  * is, with its flag before its name. Drawn 36pt tall and answering over 48pt; where the matches wrap, their group holds each to half the
  * gap between rows.
  */

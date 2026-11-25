@@ -62,8 +62,8 @@
   outline-offset: 2px;
 }
 .lore-shelf.is-on {
-  background: var(--primary);
-  color: var(--primary-ink);
+  background: var(--picked-fill);
+  color: var(--picked-ink);
 }
 .lore-shelf-name {
   font-family: var(--font-sans);
@@ -242,7 +242,7 @@
 .lore-solved-bar > span {
   display: block;
   height: 100%;
-  /* The progress violet, as on the phone. */
+  /* The progress ink, as on the phone. */
   background: var(--primary);
   border-radius: inherit;
   transition: width var(--dur-progress) var(--ease-out);

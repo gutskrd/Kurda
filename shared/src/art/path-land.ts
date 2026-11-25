@@ -5,6 +5,7 @@
  */
 import type { UnitTone } from '../lesson-path.js';
 import type { PathGround } from '../path-world.js';
+import { themeColors } from '../themes.js';
 import { roadLight } from './light.js';
 import { CANVAS, mix, n, n2, prefixFor } from './svg.js';
 import { VALLEY, dusk, ellipsePath, fill, stroke, warm } from './valley.js';
@@ -62,8 +63,11 @@ export function pathGroundView(ground: PathGround, dark = false): { far: string;
  */
 export const PATH_STOP_ART = { box: 112, cx: 56, cy: 58, rx: 36, ry: 31, side: 10, raised: 13, press: 6 } as const;
 
-/** The app's violet, the main button's colour, which the current stop wears as the road's one way forward. */
-const NOW = { light: { face: '#862be2', side: '#5b179f', ring: '#c7a2f5' }, dark: { face: '#bf9bfe', side: '#8559d8', ring: '#e6d7ff' } } as const;
+/** The colour theme's main colour, the main button's, which the current stop wears as the road's one way forward. */
+function now(dark: boolean): { face: string; side: string; ring: string } {
+  const t = themeColors(dark ? 'dark' : 'light');
+  return { face: t.primary.toLowerCase(), side: t.primaryPressed.toLowerCase(), ring: mix(t.primary, '#ffffff', dark ? 0.7 : 0.6) };
+}
 
 /** What a stop looks like, by what it is and how it stands. */
 export const PATH_STOP_LOOKS = [
@@ -119,9 +123,9 @@ interface Token {
 
 /** Every look's colours, by day and by evening. */
 function tokenOf(look: PathStopLook, t: { fill: string; lip: string }, dark: boolean): Token {
-  // A smooth river stone: pale by day, moonlit blue by night.
+  // A smooth river stone: pale by day, a warm moonlit grey by night, so the road keeps the page's warmth.
   const stone: Token = dark
-    ? { face: '#4b5370', side: '#2f3550', ring: '#5b6484', glint: '#8a95bb' }
+    ? { face: '#4d463f', side: '#342f2a', ring: '#5e564d', glint: '#9a8f82' }
     : { face: '#ece8e1', side: '#c6beb0', ring: '#f7f5f1', glint: '#ffffff' };
   const cream: Token = dark
     ? { face: '#efe4cc', side: t.lip, ring: t.fill, glint: '#fff8ea' }
@@ -135,7 +139,7 @@ function tokenOf(look: PathStopLook, t: { fill: string; lip: string }, dark: boo
     case 'refresh':
       return { face: mix(gold.face, stone.face, 0.5), side: mix(gold.side, stone.side, 0.5), ring: mix(gold.ring, stone.ring, 0.5), glint: stone.glint };
     case 'current':
-      return { ...NOW[dark ? 'dark' : 'light'], glint: '#ffffff' };
+      return { ...now(dark), glint: '#ffffff' };
     case 'available':
       return cream;
     case 'review':
@@ -182,9 +186,9 @@ export function pathStopSvg(opts: PathStopOptions): string {
 
   if (part === 'base') {
     let body = '';
-    // The current stop sits in a soft pool of its violet, so the eye finds it.
+    // The current stop sits in a soft pool of its own colour, so the eye finds it.
     if (look === 'current') {
-      const glow = NOW[dark ? 'dark' : 'light'].face;
+      const glow = now(dark).face;
       body += `<path d="${ellipsePath(cx, cy + 4, rx + 16, ry + 13)}" fill="${glow}" fill-opacity="${dark ? 0.2 : 0.14}"/>`;
       body += `<path d="${ellipsePath(cx, cy + 4, rx + 9, ry + 7)}" fill="${glow}" fill-opacity="${dark ? 0.24 : 0.18}"/>`;
     }

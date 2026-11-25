@@ -126,14 +126,14 @@ export function KindChips<K extends string>({
               accessibilityLabel={o.a11y ?? o.label}
               style={({ pressed }) => [
                 styles.chip,
-                { flexDirection: dir.row, backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+                { flexDirection: dir.row, backgroundColor: on ? colors.pickedFill : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
               ]}
             >
-              <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
+              <Text style={[styles.chipText, { color: on ? colors.pickedInk : colors.textPrimary }]} numberOfLines={1}>
                 {o.label}
               </Text>
               {o.count !== undefined ? (
-                <Text style={[styles.chipCount, on ? styles.chipCountOn : null, { color: on ? colors.textOnPrimary : colors.textSecondary }]}>
+                <Text style={[styles.chipCount, on ? styles.chipCountOn : null, { color: on ? colors.pickedInk : colors.textSecondary }]}>
                   {o.count}
                 </Text>
               ) : null}
@@ -171,15 +171,15 @@ export function ToggleChip({
       accessibilityLabel={label}
       style={({ pressed }) => [
         styles.chip,
-        { flexDirection: dir.row, backgroundColor: value ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+        { flexDirection: dir.row, backgroundColor: value ? colors.pickedFill : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
       ]}
     >
       {value ? (
-        <Icon name="check" size={16} color={colors.textOnPrimary} />
+        <Icon name="check" size={16} color={colors.pickedInk} />
       ) : (
         <View style={[styles.box, { borderColor: colors.textSecondary }]} />
       )}
-      <Text style={[styles.chipText, { color: value ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
+      <Text style={[styles.chipText, { color: value ? colors.pickedInk : colors.textPrimary }]} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>

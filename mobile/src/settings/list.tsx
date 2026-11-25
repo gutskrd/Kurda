@@ -76,7 +76,7 @@ interface RowLook {
   value?: string;
   /** Cannot be undone (deleting the account): red, the one red on the screen. */
   destructive?: boolean;
-  /** Needs action (notifications blocked, a limited account): icon, value and subtitle in violet, kept for what needs acting on. */
+  /** Needs action (notifications blocked, a limited account): icon, value and subtitle in the ink, kept for what needs acting on. */
   attention?: boolean;
 }
 
@@ -126,7 +126,7 @@ function RowBody({ icon, title, subtitle, value, destructive, attention, end }: 
 
 /**
  * One row. With `onPress` it is a button, with a chevron when it opens a page (`opens`, the default). A `badge`
- * counts what waits behind it (requests to answer), in violet, and is read out in words.
+ * counts what waits behind it (requests to answer), in the ink, and is read out in words.
  */
 export function SettingsRow({
   onPress,
@@ -258,7 +258,7 @@ export function SettingsChoice<T extends string>({
             <RowBody
               title={labelOf(option)}
               subtitle={hintOf?.(option)}
-              // The choice that is on is ticked in the violet everything chosen wears.
+              // The choice that is on is ticked in the ink everything chosen wears.
               end={<View style={styles.check}>{chosen ? <Icon name="check" size={22} color={colors.primary} /> : null}</View>}
             />
           </Pressable>

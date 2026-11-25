@@ -753,7 +753,7 @@ function Chooser({ data, season, side, busy, failed, onPlant }: { data: MyTree; 
                 if (!on) haptic('select');
                 setPicked(k.species);
               }}
-              // The chosen seed is ringed in violet like every choice, not in its tree's colour, which read as
+              // The chosen seed is ringed in the ink like every choice, not in its tree's colour, which read as
               // right or wrong answers.
               style={[styles.seed, { backgroundColor: colors.surface, borderColor: on ? colors.primary : 'transparent' }]}
               testID={`tree-seed-${k.species}`}

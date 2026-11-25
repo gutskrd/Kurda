@@ -49,8 +49,8 @@ const PULSE_AT_MS = 700;
  * wear a ring with one piece per lesson (TopicRing). A chapter ends at its story, and a jumpable unit's first stop
  * is drawn as a gate. Pressed, the face sinks into its base.
  *
- * The current skill is the road's main button: it stands higher in a glow of the app's violet, wears a star and its
- * ring in that violet, and a "Start" flag above; now and then a glint sweeps it and sparks wink on it. It bobs while
+ * The current skill is the road's main button: it stands higher in a glow of the theme's main colour, wears a star and
+ * its ring in that colour, and a "Start" flag above; now and then a glint sweeps it and sparks wink on it. It bobs while
  * the path is in view. None of it moves under Reduce Motion.
  *
  * After a lesson, `change` animates what it did to the stop: the ring fills, the stop pops and turns gold, a star
@@ -163,7 +163,7 @@ export function SkillNodeView({
     };
   }, [change, finishing, opening, unlocking, pop, lock, shut, before, wobble]);
 
-  const glyph = glyphOf(stop, look, tone, FACE_INK[scheme], colors.textOnPrimary);
+  const glyph = glyphOf(stop, look, tone, FACE_INK[scheme], colors.textOnAccent);
   const tilt = wobble.interpolate({ inputRange: [-1, 1], outputRange: [`${-PATH_MOTION.wobble}deg`, `${PATH_MOTION.wobble}deg`] });
   const lifted = rise ? { opacity: rise, transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [PATH_MOTION.rise, 0] }) }] } : null;
   // Its ring now, and as it was before a lesson that moved it on.
@@ -289,7 +289,7 @@ export function SkillNodeView({
 
 /**
  * The glyph on a stop's face: a skill's number or padlock, or review's arrows. A finished coin carries its stars
- * instead (a check only on a map too old to count them), the current skill a star in the ink its violet takes, and
+ * instead (a check only on a map too old to count them), the current skill a star in the ink its main colour takes, and
  * the drawn stops carry their own.
  */
 function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_INK)['dark'], onNow: string): { icon?: IconName; number?: number; colour: string } | null {

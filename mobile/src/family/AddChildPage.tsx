@@ -143,9 +143,9 @@ export function AddChildPage({ onExit }: { onExit: () => void }): React.JSX.Elem
                   }}
                   accessibilityRole="radio"
                   accessibilityState={{ checked: chosen }}
-                  style={[styles.chip, { backgroundColor: chosen ? colors.primary : colors.controlTrack }]}
+                  style={[styles.chip, { backgroundColor: chosen ? colors.pickedFill : colors.controlTrack }]}
                 >
-                  <Text style={[styles.chipText, { color: chosen ? colors.textOnPrimary : colors.textPrimary }]}>{yearLabel(y, locale)}</Text>
+                  <Text style={[styles.chipText, { color: chosen ? colors.pickedInk : colors.textPrimary }]}>{yearLabel(y, locale)}</Text>
                 </PressableScale>
               );
             })}

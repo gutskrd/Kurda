@@ -14,7 +14,7 @@ export const BENDING_GLASS = lensSupported();
 /** How the colours behind the glass are lifted, and how it lifts off the page, by day and by night, as on the website (web/src/styles/tokens.css). */
 const OPTICS = { light: 'saturate(1.8) brightness(1.08)', dark: 'saturate(1.7) brightness(0.92)' };
 const LIFT = {
-  light: '0 10px 30px rgba(46, 40, 74, 0.12), 0 0 0 0.5px rgba(46, 40, 74, 0.08)',
+  light: '0 10px 30px rgba(58, 47, 37, 0.12), 0 0 0 0.5px rgba(58, 47, 37, 0.08)',
   dark: '0 10px 30px rgba(0, 0, 0, 0.35), 0 0 0 0.5px rgba(255, 255, 255, 0.1)',
 };
 

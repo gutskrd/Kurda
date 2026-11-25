@@ -104,7 +104,7 @@ export function HevaloDeer({
       importantForAccessibility="no-hide-descendants"
       accessibilityElementsHidden
     >
-      {/* The lilac card the logo's deer sits on, as a soft disc that does not move. */}
+      {/* A soft disc of warm light behind the deer, which does not move. */}
       <View style={StyleSheet.absoluteFill}>{layer(deerCard())}</View>
 
       <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateY: lift }] }]}>

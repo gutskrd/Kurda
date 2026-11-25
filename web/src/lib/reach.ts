@@ -65,6 +65,8 @@ export const REACH_CONTROLS = [
   '.learn-tools-btn',
   // A post's line of gifts, which opens who gave them (styles/feed.css).
   '.fcard-gifts',
+  // The Hevalo+ page's fine-print links, restore and the terms, side by side under its button (plus/plus.css).
+  '.plus-link',
 ] as const;
 
 /** Links on a line of their own, enlarged only under a coarse pointer. */
@@ -132,6 +134,8 @@ export const LARGE_ENOUGH = [
   '.daily-row',
   '.daily-back',
   '.mkp-fact--link',
+  // A Hevalo+ plan, a card the column wide and over 90px tall (plus/plus.css).
+  '.plus-plan',
   // A full profile's icon tabs and its grid's tiles, and the line of who they know (styles/profile.css): each at least
   // 48px tall and wider still.
   '.pg-tab',

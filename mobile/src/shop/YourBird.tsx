@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   lead: { fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center' },
   // Two even rows of four.
   birds: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.md, alignSelf: 'center', maxWidth: 4 * (BIRD + 10) + 3 * spacing.md + 2 },
-  // Each bird a round button; the one picked ringed in the violet every chosen option wears.
+  // Each bird a round button; the one picked ringed in the ink every chosen option wears.
   bird: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', padding: 3, borderWidth: 2, borderRadius: radii.pill },
   // The bird that is yours, ticked, whichever is picked.
   mine: { position: 'absolute', right: 0, bottom: 0, width: 20, height: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderRadius: radii.pill },

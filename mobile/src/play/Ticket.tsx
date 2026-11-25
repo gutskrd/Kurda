@@ -20,7 +20,7 @@ import { codeTone, filledTone } from './joinCode';
  * The ticket every invitation is drawn as (join codes, invites, chat game cards, the host's invited list, friend
  * requests), so they cannot drift apart. Paper with a coloured stub on the line-start side, torn along a
  * perforation with a notch on each edge. The stub takes the colour of what it is for (a game's colour from
- * joinCode.ts, or the violet for story games and friendships) and turns grey once spent.
+ * joinCode.ts, or the ink for story games and friendships) and turns grey once spent.
  *
  * Its moments are drawn here too: the stub torn off, a stamp landing, a punched hole, and a shine crossing a
  * waiting ticket while the screen is in front. Under Reduce Motion nothing travels. Stub and paper are cut

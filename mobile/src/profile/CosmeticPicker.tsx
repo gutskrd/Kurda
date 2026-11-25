@@ -203,7 +203,7 @@ export function CosmeticPicker({
         accessibilityHint={on ? t('edit.hint.takeOff') : t('edit.hint.wear')}
         style={[styles.tile, { width: tile }]}
       >
-        {/* What you are wearing is ringed and ticked in the violet every chosen option wears. */}
+        {/* What you are wearing is ringed and ticked in the ink every chosen option wears. */}
         <View style={[styles.ring, wide ? styles.ringWide : styles.ringSquare, { borderColor: on ? colors.primary : 'transparent' }]}>
           {tier ? (
             <View style={[styles.frameTile, { width: art, height: art, backgroundColor: colors.controlTrack }]}>

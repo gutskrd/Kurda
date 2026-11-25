@@ -849,7 +849,7 @@ function Progress({ done, of }: { done: number; of: number }): React.JSX.Element
   return (
     <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {Array.from({ length: of }, (_, i) => (
-        // Filled in the progress violet; gold is kept for what is earned.
+        // Filled in the progress ink; gold is kept for what is earned.
         <View key={i} style={[styles.dot, { backgroundColor: i < done ? colors.primary : i === done ? colors.textPrimary : colors.controlTrack }]} />
       ))}
     </View>
@@ -954,7 +954,7 @@ function Choice({ label, onPress, kurdish, accent = false }: { label: string; on
       }}
       accessibilityRole="button"
       accessibilityLabel={label}
-      // The guess's words are edged in the violet of what can be pressed; gold is kept for what is earned.
+      // The guess's words are edged in the ink of what can be pressed; gold is kept for what is earned.
       style={({ pressed }) => [styles.choice, { backgroundColor: colors.glassFill, borderColor: accent ? colors.primary : 'transparent', opacity: pressed ? pressedDim : 1 }]}
     >
       {kurdish ? (
