@@ -4,12 +4,14 @@
  */
 
 /* ---- the badge row: a chip holding small pictures and "+N" ---- */
-/* Taller than a plain chip, so the pictures inside are big enough to tell apart at a glance. */
+/* Taller than a plain chip, so the pictures inside are big enough to tell apart at a glance; a box with the app's usual
+ * corners rather than a round chip, so it sits with the cards and fields around it. */
 .bdg-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   height: 44px;
+  border-radius: var(--r-md);
   max-width: 100%;
   padding-inline: 8px 14px;
   font-variant-numeric: tabular-nums;

@@ -84,11 +84,11 @@ export function BadgePill({
 
 /** The row while a profile loads: a pill of the usual length. */
 export function BadgePillSkeleton(): React.JSX.Element {
-  return <Skeleton width={104} height={PILL} radius={radii.pill} />;
+  return <Skeleton width={104} height={PILL} radius={radii.md} />;
 }
 
 const styles = StyleSheet.create({
-  pill: { alignSelf: 'flex-start', alignItems: 'center', gap: spacing.sm - 2, height: PILL, paddingStart: spacing.sm, paddingEnd: spacing.md - 2, borderRadius: radii.pill },
+  pill: { alignSelf: 'flex-start', alignItems: 'center', gap: spacing.sm - 2, height: PILL, paddingStart: spacing.sm, paddingEnd: spacing.md - 2, borderRadius: radii.md },
   icon: { width: ICON, height: ICON, alignItems: 'center', justifyContent: 'center' },
   word: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   // "+7" reads the same way round in every direction.

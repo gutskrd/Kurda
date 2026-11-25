@@ -812,8 +812,8 @@ function ProfileHeadSkeleton({ own }: { own: boolean }): React.JSX.Element {
         </div>
         <div className="ph-handle">
           <Skeleton line w={64} />
-          {/* the badge row beside the handle: a pill of a few small pictures, as most profiles show */}
-          <Skeleton w={96} h={36} radius="var(--r-pill)" />
+          {/* the badge row beside the handle: a box of a few pictures, as most profiles show */}
+          <Skeleton w={136} h={44} radius="var(--r-md)" />
         </div>
       </div>
       <ul className="mkp-about">
