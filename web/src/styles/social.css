@@ -1947,6 +1947,13 @@ button.gift-bubble:active {
   text-align: center;
   overflow-wrap: anywhere;
 }
+.gift-tile-price {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.gift-tile-price .zer-value {
+  white-space: nowrap;
+}
 .gift-tile-bag .gift-tile-price {
   color: var(--ink-2);
 }
@@ -2026,10 +2033,11 @@ button.gift-bubble:active {
 /* a grand gift: the whole screen goes to night, the stars come out, the gift rises into the lamp's glow */
 .gift-stage-grand {
   padding: 0;
+  /* the scrim three times over, as image layers, since only the last layer may be a colour: night in either theme */
   background:
     radial-gradient(70% 55% at 50% 58%, color-mix(in srgb, var(--stage-gold) 24%, transparent), transparent 72%),
-    var(--scrim),
-    var(--scrim),
+    linear-gradient(var(--scrim), var(--scrim)),
+    linear-gradient(var(--scrim), var(--scrim)),
     var(--scrim);
 }
 .gift-stage-grand .gift-stage-panel {

@@ -158,7 +158,7 @@ export function NightSky({ className }: { className?: string }): React.JSX.Eleme
   const stars = Array.from({ length: 46 }, (_, i) => ({
     x: Math.round(scatter(i, 11) * 1000) / 10,
     y: Math.round(scatter(i, 13) * 900) / 10,
-    r: 0.18 + scatter(i, 17) * 0.42,
+    r: 0.1 + scatter(i, 17) * 0.22,
     delay: Math.round(scatter(i, 19) * 1800),
   }));
   return (

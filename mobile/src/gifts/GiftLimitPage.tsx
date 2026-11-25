@@ -57,11 +57,13 @@ export function GiftLimitPage(): React.JSX.Element {
   const when = (iso: string): string => new Date(iso).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
   const words = (limit: SpendLimit | null): string => (limit ? t(PER_PERIOD[limit.period], { zer: n(limit.zer) }) : t('settings.giftLimit.none'));
 
+  // the form shows the limit asked for: one waiting its day if there is one, else the one in force
   const take = (next: GiftSpendLimitView): void => {
     setView(next);
-    if (next.limit) {
-      setPeriod(next.limit.period);
-      setAmount(String(next.limit.zer));
+    const shown = next.pending?.limit ?? next.limit;
+    if (shown) {
+      setPeriod(shown.period);
+      setAmount(String(shown.zer));
     }
   };
 

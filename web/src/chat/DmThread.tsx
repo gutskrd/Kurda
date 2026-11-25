@@ -158,8 +158,8 @@ function Thread({ otherId, otherName, onSent, onClose, className = '' }: DmThrea
   const gifts = useChatGifts<DmMessage>({
     chat: useMemo(() => ({ kind: 'dm' as const, userId: otherId }), [otherId]),
     loadPeople: useCallback(
-      async () => [{ userId: otherId, name: otherName ?? t('chat.thisPerson'), avatarUrl: null }],
-      [otherId, otherName, t],
+      async () => [{ userId: otherId, name: name ?? t('chat.thisPerson'), avatarUrl: face }],
+      [otherId, name, face, t],
     ),
     setMessages,
     sendText: useCallback(
