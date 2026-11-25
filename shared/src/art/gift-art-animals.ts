@@ -6,7 +6,7 @@
 import { n, type Drawing, type Pt } from './svg.js';
 import { characterSvg } from '../characters/index.js';
 import { pigeon } from './pigeon.js';
-import { along, band, blade, brush, ellipse, floor, form, lerp, outline, paint, polygon, roundish, runs, scaleAbout, shift, side, slab, streaks, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
+import { along, band, blade, brush, ellipse, floor, form, lerp, outline, paint, polygon, rest, roundish, runs, scaleAbout, shift, side, slab, streaks, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
 
 // ─────────────────────────────────────────────────────────────────── pisîk
 
@@ -163,7 +163,8 @@ export function kevok(dr: Drawing, rnd: Rnd): void {
 const KEW = { back: '#a6998a', backLight: '#c3b6a4', breast: '#a5a8b8', breastLight: '#c2c5d2', belly: '#e0caa4', shade: '#76695c', throat: '#f4ead2' };
 
 export function kew(dr: Drawing, rnd: Rnd): void {
-  // a rock to stand on, lichened, with a tuft of grass
+  // a rock to stand on, lichened, with a tuft of grass, and the bird's shadow on it
+  rest(dr, rnd, 63, 108.6, 40, 3);
   const rock = tremble([[24, 106], [30, 97], [44, 93.4], [64, 92.4], [84, 94], [98, 99], [102, 106], [88, 109], [60, 110], [36, 109]], rnd, 0.5);
   paint(dr, outline(rock), '#b9b2a6');
   side(dr, rock, -2, -2.4, '#8e877c');
@@ -174,6 +175,7 @@ export function kew(dr: Drawing, rnd: Rnd): void {
   let grass = '';
   for (const a of [-0.6, -0.3, 0, 0.3, 0.55]) grass += brush([[96, 104], [96 + Math.sin(a) * 4, 98], [96 + Math.sin(a) * 7, 92]], 1, rnd, { start: 1, end: 0.05, count: 5 });
   paint(dr, grass, '#7d9a52');
+  paint(dr, outline(roundish(65, 95.6, 15, 1.8, rnd, { wobble: 0.06 })), '#5e574d', 0.4);
   // its red legs
   let legs = '';
   for (const [x0, x1] of [[58, 56], [68, 70]] as const) legs += brush([[x0, 86], [x0 - 0.6, 90], [x1, 95]], 2, rnd, { start: 1, end: 0.8, peak: 0.5, count: 6 });
@@ -313,6 +315,21 @@ export function pezkovi(dr: Drawing, rnd: Rnd): void {
     paint(dr, polygon(tremble([[16, 100], [30, 95], [40, 104], [24, 112]], rnd, 0.3)) + polygon(tremble([[56, 93.4], [78, 94], [74, 103], [60, 101]], rnd, 0.3)), STONE.light);
     paint(dr, polygon(tremble([[78, 94], [96, 97], [110, 104], [92, 112], [74, 103]], rnd, 0.3)) + polygon(tremble([[40, 104], [60, 101], [62, 114], [36, 114]], rnd, 0.3)), STONE.shade);
   });
+  // the rock's weathering: cracks along its facets, lichen in rust and sage, and its seat in the ground
+  within(dr, outline(ledge), () => {
+    paint(dr, brush([[30, 95.4], [36, 100], [40, 104]], 0.6, rnd, { count: 5 }) + brush([[74, 94.4], [76, 99], [74, 103]], 0.6, rnd, { count: 5 }) +
+      brush([[52, 104], [56, 108], [62, 114]], 0.5, rnd, { count: 5 }), '#5e584f', 0.8);
+    let rust = '';
+    let sage = '';
+    for (let i = 0; i < 16; i++) {
+      const spot = outline(roundish(16 + rnd() * 88, 97 + rnd() * 13, 0.7 + rnd() * 1.1, 0.5 + rnd() * 0.7, rnd, { count: 7, tremor: 0.2 }));
+      if (i % 2) rust += spot;
+      else sage += spot;
+    }
+    paint(dr, rust, '#c48a42', 0.6);
+    paint(dr, sage, '#a4ad74', 0.7);
+    paint(dr, outline(roundish(64, 95.6, 28, 2.8, rnd, { wobble: 0.06 })), '#4a443c', 0.35);
+  });
   let tufts = '';
   for (const [x, y] of [[20, 99], [102, 101]] as const) {
     for (const a of [-0.5, -0.15, 0.2, 0.5]) tufts += brush([[x, y], [x + Math.sin(a) * 2.4, y - 3], [x + Math.sin(a) * 4.4, y - 5.6]], 0.9, rnd, { start: 1, end: 0.05, count: 4 });
@@ -334,10 +351,23 @@ export function pezkovi(dr: Drawing, rnd: Rnd): void {
     paint(dr, brush([[29, 46], [33, 56], [38, 66], [40, 74]], 3.2, rnd, { start: 0.5, end: 0.8, peak: 0.6, count: 10 }), '#4a3a2c');
     paint(dr, brush([[42, 73], [56, 72.4], [72, 73], [86, 71]], 2.2, rnd, { start: 0.4, end: 0.3, peak: 0.5, count: 10 }), '#4a3a2c');
     paint(dr, brush([[46, 49], [44, 58], [42, 68]], 2.2, rnd, { start: 0.3, end: 0.2, peak: 0.5, count: 8 }), '#5c4a38', 0.8);
-    paint(dr, streaks(rnd, [36, 48, 90, 74], 26, 74, 5, 0.6), GOAT.light, 0.45);
+    // the coat brushed the way the hair lies: down the neck, along and round the barrel, the light catching the back
+    let coat = '';
+    for (let i = 0; i < 16; i++) {
+      const x = 48 + rnd() * 38;
+      const y = 54 + rnd() * 18;
+      coat += brush([[x - 4, y - 1.4], [x, y + 0.6 + (y - 62) * 0.08], [x + 4, y - 0.4]], 0.7 + rnd() * 0.5, rnd, { start: 0.3, end: 0.1, peak: 0.4, count: 5 });
+    }
+    for (let i = 0; i < 6; i++) coat += brush([[31 + i * 1.6, 34 + i * 1.4], [36 + i * 1.6, 44 + i * 1.6], [38 + i * 1.4, 54 + i * 1.2]], 0.7, rnd,
+      { start: 0.3, end: 0.1, count: 5 });
+    paint(dr, coat, GOAT.light, 0.55);
+    paint(dr, touch(66, 53.4, 30, 4.4, 2) + touch(85, 54, 8, 4, 70), '#e2d6bc', 0.55);
+    paint(dr, brush([[48, 76], [62, 77.6], [78, 76.4]], 2.6, rnd, { start: 0.4, end: 0.4, peak: 0.5, count: 8 }), GOAT.shade, 0.5);
   });
   side(dr, goat, -2, -2.4, GOAT.shade, { grow: 0.99 });
   side(dr, goat, 1.4, 1.8, GOAT.light, { grow: 0.98 });
+  // the dark blaze down the front of its face
+  within(dr, hide, () => paint(dr, brush([[32, 30.6], [26, 37], [21, 43.4]], 2, rnd, { start: 0.6, end: 0.4, peak: 0.5, count: 6 }), '#5c4a38', 0.75));
   // the beard, the ear, the eye
   paint(dr, outline(tremble([[20.4, 46], [23.6, 47.4], [24.6, 53.6], [22.2, 52], [20.4, 49]], rnd, 0.15)), '#3e3024');
   paint(dr, outline(tremble(blade([37, 33], [45.4, 34.6], 3, { point: 0.9, count: 6 }), rnd, 0.1)), GOAT.shade);
@@ -348,6 +378,7 @@ export function pezkovi(dr: Drawing, rnd: Rnd): void {
     paint(dr, brush(pts, 7, rnd, { start: 1, end: 0.34, peak: 0.04, count: 10 }), GOAT.base);
     paint(dr, brush(shift(pts.slice(1), -1, 0), 1.2, rnd, { start: 0.6, end: 0.8, peak: 0.5, count: 6 }), '#4a3a2c');
   }
+  paint(dr, ellipse(39.4, 95.4, 3.4, 1.1) + ellipse(86.2, 95.4, 3.4, 1.1), '#3e382f', 0.5);
   paint(dr, ellipse(38.4, 94.4, 2, 1.1) + ellipse(85.2, 94.4, 2, 1.1) + ellipse(46.6, 94.4, 1.8, 1) + ellipse(78.6, 94.4, 1.8, 1), '#2e241c');
   // the near horn: a long scimitar swept back, ridged with knots along its front
   const horn = brush(hornLine, 5.6, rnd, { start: 1, end: 0.1, peak: 0.02, count: 16 });
@@ -371,8 +402,9 @@ const BAY: Tone = { base: '#8c4b2a', light: '#b26c3e', shade: '#5c2c16' };
 const MANE = '#2c1b13';
 
 export function hesp(dr: Drawing, rnd: Rnd): void {
-  // the grass it stands on
+  // the grass it stands on, and its shadow under it
   floor(dr, rnd, 62, 104, 44, 5);
+  rest(dr, rnd, 68, 100.6, 30, 2.6);
   // the far legs, in shade
   let far = '';
   for (const pts of [[[53, 64], [54, 74], [55, 84], [55.6, 92], [55.6, 98]], [[80, 60], [84.4, 72], [85.4, 80], [83, 90], [81.6, 98]]] as Pt[][]) far += brush(pts, 8, rnd, { start: 1, end: 0.36, peak: 0.04, count: 12 });
@@ -386,7 +418,21 @@ export function hesp(dr: Drawing, rnd: Rnd): void {
   const horse = tremble([[44, 72], [40, 64], [38, 56], [33, 46], [29, 48.4], [20.6, 50.4], [16, 47.4], [16.6, 42], [22, 32], [27.6, 24], [31, 21], [32.4, 14], [35.4, 19.4], [40, 21.6], [48, 30], [56, 39], [66, 43.4], [78, 43], [88, 41], [95, 45.6], [97.4, 54], [95, 64], [90, 68.4], [82, 70.6], [70, 73], [56, 72.4]], rnd, 0.25);
   const coat = outline(horse);
   paint(dr, coat, BAY.base);
-  within(dr, coat, () => paint(dr, streaks(rnd, [30, 30, 98, 72], 30, 20, 7, 0.7), BAY.light, 0.35));
+  within(dr, coat, () => {
+    // the coat brushed along the lie of the hair, and the muscle under it caught by a light from the upper left: the
+    // crest of the neck, the shoulder, the croup; the belly turning away into shade
+    let hair = '';
+    for (let i = 0; i < 18; i++) {
+      const x = 46 + rnd() * 46;
+      const y = 46 + rnd() * 22;
+      hair += brush([[x - 5, y - 1], [x, y + 0.4], [x + 5, y - 0.6]], 0.6 + rnd() * 0.5, rnd, { start: 0.3, end: 0.1, peak: 0.4, count: 5 });
+    }
+    paint(dr, hair, BAY.light, 0.4);
+    paint(dr, brush([[36, 22], [44, 27], [54, 36], [62, 41]], 3, rnd, { start: 0.3, end: 0.2, peak: 0.4, count: 10 }) + touch(44, 52, 16, 7, 76) +
+      touch(86, 50.6, 16, 9, 100), BAY.light, 0.5);
+    paint(dr, touch(46, 50, 7, 2.6, 76) + touch(84.6, 48.6, 8, 2.6, 100), '#d18e58', 0.7);
+    paint(dr, brush([[50, 70.6], [64, 72.4], [80, 70.4], [90, 66]], 4, rnd, { start: 0.5, end: 0.4, peak: 0.5, count: 10 }), BAY.shade, 0.6);
+  });
   side(dr, horse, -2.4, -2.6, BAY.shade, { grow: 0.99 });
   side(dr, horse, 1.6, 1.8, BAY.light, { grow: 0.98 });
   // the blaze down its face, the eye, the nostril, the mane along its crest and the forelock
@@ -401,6 +447,12 @@ export function hesp(dr: Drawing, rnd: Rnd): void {
   }
   mane += brush([[32.6, 21], [29, 24], [27.6, 28]], 2, rnd, { start: 1, end: 0.1, count: 5 });
   paint(dr, mane, MANE);
+  let sheen = '';
+  for (let i = 0; i < 5; i++) {
+    const root = lerp([34, 21], [52, 37], i / 4);
+    sheen += brush([root, [root[0] + 2.4, root[1] + 3], [root[0] + 3.4, root[1] + 6]], 0.6, rnd, { start: 1, end: 0.1, count: 5 });
+  }
+  paint(dr, sheen, '#6a4632', 0.8);
   // the bridle: leather straps, a red tassel at the cheek and a string of blue beads on the brow, against the evil eye
   paint(dr, brush([[33.6, 22], [30.4, 31.6], [27.6, 42], [24, 49.4]], 0.9, rnd, { start: 1, end: 1, peak: 0.5, count: 8 }) + brush([[16.6, 44], [22, 43], [28, 41.6]], 0.9, rnd, { start: 1, end: 1, peak: 0.5, count: 6 }), '#3a2218');
   let beads = '';
@@ -434,4 +486,11 @@ export function hesp(dr: Drawing, rnd: Rnd): void {
     });
   }
   paint(dr, ellipse(44.4, 99.4, 2.8, 1.5) + ellipse(89.4, 99.4, 2.8, 1.5), '#3a2a20');
+  paint(dr, touch(43.6, 98.8, 2.4, 0.6, 0) + touch(88.6, 98.8, 2.4, 0.6, 0), '#7a6250', 0.8);
+  let grass = '';
+  for (const [x, y] of [[38, 101], [50, 101.6], [76, 101.4], [96, 100.6]] as const) {
+    for (const a of [-0.5, -0.1, 0.35]) grass += brush([[x, y], [x + Math.sin(a) * 2.2, y - 2.6], [x + Math.sin(a) * 3.8, y - 4.6]], 0.8, rnd,
+      { start: 1, end: 0.05, count: 5 });
+  }
+  paint(dr, grass, '#7d9a52');
 }

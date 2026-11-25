@@ -3,7 +3,7 @@
  * the Newroz fire and the sun. Night skies are cut out as a patch of their own so they hold on a light page.
  */
 import { type Drawing, type Pt } from './svg.js';
-import { band, blade, brush, ellipse, lerp, outline, paint, polygon, roundish, shift, side, streaks, touch, tremble, turn, within, type Rnd, type Tone } from './gift-paint.js';
+import { band, blade, brush, ellipse, lerp, outline, paint, polygon, rest, roundish, shift, side, streaks, touch, tremble, turn, within, type Rnd, type Tone } from './gift-paint.js';
 
 // ──────────────────────────────────────────────────────────────────── heyv
 
@@ -218,6 +218,7 @@ const RAINBOW = ['#d9564a', '#e98d47', '#f0c64e', '#8cbf6a', '#5b9bd0', '#8a6cc0
 
 export function keskesor(dr: Drawing, rnd: Rnd): void {
   // the sky after rain, cut out as its own patch, the last of the rain still falling from the cloud at its left
+  rest(dr, rnd, 60, 113, 46, 3.6);
   const sky = roundish(60, 58, 54, 50, rnd, { wobble: 0.035, tremor: 0.7, count: 40 });
   paint(dr, outline(sky), '#d9e5ea');
   within(dr, outline(sky), () => {
@@ -241,6 +242,14 @@ export function keskesor(dr: Drawing, rnd: Rnd): void {
     }
     paint(dr, brush(pts, 4.6, rnd, { start: 0.9, end: 0.9, peak: 0.5, count: 28 }), RAINBOW[i]!);
   }
+  // where the broad brush ran thin, the sky shows through along the bands
+  let thin = '';
+  for (let i = 0; i < 14; i++) {
+    const a = Math.PI * (1.08 + rnd() * 0.84);
+    const r = 56 - Math.floor(rnd() * 6) * 4.2 - 2.1;
+    thin += touch(60 + Math.cos(a) * r, 86 + Math.sin(a) * r * 0.98, 4 + rnd() * 5, 0.5, (a * 180) / Math.PI + 90);
+  }
+  paint(dr, thin, '#eef3f2', 0.45);
   // the clouds it stands in
   const cloud = (cx: number, cy: number, s: number): void => {
     let puffs = '';
@@ -261,7 +270,17 @@ export function keskesor(dr: Drawing, rnd: Rnd): void {
     cloud(100, 78, 0.95);
   });
   within(dr, outline(land), () => {
+    // the far mountains, blue with distance and still snowed on their tops
+    const range: Pt[] = [[0, 82], [12, 72], [22, 75], [36, 63], [48, 71], [62, 66], [76, 72], [92, 62], [106, 70], [120, 67], [120, 92], [0, 92]];
+    paint(dr, polygon(tremble(range, rnd, 0.4)), '#a9b6c9');
+    paint(dr, polygon(tremble([[32, 66.6], [36, 63], [40.4, 66.4], [37.6, 66], [35, 67.6]], rnd, 0.2)) +
+      polygon(tremble([[88.6, 65.4], [92, 62], [96, 65.2], [93.4, 64.8], [90.6, 66.4]], rnd, 0.2)), '#eef1f5');
+    paint(dr, polygon([[36, 63], [48, 71], [44, 78], [38, 70]]) + polygon([[92, 62], [106, 70], [100, 78], [94, 68]]), '#8f9db3', 0.7);
     for (const [pts, colour] of hills) paint(dr, outline(tremble(pts, rnd, 0.5)), colour);
+    // the sun come out after the rain, catching the crest of each fold
+    let crests = '';
+    for (const [pts] of hills.slice(1)) crests += brush(pts.slice(0, 6).map(([x, y]): Pt => [x, y + 0.8]), 1.6, rnd, { start: 0.2, end: 0.2, peak: 0.5, count: 20 });
+    paint(dr, crests, '#c9da9e', 0.6);
     let poplars = '';
     for (const [x, y, h] of [[34, 90, 12], [38, 91, 9], [86, 86, 11], [90, 87.4, 8]] as const) poplars += outline(tremble(blade([x, y], [x, y - h], 3.4, { at: 0.4, point: 0.6, count: 6 }), rnd, 0.15));
     paint(dr, poplars, '#4f7a3e');

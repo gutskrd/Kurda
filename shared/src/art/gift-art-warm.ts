@@ -3,7 +3,7 @@
  * apple, a samovar on its tray, a frame drum and a saz.
  */
 import { type Drawing, type Pt } from './svg.js';
-import { along, band, brush, CHINA, ellipse, FLOOR, floor, form, GOLD, INK, leaf, lerp, outline, paint, polygon, roundish, runs, scaleAbout, shift, side, slab, streaks, sugar, touch, tremble, turn, within, type Rnd, type Tone } from './gift-paint.js';
+import { along, band, brush, CHINA, ellipse, FLOOR, floor, form, GOLD, INK, leaf, lerp, outline, paint, polygon, rest, roundish, runs, scaleAbout, shift, side, slab, streaks, sugar, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
 
 // ───────────────────────────────────────────────────────────────────── çay
 
@@ -388,6 +388,7 @@ const APPLE_LEAF: Tone = { base: '#6a8a3e', light: '#94b35f', shade: '#48682b' }
 
 export function sev(dr: Drawing, rnd: Rnd): void {
   floor(dr, rnd, 62, 99.5, 33, 6);
+  rest(dr, rnd, 60, 98.6, 24, 3.2);
   dr.add('<g transform="rotate(-8 58 70)">');
   const apple = tremble([[58, 41], [66, 37.4], [76, 37.6], [86, 43], [92.4, 53], [94, 65], [91.4, 78], [84.4, 90], [74.4, 97.6], [64, 99.4], [58, 97.6], [52, 99.4], [41.6, 97.6], [31.6, 90], [24.6, 78], [22, 65], [23.6, 53], [30, 43], [40, 37.6], [50, 37.4]], rnd, 0.35);
   const skin = outline(apple);
@@ -414,6 +415,10 @@ export function sev(dr: Drawing, rnd: Rnd): void {
   });
   side(dr, apple, -3.4, -3, APPLE.shade, { grow: 0.99 });
   side(dr, apple, 3.6, 3.2, APPLE.light, { grow: 0.97 });
+  // the warm light thrown back up into its shaded side from what it stands on, and the shine of the window on its skin
+  side(dr, apple, -1, -0.9, '#a53b2c', { grow: 0.995 });
+  paint(dr, touch(37.6, 57, 9, 2.6, -52) + touch(43.6, 50.4, 3, 1.3, -30), '#fbe6d2', 0.85);
+  paint(dr, ellipse(35.4, 63.6, 0.9, 0.9), '#fbe6d2', 0.7);
   // the hollow the stalk grows from, and the pale pores over the skin
   within(dr, skin, () => {
     paint(dr, outline(roundish(58.4, 43, 7.4, 3, rnd, { wobble: 0.1 })), APPLE.shade);
@@ -422,6 +427,7 @@ export function sev(dr: Drawing, rnd: Rnd): void {
     paint(dr, pores, '#eba27a', 0.6);
   });
   paint(dr, brush([[58.6, 43], [59.4, 35], [62.4, 27.6]], 2.3, rnd, { start: 0.9, end: 0.7, peak: 0.4 }), '#5a3a22');
+  leaf(dr, rnd, [60.6, 31.6], [42, 22.4], 9, { base: '#55722f', light: '#7e9c4c', shade: '#3c5622' }, { bend: 0.1, teeth: 0.03, rib: '#a9c084' });
   leaf(dr, rnd, [61.6, 30.4], [89, 21], 14, APPLE_LEAF, { bend: -0.12, teeth: 0.03, rib: '#bfd29a' });
   dr.add('</g>');
 }
@@ -557,65 +563,80 @@ const SKIN: Tone = { base: '#e9d3a6', light: '#f6e8c8', shade: '#cdaa72' };
 const FRAME: Tone = { base: '#6e3c1c', light: '#b0703e', shade: '#45230e' };
 
 export function def(dr: Drawing, rnd: Rnd): void {
-  // the frame drum from behind, tipped toward us: the hoop's depth below it, its walnut frame inlaid with bone, the inner
-  // wall hung with chains of rings, and the back of the goatskin stretched across
-  const TILT = -18;
-  const on = (rx: number, ry: number, a: number, cx: number, cy: number): Pt => turn([[cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]], cx, cy, TILT)[0]!;
-  floor(dr, rnd, 64, 98, 44, 7);
-  const rim = roundish(60, 56, 48, 34, rnd, { wobble: 0.006, tremor: 0.2, count: 40, rot: TILT });
-  paint(dr, outline(shift(rim, 2.6, 7)), FRAME.shade);
-  within(dr, outline(shift(rim, 2.6, 7)), () => paint(dr, streaks(rnd, [12, 40, 112, 100], 18, -10, 10, 0.7), FRAME.base, 0.5));
-  paint(dr, outline(rim), FRAME.base);
+  // the great frame drum stood on its rim and turned a little from us, so the depth of its hoop shows at the right: a
+  // walnut hoop inlaid with bone, the goatskin stretched thin enough to glow, a henna star at its heart, a red tassel
+  rest(dr, rnd, 62, 101, 36, 3.6);
+  dr.add('<g transform="rotate(-6 60 58)">');
+  const hoop = roundish(57, 57, 38.4, 44, rnd, { wobble: 0.006, tremor: 0.2, count: 40 });
+  const back = shift(hoop, 6.8, 0.4);
+  paint(dr, outline(back), FRAME.shade);
+  within(dr, outline(back), () => {
+    paint(dr, streaks(rnd, [60, 14, 106, 102], 14, 92, 12, 0.6), FRAME.base, 0.6);
+    paint(dr, outline(shift(hoop, 4.2, 0.2)), '#2c1608');
+  });
+  paint(dr, outline(hoop), FRAME.base);
+  within(dr, outline(hoop), () => paint(dr, streaks(rnd, [14, 12, 100, 102], 16, 80, 10, 0.6), FRAME.light, 0.35));
+  side(dr, hoop, 1.6, 1.6, FRAME.light, { grow: 0.99 });
+  side(dr, hoop, -1.4, -1.2, FRAME.shade, { grow: 0.99 });
   let inlay = '';
   let dots = '';
-  for (let i = 0; i < 36; i++) {
-    const a = (i / 36) * Math.PI * 2;
-    const [x, y] = on(46.1, 32.3, a, 60, 56);
-    if (i % 2) dots += ellipse(x, y, 0.55, 0.55);
-    else inlay += touch(x, y, 2.4, 0.8, (Math.atan2(Math.cos(a) * 32.3, -Math.sin(a) * 46.1) * 180) / Math.PI + TILT);
+  for (let i = 0; i < 32; i++) {
+    const a = (i / 32) * Math.PI * 2;
+    const [x, y] = [57 + Math.cos(a) * 36.5, 57 + Math.sin(a) * 41.9];
+    if (i % 2) dots += ellipse(x, y, 0.6, 0.6);
+    else inlay += touch(x, y, 2.6, 0.9, (a * 180) / Math.PI + 90);
   }
   paint(dr, inlay + dots, '#efdcb4');
-  const wall = roundish(60, 56, 44, 30.6, rnd, { wobble: 0.006, tremor: 0.15, count: 40, rot: TILT });
-  paint(dr, outline(wall), FRAME.light);
-  within(dr, outline(wall), () => paint(dr, streaks(rnd, [16, 24, 104, 88], 22, 60, 6, 0.6), FRAME.base, 0.3));
-  const skin = roundish(55.6, 50.2, 41, 27.6, rnd, { wobble: 0.012, tremor: 0.2, count: 36, rot: TILT });
+  // the skin: pale and uneven where it is thinner or thicker, lit from the upper left, darker where the hoop shades it
+  const skin = roundish(57, 57, 34.4, 39.6, rnd, { wobble: 0.008, tremor: 0.2, count: 36 });
   paint(dr, outline(skin), SKIN.base);
-  within(dr, outline(skin), () => paint(dr, streaks(rnd, [16, 24, 96, 78], 26, -18, 12, 1), SKIN.light, 0.55));
-  side(dr, skin, 2.4, 2.6, SKIN.shade, { grow: 0.985 });
-  band(dr, skin, scaleAbout(skin, 55.6, 50.2, 0.95), '#c39a62');
-  // a band painted in henna round the skin: small triangles pointing in, as the old drums are marked
-  let henna = '';
-  for (let i = 0; i < 30; i++) {
-    const a = (i / 30) * Math.PI * 2;
-    const [x, y] = on(34.6, 23.2, a, 55.6, 50.2);
-    const [ix, iy] = on(31.4, 20.8, a + 0.1, 55.6, 50.2);
-    const [jx, jy] = on(34.6, 23.2, a + 0.2, 55.6, 50.2);
-    henna += polygon([[x, y], [ix, iy], [jx, jy]]);
-  }
-  paint(dr, henna, '#a8532e', 0.75);
-  // and a red tassel hung from the frame
-  paint(dr, brush([[99, 72], [100, 78], [99.4, 83]], 0.9, rnd, { start: 1, end: 1, peak: 0.5, count: 6 }), '#d9a43e');
-  paint(dr, ellipse(99.4, 83.6, 1.7, 1.5), '#d9a43e');
-  let tassel = '';
-  for (let i = 0; i < 7; i++) tassel += touch(99.4 + (i - 3) * 0.6, 89, 9.4 - Math.abs(i - 3) * 0.6, 0.6, 90 + (i - 3) * 4);
-  paint(dr, tassel, '#b8333a');
-  // chains of brass rings hung from hooks on the inner wall, three to a chain, hanging down
-  let rings = '';
-  let shades = '';
-  let lights = '';
-  for (let i = 0; i < 9; i++) {
-    const a = 0.15 + (i / 8) * (Math.PI - 0.3);
-    const [x, y] = on(43, 29.6, a, 58.6, 54);
-    for (let k = 0; k < 3; k++) {
-      const [rx, ry] = [x + (k % 2) * 0.6, y - 1 + k * 2.3];
-      rings += ellipse(rx, ry, 1.6, 1.45);
-      shades += ellipse(rx + 0.4, ry + 0.45, 1.6, 1.45);
-      lights += touch(rx - 0.9, ry - 0.7, 1.4, 0.35, -40);
+  within(dr, outline(skin), () => {
+    let thin = '';
+    let thick = '';
+    for (let i = 0; i < 10; i++) {
+      const blot = outline(roundish(26 + rnd() * 62, 24 + rnd() * 66, 4 + rnd() * 8, 3 + rnd() * 6, rnd, { wobble: 0.2, count: 10, tremor: 1 }));
+      if (i % 2) thin += blot;
+      else thick += blot;
     }
+    paint(dr, thin, SKIN.light, 0.5);
+    paint(dr, thick, '#d9bc88', 0.35);
+    paint(dr, streaks(rnd, [20, 20, 94, 94], 22, -30, 12, 0.8), SKIN.light, 0.4);
+  });
+  side(dr, skin, 2.6, 2.8, SKIN.shade, { grow: 0.985 });
+  side(dr, skin, -2.2, -2.4, '#fbf1da', { grow: 0.98 });
+  // the henna: a band of small triangles pointing in near the rim, a ring of dots, and an eight-pointed star at the centre
+  let henna = '';
+  for (let i = 0; i < 28; i++) {
+    const a = (i / 28) * Math.PI * 2;
+    const p = (r: number, da = 0): Pt => [57 + Math.cos(a + da) * r * 0.92, 57 + Math.sin(a + da) * r * 1.06];
+    henna += polygon([p(33), p(29.6, 0.11), p(33, 0.22)]);
   }
-  dr.add(`<path d="${shades}" fill="none" stroke="#5e4614" stroke-width="0.75"/>`);
-  dr.add(`<path d="${rings}" fill="none" stroke="#dcbf6a" stroke-width="0.75"/>`);
-  paint(dr, lights, '#fbeec0');
+  let ring = '';
+  for (let i = 0; i < 24; i++) {
+    const a = (i / 24) * Math.PI * 2;
+    ring += ellipse(57 + Math.cos(a) * 24.3, 57 + Math.sin(a) * 28, 0.75, 0.75);
+  }
+  const star = (r: number, turnBy: number): string => {
+    const pts: Pt[] = [];
+    for (let i = 0; i < 16; i++) {
+      const a = turnBy + (i / 16) * Math.PI * 2;
+      const rr = i % 2 ? r * 0.46 : r;
+      pts.push([57 + Math.cos(a) * rr * 0.92, 57 + Math.sin(a) * rr * 1.06]);
+    }
+    return polygon(tremble(pts, rnd, 0.25));
+  };
+  paint(dr, henna + ring + star(15, -Math.PI / 2), '#a8532e', 0.82);
+  paint(dr, star(9, -Math.PI / 2 + Math.PI / 8), SKIN.base);
+  paint(dr, star(6.4, -Math.PI / 2), '#a8532e', 0.82);
+  paint(dr, ellipse(57, 57, 1.7, 1.9), SKIN.base);
+  dr.add('</g>');
+  // and the tassel, hung from the hoop on a gold cord
+  paint(dr, brush([[99, 66], [100.6, 74], [100, 81]], 0.9, rnd, { start: 1, end: 1, peak: 0.5, count: 6 }), '#d9a43e');
+  paint(dr, ellipse(100, 81.6, 1.8, 1.6), '#d9a43e');
+  let tassel = '';
+  for (let i = 0; i < 7; i++) tassel += touch(100 + (i - 3) * 0.6, 88, 10 - Math.abs(i - 3) * 0.6, 0.65, 90 + (i - 3) * 4);
+  paint(dr, tassel, '#b8333a');
+  paint(dr, touch(99.4, 87, 7, 0.5, 92), '#e0605a', 0.8);
 }
 
 // ───────────────────────────────────────────────────────────────────── saz

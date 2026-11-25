@@ -250,6 +250,12 @@ export function floor(dr: Drawing, rnd: Rnd, cx: number, cy: number, rx: number,
   paint(dr, outline(roundish(cx, cy, rx, ry, rnd, { wobble: 0.04, tremor: 0.5 })), FLOOR, 0.14);
 }
 
+/** Where a thing touches what it stands on: a soft shadow, wide and faint, then tight and darker right under it. */
+export function rest(dr: Drawing, rnd: Rnd, cx: number, cy: number, rx: number, ry: number): void {
+  paint(dr, outline(roundish(cx, cy, rx, ry, rnd, { wobble: 0.04, tremor: 0.4 })), FLOOR, 0.12);
+  paint(dr, outline(roundish(cx, cy - ry * 0.12, rx * 0.6, ry * 0.5, rnd, { wobble: 0.05, tremor: 0.3 })), FLOOR, 0.22);
+}
+
 /**
  * The side band of a round slab seen from above (a saucer, a cushion): the lower half of its top face `top`, as
  * `roundish` lays its points out, joined to the same half `depth` lower.

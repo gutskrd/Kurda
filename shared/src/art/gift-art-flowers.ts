@@ -4,7 +4,7 @@
  * here about its own middle and set in place, so the rose in the bouquet is the rose given on its own.
  */
 import { n, type Drawing, type Pt } from './svg.js';
-import { blade, brush, ellipse, leaf, lerp, outline, paint, polygon, roundish, shift, side, streaks, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
+import { blade, brush, ellipse, leaf, lerp, outline, paint, polygon, rest, roundish, shift, side, streaks, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
 
 const ROSE = { base: '#b8273a', light: '#e0626c', shade: '#801729', deep: '#52101b' };
 const LEAF: Tone = { base: '#5d7f45', light: '#83a563', shade: '#3e5c2e' };
@@ -238,15 +238,34 @@ function feather(dr: Drawing, rnd: Rnd, pts: Pt[], len: number): void {
 }
 
 export function beybun(dr: Drawing, rnd: Rnd): void {
-  // a sprig picked by hand: three heads at their different turns and a bud, on thin stems with feathery leaves
-  stem(dr, rnd, [[50, 113], [53, 84], [60, 50]], 1.8);
-  stem(dr, rnd, [[49, 113], [44, 88], [36, 60]], 1.7);
-  stem(dr, rnd, [[51, 113], [63, 94], [83, 66]], 1.7);
+  // a sprig picked by hand and put in a little clay jug: three heads at their different turns and a bud, on thin stems
+  // with feathery leaves
+  rest(dr, rnd, 54, 110.6, 22, 3);
+  stem(dr, rnd, [[51, 100], [53, 84], [60, 50]], 1.8);
+  stem(dr, rnd, [[50, 100], [44, 84], [36, 60]], 1.7);
+  stem(dr, rnd, [[53, 100], [64, 88], [83, 66]], 1.7);
   stem(dr, rnd, [[55, 76], [64, 52], [73, 32]], 1.3);
   feather(dr, rnd, [[52, 92], [40, 80], [30, 76]], 4.4);
   feather(dr, rnd, [[57, 98], [72, 96], [84, 88]], 4);
   feather(dr, rnd, [[54, 70], [44, 62], [42, 52]], 3.4);
-  paint(dr, ellipse(50, 113.4, 2.6, 0.8), '#b9cc98');
+  // the jug: red clay, a pale band of zigzag painted round its shoulder, lit from the upper left
+  const jug = tremble([[44, 86.6], [41.6, 92], [38.4, 98], [38.6, 104], [42, 109], [50, 111.4], [58, 111.4], [66, 109], [69.4, 104], [69.6, 98], [66.4, 92],
+    [64, 86.6]], rnd, 0.25);
+  paint(dr, outline(jug), '#b4603a');
+  within(dr, outline(jug), () => {
+    paint(dr, streaks(rnd, [38, 86, 70, 112], 12, 84, 6, 0.6), '#c97a4e', 0.5);
+    let zig = '';
+    for (let i = 0; i < 8; i++) zig += polygon([[40 + i * 3.8, 95.6], [41.9 + i * 3.8, 92.4], [43.8 + i * 3.8, 95.6], [42.8 + i * 3.8, 95.6], [41.9 +
+      i * 3.8, 94], [41 + i * 3.8, 95.6]]);
+    paint(dr, zig, '#f1dcb8', 0.9);
+    paint(dr, brush([[38, 97.4], [54, 98.4], [70, 97.4]], 0.6, rnd, { start: 1, end: 1, peak: 0.5, count: 8 }), '#f1dcb8', 0.9);
+  });
+  side(dr, jug, -2.2, -1.4, '#7e3a1e', { grow: 0.99 });
+  side(dr, jug, 1.8, 1.6, '#d68a5a', { grow: 0.98 });
+  paint(dr, outline(roundish(54, 86.6, 10.6, 2.4, rnd, { count: 14 })), '#9a4c2a');
+  paint(dr, outline(roundish(54, 86.9, 8.4, 1.5, rnd, { count: 12 })), '#3c1e10');
+  paint(dr, brush([[50, 87], [51.6, 84], [53, 80]], 1.6, rnd, { count: 5 }) + brush([[56, 87], [57, 84], [57.4, 80]], 1.5, rnd, { count: 5 }), LEAF.base);
+  paint(dr, touch(45.6, 99.6, 6, 1.6, -76), '#f0b088', 0.6);
   placed(dr, 72.6, 30, 0, 1, () => {
     paint(dr, outline(roundish(0, 0, 4.2, 3.8, rnd, { count: 10 })), '#f0b631');
     side(dr, roundish(0, 0, 4.2, 3.8, rnd, { count: 10 }), -0.8, -0.8, '#c4861c');
@@ -260,11 +279,19 @@ export function beybun(dr: Drawing, rnd: Rnd): void {
 // ───────────────────────────────────────────────────────────────────── lale
 
 export function lale(dr: Drawing, rnd: Rnd): void {
-  // a red tulip of the mountains, growing from a mound of earth among stones
+  // a red tulip of the mountains, growing from a mound of earth among stones, a second still in bud behind it
+  rest(dr, rnd, 61, 107.6, 38, 3.6);
+  stem(dr, rnd, [[52, 104], [46, 86], [40, 70]], 2.2, BLUE_LEAF);
+  placed(dr, 39, 62, -14, 0.92, () => tulip(dr, rnd, { base: '#b02c24', light: '#d4573f', shade: '#7a1c14', deep: '#420d09' }, false));
   const mound = roundish(60, 104, 33, 7.4, rnd, { wobble: 0.05, tremor: 0.5 });
   paint(dr, outline(mound), '#b88c5c');
   side(dr, mound, 0, -1.6, '#8e6a42');
   side(dr, mound, 0.8, 1.6, '#d1aa78');
+  within(dr, outline(mound), () => {
+    let grit = '';
+    for (let i = 0; i < 22; i++) grit += ellipse(30 + rnd() * 60, 99 + rnd() * 9, 0.3 + rnd() * 0.4, 0.25 + rnd() * 0.3);
+    paint(dr, grit, '#6e5034', 0.6);
+  });
   for (const [x, y, r] of [[40, 104, 3.4], [76, 106, 2.6], [83, 102.6, 1.8]] as const) {
     const stone = roundish(x, y, r, r * 0.7, rnd, { count: 10, tremor: 0.2 });
     paint(dr, outline(stone), '#cfc6b6');
