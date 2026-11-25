@@ -1240,7 +1240,8 @@ button.gift-bubble:active {
   opacity: 0.8;
 }
 .gift-skip {
-  min-height: 44px;
+  min-width: 48px;
+  min-height: 48px;
   padding: 0 18px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-pill);
