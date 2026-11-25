@@ -94,7 +94,7 @@ export function ChatScreen({
   const [attempt, setAttempt] = useState(0);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [picking, setPicking] = useState(false);
-  const [flying, setFlying] = useState<{ tier: GiftTier; key: number } | null>(null);
+  const [flying, setFlying] = useState<{ tier: GiftTier; item: { sku: string; assetUrl: string | null }; key: number } | null>(null);
   const [unwrapping, setUnwrapping] = useState<UnwrapTarget | null>(null);
   const [reporting, setReporting] = useState<string | null>(null);
   // The header's report: about the person, not one message.
@@ -436,7 +436,7 @@ export function ChatScreen({
         )}
       </KeyboardAvoidingView>
 
-      {flying ? <GiftSendAnimation key={flying.key} tier={flying.tier} announce={t('gift.sent', { name })} onDone={() => setFlying(null)} /> : null}
+      {flying ? <GiftSendAnimation key={flying.key} tier={flying.tier} item={flying.item} announce={t('gift.sent', { name })} onDone={() => setFlying(null)} /> : null}
 
       <GiftPickerSheet
         visible={picking}
@@ -447,7 +447,7 @@ export function ChatScreen({
           setPicking(false);
           const sent = result.message;
           if (sent) setMessages((prev) => (prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]));
-          setFlying({ tier: item.tier, key: Date.now() });
+          setFlying({ tier: item.tier, item, key: Date.now() });
         }}
       />
 

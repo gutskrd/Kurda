@@ -387,6 +387,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
             // The shop's list does not say which items are limited, so a gift flies as a rare one here; the recipient's
             // unwrap shows its real tier.
             tier={giftTierFor({ price: sentGift.item.price, limited: false })}
+            item={sentGift.item}
             announce={t('gift.sent', { name: sentGift.to.name })}
             onDone={() => setSentGift((g) => (g ? { ...g, flying: false } : g))}
           />

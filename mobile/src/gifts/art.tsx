@@ -1,15 +1,13 @@
-import Svg, { Circle, Defs, G, LinearGradient, Path, Polygon, Polyline, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, G, Path, Polygon, Polyline, RadialGradient, Rect, Stop } from 'react-native-svg';
 import type { GiftTier } from '@kurda/shared';
 
 /**
  * The gift's own art, drawn in code: a present wrapped in kilim (the woven diamonds and zigzags of a Kurdish rug, in
- * the app's gold) with a ribbon and bow; pomegranate seeds and gold sparks for confetti; and the Newroz flame for the
- * legendary, limited gifts. The paper changes with the tier (cream, pomegranate red, night indigo), so a rare gift
- * looks rarer unopened. These are the colours of the things drawn, so they are constants here; only the gold comes from
+ * the app's gold) with a ribbon and bow, and the night sky a grand gift opens on. The paper changes with the tier
+ * (cream, pomegranate red, night indigo), so a rare gift looks rarer unopened. These are the colours of the things drawn, so they are constants here; only the gold comes from
  * the palette.
  */
 const POMEGRANATE = '#B3243B';
-const SEED_LIGHT = '#F07A8C';
 const CREAM = '#F3E3C3';
 const INDIGO = '#24356A';
 
@@ -85,25 +83,6 @@ export function GiftBox({
   );
 }
 
-/** A pomegranate seed, the confetti. */
-export function Seed({ size }: { size: number }): React.JSX.Element {
-  return (
-    <Svg width={size} height={size * 1.3} viewBox="0 0 12 16">
-      <Path d="M6 0 C9 3 12 7 12 10 A6 6 0 0 1 0 10 C0 7 3 3 6 0Z" fill={POMEGRANATE} />
-      <Path d="M4 6 C3 8 3 10 4 11" fill="none" stroke={SEED_LIGHT} strokeWidth={1.4} strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-/** A four-pointed spark, in gold. */
-export function Spark({ size, gold }: { size: number; gold: string }): React.JSX.Element {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 16 16">
-      <Path d="M8 0 L9.8 6.2 L16 8 L9.8 9.8 L8 16 L6.2 9.8 L0 8 L6.2 6.2Z" fill={gold} />
-    </Svg>
-  );
-}
-
 /** Where the stars of the night sky sit, seeded so the sky is the same each time. */
 const STARS = Array.from({ length: 40 }, (_, i) => {
   const r = (n: number) => {
@@ -130,32 +109,6 @@ export function NightSky({ width, height, gold }: { width: number; height: numbe
       {STARS.map((s, i) => (
         <Circle key={i} cx={s.x} cy={s.y} r={s.size} fill={gold} opacity={0.85} />
       ))}
-    </Svg>
-  );
-}
-
-/**
- * The Newroz flame for the legendary gifts: one fire with a lick to each side of its tip, gold at the top into
- * pomegranate at the root, with a pale core.
- */
-export function NewrozFlame({ size, gold }: { size: number; gold: string }): React.JSX.Element {
-  return (
-    <Svg width={size * 0.75} height={size} viewBox="0 0 60 80">
-      <Defs>
-        <LinearGradient id="newroz" x1="0" y1="1" x2="0" y2="0">
-          <Stop offset="0" stopColor={POMEGRANATE} />
-          <Stop offset="0.5" stopColor="#E8662A" />
-          <Stop offset="1" stopColor={gold} />
-        </LinearGradient>
-      </Defs>
-      <Path
-        d="M30 2 C33 12 40 18 42 28 C44 22 44 16 42 10 C52 20 57 34 53 50 C50 66 41 76 30 78 C19 76 10 66 7 50 C5 38 10 28 17 20 C17 26 18 30 20 33 C20 20 25 10 30 2Z"
-        fill="url(#newroz)"
-      />
-      <Path
-        d="M31 24 C34 34 41 40 40 54 C39 66 35 72 30 72 C25 72 21 66 20 56 C19 46 24 41 26 35 C27 39 28 41 30 43 C29 37 29 30 31 24Z"
-        fill="#FFE08A"
-      />
     </Svg>
   );
 }

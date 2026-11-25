@@ -1,84 +1,84 @@
 import { useEffect, useRef } from 'react';
-import { AccessibilityInfo, Animated, Easing, StyleSheet, View } from 'react-native';
-import { GIFT_REDUCED_MOTION_MS, type GiftTier } from '@kurda/shared';
+import { AccessibilityInfo, Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
+import { GIFT_SENT_FADE_MS, GIFT_SENT_LOOK, GIFT_SENT_MS, type GiftTier } from '@kurda/shared';
+import { assetUrl } from '../api/env';
 import { useReducedMotion } from '../a11y/useReducedMotion';
-import { useDirection } from '../reports/direction';
-import { timing } from '../theme/animate';
-import { useTheme } from '../theme/ThemeProvider';
+import { springTo } from '../theme/animate';
+import { DarkScheme } from '../theme/ThemeProvider';
+import { PALETTES } from '../theme/palette';
+import { spacing, typography } from '../theme/tokens';
 import { GiftBox } from './art';
-import { SEND_FLY_MS } from './motion';
+import { GiftLight } from './GiftLight';
 
-/** How far to the side the gift swings on its way down, in points: enough to bend its path, no more. */
-const ARC = 44;
+/** The picture's size in the sender's moment: the opened gift's, smaller. */
+const ART = 96;
 
 /**
- * A sent gift, wrapped, flying into the chat: it appears mid-screen, settles, and is tossed on an arc towards the side
- * your own messages are on, so the sender sees it go. Under Reduce Motion it fades in and out where it is. It never
- * takes a tap, and announces what happened once.
+ * The sender's moment as a gift goes (shared gift-moment.ts): the gift springs in, smaller, in the same light it will
+ * open in, with who it went to, and is gone after a moment. Under Reduce Motion the light is still and it simply shows,
+ * then goes. It never takes a tap, and announces what happened once.
  */
 export function GiftSendAnimation({
   tier,
+  item,
   announce,
   onDone,
 }: {
   tier: GiftTier;
-  /** Said aloud: "Gift sent to Rojda". */
+  /** what was sent: its picture, and its sku for its colour; without one the wrapped box shows */
+  item?: { sku: string; assetUrl: string | null };
+  /** Said aloud and shown under it: "Gift sent to Rojda". */
   announce: string;
   onDone: () => void;
 }): React.JSX.Element {
-  const { colors } = useTheme();
   const reduce = useReducedMotion();
-  const appear = useRef(new Animated.Value(0)).current;
-  const fly = useRef(new Animated.Value(0)).current;
-  // Sideways on a curve of its own, ahead of the fall, so the path is an arc and not a drop.
-  const across = useRef(new Animated.Value(0)).current;
-  // Towards the side your own messages sit on, where it lands in the chat.
-  const side = useDirection().row === 'row-reverse' ? -1 : 1;
+  const colors = PALETTES.dark;
+  const shown = useRef(new Animated.Value(0)).current;
+  const art = useRef(new Animated.Value(reduce ? 1 : 0)).current;
   const done = useRef(onDone);
   done.current = onDone;
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility?.(announce);
-    const half = reduce ? GIFT_REDUCED_MOTION_MS : SEND_FLY_MS / 2;
     const run = Animated.sequence([
-      Animated.timing(appear, {
-        toValue: 1,
-        duration: reduce ? GIFT_REDUCED_MOTION_MS : SEND_FLY_MS * 0.35,
-        easing: reduce ? Easing.linear : Easing.out(Easing.back(1.6)),
-        useNativeDriver: true,
-      }),
-      Animated.delay(reduce ? 400 : SEND_FLY_MS * 0.15),
       Animated.parallel([
-        timing(fly, 1, half, { easing: Easing.in(Easing.cubic) }),
-        reduce ? Animated.delay(0) : timing(across, 1, half, { easing: Easing.out(Easing.quad) }),
+        Animated.timing(shown, { toValue: 1, duration: reduce ? 0 : GIFT_SENT_FADE_MS, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        reduce ? Animated.delay(0) : springTo(art, 1, 'bouncy'),
       ]),
+      Animated.delay(GIFT_SENT_MS),
+      Animated.timing(shown, { toValue: 0, duration: reduce ? 0 : GIFT_SENT_FADE_MS, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
     ]);
     run.start(() => done.current());
     return () => run.stop();
-  }, [announce, appear, fly, across, reduce]);
+  }, [announce, shown, art, reduce]);
 
-  const opacity = reduce
-    ? Animated.multiply(appear, fly.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }))
-    : fly.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 1, 0] });
-  const transform = reduce
-    ? []
-    : [
-        { translateX: across.interpolate({ inputRange: [0, 1], outputRange: [0, ARC * side] }) },
-        { translateY: fly.interpolate({ inputRange: [0, 1], outputRange: [0, 260] }) },
-        { scale: Animated.multiply(appear, fly.interpolate({ inputRange: [0, 1], outputRange: [1, 0.35] })) },
-        // Leaning into the way it is going.
-        { rotate: fly.interpolate({ inputRange: [0, 1], outputRange: ['0deg', `${12 * side}deg`] }) },
-      ];
-
+  const uri = item ? assetUrl(item.assetUrl) : null;
+  const scale = art.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] });
   return (
-    <View style={styles.overlay} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Animated.View style={{ opacity, transform }}>
-        <GiftBox size={150} tier={tier} gold={colors.gold} />
-      </Animated.View>
+    <View style={styles.overlay} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="gift-sent">
+      <DarkScheme>
+        <Animated.View style={[styles.overlay, { opacity: shown }]}>
+          {/* the screen dims a little, to the night's own page colour, so the line reads in either scheme */}
+          <View style={[styles.overlay, styles.dim, { backgroundColor: colors.background }]} />
+          <GiftLight sku={item?.sku ?? ''} look={GIFT_SENT_LOOK} art={ART} lit still={reduce}>
+            <Animated.View style={{ opacity: art, transform: [{ scale }] }}>
+              {uri ? (
+                <Image source={{ uri }} style={styles.art} resizeMode="contain" accessibilityIgnoresInvertColors />
+              ) : (
+                <GiftBox size={ART} tier={tier} gold={colors.gold} />
+              )}
+            </Animated.View>
+          </GiftLight>
+          <Text style={[styles.line, { color: colors.textPrimary }]}>{announce}</Text>
+        </Animated.View>
+      </DarkScheme>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   overlay: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
+  dim: { opacity: 0.55 },
+  art: { width: ART, height: ART },
+  line: { marginTop: spacing.xs, fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
 });
