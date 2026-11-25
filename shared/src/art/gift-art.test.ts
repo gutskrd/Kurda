@@ -86,7 +86,9 @@ describe('the gifts’ pictures', () => {
   });
 
   it('stays light enough to inline a chat of them', () => {
-    for (const id of GIFT_ART_IDS) expect(giftArtSvg({ id }).length, id).toBeLessThan(48 * 1024);
+    // Kawa's Damascus and the copy of the Şahmaran painting are shown as their PNGs, so they may carry more paint
+    const roomier: readonly GiftArtId[] = ['kawa', 'sahmaran'];
+    for (const id of GIFT_ART_IDS) expect(giftArtSvg({ id }).length, id).toBeLessThan((roomier.includes(id) ? 160 : 48) * 1024);
   });
 
   it('draws Hevalo and the pen pal pigeon from their own drawings, never a copy redrawn', () => {
