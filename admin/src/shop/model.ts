@@ -39,6 +39,7 @@ export const CATEGORIES: ReadonlyArray<{ value: string; label: string }> = [
   { value: 'tag', label: 'Tag' },
   { value: 'powerup', label: 'Power-up' },
   { value: 'freeze', label: 'Streak freeze' },
+  { value: 'gift', label: 'Gift' },
   { value: 'misc', label: 'Other' },
 ];
 
