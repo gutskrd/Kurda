@@ -1,12 +1,12 @@
 /**
- * What Zêr is worth in money, beside every price on the website ("600 Zêr ≈ €1.49"), from the smallest pack's euro
- * price (shared `ZER_BASE_RATE`), in the reader's language.
+ * What Zêr is worth in money, beside every price on the website ("300 Zêr ≈ €3"), at 100 Zêr to the euro (shared
+ * `ZER_BASE_RATE`), in the reader's language.
  */
 import { useCallback } from 'react';
 import { formatZerValue } from '@kurda/shared';
 import { useLocale } from '../i18n/I18nProvider';
 
-/** "≈ €1.49" for an amount of Zêr; empty for nothing. */
+/** "≈ €3" or "≈ €2.50" for an amount of Zêr; empty for nothing. */
 export function useZerValue(): (zer: number) => string {
   const locale = useLocale();
   return useCallback((zer: number) => formatZerValue(zer, locale), [locale]);

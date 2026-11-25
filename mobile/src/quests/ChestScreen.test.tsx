@@ -22,7 +22,7 @@ import { ChestScreen } from './ChestScreen';
 patchReactNativeWeb();
 afterEach(cleanup);
 
-const opening = ok({ questId: 'q:streak', tier: 'rare', currency: 'zer', amount: 40, balance: 1292 });
+const opening = ok({ questId: 'q:streak', tier: 'rare', currency: 'zer', amount: 40, balance: 1292, earnsZer: true });
 
 describe('the chest screen', () => {
   it('waits shut with its lid on and its lock glinting, then swings open on a tap: the rays turn and the count rises out of it', async () => {
@@ -42,6 +42,15 @@ describe('the chest screen', () => {
     expect(screen.getByTestId('chest-art-lid-open')).toBeTruthy();
     expect(screen.getByTestId('chest-art-rays-turning')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Continue' })).toBeTruthy();
+  });
+
+  it('says once that Zêr in chests is a members’ perk to someone who does not earn it, and counts none', async () => {
+    testAuth.client = fakeClient({ 'POST /me/quests/q%3Astreak/claim': ok({ questId: 'q:streak', tier: 'rare', currency: 'zer', amount: 0, balance: 40, earnsZer: false }) });
+    renderWithProviders(<ChestScreen questId="q:streak" tier="rare" onDone={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open the chest' }));
+    expect(await screen.findByRole('heading', { name: 'Zêr in chests comes with Hevalo+.' })).toBeTruthy();
+    expect(screen.queryByText('× 0')).toBeNull();
+    expect(screen.queryByLabelText('You have 40 Zêr')).toBeNull();
   });
 
   it('simply stands open under Reduce Motion, the rays still, the gold fading in', async () => {

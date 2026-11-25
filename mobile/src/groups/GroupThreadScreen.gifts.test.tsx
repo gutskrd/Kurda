@@ -69,7 +69,7 @@ describe('GroupThreadScreen gifts', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     // The gifts are fetched as the step opens, behind the group's own reads: give a busy run time to draw them.
     fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }, { timeout: 3000 }));
-    fireEvent.click(screen.getByRole('button', { name: 'Send · 600 Zêr · ≈ €1.49' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send · 600 Zêr · ≈ €6' }));
     // It reached Şîlan; Azad is named, with why, under the thread.
     expect(await screen.findByText('azad already has it.')).toBeTruthy();
     await waitFor(() => expect(client.calls.find((c) => c.path === '/gifts')?.body).toMatchObject({ toUserIds: ['u2', 'u3'] }));

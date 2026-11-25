@@ -149,14 +149,14 @@ export function ChestScreen({
         <button type="button" className="chest-close" aria-label={t('common.close')} onClick={onClose} disabled={phase === 'opening'}>
           <CloseIcon size={22} />
         </button>
-        {opening && <Balance key={index} opening={opening} />}
+        {opening?.earnsZer && <Balance key={index} opening={opening} />}
       </div>
       <div className="chest-stage">
         <h2 className="chest-tier" id={titleId}>
           {tier}
         </h2>
         {phase === 'open' && opening ? (
-          <Opened key={index} tier={chest.chest} amount={opening.amount} />
+          <Opened key={index} tier={chest.chest} amount={opening.amount} earnsZer={opening.earnsZer} />
         ) : (
           <button
             type="button"
@@ -205,8 +205,11 @@ export function ChestScreen({
   );
 }
 
-/** The opened chest: it hops, rays and the tier's colours burst out as it lands, its count rises and "+N Zêr" lands. */
-function Opened({ tier, amount }: { tier: ChestTier; amount: number }): React.JSX.Element {
+/**
+ * The opened chest: it hops, rays and the tier's colours burst out as it lands, its count rises and "+N Zêr" lands. For
+ * someone who does not earn Zêr it says, once, that Zêr is a members' perk instead of counting none.
+ */
+function Opened({ tier, amount, earnsZer }: { tier: ChestTier; amount: number; earnsZer: boolean }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const moment = useCelebrationMoment(LAND_DELAY_MS);
@@ -215,19 +218,27 @@ function Opened({ tier, amount }: { tier: ChestTier; amount: number }): React.JS
     <div className={`celebrate chest-opened tone-${TONE[tier]} ${moment.playing ? 'is-playing' : 'is-done'}`} onClick={moment.playing ? moment.skip : undefined}>
       <CelebrationArt flecks={BURST.tier} seed={amount * 7 + tier.length} reach={170} delayMs={LAND_DELAY_MS}>
         <span className="chest-open-stage">
-          <span className="chest-tile" aria-hidden="true">
-            <CoinIcon size={36} weight="fill" />
-            <span dir="ltr">{`× ${number}`}</span>
-          </span>
+          {earnsZer && (
+            <span className="chest-tile" aria-hidden="true">
+              <CoinIcon size={36} weight="fill" />
+              <span dir="ltr">{`× ${number}`}</span>
+            </span>
+          )}
           <Chest tier={tier} open popping reach={RAYS_REACH} size={208} />
         </span>
       </CelebrationArt>
-      <p className="celebrate-details chest-reward">
-        <span className="chest-coin" aria-hidden="true">
-          <CoinIcon size={30} weight="fill" />
-        </span>
-        <span dir="ltr">{t('quests.reward', { amount: number })}</span>
-      </p>
+      {earnsZer ? (
+        <p className="celebrate-details chest-reward">
+          <span className="chest-coin" aria-hidden="true">
+            <CoinIcon size={30} weight="fill" />
+          </span>
+          <span dir="ltr">{t('quests.reward', { amount: number })}</span>
+        </p>
+      ) : (
+        <p className="celebrate-details chest-members" role="status">
+          {t('quests.membersZer')}
+        </p>
+      )}
     </div>
   );
 }

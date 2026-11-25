@@ -96,14 +96,14 @@ describe('the tree’s screen', () => {
 
   it('pours all that is held at once, and celebrates a harvest with what it paid', async () => {
     const after = view({ waterings: 49, water: 0, harvests: 1 });
-    const client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 45, water: 4 }))), 'POST /me/tree/water': ok({ tree: after, poured: 4, grew: null, harvests: 1, zer: 25, revived: false } satisfies Watered) });
+    const client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 45, water: 4 }))), 'POST /me/tree/water': ok({ tree: after, poured: 4, grew: null, harvests: 1, zer: 15, revived: false } satisfies Watered) });
     testAuth.client = client;
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByRole('progressbar', { name: 'Next harvest' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Pour all 4' }));
     await waitFor(() => expect(client.calls.find((c) => c.path === '/me/tree/water')?.body).toEqual({ count: 4 }));
     expect(await screen.findByRole('heading', { name: 'Harvest!' })).toBeTruthy();
-    expect(screen.getByText('+25 Zêr')).toBeTruthy();
+    expect(screen.getByText('+15 Zêr')).toBeTruthy();
     expect(screen.getByText('Harvests: 1')).toBeTruthy();
   });
 
@@ -189,7 +189,7 @@ describe('the tree’s screen', () => {
       expect(screen.queryByRole('button', { name: 'Plant: Berû (Oak)' })).toBeNull();
       expect(screen.getByRole('button', { name: 'Plant: Hinar (Pomegranate)' })).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Buy: Tû (Mulberry)' })).toBeTruthy();
-      expect(within(screen.getByTestId('tree-kind-sev')).getByText('2,200')).toBeTruthy();
+      expect(within(screen.getByTestId('tree-kind-sev')).getByText('1,100')).toBeTruthy();
     });
 
     it('asks before planting another, saying what is lost and what stays, and keeps the tree when told to', async () => {
@@ -227,18 +227,18 @@ describe('the tree’s screen', () => {
     });
 
     it('buys a kind with Zêr, which plants nothing, and says how much is missing when it cannot be afforded', async () => {
-      const client = fakeClient({ 'GET /me/tree': ok(mine(view(), { zer: 900 })), 'POST /me/tree/kinds/tu/buy': ok(mine(view(), { zer: 100, owned: ['tu'] })) });
+      const client = fakeClient({ 'GET /me/tree': ok(mine(view(), { zer: 600 })), 'POST /me/tree/kinds/tu/buy': ok(mine(view(), { zer: 200, owned: ['tu'] })) });
       testAuth.client = client;
       renderWithProviders(<TreeScreen onExit={() => undefined} />);
       fireEvent.click(await screen.findByRole('button', { name: 'Other trees' }));
       // Too dear: no press is offered that would be refused.
       fireEvent.click(await screen.findByRole('button', { name: 'Buy: Dara Şevê (Night tree)' }));
-      expect(await screen.findByText('You need 1,300 more Zêr.')).toBeTruthy();
+      expect(await screen.findByText('You need 500 more Zêr.')).toBeTruthy();
       expect(screen.getByTestId('tree-ask-confirm').getAttribute('aria-disabled')).toBe('true');
       fireEvent.click(screen.getByTestId('tree-ask-back'));
       // within reach
       fireEvent.click(await screen.findByRole('button', { name: 'Buy: Tû (Mulberry)' }));
-      expect(await screen.findByText('It costs 800 Zêr, once. After that you can plant it whenever you like.')).toBeTruthy();
+      expect(await screen.findByText('It costs 400 Zêr, once. After that you can plant it whenever you like.')).toBeTruthy();
       fireEvent.click(screen.getByTestId('tree-ask-confirm'));
       await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/me/tree/kinds/tu/buy')).toBe(true));
       // Theirs to plant now; the oak still stands.

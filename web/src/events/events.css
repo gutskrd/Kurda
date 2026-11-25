@@ -99,6 +99,12 @@
   font-size: var(--text);
   font-weight: 600;
 }
+/* Said once to someone who does not earn Zêr, in place of the quests' Zêr. */
+.event-members {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text);
+}
 .event-quests {
   display: grid;
   gap: var(--space-3);

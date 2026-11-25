@@ -53,7 +53,7 @@ describe('GiftPicker in a direct message', () => {
     const sunset = (await screen.findByText('Sunset over Amed')).closest('button')!;
     expect(within(sunset).getByText('500')).toBeInTheDocument();
     // What the price is worth in money, beside it.
-    expect(within(sunset).getByText('≈ €1.24')).toBeInTheDocument();
+    expect(within(sunset).getByText('≈ €5')).toBeInTheDocument();
     const owned = screen.getByText('Pomegranate').closest('button')!;
     expect(owned).toBeDisabled();
     expect(within(owned).getByText('Already has it')).toBeInTheDocument();

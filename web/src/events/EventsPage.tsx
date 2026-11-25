@@ -160,6 +160,7 @@ function EventBlock({
         </h2>
         <p className="event-ends">{endsText(event.endsAt, t, locale)}</p>
       </header>
+      {event.zerForMembers && <p className="event-members">{t('events.membersZer')}</p>}
       <ul className="event-quests">
         {sortEventQuests(event.quests).map((quest) => (
           <QuestRow key={quest.id} quest={quest} busy={claiming === quest.id} fresh={claimed === quest.id} disabled={claiming !== null} onClaim={() => onClaim(quest)} />

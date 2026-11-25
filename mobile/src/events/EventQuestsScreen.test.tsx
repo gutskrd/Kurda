@@ -150,6 +150,18 @@ describe('event quests', () => {
 });
 
 describe('between events', () => {
+  it('says once that the Zêr is a members’ perk, with no Zêr on the quests, to someone who does not earn it', async () => {
+    const v = view('newroz', 'Newroz', true);
+    testAuth.client = fakeClient({
+      'GET /events/active': ok({ events: [{ key: 'newroz', name: 'Newroz' }] }),
+      'GET /events/newroz/quests': ok({ ...v, quests: v.quests.map((q) => ({ ...q, reward: {} })), zerForMembers: true }),
+    });
+    renderWithProviders(<EventQuestsScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Zêr from events comes with Hevalo+.')).toBeTruthy();
+    expect(screen.queryByLabelText(/Zêr$/)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Claim' })).toBeTruthy();
+  });
+
   it('says what an event is and where it will show, and offers today’s quests meanwhile', async () => {
     testAuth.client = fakeClient({ 'GET /events/active': ok({ events: [] }) });
     renderWithProviders(<EventQuestsScreen onExit={() => undefined} />);

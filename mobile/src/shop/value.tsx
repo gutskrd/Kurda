@@ -1,7 +1,7 @@
 /**
- * What Zêr is worth in money, beside every price on the phone ("600 Zêr · ≈ €1.49"). The rate is the smallest pack's:
- * the shared euro price until the phone has the store's own price for that pack, which `setStoreRate` hands in so the
- * value is said in the reader's store currency.
+ * What Zêr is worth in money, beside every price on the phone ("300 Zêr · ≈ €3"): 100 Zêr to the euro until the phone
+ * has the store's own price for the smallest pack, which `setStoreRate` hands in so the value is said in the reader's
+ * store currency.
  */
 import { useCallback, useSyncExternalStore } from 'react';
 import { Text, type StyleProp, type TextStyle } from 'react-native';
@@ -26,7 +26,7 @@ function subscribe(listener: () => void): () => void {
   };
 }
 
-/** "≈ €1.49" for an amount of Zêr, in the reader's language; empty for nothing. */
+/** "≈ €3" or "≈ €2.50" for an amount of Zêr, in the reader's language; empty for nothing. */
 export function useZerValue(): (zer: number) => string {
   const { locale } = useI18n();
   const rate = useSyncExternalStore(subscribe, () => storeRate);

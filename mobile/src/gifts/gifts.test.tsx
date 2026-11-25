@@ -164,7 +164,7 @@ describe('GiftPickerSheet', () => {
     expect(screen.getByText('Not enough to give this')).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Star/ }).getAttribute('aria-disabled')).toBe('true');
     // Each price says what it is worth in money as well.
-    expect(screen.getByRole('radio', { name: 'Mountain dawn, 300 Zêr, ≈ €0.74' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Mountain dawn, 300 Zêr, ≈ €3' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('radio', { name: /^Mountain dawn/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
@@ -204,7 +204,7 @@ describe('GiftPickerSheet', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
 
     fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Send · 600 Zêr · ≈ €1.49' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send · 600 Zêr · ≈ €6' }));
     // Nobody could be given it: the sheet says why, by name, and nothing flies.
     expect(await screen.findByText(/That’s today’s limit for Azad\.\s+A gift to Rojda isn’t possible yet\./)).toBeTruthy();
     expect(onSent).not.toHaveBeenCalled();
