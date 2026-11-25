@@ -84,8 +84,10 @@ export async function payOnlineWin(
   for (const other of accounts) {
     if (other !== winner && (await looksLikeOnePerson(client, winner, other))) return null;
   }
-  await grantBagGiftWithin(client, { userId: winner, source: 'win', ref: game.ref });
-  if ((await paidToday(client, winner, ONLINE_WIN_REASON)) >= PAID_WINS_PER_DAY) return null;
+  if ((await paidToday(client, winner, ONLINE_WIN_REASON)) >= PAID_WINS_PER_DAY) {
+    await grantBagGiftWithin(client, { userId: winner, source: 'win', ref: game.ref });
+    return null;
+  }
   const result = await earnWithin(client, wallet, {
     userId: winner,
     amount: onlineWinZer(await isMember(client, winner, now)),
@@ -95,6 +97,8 @@ export async function payOnlineWin(
     perDay: PAID_WINS_PER_DAY,
     now,
   });
+  // after the Zêr, the order every path takes (gifts/bag.ts)
+  await grantBagGiftWithin(client, { userId: winner, source: 'win', ref: game.ref });
   return { userId: winner, result };
 }
 
@@ -120,7 +124,6 @@ export async function payQuizPodium(
       if (other.userId !== p.userId && (await looksLikeOnePerson(client, p.userId, other.userId))) alone = false;
     }
     if (!alone) continue;
-    await grantBagGiftWithin(client, { userId: p.userId, source: 'podium', ref: night.ref });
     const result = await earnWithin(client, wallet, {
       userId: p.userId,
       amount: quizPodiumZer(p.place, night.accounts, await isMember(client, p.userId, now)),
@@ -130,6 +133,7 @@ export async function payQuizPodium(
       perDay: PAID_PODIUMS_PER_DAY,
       now,
     });
+    await grantBagGiftWithin(client, { userId: p.userId, source: 'podium', ref: night.ref });
     paid.push({ userId: p.userId, place: p.place, result });
   }
   return paid;

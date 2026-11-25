@@ -270,7 +270,8 @@ export class StreakService {
    * pays only when it last paid at least STREAK_MILESTONE_REPEAT_DAYS before today, so only a new streak two months on
    * reaches it again; its row is written first, so a retry pays nothing. Only a member is paid, and nothing is kept for
    * anyone else, so a milestone first reached as a member still pays. Everyone, members too, gets a small gift in their
-   * gift bag for each milestone reached (gifts/bag.ts), once a milestone a day. Returns the largest paid now, if any.
+   * gift bag for each milestone reached (gifts/bag.ts), under the same repeat rule, so a streak won back does not give
+   * its milestones again; the bag is filled after the Zêr, the one lock order. Returns the largest paid now, if any.
    */
   private async payMilestones(
     tx: Executor,
@@ -281,11 +282,33 @@ export class StreakService {
     plus: boolean,
     now: Date,
   ): Promise<{ days: number; zer: number } | null> {
-    let paid: { days: number; zer: number } | null = null;
+    const paid = await this.payMilestoneZer(tx, userId, before, after, today, plus, now);
     for (const m of streakMilestonesBetween(before, after)) {
+      // The last time this milestone filled the bag, from the day in its ref ('<days>:<day>'): within the repeat window
+      // a streak won back or rebuilt gives nothing more.
+      const last = await tx.query<{ last: string | null }>(
+        `SELECT max(split_part(ref, ':', 2)) AS last FROM gift_bag_grants WHERE user_id = $1 AND source = 'streak' AND split_part(ref, ':', 1) = $2`,
+        [userId, String(m.days)],
+      );
+      const lastOn = last.rows[0]?.last ?? null;
+      if (lastOn && dayDiff(lastOn, today) < STREAK_MILESTONE_REPEAT_DAYS) continue;
       // a transaction is always open here (`within`), so the bag's lock holds until the milestone's own write
       await grantBagGiftWithin(tx as pg.PoolClient, { userId, source: 'streak', ref: `${m.days}:${today}` });
     }
+    return paid;
+  }
+
+  /** The Zêr side of `payMilestones`, a member's only. */
+  private async payMilestoneZer(
+    tx: Executor,
+    userId: string,
+    before: number,
+    after: number,
+    today: string,
+    plus: boolean,
+    now: Date,
+  ): Promise<{ days: number; zer: number } | null> {
+    let paid: { days: number; zer: number } | null = null;
     if (!plus) return paid;
     for (const m of streakMilestonesBetween(before, after)) {
       const last = await tx.query<{ last: string | null }>(`SELECT max(paid_on)::text AS last FROM streak_milestones WHERE user_id = $1 AND days = $2`, [

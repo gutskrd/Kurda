@@ -4,7 +4,7 @@
  * still on sale, and their premium is active. Premium is checked against server time on every read, so access
  * ends on expiry with no revocation job and the equipped SKU is kept.
  */
-import { drawnGiftArtKey } from '@kurda/shared';
+import { drawnGiftArtKey, giftInSeason } from '@kurda/shared';
 import { levelForXp, xpForLevel } from '../tags/level.js';
 import { avatarAssetUrl, effectiveAvatarKey } from './avatars.js';
 
@@ -137,6 +137,18 @@ export function cosmeticAssetUrl(category: string, storedKey: string | null, pub
   // Any other item may have a square picture uploaded in the admin; without one the apps draw its glyph.
   if (uploadedArtKind(assetKey) === 'icon') return publicUrl(assetKey);
   return null;
+}
+
+/**
+ * Whether an item of the gifts' category can be given now: it has a picture to be seen by (drawn for it, or a square
+ * one an admin uploaded) and it is in its season. The one check the gift sheet and every send share, so nothing the
+ * sheet leaves out can be bought through the API. True for any other item, which this does not decide.
+ */
+export function giftOnOffer(item: { sku: string; category: string; assetKey: string | null }, now: Date = new Date()): boolean {
+  if (item.category !== 'gift') return true;
+  const key = itemArtKey(item.category, item.assetKey, item.sku);
+  const pictured = key !== null && (isUploadedArtKey(key) ? uploadedArtKind(key) === 'icon' : isBuiltInArtKey('icon', key));
+  return pictured && giftInSeason(item.sku, now);
 }
 
 /** The kind of uploaded art an item of a category is drawn with: a background's own, a square picture for everything else. */

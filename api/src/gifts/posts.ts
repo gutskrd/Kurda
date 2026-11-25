@@ -3,7 +3,7 @@
  * (`library`) or an old picture post (`image`), as the wall knows them (feed/service.ts).
  */
 import type pg from 'pg';
-import { GRAND_GIFT_PRICE, giftTierFor, type PostGifts, type PostGiftSender } from '@kurda/shared';
+import { GRAND_GIFT_PRICE, giftTierFor, isLimitedItem, type PostGifts, type PostGiftSender } from '@kurda/shared';
 import { cosmeticAssetUrl, type PublicUrl } from '../cosmetics/access.js';
 import { notBlockedSql } from '../friends/blocked.js';
 import { notKnownAdultSql, writtenForSql } from '../users/age.js';
@@ -96,7 +96,7 @@ export async function postGiftsFor(db: Executor, posts: readonly PostRef[], view
       name: r.name,
       assetUrl: cosmeticAssetUrl(r.category, r.asset_key, publicUrl, r.sku),
       count: r.n,
-      tier: giftTierFor({ price: r.price, limited: r.limited }),
+      tier: giftTierFor({ price: r.price, limited: r.limited || isLimitedItem(r.sku, null) }),
     });
     out.set(key, gifts);
   }

@@ -10,6 +10,7 @@ import {
   GIFTS_RECEIVED_PER_DAY,
   MAX_GIFT_RECIPIENTS,
   giftTierFor,
+  isLimitedItem,
   type EquippableCategory,
   type GiftCard,
   type GiftCatalog,
@@ -23,19 +24,19 @@ import { assertParentalAllowed, parentalAllows } from '../parental/supervision.j
 import { assertEconomyNotHeld } from '../economy/standing.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { FriendService } from '../friends/service.js';
-import { cosmeticAssetUrl, resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
+import { cosmeticAssetUrl, giftOnOffer, resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 import { isPurchasable, lockEntitlement, type ItemRow, type ShopService } from '../shop/service.js';
 import { InsufficientFundsError, type WalletService } from '../wallet/service.js';
 import type { DmMessage } from '../chat/service.js';
 import { groupRoom, type GroupChatService, type GroupMessage } from '../groups/chat-service.js';
 import type { Notification } from '../push/service.js';
-import { notKnownAdultSql } from '../users/age.js';
+import { isKnownAdultAccount, notKnownAdultSql } from '../users/age.js';
 import { childrenAmong } from '../users/kind.js';
 import { childRefused } from '../family/child-gate.js';
 import { batchChat, giftCards, giftCardsForEach, type BatchChat, type CardViewer } from './cards.js';
 import { giftHold, postGiftBlocked, visiblePostAuthor, type PostRef } from './posts.js';
 import { freeGiftsLeft, spendFreeGifts } from '../plus/members-box.js';
-import { bagEntries, takeFromBagWithin } from './bag.js';
+import { bagEntries, lockZerRow, takeFromBagWithin } from './bag.js';
 import { assertWithinBounds, confirmToken, confirmTokenValid, sendBounds, type ConfirmSubject } from './safety.js';
 
 export type SkipReason = SendGiftResult['skipped'][number]['reason'];
@@ -161,7 +162,9 @@ export class GiftService {
     this.confirmSecret = deps.confirmSecret ?? randomBytes(32);
   }
 
-  async send(input: SendGiftInput, now: Date = new Date()): Promise<SendGiftOutcome> {
+  async send(asked: SendGiftInput, now: Date = new Date()): Promise<SendGiftOutcome> {
+    // Every id in its one lower-case spelling before anything compares them, as the routes read them too (http/ids.ts).
+    const input = canonicalSend(asked);
     // A child's profile never gives a gift, however it is asked for; the child gate keeps them from the routes as well.
     if ((await childrenAmong(this.pool, [input.fromId])).size > 0) throw childRefused();
     if (input.fromBag && input.useFreeGift) throw new AppError('BAD_PAYMENT', 400, 'a gift is paid one way');
@@ -299,6 +302,10 @@ export class GiftService {
       }
 
       if (!isPurchasable(item, now)) throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
+      // a gift the sheet does not offer (not drawn yet, or out of its season) cannot be sent around it either
+      if (!giftOnOffer({ sku: item.sku, category: item.category, assetKey: item.asset_key }, now)) {
+        throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
+      }
       if (item.price <= 0) throw new AppError('NOT_GIFTABLE', 409, 'this item cannot be given as a gift');
       if (expectedPrice != null && item.price !== expectedPrice) {
         throw new AppError('PRICE_CHANGED', 409, 'the price changed; please review and try again');
@@ -388,7 +395,8 @@ export class GiftService {
       const paying = !input.useFreeGift && !input.fromBag;
       const total = paying ? item.price * candidates.length : 0;
       if (candidates.length > 0) {
-        if (paying) await lockZer(client, fromId);
+        // the Zêr row before the bag, the one order every path takes (bag.ts)
+        await lockZerRow(client, fromId);
         await assertWithinBounds(client, fromId, candidates, item.price, total);
         if (paying && total >= BIG_GIFT_CONFIRM_ZER) {
           // never ask someone to confirm what they cannot pay for
@@ -801,8 +809,8 @@ export class GiftService {
       if (author === fromId) throw new AppError('GIFT_TO_SELF', 400, 'you cannot gift to yourself');
       ids = [author];
     } else {
-      ids = [...new Set(target.toIds)];
-      if (ids.includes(fromId)) throw new AppError('GIFT_TO_SELF', 400, 'you cannot gift to yourself');
+      ids = [...new Set(target.toIds.map(lowerId))];
+      if (ids.includes(lowerId(fromId))) throw new AppError('GIFT_TO_SELF', 400, 'you cannot gift to yourself');
       if (ids.length === 0 || ids.length > MAX_GIFT_RECIPIENTS) {
         throw new AppError('BAD_RECIPIENTS', 400, `a gift goes to 1–${MAX_GIFT_RECIPIENTS} friends`);
       }
@@ -812,10 +820,9 @@ export class GiftService {
       }
     }
 
-    const live = (await this.deps.shop.liveItems(now)).filter((i) => i.price > 0 && i.category === GIFT_CATEGORY);
+    const live = (await this.deps.shop.liveItems(now)).filter((i) => i.price > 0 && i.category === GIFT_CATEGORY && giftOnOffer(i, now));
     const items = live
       .map((i) => ({ ...i, assetUrl: cosmeticAssetUrl(i.category, i.assetKey, this.publicUrl, i.sku) }))
-      .filter((i) => i.assetUrl !== null)
       .sort((a, b) => a.price - b.price || a.displayOrder - b.displayOrder);
     const unique = items.filter((i) => i.isUnique).map((i) => i.sku);
     const owned = await this.pool.query<{ user_id: string; sku: string }>(
@@ -824,7 +831,10 @@ export class GiftService {
     );
     const owners = new Map<string, string[]>();
     for (const r of owned.rows) owners.set(r.sku, [...(owners.get(r.sku) ?? []), r.user_id]);
-    const bounds = await sendBounds(this.pool, fromId, ids, now);
+    // One recipient: whether the rules let a gift go yet, so the picker can say so before anything is chosen. When they
+    // do not, the limits are the sender's own, so nobody learns from them how old someone they cannot give to is.
+    const hold = ids.length === 1 ? await giftHold(this.pool, fromId, ids[0]!, onPost, GIFT_MIN_FRIENDSHIP_HOURS) : null;
+    const bounds = await sendBounds(this.pool, fromId, hold ? [] : ids, now);
 
     return {
       items: items.map((i) => ({
@@ -833,7 +843,7 @@ export class GiftService {
         category: i.category,
         assetUrl: i.assetUrl,
         price: i.price,
-        tier: giftTierFor({ price: i.price, limited: i.availableTo !== null }),
+        tier: giftTierFor({ price: i.price, limited: isLimitedItem(i.sku, i.availableTo) }),
         // in the order asked, so the picker can line it up with its chips
         alreadyOwnedBy: ids.filter((id) => owners.get(i.sku)?.includes(id)),
         freeGiftEligible: i.price <= FREE_GIFT_MAX_PRICE,
@@ -841,10 +851,10 @@ export class GiftService {
       bag: (await bagEntries(this.pool, fromId, this.publicUrl)).filter((b) => items.some((i) => i.sku === b.sku)),
       balance: await this.deps.wallet.balances(fromId),
       freeGifts: await freeGiftsLeft(this.pool, fromId),
-      // one recipient: whether the rules let a gift go yet, so the picker can say so before anything is chosen
-      hold: ids.length === 1 ? await giftHold(this.pool, fromId, ids[0]!, onPost, GIFT_MIN_FRIENDSHIP_HOURS) : null,
+      hold,
       limits: { maxPrice: bounds.maxPrice, left: bounds.left, confirmFrom: bounds.confirmFrom },
-      nudges: !bounds.minor,
+      // only a known adult, never a guest or anyone of unknown age, is ever shown a suggestion to buy
+      nudges: await isKnownAdultAccount(this.pool, fromId),
     };
   }
 
@@ -854,18 +864,27 @@ export class GiftService {
   }
 }
 
+const lowerId = (id: string): string => id.toLowerCase();
+
+/** A send with every id lower-cased and the recipients counted once each. */
+function canonicalSend(input: SendGiftInput): SendGiftInput {
+  const chat: GiftChatRef | null =
+    input.chat?.kind === 'group' ? { kind: 'group', groupId: lowerId(input.chat.groupId) } : input.chat ? { kind: 'dm', userId: lowerId(input.chat.userId) } : null;
+  return {
+    ...input,
+    fromId: lowerId(input.fromId),
+    toIds: [...new Set(input.toIds.map(lowerId))],
+    chat,
+    post: input.post ? { type: input.post.type, id: lowerId(input.post.id) } : input.post,
+  };
+}
+
 function giftNotFound(): AppError {
   return new AppError('GIFT_NOT_FOUND', 404, 'no such gift');
 }
 
 function bagEmpty(): AppError {
   return new AppError('BAG_EMPTY', 409, 'your gift bag does not hold enough of that gift');
-}
-
-/** Holds the sender's Zêr row for the rest of the send, as a debit would, so the checks before it stay true. */
-async function lockZer(client: pg.PoolClient, userId: string): Promise<void> {
-  await client.query(`INSERT INTO wallet_balances (user_id, currency) VALUES ($1, 'zer') ON CONFLICT (user_id, currency) DO NOTHING`, [userId]);
-  await client.query(`SELECT 1 FROM wallet_balances WHERE user_id = $1 AND currency = 'zer' FOR UPDATE`, [userId]);
 }
 
 async function zerHeld(client: pg.PoolClient, userId: string): Promise<number> {

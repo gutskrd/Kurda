@@ -21,17 +21,20 @@ export interface GiftDef {
   group: GiftGroup;
   /** Earned into anyone's gift bag (`BAG_SOURCES`), as well as sold. */
   earnedFree: boolean;
-  /** Sold only for a season; the server gives it an end date. */
+  /** Sold only in its season (`months`), every year. */
   limited: boolean;
+  /** The months it is sold in, 1–12 in UTC; null for all year. */
+  months: readonly number[] | null;
 }
 
-const gift = (id: string, name: string, price: number, group: GiftGroup, extra: Partial<Pick<GiftDef, 'earnedFree' | 'limited'>> = {}): GiftDef => ({
+const gift = (id: string, name: string, price: number, group: GiftGroup, extra: Partial<Pick<GiftDef, 'earnedFree' | 'months'>> = {}): GiftDef => ({
   id,
   name,
   price,
   group,
   earnedFree: extra.earnedFree ?? false,
-  limited: extra.limited ?? false,
+  limited: extra.months != null,
+  months: extra.months ?? null,
 });
 
 /** Every gift, cheapest first. */
@@ -57,7 +60,8 @@ export const GIFTS: readonly GiftDef[] = [
   gift('keskesor', 'Keskesor', 1_200, 'sky'),
   gift('pezkovi', 'Pezkovî', 1_500, 'animals'),
   gift('belem', 'Belem', 2_000, 'boats'),
-  gift('pet', 'Pêta Newrozê', 2_000, 'sky', { limited: true }),
+  // around Newroz on 21 March, every year
+  gift('pet', 'Pêta Newrozê', 2_000, 'sky', { months: [3] }),
   gift('hesp', 'Hesp', 2_500, 'animals'),
   gift('kon', 'Reşmal', 3_000, 'houses'),
   gift('mal', 'Mala gund', 5_000, 'houses'),
@@ -83,6 +87,17 @@ export function giftOfSku(sku: string): GiftDef | null {
 export function drawnGiftArtKey(sku: string): string | null {
   const def = giftOfSku(sku);
   return def && isGiftArtId(def.id) ? giftArtKey(def.id) : null;
+}
+
+/** Whether a gift is in its season now (UTC); always for a gift sold all year, or an item that is not a gift. */
+export function giftInSeason(sku: string, now: Date = new Date()): boolean {
+  const months = giftOfSku(sku)?.months;
+  return !months || months.includes(now.getUTCMonth() + 1);
+}
+
+/** Whether a shop item is limited: an end date set on it, or a gift sold only in its season. */
+export function isLimitedItem(sku: string, availableTo: Date | string | null | undefined): boolean {
+  return availableTo != null || giftOfSku(sku)?.limited === true;
 }
 
 /** The gifts that are drawn, which are the ones on offer. */
@@ -310,4 +325,6 @@ export interface GiftBagView {
   arrivals: BagArrival[];
   /** whether this account also earns Zêr at these moments, so the apps know whether to say members do */
   earnsZer: boolean;
+  /** a known adult, who may be told what Hevalo+ gives; never a guest, a minor or someone of unknown age */
+  nudges: boolean;
 }

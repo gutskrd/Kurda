@@ -5,6 +5,7 @@ import {
   isPremiumActive,
   hasAccess,
   cosmeticAssetUrl,
+  giftOnOffer,
   isBuiltInArtKey,
   isUploadedArtKey,
   resolveAvatarUrl,
@@ -336,5 +337,28 @@ describe('levelInfo', () => {
     expect(mid.progress).toBeGreaterThan(0);
     expect(mid.progress).toBeLessThan(1);
     expect(levelInfo(-5).xp).toBe(0);
+  });
+});
+
+describe('giftOnOffer', () => {
+  const upload = `cosmetic/icon/${'a'.repeat(64)}.webp`;
+  it('offers a gift only once its picture is drawn, built in or uploaded as an icon', () => {
+    expect(giftOnOffer({ sku: 'gift-cay', category: 'gift', assetKey: null })).toBe(true);
+    // one an admin added, which the catalogue draws nothing for
+    expect(giftOnOffer({ sku: 'gift-nisan', category: 'gift', assetKey: null })).toBe(false);
+    expect(giftOnOffer({ sku: 'gift-nisan', category: 'gift', assetKey: upload })).toBe(true);
+    expect(giftOnOffer({ sku: 'gift-nisan', category: 'gift', assetKey: `cosmetic/background/${'a'.repeat(64)}.webp` })).toBe(false);
+  });
+
+  it('offers the Newroz fire in March only, every year, by the UTC calendar', () => {
+    const pet = { sku: 'gift-pet', category: 'gift', assetKey: upload };
+    expect(giftOnOffer(pet, new Date('2031-03-01T00:00:00Z'))).toBe(true);
+    expect(giftOnOffer(pet, new Date('2027-03-31T23:59:59Z'))).toBe(true);
+    expect(giftOnOffer(pet, new Date('2027-04-01T00:00:00Z'))).toBe(false);
+    expect(giftOnOffer(pet, new Date('2027-02-28T23:59:59Z'))).toBe(false);
+  });
+
+  it('leaves anything that is not a gift to its own rules', () => {
+    expect(giftOnOffer({ sku: 'icon-zozan', category: 'icon', assetKey: null })).toBe(true);
   });
 });

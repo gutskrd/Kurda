@@ -132,7 +132,9 @@ describe.skipIf(!DATABASE_URL)('the gift economy (integration)', () => {
       );
       expect(rows.rows.map((r) => [r.sku, r.name, r.price])).toEqual(GIFTS.map((g) => [giftSku(g.id), g.name, g.price]));
       expect(rows.rows.every((r) => r.active)).toBe(true);
-      expect(rows.rows.filter((r) => r.available_to).map((r) => r.sku)).toEqual([giftSku('pet')]);
+      // the Newroz fire's March is the catalogue's, every year, not a date written into the table
+      expect(rows.rows.filter((r) => r.available_to)).toEqual([]);
+      expect(GIFTS.filter((g) => g.months).map((g) => [g.id, g.months])).toEqual([['pet', [3]]]);
       const stickers = await pool.query<{ active: boolean; retired: boolean }>(
         `SELECT active, retired_at IS NOT NULL AS retired FROM shop_items WHERE category = 'sticker'`,
       );
@@ -296,8 +298,11 @@ describe.skipIf(!DATABASE_URL)('the gift economy (integration)', () => {
 
     it('never turns a received gift into Zêr: the gift is the recipient’s to keep, and cannot be bought or sold', async () => {
       expect(await zer(pal)).toBe(0);
+      // as many as were given, whichever send lost the race above
+      const given = await pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM gifts WHERE to_user_id = $1 AND sku = $2`, [pal.id, CAY]);
+      expect(given.rows[0]!.n).toBeGreaterThan(0);
       const owned = await pool.query(`SELECT quantity FROM user_entitlements WHERE user_id = $1 AND sku = $2`, [pal.id, CAY]);
-      expect(owned.rows[0]).toMatchObject({ quantity: 2 });
+      expect(owned.rows[0]).toMatchObject({ quantity: given.rows[0]!.n });
       expect((await call('POST', '/shop/purchase', pal, { sku: CAY, idempotencyKey: key() })).json().code).toBe('GIFT_ONLY');
       expect((await call('POST', '/shop/sell', pal, { sku: CAY })).statusCode).toBe(404);
     });

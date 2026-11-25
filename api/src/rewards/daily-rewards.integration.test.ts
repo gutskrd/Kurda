@@ -137,12 +137,19 @@ describe.skipIf(!DATABASE_URL)('daily rewards (integration)', () => {
       await streaks.recordActivity(plain, 'UTC', at('2026-06-01'));
       expect(await rewards.status(plain, at('2026-06-01'))).toMatchObject({ member: false, canClaim: true, learnedToday: true });
       const claimed = await rewards.claim(plain, at('2026-06-01'));
-      expect(claimed).toMatchObject({ claimed: true, reward: 0, member: false, bagGift: { sku: 'gift-cay', name: 'Çay', assetUrl: '/cosmetics/gifts/made-01-cay.png' } });
+      expect(claimed).toMatchObject({ claimed: true, reward: 0, member: false, nudges: true, bagGift: { sku: 'gift-cay', name: 'Çay', assetUrl: '/cosmetics/gifts/made-01-cay.png' } });
       expect((await wallet.balances(plain)).zer).toBe(0);
       expect(await bag(plain)).toEqual([{ sku: 'gift-cay', count: 1 }]);
       // shown with the claim, so not told of again
       const unseen = await pool.query(`SELECT 1 FROM gift_bag_grants WHERE user_id = $1 AND seen_at IS NULL`, [plain]);
       expect(unseen.rowCount).toBe(0);
+    });
+
+    it('says what Hevalo+ adds only to a known adult, never to someone under 18 or of unknown age', async () => {
+      const teen = (await makeLearner(pool, `daily_teen_${suffix}`, { age: 15 })).id;
+      const unknown = (await makeLearner(pool, `daily_unknown_${suffix}`, { age: null })).id;
+      expect(await claimOn(teen, '2026-06-01')).toMatchObject({ claimed: true, nudges: false });
+      expect(await claimOn(unknown, '2026-06-01')).toMatchObject({ claimed: true, nudges: false });
     });
 
     it('gives a member the bag’s gift beside the Zêr', async () => {

@@ -1,8 +1,10 @@
 /**
  * Gifts: one of the gifts (gift-catalogue.ts) or a shop item sent to friends, arriving as a wrapped present in the chat
  * and unwrapped with an animation, or given onto a post, which shows them in a small row. Gifts are items, never
- * currency, and cannot be sold, converted or passed on; no leaderboards or asking; a daily cap; and between anyone not a
- * known adult, only once a friendship is a day old. Shared so the API and both apps agree on tiers, timings and shapes.
+ * currency, and cannot be sold, converted or passed on; no "send one back" nudge to anyone but a known adult (never to
+ * someone under 18 or of unknown age, for whom a gift must not become a debt), no gift leaderboards, no asking for
+ * gifts; a cap per day; and between anyone not a known adult, only once a friendship is a day old. Shared so the API
+ * and both apps agree on tiers, timings and shapes.
  */
 import type { BagEntry } from './gift-catalogue.js';
 import type { GiftSendLimits } from './gift-safety.js';
@@ -16,7 +18,7 @@ export const GRAND_GIFT_PRICE = 20_000;
 
 export interface GiftTierInput {
   price: number;
-  /** a limited-time item with an end date, such as for Newroz */
+  /** a limited-time item, sold in its season (the Newroz fire, in March) or until an end date */
   limited: boolean;
 }
 

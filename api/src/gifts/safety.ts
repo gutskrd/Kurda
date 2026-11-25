@@ -87,9 +87,12 @@ export interface SendBounds extends GiftSendLimits {
 }
 
 export async function sendBounds(db: Executor, fromId: string, toIds: readonly string[], now: Date = new Date()): Promise<SendBounds> {
-  const young = await notAdults(db, [fromId, ...toIds]);
-  const minor = young.has(fromId);
-  const toMinor = toIds.some((id) => young.has(id));
+  // compared with the database's own lower-case ids
+  const from = fromId.toLowerCase();
+  const to = toIds.map((id) => id.toLowerCase());
+  const young = await notAdults(db, [from, ...to]);
+  const minor = young.has(from);
+  const toMinor = to.some((id) => young.has(id));
   const maxPrice = minor ? MINOR_GIFT_MAX_PRICE : toMinor ? TO_MINOR_GIFT_MAX_PRICE : null;
   if (minor) {
     const left = Math.max(0, MINOR_GIFT_MONTHLY_ZER - (await spentSince(db, fromId, MONTH_START)));

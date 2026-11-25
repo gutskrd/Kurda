@@ -4,6 +4,9 @@
  * only way out of a bag is a gift (`takeFromBagWithin`, under the gift rules). A child's profile, a guest, or an account the
  * economy does not pay, is given nothing. Each moment gives once (`gift_bag_grants`), at most `BAG_GIFTS_PER_DAY` a UTC
  * day and `BAG_MAX_EACH` of one kind, decided under a lock on the bag so two moments at once cannot both pass the cap.
+ *
+ * Locks are taken in one order everywhere, the person's Zêr row first and their bag after, so a moment that pays Zêr
+ * and fills the bag can never wait on one that does it the other way round (`grantBagGiftWithin` takes both itself).
  */
 import type pg from 'pg';
 import {
@@ -63,6 +66,7 @@ export async function grantBagGiftWithin(
 }
 
 async function grant1(client: pg.PoolClient, { userId, source, ref, seen = false }: BagGrantInput): Promise<BagGrant | null> {
+  await lockZerRow(client, userId);
   await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`gift-bag:${userId}`]);
   // a child's profile is given nothing, and a guest, who has no friends to give to, nothing either
   const who = await client.query<{ out: boolean }>(`SELECT (kind = 'child' OR guest) AS out FROM users WHERE id = $1 AND deleted_at IS NULL`, [userId]);
@@ -102,6 +106,12 @@ async function grant1(client: pg.PoolClient, { userId, source, ref, seen = false
     [userId, sku],
   );
   return { id: row.rows[0].id, sku, name: onSale.get(sku) ?? def.name, source };
+}
+
+/** The person's Zêr row, held for the transaction: the first lock of every path that also touches their bag. */
+export async function lockZerRow(client: pg.PoolClient, userId: string): Promise<void> {
+  await client.query(`INSERT INTO wallet_balances (user_id, currency) VALUES ($1, 'zer') ON CONFLICT (user_id, currency) DO NOTHING`, [userId]);
+  await client.query(`SELECT 1 FROM wallet_balances WHERE user_id = $1 AND currency = 'zer' FOR UPDATE`, [userId]);
 }
 
 /**

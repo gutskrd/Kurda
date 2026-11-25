@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { MAX_GIFT_RECIPIENTS, SPEND_LIMIT_MAX_ZER, SPEND_LIMIT_MIN_ZER, SPEND_LIMIT_PERIODS } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
@@ -9,17 +10,18 @@ import { POST_TYPES, postGiftSenders, postGiftsFor, visiblePostAuthor } from './
 import { bagArrivals, bagEntries, markArrivalsSeen } from './bag.js';
 import { giftLimitView, setGiftLimit } from './safety.js';
 import { earnsZer } from '../earn/service.js';
+import { isKnownAdultAccount } from '../users/age.js';
 
-const postRef = z.object({ type: z.enum(POST_TYPES), id: z.uuid() });
+const postRef = z.object({ type: z.enum(POST_TYPES), id: lowerUuid() });
 
 const sendBody = z
   .object({
     sku: z.string().min(1).max(80),
     /** the friends in the chat; left out for a gift onto a post, which goes to its author */
-    toUserIds: z.array(z.uuid()).min(1).max(MAX_GIFT_RECIPIENTS).optional(),
+    toUserIds: z.array(lowerUuid()).min(1).max(MAX_GIFT_RECIPIENTS).optional(),
     /** the chat the gift is posted in (shared `GiftChatRef`) */
     chat: z
-      .discriminatedUnion('kind', [z.object({ kind: z.literal('dm'), userId: z.uuid() }), z.object({ kind: z.literal('group'), groupId: z.uuid() })])
+      .discriminatedUnion('kind', [z.object({ kind: z.literal('dm'), userId: lowerUuid() }), z.object({ kind: z.literal('group'), groupId: lowerUuid() })])
       .optional(),
     /** a post the gift is given onto, instead of a chat */
     post: postRef.optional(),
@@ -43,7 +45,7 @@ const catalogQuery = z.union([
       .string()
       .max(MAX_GIFT_RECIPIENTS * 37)
       .transform((s) => s.split(',').map((id) => id.trim()).filter(Boolean))
-      .pipe(z.array(z.uuid()).min(1).max(MAX_GIFT_RECIPIENTS)),
+      .pipe(z.array(lowerUuid()).min(1).max(MAX_GIFT_RECIPIENTS)),
   }),
   z.object({
     post: z
@@ -54,7 +56,7 @@ const catalogQuery = z.union([
   }),
 ]);
 
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 
 /** A spending limit, or null for none. */
 const limitBody = z.object({
@@ -137,13 +139,19 @@ export function registerGiftRoutes(app: FastifyInstance, gifts: GiftService): vo
   const publicUrl = (key: string) => (app.storage ? app.storage.publicUrl(key) : null);
 
   /**
-   * The caller's gift bag (shared `GiftBagView`): what it holds, what landed since they last looked, and whether they
-   * earn Zêr at the same moments, so the apps say members do only to someone who does not.
+   * The caller's gift bag (shared `GiftBagView`): what it holds, what landed since they last looked, whether they earn
+   * Zêr at the same moments, and whether they are a known adult (`nudges`), so the apps say members do only to a known
+   * adult who does not.
    */
   app.get('/gifts/bag', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => {
     const userId = req.user!.id;
-    const [items, arrivals, member] = await Promise.all([bagEntries(app.db, userId, publicUrl), bagArrivals(app.db, userId, publicUrl), earnsZer(app.db, userId)]);
-    return { items, arrivals, earnsZer: member };
+    const [items, arrivals, member, nudges] = await Promise.all([
+      bagEntries(app.db, userId, publicUrl),
+      bagArrivals(app.db, userId, publicUrl),
+      earnsZer(app.db, userId),
+      isKnownAdultAccount(app.db, userId),
+    ]);
+    return { items, arrivals, earnsZer: member, nudges };
   });
 
   /** What landed in the bag has been told of. */

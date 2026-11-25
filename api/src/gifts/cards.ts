@@ -2,6 +2,7 @@ import type pg from 'pg';
 import {
   EQUIPPABLE_GIFT_CATEGORIES,
   giftTierFor,
+  isLimitedItem,
   type EquippableCategory,
   type GiftCard,
   type GiftRecipient,
@@ -159,7 +160,7 @@ function cardsFrom(rows: readonly CardRow[], viewerId: string | null, publicUrl:
       name: first.name,
       category: first.category,
       assetUrl: cosmeticAssetUrl(first.category, first.asset_key, publicUrl, first.sku),
-      tier: giftTierFor({ price: first.price, limited: first.limited }),
+      tier: giftTierFor({ price: first.price, limited: first.limited || isLimitedItem(first.sku, null) }),
       recipients,
       from: toSender(first, publicUrl),
       myGiftId: mine?.id ?? null,

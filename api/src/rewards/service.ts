@@ -9,6 +9,7 @@ import { StreakService } from '../streaks/service.js';
 import { dailyRewardView, statusFor, type DailyRewardState, type DailyRewardView } from './daily-cycle.js';
 import { grantBagGiftWithin } from '../gifts/bag.js';
 import { childRefused } from '../family/child-gate.js';
+import { isKnownAdultAccount } from '../users/age.js';
 import { cosmeticAssetUrl, type PublicUrl } from '../cosmetics/access.js';
 
 export interface ClaimResult {
@@ -21,6 +22,8 @@ export interface ClaimResult {
   bagGift: { sku: string; name: string; assetUrl: string | null } | null;
   /** whether this learner earns Zêr, so the apps can say members do to someone who does not */
   member: boolean;
+  /** a known adult, the only one the apps may tell what Hevalo+ gives; never a guest or anyone of unknown age */
+  nudges: boolean;
 }
 
 /**
@@ -115,7 +118,8 @@ export class DailyRewardService {
       const balance = await client.query<{ balance: number }>(`SELECT balance FROM wallet_balances WHERE user_id = $1 AND currency = 'zer'`, [userId]);
       await client.query('COMMIT');
       const bagGift = bag ? { sku: bag.sku, name: bag.name, assetUrl: cosmeticAssetUrl('gift', null, this.publicUrl, bag.sku) } : null;
-      return { claimed: true, cycleDay: status.claimableDay, reward: paid.granted, balance: balance.rows[0]?.balance ?? 0, bagGift, member: plus };
+      const nudges = await isKnownAdultAccount(client, userId);
+      return { claimed: true, cycleDay: status.claimableDay, reward: paid.granted, balance: balance.rows[0]?.balance ?? 0, bagGift, member: plus, nudges };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;
