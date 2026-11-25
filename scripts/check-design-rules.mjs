@@ -8,6 +8,9 @@
  * - One accent, on the main button alone: only the main button's styles may name it (`--accent` in ui.css's
  *   `.btn-primary`, `colors.accent` in the phone's button and lesson-button tones), the road's own main button (the
  *   stop to do now and the card that starts its lesson), and the lesson's own (Check, at the foot of every exercise).
+ * - One premium button, Hevalo+'s, and nothing else in its gold: `--plus-*` only in ui.css's `.btn-plus` rules and
+ *   `.btn-plus` only in components/PlusButton.tsx on the website, `PLUS_STYLE` only in theme/PlusButton.tsx on the
+ *   phone. The reward gold (`--gold`, `colors.gold`) stays free for whatever is earned.
  *
  * Drawings keep their own type and colour: a letter's paper scales its writing with the sheet. Those files are listed
  * below with why. Runs inside `npm run lint` for the website (`web`) and the phone (`mobile`).
@@ -66,6 +69,12 @@ if (app === 'web') {
         if (name === 'styles/learn.css' && selector === '.lesson-bar') continue;
         wrong.push(`${name}:${lineOf(src, m.index)} the accent off the main button: ${selector}`);
       }
+      for (const m of src.matchAll(/var\(--plus-[a-z-]+\)/g)) {
+        const before = src.slice(0, m.index);
+        const selector = before.slice(before.lastIndexOf('}') + 1, before.lastIndexOf('{')).trim();
+        if (name === 'styles/ui.css' && /^\.btn-plus\b/.test(selector)) continue;
+        wrong.push(`${name}:${lineOf(src, m.index)} Hevalo+'s gold off its button: ${selector}`);
+      }
     }
   }
   for (const f of files(SRC, (n) => /\.tsx?$/.test(n) && !/\.test\.tsx?$/.test(n))) {
@@ -77,8 +86,12 @@ if (app === 'web') {
       if (/^[^'"]*('var\(--text(-title)?\)'[^'"]*)+$/.test(v) && !/\d(px|rem|em)\b/.test(v)) continue;
       wrong.push(`${rel(f)}:${lineOf(src, m.index)} a third text size: fontSize: ${v}`);
     }
-    for (const m of src.matchAll(/var\(--(?:accent|font-display|text-(?:body|secondary|caption|section|tab|title-lg))\b[^)]*\)/g)) {
+    for (const m of src.matchAll(/var\(--(?:accent|plus|font-display|text-(?:body|secondary|caption|section|tab|title-lg))\b[^)]*\)/g)) {
       wrong.push(`${rel(f)}:${lineOf(src, m.index)} off the rules: ${m[0]}`);
+    }
+    for (const m of src.matchAll(/\bbtn-plus\b/g)) {
+      if (rel(f) === 'components/PlusButton.tsx') continue;
+      wrong.push(`${rel(f)}:${lineOf(src, m.index)} Hevalo+'s button outside PlusButton`);
     }
   }
 } else {
@@ -116,6 +129,10 @@ if (app === 'web') {
       if (ACCENT_ALLOWED.has(name)) continue;
       wrong.push(`${name}:${lineOf(src, m.index)} the accent off the main button`);
     }
+    for (const m of src.matchAll(/\bPLUS_STYLE\b/g)) {
+      if (name === 'theme/PlusButton.tsx') continue;
+      wrong.push(`${name}:${lineOf(src, m.index)} Hevalo+'s gold off its button`);
+    }
     for (const m of src.matchAll(/const [A-Z_]+ = (\d+(?:\.\d+)?);/g)) {
       // A size constant read as a text size elsewhere in the file is a third size under a name.
       const constName = src.slice(m.index + 6, src.indexOf(' =', m.index));
@@ -127,7 +144,7 @@ if (app === 'web') {
 }
 
 if (wrong.length) {
-  console.error(`design rules: ${wrong.length} place(s) break one face, two sizes or one accent:\n  ${wrong.join('\n  ')}`);
+  console.error(`design rules: ${wrong.length} place(s) break one face, two sizes, one accent or one premium button:\n  ${wrong.join('\n  ')}`);
   process.exit(1);
 }
-console.log('design rules: one face, two sizes, and the accent on the main button alone.');
+console.log('design rules: one face, two sizes, the accent on the main button alone, and one premium button.');

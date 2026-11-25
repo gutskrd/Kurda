@@ -276,6 +276,8 @@ export const PreviousIcon = named(SkipBack, 20, 'fill');
 export const NextIcon = named(SkipForward, 20, 'fill');
 export const TimerIcon = named(Timer, 20);
 export const HostIcon = named(Crown, 16, 'fill');
+/** Hevalo+, on its own button. */
+export const MembersIcon = named(Crown, 22, 'fill');
 export const InviteIcon = named(UserPlus, 22);
 // Taking someone out of a group.
 export const RemovePersonIcon = named(UserMinus, 22);
