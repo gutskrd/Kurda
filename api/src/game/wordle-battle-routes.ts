@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireParental } from '../parental/supervision.js';
@@ -13,7 +14,7 @@ const createBody = z.object({
 });
 const guessBody = z.object({ word: z.string().min(1).max(64) });
 const removeBody = z.object({ seat: z.number().int().min(1).max(64) });
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 
 const notFound = (reply: FastifyReply) => reply.code(404).send({ code: 'NOT_FOUND', message: 'no such battle' });
 

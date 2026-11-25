@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import {
   APP_FEEDBACK_CATEGORIES,
   APP_FEEDBACK_COMMENT_MAX,
@@ -78,7 +79,7 @@ const listQuery = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).max(100_000).default(0),
   // The last answer already shown: the next page starts after it, however marking has moved the rest.
-  beforeId: filter(z.uuid()),
+  beforeId: filter(lowerUuid()),
 });
 
 const patchBody = z
@@ -146,7 +147,7 @@ export function registerFeedbackRoutes(app: FastifyInstance, feedback: FeedbackS
 
   app.patch(
     '/admin/feedback/:id',
-    { schema: { params: z.object({ id: z.uuid() }), body: patchBody }, preHandler: readers },
+    { schema: { params: z.object({ id: lowerUuid() }), body: patchBody }, preHandler: readers },
     async (req) => {
       const { id } = req.params as { id: string };
       const updated = await feedback.update(id, req.body as z.infer<typeof patchBody>);

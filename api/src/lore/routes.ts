@@ -24,6 +24,7 @@
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import {
   GAME_DIALECTS,
   GAME_SLUG_PATTERN,
@@ -50,7 +51,7 @@ const slugParam = z.object({ slug: z.string().regex(GAME_SLUG_PATTERN) });
 const hintBody = z.object({ index: z.number().int().min(0).max(LORE_COUNTS.hints.max - 1) });
 // the interface language, so a guess that is the answer in it can be told to say it in Kurdish
 const guessBody = z.object({ guess: z.string().trim().min(1).max(LORE_LIMITS.answer * 2), locale: z.string().max(8).optional() });
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 const roundBody = z.object({ dialect: z.enum(GAME_DIALECTS), mode: z.enum(PROVERB_ROUND_MODES) });
 const openQuery = roundBody;
 const answerBody = z.object({

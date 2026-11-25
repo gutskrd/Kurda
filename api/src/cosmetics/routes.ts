@@ -1,12 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount } from '../plugins/auth.js';
 import { avatarRegistry } from './avatars.js';
 import type { CosmeticsService } from './service.js';
 
 const rateLimit = { max: 30, windowMs: 60_000, per: 'user-or-ip' as const };
 const skuBody = z.object({ sku: z.string().min(1).max(80).nullable() });
-const postBody = z.object({ postId: z.uuid() });
+const postBody = z.object({ postId: lowerUuid() });
 
 /**
  * Profile cosmetics and favourites; buying stays in /shop. Every change is scoped to the signed-in user, and the

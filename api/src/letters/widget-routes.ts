@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { WIDGET_HITS_PER_HOUR, WIDGET_IMAGE, WIDGET_SKIES, type WidgetSky } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 import { MemoryRateLimitStore, RedisRateLimitStore, type RateLimitStore } from '../ratelimit/store.js';
@@ -15,7 +16,7 @@ const imageQuery = z.object({
   sky: z.enum(WIDGET_SKIES).optional(),
 });
 // Either may be left out to change only the other: the letter page pins, the settings switch shows the words.
-const prefsBody = z.object({ pinnedLetterId: z.uuid().nullable().optional(), showWords: z.boolean().optional() });
+const prefsBody = z.object({ pinnedLetterId: lowerUuid().nullable().optional(), showWords: z.boolean().optional() });
 // the token this phone had before, if any, goes when the new one is made
 const tokenBody = z.object({ replaces: z.string().max(200).optional() }).nullish();
 

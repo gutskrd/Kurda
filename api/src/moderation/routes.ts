@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount, requireAuth } from '../plugins/auth.js';
 import { requireCapability } from '../admin/routes.js';
 
@@ -16,7 +17,7 @@ export function registerModerationRoutes(app: FastifyInstance, moderation: Moder
       schema: {
         body: z.object({
           messageType: z.enum(['dm', 'group']),
-          messageId: z.uuid(),
+          messageId: lowerUuid(),
           reason: z.string().max(300).optional(),
         }),
       },
@@ -38,7 +39,7 @@ export function registerModerationRoutes(app: FastifyInstance, moderation: Moder
   app.post(
     '/admin/moderation/reports/:id/resolve',
     {
-      schema: { params: z.object({ id: z.uuid() }), body: z.object({ action: z.enum(['actioned', 'dismissed']) }) },
+      schema: { params: z.object({ id: lowerUuid() }), body: z.object({ action: z.enum(['actioned', 'dismissed']) }) },
       preHandler: moderators,
     },
     async (req) => {

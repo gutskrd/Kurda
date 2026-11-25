@@ -1,9 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import type { BotDetectionService } from './service.js';
 
-const userParam = z.object({ userId: z.uuid() });
+const userParam = z.object({ userId: lowerUuid() });
 
 /**
  * Bot detection routes: admin review, confirm or clear of flagged accounts, a manual scoring run, and the check the

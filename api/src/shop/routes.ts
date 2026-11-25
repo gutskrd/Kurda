@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount, requireAuth, requireRoles } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { cosmeticAssetUrl } from '../cosmetics/access.js';
@@ -32,7 +33,7 @@ const itemBody = z.object({
 
 const giftBody = z.object({
   sku: z.string().min(1).max(80),
-  toUserId: z.uuid(),
+  toUserId: lowerUuid(),
   idempotencyKey: z.string().min(8).max(120),
   expectedPrice: z.number().int().min(0).max(10_000_000).optional(),
   /** a big gift's second confirmation, as `POST /gifts` takes it */

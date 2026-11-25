@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { SHOWCASE_SIZE } from '@kurda/shared';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { PROGRESS_TOOL_ROLES } from '../admin/roles.js';
@@ -46,7 +47,7 @@ export function registerBadgeRoutes(app: FastifyInstance, badges: BadgeService):
   /** Admin: one learner's badges and every award and revoke on them. */
   app.get(
     '/admin/users/:id/badges',
-    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireRoles(...PROGRESS_TOOL_ROLES) },
+    { schema: { params: z.object({ id: lowerUuid() }) }, preHandler: requireRoles(...PROGRESS_TOOL_ROLES) },
     async (req) => badges.adminUser((req.params as { id: string }).id),
   );
 
@@ -54,7 +55,7 @@ export function registerBadgeRoutes(app: FastifyInstance, badges: BadgeService):
   app.post(
     '/admin/users/:id/badges/:key',
     {
-      schema: { params: z.object({ id: z.uuid(), key: z.string().min(1).max(40) }), body: adminBody },
+      schema: { params: z.object({ id: lowerUuid(), key: z.string().min(1).max(40) }), body: adminBody },
       preHandler: requireRoles(...PROGRESS_TOOL_ROLES),
     },
     async (req) => {

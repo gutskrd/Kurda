@@ -20,6 +20,7 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import {
   CONVERSATION_ID,
   LESSON_AUDIO_MAX_SECONDS,
@@ -68,7 +69,7 @@ interface Row {
 const listQuery = z.object({ withLipsync: z.enum(['0', '1', 'false', 'true']).optional() });
 const textQuery = z.object({ text: z.string(), line: z.string().max(64).optional(), reaction: z.string().max(64).optional() });
 const conversationParams = z.object({ id: z.string().regex(CONVERSATION_ID) });
-const conversationQuery = z.object({ lesson: z.uuid().optional() });
+const conversationQuery = z.object({ lesson: lowerUuid().optional() });
 /** `<conversation id>:<part>`, the part being who says the line, by place */
 const LINE = /^([a-z0-9]{6,32}):(\d{1,2})$/;
 /** `<character>:<id>` of a reaction line */

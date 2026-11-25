@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import { z } from 'zod';
+import { lowerUuid } from '../../http/ids.js';
 import {
   DEFAULT_TIMER,
   GAME_ACCESS,
@@ -66,7 +67,7 @@ const oneOf = <T extends string | number>(values: readonly T[]) =>
 const settingsSchema = z
   .object({
     mode: z.enum(['duo', 'group']),
-    storyId: z.uuid().optional(),
+    storyId: lowerUuid().optional(),
     dialect: oneOf<StoryDialect>(STORY_DIALECTS).optional(),
     length: oneOf<StoryLength>(STORY_LENGTHS).optional(),
     level: oneOf<StoryLevel>(STORY_LEVELS).optional(),

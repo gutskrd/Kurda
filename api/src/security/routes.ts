@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { SECURITY_CATEGORIES, SECURITY_SEVERITIES } from '@kurda/shared';
 import { requireAuth } from '../plugins/auth.js';
 import { requireAdmin } from '../admin/routes.js';
@@ -14,7 +15,7 @@ const eventsQuery = z.object({
     .regex(/^[a-z0-9]+\.([a-z0-9_]+)?$/)
     .max(60)
     .optional(),
-  userId: z.uuid().optional(),
+  userId: lowerUuid().optional(),
   network: z
     .string()
     .regex(/^[a-f0-9]{16,128}$/)
@@ -25,13 +26,13 @@ const eventsQuery = z.object({
     .optional(),
   since: z.coerce.date().optional(),
   until: z.coerce.date().optional(),
-  beforeId: z.uuid().optional(),
+  beforeId: lowerUuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
 });
 
 const reviewBody = z
   .object({
-    eventIds: z.array(z.uuid()).min(1).max(200).optional(),
+    eventIds: z.array(lowerUuid()).min(1).max(200).optional(),
     kind: z
       .string()
       .regex(/^[a-z0-9]+\.[a-z0-9_]+$/)
@@ -45,7 +46,7 @@ const reviewBody = z
   });
 
 const revealBody = z.object({ reason: z.string().trim().min(5).max(300) });
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 
 /**
  * The security log in the admin console, for superadmins behind the two-step code: reading it, marking alerts

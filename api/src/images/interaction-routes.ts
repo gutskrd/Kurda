@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
@@ -20,9 +21,9 @@ function authorRole(req: FastifyRequest): AuthorRole {
 }
 
 const reactionBody = z.object({ reaction: z.enum(REACTIONS) });
-const commentBody = z.object({ body: z.string().min(1).max(2_000), parentId: z.uuid().optional() });
+const commentBody = z.object({ body: z.string().min(1).max(2_000), parentId: lowerUuid().optional() });
 const editBody = z.object({ body: z.string().min(1).max(2_000) });
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 
 /**
  * Reactions and threaded comments on image posts. Reads are public (a signed-in caller also sees their own

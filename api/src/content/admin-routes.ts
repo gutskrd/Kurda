@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth } from '../plugins/auth.js';
 import { requireAdmin } from '../admin/routes.js';
 import type { AdminTotpService } from '../admin/totp-service.js';
@@ -7,12 +8,12 @@ import { LESSON_LIST_MAX, type ContentAdminService, type ExerciseInput } from '.
 import type { ContentStatus } from './workflow.js';
 import { silentListeningMessage } from '../lessonaudio/publish-guard.js';
 
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 
 const EXERCISE_TYPES = ['multiple_choice', 'translate', 'match_pairs', 'listening', 'speaking', 'writing', 'conversation'] as const;
 
 const createBody = z.object({
-  skillId: z.uuid(),
+  skillId: lowerUuid(),
   position: z.number().int().min(1),
   titleKu: z.string().min(1).max(200),
   titleEn: z.string().min(1).max(200),

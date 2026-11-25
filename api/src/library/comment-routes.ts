@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted, voiceAttachable } from '../moderation/restrictions.js';
@@ -17,14 +18,14 @@ const isAdmin = (req: FastifyRequest): boolean => !!req.user?.roles.some((r) => 
 const createBody = z.object({
   body: z.string().min(1).max(10_000).optional(),
   audioMediaId: z.string().max(512).optional(),
-  parentId: z.uuid().optional(),
+  parentId: lowerUuid().optional(),
 });
 const editBody = z.object({
   body: z.string().min(1).max(10_000).nullable().optional(),
   audioMediaId: z.string().max(512).nullable().optional(),
 });
-const postIdParam = z.object({ postId: z.uuid() });
-const idParam = z.object({ id: z.uuid() });
+const postIdParam = z.object({ postId: lowerUuid() });
+const idParam = z.object({ id: lowerUuid() });
 
 /** Threaded comments on library posts. Reads are public; writing needs an account and an ownership or staff check, and creation is rate limited. */
 export function registerLibraryCommentRoutes(

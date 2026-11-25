@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { PICTURE_CASE_VIEWS, PICTURE_REVIEW_NOTE_MAX, REPORT_CATEGORY_KEYS, type PictureCaseView, type PictureDecision } from '@kurda/shared';
 import { requireCapability } from '../admin/routes.js';
 import { AuditService } from '../admin/audit-service.js';
@@ -8,7 +9,7 @@ import type { CasesService } from './cases-service.js';
 import type { StoredPicture } from './picture-release.js';
 import type { PictureReviewService } from './pictures-service.js';
 
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 const note = z.string().trim().max(1000).optional();
 const decideBody = z.discriminatedUnion('decision', [
   z.object({ decision: z.literal('approve'), note }),

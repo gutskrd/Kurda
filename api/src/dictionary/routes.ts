@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { DictionaryRepository } from './repository.js';
@@ -47,7 +48,7 @@ export function registerDictionaryRoutes(app: FastifyInstance, badges?: SavedWor
   /** Full entry: senses, examples, audio, cross-references. */
   app.get(
     '/dictionary/entries/:id',
-    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: z.object({ id: lowerUuid() }) }, preHandler: requireAuth },
     async (req) => {
       const { id } = req.params as { id: string };
       const entry = await repo.getEntry(id);
@@ -59,7 +60,7 @@ export function registerDictionaryRoutes(app: FastifyInstance, badges?: SavedWor
   /** Bookmark an entry → schedule it into SM-2 (capped 10 new/day). */
   app.put(
     '/dictionary/entries/:id/save',
-    { schema: { params: z.object({ id: z.uuid() }) }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: z.object({ id: lowerUuid() }) }, config: { skipValidation: true }, preHandler: requireAuth },
     async (req) => {
       const { id } = req.params as { id: string };
       return saved.save(req.user!.id, id, await timezoneOf(req.user!.id));
@@ -69,7 +70,7 @@ export function registerDictionaryRoutes(app: FastifyInstance, badges?: SavedWor
   /** Removes a bookmark; the review history is kept but no longer scheduled. */
   app.delete(
     '/dictionary/entries/:id/save',
-    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: z.object({ id: lowerUuid() }) }, preHandler: requireAuth },
     async (req) => {
       const { id } = req.params as { id: string };
       await saved.unsave(req.user!.id, id);

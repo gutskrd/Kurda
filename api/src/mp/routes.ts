@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { MULTI_GAMES, type LetterDialect, type MultiGame } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
@@ -24,7 +25,7 @@ declare module 'fastify' {
 }
 
 const game = z.enum(MULTI_GAMES);
-const lobbyParams = z.object({ game, id: z.uuid() });
+const lobbyParams = z.object({ game, id: lowerUuid() });
 const gameParam = z.object({ game });
 const pollQuery = z.object({ v: z.coerce.number().int().min(0).max(2_147_483_647).optional() });
 const seatBody = z.object({ seat: z.number().int().min(1).max(100) });

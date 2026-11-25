@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { CHILD_NAME_MAX, isValidPin, PURCHASE_REQUEST_KINDS, type PurchaseRequestKind } from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 import { AppError } from '../plugins/errors.js';
@@ -65,11 +66,11 @@ const PIN_LIMIT: RateLimitOptions = { max: 10, windowMs: FIFTEEN_MINUTES, per: '
 const hourly = (max: number): RateLimitOptions => ({ max, windowMs: HOUR, per: 'user-or-ip' });
 
 const codeBody = z.object({ code: z.string().min(1).max(32) });
-const childParam = z.object({ childId: z.uuid() });
-const memberParam = z.object({ userId: z.uuid() });
-const teenParam = z.object({ teenId: z.uuid() });
-const deviceParam = z.object({ childId: z.uuid(), id: z.uuid() });
-const requestParam = z.object({ id: z.uuid() });
+const childParam = z.object({ childId: lowerUuid() });
+const memberParam = z.object({ userId: lowerUuid() });
+const teenParam = z.object({ teenId: lowerUuid() });
+const deviceParam = z.object({ childId: lowerUuid(), id: lowerUuid() });
+const requestParam = z.object({ id: lowerUuid() });
 const noBody = z.object({}).nullish();
 const pin = z.string().refine(isValidPin, { message: 'four to six digits' });
 

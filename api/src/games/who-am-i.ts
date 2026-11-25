@@ -30,6 +30,7 @@ import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import type pg from 'pg';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import {
   DIFFICULTY_LEVELS,
   GAME_DIALECTS,
@@ -210,8 +211,8 @@ const dealBody = z.strictObject({
  * table, the game, the seat whose card it is and the question, since players there are never sent another card's id.
  */
 const reportBody = z.union([
-  z.strictObject({ identity: z.uuid(), question: z.uuid() }),
-  z.strictObject({ game: z.uuid(), seat: z.number().int().min(0).max(64), question: z.string().min(1).max(80) }),
+  z.strictObject({ identity: lowerUuid(), question: lowerUuid() }),
+  z.strictObject({ game: lowerUuid(), seat: z.number().int().min(0).max(64), question: z.string().min(1).max(80) }),
 ]);
 
 const REPORTS_PER_MINUTE = 5;

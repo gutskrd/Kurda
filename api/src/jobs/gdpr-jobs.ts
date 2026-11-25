@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import type { GdprService } from '../gdpr/service.js';
 import { PrivateStorageUnavailable } from '../media/storage.js';
 import { defineJob, type JobDefinition } from './registry.js';
@@ -22,7 +23,7 @@ export const EXPORT_JOB_NAME = 'export-user-data';
 export function makeExportJob(service: GdprService): JobDefinition<{ exportId: string }> {
   return defineJob({
     name: EXPORT_JOB_NAME,
-    schema: z.object({ exportId: z.uuid() }),
+    schema: z.object({ exportId: lowerUuid() }),
     handler: async (payload, ctx) => {
       try {
         await service.fulfillExport(payload.exportId);

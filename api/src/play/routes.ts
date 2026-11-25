@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { DECLINE_REASONS, MAX_INVITEES_PER_REQUEST, PLAY_CARDS_PER_READ, PLAY_GAMES, type DeclineReason, type PlayGame } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
@@ -19,9 +20,9 @@ import type { PlayAdapter } from './types.js';
 export const PLAY_SWEEP_MS = 30_000;
 
 const game = z.enum(PLAY_GAMES);
-const userIds = z.array(z.uuid()).min(1).max(MAX_INVITEES_PER_REQUEST);
-const lobbyParams = z.object({ game, lobbyId: z.uuid() });
-const inviteParam = z.object({ id: z.uuid() });
+const userIds = z.array(lowerUuid()).min(1).max(MAX_INVITEES_PER_REQUEST);
+const lobbyParams = z.object({ game, lobbyId: lowerUuid() });
+const inviteParam = z.object({ id: lowerUuid() });
 // `cards=<game>:<lobbyId>,…`, as shared `playCardsPath` writes it
 const cardsQuery = z.object({
   cards: z
@@ -34,10 +35,10 @@ const createBody = z.object({
   game,
   /** the game's own presets; each game checks them (400 BAD_SETTINGS) */
   settings: z.record(z.string(), z.unknown()).default({}),
-  invite: z.array(z.uuid()).max(MAX_INVITEES_PER_REQUEST).optional(),
-  chat: z.union([z.object({ userId: z.uuid() }), z.object({ groupId: z.uuid() })]).optional(),
+  invite: z.array(lowerUuid()).max(MAX_INVITEES_PER_REQUEST).optional(),
+  chat: z.union([z.object({ userId: lowerUuid() }), z.object({ groupId: lowerUuid() })]).optional(),
 });
-const inviteBody = z.object({ game, lobbyId: z.uuid(), userIds });
+const inviteBody = z.object({ game, lobbyId: lowerUuid(), userIds });
 // The reason and the body are optional: a bare POST is a plain "not now".
 const declineBody = z.object({ reason: z.enum(DECLINE_REASONS).optional() }).nullish();
 /** A code as typed or pasted; `normalizeJoinCode` handles spaces, dashes and Arabic-script digits. */

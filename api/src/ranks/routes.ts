@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { PLAY_GAMES, seasonDaysLeft, seasonOf, type MyRanks, type SeasonEmblem, type SeasonOverview } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 
@@ -15,7 +16,7 @@ function seasonNow(now: Date): MyRanks['season'] {
   return { ...season, daysLeft: seasonDaysLeft(season, now) };
 }
 
-const resultParams = z.object({ game: z.string().max(40), ref: z.uuid() });
+const resultParams = z.object({ game: z.string().max(40), ref: lowerUuid() });
 
 export function registerRankRoutes(app: FastifyInstance): void {
   app.get('/ranks/me', { preHandler: requireAccount }, async (): Promise<MyRanks> => ({ ranks: [], cooldownUntil: null, season: seasonNow(new Date()) }));

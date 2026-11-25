@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { lowerUuid } from './ids.js';
 
 /**
  * Query-string fields for the public lists (the wall, the library, comments), checked so a malformed or repeated
@@ -12,7 +13,7 @@ export function queryInt(min: number, max: number) {
 }
 
 /** An optional id. */
-export const queryUuid = z.preprocess(absentIfEmpty, z.uuid().optional());
+export const queryUuid = z.preprocess(absentIfEmpty, lowerUuid().optional());
 
 /** An optional short word (a sort, a type, a language): one value, not a list. */
 export const queryWord = z.string().max(40).optional();

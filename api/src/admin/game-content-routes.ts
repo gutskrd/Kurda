@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { AppError } from '../plugins/errors.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { classifyRhyme, normalizeWord, rhymePattern, type Dialect, type RhymeQuality } from '../game/rhyme.js';
@@ -200,7 +201,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     '/admin/dictionary/:id',
     {
       schema: {
-        params: z.object({ id: z.uuid() }),
+        params: z.object({ id: lowerUuid() }),
         body: z
           .object({
             isRhymePrompt: z.boolean().optional(),
@@ -314,7 +315,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   /** Remove a word from the pool. */
   app.delete(
     '/admin/dictionary/:id',
-    { schema: { params: z.object({ id: z.uuid() }) }, config: { skipValidation: true }, preHandler: canEdit },
+    { schema: { params: z.object({ id: lowerUuid() }) }, config: { skipValidation: true }, preHandler: canEdit },
     async (req) => {
       const { id } = req.params as { id: string };
       const row = await app.db.query<{ headword_normalized: string }>(

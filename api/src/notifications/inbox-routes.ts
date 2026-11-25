@@ -1,9 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth } from '../plugins/auth.js';
 import type { InboxService } from './inbox-service.js';
 
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 
 /** In-app notification inbox: list, unread badge, mark read, and removal. */
 export function registerInboxRoutes(app: FastifyInstance, inbox: InboxService): void {
