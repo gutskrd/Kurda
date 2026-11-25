@@ -27,6 +27,26 @@ collected.
   sign-in turned on.
 - The database accepts connections only from listed addresses.
 
+**Letters and private messages**
+- Staff read a letter or a direct or group message only in three cases. Someone in the conversation reports it: its
+  case shows it with the few letters or messages around it, the reported one marked. An automatic check flags it (the
+  word filter, the text classifier, a held drawing): its case shows the flagged one alone. Or a safety review.
+- Only a superadmin opens a safety review: for one named account, read by one staff member who moderates, for a
+  reason from a fixed list (child safety, a threat to someone’s life or safety, a legal request from the authorities,
+  a report that needs more context, which names its case) with a note. It is read-only, lasts exactly 24 hours unless
+  ended sooner, and a superadmin opens at most five a day. It opens one conversation at a time, a page at a time;
+  there is no search across accounts and nothing to export. Nobody reviews their own messages, and a child’s profile,
+  which writes to nobody, cannot be reviewed.
+- Every grant, early end and reading, and every case about a letter or private message a moderator opens, goes to the
+  Access log (append-only, readable by every admin), the admin audit trail and the security log: who, whose, when,
+  why, which kind of conversation and how many messages, never what they say. Opening a review is a warning on the
+  security log’s “Needs attention” list, so another superadmin sees each one.
+- The person under review is not told. If they ask to see these records, the owner decides case by case, within the
+  limits art. 23 of the GDPR and art. 41 of the Dutch implementation act (UAVG) allow for preventing crime and
+  protecting others.
+- The rules live in `api/src/message-access` and migration `1751000850000_message-access.js`, and are tested in
+  `api/src/message-access/message-access.integration.test.ts`.
+
 **Accounts**
 - Passwords are hashed with Argon2id; failed sign-ins are rate limited and accounts lock after repeated failures.
 - Sessions are short-lived tokens with refresh, and can be signed out per device.
@@ -76,7 +96,8 @@ collected.
 ## 6. Yearly review
 
 Every year, and after any incident: re-read this page and `docs/privacy/children.md`, check that each safeguard still
-holds, check the providers’ terms, and write the date and anything changed here.
+holds, read the Access log and check that every safety review had a reason that holds, check the providers’ terms, and
+write the date and anything changed here.
 
 | Date | By | Changes |
 |---|---|---|

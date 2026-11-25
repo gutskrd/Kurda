@@ -7,17 +7,18 @@ import type { MessageKey } from '../i18n/en';
  * What Hevalo keeps, in plain words. Each sentence matches something the product does, and must change with it: data and
  * permissions (docs/app-store/privacy.md), what the age decides (api/src/users/age.ts), visibility and blocking
  * (Settings), the hashed phone number (phone verification), how pictures are checked and how long a refused one is
- * kept (shared picture-review.ts, api/src/moderation), how a banned person is kept from returning and what the
- * suspension screen still offers (shared account-hold.ts), the security log's retention (api/src/security/log.ts),
- * export and deletion with its 14-day grace (api/src/gdpr), re-consent (api/src/gdpr/consent.ts), and what a child
- * profile holds and how long (api/src/family, docs/privacy/children.md). It opens with the controller and how to reach
- * them, as the GDPR requires, from the same record as Terms and About.
+ * kept (shared picture-review.ts, api/src/moderation), when staff may read a letter or private message and that each
+ * reading is recorded (shared message-access.ts, api/src/message-access), how a banned person is kept from returning
+ * and what the suspension screen still offers (shared account-hold.ts), the security log's retention
+ * (api/src/security/log.ts), export and deletion with its 14-day grace (api/src/gdpr), re-consent
+ * (api/src/gdpr/consent.ts), and what a child profile holds and how long (api/src/family, docs/privacy/children.md). It
+ * opens with the controller and how to reach them, as the GDPR requires, from the same record as Terms and About.
  */
 const SECTIONS: ReadonlyArray<DocSection> = [
   { title: 'privacy.collect.title', body: 'privacy.collect.body' },
   { title: 'privacy.why.title', body: <Paragraphs keys={['privacy.why.body', 'privacy.why.basis']} /> },
   { title: 'privacy.visibility.title', body: 'privacy.visibility.body' },
-  { title: 'privacy.safety.title', body: <Paragraphs keys={['privacy.safety.body', 'privacy.safety.returns']} /> },
+  { title: 'privacy.safety.title', body: <Paragraphs keys={['privacy.safety.body', 'privacy.safety.messages', 'privacy.safety.returns']} /> },
   {
     id: 'children',
     title: 'privacy.children.title',

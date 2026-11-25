@@ -3654,6 +3654,8 @@ export const en = {
   'privacy.safety.title': 'Keeping it safe',
   'privacy.safety.body':
     'Posts and pictures may be checked automatically and by moderators to keep out abuse and illegal content. Every picture is checked before anyone else sees it: automatically, by an AI service that works for us and is sent only the picture, never who you are; and by a person whenever the check is unsure. A refused picture is kept privately for up to six months, so you can ask for it to be looked at again, and is then deleted. Anything that may harm a child is kept as evidence for as long as the law requires.',
+  'privacy.safety.messages':
+    'Our safety team may read a letter or private message only when someone in the conversation reports it, when an automatic safety check flags it, or for a specific safety or legal reason, such as a child at risk or a request from the authorities. Every time this happens, it is recorded. Letters and messages are never read for anything else, and never for advertising.',
   'privacy.safety.returns':
     'To stop people who were banned from simply coming back, Hevalo keeps scrambled (hashed) details of a banned or suspended person’s account, sign-in and devices, and compares new accounts and sign-ins with them. An internet address alone is never enough, since many people can share one, and whenever a match is unclear, a person decides. These details are kept only while the ban or suspension lasts, even if the account is deleted; the sign-in and device records they come from are kept for the times given under “How long we keep it”. While your account is suspended or banned, you can still download a copy of your data or delete your account from the screen you see when you sign in.',
   'privacy.children.title':
