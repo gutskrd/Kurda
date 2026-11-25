@@ -11,12 +11,14 @@ import { ask, hesp, kevok, kew, pezkovi, pisik } from './gift-art-animals.js';
 import { beybun, desteGul, gul, lale, nergiz, sosin } from './gift-art-flowers.js';
 import { belem, gemi, keleh, kelek, kon, kosk, mal } from './gift-art-homes.js';
 import { heyv, kadiz, keskesor, pet, roj, sterk } from './gift-art-sky.js';
+import { kawa, sahmaran } from './gift-art-lore.js';
 import { cay, def, qehwe, saz, semawer, sev } from './gift-art-warm.js';
 
 /** The gifts drawn so far, in the order their files are numbered. */
 export const GIFT_ART_IDS = [
   'cay', 'qehwe', 'gul', 'pisik', 'belem', 'mal', 'heyv', 'kadiz', 'beybun', 'sev', 'lale', 'nergiz', 'kevok', 'sosin', 'kew', 'semawer',
-  'def', 'deste-gul', 'sterk', 'kelek', 'saz', 'ask', 'keskesor', 'pezkovi', 'pet', 'hesp', 'kon', 'gemi', 'kosk', 'keleh', 'roj',
+  'def', 'deste-gul', 'sterk', 'kelek', 'saz', 'ask', 'keskesor', 'pezkovi', 'pet', 'hesp', 'kon', 'gemi', 'kosk', 'keleh', 'roj', 'kawa',
+  'sahmaran',
 ] as const;
 export type GiftArtId = (typeof GIFT_ART_IDS)[number];
 
@@ -57,6 +59,8 @@ const LABELS: Readonly<Record<GiftArtId, string>> = {
   kosk: 'A stone mansion with arches',
   keleh: 'A castle on a hill',
   roj: 'The sun',
+  kawa: 'Kawa’s hammer on an anvil, sparks flying',
+  sahmaran: 'A framed folk painting of Şahmaran, queen of the serpents',
 };
 
 /** A picture's file under /cosmetics, named as the shop's drawn art is: its place in the list, then its id. */
@@ -83,5 +87,5 @@ export function giftArtSvg(opts: GiftArtOptions): string {
 
 const PAINTERS: Readonly<Record<GiftArtId, (dr: Drawing, rnd: Rnd) => void>> = {
   cay, qehwe, gul, pisik, belem, mal, heyv, kadiz, beybun, sev, lale, nergiz, kevok, sosin, kew, semawer,
-  def, 'deste-gul': desteGul, sterk, kelek, saz, ask, keskesor, pezkovi, pet, hesp, kon, gemi, kosk, keleh, roj,
+  def, 'deste-gul': desteGul, sterk, kelek, saz, ask, keskesor, pezkovi, pet, hesp, kon, gemi, kosk, keleh, roj, kawa, sahmaran,
 };

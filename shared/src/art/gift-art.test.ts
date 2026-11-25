@@ -127,8 +127,12 @@ describe('the gifts’ files', () => {
   });
 
   it('keeps every file it has shipped where it was: new gifts only go on the end', () => {
-    expect(GIFT_ART_IDS.slice(0, 8)).toEqual(['cay', 'qehwe', 'gul', 'pisik', 'belem', 'mal', 'heyv', 'kadiz']);
-    expect(GIFT_ART_IDS).toHaveLength(31);
+    const shipped = [
+      'cay', 'qehwe', 'gul', 'pisik', 'belem', 'mal', 'heyv', 'kadiz', 'beybun', 'sev', 'lale', 'nergiz', 'kevok', 'sosin', 'kew', 'semawer',
+      'def', 'deste-gul', 'sterk', 'kelek', 'saz', 'ask', 'keskesor', 'pezkovi', 'pet', 'hesp', 'kon', 'gemi', 'kosk', 'keleh', 'roj',
+    ];
+    expect(GIFT_ART_IDS.slice(0, shipped.length)).toEqual(shipped);
+    expect(GIFT_ART_IDS.slice(shipped.length)).toEqual(['kawa', 'sahmaran']);
   });
 
   it('ships one square PNG with its transparency for every gift, within the icons’ budget, and nothing else', async () => {
