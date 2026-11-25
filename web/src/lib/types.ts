@@ -1,5 +1,5 @@
 /** API contract types for the web client, matching the phone's (mobile/src/api/types.ts). */
-import type { AccountHold, FeedImage, SupervisionState, LeagueTier, PendingPicture, PictureRejection, PictureReviewState, ProfileLeague, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
+import type { AccountHold, FeedImage, SupervisionState, LeagueTier, PendingPicture, PictureRejection, PictureReviewState, ProfileBadge, ProfileLeague, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
 
 import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding } from '@kurda/shared';
 
@@ -194,6 +194,8 @@ export interface PublicProfile extends ProfileCosmetics {
   frameUrl?: string | null;
   /** The three badges they show (a minor's only to friends). */
   badges?: ShowcaseBadge[];
+  /** Every badge they earned, newest first, under the same rule; absent on an older server. */
+  earnedBadges?: ProfileBadge[];
   achievements?: number;
   /** Which activity sections this profile shows; null when private. */
   sections?: ProfileSections | null;
