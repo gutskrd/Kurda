@@ -35,7 +35,7 @@ export function sendStoredPicture(reply: FastifyReply, file: StoredPicture): Fas
  * /admin, a verified second factor; decisions are audited by the admin audit hook, and every fetch of a picture's bytes
  * writes its own audit entry, since a GET is not otherwise audited. The case-evidence bytes route serves the case view
  * the same way, so evidence shows under the console's image policy. A letter's drawing and its words are a letter read,
- * so the list and the picture record them on the Access log as a case does.
+ * so the list, the picture and the case's file record them on the Access log as a case does.
  */
 export function registerPictureRoutes(
   app: FastifyInstance,
@@ -83,6 +83,9 @@ export function registerPictureRoutes(
       const { key } = req.query as { key: string };
       const file = await cases.evidenceFile(id, key, req.user!.id);
       await audited(req.user!.id, 'GET /admin/moderation/cases/:id/media', id, String(req.id), { key });
+      // a letter's drawing is a letter read, as the case itself is
+      const c = await cases.find(app.db, id);
+      if (c) await access.caseRead(req.user!.id, c, String(req.id));
       return sendStoredPicture(reply, file);
     },
   );

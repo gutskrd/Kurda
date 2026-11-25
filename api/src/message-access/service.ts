@@ -1,9 +1,11 @@
 import type pg from 'pg';
 import {
   CASE_READ_MINUTES,
+  OPEN_CASE_STATUSES,
   SAFETY_REVIEW_NOTE_MAX,
   SAFETY_REVIEW_NOTE_MIN,
   SAFETY_REVIEW_PAGE,
+  SAFETY_REVIEW_READS_PER_HOUR,
   SAFETY_REVIEW_REASON_INFO,
   SAFETY_REVIEWS_PER_DAY,
   stripControlChars,
@@ -30,16 +32,24 @@ import { AppError } from '../plugins/errors.js';
 import type { SecurityRecorder } from '../security/log.js';
 
 /**
- * Staff reading letters and private chats, and the record of it (migration 1751000850000). A moderator reads a
+ * Staff reading letters and private chats, and the record of it (migration 1751000870000). A moderator reads a
  * reported or flagged letter or message in its case, and each reading is recorded here. Anything wider is a safety
- * review: a superadmin opens one account's letters and private chats to one staff member who moderates, read-only, for
- * 24 hours, for a reason from the fixed list with a note, a few times a day at most. The review is the reader's alone,
- * every list and conversation they open is recorded, and nobody is told, the person under review least of all.
+ * review: a superadmin opens one account's letters and private chats to one staff member who moderates and does not
+ * write with the account, read-only, for 24 hours, for a reason from the fixed list with a note, a few times a day at
+ * most. The review is the reader's alone, every list and conversation they open is recorded, and nobody is told, the
+ * person under review least of all.
  *
- * Every grant, end and reading goes on the Access log, in the admin audit trail and in the security log, with which
- * conversation and how many messages, and never a word of what they say. There is deliberately no search across
- * accounts and nothing that exports: a review opens one conversation a page at a time.
+ * Every grant, end and reading goes on the Access log, in the admin audit trail and in the security log (filed under
+ * the staff member), with which kind of conversation and how many messages, and never a word of what they say. There
+ * is deliberately no search across accounts and nothing that exports: a review opens one conversation a page at a time,
+ * at most SAFETY_REVIEW_READS_PER_HOUR pages an hour.
  */
+
+/** Who is asking: superadmins and a review's own reader see its note and case; everyone else its reason alone. */
+export interface Viewer {
+  id: string;
+  superadmin: boolean;
+}
 
 interface ReviewRow {
   id: string;
@@ -57,34 +67,15 @@ interface ReviewRow {
   ended_at: Date | null;
   ended_by: string | null;
   ender_name: string | null;
-  open: boolean;
 }
 
 const REVIEW_SELECT = `SELECT r.*, su.username AS subject_name, rv.username AS reviewer_name, gb.username AS granter_name,
-         eb.username AS ender_name, (r.ended_at IS NULL AND r.expires_at > now()) AS open
+         eb.username AS ender_name
     FROM safety_reviews r
     LEFT JOIN users su ON su.id = r.subject_id
     LEFT JOIN users rv ON rv.id = r.reviewer_id
     LEFT JOIN users gb ON gb.id = r.granted_by
     LEFT JOIN users eb ON eb.id = r.ended_by`;
-
-function toReview(r: ReviewRow, viewerId: string): SafetyReview {
-  return {
-    id: r.id,
-    subject: { id: r.subject_id, username: r.subject_name },
-    reviewer: { id: r.reviewer_id, username: r.reviewer_name },
-    grantedBy: { id: r.granted_by, username: r.granter_name },
-    reason: r.reason,
-    note: r.note,
-    caseId: r.case_id,
-    grantedAt: r.granted_at.toISOString(),
-    expiresAt: r.expires_at.toISOString(),
-    endedAt: r.ended_at?.toISOString() ?? null,
-    endedBy: r.ended_by ? { id: r.ended_by, username: r.ender_name } : null,
-    open: r.open,
-    yours: r.reviewer_id === viewerId,
-  };
-}
 
 /** What one reading records: never the words, only where and how many. */
 interface Reading {
@@ -106,6 +97,8 @@ interface Scope {
   params: unknown[];
 }
 
+type ConversationRef = { kind: ReviewConversationKind; id: string };
+
 const iso = (d: Date | null | undefined): string | null => (d ? d.toISOString() : null);
 
 /** A case is about a letter or a private message when what it holds is one, or a letter's drawing. */
@@ -120,20 +113,64 @@ function caseBasis(source: string): AccessBasis {
   return source === 'report' || source === 'chat_report' ? 'report' : 'flag';
 }
 
+/**
+ * SQL: the groups of the user `user` (a placeholder), with when they joined: those they are in, and those they left but
+ * wrote in (joined NULL). A literal from this file.
+ */
+const groupsOf = (user: string): string => `SELECT g.id, g.name, gm.joined_at FROM group_members gm JOIN groups g ON g.id = gm.group_id WHERE gm.user_id = ${user}
+   UNION ALL
+   SELECT g.id, g.name, NULL::timestamptz FROM groups g
+    WHERE EXISTS (SELECT 1 FROM group_messages w WHERE w.group_id = g.id AND w.sender_id = ${user})
+      AND NOT EXISTS (SELECT 1 FROM group_members gm WHERE gm.group_id = g.id AND gm.user_id = ${user})`;
+
+/**
+ * SQL: a group message `m` the review may show, given when the account joined (`joined`, NULL once they left) and the
+ * account (`user`): what was said from when they joined, or after they left only what they wrote themselves.
+ */
+const GROUP_VISIBLE = (joined: string, user: string): string => `(CASE WHEN ${joined} IS NULL THEN m.sender_id = ${user} ELSE m.created_at >= ${joined} END)`;
+
 export class MessageAccessService {
+  /** when it is now, for whether a review is still open; a seam so tests can stand 24 hours later */
+  private readonly now: () => Date;
+
   constructor(
     private readonly pool: pg.Pool,
-    private readonly deps: { audit: AuditService; securityLog: () => SecurityRecorder },
-  ) {}
+    private readonly deps: { audit: AuditService; securityLog: () => SecurityRecorder; now?: () => Date },
+  ) {
+    this.now = deps.now ?? (() => new Date());
+  }
+
+  private isOpen(r: Pick<ReviewRow, 'ended_at' | 'expires_at'>): boolean {
+    return r.ended_at === null && r.expires_at.getTime() > this.now().getTime();
+  }
+
+  private toReview(r: ReviewRow, viewer: Viewer): SafetyReview {
+    const full = viewer.superadmin || r.reviewer_id === viewer.id;
+    return {
+      id: r.id,
+      subject: { id: r.subject_id, username: r.subject_name },
+      reviewer: { id: r.reviewer_id, username: r.reviewer_name },
+      grantedBy: { id: r.granted_by, username: r.granter_name },
+      reason: r.reason,
+      note: full ? r.note : null,
+      caseId: full ? r.case_id : null,
+      grantedAt: r.granted_at.toISOString(),
+      expiresAt: r.expires_at.toISOString(),
+      endedAt: r.ended_at?.toISOString() ?? null,
+      endedBy: r.ended_by ? { id: r.ended_by, username: r.ender_name } : null,
+      open: this.isOpen(r),
+      yours: r.reviewer_id === viewer.id,
+    };
+  }
 
   // ---- granting and ending -------------------------------------------------------
 
   /**
    * A superadmin opens a safety review of `subjectId` for `reviewerId` (themselves unless named). Refused for one's own
    * account, a child's profile or a guest (who write to nobody), a reader who does not moderate or who writes with the
-   * account, a report-context review without its case or with a case not about the account, a second open review of
-   * the same account for the same reader, and past SAFETY_REVIEWS_PER_DAY in 24 hours. The review, its line on the
-   * Access log and its audit entry are written together or not at all.
+   * account, a report-context review without an open case about the account and a conversation in it, a second open
+   * review of the same account for the same reader, and past SAFETY_REVIEWS_PER_DAY in 24 hours. The review, its line
+   * on the Access log and its audit entry are written together or not at all.
    */
   async grant(granterId: string, subjectId: string, input: GrantSafetyReviewRequest, requestId: string | null = null): Promise<SafetyReview> {
     const note = stripControlChars(input.note).trim();
@@ -161,22 +198,24 @@ export class MessageAccessService {
       if (!r || r.deleted_at || r.banned_at || !hasCapability(r.roles, 'moderation.act')) {
         throw new AppError('REVIEWER_NOT_STAFF', 422, 'the reader must be a staff member who moderates');
       }
-      // nobody reads the conversations they are in themselves: another reader must
-      const { lo, hi } = canonicalPair(subjectId, reviewerId);
-      const involved = await client.query<{ involved: boolean }>(
-        `SELECT EXISTS (SELECT 1 FROM letter_threads WHERE user_lo = $1 AND user_hi = $2)
-             OR EXISTS (SELECT 1 FROM dm_messages WHERE user_lo = $1 AND user_hi = $2)
-             OR EXISTS (SELECT 1 FROM group_members a JOIN group_members b ON b.group_id = a.group_id WHERE a.user_id = $1 AND b.user_id = $2) AS involved`,
-        [lo, hi],
-      );
-      if (involved.rows[0]?.involved) throw new AppError('REVIEWER_INVOLVED', 422, 'the reader writes with this account; another reader must review it');
+      if (await involved(client, subjectId, reviewerId)) {
+        throw new AppError('REVIEWER_INVOLVED', 422, 'the reader writes with this account; another reader must review it');
+      }
 
-      if (input.reason === 'report_context' && !input.caseId) throw new AppError('CASE_REQUIRED', 422, 'name the case that needs more context');
-      if (input.caseId) await this.assertCaseAbout(client, input.caseId, subjectId);
+      if (input.reason === 'report_context') {
+        if (!input.caseId) throw new AppError('CASE_REQUIRED', 422, 'name the case that needs more context');
+        const c = await this.caseAbout(client, input.caseId, subjectId);
+        if (!(OPEN_CASE_STATUSES as readonly string[]).includes(c.status)) throw new AppError('CASE_CLOSED', 422, 'that case is already decided');
+        if ((await caseConversations(client, c, subjectId)).length === 0) {
+          throw new AppError('CASE_NO_CONVERSATION', 422, 'that case is not about a conversation of this account');
+        }
+      } else if (input.caseId) {
+        await this.caseAbout(client, input.caseId, subjectId);
+      }
 
       const open = await client.query<{ id: string; expires_at: Date }>(
-        `SELECT id, expires_at FROM safety_reviews WHERE reviewer_id = $1 AND subject_id = $2 AND ended_at IS NULL AND expires_at > now()`,
-        [reviewerId, subjectId],
+        `SELECT id, expires_at FROM safety_reviews WHERE reviewer_id = $1 AND subject_id = $2 AND ended_at IS NULL AND expires_at > $3`,
+        [reviewerId, subjectId, this.now()],
       );
       if (open.rows[0]) {
         throw new AppError('REVIEW_OPEN', 409, 'this reader already has an open review of this account', {
@@ -195,9 +234,10 @@ export class MessageAccessService {
         });
       }
 
+      // the table sets when it starts and ends (migration 1751000870000), whatever is sent
       const inserted = await client.query<{ id: string; expires_at: Date }>(
-        `INSERT INTO safety_reviews (subject_id, reviewer_id, granted_by, reason, note, case_id, granted_at, expires_at)
-         VALUES ($1, $2, $3, $4, $5, $6, now(), now() + interval '24 hours')
+        `INSERT INTO safety_reviews (subject_id, reviewer_id, granted_by, reason, note, case_id, expires_at)
+         VALUES ($1, $2, $3, $4, $5, $6, now() + interval '24 hours')
          RETURNING id, expires_at`,
         [subjectId, reviewerId, granterId, input.reason, note, input.caseId ?? null],
       );
@@ -215,37 +255,38 @@ export class MessageAccessService {
       return id;
     });
     await this.deps.securityLog().record('messages.review_granted', {
-      userId: subjectId,
-      details: { reviewId: review, reviewerId, reason: input.reason, caseId: input.caseId ?? null },
+      userId: granterId,
+      details: { subjectId, reviewId: review, reviewerId, reason: input.reason },
     });
-    return (await this.find(review, granterId))!;
+    return (await this.find(review, { id: granterId, superadmin: true }))!;
   }
 
   /** A case named by a review must exist and be about the account: its reported person, or one of its reporters. */
-  private async assertCaseAbout(db: Executor, caseId: string, subjectId: string): Promise<void> {
-    const found = await db.query<CaseSourceRow>(`SELECT * FROM moderation_cases WHERE id = $1`, [caseId]);
+  private async caseAbout(db: Executor, caseId: string, subjectId: string): Promise<CaseSourceRow & { status: string }> {
+    const found = await db.query<CaseSourceRow & { status: string }>(`SELECT * FROM moderation_cases WHERE id = $1`, [caseId]);
     const c = found.rows[0];
     if (!c) throw new AppError('NOT_FOUND', 404, 'no such case');
     if (c.subject_user_id !== subjectId && !(await reporterIdsOf(db, c)).includes(subjectId)) {
       throw new AppError('CASE_NOT_ABOUT_ACCOUNT', 422, 'that case is not about this account');
     }
+    return c;
   }
 
   /** Ends a review before its 24 hours are up: its reader or a superadmin may. */
-  async end(reviewId: string, staffId: string, superadmin: boolean, requestId: string | null = null): Promise<SafetyReview> {
+  async end(reviewId: string, viewer: Viewer, requestId: string | null = null): Promise<SafetyReview> {
     const subjectId = await inTransaction(this.pool, async (client) => {
-      const found = await client.query<{ subject_id: string; reviewer_id: string; open: boolean }>(
-        `SELECT subject_id, reviewer_id, (ended_at IS NULL AND expires_at > now()) AS open FROM safety_reviews WHERE id = $1 FOR UPDATE`,
+      const found = await client.query<{ subject_id: string; reviewer_id: string; ended_at: Date | null; expires_at: Date }>(
+        `SELECT subject_id, reviewer_id, ended_at, expires_at FROM safety_reviews WHERE id = $1 FOR UPDATE`,
         [reviewId],
       );
       const r = found.rows[0];
       if (!r) throw new AppError('NOT_FOUND', 404, 'no such safety review');
-      if (r.reviewer_id !== staffId && !superadmin) throw new AppError('FORBIDDEN', 403, 'only its reader or a superadmin can end a safety review');
-      if (!r.open) throw new AppError('REVIEW_ENDED', 409, 'this safety review has already ended');
-      await client.query(`UPDATE safety_reviews SET ended_at = now(), ended_by = $2 WHERE id = $1`, [reviewId, staffId]);
-      await this.write(client, { kind: 'ended', staffId, subjectId: r.subject_id, basis: 'safety_review', reviewId, requestId });
+      if (r.reviewer_id !== viewer.id && !viewer.superadmin) throw new AppError('FORBIDDEN', 403, 'only its reader or a superadmin can end a safety review');
+      if (!this.isOpen(r)) throw new AppError('REVIEW_ENDED', 409, 'this safety review has already ended');
+      await client.query(`UPDATE safety_reviews SET ended_at = now(), ended_by = $2 WHERE id = $1`, [reviewId, viewer.id]);
+      await this.write(client, { kind: 'ended', staffId: viewer.id, subjectId: r.subject_id, basis: 'safety_review', reviewId, requestId });
       await this.deps.audit.record(client, {
-        adminId: staffId,
+        adminId: viewer.id,
         action: 'safety_review.end',
         targetType: 'user',
         targetId: r.subject_id,
@@ -254,38 +295,55 @@ export class MessageAccessService {
       });
       return r.subject_id;
     });
-    await this.deps.securityLog().record('messages.review_ended', { userId: subjectId, details: { reviewId } });
-    return (await this.find(reviewId, staffId))!;
+    await this.deps.securityLog().record('messages.review_ended', { userId: viewer.id, details: { subjectId, reviewId } });
+    return (await this.find(reviewId, viewer))!;
   }
 
-  private async find(reviewId: string, viewerId: string): Promise<SafetyReview | null> {
+  private async find(reviewId: string, viewer: Viewer): Promise<SafetyReview | null> {
     const r = await this.pool.query<ReviewRow>(`${REVIEW_SELECT} WHERE r.id = $1`, [reviewId]);
-    return r.rows[0] ? toReview(r.rows[0], viewerId) : null;
+    return r.rows[0] ? this.toReview(r.rows[0], viewer) : null;
   }
 
-  /** The reviews open now, soonest to end first. Every moderator may see that one is open, so each can find their own. */
-  async openReviews(viewerId: string): Promise<SafetyReview[]> {
-    const r = await this.pool.query<ReviewRow>(`${REVIEW_SELECT} WHERE r.ended_at IS NULL AND r.expires_at > now() ORDER BY r.expires_at, r.id`);
-    return r.rows.map((row) => toReview(row, viewerId));
+  /**
+   * The reviews open now, soonest to end first. Every moderator may see that one is open, so each can find their own;
+   * the note and case only a superadmin and its reader.
+   */
+  async openReviews(viewer: Viewer): Promise<SafetyReview[]> {
+    const r = await this.pool.query<ReviewRow>(`${REVIEW_SELECT} WHERE r.ended_at IS NULL AND r.expires_at > $1 ORDER BY r.expires_at, r.id`, [this.now()]);
+    return r.rows.map((row) => this.toReview(row, viewer));
   }
 
   // ---- reading under a review -------------------------------------------------------
 
-  /** The review, for its reader while it is open: anyone else is told there is none, and once it ends, that it has. */
+  /**
+   * The review, for its reader while it is open and while they still write nothing with the account (checked on every
+   * read, since a reader may start to): anyone else is told there is none, and once it ends, that it has.
+   */
   private async openFor(reviewId: string, readerId: string): Promise<ReviewRow> {
     const r = await this.pool.query<ReviewRow>(`${REVIEW_SELECT} WHERE r.id = $1`, [reviewId]);
     const row = r.rows[0];
     if (!row || row.reviewer_id !== readerId) throw new AppError('NOT_FOUND', 404, 'no such safety review');
-    if (!row.open) throw new AppError('REVIEW_ENDED', 410, 'this safety review has ended');
+    if (!this.isOpen(row)) throw new AppError('REVIEW_ENDED', 410, 'this safety review has ended');
+    if (await involved(this.pool, row.subject_id, readerId)) {
+      throw new AppError('REVIEWER_INVOLVED', 403, 'you write with this account now; another reader must review it');
+    }
     return row;
+  }
+
+  /** The conversations a review opens: all the account's, or for a report that needs more context only its case's. */
+  private async allowed(row: ReviewRow): Promise<ConversationRef[] | null> {
+    if (row.reason !== 'report_context' || !row.case_id) return null;
+    const found = await this.pool.query<CaseSourceRow>(`SELECT * FROM moderation_cases WHERE id = $1`, [row.case_id]);
+    return found.rows[0] ? caseConversations(this.pool, found.rows[0], row.subject_id) : [];
   }
 
   /** What a review can open, with how many messages each holds and when; recorded as a reading, since who someone writes to is private too. */
   async opened(reviewId: string, readerId: string, requestId: string | null = null): Promise<ReviewOpened> {
     const row = await this.openFor(reviewId, readerId);
-    const conversations = await this.conversations(row.subject_id);
+    const allowed = await this.allowed(row);
+    const conversations = (await this.conversations(row.subject_id)).filter((c) => !allowed || allowed.some((a) => a.kind === c.kind && a.id === c.id));
     await this.recordReading({ kind: 'listed', staffId: readerId, subjectId: row.subject_id, basis: 'safety_review', reviewId, requestId });
-    return { review: toReview(row, readerId), conversations };
+    return { review: this.toReview(row, { id: readerId, superadmin: false }), conversations };
   }
 
   private async conversations(subjectId: string): Promise<ReviewConversation[]> {
@@ -315,7 +373,7 @@ export class MessageAccessService {
         [subjectId],
       ),
       this.pool.query<{ id: string; name: string; n: number; first_at: Date | null; last_at: Date | null }>(
-        `WITH theirs AS (${GROUPS_OF})
+        `WITH theirs AS (${groupsOf('$1')})
          SELECT g.id, g.name, count(m.id)::int AS n, min(m.created_at) AS first_at, max(m.created_at) AS last_at
            FROM theirs g LEFT JOIN group_messages m ON m.group_id = g.id AND ${GROUP_VISIBLE('g.joined_at', '$1')}
           GROUP BY g.id, g.name
@@ -346,8 +404,9 @@ export class MessageAccessService {
 
   /**
    * One conversation of the account under review, a page at a time, newest page first and oldest first within it. The
-   * conversation must be the account's own: a correspondence they are in, their own letters not in one, their messages
-   * with one person, or a group they are in (from when they joined) or wrote in (their own messages only).
+   * conversation must be the account's own (a correspondence they are in, their own letters not in one, their messages
+   * with one person, or a group they are in, from when they joined, or wrote in, their own messages only) and one the
+   * review opens; `before` must be one of its messages. A message someone deleted shows that it was, and nothing of it.
    */
   async read(
     reviewId: string,
@@ -359,24 +418,34 @@ export class MessageAccessService {
   ): Promise<ReviewConversationPage> {
     const row = await this.openFor(reviewId, readerId);
     const subjectId = row.subject_id;
+    const allowed = await this.allowed(row);
+    if (allowed && !allowed.some((a) => a.kind === kind && a.id === conversationId)) {
+      throw new AppError('NOT_FOUND', 404, 'that account has no such conversation');
+    }
     const { scope, conversation } = await this.scopeOf(subjectId, kind, conversationId);
     const n = scope.params.length;
+    if (before) {
+      const within = await this.pool.query(`SELECT 1 FROM ${scope.table} m WHERE ${scope.where} AND m.id = $${n + 1}`, [...scope.params, before]);
+      if (!within.rowCount) throw new AppError('NOT_FOUND', 404, 'that message is not in this conversation');
+    }
+    const group = scope.table === 'group_messages';
     const status =
       scope.table === 'letters'
         ? 'm.status'
-        : scope.table === 'group_messages'
-          ? `CASE WHEN m.moderated_at IS NOT NULL THEN 'removed' WHEN m.deleted_at IS NOT NULL THEN 'deleted' END`
+        : group
+          ? `CASE WHEN m.deleted_at IS NOT NULL THEN 'deleted' WHEN m.moderated_at IS NOT NULL THEN 'removed' END`
           : `CASE WHEN m.moderated_at IS NOT NULL THEN 'removed' END`;
+    const body = group ? 'CASE WHEN m.deleted_at IS NULL THEN m.body END' : 'm.body';
     const kindCol = scope.table === 'letters' ? `'letter'` : 'm.kind';
     const decor = scope.table === 'letters' ? 'm.decor' : 'NULL::jsonb';
     const res = await this.pool.query<{
       id: string; sender_id: string | null; username: string | null; kind: string; body: string | null; decor: LetterDecor | null;
       status: string | null; created_at: Date;
     }>(
-      `SELECT m.id, m.sender_id, u.username, ${kindCol} AS kind, m.body, ${decor} AS decor, ${status} AS status, m.created_at
+      `SELECT m.id, m.sender_id, u.username, ${kindCol} AS kind, ${body} AS body, ${decor} AS decor, ${status} AS status, m.created_at
          FROM ${scope.table} m LEFT JOIN users u ON u.id = m.sender_id
         WHERE ${scope.where}
-          ${before ? `AND (m.created_at, m.id) < (SELECT created_at, id FROM ${scope.table} WHERE id = $${n + 1})` : ''}
+          ${before ? `AND (m.created_at, m.id) < (SELECT c.created_at, c.id FROM ${scope.table} c WHERE c.id = $${n + 1})` : ''}
         ORDER BY m.created_at DESC, m.id DESC
         LIMIT ${SAFETY_REVIEW_PAGE + 1}`,
       before ? [...scope.params, before] : scope.params,
@@ -442,7 +511,10 @@ export class MessageAccessService {
         break;
       }
       case 'group': {
-        const g = await this.pool.query<{ name: string; joined_at: Date | null }>(`SELECT name, joined_at FROM (${GROUPS_OF}) g WHERE g.id = $2`, [subjectId, id]);
+        const g = await this.pool.query<{ name: string; joined_at: Date | null }>(`SELECT name, joined_at FROM (${groupsOf('$1')}) g WHERE g.id = $2`, [
+          subjectId,
+          id,
+        ]);
         if (!g.rows[0]) throw notFound();
         scope = { table: 'group_messages', where: `m.group_id = $1 AND ${GROUP_VISIBLE('$3::timestamptz', '$2')}`, params: [id, subjectId, g.rows[0].joined_at] };
         conversation = { kind, id, with: null, title: g.rows[0].name };
@@ -500,15 +572,30 @@ export class MessageAccessService {
       return fresh.rows;
     });
     for (const r of inserted) {
-      await this.deps.securityLog().record('messages.case_read', { userId: r.subject_id, details: { caseId: r.case_id, basis: r.basis } });
+      await this.deps.securityLog().record('messages.case_read', { userId: staffId, details: { subjectId: r.subject_id, caseId: r.case_id, basis: r.basis } });
     }
   }
 
   // ---- the record -----------------------------------------------------------------------
 
-  /** A reading under a review: its line on the Access log and its audit entry together, before anything is shown. */
+  /**
+   * A reading under a review: its line on the Access log and its audit entry together, before anything is shown. A
+   * conversation page past SAFETY_REVIEW_READS_PER_HOUR in an hour is refused here, counted under the reader's own lock,
+   * so it holds whatever the route's limiter knows.
+   */
   private async recordReading(reading: Reading): Promise<void> {
     await inTransaction(this.pool, async (client) => {
+      if (reading.kind === 'read') {
+        await client.query(`SELECT pg_advisory_xact_lock(hashtext('safety-review:reader:' || $1::text))`, [reading.staffId]);
+        const hour = await client.query<{ n: number; wait: number | null }>(
+          `SELECT count(*)::int AS n, ceil(extract(epoch FROM min(at) + interval '1 hour' - now()))::int AS wait
+             FROM message_access_log WHERE staff_id = $1 AND kind = 'read' AND at > now() - interval '1 hour'`,
+          [reading.staffId],
+        );
+        if ((hour.rows[0]?.n ?? 0) >= SAFETY_REVIEW_READS_PER_HOUR) {
+          throw new AppError('READ_LIMIT', 429, `at most ${SAFETY_REVIEW_READS_PER_HOUR} pages an hour`, { retryAfterSec: Math.max(1, hour.rows[0]?.wait ?? 60) });
+        }
+      }
       await this.write(client, reading);
       await this.deps.audit.record(client, {
         adminId: reading.staffId,
@@ -519,9 +606,10 @@ export class MessageAccessService {
         requestId: reading.requestId ?? null,
       });
     });
+    // which kind of conversation and how many, filed under the reader: of the account, its id alone
     await this.deps.securityLog().record('messages.review_read', {
-      userId: reading.subjectId,
-      details: { reviewId: reading.reviewId, conversation: reading.conversation ?? null, messages: reading.messages ?? null },
+      userId: reading.staffId,
+      details: { subjectId: reading.subjectId, reviewId: reading.reviewId, conversation: reading.conversation?.kind ?? null, messages: reading.messages ?? null },
     });
   }
 
@@ -546,18 +634,19 @@ export class MessageAccessService {
 
   /**
    * The Access log for every admin: the reviews open now, then each grant, end and reading, newest first. It says who
-   * opened whose letters or messages, when, why and how many, and which kind of conversation, never with whom.
+   * opened whose letters or messages, when, why and how many, and which kind of conversation, never with whom. Notes
+   * and cases are for superadmins: a case id would tie a reporter's review to the person they reported.
    */
-  async log(viewerId: string, before: string | null, limit = 50): Promise<AccessLogPage> {
+  async log(viewer: Viewer, before: string | null, limit = 50): Promise<AccessLogPage> {
     const size = Math.min(Math.max(limit, 1), 200);
     const res = await this.pool.query<{
       id: string; at: Date; kind: AccessLogKind; staff_id: string; staff_name: string | null; subject_id: string | null; subject_name: string | null;
-      basis: AccessBasis; case_id: string | null; conversation_kind: ReviewConversationKind | null; conversation_id: string | null; messages: number | null;
+      basis: AccessBasis; case_id: string | null; conversation_kind: ReviewConversationKind | null; messages: number | null;
       review_id: string | null; reason: SafetyReviewReason | null; note: string | null; expires_at: Date | null;
       reviewer_id: string | null; reviewer_name: string | null; granted_by: string | null; granter_name: string | null;
     }>(
       `SELECT a.id, a.at, a.kind, a.staff_id, st.username AS staff_name, a.subject_id, su.username AS subject_name, a.basis, a.case_id,
-              a.conversation_kind, a.conversation_id, a.messages, a.review_id, r.reason, r.note, r.expires_at,
+              a.conversation_kind, a.messages, a.review_id, r.reason, r.note, r.expires_at,
               r.reviewer_id, rv.username AS reviewer_name, r.granted_by, gb.username AS granter_name
          FROM message_access_log a
          LEFT JOIN users st ON st.id = a.staff_id
@@ -578,22 +667,22 @@ export class MessageAccessService {
       subject: a.subject_id ? { id: a.subject_id, username: a.subject_name } : null,
       basis: a.basis,
       review:
-        a.review_id && a.reason && a.note !== null && a.expires_at && a.reviewer_id && a.granted_by
+        a.review_id && a.reason && a.expires_at && a.reviewer_id && a.granted_by
           ? {
               id: a.review_id,
               reason: a.reason,
-              note: a.note,
+              note: viewer.superadmin ? a.note : null,
               reviewer: { id: a.reviewer_id, username: a.reviewer_name },
               grantedBy: { id: a.granted_by, username: a.granter_name },
               expiresAt: a.expires_at.toISOString(),
             }
           : null,
-      caseId: a.case_id,
+      caseId: viewer.superadmin ? a.case_id : null,
       conversation: a.conversation_kind ? { kind: a.conversation_kind } : null,
       messages: a.messages,
     }));
     return {
-      open: before ? [] : await this.openReviews(viewerId),
+      open: before ? [] : (await this.openReviews(viewer)).map((r) => (viewer.superadmin ? r : { ...r, note: null, caseId: null })),
       entries,
       nextCursor: entries.length === size ? entries[entries.length - 1]!.id : null,
     };
@@ -601,17 +690,51 @@ export class MessageAccessService {
 }
 
 /**
- * SQL: the groups of the user `$1`, with when they joined: those they are in, and those they left but wrote in (joined
- * NULL). A literal from this file.
+ * Whether `a` and `b` write with each other, in any of the places a review reads: a correspondence, either one's
+ * letter at the other's window, direct messages, or a group both are in, left or wrote in.
  */
-const GROUPS_OF = `SELECT g.id, g.name, gm.joined_at FROM group_members gm JOIN groups g ON g.id = gm.group_id WHERE gm.user_id = $1
-   UNION ALL
-   SELECT g.id, g.name, NULL::timestamptz FROM groups g
-    WHERE EXISTS (SELECT 1 FROM group_messages w WHERE w.group_id = g.id AND w.sender_id = $1)
-      AND NOT EXISTS (SELECT 1 FROM group_members gm WHERE gm.group_id = g.id AND gm.user_id = $1)`;
+async function involved(db: Executor, a: string, b: string): Promise<boolean> {
+  const { lo, hi } = canonicalPair(a, b);
+  const r = await db.query<{ involved: boolean }>(
+    `SELECT EXISTS (SELECT 1 FROM letter_threads WHERE user_lo = $1 AND user_hi = $2)
+         OR EXISTS (SELECT 1 FROM letter_visits v JOIN letters l ON l.id = v.letter_id
+                     WHERE (v.visitor_id = $1 AND l.sender_id = $2) OR (v.visitor_id = $2 AND l.sender_id = $1))
+         OR EXISTS (SELECT 1 FROM dm_messages WHERE user_lo = $1 AND user_hi = $2)
+         OR EXISTS (SELECT 1 FROM (${groupsOf('$1')}) x JOIN (${groupsOf('$2')}) y ON y.id = x.id) AS involved`,
+    [lo, hi],
+  );
+  return r.rows[0]?.involved === true;
+}
 
 /**
- * SQL: a group message `m` the review may show, given when the account joined (`joined`, NULL once they left) and the
- * account (`user`): what was said from when they joined, or after they left only what they wrote themselves.
+ * The conversations of `subjectId` a case is about: the correspondence or their own letter, the direct messages or the
+ * group of its letter or message, when the account is in it. A case about anything else has none.
  */
-const GROUP_VISIBLE = (joined: string, user: string): string => `(CASE WHEN ${joined} IS NULL THEN m.sender_id = ${user} ELSE m.created_at >= ${joined} END)`;
+async function caseConversations(db: Executor, c: Pick<CaseSourceRow, 'target_type' | 'target_id'>, subjectId: string): Promise<ConversationRef[]> {
+  if (!c.target_id) return [];
+  switch (c.target_type) {
+    case 'letter': {
+      const l = await db.query<{ thread_id: string | null; sender_id: string }>(`SELECT thread_id, sender_id FROM letters WHERE id = $1`, [c.target_id]);
+      const letter = l.rows[0];
+      if (!letter) return [];
+      if (letter.thread_id === null) return letter.sender_id === subjectId ? [{ kind: 'birds', id: subjectId }] : [];
+      const t = await db.query(`SELECT 1 FROM letter_threads WHERE id = $1 AND (user_lo = $2 OR user_hi = $2)`, [letter.thread_id, subjectId]);
+      return t.rowCount ? [{ kind: 'letters', id: letter.thread_id }] : [];
+    }
+    case 'dm_message': {
+      const m = await db.query<{ user_lo: string; user_hi: string }>(`SELECT user_lo, user_hi FROM dm_messages WHERE id = $1`, [c.target_id]);
+      const row = m.rows[0];
+      if (!row || (row.user_lo !== subjectId && row.user_hi !== subjectId)) return [];
+      return [{ kind: 'direct', id: row.user_lo === subjectId ? row.user_hi : row.user_lo }];
+    }
+    case 'group_message': {
+      const g = await db.query<{ group_id: string }>(
+        `SELECT m.group_id FROM group_messages m WHERE m.id = $1 AND m.group_id IN (SELECT id FROM (${groupsOf('$2')}) x)`,
+        [c.target_id, subjectId],
+      );
+      return g.rows[0] ? [{ kind: 'group', id: g.rows[0].group_id }] : [];
+    }
+    default:
+      return [];
+  }
+}

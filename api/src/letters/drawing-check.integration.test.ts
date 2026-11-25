@@ -1,7 +1,8 @@
 /**
  * A letter's drawing is checked as a picture before the letter is delivered, against real Postgres with a stub checker
  * told what to find: a clear drawing goes as before, an uncertain one waits for a person (only its writer sees the
- * letter, marked held) and flies once approved, and a child-safety hit refuses the letter.
+ * letter, marked held) and flies once approved, every moderator who reads it is on the Access log, and a child-safety
+ * hit refuses the letter.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -111,6 +112,29 @@ describe.skipIf(!DATABASE_URL)('letter drawings are checked before they fly (int
     });
     const owner = await pool.query<{ data: Record<string, unknown> }>(`SELECT data FROM notifications WHERE user_id = $1 AND data->>'kind' = 'picture_review'`, [a.id]);
     expect(owner.rows[0]!.data).toMatchObject({ outcome: 'approved', surface: 'letter', target: { type: 'letter_thread', id: met.threadId } });
+  });
+
+  it('records each moderator who reads a held letter’s drawing or its words, from the list, the picture or the case', async () => {
+    const [a, b] = [await adult('ra'), await adult('rb')];
+    const [lister, viewer, caseReader] = [await kit.admin('rl', ['moderator']), await kit.admin('rv', ['moderator']), await kit.admin('rc', ['moderator'])];
+    people.push(lister, viewer, caseReader);
+    const met = await meet(a, b);
+    stub.queue({ sexual: 'certain' });
+    expect((await call('POST', `/letters/threads/${met.threadId}`, a.token, { body: 'Binêre!', decor: drawing() })).statusCode).toBe(200);
+    const c = await pool.query<{ id: string; evidence: { mediaKey: string } }>(
+      `SELECT id, evidence FROM moderation_cases WHERE source = 'image_flag' AND subject_user_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      [a.id],
+    );
+    const caseId = c.rows[0]!.id;
+    expect((await call('GET', '/admin/pictures', lister.token)).statusCode).toBe(200);
+    expect((await call('GET', `/admin/pictures/${caseId}/image`, viewer.token)).statusCode).toBe(200);
+    const media = await call('GET', `/admin/moderation/cases/${caseId}/media?key=${encodeURIComponent(c.rows[0]!.evidence.mediaKey)}`, caseReader.token);
+    expect(media.statusCode, media.body).toBe(200);
+    const reads = await pool.query<{ staff_id: string; basis: string; subject_id: string }>(
+      `SELECT staff_id, basis, subject_id FROM message_access_log WHERE kind = 'case' AND case_id = $1 ORDER BY at`,
+      [caseId],
+    );
+    expect(reads.rows).toEqual([lister, viewer, caseReader].map((m) => ({ staff_id: m.id, basis: 'flag', subject_id: a.id })));
   });
 
   it('refuses a letter whose drawing is a possible child-safety hit, with nothing to ask about', async () => {
