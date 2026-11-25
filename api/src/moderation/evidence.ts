@@ -429,9 +429,9 @@ const resolveLetter: Resolver = async (db, targetId, ctx) => {
   const l = r.rows[0];
   if (!l) return { refused: 'not_found' };
   if (l.thread_id === null) {
-    // a bird out there: only somebody it visited has read its letter
+    // a bird out there: only somebody it visited has read its letter (an automatic flag sees it as any feed does)
     const visited =
-      ctx.reporterId !== null &&
+      ctx.reporterId === null ||
       ((await db.query(`SELECT 1 FROM letter_visits WHERE letter_id = $1 AND visitor_id = $2`, [l.id, ctx.reporterId])).rowCount ?? 0) > 0;
     if (!visited) return { refused: 'not_found' };
   } else if (ctx.reporterId !== null && ctx.reporterId !== l.sender_id && ctx.reporterId !== l.recipient_id) return { refused: 'not_found' };

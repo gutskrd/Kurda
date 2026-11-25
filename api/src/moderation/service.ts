@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import { filterText, type FilterResult } from './filter.js';
 import { ReportsService } from './reports-service.js';
+import { CHAT_FLAG_CONTENT, WORDLIST_MODEL } from './sources.js';
 
 export type MessageType = 'dm' | 'group';
 
@@ -14,6 +15,14 @@ export interface OffenseResult {
   count: number;
   mutedUntil: Date | null;
   perm: boolean;
+}
+
+/** A letter or private message the word filter flagged, once it is stored: what its text flag points at. */
+export interface FlaggedMessage {
+  targetType: keyof typeof CHAT_FLAG_CONTENT;
+  id: string;
+  /** the listed words that matched (filter.ts `hits`) */
+  words: readonly string[];
 }
 
 export interface ReportRow {
@@ -29,7 +38,8 @@ export interface ReportRow {
 
 /**
  * Chat moderation: profanity masking on delivery, message reporting with captured context, and repeat-offender
- * auto-mute escalation. The mute is global (enforced by the DM and group send paths).
+ * auto-mute escalation. The mute is global (enforced by the DM and group send paths). A flagged letter or private
+ * message also becomes a text flag, which the queue opens a case for (queue-service.ts), so a moderator sees it.
  */
 export class ModerationService {
   private readonly reports: ReportsService;
@@ -57,8 +67,15 @@ export class ModerationService {
     return row.perm_muted || (row.muted_until !== null && row.muted_until > new Date());
   }
 
-  /** Record a flagged message and apply escalating auto-mute. */
-  async recordOffense(userId: string): Promise<OffenseResult> {
+  /** Record a flagged message and apply escalating auto-mute; a stored letter or message is flagged for a moderator too. */
+  async recordOffense(userId: string, flagged?: FlaggedMessage): Promise<OffenseResult> {
+    if (flagged) {
+      await this.pool.query(
+        `INSERT INTO moderation_flags (surface, content_type, content_ref, author_id, action, top_category, top_score, scores, model_version, matched)
+         VALUES ('chat', $1, $2, $3, 'flag', 'profanity', 1, '{"profanity":1}'::jsonb, $4, $5)`,
+        [CHAT_FLAG_CONTENT[flagged.targetType], flagged.id, userId, WORDLIST_MODEL, [...flagged.words]],
+      );
+    }
     const inc = await this.pool.query<{ offense_count: number }>(
       `INSERT INTO chat_offenses (user_id, offense_count) VALUES ($1, 1)
        ON CONFLICT (user_id) DO UPDATE SET offense_count = chat_offenses.offense_count + 1, updated_at = now()

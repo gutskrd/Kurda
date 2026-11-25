@@ -34,15 +34,19 @@ function collapse(s: string): string {
   return s.replace(/(.)\1+/g, '$1');
 }
 
-function isBadToken(token: string): boolean {
+/** The listed word a token is, as the list folds it, or null. */
+function listedWord(token: string): string | null {
   const n = normalize(token);
-  if (!n) return false;
-  return BADWORDS.has(n) || BADWORDS.has(collapse(n));
+  if (!n) return null;
+  if (BADWORDS.has(n)) return n;
+  const c = collapse(n);
+  return BADWORDS.has(c) ? c : null;
 }
 
 export interface FilterResult {
   masked: string;
   flagged: boolean;
+  /** the listed words that matched, as the list folds them: never the writer's own spelling or anything else they wrote */
   hits: string[];
 }
 
@@ -50,8 +54,9 @@ export interface FilterResult {
 export function filterText(text: string): FilterResult {
   const hits: string[] = [];
   const masked = text.replace(/\S+/g, (token) => {
-    if (isBadToken(token)) {
-      hits.push(normalize(token));
+    const word = listedWord(token);
+    if (word) {
+      if (!hits.includes(word)) hits.push(word);
       return '*'.repeat(Math.max(3, token.length));
     }
     return token;

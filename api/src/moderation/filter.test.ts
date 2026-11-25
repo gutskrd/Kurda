@@ -30,6 +30,10 @@ describe('filterText', () => {
     expect(filterText('sh1t happens').masked).not.toContain('sh1t');
   });
 
+  it('names each listed word once, as the list spells it, never as it was written', () => {
+    expect(filterText('fuuuuck, F.U.C.K and sh1t').hits).toEqual(['fuck', 'shit']);
+  });
+
   it('flags spaced-out evasion even if it cannot cleanly mask it', () => {
     expect(filterText('f u c k').flagged).toBe(true);
   });

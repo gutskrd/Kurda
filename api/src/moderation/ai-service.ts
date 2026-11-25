@@ -108,6 +108,14 @@ export class AiModerationService {
     };
   }
 
+  /**
+   * Points a flag at the content it was about, once that is stored: a direct message is checked before it is sent, and
+   * only a flag that knows its message lets a moderator read it in the case.
+   */
+  async attach(flagId: string, contentRef: string): Promise<void> {
+    await this.pool.query(`UPDATE moderation_flags SET content_ref = $2 WHERE id = $1 AND content_ref IS NULL`, [flagId, contentRef]);
+  }
+
   /** Pending flags oldest-first — the automated feed for the queue. */
   async pending(limit = 50): Promise<PendingFlag[]> {
     const res = await this.pool.query<{
