@@ -59,7 +59,7 @@ const LABELS: Readonly<Record<GiftArtId, string>> = {
   kosk: 'A stone mansion with arches',
   keleh: 'A castle on a hill',
   roj: 'The sun',
-  kawa: 'Kawa’s hammer on an anvil, sparks flying',
+  kawa: 'Kawa’s hammer of Damascus steel on a stone, embers at its foot',
   sahmaran: 'A framed folk painting of Şahmaran, queen of the serpents',
 };
 
