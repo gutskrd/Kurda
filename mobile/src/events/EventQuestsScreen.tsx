@@ -151,6 +151,7 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
                     <Text style={[styles.eventName, { color: colors.textSecondary }]}>{event.name}</Text>
                     {countdown ? <Text style={[styles.countdown, { color: colors.textSecondary }]}>{t('events.endsIn', { time: countdown })}</Text> : null}
                   </View>
+                  {event.zerForMembers ? <Text style={[styles.members, { color: colors.textSecondary }]}>{t('events.membersZer')}</Text> : null}
                   {sortQuests(event.quests).map((q) => (
                     <QuestRow
                       key={q.id}
@@ -283,6 +284,7 @@ const styles = StyleSheet.create({
   noticeTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   noticeText: { fontSize: typography.sizes.text, lineHeight: 20 },
   eventBlock: { gap: spacing.sm },
+  members: { fontSize: typography.sizes.text },
   eventHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   eventName: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textTransform: 'uppercase' },
   countdown: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },

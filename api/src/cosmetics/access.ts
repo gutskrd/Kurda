@@ -147,7 +147,7 @@ export function premiumUntilSql(alias: string): string {
 }
 
 /**
- * SQL: when the user behind `alias` stops having a member's Zêr (the daily Zêr, the members' box, doubled earnings),
+ * SQL: when the user behind `alias` stops having a member's Zêr (the daily Zêr, the members' box, every earned Zêr),
  * read like `premiumUntilSql`. NULL for a child's profile, which a family plan covers for everything but money.
  */
 export function memberZerUntilSql(alias: string): string {

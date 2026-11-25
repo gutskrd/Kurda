@@ -318,11 +318,11 @@ describe('letters by bird', () => {
     const calls = signIn({ 'GET /letters': home({ bird: 2, zer: 120 }) });
     renderApp(<LettersPage />, ['/app/letters']);
     await userEvent.click(await screen.findByRole('button', { name: 'Change bird' }));
-    expect(screen.getByText('A new bird costs 500 Zêr. You have 120 Zêr.')).toBeInTheDocument();
+    expect(screen.getByText('A new bird costs 250 Zêr. You have 120 Zêr.')).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Pink bird, your bird now' })).toBeChecked();
     await userEvent.click(screen.getByRole('radio', { name: 'Green bird' }));
-    expect(screen.getByText('You need 380 more Zêr.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' })).toBeDisabled();
+    expect(screen.getByText('You need 130 more Zêr.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Get this bird · 250 Zêr' })).toBeDisabled();
     await userEvent.click(screen.getByRole('button', { name: 'Keep my bird' }));
     expect(await screen.findByRole('button', { name: 'Write a letter' })).toBeInTheDocument();
     expect(calls.some((c) => c.url.includes('/letters/bird'))).toBe(false);
@@ -339,10 +339,10 @@ describe('letters by bird', () => {
   });
 
   it('pays for a new bird only once another is picked', async () => {
-    const calls = signIn({ 'GET /letters': home({ bird: 2, zer: 900 }), 'POST /letters/bird': home({ bird: 3, zer: 400 }) });
+    const calls = signIn({ 'GET /letters': home({ bird: 2, zer: 900 }), 'POST /letters/bird': home({ bird: 3, zer: 650 }) });
     renderApp(<LettersPage />, ['/app/letters']);
     await userEvent.click(await screen.findByRole('button', { name: 'Change bird' }));
-    const buy = screen.getByRole('button', { name: 'Get this bird · 500 Zêr' });
+    const buy = screen.getByRole('button', { name: 'Get this bird · 250 Zêr' });
     expect(buy).toBeDisabled();
     await userEvent.click(screen.getByRole('radio', { name: 'Green bird' }));
     await userEvent.click(buy);
@@ -356,7 +356,7 @@ describe('letters by bird', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Change bird' }));
     await userEvent.click(screen.getByRole('radio', { name: 'Green bird' }));
     const before = reads(calls).length;
-    await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 250 Zêr' }));
     expect(await screen.findByText('Your bird is already out with a letter.')).toBeInTheDocument();
     await waitFor(() => expect(reads(calls).length).toBeGreaterThan(before));
   });

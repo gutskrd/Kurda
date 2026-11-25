@@ -571,7 +571,7 @@ describe('a shared win', () => {
   it('wears the postcard of its kind, and says what was done', () => {
     const url = 'https://hevalo.app/win/lesson';
     const tags = head(winHead({ kind: 'lesson' }, url));
-    expect(tags).toContain('<meta property="og:title" content="One more Kurdish lesson done" />');
+    expect(tags).toContain('<meta property="og:title" content="Just finished a Kurdish lesson! Come learn with me" />');
     expect(tags).toContain('<meta property="og:image" content="https://hevalo.app/share/lesson.png" />');
     expect(tags).toContain('<meta property="og:image:width" content="1200" />');
     expect(tags).toContain('<meta property="og:image:height" content="630" />');
@@ -582,37 +582,55 @@ describe('a shared win', () => {
 
   it('says a streak’s days and a league’s own name, on the card that has them', () => {
     const streak = head(winHead({ kind: 'streak', days: 30 }, 'https://hevalo.app/win/streak/30'));
-    expect(streak).toContain('content="30 days of Kurdish in a row"');
+    expect(streak).toContain('content="30 days of Kurdish in a row, and still going!"');
     expect(streak).toContain('https://hevalo.app/share/streak-30.png');
     const league = head(winHead({ kind: 'league', tier: 'cem' }, 'https://hevalo.app/win/league/cem'));
-    expect(league).toContain('content="A good week in the Çem League"');
+    expect(league).toContain('content="A big week in the Çem League!"');
     expect(league).toContain('https://hevalo.app/share/league-cem.png');
   });
 
   it('says less where there is less to say: no days, one day, a streak with no card of its own, no league', () => {
     for (const days of [null, 1]) {
       const tags = head(winHead({ kind: 'streak', days }, 'https://hevalo.app/win/streak'));
-      expect(tags, String(days)).toContain('content="A Kurdish streak, kept alive"');
+      expect(tags, String(days)).toContain('content="A Kurdish streak, still burning!"');
       expect(tags, String(days)).toContain('https://hevalo.app/share/streak.png');
     }
     // 31 days are said, and drawn with the fire alone: only the days a streak is shared on have their figures drawn.
     const odd = head(winHead({ kind: 'streak', days: 31 }, 'https://hevalo.app/win/streak/31'));
-    expect(odd).toContain('content="31 days of Kurdish in a row"');
+    expect(odd).toContain('content="31 days of Kurdish in a row, and still going!"');
     expect(odd).toContain('https://hevalo.app/share/streak.png');
     const league = head(winHead({ kind: 'league', tier: null }, 'https://hevalo.app/win/league'));
-    expect(league).toContain('content="A good week in the league"');
+    expect(league).toContain('content="A big week in the league!"');
     expect(league).toContain('https://hevalo.app/share/league.png');
   });
 
-  it('names the word game and not how it went: the same link is under a game that was lost', () => {
-    const tags = head(winHead({ kind: 'peyvok' }, 'https://hevalo.app/win/peyvok'));
+  it('tells how the word game went, with its score, and asks the friend to try it', () => {
+    const solved = head(winHead({ kind: 'peyvok', result: { tries: 4, of: 6, practice: false } }, 'https://hevalo.app/win/peyvok/4-6?l=en', 'en'));
+    expect(solved).toContain('<meta property="og:title" content="Solved today’s Peyvok in 4/6! Can you beat it?" />');
+    expect(solved).toContain('<meta property="og:description" content="Six tries to find the day’s Kurdish word. Play it on Hevalo." />');
+    expect(solved).toContain('<meta property="og:image" content="https://hevalo.app/share/peyvok.png" />');
+    const lost = head(winHead({ kind: 'peyvok', result: { tries: null, of: 6, practice: false } }, 'https://hevalo.app/win/peyvok/x-6'));
+    expect(lost).toContain('content="Today’s Peyvok won this round. Can you crack it?"');
+  });
+
+  it('names only the word game where its link does not say how it went', () => {
+    const tags = head(winHead({ kind: 'peyvok', result: null }, 'https://hevalo.app/win/peyvok'));
     expect(tags).toContain('content="Peyvok: the day’s Kurdish word"');
     expect(tags).not.toMatch(/solved|won|\d\/6/i);
   });
 
+  it('is written in the language the link names', () => {
+    const ku = head(winHead({ kind: 'peyvok', result: { tries: 4, of: 6, practice: false } }, 'https://hevalo.app/win/peyvok/4-6?l=ku', 'ku'));
+    expect(ku).toContain('<meta property="og:title" content="Min Peyvoka îro bi 4/6 çareser kir! Tu dikarî baştir bikî?" />');
+    expect(ku).toContain('<meta property="og:description" content="Di şeş ceribandinan de peyva kurdî ya rojê bibîne. Li ser Hevalo bilîze." />');
+    expect(ku).toContain('<title>Min Peyvoka îro bi 4/6 çareser kir! Tu dikarî baştir bikî?</title>');
+    const ckb = head(winHead({ kind: 'league', tier: 'cem' }, 'https://hevalo.app/win/league/cem?l=ckb', 'ckb'));
+    expect(ckb).toContain('content="هەفتەیەکی گەورە لە لیگی چەم!"');
+  });
+
   it('has a title and a line for every win, short enough to be shown whole', () => {
     for (const win of winCards()) {
-      const tags = head(winHead(win, winLinkUrl('https://hevalo.app', win)));
+      const tags = head(winHead(win, winLinkUrl('https://hevalo.app', win, 'en'), 'en'));
       const title = /<meta property="og:title" content="([^"]*)"/.exec(tags)?.[1] ?? '';
       const line = /<meta property="og:description" content="([^"]*)"/.exec(tags)?.[1] ?? '';
       expect(title.length, winCardName(win)).toBeGreaterThan(8);
@@ -694,14 +712,34 @@ describe('a shared win', () => {
       expect(tags).toContain('<link rel="canonical" href="https://hevalo.app/win/streak/30" />');
     });
 
+    it('writes the card in the language the link names, and keeps that language in the address the card points to', async () => {
+      vi.stubGlobal('HTMLRewriter', Rewriter);
+      const tags = await (await get('/win/peyvok/4-6?l=ku')).text();
+      expect(tags).toContain('<meta property="og:title" content="Min Peyvoka îro bi 4/6 çareser kir! Tu dikarî baştir bikî?" />');
+      expect(tags).toContain('<link rel="canonical" href="https://hevalo.app/win/peyvok/4-6?l=ku" />');
+      expect(tags).toContain('<meta property="og:url" content="https://hevalo.app/win/peyvok/4-6?l=ku" />');
+    });
+
+    it('writes the card in English for a link that names no language, or one the app does not speak', async () => {
+      vi.stubGlobal('HTMLRewriter', Rewriter);
+      for (const path of ['/win/peyvok/x-6', '/win/peyvok/x-6?l=xx', '/win/peyvok/x-6?l=%22%3E%3Cscript%3E']) {
+        const tags = await (await get(path)).text();
+        expect(tags, path).toContain('<meta property="og:title" content="Today’s Peyvok won this round. Can you crack it?" />');
+        expect(tags, path).toContain('<link rel="canonical" href="https://hevalo.app/win/peyvok/x-6" />');
+        expect(tags, path).not.toMatch(/<script|\?l=/);
+      }
+    });
+
     it('calls a win by its own address, whatever was added to it or mistyped after it', async () => {
       vi.stubGlobal('HTMLRewriter', Rewriter);
       for (const [path, canonical] of [
         ['/win/lesson?ref=chat', '/win/lesson'],
+        ['/win/lesson?ref=chat&l=de', '/win/lesson?l=de'],
         ['/win/lesson/', '/win/lesson'],
         ['/win/streak/many', '/win/streak'],
         ['/win/league/gold', '/win/league'],
         ['/win/badge/anything', '/win/badge'],
+        ['/win/peyvok/7-6', '/win/peyvok'],
       ] as const) {
         const tags = await (await get(path)).text();
         expect(tags, path).toContain(`<link rel="canonical" href="https://hevalo.app${canonical}" />`);

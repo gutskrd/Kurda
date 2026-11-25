@@ -45,6 +45,20 @@ Created from the list that comes with the purchase build (the plans and Zêr pac
 [`../money/hevalo-plus.md`](../money/hevalo-plus.md)). The Paid Apps agreement, with bank and tax details, must be
 active first (`launch.md`, section 1).
 
+| Product | Type | Reference id | Price |
+|---|---|---|---|
+| Hevalo+ monthly | auto-renewing subscription | `app.hevalo.plus.monthly` | €3.99 (first month €0.99) |
+| Hevalo+ yearly | auto-renewing subscription | `app.hevalo.plus.yearly` | €29.99 |
+| Family monthly, up to 6 people | auto-renewing subscription | `app.hevalo.family.monthly` | €6.99 |
+| Family yearly, up to 6 people | auto-renewing subscription | `app.hevalo.family.yearly` | €59.99 |
+| 100 Zêr | consumable | `app.hevalo.zer.100` | €0.99 |
+| 500 Zêr | consumable | `app.hevalo.zer.500` | €4.99 |
+| 1,000 Zêr + 100 bonus | consumable | `app.hevalo.zer.1100` | €9.99 |
+| 2,000 Zêr + 400 bonus | consumable | `app.hevalo.zer.2400` | €19.99 |
+| 5,000 Zêr + 1,500 bonus | consumable | `app.hevalo.zer.6500` | €49.99 |
+
+100 Zêr is one euro, or one dollar in the US store, at the same price points.
+
 ### App Review Information
 
 - Keep the two demo accounts, and add to demo account 1 a child profile, with the family PIN written in the notes.

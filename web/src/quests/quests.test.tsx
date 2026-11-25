@@ -68,7 +68,8 @@ describe('a chest', () => {
     );
   }
 
-  const opened = (questId: string, amount = 12, balance = 1252) => jsonResponse(200, { questId, tier: 'common', currency: 'zer', amount, balance });
+  const opened = (questId: string, amount = 12, balance = 1252, earnsZer = true) =>
+    jsonResponse(200, { questId, tier: 'common', currency: 'zer', amount, balance, earnsZer });
 
   function open(chests: ChestToOpen[] = [{ id: '2026-10-29:streak', chest: 'common' }]) {
     const onOpened = vi.fn();
@@ -104,6 +105,16 @@ describe('a chest', () => {
     expect(go).toHaveFocus();
     await userEvent.click(go);
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('says once that Zêr in chests is a members’ perk to someone who does not earn it, and counts none', async () => {
+    serve((id) => opened(id, 0, 40, false));
+    open();
+    const dialog = screen.getByRole('dialog', { name: 'Common chest' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Open chest' }));
+    expect(await within(dialog).findByText('Zêr in chests comes with Hevalo+.')).toBeInTheDocument();
+    expect(within(dialog).queryByText(/\+0 Zêr/)).toBeNull();
+    expect(within(dialog).queryByText(/You have 40 Zêr/)).toBeNull();
   });
 
   it('goes on to the next chest waiting, and then on', async () => {

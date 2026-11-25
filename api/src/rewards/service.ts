@@ -95,6 +95,7 @@ export class DailyRewardService {
         amount: status.reward,
         reason: 'daily_reward',
         idempotencyKey: `daily:${userId}:${today}`,
+        now,
       });
       await client.query(
         `UPDATE daily_rewards SET cycle_day = $2, last_claim_on = $3, updated_at = now() WHERE user_id = $1`,

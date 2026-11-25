@@ -48,6 +48,8 @@ describe.skipIf(!DATABASE_URL)('the economy under concurrent requests (integrati
   const people: TestLearner[] = [];
   const learner = async (tag: string) => {
     const who = await makeLearner(pool, `ecc${tag}${suffix}`);
+    // only members earn Zêr, and what is under test is that they are paid once
+    await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [who.id]);
     people.push(who);
     return who;
   };

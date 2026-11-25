@@ -1,7 +1,7 @@
 /**
- * Daily quests: three small things to do today, each paying a chest of Zêr. They pay for learning only (a lesson, right
- * answers, the streak kept), never for spending, watching or inviting. The server picks and counts them; these are the
- * shapes it answers with, read alike by both apps.
+ * Daily quests: three small things to do today, each with a chest that holds Zêr for a Hevalo+ member. They pay for
+ * learning only (a lesson, right answers, the streak kept), never for spending, watching or inviting. The server picks
+ * and counts them; these are the shapes it answers with, read alike by both apps.
  */
 
 /**
@@ -63,6 +63,8 @@ export interface ChestOpening {
   amount: number;
   /** the learner's Zêr afterwards */
   balance: number;
+  /** whether this learner earns Zêr at all; only Hevalo+ members do, so anyone else's chest holds none */
+  earnsZer: boolean;
 }
 
 /** One quest as a list shows it: where its bar starts (`from`) and stands (`to`). */

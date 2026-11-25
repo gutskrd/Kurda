@@ -622,7 +622,7 @@ export const es: Catalogue = {
   'games.race.time': 'Tiempo',
   'games.race.again': 'Correr otra vez',
   'games.race.noPasting': 'Nada de pegar: esto se escribe.',
-  'games.cta.body': 'Crea una cuenta gratuita para jugar, ganar Zêr y subir en las clasificaciones de Hevalo.',
+  'games.cta.body': 'Crea una cuenta gratuita para jugar y subir en las clasificaciones de Hevalo.',
   'games.wordle.emptyCell': 'vacía',
   // ---- web-race-rating: the race's keyboard, Peyvok's keys, the rating box ----
   'games.race.textIn': 'Texto en',
@@ -2230,21 +2230,20 @@ export const es: Catalogue = {
   'share.sendFailed': 'Ese mensaje no se envió. Inténtalo de nuevo.',
   'share.signInToSend': 'Inicia sesión para enviárselo a un amigo.',
 
-  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
-  'share.win.lesson': 'He terminado la lección de kurdo «{title}» en Hevalo.',
-  'share.win.lessonPlain': 'He terminado una lección de kurdo en Hevalo.',
-  'share.win.streak': '{count} días seguidos de kurdo.',
-  'share.win.badge': 'He conseguido la insignia «{badge}» en Hevalo.',
-  'share.win.leagueUp': 'He subido a la Liga {tier} en Hevalo.',
-  'share.win.leaguePlace': 'He quedado en el puesto {rank} de la Liga {tier} en Hevalo.',
+  /* a win sent to somebody outside Hevalo: one warm line in the sharer's own voice telling the news and asking them along, with nothing in it that names the sharer; a streak's is only ever said of a week or more, and the word game names its difficulty only when it was hard */
+  'share.win.lesson': '¡Mira, acabo de terminar la lección de kurdo «{title}»! Ven a aprender conmigo en Hevalo',
+  'share.win.lessonPlain': '¡Mira, acabo de terminar una lección de kurdo! Ven a aprender conmigo en Hevalo',
+  'share.win.streak': '¡{count} días seguidos de kurdo y no pienso parar! Únete a mí en Hevalo',
+  'share.win.badge': '¡Acabo de conseguir la insignia «{badge}» en Hevalo!',
+  'share.win.leagueUp': '¡Acabo de subir a la Liga {tier} en Hevalo!',
+  'share.win.leaguePlace': '¡Esta semana he quedado en el puesto {rank} de la Liga {tier}!',
+  'share.win.peyvok': '¡Mira, acabo de resolver el Peyvok de hoy en {score}! ¿Me superas?',
+  'share.win.peyvokHard': '¡Mira, acabo de resolver el Peyvok de hoy en {score} en modo difícil! ¿Me superas?',
+  'share.win.peyvokLost': 'El Peyvok de hoy ha podido conmigo… ¿lo resuelves tú?',
+  'share.win.peyvokPractice': '¡Mira, acabo de resolver un Peyvok en {score}! ¿Me superas?',
+  'share.win.peyvokPracticeHard': '¡Mira, acabo de resolver un Peyvok en {score} en modo difícil! ¿Me superas?',
+  'share.win.peyvokPracticeLost': 'Este Peyvok ha podido conmigo… ¿lo resuelves tú?',
   'win.kicker': 'Una postal de Hevalo',
-  'win.lesson': 'Otra lección terminada',
-  'win.streak': '{count} días seguidos',
-  'win.streakPlain': 'Una racha que sigue viva',
-  'win.badge': 'Una insignia nueva',
-  'win.league': 'Una buena semana en la {league}',
-  'win.leaguePlain': 'Una buena semana en la liga',
-  'win.body': 'Alguien que conoces aprende kurdo aquí, unos minutos cada día. Anímate tú también.',
   'win.picture': 'Una postal: Hamo y Hevalo en una colina, y un pájaro que se aleja volando con una carta.',
 
   /* putting somebody else's post on your own profile */
@@ -3406,11 +3405,11 @@ export const es: Catalogue = {
   'landing.learn.point3': 'El repaso te devuelve lo que has respondido, tras intervalos que crecen mientras lo sigas recordando.',
   'landing.learn.point4': 'XP por cada lección, y una racha por cada día que terminas una lección o un repaso, o resuelves el Peyvok diario.',
   'landing.progress.title': 'Pequeñas recompensas por ser constante.',
-  'landing.progress.lead': 'Las lecciones, las historias y los juegos en línea con amigos dan XP, y una liga semanal los clasifica si te unes a una. Aprender cada día te da Zêr, las monedas propias de Hevalo, para gastar en tu perfil o en un regalo para un amigo.',
+  'landing.progress.lead': 'Las lecciones, las historias y los juegos en línea con amigos dan XP, y una liga semanal los clasifica si te unes a una. Los miembros de Hevalo+ también ganan Zêr, las monedas propias de Hevalo, por aprender cada día, para gastar en su perfil o en un regalo para un amigo.',
   'landing.progress.learn': 'Aprende',
   'landing.progress.learnBody': 'Las lecciones, las historias y los juegos en línea con amigos dan XP.',
   'landing.progress.earn': 'Gana',
-  'landing.progress.earnBody': 'Termina una lección o un repaso cada día para ganar Zêr. El séptimo día es el que más da.',
+  'landing.progress.earnBody': 'Los miembros de Hevalo+ ganan Zêr cada día que terminan una lección o un repaso. El séptimo día es el que más da.',
   'landing.progress.customize': 'Personaliza',
   'landing.progress.customizeBody': 'Gástalo en fondos e iconos para tu perfil, o en un regalo para un amigo.',
   'landing.progress.play': 'Juega',
@@ -3512,7 +3511,7 @@ export const es: Catalogue = {
   'teach.rewards.does3': 'Las rachas perdonan. Cada cinco lecciones o repasos que terminas te dan un protector de racha, que cubre un día perdido; puedes guardar uno a la vez. Tu racha más larga y tus días de aprendizaje se quedan en tu perfil cuando una racha termina.',
   'teach.rewards.does4': 'Las ligas semanales son opcionales. Puedes salir de ellas en Ajustes, y tu XP, tu racha y tu progreso cuentan igual en ambos casos.',
   'teach.rewards.does5':
-    'El Zêr se consigue con las misiones diarias, tu árbol, las metas de tu racha, las victorias contra otras personas y los eventos, nunca por repetir una lección.',
+    'Solo los miembros de Hevalo+ ganan Zêr: con las misiones diarias, su árbol, las metas de su racha, las victorias contra otras personas y los eventos, nunca por repetir una lección.',
   'teach.younger.title': 'Más seguro para los más jóvenes',
   'teach.younger.found1': 'Investigadores que estudiaron las apps usadas por 160 niños de 3 a 5 años encontraron diseño manipulador en la mayoría: presión de tiempo, señuelos y personajes que presionan al niño. Solo una de cada cinco no tenía nada de eso.',
   'teach.younger.found2': 'Una revisión sobre cómo aprenden los niños con apps encontró que aprenden mejor cuando una app les hace pensar y no solo tocar, los mantiene atentos en lugar de distraerlos, conecta con su vida e incluye a otras personas.',
@@ -3546,6 +3545,8 @@ export const es: Catalogue = {
   'privacy.safety.title': 'Seguridad',
   'privacy.safety.body':
     'Las publicaciones y las imágenes pueden revisarse de forma automática y por moderadores para evitar abusos y contenido ilegal. Cada imagen se revisa antes de que nadie más la vea: de forma automática, mediante un servicio de IA que trabaja para nosotros y que solo recibe la imagen, nunca quién eres; y por una persona cuando la revisión no está segura. Una imagen rechazada se guarda en privado hasta seis meses, para que puedas pedir que se revise de nuevo, y después se borra. Lo que pueda dañar a un menor se guarda como prueba durante el tiempo que exija la ley.',
+  'privacy.safety.messages':
+    'Nuestro equipo de seguridad solo puede leer una carta o un mensaje privado cuando alguien de la conversación lo denuncia, cuando una revisión automática de seguridad lo marca o por un motivo concreto de seguridad o legal, como un menor en peligro o una petición de las autoridades. Cada vez que nuestro equipo abre una carta o un mensaje, queda registrado. Las cartas y los mensajes nunca se leen para nada más, y nunca para publicidad.',
   'privacy.safety.returns':
     'Para que quienes han sido expulsados no puedan volver sin más, Hevalo guarda datos cifrados con hash de la cuenta, el inicio de sesión y los dispositivos de una persona expulsada o suspendida, y compara con ellos las cuentas y los inicios de sesión nuevos. Una dirección de internet por sí sola nunca basta, porque muchas personas pueden compartir una, y cuando una coincidencia no está clara, decide una persona. Estos datos se guardan solo mientras dura la expulsión o la suspensión, aunque se elimine la cuenta; los registros de inicio de sesión y de dispositivos de los que proceden se guardan durante los plazos indicados en «Cuánto tiempo lo guardamos». Aunque tu cuenta esté suspendida, puedes descargar una copia de tus datos o eliminar tu cuenta desde la pantalla que ves al iniciar sesión.',
   'privacy.children.title':
@@ -3570,7 +3571,7 @@ export const es: Catalogue = {
   'privacy.retention.title':
     'Cuánto tiempo lo guardamos',
   'privacy.retention.body':
-    'Tu cuenta y lo que añades a ella se guardan hasta que elimines ese contenido o tu cuenta. Eliminar tu cuenta empieza con un periodo de gracia de 14 días; si vuelves a iniciar sesión durante ese tiempo, se cancela. Después se borran tus datos personales y lo que publicaste, y solo quedan un historial de aprendizaje anónimo y los registros de moderación. Los registros de inicio de sesión se guardan 90 días, o un año si hay algo sospechoso, y la dirección de internet que contienen, 30 días; un dispositivo desde el que inicias sesión se recuerda hasta 180 días después de su último inicio de sesión. Una imagen rechazada se guarda en privado hasta seis meses. Los perfiles infantiles siguen las reglas de «Menores». Lo que queda en las copias de seguridad de nuestra empresa de alojamiento se sobrescribe en un plazo de 7 días.',
+    'Tu cuenta y lo que añades a ella se guardan hasta que elimines ese contenido o tu cuenta. Eliminar tu cuenta empieza con un periodo de gracia de 14 días; si vuelves a iniciar sesión durante ese tiempo, se cancela. Después se borran tus datos personales y lo que publicaste, y solo quedan un historial de aprendizaje anónimo y los registros de moderación. Los registros de inicio de sesión se guardan 90 días, o un año si hay algo sospechoso, y la dirección de internet que contienen, 30 días; un dispositivo desde el que inicias sesión se recuerda hasta 180 días después de su último inicio de sesión. Una imagen rechazada se guarda en privado hasta seis meses. Una carta o un mensaje que una revisión automática de seguridad marca se guarda con su caso hasta un año después de que se decida, o hasta que se borre tu cuenta si eso ocurre antes. Los perfiles infantiles siguen las reglas de «Menores». Lo que queda en las copias de seguridad de nuestra empresa de alojamiento se sobrescribe en un plazo de 7 días.',
   'privacy.control.title':
     'Tus derechos y opciones',
   'privacy.control.body':
@@ -3610,7 +3611,7 @@ export const es: Catalogue = {
   'faq.what.q': '¿Qué es Hevalo?',
   'faq.what.a': 'Un lugar para aprender kurdo con otras personas. Aprendes palabras en juegos, compites con amigos por la misma palabra, subes en una liga semanal y lees lo que escribe la comunidad. Primero, kurmanji.',
   'faq.free.q': '¿Es gratis?',
-  'faq.free.a': 'Sí. En el navegador nada cuesta dinero. El Zêr, la moneda propia de Hevalo, se consigue con la recompensa diaria, las misiones diarias y los eventos, y se gasta en la tienda.',
+  'faq.free.a': 'Sí. En el navegador nada cuesta dinero. El Zêr, la moneda propia de Hevalo, lo ganan los miembros de Hevalo+ con la recompensa diaria, las misiones diarias y los eventos, y se gasta en la tienda.',
   'faq.kurdish.q': '¿Qué kurdo enseña Hevalo?',
   'faq.kurdish.a': 'Primero kurmanji: el primer curso lo enseña en alfabeto latino. Peyvên Hevserwa, el juego de rimas, también se puede jugar en soranî, toda la interfaz está en soranî y los cursos en más variedades del kurdo llegarán después.',
   'faq.account.q': '¿Necesito una cuenta?',
@@ -4295,6 +4296,7 @@ export const es: Catalogue = {
   'events.noneBody': 'Los eventos llegan unas cuantas veces al año, cada uno con sus propias misiones y recompensas. Cuando empiece uno, aparecerá en Aprender.',
   'events.someMissing': 'Algunos eventos no se han podido cargar.',
   'events.reward': 'Recompensa:',
+  'events.membersZer': 'El Zêr de los eventos viene con Hevalo+.',
   'events.claim': 'Reclamar',
   'events.claimed': 'Reclamado',
   'events.claimFailed': 'Esta recompensa no se puede reclamar ahora mismo.',
@@ -4319,6 +4321,7 @@ export const es: Catalogue = {
   'quests.tapToOpen': '¡Toca para abrir!',
   'quests.opening': 'Abriendo…',
   'quests.reward': '+{amount} Zêr',
+  'quests.membersZer': 'El Zêr de los cofres viene con Hevalo+.',
   'quests.got': '+{amount} Zêr. Ahora tienes {balance} Zêr.',
   'quests.nextChest': 'Siguiente cofre',
   'quests.alreadyOpen': 'Este cofre ya está abierto y sus Zêr son tuyos.',

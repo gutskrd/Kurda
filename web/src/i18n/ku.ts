@@ -626,7 +626,7 @@ export const ku: Catalogue = {
   'games.race.time': 'Dem',
   'games.race.again': 'Dîsa pêşbaziyê bike',
   'games.race.noPasting': 'Pêvekirin tune — vê yekê tu bi xwe binivîse.',
-  'games.cta.body': 'Ji bo lîstinê, bidestxistina Zêr û hilkişîna rêzbendiyê li seranserê Hevalo hesabekî bêpere çêke.',
+  'games.cta.body': 'Ji bo lîstinê û hilkişîna rêzbendiyê li seranserê Hevalo hesabekî bêpere çêke.',
   'games.wordle.emptyCell': 'vala',
   // ---- web-race-rating: the race's keyboard, Peyvok's keys, the rating box ----
   'games.race.textIn': 'Nivîs bi',
@@ -2234,21 +2234,20 @@ export const ku: Catalogue = {
   'share.sendFailed': 'Ew peyam nehat şandin. Dîsa biceribîne.',
   'share.signInToSend': 'Têkeve da ku vê ji hevalekî re bişînî.',
 
-  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
-  'share.win.lesson': 'Min li ser Hevalo waneyeke kurdî qedand: “{title}”.',
-  'share.win.lessonPlain': 'Min li ser Hevalo waneyeke kurdî qedand.',
-  'share.win.streak': '{count} rojên li pey hev bi kurdî.',
-  'share.win.badge': 'Min li ser Hevalo nîşana “{badge}” bi dest xist.',
-  'share.win.leagueUp': 'Ez li ser Hevalo derbasî Lîga {tier} bûm.',
-  'share.win.leaguePlace': 'Ez li ser Hevalo di Lîga {tier} de bûm #{rank}.',
+  /* a win sent to somebody outside Hevalo: one warm line in the sharer's own voice telling the news and asking them along, with nothing in it that names the sharer; a streak's is only ever said of a week or more, and the word game names its difficulty only when it was hard */
+  'share.win.lesson': 'Binêre, min nû waneya kurdî “{title}” qedand! Were, li ser Hevalo bi min re hîn bibe',
+  'share.win.lessonPlain': 'Binêre, min nû waneyeke kurdî qedand! Were, li ser Hevalo bi min re hîn bibe',
+  'share.win.streak': '{count} roj li pey hev bi kurdî, û ez nasekinim! Li ser Hevalo tevlî min bibe',
+  'share.win.badge': 'Min nû li ser Hevalo nîşana “{badge}” bi dest xist!',
+  'share.win.leagueUp': 'Ez nû li ser Hevalo derbasî Lîga {tier} bûm!',
+  'share.win.leaguePlace': 'Vê hefteyê ez di Lîga {tier} de bûm #{rank}!',
+  'share.win.peyvok': 'Binêre, min nû Peyvoka îro bi {score} çareser kir! Tu dikarî min derbas bikî?',
+  'share.win.peyvokHard': 'Binêre, min nû Peyvoka îro di asta dijwar de bi {score} çareser kir! Tu dikarî min derbas bikî?',
+  'share.win.peyvokLost': 'Vê carê Peyvoka îro ez têk birim… tu dikarî wê çareser bikî?',
+  'share.win.peyvokPractice': 'Binêre, min nû Peyvokek bi {score} çareser kir! Tu dikarî min derbas bikî?',
+  'share.win.peyvokPracticeHard': 'Binêre, min nû Peyvokek di asta dijwar de bi {score} çareser kir! Tu dikarî min derbas bikî?',
+  'share.win.peyvokPracticeLost': 'Vê Peyvokê ez têk birim… tu dikarî wê çareser bikî?',
   'win.kicker': 'Kartpostalek ji Hevalo',
-  'win.lesson': 'Waneyeke din qediya',
-  'win.streak': '{count} roj li pey hev',
-  'win.streakPlain': 'Rêze nehat birîn',
-  'win.badge': 'Nîşaneke nû',
-  'win.league': 'Hefteyeke xweş di {league} de',
-  'win.leaguePlain': 'Hefteyeke xweş di lîgê de',
-  'win.body': 'Yekî ku tu nas dikî li vir hînî kurdî dibe, rojê çend deqeyan. Tu jî were.',
   'win.picture': 'Kartpostalek: Hamo û Hevalo li ser girekî, û çûkek bi nameyekê difire.',
 
   /* putting somebody else's post on your own profile */
@@ -3416,11 +3415,11 @@ export const ku: Catalogue = {
   'landing.learn.point3': 'Dubarekirin tiştên ku te bersiv dane vedigerîne, piştî navberên ku dirêjtir dibin heta ku tu wan bi bîr tînî.',
   'landing.learn.point4': 'Ji bo her waneyê XP, û ji bo her roja ku tu waneyekê an dubarekirinekê diqedînî, an peyva rojane ya Peyvokê dibînî, rêzeyek.',
   'landing.progress.title': 'Xelatên biçûk ji bo berdewamiyê.',
-  'landing.progress.lead': 'Wane, çîrok û lîstikên ku tu bi hevalan re serhêl dilîzî XP didin, û heke tu tevlî lîgeke heftane bibî, ew wê rêz dike. Fêrbûna her rojê Zêr, diravê Hevalo yê taybet, dide te; tu dikarî wî ji bo profîla xwe an jî ji bo diyariyekê ji hevalekî re bi kar bînî.',
+  'landing.progress.lead': 'Wane, çîrok û lîstikên ku tu bi hevalan re serhêl dilîzî XP didin, û heke tu tevlî lîgeke heftane bibî, ew wê rêz dike. Endamên Hevalo+ bi fêrbûna her rojê Zêr jî qezenc dikin, ku diravê Hevalo yê taybet e; ew dikarin wî ji bo profîla xwe an jî ji bo diyariyekê ji hevalekî re bi kar bînin.',
   'landing.progress.learn': 'Fêr bibe',
   'landing.progress.learnBody': 'Wane, çîrok û lîstikên serhêl ên bi hevalan re XP didin.',
   'landing.progress.earn': 'Bi dest bixe',
-  'landing.progress.earnBody': 'Ji bo Zêr her roj waneyekê an dubarekirinekê biqedîne. Roja heftemîn herî zêde dide.',
+  'landing.progress.earnBody': 'Endamên Hevalo+ ji bo her rojeke ku waneyekê an dubarekirinekê diqedînin Zêr distînin. Roja heftemîn herî zêde dide.',
   'landing.progress.customize': 'Bixemilîne',
   'landing.progress.customizeBody': 'Wî ji bo paşxane û îkonên profîla xwe bi kar bîne, an jî ji bo diyariyekê ji hevalekî re.',
   'landing.progress.play': 'Bilîze',
@@ -3521,7 +3520,7 @@ export const ku: Catalogue = {
   'teach.rewards.does2': 'Zêrê rojane waneyekê an dubarekirineke qedandî dixwaze: vekirina sepanê ne bes e, û rojeke winda wî venagerîne destpêkê. Lê dîsa jî ew xelatek e ji bo qedandina tiştekî, ji wî cureyî ku hişyariya li jor li ser diaxive. Zêr tenê ji bo xuyabûna profîla te an ji bo diyariyekê ji hevalekî re tê bikaranîn, tu caran ne ji bo tiştekî di waneyê de.',
   'teach.rewards.does3': 'Rêze dibexşînin. Her pênc wane an dubarekirinên ku tu diqedînî cemidandineke rêzeyê didin te, ku rojeke winda vedigire; tu dikarî tenê yekê li cem xwe bihêlî. Rêzeya te ya herî dirêj û rojên ku tu fêr bûyî li ser profîla te dimînin gava rêzeyek diqede.',
   'teach.rewards.does4': 'Lîgên heftane ne pêwîst in. Tu dikarî di Mîhengan de ji wan derkevî, û XP, rêze û pêşketina te her wekî xwe tên hejmartin.',
-  'teach.rewards.does5': 'Zêr ji erkên rojane, dara te, qonaxên rêzeyê, serketinên li hember kesên din û çalakiyan tê, tu carî ne ji dubarekirina waneyekê.',
+  'teach.rewards.does5': 'Tenê endamên Hevalo+ Zêr qezenc dikin: ji erkên rojane, dara xwe, qonaxên rêzeyê, serketinên li hember kesên din û çalakiyan, tu carî ne ji dubarekirina waneyekê.',
   'teach.younger.title': 'Ewletir ji bo fêrxwazên ciwan',
   'teach.younger.found1': 'Lêkolînerên ku sepanên 160 zarokên 3 heta 5 salî lêkolîn kirin, di piraniya wan de sêwirana manîpulatîf dîtin: pesta demê, xapandin û karakterên ku pestê li zarokê dikin. Tenê yek ji pêncan bê van tiştan bû.',
   'teach.younger.found2': 'Lêkolîneke li ser ka zarok çawa ji sepanan fêr dibin dît ku ew herî baş fêr dibin gava sepan wan dide ramandin ne tenê pêlkirin, wan mijûl dike ne ku bala wan belav bike, bi jiyana wan ve girêdayî ye, û kesên din tê de hene.',
@@ -3555,6 +3554,8 @@ export const ku: Catalogue = {
   'privacy.safety.title': 'Ewlehî',
   'privacy.safety.body':
     'Şandî û wêne dikarin bi awayekî otomatîk û ji aliyê moderatoran ve werin kontrolkirin, da ku destdirêjî û naveroka neqanûnî dûr bimîne. Her wêne berî ku kesekî din wî bibîne tê kontrolkirin: bi awayekî otomatîk, ji aliyê xizmeteke zekaya çêkirî ya ku ji bo me dixebite û tenê wêne jê re tê şandin, tu caran ne ku tu kî yî; û ji aliyê mirovekî ve, gava kontrol ne bawer be. Wêneyekî ku hat redkirin heta şeş mehan bi taybetî tê hilanîn, da ku tu bikarî bixwazî ku dîsa lê were nêrîn, paşê tê jêbirin. Tiştê ku dikare zirarê bide zarokekî, heta ku qanûn dixwaze wek delîl tê hilanîn.',
+  'privacy.safety.messages':
+    'Tîma me ya ewlehiyê dikare nameyekê an peyameke taybet tenê bixwîne gava kesekî ji axaftinê ew ragihandibe, gava kontroleke ewlehiyê ya otomatîk ew nîşan kiribe, an jî ji ber sedemeke taybet a ewlehiyê an qanûnî, wek zarokekî di xeterê de an daxwazeke rayedaran. Her car ku karmendên me yekê vedikin, ev tê tomarkirin. Name û peyam qet ji bo tiştekî din nayên xwendin, ji bo reklamê jî na.',
   'privacy.safety.returns':
     'Da ku kesên hatine qedexekirin bi hêsanî venegerin, Hevalo agahiyên heşkirî (hash) yên hesab, têketin û amûrên kesekî qedexekirî an rawestandî diparêze, û hesab û têketinên nû bi wan re dide ber hev. Navnîşaneke înternetê bi tena serê xwe qet têr nake, ji ber ku gelek kes dikarin yek navnîşanê bi hev re bi kar bînin, û gava hevhatinek ne zelal be, mirovek biryarê dide. Ev agahî tenê heta ku qedexe an rawestandin didome tên parastin, heke hesab were jêbirin jî; tomarên têketin û amûrên ku ew jê tên, ji bo demên di bin “Em heta kengê tomar dikin” de tên parastin. Dema ku hesabê te hatiye rawestandin an qedexekirin, tu dîsa jî dikarî ji wê ekrana ku dema têdikevî dibînî, kopiyeke daneyên xwe daxî an hesabê xwe jê bibî.',
   'privacy.children.title':
@@ -3579,7 +3580,7 @@ export const ku: Catalogue = {
   'privacy.retention.title':
     'Em heta kengê tomar dikin',
   'privacy.retention.body':
-    'Hesabê te û tiştên ku tu lê zêde dikî, heta ku tu wan an hesabê xwe jê bibî tên parastin. Jêbirina hesabê te bi demeke bêhnvedanê ya 14 rojan dest pê dike, û heke tu di wê demê de dîsa têkevî, jêbirin tê betalkirin; piştî wê, agahiyên te yên kesane û tiştên ku te weşandine tên jêbirin, û tenê dîroka fêrbûnê ya bênav û tomarên çavdêriyê dimînin. Tomarên têketinê 90 rojan tên parastin, an salekê ji bo tiştekî gumanbar, û navnîşana înternetê ya di wan de 30 rojan; amûra ku tu pê têdikevî 180 rojan piştî têketina wê ya dawî tê bîranîn. Wêneyekî ku hat redkirin heta şeş mehan bi taybetî tê hilanîn. Ji bo profîlên zarokan rêzikên di bin “Zarok” de derbas dibin. Di nav 7 rojan de li ser kopiyên di yedekên (backup) pargîdaniya me ya mêvandariyê de tê nivîsîn.',
+    'Hesabê te û tiştên ku tu lê zêde dikî, heta ku tu wan an hesabê xwe jê bibî tên parastin. Jêbirina hesabê te bi demeke bêhnvedanê ya 14 rojan dest pê dike, û heke tu di wê demê de dîsa têkevî, jêbirin tê betalkirin; piştî wê, agahiyên te yên kesane û tiştên ku te weşandine tên jêbirin, û tenê dîroka fêrbûnê ya bênav û tomarên çavdêriyê dimînin. Tomarên têketinê 90 rojan tên parastin, an salekê ji bo tiştekî gumanbar, û navnîşana înternetê ya di wan de 30 rojan; amûra ku tu pê têdikevî 180 rojan piştî têketina wê ya dawî tê bîranîn. Wêneyekî ku hat redkirin heta şeş mehan bi taybetî tê hilanîn. Nameyek an peyamek ku kontroleke ewlehiyê ya otomatîk nîşan kiribe, bi dosyaya xwe re heta salekê piştî biryara li ser dosyayê tê hilanîn, an heta ku hesabê te tê jêbirin, kîjan zûtir be. Ji bo profîlên zarokan rêzikên di bin “Zarok” de derbas dibin. Di nav 7 rojan de li ser kopiyên di yedekên (backup) pargîdaniya me ya mêvandariyê de tê nivîsîn.',
   'privacy.control.title':
     'Maf û bijartinên te',
   'privacy.control.body':
@@ -3619,7 +3620,7 @@ export const ku: Catalogue = {
   'faq.what.q': 'Hevalo çi ye?',
   'faq.what.a': 'Cihek e ku tu bi kesên din re fêrî kurdî bibî. Tu di lîstikan de peyvan hîn dibî, bi hevalan re ji bo heman peyvê pêşbaziyê dikî, di lîgeke heftane de bilind dibî û tiştên ku civak dinivîse dixwînî. Pêşî kurmancî.',
   'faq.free.q': 'Bêpere ye?',
-  'faq.free.a': 'Erê. Di gerokê de tu tişt bi pere nîne. Zêr, diravê Hevalo yê taybet, ji xelata rojane, erkên rojane û çalakiyan tê, û tu wî li firoşgehê bi kar tînî.',
+  'faq.free.a': 'Erê. Di gerokê de tu tişt bi pere nîne. Zêr, diravê Hevalo yê taybet, ji aliyê endamên Hevalo+ ve ji xelata rojane, erkên rojane û çalakiyan tê qezenckirin, û li firoşgehê tê bikaranîn.',
   'faq.kurdish.q': 'Hevalo kîjan kurdî hîn dike?',
   'faq.kurdish.a': 'Pêşî kurmancî: kursa yekem wê bi alfabeya latînî hîn dike. Peyvên Hevserwa bi soranî jî tê lîstin, tevahiya navrûyê bi soranî jî heye, û kursên bi zaravayên din ên kurdî jî dê werin.',
   'faq.account.q': 'Hesab pêwîst e?',
@@ -4304,6 +4305,7 @@ export const ku: Catalogue = {
   'events.noneBody': 'Bûyer salê çend caran tên, her yek bi erk û xelatên xwe. Gava yek dest pê bike, li Fêrbûnê xuya dibe.',
   'events.someMissing': 'Hin bûyer nehatin barkirin.',
   'events.reward': 'Xelat:',
+  'events.membersZer': 'Zêrên bûyeran bi Hevalo+ re tên.',
   'events.claim': 'Bistîne',
   'events.claimed': 'Hat stendin',
   'events.claimFailed': 'Ev xelat niha nayê wergirtin.',
@@ -4328,6 +4330,7 @@ export const ku: Catalogue = {
   'quests.tapToOpen': 'Bitikîne da ku vebe',
   'quests.opening': 'Vedibe…',
   'quests.reward': '+{amount} Zêr',
+  'quests.membersZer': 'Zêrên di qutiyan de bi Hevalo+ re tên.',
   'quests.got': '+{amount} Zêr. Niha {balance} Zêrên te hene.',
   'quests.nextChest': 'Qutiya din',
   'quests.alreadyOpen': 'Ev qutî berê vebûye, û Zêrê wê yê te ye.',

@@ -623,7 +623,7 @@ export const fr: Catalogue = {
   'games.race.time': 'Temps',
   'games.race.again': 'Refaire une course',
   'games.race.noPasting': 'Pas de collage — celui-ci, tu le tapes.',
-  'games.cta.body': 'Crée un compte gratuit pour jouer, gagner des Zêr et grimper dans les classements de Hevalo.',
+  'games.cta.body': 'Crée un compte gratuit pour jouer et grimper dans les classements de Hevalo.',
   'games.wordle.emptyCell': 'vide',
   // ---- web-race-rating: the race's keyboard, Peyvok's keys, the rating box ----
   'games.race.textIn': 'Texte en',
@@ -2231,21 +2231,20 @@ export const fr: Catalogue = {
   'share.sendFailed': 'Ce message n’a pas été envoyé. Réessaie.',
   'share.signInToSend': 'Connecte-toi pour l’envoyer à un ami.',
 
-  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
-  'share.win.lesson': 'J’ai terminé la leçon de kurde « {title} » sur Hevalo.',
-  'share.win.lessonPlain': 'J’ai terminé une leçon de kurde sur Hevalo.',
-  'share.win.streak': '{count} jours de kurde d’affilée.',
-  'share.win.badge': 'J’ai obtenu le badge « {badge} » sur Hevalo.',
-  'share.win.leagueUp': 'Je monte en Ligue {tier} sur Hevalo.',
-  'share.win.leaguePlace': 'J’ai fini #{rank} de la Ligue {tier} sur Hevalo.',
+  /* a win sent to somebody outside Hevalo: one warm line in the sharer's own voice telling the news and asking them along, with nothing in it that names the sharer; a streak's is only ever said of a week or more, and the word game names its difficulty only when it was hard */
+  'share.win.lesson': 'Regarde, je viens de finir la leçon de kurde « {title} » ! Viens apprendre avec moi sur Hevalo',
+  'share.win.lessonPlain': 'Regarde, je viens de finir une leçon de kurde ! Viens apprendre avec moi sur Hevalo',
+  'share.win.streak': '{count} jours de kurde d’affilée, et je ne compte pas m’arrêter ! Rejoins-moi sur Hevalo',
+  'share.win.badge': 'Je viens de gagner le badge « {badge} » sur Hevalo !',
+  'share.win.leagueUp': 'Je viens de monter en Ligue {tier} sur Hevalo !',
+  'share.win.leaguePlace': 'Cette semaine, j’ai fini #{rank} de la Ligue {tier} !',
+  'share.win.peyvok': 'Regarde, je viens de résoudre le Peyvok du jour en {score} ! Tu fais mieux ?',
+  'share.win.peyvokHard': 'Regarde, je viens de résoudre le Peyvok du jour en {score} en mode difficile ! Tu fais mieux ?',
+  'share.win.peyvokLost': 'Le Peyvok du jour a eu raison de moi… tu le trouves ?',
+  'share.win.peyvokPractice': 'Regarde, je viens de résoudre un Peyvok en {score} ! Tu fais mieux ?',
+  'share.win.peyvokPracticeHard': 'Regarde, je viens de résoudre un Peyvok en {score} en mode difficile ! Tu fais mieux ?',
+  'share.win.peyvokPracticeLost': 'Ce Peyvok a eu raison de moi… tu le trouves ?',
   'win.kicker': 'Une carte postale de Hevalo',
-  'win.lesson': 'Encore une leçon terminée',
-  'win.streak': '{count} jours d’affilée',
-  'win.streakPlain': 'Une série qui tient bon',
-  'win.badge': 'Un nouveau badge',
-  'win.league': 'Une bonne semaine en {league}',
-  'win.leaguePlain': 'Une bonne semaine en ligue',
-  'win.body': 'Quelqu’un que tu connais apprend le kurde ici, quelques minutes par jour. Viens apprendre toi aussi.',
   'win.picture': 'Une carte postale : Hamo et Hevalo sur une colline, et un oiseau qui s’envole avec une lettre.',
 
   /* putting somebody else's post on your own profile */
@@ -3408,11 +3407,11 @@ export const fr: Catalogue = {
   'landing.learn.point3': 'Les révisions ramènent ce à quoi tu as répondu, à des intervalles qui s’allongent tant que tu t’en souviens.',
   'landing.learn.point4': 'Des XP à chaque leçon, et une série pour chaque jour où tu termines une leçon ou une révision, ou résous le Peyvok du jour.',
   'landing.progress.title': 'De petites récompenses quand tu reviens.',
-  'landing.progress.lead': 'Les leçons, les histoires et les jeux joués en ligne avec des amis rapportent des XP, et une ligue hebdomadaire les classe si tu en rejoins une. Apprendre chaque jour te fait gagner des Zêr, la monnaie de Hevalo, à dépenser pour ton profil ou en cadeau pour un ami.',
+  'landing.progress.lead': 'Les leçons, les histoires et les jeux joués en ligne avec des amis rapportent des XP, et une ligue hebdomadaire les classe si tu en rejoins une. Les membres de Hevalo+ gagnent aussi des Zêr, la monnaie de Hevalo, en apprenant chaque jour, à dépenser pour leur profil ou en cadeau pour un ami.',
   'landing.progress.learn': 'Apprendre',
   'landing.progress.learnBody': 'Les leçons, les histoires et les jeux en ligne entre amis rapportent des XP.',
   'landing.progress.earn': 'Gagner',
-  'landing.progress.earnBody': 'Termine une leçon ou une révision chaque jour pour gagner des Zêr. Le septième jour rapporte le plus.',
+  'landing.progress.earnBody': 'Les membres de Hevalo+ gagnent des Zêr chaque jour où ils terminent une leçon ou une révision. Le septième jour rapporte le plus.',
   'landing.progress.customize': 'Personnaliser',
   'landing.progress.customizeBody': 'Dépense-les en arrière-plans et en icônes pour ton profil, ou en cadeau pour un ami.',
   'landing.progress.play': 'Jouer',
@@ -3514,7 +3513,7 @@ export const fr: Catalogue = {
   'teach.rewards.does3': 'Les séries pardonnent. Toutes les cinq leçons ou révisions terminées, tu gagnes un gel de série, qui couvre un jour manqué ; tu peux en garder un à la fois. Ta plus longue série et tes jours d’apprentissage restent sur ton profil quand une série s’arrête.',
   'teach.rewards.does4': 'Les ligues hebdomadaires sont facultatives. Tu peux les quitter dans les Réglages, et tes XP, ta série et ta progression comptent pareil dans les deux cas.',
   'teach.rewards.does5':
-    'Le Zêr s’obtient avec les quêtes du jour, ton arbre, les étapes de ta série, les victoires contre d’autres personnes et les événements, jamais en refaisant une leçon.',
+    'Seuls les membres de Hevalo+ gagnent du Zêr : avec les quêtes du jour, leur arbre, les étapes de leur série, les victoires contre d’autres personnes et les événements, jamais en refaisant une leçon.',
   'teach.younger.title': 'Plus sûr pour les plus jeunes',
   'teach.younger.found1': 'Des chercheurs qui ont étudié les apps utilisées par 160 enfants de 3 à 5 ans ont trouvé un design manipulateur dans la plupart d’entre elles : pression du temps, appâts et personnages qui font pression sur l’enfant. Seule une sur cinq en était exempte.',
   'teach.younger.found2': 'Une synthèse sur la façon dont les enfants apprennent avec les apps a montré qu’ils apprennent le mieux quand une app les fait réfléchir plutôt que simplement toucher l’écran, les captive au lieu de les distraire, se rattache à leur vie et fait intervenir d’autres personnes.',
@@ -3548,6 +3547,8 @@ export const fr: Catalogue = {
   'privacy.safety.title': 'Sécurité',
   'privacy.safety.body':
     'Les publications et les images peuvent être vérifiées automatiquement et par des modérateurs pour écarter les abus et les contenus illégaux. Chaque image est vérifiée avant que quiconque d’autre la voie : automatiquement, par un service d’IA qui travaille pour nous et ne reçoit que l’image, jamais votre identité ; et par une personne quand la vérification a un doute. Une image refusée est conservée de façon privée jusqu’à six mois, pour que vous puissiez demander un nouvel examen, puis elle est supprimée. Ce qui pourrait nuire à un enfant est conservé comme preuve aussi longtemps que la loi l’exige.',
+  'privacy.safety.messages':
+    'Notre équipe de sécurité ne peut lire une lettre ou un message privé que si une personne de la conversation le signale, si une vérification de sécurité automatique le repère, ou pour un motif précis de sécurité ou légal, comme un enfant en danger ou une demande des autorités. Chaque ouverture par notre équipe est enregistrée. Les lettres et les messages ne sont jamais lus pour autre chose, et jamais pour de la publicité.',
   'privacy.safety.returns':
     'Pour empêcher les personnes bannies de revenir tout simplement, Hevalo conserve des données brouillées (hachées) sur le compte, la connexion et les appareils d’une personne bannie ou suspendue, et y compare les nouveaux comptes et les nouvelles connexions. Une adresse internet seule ne suffit jamais, car beaucoup de personnes peuvent partager la même, et dès qu’une correspondance n’est pas claire, c’est une personne qui décide. Ces données ne sont conservées que tant que dure le bannissement ou la suspension, même si le compte est supprimé ; les journaux de connexion et d’appareils dont elles proviennent sont conservés pendant les durées indiquées dans « Combien de temps nous les conservons ». Si votre compte est suspendu ou banni, vous pouvez toujours télécharger une copie de vos données ou supprimer votre compte depuis l’écran qui s’affiche à la connexion.',
   'privacy.children.title':
@@ -3572,7 +3573,7 @@ export const fr: Catalogue = {
   'privacy.retention.title':
     'Combien de temps nous les conservons',
   'privacy.retention.body':
-    'Votre compte et ce que vous y ajoutez sont conservés jusqu’à ce que vous les supprimiez ou supprimiez votre compte. La suppression de votre compte commence par un délai de grâce de 14 jours ; vous reconnecter pendant ce délai l’annule. Ensuite, vos données personnelles et ce que vous avez publié sont supprimés, et seuls restent un historique d’apprentissage anonyme et les dossiers de modération. Les journaux de connexion sont conservés 90 jours, ou un an pour tout ce qui est suspect, et l’adresse internet qu’ils contiennent 30 jours ; un appareil sur lequel vous vous connectez reste connu 180 jours après sa dernière connexion. Une image refusée est conservée de façon privée jusqu’à six mois. Les profils enfants suivent les règles décrites dans « Enfants ». Les copies présentes dans les sauvegardes de notre hébergeur sont écrasées sous 7 jours.',
+    'Votre compte et ce que vous y ajoutez sont conservés jusqu’à ce que vous les supprimiez ou supprimiez votre compte. La suppression de votre compte commence par un délai de grâce de 14 jours ; vous reconnecter pendant ce délai l’annule. Ensuite, vos données personnelles et ce que vous avez publié sont supprimés, et seuls restent un historique d’apprentissage anonyme et les dossiers de modération. Les journaux de connexion sont conservés 90 jours, ou un an pour tout ce qui est suspect, et l’adresse internet qu’ils contiennent 30 jours ; un appareil sur lequel vous vous connectez reste connu 180 jours après sa dernière connexion. Une image refusée est conservée de façon privée jusqu’à six mois. Une lettre ou un message repéré par une vérification de sécurité automatique est conservé avec son dossier jusqu’à un an après la décision, ou jusqu’à la suppression de votre compte si elle intervient avant. Les profils enfants suivent les règles décrites dans « Enfants ». Les copies présentes dans les sauvegardes de notre hébergeur sont écrasées sous 7 jours.',
   'privacy.control.title':
     'Vos droits et vos choix',
   'privacy.control.body':
@@ -3613,7 +3614,7 @@ export const fr: Catalogue = {
   'faq.what.q': 'Qu’est-ce que Hevalo ?',
   'faq.what.a': 'Un lieu pour apprendre le kurde avec d’autres. Tu apprends des mots en jouant, tu fais la course avec tes amis pour trouver le même mot, tu montes dans une ligue hebdomadaire et tu lis ce que la communauté écrit. Le kurmancî d’abord.',
   'faq.free.q': 'Est-ce gratuit ?',
-  'faq.free.a': 'Oui. Dans le navigateur, rien n’est payant. Le Zêr, la monnaie de Hevalo, s’obtient avec la récompense quotidienne, les quêtes du jour et les événements, et se dépense dans la boutique.',
+  'faq.free.a': 'Oui. Dans le navigateur, rien n’est payant. Les membres de Hevalo+ gagnent le Zêr, la monnaie de Hevalo, avec la récompense quotidienne, les quêtes du jour et les événements, et le dépensent dans la boutique.',
   'faq.kurdish.q': 'Quel kurde Hevalo enseigne-t-il ?',
   'faq.kurdish.a': 'Le kurmancî d’abord : le premier cours l’enseigne en alphabet latin. Peyvên Hevserwa, le jeu de rimes, se joue aussi en soranî, toute l’interface existe en soranî, et des cours dans d’autres variantes du kurde suivront.',
   'faq.account.q': 'Faut-il un compte ?',
@@ -4298,6 +4299,7 @@ export const fr: Catalogue = {
   'events.noneBody': 'Les événements reviennent quelques fois par an, chacun avec ses propres quêtes et récompenses. Quand l’un commence, il apparaît dans Apprendre.',
   'events.someMissing': 'Certains événements n’ont pas pu être chargés.',
   'events.reward': 'Récompense :',
+  'events.membersZer': 'Le Zêr des événements fait partie de Hevalo+.',
   'events.claim': 'Récupérer',
   'events.claimed': 'Récupéré',
   'events.claimFailed': 'Cette récompense ne peut pas être récupérée pour le moment.',
@@ -4322,6 +4324,7 @@ export const fr: Catalogue = {
   'quests.tapToOpen': 'Touche pour ouvrir !',
   'quests.opening': 'Ouverture…',
   'quests.reward': '+{amount} Zêr',
+  'quests.membersZer': 'Le Zêr des coffres fait partie de Hevalo+.',
   'quests.got': '+{amount} Zêr. Tu as maintenant {balance} Zêr.',
   'quests.nextChest': 'Coffre suivant',
   'quests.alreadyOpen': 'Ce coffre est déjà ouvert, et ses Zêr sont à toi.',

@@ -113,7 +113,7 @@ export const LETTER_BIRDS = ['grey', '#6fa8e2', '#e88aa6', '#7dbf8f', 'brown', '
 export const LETTER_BIRD_ORDER: readonly number[] = [0, 6, 4, 1, 2, 3, 5, 7];
 
 /** What another bird costs in Zêr; the first one chosen is free. */
-export const LETTER_BIRD_PRICE = 500;
+export const LETTER_BIRD_PRICE = 250;
 
 /** Whether `bird` is an index into `LETTER_BIRDS`. */
 export function isLetterBird(bird: unknown): bird is number {

@@ -407,6 +407,12 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
   });
 
   describe('a chest', () => {
+    /** A learner who earns Zêr: only Hevalo+ members do. */
+    const earner = async (tag: string): Promise<Learner> => {
+      const who = await learner(tag);
+      await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [who.id]);
+      return who;
+    };
     const ledger = async (who: Learner) =>
       (
         await pool.query<{ amount: number; reason: string; ref_id: string }>(
@@ -416,7 +422,7 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
       ).rows;
 
     it('pays its tier Zêr once, in the ledger, and is opened after that', async () => {
-      const jan = await learner('claim');
+      const jan = await earner('claim');
       const day = today();
       await finished(jan, day, 'streak', 1);
       await pool.query(`INSERT INTO user_quests (user_id, day, kind, target, chest) VALUES ($1, $2, 'lessons', 3, 'rare'), ($1, $2, 'perfect', 1, 'epic')`, [
@@ -428,8 +434,8 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
 
       const opened = await call(jan, 'POST', `/me/quests/${encodeURIComponent(id)}/claim`);
       expect(opened.statusCode, opened.body).toBe(200);
-      expect(opened.json()).toEqual({ questId: id, tier: 'common', currency: 'zer', amount, balance: amount });
-      expect(amount).toBeGreaterThanOrEqual(5);
+      expect(opened.json()).toEqual({ questId: id, tier: 'common', currency: 'zer', amount, balance: amount, earnsZer: true });
+      expect(amount).toBeGreaterThanOrEqual(6);
       expect(amount).toBeLessThanOrEqual(10);
       expect(await ledger(jan)).toEqual([{ amount, reason: QUEST_LEDGER_REASON, ref_id: id }]);
       expect(await wallet.verifyConsistency(jan.id, 'zer')).toBe(true);
@@ -449,7 +455,7 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
     });
 
     it('is no chest of somebody else, nor one that names no quest', async () => {
-      const kim = await learner('owner');
+      const kim = await earner('owner');
       const lea = await learner('other');
       const day = today();
       await finished(kim, day, 'perfect', 1);
@@ -465,7 +471,7 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
     });
 
     it('waits a week for a finished quest, and no longer', async () => {
-      const max = await learner('week');
+      const max = await earner('week');
       const day = today();
       await finished(max, shiftDate(day, -6), 'perfect', 1);
       await finished(max, shiftDate(day, -7), 'perfect', 1);
@@ -479,7 +485,7 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
     });
 
     it('of an earlier day waits beside today, done and unopened, until it is opened or its week is over', async () => {
-      const ola = await learner('waiting');
+      const ola = await earner('waiting');
       const day = today();
       const yesterday = shiftDate(day, -1);
       await finished(ola, yesterday, 'streak', 1);
@@ -507,7 +513,7 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
     });
 
     it('opened twice at once pays once', async () => {
-      const ned = await learner('race');
+      const ned = await earner('race');
       const day = today();
       await finished(ned, day, 'listening', 6);
       const id = questId(day, 'listening');
@@ -520,15 +526,17 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
       expect(row.rows[0]).toEqual({ amount });
     });
 
-    it('holds twice as much for a Hevalo+ member', async () => {
-      const kit = await learner('member');
-      await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [kit.id]);
+    it('opens empty for someone who is not a member, and says they do not earn Zêr', async () => {
+      const kit = await learner('free');
       const day = today();
       await finished(kit, day, 'streak', 1);
       const id = questId(day, 'streak');
       const opened = await call(kit, 'POST', `/me/quests/${encodeURIComponent(id)}/claim`);
-      expect(opened.json()).toMatchObject({ tier: 'common', amount: 2 * chestAmount('common', kit.id, id) });
-      expect((await wallet.balances(kit.id)).zer).toBe(2 * chestAmount('common', kit.id, id));
+      expect(opened.statusCode, opened.body).toBe(200);
+      expect(opened.json()).toEqual({ questId: id, tier: 'common', currency: 'zer', amount: 0, balance: 0, earnsZer: false });
+      expect(await ledger(kit)).toEqual([]);
+      const row = await pool.query(`SELECT amount, claimed_at IS NOT NULL AS opened FROM user_quests WHERE user_id = $1 AND day = $2 AND kind = 'streak'`, [kit.id, day]);
+      expect(row.rows[0]).toEqual({ amount: 0, opened: true });
     });
   });
 });

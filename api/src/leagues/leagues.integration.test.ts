@@ -56,11 +56,15 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
     ).rows[0]?.cohort_id;
   const zerOf = async (userId: string): Promise<number> => (await new WalletService(pool).balances(userId)).zer;
 
+  /** Only Hevalo+ members earn Zêr, so the learners whose promotions pay are members. */
+  const member = (userId: string) => pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [userId]);
+
   /** `count` learners of `tier`, all in one group of `week`, with the given weekly XP. */
   const group = async (week: string, tier: LeagueTier, xps: number[], opts: LearnerOptions = {}) => {
     const people = [];
     for (const xp of xps) {
       const p = await learner(opts);
+      await member(p.id);
       await setTier(p.id, tier, week);
       await leagues.ensureMembership(p.id, at(week));
       if (xp > 0) await addXp(pool, p.id, xp, at(week, 1));
@@ -136,9 +140,9 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       }
     });
 
-    it('pays 50 Zêr for a promotion, what 10 Gewher became', async () => {
+    it('pays 25 Zêr for a promotion, what 10 Gewher became at 100 Zêr to the euro', async () => {
       const r = await pool.query<{ amount: number }>(`SELECT amount FROM earn_rules WHERE key = 'league_promotion'`);
-      expect(r.rows[0]!.amount).toBe(50);
+      expect(r.rows[0]!.amount).toBe(25);
     });
   });
 
@@ -264,7 +268,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
   });
 
   describe('the weekly settle', () => {
-    it('promotes the top quarter with the goal met, demotes only those at the bottom without it, and pays 50 Zêr', async () => {
+    it('promotes the top quarter with the goal met, demotes only those at the bottom without it, and pays 25 Zêr', async () => {
       const week = '2025-02-17';
       // twenty in Gol: places 1–5 move up (but #5 is short of the goal), 18–20 move down
       const xps = [900, 800, 700, 600, 140, 130, 120, 110, 100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 20, 10];
@@ -278,9 +282,9 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       );
       const row = (i: number) => byXp.rows.find((r) => r.user_id === people[i]!.id)!;
       for (const i of [0, 1, 2, 3]) {
-        expect(row(i)).toMatchObject({ outcome: 'promoted', tier_after: 'derya', zer: 50 });
+        expect(row(i)).toMatchObject({ outcome: 'promoted', tier_after: 'derya', zer: 25 });
         expect(await tierOf(people[i]!.id)).toBe('derya');
-        expect(await zerOf(people[i]!.id)).toBe(50);
+        expect(await zerOf(people[i]!.id)).toBe(25);
       }
       expect(row(4)).toMatchObject({ outcome: 'stayed', goal_met: false });
       expect(await zerOf(people[4]!.id)).toBe(0);
@@ -306,7 +310,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       expect(await tierOf(people[0]!.id)).toBe('gol');
       expect(await tierOf(people[1]!.id)).toBe('gol');
       expect(await tierOf(people[2]!.id)).toBe('cem');
-      expect(await zerOf(people[0]!.id)).toBe(50);
+      expect(await zerOf(people[0]!.id)).toBe(25);
       const rows = await pool.query(`SELECT 1 FROM league_weeks WHERE week_key = $1 AND user_id = ANY($2)`, [
         week,
         people.map((p) => p.id),
@@ -331,7 +335,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       // the late settle then changes nothing it has already done
       await leagues.settleDue(at(nextWeek(week), 0, 2), { force: true });
       expect(await tierOf(winner.id)).toBe('gol');
-      expect(await zerOf(winner.id)).toBe(50);
+      expect(await zerOf(winner.id)).toBe(25);
     });
 
     it('in a group under eight: nobody is demoted, and nobody with no XP moves up', async () => {
@@ -356,6 +360,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       // The third week far enough on that the first week's XP no longer sets the climber's band.
       const weeks = ['2025-05-05', '2025-05-12', '2025-06-16'];
       const climber = await learner();
+      await member(climber.id);
       const others = async (week: string, tier: LeagueTier, xps: number[]) => group(week, tier, xps);
       // week 1: up from Kanî to Çem
       await setTier(climber.id, 'kani', weeks[0]!);
@@ -364,7 +369,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       await others(weeks[0]!, 'kani', [100, 90, 80, 70, 60, 50, 40]);
       await leagues.settleCohort((await groupOf(climber.id, weeks[0]!))!);
       expect(await tierOf(climber.id)).toBe('cem');
-      expect(await zerOf(climber.id)).toBe(50);
+      expect(await zerOf(climber.id)).toBe(25);
       // week 2: down to Kanî (last, no goal) — set straight, as the settle would
       await setTier(climber.id, 'kani', weeks[1]!);
       // week 3: up to Çem again — no Zêr this season
@@ -373,7 +378,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       await others(weeks[2]!, 'kani', [100, 90, 80, 70, 60, 50, 40]);
       await leagues.settleCohort((await groupOf(climber.id, weeks[2]!))!);
       expect(await tierOf(climber.id)).toBe('cem');
-      expect(await zerOf(climber.id)).toBe(50);
+      expect(await zerOf(climber.id)).toBe(25);
       const last = await pool.query<{ zer: number }>(`SELECT zer FROM league_weeks WHERE user_id = $1 AND week_key = $2`, [
         climber.id,
         weeks[2],
@@ -493,7 +498,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
         groupSize: 8,
         weeklyXp: 800,
         goalMet: true,
-        zer: 50,
+        zer: 25,
       });
       expect(view.tier).toBe('gol');
     });

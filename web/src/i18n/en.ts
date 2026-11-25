@@ -677,7 +677,7 @@ export const en = {
   'games.race.time': 'Time',
   'games.race.again': 'Race again',
   'games.race.noPasting': 'No pasting — this one you type.',
-  'games.cta.body': 'Create a free account to play, earn Zêr and climb the rankings across Hevalo.',
+  'games.cta.body': 'Create a free account to play and climb the rankings across Hevalo.',
   'games.wordle.emptyCell': 'empty',
   // ---- web-race-rating: the race's keyboard, Peyvok's keys, the rating box ----
   // The device's own menu names in keyboardGuide.* stay in English ({0}, {1}…
@@ -2333,22 +2333,21 @@ export const en = {
   'share.sendFailed': 'That message did not send. Try again.',
   'share.signInToSend': 'Sign in to send this to a friend.',
 
-  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
-  'share.win.lesson': 'I finished “{title}” in Kurdish on Hevalo.',
-  'share.win.lessonPlain': 'I finished a Kurdish lesson on Hevalo.',
-  'share.win.streak': '{count} days of Kurdish in a row.',
-  'share.win.badge': 'I earned the “{badge}” badge on Hevalo.',
-  'share.win.leagueUp': 'I moved up to the {tier} League on Hevalo.',
-  'share.win.leaguePlace': 'I finished #{rank} in the {tier} League on Hevalo.',
-  // the page a shared win's link opens (share/WinPage.tsx): what was done, said to whoever it was sent to
+  /* a win sent to somebody outside Hevalo: one warm line in the sharer's own voice telling the news and asking them along, with nothing in it that names the sharer; a streak's is only ever said of a week or more, and the word game names its difficulty only when it was hard */
+  'share.win.lesson': 'Look, I just finished “{title}” in Kurdish! Come learn with me on Hevalo',
+  'share.win.lessonPlain': 'Look, I just finished a Kurdish lesson! Come learn with me on Hevalo',
+  'share.win.streak': '{count} days of Kurdish in a row, and I’m not stopping! Join me on Hevalo',
+  'share.win.badge': 'I just earned the “{badge}” badge on Hevalo!',
+  'share.win.leagueUp': 'I just moved up to the {tier} League on Hevalo!',
+  'share.win.leaguePlace': 'I finished #{rank} in the {tier} League this week!',
+  'share.win.peyvok': 'Look, I just solved today’s Peyvok in {score}! Can you beat me?',
+  'share.win.peyvokHard': 'Look, I just solved today’s Peyvok in {score} on Hard! Can you beat me?',
+  'share.win.peyvokLost': 'Today’s Peyvok got the better of me… can you crack it?',
+  'share.win.peyvokPractice': 'Look, I just solved a Peyvok in {score}! Can you beat me?',
+  'share.win.peyvokPracticeHard': 'Look, I just solved a Peyvok in {score} on Hard! Can you beat me?',
+  'share.win.peyvokPracticeLost': 'This Peyvok got the better of me… can you crack it?',
+  // the page a shared win's link opens (share/WinPage.tsx), around the card's own words (shared win-words.ts)
   'win.kicker': 'A postcard from Hevalo',
-  'win.lesson': 'One more lesson done',
-  'win.streak': '{count} days in a row',
-  'win.streakPlain': 'A streak kept alive',
-  'win.badge': 'A new badge earned',
-  'win.league': 'A good week in the {league}',
-  'win.leaguePlain': 'A good week in the league',
-  'win.body': 'Somebody you know is learning Kurdish here, a few minutes at a time. Come and learn along.',
   'win.picture': 'A postcard: Hamo and Hevalo on a hillside, and a bird flying off with a letter.',
 
   /* putting somebody else's post on your own profile */
@@ -3512,11 +3511,11 @@ export const en = {
   'landing.learn.point3': 'Review brings back what you have answered, after gaps that grow as you keep remembering it.',
   'landing.learn.point4': 'XP for every lesson, and a streak for each day you finish a lesson or a review, or solve the daily Peyvok.',
   'landing.progress.title': 'Small rewards for showing up.',
-  'landing.progress.lead': 'Lessons, stories and games played online with friends earn XP, and a weekly league ranks it if you join one. Learning each day earns Zêr, Hevalo’s own coins, to spend on your profile or on a gift for a friend.',
+  'landing.progress.lead': 'Lessons, stories and games played online with friends earn XP, and a weekly league ranks it if you join one. Hevalo+ members also earn Zêr, Hevalo’s own coins, by learning each day, to spend on their profile or on a gift for a friend.',
   'landing.progress.learn': 'Learn',
   'landing.progress.learnBody': 'Lessons, stories and games with friends online earn XP.',
   'landing.progress.earn': 'Earn',
-  'landing.progress.earnBody': 'Finish a lesson or a review each day for Zêr. The seventh day pays the most.',
+  'landing.progress.earnBody': 'Hevalo+ members get Zêr for each day they finish a lesson or a review. The seventh day pays the most.',
   'landing.progress.customize': 'Customize',
   'landing.progress.customizeBody': 'Spend it on backgrounds and icons for your profile, or on a gift for a friend.',
   'landing.progress.play': 'Play',
@@ -3621,7 +3620,7 @@ export const en = {
   'teach.rewards.does2': 'The daily Zêr needs a finished lesson or review: opening the app is not enough, and missing a day does not send it back to the start. It is still a reward for finishing something, the kind the caution above is about. Zêr is spent only on how your profile looks or on a gift for a friend, never on anything in a lesson.',
   'teach.rewards.does3': 'Streaks forgive. Every five lessons or reviews you finish earn a streak freeze, which covers one missed day; you can hold one at a time. Your longest streak and the days you have learned stay on your profile when a streak ends.',
   'teach.rewards.does4': 'Weekly leagues are optional. You can leave them in Settings, and your XP, streak and progress count the same either way.',
-  'teach.rewards.does5': 'Zêr comes from daily quests, your tree, streak milestones, wins against other people and events, never from replaying a lesson.',
+  'teach.rewards.does5': 'Only Hevalo+ members earn Zêr: from daily quests, their tree, streak milestones, wins against other people and events, never from replaying a lesson.',
   'teach.younger.title': 'Safer for younger learners',
   'teach.younger.found1': 'Researchers who studied the apps used by 160 children aged 3 to 5 found manipulative design in most of them: time pressure, lures, and characters who put pressure on the child. Only one in five had none.',
   'teach.younger.found2': 'A review of how children learn from apps found they learn best when an app makes them think rather than just tap, keeps them engaged rather than distracted, connects to their lives, and involves other people.',
@@ -3655,6 +3654,8 @@ export const en = {
   'privacy.safety.title': 'Keeping it safe',
   'privacy.safety.body':
     'Posts and pictures may be checked automatically and by moderators to keep out abuse and illegal content. Every picture is checked before anyone else sees it: automatically, by an AI service that works for us and is sent only the picture, never who you are; and by a person whenever the check is unsure. A refused picture is kept privately for up to six months, so you can ask for it to be looked at again, and is then deleted. Anything that may harm a child is kept as evidence for as long as the law requires.',
+  'privacy.safety.messages':
+    'Our safety team may read a letter or private message only when someone in the conversation reports it, when an automatic safety check flags it, or for a specific safety or legal reason, such as a child at risk or a request from the authorities. Each time our staff open one, it is recorded. Letters and messages are never read for anything else, and never for advertising.',
   'privacy.safety.returns':
     'To stop people who were banned from simply coming back, Hevalo keeps scrambled (hashed) details of a banned or suspended person’s account, sign-in and devices, and compares new accounts and sign-ins with them. An internet address alone is never enough, since many people can share one, and whenever a match is unclear, a person decides. These details are kept only while the ban or suspension lasts, even if the account is deleted; the sign-in and device records they come from are kept for the times given under “How long we keep it”. While your account is suspended or banned, you can still download a copy of your data or delete your account from the screen you see when you sign in.',
   'privacy.children.title':
@@ -3678,7 +3679,7 @@ export const en = {
   'privacy.retention.title':
     'How long we keep it',
   'privacy.retention.body':
-    'Your account and what you add to it are kept until you delete them or your account. Deleting your account starts a 14-day grace period, and signing back in during it cancels the deletion; after that your personal details and what you posted are removed, and only anonymous learning history and moderation records stay. Sign-in records are kept for 90 days, or a year for anything suspicious, and the internet address in them for 30 days; a device you sign in from is remembered for 180 days after its last sign-in. A refused picture is kept privately for up to six months. Children’s profiles follow the rules under “Children”. Copies in our hosting company’s backups are overwritten within 7 days.',
+    'Your account and what you add to it are kept until you delete them or your account. Deleting your account starts a 14-day grace period, and signing back in during it cancels the deletion; after that your personal details and what you posted are removed, and only anonymous learning history and moderation records stay. Sign-in records are kept for 90 days, or a year for anything suspicious, and the internet address in them for 30 days; a device you sign in from is remembered for 180 days after its last sign-in. A refused picture is kept privately for up to six months. A letter or message an automatic safety check flags is kept with its case until a year after the case is decided, or until your account is deleted if that is sooner. Children’s profiles follow the rules under “Children”. Copies in our hosting company’s backups are overwritten within 7 days.',
   'privacy.control.title':
     'Your rights and choices',
   'privacy.control.body':
@@ -3716,7 +3717,7 @@ export const en = {
   'faq.what.q': 'What is Hevalo?',
   'faq.what.a': 'A place to learn Kurdish with other people. You pick up words in games, race friends to the same word, climb a weekly league and read what the community writes. Kurmanji comes first.',
   'faq.free.q': 'Is it free?',
-  'faq.free.a': 'Yes. Nothing in the browser costs money. Zêr, Hevalo’s own currency, comes from the daily reward, daily quests and events, and you spend it in the shop.',
+  'faq.free.a': 'Yes. Nothing in the browser costs money. Zêr, Hevalo’s own currency, is earned by Hevalo+ members from the daily reward, daily quests and events, and spent in the shop.',
   'faq.kurdish.q': 'Which Kurdish does Hevalo teach?',
   'faq.kurdish.a': 'Kurmanji first: the first course teaches it in the Latin alphabet. The rhyme game, Peyvên Hevserwa, can also be played in Soranî, the whole interface comes in Soranî, and courses in more Kurdish varieties will follow.',
   'faq.account.q': 'Do I need an account?',
@@ -4396,6 +4397,7 @@ export const en = {
   'events.noneBody': 'Events come a few times a year, each with quests and rewards of its own. When one starts, it shows on Learn.',
   'events.someMissing': 'Some events didn’t load.',
   'events.reward': 'Reward:',
+  'events.membersZer': 'Zêr from events comes with Hevalo+.',
   'events.claim': 'Claim',
   'events.claimed': 'Claimed',
   'events.claimFailed': 'This reward can’t be claimed right now.',
@@ -4420,6 +4422,7 @@ export const en = {
   'quests.tapToOpen': 'Tap to open!',
   'quests.opening': 'Opening…',
   'quests.reward': '+{amount} Zêr',
+  'quests.membersZer': 'Zêr in chests comes with Hevalo+.',
   'quests.got': '+{amount} Zêr. You have {balance} Zêr now.',
   'quests.nextChest': 'Next chest',
   'quests.alreadyOpen': 'This chest is already open, and its Zêr is yours.',

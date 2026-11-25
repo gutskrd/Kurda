@@ -15,9 +15,22 @@ const WORDLISTS: Record<string, string[]> = {
   ar: ['sharmuta', 'kalb', 'ayr'],
 };
 
+/**
+ * Listed words that are more than swearing: sexual words, and slurs once the lists hold any. In a private message or
+ * letter only these, or a flag on something sent to a minor, are put before a moderator; plain swearing is only
+ * counted against its writer.
+ */
+const SERIOUS: Record<'sexual' | 'hate', string[]> = {
+  sexual: ['cunt', 'dick', 'kerî', 'sik', 'orospu', 'sharmuta', 'ayr'],
+  hate: [],
+};
+
 const LEET: Record<string, string> = { '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '@': 'a', $: 's' };
 
 const BADWORDS = new Set(Object.values(WORDLISTS).flatMap((l) => l.map((w) => normalize(w))));
+const SERIOUS_OF = new Map<string, 'sexual' | 'hate'>(
+  (Object.entries(SERIOUS) as Array<['sexual' | 'hate', string[]]>).flatMap(([category, words]) => words.map((w) => [normalize(w), category] as const)),
+);
 /** Longer words are also matched as substrings (spaced-out evasion detection). */
 const SUBSTRING_MIN = 4;
 
@@ -34,15 +47,19 @@ function collapse(s: string): string {
   return s.replace(/(.)\1+/g, '$1');
 }
 
-function isBadToken(token: string): boolean {
+/** The listed word a token is, as the list folds it, or null. */
+function listedWord(token: string): string | null {
   const n = normalize(token);
-  if (!n) return false;
-  return BADWORDS.has(n) || BADWORDS.has(collapse(n));
+  if (!n) return null;
+  if (BADWORDS.has(n)) return n;
+  const c = collapse(n);
+  return BADWORDS.has(c) ? c : null;
 }
 
 export interface FilterResult {
   masked: string;
   flagged: boolean;
+  /** the listed words that matched, as the list folds them: never the writer's own spelling or anything else they wrote */
   hits: string[];
 }
 
@@ -50,8 +67,9 @@ export interface FilterResult {
 export function filterText(text: string): FilterResult {
   const hits: string[] = [];
   const masked = text.replace(/\S+/g, (token) => {
-    if (isBadToken(token)) {
-      hits.push(normalize(token));
+    const word = listedWord(token);
+    if (word) {
+      if (!hits.includes(word)) hits.push(word);
       return '*'.repeat(Math.max(3, token.length));
     }
     return token;
@@ -70,4 +88,11 @@ export function filterText(text: string): FilterResult {
     }
   }
   return { masked, flagged, hits };
+}
+
+/** The most serious category among matched listed words (`hits`): hate before sexual, and null for plain swearing. */
+export function seriousCategory(hits: readonly string[]): 'sexual' | 'hate' | null {
+  const found = hits.map((h) => SERIOUS_OF.get(h)).filter((c): c is 'sexual' | 'hate' => c !== undefined);
+  if (found.includes('hate')) return 'hate';
+  return found.includes('sexual') ? 'sexual' : null;
 }

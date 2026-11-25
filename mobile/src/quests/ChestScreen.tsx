@@ -156,7 +156,8 @@ export function ChestScreen({
  * (theme/celebration.ts): haptic and sound, a ring and a burst of gold, a few stars, the inner light, and turning
  * rays. Then the contents rise as a tile with a count ("× 40") and "+N Zêr" lands under it while the corner
  * balance counts up to the server's new total. Badges wait for it. Under Reduce Motion the chest stands open and
- * the gold fades in, rays still.
+ * the gold fades in, rays still. For someone who does not earn Zêr it says, once, that Zêr is a members' perk instead
+ * of counting none.
  */
 function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: ChestTier; size: number; ink: string }): React.JSX.Element {
   const { colors } = useTheme();
@@ -183,7 +184,7 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
   };
   const balance = useCountUp(opening.balance, { from: Math.max(0, opening.balance - opening.amount), delayMs: plan.detailsDelayMs });
   const amount = formatNumber(opening.amount, locale);
-  const reward = t('quests.chest.reward', { amount });
+  const reward = opening.earnsZer ? t('quests.chest.reward', { amount }) : t('quests.chest.membersZer');
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility?.(reward);
@@ -199,12 +200,14 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
 
   return (
     <>
-      <View style={[styles.corner, { alignItems: dir.row === 'row-reverse' ? 'flex-start' : 'flex-end' }]} accessible accessibilityLabel={t('quests.chest.balance', { count: formatNumber(opening.balance, locale) })}>
-        <View style={[styles.balance, { flexDirection: dir.row, backgroundColor: 'rgba(0,0,0,0.14)' }]}>
-          <Icon name="coin" size={18} color={colors.gold} />
-          <Text style={[styles.balanceText, { color: ink }]}>{formatNumber(balance, locale)}</Text>
+      {opening.earnsZer ? (
+        <View style={[styles.corner, { alignItems: dir.row === 'row-reverse' ? 'flex-start' : 'flex-end' }]} accessible accessibilityLabel={t('quests.chest.balance', { count: formatNumber(opening.balance, locale) })}>
+          <View style={[styles.balance, { flexDirection: dir.row, backgroundColor: 'rgba(0,0,0,0.14)' }]}>
+            <Icon name="coin" size={18} color={colors.gold} />
+            <Text style={[styles.balanceText, { color: ink }]}>{formatNumber(balance, locale)}</Text>
+          </View>
         </View>
-      </View>
+      ) : null}
       <View style={styles.middle}>
         {/* The tier's name keeps its room but gives way to what the chest held, which rises into it. */}
         <Text style={[styles.name, styles.gone]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -227,20 +230,22 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
               <ConfettiBurst progress={moment.burst} count={BURST.badge} seed={opening.amount * 7 + 3} colours={[colors.gold, '#FFE16A', '#FFBD1F', '#FFFFFF']} reach={size * 0.75} />
             </View>
           ) : null}
-          <Animated.View
-            style={[styles.tile, { bottom: (stageHeight + chestHeight) / 2 + spacing.sm, backgroundColor: colors.surface, opacity: moment.details, transform: [{ translateY: rise }] }]}
-            pointerEvents="none"
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-          >
-            <Icon name="coin" size={44} color={colors.gold} />
-            <Text style={[styles.count, { color: colors.textPrimary }]} maxFontSizeMultiplier={1.3}>
-              {`× ${amount}`}
-            </Text>
-          </Animated.View>
+          {opening.earnsZer ? (
+            <Animated.View
+              style={[styles.tile, { bottom: (stageHeight + chestHeight) / 2 + spacing.sm, backgroundColor: colors.surface, opacity: moment.details, transform: [{ translateY: rise }] }]}
+              pointerEvents="none"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              <Icon name="coin" size={44} color={colors.gold} />
+              <Text style={[styles.count, { color: colors.textPrimary }]} maxFontSizeMultiplier={1.3}>
+                {`× ${amount}`}
+              </Text>
+            </Animated.View>
+          ) : null}
         </Pressable>
         <Animated.View style={[styles.words, { opacity: moment.details }]}>
-          <Text style={[styles.amount, { color: ink }]} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
+          <Text style={[opening.earnsZer ? styles.amount : styles.members, { color: ink }]} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
             {reward}
           </Text>
         </Animated.View>
@@ -346,5 +351,6 @@ const styles = StyleSheet.create({
   balance: { alignItems: 'center', gap: spacing.xs, borderRadius: radii.pill, paddingHorizontal: spacing.sm + 4, paddingVertical: spacing.xs + 2 },
   balanceText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   amount: { ...display(44), textAlign: 'center', fontVariant: ['tabular-nums'] },
+  members: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center', maxWidth: 320 },
   bar: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm },
 });

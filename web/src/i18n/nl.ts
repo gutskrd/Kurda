@@ -624,7 +624,7 @@ export const nl: Catalogue = {
   'games.race.time': 'Tijd',
   'games.race.again': 'Opnieuw racen',
   'games.race.noPasting': 'Niet plakken — deze typ je zelf.',
-  'games.cta.body': 'Maak een gratis account om te spelen, Zêr te verdienen en te klimmen in de ranglijsten van Hevalo.',
+  'games.cta.body': 'Maak een gratis account om te spelen en te klimmen in de ranglijsten van Hevalo.',
   'games.wordle.emptyCell': 'leeg',
   // ---- web-race-rating: the race's keyboard, Peyvok's keys, the rating box ----
   'games.race.textIn': 'Tekst in',
@@ -2232,21 +2232,20 @@ export const nl: Catalogue = {
   'share.sendFailed': 'Dat bericht is niet verstuurd. Probeer het opnieuw.',
   'share.signInToSend': 'Log in om dit naar een vriend te sturen.',
 
-  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
-  'share.win.lesson': 'Ik heb op Hevalo de Koerdische les ‘{title}’ afgerond.',
-  'share.win.lessonPlain': 'Ik heb op Hevalo een Koerdische les afgerond.',
-  'share.win.streak': '{count} dagen Koerdisch op rij.',
-  'share.win.badge': 'Ik heb op Hevalo de badge ‘{badge}’ verdiend.',
-  'share.win.leagueUp': 'Ik ben op Hevalo gestegen naar Competitie {tier}.',
-  'share.win.leaguePlace': 'Ik werd op Hevalo #{rank} in Competitie {tier}.',
+  /* a win sent to somebody outside Hevalo: one warm line in the sharer's own voice telling the news and asking them along, with nothing in it that names the sharer; a streak's is only ever said of a week or more, and the word game names its difficulty only when it was hard */
+  'share.win.lesson': 'Kijk, ik heb net de Koerdische les ‘{title}’ afgerond! Leer met me mee op Hevalo',
+  'share.win.lessonPlain': 'Kijk, ik heb net een Koerdische les afgerond! Leer met me mee op Hevalo',
+  'share.win.streak': '{count} dagen Koerdisch op rij, en ik stop niet! Doe mee op Hevalo',
+  'share.win.badge': 'Ik heb net de badge ‘{badge}’ verdiend op Hevalo!',
+  'share.win.leagueUp': 'Ik ben op Hevalo net gestegen naar Competitie {tier}!',
+  'share.win.leaguePlace': 'Ik ben deze week #{rank} geworden in Competitie {tier}!',
+  'share.win.peyvok': 'Kijk, ik heb de Peyvok van vandaag net in {score} opgelost! Kun jij me verslaan?',
+  'share.win.peyvokHard': 'Kijk, ik heb de Peyvok van vandaag net op moeilijk in {score} opgelost! Kun jij me verslaan?',
+  'share.win.peyvokLost': 'De Peyvok van vandaag was me te slim af… kraak jij hem?',
+  'share.win.peyvokPractice': 'Kijk, ik heb net een Peyvok in {score} opgelost! Kun jij me verslaan?',
+  'share.win.peyvokPracticeHard': 'Kijk, ik heb net een Peyvok op moeilijk in {score} opgelost! Kun jij me verslaan?',
+  'share.win.peyvokPracticeLost': 'Deze Peyvok was me te slim af… kraak jij hem?',
   'win.kicker': 'Een ansichtkaart van Hevalo',
-  'win.lesson': 'Weer een les af',
-  'win.streak': '{count} dagen op rij',
-  'win.streakPlain': 'De reeks houdt stand',
-  'win.badge': 'Een nieuwe badge',
-  'win.league': 'Een goede week in de {league}',
-  'win.leaguePlain': 'Een goede week in de competitie',
-  'win.body': 'Iemand die je kent leert hier Koerdisch, elke dag een paar minuten. Doe ook mee.',
   'win.picture': 'Een ansichtkaart: Hamo en Hevalo op een heuvel, en een vogel die wegvliegt met een brief.',
 
   /* putting somebody else's post on your own profile */
@@ -3408,11 +3407,11 @@ export const nl: Catalogue = {
   'landing.learn.point3': 'Herhalen brengt terug wat je hebt beantwoord, na tussenpozen die groeien zolang je het onthoudt.',
   'landing.learn.point4': 'XP voor elke les, en een reeks voor elke dag dat je een les of een herhaling afrondt, of de dagelijkse Peyvok oplost.',
   'landing.progress.title': 'Kleine beloningen voor wie blijft komen.',
-  'landing.progress.lead': 'Lessen, verhalen en spellen die je online met vrienden speelt leveren XP op, en een wekelijkse competitie rangschikt die als je meedoet. Leer je elke dag, dan verdien je Zêr, de eigen munten van Hevalo, om uit te geven aan je profiel of aan een cadeau voor een vriend.',
+  'landing.progress.lead': 'Lessen, verhalen en spellen die je online met vrienden speelt leveren XP op, en een wekelijkse competitie rangschikt die als je meedoet. Leden van Hevalo+ verdienen door elke dag te leren ook Zêr, de eigen munten van Hevalo, om uit te geven aan hun profiel of aan een cadeau voor een vriend.',
   'landing.progress.learn': 'Leren',
   'landing.progress.learnBody': 'Lessen, verhalen en online spellen met vrienden leveren XP op.',
   'landing.progress.earn': 'Verdienen',
-  'landing.progress.earnBody': 'Rond elke dag een les of een herhaling af voor Zêr. De zevende dag levert het meest op.',
+  'landing.progress.earnBody': 'Leden van Hevalo+ krijgen Zêr voor elke dag waarop ze een les of een herhaling afronden. De zevende dag levert het meest op.',
   'landing.progress.customize': 'Aanpassen',
   'landing.progress.customizeBody': 'Geef het uit aan achtergronden en iconen voor je profiel, of aan een cadeau voor een vriend.',
   'landing.progress.play': 'Spelen',
@@ -3514,7 +3513,7 @@ export const nl: Catalogue = {
   'teach.rewards.does3': 'Reeksen zijn vergevingsgezind. Elke vijf afgeronde lessen of herhalingen leveren een reeksbevriezing op, die één gemiste dag dekt; je kunt er één tegelijk bewaren. Je langste reeks en je leerdagen blijven op je profiel staan als een reeks eindigt.',
   'teach.rewards.does4': 'De wekelijkse competities zijn vrijwillig. Je kunt ze in Instellingen verlaten, en je XP, reeks en voortgang tellen hoe dan ook hetzelfde.',
   'teach.rewards.does5':
-    'Zêr krijg je voor dagelijkse opdrachten, je boom, mijlpalen in je reeks, overwinningen op anderen en bij evenementen, nooit voor het opnieuw doen van een les.',
+    'Alleen leden van Hevalo+ verdienen Zêr: met dagelijkse opdrachten, hun boom, mijlpalen in hun reeks, overwinningen op anderen en bij evenementen, nooit door een les opnieuw te doen.',
   'teach.younger.title': 'Veiliger voor jongere leerlingen',
   'teach.younger.found1': 'Onderzoekers die de apps bekeken die 160 kinderen van 3 tot 5 jaar gebruikten, vonden in de meeste manipulatief ontwerp: tijdsdruk, lokkertjes en figuren die het kind onder druk zetten. Slechts één op de vijf had er niets van.',
   'teach.younger.found2': 'Een overzicht van hoe kinderen van apps leren vond dat ze het best leren als een app ze laat nadenken in plaats van alleen tikken, hun aandacht vasthoudt in plaats van afleidt, aansluit bij hun leven en andere mensen erbij betrekt.',
@@ -3548,6 +3547,8 @@ export const nl: Catalogue = {
   'privacy.safety.title': 'Veiligheid',
   'privacy.safety.body':
     'Berichten en afbeeldingen kunnen automatisch en door moderators worden gecontroleerd om misbruik en illegale inhoud te weren. Elke afbeelding wordt gecontroleerd voordat iemand anders haar ziet: automatisch, door een AI-dienst die voor ons werkt en alleen de afbeelding krijgt, nooit wie je bent; en door een mens als de controle twijfelt. Een geweigerde afbeelding bewaren we tot zes maanden privé, zodat je kunt vragen om haar opnieuw te bekijken, en daarna wordt ze verwijderd. Wat een kind kan schaden, bewaren we als bewijs zolang de wet dat vereist.',
+  'privacy.safety.messages':
+    'Ons veiligheidsteam mag een brief of privébericht alleen lezen als iemand uit het gesprek het meldt, als een automatische veiligheidscontrole het markeert, of om een specifieke reden van veiligheid of wet, zoals een kind in gevaar of een verzoek van de autoriteiten. Elke keer dat iemand van ons team er een opent, wordt dat vastgelegd. Brieven en berichten worden nooit voor iets anders gelezen, en nooit voor reclame.',
   'privacy.safety.returns':
     'Om te voorkomen dat verbannen mensen zomaar terugkomen, bewaart Hevalo onherkenbaar gemaakte (gehashte) gegevens van het account, de inlog en de apparaten van iemand die verbannen of geschorst is, en vergelijkt nieuwe accounts en inlogs daarmee. Een internetadres alleen is nooit genoeg, omdat veel mensen er een kunnen delen, en als een overeenkomst niet duidelijk is, beslist een mens. Deze gegevens worden alleen bewaard zolang de verbanning of schorsing duurt, ook als het account wordt verwijderd; de inlog- en apparaatgegevens waar ze uit komen, worden bewaard voor de termijnen onder ‘Hoelang we het bewaren’. Is je account geschorst of verbannen, dan kun je via het scherm dat je bij het inloggen ziet nog steeds een kopie van je gegevens downloaden of je account verwijderen.',
   'privacy.children.title':
@@ -3572,7 +3573,7 @@ export const nl: Catalogue = {
   'privacy.retention.title':
     'Hoelang we het bewaren',
   'privacy.retention.body':
-    'Je account en wat je eraan toevoegt, worden bewaard tot je die inhoud of je account verwijdert. Je account verwijderen begint met een bedenktijd van 14 dagen; log je in die tijd weer in, dan wordt het verwijderen geannuleerd. Daarna worden je persoonlijke gegevens en wat je hebt geplaatst verwijderd, en blijven alleen een anonieme leergeschiedenis en moderatiedossiers over. Het logboek van inlogs wordt 90 dagen bewaard, of een jaar bij iets verdachts, en het internetadres daarin 30 dagen; een apparaat waarmee je inlogt, wordt tot 180 dagen na de laatste inlog onthouden. Een geweigerde afbeelding bewaren we tot zes maanden privé. Voor kinderprofielen gelden de regels onder ‘Kinderen’. Kopieën in de back-ups van ons hostingbedrijf worden binnen 7 dagen overschreven.',
+    'Je account en wat je eraan toevoegt, worden bewaard tot je die inhoud of je account verwijdert. Je account verwijderen begint met een bedenktijd van 14 dagen; log je in die tijd weer in, dan wordt het verwijderen geannuleerd. Daarna worden je persoonlijke gegevens en wat je hebt geplaatst verwijderd, en blijven alleen een anonieme leergeschiedenis en moderatiedossiers over. Het logboek van inlogs wordt 90 dagen bewaard, of een jaar bij iets verdachts, en het internetadres daarin 30 dagen; een apparaat waarmee je inlogt, wordt tot 180 dagen na de laatste inlog onthouden. Een geweigerde afbeelding bewaren we tot zes maanden privé. Een brief of bericht dat een automatische veiligheidscontrole markeert, bewaren we bij de zaak tot een jaar nadat erover is beslist, of tot je account wordt verwijderd als dat eerder is. Voor kinderprofielen gelden de regels onder ‘Kinderen’. Kopieën in de back-ups van ons hostingbedrijf worden binnen 7 dagen overschreven.',
   'privacy.control.title':
     'Jouw rechten en keuzes',
   'privacy.control.body':
@@ -3613,7 +3614,7 @@ export const nl: Catalogue = {
   'faq.what.q': 'Wat is Hevalo?',
   'faq.what.a': 'Een plek om samen met anderen Koerdisch te leren. Je leert woorden in spellen, racet met vrienden naar hetzelfde woord, klimt in een wekelijkse competitie en leest wat de community schrijft. Eerst Kurmanci.',
   'faq.free.q': 'Is het gratis?',
-  'faq.free.a': 'Ja. In de browser kost niets geld. Zêr, de eigen munt van Hevalo, krijg je als dagbeloning, voor dagelijkse opdrachten en bij evenementen, en je geeft het uit in de winkel.',
+  'faq.free.a': 'Ja. In de browser kost niets geld. Zêr, de eigen munt van Hevalo, krijgen leden van Hevalo+ als dagbeloning, voor dagelijkse opdrachten en bij evenementen, en je geeft het uit in de winkel.',
   'faq.kurdish.q': 'Welk Koerdisch leert Hevalo je?',
   'faq.kurdish.a': 'Eerst Kurmanci: in de eerste cursus leer je het in het Latijnse alfabet. Peyvên Hevserwa, het rijmspel, kun je ook in het Soranî spelen, de hele interface is er in het Soranî, en cursussen in meer Koerdische varianten volgen.',
   'faq.account.q': 'Heb ik een account nodig?',
@@ -4298,6 +4299,7 @@ export const nl: Catalogue = {
   'events.noneBody': 'Evenementen komen een paar keer per jaar, elk met eigen opdrachten en beloningen. Zodra er een begint, staat het bij Leren.',
   'events.someMissing': 'Sommige evenementen konden niet worden geladen.',
   'events.reward': 'Beloning:',
+  'events.membersZer': 'Zêr uit evenementen hoort bij Hevalo+.',
   'events.claim': 'Ophalen',
   'events.claimed': 'Opgehaald',
   'events.claimFailed': 'Deze beloning kan nu niet worden opgehaald.',
@@ -4322,6 +4324,7 @@ export const nl: Catalogue = {
   'quests.tapToOpen': 'Tik om te openen!',
   'quests.opening': 'Wordt geopend…',
   'quests.reward': '+{amount} Zêr',
+  'quests.membersZer': 'Zêr in kisten hoort bij Hevalo+.',
   'quests.got': '+{amount} Zêr. Je hebt nu {balance} Zêr.',
   'quests.nextChest': 'Volgende kist',
   'quests.alreadyOpen': 'Deze kist is al open, en de Zêr erin is van jou.',

@@ -229,10 +229,10 @@ describe('an item’s sale state', () => {
     expect(saleState(item({ availableFrom: new Date(now - DAY).toISOString(), availableTo: new Date(now + DAY).toISOString() }), now)).toBe('on');
   });
 
-  it('needs a second admin only for a new price at or over 1,000', () => {
-    expect(needsApproval(null, 999, 'zer')).toBe(false);
-    expect(needsApproval(null, 1000, 'zer')).toBe(true);
-    expect(needsApproval({ price: 1500, currency: 'zer' }, 1500, 'zer')).toBe(false);
-    expect(needsApproval({ price: 500, currency: 'zer' }, 1200, 'zer')).toBe(true);
+  it('needs a second admin only for a new price at or over 500', () => {
+    expect(needsApproval(null, 499, 'zer')).toBe(false);
+    expect(needsApproval(null, 500, 'zer')).toBe(true);
+    expect(needsApproval({ price: 750, currency: 'zer' }, 750, 'zer')).toBe(false);
+    expect(needsApproval({ price: 250, currency: 'zer' }, 600, 'zer')).toBe(true);
   });
 });

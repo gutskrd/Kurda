@@ -53,6 +53,8 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
     // Scheduling a tournament and declaring a winner are staff surface and need the second factor.
     await pass2fa(app, adminToken);
     for (const tag of ['p1', 'p2', 'p3', 'p4']) players.push(await register(tag));
+    // a prize is Zêr won, which only members are paid
+    await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = ANY($1)`, [players.map((p) => p.id)]);
   });
 
   afterAll(async () => {

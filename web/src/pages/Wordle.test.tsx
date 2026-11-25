@@ -323,13 +323,13 @@ describe('Peyvok’s result, shared', () => {
 
   afterEach(() => vi.unstubAllGlobals());
 
-  it('shares the day’s word as its score, its guesses as rows of fruit and the game’s address', async () => {
+  it('shares the day’s word as news and a challenge, its guesses as rows of fruit and the game’s address with the score', async () => {
     const said = open({ daily: wonGame });
     await screen.findByText(/solved it/i);
     const share = screen.getByRole('button', { name: 'Share' });
     expect(share).toHaveClass('btn-secondary');
     await userEvent.click(share);
-    expect(said()).toBe(`Hevalo Peyvok (Medium) 1/6\n\n🍏🍏🍏\n\n${SITE}/win/peyvok`);
+    expect(said()).toBe(`Look, I just solved today’s Peyvok in 1/6! Can you beat me?\n\n🍏🍏🍏\n\n${SITE}/win/peyvok/1-6?l=en`);
   });
 
   it('gives nothing of the word away, and nothing of who played', async () => {
@@ -342,10 +342,10 @@ describe('Peyvok’s result, shared', () => {
     expect(text).not.toMatch(/kar/i);
     for (const theirs of ['rojda', 'u-4471', '/users/', '@']) expect(text).not.toContain(theirs);
     // One address, and it is the word game's own page, which is about nobody.
-    expect(text.match(/https?:\/\/\S+/g)).toEqual([`${SITE}/win/peyvok`]);
+    expect(text.match(/https?:\/\/\S+/g)).toEqual([`${SITE}/win/peyvok/1-6?l=en`]);
   });
 
-  it('shares a practice word that was not found the same way, with an X for the score, under the way to play again', async () => {
+  it('shares a practice word that was not found as one that got the better of the player, under the way to play again', async () => {
     const miss = { guess: 'mal', letters: ['m', 'a', 'l'], feedback: ['gray', 'green', 'gray'] };
     const lostGame = { ...startedGame, mode: 'practice', difficulty: 'hard', status: 'lost', guesses: Array.from({ length: 6 }, () => miss), remainingAttempts: 0, target: 'kar', xpAwarded: 0 };
     localStorage.setItem('hevalo_peyvok_choice', JSON.stringify({ mode: 'practice', difficulty: 'hard' }));
@@ -357,7 +357,7 @@ describe('Peyvok’s result, shared', () => {
     expect(again).toHaveClass('btn-primary');
     expect(again.compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await userEvent.click(share);
-    expect(said()).toBe(`Hevalo Peyvok Practice (Hard) X/6\n\n${Array.from({ length: 6 }, () => '⚪🍏⚪').join('\n')}\n\n${SITE}/win/peyvok`);
+    expect(said()).toBe(`This Peyvok got the better of me… can you crack it?\n\n${Array.from({ length: 6 }, () => '⚪🍏⚪').join('\n')}\n\n${SITE}/win/peyvok/practice-x-6?l=en`);
     expect(said()).not.toMatch(/kar/i);
   });
 

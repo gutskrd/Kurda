@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { GROUP_UNREAD_CAP, stripControlChars, type ChatGameRef, type ChatMessageExtras } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { assertUnrestricted } from '../moderation/restrictions.js';
+import type { FlaggedMessage } from '../moderation/service.js';
 import { assertParentalAllowed, switchedOffSql } from '../parental/supervision.js';
 import { gameRef, type KindColumns } from '../chat/kinds.js';
 import { giftCards } from '../gifts/cards.js';
@@ -22,8 +23,8 @@ export interface RoomHub {
 /** Moderation hook: mask, track offences, enforce escalation mutes. */
 export interface ChatModeration {
   isChatMuted(userId: string): Promise<boolean>;
-  filter(text: string): { masked: string; flagged: boolean };
-  recordOffense(userId: string): Promise<unknown>;
+  filter(text: string): { masked: string; flagged: boolean; hits?: string[] };
+  recordOffense(userId: string, flagged?: FlaggedMessage): Promise<unknown>;
 }
 
 /** A message in a group's channel: text, or a gift or game card with no body. A deleted message carries nothing. */
@@ -192,7 +193,11 @@ export class GroupChatService {
          FROM ins JOIN users u ON u.id = ins.sender_id`,
       [groupId, userId, body],
     );
-    if (filtered.flagged && this.moderation) void this.moderation.recordOffense(userId).catch(() => undefined);
+    // a flagged message is counted against its writer, and goes to a moderator with the words that matched
+    if (filtered.flagged && this.moderation) {
+      const flagged: FlaggedMessage = { targetType: 'group_message', id: row.rows[0]!.id, words: filtered.hits ?? [] };
+      void this.moderation.recordOffense(userId, flagged).catch(() => undefined);
+    }
     const message: GroupMessage = {
       id: row.rows[0]!.id,
       senderId: userId,

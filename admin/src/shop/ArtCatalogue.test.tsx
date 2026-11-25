@@ -124,7 +124,7 @@ describe('the backgrounds and icons', () => {
       description: 'A red night',
       category: 'background',
       currency: 'zer',
-      price: 500,
+      price: 250,
       isUnique: true,
       active: true,
       inStock: true,
@@ -250,20 +250,20 @@ describe('the backgrounds and icons', () => {
     expect(sent(calls, 'PATCH', '/shop/items/bg-newroz')[0]!.body).toEqual({ assetKey: UPLOADED, inStock: false });
   });
 
-  it('sends a new price of 1,000 or more to Approvals, and follows the server when it says so', async () => {
+  it('sends a new price of 500 or more to Approvals, and follows the server when it says so', async () => {
     const user = userEvent.setup();
     const { calls } = fakeApi(...shop([bg()]), on('POST', '/admin/config/changes', json({ id: 'c1', status: 'pending' }, 202)));
     renderUi(<Shop />);
     await user.click(await screen.findByRole('button', { name: 'Edit “Newroz”' }));
     const price = screen.getByLabelText(/^price/i);
     await user.clear(price);
-    await user.type(price, '1500');
+    await user.type(price, '750');
     expect(screen.getByText('A second admin approves this price')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Send for approval' }));
     await waitFor(() => expect(sent(calls, 'POST', '/admin/config/changes')).toHaveLength(1));
     expect(sent(calls, 'POST', '/admin/config/changes')[0]!.body).toEqual({
       target: 'shop_item',
-      payload: { sku: 'bg-newroz', name: 'Newroz', currency: 'zer', price: 1500 },
+      payload: { sku: 'bg-newroz', name: 'Newroz', currency: 'zer', price: 750 },
     });
     expect(sent(calls, 'PATCH', '/shop/items/bg-newroz')).toHaveLength(0);
     expect(await screen.findByText(/waiting in Approvals/)).toBeInTheDocument();
@@ -273,7 +273,7 @@ describe('the backgrounds and icons', () => {
     const user = userEvent.setup();
     const { calls } = fakeApi(
       ...shop([bg({ price: 900 })]),
-      on('PATCH', '/shop/items/bg-newroz', failure(409, 'PRICE_NEEDS_APPROVAL', 'a price of 1,000 or more goes through Approvals')),
+      on('PATCH', '/shop/items/bg-newroz', failure(409, 'PRICE_NEEDS_APPROVAL', 'a price of 500 or more goes through Approvals')),
     );
     renderUi(<Shop />);
     await user.click(await screen.findByRole('button', { name: 'Edit “Newroz”' }));

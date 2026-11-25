@@ -250,8 +250,8 @@ function PlusSection({ user, canAdjust, onChanged }: { user: EconomyUser; canAdj
     <Section
       title="Hevalo+"
       description={
-        'Membership: the daily Zêr, a monthly members’ box, double quest chests, streak milestones and wins, a second ' +
-        'streak freeze, and one free streak restore a month.'
+        'Membership: earning Zêr at all (only members earn it, from the daily Zêr, quest chests, streak milestones, wins and ' +
+        'more), a monthly members’ box, a second streak freeze, and one free streak restore a month.'
       }
     >
       <p>

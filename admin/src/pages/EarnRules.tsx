@@ -36,7 +36,10 @@ export function EarnRules(): React.JSX.Element {
 
   return (
     <div>
-      <PageHeader title="Earn rules" subtitle="How much Zêr each action earns, the most a day, and the wait before it pays again. Changes apply to the next Zêr earned." />
+      <PageHeader
+        title="Earn rules"
+        subtitle="How much Zêr each action earns a Hevalo+ member (nobody else earns Zêr), the most a day, and the wait before it pays again. Changes apply to the next Zêr earned."
+      />
       <Section flush>
         <Table
           caption="Earn rules"

@@ -90,13 +90,14 @@ export async function payOnlineWin(
     refId: game.ref,
     idempotencyKey: `online-win:${game.ref}:${winner}`,
     perDay: PAID_WINS_PER_DAY,
+    now,
   });
   return { userId: winner, result };
 }
 
 /**
  * Pays a quiz night's podium, in the transaction that ends the night: first to third (`quizPodiumZer`), in a room of
- * QUIZ_PODIUM_MIN_ACCOUNTS accounts or more, twice as much to a member, at most PAID_PODIUMS_PER_DAY podiums a person a
+ * QUIZ_PODIUM_MIN_ACCOUNTS accounts or more, to members only, at most PAID_PODIUMS_PER_DAY podiums a person a
  * day. A podium place is skipped when that player looks like another podium player on a second account, which is how a
  * room filled with someone's own accounts would farm it. `accounts` counts the room's signed-in players; nicknames
  * without an account earn nothing and do not count. A shared place pays each who shares it.
@@ -107,7 +108,8 @@ export async function payQuizPodium(
   night: { ref: string; placings: readonly Placing[]; accounts: number },
   now: Date = new Date(),
 ): Promise<Array<{ userId: string; place: number; result: GrantResult }>> {
-  const podium = night.placings.filter((p) => quizPodiumZer(p.place, night.accounts, false) > 0);
+  // the places that pay, whoever holds them; who is a member decides the amount below
+  const podium = night.placings.filter((p) => quizPodiumZer(p.place, night.accounts, true) > 0);
   const paid: Array<{ userId: string; place: number; result: GrantResult }> = [];
   for (const p of podium) {
     let alone = true;
@@ -122,6 +124,7 @@ export async function payQuizPodium(
       refId: night.ref,
       idempotencyKey: `quiz-podium:${night.ref}:${p.userId}`,
       perDay: PAID_PODIUMS_PER_DAY,
+      now,
     });
     paid.push({ userId: p.userId, place: p.place, result });
   }

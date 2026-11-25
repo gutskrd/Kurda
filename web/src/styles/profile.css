@@ -167,7 +167,8 @@
 /* the name with its level ring, and the handle */
 .ph-names {
   display: grid;
-  gap: 2px;
+  /* room between the name with its level ring and the handle with its badge row, so neither crowds the other */
+  gap: 8px;
   min-width: 0;
 }
 .ph-name-row {

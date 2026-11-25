@@ -44,6 +44,7 @@ internal operations, and is disclosed to no third party beyond service providers
 | Risk | Likelihood before | Measures | Remaining |
 |---|---|---|---|
 | A stranger contacts a child | high on a social app | children cannot chat, post, add friends, write letters, play online outside the family, appear in rankings or be found; enforced on the server for every route | low |
+| Staff read a teen’s letters or messages without need | medium | read only when someone in the conversation reports one, an automatic check flags one, or a superadmin opens a 24-hour safety review for a reason from a fixed list; every reading on the Access log every admin sees (security-program.md) | low |
 | A child’s data is seen outside the family | medium | no public profile, name never shown outside the family, family boards visible only to members | low |
 | A child spends money or is pushed to | medium | nothing can be bought on a child profile; a parent approves and pays; no ads; no paid random rewards | low |
 | A child is nudged to over-use the app | medium | the parent’s daily limit and bedtime; no streak repairs sold; reminders only if the parent allows | low |
@@ -86,7 +87,8 @@ never receives anything from a child.
 
 ## 7. Before release, and every year
 
-- [ ] The privacy page’s “Children” part matches this page and the code.
+- [ ] The privacy page’s “Children” part matches this page and the code, and its “Keeping it safe” part says when
+      staff may read letters and messages as `api/src/message-access` enforces it.
 - [ ] `CURRENT_POLICY_VERSION` (`api/src/gdpr/consent.ts`) is moved to the release date, so everyone agrees to the
       new policy again.
 - [ ] Every provider above has a data processing agreement with standard contractual clauses (most are part of their

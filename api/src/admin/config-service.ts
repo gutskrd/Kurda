@@ -7,7 +7,7 @@ export type ConfigTarget = 'shop_item' | 'event';
 export type ChangeStatus = 'pending' | 'applied' | 'rejected';
 
 /** Price at/above which a shop change needs a second admin's sign-off. */
-export const SENSITIVE_PRICE = 1000;
+export const SENSITIVE_PRICE = 500;
 
 export interface ProposeResult {
   status: 'applied' | 'pending';

@@ -38,7 +38,7 @@ const steps: QuestStep[] = [
   { id: 'q:streak', kind: 'streak', target: 1, chest: 'common', from: 0, to: 1, claimable: true },
   { id: 'q:xp', kind: 'xp', target: 40, chest: 'rare', from: 10, to: 25, claimable: false },
 ];
-const opening = (questId: string, amount: number, balance: number) => ok({ questId, tier: 'common', currency: 'zer', amount, balance });
+const opening = (questId: string, amount: number, balance: number, earnsZer = true) => ok({ questId, tier: 'common', currency: 'zer', amount, balance, earnsZer });
 const offline: ApiResult<never> = { ok: false, error: { kind: 'network', message: 'network request failed' } };
 
 /** A route that answers from a list, one reply per call, the last one for ever after. */

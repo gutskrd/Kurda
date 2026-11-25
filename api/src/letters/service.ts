@@ -43,6 +43,7 @@ import { canonicalPair } from '../friends/pair.js';
 import type { Notification } from '../push/service.js';
 import { activeRestriction, IN_FORCE_SQL } from '../moderation/sanctions-service.js';
 import { inTransaction } from '../moderation/tx.js';
+import type { FlaggedMessage } from '../moderation/service.js';
 import type { WalletService } from '../wallet/service.js';
 import { letterNoticeText, type LetterNoticeHow } from './notice.js';
 import { unseenByOthersSql } from '../users/kind.js';
@@ -85,9 +86,9 @@ const AGAIN_MINUTES = 10;
 /** What the service needs from the app: the word filter and mute, a way to notify about a letter, and the open windows. */
 export interface LetterDeps {
   moderation?: {
-    filter(text: string): { masked: string; flagged: boolean };
+    filter(text: string): { masked: string; flagged: boolean; hits?: string[] };
     isChatMuted(userId: string): Promise<boolean>;
-    recordOffense(userId: string): Promise<unknown>;
+    recordOffense(userId: string, flagged?: FlaggedMessage): Promise<unknown>;
   };
   /** writes the line into the person's notifications */
   inbox?: { record(userId: string, notification: Notification): Promise<void> };
@@ -185,6 +186,8 @@ interface Written {
   decor: LetterDecor | null;
   /** the paper chosen, to open the composer on next time; null when the app sent none */
   paper: LetterPaper | null;
+  /** the listed words the filter found in its words or notes; null when it found none */
+  flagged: string[] | null;
 }
 
 /** The key a letter is stored under: the app's key prefixed by the letter's kind, so it never matches another kind. */
@@ -283,7 +286,8 @@ export class LetterService {
    * A letter as it will be sent: control characters removed, Kurdish letters normalized, refused for a link or contact
    * detail, filtered words masked. Decor is checked as the apps check it (`checkLetterDecor`, `strokes: false` for a
    * first letter), and notes follow the words' rules; words and notes are read together so a number split between them
-   * is still found. A muted writer is refused here too.
+   * is still found. A muted writer is refused here too. A flagged letter is counted against its writer once it is sent
+   * (`flag`), not here, since it may yet be refused.
    */
   private async cleaned(me: string, raw: string, rawDecor: unknown, opts: { strokes: boolean }): Promise<Written> {
     const text = letterText(stripControlChars(raw));
@@ -303,16 +307,23 @@ export class LetterService {
       if (await moderation.isChatMuted(me)) throw new AppError('CHAT_MUTED', 403, 'you are muted from writing to people');
       const filtered = moderation.filter(text);
       let flagged = filtered.flagged;
+      const words = new Set(filtered.hits ?? []);
       const notes = (decor?.notes ?? []).map((n) => {
         const f = moderation.filter(n.text);
         flagged ||= f.flagged;
+        for (const w of f.hits ?? []) words.add(w);
         return { ...n, text: f.masked };
       });
-      if (flagged) void moderation.recordOffense(me).catch(() => undefined);
       if (decor) decor = { ...decor, notes };
-      return { text: filtered.masked, decor: decor && !isPlainDecor(decor) ? decor : null, paper };
+      return { text: filtered.masked, decor: decor && !isPlainDecor(decor) ? decor : null, paper, flagged: flagged ? [...words] : null };
     }
-    return { text, decor: decor && !isPlainDecor(decor) ? decor : null, paper };
+    return { text, decor: decor && !isPlainDecor(decor) ? decor : null, paper, flagged: null };
+  }
+
+  /** A sent letter the filter flagged: counted against its writer, and put before a moderator with the words that matched. */
+  private flag(userId: string, letterId: string, written: Written): void {
+    if (!written.flagged || !this.deps.moderation) return;
+    void this.deps.moderation.recordOffense(userId, { targetType: 'letter', id: letterId, words: written.flagged }).catch(() => undefined);
   }
 
   /**
@@ -760,14 +771,15 @@ export class LetterService {
    */
   async sendOut(userId: string, raw: string, rawDecor?: unknown, opts: { key?: string | null } = {}): Promise<BirdOutResult> {
     // A first letter to a stranger may choose paper and carry notes but no drawing; drawings are for pen pals.
-    const { text, decor, paper } = await this.cleaned(userId, raw, rawDecor, { strokes: false });
+    const written = await this.cleaned(userId, raw, rawDecor, { strokes: false });
+    const { text, decor, paper } = written;
     const key = keyed('out', opts.key);
-    const { result, fresh } = await inTransaction(this.pool, async (client): Promise<{ result: BirdOutResult; fresh: boolean }> => {
+    const { result, sent } = await inTransaction(this.pool, async (client): Promise<{ result: BirdOutResult; sent: string | null }> => {
       // one writer, one send or call at a time: two quick presses cannot do it twice
       await client.query(`SELECT pg_advisory_xact_lock(hashtext('letters:' || $1::text))`, [userId]);
       if (key) {
         const before = await client.query<{ created_at: Date }>(`SELECT created_at FROM letters WHERE sender_id = $1 AND idempotency_key = $2`, [userId, key]);
-        if (before.rows[0]) return { result: { kind: 'waiting', since: before.rows[0].created_at.toISOString() }, fresh: false };
+        if (before.rows[0]) return { result: { kind: 'waiting', since: before.rows[0].created_at.toISOString() }, sent: null };
       }
       const me = await this.me(client, userId);
       const band = this.bandOf(me);
@@ -781,7 +793,7 @@ export class LetterService {
       if (already) {
         // the same letter again, its reply lost on the way: that is the bird already out
         if (already.body === text && Date.now() - already.created_at.getTime() < AGAIN_MINUTES * 60_000) {
-          return { result: { kind: 'waiting', since: already.created_at.toISOString() }, fresh: false };
+          return { result: { kind: 'waiting', since: already.created_at.toISOString() }, sent: null };
         }
         throw new AppError('BIRD_OUT', 409, 'your bird is already out');
       }
@@ -789,16 +801,19 @@ export class LetterService {
       if (await this.visitorOf(client, userId)) throw new AppError('VISITOR_HERE', 409, 'a bird is at your window: answer it or send it on first');
       await this.withinDay(client, userId);
       if ((await this.openThreads(client, userId)) >= PEN_PALS_MAX) throw new AppError('PEN_PALS_FULL', 409, 'you have as many pen pals as there is room for');
-      const out = await client.query<{ created_at: Date }>(
-        `INSERT INTO letters (sender_id, body, decor, age_band, idempotency_key) VALUES ($1, $2, $3::jsonb, $4, $5) RETURNING created_at`,
+      const out = await client.query<{ id: string; created_at: Date }>(
+        `INSERT INTO letters (sender_id, body, decor, age_band, idempotency_key) VALUES ($1, $2, $3::jsonb, $4, $5) RETURNING id, created_at`,
         [userId, text, decor ? JSON.stringify(decor) : null, band, key],
       );
       // A bird that came home by itself and was never shown is going out again, so its return is no longer news.
       await client.query(`UPDATE letters SET landed_at = now() WHERE sender_id = $1 AND status = 'recalled' AND landed_at IS NULL`, [userId]);
       await this.rememberPaper(client, userId, paper);
-      return { result: { kind: 'waiting', since: out.rows[0]!.created_at.toISOString() }, fresh: true };
+      return { result: { kind: 'waiting', since: out.rows[0]!.created_at.toISOString() }, sent: out.rows[0]!.id };
     });
-    if (fresh) this.ping(userId);
+    if (sent) {
+      this.flag(userId, sent, written);
+      this.ping(userId);
+    }
     return result;
   }
 
@@ -862,7 +877,8 @@ export class LetterService {
    * answer already sent.
    */
   async answer(userId: string, raw: string, rawDecor?: unknown, opts: { key?: string | null } = {}): Promise<VisitorAnswer> {
-    const { text, decor, paper } = await this.cleaned(userId, raw, rawDecor, { strokes: true });
+    const written = await this.cleaned(userId, raw, rawDecor, { strokes: true });
+    const { text, decor, paper } = written;
     const drawing = await this.checkDrawing(userId, decor, text);
     const key = keyed('answer', opts.key);
     const client = await this.pool.connect();
@@ -870,6 +886,7 @@ export class LetterService {
     let writer: string | null = null;
     let told: { threadId: string; letterId: string; name: string } | null = null;
     let answered: VisitorAnswer | null = null;
+    let sent: string | null = null;
     try {
       await client.query('BEGIN');
       const at = await client.query<{ sender_id: string }>(
@@ -949,6 +966,7 @@ export class LetterService {
               [userId, visit.sender_id, threadId, text, decor ? JSON.stringify(decor) : null, band, key, drawing ? 'held' : 'delivered', drawing],
             );
             const letter = ins.rows[0]!;
+            sent = letter.id;
             if (drawing) await this.deps.pictures?.attachLetter(client, drawing, letter.id);
             await this.rememberPaper(client, userId, paper);
             await client.query(`UPDATE letter_visits SET ended_at = now(), outcome = 'answered', thread_id = $2, answer_id = $3 WHERE id = $1`, [
@@ -974,6 +992,7 @@ export class LetterService {
       this.ping(userId, writer);
       throw refusal;
     }
+    if (sent) this.flag(userId, sent, written);
     if (told && writer) {
       this.ping(userId, writer);
       await this.tell(writer, told.threadId, userId, told.name, 'home', told.letterId);
@@ -1108,11 +1127,13 @@ export class LetterService {
    * resend (same key, or same words just after) returns the letter already sent.
    */
   async reply(userId: string, threadId: string, raw: string, rawDecor?: unknown, opts: { key?: string | null } = {}): Promise<LetterItem> {
-    const { text, decor, paper } = await this.cleaned(userId, raw, rawDecor, { strokes: true });
+    const written = await this.cleaned(userId, raw, rawDecor, { strokes: true });
+    const { text, decor, paper } = written;
     const drawing = await this.checkDrawing(userId, decor, text);
     let key = keyed('reply', opts.key);
-    // `told` is who to notify for a newly sent letter; none when the letter already sent was found again.
-    const { sent, told } = await inTransaction(this.pool, async (client): Promise<{ sent: LetterItem; told: { other: string; name: string } | null }> => {
+    // `told` is who to notify for a newly sent letter and `fresh` whether it is one; neither when the letter already sent was found again.
+    type Replied = { sent: LetterItem; told: { other: string; name: string } | null; fresh: boolean };
+    const { sent, told, fresh } = await inTransaction(this.pool, async (client): Promise<Replied> => {
       const t = await this.threadRow(client, userId, threadId, true);
       if (key) {
         const before = await client.query<LetterRow & { thread_id: string }>(
@@ -1120,7 +1141,7 @@ export class LetterService {
           [userId, key],
         );
         const row = before.rows[0];
-        if (row && row.thread_id === threadId) return { sent: toItem(row, userId), told: null };
+        if (row && row.thread_id === threadId) return { sent: toItem(row, userId), told: null, fresh: false };
         // a key already used for another letter cannot be kept twice; this one goes without it
         if (row) key = null;
       }
@@ -1136,7 +1157,7 @@ export class LetterService {
             ORDER BY delivered_at DESC, id DESC LIMIT 1`,
           [threadId, userId, AGAIN_MINUTES],
         );
-        if (last.rows[0]?.body === text) return { sent: toItem(last.rows[0], userId), told: null };
+        if (last.rows[0]?.body === text) return { sent: toItem(last.rows[0], userId), told: null, fresh: false };
         throw new AppError('NOT_YOUR_TURN', 409, 'wait for their letter before you write again');
       }
       await this.withinDay(client, userId);
@@ -1150,11 +1171,12 @@ export class LetterService {
       if (drawing) {
         // it waits for a person: their pen pal hears of it once it is approved, and the bird flies then
         await this.deps.pictures?.attachLetter(client, drawing, ins.rows[0]!.id);
-        return { sent: toItem(ins.rows[0]!, userId), told: null };
+        return { sent: toItem(ins.rows[0]!, userId), told: null, fresh: true };
       }
       await client.query(`UPDATE letter_threads SET last_letter_at = now() WHERE id = $1`, [threadId]);
-      return { sent: toItem(ins.rows[0]!, userId), told: { other: t.other, name: me.name } };
+      return { sent: toItem(ins.rows[0]!, userId), told: { other: t.other, name: me.name }, fresh: true };
     });
+    if (fresh) this.flag(userId, sent.id, written);
     if (told) {
       this.ping(userId, told.other);
       await this.tell(told.other, threadId, userId, told.name, 'window', sent.id);

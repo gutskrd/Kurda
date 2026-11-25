@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
+import { minorSql } from '../users/age.js';
 import { classifyForSurface, HeuristicSpamClassifier, type ModerationClassifier } from './classifier.js';
 import { evaluateForSurface, type CategoryScores, type ModerationAction, type Surface } from './policy.js';
 
@@ -106,6 +107,20 @@ export class AiModerationService {
       topScore: result.topScore,
       flagId,
     };
+  }
+
+  /**
+   * Points a flag on a direct message at the message once it is sent (it is checked before), so its case can show it,
+   * but only when a moderator must read a private message: a sexual, hateful or self-harm flag, or one on a message to
+   * a minor. Any other flag stays without its message.
+   */
+  async attachMessage(flagId: string, messageId: string, recipientId: string): Promise<void> {
+    await this.pool.query(
+      `UPDATE moderation_flags f SET content_ref = $2, minor_target = m.minor
+         FROM (SELECT EXISTS (SELECT 1 FROM users u WHERE u.id = $3 AND ${minorSql('u')}) AS minor) m
+        WHERE f.id = $1 AND f.content_ref IS NULL AND (f.top_category IN ('sexual','hate','self_harm') OR m.minor)`,
+      [flagId, messageId, recipientId],
+    );
   }
 
   /** Pending flags oldest-first — the automated feed for the queue. */

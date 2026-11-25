@@ -18,11 +18,12 @@ describe('gift tiers', () => {
   });
 
   it('makes dear items rare', () => {
-    expect(giftTierFor({ price: 1500, limited: false })).toBe('rare');
+    expect(giftTierFor({ price: 750, limited: false })).toBe('rare');
+    expect(giftTierFor({ price: 1000, limited: false })).toBe('rare');
   });
 
   it('leaves the rest common', () => {
-    expect(giftTierFor({ price: 500, limited: false })).toBe('common');
+    expect(giftTierFor({ price: 700, limited: false })).toBe('common');
   });
 
   it('plays a bigger moment for a bigger gift, and never long', () => {
@@ -47,7 +48,7 @@ describe('gift tiers', () => {
 describe('gift stickers', () => {
   it('come at three sizes, three of each, and any one can be a member’s free gift', () => {
     const prices = [...new Set(GIFT_STICKERS.map((s) => s.price))];
-    expect(prices).toEqual([40, 120, 400]);
+    expect(prices).toEqual([20, 50, 150]);
     for (const price of prices) expect(GIFT_STICKERS.filter((s) => s.price === price)).toHaveLength(3);
     expect(Math.max(...prices)).toBeLessThanOrEqual(FREE_GIFT_MAX_PRICE);
   });

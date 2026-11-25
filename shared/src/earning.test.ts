@@ -13,7 +13,12 @@ import {
 import { MEMBERS_BOX_FREE_GIFTS, MEMBERS_BOX_ITEMS, MEMBERS_BOX_ZER, PLUS_ON_SALE, memberPay, membersBoxItem, membersBoxMonth } from './plus.js';
 
 describe('earning Zêr', () => {
-  it('pays the streak milestones the money model lists, twice as much to a member', () => {
+  it('pays only members, and never takes anything from anyone else', () => {
+    expect(memberPay(40, true)).toBe(40);
+    expect(memberPay(40, false)).toBe(0);
+  });
+
+  it('pays a member the streak milestones the money model lists', () => {
     expect(STREAK_MILESTONES.map((m) => [m.days, m.zer])).toEqual([
       [7, 40],
       [14, 60],
@@ -23,8 +28,6 @@ describe('earning Zêr', () => {
       [200, 400],
       [365, 800],
     ]);
-    expect(memberPay(800, true)).toBe(1600);
-    expect(memberPay(800, false)).toBe(800);
     expect(STREAK_MILESTONE_REPEAT_DAYS).toBe(60);
   });
 
@@ -36,32 +39,32 @@ describe('earning Zêr', () => {
     expect(nextStreakMilestone(365)).toBeNull();
   });
 
-  it('pays a win against other people, three a day', () => {
-    expect(onlineWinZer(false)).toBe(10);
-    expect(onlineWinZer(true)).toBe(20);
+  it('pays a member’s win against other people, three a day', () => {
+    expect(onlineWinZer(true)).toBe(10);
+    expect(onlineWinZer(false)).toBe(0);
     expect(PAID_WINS_PER_DAY).toBe(3);
   });
 
-  it('pays a quiz night’s podium only in a room of four accounts or more', () => {
-    expect([1, 2, 3, 4].map((place) => quizPodiumZer(place, 4, false))).toEqual([30, 20, 10, 0]);
-    expect([1, 2, 3].map((place) => quizPodiumZer(place, 12, true))).toEqual([60, 40, 20]);
+  it('pays a quiz night’s podium only to members, in a room of four accounts or more', () => {
+    expect([1, 2, 3, 4].map((place) => quizPodiumZer(place, 4, true))).toEqual([30, 20, 10, 0]);
+    expect([1, 2, 3].map((place) => quizPodiumZer(place, 12, false))).toEqual([0, 0, 0]);
     expect(quizPodiumZer(1, QUIZ_PODIUM_MIN_ACCOUNTS - 1, true)).toBe(0);
-    expect(quizPodiumZer(0, 8, false)).toBe(0);
-    expect(quizPodiumZer(1.5, 8, false)).toBe(0);
+    expect(quizPodiumZer(0, 8, true)).toBe(0);
+    expect(quizPodiumZer(1.5, 8, true)).toBe(0);
   });
 
-  it('caps a day above an honest member’s best day', () => {
+  it('caps a day just above an honest member’s best day', () => {
     // the 365-day milestone, the cycle’s day 7, a full day’s three chests, a harvest, three wins and a podium
-    const chests = memberPay(10 + 20 + 35, true);
-    const best = memberPay(800, true) + 100 + chests + 25 + PAID_WINS_PER_DAY * onlineWinZer(true) + quizPodiumZer(1, 4, true);
+    const chests = 10 + 20 + 35;
+    const best = 800 + 50 + chests + 15 + PAID_WINS_PER_DAY * onlineWinZer(true) + quizPodiumZer(1, 4, true);
     expect(DAILY_EARNED_ZER_CAP).toBeGreaterThanOrEqual(best);
-    expect(DAILY_EARNED_ZER_CAP).toBeLessThanOrEqual(2500);
+    expect(DAILY_EARNED_ZER_CAP).toBeLessThanOrEqual(1250);
   });
 });
 
 describe('the members’ box', () => {
   it('holds what the money model promises', () => {
-    expect(MEMBERS_BOX_ZER).toBe(500);
+    expect(MEMBERS_BOX_ZER).toBe(250);
     expect(MEMBERS_BOX_FREE_GIFTS).toBe(3);
   });
 

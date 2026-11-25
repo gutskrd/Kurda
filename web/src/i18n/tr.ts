@@ -619,7 +619,7 @@ export const tr: Catalogue = {
   'games.race.time': 'Süre',
   'games.race.again': 'Tekrar yarış',
   'games.race.noPasting': 'Yapıştırma yok — bunu sen yazacaksın.',
-  'games.cta.body': 'Oynamak, Zêr kazanmak ve Hevalo sıralamalarında yükselmek için ücretsiz bir hesap oluştur.',
+  'games.cta.body': 'Oynamak ve Hevalo sıralamalarında yükselmek için ücretsiz bir hesap oluştur.',
   'games.wordle.emptyCell': 'boş',
   // ---- web-race-rating: the race's keyboard, Peyvok's keys, the rating box ----
   'games.race.textIn': 'Metin',
@@ -2227,21 +2227,20 @@ export const tr: Catalogue = {
   'share.sendFailed': 'Mesaj gönderilemedi. Tekrar dene.',
   'share.signInToSend': 'Bunu bir arkadaşına göndermek için giriş yap.',
 
-  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
-  'share.win.lesson': 'Hevalo’da “{title}” adlı Kürtçe dersi bitirdim.',
-  'share.win.lessonPlain': 'Hevalo’da bir Kürtçe dersi bitirdim.',
-  'share.win.streak': 'Üst üste {count} gün Kürtçe.',
-  'share.win.badge': 'Hevalo’da “{badge}” rozetini kazandım.',
-  'share.win.leagueUp': 'Hevalo’da {tier} ligine yükseldim.',
-  'share.win.leaguePlace': 'Hevalo’da {tier} liginde {rank}. oldum.',
+  /* a win sent to somebody outside Hevalo: one warm line in the sharer's own voice telling the news and asking them along, with nothing in it that names the sharer; a streak's is only ever said of a week or more, and the word game names its difficulty only when it was hard */
+  'share.win.lesson': 'Bak, Kürtçe “{title}” dersini az önce bitirdim! Hevalo’da benimle öğren',
+  'share.win.lessonPlain': 'Bak, az önce bir Kürtçe dersi bitirdim! Hevalo’da benimle öğren',
+  'share.win.streak': 'Üst üste {count} gündür Kürtçe çalışıyorum ve durmaya niyetim yok! Hevalo’da bana katıl',
+  'share.win.badge': 'Hevalo’da az önce “{badge}” rozetini kazandım!',
+  'share.win.leagueUp': 'Az önce Hevalo’da {tier} ligine yükseldim!',
+  'share.win.leaguePlace': 'Bu hafta {tier} liginde {rank}. oldum!',
+  'share.win.peyvok': 'Bak, bugünün Peyvok’unu az önce {score} denemede çözdüm! Beni geçebilir misin?',
+  'share.win.peyvokHard': 'Bak, bugünün Peyvok’unu az önce zor modda {score} denemede çözdüm! Beni geçebilir misin?',
+  'share.win.peyvokLost': 'Bugünün Peyvok’u bu sefer beni yendi… sen çözebilir misin?',
+  'share.win.peyvokPractice': 'Bak, az önce {score} denemede bir Peyvok çözdüm! Beni geçebilir misin?',
+  'share.win.peyvokPracticeHard': 'Bak, az önce zor modda {score} denemede bir Peyvok çözdüm! Beni geçebilir misin?',
+  'share.win.peyvokPracticeLost': 'Bu Peyvok beni yendi… sen çözebilir misin?',
   'win.kicker': 'Hevalo’dan bir kartpostal',
-  'win.lesson': 'Bir ders daha bitti',
-  'win.streak': 'Üst üste {count} gün',
-  'win.streakPlain': 'Seri devam ediyor',
-  'win.badge': 'Yeni bir rozet',
-  'win.league': '{league}’nde güzel bir hafta',
-  'win.leaguePlain': 'Ligde güzel bir hafta',
-  'win.body': 'Tanıdığın biri burada Kürtçe öğreniyor, her gün birkaç dakika. Sen de gel.',
   'win.picture': 'Bir kartpostal: bir tepede Hamo ile Hevalo, ve mektupla uçup giden bir kuş.',
 
   /* putting somebody else's post on your own profile */
@@ -3404,11 +3403,11 @@ export const tr: Catalogue = {
   'landing.learn.point3': 'Tekrar, cevapladıklarını hatırladıkça uzayan aralıklarla geri getirir.',
   'landing.learn.point4': 'Her ders için XP; bir dersi ya da bir tekrarı bitirdiğin ya da günlük Peyvok’u çözdüğün her gün için bir seri.',
   'landing.progress.title': 'Düzenli geldiğin için küçük ödüller.',
-  'landing.progress.lead': 'Dersler, hikâyeler ve arkadaşlarınla çevrimiçi oynadığın oyunlar XP kazandırır; katılırsan haftalık bir lig bunu sıralar. Her gün öğrenince Hevalo’nun kendi parası olan Zêr kazanırsın; onu profiline ya da bir arkadaşına alacağın bir hediyeye harcayabilirsin.',
+  'landing.progress.lead': 'Dersler, hikâyeler ve arkadaşlarınla çevrimiçi oynadığın oyunlar XP kazandırır; katılırsan haftalık bir lig bunu sıralar. Hevalo+ üyeleri her gün öğrenerek Hevalo’nun kendi parası olan Zêr de kazanır; onu profillerine ya da bir arkadaşa alacakları bir hediyeye harcayabilirler.',
   'landing.progress.learn': 'Öğren',
   'landing.progress.learnBody': 'Dersler, hikâyeler ve arkadaşlarla çevrimiçi oyunlar XP kazandırır.',
   'landing.progress.earn': 'Kazan',
-  'landing.progress.earnBody': 'Zêr için her gün bir ders ya da tekrar bitir. Yedinci gün en çok kazandırır.',
+  'landing.progress.earnBody': 'Hevalo+ üyeleri bir ders ya da tekrar bitirdikleri her gün Zêr kazanır. Yedinci gün en çok kazandırır.',
   'landing.progress.customize': 'Özelleştir',
   'landing.progress.customizeBody': 'Onu profilin için arka planlara ve simgelere ya da bir arkadaşına hediyeye harca.',
   'landing.progress.play': 'Oyna',
@@ -3510,7 +3509,7 @@ export const tr: Catalogue = {
   'teach.rewards.does3': 'Seriler affeder. Bitirdiğin her beş ders ya da tekrar sana bir seri dondurucu kazandırır; bu, kaçırılan bir günü kapatır ve aynı anda yalnızca bir tane tutabilirsin. En uzun serin ve öğrendiğin günler, bir seri bittiğinde profilinde kalır.',
   'teach.rewards.does4': 'Haftalık ligler isteğe bağlıdır. Ayarlar’da liglerden ayrılabilirsin; XP’n, serin ve ilerlemen her iki durumda da aynı sayılır.',
   'teach.rewards.does5':
-    'Zêr günlük görevlerden, ağacından, seri dönüm noktalarından, başkalarına karşı kazandığın oyunlardan ve etkinliklerden gelir; bir dersi yeniden yapmaktan asla gelmez.',
+    'Zêr’i yalnızca Hevalo+ üyeleri kazanır: günlük görevlerden, ağaçlarından, seri dönüm noktalarından, başkalarına karşı kazandıkları oyunlardan ve etkinliklerden; bir dersi yeniden yapmaktan asla.',
   'teach.younger.title': 'Genç öğrenciler için daha güvenli',
   'teach.younger.found1': '3–5 yaşlarındaki 160 çocuğun kullandığı uygulamaları inceleyen araştırmacılar, çoğunda manipülatif tasarım buldu: zaman baskısı, tuzaklar ve çocuğa baskı yapan karakterler. Yalnızca beşte birinde bunların hiçbiri yoktu.',
   'teach.younger.found2': 'Çocukların uygulamalardan nasıl öğrendiğine dair bir derleme, bir uygulama onları yalnızca dokunmaya değil düşünmeye ittiğinde, dikkatlerini dağıtmak yerine ilgilerini canlı tuttuğunda, hayatlarıyla bağ kurduğunda ve başka insanları işin içine kattığında en iyi öğrendiklerini buldu.',
@@ -3544,6 +3543,8 @@ export const tr: Catalogue = {
   'privacy.safety.title': 'Güvenlik',
   'privacy.safety.body':
     'Gönderiler ve fotoğraflar, kötüye kullanımı ve yasa dışı içeriği uzak tutmak için otomatik olarak ve moderatörler tarafından incelenebilir. Her fotoğraf başkaları görmeden önce kontrol edilir: otomatik olarak, bizim için çalışan ve kim olduğunu değil yalnızca fotoğrafı alan bir yapay zekâ hizmetiyle; kontrol emin olamadığında da bir kişi tarafından. Reddedilen bir fotoğraf, yeniden bakılmasını isteyebilmen için altı aya kadar gizli tutulur, sonra silinir. Bir çocuğa zarar verebilecek her şey, yasanın gerektirdiği süre boyunca kanıt olarak saklanır.',
+  'privacy.safety.messages':
+    'Güvenlik ekibimiz bir mektubu ya da özel mesajı yalnızca konuşmadaki biri onu bildirdiğinde, otomatik bir güvenlik kontrolü onu işaretlediğinde ya da tehlikedeki bir çocuk veya yetkililerden gelen bir talep gibi belirli bir güvenlik ya da hukuki nedenle okuyabilir. Ekibimiz birini her açtığında bu kayda geçirilir. Mektuplar ve mesajlar asla başka bir amaçla okunmaz, reklam için hiç okunmaz.',
   'privacy.safety.returns':
     'Yasaklanan kişilerin kolayca geri dönmesini önlemek için Hevalo, yasaklanan ya da askıya alınan bir kişinin hesabına, girişine ve cihazlarına ait karıştırılmış (hash’lenmiş) bilgileri saklar ve yeni hesapları ve girişleri bunlarla karşılaştırır. Bir internet adresi tek başına asla yeterli değildir, çünkü birçok kişi aynı adresi paylaşabilir; bir eşleşme net olmadığında da kararı bir kişi verir. Bu bilgiler hesap silinse bile yalnızca yasak ya da askıya alma sürdüğü sürece saklanır; alındıkları giriş ve cihaz kayıtları ise “Ne kadar süre saklıyoruz” bölümündeki sürelerce tutulur. Hesabın askıya alınmış ya da yasaklanmış olsa bile, giriş yaparken gördüğün ekrandan verilerinin bir kopyasını indirebilir ya da hesabını silebilirsin.',
   'privacy.children.title':
@@ -3568,7 +3569,7 @@ export const tr: Catalogue = {
   'privacy.retention.title':
     'Ne kadar süre saklıyoruz',
   'privacy.retention.body':
-    'Hesabın ve ona eklediklerin, eklediklerini ya da hesabını silene kadar saklanır. Hesabını silmek 14 günlük bir bekleme süresiyle başlar; bu sürede tekrar giriş yaparsan silme iptal olur. Sonrasında kişisel bilgilerin ve paylaştıkların silinir; yalnızca anonim bir öğrenme geçmişi ve moderasyon kayıtları kalır. Giriş kayıtları 90 gün, şüpheli bir durumda bir yıl, içlerindeki internet adresi ise 30 gün saklanır; giriş yaptığın bir cihaz, son girişinden sonra 180 gün boyunca hatırlanır. Reddedilen bir fotoğraf altı aya kadar gizli tutulur. Çocuk profilleri için “Çocuklar” bölümündeki kurallar geçerlidir. Barındırma şirketimizin yedeklerindeki kopyaların üzerine 7 gün içinde yazılır.',
+    'Hesabın ve ona eklediklerin, eklediklerini ya da hesabını silene kadar saklanır. Hesabını silmek 14 günlük bir bekleme süresiyle başlar; bu sürede tekrar giriş yaparsan silme iptal olur. Sonrasında kişisel bilgilerin ve paylaştıkların silinir; yalnızca anonim bir öğrenme geçmişi ve moderasyon kayıtları kalır. Giriş kayıtları 90 gün, şüpheli bir durumda bir yıl, içlerindeki internet adresi ise 30 gün saklanır; giriş yaptığın bir cihaz, son girişinden sonra 180 gün boyunca hatırlanır. Reddedilen bir fotoğraf altı aya kadar gizli tutulur. Otomatik bir güvenlik kontrolünün işaretlediği bir mektup ya da mesaj, karar verildikten bir yıl sonrasına kadar ya da daha önce olursa hesabın silinene kadar dosyasıyla birlikte saklanır. Çocuk profilleri için “Çocuklar” bölümündeki kurallar geçerlidir. Barındırma şirketimizin yedeklerindeki kopyaların üzerine 7 gün içinde yazılır.',
   'privacy.control.title':
     'Hakların ve seçimlerin',
   'privacy.control.body':
@@ -3608,7 +3609,7 @@ export const tr: Catalogue = {
   'faq.what.q': 'Hevalo nedir?',
   'faq.what.a': 'Kürtçeyi başkalarıyla birlikte öğrenebileceğin bir yer. Oyunlarda kelime öğrenir, aynı kelime için arkadaşlarınla yarışır, haftalık bir ligde yükselir ve topluluğun yazdıklarını okursun. Önce Kurmanci.',
   'faq.free.q': 'Ücretsiz mi?',
-  'faq.free.a': 'Evet. Tarayıcıda hiçbir şey para gerektirmez. Hevalo’nun kendi para birimi Zêr, günlük ödülden, günlük görevlerden ve etkinliklerden gelir; onu mağazada harcarsın.',
+  'faq.free.a': 'Evet. Tarayıcıda hiçbir şey para gerektirmez. Hevalo’nun kendi para birimi Zêr’i Hevalo+ üyeleri günlük ödülden, günlük görevlerden ve etkinliklerden kazanır; Zêr mağazada harcanır.',
   'faq.kurdish.q': 'Hevalo hangi Kürtçeyi öğretiyor?',
   'faq.kurdish.a': 'Önce Kurmanci: ilk kurs onu Latin alfabesiyle öğretir. Kafiye oyunu Peyvên Hevserwa Soranî ile de oynanabilir, arayüzün tamamı Soranî olarak da var ve başka Kürtçe lehçelerde kurslar da gelecek.',
   'faq.account.q': 'Hesap gerekiyor mu?',
@@ -4292,6 +4293,7 @@ export const tr: Catalogue = {
   'events.noneBody': 'Etkinlikler yılda birkaç kez gelir; her birinin kendi görevleri ve ödülleri vardır. Biri başladığında Öğren’de görünür.',
   'events.someMissing': 'Bazı etkinlikler yüklenemedi.',
   'events.reward': 'Ödül:',
+  'events.membersZer': 'Etkinliklerdeki Zêr, Hevalo+ ile gelir.',
   'events.claim': 'Al',
   'events.claimed': 'Alındı',
   'events.claimFailed': 'Bu ödül şu anda alınamıyor.',
@@ -4316,6 +4318,7 @@ export const tr: Catalogue = {
   'quests.tapToOpen': 'Açmak için dokun!',
   'quests.opening': 'Açılıyor…',
   'quests.reward': '+{amount} Zêr',
+  'quests.membersZer': 'Sandıklardaki Zêr, Hevalo+ ile gelir.',
   'quests.got': '+{amount} Zêr. Artık {balance} Zêr’in var.',
   'quests.nextChest': 'Sonraki sandık',
   'quests.alreadyOpen': 'Bu sandık zaten açık, Zêr’leri senin.',

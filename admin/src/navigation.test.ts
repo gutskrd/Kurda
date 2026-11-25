@@ -13,7 +13,21 @@ const ids = (s: SessionAccess): string[] => visibleNav(s).map((n) => n.id);
 
 describe('who sees which page — what the API allows, not a guess', () => {
   it('a moderator sees the queue and the people, and not what refuses them', () => {
-    expect(ids(MODERATOR)).toEqual(['dashboard', 'users', 'moderation', 'picture-checks', 'appeals', 'ban-approvals', 'possible-returns', 'aimod', 'feedback', 'playbook', 'security']);
+    expect(ids(MODERATOR)).toEqual([
+      'dashboard',
+      'users',
+      'moderation',
+      'picture-checks',
+      'appeals',
+      'ban-approvals',
+      'possible-returns',
+      'aimod',
+      'feedback',
+      'playbook',
+      'safety-reviews',
+      'access-log',
+      'security',
+    ]);
     // The API answers a moderator 403 on these.
     for (const page of ['analytics', 'shop', 'economy', 'antibot', 'lessons', 'audit']) expect(mayOpenPage(page, MODERATOR)).toBe(false);
   });
@@ -35,6 +49,7 @@ describe('who sees which page — what the API allows, not a guess', () => {
       'rhyme',
       'race',
       'game-content',
+      'access-log',
       'security',
     ]);
   });
@@ -63,7 +78,7 @@ describe('who sees which page — what the API allows, not a guess', () => {
   });
 
   it('support sees the people, the support inbox and the feedback, a founder the tags', () => {
-    expect(ids(SUPPORT)).toEqual(['dashboard', 'users', 'email', 'feedback', 'security']);
+    expect(ids(SUPPORT)).toEqual(['dashboard', 'users', 'email', 'feedback', 'access-log', 'security']);
     expect(ids(FOUNDER)).toEqual(['dashboard', 'tags', 'security']);
   });
 
@@ -88,6 +103,13 @@ describe('who sees which page — what the API allows, not a guess', () => {
     // A voice with no role that opens the page is no way in.
     expect(landingRoute({ ...MODERATOR, voices: ['hamo'] })).toBe('dashboard');
     expect(landingRoute({ ...EDITOR, voices: [] })).toBe('dashboard');
+  });
+
+  it('opens the Access log to every admin, and safety reviews only to those who moderate', () => {
+    for (const s of [MODERATOR, EDITOR, LEGACY, SUPPORT, OWNER]) expect(mayOpenPage('access-log', s)).toBe(true);
+    for (const s of [FOUNDER, VOICE_ACTOR]) expect(mayOpenPage('access-log', s)).toBe(false);
+    for (const s of [MODERATOR, LEGACY, OWNER]) expect(mayOpenPage('safety-reviews', s)).toBe(true);
+    for (const s of [EDITOR, SUPPORT, FOUNDER, VOICE_ACTOR]) expect(mayOpenPage('safety-reviews', s)).toBe(false);
   });
 
   it('opens nothing it does not know', () => {

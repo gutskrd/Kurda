@@ -70,16 +70,22 @@ export function registerChatRoutes(
             .send({ code: 'AUTO_MODERATED', message: 'your account has been restricted for spam-like activity' });
         }
       }
+      let flagId: string | null = null;
       if (aiMod) {
         // Automated moderation after the word list: a high-confidence hit blocks the send, lower ones are flagged.
         const verdict = await aiMod.moderate({ surface: 'chat', text: body, authorId: req.user!.id, contentType: 'dm' });
         if (verdict.blocked) {
           return reply.code(422).send({ code: 'CONTENT_BLOCKED', message: 'this message was blocked by moderation' });
         }
+        flagId = verdict.flagId;
       }
       const msg = await chat.send(req.user!.id, userId, body, (k) =>
         app.storage ? app.storage.publicUrl(k) : null,
       );
+      // a flagged message that was sent is the one its case shows, when a moderator must read it
+      if (aiMod && flagId) {
+        await aiMod.attachMessage(flagId, msg.id, userId).catch((err: unknown) => req.log.warn({ err }, 'a flag could not be pointed at its message'));
+      }
       if (trust) await trust.recordAction(req.user!.id, 'message');
       return msg;
     },

@@ -99,10 +99,6 @@ const NOT_COPY = new Set([
   // like the words in its game tiles, and it reads as English to this gate only
   // because it happens to need no letter outside a–z. See web/src/landing/samples.ts.
   'Baran dibare.',
-  // the header on a shared Peyvok grid. A share text is pasted into somebody
-  // else's chat, where the sharer's language is not the reader's, so it stays
-  // one recognisable name — the grid underneath is the content.
-  'Hevalo Peyvok',
   // The licence the imported dictionary arrives under, named beside the source
   // on every screen that shows a definition. A licence identifier is the same
   // string in every language — translating it would misname the licence, and

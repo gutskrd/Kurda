@@ -2,12 +2,13 @@ import type pg from 'pg';
 import { DAILY_EARNED_ZER_CAP } from '@kurda/shared';
 import { WalletService } from '../wallet/service.js';
 import { isEconomyBlocked } from '../economy/standing.js';
+import { memberZerUntilSql } from '../cosmetics/access.js';
 
 /**
- * Earned Zêr: every way of earning goes through `earnWithin`, which pays nobody the economy does not pay
- * (economy/standing.ts) and holds each person to `DAILY_EARNED_ZER_CAP` a UTC day. Purchases, the members' box, refunds
- * and staff adjustments are not earned and are not counted. A few grants are tunable by staff (`earn_rules`: a league
- * promotion, a tournament win); the rest are the shared rules' numbers.
+ * Earned Zêr: every way of earning goes through `earnWithin`, which pays only Hevalo+ members, nobody the economy does
+ * not pay (economy/standing.ts), and holds each person to `DAILY_EARNED_ZER_CAP` a UTC day. Purchases, the members' box,
+ * refunds and staff adjustments are not earned and are not counted. A few grants are tunable by staff (`earn_rules`: a
+ * league promotion, a tournament win); the rest are the shared rules' numbers.
  */
 
 /** Ledger reasons of Zêr earned before this module paid under `earn:` reasons; they count toward the day's cap too. */
@@ -31,7 +32,7 @@ export interface EarnRule {
 export interface GrantResult {
   granted: number;
   /** why the full amount was not granted, when it was not */
-  cappedBy: 'none' | 'no_rule' | 'duplicate' | 'cooldown' | 'rule_cap' | 'daily_cap' | 'daily_count' | 'restricted';
+  cappedBy: 'none' | 'no_rule' | 'duplicate' | 'cooldown' | 'rule_cap' | 'daily_cap' | 'daily_count' | 'restricted' | 'members_only';
 }
 
 export interface EarnInput {
@@ -48,6 +49,14 @@ export interface EarnInput {
   reasonCap?: number | null;
   /** no payment under `reason` within this many seconds */
   cooldownSeconds?: number;
+  /** the moment membership is judged at, the caller's own clock where it has one */
+  now?: Date;
+}
+
+/** Whether someone earns Zêr at `now`: a Hevalo+ member, their own or a family plan's, and never a child's profile. */
+export async function earnsZer(db: Pick<pg.PoolClient, 'query'>, userId: string, now: Date = new Date()): Promise<boolean> {
+  const res = await db.query<{ member: boolean | null }>(`SELECT (${memberZerUntilSql('u')}) > $2 AS member FROM users u WHERE u.id = $1`, [userId, now]);
+  return res.rows[0]?.member === true;
 }
 
 /** The UTC day's start, in SQL, as the earned cap counts days. */
@@ -63,6 +72,7 @@ export async function earnWithin(client: pg.PoolClient, wallet: WalletService, i
   await client.query(`INSERT INTO wallet_balances (user_id, currency) VALUES ($1, 'zer') ON CONFLICT (user_id, currency) DO NOTHING`, [userId]);
   await client.query(`SELECT 1 FROM wallet_balances WHERE user_id = $1 AND currency = 'zer' FOR UPDATE`, [userId]);
   if (await isEconomyBlocked(client, userId)) return { granted: 0, cappedBy: 'restricted' };
+  if (!(await earnsZer(client, userId, input.now))) return { granted: 0, cappedBy: 'members_only' };
 
   const totals = await client.query<{ all_today: string; reason_today: string; reason_count: number; recent: boolean }>(
     `SELECT COALESCE(SUM(amount) FILTER (WHERE ${EARNED_SQL}), 0) AS all_today,

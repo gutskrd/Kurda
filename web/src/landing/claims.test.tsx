@@ -25,12 +25,13 @@ describe('what the front page promises', () => {
     expect(screen.getByText(/review brings back what you have answered/i)).toBeInTheDocument();
   });
 
-  it('says what keeps a streak and what pays Zêr', () => {
+  it('says what keeps a streak, and that only Hevalo+ members earn Zêr', () => {
     const { container } = renderApp(<Landing />);
     expect(screen.getByText(/a streak for each day you finish a lesson or a review, or solve the daily peyvok/i)).toBeInTheDocument();
     // A lost daily Peyvok keeps no streak, so finishing one is not enough.
     expect(container.textContent).not.toMatch(/a review or the daily peyvok/i);
-    expect(screen.getByText(/finish a lesson or a review each day for zêr/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Hevalo\+ members get Zêr for each day they finish a lesson or a review/)).toBeInTheDocument();
+    expect(screen.getByText(/Hevalo\+ members also earn Zêr/)).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/come back each day for zêr|show up every day for zêr/i);
   });
 

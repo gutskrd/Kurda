@@ -10,20 +10,20 @@
  */
 export const PLUS_ON_SALE = false;
 
-/** How much more a member earns from the sources the money model doubles (quest chests, streak milestones, wins). */
-export const MEMBER_EARNING_MULTIPLIER = 2;
-
-/** What a source pays a member or anyone else. */
+/**
+ * What an earning source pays: its amount to a member, nothing to anyone else. Only members earn Zêr; anyone else keeps
+ * what they have, spends it and can buy more, so nobody's balance is taken away.
+ */
 export function memberPay(amount: number, plus: boolean): number {
-  return plus ? amount * MEMBER_EARNING_MULTIPLIER : amount;
+  return plus ? amount : 0;
 }
 
 /** The members' box, once each month a member is a member: Zêr, free gifts, and that month's members-only item. */
-export const MEMBERS_BOX_ZER = 500;
+export const MEMBERS_BOX_ZER = 250;
 export const MEMBERS_BOX_FREE_GIFTS = 3;
 
 /** A free gift from the box pays for one gift priced up to this, every gift sticker included. */
-export const FREE_GIFT_MAX_PRICE = 400;
+export const FREE_GIFT_MAX_PRICE = 150;
 
 /**
  * Each calendar month's members-only icon or background, January first, chosen from the items only members wear and

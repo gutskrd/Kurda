@@ -33,6 +33,8 @@ export interface EventQuests {
   /** The last moment a finished quest can still be claimed, a little after the event ends. */
   claimDeadline: string;
   quests: EventQuest[];
+  /** the quests pay Zêr, which only Hevalo+ members earn, so for this viewer their Zêr is left out */
+  zerForMembers?: boolean;
 }
 
 /** An event live now (GET /events/active), highest priority first. */

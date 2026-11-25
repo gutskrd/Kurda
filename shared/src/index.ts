@@ -201,6 +201,8 @@ export {
 export * from './win-share.js';
 /** A win's own address, and the picture a link to it is drawn with. */
 export * from './win-link.js';
+/** What a win's card says, in the sender's language. */
+export * from './win-words.js';
 export * from './tab-bar-scroll.js';
 /** The lesson path a course map is drawn as: the current skill, milestones, unit colours and stop places. */
 export {
@@ -1002,3 +1004,5 @@ export * from './parental.js';
 export * from './family.js';
 /** Icons Hevalo draws itself in the icon family's weight, where the family has none for the job. */
 export * from './glyphs.js';
+/** When staff may read letters and private chats: reports, automatic flags, and safety reviews, each on the Access log. */
+export * from './message-access.js';

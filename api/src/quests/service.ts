@@ -102,7 +102,7 @@ export class DailyQuestService {
     return safeTimeZone(res.rows[0]?.timezone);
   }
 
-  /** The learner's time zone, and whether they are a Hevalo+ member, whose chests hold twice as much. */
+  /** The learner's time zone, and whether they are a Hevalo+ member, the only learners whose chests hold Zêr. */
   private async account(userId: string, now: Date): Promise<{ tz: string; plus: boolean }> {
     const res = await this.pool.query<{ timezone: string | null; premium_until: Date | null }>(
       `SELECT u.timezone, ${memberZerUntilSql('u')} AS premium_until FROM users u WHERE u.id = $1`,
@@ -172,9 +172,9 @@ export class DailyQuestService {
 
   /**
    * Opens a finished quest's chest: its Zêr once, through the wallet and ledger, as earned Zêr under the daily cap. Any
-   * quest of the last CLAIM_DAYS days may be opened. The amount is a hash of who and which quest (`chestAmount`), twice
-   * that for a Hevalo+ member, so a retry never redraws; the quest is marked opened by a conditional update in the credit's
-   * transaction, so of two concurrent claims only one opens it.
+   * quest of the last CLAIM_DAYS days may be opened. The amount is a hash of who and which quest (`chestAmount`), and
+   * nothing for anyone not a Hevalo+ member, so a retry never redraws; the quest is marked opened by a conditional update
+   * in the credit's transaction, so of two concurrent claims only one opens it.
    */
   async claim(userId: string, id: string, now: Date = new Date()): Promise<ChestOpening> {
     const quest = parseQuestId(id);
@@ -214,6 +214,7 @@ export class DailyQuestService {
         reason: QUEST_LEDGER_REASON,
         refId: id,
         idempotencyKey: `daily-quest:${userId}:${id}`,
+        now,
       });
       // the chest records what it paid, which the daily cap can make less than it held
       if (paid.granted !== row.amount) {
@@ -226,7 +227,7 @@ export class DailyQuestService {
       }
       const balance = await client.query<{ balance: number }>(`SELECT balance FROM wallet_balances WHERE user_id = $1 AND currency = 'zer'`, [userId]);
       await client.query('COMMIT');
-      return { questId: id, tier: row.chest, currency: 'zer', amount: paid.granted, balance: balance.rows[0]?.balance ?? 0 };
+      return { questId: id, tier: row.chest, currency: 'zer', amount: paid.granted, balance: balance.rows[0]?.balance ?? 0, earnsZer: plus };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;

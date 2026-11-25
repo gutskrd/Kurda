@@ -73,6 +73,17 @@ describe('the events page', () => {
     expect(within(rows[2]!).getByText('Claimed')).toBeInTheDocument();
   });
 
+  it('says once that the Zêr is a members’ perk, with no Zêr on the quests, to someone who does not earn it', async () => {
+    const free: EventQuests = { ...newroz, quests: newroz.quests.map((q) => ({ ...q, reward: {} })), zerForMembers: true };
+    serve({ 'GET /events/active': { events: [{ key: 'newroz', name: 'Newroz', endsAt: newroz.endsAt, theme: null }] }, 'GET /events/newroz/quests': free });
+    renderApp(<EventsPage />, ['/app/events']);
+
+    const event = await screen.findByRole('region', { name: 'Newroz' });
+    expect(within(event).getByText('Zêr from events comes with Hevalo+.')).toBeInTheDocument();
+    expect(within(event).queryByText(/Reward:/)).toBeNull();
+    expect(within(event).getAllByRole('listitem')).toHaveLength(3);
+  });
+
   it('claims a reward, then reads the quests again to show it claimed', async () => {
     const claimedView = { ...newroz, quests: newroz.quests.map((q) => (q.id === 'ready' ? { ...q, claimable: false, claimed: true } : q)) };
     const table: Record<string, unknown> = {

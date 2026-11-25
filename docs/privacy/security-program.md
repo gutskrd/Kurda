@@ -27,6 +27,38 @@ collected.
   sign-in turned on.
 - The database accepts connections only from listed addresses.
 
+**Letters and private messages**
+- Staff read a letter or a direct or group message only in three cases. Someone in the conversation reports it: its
+  case shows it with the few letters or messages around it, the reported one marked. An automatic check flags it: its
+  case shows the flagged one alone. Or a safety review.
+- An automatic check puts a letter or private message before a moderator only for something serious: sexual words
+  or slurs from the word filter, sexual, hateful or self-harm content from the text classifier, a held drawing, or
+  anything sent to a minor (a letter in a teen band, a message to a minor, a group with one in it). Plain swearing
+  between adults only counts against its writer. A flag is kept as long as its case’s evidence, a year after the decision,
+  and goes with its writer’s account when that is deleted.
+- Only a superadmin opens a safety review: for one named account, read by one staff member who moderates and who
+  writes with the account nowhere a review reads (a correspondence, a letter at either one’s window, direct messages,
+  a group either is in, left or wrote in), checked again on every read. The reason comes from a fixed list (child
+  safety, a threat to someone’s life or safety, a legal request from the authorities, a report that needs more
+  context) with a note; a report that needs more context names an open case about the account and opens only that
+  case’s conversation. A review is read-only and lasts exactly 24 hours unless ended sooner, as the database itself
+  sets; a superadmin opens at most five a day. It opens one conversation at a time, a page at a time, at most 120
+  pages an hour per reader, counted in the database; there is no search across accounts and nothing to export. A
+  message someone deleted shows only that it was. Nobody reviews their own messages, and a child’s profile, which
+  writes to nobody, cannot be reviewed.
+- Every grant, early end and reading, and every case about a letter or private message a moderator opens (its
+  drawing too), goes to the Access log, the admin audit trail and the security log (under the staff member): who,
+  whose, when, why, which kind of conversation and how many messages, never what they say. Every admin reads the
+  Access log; the note behind a review and the case it names are for superadmins, since a case id would tie a
+  reporter to the person they reported. The Access log, the reviews, the audit trail and the security log cannot be
+  changed or emptied, and nothing leaves them early. Opening a review is a warning on the security log’s “Needs attention” list, so another
+  superadmin sees each one.
+- The person under review is not told. If they ask to see these records, the owner decides case by case, within the
+  limits art. 23 of the GDPR and art. 41 of the Dutch implementation act (UAVG) allow for preventing crime and
+  protecting others.
+- The rules live in `api/src/message-access`, `api/src/moderation/service.ts` and migrations `1751000870000` to
+  `1751000872000`, and are tested in `api/src/message-access/message-access.integration.test.ts`.
+
 **Accounts**
 - Passwords are hashed with Argon2id; failed sign-ins are rate limited and accounts lock after repeated failures.
 - Sessions are short-lived tokens with refresh, and can be signed out per device.
@@ -76,7 +108,8 @@ collected.
 ## 6. Yearly review
 
 Every year, and after any incident: re-read this page and `docs/privacy/children.md`, check that each safeguard still
-holds, check the providers’ terms, and write the date and anything changed here.
+holds, read the Access log and check that every safety review had a reason that holds, check the providers’ terms, and
+write the date and anything changed here.
 
 | Date | By | Changes |
 |---|---|---|

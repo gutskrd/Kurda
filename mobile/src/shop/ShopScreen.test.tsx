@@ -111,7 +111,7 @@ describe('the Shop, by kind', () => {
 
   it('shows each item’s picture, shaped by its kind, and a glyph for the tag that has none', async () => {
     open();
-    const glass = await screen.findByRole('button', { name: /^Îstîkan, Tea glass, 900 Zêr · ≈ €2\.23$/ });
+    const glass = await screen.findByRole('button', { name: /^Îstîkan, Tea glass, 900 Zêr · ≈ €9$/ });
     // The picture is drawn once it starts loading, an effect after the row.
     await waitFor(() => expect(glass.querySelector('img')?.getAttribute('src')).toBe('https://hevalo.app/cosmetics/icons/made-08-caydan.png'));
     const lake = screen.getByRole('button', { name: /^Gola Şîn/ });
@@ -149,7 +149,7 @@ describe('the Shop, by kind', () => {
 
   it('shows a frame the way it will be worn: round your own picture, in its row and in its sheet', async () => {
     open([...CATALOGUE, item({ sku: 'frame-made-lale', name: 'Xeleka Laleyan', description: 'Tulip wreath', category: 'frame', price: 1400, premiumOnly: false, assetUrl: '/cosmetics/frames/made-01-lale.png' })], { zer: 2000 });
-    const row = await screen.findByRole('button', { name: /^Xeleka Laleyan, Tulip wreath, 1.?400 Zêr · ≈ €3\.47$/ });
+    const row = await screen.findByRole('button', { name: /^Xeleka Laleyan, Tulip wreath, 1.?400 Zêr · ≈ €14$/ });
     await waitFor(() => expect([...row.querySelectorAll('img')].map((img) => img.getAttribute('src'))).toContain('https://hevalo.app/cosmetics/frames/made-01-lale.png'));
     // Your own picture inside it (here with no photo, the default avatar).
     expect(row.querySelector('[role="img"][aria-label*="rojda"]')).not.toBeNull();
@@ -227,9 +227,9 @@ describe('the Shop, by kind', () => {
 
   it('says what each price is worth in money, on the card and in its sheet', async () => {
     open();
-    expect(await screen.findByRole('button', { name: /^Gola Şîn, Blue lake, 400 Zêr · ≈ €0\.99/ })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /^Gola Şîn, Blue lake, 400 Zêr · ≈ €4\b/ })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /^Gola Şîn,/ }));
-    expect(screen.getByText('400 Zêr · ≈ €0.99')).toBeTruthy();
+    expect(screen.getByText('400 Zêr · ≈ €4')).toBeTruthy();
   });
 
   it('offers no gift for something free, and keeps Buy and the gift for the rest', async () => {
@@ -242,7 +242,7 @@ describe('the Shop, by kind', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /^Gola Şîn,/ }));
     expect(screen.getByText('Send as a gift')).toBeTruthy();
-    expect(screen.getByText('400 Zêr · ≈ €0.99')).toBeTruthy();
+    expect(screen.getByText('400 Zêr · ≈ €4')).toBeTruthy();
     // Beside Buy, before anything is spent: a purchase is final.
     expect(screen.getByText('Every purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.')).toBeTruthy();
     const felt: HapticEvent[] = [];
@@ -284,7 +284,7 @@ describe('the Shop, by kind', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     expect(Alert.alert).toHaveBeenCalledWith(
       'Confirm purchase',
-      'Spend 900 Zêr on Îstîkan? ≈ €2.23\n\nEvery purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
+      'Spend 900 Zêr on Îstîkan? ≈ €9\n\nEvery purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
       expect.any(Array),
     );
     expect(client.calls.some((c) => c.path === '/shop/purchase')).toBe(false);
@@ -410,7 +410,7 @@ describe('your bird and your tree, in the Shop', () => {
       expect(within(group).getAllByRole('radio')).toHaveLength(8);
       expect(within(group).getByRole('radio', { name: 'Pink bird, your bird now' }).getAttribute('aria-checked')).toBe('true');
       expect(within(group).getByRole('radio', { name: 'Brown bird' }).getAttribute('aria-checked')).toBe('false');
-      expect(screen.getByText('A new bird costs 500 Zêr. You have 550 Zêr.')).toBeTruthy();
+      expect(screen.getByText('A new bird costs 250 Zêr. You have 550 Zêr.')).toBeTruthy();
       // The bird that is yours already cannot be bought again.
       expect(disabled('shop-bird-get')).toBe(true);
     });
@@ -418,7 +418,7 @@ describe('your bird and your tree, in the Shop', () => {
     it('takes the first bird for free, with no question, and posts the bird picked', async () => {
       const client = openOwn({ 'GET /letters?landings=1': ok(letters({ birdChosen: false, bird: 1 })), 'POST /letters/bird': ok(letters({ bird: 4 })) });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Choose your bird' }));
-      expect(screen.getByText('Your bird carries your letters. Your first one is free; a new one later costs 500 Zêr.')).toBeTruthy();
+      expect(screen.getByText('Your bird carries your letters. Your first one is free; a new one later costs 250 Zêr.')).toBeTruthy();
       fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
       fireEvent.click(screen.getByRole('button', { name: 'This is my bird' }));
       await waitFor(() => expect(client.calls.find((c) => c.method === 'POST' && c.path === '/letters/bird')?.body).toEqual({ bird: 4 }));
@@ -434,10 +434,10 @@ describe('your bird and your tree, in the Shop', () => {
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
       fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
       expect(disabled('shop-bird-get')).toBe(false);
-      fireEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Get this bird · 250 Zêr' }));
       expect(Alert.alert).toHaveBeenCalledWith(
         'Confirm purchase',
-        'Spend 500 Zêr on Brown bird? ≈ €1.24\nYou have 550 Zêr.\n\nEvery purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
+        'Spend 250 Zêr on Brown bird? ≈ €2.50\nYou have 550 Zêr.\n\nEvery purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
         expect.any(Array),
       );
       expect(client.calls.some((c) => c.path === '/letters/bird')).toBe(false);
@@ -451,10 +451,10 @@ describe('your bird and your tree, in the Shop', () => {
     });
 
     it('says how many Zêr are missing when the balance is short, and does not offer the buy', async () => {
-      const client = openOwn({ 'GET /letters?landings=1': ok(letters({ zer: 300 })) }, { zer: 300 });
+      const client = openOwn({ 'GET /letters?landings=1': ok(letters({ zer: 100 })) }, { zer: 100 });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
       fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
-      expect(screen.getByText('You need 200 more Zêr.')).toBeTruthy();
+      expect(screen.getByText('You need 150 more Zêr.')).toBeTruthy();
       expect(disabled('shop-bird-get')).toBe(true);
       fireEvent.click(screen.getByTestId('shop-bird-get'));
       expect(Alert.alert).not.toHaveBeenCalled();
@@ -473,9 +473,9 @@ describe('your bird and your tree, in the Shop', () => {
       });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
       fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
-      fireEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Get this bird · 250 Zêr' }));
       (vi.mocked(Alert.alert).mock.calls[0]![2] as Array<{ onPress?: () => void }>)[1]!.onPress!();
-      expect(await screen.findByText('You need 400 more Zêr.')).toBeTruthy();
+      expect(await screen.findByText('You need 150 more Zêr.')).toBeTruthy();
       expect(disabled('shop-bird-get')).toBe(true);
     });
   });
@@ -496,20 +496,20 @@ describe('your bird and your tree, in the Shop', () => {
       expect(within(kind('beru')).getByText('Free')).toBeTruthy();
       expect(within(kind('beru')).getByRole('button', { name: 'Plant: Berû (Oak)' })).toBeTruthy();
       expect(within(kind('tu')).getByText('Yours')).toBeTruthy();
-      expect(within(kind('kaj')).getByText('1,000')).toBeTruthy();
+      expect(within(kind('kaj')).getByText('500')).toBeTruthy();
       expect(within(kind('kaj')).getByRole('button', { name: 'Buy: Kaj (Pine)' })).toBeTruthy();
-      expect(within(kind('sev')).getByText('You need 1,650 more Zêr.')).toBeTruthy();
+      expect(within(kind('sev')).getByText('You need 550 more Zêr.')).toBeTruthy();
     });
 
     it('buys a kind once it has said what it costs, which plants nothing', async () => {
       const client = openOwn(
-        { 'GET /me/tree': ok(mine(growing(), { zer: 2000 })), 'POST /me/tree/kinds/kaj/buy': ok(mine(growing(), { owned: ['kaj'], zer: 1000 })) },
+        { 'GET /me/tree': ok(mine(growing(), { zer: 2000 })), 'POST /me/tree/kinds/kaj/buy': ok(mine(growing(), { owned: ['kaj'], zer: 1500 })) },
         { zer: 2000 },
       );
       fireEvent.click(await screen.findByRole('button', { name: 'Your tree, Hinar · Growing now' }));
       fireEvent.click(await screen.findByRole('button', { name: 'Buy: Kaj (Pine)' }));
       expect(await screen.findByText('Buy Kaj?')).toBeTruthy();
-      expect(screen.getByText('It costs 1,000 Zêr, once. After that you can plant it whenever you like.')).toBeTruthy();
+      expect(screen.getByText('It costs 500 Zêr, once. After that you can plant it whenever you like.')).toBeTruthy();
       expect(screen.getByText('You have 2,000 Zêr.')).toBeTruthy();
       expect(client.calls.some((c) => c.path === '/me/tree/kinds/kaj/buy')).toBe(false);
       fireEvent.click(screen.getByTestId('shop-tree-confirm'));
@@ -573,11 +573,11 @@ describe('a member’s box in the Shop', () => {
 
   it('shows this month’s box with what its Zêr are worth, its free gifts and its item, and marks it seen', async () => {
     const item = { sku: 'icon-made-lale', name: 'Lale', category: 'icon', assetUrl: '/cosmetics/icons/made-05-lale.png' };
-    const client = shop({ box: { month: '2026-11', zer: 500, freeGifts: 3, item, grantedAt: '2026-11-01T08:00:00Z', seen: false }, freeGifts: 3 });
+    const client = shop({ box: { month: '2026-11', zer: 250, freeGifts: 3, item, grantedAt: '2026-11-01T08:00:00Z', seen: false }, freeGifts: 3 });
     expect(await screen.findByText('Your members’ box')).toBeTruthy();
     const box = within(screen.getByTestId('members-box'));
-    expect(box.getByText('500 Zêr')).toBeTruthy();
-    expect(box.getByText('≈ €1.24')).toBeTruthy();
+    expect(box.getByText('250 Zêr')).toBeTruthy();
+    expect(box.getByText('≈ €2.50')).toBeTruthy();
     expect(box.getByText('Free gifts: 3 · Lale to wear')).toBeTruthy();
     await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/me/members-box/seen')).toBe(true));
   });

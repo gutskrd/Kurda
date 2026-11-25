@@ -69,6 +69,8 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     });
     await activate(app, pool, reg);
     const player = { id: reg.json().user.id as string, token: reg.json().tokens.accessToken as string };
+    // the perfect-lesson rule pays Zêr, which only members earn
+    await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [player.id]);
     players.push(player);
     return player;
   }
@@ -166,7 +168,7 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     expect(graded.map((g) => g.verdict)).toEqual(['correct', 'correct', 'correct']);
     expect(results).toMatchObject({ correct: 3, total: 3, accuracy: 1, firstCompletion: true, mistakes: [] });
 
-    expect(await zerEarned(learner.id, 'perfect_lesson')).toBe(25);
+    expect(await zerEarned(learner.id, 'perfect_lesson')).toBe(15);
     const page = await authed(learner, 'GET', '/me/badges');
     const perfect = page.json().badges.find((b: { key: string }) => b.key === 'bekemasi');
     expect(perfect.progress).toBe(1);
@@ -219,7 +221,7 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   it('a perfect replay pays no Zêr: an easy lesson cannot be farmed', async () => {
     const { results } = await play(learner, true);
     expect(results).toMatchObject({ accuracy: 1, firstCompletion: false });
-    expect(await zerEarned(learner.id, 'perfect_lesson')).toBe(25);
+    expect(await zerEarned(learner.id, 'perfect_lesson')).toBe(15);
   });
 
   it('re-asking for a first completion’s results still says it was the first', async () => {
@@ -229,7 +231,7 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     );
     const again = await authed(learner, 'POST', `/sessions/${first.rows[0]!.id}/complete`);
     expect(again.json()).toMatchObject({ firstCompletion: true, xpAwarded: 0 });
-    expect(await zerEarned(learner.id, 'perfect_lesson')).toBe(25);
+    expect(await zerEarned(learner.id, 'perfect_lesson')).toBe(15);
   });
 
   let legacy: Player;
@@ -253,11 +255,11 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     // completed and paid the way the route used to do it
     await pool.query(`UPDATE lesson_sessions SET completed_at = now() WHERE id = $1`, [sid]);
     await new EarnService(pool, new WalletService(pool)).grant(legacy.id, 'perfect_lesson', sid);
-    expect(await zerEarned(legacy.id, 'perfect_lesson')).toBe(25);
+    expect(await zerEarned(legacy.id, 'perfect_lesson')).toBe(15);
 
     const again = await authed(legacy, 'POST', `/sessions/${sid}/complete`);
     expect(again.json()).toMatchObject({ accuracy: 1, firstCompletion: true, xpAwarded: 0 });
-    expect(await zerEarned(legacy.id, 'perfect_lesson')).toBe(25);
+    expect(await zerEarned(legacy.id, 'perfect_lesson')).toBe(15);
   });
 
   /** A corrected lesson's new version (new id, same slot) is the lesson the learner already finished. */
@@ -283,13 +285,13 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     const v1 = await version(['av']);
     const first = await finish(v1);
     expect(first.results).toMatchObject({ accuracy: 1, firstCompletion: true, xpAwarded: lessonCompletionXp(1, false) });
-    expect(await zerEarned(legacy.id, 'perfect_lesson')).toBe(before + 25);
+    expect(await zerEarned(legacy.id, 'perfect_lesson')).toBe(before + 15);
 
     const v2 = await version(['av', 'ava']);
     expect(v2).not.toBe(v1);
     const second = await finish(v2);
     expect(second.results).toMatchObject({ accuracy: 1, firstCompletion: false, xpAwarded: lessonCompletionXp(1, true) });
-    expect(await zerEarned(legacy.id, 'perfect_lesson')).toBe(before + 25);
+    expect(await zerEarned(legacy.id, 'perfect_lesson')).toBe(before + 15);
     // asked again, the answer is the same
     expect((await authed(legacy, 'POST', `/sessions/${second.sid}/complete`)).json().firstCompletion).toBe(false);
   });
@@ -322,7 +324,7 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     const second = await register('eng2');
     const { results } = await play(second, true);
     expect(results).toMatchObject({ accuracy: 1, firstCompletion: true });
-    expect(await zerEarned(second.id, 'perfect_lesson')).toBe(25);
+    expect(await zerEarned(second.id, 'perfect_lesson')).toBe(15);
     expect(await zerEarned(second.id, 'achievement_milestone')).toBe(0);
     for (const who of [learner.id, second.id]) {
       const perfect = await pool.query<{ progress: number }>(

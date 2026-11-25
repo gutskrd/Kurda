@@ -293,14 +293,14 @@ describe.skipIf(!DATABASE_URL)('shop art and catalogue editing (integration)', (
       expect((await pool.query(`SELECT 1 FROM shop_items WHERE sku = ANY($1)`, [[sku('mixed'), sku('ghost'), sku('bare')]])).rowCount).toBe(0);
     });
 
-    it('sends a price of 1,000 or more to Approvals', async () => {
+    it('sends a price of 500 or more to Approvals', async () => {
       const art = await upload('icon', await picture(512, 512, true));
       const res = await call(admin, 'POST', '/admin/shop/items', {
         sku: sku('dear'),
         name: 'Dear',
         category: 'icon',
         currency: 'zer',
-        price: 1000,
+        price: 500,
         assetKey: art.json().key,
       });
       expect(res.statusCode).toBe(409);
@@ -357,17 +357,17 @@ describe.skipIf(!DATABASE_URL)('shop art and catalogue editing (integration)', (
       expect((await uploadRow(key))?.confirmed_at).not.toBeNull();
     });
 
-    it('keeps the approval rule: a new price of 1,000 or more is refused, the rest of a dear item is not', async () => {
+    it('keeps the approval rule: a new price of 500 or more is refused, the rest of a dear item is not', async () => {
       const { sku: edited } = await addArtItem('Pricey', 'icon');
-      expect((await call(admin, 'PATCH', `/shop/items/${edited}`, { price: 999 })).statusCode).toBe(200);
-      const dear = await call(admin, 'PATCH', `/shop/items/${edited}`, { price: 1500 });
+      expect((await call(admin, 'PATCH', `/shop/items/${edited}`, { price: 499 })).statusCode).toBe(200);
+      const dear = await call(admin, 'PATCH', `/shop/items/${edited}`, { price: 750 });
       expect(dear.statusCode).toBe(409);
       expect(dear.json().code).toBe('PRICE_NEEDS_APPROVAL');
       // an item already at a dear price keeps its other edits; there is no other currency to price it in
-      await pool.query(`UPDATE shop_items SET price = 2000 WHERE sku = $1`, [edited]);
+      await pool.query(`UPDATE shop_items SET price = 1000 WHERE sku = $1`, [edited]);
       expect((await call(admin, 'PATCH', `/shop/items/${edited}`, { name: 'Very pricey' })).statusCode).toBe(200);
       expect((await call(admin, 'PATCH', `/shop/items/${edited}`, { currency: 'gems' })).statusCode).toBe(400);
-      expect((await pool.query(`SELECT price, currency FROM shop_items WHERE sku = $1`, [edited])).rows[0]).toEqual({ price: 2000, currency: 'zer' });
+      expect((await pool.query(`SELECT price, currency FROM shop_items WHERE sku = $1`, [edited])).rows[0]).toEqual({ price: 1000, currency: 'zer' });
     });
 
     it('refuses nothing to change, an unknown item, and a picture that is not the item’s kind', async () => {

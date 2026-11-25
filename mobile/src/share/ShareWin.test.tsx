@@ -16,7 +16,7 @@ import { ShareWin, shareOut } from './ShareWin';
 
 patchReactNativeWeb({ reduceMotion: true });
 
-const TEXT = 'I finished a Kurdish lesson on Hevalo. 🍎\nhttps://hevalo.app/win/lesson';
+const TEXT = 'Look, I just finished a Kurdish lesson! Come learn with me on Hevalo 🍎\nhttps://hevalo.app/win/lesson?l=en';
 
 afterEach(() => {
   cleanup();
