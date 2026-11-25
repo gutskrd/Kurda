@@ -36,7 +36,7 @@ import { useTreeSky } from '../tree/TreeScene';
 /**
  * The letters page window (shared/src/art/letters.ts and letter-sky.ts), seen from inside: the hour's landscape, the
  * birds out with letters (`sky`), the reader's bird on the sill, and any visiting bird. Its layers give depth: the
- * landscape follows the pointer and drifts, clouds pass, the casements and plant stir, the sill light pulses, and the
+ * landscape follows the pointer and drifts, clouds pass, the shutters and plant stir, the sill light pulses, and the
  * season blows past.
  *
  * The birds' actions are the page's news, played with the shared LETTER_PLAY: the reader's bird (`own`) idles, leaves
