@@ -563,7 +563,12 @@ function GiftGrid({
             const newest = giver ? g.people[0]?.person : null;
             return (
               <li key={g.sku}>
-                <button type="button" className="coll-tile is-item" aria-label={g.count > 1 ? `${g.name}, ${times}` : g.name} onClick={() => onOpen(g)}>
+                <button
+                  type="button"
+                  className={`coll-tile is-item${newest || g.count > 1 ? ' has-foot' : ''}`}
+                  aria-label={g.count > 1 ? `${g.name}, ${times}` : g.name}
+                  onClick={() => onOpen(g)}
+                >
                   {g.assetUrl ? <ItemPicture src={g.assetUrl} /> : <ItemGlyph category={g.category} />}
                   {newest && (
                     <span className="coll-giver" aria-hidden="true">

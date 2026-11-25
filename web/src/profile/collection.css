@@ -40,18 +40,28 @@
   outline-offset: 2px;
 }
 
-/* ---- the sheet: a solid panel, so the button pinned at its foot sits on the same colour ---- */
+/*
+ * ---- the sheet: a solid panel, so the button pinned at its foot sits on the same colour, and one height on every tab,
+ * so switching tabs never moves it; what is left over is calm space ----
+ */
 .sheet-panel.coll-sheet {
+  display: flex;
+  flex-direction: column;
+  height: min(760px, calc(100dvh - 48px));
   background: var(--surface-solid);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+@media (max-width: 640px) {
+  .sheet-panel.coll-sheet {
+    height: 92dvh;
+  }
+}
 .coll {
   display: flex;
+  flex: 1 0 auto;
   flex-direction: column;
   gap: 16px;
-  /* tall enough that the tabs do not change its height, with room left over as calm space */
-  min-height: min(540px, calc(92dvh - 48px));
 }
 .coll-title {
   margin: 0;
@@ -163,8 +173,19 @@ button.coll-tile:hover {
 .coll-tile.is-item > svg {
   color: var(--ink-3);
 }
-/* what is still to earn is dimmed, with how far along it is as a line across its foot */
+/* a tile whose foot holds the giver's face and the count: the picture smaller and lifted, so they sit beside it */
+.coll-tile.has-foot img,
+.coll-tile.has-foot video {
+  width: 56%;
+  height: 56%;
+  margin-bottom: 12px;
+}
+.coll-tile.has-foot > svg {
+  margin-bottom: 12px;
+}
+/* what is still to earn is dimmed and lifted a little, with how far along it is as a line across its foot */
 .coll-tile.is-locked .art {
+  margin-bottom: 8px;
   opacity: 0.6;
 }
 .coll-bar {
@@ -174,7 +195,7 @@ button.coll-tile:hover {
   height: 4px;
   overflow: hidden;
   border-radius: var(--r-pill);
-  background: var(--separator);
+  background: var(--border-strong);
 }
 .coll-bar > span {
   display: block;

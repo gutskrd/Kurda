@@ -60,7 +60,8 @@ export function BadgePill({
         </span>
       )}
       {more > 0 && (
-        <span className="bdg-pill-more" aria-hidden="true">
+        // "+7" reads the same way round in every direction.
+        <span className="bdg-pill-more" aria-hidden="true" dir="ltr">
           +{more.toLocaleString(locale)}
         </span>
       )}

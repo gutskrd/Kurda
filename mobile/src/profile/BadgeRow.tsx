@@ -91,5 +91,6 @@ const styles = StyleSheet.create({
   pill: { alignSelf: 'flex-start', alignItems: 'center', gap: spacing.xs, height: PILL, paddingHorizontal: spacing.sm + 2, borderRadius: radii.pill },
   icon: { width: ICON, height: ICON, alignItems: 'center', justifyContent: 'center' },
   word: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
-  more: { fontVariant: ['tabular-nums'], marginStart: 2 },
+  // "+7" reads the same way round in every direction.
+  more: { fontVariant: ['tabular-nums'], marginStart: 2, writingDirection: 'ltr' },
 });

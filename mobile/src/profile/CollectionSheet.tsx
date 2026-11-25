@@ -329,6 +329,7 @@ function Tile({
   onPress,
   on = false,
   locked = false,
+  foot,
   children,
 }: {
   size: number;
@@ -337,6 +338,8 @@ function Tile({
   /** chosen: the icon worn now */
   on?: boolean;
   locked?: boolean;
+  /** Laid over the tile's foot, undimmed: how far along a badge still to earn is. */
+  foot?: ReactNode;
   children: ReactNode;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -351,6 +354,7 @@ function Tile({
   return (
     <PressableScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityState={on ? { selected: true } : undefined} style={box}>
       <View style={locked ? styles.dimmed : null}>{children}</View>
+      {foot}
     </PressableScale>
   );
 }
@@ -405,10 +409,21 @@ function BadgesTab({
               {unearned.map((b) => {
                 const left = progressText(t, b, (v) => formatNumber(v, locale));
                 return (
-                  <Tile key={b.key} size={size} label={[badgeLabel(t, b), left].filter(Boolean).join('. ')} onPress={() => onStep({ kind: 'badge', key: b.key })} locked>
-                    <BadgeMedal badgeKey={b.key} tier={0} tierCount={b.tierCount} size={medal} label="" />
-                    <View style={[styles.bar, { backgroundColor: colors.separator }]}>
-                      <View style={[styles.barFill, { width: `${Math.max(6, badgeViewFraction(b) * 100)}%`, backgroundColor: scheme === 'dark' ? colors.textSecondary : colors.textPrimary }]} />
+                  <Tile
+                    key={b.key}
+                    size={size}
+                    label={[badgeLabel(t, b), left].filter(Boolean).join('. ')}
+                    onPress={() => onStep({ kind: 'badge', key: b.key })}
+                    locked
+                    foot={
+                      <View style={styles.bar}>
+                        <View style={[StyleSheet.absoluteFill, styles.barTrack, { backgroundColor: colors.textSecondary }]} />
+                        <View style={[styles.barFill, { width: `${Math.max(6, badgeViewFraction(b) * 100)}%`, backgroundColor: scheme === 'dark' ? colors.textSecondary : colors.textPrimary }]} />
+                      </View>
+                    }
+                  >
+                    <View style={styles.lift}>
+                      <BadgeMedal badgeKey={b.key} tier={0} tierCount={b.tierCount} size={medal} label="" />
                     </View>
                   </Tile>
                 );
@@ -524,7 +539,8 @@ function BadgeStep({ badge, view }: { badge: ProfileBadge | null; view: BadgeVie
       ))}
       {progress && view ? (
         <View style={styles.fact}>
-          <View style={[styles.bar, styles.barWide, { backgroundColor: colors.separator }]}>
+          <View style={[styles.bar, styles.barWide]}>
+            <View style={[StyleSheet.absoluteFill, styles.barTrack, { backgroundColor: colors.textSecondary }]} />
             <View style={[styles.barFill, { width: `${Math.max(4, badgeViewFraction(view) * 100)}%`, backgroundColor: colors.textSecondary }]} />
           </View>
           <Text style={[styles.factText, { color: colors.textSecondary }]}>{progress}</Text>
@@ -670,7 +686,7 @@ function GiftGrid({
             const newest = giver ? g.people[0]?.person : null;
             return (
               <Tile key={g.sku} size={size} label={g.count > 1 ? `${g.name}, ${times}` : g.name} onPress={() => onOpen(g)}>
-                <ItemArt url={g.assetUrl} size={size} />
+                <ItemArt url={g.assetUrl} size={size} lifted={!!newest || g.count > 1} />
                 {newest ? (
                   <View style={[styles.giver, dir.rtl ? styles.giverRtl : null, { borderColor: colors.background }]}>
                     <Avatar name="" size={20} photoUrl={newest.avatarUrl} />
@@ -692,10 +708,21 @@ function GiftGrid({
   );
 }
 
-/** A gift item's picture, or the gift glyph for an item drawn without one. */
-function ItemArt({ url, size }: { url: string | null; size: number }): React.JSX.Element {
+/**
+ * A gift item's picture, or the gift glyph for an item drawn without one. `lifted` leaves the tile's foot to the giver's
+ * face and the count, so they sit beside the picture rather than over it.
+ */
+function ItemArt({ url, size, lifted = false }: { url: string | null; size: number; lifted?: boolean }): React.JSX.Element {
   const art = assetUrl(url);
-  return art ? <Image source={{ uri: art }} style={{ width: size * 0.66, height: size * 0.66, borderRadius: radii.sm }} resizeMode="contain" accessibilityIgnoresInvertColors /> : <Icon name="gift" size={28} tone="secondary" />;
+  const side = size * (lifted ? 0.56 : 0.66);
+  const lift = lifted ? { marginBottom: spacing.md - 4 } : null;
+  return art ? (
+    <Image source={{ uri: art }} style={[{ width: side, height: side, borderRadius: radii.sm }, lift]} resizeMode="contain" accessibilityIgnoresInvertColors />
+  ) : (
+    <View style={lift}>
+      <Icon name="gift" size={28} tone="secondary" />
+    </View>
+  );
 }
 
 /**
@@ -795,9 +822,13 @@ const styles = StyleSheet.create({
   cell: { gap: spacing.xs },
   tile: { alignItems: 'center', justifyContent: 'center', borderRadius: radii.md, overflow: 'hidden' },
   dimmed: { opacity: 0.6 },
+  // A medal still to earn sits a little higher, leaving the tile's foot to its progress.
+  lift: { marginBottom: spacing.sm },
   fresh: { position: 'absolute', top: -2, end: -14 },
   bar: { position: 'absolute', left: '16%', right: '16%', bottom: 10, height: 4, borderRadius: radii.pill, overflow: 'hidden' },
   barWide: { position: 'relative', left: undefined, right: undefined, bottom: undefined, width: 96 },
+  // The track is the fill's own colour, faint, so it shows on any tile in either theme.
+  barTrack: { opacity: 0.25 },
   barFill: { height: '100%', borderRadius: radii.pill },
   worn: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
   count: { position: 'absolute', bottom: 5, right: 5, paddingHorizontal: 6, borderRadius: radii.pill },
