@@ -237,3 +237,92 @@ export const polygon = (pts: readonly Pt[]): string => `M${pts.map(([x, y]) => n
 /** An exact ellipse as a path, for what is turned on a wheel or too small for a hand's wobble to show. */
 export const ellipse = (cx: number, cy: number, rx: number, ry: number): string =>
   `M${n(cx - rx)} ${n(cy)}a${n(rx)} ${n(ry)} 0 1 0 ${n(2 * rx)} 0a${n(rx)} ${n(ry)} 0 1 0 ${n(-2 * rx)} 0Z`;
+
+// ───────────────────────────────────────────────────────────── shared by the gifts
+
+/** What a gift's shadow is painted in: the page's violet, thin, so it shows on a light page and sinks into a dark one. */
+export const FLOOR = '#2a2140';
+export const CHINA: Tone = { base: '#f6efe2', light: '#fffcf5', shade: '#d6c7b1' };
+export const GOLD = '#c39238';
+export const INK = '#3b2119';
+
+export function floor(dr: Drawing, rnd: Rnd, cx: number, cy: number, rx: number, ry: number): void {
+  paint(dr, outline(roundish(cx, cy, rx, ry, rnd, { wobble: 0.04, tremor: 0.5 })), FLOOR, 0.14);
+}
+
+/**
+ * The side band of a round slab seen from above (a saucer, a cushion): the lower half of its top face `top`, as
+ * `roundish` lays its points out, joined to the same half `depth` lower.
+ */
+export function slab(top: readonly Pt[], depth: number): Pt[] {
+  const half = top.slice(0, Math.floor(top.length / 2) + 1);
+  return [...half.map(([x, y]): Pt => [x, y + depth]), ...half.slice().reverse()];
+}
+
+/** A ring between an outline and a smaller copy of it, filled even-odd: a rim, a band. */
+export function band(dr: Drawing, outer: readonly Pt[], inner: readonly Pt[], colour: string): void {
+  dr.add(`<path d="${outline(outer)}${outline(inner)}" fill="${colour}" fill-rule="evenodd"/>`);
+}
+
+/** A leaf or petal from `base` to `tip`, `width` across at its widest (`at` of the way along), bent by `bend`. */
+export function blade(base: Pt, tip: Pt, width: number, { at = 0.55, bend = 0, point = 0.7, teeth = 0, count = 14 } = {}): Pt[] {
+  const dx = tip[0] - base[0];
+  const dy = tip[1] - base[1];
+  const len = Math.hypot(dx, dy);
+  const ux = dx / len;
+  const uy = dy / len;
+  const k = Math.log(0.5) / Math.log(at);
+  const left: Pt[] = [];
+  const right: Pt[] = [];
+  for (let i = 0; i <= count; i++) {
+    const t = i / count;
+    const tooth = teeth && i > 1 && i < count - 1 ? (i % 2 ? 1 + teeth : 1 - teeth) : 1;
+    const w = (width / 2) * Math.pow(Math.sin(Math.PI * Math.pow(t, k)), 0.75) * (1 - point * Math.pow(t, 6)) * tooth;
+    const off = bend * len * Math.sin(Math.PI * t);
+    const cx = base[0] + dx * t - uy * off;
+    const cy = base[1] + dy * t + ux * off;
+    left.push([cx - uy * w, cy + ux * w]);
+    right.push([cx + uy * w, cy - ux * w]);
+  }
+  return [...left, ...right.reverse().slice(1, -1)];
+}
+
+/**
+ * A leaf from `base` to `tip`: its flat colour, the light laid along one half of it and the shade along the other edge,
+ * a pale midrib and a few veins; its edge toothed by `teeth`.
+ */
+export function leaf(dr: Drawing, rnd: Rnd, base: Pt, tip: Pt, width: number, tone: Tone, { bend = 0, teeth = 0.07, rib = '#a9c48a' } = {}): void {
+  const pts = tremble(blade(base, tip, width, { at: 0.42, bend, point: 0.85, teeth, count: 12 }), rnd, 0.2);
+  const [dx, dy] = [tip[0] - base[0], tip[1] - base[1]];
+  const l = Math.hypot(dx, dy);
+  const [nx, ny] = [-dy / l, dx / l];
+  paint(dr, outline(pts), tone.base);
+  side(dr, pts, -nx * 1.5, -ny * 1.5, tone.shade);
+  within(dr, outline(pts), () => {
+    const lit = [0.12, 0.5, 0.86].map((t, i): Pt => {
+      const p = lerp(base, tip, t);
+      const o = width * [0.16, 0.22, 0.1][i]!;
+      return [p[0] - nx * o, p[1] - ny * o];
+    });
+    paint(dr, brush(lit, width * 0.34, rnd, { start: 0.5, end: 0.2 }), tone.light, 0.9);
+    let veins = '';
+    for (const t of [0.3, 0.52, 0.72]) {
+      const p = lerp(base, tip, t);
+      for (const s of [-1, 1]) veins += brush([p, [p[0] + (s * nx * width * 0.36 + dx * 0.08), p[1] + (s * ny * width * 0.36 + dy * 0.08)]], 0.3, rnd, { count: 4, start: 1, end: 0.2 });
+    }
+    paint(dr, veins, rib, 0.7);
+    paint(dr, brush([base, lerp(base, tip, 0.5), tip], 0.55, rnd, { start: 0.9, end: 0.1 }), rib);
+  });
+}
+
+/** A sugar cube on its three faces, lying where (cx, cy) is, `s` across, with its shadow in `shadow`. */
+export function sugar(dr: Drawing, rnd: Rnd, cx: number, cy: number, s: number, shadow: string): void {
+  const pts = (corners: Pt[]): Pt[] => tremble(turn(runs(corners, 1.2), cx, cy, 8), rnd, 0.18);
+  const topFace = pts([[cx - s * 0.55, cy - s * 0.42], [cx, cy - s * 0.68], [cx + s * 0.55, cy - s * 0.42], [cx, cy - s * 0.16]]);
+  const leftFace = pts([[cx - s * 0.55, cy - s * 0.42], [cx, cy - s * 0.16], [cx, cy + s * 0.5], [cx - s * 0.55, cy + s * 0.24]]);
+  const rightFace = pts([[cx, cy - s * 0.16], [cx + s * 0.55, cy - s * 0.42], [cx + s * 0.55, cy + s * 0.24], [cx, cy + s * 0.5]]);
+  paint(dr, outline(roundish(cx + s * 0.5, cy + s * 0.42, s * 0.7, s * 0.22, rnd)), shadow);
+  paint(dr, outline(leftFace), '#ebe2d3');
+  paint(dr, outline(rightFace), '#cdbfa9');
+  paint(dr, outline(topFace), '#fffdf8');
+}
