@@ -378,7 +378,7 @@ function ItemForm({
   const [name, setName] = useState(item?.name ?? '');
   const [description, setDescription] = useState(item?.description ?? '');
   const [category, setCategory] = useState(item?.category ?? 'cosmetic');
-  const [currency, setCurrency] = useState<Currency>(item?.currency ?? 'zer');
+  const currency: Currency = 'zer';
   const [price, setPrice] = useState(String(item?.price ?? 0));
   const [from, setFrom] = useState(item?.availableFrom ? toLocalInput(item.availableFrom) : '');
   const [to, setTo] = useState(item?.availableTo ? toLocalInput(item.availableTo) : '');
@@ -497,15 +497,6 @@ function ItemForm({
         <Textarea label="Description" hint="Shown on the shop card. Optional." rows={2} maxLength={500} value={description} onChange={(e) => setDescription(e.target.value)} />
         <FieldRow>
           <Select label="Category" value={category} onChange={(e) => setCategory(e.target.value)} options={categories} />
-          <Select
-            label="Currency"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value as Currency)}
-            options={[
-              { value: 'zer', label: 'Zêr' },
-              { value: 'gems', label: 'Gems' },
-            ]}
-          />
           <TextInput
             label="Price"
             inputMode="numeric"

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { api } from '../api';
 import { Badge, Button, Checkbox, Drawer, FieldRow, FormActions, PageHeader, Section, Table, TextInput, errorLine, useDialogs, useLoad, useToast, type Column } from '../ui';
 
-interface GemRule {
+interface EarnRule {
   key: string;
   amount: number;
   dailyCap: number | null;
@@ -18,17 +18,17 @@ function cooldown(s: number): string {
 }
 
 /**
- * Gem rules: what each action earns, the daily cap, and the wait before it pays again. A change applies to everyone's
- * next Gem, so it is asked first.
+ * Earn rules: the Zêr each staff-tunable action earns (a league promotion, a tournament win), the daily cap, and the wait
+ * before it pays again. A change applies to everyone's next Zêr earned that way, so it is asked first.
  */
-export function GemRules(): React.JSX.Element {
+export function EarnRules(): React.JSX.Element {
   const toast = useToast();
-  const list = useLoad(() => api<{ rules: GemRule[] }>('/admin/gem-rules').then((r) => r.rules), []);
-  const [editing, setEditing] = useState<GemRule | null>(null);
+  const list = useLoad(() => api<{ rules: EarnRule[] }>('/admin/earn-rules').then((r) => r.rules), []);
+  const [editing, setEditing] = useState<EarnRule | null>(null);
 
-  const columns: Column<GemRule>[] = [
+  const columns: Column<EarnRule>[] = [
     { key: 'key', header: 'Earned for', card: 'title', sort: (a, b) => a.key.localeCompare(b.key), cell: (r) => <code className="strong-code">{r.key}</code> },
-    { key: 'amount', header: 'Gems', align: 'end', sort: (a, b) => a.amount - b.amount, cell: (r) => r.amount.toLocaleString() },
+    { key: 'amount', header: 'Zêr', align: 'end', sort: (a, b) => a.amount - b.amount, cell: (r) => r.amount.toLocaleString() },
     { key: 'cap', header: 'Most a day', align: 'end', cell: (r) => (r.dailyCap === null ? <span className="subtle">No limit</span> : r.dailyCap.toLocaleString()) },
     { key: 'cooldown', header: 'Wait between', align: 'end', cell: (r) => cooldown(r.cooldownSeconds) },
     { key: 'active', header: 'State', cell: (r) => <Badge tone={r.active ? 'ok' : 'neutral'}>{r.active ? 'Paying' : 'Off'}</Badge> },
@@ -36,18 +36,18 @@ export function GemRules(): React.JSX.Element {
 
   return (
     <div>
-      <PageHeader title="Gem rules" subtitle="How many Gems each action earns, the most a day, and the wait before it pays again. Changes apply to the next Gem earned." />
+      <PageHeader title="Earn rules" subtitle="How much Zêr each action earns, the most a day, and the wait before it pays again. Changes apply to the next Zêr earned." />
       <Section flush>
         <Table
-          caption="Gem rules"
+          caption="Earn rules"
           columns={columns}
           rows={list.data ?? null}
           rowKey={(r) => r.key}
           loading={list.loading}
           error={list.error}
           onRetry={() => void list.reload()}
-          what="gem rules"
-          empty="No gem rules are set up."
+          what="earn rules"
+          empty="No earn rules are set up."
           actions={(r) => <Button onClick={() => setEditing(r)}>Edit</Button>}
         />
       </Section>
@@ -67,7 +67,7 @@ export function GemRules(): React.JSX.Element {
   );
 }
 
-function RuleForm({ rule, onClose, onSaved }: { rule: GemRule; onClose: () => void; onSaved: () => Promise<void> }): React.JSX.Element {
+function RuleForm({ rule, onClose, onSaved }: { rule: EarnRule; onClose: () => void; onSaved: () => Promise<void> }): React.JSX.Element {
   const dialogs = useDialogs();
   const [amount, setAmount] = useState(String(rule.amount));
   const [cap, setCap] = useState(rule.dailyCap === null ? '' : String(rule.dailyCap));
@@ -81,22 +81,22 @@ function RuleForm({ rule, onClose, onSaved }: { rule: GemRule; onClose: () => vo
     const n = Number(amount);
     const c = cap.trim() === '' ? null : Number(cap);
     const w = Number(wait);
-    if (!Number.isInteger(n) || n < 1 || n > 100_000) return setProblem('Gems is a whole number from 1 to 100,000.');
+    if (!Number.isInteger(n) || n < 1 || n > 100_000) return setProblem('Zêr is a whole number from 1 to 100,000.');
     if (c !== null && (!Number.isInteger(c) || c < 1)) return setProblem('The daily limit is a whole number of 1 or more, or empty for no limit.');
     if (!Number.isInteger(w) || w < 0 || w > 86_400) return setProblem('The wait is 0 to 86,400 seconds (a day).');
     const yes = await dialogs.confirm({
       title: `Change what ${rule.key} pays?`,
-      body: `${n} Gems, ${c === null ? 'no daily limit' : `at most ${c} a day`}, ${w ? `${cooldown(w)} between` : 'no wait'}${active ? '' : ', and switched off'}. It applies to everyone from the next Gem earned.`,
+      body: `${n} Zêr, ${c === null ? 'no daily limit' : `at most ${c} a day`}, ${w ? `${cooldown(w)} between` : 'no wait'}${active ? '' : ', and switched off'}. It applies to everyone from the next Zêr earned.`,
       confirmLabel: 'Save the rule',
     });
     if (!yes) return;
     setBusy(true);
     setProblem(null);
     try {
-      await api(`/admin/gem-rules/${encodeURIComponent(rule.key)}`, { method: 'PUT', body: { amount: n, dailyCap: c, cooldownSeconds: w, active } });
+      await api(`/admin/earn-rules/${encodeURIComponent(rule.key)}`, { method: 'PUT', body: { amount: n, dailyCap: c, cooldownSeconds: w, active } });
       await onSaved();
     } catch (err) {
-      setProblem(errorLine(err, 'gem rules'));
+      setProblem(errorLine(err, 'earn rules'));
     } finally {
       setBusy(false);
     }
@@ -118,11 +118,11 @@ function RuleForm({ rule, onClose, onSaved }: { rule: GemRule; onClose: () => vo
     >
       <form id="rule-form" className="form" onSubmit={(e) => void save(e)}>
         <FieldRow>
-          <TextInput label="Gems each time" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))} required />
+          <TextInput label="Zêr each time" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))} required />
           <TextInput label="Most a day" hint="Empty for no limit." inputMode="numeric" value={cap} onChange={(e) => setCap(e.target.value.replace(/\D/g, ''))} />
           <TextInput label="Wait between (seconds)" inputMode="numeric" value={wait} onChange={(e) => setWait(e.target.value.replace(/\D/g, ''))} required />
         </FieldRow>
-        <Checkbox label="Paying" hint="Off: the action earns no Gems until it is switched back on." checked={active} onChange={setActive} />
+        <Checkbox label="Paying" hint="Off: the action earns no Zêr until it is switched back on." checked={active} onChange={setActive} />
         {problem && (
           <p className="field-error" role="alert">
             {problem}

@@ -37,7 +37,7 @@ const SUGGESTIONS = [
   'POST /admin/stories',
   'POST /shop/items',
   'PATCH /shop/items',
-  'PUT /admin/gem-rules',
+  'PUT /admin/earn-rules',
   'POST /admin/config/changes',
   'POST /admin/events',
   'POST /admin/experiments',

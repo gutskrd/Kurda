@@ -38,7 +38,7 @@ function person(over: Partial<UserDetail> = {}): UserDetail {
     ban: 'active',
     bannedUntil: null,
     mutedUntil: null,
-    balances: { zer: 1200, gems: 15 },
+    balances: { zer: 1200 },
     ledger: [
       { currency: 'zer', amount: -300, reason: 'shop_purchase', createdAt: ago(30) },
       { currency: 'zer', amount: 500, reason: 'admin_adjustment', createdAt: ago(48) },

@@ -11,7 +11,7 @@ import { Badge, Button, FieldRow, FormActions, Section, Select, Table, TextInput
 interface EconomyUser {
   id: string;
   username: string;
-  balances: { zer: number; gems: number };
+  balances: { zer: number };
   premiumUntil?: string | null;
   ledger: Array<{ currency: string; amount: number; reason: string; createdAt: string }>;
 }
@@ -25,7 +25,8 @@ export interface OwnedItem {
   equipped: boolean;
 }
 
-const CURRENCY: Readonly<Record<string, string>> = { zer: 'Zêr', gems: 'Gems' };
+/** The ledger's currencies by name: Zêr, and Gewher on the rows from before it was folded into Zêr. */
+const CURRENCY: Readonly<Record<string, string>> = { zer: 'Zêr', gems: 'Gewher' };
 
 /** The ledger's reasons as people say them; one this build doesn't know is shown by its key. */
 const LEDGER_REASON: Readonly<Record<string, string>> = {
@@ -43,7 +44,16 @@ const LEDGER_REASON: Readonly<Record<string, string>> = {
   tournament_reward: 'Tournament prize',
   season_reward: 'Season reward',
   streak_repair: 'Streak restored',
-  plus_daily: 'Hevalo+ daily gems',
+  members_box: 'Hevalo+ members’ box',
+  'earn:streak_milestone': 'Streak milestone',
+  'earn:online_win': 'Win against another person',
+  'earn:quiz_podium': 'Quiz night podium',
+  'earn:league_promotion': 'League promotion',
+  'earn:tournament_win': 'Tournament win',
+  gewher_retired: 'Gewher folded into Zêr',
+  gewher_converted: 'Zêr from folded Gewher',
+  // From before Gewher was folded into Zêr: the ledger keeps every row it ever had.
+  plus_daily: 'Hevalo+ daily Gewher (no longer given)',
 };
 
 export function ledgerReason(reason: string): string {
@@ -76,10 +86,6 @@ export function WalletPanel({ user, canAdjust, onChanged }: { user: EconomyUser;
             <div className="balance-n">{user.balances.zer.toLocaleString()}</div>
             <div className="balance-k">Zêr</div>
           </div>
-          <div className="balance">
-            <div className="balance-n">{user.balances.gems.toLocaleString()}</div>
-            <div className="balance-k">Gems</div>
-          </div>
         </div>
       </Section>
       {canAdjust && <AdjustForm user={user} onChanged={onChanged} />}
@@ -99,9 +105,9 @@ export const WALLET_ADJUST_MAX = 1_000_000;
  */
 const LARGE_ADJUSTMENT = 1_000;
 
-/** Add or take away Zêr or Gems with a reason; it mints or burns currency, so the result is said back and confirmed first. */
+/** Add or take away Zêr with a reason; it mints or burns currency, so the result is said back and confirmed first. */
 function AdjustForm({ user, onChanged }: { user: EconomyUser; onChanged: () => void }): React.JSX.Element {
-  const [currency, setCurrency] = useState<'zer' | 'gems'>('zer');
+  const currency = 'zer';
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
@@ -161,17 +167,8 @@ function AdjustForm({ user, onChanged }: { user: EconomyUser; onChanged: () => v
     <Section title="Change a balance" description="It goes through the ledger with your reason, so it can always be traced.">
       <form className="form" noValidate onSubmit={(e) => void submit(e)}>
         <FieldRow>
-          <Select
-            label="Currency"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value as 'zer' | 'gems')}
-            options={[
-              { value: 'zer', label: 'Zêr' },
-              { value: 'gems', label: 'Gems' },
-            ]}
-          />
           <TextInput
-            label="Amount"
+            label="Amount in Zêr"
             hint="500 adds, -500 takes away."
             inputMode="numeric"
             value={amount}
@@ -250,7 +247,13 @@ function PlusSection({ user, canAdjust, onChanged }: { user: EconomyUser; canAdj
   }
 
   return (
-    <Section title="Hevalo+" description="Membership: five gems with each day’s reward, a second streak freeze, and one free streak restore a month.">
+    <Section
+      title="Hevalo+"
+      description={
+        'Membership: the daily Zêr, a monthly members’ box, double quest chests, streak milestones and wins, a second ' +
+        'streak freeze, and one free streak restore a month.'
+      }
+    >
       <p>
         {member ? (
           <>

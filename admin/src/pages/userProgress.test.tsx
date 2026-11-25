@@ -32,7 +32,7 @@ const person: UserDetail = {
   ban: 'active',
   bannedUntil: null,
   mutedUntil: null,
-  balances: { zer: 0, gems: 0 },
+  balances: { zer: 0 },
   ledger: [],
   sessions: [],
   actions: [],

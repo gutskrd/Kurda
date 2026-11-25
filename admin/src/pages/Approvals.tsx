@@ -27,7 +27,7 @@ function Change({ c }: { c: PendingChange }): React.JSX.Element {
       <>
         <strong>{s(p.name) || s(p.sku)}</strong>
         <span className="cell-sub">
-          <code>{s(p.sku)}</code> · {Number(p.price).toLocaleString()} {p.currency === 'gems' ? 'Gems' : 'Zêr'}
+          <code>{s(p.sku)}</code> · {Number(p.price).toLocaleString()} Zêr
           {p.category ? ` · ${s(p.category)}` : ''}
         </span>
       </>
