@@ -128,20 +128,26 @@ export const LARGE_ENOUGH = [
   '.daily-row',
   '.daily-back',
   '.mkp-fact--link',
-  // A full profile's highlights, its icon tabs and its grid's tiles, and the line of who they know (styles/profile.css):
-  // each at least 48px tall and wider still.
-  '.hl',
+  // A full profile's icon tabs and its grid's tiles, and the line of who they know (styles/profile.css): each at least
+  // 48px tall and wider still.
   '.pg-tab',
   '.pg-tile',
   '.mkp-friends-line',
   // Your progress, a row across the column at least 52px tall.
   '.mkp-yours-row',
+  // The collection's square tiles, a quarter of the sheet across a phone; its league and tree cards, at least 64px
+  // tall; its way back, 48px tall; and a giver's row, 52px tall across the sheet (profile/collection.css).
+  '.coll-tile',
+  '.coll-card',
+  '.coll-back',
+  '.coll-person',
+  // A badge to choose for the profile, its 60px medal and name in a tile (styles/ranks.css).
+  '.showcase-pick',
 ] as const;
 
 /** Sideways-scrolling rows of controls, padded above and below for their reach. */
 export const SCROLLERS = [
   '.note-filters',
-  '.hl-row',
   '.story-shelf-row',
   '.league-ladder',
   '.imp-cat-strip',

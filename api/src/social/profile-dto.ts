@@ -1,4 +1,4 @@
-import type { LeagueTier, ProfileLeague, ShowcaseBadge } from '@kurda/shared';
+import type { LeagueTier, ProfileBadge, ProfileLeague, ShowcaseBadge } from '@kurda/shared';
 import type { MediaStorage } from '../media/storage.js';
 import { cosmeticArtUrl, resolveCosmetics, levelInfo, type LevelInfo, type ResolvedBackground, type ResolvedIcon } from '../cosmetics/access.js';
 import type { PublicProfile } from './service.js';
@@ -40,6 +40,8 @@ export interface PublicProfileDto {
   frameUrl?: string | null;
   achievements?: number;
   badges?: ShowcaseBadge[];
+  /** Every badge earned, newest first, for the profile's badge row; held back where the three are. */
+  earnedBadges?: ProfileBadge[];
   favoritePoem?: FavoriteDto | null;
   favoriteStory?: FavoriteDto | null;
 }
@@ -90,6 +92,7 @@ export function toPublicProfileDto(
     frameUrl: profile.frameAssetKey ? cosmeticArtUrl(profile.frameAssetKey, publicUrl) : null,
     achievements: profile.achievements,
     badges: profile.badges,
+    earnedBadges: profile.earnedBadges,
     favoritePoem: fav(profile.favoritePoem),
     favoriteStory: fav(profile.favoriteStory),
   };

@@ -26,17 +26,21 @@ import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { Flag, GiftedNote, IconOverlay } from '../profile/cosmetic-parts';
 import type { ProfileCosmetics } from '../profile/types';
 import {
+  badgesInOrder,
   countryName,
   fireLevel,
   type PendingPicture,
   type PictureRejection,
+  type ProfileBadge,
   type ProfileLeague,
   type ShowcaseBadge,
   type TreeGlimpse,
 } from '@kurda/shared';
 import { OnlyYou, ProfileFacts, type ProfileFact } from '../profile/ProfileFacts';
 import { FACE, FRAMED, ProfileHead } from '../profile/ProfileHead';
-import { ProfileHighlights, ProfileHighlightsSkeleton } from '../profile/ProfileHighlights';
+import { BadgePill, BadgePillSkeleton } from '../profile/BadgeRow';
+import { CollectionSheet } from '../profile/CollectionSheet';
+import { Favourites } from '../profile/Favourites';
 import { Framed, frameTierOf } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
 import { VISIBILITY_LABEL } from '../social/format';
@@ -166,8 +170,8 @@ function AccountProfile() {
     frameUrl: string | null;
     /** Their tree; null before one is planted, undefined on a server without trees. */
     tree: TreeGlimpse | null | undefined;
-    /** Badges earned (and the legacy tournament win), as the public profile counts them; `/me` does not send this. */
-    achievements: number | null;
+    /** Every badge earned, newest first; absent on an older server, which sends only the three. */
+    earned: ProfileBadge[] | undefined;
     /** Which activity sections others see, so the ones you hid are marked on your own tabs. */
     sections: ProfileSections | null;
   } | null>(null);
@@ -185,8 +189,10 @@ function AccountProfile() {
   const showSendError = useSendErrorAlert();
   // A held account cannot put up a new picture until it is checked; the tap says so instead of opening the picker.
   const held = useAccountHeld();
-  // Badges earned since the app opened wear a "New" chip in the showcase.
+  // Badges earned since the app opened wear a "New" chip in the collection.
   const fresh = useFreshBadges();
+  // The collection: badges, icons and gifts, opened from the row beside the handle.
+  const [collecting, setCollecting] = useState(false);
 
   /*
    * The session user carries identity only, so the profile comes from /me, the wallet from /me/wallet, the friend
@@ -226,7 +232,7 @@ function AccountProfile() {
             frameSku?: string | null;
             frameUrl?: string | null;
             tree?: TreeGlimpse | null;
-            achievements?: number;
+            earnedBadges?: ProfileBadge[];
             sections?: ProfileSections | null;
           }>(`/users/${id}`);
           if (active && p.ok) {
@@ -236,7 +242,7 @@ function AccountProfile() {
               frameSku: p.data.frameSku ?? null,
               frameUrl: p.data.frameUrl ?? null,
               tree: p.data.tree,
-              achievements: p.data.achievements ?? null,
+              earned: p.data.earnedBadges,
               sections: p.data.sections ?? null,
             });
           }
@@ -307,8 +313,8 @@ function AccountProfile() {
   const whole = (n: number | null | undefined): string | undefined => (n == null || short(n) === number(n) ? undefined : (number(n) ?? undefined));
   const streakDays = streak?.current ?? 0;
   const xp = me?.level?.xp ?? me?.xp ?? 0;
-  // The three figures the website shows; how many badges sits on the badge case in the highlights. The streak opens its
-  // sheet and friends their page.
+  // The three figures the website shows; badges are in the row beside the handle. The streak opens its sheet and friends
+  // their page.
   const facts: ProfileFact[] = [
     {
       key: 'streak',
@@ -409,6 +415,20 @@ function AccountProfile() {
             level={me?.level}
             premium={me?.premium}
             handle={handleLine}
+            handleAside={
+              progress ? (
+                <BadgePill
+                  league={progress.league?.tier ?? null}
+                  tree={progress.tree}
+                  badges={badgesInOrder(progress.badges, progress.earned)}
+                  own
+                  title={t('collection.title.own')}
+                  onOpen={() => setCollecting(true)}
+                />
+              ) : !progressSettled ? (
+                <BadgePillSkeleton />
+              ) : null
+            }
             actions={
               /*
                 Edit and Share side by side, and the find-friends button. The buttons are text only, each label on one
@@ -498,6 +518,7 @@ function AccountProfile() {
                 <Text style={[styles.addBio, { color: colors.textPrimary }]}>{t('profile.addBio')}</Text>
               </Pressable>
             ) : null}
+            <Favourites poem={me?.favoritePoem} story={me?.favoriteStory} />
             {pending ? <PendingPhoto pending={pending.photo} body="picture.held.profile" testID="profile-photo-pending" /> : null}
             {refusal ? <PictureRefusal rejection={refusal} testID="profile-photo-refused" /> : null}
             {settled && !me ? <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} /> : null}
@@ -521,21 +542,6 @@ function AccountProfile() {
             ) : null}
           </ProfileHead>
 
-          {/* The badge case, tree, league and favourites; until the public profile answers, the row's shape in grey. */}
-          {progress ? (
-            <ProfileHighlights
-              own
-              tree={progress.tree}
-              badges={progress.badges}
-              earned={progress.achievements}
-              league={progress.league}
-              favPoem={me?.favoritePoem}
-              favStory={me?.favoriteStory}
-              fresh={fresh}
-            />
-          ) : !progressSettled ? (
-            <ProfileHighlightsSkeleton />
-          ) : null}
         </View>
 
         <View style={styles.bleed}>
@@ -546,6 +552,20 @@ function AccountProfile() {
         </View>
       </ScrollView>
       <DailySheet visible={streakOpen} onClose={() => setStreakOpen(false)} today={today} onStreak={setStreak} />
+      {progress && seed ? (
+        <CollectionSheet
+          visible={collecting}
+          onClose={() => setCollecting(false)}
+          owner={{ userId: seed, name: '', own: true, league: progress.league, tree: progress.tree, showcase: progress.badges, earned: progress.earned }}
+          fresh={fresh}
+          // The three chosen again lead the row beside your handle from now on.
+          onShowcase={(keys) =>
+            setProgress((p) => p && { ...p, badges: keys.flatMap((k) => (p.earned ?? p.badges).filter((b) => b.key === k)) })
+          }
+          // An icon worn from the collection is read back with the rest, so your face shows it.
+          onWorn={() => setReloadKey((k) => k + 1)}
+        />
+      ) : null}
     </GradientBackground>
   );
 }

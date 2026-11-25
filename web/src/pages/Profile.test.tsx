@@ -47,7 +47,7 @@ describe('Profile view (full, read-only)', () => {
     renderApp(<Profile />, ['/app/profile']);
 
     expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
-    expect(document.querySelector('.ph-handle')?.textContent).toBe('@ada');
+    expect(document.querySelector('.ph-handle [dir="ltr"]')?.textContent).toBe('@ada');
     expect(screen.getByText('Learning Kurdish.', { selector: 'p.mkp-bio' })).toBeInTheDocument();
     // shortened beside the face so four figures always fit, and said whole to a screen reader
     expect(fact('XP')).toBe('3.2K');
@@ -123,7 +123,15 @@ describe('Profile view (full, read-only)', () => {
         routedFetch({
           '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
           '/friends': { friends: [{ userId: 'a', username: 'x' }], total: 7 },
-          '/users/1': { userId: '1', username: 'ada', friendStatus: 'self', private: false, achievements: 4, sections: { posts: true, games: true, likes: true, reposts: true, saved: true } },
+          '/users/1': {
+            userId: '1',
+            username: 'ada',
+            friendStatus: 'self',
+            private: false,
+            achievements: 4,
+            earnedBadges: [{ key: 'ders', family: 'learning', tier: 1, tierKey: 'sifir', earnedAt: null, rarity: null }],
+            sections: { posts: true, games: true, likes: true, reposts: true, saved: true },
+          },
           '/me': { user: meUser },
         }),
       ),
@@ -133,14 +141,14 @@ describe('Profile view (full, read-only)', () => {
 
     const card = document.querySelector<HTMLElement>('.ph')!;
     const strip = card.querySelector<HTMLElement>('.ph-stats .mkp-facts')!;
-    // Three figures beside the face; how many badges is on the badge case, which opens your badges.
+    // Three figures beside the face; badges are in the row beside your handle, which opens your collection.
     expect(within(strip).getAllByRole('listitem').map((li) => li.querySelector('.mkp-fact-label')?.textContent)).toEqual(['Streak', 'XP', 'Friends']);
     // A number with a page of its own is the way into it; the others are only numbers.
     expect(within(strip).getByRole('link', { name: /Friends/ })).toHaveAttribute('href', '/app/friends');
     expect(within(strip).queryByRole('link', { name: /XP/ })).toBeNull();
-    const badgeCase = await screen.findByRole('link', { name: 'Badges: 4' });
-    expect(badgeCase).toHaveAttribute('href', '/app/badges');
-    expect(badgeCase.querySelector('.hl-count')).toHaveTextContent('4');
+    const row = await screen.findByRole('button', { name: 'Your collection, Badges: 1' });
+    expect(row).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(row.closest('.ph-handle')).not.toBeNull();
     // Read aloud, a streak is days.
     expect(within(strip).getByText('5 days')).toHaveClass('sr-only');
 

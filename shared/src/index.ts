@@ -618,6 +618,8 @@ export { PROVIDER, isProviderPlaceholder, type ProviderIdentity } from './provid
 /** Learning Leagues (the weekly table that rewards effort) and badges. */
 export * from './leagues.js';
 export * from './badges.js';
+/** What a profile owns and was given besides its badges. */
+export * from './collection.js';
 
 /**
  * Badge medallions, rank and league emblems and season frames as SVG strings: inlined on the web, `SvgXml` on the phone.

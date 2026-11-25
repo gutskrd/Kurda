@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { foldDiacritics, handleName, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague, type ShowcaseBadge } from '@kurda/shared';
+import { foldDiacritics, handleName, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileBadge, type ProfileLeague, type ShowcaseBadge } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { FriendService } from '../friends/service.js';
 import { premiumUntilSql, resolveAvatarUrl } from '../cosmetics/access.js';
@@ -7,7 +7,7 @@ import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from './presence.js';
 import { escapeLike } from '../db/like.js';
 import { inLeaguesSql } from '../leagues/service.js';
-import { profileShowcase } from '../badges/service.js';
+import { profileBadges } from '../badges/service.js';
 import { birthDateRequired, isKnownAdultRow, isMinorRow, notKnownAdultSql, shownToSql, writtenForSql } from '../users/age.js';
 import { notBlockedSql } from '../friends/blocked.js';
 import { unseenByOthersSql } from '../users/kind.js';
@@ -72,6 +72,8 @@ export interface PublicProfile {
   achievements?: number;
   /** the three badges they chose to show; a minor's only to themselves and friends */
   badges?: ShowcaseBadge[];
+  /** every badge they earned, newest first, under the same rule as the three */
+  earnedBadges?: ProfileBadge[];
   /** presence — only populated for the user themselves or their friends */
   online?: boolean;
 }
@@ -373,8 +375,8 @@ export class SocialService {
       u.favorite_story_id && u.fs_title != null
         ? { id: u.favorite_story_id, title: u.fs_title, type: u.fs_type ?? '', status: u.fs_status ?? '' }
         : null;
-    // a minor's showcase only to themselves and their friends
-    const badges = opts.badges === false ? undefined : await profileShowcase(this.pool, targetId, viewerId);
+    // a minor's badges only to themselves and their friends
+    const shown = opts.badges === false ? undefined : await profileBadges(this.pool, targetId, viewerId);
     return {
       ...base,
       bio: u.bio,
@@ -394,7 +396,8 @@ export class SocialService {
       frameSku: u.frame_sku,
       frameAssetKey: u.frame_asset,
       achievements: u.achievements,
-      badges,
+      badges: shown?.showcase,
+      earnedBadges: shown?.earned,
       // presence is private: only the user themselves and their friends see it
       online: isSelf || friendStatus === 'friends' ? isOnline(u.last_seen_at) : undefined,
     };

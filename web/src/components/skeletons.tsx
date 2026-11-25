@@ -812,6 +812,8 @@ function ProfileHeadSkeleton({ own }: { own: boolean }): React.JSX.Element {
         </div>
         <div className="ph-handle">
           <Skeleton line w={64} />
+          {/* the badge row beside the handle: a pill of a few small pictures, as most profiles show */}
+          <Skeleton w={96} h={36} radius="var(--r-pill)" />
         </div>
       </div>
       <ul className="mkp-about">
@@ -874,24 +876,6 @@ function ProfileHeadSkeleton({ own }: { own: boolean }): React.JSX.Element {
   );
 }
 
-/** The highlights row (ProfileHighlights) with the two most profiles show, badges and the tree. */
-function ProfileHighlightsSkeleton(): React.JSX.Element {
-  return (
-    <ul className="hl-row">
-      {times(2, (i) => (
-        <li key={i}>
-          <span className="hl">
-            <Skeleton className="hl-ring" circle />
-            <span className="hl-label">
-              <Skeleton line w={[48, 32][i]} />
-            </span>
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 /** Two rows of a profile tab's grid (ProfileActivity): post tiles, or game covers with their captions. */
 export function ProfileGridSkeleton({ games = false }: { games?: boolean }): React.JSX.Element {
   return (
@@ -926,7 +910,6 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
     <SkeletonRegion label={t(label ?? 'profile.loading')} className="mkp-page">
       <div className="mkp-wrap">
         <ProfileHeadSkeleton own={own} />
-        <ProfileHighlightsSkeleton />
         <div className="pg">
           <div className="pg-tabs" style={{ '--n': 5, '--at': 0 } as React.CSSProperties}>
             {times(5, (i) => (

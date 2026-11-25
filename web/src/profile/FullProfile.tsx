@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import type { FavoriteRef, LevelInfo, ProfileBackground, ProfileIcon } from '../lib/types';
 import { Flag } from '../components/Flag';
 import { GiftedNote } from './cosmetic-parts';
-import { compactCount, fireLevel, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
+import { badgesInOrder, compactCount, fireLevel, toLeagueTier, type ProfileBadge, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import { ProfileHead } from './ProfileHead';
-import { ProfileHighlights } from './ProfileHighlights';
+import { BadgePill } from './BadgeRow';
+import { CollectionSheet } from './CollectionSheet';
 import { Fire } from '../components/Fire';
-import { CalendarIcon, ChevronIcon, EyeIcon, LockIcon } from '../components/icons';
+import { BookIcon, CalendarIcon, ChevronIcon, EyeIcon, FeatherIcon, LockIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { useWordFit } from '../lib/useWordFit';
@@ -28,8 +29,6 @@ export interface FullProfileView {
   streakDays: number;
   /** how many friends they have; left out where it is not known, or not theirs to show */
   friends?: number | null;
-  /** how many badges they have earned; left out where the server does not say */
-  badges?: number | null;
   bio?: string | null;
   favPoem?: FavoriteRef | null;
   favStory?: FavoriteRef | null;
@@ -172,7 +171,7 @@ export function OnlyYou({ title, children }: { title: string; children: React.Re
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} label={title}>
         <div className="mkp-yours-sheet">
-          <h2 className="hl-sheet-title">{title}</h2>
+          <h2 className="mkp-sheet-title">{title}</h2>
           <div className="mkp-yours">{children}</div>
         </div>
       </Sheet>
@@ -181,9 +180,10 @@ export function OnlyYou({ title, children }: { title: string; children: React.Re
 }
 
 /**
- * A full profile in one column, laid out as a social app's: the head (banner, face and figures, name and level, what is
- * known about them and the bio, who they know, what only the owner sees, the actions), the highlights (tree, league,
- * badges, favourites), any notice for the owner, then what they posted, played, liked, reposted and saved as a grid.
+ * A full profile in one column, laid out as a social app's: the head (banner, face and figures, name and level, the
+ * handle with the badge row that opens their collection, what is known about them, the bio and favourites, who they
+ * know, what only the owner sees, the actions), any notice for the owner, then what they posted, played, liked,
+ * reposted and saved as a grid.
  */
 export function FullProfile({
   view,
@@ -191,6 +191,8 @@ export function FullProfile({
   corner,
   headerAction,
   showcase,
+  onShowcase,
+  onWorn,
   notice,
   people,
   yours,
@@ -204,8 +206,12 @@ export function FullProfile({
   corner?: React.ReactNode;
   /** what can be done here: edit and share, or the friend buttons */
   headerAction?: React.ReactNode;
-  /** what the highlights show besides the favourites */
-  showcase?: { tree?: TreeGlimpse | null; badges?: readonly ShowcaseBadge[]; league?: ProfileLeague | null };
+  /** what the badge row and the collection show: the league, the tree, the three chosen badges and every earned one */
+  showcase?: { tree?: TreeGlimpse | null; badges?: readonly ShowcaseBadge[]; earned?: readonly ProfileBadge[]; league?: ProfileLeague | null };
+  /** your own profile: the three badges shown first were chosen again in the collection */
+  onShowcase?: (keys: string[]) => void;
+  /** your own profile: another icon is worn, chosen in the collection */
+  onWorn?: () => void;
   /** something only the owner is told, such as a new photo still being checked */
   notice?: React.ReactNode;
   /** who they know (profile/ProfileFriends) */
@@ -219,9 +225,10 @@ export function FullProfile({
 }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
+  const [collecting, setCollecting] = useState(false);
   const number = (n: number): string => n.toLocaleString(locale);
   // Figures beside the face are shortened (5230 → 5.2K) so all three fit; a screen reader is given the whole number.
-  // How many badges sits on the badge case in the highlights rather than as a fourth figure.
+  // Badges are in the row beside the handle rather than a fourth figure.
   const short = (n: number): string => compactCount(n, locale);
   const whole = (n: number): string | undefined => (short(n) === number(n) ? undefined : number(n));
   const facts: ProfileFact[] = [
@@ -237,6 +244,13 @@ export function FullProfile({
     { key: 'xp', label: t('profile.stat.xp'), value: short(view.xp), spoken: whole(view.xp) },
     ...(view.friends != null ? [{ key: 'friends', label: t('nav.friends'), value: short(view.friends), spoken: whole(view.friends), to: own ? '/app/friends' : undefined }] : []),
   ];
+
+  const badges = badgesInOrder(showcase?.badges, showcase?.earned);
+  const collectionTitle = own ? t('collection.title.own') : t('collection.title.other', { name: view.name });
+  const favourites = [
+    view.favPoem && { key: 'poem', ref: view.favPoem, to: '/poems', icon: <FeatherIcon size={16} />, kind: t('profile.favoritePoem') },
+    view.favStory && { key: 'story', ref: view.favStory, to: '/stories', icon: <BookIcon size={16} />, kind: t('profile.favoriteStory') },
+  ].filter((f) => !!f);
 
   return (
     <div className="mkp-page">
@@ -255,6 +269,18 @@ export function FullProfile({
           frameUrl={view.frameUrl}
           corner={corner}
           stats={<ProfileFacts facts={facts} stack={false} />}
+          handleAside={
+            showcase && (
+              <BadgePill
+                league={toLeagueTier(showcase.league?.tier ?? null)}
+                tree={showcase.tree}
+                badges={badges}
+                own={own}
+                title={collectionTitle}
+                onOpen={() => setCollecting(true)}
+              />
+            )
+          }
           actions={headerAction}
           meta={
             <>
@@ -294,6 +320,21 @@ export function FullProfile({
                   {t('profile.addBio')}
                 </Link>
               ) : null}
+              {/* The favourite poem and story, where they are set, leading where the library keeps them. */}
+              {favourites.length > 0 && (
+                <ul className="mkp-favs">
+                  {favourites.map((f) => (
+                    <li key={f.key}>
+                      <Link to={f.to} className="chip mkp-fav" aria-label={`${f.kind}: ${f.ref.title}`}>
+                        {f.icon}
+                        <span className="mkp-fav-title" dir="auto">
+                          {f.ref.title}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </>
           }
         >
@@ -301,15 +342,15 @@ export function FullProfile({
           {yours}
         </ProfileHead>
 
-        <ProfileHighlights
-          own={own}
-          tree={showcase?.tree}
-          badges={showcase?.badges}
-          earned={view.badges}
-          league={showcase?.league}
-          favPoem={view.favPoem}
-          favStory={view.favStory}
-        />
+        {showcase && view.id && (
+          <CollectionSheet
+            open={collecting}
+            onClose={() => setCollecting(false)}
+            owner={{ userId: view.id, name: view.name, own, league: showcase.league, tree: showcase.tree, showcase: showcase.badges, earned: showcase.earned }}
+            onShowcase={onShowcase}
+            onWorn={onWorn}
+          />
+        )}
         {notice}
         {activity}
       </div>
