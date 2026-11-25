@@ -6,7 +6,8 @@ repository's tests and audits; this page is the part that lives outside the
 code: App Store Connect, the server's settings, and the content. What goes into
 the listing itself, word for word in every language, is in
 [`listing.md`](listing.md); the App Privacy answers are in
-[`privacy.md`](privacy.md).
+[`privacy.md`](privacy.md). What changes for the version with child profiles and Hevalo+ is in
+[`children-and-selling.md`](children-and-selling.md).
 
 Tick each line before pressing Submit. A line marked **owner** can only be done
 by the account holder.

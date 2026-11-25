@@ -213,7 +213,8 @@
       "package": "app.hevalo.mobile",
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
-        "android.permission.ACTIVITY_RECOGNITION"
+        "android.permission.ACTIVITY_RECOGNITION",
+        "com.google.android.gms.permission.AD_ID"
       ],
       "playStoreUrl": "",
       "adaptiveIcon": {
