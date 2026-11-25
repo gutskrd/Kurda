@@ -125,8 +125,10 @@ describe.skipIf(!DATABASE_URL)('wordle battle (integration)', () => {
     expect(p2Row.solved).toBe(false);
     expect(hostRow.guesses.length).toBe(1); // full history revealed
     expect(hostRow.xpAwarded!).toBeGreaterThan(p2Row.xpAwarded!);
-    // what the word means goes to everyone with it; these test words have no card and no gloss
-    expect(results!.meanings).toEqual({});
+    // what the word means goes to everyone with it; the test's own words have no card and no gloss, but the pool also
+    // holds the dictionary's game words, which may carry one
+    if (MEDIUM.includes(await targetOf(battleId))) expect(results!.meanings).toEqual({});
+    else expect(Object.values(results!.meanings).every((m) => typeof m === 'string' && m.length > 0)).toBe(true);
 
     // XP actually landed in the ledger, and is idempotent (no double-award)
     expect(await ledgerXp(host)).toBe(hostRow.xpAwarded);

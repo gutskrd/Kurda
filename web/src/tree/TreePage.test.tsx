@@ -262,7 +262,7 @@ describe('TreePage', () => {
       expect(within(sheet).queryByRole('button', { name: 'Plant: Berû (Oak)' })).toBeNull();
       expect(within(sheet).getByRole('button', { name: 'Plant: Hinar (Pomegranate)' })).toBeInTheDocument();
       expect(within(sheet).getByRole('button', { name: 'Buy: Tû (Mulberry)' })).toBeInTheDocument();
-      expect(within(sheet).getByText('2,200')).toBeInTheDocument();
+      expect(within(sheet).getByText('1,100')).toBeInTheDocument();
     });
 
     it('asks before planting another, saying what is lost and what stays, and keeps the tree when told to', async () => {
@@ -283,19 +283,19 @@ describe('TreePage', () => {
     });
 
     it('buys a kind with Zêr, which plants nothing, and says how much is missing when it cannot be afforded', async () => {
-      const calls = server({ 'GET /me/tree': mine(view(), { zer: 900 }), 'POST /me/tree/kinds/tu/buy': mine(view(), { zer: 100, owned: ['tu'] }) });
+      const calls = server({ 'GET /me/tree': mine(view(), { zer: 900 }), 'POST /me/tree/kinds/tu/buy': mine(view(), { zer: 500, owned: ['tu'] }) });
       renderApp(<TreePage />);
       await userEvent.click(await screen.findByRole('button', { name: 'Other trees' }));
       // Too expensive: the purchase is refused before it is sent.
       await userEvent.click(await screen.findByRole('button', { name: 'Buy: Dara Şevê (Night tree)' }));
       const dear = await screen.findByRole('dialog', { name: 'Buy Dara Şevê?' });
-      expect(within(dear).getByText('You need 1,300 more Zêr.')).toBeInTheDocument();
+      expect(within(dear).getByText('You need 200 more Zêr.')).toBeInTheDocument();
       expect(within(dear).getByRole('button', { name: 'Buy' })).toBeDisabled();
       await userEvent.click(within(dear).getByRole('button', { name: 'Cancel' }));
       // Affordable.
       await userEvent.click(await screen.findByRole('button', { name: 'Buy: Tû (Mulberry)' }));
       const ask = await screen.findByRole('dialog', { name: 'Buy Tû?' });
-      expect(within(ask).getByText('It costs 800 Zêr, once. After that you can plant it whenever you like.')).toBeInTheDocument();
+      expect(within(ask).getByText('It costs 400 Zêr, once. After that you can plant it whenever you like.')).toBeInTheDocument();
       await userEvent.click(within(ask).getByRole('button', { name: 'Buy' }));
       expect(calls.some((c) => c.method === 'POST' && c.path === '/me/tree/kinds/tu/buy')).toBe(true);
       // Theirs to plant now; the oak is still planted.

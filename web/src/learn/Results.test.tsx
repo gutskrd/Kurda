@@ -168,7 +168,7 @@ describe('after the results', () => {
   const kept: LessonMoments = { ...NO_LESSON_MOMENTS, streakKept: true };
 
   it('goes on to the streak’s card and the quests of the day one tap at a time, and opens the chest there', async () => {
-    serve({ 'GET /me/quests': day, 'POST /me/quests/q1/claim': { questId: 'q1', tier: 'common', currency: 'zer', amount: 12, balance: 1252 } });
+    serve({ 'GET /me/quests': day, 'POST /me/quests/q1/claim': { questId: 'q1', tier: 'common', currency: 'zer', amount: 12, balance: 1252, earnsZer: true } });
     show({ quests: steps }, { moments: kept });
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));

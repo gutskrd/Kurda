@@ -174,8 +174,9 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       const five = await steady('GET', `/users/${ids.f2}/activity?kind=posts`, 'me');
       expect(five.body.items).toHaveLength(5);
       expect(five.count, shown(five)).toBe(one.count);
-      // the session read, who may see it and where you stand, then the posts with their authors, engagement and pictures
-      expect(five.count, shown(five)).toBeLessThanOrEqual(7);
+      // the session read, who may see it and where you stand, then the posts with their authors, engagement, pictures,
+      // the gifts given onto them and who gave the latest
+      expect(five.count, shown(five)).toBeLessThanOrEqual(9);
       const friends = await steady('GET', `/users/${ids.f2}/friends`, 'me');
       expect(friends.body.friends.length).toBeGreaterThan(0);
       // the session read, who may see it and where you stand, and the list
