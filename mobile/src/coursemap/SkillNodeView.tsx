@@ -163,7 +163,7 @@ export function SkillNodeView({
     };
   }, [change, finishing, opening, unlocking, pop, lock, shut, before, wobble]);
 
-  const glyph = glyphOf(stop, look, tone, FACE_INK[scheme], colors.textOnPrimary);
+  const glyph = glyphOf(stop, look, tone, FACE_INK[scheme], colors.textOnAccent);
   const tilt = wobble.interpolate({ inputRange: [-1, 1], outputRange: [`${-PATH_MOTION.wobble}deg`, `${PATH_MOTION.wobble}deg`] });
   const lifted = rise ? { opacity: rise, transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [PATH_MOTION.rise, 0] }) }] } : null;
   // Its ring now, and as it was before a lesson that moved it on.

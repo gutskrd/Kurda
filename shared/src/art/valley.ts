@@ -76,8 +76,8 @@ export const VALLEY = {
   smoke: '#e7e3dc',
 } as const;
 
-/** The evening violet that `dusk` and `warm` blend toward. */
-const DUSK = '#2a2448';
+/** The evening's deep teal that `dusk` and `warm` blend toward, the app's own night. */
+const DUSK = '#1e2c2d';
 
 /** A day colour by evening: blended `amount` toward the dusk; fire and lit things use `warm` instead. */
 export function dusk(hex: string, dark: boolean, amount = 0.26): string {

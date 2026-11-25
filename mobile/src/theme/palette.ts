@@ -14,15 +14,32 @@ export interface Palette {
   scheme: ColorScheme;
 
   /*
-   * `accent` is the theme's main colour, the main button's fill and nothing else's. `primary` is the ink for what is
-   * pressable (a glyph, a link), the same as `textPrimary`, with `textOnPrimary` written on it, and on the accent too.
-   * `secondary` is the theme's second colour, for what is chosen or in progress (a chosen chip or tab, a switch that is
-   * on, your chat bubble), with `textOnSecondary` written on it.
+   * `accent` is the theme's main colour, the main button's fill and nothing else's, with `textOnAccent` written on it.
+   * `primary` is the ink for what is pressable (a glyph, a link), the same as `textPrimary`, with `textOnPrimary`
+   * written on it. `secondary` is the theme's second colour as a fill (your chat bubble), with `textOnSecondary` on it,
+   * and `secondaryText` the same colour as words and marks (the tab you are on).
    */
   primary: string;
   accent: string;
+  textOnAccent: string;
   secondary: string;
   textOnSecondary: string;
+  secondaryText: string;
+  /**
+   * A chosen chip or segment: the second colour filled, with its own word colour, by day; by night a tint of it with
+   * its word and edge in `secondaryText`, since a lit fill shouts on the dark page.
+   */
+  chosenFill: string;
+  chosenInk: string;
+  chosenEdge: string;
+  /**
+   * The one picked among a row of small choices drawn as pills of their own (a year, a month, a filter): the ink filled
+   * by day, as they always were; by night the second colour's tint with its word in its light, as a chosen chip is.
+   */
+  pickedFill: string;
+  pickedInk: string;
+  /** A faint warm light along a card's top edge by night, which lifts it off the page without a shadow; none by day. */
+  cardRim: string;
   gold: string;
   danger: string;
   success: string;
@@ -136,12 +153,31 @@ export interface Palette {
 const DAY = themeColors('light');
 const NIGHT = themeColors('dark');
 
+/** A #rrggbb colour at an opacity, as rgba(). */
+function rgba(hex: string, a: number): string {
+  return `rgba(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(',')},${a})`;
+}
+
+/** Two #rrggbb colours blended, `t` of the way from `a` to `b`. */
+function mix(a: string, b: string, t: number): string {
+  const channel = (hex: string, i: number): number => parseInt(hex.slice(1 + 2 * i, 3 + 2 * i), 16);
+  return `#${[0, 1, 2].map((i) => Math.round(channel(a, i) + (channel(b, i) - channel(a, i)) * t).toString(16).padStart(2, '0')).join('')}`.toUpperCase();
+}
+
 export const LIGHT: Palette = {
   scheme: 'light',
   primary: PAGE.light.ink,
   accent: DAY.primary,
+  textOnAccent: DAY.onPrimary,
   secondary: DAY.secondary,
   textOnSecondary: DAY.onSecondary,
+  secondaryText: DAY.secondaryText,
+  chosenFill: DAY.secondary,
+  chosenInk: DAY.onSecondary,
+  chosenEdge: DAY.secondary,
+  pickedFill: PAGE.light.ink,
+  pickedInk: '#FFFDF9',
+  cardRim: 'transparent',
   gold: REWARD_GOLD.light.gold,
   danger: '#B83A2E',
   like: '#E0263F',
@@ -153,7 +189,7 @@ export const LIGHT: Palette = {
 
   textPrimary: PAGE.light.ink,
   textSecondary: PAGE.light.inkSoft,
-  textOnPrimary: DAY.onPrimary,
+  textOnPrimary: '#FFFDF9',
   textOnGold: REWARD_GOLD.light.onGold,
 
   // A warm soft white, so cards a step lighter lift off it with only a hairline.
@@ -200,8 +236,16 @@ export const DARK: Palette = {
   scheme: 'dark',
   primary: PAGE.dark.ink,
   accent: NIGHT.primary,
+  textOnAccent: NIGHT.onPrimary,
   secondary: NIGHT.secondary,
   textOnSecondary: NIGHT.onSecondary,
+  secondaryText: NIGHT.secondaryText,
+  chosenFill: rgba(NIGHT.secondary, 0.2),
+  chosenInk: NIGHT.secondaryText,
+  chosenEdge: mix(NIGHT.secondary, NIGHT.secondaryText, 0.5),
+  pickedFill: rgba(NIGHT.secondary, 0.24),
+  pickedInk: NIGHT.secondaryText,
+  cardRim: 'rgba(255,232,204,0.09)',
   gold: REWARD_GOLD.dark.gold,
   danger: '#FF9C90',
   like: '#FF5A6A',
@@ -213,7 +257,8 @@ export const DARK: Palette = {
 
   textPrimary: PAGE.dark.ink,
   textSecondary: PAGE.dark.inkSoft,
-  textOnPrimary: NIGHT.onPrimary,
+  // Words on the night's light ink, as on a chosen pill or an ink button.
+  textOnPrimary: '#1C1814',
   textOnGold: REWARD_GOLD.dark.onGold,
 
   // A warm soft black, like a room with the lamp low; never pure black, which reads as a screen switched off.
@@ -231,8 +276,9 @@ export const DARK: Palette = {
   softShadow: '#0A0807',
 
   controlTrack: 'rgba(255,248,240,0.10)',
-  switchOn: NIGHT.secondary,
-  switchOnThumb: NIGHT.onSecondary,
+  // The switch's track glows in the second colour's light, small enough not to shout, with the dark ink as its knob.
+  switchOn: NIGHT.secondaryText,
+  switchOnThumb: '#1C1814',
   switchOff: '#7E746A',
   switchOffThumb: '#FFFDF9',
   selectedFill: 'rgba(255,248,240,0.16)',

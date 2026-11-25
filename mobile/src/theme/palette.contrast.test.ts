@@ -49,21 +49,39 @@ for (const p of [LIGHT, DARK]) {
     });
 
     it('button label on the main button, in the accent, meets AA (4.5:1)', () => {
-      expect(contrastRatio(p.textOnPrimary, p.accent)).toBeGreaterThanOrEqual(AA_NORMAL);
+      expect(contrastRatio(p.textOnAccent, p.accent)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
-    // A chosen chip, tab or segment is the second colour on the track the others sit on: its word reads as a button's
-    // does, and the chip itself stands out from the track as a control must (WCAG 1.4.11).
+    // The main button is the one strong thing on a screen, so it stands off the page and a card as a control must.
+    it('the main button stands 3:1 off the page and a card', () => {
+      for (const ground of [p.background, p.surface]) expect(contrastRatio(p.accent, ground), ground).toBeGreaterThanOrEqual(AA_LARGE);
+    });
+
+    // A chosen chip, tab or segment stands out from the track the others sit on as a control must (WCAG 1.4.11): by day
+    // by its fill, by night by its edge, and its word reads at AA on whatever it sits on.
     it('a chosen chip stands 3:1 off the track, on the page and on a card, with its word at AA', () => {
       for (const surface of [p.background, p.surface]) {
-        expect(contrastRatio(p.secondary, over(p.controlTrack, surface)), surface).toBeGreaterThanOrEqual(AA_LARGE);
+        const mark = p.scheme === 'light' ? p.chosenFill : p.chosenEdge;
+        expect(contrastRatio(mark, over(p.controlTrack, surface)), surface).toBeGreaterThanOrEqual(AA_LARGE);
+        expect(contrastRatio(p.chosenInk, over(p.chosenFill, surface)), surface).toBeGreaterThanOrEqual(AA_NORMAL);
       }
-      expect(contrastRatio(p.textOnSecondary, p.secondary)).toBeGreaterThanOrEqual(AA_NORMAL);
+    });
+
+    // A pick among small pills (a year, a filter) is a fill by day and a tint by night, its word at AA either way.
+    it('a picked pill’s word meets AA on its fill, on the page and on a card', () => {
+      for (const surface of [p.background, p.surface]) {
+        expect(contrastRatio(p.pickedInk, over(p.pickedFill, surface)), surface).toBeGreaterThanOrEqual(AA_NORMAL);
+      }
     });
 
     // The chosen tab's glyph and label are drawn in the second colour on the bar, over its own faint capsule.
     it('the chosen tab, in the second colour, meets AA on the bar', () => {
-      expect(contrastRatio(p.secondary, over(p.barFill, p.background))).toBeGreaterThanOrEqual(AA_NORMAL);
+      expect(contrastRatio(p.secondaryText, over(p.barFill, p.background))).toBeGreaterThanOrEqual(AA_NORMAL);
+    });
+
+    // A bubble of your own is body text on the second colour.
+    it('your words on the second colour meet AA', () => {
+      expect(contrastRatio(p.textOnSecondary, p.secondary)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
     // Secondary text is body text too (previews, captions, times), so it is held to the full 4.5:1.
@@ -130,6 +148,14 @@ function isPurple(colour: string): boolean {
 }
 
 describe('palette — the values the design settled on', () => {
+  // By night a lit fill shouts on the warm black, so a chosen chip is a tint with its word in the second colour.
+  it('fills a chosen chip by day and tints it by night', () => {
+    expect(LIGHT.chosenFill).toBe(LIGHT.secondary);
+    expect(DARK.chosenFill).toMatch(/^rgba\(.*,0\.\d+\)$/);
+    expect(DARK.chosenInk).toBe(DARK.secondaryText);
+    expect(LIGHT.cardRim).toBe('transparent');
+  });
+
   it('sits on the warm page from @kurda/shared, never pure white by day or pure black by night', () => {
     expect(LIGHT.background).toBe(PAGE.light.page);
     expect(DARK.background).toBe(PAGE.dark.page);
@@ -144,7 +170,8 @@ describe('palette — the values the design settled on', () => {
       expect(p.accent).toBe(THEMES[THEME][scheme].primary);
       expect(p.secondary).toBe(THEMES[THEME][scheme].secondary);
       expect(p.bubbleMine).toBe(p.secondary);
-      expect(p.switchOn).toBe(p.secondary);
+      expect([p.secondary, p.secondaryText]).toContain(p.switchOn);
+      expect(p.secondaryText).toBe(THEMES[THEME][scheme].secondaryText);
       expect(p.gold).toBe(REWARD_GOLD[scheme].gold);
       expect(p.primary).toBe(p.textPrimary);
     }

@@ -165,11 +165,11 @@ export function StoryText({
                   }
                   style={({ pressed }) => [
                     styles.listen,
-                    { backgroundColor: active ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+                    { backgroundColor: active ? colors.pickedFill : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
                   ]}
                 >
-                  <Icon name={active && playing ? 'audio-pause' : 'headphones'} size={16} color={active ? colors.textOnPrimary : colors.primary} />
-                  <Text style={[styles.listenText, { color: active ? colors.textOnPrimary : colors.primary }]}>
+                  <Icon name={active && playing ? 'audio-pause' : 'headphones'} size={16} color={active ? colors.pickedInk : colors.primary} />
+                  <Text style={[styles.listenText, { color: active ? colors.pickedInk : colors.primary }]}>
                     {active && playing ? t('stories.reader.pause') : t('stories.reader.listen')}
                   </Text>
                 </Pressable>

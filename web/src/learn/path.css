@@ -1338,15 +1338,13 @@ button.lp-scard:focus-visible {
   gap: var(--space-2);
   margin-top: var(--space-1);
   border: 0;
-  background: #ffffff;
-  color: var(--accent-ink);
+  background: #fffdf9;
+  /* the main colour on the button's warm white, by day and by night */
+  color: var(--accent);
   box-shadow: 0 4px 0 rgb(0 0 0 / 0.18);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-}
-:root[data-theme='light'] .lp-pop.is-go .lp-pop-start {
-  color: var(--accent);
 }
 .lp-pop.is-go .lp-pop-start:active {
   translate: 0 3px;

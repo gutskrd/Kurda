@@ -56,11 +56,11 @@ export function MonthChips({
             style={[
               styles.chip,
               columns === 3 ? styles.third : styles.half,
-              { backgroundColor: chosen ? colors.primary : colors.controlTrack },
+              { backgroundColor: chosen ? colors.pickedFill : colors.controlTrack },
               disabled && styles.dim,
             ]}
           >
-            <Text style={[styles.label, { color: chosen ? colors.textOnPrimary : colors.textPrimary }, chosen && styles.labelChosen]} numberOfLines={2}>
+            <Text style={[styles.label, { color: chosen ? colors.pickedInk : colors.textPrimary }, chosen && styles.labelChosen]} numberOfLines={2}>
               {label}
             </Text>
           </PressableScale>

@@ -28,9 +28,9 @@
   --surface-2: rgba(255, 248, 240, 0.1);
   --surface-3: rgba(255, 248, 240, 0.16);
   /* an opaque raised surface, for things that float over the page (menus, sheets) */
-  --surface-solid: #2a2622;
+  --surface-solid: #2b2723;
   /* a panel that floats over the page — a menu, a toast, a dialog — near-opaque, and frosted where it is glass */
-  --panel-bg: #201d1a;
+  --panel-bg: #211e1b;
   --panel-glass: rgba(26, 23, 20, 0.86);
   /* the ray of light that crosses a placeholder while it waits (ui.css): its middle, and its edges */
   --skeleton-ray: rgba(255, 248, 240, 0.14);
@@ -110,7 +110,7 @@
 
   /* glass mechanics */
   --glass-blur: 20px;
-  --glass-rim: inset 0 1px 0 rgba(255, 248, 240, 0.12);
+  --glass-rim: inset 0 1px 0 rgba(255, 232, 204, 0.1);
 
   /* type: the device's own face, for every script and every line */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -288,14 +288,16 @@
 /*
  * The colour themes (@kurda/shared themes.ts; theme/theme.ts names one in `data-palette`): the main colour on the main
  * button alone, and the second colour for what is chosen, a switch that is on, the tab you are on and your own chat
- * bubble. Dark first, then light; tokens.test.ts holds every value to the shared module.
+ * bubble. By night both are deep jewel tones with the soft white on them. Dark first, then light; tokens.test.ts holds
+ * every value to the shared module.
  */
 :root[data-palette='hearth'] {
-  --accent: #e5805f;
-  --accent-hover: #c9684a;
-  --accent-ink: #1c1814;
-  --secondary: #a9be9c;
-  --secondary-ink: #1c1814;
+  --accent: #b4573c;
+  --accent-hover: #9a4a33;
+  --accent-ink: #fff8ee;
+  --secondary: #4f6e4b;
+  --secondary-ink: #fff8ee;
+  --secondary-text: #a9c29b;
 }
 :root[data-theme='light'][data-palette='hearth'] {
   --accent: #bc4e36;
@@ -303,13 +305,15 @@
   --accent-ink: #fffdf9;
   --secondary: #5b7356;
   --secondary-ink: #fffdf9;
+  --secondary-text: #5b7356;
 }
 :root[data-palette='pomegranate'] {
-  --accent: #e98a93;
-  --accent-hover: #d06f79;
-  --accent-ink: #1c1814;
-  --secondary: #b8c27e;
-  --secondary-ink: #1c1814;
+  --accent: #ba4552;
+  --accent-hover: #9c3843;
+  --accent-ink: #fff8ee;
+  --secondary: #5e6c30;
+  --secondary-ink: #fff8ee;
+  --secondary-text: #c2cc8a;
 }
 :root[data-theme='light'][data-palette='pomegranate'] {
   --accent: #ad3a47;
@@ -317,13 +321,15 @@
   --accent-ink: #fffdf9;
   --secondary: #5d6a2f;
   --secondary-ink: #fffdf9;
+  --secondary-text: #5d6a2f;
 }
 :root[data-palette='zagros'] {
-  --accent: #5fb8a6;
-  --accent-hover: #4a9e8d;
-  --accent-ink: #1c1814;
-  --secondary: #e49272;
-  --secondary-ink: #1c1814;
+  --accent: #1b7e6d;
+  --accent-hover: #166b5d;
+  --accent-ink: #fff8ee;
+  --secondary: #ad5539;
+  --secondary-ink: #fff8ee;
+  --secondary-text: #eda07f;
 }
 :root[data-theme='light'][data-palette='zagros'] {
   --accent: #1f6f63;
@@ -331,16 +337,38 @@
   --accent-ink: #fffdf9;
   --secondary: #ae5638;
   --secondary-ink: #fffdf9;
+  --secondary-text: #ae5638;
 }
-/* What follows the second colour, in every theme and scheme. */
+/*
+ * What follows the second colour. By night a chosen chip is a tint with its word and edge in the second colour's light,
+ * a switch glows in that light, and a card has a faint warm light on its top edge instead of a shadow; by day the chip
+ * is filled and the card is flat.
+ */
 :root {
-  /* a chosen row or chip's faint ground, and the capsule behind the chosen tab */
+  /* a chosen row's faint ground, and the capsule behind the chosen tab */
   --secondary-soft: color-mix(in srgb, var(--secondary) 14%, transparent);
   --capsule: color-mix(in srgb, var(--secondary) 18%, transparent);
-  --switch-on: var(--secondary);
-  --switch-on-thumb: var(--secondary-ink);
+  --chosen-fill: color-mix(in srgb, var(--secondary) 20%, transparent);
+  --chosen-ink: var(--secondary-text);
+  --chosen-edge: color-mix(in srgb, var(--secondary) 50%, var(--secondary-text));
+  --switch-on: var(--secondary-text);
+  --switch-on-thumb: #1c1814;
   --bubble-mine: var(--secondary);
   --bubble-mine-ink: var(--secondary-ink);
+  --card-rim: inset 0 1px 0 rgba(255, 232, 204, 0.09);
+  /* the one picked among small pills of their own (a filter, a shelf): the ink filled by day, a tint of the second colour by night */
+  --picked-fill: color-mix(in srgb, var(--secondary) 24%, transparent);
+  --picked-ink: var(--secondary-text);
+}
+:root[data-theme='light'] {
+  --chosen-fill: var(--secondary);
+  --chosen-ink: var(--secondary-ink);
+  --chosen-edge: var(--secondary);
+  --switch-on: var(--secondary);
+  --switch-on-thumb: var(--secondary-ink);
+  --card-rim: 0 0 0 transparent;
+  --picked-fill: var(--primary);
+  --picked-ink: var(--primary-ink);
 }
 
 /*

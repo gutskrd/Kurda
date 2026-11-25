@@ -210,8 +210,8 @@ export function Question({
             >
               {(ink) => (
                 <>
-                  <View style={[styles.badge, { backgroundColor: on ? colors.primary : colors.controlTrack }]}>
-                    <Text style={[styles.badgeText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>{i + 1}</Text>
+                  <View style={[styles.badge, { backgroundColor: on ? colors.pickedFill : colors.controlTrack }]}>
+                    <Text style={[styles.badgeText, { color: on ? colors.pickedInk : colors.textPrimary }]}>{i + 1}</Text>
                   </View>
                   <View style={styles.optionMain}>
                     <Text {...storyTextProps(dialect)} style={[styles.optionText, { color: ink }, storyTextStyle(dialect)]}>

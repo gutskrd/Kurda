@@ -393,9 +393,9 @@ export function SoloGameShell<Item, H, C, B = unknown>({
                 accessibilityState={{ checked: on, disabled: !can }}
                 accessibilityLabel={t(DIFFICULTY_KEY[d])}
                 // The chosen one is marked as every chosen chip and segment is: solid violet.
-                style={[styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: can ? 1 : 0.5 }]}
+                style={[styles.chip, { backgroundColor: on ? colors.pickedFill : colors.controlTrack, opacity: can ? 1 : 0.5 }]}
               >
-                <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary, fontWeight: on ? typography.weights.semibold : typography.weights.regular }]}>
+                <Text style={[styles.chipText, { color: on ? colors.pickedInk : colors.textPrimary, fontWeight: on ? typography.weights.semibold : typography.weights.regular }]}>
                   {t(DIFFICULTY_KEY[d])}
                 </Text>
               </PressableScale>

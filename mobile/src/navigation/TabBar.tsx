@@ -127,7 +127,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
             const name = (tab?.name ?? route.name) as TabName;
             const full = tab ? t(tab.labelKey) : route.name;
             const focused = state.index === i;
-            const ink = focused ? colors.secondary : colors.textSecondary;
+            const ink = focused ? colors.secondaryText : colors.textSecondary;
             const unread = name === 'Messages' && messages > 0;
             const gift = name === 'Profile' && counts.gifts > 0;
             // A screen reader gets the name and what is waiting.
@@ -154,7 +154,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
               >
                 {name === 'Profile' && user ? (
                   // Your own face on your own tab, from the session already loaded so it costs no request.
-                  <View style={[styles.ring, { borderColor: focused ? colors.secondary : 'transparent' }]}>
+                  <View style={[styles.ring, { borderColor: focused ? colors.secondaryText : 'transparent' }]}>
                     <Avatar name={user.username} size={AVATAR} photoUrl={ownAvatarUrl(user)} />
                   </View>
                 ) : (

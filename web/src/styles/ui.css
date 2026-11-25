@@ -436,6 +436,7 @@ input[type='password']::-ms-clear {
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: var(--space-5);
+  box-shadow: var(--card-rim);
 }
 .card-link {
   display: block;

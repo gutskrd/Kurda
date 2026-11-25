@@ -321,9 +321,9 @@
   color: var(--ink);
 }
 .chip.active {
-  background: var(--secondary);
-  color: var(--secondary-ink);
-  border-color: var(--secondary);
+  background: var(--chosen-fill);
+  color: var(--chosen-ink);
+  border-color: var(--chosen-edge);
 }
 /* a filter is still a target for a thumb: a full 44px where the pointer is a finger */
 @media (pointer: coarse) {

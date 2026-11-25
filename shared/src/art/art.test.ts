@@ -1836,8 +1836,24 @@ describe('the horizon over a profile', () => {
     for (const seed of PEOPLE) expect(TREE_SKIES).toContain(horizonSky(seed));
     expect(new Set(PEOPLE.map(horizonSky)).size).toBeGreaterThanOrEqual(3);
     // the sky can be asked for, and is then the one drawn
-    expect(horizonSvg({ seed: 'dilan', sky: 'night' })).toContain('#0b1130');
+    expect(horizonSvg({ seed: 'dilan', sky: 'night' })).toContain(SKIES.night.air[0]);
     expect(horizonSvg({ seed: 'dilan', sky: 'day' })).toContain('#52aeee');
+  });
+
+  // The banner sits in the app's warm palette by day and by night, so no sky or ridge turns lilac or violet.
+  it('paints every sky without violet', () => {
+    const purple = (hex: string): boolean => {
+      const [r, g, b] = [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)) as [number, number, number];
+      const max = Math.max(r, g, b);
+      const chroma = max - Math.min(r, g, b);
+      if (chroma < 12) return false;
+      const hue = 60 * (max === r ? ((g - b) / chroma + 6) % 6 : max === g ? (b - r) / chroma + 2 : (r - g) / chroma + 4);
+      return hue >= 245 && hue <= 330;
+    };
+    for (const sky of TREE_SKIES) {
+      const { air, ridges, cloud, glow, orb } = SKIES[sky];
+      for (const colour of [...air, ...ridges, ...cloud, glow[0], orb[3], orb[4]]) expect(purple(colour), `${sky} ${colour}`).toBe(false);
+    }
   });
 
   it('keeps the sun and the first ridge inside the middle band, which is all a short banner shows', () => {

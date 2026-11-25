@@ -163,10 +163,10 @@ export function ChoiceChips<T extends string>({
               reach="open"
               style={({ pressed }) => [
                 styles.chip,
-                { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+                { backgroundColor: on ? colors.pickedFill : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
               ]}
             >
-              <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
+              <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.pickedInk : colors.textPrimary }]} numberOfLines={1}>
                 {labelOf(opt)}
               </Text>
             </Pressable>

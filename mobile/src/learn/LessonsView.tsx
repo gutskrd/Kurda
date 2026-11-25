@@ -334,9 +334,9 @@ export function LessonsView({
                       accessibilityRole="button"
                       accessibilityState={{ selected: on }}
                       // The current course in solid ink, as every chosen chip is.
-                      style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+                      style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.pickedFill : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
                     >
-                      <Text style={[styles.chipText, dir.free, { color: on ? colors.textOnPrimary : colors.textSecondary }]} numberOfLines={1}>
+                      <Text style={[styles.chipText, dir.free, { color: on ? colors.pickedInk : colors.textSecondary }]} numberOfLines={1}>
                         {courseName(t, { slug: c.course.slug, title: c.map?.course.title ?? c.course.title })}
                       </Text>
                     </Pressable>

@@ -121,12 +121,13 @@ describe('the warm page and the colour themes in the website’s tokens', () => 
         '--accent-ink': t.onPrimary.toLowerCase(),
         '--secondary': t.secondary.toLowerCase(),
         '--secondary-ink': t.onSecondary.toLowerCase(),
+        '--secondary-text': t.secondaryText.toLowerCase(),
       });
     }
   });
 
   it('keeps the main colour out of the schemes themselves, so only a theme sets it', () => {
-    for (const block of [dark, light]) expect(Object.keys(block).filter((k) => /^--(accent(-hover|-ink)?|secondary(-ink)?)$/.test(k))).toEqual([]);
+    for (const block of [dark, light]) expect(Object.keys(block).filter((k) => /^--(accent(-hover|-ink)?|secondary(-ink|-text)?)$/.test(k))).toEqual([]);
   });
 
   it('gives gold and Hevalo+’s button the shared colours in both schemes', () => {

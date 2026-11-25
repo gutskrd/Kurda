@@ -75,16 +75,16 @@ export function Chips<T extends string>({
               reach="open"
               style={({ pressed }) => [
                 styles.chip,
-                { backgroundColor: active ? colors.secondary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+                { backgroundColor: active ? colors.chosenFill : colors.controlTrack, borderColor: active ? colors.chosenEdge : 'transparent', opacity: pressed ? pressedDim : 1 },
               ]}
             >
-              <Text style={[styles.text, { color: active ? colors.textOnSecondary : colors.textPrimary }]} numberOfLines={1}>
+              <Text style={[styles.text, { color: active ? colors.chosenInk : colors.textPrimary }]} numberOfLines={1}>
                 {label}
               </Text>
               {/* The count turns over on the chosen chip, so it stays a mark of its own. */}
               {count ? (
-                <View style={[styles.count, { backgroundColor: active ? colors.textOnSecondary : colors.primary }]}>
-                  <Text style={[styles.countText, { color: active ? colors.secondary : colors.textOnPrimary }]}>{count > 9 ? '9+' : count}</Text>
+                <View style={[styles.count, { backgroundColor: active ? colors.chosenInk : colors.primary }]}>
+                  <Text style={[styles.countText, { color: active ? (colors.scheme === 'dark' ? colors.background : colors.secondary) : colors.textOnPrimary }]}>{count > 9 ? '9+' : count}</Text>
                 </View>
               ) : null}
             </Pressable>
@@ -123,6 +123,7 @@ const styles = StyleSheet.create({
     minHeight: CHIP,
     paddingHorizontal: spacing.md - 2,
     borderRadius: radii.pill,
+    borderWidth: 1,
   },
   text: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   count: { minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },

@@ -62,8 +62,8 @@
   outline-offset: 2px;
 }
 .lore-shelf.is-on {
-  background: var(--primary);
-  color: var(--primary-ink);
+  background: var(--picked-fill);
+  color: var(--picked-ink);
 }
 .lore-shelf-name {
   font-family: var(--font-sans);

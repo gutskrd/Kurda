@@ -212,9 +212,9 @@ export function RatingBox({
                 onPress={() => toggle(c)}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on }}
-                style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack }, pressed && heldDim]}
+                style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.pickedFill : colors.controlTrack }, pressed && heldDim]}
               >
-                <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>
+                <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.pickedInk : colors.textPrimary }]}>
                   {t(CATEGORY_LABEL[c])}
                 </Text>
               </Pressable>

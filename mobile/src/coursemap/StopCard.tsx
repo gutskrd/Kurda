@@ -153,7 +153,7 @@ function GoCard({ stop, titleRef, actions }: { stop: Extract<Stop, { kind: 'skil
   const lessons = skill.lessons ?? [];
   const at = lessons.findIndex((l) => l.lessonId === stop.launch);
   const action = actionOf(stop, t, actions);
-  const ink = colors.textOnPrimary;
+  const ink = colors.textOnAccent;
   // A finished topic is played again in rounds, so it says which round; any other says which lesson is next.
   const where =
     stop.state === 'done' && stop.rounds > 0
@@ -181,10 +181,10 @@ function GoCard({ stop, titleRef, actions }: { stop: Extract<Stop, { kind: 'skil
  * crosses it now and then while the road is alive; under Reduce Motion it holds still.
  */
 function StartButton({ label, xp, onPress }: { label: string; xp: string | null; onPress: () => void }): React.JSX.Element {
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const live = useMotionAlive();
-  // The main colour by day; by night it is pale, so the night's dark ink is written on it instead.
-  const words = scheme === 'dark' ? colors.textOnPrimary : colors.accent;
+  // The main colour on the button's warm white, by day and by night.
+  const words = colors.accent;
   const [width, setWidth] = useState(0);
   const glint = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     borderBottomWidth: 4,
     borderBottomColor: 'rgba(0,0,0,0.18)',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFDF9',
   },
   startPressed: { marginTop: spacing.xs + 3, borderBottomWidth: 1 },
   startText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 0.6 },

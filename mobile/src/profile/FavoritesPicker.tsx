@@ -196,13 +196,13 @@ function Slot({
                   style={[
                     styles.option,
                     {
-                      backgroundColor: on ? colors.primary : colors.controlTrack,
+                      backgroundColor: on ? colors.pickedFill : colors.controlTrack,
                       borderWidth: 1,
                       borderColor: on ? colors.primary : colors.glassBorder,
                     },
                   ]}
                 >
-                  <Text style={[styles.optionText, dir.free, { color: on ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
+                  <Text style={[styles.optionText, dir.free, { color: on ? colors.pickedInk : colors.textPrimary }]} numberOfLines={1}>
                     {postName(p)}
                   </Text>
                 </PressableScale>

@@ -71,9 +71,9 @@
   cursor: pointer;
 }
 .chip-radio-option.is-on {
-  background: var(--primary);
-  color: var(--primary-ink);
-  border-color: var(--primary);
+  background: var(--picked-fill);
+  color: var(--picked-ink);
+  border-color: var(--picked-fill);
 }
 .chip-radio-option:has(input:focus-visible) {
   outline: 2px solid var(--focus);
@@ -286,9 +286,9 @@
   background: var(--surface-2);
 }
 .story-chip.is-on {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--primary-ink);
+  background: var(--picked-fill);
+  border-color: var(--picked-fill);
+  color: var(--picked-ink);
 }
 .story-chip-count {
   font-size: var(--text);

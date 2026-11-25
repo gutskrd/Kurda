@@ -100,15 +100,36 @@ describe('the three themes', () => {
     }
   });
 
-  // A filled control has to stand off the page and a card (WCAG 1.4.11), and the main colour is also written as words.
-  it.each(THEME_NAMES)('stands %s’s colours 3:1 off the page and its cards, and the main colour as words at AA', (name) => {
+  // A filled control has to stand off the page and a card (WCAG 1.4.11); by day the main colour is also written as words.
+  it.each(THEME_NAMES)('stands %s’s colours 3:1 off the page and a card, and writes the main colour as words by day', (name) => {
     for (const scheme of SCHEMES) {
       const t = THEMES[name][scheme];
+      for (const ground of [PAGE[scheme].page, PAGE[scheme].surface]) {
+        expect(contrast(t.primary, ground), `${scheme} main on ${ground}`).toBeGreaterThanOrEqual(CONTROL);
+      }
+      // A filled bubble sits on the page.
+      expect(contrast(t.secondary, PAGE[scheme].page), `${scheme} second on the page`).toBeGreaterThanOrEqual(CONTROL);
+    }
+    for (const ground of [PAGE.light.page, PAGE.light.surface, PAGE.light.raised]) {
+      expect(contrast(THEMES[name].light.primary, ground), `main as words on ${ground}`).toBeGreaterThanOrEqual(AA);
+    }
+  });
+
+  it.each(THEME_NAMES)('writes %s’s second colour as words at AA on the page and its surfaces, by day and by night', (name) => {
+    for (const scheme of SCHEMES) {
       for (const ground of [PAGE[scheme].page, PAGE[scheme].surface, PAGE[scheme].raised]) {
-        expect(contrast(t.primary, ground), `${scheme} main on ${ground}`).toBeGreaterThanOrEqual(AA);
-        expect(contrast(t.secondary, ground), `${scheme} second on ${ground}`).toBeGreaterThanOrEqual(CONTROL);
+        expect(contrast(THEMES[name][scheme].secondaryText, ground), `${scheme} on ${ground}`).toBeGreaterThanOrEqual(AA);
       }
     }
+  });
+
+  // By night a lit pastel glares on the warm black, so both colours stay deep enough to carry the page's light ink.
+  it.each(THEME_NAMES)('keeps %s’s night colours deep: the soft white reads on both at AA', (name) => {
+    const t = THEMES[name].dark;
+    expect(contrast(PAGE.light.surface, t.primary)).toBeGreaterThanOrEqual(AA - 0.2);
+    expect(contrast(t.onPrimary, t.primary)).toBeGreaterThanOrEqual(AA);
+    expect(luminance(t.primary)).toBeLessThan(0.2);
+    expect(luminance(t.secondary)).toBeLessThan(0.2);
   });
 
   it.each(THEME_NAMES)('keeps %s’s two colours apart, so the main action is never mistaken for what is chosen', (name) => {
