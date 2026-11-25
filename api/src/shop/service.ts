@@ -5,6 +5,7 @@ import { WalletService, type Currency } from '../wallet/service.js';
 import type { Cache } from '../cache/cache.js';
 import { isBuiltInArtKey, isUploadedArtKey } from '../cosmetics/access.js';
 import { claimArt, releaseArt } from './art.js';
+import { notBlockedSql } from '../friends/blocked.js';
 
 export interface ShopItem {
   sku: string;
@@ -58,7 +59,8 @@ export interface ReceivedGift {
   name: string;
   category: string;
   assetKey: string | null;
-  from: { id: string; username: string } | null;
+  /** null for "a Hevalo member": a closed account, or one with a block either way */
+  from: { id: string; username: string; displayName: string | null } | null;
   createdAt: Date;
   seenAt: Date | null;
 }
@@ -435,15 +437,15 @@ export class ShopService {
   async giftsReceived(userId: string, limit = 50): Promise<ReceivedGift[]> {
     const rows = await this.pool.query<{
       id: string; sku: string; name: string; category: string; asset_key: string | null;
-      from_id: string | null; from_username: string | null; created_at: Date; seen_at: Date | null;
+      from_id: string | null; from_username: string | null; from_display_name: string | null; created_at: Date; seen_at: Date | null;
     }>(
       `SELECT g.id, g.sku, i.name, i.category, i.asset_key,
-              u.id AS from_id, u.username AS from_username, g.created_at, g.seen_at
+              u.id AS from_id, u.username AS from_username, u.display_name AS from_display_name, g.created_at, g.seen_at
          FROM gifts g
          JOIN shop_items i ON i.sku = g.sku
-         -- a deleted account's name is "deleted_…", which is no one's name: a
-         -- gift from one is from a former member (shop.giftFromFormer)
-         LEFT JOIN users u ON u.id = g.from_user_id AND u.deleted_at IS NULL
+         -- a deleted account's name is "deleted_…", which is no one's name, and a block hides who either is: such a
+         -- gift is from "a Hevalo member"
+         LEFT JOIN users u ON u.id = g.from_user_id AND u.deleted_at IS NULL AND ${notBlockedSql('u.id', '$1::uuid')}
         WHERE g.to_user_id = $1
         ORDER BY g.created_at DESC
         LIMIT $2`,
@@ -456,7 +458,7 @@ export class ShopService {
       category: r.category,
       assetKey: r.asset_key,
       // the sender's row can be gone; the gift is still theirs
-      from: r.from_id && r.from_username ? { id: r.from_id, username: r.from_username } : null,
+      from: r.from_id && r.from_username ? { id: r.from_id, username: r.from_username, displayName: r.from_display_name } : null,
       createdAt: r.created_at,
       seenAt: r.seen_at,
     }));

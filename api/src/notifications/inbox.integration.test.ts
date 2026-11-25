@@ -93,4 +93,24 @@ describe.skipIf(!DATABASE_URL)('notification inbox (integration)', () => {
     expect((await app.inject({ method: 'DELETE', url: `/me/notifications/${four!.id}`, headers })).statusCode).toBe(404);
     expect((await app.inject({ method: 'DELETE', url: '/me/notifications/not-an-id', headers })).statusCode).toBe(400);
   });
+
+  it('stops naming a gift’s sender in the list once a block stands between them, in chat and on a post', async () => {
+    const chat = { kind: 'gift', fromUserId: otherId, fromName: 'inboxB', sku: 'sticker-lale' };
+    const post = { kind: 'post_gift', fromUserId: otherId, fromName: 'inboxB', postType: 'library', postId: otherId };
+    await inbox.record(userId, { category: 'friends', title: 'You have a gift', body: 'inboxB sent you Lale.', data: chat });
+    await inbox.record(userId, { category: 'friends', title: 'A gift on your post', body: 'inboxB gave your post Lale.', data: post });
+    const named = await inbox.list(userId, 2);
+    expect(named.map((i) => i.data.fromName)).toEqual(['inboxB', 'inboxB']);
+
+    await pool.query('INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2)', [otherId, userId]);
+    try {
+      const unnamed = await inbox.list(userId, 2);
+      expect(unnamed.map((i) => i.data.fromName)).toEqual([undefined, undefined]);
+      expect(unnamed.map((i) => i.body)).toEqual(['A Hevalo member gave your post a gift.', 'A Hevalo member sent you a gift.']);
+      expect(unnamed[0]!.data).toMatchObject({ kind: 'post_gift', fromUserId: otherId, postId: otherId });
+      expect((await inbox.recent(userId, 2)).items.map((i) => i.data.fromName)).toEqual([undefined, undefined]);
+    } finally {
+      await pool.query('DELETE FROM blocks WHERE blocker_id = $1 AND blocked_id = $2', [otherId, userId]);
+    }
+  });
 });
