@@ -481,6 +481,7 @@ export {
   ADULT_AGE,
   DIGITAL_CONSENT_AGE,
   EARLIEST_BIRTH_YEAR,
+  MIN_CHILD_PROFILE_AGE,
   MIN_SIGNUP_AGE,
   ageInYears,
   birthYearChoices,
@@ -991,5 +992,7 @@ export * from './counts.js';
 
 /** Parental controls: the options a parent has, the pause they make, and the codes that connect a parent and a teen. */
 export * from './parental.js';
+/** Families and child profiles: who may be in a family, a child's ages, and the codes and PIN that sign a child in. */
+export * from './family.js';
 /** Icons Hevalo draws itself in the icon family's weight, where the family has none for the job. */
 export * from './glyphs.js';

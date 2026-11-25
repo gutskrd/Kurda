@@ -38,6 +38,8 @@ const payloadSchema = z.object({
     'parental-ended',
     'parental-parent-added',
     'parental-leave-requested',
+    'family-child-added',
+    'family-child-unused',
   ]),
   vars: z.record(z.string(), z.string()).default({}),
   /** Recipient language; English when omitted. */

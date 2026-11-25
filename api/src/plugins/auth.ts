@@ -31,7 +31,8 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
     //
     // `birth_month_known`, `guest` and `held` ride along for `requireBirthMonth`, `requireAccount` and the hold
     // (moderation/restrictions.ts), saving each a second read; `supervised` lets the parental guards skip their read for
-    // everyone without a live parent link (parental/supervision.ts).
+    // everyone without a live parent link (parental/supervision.ts); `kind` marks a child's profile, which the child gate
+    // (family/child-gate.ts) holds to the parts of Hevalo a child may use.
     const family = claims.fam && UUID_RE.test(claims.fam) ? claims.fam : null;
     const result = await app.db.query<{
       id: string;
@@ -46,8 +47,9 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
       held: boolean;
       supervised: boolean;
       session_live: boolean;
+      kind: string;
     }>(
-      `SELECT id, roles, token_version, deleted_at, banned_at, banned_until, email_verified_at, guest,
+      `SELECT id, roles, token_version, deleted_at, banned_at, banned_until, email_verified_at, guest, kind,
               birth_year IS NOT NULL AS birth_month_known, held_at IS NOT NULL AS held,
               EXISTS (SELECT 1 FROM parental_links pl WHERE pl.teen_id = users.id AND pl.ended_at IS NULL) AS supervised,
               ($2::uuid IS NULL OR EXISTS (
@@ -82,6 +84,7 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
       guest: user.guest,
       held: user.held,
       supervised: user.supervised,
+      child: user.kind === 'child',
     };
   });
 }

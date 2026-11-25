@@ -7,9 +7,14 @@ import { UserPage } from './UserPage';
 
 export type BanState = 'active' | 'temp_banned' | 'perm_banned';
 
+/** A person's own account, a guest's, or a child's profile made by a parent. */
+export type AccountKind = 'person' | 'guest' | 'child';
+
 interface UserRow {
   id: string;
   username: string;
+  /** Absent from an older API. */
+  kind?: AccountKind;
   email: string;
   ban: BanState;
   /** A chat mute in force now. */
@@ -194,7 +199,7 @@ const COLUMNS: ReadonlyArray<Column<UserRow>> = [
         <a className="table-link" href={`#/users/${encodeURIComponent(u.id)}`}>
           <strong>@{u.username}</strong>
         </a>
-        <span className="cell-sub">{u.email}</span>
+        <span className="cell-sub">{u.kind === 'child' ? 'Child profile' : u.kind === 'guest' ? 'Guest' : u.email}</span>
       </span>
     ),
   },

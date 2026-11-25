@@ -43,6 +43,7 @@ function account(years: number | null, over: Partial<AccountRow> = {}): AccountR
     leaving: false,
     limited: false,
     supervised: false,
+    kind: 'person',
     ...over,
   };
 }

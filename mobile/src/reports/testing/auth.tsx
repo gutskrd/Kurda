@@ -72,10 +72,18 @@ export const testAuth: {
     accountHold?: AccountHold | null;
     /** Set for a test of what a supervised teen sees (parental/). */
     supervision?: SupervisionState | null;
+    /** Set for a test of child mode (family/). */
+    kind?: 'person' | 'child';
+    child?: { parentName: string; returnable: boolean; remindersAllowed: boolean } | null;
+    avatarUrl?: string | null;
   };
   baseUrl: string;
   /** Reading the account again after something changed; a test can ask whether it was. */
   refreshUser: () => Promise<void>;
+  /** The child sign-ins and the way back to the parent, for a test of the family screens. */
+  childSignIn?: (code: string) => Promise<{ message: string; code?: string } | null>;
+  switchToChild?: (childId: string) => Promise<{ message: string; code?: string } | null>;
+  returnToParent?: (pin: string) => Promise<{ message: string; code?: string } | null>;
 } = {
   client: fakeClient(),
   user: { id: 'me', username: 'rojda', email: 'r@example.com', displayName: null, profilePhotoUrl: null, emailVerified: true },
@@ -84,7 +92,7 @@ export const testAuth: {
 };
 
 export function useAuth() {
-  return { ...testAuth, isGuest: testAuth.user.guest === true, status: 'signedIn' as const };
+  return { ...testAuth, isGuest: testAuth.user.guest === true, isChild: testAuth.user.kind === 'child', status: 'signedIn' as const };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }): React.JSX.Element {

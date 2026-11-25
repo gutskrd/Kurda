@@ -133,10 +133,12 @@ export interface AccountRow extends NoticePerson {
   limited: boolean;
   /** in a live link as its teen, which for an adult is one left from before they turned 18 */
   supervised: boolean;
+  /** 'child' for a child's profile (family/), which a parent made and nobody connects to with a code */
+  kind: string;
 }
 
 const ACCOUNT_SQL = `
-  SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.email, u.locale, u.timezone, u.guest,
+  SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.email, u.locale, u.timezone, u.guest, u.kind,
          u.birth_year, u.birth_month, u.email_verified_at IS NOT NULL AS email_verified,
          (u.deleted_at IS NOT NULL OR u.deletion_requested_at IS NOT NULL) AS leaving,
          (NOT ${availableSql('u')} OR u.held_at IS NOT NULL OR COALESCE(u.muted_until > now(), false)
@@ -172,8 +174,20 @@ export function mayBeParent(account: AccountRow, now: Date = new Date()): boolea
 
 /** May connect a parent now: a teen by `roleOf`, and not closing. */
 export function mayBeTeen(account: AccountRow, now: Date = new Date()): boolean {
-  return roleOf(account, now).role === 'teen' && !account.leaving;
+  return roleOf(account, now).role === 'teen' && !account.leaving && account.kind !== 'child';
 }
+
+/** The row both eligibility rules read, for the family pages, which ask the same of a parent (family/). */
+export async function parentalAccount(db: Executor, userId: string): Promise<AccountRow | null> {
+  const r = await db.query<AccountRow>(ACCOUNT_SQL, [userId, LIMITING_SANCTIONS]);
+  return r.rows[0] ?? null;
+}
+
+/**
+ * SQL: the live link `alias` is to a teen's own account, not to a child's profile, which a parent looks after from the
+ * family page and which counts against MAX_CHILDREN_PER_PARENT instead. `alias` is a literal from this module.
+ */
+const teenLinkSql = (alias: string): string => `NOT EXISTS (SELECT 1 FROM child_profiles cp WHERE cp.user_id = ${alias}.teen_id)`;
 
 /** A new code: PARENT_CODE_LENGTH letters drawn evenly from PARENT_CODE_ALPHABET by the system's secure random source. */
 export function makeParentCode(): string {
@@ -218,6 +232,15 @@ const alreadyConnected = (): AppError => new AppError('PARENTAL_ALREADY_CONNECTE
 /** A parent who is not the first tried to loosen a control; the first parent is named so the apps can say whom to ask. */
 const firstParentOnly = (first: PersonRef): AppError =>
   new AppError('PARENTAL_FIRST_PARENT_ONLY', 403, 'only the first parent connected can loosen these settings', { parent: first });
+/** A parent tried to turn on a part of Hevalo a child's profile never has. */
+const childSwitchesFixed = (): AppError =>
+  new AppError('CHILD_CONTROLS_FIXED', 422, 'a child profile has no chat, letters, posts, online games, friends or purchases to turn on');
+
+async function isChildProfile(db: Executor, userId: string): Promise<boolean> {
+  const r = await db.query(`SELECT 1 FROM child_profiles WHERE user_id = $1`, [userId]);
+  return (r.rowCount ?? 0) > 0;
+}
+
 /** The same answer for a link that does not exist and one that is not the caller's, so no link is ever revealed. */
 const noSuchLink = (): AppError => new AppError('NOT_FOUND', 404, 'nothing to show here');
 /** A birth month is corrected once by a parent; after that only support can. */
@@ -252,6 +275,8 @@ interface TeenPageRow extends PersonColumns, ControlsRow {
   leave_requested_at: Date | null;
   /** a live link of the teen's, this one or another parent's, whose leave has run its days */
   any_leave_due: boolean;
+  /** a child's profile, whose birth month its parent set when making it and changes on the family page */
+  child: boolean;
 }
 
 export interface ParentalDeps {
@@ -282,9 +307,8 @@ export class ParentalService {
     };
   }
 
-  private async account(db: Executor, userId: string): Promise<AccountRow | null> {
-    const r = await db.query<AccountRow>(ACCOUNT_SQL, [userId, LIMITING_SANCTIONS]);
-    return r.rows[0] ?? null;
+  private account(db: Executor, userId: string): Promise<AccountRow | null> {
+    return parentalAccount(db, userId);
   }
 
   /** The caller's part in parental controls, and what goes with it: their parents, or their teens and today's numbers. */
@@ -326,7 +350,7 @@ export class ParentalService {
          FROM parental_links l
          JOIN users u ON u.id = l.teen_id
          LEFT JOIN parental_controls c ON c.teen_id = l.teen_id
-        WHERE l.parent_id = $1 AND l.ended_at IS NULL
+        WHERE l.parent_id = $1 AND l.ended_at IS NULL AND ${teenLinkSql('l')}
         ORDER BY l.created_at`,
       [parentId],
     );
@@ -359,7 +383,10 @@ export class ParentalService {
       }
       if (account.supervised) await endDueLinks(client, 'teen_id', userId, now);
       await endDueLinks(client, 'parent_id', userId, now);
-      const teens = await client.query<{ n: number }>(`SELECT count(*)::int AS n FROM parental_links WHERE parent_id = $1 AND ended_at IS NULL`, [userId]);
+      const teens = await client.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM parental_links l WHERE l.parent_id = $1 AND l.ended_at IS NULL AND ${teenLinkSql('l')}`,
+        [userId],
+      );
       if (teens.rows[0]!.n >= MAX_TEENS_PER_PARENT) throw parentFull();
 
       await client.query(`DELETE FROM parental_codes WHERE parent_id = $1`, [userId]);
@@ -438,7 +465,7 @@ export class ParentalService {
       await endDueLinks(client, 'parent_id', parentId, now);
       await endDueLinks(client, 'teen_id', userId, now);
       const links = await client.query<{ parent_id: string; teen_id: string }>(
-        `SELECT parent_id, teen_id FROM parental_links WHERE (teen_id = $1 OR parent_id = $2) AND ended_at IS NULL`,
+        `SELECT parent_id, teen_id FROM parental_links l WHERE (l.teen_id = $1 OR l.parent_id = $2) AND l.ended_at IS NULL AND ${teenLinkSql('l')}`,
         [userId, parentId],
       );
       if (links.rows.some((l) => l.parent_id === parentId && l.teen_id === userId)) throw alreadyConnected();
@@ -492,7 +519,8 @@ export class ParentalService {
     const r = await this.pool.query<TeenPageRow>(
       `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.timezone, u.birth_year, u.birth_month,
               l.created_at AS since, l.leave_requested_at, c.birth_corrected_at, ${CONTROL_COLUMNS}, ${minorSql('u')} AS minor,
-              EXISTS (SELECT 1 FROM parental_links d WHERE d.teen_id = l.teen_id AND d.ended_at IS NULL AND ${leaveDueSql('d', '$3')}) AS any_leave_due
+              EXISTS (SELECT 1 FROM parental_links d WHERE d.teen_id = l.teen_id AND d.ended_at IS NULL AND ${leaveDueSql('d', '$3')}) AS any_leave_due,
+              u.kind = 'child' AS child
          FROM parental_links l
          JOIN users u ON u.id = l.teen_id
          JOIN parental_controls c ON c.teen_id = l.teen_id
@@ -525,8 +553,8 @@ export class ParentalService {
       parents: parents.map((p, i) => ({ ...refOf(p), first: i === 0 })),
       leaveEndsAt: leaveEndOf(row.leave_requested_at),
       birthMonth: { year: row.birth_year, month: row.birth_month },
-      // the first parent alone, as for loosening, and once
-      birthCorrectable: canLoosen && row.birth_corrected_at === null,
+      // the first parent alone, as for loosening, and once; never a child's here
+      birthCorrectable: canLoosen && row.birth_corrected_at === null && !row.child,
     };
   }
 
@@ -554,6 +582,8 @@ export class ParentalService {
       if (!row) throw noSuchLink();
       const before = controlsOf(row);
       const next: ParentalControls = { ...before, ...patch };
+      // A child's profile has none of the parts the switches open, so only its two times are a parent's to set.
+      if (PARENTAL_SWITCHES.some((sw) => next[sw] !== before[sw]) && (await isChildProfile(client, teenId))) throw childSwitchesFixed();
       if (sameControls(before, next)) return { controls: before, pushes: [] };
       const parents = await this.parentsOf(client, teenId);
       const first = parents[0]!;

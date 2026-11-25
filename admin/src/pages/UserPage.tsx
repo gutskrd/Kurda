@@ -48,12 +48,14 @@ import { banSummary, takesContent } from '../bans';
 import { ItemsPanel, WalletPanel } from './UserEconomy';
 import { BadgesTab } from './UserProgress';
 import { holdsProgressTools } from '../progress';
-import { usersListHref, type BanState } from './Users';
+import { usersListHref, type AccountKind, type BanState } from './Users';
 
 /** `GET /admin/users/:id`: the moderation fields only for a reader who can moderate. */
 export interface UserDetail extends Partial<AdminUserModeration> {
   id: string;
   username: string;
+  /** A person's own account, a guest's, or a child's profile made by a parent; absent from an older API. */
+  kind?: AccountKind;
   email: string;
   displayName: string | null;
   roles: string[];
@@ -134,6 +136,7 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
         meta={
           <>
             {standingBadge(u)}
+            {u.kind && u.kind !== 'person' && <KindTag kind={u.kind} />}
             {u.age && <AgeTag age={u.age} />}
             {u.roles
               .filter((r) => Object.hasOwn(ROLE_NAME, r))
@@ -170,6 +173,18 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
   );
 }
 
+/** What each kind of account is, as the profile's facts say it. */
+const KIND_TEXT: Record<AccountKind, string> = {
+  person: 'Their own account',
+  guest: 'A guest, trying Hevalo without an account',
+  child: 'A child’s profile, made and looked after by their parent; never shown to anyone outside their family',
+};
+
+/** A guest or a child's profile, said beside the name, since what may be done to and shown about them differs. */
+export function KindTag({ kind }: { kind: Exclude<AccountKind, 'person'> }): React.JSX.Element {
+  return <Badge tone="info">{kind === 'child' ? 'Child profile' : 'Guest'}</Badge>;
+}
+
 /**
  * The badge beside the name saying where the account stands; "Active" only when nothing limits it. Support staff get
  * no sanctions with the page, so for them it says only what the account record says.
@@ -196,9 +211,15 @@ function ProfileTab({ user: u }: { user: UserDetail }): React.JSX.Element {
             <dt>Display name</dt>
             <dd>{u.displayName ?? <span className="subtle">None</span>}</dd>
           </div>
+          {u.kind && (
+            <div>
+              <dt>Account</dt>
+              <dd>{KIND_TEXT[u.kind]}</dd>
+            </div>
+          )}
           <div>
             <dt>Email</dt>
-            <dd>{u.email}</dd>
+            <dd>{u.email ?? <span className="subtle">None</span>}</dd>
           </div>
           {u.age && (
             <div>

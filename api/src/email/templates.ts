@@ -29,6 +29,8 @@ export const EMAIL_TEMPLATES = [
   'parental-ended',
   'parental-parent-added',
   'parental-leave-requested',
+  'family-child-added',
+  'family-child-unused',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -281,6 +283,31 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
       text: 'Silav {username},\n\n{teen} li Hevalo xwest ku çavdêriya te ya dêûbavan bi dawî bibe ({time}). Ew ê di {endsOn} de bi dawî bibe, heke tu berê wê çavdêriyê ranewestînî. Heta wê demê, her tişt wek ku te ji bo ciwanê xwe saz kiriye dimîne.\n\nGava herî baş a pêşîn ew e ku tu pê re biaxivî. Heke tu dixwazî niha çavdêriyê rawestînî, di Mîhengan de, paşê di Çavdêriya dêûbavan de, {teen} veke.\n\n— Tîma Hevalo',
     },
   },
+  /**
+   * To a parent, right after they make a child profile: the confirming step of their consent, so it goes for every
+   * profile, with what is kept and why, and a way to delete it at once.
+   */
+  'family-child-added': {
+    en: {
+      subject: 'You made a child profile for {child}',
+      text: 'Hello {username},\n\nYou made a child profile for {child} on Hevalo ({time}). As their parent, you agreed that Hevalo keeps what their learning needs: their first name or nickname, birth month and year, avatar, their learning and time in the app, and the phones they are signed in on. It is used only for their learning and your controls: never for ads, never sold, and never shown outside your family. Only the services that host Hevalo, send its email and deliver its notifications handle it.\n\nYou can see their learning, download their data and delete the profile at any time in Settings, then Family. How Hevalo looks after children’s data: {privacy}\n\nIf you didn’t make this profile, or want it gone now, delete it here: {link}\n\nThe link works for 90 days. After that, delete the profile in the app.\n\n— The Hevalo team',
+    },
+    ku: {
+      subject: 'Te ji bo {child} profîleke zarokan çêkir',
+      text: 'Silav {username},\n\nTe li Hevalo ji bo {child} profîleke zarokan çêkir ({time}). Wekî dêûbavê wan, te qebûl kir ku Hevalo tenê tiştên ku hînbûna wan hewce dike biparêze: nav an nasnavê wan, meh û sala jidayikbûnê, avatar, hînbûna wan û dema di sepanê de, û telefonên ku pê têketine. Ev tenê ji bo hînbûna wan û kontrolên te tê bikaranîn: qet ne ji bo reklaman, qet nayê firotin û qet li derveyî malbata te nayê nîşandan. Tenê xizmetên ku Hevalo mêvandar dikin, e-nameyên wê dişînin û agahdariyên wê digihînin, wan digirin destê xwe.\n\nTu dikarî her dem di Mîhengan de, paşê di Malbatê de, hînbûna wan bibînî, daneyên wan daxînî û profîlê jê bibî. Hevalo çawa li daneyên zarokan xwedî derdikeve: {privacy}\n\nHeke te ev profîl çênekiriye, an tu dixwazî niha jê bibî, li vir jê bibe: {link}\n\nEv girêdan ji bo 90 rojan derbasdar e. Piştî wê, profîlê di sepanê de jê bibe.\n\n— Tîma Hevalo',
+    },
+  },
+  /** To a parent a month before an unused child profile is deleted, with a way to keep it. */
+  'family-child-unused': {
+    en: {
+      subject: '{child}’s profile will be deleted soon',
+      text: 'Hello {username},\n\nNobody has used {child}’s child profile on Hevalo for eleven months. An unused child profile is deleted after a year, with everything in it, so this one will be deleted in about a month.\n\nTo keep it, tap here: {link}\n\nThe link works for 45 days. If you would rather it went now, delete it in Settings, then Family.\n\n— The Hevalo team',
+    },
+    ku: {
+      subject: 'Profîla {child} dê di demeke nêz de were jêbirin',
+      text: 'Silav {username},\n\nYanzdeh meh in ku kesî profîla zarokan a {child} li Hevalo bi kar neaniye. Profîleke zarokan a ku nayê bikaranîn piştî salekê bi hemû tiştên tê de tê jêbirin, ji ber vê yekê ev profîl dê di nêzîkî mehekê de were jêbirin.\n\nJi bo ku bimîne, li vir bitikîne: {link}\n\nEv girêdan ji bo 45 rojan derbasdar e. Heke tu dixwazî ew niha here, wê di Mîhengan de, paşê di Malbatê de, jê bibe.\n\n— Tîma Hevalo',
+    },
+  },
   'deletion-notice': {
     en: {
       subject: 'Your account is scheduled for deletion',
@@ -329,6 +356,9 @@ const DESIGN: Record<EmailTemplate, { picture: EmailPicture; button?: Record<Ema
   'parental-parent-added': { picture: 'shield' },
   // the time left before it ends
   'parental-leave-requested': { picture: 'hourglass' },
+  // a child's profile is something looked after, and an unused one has its time running out
+  'family-child-added': { picture: 'shield', button: { en: 'Delete this profile', ku: 'Vê profîlê jê bibe' } },
+  'family-child-unused': { picture: 'hourglass', button: { en: 'Keep the profile', ku: 'Profîlê bihêle' } },
 };
 
 /** The footer's two lines: where to write, and the link again for a button that will not press. */

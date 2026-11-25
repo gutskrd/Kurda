@@ -11,6 +11,7 @@ import type { Executor } from '../moderation/tx.js';
 import type { Notification } from '../push/service.js';
 import { currentRequest } from '../security/context.js';
 import { storableTimeZone } from '../streaks/time-zones.js';
+import { childPushMuted } from '../family/reminders.js';
 import { minorSql } from '../users/age.js';
 import {
   barredNotice,
@@ -276,6 +277,8 @@ export function noticeSwitch(notification: Pick<Notification, 'category' | 'data
  * costs a lookup only for the kinds a switch covers.
  */
 export async function pushMutedByParent(db: Executor, userId: string, notification: Pick<Notification, 'category' | 'data'>): Promise<boolean> {
+  // a child's phone hears only the learning reminders their parent allows (family/reminders.ts)
+  if (await childPushMuted(db, userId, notification)) return true;
   const control = noticeSwitch(notification);
   return control !== null && !(await parentalAllows(db, userId, control));
 }

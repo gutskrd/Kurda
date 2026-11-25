@@ -218,6 +218,12 @@ import { pruneParental } from './parental/gdpr.js';
 import { setParentalMail, setParentalPush } from './parental/notices.js';
 import { pushMutedByParent } from './parental/supervision.js';
 import { registerParentalRoutes } from './parental/routes.js';
+import { installChildGate } from './family/child-gate.js';
+import { FamilyService } from './family/service.js';
+import { ChildService } from './family/children.js';
+import { ChildSessions } from './family/sessions.js';
+import { registerFamilyRoutes } from './family/routes.js';
+import { GdprService } from './gdpr/service.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -363,6 +369,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // An unverified account cannot write anything. Installed before every route, since a preHandler hook applies only to
     // routes added after it.
     installActivationGate(app);
+    // A child's profile reaches only what a child may use, and only from the phone (family/child-gate.ts); before every
+    // route for the same reason.
+    installChildGate(app, config);
 
     // Mandatory 2FA on every staff-only route, as one hook so new routes are covered. It reads the route table, so it must
     // be installed here, before any route: a fastify hook only applies to routes added after it.
@@ -719,6 +728,26 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       }),
     );
 
+    // Families and child profiles: a family's members and board, the profiles parents make for children, and the ways a
+    // child is signed in; the daily upkeep tells a parent of a 13th birthday and lets an unused profile go.
+    const families = new FamilyService(app.db, { publicUrl: (k) => (app.storage ? app.storage.publicUrl(k) : null) });
+    const familyGdpr = new GdprService(app.db, { storage: app.storage, jobs: app.jobs, log: app.log });
+    const childProfiles = new ChildService(app.db, {
+      jobs: app.jobs ?? null,
+      gdpr: familyGdpr,
+      config,
+      publicUrl: (k) => (app.storage ? app.storage.publicUrl(k) : null),
+      log: app.log,
+    });
+    families.useChildren(childProfiles);
+    registerFamilyRoutes(app, config, { families, children: childProfiles, sessions: new ChildSessions(app.db, config), gdpr: familyGdpr });
+    if (config.NODE_ENV !== 'test') {
+      const familyUpkeep = () => void childProfiles.upkeep().catch((err) => app.log.warn({ err }, 'family upkeep failed'));
+      familyUpkeep();
+      const familySweep = setInterval(familyUpkeep, 24 * 60 * 60 * 1000);
+      app.addHook('onClose', async () => clearInterval(familySweep));
+    }
+
     // Personalized streak reminders, hourly, by local time.
     const streakReminders = new StreakReminderService(app.db, {
       enqueue: async (reminders) => {
@@ -965,6 +994,8 @@ declare module 'fastify' {
       held?: boolean;
       /** a live parent link, as the session read found it; false lets the parental guards skip their read */
       supervised?: boolean;
+      /** a child's profile (family/), held to what a child may use by the child gate */
+      child?: boolean;
     };
     /** Why authentication failed, when a credential was presented. */
     authFailure?: import('./plugins/auth.js').AuthFailure;

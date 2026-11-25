@@ -16,14 +16,16 @@ import { getPushToken } from './tokenSource';
  * them, so the phone registers once the account is claimed.
  */
 export function PushRegistration(): null {
-  const { client, status, isGuest } = useAuth();
+  const { client, status, isGuest, user } = useAuth();
+  // A child's phone is told only the learning reminders their parent allows, so it registers only while they are.
+  const childQuiet = user?.kind === 'child' && user.child?.remindersAllowed !== true;
   const { t } = useI18n();
   // Read when a token is fetched, so a language change renames the Android channel next time without re-registering.
   const channelName = useRef(t('notifications.title'));
   channelName.current = t('notifications.title');
 
   useEffect(() => {
-    if (status !== 'signedIn' || isGuest) return;
+    if (status !== 'signedIn' || isGuest || childQuiet) return;
     let active = true;
     const sync = () => {
       void getPushToken(channelName.current).then((device) => {
@@ -47,7 +49,7 @@ export function PushRegistration(): null {
       const token = takePushToken();
       if (token) void removeDevice(client, token);
     };
-  }, [client, status, isGuest]);
+  }, [client, status, isGuest, childQuiet]);
 
   return null;
 }

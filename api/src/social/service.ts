@@ -2,7 +2,7 @@ import type pg from 'pg';
 import { foldDiacritics, handleName, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague, type ShowcaseBadge } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { FriendService } from '../friends/service.js';
-import { resolveAvatarUrl } from '../cosmetics/access.js';
+import { premiumUntilSql, resolveAvatarUrl } from '../cosmetics/access.js';
 import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from './presence.js';
 import { escapeLike } from '../db/like.js';
@@ -10,6 +10,7 @@ import { inLeaguesSql } from '../leagues/service.js';
 import { profileShowcase } from '../badges/service.js';
 import { birthDateRequired, isKnownAdultRow, isMinorRow, notKnownAdultSql, shownToSql, writtenForSql } from '../users/age.js';
 import { notBlockedSql } from '../friends/blocked.js';
+import { unseenByOthersSql } from '../users/kind.js';
 import { availableSql, accountUnavailable } from '../moderation/availability.js';
 import { resolveSections, type SectionVisibility } from './profile-activity.js';
 
@@ -141,8 +142,8 @@ export class SocialService {
             -- strangers cannot look a minor up (they reach friends another way),
             -- nor anyone whose age is not on record yet
             AND NOT ${notKnownAdultSql('u')}
-            -- a guest (auth/guest.ts) is nobody's to find until the account is claimed
-            AND NOT u.guest
+            -- a guest (auth/guest.ts) is nobody's to find until the account is claimed, and a child's profile never is
+            AND NOT ${unseenByOthersSql('u')}
             AND NOT EXISTS (
               SELECT 1 FROM blocks b
                WHERE (b.blocker_id = $1 AND b.blocked_id = u.id) OR (b.blocker_id = u.id AND b.blocked_id = $1)
@@ -265,8 +266,9 @@ export class SocialService {
       // favourite's author are named to the viewer only as allowed for minors (users/age.ts), and favourites across a
       // block are not shown.
       `SELECT u.username, u.display_name, u.bio, u.profile_photo_key, u.selected_avatar_key,
-              u.last_seen_at, u.premium_until, u.xp, u.profile_visibility, u.country,
-              u.birth_year, u.birth_month, u.guest, NOT ${availableSql('u')} AS unavailable,
+              u.last_seen_at, ${premiumUntilSql('u')} AS premium_until, u.xp, u.profile_visibility, u.country,
+              -- a child's profile is answered as a guest's is: nobody's but its own
+              u.birth_year, u.birth_month, ${unseenByOthersSql('u')} AS guest, NOT ${availableSql('u')} AS unavailable,
               u.equipped_background_sku, u.equipped_icon_sku, u.premium_icon_enabled,
               u.favorite_poem_id, u.favorite_story_id,
               COALESCE(s.current_streak, 0) AS streak,
@@ -404,7 +406,7 @@ export class SocialService {
    */
   async access(viewerId: string | null, targetId: string): Promise<{ private: boolean; sections: SectionVisibility }> {
     const row = await this.pool.query<GateRow & { profile_sections: unknown }>(
-      `SELECT profile_visibility, birth_year, birth_month, guest, NOT ${availableSql('users')} AS unavailable, profile_sections
+      `SELECT profile_visibility, birth_year, birth_month, ${unseenByOthersSql('users')} AS guest, NOT ${availableSql('users')} AS unavailable, profile_sections
          FROM users WHERE id = $1 AND deleted_at IS NULL`,
       [targetId],
     );

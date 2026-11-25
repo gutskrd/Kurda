@@ -28,8 +28,8 @@ export function isLetterNotice(data: unknown): boolean {
 export function LetterWidgetSync(): null {
   const { client, status, isGuest, user, baseUrl } = useAuth();
   const { locale } = useI18n();
-  // A guest has no pen pals, and an address not yet confirmed has no letters to show.
-  const withLetters = status === 'signedIn' && !isGuest && user !== null && user.emailVerified !== false;
+  // A guest or a child has no pen pals, and an address not yet confirmed has no letters to show.
+  const withLetters = status === 'signedIn' && !isGuest && user !== null && user.emailVerified !== false && user.kind !== 'child';
 
   useEffect(() => {
     if (status === 'restoring') return;

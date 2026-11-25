@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
-import { isPremiumActive } from './access.js';
+import { isPremiumActive, premiumUntilSql } from './access.js';
 import { avatarRequiresPremium, isValidAvatarKey } from './avatars.js';
 
 interface AccessRow {
@@ -30,7 +30,7 @@ export class CosmeticsService {
       }
       if (avatarRequiresPremium(key)) {
         const res = await this.pool.query<{ premium_until: Date | null }>(
-          `SELECT premium_until FROM users WHERE id = $1`,
+          `SELECT ${premiumUntilSql('users')} AS premium_until FROM users WHERE id = $1`,
           [userId],
         );
         if (!isPremiumActive(res.rows[0]?.premium_until ?? null, now)) {
@@ -47,7 +47,7 @@ export class CosmeticsService {
               (e.user_id IS NOT NULL) AS owned,
               u.premium_until
          FROM shop_items i
-         CROSS JOIN (SELECT premium_until FROM users WHERE id = $1) u
+         CROSS JOIN (SELECT ${premiumUntilSql('users')} AS premium_until FROM users WHERE id = $1) u
          LEFT JOIN user_entitlements e ON e.user_id = $1 AND e.sku = i.sku
         WHERE i.sku = $2`,
       [userId, sku],

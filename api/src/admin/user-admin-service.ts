@@ -17,9 +17,16 @@ import { IN_FORCE_SQL, SanctionsService, toAppealView, type AppealRow } from '..
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** What an account is: a person's own, a guest's (auth/guest.ts), or a child's profile made by a parent (family/). */
+export type AccountKind = 'person' | 'guest' | 'child';
+
+/** SQL: the account kind of the user behind `alias`. `alias` is always a literal from this module. */
+const kindSql = (alias: string): string => `CASE WHEN ${alias}.kind = 'child' THEN 'child' WHEN ${alias}.guest THEN 'guest' ELSE 'person' END`;
+
 export interface UserSearchResult {
   id: string;
   username: string;
+  kind: AccountKind;
   /** null for a guest account, which has none until claimed (auth/guest.ts) */
   email: string | null;
   ban: BanState;
@@ -55,6 +62,7 @@ export const USERS_PAGE_MAX = 100;
 export interface UserDetail extends Partial<AdminUserModeration> {
   id: string;
   username: string;
+  kind: AccountKind;
   /** null for a guest account, which has none until claimed (auth/guest.ts) */
   email: string | null;
   displayName: string | null;
@@ -172,8 +180,9 @@ export class UserAdminService {
       roles: string[];
       created_at: Date;
       total: number;
+      kind: AccountKind;
     }>(
-      `SELECT id, username, email, banned_at, banned_until, COALESCE(muted_until > now(), false) AS muted, roles, created_at,
+      `SELECT id, username, email, banned_at, banned_until, COALESCE(muted_until > now(), false) AS muted, roles, created_at, ${kindSql('users')} AS kind,
               EXISTS (SELECT 1 FROM sanctions s WHERE s.user_id = users.id AND s.kind IN ('post_mute', 'feature_limit')
                          AND ${IN_FORCE_SQL}) AS limited,
               count(*) OVER ()::int AS total
@@ -192,6 +201,7 @@ export class UserAdminService {
       users: res.rows.map((r) => ({
         id: r.id,
         username: r.username,
+        kind: r.kind,
         email: r.email,
         ban: banState(now, r.banned_at, r.banned_until),
         muted: r.muted,
@@ -206,9 +216,9 @@ export class UserAdminService {
     const u = await this.pool.query<{
       id: string; username: string; email: string | null; display_name: string | null; roles: string[];
       created_at: Date; banned_at: Date | null; banned_until: Date | null; muted_until: Date | null;
-      age_known: boolean; minor: boolean; premium_until: Date | null;
+      age_known: boolean; minor: boolean; premium_until: Date | null; kind: AccountKind;
     }>(
-      `SELECT id, username, email, display_name, roles, created_at, banned_at, banned_until, premium_until,
+      `SELECT id, username, email, display_name, roles, created_at, banned_at, banned_until, premium_until, ${kindSql('users')} AS kind,
               birth_year IS NOT NULL AS age_known, ${minorSql('users')} AS minor,
               CASE WHEN muted_until = 'infinity' THEN NULL ELSE muted_until END AS muted_until
        FROM users WHERE id = $1`,
@@ -240,6 +250,7 @@ export class UserAdminService {
     return {
       id: user.id,
       username: user.username,
+      kind: user.kind,
       email: user.email,
       displayName: user.display_name,
       roles: user.roles,

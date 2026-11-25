@@ -99,6 +99,24 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   PARENTAL_PARENT_FULL: 'parental.error.parentFull',
   PARENTAL_ALREADY_CONNECTED: 'parental.error.alreadyConnected',
   PARENTAL_SELF: 'parental.error.self',
+  // Families and child profiles (family/).
+  CHILD_PROFILE: 'family.error.child',
+  CHILD_PROFILE_PHONE_ONLY: 'family.error.phoneOnly',
+  FAMILY_FULL: 'family.error.full',
+  FAMILY_CHILDREN_FULL: 'family.error.childrenFull',
+  FAMILY_ALREADY_IN_ONE: 'family.error.inOne',
+  FAMILY_CODE_INVALID: 'family.error.code',
+  FAMILY_OWN_CODE: 'family.error.ownCode',
+  FAMILY_OWNER_ONLY: 'family.error.ownerOnly',
+  FAMILY_OWNER_LEAVES: 'family.error.ownerLeaves',
+  FAMILY_EMAIL_UNAVAILABLE: 'family.error.email',
+  FAMILY_NOT_SWITCHED: 'family.error.notSwitched',
+  FAMILY_PARENT_SIGN_IN: 'family.error.parentSignIn',
+  FAMILY_PIN_REQUIRED: 'family.pin.required',
+  FAMILY_PIN_PROOF: 'family.pin.proof',
+  CHILD_NAME_INVALID: 'family.add.nameInvalid',
+  CHILD_AVATAR_INVALID: 'family.add.avatarInvalid',
+  PAIRING_CODE_INVALID: 'child.code.invalid',
 };
 /**
  * Codes that need their details: which rule a password or username broke (`details.reason`,
@@ -111,6 +129,13 @@ const PASSWORD_REASON: Record<string, TranslationKey> = {
   'too-long': 'field.passwordTooLong',
   'needs-letter': 'field.passwordNeedsLetter',
   'needs-number': 'field.passwordNeedsNumber',
+};
+
+const NOT_ADULT_REASON: Record<string, TranslationKey> = {
+  guest: 'family.none.guest',
+  birth_month: 'family.none.birthMonth',
+  email: 'family.none.email',
+  minor: 'family.none.minor',
 };
 
 const NOT_PARENT_REASON: Record<string, TranslationKey> = {
@@ -134,6 +159,15 @@ function byReason(error: ApiError, t: Translate): string | null {
     const name = typeof parent === 'string' ? parent : person ? String(person.displayName || person.username || '') : '';
     return name ? t('parental.firstOnly', { name }) : t('parental.firstOnlyAnyone');
   }
+  if (error.code === 'FAMILY_PIN_WRONG') {
+    const left = (error.details as { triesLeft?: unknown } | undefined)?.triesLeft;
+    return typeof left === 'number' ? t(left === 1 ? 'family.pin.wrongOne' : 'family.pin.wrong', { count: left }) : t('family.pin.wrongPlain');
+  }
+  if (error.code === 'FAMILY_PIN_LOCKED') {
+    const seconds = (error.details as { retryAfterSec?: unknown } | undefined)?.retryAfterSec;
+    return typeof seconds === 'number' ? lockedFor(seconds, t) : t('family.pin.wrongPlain');
+  }
+  if (error.code === 'FAMILY_NOT_ADULT') return t(NOT_ADULT_REASON[key] ?? 'family.error.notAdult');
   if (error.code === 'PARENTAL_NOT_PARENT') {
     // Why the account cannot add a teen yet, and so what would let it.
     return t(NOT_PARENT_REASON[key] ?? 'parental.error.notParent');

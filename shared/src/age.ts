@@ -10,6 +10,12 @@
 /** Younger than this, no account is made at all (COPPA's line in the US). */
 export const MIN_SIGNUP_AGE = 13;
 
+/**
+ * The youngest a parent's child profile is for (shared/src/family.ts): the lessons assume a child who can read and tap
+ * an answer. From here up to MIN_SIGNUP_AGE a child learns only through a profile their parent makes.
+ */
+export const MIN_CHILD_PROFILE_AGE = 6;
+
 /** From this age the protections for minors stop applying. */
 export const ADULT_AGE = 18;
 

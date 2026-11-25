@@ -180,6 +180,8 @@ describe('every email, designed', () => {
     teen: '@dilan',
     parent: '@berfin',
     endsOn: '1 December 2026',
+    child: 'Rojîn',
+    privacy: 'https://hevalo.app/privacy#children',
   };
   /** The words of an HTML email, as a reader gets them. */
   const words = (html: string): string =>

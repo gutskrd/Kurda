@@ -158,6 +158,8 @@ import { noteCurrentRoute } from './src/navigation/currentRoute';
 import { ParentalWall } from './src/parental/ParentalNote';
 import { PauseHost } from './src/parental/PauseScreen';
 import { SupervisionProvider } from './src/parental/supervision';
+import { ChildRoot } from './src/family/ChildRoot';
+import { ChildCodeScreen } from './src/family/ChildCodeScreen';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -937,6 +939,7 @@ function Root() {
         <AuthStack.Screen name="Login" component={LoginScreen} />
         <AuthStack.Screen name="Register" component={RegisterScreen} />
         <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+        <AuthStack.Screen name="ChildCode">{({ navigation }) => <ChildCodeScreen onBack={() => navigation.goBack()} />}</AuthStack.Screen>
       </AuthStack.Navigator>
       </Entrance>
     );
@@ -957,6 +960,15 @@ function Root() {
     return (
       <Entrance>
         <BirthDatePromptScreen />
+      </Entrance>
+    );
+  }
+
+  // A child's profile opens in child mode: only what a child may use, with nothing social anywhere (family/ChildRoot).
+  if (user?.kind === 'child') {
+    return (
+      <Entrance>
+        <ChildRoot />
       </Entrance>
     );
   }

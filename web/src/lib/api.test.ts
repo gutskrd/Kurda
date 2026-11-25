@@ -153,6 +153,20 @@ describe('ApiClient', () => {
     expect(storage.get()).toBeNull();
   });
 
+  // A child's profile is the phone app's: the website drops such a session and says why, in the reader's words.
+  it('signs a child’s profile out of the website at once', async () => {
+    persistTokens({ accessToken: 'a', refreshToken: 'r' }, true);
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(403, { code: 'CHILD_PROFILE_PHONE_ONLY', message: 'phone only' })));
+    const onLogout = vi.fn();
+    const storage = createTokenStorage();
+    const client = new ApiClient('https://api.test', storage, onLogout);
+    const res = await client.get('/me');
+    expect(res.ok).toBe(false);
+    expect(onLogout).toHaveBeenCalled();
+    expect(storage.get()).toBeNull();
+    if (!res.ok) expect(describeError(res.error, t)).toBe(en['error.code.childPhoneOnly']);
+  });
+
   // Maintenance answers 503 MAINTENANCE with the notice, which the first request to see it hands to the app.
   it('hands on the notice when Hevalo is offline', async () => {
     const maintenance = { title: 'Back soon', message: null, pictureUrl: 'https://cdn.test/a.png', since: '2026-10-27T08:00:00.000Z', backBy: null };
