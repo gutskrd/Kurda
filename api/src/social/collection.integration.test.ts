@@ -1,8 +1,8 @@
-/** A profile's collection over HTTP: the profile's own gate, blocks, and who sent a gift told only to its recipient. */
+/** A profile's collection over HTTP: the profile's own gate, blocks, and each giver named only as the reader may see them. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import type { CollectionResponse } from '@kurda/shared';
+import type { CollectionGift, CollectionResponse } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
@@ -23,7 +23,7 @@ describe.skipIf(!DATABASE_URL)('a profile’s collection (integration)', () => {
     token: string;
   }
 
-  const signUp = async (tag: string): Promise<Account> => {
+  const signUp = async (tag: string, years = 30): Promise<Account> => {
     n += 1;
     const res = await app.inject({
       method: 'POST',
@@ -33,7 +33,7 @@ describe.skipIf(!DATABASE_URL)('a profile’s collection (integration)', () => {
         username: `coll_${tag}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
-        ...bornYearsAgo(30),
+        ...bornYearsAgo(years),
       },
       remoteAddress: `10.178.${n}.1`,
     });
@@ -41,13 +41,15 @@ describe.skipIf(!DATABASE_URL)('a profile’s collection (integration)', () => {
     await activate(app, pool, res);
     return { id: res.json().user.id, token: res.json().tokens.accessToken };
   };
-  const read = (who: Account | null, id: string) =>
-    app.inject({
+  const read = async (who: Account | null, id: string): Promise<{ status: number; body: CollectionResponse }> => {
+    const res = await app.inject({
       method: 'GET',
       url: `/users/${id}/collection`,
       headers: who ? { authorization: `Bearer ${who.token}` } : {},
       remoteAddress: '10.178.0.1',
     });
+    return { status: res.statusCode, body: res.json() };
+  };
   const gift = (from: string, to: string, item: string, minutesAgo: number) =>
     pool.query(`INSERT INTO gifts (from_user_id, to_user_id, sku, price, currency, created_at) VALUES ($1, $2, $3, 100, 'zer', now() - $4 * interval '1 minute')`, [
       from,
@@ -55,11 +57,17 @@ describe.skipIf(!DATABASE_URL)('a profile’s collection (integration)', () => {
       item,
       minutesAgo,
     ]);
+  /** Who each gift item came from, as the reader is told: an id, or null for "a Hevalo member". */
+  const givers = (gifts: CollectionGift[]): Record<string, Array<string | null>> =>
+    Object.fromEntries(gifts.map((g) => [g.sku, g.people.map((p) => p.person?.id ?? null)]));
 
   let owner: Account;
   let friend: Account;
   let stranger: Account;
   let blocked: Account;
+  let teen: Account;
+  let gone: Account;
+  let picky: Account;
 
   beforeAll(async () => {
     app = buildApp(config);
@@ -81,15 +89,24 @@ describe.skipIf(!DATABASE_URL)('a profile’s collection (integration)', () => {
     friend = await signUp('friend');
     stranger = await signUp('stranger');
     blocked = await signUp('blocked');
+    teen = await signUp('teen', 15);
+    gone = await signUp('gone');
+    picky = await signUp('picky');
     await befriend(pool, owner.id, friend.id);
+    await befriend(pool, owner.id, teen.id);
     await pool.query(`INSERT INTO user_entitlements (user_id, sku, source) VALUES ($1, $2, 'gift'), ($1, $3, 'purchase')`, [owner.id, sku('star'), sku('moon')]);
     await pool.query(`UPDATE users SET equipped_icon_sku = $2 WHERE id = $1`, [owner.id, sku('star')]);
-    // Two skies from a friend and one star from somebody the owner later blocks; the owner sent the friend a moon.
+    // Two skies from a friend; a star from somebody the owner later blocks, and one from an account since deleted; a moon
+    // from a teenage friend. The owner sent the friend a moon.
     await gift(friend.id, owner.id, sku('sky'), 30);
     await gift(friend.id, owner.id, sku('sky'), 10);
     await gift(blocked.id, owner.id, sku('star'), 20);
+    await gift(gone.id, owner.id, sku('star'), 25);
+    await gift(teen.id, owner.id, sku('moon'), 40);
     await gift(owner.id, friend.id, sku('moon'), 5);
     await block(pool, owner.id, blocked.id);
+    await block(pool, picky.id, friend.id);
+    await pool.query(`UPDATE users SET deleted_at = now() WHERE id = $1`, [gone.id]);
   });
 
   afterAll(async () => {
@@ -107,58 +124,58 @@ describe.skipIf(!DATABASE_URL)('a profile’s collection (integration)', () => {
     await app.close();
   });
 
-  it('shows the owner their icons with the worn one first, what they were given with who sent it, and what they sent', async () => {
-    const res = await read(owner, owner.id);
-    expect(res.statusCode).toBe(200);
-    const body = res.json() as CollectionResponse;
+  it('shows the owner their icons with the worn one first, their gifts newest first with who gave them, and what they sent', async () => {
+    const { status, body } = await read(owner, owner.id);
+    expect(status).toBe(200);
     expect(body.private).toBe(false);
     expect(body.icons.items.map((i) => [i.sku, i.worn])).toEqual([
       [sku('star'), true],
       [sku('moon'), false],
     ]);
     expect(body.icons.total).toBe(2);
-    // Newest first: the second sky came ten minutes ago, the star twenty.
+    // The second sky came ten minutes ago, the newer star twenty, the moon forty.
     expect(body.received.items.map((g) => [g.sku, g.count])).toEqual([
       [sku('sky'), 2],
-      [sku('star'), 1],
+      [sku('star'), 2],
+      [sku('moon'), 1],
     ]);
-    const skies = body.received.items[0]!.people!;
-    expect(skies).toHaveLength(2);
-    expect(skies.every((p) => p.person?.id === friend.id)).toBe(true);
+    const skies = body.received.items[0]!.people;
     expect(new Date(skies[0]!.at).getTime()).toBeGreaterThan(new Date(skies[1]!.at).getTime());
-    // Somebody blocked is there without a name.
-    expect(body.received.items[1]!.people).toEqual([{ person: null, at: expect.any(String) }]);
+    // Somebody the owner blocked, and an account that is gone, are members without a name; a teenage friend is named.
+    expect(givers(body.received.items)).toEqual({ [sku('sky')]: [friend.id, friend.id], [sku('star')]: [null, null], [sku('moon')]: [teen.id] });
     expect(body.sent?.items).toEqual([expect.objectContaining({ sku: sku('moon'), count: 1, people: [expect.objectContaining({ person: expect.objectContaining({ id: friend.id }) })] })]);
   });
 
-  it('shows anyone else the items and counts but never who sent them, and nothing of what was sent', async () => {
-    for (const viewer of [friend, stranger, null]) {
-      const body = (await read(viewer, owner.id)).json() as CollectionResponse;
-      // Accounts start as 'members': a signed-out reader is told nothing.
-      if (viewer === null) {
-        expect(body).toMatchObject({ private: true, icons: { items: [] }, received: { items: [] } });
-        continue;
-      }
-      expect(body.icons.items).toHaveLength(2);
-      expect(body.received.items.map((g) => g.count)).toEqual([2, 1]);
-      expect(body.received.items.every((g) => g.people === undefined)).toBe(true);
-      expect(body.sent).toBeUndefined();
-      expect(JSON.stringify(body)).not.toContain(friend.id);
-    }
+  it('names each giver to anyone else as they may see them, and keeps what the owner sent to the owner', async () => {
+    // A stranger is told the adults, the one the owner blocked included, and not the teenager they are no friend of.
+    const strangers = (await read(stranger, owner.id)).body;
+    expect(givers(strangers.received.items)).toEqual({ [sku('sky')]: [friend.id, friend.id], [sku('star')]: [blocked.id, null], [sku('moon')]: [null] });
+    expect(strangers.icons.items).toHaveLength(2);
+    expect(strangers.sent).toBeUndefined();
+    // Somebody who blocked the giver is not shown them.
+    const pickys = (await read(picky, owner.id)).body;
+    expect(givers(pickys.received.items)[sku('sky')]).toEqual([null, null]);
+    // A friend of the owner is told no more of the teenager than a stranger.
+    const friends = (await read(friend, owner.id)).body;
+    expect(givers(friends.received.items)[sku('moon')]).toEqual([null]);
+    expect(friends.sent).toBeUndefined();
+    // The teenager is told their own name.
+    expect(givers((await read(teen, owner.id)).body.received.items)[sku('moon')]).toEqual([teen.id]);
   });
 
-  it('follows the profile’s visibility: friends only keeps it from a stranger and shows it to a friend', async () => {
+  it('follows the profile’s visibility: nothing signed out from a members’ profile, nothing to a stranger from a friends’ one', async () => {
+    expect((await read(null, owner.id)).body).toMatchObject({ private: true, icons: { items: [], total: 0 }, received: { items: [], total: 0 } });
     await pool.query(`UPDATE users SET profile_visibility = 'friends' WHERE id = $1`, [owner.id]);
     try {
-      expect((await read(stranger, owner.id)).json()).toMatchObject({ private: true, icons: { items: [], total: 0 } });
-      expect(((await read(friend, owner.id)).json() as CollectionResponse).icons.total).toBe(2);
+      expect((await read(stranger, owner.id)).body).toMatchObject({ private: true, icons: { items: [], total: 0 } });
+      expect((await read(friend, owner.id)).body.icons.total).toBe(2);
     } finally {
       await pool.query(`UPDATE users SET profile_visibility = 'members' WHERE id = $1`, [owner.id]);
     }
   });
 
   it('is not found across a block, either way', async () => {
-    expect((await read(blocked, owner.id)).statusCode).toBe(404);
-    expect((await read(owner, blocked.id)).statusCode).toBe(404);
+    expect((await read(blocked, owner.id)).status).toBe(404);
+    expect((await read(owner, blocked.id)).status).toBe(404);
   });
 });

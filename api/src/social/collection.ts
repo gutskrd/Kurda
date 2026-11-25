@@ -11,6 +11,7 @@ import {
 import { cosmeticAssetUrl, isPremiumActive, resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 import { notBlockedSql } from '../friends/blocked.js';
 import { availableSql } from '../moderation/availability.js';
+import { shownToSql } from '../users/age.js';
 import type { SocialService } from './service.js';
 
 /** The answer of a profile that keeps its detail from the viewer. */
@@ -39,9 +40,11 @@ interface PersonRow {
 
 /**
  * A profile's collection besides its badges: the icons they own, with the one they wear, and the gifts they were given,
- * as items with how many of each. It follows the profile's own gate (`SocialService.access`), so a block hides it and a
- * private profile shows none of it. Who sent a gift is told to the person it was sent to and nobody else, and only
- * the owner sees what they sent. Lists are cut at `COLLECTION_LIST_MAX` items and `COLLECTION_PEOPLE_MAX` people.
+ * as items with how many of each and who gave them. It follows the profile's own gate (`SocialService.access`), so a
+ * block hides it and a private profile shows none of it. A giver is named to each viewer only as people are named
+ * anywhere: not across a block with the viewer, not once their account is gone or not available, and a minor or an
+ * account of unknown age only to themselves and their friends; otherwise the gift is from a member, unnamed. Only the
+ * owner sees what they sent. Lists are cut at `COLLECTION_LIST_MAX` items and `COLLECTION_PEOPLE_MAX` people.
  */
 export class CollectionService {
   constructor(
@@ -55,8 +58,8 @@ export class CollectionService {
     const own = viewerId !== null && viewerId === targetId;
     const [icons, received, sent] = await Promise.all([
       this.icons(targetId, publicUrl),
-      this.gifts('to', targetId, own, publicUrl),
-      own ? this.gifts('from', targetId, true, publicUrl) : Promise.resolve(undefined),
+      this.gifts('to', targetId, viewerId, publicUrl),
+      own ? this.gifts('from', targetId, viewerId, publicUrl) : Promise.resolve(undefined),
     ]);
     return { private: false, icons, received, ...(sent ? { sent } : {}) };
   }
@@ -81,11 +84,10 @@ export class CollectionService {
   }
 
   /**
-   * Gifts as items, newest first: those sent to them (`to`), or those they sent (`from`). With `named`, the people at
-   * the other end too, the newest few for each item; someone who left, is blocked either way or is not available is
-   * there without a name.
+   * Gifts as items, newest first: those sent to them (`to`), or those they sent (`from`), each with the newest few
+   * people at the other end, named as `viewer` may see them.
    */
-  private async gifts(side: 'to' | 'from', userId: string, named: boolean, publicUrl: PublicUrl): Promise<CollectionList<CollectionGift>> {
+  private async gifts(side: 'to' | 'from', userId: string, viewer: string | null, publicUrl: PublicUrl): Promise<CollectionList<CollectionGift>> {
     const mine = side === 'to' ? 'g.to_user_id' : 'g.from_user_id';
     const theirs = side === 'to' ? 'g.from_user_id' : 'g.to_user_id';
     const r = await this.pool.query<GiftRow>(
@@ -97,7 +99,7 @@ export class CollectionService {
         LIMIT $2`,
       [userId, COLLECTION_LIST_MAX],
     );
-    const people = named && r.rows.length > 0 ? await this.people(mine, theirs, userId, r.rows.map((g) => g.sku), publicUrl) : null;
+    const people = r.rows.length > 0 ? await this.people(mine, theirs, userId, viewer, r.rows.map((g) => g.sku), publicUrl) : null;
     return {
       items: r.rows.map((g) => ({
         sku: g.sku,
@@ -106,7 +108,7 @@ export class CollectionService {
         assetUrl: cosmeticAssetUrl(g.category, g.asset_key, publicUrl),
         count: g.n,
         lastAt: g.last_at.toISOString(),
-        ...(people ? { people: people.get(g.sku) ?? [] } : {}),
+        people: people?.get(g.sku) ?? [],
       })),
       total: r.rows[0]?.total ?? 0,
     };
@@ -117,6 +119,7 @@ export class CollectionService {
     mine: string,
     theirs: string,
     userId: string,
+    viewer: string | null,
     skus: string[],
     publicUrl: PublicUrl,
   ): Promise<Map<string, Array<{ person: CollectionPerson | null; at: string }>>> {
@@ -129,9 +132,10 @@ export class CollectionService {
             ORDER BY g.created_at DESC
             LIMIT $3
          ) x
-         LEFT JOIN users p ON p.id = x.other AND p.deleted_at IS NULL AND ${availableSql('p')} AND ${notBlockedSql('p.id', '$1::uuid')}
+         LEFT JOIN users p ON p.id = x.other AND p.deleted_at IS NULL AND ${availableSql('p')}
+               AND ${notBlockedSql('p.id', '$4::uuid')} AND ${shownToSql('p', '$4::uuid')}
         ORDER BY x.sku, x.created_at DESC`,
-      [userId, skus, COLLECTION_PEOPLE_MAX],
+      [userId, skus, COLLECTION_PEOPLE_MAX, viewer],
     );
     const out = new Map<string, Array<{ person: CollectionPerson | null; at: string }>>();
     for (const row of r.rows) {
