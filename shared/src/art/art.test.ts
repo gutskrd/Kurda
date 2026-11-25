@@ -25,7 +25,7 @@ import {
   type BadgeKey,
   type BadgeTier,
 } from './index.js';
-import { coinSvg, gemSvg } from './currency.js';
+import { coinSvg } from './currency.js';
 import { wordSetSvg } from './word-sets.js';
 import {
   CARD_RIM,
@@ -881,21 +881,15 @@ describe('weight', () => {
   });
 });
 
-describe('the currencies', () => {
+describe('the currency', () => {
   const SIZES = [13, 15, 20, 26, 36, 64, 160];
 
-  it('draws Zêr and the gem as valid, self-contained pictures at every size the apps show them', () => {
-    for (const size of SIZES) {
-      checkSvg(coinSvg({ size }), size);
-      checkSvg(gemSvg({ size }), size);
-    }
+  it('draws Zêr as a valid, self-contained picture at every size the apps show it', () => {
+    for (const size of SIZES) checkSvg(coinSvg({ size }), size);
   });
 
-  it('draws the same picture every time, with ids of its own beside the other', () => {
+  it('draws the same picture every time', () => {
     expect(coinSvg({ size: 30 })).toBe(coinSvg({ size: 30 }));
-    const coin = new Set([...coinSvg({ size: 30 }).matchAll(/ id="([^"]+)"/g)].map((m) => m[1]));
-    const gem = [...gemSvg({ size: 30 }).matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
-    expect(gem.filter((id) => coin.has(id))).toEqual([]);
   });
 
   it('raises one deer on the coin, its shadow down and to the left, its edges lit where there is room', () => {
@@ -917,8 +911,6 @@ describe('the currencies', () => {
     const paths = (svg: string): number => (svg.match(/<path/g) ?? []).length;
     expect(paths(coinSvg({ size: 15 }))).toBeLessThan(paths(coinSvg({ size: 26 })));
     expect(paths(coinSvg({ size: 26 }))).toBeLessThan(paths(coinSvg({ size: 64 })));
-    expect(paths(gemSvg({ size: 15 }))).toBeLessThan(paths(gemSvg({ size: 26 })));
-    expect(paths(gemSvg({ size: 26 }))).toBeLessThan(paths(gemSvg({ size: 64 })));
   });
 });
 

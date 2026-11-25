@@ -95,7 +95,7 @@ describe.skipIf(!DATABASE_URL)('admin 2FA gate (integration)', () => {
     const uuid = '11111111-2222-4333-8444-555555555555';
     const cases: [ "GET" | "POST", string, unknown?][] = [
       ['POST', '/shop/items', { sku: 'gate-probe', name: 'Gate probe', currency: 'zer', price: 1 }],
-      ['POST', '/iap/packs', { platform: 'apple', productId: 'gate.probe', gems: 1 }],
+      ['POST', '/iap/packs', { platform: 'apple', productId: 'gate.probe', zer: 1 }],
       ['POST', '/tournaments', { name: 'Gate probe', capacity: 8, startsAt: '2030-01-01T00:00:00.000Z' }],
       ['POST', `/tournaments/${uuid}/start`],
       ['POST', `/tournaments/${uuid}/matches/${uuid}/result`, { winnerId: uuid }],

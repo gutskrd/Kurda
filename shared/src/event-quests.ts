@@ -6,9 +6,9 @@
 /** The kinds the server counts (api/src/events/quest-logic.ts); it leaves out any other, so none arrives unwinnable. */
 export type EventQuestType = 'earn_xp' | 'story_quizzes' | 'complete_lessons';
 
+/** What a quest pays, in Zêr. */
 export interface EventQuestReward {
   zer?: number;
-  gems?: number;
 }
 
 export interface EventQuest {
@@ -64,14 +64,11 @@ export function sortEventQuests<Q extends Pick<EventQuest, 'claimed' | 'claimabl
   return [...quests].sort((a, b) => order[eventQuestState(a)] - order[eventQuestState(b)]);
 }
 
-export type EventRewardCurrency = 'zer' | 'gems';
+export type EventRewardCurrency = 'zer';
 
-/** What a quest pays, Zêr then gems; empty when it pays nothing. */
+/** What a quest pays; empty when it pays nothing. */
 export function eventRewardParts(reward: EventQuestReward): Array<{ currency: EventRewardCurrency; amount: number }> {
-  const parts: Array<{ currency: EventRewardCurrency; amount: number }> = [];
-  if (reward.zer && reward.zer > 0) parts.push({ currency: 'zer', amount: reward.zer });
-  if (reward.gems && reward.gems > 0) parts.push({ currency: 'gems', amount: reward.gems });
-  return parts;
+  return reward.zer && reward.zer > 0 ? [{ currency: 'zer', amount: reward.zer }] : [];
 }
 
 /**

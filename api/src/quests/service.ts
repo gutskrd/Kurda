@@ -1,8 +1,10 @@
 import type pg from 'pg';
-import { QUEST_KINDS, type ChestOpening, type ChestTier, type Quest, type QuestDay, type QuestKind, type QuestStep } from '@kurda/shared';
+import { QUEST_KINDS, memberPay, type ChestOpening, type ChestTier, type Quest, type QuestDay, type QuestKind, type QuestStep } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { WalletService } from '../wallet/service.js';
 import { assertEconomyNotHeld } from '../economy/standing.js';
+import { isPremiumActive } from '../cosmetics/access.js';
+import { earnWithin } from '../earn/service.js';
 import { localDate, safeTimeZone, shiftDate } from '../streaks/streak-logic.js';
 import { CLAIM_DAYS, chestAmount, dayQuests, parseQuestId, pickQuests, questId, questMoves, type QuestEvent } from './daily.js';
 
@@ -100,6 +102,15 @@ export class DailyQuestService {
     return safeTimeZone(res.rows[0]?.timezone);
   }
 
+  /** The learner's time zone, and whether they are a Hevalo+ member, whose chests hold twice as much. */
+  private async account(userId: string, now: Date): Promise<{ tz: string; plus: boolean }> {
+    const res = await this.pool.query<{ timezone: string | null; premium_until: Date | null }>(
+      `SELECT timezone, premium_until FROM users WHERE id = $1`,
+      [userId],
+    );
+    return { tz: safeTimeZone(res.rows[0]?.timezone), plus: isPremiumActive(res.rows[0]?.premium_until ?? null, now) };
+  }
+
   /**
    * Today's three quests (made on the day's first look), this calendar month's finished count, and earlier chests
    * still waiting. Read on every Learn visit, so one statement in the learner's time zone.
@@ -160,18 +171,20 @@ export class DailyQuestService {
   }
 
   /**
-   * Opens a finished quest's chest: its Zêr once, through the wallet and ledger. Any quest of the last CLAIM_DAYS days
-   * may be opened. The amount is a hash of who and which quest (`chestAmount`), so a retry never redraws; the quest is
-   * marked opened by a conditional update in the credit's transaction, so of two concurrent claims only one opens it.
+   * Opens a finished quest's chest: its Zêr once, through the wallet and ledger, as earned Zêr under the daily cap. Any
+   * quest of the last CLAIM_DAYS days may be opened. The amount is a hash of who and which quest (`chestAmount`), twice
+   * that for a Hevalo+ member, so a retry never redraws; the quest is marked opened by a conditional update in the credit's
+   * transaction, so of two concurrent claims only one opens it.
    */
   async claim(userId: string, id: string, now: Date = new Date()): Promise<ChestOpening> {
     const quest = parseQuestId(id);
     if (!quest) throw new AppError('QUEST_NOT_FOUND', 404, 'no such quest');
     // a confirmed bot or a payment-fraud hold opens no chest (economy/standing.ts)
     await assertEconomyNotHeld(this.pool, userId, 'rewards');
-    const today = localDate(now, await this.timeZone(userId));
+    const { tz, plus } = await this.account(userId, now);
+    const today = localDate(now, tz);
     if (quest.day > today || quest.day <= shiftDate(today, -CLAIM_DAYS)) throw new AppError('QUEST_NOT_FOUND', 404, 'no such quest');
-    const amounts = TIERS.map((tier) => chestAmount(tier, userId, id));
+    const amounts = TIERS.map((tier) => memberPay(chestAmount(tier, userId, id), plus));
 
     const client = await this.pool.connect();
     try {
@@ -195,16 +208,25 @@ export class DailyQuestService {
         if (state.claimed) throw new AppError('QUEST_CLAIMED', 409, 'this chest is already open');
         throw new AppError('QUEST_NOT_DONE', 409, 'this quest is not done yet');
       }
-      const credit = await this.wallet.creditWithin(client, {
+      const paid = await earnWithin(client, this.wallet, {
         userId,
-        currency: 'zer',
         amount: row.amount,
         reason: QUEST_LEDGER_REASON,
         refId: id,
         idempotencyKey: `daily-quest:${userId}:${id}`,
       });
+      // the chest records what it paid, which the daily cap can make less than it held
+      if (paid.granted !== row.amount) {
+        await client.query(`UPDATE user_quests SET amount = $4 WHERE user_id = $1 AND day = $2::date AND kind = $3`, [
+          userId,
+          quest.day,
+          quest.kind,
+          paid.granted,
+        ]);
+      }
+      const balance = await client.query<{ balance: number }>(`SELECT balance FROM wallet_balances WHERE user_id = $1 AND currency = 'zer'`, [userId]);
       await client.query('COMMIT');
-      return { questId: id, tier: row.chest, currency: 'zer', amount: row.amount, balance: credit.balance };
+      return { questId: id, tier: row.chest, currency: 'zer', amount: paid.granted, balance: balance.rows[0]?.balance ?? 0 };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;

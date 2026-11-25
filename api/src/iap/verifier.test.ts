@@ -10,18 +10,18 @@ const PROD = { NODE_ENV: 'production', JWT_SECRET: 'x'.repeat(32) };
 
 describe('StubReceiptVerifier', () => {
   it('accepts a well-formed receipt and carries its fields through', async () => {
-    const r = await v.verify('apple', JSON.stringify({ transactionId: 't1', environment: 'production' }), 'gems_100');
+    const r = await v.verify('apple', JSON.stringify({ transactionId: 't1', environment: 'production' }), 'zer_400');
     expect(r).toEqual({
       valid: true,
       transactionId: 't1',
-      productId: 'gems_100',
+      productId: 'zer_400',
       environment: 'production',
       ownershipType: 'purchased',
     });
   });
 
   it('defaults the environment to sandbox', async () => {
-    const r = await v.verify('google', JSON.stringify({ transactionId: 't2' }), 'gems_100');
+    const r = await v.verify('google', JSON.stringify({ transactionId: 't2' }), 'zer_400');
     expect(r.environment).toBe('sandbox');
   });
 
@@ -79,7 +79,7 @@ describe('createReceiptVerifier', () => {
    */
   it('shows what the stub would have accepted in production', async () => {
     const forged = JSON.stringify({ transactionId: 'i-made-this-up', environment: 'production' });
-    const receipt = await new StubReceiptVerifier().verify('apple', forged, 'gems_500');
+    const receipt = await new StubReceiptVerifier().verify('apple', forged, 'zer_2200');
 
     expect(receipt.valid).toBe(true);
     expect(receipt.transactionId).toBe('i-made-this-up');

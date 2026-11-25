@@ -1,9 +1,10 @@
 import type pg from 'pg';
-import { FEED_PERIOD_DAYS, sortRanks, type FeedImage, type FeedPeriod, type FeedSort } from '@kurda/shared';
+import { FEED_PERIOD_DAYS, sortRanks, type FeedImage, type FeedPeriod, type FeedSort, type PostGifts } from '@kurda/shared';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 import { writtenForSql } from '../users/age.js';
 import { notBlockedSql } from '../friends/blocked.js';
+import { postGiftsFor } from '../gifts/posts.js';
 import {
   EngagementService,
   NO_ENGAGEMENT,
@@ -86,6 +87,8 @@ export interface FeedItem {
   viewCount: number;
   commentCount: number;
   engagement: Engagement;
+  /** the gifts given onto it, as a small row with a count */
+  gifts: PostGifts;
   at: Date;
 }
 
@@ -296,17 +299,18 @@ export class FeedService {
     return this.hydrate(rows.rows, opts.viewerId ?? null, publicUrl);
   }
 
-  /** Attach authors, engagement and pictures to a page of rows, in four lookups. */
+  /** Attach authors, engagement, pictures and gifts to a page of rows, in five lookups. */
   private async hydrate(rows: FeedRow[], viewerId: string | null, publicUrl: PublicUrl): Promise<FeedItem[]> {
     if (rows.length === 0) return [];
     const libraryIds = rows.filter((r) => r.source === 'library').map((r) => r.id);
 
-    // four lookups for the whole page, not four per card
-    const [authors, libraryEngagement, imageEngagement, pictures] = await Promise.all([
+    // five lookups for the whole page, not five per card
+    const [authors, libraryEngagement, imageEngagement, pictures, gifts] = await Promise.all([
       loadAuthors(this.pool, rows.map((r) => r.author_id), publicUrl),
       this.engagement.forPosts(viewerId, 'library', libraryIds),
       this.engagement.forPosts(viewerId, 'image', rows.filter((r) => r.source === 'image').map((r) => r.id)),
       this.pictures(libraryIds, publicUrl),
+      postGiftsFor(this.pool, rows.map((r) => ({ type: r.source, id: r.id })), viewerId, publicUrl),
     ]);
 
     return rows.map((r) => {
@@ -332,6 +336,7 @@ export class FeedService {
         viewCount: r.view_count,
         commentCount: r.comment_count,
         engagement,
+        gifts: gifts.get(`${r.source}:${r.id}`) ?? { count: 0, items: [], senders: 0, from: null },
         at: r.at,
       };
     });

@@ -137,6 +137,8 @@ describe.skipIf(!DATABASE_URL)('practice mode (integration)', () => {
   });
 
   it('a finished practice session unlocks today’s daily Zêr', async () => {
+    // the daily Zêr is a Hevalo+ member's
+    await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [userId]);
     const status = await authed('GET', '/rewards/daily');
     expect(status.json()).toMatchObject({ learnedToday: true, canClaim: true });
   });

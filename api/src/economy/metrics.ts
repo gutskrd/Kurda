@@ -3,8 +3,8 @@
  * migrations and backfills are excluded by reason code so they never distort inflation figures.
  */
 
-/** Reason codes that move balances but aren't real faucets/sinks. */
-export const EXCLUDED_REASONS = new Set(['admin_adjustment', 'migration', 'backfill']);
+/** Reason codes that move balances but aren't real faucets/sinks, the retired Gewher's move into Zêr among them. */
+export const EXCLUDED_REASONS = new Set(['admin_adjustment', 'migration', 'backfill', 'gewher_retired', 'gewher_converted', 'gewher_restored']);
 
 /**
  * Reason codes that gave spent currency back. A refund undoes a counted sink, so it counts as negative spending,

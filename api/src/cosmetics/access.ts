@@ -119,8 +119,9 @@ export function cosmeticArtUrl(assetKey: string, publicUrl: PublicUrl): string |
  */
 export function cosmeticAssetUrl(category: string, assetKey: string | null, publicUrl: PublicUrl): string | null {
   if (!assetKey) return null;
-  // A shop frame is a file the site ships too; a season frame has none and is drawn by the apps.
-  if (category === 'background' || category === 'icon' || category === 'frame') return cosmeticArtUrl(assetKey, publicUrl);
+  // A shop frame is a file the site ships too, and a gift sticker is an app icon's picture; a season frame has none and
+  // is drawn by the apps.
+  if (category === 'background' || category === 'icon' || category === 'frame' || category === 'sticker') return cosmeticArtUrl(assetKey, publicUrl);
   // Any other item may have a square picture uploaded in the admin; without one the apps draw its glyph.
   if (uploadedArtKind(assetKey) === 'icon') return publicUrl(assetKey);
   return null;

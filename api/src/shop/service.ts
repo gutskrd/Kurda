@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { isGiftSticker } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { WalletService, type Currency } from '../wallet/service.js';
 import type { Cache } from '../cache/cache.js';
@@ -342,7 +343,7 @@ export class ShopService {
       }));
   }
 
-  /** The catalogue this user can see and buy: in window, in stock, without unique items they own. */
+  /** The catalogue this user can see and buy: in window, in stock, without unique items they own or gift stickers, which are only given. */
   async catalog(userId: string, now: Date = new Date()): Promise<ShopItem[]> {
     const live = await this.liveItems(now);
     const ownedRes = await this.pool.query<{ sku: string }>(
@@ -350,7 +351,7 @@ export class ShopService {
       [userId],
     );
     const owned = new Set(ownedRes.rows.map((r) => r.sku));
-    return live.filter((i) => !(i.isUnique && owned.has(i.sku)));
+    return live.filter((i) => !(i.isUnique && owned.has(i.sku)) && !isGiftSticker(i.category));
   }
 
   /**
@@ -372,6 +373,7 @@ export class ShopService {
       const item = itemRes.rows[0];
       if (!item) throw new AppError('ITEM_NOT_FOUND', 404, 'no such item');
       if (!isPurchasable(item, now)) throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
+      if (isGiftSticker(item.category)) throw new AppError('GIFT_ONLY', 409, 'a gift sticker is given to someone, not bought for yourself');
       // The price the client saw must still hold, so the UI can reconfirm rather than charge a changed price.
       if (expectedPrice != null && item.price !== expectedPrice) {
         throw new AppError('PRICE_CHANGED', 409, 'the price changed; please review and try again');

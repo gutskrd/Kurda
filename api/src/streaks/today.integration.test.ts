@@ -88,7 +88,7 @@ describe.skipIf(!DATABASE_URL)('the daily view (integration)', () => {
     expect(view.days.every((d) => !d.learned && !d.frozen && d.xp === 0)).toBe(true);
     expect(view.badge).toBeNull();
     expect(view.streak).toMatchObject({ current: 0, longest: 0 });
-    expect(view.daily).toMatchObject({ canClaim: false, learnedToday: false, alreadyClaimedToday: false, cycleDay: 0, plusGems: 0 });
+    expect(view.daily).toMatchObject({ canClaim: false, learnedToday: false, alreadyClaimedToday: false, cycleDay: 0, member: false });
   });
 
   it('counts a learner in UTC+14 by their own midnight', async () => {
@@ -155,6 +155,8 @@ describe.skipIf(!DATABASE_URL)('the daily view (integration)', () => {
   it('says today’s Zêr as GET /rewards/daily does, and names the badge level earned last', async () => {
     const u = await learner('UTC');
     const now = new Date('2026-11-18T12:00:00Z');
+    // the daily Zêr is a member's
+    await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [u.id]);
     await new StreakService(pool).recordActivity(u.id, 'UTC', now);
     await pool.query(
       `INSERT INTO user_badges (user_id, badge_key, tier, progress, earned_at, tier_earned_at) VALUES

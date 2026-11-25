@@ -15,8 +15,9 @@ const itemBody = z.object({
   name: z.string().min(1).max(120),
   description: z.string().max(500).optional(),
   // 'tag' is the Kurdish identity tag (tag_kurdish); without it the item could be listed but never saved again.
-  category: z.enum(['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'tag', 'misc']).optional(),
-  currency: z.enum(['zer', 'gems']),
+  category: z.enum(['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'tag', 'sticker', 'misc']).optional(),
+  /** every price is in Zêr; the field stays so older consoles keep working */
+  currency: z.literal('zer').default('zer'),
   price: z.number().int().min(0).max(10_000_000),
   isUnique: z.boolean().optional(),
   active: z.boolean().optional(),
@@ -75,12 +76,9 @@ export function registerShopRoutes(
     async (req) => {
       const body = req.body as z.infer<typeof itemBody>;
       if (body.price >= SENSITIVE_PRICE) {
-        const { rows } = await app.db.query<{ price: number; currency: string }>(
-          `SELECT price, currency FROM shop_items WHERE sku = $1`,
-          [body.sku],
-        );
+        const { rows } = await app.db.query<{ price: number }>(`SELECT price FROM shop_items WHERE sku = $1`, [body.sku]);
         const was = rows[0];
-        if (!was || was.price !== body.price || was.currency !== body.currency) {
+        if (!was || was.price !== body.price) {
           throw new AppError(
             'PRICE_NEEDS_APPROVAL',
             409,
@@ -183,8 +181,7 @@ export function registerShopRoutes(
         gifted: true,
         duplicate: result.duplicate,
         sku: result.item.sku,
-        // In the item's own currency.
-        balance: result.balance[result.item.currency],
+        balance: result.balance.zer,
       };
     },
   );

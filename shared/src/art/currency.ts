@@ -1,10 +1,9 @@
 /**
- * The two currencies, drawn in colour wherever money is shown: Zêr, a gold coin with a raised deer's head, and the
- * gem, a faceted green stone. Both get bolder as they shrink (`detail`): outlines thicken and the fine facet lines,
- * lips and sparkle are dropped, so a 15-pixel coin still reads as a coin.
+ * The currency, drawn in colour wherever money is shown: Zêr, a gold coin with a raised deer's head. It gets bolder as it
+ * shrinks (`detail`): the outline thickens and the fine lines are dropped, so a 15-pixel coin still reads as a coin.
  */
 import { curve, symmetric, type Knot } from '../characters/pen.js';
-import { CANVAS, Drawing, checkSize, linearAt, n, prefixFor, type Detail, type Pt } from './svg.js';
+import { CANVAS, Drawing, checkSize, n, prefixFor, type Detail, type Pt } from './svg.js';
 
 export interface CurrencyOptions {
   /** Size in pixels; the drawing is square. */
@@ -21,8 +20,6 @@ const TINY = 20;
 
 const detailOf = (size: number): Detail => (size < TINY ? 0 : size < FINE ? 1 : 2);
 
-const poly = (pts: readonly Pt[]): string => `M${pts.map(([x, y]) => `${n(x)} ${n(y)}`).join('L')}Z`;
-
 /** A point on a circle round (cx, cy), `deg` degrees clockwise from the right. */
 const on = (cx: number, cy: number, r: number, deg: number): Pt => [cx + r * Math.cos((deg * Math.PI) / 180), cy + r * Math.sin((deg * Math.PI) / 180)];
 
@@ -31,12 +28,6 @@ function arc(cx: number, cy: number, r: number, a0: number, a1: number): string 
   const [x0, y0] = on(cx, cy, r, a0);
   const [x1, y1] = on(cx, cy, r, a1);
   return `M${n(x0)} ${n(y0)}A${n(r)} ${n(r)} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${n(x1)} ${n(y1)}`;
-}
-
-/** A small four-pointed sparkle at (x, y), `r` from its middle to a point. */
-function sparkle(x: number, y: number, r: number): string {
-  const w = r * 0.22;
-  return `M${n(x)} ${n(y - r)}Q${n(x + w)} ${n(y - w)} ${n(x + r)} ${n(y)}Q${n(x + w)} ${n(y + w)} ${n(x)} ${n(y + r)}Q${n(x - w)} ${n(y + w)} ${n(x - r)} ${n(y)}Q${n(x - w)} ${n(y - w)} ${n(x)} ${n(y - r)}Z`;
 }
 
 // ─────────────────────────────────────────────────────────── the coin
@@ -124,77 +115,5 @@ export function coinSvg(opts: CurrencyOptions = {}): string {
   return dr.svg(size, opts.title ?? 'Zêr');
 }
 
-
-// ─────────────────────────────────────────────────────────── the gem
-
-const GREEN = {
-  outline: '#0a4d1f',
-  topLeft: '#a3f5b2',
-  topRight: '#58e46f',
-  right: '#14a63a',
-  bottomRight: '#0b7a2b',
-  bottomLeft: '#119134',
-  left: '#3fd35f',
-  tableLight: '#5ae874',
-  table: '#18c444',
-};
-
-/** The gem's outer corners and its table's, clockwise from the top. */
-const GEM_OUTER: readonly Pt[] = [
-  [60, 5],
-  [101, 28],
-  [101, 92],
-  [60, 115],
-  [19, 92],
-  [19, 28],
-];
-const GEM_TABLE: readonly Pt[] = [
-  [60, 28],
-  [81, 40],
-  [81, 80],
-  [60, 92],
-  [39, 80],
-  [39, 40],
-];
-
-/** The gem: an elongated hexagon with six bevels round a flat table. */
-export function gemSvg(opts: CurrencyOptions = {}): string {
-  const size = checkSize(opts.size, 24);
-  const detail = detailOf(size);
-  const dr = new Drawing(prefixFor(opts.idPrefix, 'gem', detail));
-  const line = detail === 0 ? 8 : detail === 1 ? 6.5 : 5;
-
-  dr.add(`<path d="${poly(GEM_OUTER)}" fill="${GREEN.outline}" stroke="${GREEN.outline}" stroke-width="${n(line)}" stroke-linejoin="round"/>`);
-  // The bevels, each from an outer edge to the table, lit from the upper left.
-  const shades = [GREEN.topRight, GREEN.right, GREEN.bottomRight, GREEN.bottomLeft, GREEN.left, GREEN.topLeft];
-  for (let i = 0; i < 6; i++) {
-    const j = (i + 1) % 6;
-    dr.add(`<path d="${poly([GEM_OUTER[i]!, GEM_OUTER[j]!, GEM_TABLE[j]!, GEM_TABLE[i]!])}" fill="${shades[i]}"/>`);
-  }
-  // The table, with two bands of light rising to the right.
-  const table = dr.id('t');
-  dr.def(linearAt(table, [[0, GREEN.tableLight], [1, GREEN.table]], 39, 28, 81, 92));
-  const tableD = poly(GEM_TABLE);
-  dr.add(`<path d="${tableD}" fill="url(#${table})"/>`);
-  const clip = dr.clip(tableD);
-  const band = (y: number, h: number, a: number): string =>
-    `<path d="${poly([[36, y], [84, y - 27], [84, y - 27 + h], [36, y + h]])}" fill="#ffffff" fill-opacity="${a}" clip-path="url(#${clip})"/>`;
-  dr.add(band(66, 13, 0.32));
-  dr.add(band(86, 6, 0.22));
-  if (detail > 0) {
-    // The lit edges between bevels.
-    for (let i = 0; i < 6; i++) {
-      const [x0, y0] = GEM_OUTER[i]!;
-      const [x1, y1] = GEM_TABLE[i]!;
-      dr.add(`<path d="M${n(x0)} ${n(y0)}L${n(x1)} ${n(y1)}" stroke="#ffffff" stroke-opacity="0.32" stroke-width="1.4"/>`);
-    }
-    dr.add(`<path d="${poly(GEM_TABLE)}" fill="none" stroke="#ffffff" stroke-opacity="0.38" stroke-width="1.6" stroke-linejoin="round"/>`);
-  }
-  // A glint along the upper-left bevel, and a sparkle when there is room.
-  dr.add(`<path d="M27 29.5L54 14.5" stroke="#ffffff" stroke-opacity="0.7" stroke-width="${detail === 0 ? 5 : 3.6}" stroke-linecap="round"/>`);
-  if (detail === 2) dr.add(`<path d="${sparkle(99, 14, 10)}" fill="#ffffff"/>`);
-  return dr.svg(size, opts.title ?? 'Gem');
-}
-
-/** The canvas both are drawn on, for a caller that sizes them itself. */
+/** The canvas the coin is drawn on, for a caller that sizes them itself. */
 export const CURRENCY_CANVAS = CANVAS;

@@ -1,9 +1,9 @@
 import type pg from 'pg';
-import { PLUS_DAILY_GEMS } from '@kurda/shared';
 import { isPremiumActive } from '../cosmetics/access.js';
 import { AppError } from '../plugins/errors.js';
 import { WalletService } from '../wallet/service.js';
 import { assertEconomyNotHeld } from '../economy/standing.js';
+import { earnWithin } from '../earn/service.js';
 import { localDate } from '../streaks/streak-logic.js';
 import { StreakService } from '../streaks/service.js';
 import { dailyRewardView, statusFor, type DailyRewardState, type DailyRewardView } from './daily-cycle.js';
@@ -11,21 +11,16 @@ import { dailyRewardView, statusFor, type DailyRewardState, type DailyRewardView
 export interface ClaimResult {
   claimed: boolean;
   cycleDay: number;
+  /** what was paid, which the daily earned cap can make less than the day's reward */
   reward: number;
   balance: number;
-  /** gems a Hevalo+ member received with this claim; 0 for everyone else */
-  plusGems: number;
 }
 
-/** The ledger's reason for a Hevalo+ member's daily gems. */
-export const PLUS_DAILY_REASON = 'plus_daily';
-
 /**
- * Daily Zêr reward claims. The claim day is the user's local calendar date (`localDate`) by server time, so a device
- * clock can never unlock an extra claim; the grant is atomic with the cycle update and idempotent per user and day. A
- * claim needs a lesson or practice session finished that local day (`last_learned_on`); a daily Peyvok win keeps a
- * streak but does not count. A Hevalo+ member also gets `PLUS_DAILY_GEMS` in the same transaction, under a ledger key
- * and reason of its own, outside the earned-gems cap, since it is part of membership.
+ * Daily Zêr reward claims, a Hevalo+ member's. The claim day is the user's local calendar date (`localDate`) by server
+ * time, so a device clock can never unlock an extra claim; the grant is atomic with the cycle update and idempotent per
+ * user and day, and counts toward the day's earned cap. A claim needs a lesson or practice session finished that local
+ * day (`last_learned_on`); a daily Peyvok win keeps a streak but does not count.
  */
 export class DailyRewardService {
   private readonly streaks: StreakService;
@@ -59,7 +54,7 @@ export class DailyRewardService {
     return (await this.streaks.lastLearnedOn(userId, executor)) === today;
   }
 
-  /** Cycle progress and the next reward for the calendar, and the gems a claim today adds for a Hevalo+ member (0 otherwise). */
+  /** Cycle progress and the next reward for the calendar, and whether the learner has the daily Zêr. */
   async status(userId: string, now: Date = new Date()): Promise<DailyRewardView> {
     const { tz, plus } = await this.account(userId, now);
     const today = localDate(now, tz);
@@ -68,12 +63,14 @@ export class DailyRewardService {
   }
 
   /**
-   * Claims today's reward: ALREADY_CLAIMED if claimed, LEARN_FIRST without a lesson or practice today, REWARDS_PAUSED for
-   * a confirmed bot or fraud hold (economy/standing.ts). The amount is the server's (daily-cycle.ts).
+   * Claims today's reward: MEMBERS_ONLY for anyone not a Hevalo+ member, ALREADY_CLAIMED if claimed, LEARN_FIRST without a
+   * lesson or practice today, REWARDS_PAUSED for a confirmed bot or fraud hold (economy/standing.ts). The amount is the
+   * server's (daily-cycle.ts).
    */
   async claim(userId: string, now: Date = new Date()): Promise<ClaimResult> {
     await assertEconomyNotHeld(this.pool, userId, 'rewards');
     const { tz, plus } = await this.account(userId, now);
+    if (!plus) throw new AppError('MEMBERS_ONLY', 403, 'the daily Zêr is part of Hevalo+');
     const today = localDate(now, tz);
     const client = await this.pool.connect();
     try {
@@ -93,31 +90,19 @@ export class DailyRewardService {
         throw new AppError('LEARN_FIRST', 409, 'finish a lesson or a practice session to claim today’s reward');
       }
 
-      const credit = await this.wallet.creditWithin(client, {
+      const paid = await earnWithin(client, this.wallet, {
         userId,
-        currency: 'zer',
         amount: status.reward,
         reason: 'daily_reward',
         idempotencyKey: `daily:${userId}:${today}`,
       });
-      // A member's gems ride on the claim: the day's lock makes this once a day, and the key says so to the ledger.
-      let plusGems = 0;
-      if (plus) {
-        const gems = await this.wallet.creditWithin(client, {
-          userId,
-          currency: 'gems',
-          amount: PLUS_DAILY_GEMS,
-          reason: PLUS_DAILY_REASON,
-          idempotencyKey: `plus-daily:${userId}:${today}`,
-        });
-        if (!gems.duplicate) plusGems = PLUS_DAILY_GEMS;
-      }
       await client.query(
         `UPDATE daily_rewards SET cycle_day = $2, last_claim_on = $3, updated_at = now() WHERE user_id = $1`,
         [userId, status.claimableDay, today],
       );
+      const balance = await client.query<{ balance: number }>(`SELECT balance FROM wallet_balances WHERE user_id = $1 AND currency = 'zer'`, [userId]);
       await client.query('COMMIT');
-      return { claimed: true, cycleDay: status.claimableDay, reward: status.reward, balance: credit.balance, plusGems };
+      return { claimed: true, cycleDay: status.claimableDay, reward: paid.granted, balance: balance.rows[0]?.balance ?? 0 };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;

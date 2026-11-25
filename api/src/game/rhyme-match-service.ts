@@ -2,6 +2,8 @@ import type pg from 'pg';
 import { type GameAccess, type InviteSummary, type LobbyCard } from '@kurda/shared';
 import { pickRhymePrompt } from './rhyme-prompt.js';
 import { XpService } from '../xp/service.js';
+import { WalletService } from '../wallet/service.js';
+import { payOnlineWinSafely } from '../earn/wins.js';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { canJoin, mayHostOpen } from '../play/access.js';
 import {
@@ -674,6 +676,11 @@ export class RhymeMatchService {
         WHERE p.match_id = $1 AND p.user_id = v.user_id`,
       [matchId, placed.map((x) => x.userId), placed.map((x) => x.xp)],
     );
+    // a match two people played pays its winner Zêr too (earn/wins.ts)
+    if (played) {
+      const players = ranked.filter((r) => rhymed.has(r.userId)).map((r) => ({ userId: r.userId, place: r.rank }));
+      await payOnlineWinSafely(client, new WalletService(this.pool), { ref: `rhyme-match:${matchId}`, players }, undefined, now);
+    }
     await client.query(`UPDATE rhyme_matches SET status = 'finished', finished_at = $2, updated_at = $2 WHERE id = $1`, [matchId, now]);
   }
 

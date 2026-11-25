@@ -39,7 +39,7 @@ export function auditTargetType(routeUrl: string): string | null {
   if (routeUrl.startsWith('/admin/users/:id') || routeUrl.startsWith('/admin/antibot/:userId')) return 'user';
   if (routeUrl.startsWith('/shop/items/:sku')) return 'shop_item';
   if (routeUrl.startsWith('/admin/tags/:key')) return 'tag';
-  if (routeUrl.startsWith('/admin/gem-rules/:key')) return 'gem_rule';
+  if (routeUrl.startsWith('/admin/earn-rules/:key')) return 'earn_rule';
   if (routeUrl.startsWith('/admin/events/:key')) return 'event';
   if (routeUrl.startsWith('/admin/experiments/:key')) return 'experiment';
   if (routeUrl.startsWith('/admin/content/lessons/:id')) return 'lesson';

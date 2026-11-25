@@ -356,13 +356,13 @@ export interface SeasonEmblem {
 /** `GET /ranks/seasons/current` */
 export interface SeasonOverview {
   season: Season & { daysLeft: number };
-  rewards: Array<{ tier: RankTier; gems: number; frameSku: string }>;
+  rewards: Array<{ tier: RankTier; zer: number; frameSku: string }>;
   minGames: number;
   /** the viewer's last season, once it was closed */
   lastSeason: {
     id: string;
     emblems: SeasonEmblem[];
-    reward: { tier: RankTier; gems: number; frameSku: string | null; title: string | null } | null;
+    reward: { tier: RankTier; zer: number; frameSku: string | null; title: string | null } | null;
   } | null;
 }
 

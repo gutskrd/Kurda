@@ -9,18 +9,18 @@ const todayQuery = z.object({ weekStart: z.coerce.number().int().min(0).max(6).o
 
 /**
  * A learner's own streak: GET /me reads it, GET /me/today reads it with this week and last for the daily view, and the
- * one action is restoring the streak that ended.
+ * one action is a Hevalo+ member's free restore of the streak that ended.
  */
 export function registerStreakRoutes(app: FastifyInstance, streaks: StreakService): void {
   const today = new TodayService(app.db, streaks);
 
-  /** The daily view: the streak, fourteen days in the learner's zone, today's Zêr and the latest badge. */
+  /** The daily view: the streak, fourteen days in the learner's zone, today's Zêr, the latest badge, and a member's new box. */
   app.get('/me/today', { schema: { querystring: todayQuery }, preHandler: requireAuth }, async (req) =>
     today.view(req.user!.id, (req.query as z.infer<typeof todayQuery>).weekStart ?? 1),
   );
 
   /**
-   * Restores the ended streak. No body: which streak, whether it can be restored and the cost are decided by the
+   * A member's free restore of the ended streak. No body: which streak and whether it can be restored are decided by the
    * server's clock and the account's time zone.
    */
   app.post(

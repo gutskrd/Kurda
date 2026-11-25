@@ -11,28 +11,30 @@ export interface RedeemResult {
   duplicate: boolean;
   /** True when fraud rules held the purchase for review. */
   held: boolean;
-  gems: number;
+  /** the Zêr the pack holds */
+  zer: number;
   balance: number;
 }
 
-export interface GemPackInput {
+export interface ZerPackInput {
   platform: IapPlatform;
   productId: string;
-  gems: number;
+  zer: number;
   active?: boolean;
 }
 
 interface ReceiptRow {
   id: string;
   user_id: string;
-  gems: number;
+  zer: number;
   status: string;
 }
 
 /**
- * In-app purchase redemption. A receipt is validated server to server and stored (unique per store transaction),
- * with the Gems granted in the same transaction. Duplicates are answered idempotently, so restores and dropped
- * responses reconcile; refund webhooks claw back the Gems still available.
+ * In-app purchase redemption, for the Zêr packs the phone stores will sell (the checkout itself is still to come). A
+ * receipt is validated server to server and stored (unique per store transaction), with the Zêr granted in the same
+ * transaction. Duplicates are answered idempotently, so restores and dropped responses reconcile; refund webhooks claw
+ * back the Zêr still available.
  */
 export class IapService {
   constructor(
@@ -43,15 +45,15 @@ export class IapService {
     private readonly fraud: FraudService,
   ) {}
 
-  /** Admin: upsert a gem pack (store product → Gem amount). */
-  async createPack(input: GemPackInput): Promise<void> {
-    if (input.gems <= 0) throw new AppError('BAD_PACK', 400, 'gems must be > 0');
+  /** Admin: upsert a Zêr pack (store product → Zêr amount). */
+  async createPack(input: ZerPackInput): Promise<void> {
+    if (input.zer <= 0) throw new AppError('BAD_PACK', 400, 'a pack must hold some Zêr');
     await this.pool.query(
-      `INSERT INTO gem_packs (platform, product_id, gems, active)
+      `INSERT INTO zer_packs (platform, product_id, zer, active)
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (platform, product_id)
-       DO UPDATE SET gems = EXCLUDED.gems, active = EXCLUDED.active`,
-      [input.platform, input.productId, input.gems, input.active ?? true],
+       DO UPDATE SET zer = EXCLUDED.zer, active = EXCLUDED.active`,
+      [input.platform, input.productId, input.zer, input.active ?? true],
     );
   }
 
@@ -70,12 +72,12 @@ export class IapService {
       throw new AppError('WRONG_ENVIRONMENT', 400, 'sandbox receipt rejected in production');
     }
 
-    const pack = await this.pool.query<{ gems: number }>(
-      `SELECT gems FROM gem_packs WHERE platform = $1 AND product_id = $2 AND active = true`,
+    const pack = await this.pool.query<{ zer: number }>(
+      `SELECT zer FROM zer_packs WHERE platform = $1 AND product_id = $2 AND active = true`,
       [platform, verified.productId],
     );
-    const gems = pack.rows[0]?.gems;
-    if (!gems) throw new AppError('UNKNOWN_PRODUCT', 400, 'no active pack for that product');
+    const zer = pack.rows[0]?.zer;
+    if (!zer) throw new AppError('UNKNOWN_PRODUCT', 400, 'no active pack for that product');
 
     const familyShared = verified.ownershipType === 'family_shared';
     const client = await this.pool.connect();
@@ -83,16 +85,16 @@ export class IapService {
       await client.query('BEGIN');
       // one grant per store transaction, ever
       const inserted = await client.query<{ id: string }>(
-        `INSERT INTO iap_receipts (user_id, platform, transaction_id, product_id, environment, gems)
+        `INSERT INTO iap_receipts (user_id, platform, transaction_id, product_id, environment, zer)
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (platform, transaction_id) DO NOTHING
          RETURNING id`,
-        [userId, platform, verified.transactionId, verified.productId, verified.environment, gems],
+        [userId, platform, verified.transactionId, verified.productId, verified.environment, zer],
       );
 
       if ((inserted.rowCount ?? 0) === 0) {
-        const existing = await client.query<{ user_id: string; status: string; gems: number }>(
-          `SELECT user_id, status, gems FROM iap_receipts WHERE platform = $1 AND transaction_id = $2`,
+        const existing = await client.query<{ user_id: string; status: string; zer: number }>(
+          `SELECT user_id, status, zer FROM iap_receipts WHERE platform = $1 AND transaction_id = $2`,
           [platform, verified.transactionId],
         );
         const prior = existing.rows[0];
@@ -111,7 +113,7 @@ export class IapService {
             evidence: { ...signals, transactionId: verified.transactionId, reusedFrom: prior!.user_id },
           });
           await client.query('COMMIT');
-          return { granted: false, duplicate: true, held: true, gems, balance: (await this.wallet.balances(userId)).gems };
+          return { granted: false, duplicate: true, held: true, zer, balance: (await this.wallet.balances(userId)).zer };
         }
         await client.query('COMMIT');
         // A family member replaying a shared purchase is legitimate but granted nothing, since the original account owns
@@ -120,8 +122,8 @@ export class IapService {
           granted: otherAccount ? false : prior?.status === 'granted',
           duplicate: true,
           held: otherAccount ? false : prior?.status === 'held',
-          gems: prior?.gems ?? gems,
-          balance: (await this.wallet.balances(userId)).gems,
+          zer: prior?.zer ?? zer,
+          balance: (await this.wallet.balances(userId)).zer,
         };
       }
 
@@ -141,18 +143,18 @@ export class IapService {
           evidence: { ...signals, transactionId: verified.transactionId, priorHold: alreadyHeld },
         });
         await client.query('COMMIT');
-        return { granted: false, duplicate: false, held: true, gems, balance: (await this.wallet.balances(userId)).gems };
+        return { granted: false, duplicate: false, held: true, zer, balance: (await this.wallet.balances(userId)).zer };
       }
 
       const credit = await this.wallet.creditWithin(client, {
         userId,
-        currency: 'gems',
-        amount: gems,
+        currency: 'zer',
+        amount: zer,
         reason: 'iap_purchase',
         idempotencyKey: `iap:${platform}:${verified.transactionId}`,
       });
       await client.query('COMMIT');
-      return { granted: true, duplicate: false, held: false, gems, balance: credit.balance };
+      return { granted: true, duplicate: false, held: false, zer, balance: credit.balance };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;
@@ -162,7 +164,7 @@ export class IapService {
   }
 
   /**
-   * Refund clawback from the webhook: marks the receipt refunded and debits the Gems still in the wallet, capped at the
+   * Refund clawback from the webhook: marks the receipt refunded and debits the Zêr still in the wallet, capped at the
    * balance (the shortfall is recorded in `clawed_back`). Idempotent per receipt.
    */
   async refund(platform: IapPlatform, transactionId: string): Promise<{ found: boolean; clawedBack: number }> {
@@ -170,7 +172,7 @@ export class IapService {
     try {
       await client.query('BEGIN');
       const res = await client.query<ReceiptRow>(
-        `SELECT id, user_id, gems, status FROM iap_receipts
+        `SELECT id, user_id, zer, status FROM iap_receipts
            WHERE platform = $1 AND transaction_id = $2 FOR UPDATE`,
         [platform, transactionId],
       );
@@ -193,20 +195,20 @@ export class IapService {
 
       // claw back what's still there (never drive the balance negative)
       await client.query(
-        `INSERT INTO wallet_balances (user_id, currency) VALUES ($1, 'gems')
+        `INSERT INTO wallet_balances (user_id, currency) VALUES ($1, 'zer')
          ON CONFLICT (user_id, currency) DO NOTHING`,
         [receipt.user_id],
       );
       const bal = await client.query<{ balance: number }>(
-        `SELECT balance FROM wallet_balances WHERE user_id = $1 AND currency = 'gems' FOR UPDATE`,
+        `SELECT balance FROM wallet_balances WHERE user_id = $1 AND currency = 'zer' FOR UPDATE`,
         [receipt.user_id],
       );
       const available = bal.rows[0]?.balance ?? 0;
-      const clawback = Math.min(available, receipt.gems);
+      const clawback = Math.min(available, receipt.zer);
       if (clawback > 0) {
         await this.wallet.debitWithin(client, {
           userId: receipt.user_id,
-          currency: 'gems',
+          currency: 'zer',
           amount: clawback,
           reason: 'iap_refund',
           idempotencyKey: `iap-refund:${platform}:${transactionId}`,
@@ -228,23 +230,23 @@ export class IapService {
 
   /** The caller's receipts — the client reconciles restore-purchases against this. */
   async receipts(userId: string): Promise<
-    Array<{ transactionId: string; productId: string; gems: number; status: string; createdAt: Date }>
+    Array<{ transactionId: string; productId: string; zer: number; status: string; createdAt: Date }>
   > {
     const rows = await this.pool.query<{
       transaction_id: string;
       product_id: string;
-      gems: number;
+      zer: number;
       status: string;
       created_at: Date;
     }>(
-      `SELECT transaction_id, product_id, gems, status, created_at
+      `SELECT transaction_id, product_id, zer, status, created_at
          FROM iap_receipts WHERE user_id = $1 ORDER BY created_at DESC`,
       [userId],
     );
     return rows.rows.map((r) => ({
       transactionId: r.transaction_id,
       productId: r.product_id,
-      gems: r.gems,
+      zer: r.zer,
       status: r.status,
       createdAt: r.created_at,
     }));

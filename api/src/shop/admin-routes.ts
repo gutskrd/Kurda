@@ -24,7 +24,7 @@ import { storeArt } from './art.js';
 import { CatalogueEditor } from './catalogue.js';
 import type { ShopItem, ShopService } from './service.js';
 
-const CATEGORIES = ['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'tag', 'misc'] as const;
+const CATEGORIES = ['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'tag', 'sticker', 'misc'] as const;
 
 const skuParams = z.object({ sku: z.string().min(1).max(80) });
 
@@ -34,7 +34,8 @@ const addBody = z.object({
   name: z.string().trim().min(1).max(120),
   description: z.string().max(500).optional(),
   category: z.enum(CATEGORIES).optional(),
-  currency: z.enum(['zer', 'gems']),
+  /** every price is in Zêr; the field stays so older consoles keep working */
+  currency: z.literal('zer').default('zer'),
   price: z.number().int().min(0).max(10_000_000),
   isUnique: z.boolean().optional(),
   active: z.boolean().optional(),
@@ -52,7 +53,7 @@ const editBody = z
     name: z.string().trim().min(1).max(120),
     description: z.string().max(500).nullable(),
     category: z.enum(CATEGORIES),
-    currency: z.enum(['zer', 'gems']),
+    currency: z.literal('zer'),
     price: z.number().int().min(0).max(10_000_000),
     isUnique: z.boolean(),
     active: z.boolean(),

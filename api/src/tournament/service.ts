@@ -19,8 +19,8 @@ export interface CreateTournamentInput {
   name: string;
   capacity: number;
   startsAt: Date;
+  /** a prize of the staff's choosing, on top of the tournament win's earned Zêr */
   rewardZer?: number;
-  rewardGems?: number;
 }
 
 export interface BracketMatchView {
@@ -52,8 +52,8 @@ type Executor = Pick<pg.PoolClient, 'query'>;
  * and the bracket generated (top seeds get byes); winners move up by slot and the champion is paid once. There
  * is no game to play matches in yet, so results are entered by an admin and tournaments stay out of the apps.
  */
-/** Grants Gems for a rule and reference id. */
-export interface GemGranter {
+/** Grants earned Zêr for a rule and reference id. */
+export interface EarnGranter {
   grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
 }
 
@@ -66,7 +66,7 @@ export class TournamentService {
   constructor(
     private readonly pool: pg.Pool,
     private readonly wallet: WalletService,
-    private readonly gems?: GemGranter,
+    private readonly earn?: EarnGranter,
     private readonly achievements?: AchievementAwarder,
   ) {}
 
@@ -75,16 +75,9 @@ export class TournamentService {
       throw new AppError('BAD_CAPACITY', 400, `capacity must be ${MIN_CAPACITY}–${MAX_CAPACITY}`);
     }
     const row = await this.pool.query<{ id: string }>(
-      `INSERT INTO tournaments (name, capacity, starts_at, reward_zer, reward_gems, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [
-        input.name,
-        input.capacity,
-        input.startsAt,
-        Math.max(0, input.rewardZer ?? 0),
-        Math.max(0, input.rewardGems ?? 0),
-        adminId,
-      ],
+      `INSERT INTO tournaments (name, capacity, starts_at, reward_zer, created_by)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      [input.name, input.capacity, input.startsAt, Math.max(0, input.rewardZer ?? 0), adminId],
     );
     return { id: row.rows[0]!.id };
   }
@@ -249,11 +242,11 @@ export class TournamentService {
   async reportResult(tournamentId: string, matchId: string, winnerId: string): Promise<{ champion: boolean }> {
     const client = await this.pool.connect();
     let championId: string | null = null;
-    let reward = { zer: 0, gems: 0 };
+    let reward = { zer: 0 };
     try {
       await client.query('BEGIN');
-      const t = await client.query<{ rounds: number; status: string; reward_zer: number; reward_gems: number }>(
-        `SELECT rounds, status, reward_zer, reward_gems FROM tournaments WHERE id = $1 FOR UPDATE`,
+      const t = await client.query<{ rounds: number; status: string; reward_zer: number }>(
+        `SELECT rounds, status, reward_zer FROM tournaments WHERE id = $1 FOR UPDATE`,
         [tournamentId],
       );
       const tourn = t.rows[0];
@@ -272,7 +265,7 @@ export class TournamentService {
 
       if (match.round >= tourn.rounds) {
         championId = winnerId;
-        reward = { zer: tourn.reward_zer, gems: tourn.reward_gems };
+        reward = { zer: tourn.reward_zer };
       }
       await client.query('COMMIT');
     } catch (err) {
@@ -344,7 +337,7 @@ export class TournamentService {
   private async payChampion(
     tournamentId: string,
     userId: string,
-    reward: { zer: number; gems: number },
+    reward: { zer: number },
   ): Promise<void> {
     // Nobody the economy does not pay gets a prize (economy/standing.ts); the bracket still names the winner, and an admin
     // can pay by hand once a review clears them.
@@ -359,17 +352,8 @@ export class TournamentService {
         idempotencyKey: `tourn:${tournamentId}:zer`,
       });
     }
-    if (reward.gems > 0) {
-      await this.wallet.credit({
-        userId,
-        currency: 'gems',
-        amount: reward.gems,
-        reason: 'tournament_reward',
-        idempotencyKey: `tourn:${tournamentId}:gems`,
-      });
-    }
-    // Config-driven Gem grant, idempotent per tournament and champion; ledger keys are global, so the key names both.
-    if (this.gems) await this.gems.grant(userId, 'tournament_win', `${tournamentId}:${userId}`).catch(() => undefined);
+    // The tournament win's earned Zêr, idempotent per tournament and champion; ledger keys are global, so the key names both.
+    if (this.earn) await this.earn.grant(userId, 'tournament_win', `${tournamentId}:${userId}`).catch(() => undefined);
     // the champion's achievement; idempotent, best-effort like the grant above
     if (this.achievements) await this.achievements.award(userId, 'tournament-win').catch(() => undefined);
   }

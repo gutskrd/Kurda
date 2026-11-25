@@ -2,7 +2,7 @@ import type pg from 'pg';
 import type { Redis } from 'ioredis';
 import { ActivityService } from '../activity/service.js';
 import { FriendService } from '../friends/service.js';
-import { GemService } from '../gems/service.js';
+import { EarnService } from '../earn/service.js';
 import { createProgression } from '../badges/progression.js';
 import { RedisRoomPublisher } from '../realtime/bus.js';
 import { WalletService } from '../wallet/service.js';
@@ -25,11 +25,11 @@ interface Log {
 export function standaloneStoryGames(pool: pg.Pool, opts: { redis?: Redis | null; log?: Log } = {}): StoryGamesService {
   const log: Log = opts.log ?? { warn: () => undefined };
   const redis = opts.redis ?? undefined;
-  const gems = new GemService(pool, new WalletService(pool));
+  const earn = new EarnService(pool, new WalletService(pool));
   const activity = new ActivityService(pool, new FriendService(pool));
   // badges reached here are counted without a celebration of their own: the
   // app shows them from `GET /me/badges/unseen` when it next opens
-  const { xp, badges } = createProgression(pool, { gems, activity, log });
+  const { xp, badges } = createProgression(pool, { earn, activity, log });
   return new StoryGamesService(pool, {
     xp,
     milestones: badges,

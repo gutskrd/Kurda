@@ -12,9 +12,9 @@ export const QUEST_TYPES: readonly QuestType[] = ['earn_xp', 'story_quizzes', 'c
 export const QUEST_GRACE_HOURS = 72;
 const GRACE_MS = QUEST_GRACE_HOURS * 3_600_000;
 
+/** What a quest pays, in Zêr. */
 export interface QuestReward {
   zer?: number;
-  gems?: number;
 }
 
 export interface QuestDef {
@@ -47,7 +47,6 @@ function toReward(raw: unknown): QuestReward {
   if (raw && typeof raw === 'object') {
     const r = raw as Record<string, unknown>;
     if (typeof r.zer === 'number' && r.zer > 0) reward.zer = Math.floor(r.zer);
-    if (typeof r.gems === 'number' && r.gems > 0) reward.gems = Math.floor(r.gems);
   }
   return reward;
 }

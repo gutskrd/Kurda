@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireRoles } from '../plugins/auth.js';
-import type { GemService } from './service.js';
+import type { EarnService } from './service.js';
 
 const ruleBody = z.object({
   amount: z.number().int().min(1).max(100_000),
@@ -10,14 +10,14 @@ const ruleBody = z.object({
   active: z.boolean(),
 });
 
-/** Gem earning-rule configuration, admin-only. */
-export function registerGemRoutes(app: FastifyInstance, gems: GemService): void {
-  app.get('/admin/gem-rules', { preHandler: requireRoles('admin') }, async () => ({
-    rules: await gems.rules(),
+/** The staff-tunable earning rules (a league promotion, a tournament win), admin only. */
+export function registerEarnRoutes(app: FastifyInstance, earn: EarnService): void {
+  app.get('/admin/earn-rules', { preHandler: requireRoles('admin') }, async () => ({
+    rules: await earn.rules(),
   }));
 
   app.put(
-    '/admin/gem-rules/:key',
+    '/admin/earn-rules/:key',
     {
       schema: { params: z.object({ key: z.string().min(1).max(60) }), body: ruleBody },
       preHandler: requireRoles('admin'),
@@ -25,7 +25,7 @@ export function registerGemRoutes(app: FastifyInstance, gems: GemService): void 
     async (req) => {
       const { key } = req.params as { key: string };
       const body = req.body as z.infer<typeof ruleBody>;
-      await gems.upsertRule({ key, ...body });
+      await earn.upsertRule({ key, ...body });
       return { ok: true };
     },
   );

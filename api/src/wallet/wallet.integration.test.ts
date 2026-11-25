@@ -82,11 +82,11 @@ describe.skipIf(!DATABASE_URL)('wallet (integration)', () => {
   });
 
   it('two simultaneous spends of the same balance: exactly one succeeds', async () => {
-    await wallet.credit({ userId, currency: 'gems', amount: 50, reason: 'achievement' });
+    await wallet.credit({ userId, currency: 'zer', amount: 50, reason: 'achievement' });
 
     const spend = () =>
       wallet
-        .debit({ userId, currency: 'gems', amount: 50, reason: 'shop_purchase' })
+        .debit({ userId, currency: 'zer', amount: 120, reason: 'shop_purchase' })
         .then(() => 'ok' as const)
         .catch((err) =>
           err instanceof InsufficientFundsError ? ('insufficient' as const) : Promise.reject(err),
@@ -94,8 +94,17 @@ describe.skipIf(!DATABASE_URL)('wallet (integration)', () => {
 
     const results = await Promise.all([spend(), spend()]);
     expect(results.sort()).toEqual(['insufficient', 'ok']);
-    expect((await wallet.balances(userId)).gems).toBe(0);
-    expect(await wallet.verifyConsistency(userId, 'gems')).toBe(true);
+    expect((await wallet.balances(userId)).zer).toBe(0);
+    expect(await wallet.verifyConsistency(userId, 'zer')).toBe(true);
+    // back to where the rest of the file expects it
+    await wallet.credit({ userId, currency: 'zer', amount: 70, reason: 'refund' });
+  });
+
+  it('writes no retired Gewher, while the history of it stays', async () => {
+    await expect(pool.query(`INSERT INTO wallet_balances (user_id, currency) VALUES ($1, 'gems')`, [userId])).rejects.toThrow(/zer_only/);
+    await expect(
+      pool.query(`INSERT INTO wallet_ledger (user_id, currency, amount, reason) VALUES ($1, 'gems', 5, 'x')`, [userId]),
+    ).rejects.toThrow(/zer_only/);
   });
 
   it('idempotency keys make retries safe (credit and debit)', async () => {
@@ -164,8 +173,7 @@ describe.skipIf(!DATABASE_URL)('wallet (integration)', () => {
     });
     expect(res.statusCode).toBe(200);
     const body = res.json();
-    expect(body.balances.zer).toBe(95);
-    expect(body.balances.gems).toBe(0);
+    expect(body.balances).toEqual({ zer: 95 });
     expect(body.history.length).toBeGreaterThanOrEqual(4);
     expect(body.history[0]).toHaveProperty('reason');
   });

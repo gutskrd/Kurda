@@ -95,9 +95,12 @@ export {
   type TodayWeeks,
   type WeekStats,
 } from './daily-view.js';
-/** Restoring a streak that ended: what it costs, how long it is offered, and what a Hevalo+ member is given. */
+/** Restoring a streak that ended: how it is won back, how long it is offered, and what a Hevalo+ member is given. */
 export * from './streak-repair.js';
 export * from './plus.js';
+/** One currency: what Zêr is worth in money, and how it is earned. */
+export * from './zer.js';
+export * from './earning.js';
 /** Today's three quests, and the chests they pay: learning only, never anything paid. */
 export {
   QUEST_KINDS,
@@ -646,7 +649,6 @@ export {
   SMALL_LEAGUE,
   SMALL_FRAME,
   coinSvg,
-  gemSvg,
   CURRENCY_CANVAS,
   type CurrencyOptions,
   wordSetSvg,

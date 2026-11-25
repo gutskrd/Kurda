@@ -34,7 +34,7 @@ const banBody = z.object({
 export const WALLET_ADJUST_MAX = 1_000_000;
 const walletBody = z.object({
   reason: z.string(),
-  currency: z.enum(['zer', 'gems']),
+  currency: z.literal('zer'),
   amount: z.number().int().min(-WALLET_ADJUST_MAX).max(WALLET_ADJUST_MAX),
   /** the console's key for this one change, so a double click or a retry moves the money once */
   idempotencyKey: z.string().min(8).max(120).optional(),

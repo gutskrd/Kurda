@@ -30,8 +30,8 @@ export interface AwardResult {
   alreadyEarned: boolean;
 }
 
-/** Grants Gems for a rule and reference id. */
-export interface GemGranter {
+/** Grants earned Zêr for a rule and reference id. */
+export interface EarnGranter {
   grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
 }
 
@@ -59,13 +59,13 @@ export interface MilestoneRecorder {
 export class AchievementsService {
   constructor(
     private readonly pool: pg.Pool,
-    private readonly gems?: GemGranter,
+    private readonly earn?: EarnGranter,
     private readonly activity?: ActivityPublisher,
   ) {}
 
   /**
    * Awards an achievement exactly once: the primary-key insert is the idempotency gate. A new award also asks for
-   * Gems with a key per user and achievement, because the Gem key is global; the `achievement_milestone` rule is
+   * Zêr with a key per user and achievement, because ledger keys are global; the `achievement_milestone` rule is
    * switched off, so nothing is paid unless an admin turns it back on.
    */
   async award(userId: string, achievementId: string): Promise<AwardResult> {
@@ -80,9 +80,9 @@ export class AchievementsService {
     );
     if ((inserted.rowCount ?? 0) === 0) return { awarded: false, alreadyEarned: true };
 
-    // The Gems and the milestone are best-effort: a failure must never undo the award.
-    if (this.gems) {
-      await this.gems.grant(userId, 'achievement_milestone', `${achievementId}:${userId}`).catch(() => undefined);
+    // The Zêr and the milestone are best-effort: a failure must never undo the award.
+    if (this.earn) {
+      await this.earn.grant(userId, 'achievement_milestone', `${achievementId}:${userId}`).catch(() => undefined);
     }
     if (this.activity) await this.activity.publish(userId, 'achievement', { achievementId }).catch(() => undefined);
     return { awarded: true, alreadyEarned: false };

@@ -62,7 +62,7 @@ describe('auditTargetType', () => {
     expect(auditTargetType('/admin/shop/items')).toBeNull();
     expect(auditTargetType('/shop/items/:sku/stock')).toBe('shop_item');
     expect(auditTargetType('/admin/antibot/:userId/clear')).toBe('user');
-    expect(auditTargetType('/admin/gem-rules/:key')).toBe('gem_rule');
+    expect(auditTargetType('/admin/earn-rules/:key')).toBe('earn_rule');
     expect(auditTargetType('/admin/tags/:key')).toBe('tag');
   });
 });

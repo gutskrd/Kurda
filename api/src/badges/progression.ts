@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { LeagueService, type ActivityPublisher, type GemGranter } from '../leagues/service.js';
+import { LeagueService, type ActivityPublisher, type EarnGranter } from '../leagues/service.js';
 import { XpService } from '../xp/service.js';
 import { BadgeService, type BadgeNotices } from './service.js';
 import type { ProgressNotices } from '../notifications/progress-notices.js';
@@ -21,7 +21,7 @@ export interface Progression {
 export function createProgression(
   pool: pg.Pool,
   deps: {
-    gems?: GemGranter;
+    earn?: EarnGranter;
     activity?: ActivityPublisher;
     notices?: ProgressNotices;
     /** given the badge service to come (the day's bundled push reads it) */
@@ -34,7 +34,7 @@ export function createProgression(
   const badges = new BadgeService(pool, { notices: deps.badgeNotices?.(() => made.badges!), log: deps.log });
   made.badges = badges;
   const leagues = new LeagueService(pool, {
-    gems: deps.gems,
+    earn: deps.earn,
     activity: deps.activity,
     notices: deps.notices,
     badges,

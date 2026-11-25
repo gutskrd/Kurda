@@ -138,7 +138,7 @@ interface FaceRow {
 }
 
 /**
- * Leaderboards: this week's XP, all the XP ever earned, and the Zêr and Gewher each person holds now. Redis sorted
+ * Leaderboards: this week's XP, all the XP ever earned, and the Zêr each person holds now. Redis sorted
  * sets give fast rank lookups for the global boards; Postgres is the source of truth, with a rebuild path and a pure
  * fallback without Redis. Shadow-flagged cheaters are excluded silently, still seeing a plausible own rank. The boards
  * with no week take the same paths, scored from `users.xp` or `wallet_balances`, and are cut at BOARD_DEPTH.

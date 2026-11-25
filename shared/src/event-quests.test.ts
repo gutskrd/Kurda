@@ -30,13 +30,10 @@ describe('eventQuestState and sortEventQuests', () => {
 });
 
 describe('eventRewardParts', () => {
-  it('lists what a quest pays, Zêr first, and nothing for no reward', () => {
-    expect(eventRewardParts({ zer: 200, gems: 30 })).toEqual([
-      { currency: 'zer', amount: 200 },
-      { currency: 'gems', amount: 30 },
-    ]);
-    expect(eventRewardParts({ gems: 40 })).toEqual([{ currency: 'gems', amount: 40 }]);
+  it('lists what a quest pays, and nothing for no reward', () => {
+    expect(eventRewardParts({ zer: 200 })).toEqual([{ currency: 'zer', amount: 200 }]);
     expect(eventRewardParts({ zer: 0 })).toEqual([]);
+    expect(eventRewardParts({})).toEqual([]);
   });
 });
 

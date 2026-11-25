@@ -13,8 +13,8 @@ function event(over: Partial<EventDef> = {}): EventDef {
     priority: 10,
     theme: 'newroz',
     quests: [
-      { id: 'xp', type: 'earn_xp', count: 300, reward: { gems: 30 } },
-      { id: 'wins', type: 'story_quizzes', count: 3, reward: { gems: 40, zer: 100 } },
+      { id: 'xp', type: 'earn_xp', count: 300, reward: { zer: 150 } },
+      { id: 'wins', type: 'story_quizzes', count: 3, reward: { zer: 300 } },
     ],
     rewards: {},
     enabled: true,
@@ -41,6 +41,9 @@ function fakePool() {
       query: async (sql: string, params?: unknown[]) => {
         if (/SELECT quest_id/i.test(sql)) return { rows: [...claims].map((q) => ({ quest_id: q })), rowCount: claims.size };
         if (/BEGIN|COMMIT|ROLLBACK/i.test(sql)) return { rows: [], rowCount: 0 };
+        // an account the economy pays, with nothing earned yet today, so the daily cap leaves the whole reward
+        if (/AS blocked/.test(sql)) return { rows: [{ blocked: false }], rowCount: 1 };
+        if (/all_today/.test(sql)) return { rows: [{ all_today: '0', reason_today: '0', reason_count: 0, recent: false }], rowCount: 1 };
         if (/INSERT INTO event_quest_claims/i.test(sql)) {
           const id = String(params![2]);
           if (claims.has(id)) return { rows: [], rowCount: 0 };
@@ -82,18 +85,19 @@ describe('QuestService.progress', () => {
 describe('QuestService.claim', () => {
   const now = () => new Date('2026-03-22T00:00:00.000Z');
 
-  it('pays Zêr + Gems once and is idempotent on re-claim', async () => {
+  it('pays its Zêr once and is idempotent on re-claim', async () => {
     const { pool } = fakePool();
     const creditWithin = vi.fn(async () => ({ balance: 0, duplicate: false }));
     const svc = new QuestService(pool, lookup(event()), { creditWithin } as never, fakeMetrics({ storyQuizzes: 3 }), now);
 
     const first = await svc.claim('u1', 'newroz-2026', 'wins');
-    expect(first).toEqual({ ok: true, claimed: true, reward: { gems: 40, zer: 100 } });
-    expect(creditWithin).toHaveBeenCalledTimes(2); // zer + gems
+    expect(first).toEqual({ ok: true, claimed: true, reward: { zer: 300 } });
+    expect(creditWithin).toHaveBeenCalledTimes(1);
+    expect(creditWithin).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ currency: 'zer', amount: 300, reason: 'event_quest' }));
 
     const second = await svc.claim('u1', 'newroz-2026', 'wins');
-    expect(second).toEqual({ ok: true, claimed: false, reward: { gems: 40, zer: 100 } });
-    expect(creditWithin).toHaveBeenCalledTimes(2); // no double pay
+    expect(second).toEqual({ ok: true, claimed: false, reward: { zer: 300 } });
+    expect(creditWithin).toHaveBeenCalledTimes(1); // no double pay
   });
 
   it('refuses an incomplete quest and an unknown quest', async () => {

@@ -60,9 +60,9 @@ describe.skipIf(!DATABASE_URL)('wallet reconciliation and limits (integration)',
   it('finds every balance equal to its ledger when the wallet wrote both', async () => {
     await wallet.credit({ userId: ann.id, currency: 'zer', amount: 300, reason: 'admin_adjustment' });
     await wallet.debit({ userId: ann.id, currency: 'zer', amount: 120, reason: 'shop_purchase' });
-    await wallet.credit({ userId: ann.id, currency: 'gems', amount: 9, reason: 'admin_adjustment' });
+    await wallet.credit({ userId: ann.id, currency: 'zer', amount: 9, reason: 'admin_adjustment' });
     const report = await reconciler.check({ userIds: [ann.id, bea.id] });
-    expect(report).toMatchObject({ checked: 2, mismatched: 0, mismatches: [] });
+    expect(report).toMatchObject({ checked: 1, mismatched: 0, mismatches: [] });
     expect(await wallet.verifyConsistency(ann.id, 'zer')).toBe(true);
   });
 
@@ -70,14 +70,14 @@ describe.skipIf(!DATABASE_URL)('wallet reconciliation and limits (integration)',
     // a hand edit: the balance moves and no ledger row says why
     await pool.query(`UPDATE wallet_balances SET balance = balance + 5 WHERE user_id = $1 AND currency = 'zer'`, [ann.id]);
     // and a balance row with nothing at all behind it
-    await pool.query(`INSERT INTO wallet_balances (user_id, currency, balance) VALUES ($1, 'gems', 40)`, [bea.id]);
+    await pool.query(`INSERT INTO wallet_balances (user_id, currency, balance) VALUES ($1, 'zer', 40)`, [bea.id]);
     try {
       const report = await reconciler.check({ userIds: [ann.id, bea.id] });
       expect(report.mismatched).toBe(2);
       // the largest gap first
       expect(report.mismatches).toEqual([
-        { userId: bea.id, currency: 'gems', balance: 40, ledgerSum: 0 },
-        { userId: ann.id, currency: 'zer', balance: 185, ledgerSum: 180 },
+        { userId: bea.id, currency: 'zer', balance: 40, ledgerSum: 0 },
+        { userId: ann.id, currency: 'zer', balance: 194, ledgerSum: 189 },
       ]);
       expect((await reconciler.check({ userIds: [ann.id, bea.id], limit: 1 })).mismatches).toHaveLength(1);
       expect(await reconciler.check({ userIds: [] })).toMatchObject({ checked: 0, mismatched: 0 });
@@ -86,7 +86,7 @@ describe.skipIf(!DATABASE_URL)('wallet reconciliation and limits (integration)',
       expect(all.mismatched).toBeGreaterThanOrEqual(2);
     } finally {
       await pool.query(`UPDATE wallet_balances SET balance = balance - 5 WHERE user_id = $1 AND currency = 'zer'`, [ann.id]);
-      await pool.query(`DELETE FROM wallet_balances WHERE user_id = $1 AND currency = 'gems'`, [bea.id]);
+      await pool.query(`DELETE FROM wallet_balances WHERE user_id = $1 AND currency = 'zer'`, [bea.id]);
     }
     expect((await reconciler.check({ userIds: [ann.id, bea.id] })).mismatched).toBe(0);
   });
@@ -131,16 +131,16 @@ describe.skipIf(!DATABASE_URL)('wallet reconciliation and limits (integration)',
 
   it('refuses a balance past the ceiling, at the database and in the wallet', async () => {
     expect(
-      await refusal(`INSERT INTO wallet_balances (user_id, currency, balance) VALUES ($1, 'gems', $2)`, [bea.id, MAX_BALANCE + 1]),
+      await refusal(`INSERT INTO wallet_balances (user_id, currency, balance) VALUES ($1, 'zer', $2)`, [bea.id, MAX_BALANCE + 1]),
     ).toMatch(/wallet_balances_ceiling/);
-    await pool.query(`INSERT INTO wallet_balances (user_id, currency, balance) VALUES ($1, 'gems', $2)`, [bea.id, MAX_BALANCE - 10]);
+    await pool.query(`INSERT INTO wallet_balances (user_id, currency, balance) VALUES ($1, 'zer', $2)`, [bea.id, MAX_BALANCE - 10]);
     try {
-      await expect(wallet.credit({ userId: bea.id, currency: 'gems', amount: 11, reason: 'admin_adjustment' })).rejects.toMatchObject({
+      await expect(wallet.credit({ userId: bea.id, currency: 'zer', amount: 11, reason: 'admin_adjustment' })).rejects.toMatchObject({
         code: 'BALANCE_LIMIT',
       });
-      expect((await wallet.balances(bea.id)).gems).toBe(MAX_BALANCE - 10);
+      expect((await wallet.balances(bea.id)).zer).toBe(MAX_BALANCE - 10);
     } finally {
-      await pool.query(`DELETE FROM wallet_balances WHERE user_id = $1 AND currency = 'gems'`, [bea.id]);
+      await pool.query(`DELETE FROM wallet_balances WHERE user_id = $1 AND currency = 'zer'`, [bea.id]);
     }
     // and a single change past the bound is refused before it reaches the database
     await expect(wallet.credit({ userId: bea.id, currency: 'zer', amount: MAX_LEDGER_AMOUNT + 1, reason: 'admin_adjustment' })).rejects.toThrow(
