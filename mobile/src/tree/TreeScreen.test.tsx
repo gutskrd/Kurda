@@ -208,6 +208,24 @@ describe('the tree’s screen', () => {
       expect(await screen.findByText('Willow · Seed · Day 1')).toBeTruthy();
     });
 
+    it('shows a child’s profile only the kinds it may plant, with no Zêr and nothing to buy', async () => {
+      const was = testAuth.user;
+      testAuth.user = { ...was, kind: 'child' };
+      try {
+        testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view(), { zer: 900, owned: ['tu'] })) });
+        renderWithProviders(<TreeScreen onExit={() => undefined} />);
+        fireEvent.click(await screen.findByRole('button', { name: 'Other trees' }));
+        expect(await screen.findByText('The nursery')).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Plant: Hinar (Pomegranate)' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Plant: Tû (Mulberry)' })).toBeTruthy();
+        expect(screen.queryByTestId('tree-kind-sev')).toBeNull();
+        expect(screen.queryByRole('button', { name: /^Buy: / })).toBeNull();
+        expect(screen.queryByText('900 Zêr')).toBeNull();
+      } finally {
+        testAuth.user = was;
+      }
+    });
+
     it('buys a kind with Zêr, which plants nothing, and says how much is missing when it cannot be afforded', async () => {
       const client = fakeClient({ 'GET /me/tree': ok(mine(view(), { zer: 900 })), 'POST /me/tree/kinds/tu/buy': ok(mine(view(), { zer: 100, owned: ['tu'] })) });
       testAuth.client = client;

@@ -4,7 +4,7 @@
  * list, and no browser) hold for routes that do not exist yet.
  */
 import type { FastifyRequest, RouteOptions } from 'fastify';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { CHILD_ROUTES, childMayUse, fromBrowser } from './child-gate.js';
@@ -38,9 +38,14 @@ const NEVER_FOR_A_CHILD: Array<[RegExp, string]> = [
   [/^\/me\/gifts\b/, 'gifts'],
   [/^\/shop\b/, 'the shop'],
   [/^\/iap\b/, 'payments'],
+  [/^\/me\/iap\b/, 'payments'],
   [/^\/me\/wallet\b/, 'currency'],
+  [/^\/me\/members-box\b/, 'the members’ box'],
+  [/^\/rewards\b/, 'the daily Zêr'],
+  [/^\/me\/quests\b/, 'quest chests of Zêr'],
+  [/^\/events\/[^/]+\/quests\b/, 'event quests and their Zêr'],
   [/^\/me\/tree\/kinds\b/, 'buying a tree'],
-  [/^\/me\/streak\/repair\b/, 'buying a streak back'],
+  [/^\/me\/streak\/repair\b/, 'a member’s restore of a streak'],
   [/^\/experiments\b/, 'analytics'],
   [/^\/me\/heartbeat\b/, 'presence'],
   [/^\/realtime\b/, 'live updates from other people'],
@@ -54,6 +59,37 @@ const NEVER_FOR_A_CHILD: Array<[RegExp, string]> = [
   [/^\/me\/app-feedback\b/, 'feedback and store prompts'],
   [/^\/me\/store-review\b/, 'store prompts'],
   [/^\/admin\b/, 'staff'],
+];
+
+/**
+ * Every route that pays, spends, gives or shows Zêr. Wins against other people have no route of their own: they are paid
+ * when an online game ends, and online games are never a child's.
+ */
+const MONEY_ROUTES = [
+  'GET /me/wallet',
+  'GET /me/members-box',
+  'POST /me/members-box/seen',
+  'GET /rewards/daily',
+  'POST /rewards/daily/claim',
+  'GET /me/quests',
+  'POST /me/quests/:id/claim',
+  'GET /events/:key/quests',
+  'POST /events/:key/quests/:questId/claim',
+  'POST /me/streak/repair',
+  'GET /gifts/catalog',
+  'POST /gifts',
+  'GET /gifts/posts/:type/:id',
+  'GET /gifts/batches/:id',
+  'POST /gifts/:id/open',
+  'GET /me/gifts',
+  'GET /shop',
+  'POST /shop/purchase',
+  'POST /shop/gift',
+  'POST /me/tree/kinds/:species/buy',
+  'POST /iap/redeem',
+  'GET /me/iap/receipts',
+  'GET /admin/earn-rules',
+  'PUT /admin/earn-rules/:key',
 ];
 
 async function routeTable(): Promise<string[]> {
@@ -72,13 +108,23 @@ async function routeTable(): Promise<string[]> {
 }
 
 describe('the child gate', () => {
-  it('lists only routes that exist, and none a child must never use', async () => {
-    const routes = new Set(await routeTable());
+  let routes: Set<string>;
+  beforeAll(async () => {
+    routes = new Set(await routeTable());
+  });
+
+  it('lists only routes that exist, and none a child must never use', () => {
     expect([...CHILD_ROUTES].filter((r) => !routes.has(r))).toEqual([]);
     const wrong = [...CHILD_ROUTES].filter((r) => NEVER_FOR_A_CHILD.some(([pattern]) => pattern.test(r.split(' ')[1]!)));
     expect(wrong).toEqual([]);
     // and the routes a child is refused are most of Hevalo
     expect(routes.size - CHILD_ROUTES.size).toBeGreaterThan(400);
+  });
+
+  it('keeps every route that pays, spends, gives or shows Zêr from a child, each for a part a child never uses', () => {
+    expect(MONEY_ROUTES.filter((r) => !routes.has(r))).toEqual([]);
+    expect(MONEY_ROUTES.filter((r) => childMayUse(r.split(' ')[0]!, r.split(' ')[1]))).toEqual([]);
+    expect(MONEY_ROUTES.filter((r) => !NEVER_FOR_A_CHILD.some(([pattern]) => pattern.test(r.split(' ')[1]!)))).toEqual([]);
   });
 
   it('refuses a child any route it does not list', () => {

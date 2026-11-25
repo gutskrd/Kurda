@@ -29,6 +29,8 @@ import type { DmMessage } from '../chat/service.js';
 import { groupRoom, type GroupChatService, type GroupMessage } from '../groups/chat-service.js';
 import type { Notification } from '../push/service.js';
 import { notKnownAdultSql } from '../users/age.js';
+import { childrenAmong } from '../users/kind.js';
+import { childRefused } from '../family/child-gate.js';
 import { batchChat, giftCards, giftCardsForEach, type BatchChat, type CardViewer } from './cards.js';
 import { giftHold, postGiftBlocked, visiblePostAuthor, type PostRef } from './posts.js';
 import { freeGiftsLeft, spendFreeGifts } from '../plus/members-box.js';
@@ -143,6 +145,8 @@ export class GiftService {
   ) {}
 
   async send(input: SendGiftInput, now: Date = new Date()): Promise<SendGiftOutcome> {
+    // A child's profile never gives a gift, however it is asked for; the child gate keeps them from the routes as well.
+    if ((await childrenAmong(this.pool, [input.fromId])).size > 0) throw childRefused();
     if (input.post) return this.sendToPost({ ...input, post: input.post }, now);
     const { fromId, chat } = input;
     const toIds = [...new Set(input.toIds)];
@@ -285,12 +289,14 @@ export class GiftService {
         throw new AppError('NOT_A_FREE_GIFT', 409, 'a free gift pays only for a smaller gift');
       }
 
-      // a member of the group the gift is posted in, and a friendship old enough (onto a post, the post's own rule)
+      // a member of the group the gift is posted in, a friendship old enough (onto a post, the post's own rule), and never
+      // a child's profile, which is given nothing
       const notYet = post
         ? await postGiftBlocked(client, fromId, candidates, GIFT_MIN_FRIENDSHIP_HOURS)
         : await this.notYetAllowed(client, fromId, candidates);
+      const children = await childrenAmong(client, candidates);
       candidates = candidates.filter((to) => {
-        const allowed = !outsideGroup.has(to) && !notYet.has(to);
+        const allowed = !outsideGroup.has(to) && !notYet.has(to) && !children.has(to);
         if (!allowed) skip(to, 'not_allowed');
         return allowed;
       });

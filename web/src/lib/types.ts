@@ -49,6 +49,8 @@ export interface SessionUser {
   accountHold?: AccountHold | null;
   /** A supervised teen's limits and where they stand today (/me only); null or absent for everyone else. */
   supervision?: SupervisionState | null;
+  /** 'child' for a child's profile made by a parent, which the website never opens; absent or 'person' for everyone else. */
+  kind?: 'person' | 'child';
 }
 
 export interface AuthPayload {

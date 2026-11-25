@@ -17,6 +17,8 @@ import { SanctionsService } from '../moderation/sanctions-service.js';
 import { inTransaction } from '../moderation/tx.js';
 import { OFFENSE_PERM } from '../moderation/service.js';
 import { queriesDuring } from '../test/query-count.js';
+import { issueAccessToken } from '../auth/tokens.js';
+import { GiftService, type GiftDeps } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -928,6 +930,49 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       const res = await giftDm(solo, solo, POWER);
       expect(res.statusCode).toBe(400);
       expect(res.json().code).toBe('GIFT_TO_SELF');
+    });
+  });
+
+  describe('a child’s profile', () => {
+    it('is given nothing, even by a friend, and gives nothing by any door', async () => {
+      const giver = await signUp('kidgiver');
+      await fund(giver);
+      const kid = (
+        await pool.query<{ id: string }>(
+          `INSERT INTO users (email, username, display_name, birth_year, birth_month, kind, leagues_enabled, profile_visibility)
+           VALUES (NULL, $1, 'Rojîn', extract(year FROM now())::int - 8, 1, 'child', false, 'nobody') RETURNING id`,
+          [`gf_childp_${suffix}`.slice(0, 30)],
+        )
+      ).rows[0]!.id;
+      const child: Account = { id: kid, token: await issueAccessToken(config, { sub: kid, ver: 0 }), username: '' };
+      try {
+        // A child has no friends; a friendship written straight in stands for one the app could never make.
+        await befriend(giver, child, 48);
+        const before = await zer(giver);
+        const res = await giftDm(giver, child, POWER);
+        expect(res.statusCode).toBe(200);
+        expect(res.json()).toMatchObject({ sent: [], skipped: [{ userId: kid, reason: 'not_allowed' }] });
+        expect(await owns(child, POWER)).toBeNull();
+        expect(await zer(giver)).toBe(before);
+        expect((await pool.query(`SELECT 1 FROM gifts WHERE to_user_id = $1 OR from_user_id = $1`, [kid])).rowCount).toBe(0);
+
+        // The child gate refuses the child every door to giving, and the service refuses a child's send however it came.
+        for (const [method, url, payload] of [
+          ['POST', '/gifts', { sku: POWER, toUserIds: [giver.id], chat: { kind: 'dm', userId: giver.id }, idempotencyKey: key() }],
+          ['GET', `/gifts/catalog?to=${giver.id}`, undefined],
+          ['POST', '/shop/gift', { sku: POWER, toUserId: giver.id, idempotencyKey: key() }],
+        ] as const) {
+          const refused = await call(method, url, child, payload);
+          expect(refused.statusCode, url).toBe(403);
+          expect(refused.json().code, url).toBe('CHILD_PROFILE');
+        }
+        const service = new GiftService(pool, {} as GiftDeps);
+        await expect(
+          service.send({ fromId: kid, toIds: [giver.id], sku: POWER, chat: { kind: 'dm', userId: giver.id }, idempotencyKey: key() }),
+        ).rejects.toMatchObject({ code: 'CHILD_PROFILE' });
+      } finally {
+        await pool.query(`DELETE FROM users WHERE id = $1`, [kid]);
+      }
     });
   });
 
