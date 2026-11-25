@@ -4,7 +4,7 @@
  * owner's folk painting shows her, framed to hang on a wall and painted afresh rather than traced.
  */
 import { type Drawing, type Pt } from './svg.js';
-import { brush, ellipse, floor, FLOOR, outline, paint, polygon, roundish, runs, scaleAbout, streaks, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
+import { along, brush, ellipse, floor, FLOOR, outline, paint, polygon, roundish, runs, scaleAbout, streaks, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
 
 // ────────────────────────────────────────────────────────────────────── kawa
 
@@ -162,6 +162,8 @@ export function kawa(dr: Drawing, rnd: Rnd): void {
 // ────────────────────────────────────────────────────────────────── şahmaran
 
 const CREAM = '#f1ead9';
+/** A number to a tenth, as a path writes it. */
+const n1 = (v: number): string => String(Math.round(v * 10) / 10);
 const SCALE_GOLD = '#dcb43c';
 const SCALE_GREEN = '#4e7d3a';
 const NEAR_BLACK = '#1a1c17';
@@ -174,7 +176,8 @@ export function sahmaran(dr: Drawing, rnd: Rnd): void {
   const Y0 = 31;
   const W = 90;
   const H = 62;
-  const A = (x: number, y: number): Pt => [X0 + (x / 410) * W, Y0 + (y / 307) * H];
+  const K = W / 410;
+  const A = (x: number, y: number): Pt => [X0 + x * K, Y0 + (y / 307) * H];
   const shape = (pts: ReadonlyArray<readonly [number, number]>, wobble = 0.15): Pt[] => tremble(pts.map(([x, y]) => A(x, y)), rnd, wobble);
   // the cord it hangs by, its nail, and its shadow on the wall
   paint(dr, brush([[13, 25], [36, 17.6], [60, 12.6]], 0.9, rnd, { start: 1, end: 1, peak: 0.5, count: 6 }) + brush([[107, 25], [84, 17.6], [60, 12.6]], 0.9, rnd, { start: 1, end: 1, peak: 0.5, count: 6 }), '#a8302c');
@@ -197,165 +200,188 @@ export function sahmaran(dr: Drawing, rnd: Rnd): void {
   paint(dr, outline(picture), CREAM);
   within(dr, outline(picture), () => {
     paint(dr, streaks(rnd, [X0, Y0, X0 + W, Y0 + H], 18, -6, 14, 1.6), '#e6dcc4', 0.5);
-    // the row of small feet along her belly, each curling like a wave
+    // her body is one thick curve: up from under the queen, along the bottom and round, rising on the left to the head.
+    // It is laid along its middle line, each point with its half-width, so the outline and the rows of scales follow
+    // the same curve; N is the side away from the bend
+    const spine: Array<[number, number, number]> = [[100, 86, 16], [84, 100, 22], [62, 122, 27], [48, 154, 30], [50, 188, 33], [66, 216, 36], [100, 232, 39], [150, 230, 40], [210, 229, 40], [270, 228, 40], [320, 226, 38], [356, 222, 32]];
+    const SAMPLES = 64;
+    const line = along(spine.map(([x, y]) => A(x, y)), SAMPLES);
+    const widths = along(spine.map(([, , w], i): Pt => [i, w * K]), SAMPLES).map(([, w]) => w);
+    const frames = line.map((p, i) => {
+      const a = line[Math.max(0, i - 1)]!;
+      const b = line[Math.min(SAMPLES, i + 1)]!;
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      const T: Pt = [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
+      return { p, T, N: [-T[1], T[0]] as Pt, w: widths[i]! };
+    });
+    const coarse = frames.filter((_, i) => i % 2 === 0);
+    const offset = (grow: number): Pt[] => [
+      ...coarse.map(({ p, N, w }): Pt => [p[0] + N[0] * (w + grow), p[1] + N[1] * (w + grow)]),
+      ...coarse.slice().reverse().map(({ p, N, w }): Pt => [p[0] - N[0] * (w + grow), p[1] - N[1] * (w + grow)]),
+    ];
+    // the row of small feet under its bottom run, each curling like a wave
     let feet = '';
-    for (let i = 0; i < 7; i++) {
-      const x = 98 + i * 32;
-      feet += outline(shape([[x, 258], [x + 3, 274], [x + 12, 286], [x + 24, 283], [x + 18, 278], [x + 14, 270], [x + 18, 258]], 0.1));
+    for (const i of [22, 27, 32, 37, 42, 47, 52]) {
+      const { p, N, w } = frames[i]!;
+      const [bx, by] = [p[0] + N[0] * w, p[1] + N[1] * w];
+      feet += outline(tremble([[bx - 1.2, by - 0.6], [bx - 0.6, by + 2.6], [bx + 1.6, by + 4.8], [bx + 4.4, by + 4.2], [bx + 3, by + 3.4], [bx + 2.2, by + 1.8], [bx + 2.6, by - 0.6]], rnd, 0.08));
     }
     paint(dr, feet, NEAR_BLACK);
-    // the long serpent body, sweeping left in a great arc from the queen to the head that rises at its far end; laid on
-    // dark, then scaled in green and gold with a dark scallop to every scale
-    const bodyRef: Array<[number, number]> = [[56, 92], [36, 128], [22, 170], [26, 214], [48, 246], [92, 262], [160, 268], [240, 266], [310, 258], [350, 240], [364, 210], [352, 184], [300, 180], [240, 180], [192, 175], [148, 162], [118, 138], [104, 112], [100, 92]];
-    const body = shape(bodyRef);
-    paint(dr, outline(body), NEAR_BLACK);
-    const inner = scaleAbout(body, ...A(190, 190), 0.97, 0.955);
-    paint(dr, outline(inner), SCALE_GOLD);
-    within(dr, outline(inner), () => {
-      const inside = (x: number, y: number): boolean => {
-        let hit = false;
-        for (let i = 0, j = bodyRef.length - 1; i < bodyRef.length; j = i++) {
-          const [xi, yi] = A(...bodyRef[i]!);
-          const [xj, yj] = A(...bodyRef[j]!);
-          if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) hit = !hit;
-        }
-        return hit;
-      };
-      const r = 1.45;
+    const body = tremble(offset(0), rnd, 0.12);
+    paint(dr, outline(tremble(offset(0.9), rnd, 0.12)), NEAR_BLACK);
+    paint(dr, outline(body), SCALE_GOLD);
+    within(dr, outline(body), () => {
+      // the scales in rows across the body, spaced evenly along it, each one's round edge toward the tail, mostly green
+      // with gold ones among them
+      const r = 1.5;
+      const STEP = 2.5;
+      const run = [0];
+      for (let i = 1; i <= SAMPLES; i++) run.push(run[i - 1]! + Math.hypot(line[i]![0] - line[i - 1]![0], line[i]![1] - line[i - 1]![1]));
       let greens = '';
       let scallops = '';
-      for (let row = 0; row < 22; row++) {
-        const y = Y0 + 9 + row * 2.2;
-        for (let col = 0; col < 32; col++) {
-          const x = X0 + 2 + col * r * 2 + (row % 2) * r;
-          if (!inside(x, y + 0.6)) continue;
-          const arc = `M${x - r} ${y.toFixed(1)}a${r} ${r} 0 0 0 ${2 * r} 0`;
-          if ((col + Math.floor(row / 2)) % 2) greens += `${arc}Z`;
+      for (let d = 1, i = 0; d < run[SAMPLES]!; d += STEP) {
+        while (i < SAMPLES - 1 && run[i + 1]! < d) i++;
+        const { p, T, N, w } = frames[i]!;
+        const rows = Math.max(2, Math.round(w / (r * 1.15)));
+        for (let j = -rows; j <= rows; j++) {
+          const o = (j / rows) * w * 0.98;
+          const slide = (j % 2 ? 0.5 : 0) * STEP;
+          const x0 = p[0] + N[0] * (o - r) + T[0] * slide;
+          const y0 = p[1] + N[1] * (o - r) + T[1] * slide;
+          const arc = `M${n1(x0)} ${n1(y0)}a${r} ${r} 0 0 1 ${n1(N[0] * 2 * r)} ${n1(N[1] * 2 * r)}`;
+          if (rnd() < 0.6) greens += `${arc}Z`;
           scallops += arc;
         }
       }
       paint(dr, greens, SCALE_GREEN);
-      dr.add(`<path d="${scallops}" fill="none" stroke="${NEAR_BLACK}" stroke-width="0.4"/>`);
+      dr.add(`<path d="${scallops}" fill="none" stroke="${NEAR_BLACK}" stroke-width="0.38"/>`);
     });
-    // the cape wrapped round her body below the queen: gold, orange and red, scalloped
-    const cape = shape([[356, 192], [330, 180], [262, 182], [214, 188], [204, 204], [214, 228], [262, 240], [330, 234], [358, 222]]);
-    paint(dr, outline(cape), NEAR_BLACK);
-    const capeIn = scaleAbout(cape, ...A(282, 210), 0.95, 0.88);
-    paint(dr, outline(capeIn), '#e0802c');
-    within(dr, outline(capeIn), () => {
-      // laid in rows of scales like feathers, yellow at the top, then orange edged in red, then red
-      let yellow = '';
-      let red = '';
-      let edges = '';
-      for (let row = 0; row < 4; row++) {
-        for (let i = 0; i < 12; i++) {
-          const [x, y] = A(206 + i * 14 + (row % 2) * 7, 184 + row * 13);
-          const arc = `M${(x - 1.6).toFixed(1)} ${y.toFixed(1)}a1.6 1.6 0 0 0 3.2 0`;
-          if (row === 0) yellow += `${arc}Z`;
-          if (row === 3) red += `${arc}Z`;
-          edges += arc;
-        }
-      }
-      paint(dr, polygon([A(196, 168), A(372, 168), A(372, 186), A(196, 186)]), '#f2c44a');
-      paint(dr, yellow, '#f2c44a');
-      paint(dr, polygon([A(196, 226), A(372, 224), A(372, 252), A(196, 252)]) + red, '#c3372c');
-      dr.add(`<path d="${edges}" fill="none" stroke="#a82a22" stroke-width="0.45"/>`);
-    });
-    // the head at the arc's far end: dark, its mouth open on a red forked tongue that reaches toward the queen, a red
-    // and gold collar at its neck, a gold eye
-    paint(dr, brush([A(150, 63), A(184, 56), A(214, 50)], 0.8, rnd, { start: 1, end: 1, peak: 0.5, count: 6 }) + brush([A(208, 51), A(222, 44)], 0.6, rnd, { count: 4 }) + brush([A(208, 51), A(222, 56)], 0.6, rnd, { count: 4 }), '#c8302a');
-    const head = shape([[50, 74], [68, 56], [100, 49], [134, 49], [160, 53], [176, 58], [150, 63], [170, 70], [140, 79], [112, 87], [84, 97], [58, 97]]);
-    paint(dr, outline(head), NEAR_BLACK);
+    // the head rising at the left, level with the queen's crown and facing her: dark, its jaw open on a red forked
+    // tongue that reaches across toward her, white teeth, a gold eye, a beaded collar where its neck begins
+    paint(dr, brush([A(140, 61), A(184, 54), A(222, 46)], 0.8, rnd, { start: 1, end: 1, peak: 0.5, count: 6 }) + brush([A(216, 47), A(232, 40)], 0.6, rnd, { count: 4 }) + brush([A(216, 47), A(232, 52)], 0.6, rnd, { count: 4 }), '#c8302a');
+    const head = shape([[56, 82], [62, 64], [82, 51], [108, 44], [134, 42], [156, 44], [173, 49], [166, 54], [150, 59], [137, 63], [152, 64], [166, 62], [158, 70], [134, 82], [110, 94], [88, 104], [66, 100]]);
+    paint(dr, outline(scaleAbout(head, ...A(112, 72), 1.04)), NEAR_BLACK);
+    paint(dr, outline(head), '#232a20');
     within(dr, outline(head), () => {
       let dots = '';
-      for (const [x, y] of [[80, 66], [96, 60], [112, 58], [92, 76], [108, 72], [126, 66], [74, 84]] as const) {
-        const [cx, cy] = A(x, y);
-        dots += ellipse(cx, cy, 0.7, 0.55);
-      }
-      paint(dr, dots, '#3c4a32');
+      for (const [x, y] of [[76, 70], [90, 60], [104, 54], [86, 82], [100, 74], [120, 68], [72, 88], [112, 86]] as const) dots += ellipse(...A(x, y), 0.65, 0.5);
+      paint(dr, dots, '#4a5a3a');
     });
-    const [ex, ey] = A(122, 60);
-    paint(dr, touch(ex, ey, 3.8, 2, -6), '#f3e3b4');
+    let teeth = '';
+    for (const x of [142, 150, 158, 165]) {
+      const [tx, ty] = A(x, 57 - (x - 140) * 0.18);
+      teeth += polygon([[tx - 0.6, ty], [tx + 0.6, ty], [tx, ty + 1.3]]);
+    }
+    paint(dr, teeth, '#f4eee0');
+    const [ex, ey] = A(114, 56);
+    paint(dr, touch(ex, ey, 3.6, 1.9, -8), '#f3e3b4');
     paint(dr, ellipse(ex + 0.4, ey, 0.75, 0.8), NEAR_BLACK);
-    paint(dr, brush([A(56, 86), A(66, 96), A(74, 104)], 2.6, rnd, { start: 1, end: 1, peak: 0.5, count: 6 }), '#c8302a');
-    paint(dr, ellipse(...A(62, 92), 0.6, 0.6) + ellipse(...A(68, 99), 0.6, 0.6), '#f2c44a');
-    // its own crown, a fan of gold petals striped with red, rising from the top of its head
+    paint(dr, brush([A(58, 74), A(62, 92), A(70, 108)], 2.4, rnd, { start: 1, end: 1, peak: 0.5, count: 6 }), '#c8302a');
+    paint(dr, ellipse(...A(59, 80), 0.6, 0.6) + ellipse(...A(62, 92), 0.6, 0.6) + ellipse(...A(67, 103), 0.6, 0.6), '#f2c44a');
+    // its own crown: a fan of gold petals striped with red, rising from the top of its head almost to the frame
     let fan = '';
     let edge = '';
     let stripes = '';
-    const base = A(96, 50);
-    for (let i = 0; i < 7; i++) {
-      const a = ((196 + i * 22) * Math.PI) / 180;
-      const tip: Pt = [base[0] + Math.cos(a) * 13.4, base[1] + Math.sin(a) * 10.6];
-      const petal = tremble([base, [base[0] + Math.cos(a - 0.2) * 9, base[1] + Math.sin(a - 0.2) * 7.4], tip, [base[0] + Math.cos(a + 0.2) * 9, base[1] + Math.sin(a + 0.2) * 7.4]], rnd, 0.1);
-      edge += outline(scaleAbout(petal, base[0], base[1], 1.1));
+    const base = A(100, 46);
+    for (const [x, y] of [[30, 36], [38, 18], [54, 6], [76, 1], [100, 2], [124, 5], [148, 10]] as const) {
+      const tip = A(x, y);
+      const [dx, dy] = [tip[0] - base[0], tip[1] - base[1]];
+      const l = Math.hypot(dx, dy);
+      const [nx, ny] = [-dy / l, dx / l];
+      const petal = tremble([base, [base[0] + dx * 0.6 + nx * 1.7, base[1] + dy * 0.6 + ny * 1.7], tip, [base[0] + dx * 0.6 - nx * 1.7, base[1] + dy * 0.6 - ny * 1.7]], rnd, 0.08);
+      edge += outline(scaleAbout(petal, base[0], base[1], 1.08));
       fan += outline(petal);
-      stripes += brush([[base[0] + Math.cos(a) * 3, base[1] + Math.sin(a) * 2.4], [base[0] + Math.cos(a) * 9.6, base[1] + Math.sin(a) * 7.6]], 0.9, rnd, { start: 0.4, end: 0.2, count: 4 });
+      stripes += brush([[base[0] + dx * 0.25, base[1] + dy * 0.25], [base[0] + dx * 0.72, base[1] + dy * 0.72]], 0.8, rnd, { start: 0.4, end: 0.2, count: 4 });
     }
     paint(dr, edge, NEAR_BLACK);
     paint(dr, fan, '#f0c040');
     paint(dr, stripes, '#c8302a');
-    paint(dr, outline(roundish(base[0], base[1] + 0.4, 4.4, 1.6, rnd, { count: 10 })), '#c8302a');
-    // the queen: long black hair framing her face and falling behind it, her horns curving up from her crown with green
-    // spirals and hanging drops, the tall crown with its leaves, her layered necklace and its heart
-    const horn = (pts: Array<[number, number]>): void => paint(dr, brush(pts.map(([x, y]) => A(x, y)), 2.4, rnd, { start: 1, end: 0.05, peak: 0.05, count: 12 }), NEAR_BLACK);
-    horn([[282, 88], [262, 52], [238, 24], [222, 10]]);
-    horn([[326, 88], [346, 54], [370, 28], [386, 16]]);
+    paint(dr, outline(roundish(base[0], base[1] + 0.3, 4.2, 1.6, rnd, { count: 10 })), '#c8302a');
+    // the queen, large on the right: horns curving up from her crown with green spirals and hanging drops, her long
+    // black hair falling past her shoulders into her body, her face, her layered necklace and its heart, the cape of
+    // scales at her shoulders where her body begins, and the tall crown
+    const horn = (pts: Array<[number, number]>): void => paint(dr, brush(pts.map(([x, y]) => A(x, y)), 2.6, rnd, { start: 1, end: 0.05, peak: 0.05, count: 12 }), NEAR_BLACK);
+    horn([[278, 96], [250, 58], [224, 22], [206, 4]]);
+    horn([[328, 96], [352, 60], [372, 28], [388, 12]]);
     const spiral = (cx: number, cy: number, s: number): void => {
       const pts: Pt[] = [];
       for (let i = 0; i <= 14; i++) {
         const a = (i / 14) * Math.PI * 3 * s - Math.PI / 2;
-        const r = 3.3 * (1 - i / 17);
+        const r = 4.2 * (1 - i / 17);
         pts.push([A(cx, cy)[0] + Math.cos(a) * r, A(cx, cy)[1] + Math.sin(a) * r * 0.95]);
       }
-      paint(dr, brush(pts, 1.5, rnd, { start: 0.8, end: 0.4, peak: 0.2, count: 18 }), '#5f9a38');
-      paint(dr, brush(pts.slice(2), 0.5, rnd, { start: 0.6, end: 0.2, count: 14 }), '#a8cf6a');
+      paint(dr, brush(pts, 1.8, rnd, { start: 0.8, end: 0.4, peak: 0.2, count: 18 }), '#5f9a38');
+      paint(dr, brush(pts.slice(2), 0.6, rnd, { start: 0.6, end: 0.2, count: 14 }), '#a8cf6a');
     };
-    spiral(244, 66, 1);
-    spiral(364, 70, -1);
+    spiral(244, 78, 1);
+    spiral(364, 76, -1);
     let drops = '';
     let beads = '';
-    for (const [x, y, l] of [[236, 80, 22], [252, 82, 30], [356, 84, 30], [372, 82, 22]] as const) {
+    for (const [x, y, l] of [[238, 98, 18], [256, 100, 26], [350, 100, 34], [368, 98, 20]] as const) {
       drops += brush([A(x, y), A(x, y + l)], 0.35, rnd, { start: 1, end: 1, count: 4 });
       beads += ellipse(...A(x, y + l + 4), 0.9, 1.2);
     }
     paint(dr, drops, '#8a6a2a');
     paint(dr, beads, '#c8302a');
-    paint(dr, outline(shape([[300, 70], [272, 84], [256, 110], [250, 148], [254, 188], [272, 192], [286, 176], [324, 176], [336, 192], [354, 188], [358, 148], [350, 110], [334, 84]])), '#141210');
-    const face = shape([[303, 92], [322, 100], [330, 124], [324, 150], [304, 162], [284, 150], [278, 124], [286, 100]]);
+    paint(dr, outline(shape([[270, 92], [260, 114], [252, 142], [242, 168], [228, 190], [254, 194], [276, 184], [328, 184], [346, 204], [354, 232], [362, 212], [360, 178], [352, 140], [344, 112], [336, 92]])), '#141210');
+    const cape = shape([[226, 186], [262, 176], [300, 188], [340, 182], [361, 198], [358, 234], [300, 240], [250, 230], [226, 212]]);
+    paint(dr, outline(cape), NEAR_BLACK);
+    const capeIn = scaleAbout(cape, ...A(292, 208), 0.95, 0.88);
+    paint(dr, outline(capeIn), '#e0802c');
+    within(dr, outline(capeIn), () => {
+      let yellow = '';
+      let red = '';
+      let edges = '';
+      for (let row = 0; row < 4; row++) {
+        for (let i = 0; i < 12; i++) {
+          const [x, y] = A(222 + i * 13 + (row % 2) * 6.5, 186 + row * 13);
+          const arc = `M${(x - 1.5).toFixed(1)} ${y.toFixed(1)}a1.5 1.5 0 0 0 3 0`;
+          if (row === 0) yellow += `${arc}Z`;
+          if (row === 3) red += `${arc}Z`;
+          edges += arc;
+        }
+      }
+      paint(dr, polygon([A(220, 170), A(366, 170), A(366, 188), A(220, 188)]) + yellow, '#f2c44a');
+      paint(dr, polygon([A(220, 228), A(366, 226), A(366, 250), A(220, 250)]) + red, '#c3372c');
+      dr.add(`<path d="${edges}" fill="none" stroke="#a82a22" stroke-width="0.45"/>`);
+    });
+    paint(dr, polygon(shape([[286, 156], [318, 156], [330, 184], [274, 184]], 0.05)), '#f4e6d8');
+    const face = shape([[302, 92], [324, 100], [331, 126], [325, 154], [303, 168], [281, 154], [275, 126], [281, 100]]);
     paint(dr, outline(face), '#f4e6d8');
-    paint(dr, polygon(shape([[286, 100], [303, 90], [322, 100], [320, 110], [303, 104], [288, 110]], 0.05)), '#141210');
-    const [lx, ly] = A(291, 124);
+    paint(dr, polygon(shape([[281, 102], [302, 92], [324, 102], [320, 110], [302, 105], [285, 110]], 0.05)), '#141210');
+    const [lx, ly] = A(290, 124);
     const [rx, ry] = A(315, 124);
-    paint(dr, touch(lx, ly, 3, 1.4, -6) + touch(rx, ry, 3, 1.4, 6), '#1e1410');
-    paint(dr, ellipse(lx + 0.3, ly - 0.2, 0.3, 0.3) + ellipse(rx + 0.3, ry - 0.2, 0.3, 0.3), '#fbf3e4');
-    paint(dr, brush([A(282, 114), A(290, 110), A(298, 113)], 0.4, rnd, { count: 4 }) + brush([A(308, 113), A(316, 110), A(324, 114)], 0.4, rnd, { count: 4 }) + brush([A(303, 124), A(304, 136), A(301, 138)], 0.3, rnd, { count: 4 }), '#6a4030');
-    paint(dr, touch(...A(303, 147), 2.8, 1.3, 0), '#c23a36');
-    paint(dr, touch(...A(288, 138), 2.6, 1.4, 0) + touch(...A(318, 138), 2.6, 1.4, 0), '#e8998a', 0.5);
-    paint(dr, polygon(shape([[294, 160], [312, 160], [314, 176], [292, 176]], 0.05)), '#f4e6d8');
-    for (const [sag, colour] of [[180, '#c8302a'], [188, '#e0aa3e'], [196, '#c8302a']] as const) {
-      paint(dr, brush([A(282, 168), A(303, sag), A(326, 168)], 0.9, rnd, { start: 1, end: 1, peak: 0.5, count: 8 }), colour);
+    paint(dr, touch(lx, ly, 3.4, 1.6, -6) + touch(rx, ry, 3.4, 1.6, 6), '#1e1410');
+    paint(dr, ellipse(lx + 0.3, ly - 0.2, 0.32, 0.32) + ellipse(rx + 0.3, ry - 0.2, 0.32, 0.32), '#fbf3e4');
+    paint(dr, brush([A(280, 114), A(289, 110), A(298, 113)], 0.42, rnd, { count: 4 }) + brush([A(307, 113), A(316, 110), A(325, 114)], 0.42, rnd, { count: 4 }) + brush([A(303, 124), A(304, 138), A(300, 140)], 0.32, rnd, { count: 4 }), '#6a4030');
+    paint(dr, touch(...A(302, 151), 3, 1.4, 0), '#c23a36');
+    paint(dr, touch(...A(287, 140), 2.8, 1.5, 0) + touch(...A(318, 140), 2.8, 1.5, 0), '#e8998a', 0.5);
+    for (const [sag, colour] of [[176, '#c8302a'], [184, '#e0aa3e'], [192, '#c8302a']] as const) {
+      paint(dr, brush([A(282, 162), A(302, sag), A(324, 162)], 0.9, rnd, { start: 1, end: 1, peak: 0.5, count: 8 }), colour);
     }
-    const [hxp, hyp] = A(303, 206);
-    paint(dr, `M${hxp.toFixed(1)} ${(hyp + 2).toFixed(1)}c-2.6 -1.6 -3 -3.6 -1.4 -4.2c0.8 -0.3 1.2 0.2 1.4 0.6c0.2 -0.4 0.6 -0.9 1.4 -0.6c1.6 0.6 1.2 2.6 -1.4 4.2Z`, '#c8302a');
-    // the crown, tall: a band of red and gold on her brow, a gold body banded with red, green leaves round its top, a
-    // gold cup at its peak
-    const crown = shape([[276, 92], [282, 58], [292, 42], [314, 42], [324, 58], [330, 92]]);
+    const [hxp, hyp] = A(302, 204);
+    paint(dr, `M${hxp.toFixed(1)} ${(hyp + 2.2).toFixed(1)}c-2.8 -1.7 -3.2 -3.9 -1.5 -4.5c0.9 -0.3 1.3 0.2 1.5 0.6c0.2 -0.4 0.6 -0.9 1.5 -0.6c1.7 0.6 1.3 2.8 -1.5 4.5Z`, '#c8302a');
+    // the crown, tall, reaching almost to the frame: a band of red and gold over her brow, a gold body banded with red,
+    // green and gold leaves round its top, a gold cup at its peak
+    const crown = shape([[274, 96], [280, 58], [290, 38], [314, 38], [324, 58], [330, 96]]);
     paint(dr, outline(crown), '#e2ad38');
-    within(dr, outline(crown), () => paint(dr, polygon([A(270, 76), A(336, 76), A(336, 84), A(270, 84)]) + polygon([A(270, 58), A(336, 58), A(336, 64), A(270, 64)]), '#c8302a'));
-    paint(dr, polygon([A(274, 86), A(332, 86), A(332, 96), A(274, 96)]), '#c8302a');
+    within(dr, outline(crown), () => paint(dr, polygon([A(268, 78), A(336, 78), A(336, 86), A(268, 86)]) + polygon([A(268, 56), A(336, 56), A(336, 62), A(268, 62)]), '#c8302a'));
+    paint(dr, polygon([A(272, 88), A(332, 88), A(332, 100), A(272, 100)]), '#c8302a');
     let gems = '';
-    for (const x of [282, 293, 303, 313, 324]) gems += ellipse(...A(x, 91), 0.7, 0.7);
+    for (const x of [280, 291, 302, 313, 324]) gems += ellipse(...A(x, 94), 0.75, 0.75);
     paint(dr, gems, '#f2c44a');
     let leaves = '';
-    for (const [x, deg] of [[286, -120], [294, -105], [303, -90], [312, -75], [320, -60]] as const) {
+    let golds = '';
+    for (const [x, deg] of [[283, -122], [291, -106], [302, -90], [313, -74], [321, -58]] as const) {
       const a = (deg * Math.PI) / 180;
-      const [bx, by] = A(x, 44);
-      leaves += touch(bx + Math.cos(a) * 2.6, by + Math.sin(a) * 2.6, 6, 1.8, deg);
+      const [bx, by] = A(x, 40);
+      leaves += touch(bx + Math.cos(a) * 3, by + Math.sin(a) * 3, 6.6, 1.9, deg);
+      golds += touch(bx + Math.cos(a) * 2, by + Math.sin(a) * 2, 3.4, 0.8, deg);
     }
     paint(dr, leaves, '#5f9a38');
-    const [cx, cy] = A(303, 22);
-    paint(dr, polygon([[cx - 2.2, cy - 2], [cx + 2.2, cy - 2], [cx + 1, cy + 1.6], [cx + 0.4, cy + 3.6], [cx - 0.4, cy + 3.6], [cx - 1, cy + 1.6]]), '#e2ad38');
-    paint(dr, ellipse(cx, cy - 2.6, 1, 0.9), '#c8302a');
+    paint(dr, golds, '#f2c44a');
+    const [cx, cy] = A(303, 16);
+    paint(dr, polygon([[cx - 2.4, cy - 2.4], [cx + 2.4, cy - 2.4], [cx + 1.1, cy + 1.6], [cx + 0.4, cy + 4], [cx - 0.4, cy + 4], [cx - 1.1, cy + 1.6]]), '#e2ad38');
+    paint(dr, ellipse(cx, cy - 3, 1.1, 1), '#c8302a');
   });
 }
