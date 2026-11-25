@@ -15,8 +15,8 @@ Kurda sells two things and **neither** exposes us to cardholder data:
 
 | Purchase type | Money flow | What Kurda stores | Card data? |
 |---|---|---|---|
-| **Gem packs** (real money) | Apple StoreKit / Google Play Billing collect and process payment entirely on-device / on-store. | A validated **store receipt** (`iap_receipts`): transaction id, product id, environment, gem amount. | **None.** |
-| **Shop items** (in-app currency) | Spends `zer`/`gems` from the internal double-entry wallet. | Ledger rows only. | **None.** |
+| **Zêr packs** (real money) | Apple StoreKit / Google Play Billing collect and process payment entirely on-device / on-store. | A validated **store receipt** (`iap_receipts`): transaction id, product id, environment, Zêr amount. | **None.** |
+| **Shop items** (in-app currency) | Spends `zer` from the internal double-entry wallet. | Ledger rows only. | **None.** |
 
 Consequences:
 
@@ -43,7 +43,7 @@ Consequences:
 
 Legend: ✅ tested (automated), 🛡️ enforced in code, 🎫 ticketed follow-up.
 
-### 2.1 Receipt **replay** (reuse a valid receipt to mint gems repeatedly)
+### 2.1 Receipt **replay** (reuse a valid receipt to mint Zêr repeatedly)
 - 🛡️ `iap_receipts` has a **unique `(platform, transaction_id)`** constraint;
   redeem inserts `ON CONFLICT DO NOTHING`. A given store transaction can grant
   **exactly once**, ever.
@@ -75,7 +75,7 @@ Legend: ✅ tested (automated), 🛡️ enforced in code, 🎫 ticketed follow-u
 - ✅ Verifier carries `environment`; unit-tested in `verifier.test.ts`.
 
 ### 2.5 **Refund abuse** (buy → spend → refund, keep the goods)
-- 🛡️ Refund webhook claws back gems, **capped at the remaining balance** so a
+- 🛡️ Refund webhook claws back Zêr, **capped at the remaining balance** so a
   malicious refund can't drive a negative wallet; the shortfall is recorded in
   `iap_receipts.clawed_back`.
 - 🛡️ Repeat/refund-after-spend patterns raise `REFUND_ABUSE` and hold the

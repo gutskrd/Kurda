@@ -90,7 +90,7 @@ by the account holder.
   | Realistic violence | Infrequent/Mild | the legends and the history behind them tell of killings and a massacre (Halabja), in words, never shown |
   | Profanity, horror, alcohol, medical, wellness, sexuality, cartoon or fantasy violence | None | the app's own content; what members post is moderated |
   | Gambling, simulated gambling | No | |
-  | Contests | None | leagues pay Zêr and gems, which are not money |
+  | Contests | None | leagues pay Zêr, which is not money |
   | Loot boxes | No | a quest's chest is earned, never bought, and holds Zêr |
   | Shared location | No | a member's country is chosen by them, never read from the phone |
   | Dating and relationships | No | |
@@ -151,7 +151,7 @@ already through it.
   > never lead to the App Store, and the store's rating prompt is the system's.
   >
   > Sign in with Apple is offered wherever Google is.
-  > Nothing is sold: Zêr and gems are earned by learning and cannot be bought.
+  > Nothing is sold: Zêr is earned by learning and cannot be bought.
   > The app has no advertising and no third-party analytics.
 
   Do not say that pictures are scanned automatically unless a scanner has been
@@ -303,7 +303,7 @@ npx eas-cli build --platform android --profile production
 npx eas-cli submit --platform android --profile production
 ```
 
-## Selling (Hevalo+ and Gewher), when it is turned on
+## Selling (Hevalo+ and Zêr), when it is turned on
 
 Nothing is sold in 1.0.0, and the privacy page says so. The phone shows no
 avatar, crown or line that only Hevalo+ unlocks to anybody who is not a
@@ -315,9 +315,16 @@ created in App Store Connect first:
 |---|---|---|---|
 | Hevalo+ monthly | auto-renewing subscription | `app.hevalo.plus.monthly` | €3.99 a month, with an introductory offer: first month €0.99 (pay as you go, 1 month) |
 | Hevalo+ yearly | auto-renewing subscription, same group | `app.hevalo.plus.yearly` | €29.99 a year |
-| Gewher, small | consumable | `app.hevalo.gems.60` | €0.99 |
-| Gewher, medium | consumable | `app.hevalo.gems.350` | €4.99 |
-| Gewher, large | consumable | `app.hevalo.gems.800` | €9.99 |
+| 400 Zêr | consumable | `app.hevalo.zer.400` | €0.99 |
+| 2,200 Zêr | consumable | `app.hevalo.zer.2200` | €4.99 |
+| 4,800 Zêr | consumable | `app.hevalo.zer.4800` | €9.99 |
+| 10,400 Zêr | consumable | `app.hevalo.zer.10400` | €19.99 |
+
+Zêr is the one currency: Gewher was folded into it at five Zêr to one. Every
+Zêr price in the apps and on the website already shows what it is worth,
+"≈ €0.99" for 400 Zêr (shared `zerValue`, from the smallest pack); once the
+store's own price for that pack is known on the phone it is said in the
+reader's store currency instead.
 
 The paywall must show the price, the period, that it renews until cancelled,
 the introductory price and what follows it, and links to the Terms and the
