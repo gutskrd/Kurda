@@ -67,6 +67,8 @@ export const REACH_CONTROLS = [
   '.fcard-gifts',
   // The Hevalo+ page's fine-print links, restore and the terms, side by side under its button (plus/plus.css).
   '.plus-link',
+  // Skip on a gift still in its wrapping, a 44px pill (styles/social.css).
+  '.gift-skip',
 ] as const;
 
 /** Links on a line of their own, enlarged only under a coarse pointer. */
@@ -111,6 +113,9 @@ export const LARGE_ENOUGH = [
   // tall (styles/social.css).
   '.gift-tile',
   '.gift-limit-field',
+  // The gift's moment and the sender's, each the whole screen, which a tap anywhere skips or closes (styles/social.css).
+  '.gift-moment',
+  '.gift-sent',
   '.user-actions-btn',
   '.editor-history-btn',
   '.framer-zoom-btn',
