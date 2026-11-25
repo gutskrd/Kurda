@@ -922,6 +922,8 @@ export {
 } from './art/palette.js';
 /** The warm page, the three colour themes on it, the reward gold and Hevalo+'s own button, for both apps. */
 export * from './themes.js';
+/** The Hevalo+ page's picture: the sky, the deer with his crown, and gold sparkles, as three layers. */
+export { PLUS_HERO_VIEW, plusHeroFigure, plusHeroSky, plusHeroSparkles } from './art/plus-hero.js';
 /** The nine hues drawings are coloured in, each in the same four steps, light and dark. */
 export { HUES, HUE_NAMES, hueSteps, isHueName, type HueName, type HueScheme, type HueSteps } from './hues.js';
 /** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
