@@ -2,11 +2,12 @@
  * Who read whose letters and private chats, and why (api/src/message-access).
  *
  * - `safety_reviews`: a superadmin letting one staff member read one account's letters and private chats, read-only,
- *   for exactly 24 hours, for a reason from a fixed list with a note. Nothing about a review may change afterwards
- *   except ending it early, once.
+ *   for exactly 24 hours, for a reason from a fixed list with a note. The database sets when it starts and ends, so no
+ *   insert can open one in the past or for longer, and nothing about it may change afterwards except ending it early,
+ *   once.
  * - `message_access_log`: every such grant and its end, every list of conversations and every conversation opened
  *   under one, and every time a moderator read a reported or flagged letter or message in its case. Never what a
- *   message says. Append-only, with no way round it, like admin_audit_log.
+ *   message says. Append-only, with no way round it: no update, delete or truncate.
  *
  * The people in both are plain columns, as in admin_audit_log, so the record outlives the accounts it names.
  */
@@ -57,6 +58,25 @@ export const up = (pgm) => {
     level: 'ROW',
     function: 'safety_reviews_guard',
   });
+  // a review starts when it is written and lasts its 24 hours, whatever the insert said
+  pgm.createFunction(
+    'safety_reviews_times',
+    [],
+    { returns: 'trigger', language: 'plpgsql', replace: true },
+    `BEGIN
+       NEW.granted_at := now();
+       NEW.expires_at := now() + interval '24 hours';
+       NEW.ended_at := NULL;
+       NEW.ended_by := NULL;
+       RETURN NEW;
+     END;`,
+  );
+  pgm.createTrigger('safety_reviews', 'safety_reviews_set_times', {
+    when: 'BEFORE',
+    operation: 'INSERT',
+    level: 'ROW',
+    function: 'safety_reviews_times',
+  });
 
   pgm.createTable('message_access_log', {
     id: { type: 'uuid', primaryKey: true, default: pgm.func('gen_random_uuid()') },
@@ -96,12 +116,34 @@ export const up = (pgm) => {
     level: 'ROW',
     function: 'message_access_log_immutable',
   });
+
+  // TRUNCATE skips row triggers, so each table refuses it on its own
+  pgm.createFunction(
+    'message_access_no_truncate',
+    [],
+    { returns: 'trigger', language: 'plpgsql', replace: true },
+    `BEGIN
+       RAISE EXCEPTION '% is append-only and cannot be emptied', TG_TABLE_NAME;
+     END;`,
+  );
+  for (const table of ['safety_reviews', 'message_access_log']) {
+    pgm.createTrigger(table, `${table}_no_truncate`, {
+      when: 'BEFORE',
+      operation: 'TRUNCATE',
+      level: 'STATEMENT',
+      function: 'message_access_no_truncate',
+    });
+  }
 };
 
 export const down = (pgm) => {
+  for (const table of ['safety_reviews', 'message_access_log']) pgm.dropTrigger(table, `${table}_no_truncate`);
+  pgm.dropFunction('message_access_no_truncate', []);
   pgm.dropTrigger('message_access_log', 'message_access_log_no_rewrite');
   pgm.dropFunction('message_access_log_immutable', []);
   pgm.dropTable('message_access_log');
+  pgm.dropTrigger('safety_reviews', 'safety_reviews_set_times');
+  pgm.dropFunction('safety_reviews_times', []);
   pgm.dropTrigger('safety_reviews', 'safety_reviews_no_rewrite');
   pgm.dropFunction('safety_reviews_guard', []);
   pgm.dropTable('safety_reviews');
