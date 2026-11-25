@@ -24,6 +24,9 @@ import { CodePage } from '../parental/CodePage';
 import { ConnectPage } from '../parental/ConnectPage';
 import { ParentalPage } from '../parental/ParentalPage';
 import { BedtimePage, LimitPage, TeenPage } from '../parental/TeenPage';
+import { AddChildPage } from '../family/AddChildPage';
+import { ChildPage, PairingPage } from '../family/ChildPage';
+import { FamilyPage } from '../family/FamilyPage';
 import { useMyAccount } from './account';
 import { AboutPage, AccountPage, DisplayPage, HelpPage, PrivacyPage, SafetyPage } from './CategoryPages';
 import { SettingsChoice, SettingsNote, SettingsPage, SettingsRow, SettingsSection, SettingsSwitch } from './list';
@@ -41,6 +44,10 @@ export const SETTINGS_PAGES = [
   'parentalTeen',
   'parentalLimit',
   'parentalBedtime',
+  'family',
+  'familyAddChild',
+  'familyChild',
+  'familyPairing',
   'display',
   'privacy',
   'safety',
@@ -64,6 +71,8 @@ export function SettingsPageScreen({ page, teenId = '', onExit }: { page: Settin
   // The two pages with a moment over their header draw their own frame.
   if (page === 'parentalConnect') return <ConnectPage onExit={onExit} />;
   if (page === 'parentalCode') return <CodePage onExit={onExit} />;
+  if (page === 'familyAddChild') return <AddChildPage onExit={onExit} />;
+  if (page === 'familyPairing') return <PairingPage teenId={teenId} onExit={onExit} />;
   const { title, Body } = PAGES[page];
   return (
     <SettingsPage title={t(title)} onExit={onExit}>
@@ -74,12 +83,14 @@ export function SettingsPageScreen({ page, teenId = '', onExit }: { page: Settin
 
 /** Each page's title and list; a page about one teen is drawn afresh for another. */
 type Page = { title: TranslationKey; Body: (props: { teenId: string }) => React.JSX.Element };
-const PAGES: Record<Exclude<SettingsPageKey, 'parentalConnect' | 'parentalCode'>, Page> = {
+const PAGES: Record<Exclude<SettingsPageKey, 'parentalConnect' | 'parentalCode' | 'familyAddChild' | 'familyPairing'>, Page> = {
   account: { title: 'settings.group.account', Body: AccountPage },
   parental: { title: 'parental.title', Body: ParentalPage },
   parentalTeen: { title: 'parental.title', Body: TeenPage },
   parentalLimit: { title: 'parental.dailyLimit', Body: LimitPage },
   parentalBedtime: { title: 'parental.bedtime', Body: BedtimePage },
+  family: { title: 'family.title', Body: FamilyPage },
+  familyChild: { title: 'family.title', Body: ChildPage },
   display: { title: 'settings.cat.display', Body: DisplayPage },
   privacy: { title: 'settings.cat.privacy', Body: PrivacyPage },
   safety: { title: 'settings.cat.safety', Body: SafetyPage },

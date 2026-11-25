@@ -11,14 +11,18 @@ import { useDirection } from '../reports/direction';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { ActionPill, HeaderButton } from './HeaderButton';
 import type { RootNavigation } from './rootStack';
+import { useAuth } from '../auth/AuthContext';
 
 /**
  * Search and the bell in one pill at the far end of a page's top, in the same corner on every tab and page to browse.
  * Search opens over the current page, and Back returns there.
  */
-export function GlobalActions(): React.JSX.Element {
+export function GlobalActions(): React.JSX.Element | null {
   const navigation = useNavigation<RootNavigation>();
   const { t } = useI18n();
+  // A child's profile has no search and no notification list (family/ChildRoot).
+  const { isChild } = useAuth();
+  if (isChild) return null;
   return (
     <ActionPill>
       <HeaderButton icon="search" label={t('nav.search')} onPress={() => navigation.navigate('Search')} testID="top-search" />

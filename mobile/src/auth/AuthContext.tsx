@@ -53,6 +53,13 @@ export interface SessionUser {
   accountHold?: AccountHold | null;
   /** A supervised teen's limits and where they stand today (/me only); null or absent for everyone else (parental/). */
   supervision?: SupervisionState | null;
+  /** 'child' for a child's profile made by a parent (family/), which the app opens in child mode; absent for everyone else. */
+  kind?: 'person' | 'child';
+  /**
+   * A child's parent, whether this phone is the parent's own (a profile switch, which the family PIN gives back), and
+   * whether learning reminders are allowed (/me only, for a child).
+   */
+  child?: { parentName: string; returnable: boolean; remindersAllowed: boolean } | null;
 }
 
 /** A failed request, with the server's code when it sent one. */
@@ -95,6 +102,8 @@ interface AuthContextValue {
    * account gate (auth/AccountGate).
    */
   isGuest: boolean;
+  /** Signed in as a child's profile (`user.kind`): the app shows only what a child may use (family/ChildRoot). */
+  isChild: boolean;
   client: ApiClient;
   /** API origin, used to derive the realtime WebSocket URL. */
   baseUrl: string;
@@ -173,6 +182,18 @@ interface AuthContextValue {
    */
   requestPasswordReset(email: string): Promise<string | null>;
   logout(): Promise<void>;
+  /**
+   * A child's own phone, with the six digits their parent showed (POST /auth/child/pair): a session for the child, bound
+   * to this phone. Resolves to the failure, or null on success.
+   */
+  childSignIn(code: string): Promise<AuthFailure | null>;
+  /**
+   * The parent hands this phone to a child (POST /me/family/children/:id/switch): the parent's session here ends and the
+   * child's begins, until the family PIN gives it back. Resolves to the failure, or null on success.
+   */
+  switchToChild(childId: string): Promise<AuthFailure | null>;
+  /** The phone back to the parent with the family PIN (POST /auth/child/return). Resolves to the failure, or null. */
+  returnToParent(pin: string): Promise<AuthFailure | null>;
   /**
    * Start account deletion: schedules a grace-period delete server-side (DELETE /me) and signs out locally; signing in
    * before it elapses cancels it. Resolves to the grace period, or to why it failed.
@@ -296,8 +317,8 @@ export function AuthProvider({
     [baseUrl, storage, deviceStore],
   );
 
-  // A guest has no friends to be seen online by, so no presence beat is sent for one.
-  useHeartbeat(client, status === 'signedIn' && user?.guest !== true);
+  // A guest has no friends to be seen online by, and a child is seen by nobody, so no presence beat is sent for either.
+  useHeartbeat(client, status === 'signedIn' && user?.guest !== true && user?.kind !== 'child');
 
   // The account's days are the learner's own: its time zone follows the device's (auth/timeZone.ts).
   const zoneTaken = useCallback((timezone: string) => setUser((u) => (u ? { ...u, timezone } : u)), []);
@@ -366,6 +387,7 @@ export function AuthProvider({
     status,
     user,
     isGuest: user?.guest === true,
+    isChild: user?.kind === 'child',
     client,
     baseUrl,
     login: async (email, password) => {
@@ -488,6 +510,26 @@ export function AuthProvider({
       await storage.clear();
       setUser(null);
       setStatus('signedOut');
+    },
+    childSignIn: async (code) => {
+      const res = await client.post<AuthPayload>('/auth/child/pair', { code });
+      if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
+      await applyAuth(res.data);
+      return null;
+    },
+    switchToChild: async (childId) => {
+      // The parent's phone off their notifications first, while their session can still say whose phone it is.
+      await unregisterThisDevice(client);
+      const res = await client.post<AuthPayload>(`/me/family/children/${encodeURIComponent(childId)}/switch`, {});
+      if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
+      await applyAuth(res.data);
+      return null;
+    },
+    returnToParent: async (pin) => {
+      const res = await client.post<AuthPayload>('/auth/child/return', { pin });
+      if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
+      await applyAuth(res.data);
+      return null;
     },
     deleteAccount: async () => {
       // Before the deletion, which ends every session the account has; after it, nothing could say whose phone this is.

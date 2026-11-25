@@ -92,6 +92,8 @@ export type RootStackParamList = {
    * (settings/SettingsPageScreen). `teenId` names the teen on a parent's pages about one.
    */
   SettingsPage: { page: SettingsPageKey; teenId?: string };
+  /** A child's own page in child mode (family/ChildProfile): who made the profile and who sees it, and their settings. */
+  ChildProfile: undefined;
   BlockedUsers: undefined;
   /** Your reports and what became of them (reports/MyReportsScreen). */
   MyReports: undefined;
