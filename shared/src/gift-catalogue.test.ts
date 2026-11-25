@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GIFT_ART_IDS, giftArtKey } from './art/gift-art.js';
+import { giftArtKey, isGiftArtId } from './art/gift-art.js';
 import {
   BAG_GIFTS_PER_DAY,
   BAG_MAX_EACH,
@@ -9,23 +9,25 @@ import {
   bagGiftFor,
   drawnGiftArtKey,
   drawnGifts,
+  giftInSeason,
   giftMeaning,
   giftMeaningLocales,
   giftOfSku,
   giftShelves,
   giftSku,
+  isLimitedItem,
 } from './gift-catalogue.js';
 import { APP_LOCALE_CODES } from './locales.js';
 import { MINOR_GIFT_MAX_PRICE } from './gift-safety.js';
 
 describe('the gift catalogue', () => {
-  it('holds the thirty-one gifts, cheapest first, from a cent to a thousand euros', () => {
-    expect(GIFTS).toHaveLength(31);
+  it('holds the thirty-three gifts, cheapest first, from a cent to a thousand euros', () => {
+    expect(GIFTS).toHaveLength(33);
     const prices = GIFTS.map((g) => g.price);
     expect([...prices].sort((a, b) => a - b)).toEqual(prices);
     expect(prices[0]).toBe(1);
     expect(prices.at(-1)).toBe(100_000);
-    expect(new Set(GIFTS.map((g) => g.id)).size).toBe(31);
+    expect(new Set(GIFTS.map((g) => g.id)).size).toBe(33);
   });
 
   it('keeps the prices and groups of the spec', () => {
@@ -33,6 +35,9 @@ describe('the gift catalogue', () => {
     expect([at('cay').price, at('qehwe').price, at('gul').price, at('pisik').price]).toEqual([1, 2, 25, 150]);
     expect([at('belem').price, at('mal').price, at('heyv').price, at('kadiz').price]).toEqual([2_000, 5_000, 20_000, 100_000]);
     expect(at('pet')).toMatchObject({ group: 'sky', limited: true, price: 2_000 });
+    expect(at('kawa')).toMatchObject({ name: 'Çakûçê Kawa', group: 'legends', price: 5_000 });
+    expect(at('sahmaran')).toMatchObject({ name: 'Wêneyê Şahmaranê', group: 'legends', price: 7_500 });
+    expect(GIFT_GROUPS.at(-1)).toBe('legends');
     expect(GIFTS.filter((g) => g.limited).map((g) => g.id)).toEqual(['pet']);
     for (const g of GIFTS) expect(GIFT_GROUPS).toContain(g.group);
   });
@@ -50,11 +55,23 @@ describe('the gift catalogue', () => {
     expect(giftOfSku('bg-made-bihar')).toBeNull();
   });
 
-  it('offers only the drawn gifts, with the picture each is drawn as', () => {
-    expect(drawnGifts().map((g) => g.id).sort()).toEqual([...GIFT_ART_IDS].sort());
-    expect(drawnGiftArtKey('gift-cay')).toBe(giftArtKey('cay'));
-    expect(drawnGiftArtKey('gift-lale')).toBeNull();
+  it('offers each gift once its picture is painted, with the picture it is drawn as', () => {
+    for (const g of GIFTS) expect(drawnGiftArtKey(giftSku(g.id)), g.id).toBe(isGiftArtId(g.id) ? giftArtKey(g.id) : null);
+    expect(drawnGifts().map((g) => g.id)).toEqual(GIFTS.filter((g) => isGiftArtId(g.id)).map((g) => g.id));
+    // every gift is painted but the two legends, whose pictures come next
+    expect(GIFTS.filter((g) => !isGiftArtId(g.id)).every((g) => g.group === 'legends')).toBe(true);
     expect(drawnGiftArtKey('sticker-lale')).toBeNull();
+    expect(drawnGiftArtKey('gift-unknown')).toBeNull();
+  });
+
+  it('sells the Newroz fire in March only, every year, by the UTC calendar', () => {
+    expect(giftInSeason('gift-pet', new Date('2027-03-01T00:00:00Z'))).toBe(true);
+    expect(giftInSeason('gift-pet', new Date('2040-03-31T23:59:59Z'))).toBe(true);
+    expect(giftInSeason('gift-pet', new Date('2027-04-01T00:00:00Z'))).toBe(false);
+    expect(giftInSeason('gift-cay', new Date('2027-04-01T00:00:00Z'))).toBe(true);
+    expect(isLimitedItem('gift-pet', null)).toBe(true);
+    expect(isLimitedItem('gift-cay', null)).toBe(false);
+    expect(isLimitedItem('bg-newroz', '2027-03-22T00:00:00Z')).toBe(true);
   });
 
   it('says what every gift means in every interface language', () => {
@@ -91,12 +108,11 @@ describe('the gift bag', () => {
     expect(BAG_MAX_EACH).toBe(99);
   });
 
-  it('gives each moment its own first choice once drawn, and a drawn one until then', () => {
+  it('gives each moment its own first choice', () => {
     expect(bagGiftFor('daily')?.id).toBe('cay');
     expect(bagGiftFor('streak')?.id).toBe('qehwe');
-    // an apple and a chamomile sprig are not drawn yet
-    expect(bagGiftFor('harvest')?.id).toBe('cay');
-    expect(bagGiftFor('podium')?.id).toBe('qehwe');
+    expect(bagGiftFor('harvest')?.id).toBe('sev');
+    expect(bagGiftFor('podium')?.id).toBe('beybun');
   });
 
   it('brings another kind once one is full, and nothing once every kind is', () => {

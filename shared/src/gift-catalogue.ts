@@ -1,6 +1,6 @@
 /**
- * The gifts: tea and coffee, flowers, animals, music, boats, houses and the sky, from 1 Zêr (one cent) to 100,000 (a
- * thousand euros). Each has its Kurmancî name, which every app shows as written, and what it means in each interface
+ * The gifts: tea and coffee, flowers, animals, music, boats, houses, legends and the sky, from 1 Zêr (one cent) to
+ * 100,000 (a thousand euros). Each has its Kurmancî name, which every app shows as written, and what it means in each interface
  * language underneath, so a gift teaches a word. A gift is offered only once its picture is drawn (`GIFT_ART_IDS`), so a
  * new picture is all it takes to put one on sale. The server seeds these as shop items (`giftSku`), and an admin may
  * change a price through the usual approvals; the numbers here are what they were first put on sale at.
@@ -9,7 +9,7 @@ import { GIFT_ART_IDS, giftArtKey, isGiftArtId } from './art/gift-art.js';
 import type { AppLocale } from './locales.js';
 
 /** The shelves of the gift sheet, in the order it shows them. */
-export const GIFT_GROUPS = ['warm', 'flowers', 'animals', 'music', 'sky', 'boats', 'houses'] as const;
+export const GIFT_GROUPS = ['warm', 'flowers', 'animals', 'music', 'sky', 'boats', 'houses', 'legends'] as const;
 export type GiftGroup = (typeof GIFT_GROUPS)[number];
 
 export interface GiftDef {
@@ -65,6 +65,8 @@ export const GIFTS: readonly GiftDef[] = [
   gift('hesp', 'Hesp', 2_500, 'animals'),
   gift('kon', 'Reşmal', 3_000, 'houses'),
   gift('mal', 'Mala gund', 5_000, 'houses'),
+  gift('kawa', 'Çakûçê Kawa', 5_000, 'legends'),
+  gift('sahmaran', 'Wêneyê Şahmaranê', 7_500, 'legends'),
   gift('gemi', 'Gemiya bayê', 10_000, 'boats'),
   gift('kosk', 'Koşk', 15_000, 'houses'),
   gift('heyv', 'Heyv', 20_000, 'sky'),
@@ -239,6 +241,15 @@ const MEANINGS: Readonly<Record<string, Readonly<Record<AppLocale, string>>>> = 
   roj: {
     en: 'The sun', ku: 'Roja ezmên', ckb: 'خۆر', de: 'Die Sonne', es: 'El sol', fr: 'Le soleil', nl: 'De zon', tr: 'Güneş',
     ar: 'الشمس',
+  },
+  kawa: {
+    en: 'Kawa’s hammer', ku: 'Çakûçê Kawayê Hesinkar', ckb: 'چەکوشی کاوەی ئاسنگەر', de: 'Kawas Hammer', es: 'El martillo de Kawa',
+    fr: 'Le marteau de Kawa', nl: 'De hamer van Kawa', tr: 'Kawa’nın çekici', ar: 'مطرقة كاوا',
+  },
+  sahmaran: {
+    en: 'A painting of Şahmaran', ku: 'Şahmaran, şahbanûya maran', ckb: 'تابلۆیەکی شاماران', de: 'Ein Gemälde von Şahmaran',
+    es: 'Un cuadro de Şahmaran', fr: 'Un tableau de Şahmaran', nl: 'Een schilderij van Şahmaran', tr: 'Bir Şahmeran tablosu',
+    ar: 'لوحة لشاهماران',
   },
   kadiz: {
     en: 'The Milky Way', ku: 'Galaksiya me', ckb: 'کاکێشان', de: 'Die Milchstraße', es: 'La Vía Láctea', fr: 'La Voie lactée',

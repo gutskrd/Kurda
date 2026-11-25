@@ -1241,6 +1241,7 @@ export const fr: Catalogue = {
   'gift.group.sky': 'Le ciel',
   'gift.group.boats': 'Bateaux',
   'gift.group.houses': 'Maisons',
+  'gift.group.legends': 'Légendes',
   'gift.error.bagEmpty': 'Il n’en reste plus assez dans ton sac.',
   'gift.error.overLimit': 'Ici, un cadeau peut coûter au plus {zer} Zêr.',
   'gift.error.monthLimit': 'C’est plus que ce qu’il reste de ta limite de cadeaux ce mois-ci : {zer} Zêr.',

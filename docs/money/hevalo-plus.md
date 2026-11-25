@@ -79,10 +79,10 @@ more needs a second admin's approval.
 
 ## Gifts
 
-- Thirty-one gifts (shared `gift-catalogue.ts`), from a glass of tea at 1 Zêr (one cent) through flowers, animals,
-  music, boats and houses to the moon at 20,000, the sun at 50,000 and the Milky Way at 100,000 (€1,000). Each shows its
-  Kurmancî name with its meaning in the reader's language, so a gift teaches a word. A gift is offered once its picture
-  is painted. The Newroz fire is sold for March only. The gift stickers are retired and stay with whoever holds or gave
+- Thirty-three gifts (shared `gift-catalogue.ts`), from a glass of tea at 1 Zêr (one cent) through flowers, animals,
+  music, boats, houses and legends (Kawa's hammer, a painting of Şahmaran) to the moon at 20,000, the sun at 50,000
+  and the Milky Way at 100,000 (€1,000). Each shows its Kurmancî name with its meaning in the reader's language, so a
+  gift teaches a word. A gift is offered once its picture is painted. The Newroz fire is sold for March only. The gift stickers are retired and stay with whoever holds or gave
   one. A free gift from the members' box pays for one gift of up to 150 Zêr. Shop items can still be given from the
   shop.
 - The gift sheet opens with the gift bag, then the gifts by shelf, cheapest first, each with its euro value. What

@@ -237,6 +237,7 @@ const GROUP_LABEL: Record<GiftGroup, TranslationKey> = {
   sky: 'gift.group.sky',
   boats: 'gift.group.boats',
   houses: 'gift.group.houses',
+  legends: 'gift.group.legends',
 };
 
 /** The second confirmation's details, checked before they are trusted. */

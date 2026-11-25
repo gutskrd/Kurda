@@ -1306,6 +1306,7 @@ export const en = {
   'gift.group.sky': 'The sky',
   'gift.group.boats': 'Boats',
   'gift.group.houses': 'Houses',
+  'gift.group.legends': 'Legends',
   'gift.error.bagEmpty': 'Your bag doesn’t have enough of that one now.',
   'gift.error.overLimit': 'A gift here can be up to {zer} Zêr.',
   'gift.error.monthLimit': 'That’s more than this month’s gift limit leaves: {zer} Zêr.',

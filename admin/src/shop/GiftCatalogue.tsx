@@ -26,6 +26,7 @@ const SHELF: Record<string, string> = {
   sky: 'The sky',
   boats: 'Boats',
   houses: 'Houses',
+  legends: 'Legends',
 };
 
 export function GiftCatalogue({

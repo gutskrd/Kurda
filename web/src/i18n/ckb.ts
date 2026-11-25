@@ -1247,6 +1247,7 @@ export const ckb: Catalogue = {
   'gift.group.sky': 'ئاسمان',
   'gift.group.boats': 'بەلەم و کەشتی',
   'gift.group.houses': 'خانوو',
+  'gift.group.legends': 'ئەفسانە',
   'gift.error.bagEmpty': 'ئێستا بەشی پێویست لەمە لە کیسەکەتدا نییە.',
   'gift.error.overLimit': 'لێرە دیاری دەتوانێت تا {zer} Zêr بێت.',
   'gift.error.monthLimit': 'ئەمە زیاترە لەوەی لە سنووری دیاریی ئەم مانگە ماوە: {zer} Zêr.',

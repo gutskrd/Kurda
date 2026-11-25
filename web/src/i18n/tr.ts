@@ -1237,6 +1237,7 @@ export const tr: Catalogue = {
   'gift.group.sky': 'Gökyüzü',
   'gift.group.boats': 'Tekneler',
   'gift.group.houses': 'Evler',
+  'gift.group.legends': 'Efsaneler',
   'gift.error.bagEmpty': 'Çantanda bundan artık yeterince yok.',
   'gift.error.overLimit': 'Burada bir hediye en fazla {zer} Zêr olabilir.',
   'gift.error.monthLimit': 'Bu, bu ayki hediye sınırından kalandan fazla: {zer} Zêr.',

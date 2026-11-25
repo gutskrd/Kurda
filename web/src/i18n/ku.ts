@@ -1244,6 +1244,7 @@ export const ku: Catalogue = {
   'gift.group.sky': 'Ezman',
   'gift.group.boats': 'Belem û gemî',
   'gift.group.houses': 'Xanî',
+  'gift.group.legends': 'Efsane',
   'gift.error.bagEmpty': 'Di torbeya te de êdî têra vê tune.',
   'gift.error.overLimit': 'Li vir diyarî herî zêde dikare {zer} Zêr be.',
   'gift.error.monthLimit': 'Ev ji ya ku ji sînorê diyariyan ê vê mehê maye zêdetir e: {zer} Zêr.',

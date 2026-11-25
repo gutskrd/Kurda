@@ -1,5 +1,5 @@
 /**
- * The gift economy: the thirty-one gifts (shared/src/gift-catalogue.ts) on sale in place of the gift stickers, the
+ * The gift economy: the thirty-three gifts (shared/src/gift-catalogue.ts) on sale in place of the gift stickers, the
  * gift bag that everyone fills from the moments that pay members Zêr, and an adult's own limit on spending Zêr on gifts.
  *
  * The stickers are retired, not deleted: whoever holds or was given one keeps it, and every gift of one still reads in
@@ -37,6 +37,8 @@ const GIFTS = [
   ['hesp', 'Hesp', 2500],
   ['kon', 'Reşmal', 3000],
   ['mal', 'Mala gund', 5000],
+  ['kawa', 'Çakûçê Kawa', 5000],
+  ['sahmaran', 'Wêneyê Şahmaranê', 7500],
   ['gemi', 'Gemiya bayê', 10000],
   ['kosk', 'Koşk', 15000],
   ['heyv', 'Heyv', 20000],

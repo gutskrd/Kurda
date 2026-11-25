@@ -67,6 +67,7 @@ const GROUP_LABEL: Record<GiftGroup, MessageKey> = {
   sky: 'gift.group.sky',
   boats: 'gift.group.boats',
   houses: 'gift.group.houses',
+  legends: 'gift.group.legends',
 };
 
 const SKIP_REASON: Record<SendGiftResult['skipped'][number]['reason'], MessageKey> = {

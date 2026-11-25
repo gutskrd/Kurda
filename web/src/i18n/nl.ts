@@ -1242,6 +1242,7 @@ export const nl: Catalogue = {
   'gift.group.sky': 'De hemel',
   'gift.group.boats': 'Boten',
   'gift.group.houses': 'Huizen',
+  'gift.group.legends': 'Legendes',
   'gift.error.bagEmpty': 'Je hebt er niet genoeg meer van in je tas.',
   'gift.error.overLimit': 'Een cadeau kan hier hoogstens {zer} Zêr kosten.',
   'gift.error.monthLimit': 'Dat is meer dan je cadeaulimiet deze maand nog toelaat: {zer} Zêr.',

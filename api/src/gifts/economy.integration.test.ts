@@ -12,6 +12,8 @@ import {
   BIG_GIFT_CONFIRM_TTL_MS,
   GIFTS,
   MINOR_GIFT_MONTHLY_ZER,
+  drawnGiftArtKey,
+  giftInSeason,
   giftSku,
   type BagSource,
 } from '@kurda/shared';
@@ -39,6 +41,8 @@ interface Account {
 
 const CAY = giftSku('cay');
 const QEHWE = giftSku('qehwe');
+const SEV = giftSku('sev');
+const BEYBUN = giftSku('beybun');
 const GUL = giftSku('gul');
 const PISIK = giftSku('pisik');
 const BELEM = giftSku('belem');
@@ -126,7 +130,7 @@ describe.skipIf(!DATABASE_URL)('the gift economy (integration)', () => {
   });
 
   describe('the gifts on sale', () => {
-    it('are the thirty-one gifts at their prices, the Newroz fire for March only, and the stickers retired', async () => {
+    it('are the thirty-three gifts at their prices, the Newroz fire for March only, and the stickers retired', async () => {
       const rows = await pool.query<{ sku: string; name: string; price: number; category: string; available_to: Date | null; active: boolean }>(
         `SELECT sku, name, price, category, available_to, active FROM shop_items WHERE category = 'gift' ORDER BY display_order`,
       );
@@ -140,6 +144,16 @@ describe.skipIf(!DATABASE_URL)('the gift economy (integration)', () => {
       );
       expect(stickers.rows.length).toBe(9);
       expect(stickers.rows.every((r) => !r.active && r.retired)).toBe(true);
+    });
+
+    it('are all on the gift sheet once painted, each with its picture, the Newroz fire in March only', async () => {
+      const giver = await person('sheetall');
+      const pal = await person('sheetpal');
+      await befriend(giver, pal);
+      const items = (await call('GET', `/gifts/catalog?to=${pal.id}`, giver)).json().items as Array<{ sku: string; assetUrl: string | null }>;
+      const inSeason = GIFTS.map((g) => giftSku(g.id)).filter((sku) => giftInSeason(sku) && drawnGiftArtKey(sku) !== null);
+      expect(items.map((i) => i.sku).sort()).toEqual(inSeason.sort());
+      expect(items.every((i) => i.assetUrl?.startsWith('/cosmetics/gifts/made-'))).toBe(true);
     });
 
     it('show in the admin’s list with their drawn pictures and prices, a dear price going through Approvals', async () => {
@@ -157,7 +171,10 @@ describe.skipIf(!DATABASE_URL)('the gift economy (integration)', () => {
       expect(list.statusCode, list.body).toBe(200);
       const items = list.json().items as Array<{ sku: string; assetUrl: string | null; price: number; category: string }>;
       expect(items.find((i) => i.sku === HEYV)).toMatchObject({ category: 'gift', price: 20_000, assetUrl: '/cosmetics/gifts/made-07-heyv.png' });
-      expect(items.find((i) => i.sku === giftSku('lale'))).toMatchObject({ price: 10, assetUrl: null });
+      expect(items.find((i) => i.sku === giftSku('lale'))).toMatchObject({ price: 10, assetUrl: '/cosmetics/gifts/made-11-lale.png' });
+      // every gift has its picture once painted
+      const unpainted = GIFTS.map((g) => giftSku(g.id)).filter((sku) => drawnGiftArtKey(sku) === null);
+      expect(items.filter((i) => i.category === 'gift' && !i.assetUrl).map((i) => i.sku).sort()).toEqual(unpainted.sort());
       const edited = await call('PATCH', `/shop/items/${HEYV}`, staff, { price: 25_000 });
       expect(edited.json().code).toBe('PRICE_NEEDS_APPROVAL');
       // a small one changes at once, and a gift is never deleted, since it may wait in someone's bag
@@ -171,11 +188,11 @@ describe.skipIf(!DATABASE_URL)('the gift economy (integration)', () => {
     it('fills from every moment that pays members, for a free account as for a member, once a moment', async () => {
       const free = await person('bagfree');
       expect(await grant(free, 'streak', 's7')).toMatchObject({ sku: QEHWE, source: 'streak' });
-      expect(await grant(free, 'harvest', 'h1')).toMatchObject({ sku: CAY });
-      expect(await grant(free, 'podium', 'p1')).toMatchObject({ sku: QEHWE });
+      expect(await grant(free, 'harvest', 'h1')).toMatchObject({ sku: SEV });
+      expect(await grant(free, 'podium', 'p1')).toMatchObject({ sku: BEYBUN });
       // the same moment again gives nothing
       expect(await grant(free, 'streak', 's7')).toBeNull();
-      expect(await bag(free)).toEqual({ [CAY]: 1, [QEHWE]: 2 });
+      expect(await bag(free)).toEqual({ [QEHWE]: 1, [SEV]: 1, [BEYBUN]: 1 });
       expect(await zer(free)).toBe(0);
     });
 
@@ -207,7 +224,12 @@ describe.skipIf(!DATABASE_URL)('the gift economy (integration)', () => {
       const full = await person('bagfull');
       await pool.query(`INSERT INTO gift_bag (user_id, sku, count) VALUES ($1, $2, $3)`, [full.id, CAY, BAG_MAX_EACH]);
       expect(await grant(full, 'daily', 'd1')).toMatchObject({ sku: QEHWE });
-      await pool.query(`UPDATE gift_bag SET count = $3 WHERE user_id = $1 AND sku = $2`, [full.id, QEHWE, BAG_MAX_EACH]);
+      // every kind a moment gives, full: nothing more comes
+      await pool.query(
+        `INSERT INTO gift_bag (user_id, sku, count) SELECT $1, sku, $3 FROM unnest($2::text[]) AS sku
+         ON CONFLICT (user_id, sku) DO UPDATE SET count = EXCLUDED.count`,
+        [full.id, [QEHWE, SEV, BEYBUN], BAG_MAX_EACH],
+      );
       expect(await grant(full, 'daily', 'd2')).toBeNull();
       await expect(pool.query(`UPDATE gift_bag SET count = 100 WHERE user_id = $1 AND sku = $2`, [full.id, CAY])).rejects.toThrow();
     });
@@ -229,8 +251,8 @@ describe.skipIf(!DATABASE_URL)('the gift economy (integration)', () => {
       const looker = await person('baglook');
       await grant(looker, 'harvest', 'l1');
       const view = (await call('GET', '/gifts/bag', looker)).json();
-      expect(view).toMatchObject({ items: [{ sku: CAY, name: 'Çay', count: 1, assetUrl: '/cosmetics/gifts/made-01-cay.png' }], earnsZer: false });
-      expect(view.arrivals).toMatchObject([{ sku: CAY, source: 'harvest' }]);
+      expect(view).toMatchObject({ items: [{ sku: SEV, name: 'Sêv', count: 1, assetUrl: '/cosmetics/gifts/made-10-sev.png' }], earnsZer: false });
+      expect(view.arrivals).toMatchObject([{ sku: SEV, source: 'harvest' }]);
       expect((await call('POST', '/gifts/bag/seen', looker)).json()).toEqual({ seen: 1 });
       expect((await call('GET', '/gifts/bag', looker)).json().arrivals).toEqual([]);
     });
@@ -239,8 +261,8 @@ describe.skipIf(!DATABASE_URL)('the gift economy (integration)', () => {
       const leaving = await person('bagleave');
       await grant(leaving, 'harvest', 'x1');
       const exported = (await exportProgress(pool, leaving.id)) as { giftBag: { items: unknown[]; landed: unknown[] } };
-      expect(exported.giftBag.items).toMatchObject([{ sku: CAY, count: 1 }]);
-      expect(exported.giftBag.landed).toMatchObject([{ sku: CAY, source: 'harvest' }]);
+      expect(exported.giftBag.items).toMatchObject([{ sku: SEV, count: 1 }]);
+      expect(exported.giftBag.landed).toMatchObject([{ sku: SEV, source: 'harvest' }]);
       await inTx((c) => eraseAccountData(c, leaving.id));
       expect(await bag(leaving)).toEqual({});
       expect((await pool.query(`SELECT 1 FROM gift_bag_grants WHERE user_id = $1`, [leaving.id])).rowCount).toBe(0);

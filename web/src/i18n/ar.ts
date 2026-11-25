@@ -1235,6 +1235,7 @@ export const ar: Catalogue = {
   'gift.group.sky': 'السماء',
   'gift.group.boats': 'قوارب',
   'gift.group.houses': 'بيوت',
+  'gift.group.legends': 'أساطير',
   'gift.error.bagEmpty': 'لم يعد في حقيبتك ما يكفي من هذه الهدية.',
   'gift.error.overLimit': 'يمكن أن تصل الهدية هنا إلى {zer} Zêr كحدّ أقصى.',
   'gift.error.monthLimit': 'هذا أكثر مما تبقّى من حدّ الهدايا لهذا الشهر: {zer} Zêr.',

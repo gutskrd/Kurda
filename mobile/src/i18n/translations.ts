@@ -2479,6 +2479,7 @@ export type TranslationKey =
   | 'gift.group.sky'
   | 'gift.group.boats'
   | 'gift.group.houses'
+  | 'gift.group.legends'
   | 'gift.error.bagEmpty'
   | 'gift.error.overLimit'
   | 'gift.error.monthLimit'
@@ -6234,6 +6235,7 @@ const en: Catalog = {
   'gift.group.sky': 'The sky',
   'gift.group.boats': 'Boats',
   'gift.group.houses': 'Houses',
+  'gift.group.legends': 'Legends',
   'gift.error.bagEmpty': 'Your bag doesn’t have enough of that one now.',
   'gift.error.overLimit': 'A gift here can be up to {zer} Zêr.',
   'gift.error.monthLimit': 'That’s more than this month’s gift limit leaves: {zer} Zêr.',
@@ -10408,6 +10410,7 @@ const ku: Catalog = {
   'gift.group.sky': 'Ezman',
   'gift.group.boats': 'Belem û gemî',
   'gift.group.houses': 'Xanî',
+  'gift.group.legends': 'Efsane',
   'gift.error.bagEmpty': 'Di torbeya te de êdî têra vê tune.',
   'gift.error.overLimit': 'Li vir diyarî herî zêde dikare {zer} Zêr be.',
   'gift.error.monthLimit': 'Ev ji ya ku ji sînorê diyariyan ê vê mehê maye zêdetir e: {zer} Zêr.',
@@ -14582,6 +14585,7 @@ const de: Catalog = {
   'gift.group.sky': 'Der Himmel',
   'gift.group.boats': 'Boote',
   'gift.group.houses': 'Häuser',
+  'gift.group.legends': 'Legenden',
   'gift.error.bagEmpty': 'In deinem Beutel ist davon gerade nicht mehr genug.',
   'gift.error.overLimit': 'Ein Geschenk kann hier höchstens {zer} Zêr kosten.',
   'gift.error.monthLimit': 'Das ist mehr, als dein Geschenklimit diesen Monat noch zulässt: {zer} Zêr.',
@@ -18756,6 +18760,7 @@ const es: Catalog = {
   'gift.group.sky': 'El cielo',
   'gift.group.boats': 'Barcos',
   'gift.group.houses': 'Casas',
+  'gift.group.legends': 'Leyendas',
   'gift.error.bagEmpty': 'Ya no tienes suficientes de este en tu bolsa.',
   'gift.error.overLimit': 'Aquí un regalo puede costar como máximo {zer} Zêr.',
   'gift.error.monthLimit': 'Es más de lo que te queda del límite de regalos de este mes: {zer} Zêr.',
@@ -22930,6 +22935,7 @@ const tr: Catalog = {
   'gift.group.sky': 'Gökyüzü',
   'gift.group.boats': 'Tekneler',
   'gift.group.houses': 'Evler',
+  'gift.group.legends': 'Efsaneler',
   'gift.error.bagEmpty': 'Çantanda bundan artık yeterince yok.',
   'gift.error.overLimit': 'Burada bir hediye en fazla {zer} Zêr olabilir.',
   'gift.error.monthLimit': 'Bu, bu ayki hediye sınırından kalandan fazla: {zer} Zêr.',
@@ -27104,6 +27110,7 @@ const ar: Catalog = {
   'gift.group.sky': 'السماء',
   'gift.group.boats': 'قوارب',
   'gift.group.houses': 'بيوت',
+  'gift.group.legends': 'أساطير',
   'gift.error.bagEmpty': 'لم يعد في حقيبتك ما يكفي من هذه الهدية.',
   'gift.error.overLimit': 'يمكن أن تصل الهدية هنا إلى {zer} Zêr كحدّ أقصى.',
   'gift.error.monthLimit': 'هذا أكثر مما تبقّى من حدّ الهدايا لهذا الشهر: {zer} Zêr.',
@@ -31278,6 +31285,7 @@ const fr: Catalog = {
   'gift.group.sky': 'Le ciel',
   'gift.group.boats': 'Bateaux',
   'gift.group.houses': 'Maisons',
+  'gift.group.legends': 'Légendes',
   'gift.error.bagEmpty': 'Il n’en reste plus assez dans ton sac.',
   'gift.error.overLimit': 'Ici, un cadeau peut coûter au plus {zer} Zêr.',
   'gift.error.monthLimit': 'C’est plus que ce qu’il reste de ta limite de cadeaux ce mois-ci : {zer} Zêr.',
@@ -35452,6 +35460,7 @@ const nl: Catalog = {
   'gift.group.sky': 'De hemel',
   'gift.group.boats': 'Boten',
   'gift.group.houses': 'Huizen',
+  'gift.group.legends': 'Legendes',
   'gift.error.bagEmpty': 'Je hebt er niet genoeg meer van in je tas.',
   'gift.error.overLimit': 'Een cadeau kan hier hoogstens {zer} Zêr kosten.',
   'gift.error.monthLimit': 'Dat is meer dan je cadeaulimiet deze maand nog toelaat: {zer} Zêr.',
@@ -39627,6 +39636,7 @@ const ckb: Catalog = {
   'gift.group.sky': 'ئاسمان',
   'gift.group.boats': 'بەلەم و کەشتی',
   'gift.group.houses': 'خانوو',
+  'gift.group.legends': 'ئەفسانە',
   'gift.error.bagEmpty': 'ئێستا بەشی پێویست لەمە لە کیسەکەتدا نییە.',
   'gift.error.overLimit': 'لێرە دیاری دەتوانێت تا {zer} Zêr بێت.',
   'gift.error.monthLimit': 'ئەمە زیاترە لەوەی لە سنووری دیاریی ئەم مانگە ماوە: {zer} Zêr.',
