@@ -5,7 +5,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { GIFTS_PER_DAY, GIFTS_PER_FRIEND_PER_DAY, GIFTS_RECEIVED_PER_DAY, MEMBERS_BOX_FREE_GIFTS, drawnGifts, giftArtKey, giftSku } from '@kurda/shared';
+import { GIFTS_PER_DAY, GIFTS_PER_FRIEND_PER_DAY, GIFTS_RECEIVED_PER_DAY, MEMBERS_BOX_FREE_GIFTS, drawnGifts, giftArtKey, giftInSeason, giftSku } from '@kurda/shared';
 import { MembersBoxService } from '../plus/members-box.js';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
@@ -1204,7 +1204,7 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       const res = await call('GET', `/gifts/catalog?to=${mae.id},${ned.id}`, lou);
       expect(res.statusCode).toBe(200);
       const { items, balance } = res.json();
-      expect(items.map((i: { sku: string }) => i.sku)).toEqual(drawnGifts().map((g) => giftSku(g.id)));
+      expect(items.map((i: { sku: string }) => i.sku)).toEqual(drawnGifts().map((g) => giftSku(g.id)).filter((sku) => giftInSeason(sku)));
       expect(items[0]).toMatchObject({ sku: CAY, name: 'Çay', category: 'gift', price: 1, tier: 'common', alreadyOwnedBy: [], freeGiftEligible: true });
       expect(items.at(-1)).toMatchObject({ sku: giftSku('kadiz'), price: 100_000, tier: 'grand', freeGiftEligible: false });
       // what is worn is bought in the shop and given from there, not from a chat's gift sheet
@@ -1213,11 +1213,13 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       expect(res.json()).toMatchObject({ freeGifts: 0, bag: [], limits: { maxPrice: null, left: null, confirmFrom: 2_000 }, nudges: true });
     });
 
-    it('shows each gift with its drawn picture, leaves out the undrawn and the retired stickers, and never sells one to oneself', async () => {
+    it('shows each gift with its drawn picture, leaves out the retired stickers and what is out of season, and never sells one to oneself', async () => {
       type Item = { sku: string; category: string; price: number; assetUrl: string };
       const { items } = (await call('GET', `/gifts/catalog?to=${mae.id}`, lou)).json() as { items: Item[] };
       expect(items[0]!.assetUrl).toBe(`/cosmetics/${giftArtKey('cay')}`);
-      expect(items.some((i) => i.sku === giftSku('lale') || i.category === 'sticker')).toBe(false);
+      expect(items.every((i) => i.assetUrl.startsWith('/cosmetics/gifts/'))).toBe(true);
+      expect(items.some((i) => i.category === 'sticker')).toBe(false);
+      expect(items.some((i) => i.sku === giftSku('pet'))).toBe(giftInSeason(giftSku('pet')));
       const shop = (await call('GET', '/shop', lou)).json().items as Item[];
       expect(shop.some((i) => i.category === 'sticker' || i.category === 'gift')).toBe(false);
       const bought = await call('POST', '/shop/purchase', lou, { sku: CAY, idempotencyKey: key() });

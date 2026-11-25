@@ -317,10 +317,11 @@ describe('art keys', () => {
     expect(isBuiltInArtKey('icon', 'gifts/../index.html')).toBe(false);
     expect(isBuiltInArtKey('icon', 'gifts/made-01-cay.svg')).toBe(false);
   });
-  it('show a gift with its drawn picture, and none until it is drawn', () => {
+  it('show a gift with its drawn picture, and none for one the catalogue does not draw', () => {
     const none = () => null;
     expect(cosmeticAssetUrl('gift', null, none, 'gift-cay')).toBe('/cosmetics/gifts/made-01-cay.png');
-    expect(cosmeticAssetUrl('gift', null, none, 'gift-lale')).toBeNull();
+    expect(cosmeticAssetUrl('gift', null, none, 'gift-lale')).toBe('/cosmetics/gifts/made-11-lale.png');
+    expect(cosmeticAssetUrl('gift', null, none, 'gift-nisan')).toBeNull();
     expect(cosmeticAssetUrl('gift', null, none)).toBeNull();
     // a stored key that is neither a gift picture nor an upload is never served for a gift
     expect(cosmeticAssetUrl('gift', 'backgrounds/made-20-newroz.webp', none, 'gift-cay')).toBeNull();
