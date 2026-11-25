@@ -5,7 +5,7 @@
  */
 import type pg from 'pg';
 import { PAID_PODIUMS_PER_DAY, PAID_WINS_PER_DAY, WIN_MIN_ACCOUNTS, onlineWinZer, quizPodiumZer } from '@kurda/shared';
-import { isPremiumActive } from '../cosmetics/access.js';
+import { isPremiumActive, memberZerUntilSql } from '../cosmetics/access.js';
 import { pairEvidence } from '../net/evidence.js';
 import type { WalletService } from '../wallet/service.js';
 import { earnReason, earnWithin, type GrantResult } from './service.js';
@@ -26,7 +26,7 @@ export async function looksLikeOnePerson(db: Pick<pg.Pool, 'query'>, a: string, 
 }
 
 async function isMember(db: Pick<pg.Pool, 'query'>, userId: string, now: Date): Promise<boolean> {
-  const row = await db.query<{ premium_until: Date | null }>(`SELECT premium_until FROM users WHERE id = $1`, [userId]);
+  const row = await db.query<{ premium_until: Date | null }>(`SELECT ${memberZerUntilSql('u')} AS premium_until FROM users u WHERE u.id = $1`, [userId]);
   return isPremiumActive(row.rows[0]?.premium_until ?? null, now);
 }
 

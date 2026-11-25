@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { MEMBERS_BOX_FREE_GIFTS, MEMBERS_BOX_ZER, membersBoxItem, membersBoxMonth, type MembersBox, type MembersBoxView } from '@kurda/shared';
-import { cosmeticAssetUrl, isPremiumActive, type PublicUrl } from '../cosmetics/access.js';
+import { cosmeticAssetUrl, isPremiumActive, memberZerUntilSql, type PublicUrl } from '../cosmetics/access.js';
 import { lockEntitlement } from '../shop/service.js';
 import { WalletService } from '../wallet/service.js';
 
@@ -37,7 +37,10 @@ export class MembersBoxService {
 
   /** Gives this month's box to a member who has not had it; nothing for anyone else or a second time. Returns whether it was given now. */
   async ensure(userId: string, now: Date = new Date()): Promise<boolean> {
-    const member = await this.pool.query<{ premium_until: Date | null }>(`SELECT premium_until FROM users WHERE id = $1`, [userId]);
+    const member = await this.pool.query<{ premium_until: Date | null }>(
+      `SELECT ${memberZerUntilSql('u')} AS premium_until FROM users u WHERE u.id = $1`,
+      [userId],
+    );
     if (!isPremiumActive(member.rows[0]?.premium_until ?? null, now)) return false;
     const month = membersBoxMonth(now);
     const first = `${month}-01`;

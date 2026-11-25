@@ -147,6 +147,14 @@ export function premiumUntilSql(alias: string): string {
 }
 
 /**
+ * SQL: when the user behind `alias` stops having a member's Zêr (the daily Zêr, the members' box, doubled earnings),
+ * read like `premiumUntilSql`. NULL for a child's profile, which a family plan covers for everything but money.
+ */
+export function memberZerUntilSql(alias: string): string {
+  return `CASE WHEN ${alias}.kind = 'child' THEN NULL ELSE ${premiumUntilSql(alias)} END`;
+}
+
+/**
  * A user's display avatar URL: uploaded photo, else the selected default avatar, else default-01; never null. A
  * premium-gated avatar falls back once premium lapses (`premiumActive` defaults to true for callers that do not
  * track it). Shared by the profile and the social and chat lists so avatars match everywhere.

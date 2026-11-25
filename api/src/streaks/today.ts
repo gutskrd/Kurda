@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { TODAY_DAYS, addDays, firstDayOfWeek, membersBoxMonth, type TodayBadge, type TodayDay, type TodayWeek } from '@kurda/shared';
-import { isPremiumActive } from '../cosmetics/access.js';
+import { isPremiumActive, memberZerUntilSql } from '../cosmetics/access.js';
 import { dailyRewardView, type DailyRewardView } from '../rewards/daily-cycle.js';
 import { MembersBoxService } from '../plus/members-box.js';
 import { StreakService, type StreakSummary } from './service.js';
@@ -50,7 +50,7 @@ export class TodayService {
 
   async view(userId: string, startsOn: number, now: Date = new Date()): Promise<TodayView> {
     const account = await this.pool.query<AccountRow>(
-      `SELECT u.timezone, u.premium_until, d.cycle_day, d.last_claim_on, b.badge_key, b.tier AS badge_tier, b.at AS badge_at,
+      `SELECT u.timezone, ${memberZerUntilSql('u')} AS premium_until, d.cycle_day, d.last_claim_on, b.badge_key, b.tier AS badge_tier, b.at AS badge_at,
               EXISTS (SELECT 1 FROM members_boxes mb WHERE mb.user_id = u.id AND mb.month = $2::date) AS boxed
          FROM users u
          LEFT JOIN daily_rewards d ON d.user_id = u.id

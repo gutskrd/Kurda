@@ -8,7 +8,7 @@ import {
   type CollectionPerson,
   type CollectionResponse,
 } from '@kurda/shared';
-import { cosmeticAssetUrl, isPremiumActive, resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
+import { cosmeticAssetUrl, isPremiumActive, premiumUntilSql, resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 import { notBlockedSql } from '../friends/blocked.js';
 import { availableSql } from '../moderation/availability.js';
 import { shownToSql } from '../users/age.js';
@@ -98,7 +98,7 @@ export class CollectionService {
       // worn as the profile shows it: equipped and not hidden (cosmetics/access.ts); an owned icon needs no premium.
       // The giver is the newest one of that item, as the profile names who gave what is worn.
       `SELECT i.sku, i.name, i.asset_key, (u.equipped_icon_sku = i.sku AND u.premium_icon_enabled) AS worn, count(*) OVER ()::int AS total,
-              p.id, p.username, p.display_name, p.profile_photo_key, p.selected_avatar_key, p.premium_until
+              p.id, p.username, p.display_name, p.profile_photo_key, p.selected_avatar_key, ${premiumUntilSql('p')} AS premium_until
          FROM user_entitlements e
          JOIN shop_items i ON i.sku = e.sku AND i.category = 'icon'
          JOIN users u ON u.id = e.user_id
@@ -167,7 +167,8 @@ export class CollectionService {
     publicUrl: PublicUrl,
   ): Promise<Map<string, Array<{ person: CollectionPerson | null; at: string }>>> {
     const r = await this.pool.query<PersonRow>(
-      `SELECT x.sku, x.created_at AS at, p.id, p.username, p.display_name, p.profile_photo_key, p.selected_avatar_key, p.premium_until
+      `SELECT x.sku, x.created_at AS at, p.id, p.username, p.display_name, p.profile_photo_key, p.selected_avatar_key,
+              ${premiumUntilSql('p')} AS premium_until
          FROM unnest($2::text[]) AS s(sku)
          CROSS JOIN LATERAL (
            SELECT g.sku, g.created_at, ${theirs} AS other FROM gifts g

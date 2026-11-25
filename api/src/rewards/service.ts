@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { isPremiumActive } from '../cosmetics/access.js';
+import { isPremiumActive, memberZerUntilSql } from '../cosmetics/access.js';
 import { AppError } from '../plugins/errors.js';
 import { WalletService } from '../wallet/service.js';
 import { assertEconomyNotHeld } from '../economy/standing.js';
@@ -35,7 +35,7 @@ export class DailyRewardService {
   /** The learner's time zone, and whether they are a Hevalo+ member at `now`. */
   private async account(userId: string, now: Date): Promise<{ tz: string; plus: boolean }> {
     const row = await this.pool.query<{ timezone: string; premium_until: Date | null }>(
-      `SELECT timezone, premium_until FROM users WHERE id = $1`,
+      `SELECT u.timezone, ${memberZerUntilSql('u')} AS premium_until FROM users u WHERE u.id = $1`,
       [userId],
     );
     return { tz: row.rows[0]?.timezone ?? 'UTC', plus: isPremiumActive(row.rows[0]?.premium_until ?? null, now) };

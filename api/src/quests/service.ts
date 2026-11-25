@@ -3,7 +3,7 @@ import { QUEST_KINDS, memberPay, type ChestOpening, type ChestTier, type Quest, 
 import { AppError } from '../plugins/errors.js';
 import type { WalletService } from '../wallet/service.js';
 import { assertEconomyNotHeld } from '../economy/standing.js';
-import { isPremiumActive } from '../cosmetics/access.js';
+import { isPremiumActive, memberZerUntilSql } from '../cosmetics/access.js';
 import { earnWithin } from '../earn/service.js';
 import { localDate, safeTimeZone, shiftDate } from '../streaks/streak-logic.js';
 import { CLAIM_DAYS, chestAmount, dayQuests, parseQuestId, pickQuests, questId, questMoves, type QuestEvent } from './daily.js';
@@ -105,7 +105,7 @@ export class DailyQuestService {
   /** The learner's time zone, and whether they are a Hevalo+ member, whose chests hold twice as much. */
   private async account(userId: string, now: Date): Promise<{ tz: string; plus: boolean }> {
     const res = await this.pool.query<{ timezone: string | null; premium_until: Date | null }>(
-      `SELECT timezone, premium_until FROM users WHERE id = $1`,
+      `SELECT u.timezone, ${memberZerUntilSql('u')} AS premium_until FROM users u WHERE u.id = $1`,
       [userId],
     );
     return { tz: safeTimeZone(res.rows[0]?.timezone), plus: isPremiumActive(res.rows[0]?.premium_until ?? null, now) };

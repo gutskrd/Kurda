@@ -14,7 +14,7 @@ import {
   type RepairRefusal,
   type StreakRepairOffer,
 } from '@kurda/shared';
-import { isPremiumActive } from '../cosmetics/access.js';
+import { isPremiumActive, premiumUntilSql } from '../cosmetics/access.js';
 import { AppError } from '../plugins/errors.js';
 import { WalletService } from '../wallet/service.js';
 import { earnReason, earnWithin } from '../earn/service.js';
@@ -244,7 +244,7 @@ export class StreakService {
               s.freeze_used_on::text AS freeze_used_on, s.freeze_used_days,
               s.ended_streak, s.ended_last_active_on::text AS ended_last_active_on, s.ended_restored_on::text AS ended_restored_on,
               s.sessions_on::text AS sessions_on, s.sessions_today,
-              u.premium_until
+              ${premiumUntilSql('u')} AS premium_until
          FROM users u LEFT JOIN user_streaks s ON s.user_id = u.id
         WHERE u.id = $1`,
       [userId],
