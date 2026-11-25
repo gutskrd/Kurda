@@ -1998,7 +1998,7 @@ button.gift-bubble:active {
   margin: 6px 0;
 }
 .gift-big-confirm-money .zer-value {
-  font-size: calc(var(--text-title) * 1.6);
+  font-size: var(--text-title);
   font-weight: 800;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
