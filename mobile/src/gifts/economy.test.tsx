@@ -160,13 +160,15 @@ describe('the day’s gift for an account that does not earn Zêr', () => {
 });
 
 describe('suggestions to buy or join', () => {
-  it('go only to a known adult, and only while there is something to buy', () => {
-    expect(isKnownAdult({ minor: false })).toBe(true);
-    expect(isKnownAdult({ minor: true })).toBe(false);
+  it('go only to whom the server says is a known adult, and only while there is something to buy', () => {
+    expect(isKnownAdult({ knownAdult: true })).toBe(true);
+    expect(isKnownAdult({ knownAdult: false })).toBe(false);
+    // a guest, an unknown age or an older server: the flag is not there, and nobody is taken for an adult
     expect(isKnownAdult({})).toBe(false);
-    expect(isKnownAdult({ minor: false, kind: 'child' })).toBe(false);
-    expect(plusPitchAllowed({ minor: false }, true)).toBe(true);
-    expect(plusPitchAllowed({ minor: true }, true)).toBe(false);
-    expect(plusPitchAllowed({ minor: false })).toBe(false);
+    expect(isKnownAdult(null)).toBe(false);
+    expect(plusPitchAllowed(true, true)).toBe(true);
+    expect(plusPitchAllowed(false, true)).toBe(false);
+    expect(plusPitchAllowed(undefined, true)).toBe(false);
+    expect(plusPitchAllowed(true)).toBe(false);
   });
 });

@@ -23,11 +23,11 @@ const COIN_STAGE = 44;
  * amount), a lesson first until one is finished today, or tomorrow once taken, and the cycle as a quiet row of coins.
  * A claim plays the app's celebration around the coin once, with a word from Xezo, and tells the rest of the app
  * (`dailyClaimed`), so Learn's purse shows the new Zêr. The Zêr is a Hevalo+ member's; everyone claims the day for a
- * small gift in the gift bag, said with the claim, and a free adult account hears once that members also earn Zêr here,
- * while Hevalo+ is on sale.
+ * small gift in the gift bag, said with the claim, and a free account the server knows is an adult hears with its claim
+ * that members also earn Zêr here, while Hevalo+ is on sale.
  */
 export function DailyZer({ daily, onClaimed, onLearn }: { daily: DailyStatus; onClaimed: (daily: DailyStatus) => void; onLearn?: () => void }): React.JSX.Element {
-  const { client, user } = useAuth();
+  const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
@@ -86,7 +86,7 @@ export function DailyZer({ daily, onClaimed, onLearn }: { daily: DailyStatus; on
             {words}
           </Text>
           {member && giftWords ? <Text style={[styles.line, dir.text, { color: colors.textSecondary }]}>{giftWords}</Text> : null}
-          {!member && landed && plusPitchAllowed(user) ? (
+          {!member && landed && plusPitchAllowed(landed.nudges) ? (
             <Text style={[styles.line, dir.text, { color: colors.textSecondary }]}>{t('gift.membersEarnZer')}</Text>
           ) : null}
           {member ? (

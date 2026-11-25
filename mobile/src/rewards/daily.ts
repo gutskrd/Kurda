@@ -22,6 +22,8 @@ export interface DailyClaim {
   /** The small gift the day put in the gift bag, for everyone; null when the bag was full, absent from an older server. */
   bagGift?: { sku: string; name: string; assetUrl: string | null } | null;
   member?: boolean;
+  /** Whether this account may be told what Hevalo+ adds: a known adult only. Absent means no. */
+  nudges?: boolean;
 }
 
 /** Whether this learner has the daily Zêr to show at all. */

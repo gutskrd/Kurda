@@ -13,6 +13,7 @@ import { GiftBubble } from './GiftBubble';
 import { GiftFlight } from './GiftFlight';
 import { GiftPicker, type GiftPerson, type GiftSent } from './GiftPicker';
 import type { GiftActions } from './GiftReveal';
+import { isKnownAdult } from './nudges';
 
 type ChatMessage = DmMessage | GroupMessage;
 
@@ -186,8 +187,9 @@ export function useChatGifts<M extends ChatMessage>({
         const res = await client.put(`/me/cosmetics/${card.equippable}`, { sku: card.sku });
         return res.ok ? null : res.error;
       },
-      // a gift back to whoever sent this one, from the bag first; a child's profile gives nothing
-      ...(canGiveGifts(user)
+      // A gift back to whoever sent this one, from the bag first, is offered to a known adult only: to anyone else it
+      // would be a prompt to spend, which nobody under 18 or of unknown age is shown.
+      ...(canGiveGifts(user) && isKnownAdult(user)
         ? {
             sendBack: (card: GiftCard) => {
               const from = card.from?.userId;

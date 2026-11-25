@@ -51,6 +51,8 @@ export interface SessionUser {
   supervision?: SupervisionState | null;
   /** 'child' for a child's profile made by a parent, which the website never opens; absent or 'person' for everyone else. */
   kind?: 'person' | 'child';
+  /** Known to be 18 or over (/me only): not a guest or a child's profile, with a birth month that says so. Absent means no. */
+  knownAdult?: boolean;
 }
 
 export interface AuthPayload {
@@ -514,6 +516,8 @@ export interface ClaimResult {
   /** The small gift the day put in the gift bag, for everyone; null when the bag was full, absent from an older server. */
   bagGift?: { sku: string; name: string; assetUrl: string | null } | null;
   member?: boolean;
+  /** Whether this account may be told what Hevalo+ adds: a known adult only. Absent means no. */
+  nudges?: boolean;
 }
 
 /** A community library post (story or poem), from the public browse endpoint. */

@@ -18,15 +18,16 @@ const LOOK_EVERY_MS = 60_000;
 
 /**
  * One quiet line when small gifts land in the gift bag (a streak milestone, a win, a harvest): "Çay is in your gift
- * bag", with Close. To a free adult account it adds once that members also earn Zêr there, while Hevalo+ is on sale;
- * never to anyone under 18. The day's own gift is said by the daily card instead. Announced politely.
+ * bag", with Close. To a free account the server knows is an adult it adds that members also earn Zêr there, while
+ * Hevalo+ is on sale; never to anyone under 18 or of unknown age. The day's own gift is said by the daily card instead.
+ * Announced politely.
  */
 export function BagNews(): React.JSX.Element | null {
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
-  const [news, setNews] = useState<{ arrivals: BagArrival[]; earnsZer: boolean } | null>(null);
+  const [news, setNews] = useState<{ arrivals: BagArrival[]; earnsZer: boolean; nudges: boolean } | null>(null);
   const lastLook = useRef(0);
   const can = canGiveGifts(user);
 
@@ -34,7 +35,7 @@ export function BagNews(): React.JSX.Element | null {
     if (!can || Date.now() - lastLook.current < LOOK_EVERY_MS) return;
     lastLook.current = Date.now();
     void giftBag(client).then((res) => {
-      if (res.ok && res.data.arrivals.length > 0) setNews({ arrivals: res.data.arrivals, earnsZer: res.data.earnsZer });
+      if (res.ok && res.data.arrivals.length > 0) setNews({ arrivals: res.data.arrivals, earnsZer: res.data.earnsZer, nudges: res.data.nudges === true });
     });
   }, [client, can]);
 
@@ -60,7 +61,7 @@ export function BagNews(): React.JSX.Element | null {
       <ItemArt category="gift" path={first.assetUrl} width={44} />
       <View style={styles.words}>
         <Text style={[styles.text, dir.text, { color: colors.textPrimary }]}>{words}</Text>
-        {!news.earnsZer && plusPitchAllowed(user) ? <Text style={[styles.text, dir.text, { color: colors.textSecondary }]}>{t('gift.membersEarnZer')}</Text> : null}
+        {!news.earnsZer && plusPitchAllowed(news.nudges) ? <Text style={[styles.text, dir.text, { color: colors.textSecondary }]}>{t('gift.membersEarnZer')}</Text> : null}
       </View>
       <ClayButton label={t('bag.news.close')} variant="outline" onPress={done} />
     </View>

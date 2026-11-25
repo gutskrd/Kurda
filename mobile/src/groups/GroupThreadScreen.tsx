@@ -34,6 +34,7 @@ import { giftBatchCard, openGift as openGiftApi, withCard, type ChatMessage } fr
 import { useGiftEvents, useOpenChat } from '../gifts/events';
 import { GiftPickerSheet, skippedText, type GiftFriend } from '../gifts/GiftPickerSheet';
 import { canGiveGifts } from '../gifts/access';
+import { isKnownAdult } from '../gifts/nudges';
 import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftUnwrap, type UnwrapTarget } from '../gifts/GiftUnwrap';
 import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
@@ -719,8 +720,8 @@ export function GroupThreadScreen({
           onClose={() => setUnwrapping(null)}
           onOpened={(card) => setMessages((prev) => withCard(prev, card))}
           onThanks={() => post(t('gift.thanksMessage'))}
-          // to whoever sent it, if they are a friend here (the sheet checks), the bag first
-          onSendBack={canGiveGifts(user) && unwrapping.card.from ? () => openPicker(unwrapping.card.from!.userId) : undefined}
+          // to whoever sent it, if they are a friend here (the sheet checks), the bag first; a known adult only, as a prompt to spend
+          onSendBack={canGiveGifts(user) && isKnownAdult(user) && unwrapping.card.from ? () => openPicker(unwrapping.card.from!.userId) : undefined}
         />
       ) : null}
 

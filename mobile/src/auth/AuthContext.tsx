@@ -55,6 +55,8 @@ export interface SessionUser {
   supervision?: SupervisionState | null;
   /** 'child' for a child's profile made by a parent (family/), which the app opens in child mode; absent for everyone else. */
   kind?: 'person' | 'child';
+  /** Known to be 18 or over (/me only): not a guest or a child's profile, with a birth month that says so. Absent means no. */
+  knownAdult?: boolean;
   /**
    * A child's parent, whether this phone is the parent's own (a profile switch, which the family PIN gives back), and
    * whether learning reminders are allowed (/me only, for a child).

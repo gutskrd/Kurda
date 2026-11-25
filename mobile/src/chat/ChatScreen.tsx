@@ -35,6 +35,7 @@ import { giftBatchCard, openGift as openGiftApi, withCard, type ChatMessage } fr
 import { useGiftEvents, useOpenChat } from '../gifts/events';
 import { GiftPickerSheet } from '../gifts/GiftPickerSheet';
 import { canGiveGifts } from '../gifts/access';
+import { isKnownAdult } from '../gifts/nudges';
 import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftUnwrap, type UnwrapTarget } from '../gifts/GiftUnwrap';
 import { ReportSheet } from '../reports/ReportSheet';
@@ -456,8 +457,8 @@ export function ChatScreen({
           onClose={() => setUnwrapping(null)}
           onOpened={(card: GiftCard) => setMessages((prev) => withCard(prev, card))}
           onThanks={() => post(t('gift.thanksMessage'))}
-          // back to the friend this chat is with, the bag first; a child's profile gives nothing
-          onSendBack={canGiveGifts(user) ? () => setPicking(true) : undefined}
+          // back to the friend this chat is with, the bag first; offered to a known adult only, as a prompt to spend
+          onSendBack={canGiveGifts(user) && isKnownAdult(user) ? () => setPicking(true) : undefined}
         />
       ) : null}
 

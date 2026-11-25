@@ -34,8 +34,8 @@ spent on looks and gifts.
 ## Earning
 
 Only Hevalo+ members earn Zêr (a family plan counts; a child's profile never earns). Anyone else keeps the Zêr they
-have, spends it and can buy more; where the apps would show earned Zêr to them, they say once that it comes with
-Hevalo+.
+have, spends it and can buy more; where the apps would show earned Zêr to them, they say that it comes with Hevalo+,
+only to an account the server knows is an adult and only while Hevalo+ is on sale.
 
 | Source | Hevalo+ member |
 |---|---|
@@ -54,8 +54,9 @@ Hevalo+.
   wins, quiz podiums and tree harvests: a glass of tea, a Kurdish coffee, a chamomile sprig or an apple, five a day at
   most and 99 of a kind. Anyone who does not earn Zêr claims the day for the gift alone. What is in the bag can only be
   given away, under the same rules as any gift; it is never sold, turned into Zêr or traded. A child's profile earns
-  nothing. Where a free adult account earns a bag gift, the apps say once that members also earn Zêr there, while
-  Hevalo+ is on sale.
+  nothing. Where a free account earns a bag gift, the apps say each time that members also earn Zêr there, while
+  Hevalo+ is on sale, and only when the server says the account is a known adult (`nudges` with the bag and the day's
+  claim): never to a guest, to someone under 18 or of unknown age.
 - A streak milestone pays again only when a new streak reaches it at least 60 days after it last paid.
 - Paid wins skip pairs that look like one person (same device or network, per the existing ban-evasion signals).
 - Earned Zêr is capped at 1,000 a day (purchases and the members' box are not), so nothing can be farmed.
@@ -85,8 +86,9 @@ more needs a second admin's approval.
   one. A free gift from the members' box pays for one gift of up to 150 Zêr. Shop items can still be given from the
   shop.
 - The gift sheet opens with the gift bag, then the gifts by shelf, cheapest first, each with its euro value. What
-  cannot go shows a lock and why. "Get Zêr" appears only while Zêr is on sale, in the phone app, and never to anyone
-  under 18. A received gift offers "Send one back", which opens on the bag.
+  cannot go shows a lock and why. "Get Zêr" appears only while Zêr is on sale, in the phone app, and only to a known
+  adult. A received gift offers a known adult "Send one back", which opens on the bag; nobody under 18 or of unknown
+  age is offered it.
 - A gift of 20,000 Zêr or more opens on the whole screen as a night sky (still under Reduce Motion) and stays on show,
   large, in the chat and on the post.
 - Sent to one to seven friends (in a chat) or onto a post. A post shows its gifts as a small row with a count; its
@@ -94,7 +96,8 @@ more needs a second admin's approval.
   people are known adults.
 - The existing limits stay (10 sent a day, 3 a day to one friend, 10 received a day). Gifts are never currency and
   are never turned into money.
-- Safeguards, held by the server: under 18, gifts of at most 500 Zêr and 2,000 Zêr a calendar month in all; to
+- Safeguards, held by the server: under 18, gifts of at most 500 Zêr and 2,000 Zêr a calendar month in all (from the
+  1st at midnight UTC, the same instant everywhere, so no time zone can be moved to start a month early); to
   someone under 18 (or of unknown age), only from a friend and at most 500 Zêr; a send of 2,000 Zêr or more, all its
   recipients together, asks once more with its money amount, by a signed token for that one send; and an adult may set
   a daily, weekly or monthly limit (rolling 24 hours, 7 or 30 days), lowered at once and raised or removed a day later.

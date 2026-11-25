@@ -13,8 +13,9 @@ const LOOK_EVERY_MS = 60_000;
 
 /**
  * One quiet line when small gifts land in the gift bag (a streak milestone, a win, a harvest), wherever the learner is:
- * "Çay is in your gift bag", with Give it and Close. To a free adult account it adds once that members also earn Zêr
- * there, while Hevalo+ is on sale; never to anyone under 18. The day's own gift is said by the daily card instead.
+ * "Çay is in your gift bag", with Give it and Close. To a free account the server knows is an adult it adds that members
+ * also earn Zêr there, while Hevalo+ is on sale; never to anyone under 18 or of unknown age. The day's own gift is said
+ * by the daily card instead.
  * Announced politely, without taking focus.
  */
 export function BagNews(): React.JSX.Element | null {
@@ -23,7 +24,7 @@ export function BagNews(): React.JSX.Element | null {
   const { client, status, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [news, setNews] = useState<{ arrivals: BagArrival[]; earnsZer: boolean } | null>(null);
+  const [news, setNews] = useState<{ arrivals: BagArrival[]; earnsZer: boolean; nudges: boolean } | null>(null);
   const lastLook = useRef(0);
   const signedIn = status === 'signedIn' && canGiveGifts(user);
 
@@ -31,7 +32,7 @@ export function BagNews(): React.JSX.Element | null {
     if (!signedIn || Date.now() - lastLook.current < LOOK_EVERY_MS) return;
     lastLook.current = Date.now();
     const res = await client.get<GiftBagView>('/gifts/bag');
-    if (res.ok && res.data.arrivals.length > 0) setNews({ arrivals: res.data.arrivals, earnsZer: res.data.earnsZer });
+    if (res.ok && res.data.arrivals.length > 0) setNews({ arrivals: res.data.arrivals, earnsZer: res.data.earnsZer, nudges: res.data.nudges === true });
   }, [client, signedIn]);
 
   // on arriving, on every move through the app, and on coming back to the tab, at most once a minute
@@ -62,7 +63,7 @@ export function BagNews(): React.JSX.Element | null {
       <GiftItemArt assetUrl={first.assetUrl} category="gift" size={44} />
       <span className="bag-news-words">
         <span>{words}</span>
-        {!news.earnsZer && plusPitchAllowed(user) && <span className="bag-news-pitch">{t('gift.membersEarnZer')}</span>}
+        {!news.earnsZer && plusPitchAllowed(news.nudges) && <span className="bag-news-pitch">{t('gift.membersEarnZer')}</span>}
       </span>
       <button
         type="button"
