@@ -88,11 +88,11 @@ describe('UserProfile (other user, full page)', () => {
     const figure = (label: string) => within(card).getByText(label, { selector: '.mkp-fact-label' }).parentElement?.querySelector('.mkp-fact-value')?.textContent;
     expect(figure('Streak')).toBe('3');
     expect(figure('XP')).toBe('410');
-    // Badges are in the row beside the handle, not a fourth figure: the league and five badges, six pictures at most.
+    // Badges are in the row beside the handle, not a fourth figure: the top three of five badges and the league, the rest counted.
     expect(within(card).queryByText('Badges', { selector: '.mkp-fact-label' })).toBeNull();
     const row = within(card.querySelector<HTMLElement>('.ph-handle')!).getByRole('button', { name: 'Zana K’s collection, Badges: 5' });
-    expect(row.querySelectorAll('.bdg-pill-icon')).toHaveLength(6);
-    expect(row.querySelector('.bdg-pill-more')).toBeNull();
+    expect(row.querySelectorAll('.bdg-pill-icon')).toHaveLength(3);
+    expect(row.querySelector('.bdg-pill-more')).toHaveTextContent('+3');
     // How many friends they have was not sent, so it is not guessed at.
     expect(within(card).queryByText('Friends', { selector: '.mkp-fact-label' })).toBeNull();
     expect(within(card).getByRole('list').querySelectorAll('a')).toHaveLength(0);
