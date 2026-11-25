@@ -1734,13 +1734,13 @@ describe('the learner’s tree', () => {
   });
 
   it('paints a grown crown as hundreds of leaves laid one by one, the same each time, thinning as the tree dries', () => {
-    // each leaf is a small almond of two curves; nothing of the crown is a clipped mass, so only the island and the wood clip
+    // each leaf is a small almond of two curves; nothing of the crown or the wood is clipped, so only the island clips
     const leaves = (svg: string): number => (svg.match(/Q/g) ?? []).length / 2;
     const grown = (species: (typeof TREE_SPECIES)[number], health: (typeof TREE_HEALTHS)[number] = 'fresh'): string =>
       (['plant', 'crown'] as const).map((part) => treeSvg({ species, stage: 6, health, part, title: 'x' })).join('');
     for (const species of TREE_SPECIES) {
       expect(leaves(grown(species)), species).toBeGreaterThan(300);
-      expect(count(treeSvg({ species, stage: 6, title: 'x' }), 'clipPath'), species).toBe(2);
+      expect(count(treeSvg({ species, stage: 6, title: 'x' }), 'clipPath'), species).toBe(1);
       expect(leaves(grown(species, 'wilting')), species).toBeLessThan(leaves(grown(species)) * 0.85);
     }
     expect(treeSvg({ species: 'kaj', stage: 5, part: 'crown', title: 'x' })).toBe(treeSvg({ species: 'kaj', stage: 5, part: 'crown', title: 'x' }));
