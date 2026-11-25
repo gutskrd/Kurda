@@ -78,12 +78,13 @@ export function SupervisionProvider({ children }: { children: React.ReactNode })
         if (res.ok) setState(res.data ?? null);
       });
     };
-    // A bedtime begins on the minute, not at the next beat.
+    // A bedtime begins on the minute, not at the next beat. The pause is laid on the state as it stands, so it never
+    // brings back a supervision a beat has just ended.
     const check = (): void => {
       const now = latest.current;
       if (!now || now.paused) return;
       const due = parentalPause(now.controls, now.minutesToday, new Date(), now.timeZone);
-      if (due.paused) setState({ ...now, ...due });
+      if (due.paused) setState((s) => (s && !s.paused ? { ...s, ...due } : s));
     };
     return startUsageBeat(beat, check);
   }, [supervised, client]);
