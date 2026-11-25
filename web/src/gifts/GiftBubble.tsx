@@ -14,7 +14,8 @@ type Phase = 'idle' | 'unwrapping' | 'revealed';
  * A gift message in the chat. To its recipient it is a wrapped present; a tap plays the unwrap for its tier (a burst
  * in the bubble, a confetti sheet, or a full-screen Newroz fire), skippable with a tap and a short fade under Reduce
  * Motion, then shows the item with Wear it, Say thanks and Close. The sender sees whether it was opened, live. In a
- * group everyone sees who it was for and who opened theirs; the item stays a surprise to anyone who has not.
+ * group everyone sees who it was for and who opened theirs; the item stays a surprise to anyone who has not. Everyone
+ * else sees who it is from ("Gift from Hamo"), or "a Hevalo member" when the server does not name the sender to them.
  */
 export function GiftBubble({
   card,
@@ -30,6 +31,7 @@ export function GiftBubble({
   mine: boolean;
   /** Given in a group chat, where the recipient is not obvious. */
   inGroup?: boolean;
+  /** Who sent it as the server names them to this viewer; empty when it may not. */
   senderName: string;
   actions: GiftActions;
   /** Opens it as soon as it is on screen, when arriving from a notification or the banner. */
@@ -46,6 +48,8 @@ export function GiftBubble({
   const bubbleRef = useRef<HTMLButtonElement>(null);
   const recipient = card.myGiftId !== null;
   const shown = opened ?? card;
+  const fromLine = senderName ? t('gift.from', { name: senderName }) : t('gift.fromMember');
+  const fromName = senderName || t('gift.someone');
 
   const finish = useCallback(async () => {
     if (timer.current !== null) window.clearTimeout(timer.current);
@@ -118,7 +122,7 @@ export function GiftBubble({
         <span className="gift-bubble-text">
           <span className="gift-bubble-title">
             {/* Only the sender sees the item's name; to anyone else it is a surprise. */}
-            {mine ? t('gift.youSent', { item: card.name }) : t('gift.someoneSent', { name: senderName })}
+            {mine ? t('gift.youSent', { item: card.name }) : fromLine}
           </span>
           <Recipients recipients={card.recipients} named={inGroup} />
         </span>
@@ -151,7 +155,7 @@ export function GiftBubble({
           type="button"
           className={`gift-bubble is-mine-to-open${shown.myOpened ? ' is-opened' : ' is-wrapped'} gift-bubble-${card.tier}`}
           onClick={unwrap}
-          aria-label={shown.myOpened ? t('gift.seeAgain', { item: shown.name }) : t('gift.openFrom', { name: senderName })}
+          aria-label={shown.myOpened ? t('gift.seeAgain', { item: shown.name }) : t('gift.openFrom', { name: fromName })}
         >
           <span className="gift-bubble-art">
             {shown.myOpened ? (
@@ -161,18 +165,8 @@ export function GiftBubble({
             )}
           </span>
           <span className="gift-bubble-text">
-            <span className="gift-bubble-title">
-              {shown.myOpened ? shown.name : t('gift.forYou')}
-            </span>
-            <span className="gift-bubble-sub">
-              {shown.myOpened ? (
-                <>
-                  <CheckIcon size={13} /> {t('gift.opened')}
-                </>
-              ) : (
-                t('gift.tapToOpen')
-              )}
-            </span>
+            <span className="gift-bubble-title">{shown.myOpened ? shown.name : fromLine}</span>
+            <span className="gift-bubble-sub">{shown.myOpened ? fromLine : t('gift.tapToOpen')}</span>
           </span>
         </button>
       )}

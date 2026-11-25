@@ -63,6 +63,8 @@ export const REACH_CONTROLS = [
   '.learn-strip-goal',
   // Learn's letters and dictionary, the two halves of one 44px pill under the bell's (styles/shell.css).
   '.learn-tools-btn',
+  // A post's line of gifts, which opens who gave them (styles/feed.css).
+  '.fcard-gifts',
 ] as const;
 
 /** Links on a line of their own, enlarged only under a coarse pointer. */

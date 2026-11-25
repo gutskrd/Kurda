@@ -230,7 +230,7 @@ describe('LeaguePanel', () => {
             goalXp: 150,
             goalMet: false,
             trophy: false,
-            gems: 0,
+            zer: 0,
           },
         }),
       ),
@@ -241,7 +241,7 @@ describe('LeaguePanel', () => {
     expect(within(card).getByText(/Place 18 of 20/)).toBeInTheDocument();
   });
 
-  it('pays its respects to a promotion, with the Gems it brought', async () => {
+  it('pays its respects to a promotion, with the Zêr it brought', async () => {
     vi.stubGlobal(
       'fetch',
       answer(
@@ -258,7 +258,7 @@ describe('LeaguePanel', () => {
             goalXp: 150,
             goalMet: true,
             trophy: false,
-            gems: 10,
+            zer: 50,
           },
         }),
       ),
@@ -272,7 +272,7 @@ describe('LeaguePanel', () => {
     expect(localStorage.getItem('hevalo_league_celebrated')).toBe('2026-10-05');
     // The card says it too, and keeps saying it.
     expect(screen.getByText('You moved up to Çem League.')).toBeInTheDocument();
-    expect(screen.getByText('+10 Gems')).toBeInTheDocument();
+    expect(screen.getByText('+50 Zêr')).toBeInTheDocument();
     expect(screen.getByText(en['leagues.result.goalMet'])).toBeInTheDocument();
   });
 
@@ -290,7 +290,7 @@ describe('LeaguePanel', () => {
       goalXp: 150,
       goalMet: true,
       trophy: false,
-      gems: 10,
+      zer: 50,
     };
     vi.stubGlobal('fetch', answer(league('cem', 20, 12, { lastWeek: week })));
     const seen = renderApp(<LeaguePanel />);

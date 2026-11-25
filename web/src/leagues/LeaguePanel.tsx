@@ -369,7 +369,7 @@ function LastWeek({ result }: { result: LeagueWeekResult }): React.JSX.Element {
             ? t('leagues.result.place', { rank: result.rank, size: result.groupSize, xp: result.weeklyXp.toLocaleString() })
             : t('leagues.result.xp', { xp: result.weeklyXp.toLocaleString() })}
           {result.goalMet && <span className="league-last-chip">{t('leagues.result.goalMet')}</span>}
-          {result.gems > 0 && <span className="league-last-chip">{t('leagues.result.gems', { gems: result.gems })}</span>}
+          {result.zer > 0 && <span className="league-last-chip">{t('leagues.result.zer', { zer: result.zer.toLocaleString() })}</span>}
           {result.trophy && <span className="league-last-chip">{t('leagues.result.trophy')}</span>}
         </p>
       </div>

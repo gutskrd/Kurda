@@ -3395,6 +3395,12 @@ button.mkp-fact {
   font-size: var(--text);
   font-weight: 500;
 }
+/* what a price is worth in money, quiet beside it wherever a price is shown */
+.zer-value {
+  color: var(--ink-3);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
 
 /* narrowing the shop — tabs, search, sort and the toggles — is shop/items.css,
    shared with the inventory and the gift picker */

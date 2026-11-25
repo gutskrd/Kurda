@@ -6,6 +6,7 @@ import { Avatar } from '../components/Avatar';
 import { BookmarkIcon, CommentIcon, HeartIcon, RepostIcon } from '../components/icons';
 import { useProfileModal } from '../profile/ProfileModal';
 import { SharePost } from './SharePost';
+import { PostGiftsRow } from './PostGifts';
 import { PostMenu } from './PostMenu';
 import { dayLabel } from '../chat/messageGroups';
 import { useI18n, useT } from '../i18n/I18nProvider';
@@ -342,6 +343,7 @@ export function PostActions({
 
   return (
     <>
+      <PostGiftsRow item={item} />
       {row}
       {/* An undone press and why, shown beside it and cleared by itself. */}
       {refused && (

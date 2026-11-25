@@ -70,9 +70,9 @@ export function GiftReveal({
       <Heading className="gift-reveal-name" ref={headingRef} tabIndex={-1}>
         {card.name}
       </Heading>
-      <p className="gift-reveal-from">{t('gift.from', { name: from })}</p>
+      <p className="gift-reveal-from">{from ? t('gift.from', { name: from }) : t('gift.fromMember')}</p>
       <p className="sr-only" role="status">
-        {t('gift.revealed', { item: card.name, name: from })}
+        {t('gift.revealed', { item: card.name, name: from || t('gift.someone') })}
       </p>
       <div className="gift-reveal-actions">
         {card.equippable &&
@@ -159,7 +159,7 @@ export function GiftStage({
       className={`gift-stage gift-stage-${tier}${revealed ? ' is-revealed' : ''}`}
       role="dialog"
       aria-modal="true"
-      aria-label={t('gift.fromLabel', { name: from })}
+      aria-label={from ? t('gift.fromLabel', { name: from }) : t('gift.fromMember')}
       onClick={revealed ? undefined : onSkip}
     >
       <div className="gift-stage-panel" onClick={(e) => revealed && e.stopPropagation()}>

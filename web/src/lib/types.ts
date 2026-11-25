@@ -1,7 +1,7 @@
 /** API contract types for the web client, matching the phone's (mobile/src/api/types.ts). */
 import type { AccountHold, FeedImage, SupervisionState, LeagueTier, PendingPicture, PictureRejection, PictureReviewState, ProfileLeague, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
 
-import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding } from '@kurda/shared';
+import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding, PostGifts } from '@kurda/shared';
 
 /** Every API call returns a result; callers never try/catch fetch. */
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError };
@@ -69,19 +69,18 @@ export interface StreakSummary {
   sessionsPerFreeze?: number;
   /** The most freezes held at once: one, or two for a Hevalo+ member. */
   maxFreezes?: number;
-  /** The ended streak that can still be restored, with its price and deadline; null when none, absent on older responses. */
+  /** The ended streak that can still be won back, with today's sessions toward it and its deadline; null when none. */
   repair?: StreakRepairOffer | null;
+  /** The ended run won back, and on which day; null or absent otherwise. */
+  restored?: { days: number; on: string } | null;
 }
 
-/** What POST /me/streak/repair answers with. */
+/** What POST /me/streak/repair answers with: a Hevalo+ member's free restore. */
 export interface StreakRepairResult {
   restored: boolean;
   duplicate: boolean;
   days: number;
-  costGems: number;
   free: boolean;
-  /** The gem balance afterwards. */
-  gems: number;
   streak: StreakSummary;
 }
 
@@ -259,6 +258,8 @@ export interface FeedItem {
   viewCount: number;
   commentCount: number;
   engagement: PostEngagement;
+  /** The gifts given onto it, as this reader may see who gave them; absent from an older API. */
+  gifts?: PostGifts;
   at: string;
   /** Only on the author's own copy, while a picture on it waits for a person to check it; nobody else is sent it. */
   review?: PictureReviewState;
@@ -449,10 +450,9 @@ export interface GroupMessage extends ChatExtras {
   deleted: boolean;
 }
 
-/** Wallet balances (GET /me/wallet). */
+/** Wallet balances (GET /me/wallet): Zêr, the one currency. */
 export interface WalletBalances {
   zer: number;
-  gems: number;
 }
 
 /** A buyable catalogue item (GET /shop); owned unique items are left out. */
@@ -461,7 +461,7 @@ export interface ShopItem {
   name: string;
   description: string | null;
   category: string;
-  currency: 'zer' | 'gems';
+  currency: 'zer';
   price: number;
   isUnique: boolean;
   premiumOnly: boolean;
@@ -497,8 +497,8 @@ export interface DailyRewardStatus {
   cycleDay: number;
   /** A lesson or practice was finished today, which a claim needs; absent on older responses, where `canClaim` decides. */
   learnedToday?: boolean;
-  /** Extra gems a claim today gives a Hevalo+ member; 0 or absent for everyone else. */
-  plusGems?: number;
+  /** The daily Zêr is a Hevalo+ member's: false for anyone else, absent on older responses. */
+  member?: boolean;
 }
 
 /** Result of POST /rewards/daily/claim. */
@@ -507,8 +507,6 @@ export interface ClaimResult {
   cycleDay: number;
   reward: number;
   balance: number;
-  /** Gems a Hevalo+ member received with the claim; 0 or absent for everyone else. */
-  plusGems?: number;
 }
 
 /** A community library post (story or poem), from the public browse endpoint. */

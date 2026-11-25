@@ -12,6 +12,7 @@ import { useMediaQuery } from '../lib/useMediaQuery';
 import { BIRD_NAMES } from '../letters/BirdPicker';
 import { LETTERS_HOME_PATH } from '../letters/useLettersHome';
 import { BuyConfirm } from './BuyConfirm';
+import { ZerValue } from './ZerValue';
 import './yours.css';
 
 /**
@@ -228,6 +229,11 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
           {first
             ? t('letters.bird.chooseLead', { price: number(LETTER_BIRD_PRICE) })
             : t('letters.bird.changeLead', { price: number(LETTER_BIRD_PRICE), zer: number(purse) })}
+        </p>
+        {/* What the price is worth, on its own line so it is never read as the balance's. */}
+        <p className="yours-lead">
+          {`${number(LETTER_BIRD_PRICE)} Zêr `}
+          <ZerValue zer={LETTER_BIRD_PRICE} />
         </p>
         {/* Native radios under one name, so arrow keys work and screen readers name each by its colour. */}
         <div className="yours-birds" role="radiogroup" aria-labelledby={titleId}>

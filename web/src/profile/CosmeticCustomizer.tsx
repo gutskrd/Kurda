@@ -20,6 +20,7 @@ import {
 } from '../shop/ItemBrowser';
 import { ItemGlyph } from '../shop/ItemGlyph';
 import { ItemPicture } from '../shop/ItemPicture';
+import { ZerValue } from '../shop/ZerValue';
 import { PictureFrame, SeasonFrame, frameTier } from '../ranks/art';
 import { rankTierNamed } from '../ranks/names';
 import { useAvatarSrc } from '../art/overrides';
@@ -29,7 +30,7 @@ type Kind = 'background' | 'icon' | 'frame' | 'tag';
 /** The kinds that are worn on a profile, each through `PUT /me/cosmetics/<kind>`. */
 type Wearable = Exclude<Kind, 'tag'>;
 type Ownership = 'all' | 'owned' | 'notOwned';
-type Currency = 'zer' | 'gems';
+type Currency = 'zer';
 
 /** One thing in the inventory: owned, or on sale and not yet owned. */
 interface Tile {
@@ -61,7 +62,8 @@ function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { descrip
   const map = new Map<string, Tile>();
   for (const inv of inventory) {
     const kind = itemCategory(inv.category);
-    if (kind === 'other') continue;
+    // a gift sticker is kept as a gift, never worn
+    if (kind === 'other' || kind === 'sticker') continue;
     map.set(inv.sku, {
       sku: inv.sku,
       name: inv.name,
@@ -126,11 +128,11 @@ export function CosmeticCustomizer({
     const [s, inv, w] = await Promise.all([
       client.get<{ items: ShopItem[] }>('/shop'),
       client.get<{ items: InventoryItem[] }>('/me/inventory'),
-      client.get<{ balances: { zer: number; gems?: number } }>('/me/wallet'),
+      client.get<{ balances: { zer: number } }>('/me/wallet'),
     ]);
     if (s.ok) setShop(s.data.items ?? []);
     if (inv.ok) setInventory(inv.data.items ?? []);
-    if (w.ok) setBalances({ zer: w.data.balances?.zer, gems: w.data.balances?.gems });
+    if (w.ok) setBalances({ zer: w.data.balances?.zer });
     if (!s.ok && !inv.ok) setError(describeError(s.ok ? inv.error : s.error, t));
   }
 
@@ -191,7 +193,7 @@ export function CosmeticCustomizer({
       expectedPrice: tile.price,
     });
     if (res.ok) {
-      // the answer is the balance of the item's own currency
+      // the answer is the Zêr left
       setBalances((b) => ({ ...b, [tile.currency]: res.data.balance }));
       await load(); // the item is now owned → becomes equippable
       setMsg({ kind: 'ok', text: tile.price > 0 ? t('edit.purchased', { name: tile.name }) : t('edit.gotFree', { name: tile.name }) });
@@ -412,17 +414,17 @@ function CosmeticTile({
           {t('edit.equip')}
         </button>
       ) : buyable ? (
-        <button type="button" className="btn btn-secondary btn-sm cosmetic-action" disabled={disabled || !canAfford} onClick={onBuy}>
-          {free
-            ? t('edit.getFree')
-            : !canAfford
-              ? tile.currency === 'gems'
-                ? t('edit.notEnoughGems')
-                : t('edit.notEnoughZer')
-              : tile.currency === 'gems'
-                ? t('edit.buyForGems', { price: tile.price!.toLocaleString(locale) })
+        <>
+          <button type="button" className="btn btn-secondary btn-sm cosmetic-action" disabled={disabled || !canAfford} onClick={onBuy}>
+            {free
+              ? t('edit.getFree')
+              : !canAfford
+                ? t('edit.notEnoughZer')
                 : t('edit.buyFor', { price: tile.price!.toLocaleString(locale) })}
-        </button>
+          </button>
+          {/* what the price is worth, beside the button rather than in its name */}
+          {!free && <ZerValue zer={tile.price!} />}
+        </>
       ) : (
         <span className="cosmetic-locked">{t('profile.premium')}</span>
       )}

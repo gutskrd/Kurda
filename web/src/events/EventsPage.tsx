@@ -197,7 +197,7 @@ function QuestRow({
           <p className="event-quest-reward">
             <span className="sr-only">{t('events.reward')}</span>
             {parts.map((p) => (
-              <BoardAmount key={p.currency} type={p.currency === 'zer' ? 'zer' : 'gewher'} amount={p.amount} />
+              <BoardAmount key={p.currency} type="zer" amount={p.amount} />
             ))}
           </p>
         )}

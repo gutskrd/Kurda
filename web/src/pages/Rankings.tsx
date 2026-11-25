@@ -46,7 +46,7 @@ const SCOPES: { key: Scope; labelKey: MessageKey }[] = [
 ];
 
 /**
- * Where you stand: by XP, Zêr or Gewher. XP is this week's by default, with your league first as a card that opens the
+ * Where you stand: by XP or Zêr. XP is this week's by default, with your league first as a card that opens the
  * whole league, or all time's. What is ranked (`?board=zer`) and the span (`?span=all`) are in the address, so either
  * can be linked to; who you are compared with is a choice of the moment, starting at everyone.
  */
@@ -268,5 +268,5 @@ function emptyTitleKey(scope: Scope): MessageKey {
 function emptyMessageKey(scope: Scope, type: BoardType): MessageKey {
   if (scope === 'friends') return 'rankings.empty.friendsBody';
   if (scope === 'country') return type === 'weekly_xp' ? 'rankings.empty.countryBody' : 'rankings.empty.balanceCountryBody';
-  return type === 'zer' || type === 'gewher' ? 'rankings.empty.balanceGlobalBody' : 'rankings.empty.globalBody';
+  return type === 'zer' ? 'rankings.empty.balanceGlobalBody' : 'rankings.empty.globalBody';
 }

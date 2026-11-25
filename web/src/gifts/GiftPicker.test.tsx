@@ -13,10 +13,10 @@ const item = (over: Partial<GiftCatalogItem> = {}): GiftCatalogItem => ({
   name: 'Sunset over Amed',
   category: 'background',
   assetUrl: null,
-  currency: 'zer',
   price: 500,
   tier: 'common',
   alreadyOwnedBy: [],
+  freeGiftEligible: false,
   ...over,
 });
 
@@ -26,7 +26,7 @@ interface Call {
   body: unknown;
 }
 
-function stub(items: GiftCatalogItem[], send: unknown = null, balance = { zer: 1200, gems: 10 }): Call[] {
+function stub(items: GiftCatalogItem[], send: unknown = null, balance = { zer: 1200 }): Call[] {
   const calls: Call[] = [];
   vi.stubGlobal(
     'fetch',
@@ -34,7 +34,7 @@ function stub(items: GiftCatalogItem[], send: unknown = null, balance = { zer: 1
       calls.push({ url, method: init?.method ?? 'GET', body: init?.body ? JSON.parse(init.body as string) : null });
       if (url.includes('/gifts/catalog')) return jsonResponse(200, { items, balance });
       if (url.endsWith('/gifts')) {
-        return jsonResponse(200, send ?? { batchId: 'b1', sent: ['u-rojda'], skipped: [], balance: { zer: 700, gems: 10 }, message: null });
+        return jsonResponse(200, send ?? { batchId: 'b1', sent: ['u-rojda'], skipped: [], balance: { zer: 700 }, message: null });
       }
       return jsonResponse(200, {});
     }),
@@ -46,19 +46,21 @@ const rojda = { userId: 'u-rojda', name: 'rojda', avatarUrl: null };
 
 describe('GiftPicker in a direct message', () => {
   it('shows what can be given, its price, what they already have, and your balance', async () => {
-    const calls = stub([item(), item({ sku: 'ic-1', name: 'Pomegranate', category: 'icon', alreadyOwnedBy: ['u-rojda'] }), item({ sku: 'bg-gem', name: 'Night sky', currency: 'gems', price: 40, tier: 'rare' })]);
+    const calls = stub([item(), item({ sku: 'ic-1', name: 'Pomegranate', category: 'icon', alreadyOwnedBy: ['u-rojda'] }), item({ sku: 'bg-night', name: 'Night sky', price: 2000, tier: 'rare' })]);
     renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'dm', userId: 'u-rojda' }} people={[rojda]} onSent={() => undefined} />);
 
     expect(screen.getByRole('dialog', { name: 'A gift for rojda' })).toBeInTheDocument();
     const sunset = (await screen.findByText('Sunset over Amed')).closest('button')!;
     expect(within(sunset).getByText('500')).toBeInTheDocument();
+    // What the price is worth in money, beside it.
+    expect(within(sunset).getByText('≈ €1.24')).toBeInTheDocument();
     const owned = screen.getByText('Pomegranate').closest('button')!;
     expect(owned).toBeDisabled();
     expect(within(owned).getByText('Already has it')).toBeInTheDocument();
     // More than the balance: shown and priced, but not sendable.
     const night = screen.getByText('Night sky').closest('button')!;
     expect(within(night).getByText('Rare')).toBeInTheDocument();
-    expect(screen.getByLabelText('You have 1,200 Zêr and 10 gems')).toBeInTheDocument();
+    expect(screen.getByLabelText('You have 1,200 Zêr')).toBeInTheDocument();
     expect(calls[0]!.url).toContain('/gifts/catalog?to=u-rojda');
   });
 
@@ -102,7 +104,7 @@ describe('GiftPicker in a direct message', () => {
   });
 
   it('says why nobody could be given it, and stays open', async () => {
-    stub([item()], { batchId: 'b1', sent: [], skipped: [{ userId: 'u-rojda', reason: 'daily_limit' }], balance: { zer: 1200, gems: 10 }, message: null });
+    stub([item()], { batchId: 'b1', sent: [], skipped: [{ userId: 'u-rojda', reason: 'daily_limit' }], balance: { zer: 1200 }, message: null });
     const onSent = vi.fn();
     renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'dm', userId: 'u-rojda' }} people={[rojda]} onSent={onSent} />);
     await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
@@ -122,9 +124,9 @@ describe('GiftPicker in a direct message', () => {
       vi.fn(async (url: string, init?: RequestInit) => {
         const body = init?.body ? JSON.parse(init.body as string) : null;
         calls.push({ url, method: init?.method ?? 'GET', body });
-        if (url.includes('/gifts/catalog')) return jsonResponse(200, { items: [item({ price })], balance: { zer: 1200, gems: 0 } });
+        if (url.includes('/gifts/catalog')) return jsonResponse(200, { items: [item({ price })], balance: { zer: 1200 } });
         if (body?.expectedPrice !== price) return jsonResponse(409, { code: 'PRICE_CHANGED', message: 'price changed' });
-        return jsonResponse(200, { batchId: 'b1', sent: ['u-rojda'], skipped: [], balance: { zer: 670, gems: 0 }, message: null });
+        return jsonResponse(200, { batchId: 'b1', sent: ['u-rojda'], skipped: [], balance: { zer: 670 }, message: null });
       }),
     );
     const onSent = vi.fn();
@@ -148,7 +150,7 @@ describe('GiftPicker in a direct message', () => {
     vi.mocked(fetch).mockImplementation(async (url) =>
       String(url).endsWith('/gifts')
         ? jsonResponse(403, { code: 'MUTED', message: 'no', details: { scope: 'chat', until: null } })
-        : jsonResponse(200, { items: [item()], balance: { zer: 1200, gems: 0 } }),
+        : jsonResponse(200, { items: [item()], balance: { zer: 1200 } }),
     );
     renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'dm', userId: 'u-rojda' }} people={[rojda]} onSent={() => undefined} />);
     await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
@@ -185,7 +187,7 @@ describe('GiftPicker in a group', () => {
       batchId: 'b1',
       sent: ['u-rojda'],
       skipped: [{ userId: 'u-baran', reason: 'not_allowed' }],
-      balance: { zer: 700, gems: 10 },
+      balance: { zer: 700 },
       message: null,
     });
     const onSent = vi.fn();
@@ -222,7 +224,7 @@ describe('GiftPicker’s shelf, by kind', () => {
     item({ sku: 'bg-kilim', name: 'Kilîma Sor', price: 600, alreadyOwnedBy: ['u-rojda'] }),
     item({ sku: 'icon-caydan', name: 'Îstîkan', category: 'icon', price: 900 }),
     item({ sku: 'icon-roj', name: 'Roj', category: 'icon', price: 600 }),
-    item({ sku: 'bg-night', name: 'Night sky', currency: 'gems', price: 40, tier: 'rare' }),
+    item({ sku: 'bg-night', name: 'Night sky', price: 2000, tier: 'rare' }),
     item({ sku: 'tag_kurdish', name: 'Kurdish Tag', category: 'tag', price: 500 }),
   ];
   const tiles = (): string[] => [...document.querySelectorAll('.gift-tile .gift-tile-name')].map((el) => el.textContent ?? '');
@@ -253,7 +255,7 @@ describe('GiftPicker’s shelf, by kind', () => {
     expect(screen.getByRole('status')).toHaveTextContent('1 item');
   });
 
-  it('sorts by price — Zêr before gems, dearest first when asked', async () => {
+  it('sorts by price, dearest first when asked', async () => {
     stub(shelf());
     open();
     await screen.findByText('Sunset over Amed');
@@ -264,17 +266,17 @@ describe('GiftPicker’s shelf, by kind', () => {
     expect(tiles()).toEqual(['Sunset over Amed', 'Kilîma Sor', 'Night sky']);
   });
 
-  it('holds each gift against its own currency, for everyone it would go to', async () => {
-    // 1,200 Zêr and 10 gems; two friends chosen, so each gift costs twice its price.
-    stub(shelf(), null, { zer: 1200, gems: 10 });
+  it('holds each gift against the Zêr, for everyone it would go to', async () => {
+    // 1,200 Zêr; two friends chosen, so each gift costs twice its price.
+    stub(shelf(), null, { zer: 1200 });
     open([rojda, { userId: 'u-baran', name: 'baran', avatarUrl: null }], { kind: 'group', groupId: 'g1' });
     await userEvent.click(screen.getByLabelText('Select all'));
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     await screen.findByText('Sunset over Amed');
 
     await userEvent.click(screen.getByLabelText('Within my balance'));
-    // 2 × 500 and 2 × 600 fit in 1,200 Zêr; Kilîma Sor is 600 for baran alone (rojda has it); 2 × 900 does not; 40
-    // gems is more than the 10 held.
+    // 2 × 500 and 2 × 600 fit in 1,200 Zêr; Kilîma Sor is 600 for baran alone (rojda has it); 2 × 900 and 2 × 2,000
+    // do not.
     expect(tiles()).toEqual(['Sunset over Amed', 'Kilîma Sor', 'Roj', 'Kurdish Tag']);
   });
 

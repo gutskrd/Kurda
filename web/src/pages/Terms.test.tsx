@@ -23,7 +23,7 @@ describe('Terms', () => {
     renderApp(<Terms />, ['/terms']);
     const summary = section('In short');
     expect(within(summary).getAllByRole('listitem')).toHaveLength(6);
-    expect(within(summary).getByText(/They aren’t real money/)).toBeInTheDocument();
+    expect(within(summary).getByText(/It isn’t real money/)).toBeInTheDocument();
   });
 
   it('says who provides Hevalo, from the one config file', () => {
@@ -52,8 +52,8 @@ describe('Terms', () => {
     expect(within(section('Copyright notices')).getByRole('link', { name: 'Go to the Copyright page' })).toHaveAttribute('href', '/copyright');
     expect(within(section('Repeated copying')).getByText(/three copyright notices/)).toBeInTheDocument();
     expect(within(section('Shop items')).getByText(/Items you own stay yours/)).toBeInTheDocument();
-    // Nothing bought with Zêr or gems can be handed back, and the Terms say so.
-    expect(within(section('Purchases are final')).getByText(/can’t be returned or turned back into Zêr or gems/)).toBeInTheDocument();
+    // Nothing bought with Zêr can be handed back, and the Terms say so.
+    expect(within(section('Purchases are final')).getByText(/can’t be returned or turned back into Zêr/)).toBeInTheDocument();
     const contact = section('How to reach us');
     expect(within(contact).getByText('For members')).toBeInTheDocument();
     expect(within(contact).getByText(`Write in: ${PROVIDER.authorityContact.languages.join(', ')}`)).toBeInTheDocument();

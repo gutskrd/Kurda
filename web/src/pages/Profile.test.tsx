@@ -38,7 +38,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 450, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 450 }, history: [] },
           '/friends': { friends: [{ userId: 'a', username: 'x' }, { userId: 'b', username: 'y' }], total: 2 },
           '/me': { user: meUser },
         }),
@@ -70,7 +70,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 0 }, history: [] },
           '/friends': { friends: [], total: 0 },
           '/me': {
             user: {
@@ -99,7 +99,7 @@ describe('Profile view (full, read-only)', () => {
       vi.fn(
         routedFetch({
           '/me/today': todayView({ streak: { current: 5, longest: 9 } }),
-          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 0 }, history: [] },
           '/friends': { friends: [], total: 0 },
           '/me': { user: meUser },
         }),
@@ -121,7 +121,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 0 }, history: [] },
           '/friends': { friends: [{ userId: 'a', username: 'x' }], total: 7 },
           '/users/1': { userId: '1', username: 'ada', friendStatus: 'self', private: false, achievements: 4, sections: { posts: true, games: true, likes: true, reposts: true, saved: true } },
           '/me': { user: meUser },
@@ -155,7 +155,7 @@ describe('Profile view (full, read-only)', () => {
   it('says which part only you are shown, and does not say you are online on your own profile', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(routedFetch({ '/me/wallet': { balances: { zer: 450, gems: 0 }, history: [] }, '/friends': { friends: [], total: 0 }, '/me': { user: meUser } })),
+      vi.fn(routedFetch({ '/me/wallet': { balances: { zer: 450 }, history: [] }, '/friends': { friends: [], total: 0 }, '/me': { user: meUser } })),
     );
     renderApp(<Profile />, ['/app/profile']);
     await screen.findByText('Ada Lovelace');
@@ -174,7 +174,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 0 }, history: [] },
           '/friends': { friends: [], total: 0 },
           '/me': { user: { ...meUser, profilePhotoUrl: 'https://cdn.test/old.webp', profilePhotoPending: { url: 'https://private.test/new.webp' } } },
         }),
@@ -188,7 +188,7 @@ describe('Profile view (full, read-only)', () => {
   it('offers to write a bio where there is none, instead of saying there is none', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(routedFetch({ '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] }, '/friends': { friends: [], total: 0 }, '/me': { user: { ...meUser, bio: null } } })),
+      vi.fn(routedFetch({ '/me/wallet': { balances: { zer: 0 }, history: [] }, '/friends': { friends: [], total: 0 }, '/me': { user: { ...meUser, bio: null } } })),
     );
     renderApp(<Profile />, ['/app/profile']);
     await screen.findByText('Ada Lovelace');
@@ -209,7 +209,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 0, gems: 0 } },
+          '/me/wallet': { balances: { zer: 0 } },
           '/friends': { friends: [], total: 0 },
           '/me': { user: enriched },
         }),
@@ -234,7 +234,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 450, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 450 }, history: [] },
           '/friends': { friends: [], total: 0 },
           '/me': { user: meUser },
         }),
@@ -277,7 +277,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 0 }, history: [] },
           '/friends': { friends: [], total: 0 },
           '/me': { user: { ...meUser, profileVisibility: 'friends' } },
         }),
@@ -295,7 +295,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 0 }, history: [] },
           '/friends': { friends: [], total: 0 },
           '/me': { user: meUser },
         }),

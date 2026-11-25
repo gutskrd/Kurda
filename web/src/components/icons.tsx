@@ -126,7 +126,7 @@ import { Highlighter } from '@phosphor-icons/react/dist/icons/Highlighter';
 import { Swatches } from '@phosphor-icons/react/dist/icons/Swatches';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 import { useMemo } from 'react';
-import { HEVALO_GLYPHS, coinSvg, gemSvg, type CurrencyOptions, type HevaloGlyph } from '@kurda/shared';
+import { HEVALO_GLYPHS, coinSvg, type CurrencyOptions, type HevaloGlyph } from '@kurda/shared';
 
 /** `regular` is closest to the 1.7px strokes of the earlier hand-drawn set. */
 export const ICON_WEIGHT: IconWeight = 'regular';
@@ -145,7 +145,7 @@ function named(Glyph: Icon, fallbackSize: number, defaultWeight: IconWeight = IC
 }
 
 /**
- * A currency drawn in colour (shared `coinSvg`, `gemSvg`), so it looks the same on every surface and on the phone.
+ * The currency drawn in colour (shared `coinSvg`), so it looks the same on every surface and on the phone.
  * Decorative, since the amount beside it says what it is.
  */
 function currency(draw: (opts: CurrencyOptions) => string, fallbackSize: number) {
@@ -257,8 +257,6 @@ export const HomeIcon = named(House, 22);
 /** The community wall: a page of what everyone wrote. */
 export const WallIcon = named(Newspaper, 22);
 export const ShopIcon = named(Storefront, 22);
-/** Gems, the harder currency, a faceted green stone; Zêr is the CoinIcon above. */
-export const GemIcon = currency(gemSvg, 22);
 export const SignOutIcon = named(SignOut, 22);
 /* The quiet menu on somebody else's profile: block, report. */
 export const MoreIcon = named(DotsThree, 22);

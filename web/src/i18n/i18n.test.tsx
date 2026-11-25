@@ -129,14 +129,15 @@ describe('the catalogues', () => {
       }
     });
   });
-  /** The leaderboards name Zêr and Gewher as the purse and shop do, so they never read as a third currency. */
-  it('name the currencies on the leaderboards as the shop does', () => {
+  /** One currency, named the same everywhere, and no second one coming back under another name. */
+  it('name the one currency on the leaderboards, the purse and the gift picker alike', () => {
     for (const [code, catalogue] of Object.entries({ en, ...CATALOGUES })) {
-      expect(catalogue['rankings.board.gewher'], code).toBe(catalogue['shop.gems']);
       expect(catalogue['rankings.board.zer'], code).toBe('Zêr');
+      for (const key of ['nav.yourPurse', 'gift.picker.balance', 'leagues.result.zer'] as const) {
+        expect(catalogue[key], `${code} ${key}`).toContain('Zêr');
+      }
+      for (const text of Object.values(catalogue)) expect(text, code).not.toMatch(/gewher|گەوهەر|\bgems\b|edelstein|\bgemas\b|mücevher|جوهرة|gemmes|edelstenen/i);
     }
-    expect(ku['rankings.board.gewher']).toBe('Gewher');
-    expect(ckb['rankings.board.gewher']).toBe('گەوهەر');
   });
 
   /**

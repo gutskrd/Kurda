@@ -84,7 +84,7 @@ function inventoryFetch(
         ],
       });
     }
-    if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 1000, gems: 5 } });
+    if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 1000 } });
     if (url.includes('/shop')) {
       return jsonResponse(200, {
         items: [
@@ -291,7 +291,7 @@ describe('CosmeticCustomizer', () => {
             items: [{ sku: 'frame-made-genim', name: 'Xeleka Genim', category: 'frame', quantity: 1, premiumOnly: false, assetUrl: '/cosmetics/frames/made-02-genim.png' }],
           });
         }
-        if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 3000, gems: 0 } });
+        if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 3000 } });
         if (url.includes('/shop')) {
           return jsonResponse(200, {
             items: [{ sku: 'frame-made-lale', name: 'Xeleka Laleyan', description: 'Tulip wreath', category: 'frame', currency: 'zer', price: 1400, isUnique: true, premiumOnly: false, assetUrl: '/cosmetics/frames/made-01-lale.png' }],

@@ -28,6 +28,7 @@ const BY_DATA: Record<string, NoteKind> = {
   play_invite: 'invite',
   friend_request: 'friendRequest',
   gift: 'gift',
+  post_gift: 'gift',
   badge: 'badge',
   league_safe: 'league',
   league_promotion: 'league',

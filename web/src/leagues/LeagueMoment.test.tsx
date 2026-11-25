@@ -25,7 +25,7 @@ const week = (over: Partial<LeagueWeekResult>): LeagueWeekResult => ({
   goalXp: 150,
   goalMet: true,
   trophy: false,
-  gems: 0,
+  zer: 0,
   ...over,
 });
 
@@ -49,7 +49,7 @@ afterEach(() => {
 
 describe('sharing a league week', () => {
   it('offers one quiet Share under the way on of a promotion', async () => {
-    renderApp(<LeagueMoment week={week({ outcome: 'promoted', tierAfter: 'cem', rank: 2, gems: 10 })} />);
+    renderApp(<LeagueMoment week={week({ outcome: 'promoted', tierAfter: 'cem', rank: 2, zer: 50 })} />);
     const moment = await screen.findByRole('dialog', { name: en['leagues.celebrate.up'] });
     const onward = within(moment).getByRole('button', { name: en['lesson.continue'] });
     const share = within(moment).getByRole('button', { name: 'Share' });
@@ -60,7 +60,7 @@ describe('sharing a league week', () => {
 
   it('shares the league moved up to, and nothing of the group or of who moved', async () => {
     const { share, said } = sheet();
-    renderApp(<LeagueMoment week={week({ outcome: 'promoted', tierAfter: 'cem', rank: 2, gems: 10 })} />);
+    renderApp(<LeagueMoment week={week({ outcome: 'promoted', tierAfter: 'cem', rank: 2, zer: 50 })} />);
     const moment = await screen.findByRole('dialog', { name: en['leagues.celebrate.up'] });
     await userEvent.click(within(moment).getByRole('button', { name: 'Share' }));
     expect(share).toHaveBeenCalledTimes(1);
