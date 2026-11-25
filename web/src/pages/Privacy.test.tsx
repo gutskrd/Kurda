@@ -70,8 +70,15 @@ describe('the privacy policy on reading letters and messages', () => {
   it('names the only times, that each is recorded, and that it is never for anything else', () => {
     const text = en['privacy.safety.messages'];
     expect(text).toMatch(/only when someone in the conversation reports it, when an automatic safety check flags it, or for a specific safety or legal reason/);
-    expect(text).toMatch(/Every time this happens, it is recorded/);
+    expect(text).toMatch(/Each time our staff open one, it is recorded/);
     expect(text).toMatch(/never read for anything else, and never for advertising/);
+  });
+
+  it('says how long a flagged letter or message is kept, in every language', () => {
+    expect(en['privacy.retention.body']).toMatch(/A letter or message an automatic safety check flags is kept with its case until a year after the case is decided, or until your account is deleted if that is sooner/);
+    for (const [code, catalogue] of Object.entries(CATALOGUES)) {
+      if (code !== 'en') expect(catalogue['privacy.retention.body'], code).not.toBe(en['privacy.retention.body']);
+    }
   });
 
   it('reads in Kurmancî on the page itself', async () => {
