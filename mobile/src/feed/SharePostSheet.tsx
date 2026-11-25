@@ -10,7 +10,8 @@ import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { SendErrorNotice } from '../reports/SendError';
 import { Sheet } from '../stories/ui';
-import { ClayButton } from '../theme/glass';
+import { ClayButton, ErrorRetry } from '../theme/glass';
+import { describeError } from '../api/errors';
 import { Icon } from '../theme/Icon';
 import { PressableScale } from '../theme/MotionParts';
 import { SearchField } from '../theme/SearchField';
@@ -47,6 +48,9 @@ export function SharePostSheet({ item, onClose }: { item: FeedItem; onClose: () 
   const [query, setQuery] = useState('');
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [failed, setFailed] = useState<ApiError | null>(null);
+  // The friends could not be read: said as that, with Try again, never as having none.
+  const [unread, setUnread] = useState<ApiError | null>(null);
+  const [round, setRound] = useState(0);
   const timers = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -54,12 +58,14 @@ export function SharePostSheet({ item, onClose }: { item: FeedItem; onClose: () 
     if (isGuest) return;
     let live = true;
     void listFriends(client).then((res) => {
-      if (live) setFriends(res.ok ? res.data.friends : []);
+      if (!live) return;
+      if (res.ok) setFriends(res.data.friends);
+      else setUnread(res.error);
     });
     return () => {
       live = false;
     };
-  }, [client, isGuest]);
+  }, [client, isGuest, round]);
 
   const shareOut = async (): Promise<void> => {
     try {
@@ -110,6 +116,14 @@ export function SharePostSheet({ item, onClose }: { item: FeedItem; onClose: () 
             <Text style={[styles.sent, dir.text, { color: colors.success }]} accessibilityLiveRegion="polite" accessibilityRole="alert">
               {t('share.sentTo', { name: sentTo })}
             </Text>
+          ) : unread ? (
+            <ErrorRetry
+              message={describeError(unread, t)}
+              onRetry={() => {
+                setUnread(null);
+                setRound((r) => r + 1);
+              }}
+            />
           ) : friends === null ? (
             <View accessibilityLabel={t('common.loading')}>
               {[0, 1, 2].map((i) => (

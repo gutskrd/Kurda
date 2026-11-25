@@ -11,7 +11,7 @@ import type { ApiError } from '../api/types';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
-import { ClayButton } from '../theme/glass';
+import { ClayButton, ErrorRetry } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { SearchField } from '../theme/SearchField';
 import { useTheme } from '../theme/ThemeProvider';
@@ -73,6 +73,9 @@ export function CosmeticPicker({
   const dir = useDirection();
 
   const [items, setItems] = useState<InventoryItem[] | null>(null);
+  // Why what you own could not be read: said with Try again, never as owning nothing.
+  const [unread, setUnread] = useState<string | null>(null);
+  const [round, setRound] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [showIcon, setShowIcon] = useState(iconVisible);
   // Null until chosen; then the first kind you own any of.
@@ -86,7 +89,11 @@ export function CosmeticPicker({
     let alive = true;
     void inventory(client).then((res) => {
       if (!alive) return;
-      const owned = res.ok ? res.data.items : [];
+      if (!res.ok) {
+        setUnread(describeError(res.error, t));
+        return;
+      }
+      const owned = res.data.items;
       setItems(owned);
       if (user && owned.some((i) => itemCategory(i.category) === 'frame')) {
         void client.get<{ frameSku?: string | null }>(`/users/${user.id}`).then((me) => {
@@ -97,7 +104,7 @@ export function CosmeticPicker({
     return () => {
       alive = false;
     };
-  }, [client, user]);
+  }, [client, user, t, round]);
 
   // What /me has you wearing, or a fresher answer to a tap here, so a tile does not flicker back while /me is re-read.
   const [worn, setWorn] = useState<Record<CosmeticSlot, string | null>>({ background: equippedBackground, icon: equippedIcon });
@@ -241,7 +248,15 @@ export function CosmeticPicker({
         {t('edit.cosmetics')}
       </Text>
 
-      {items === null ? (
+      {unread && items === null ? (
+        <ErrorRetry
+          message={unread}
+          onRetry={() => {
+            setUnread(null);
+            setRound((r) => r + 1);
+          }}
+        />
+      ) : items === null ? (
         <Loading style={{ marginVertical: spacing.md }} />
       ) : (
         <>

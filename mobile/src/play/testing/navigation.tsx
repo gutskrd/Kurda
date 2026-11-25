@@ -5,7 +5,7 @@
  * `backOut()` hands it the action while it prevents removal, else goes back. Wire it with
  * `vi.mock('@react-navigation/native', () => import('…/play/testing/navigation'))`.
  */
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { createContext, useEffect, useLayoutEffect, useState } from 'react';
 import { vi } from 'vitest';
 
 /** Told when a page is pushed over the tabs, as the tabs' own screen blurs then. */
@@ -34,6 +34,19 @@ export const navigation = {
 export function useNavigation() {
   return navigation;
 }
+
+/** The container's own ref, as a host outside any screen reads it: ready, on no screen, and moving as `navigation` does. */
+export const NavigationContainerRefContext = createContext<unknown>({
+  isReady: () => true,
+  getCurrentRoute: () => undefined,
+  navigate: (...args: unknown[]) => navigation.navigate(...args),
+  dispatch: (...args: unknown[]) => navigation.dispatch(...args),
+});
+
+/** The stack's actions, as plain records a test can read back from `navigation.dispatch`. */
+export const StackActions = {
+  popTo: (name: string, params?: object) => ({ type: 'POP_TO', payload: { name, params } }),
+};
 
 /** Every screen under test with a focus effect, each told when a test returns to it. */
 const focused = new Set<() => void>();

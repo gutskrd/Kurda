@@ -42,6 +42,8 @@ import {
 } from './api';
 import { Loading } from '../theme/Loading';
 import { heldDim } from '../theme/MotionParts';
+import { PendingPhoto } from '../pictures/PictureReview';
+import { pendingOf } from '../pictures/review';
 
 /**
  * A group's own page, for members only (anyone else is told there is no such group): the group as it presents itself,
@@ -227,6 +229,10 @@ export function GroupMembersScreen({
               </Text>
               {detail.description ? <Text style={[styles.about, dir.free, styles.centred, { color: colors.textSecondary }]}>{detail.description}</Text> : null}
               <Text style={[styles.meta, { color: colors.textSecondary }]}>{membersLine(t, detail.memberCount)}</Text>
+              {/* Sent only to admins and whoever set it: a new picture members do not see yet. */}
+              {pendingOf(detail.photoPending) ? (
+                <PendingPhoto pending={pendingOf(detail.photoPending)} body="picture.held.group" testID="group-info-photo-pending" />
+              ) : null}
             </View>
 
             {error ? (

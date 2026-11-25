@@ -21,6 +21,8 @@ import type { TranslationKey } from '../i18n/translations';
 import { bucket, type RailFriend, type SocialRailData } from './rail';
 import { elapsed, lastSeen } from './time';
 import { Loading } from '../theme/Loading';
+import { ErrorRetry } from '../theme/glass';
+import { describeError } from '../api/errors';
 import { useDirection } from '../reports/direction';
 import { pageWidth } from '../theme/pageWidth';
 
@@ -48,6 +50,9 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
 
   const [data, setData] = useState<SocialRailData | null>(null);
   const [loading, setLoading] = useState(false);
+  // Why the drawer could not be read, said with Try again rather than left blank.
+  const [failed, setFailed] = useState<string | null>(null);
+  const [round, setRound] = useState(0);
 
   const width = Math.round(pageWidth() * WIDTH_RATIO);
   // How far it is from open towards its edge: 0 is open, `width` is gone.
@@ -61,15 +66,17 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
     if (!open) return;
     let stale = false;
     setLoading(true);
+    setFailed(null);
     void client.get<SocialRailData>('/me/social').then((res) => {
       if (stale) return;
       setLoading(false);
       if (res.ok) setData(res.data);
+      else setFailed(describeError(res.error, t));
     });
     return () => {
       stale = true;
     };
-  }, [open, client]);
+  }, [open, client, t, round]);
 
   const go = useCallback(
     (run: () => void) => {
@@ -170,29 +177,13 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
 
         {loading && data === null ? (
           <Loading style={{ marginTop: spacing.lg }} />
+        ) : failed && data === null ? (
+          <ErrorRetry message={failed} onRetry={() => setRound((r) => r + 1)} />
         ) : (
           <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-            {/* What goes stale first: a challenge is gone in two minutes. */}
-            {data && (data.challenges.length > 0 || data.requests.length > 0) ? (
+            {data && data.requests.length > 0 ? (
               <View style={styles.group}>
                 {heading('rail.waitingOnYou')}
-                {data.challenges.map((c) => (
-                  <PressableScale
-                    key={`c:${c.userId}`}
-                    style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
-                    onPress={() => go(() => navigation.navigate('FriendRequests'))}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('rail.wantsToPlay', { name: c.displayName ?? c.username })}
-                  >
-                    <Avatar name={c.username} size={34} photoUrl={c.avatarUrl ?? undefined} />
-                    <View style={styles.rowMain}>
-                      <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>{c.username}</Text>
-                      <Text style={[styles.detail, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
-                        {t('rail.wantsToPlay', { name: c.displayName ?? c.username })}
-                      </Text>
-                    </View>
-                  </PressableScale>
-                ))}
                 {data.requests.map((r) => (
                   <PressableScale
                     key={`r:${r.userId}`}

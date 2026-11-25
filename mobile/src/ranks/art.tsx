@@ -11,18 +11,14 @@ import {
   dayMedalSvg,
   hasBadgeArt,
   leagueEmblemSvg,
-  placementEmblemSvg,
-  rankEmblemSvg,
   seasonFrameShineSvg,
   seasonFrameSvg,
   streakMedalSvg,
   type ArtBadgeKey,
   type ArtBadgeTier,
-  type ArtSeason,
   type ArtSlotFamily,
   type BadgeState,
   type DayMedal,
-  type Division,
   type LeagueTier,
   type RankTier,
 } from '@kurda/shared';
@@ -125,43 +121,6 @@ function Picture({
       </View>
     </View>
   );
-}
-
-export function RankEmblem({
-  tier,
-  division,
-  size,
-  label,
-  season,
-  style,
-}: {
-  tier: RankTier;
-  division?: Division | null;
-  size: number;
-  /** The translated name, "Gir II (Hill)" */
-  label: string;
-  /** A season's emblem shows the season under the medallion instead of the division. */
-  season?: { name: ArtSeason; year: number };
-  style?: StyleProp<ViewStyle>;
-}): React.JSX.Element {
-  const idPrefix = useArtId();
-  const [picture, onError] = usePicture('rank', tier);
-  // Nothing is drawn by code while an uploaded picture stands in for it.
-  const xml = useMemo(
-    () => (picture ? '' : rankEmblemSvg({ tier, division: division ?? undefined, size, title: label, season, idPrefix })),
-    [picture, tier, division, size, label, season, idPrefix],
-  );
-  if (picture) return <Picture uri={picture} size={size} label={label} onError={onError} style={style} />;
-  return <Art xml={xml} size={size} label={label} style={style} />;
-}
-
-export function PlacementEmblem({ done, size, label }: { done: number; size: number; label: string }): React.JSX.Element {
-  const idPrefix = useArtId();
-  const xml = useMemo(
-    () => placementEmblemSvg({ done: Math.max(0, Math.min(5, Math.round(done))), size, title: label, idPrefix }),
-    [done, size, label, idPrefix],
-  );
-  return <Art xml={xml} size={size} label={label} />;
 }
 
 export function LeagueEmblem({

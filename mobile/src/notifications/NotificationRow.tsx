@@ -281,7 +281,7 @@ function Face({ actor, kind, ring, mirrored }: { actor: NoticeActor | null; kind
  * What it is about, drawn small at the row's end: the website's shared art (drawn at twice the size and fitted, so
  * detail holds), the gift's wrapping, or the streak's still fire. Decoration: the row's words already say it.
  */
-function NoticeArt({ picture }: { picture: NoticePicture }): React.JSX.Element {
+export function NoticeArt({ picture }: { picture: NoticePicture }): React.JSX.Element {
   const { colors } = useTheme();
   const id = `np${useId().replace(/[^A-Za-z0-9]/g, '')}`;
   const xml = useMemo(() => {

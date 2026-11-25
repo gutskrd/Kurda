@@ -114,7 +114,7 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
   const dialect = picked && isRhymeOffered(offered, picked) ? picked : openingRhymeDialect(offered, course, locale);
   const canCreate = isRhymeOffered(offered, dialect);
   const choices = offeredRhymeDialects(offered);
-  const { friends, recentIds } = useFriendsToAsk();
+  const { friends, recentIds, failed: friendsFailed, retry: retryFriends } = useFriendsToAsk();
   const [asked, setAsked] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -166,6 +166,8 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
               </Text>
               <FriendPicker
                 friends={friends}
+                failed={friendsFailed}
+                onRetry={retryFriends}
                 recentIds={recentIds}
                 picked={asked}
                 onToggle={(friend) => setAsked((list) => togglePick(list, friend, false, MAX_INVITEES_PER_REQUEST))}

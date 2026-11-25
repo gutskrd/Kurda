@@ -30,7 +30,7 @@ const friends = ok({ friends: [{ userId: 'u2', username: 'shilan', displayName: 
 
 describe('GiftSheet (the Shop)', () => {
   it('gives the item and names the friend as the list showed them', async () => {
-    testAuth.client = fakeClient({ 'GET /friends?limit=50': friends, 'POST /shop/gift': ok({ balance: 4100 }) });
+    testAuth.client = fakeClient({ 'GET /friends?limit=500': friends, 'POST /shop/gift': ok({ balance: 4100 }) });
     const onSent = vi.fn();
     renderWithProviders(<GiftSheet item={item} onClose={() => undefined} onSent={onSent} />);
     // Each row is named for its friend, not only for the item.
@@ -38,9 +38,20 @@ describe('GiftSheet (the Shop)', () => {
     await waitFor(() => expect(onSent).toHaveBeenCalledWith(4100, { userId: 'u2', username: 'shilan', name: 'Şîlan' }));
   });
 
+  it('says the friends could not be read, never that there are none, and reads them again on Try again', async () => {
+    let up = false;
+    testAuth.client = fakeClient({ 'GET /friends?limit=500': () => (up ? friends : fail({ status: 503, message: 'down' })) });
+    renderWithProviders(<GiftSheet item={item} onClose={() => undefined} onSent={() => undefined} />);
+    expect(await screen.findByText('Couldn’t load')).toBeTruthy();
+    expect(screen.queryByText(/no friends/i)).toBeNull();
+    up = true;
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByRole('button', { name: 'A gift for Şîlan' })).toBeTruthy();
+  });
+
   it('says what a limit on the account stops, instead of the server’s English', async () => {
     testAuth.client = fakeClient({
-      'GET /friends?limit=50': friends,
+      'GET /friends?limit=500': friends,
       'POST /shop/gift': fail({ code: 'MUTED', message: "you can't send messages right now", details: { scope: 'chat', until: null } }),
     });
     const onSent = vi.fn();
@@ -53,7 +64,7 @@ describe('GiftSheet (the Shop)', () => {
   it('closes itself before Account standing opens, so the link is not hidden under it', async () => {
     navigate.mockReset();
     testAuth.client = fakeClient({
-      'GET /friends?limit=50': friends,
+      'GET /friends?limit=500': friends,
       'POST /shop/gift': fail({ code: 'MUTED', details: { scope: 'chat', until: null } }),
     });
     const onClose = vi.fn();
@@ -70,7 +81,7 @@ describe('GiftSheet (the Shop)', () => {
       fail({ code: 'GIFT_NOT_ALLOWED', message: 'a gift to a new friend can be sent once you have been friends for a day' }),
       fail({ code: 'GIFT_DAILY_LIMIT', status: 429, kind: 'rate_limited', message: 'that is all the gifts for today' }),
     ];
-    testAuth.client = fakeClient({ 'GET /friends?limit=50': friends, 'POST /shop/gift': () => answers.shift()! });
+    testAuth.client = fakeClient({ 'GET /friends?limit=500': friends, 'POST /shop/gift': () => answers.shift()! });
     renderWithProviders(<GiftSheet item={item} onClose={() => undefined} onSent={() => undefined} />);
     // Each refusal re-enables the row in a later render; let it settle before pressing again, or the press can land
     // while the row is still busy.
@@ -91,7 +102,7 @@ describe('GiftSheet (the Shop)', () => {
       fail({ code: 'PRICE_CHANGED', status: 409 }),
       ok({ balance: 4100 }),
     ];
-    const client = fakeClient({ 'GET /friends?limit=50': friends, 'POST /shop/gift': () => answers.shift()! });
+    const client = fakeClient({ 'GET /friends?limit=500': friends, 'POST /shop/gift': () => answers.shift()! });
     testAuth.client = client;
     const onSent = vi.fn();
     renderWithProviders(<GiftSheet item={item} onClose={() => undefined} onSent={onSent} />);

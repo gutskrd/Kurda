@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useI18n } from '../i18n/I18nContext';
 import { useIsOnline } from '../net/useNetworkStatus';
+import { ArrivalCard, useArrivals } from '../notifications/ArrivalToasts';
 import { useDirection } from '../reports/direction';
 import { timing } from './animate';
 import { Icon } from './Icon';
@@ -21,14 +22,16 @@ const MAX_NOTICES = 3;
 const OFFLINE_PILL = 36;
 
 /**
- * The app's short notices (theme/notice.ts) as quiet cards at the top, over every screen. A notice already showing is
- * not stacked again, so a burst of failures while offline says it once. Each is read out as it comes, leaves by itself
- * after `NOTICE_MS`, and can be closed sooner. Mounted once at the root.
+ * The app's short notices (theme/notice.ts) as quiet cards at the top, over every screen, under any notification that
+ * arrived while the app is open (notifications/ArrivalToasts.tsx), so the two never cover each other. A notice already
+ * showing is not stacked again, so a burst of failures while offline says it once. Each is read out as it comes, leaves
+ * by itself after `NOTICE_MS`, and can be closed sooner. Mounted once at the root.
  */
 export function NoticeToasts(): React.JSX.Element | null {
   const insets = useSafeAreaInsets();
   const online = useIsOnline();
   const [notices, setNotices] = useState<string[]>([]);
+  const { arrivals, dismiss: dismissArrival } = useArrivals();
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
   const dismiss = useCallback((text: string) => {
@@ -53,9 +56,12 @@ export function NoticeToasts(): React.JSX.Element | null {
     };
   }, [dismiss]);
 
-  if (notices.length === 0) return null;
+  if (notices.length === 0 && arrivals.length === 0) return null;
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { top: insets.top + spacing.sm + (online ? 0 : OFFLINE_PILL) }]}>
+      {arrivals.map((arrival) => (
+        <ArrivalCard key={arrival.id} arrival={arrival} onClose={() => dismissArrival(arrival.id)} />
+      ))}
       {notices.map((text) => (
         <NoticeCard key={text} text={text} onClose={() => dismiss(text)} />
       ))}

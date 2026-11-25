@@ -48,14 +48,6 @@ export function useLobbyRefresh(game: PlayGame, lobbyId: string, refresh: () => 
   }, [active, foreground]);
 }
 
-/** A seat's name as this viewer may see it: a friend's name, or "Player 3". */
-export function seatNamer(
-  players: readonly Pick<LobbySeat, 'seat' | 'name'>[],
-  t: (key: 'stories.player', vars: { seat: number }) => string,
-): (seat: number) => string {
-  return (seat) => players.find((p) => p.seat === seat)?.name ?? t('stories.player', { seat });
-}
-
 interface LobbySeat {
   seat: number;
   name: string | null;

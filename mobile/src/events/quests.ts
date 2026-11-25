@@ -10,9 +10,7 @@ import {
   type EventQuest,
   type EventQuestReward,
   type EventQuests,
-  type EventQuestState,
   type EventQuestType,
-  type EventRewardCurrency,
 } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 import type { Translate } from '../api/errors';
@@ -21,8 +19,6 @@ export type QuestType = EventQuestType;
 export type QuestReward = EventQuestReward;
 export type QuestView = EventQuest;
 export type EventQuestsView = EventQuests;
-export type ClaimState = EventQuestState;
-export type RewardCurrency = EventRewardCurrency;
 
 export const progressPct = eventQuestShare;
 export const claimState = eventQuestState;

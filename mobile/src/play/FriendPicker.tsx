@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { describeError } from '../api/errors';
 import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { Note } from '../stories/ui';
+import { ErrorRetry } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { pressedDim } from '../theme/motion';
 import { Pressable } from '../theme/Pressable';
@@ -36,15 +38,25 @@ export function orderFriends(friends: readonly FriendSummary[], recentIds: reado
   return { recent, rest };
 }
 
-/** Your friends and who you played with lately, read once for a picker; `friends` is null until it has answered. */
-export function useFriendsToAsk(): { friends: FriendSummary[] | null; recentIds: string[] } {
+/**
+ * Your friends and who you played with lately, read once for a picker; `friends` is null until it has answered, and
+ * `failed` says why it could not, so a failure is never shown as having no friends.
+ */
+export function useFriendsToAsk(): { friends: FriendSummary[] | null; recentIds: string[]; failed: string | null; retry: () => void } {
   const { client } = useAuth();
+  const { t } = useI18n();
   const [friends, setFriends] = useState<FriendSummary[] | null>(null);
   const [recentIds, setRecentIds] = useState<string[]>([]);
+  const [failed, setFailed] = useState<string | null>(null);
+  const [round, setRound] = useState(0);
   useEffect(() => {
     let live = true;
     void listFriends(client).then((res) => {
-      if (live) setFriends(res.ok ? res.data.friends : []);
+      if (!live) return;
+      if (res.ok) {
+        setFriends(res.data.friends);
+        setFailed(null);
+      } else setFailed(describeError(res.error, t));
     });
     void listInvites(client).then((res) => {
       if (live && res.ok) setRecentIds(recentPlayers(res.data));
@@ -52,8 +64,12 @@ export function useFriendsToAsk(): { friends: FriendSummary[] | null; recentIds:
     return () => {
       live = false;
     };
-  }, [client]);
-  return { friends, recentIds };
+  }, [client, t, round]);
+  const retry = useCallback(() => {
+    setFailed(null);
+    setRound((r) => r + 1);
+  }, []);
+  return { friends, recentIds, failed, retry };
 }
 
 /**
@@ -70,8 +86,13 @@ export function FriendPicker({
   limit,
   locked,
   offerOthers = true,
+  failed = null,
+  onRetry,
 }: {
   friends: FriendSummary[] | null;
+  /** Why the friends could not be read (`useFriendsToAsk`), shown with Try again in place of the list. */
+  failed?: string | null;
+  onRetry?: () => void;
   recentIds: readonly string[];
   picked: readonly string[];
   onToggle: (id: string) => void;
@@ -127,7 +148,9 @@ export function FriendPicker({
     <View style={styles.picker}>
       {locked ? row(locked) : null}
       {offerOthers ? <SearchField value={query} onChangeText={setQuery} label={t('play.sheet.search')} returnKeyType="done" /> : null}
-      {friends === null || !offerOthers ? null : friends.length === 0 ? (
+      {failed && offerOthers && onRetry ? (
+        <ErrorRetry message={failed} onRetry={onRetry} />
+      ) : friends === null || !offerOthers ? null : friends.length === 0 ? (
         <Note>{t('play.sheet.noFriends')}</Note>
       ) : (
         <>
