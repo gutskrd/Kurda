@@ -6,11 +6,12 @@
  * its own gold (`--plus-*`). Green and red only ever say right and wrong, never alone.
  *
  * Dark is the default on :root; light redefines the same names under `data-theme="light"`, set by theme/theme.ts, which
- * also names the colour theme in `data-palette`. Text colours meet WCAG AA (4.5:1, or 3:1 for large text and control
- * edges), with close ones noted.
+ * also names the colour theme in `data-palette`. A stage that is night in either scheme (a gift's moment) takes the dark
+ * names with `.scheme-night`, as the phone's DarkScheme does, and keeps the theme's colours. Text colours meet WCAG AA
+ * (4.5:1, or 3:1 for large text and control edges), with close ones noted.
  */
-:root {
-  /* the single, consistent page background behind every surface */
+:root,
+.scheme-night {
   /* the warm soft black every surface sits on: never pure black, which reads as a screen switched off */
   --app-bg: #161412;
 
@@ -69,6 +70,8 @@
   --stage-gold: #f2b632;
   --stage-gold-lip: #a8791a;
   --stage-gold-ink: #2a1d05;
+  /* the screen dimmed to the warm night behind a gift as it is opened, the same in both schemes */
+  --stage-dim: rgba(14, 12, 10, 0.92);
   /*
    * Chat bubbles: the reader's in the theme's second colour (set with the theme, below), the other person's a step off
    * the page, each with its ink, so the thread, typing bubble and send button agree.
@@ -192,7 +195,8 @@
 
 /* a finger is broader than the tip of a mouse pointer, and is aimed less exactly */
 @media (any-pointer: coarse) {
-  :root {
+  :root,
+  .scheme-night {
     --reach-min: 48px;
   }
 }

@@ -4,7 +4,7 @@ import { HELPLINE_URL } from '@kurda/shared';
  * Where a notification about a gift or moderation opens, from its `data.kind` (shared `ModerationNotificationData`, and
  * the gift notice the API records). Pure, like the rest of the inbox helpers.
  * - `gift`: the chat it is in, unwrapping it there (`data.chat` is `dm:<senderId>` or `group:<groupId>`).
- * - `post_gift`: the post it was given onto, where its gifts show.
+ * - `post_gift`: the post it was given onto, where its gifts show, opening the author's own gift there when named.
  * - `report_outcome`: My reports.
  * - `sanction`, `sanction_lifted`, `appeal_decided`: Account standing.
  * - `caring_message`: not a screen; the list opens it in full with its helpline (`CaringMessageDialog`). Only an https
@@ -16,7 +16,7 @@ export type SocialDeepLink =
   | { screen: 'CaringMessage'; helplineUrl: string }
   | { screen: 'Chat'; params: { userId: string; username: string; openGift?: string } }
   | { screen: 'GroupThread'; params: { groupId: string; name: string; openGift?: string } }
-  | { screen: 'LibraryPost'; params: { postId: string } };
+  | { screen: 'LibraryPost'; params: { postId: string; openGift?: string } };
 
 const UUIDISH = /^[0-9a-f-]{8,64}$/i;
 
@@ -51,7 +51,9 @@ export function socialDeepLink(data: Record<string, unknown>): SocialDeepLink | 
     }
     case 'post_gift': {
       const post = str(data.postId);
-      return post && UUIDISH.test(post) && data.postType === 'library' ? { screen: 'LibraryPost', params: { postId: post } } : null;
+      const gift = str(data.giftId);
+      if (!post || !UUIDISH.test(post) || data.postType !== 'library') return null;
+      return { screen: 'LibraryPost', params: gift && UUIDISH.test(gift) ? { postId: post, openGift: gift } : { postId: post } };
     }
     default:
       return null;

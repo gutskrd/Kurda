@@ -173,7 +173,6 @@ function Thread({ otherId, otherName, onSent, onClose, className = '' }: DmThrea
       },
       [client, otherId, onSent],
     ),
-    threadRef: scrollRef,
     onSentScroll: () => scrollToBottom('smooth'),
   });
 

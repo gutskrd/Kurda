@@ -39,7 +39,7 @@ export function usePostGifts(item: FeedItem): {
   const { t } = useI18n();
   const [gifts, setGifts] = useState<PostGifts>(item.gifts ?? NONE);
   const [giving, setGiving] = useState(false);
-  const [flying, setFlying] = useState<{ tier: GiftTier; key: number } | null>(null);
+  const [flying, setFlying] = useState<{ tier: GiftTier; item: { sku: string; assetUrl: string | null }; key: number } | null>(null);
   useEffect(() => setGifts(item.gifts ?? NONE), [item.gifts]);
   const authorName = item.author.displayName || item.author.username;
   const sheet = (
@@ -51,11 +51,11 @@ export function usePostGifts(item: FeedItem): {
         onClose={() => setGiving(false)}
         onSent={(_result, picked) => {
           setGiving(false);
-          setFlying({ tier: picked.tier, key: Date.now() });
+          setFlying({ tier: picked.tier, item: picked, key: Date.now() });
           void postGifts(client, postTarget(item)).then((res) => res.ok && setGifts(res.data.gifts));
         }}
       />
-      {flying ? <GiftSendAnimation key={flying.key} tier={flying.tier} announce={t('gift.post.sent', { name: authorName })} onDone={() => setFlying(null)} /> : null}
+      {flying ? <GiftSendAnimation key={flying.key} tier={flying.tier} item={flying.item} announce={t('gift.post.sent', { name: authorName })} onDone={() => setFlying(null)} /> : null}
     </>
   );
   return { gifts, giving, give: () => setGiving(true), sheet };

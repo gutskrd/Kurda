@@ -257,6 +257,38 @@ const MEANINGS: Readonly<Record<string, Readonly<Record<AppLocale, string>>>> = 
   },
 };
 
+/**
+ * Each gift's own light, for the glow and rays behind it as it is opened (gift-moment.ts): the strongest colour in its
+ * picture, made bright. One the pictures do not say (a steel hammer) takes its shelf's, as does a gift added later.
+ */
+const GLOW: Readonly<Record<string, string>> = {
+  cay: '#ea6b52', qehwe: '#daac62', beybun: '#f5be47', sev: '#e86354', lale: '#ea5f52', gul: '#ec5165', nergiz: '#f5b547',
+  kevok: '#e0845d', sosin: '#8a62da', pisik: '#ef964d', kew: '#daae62', semawer: '#e0b45d', def: '#e1b25b',
+  'deste-gul': '#dc6075', sterk: '#6270da', kelek: '#daaa62', saz: '#e3ae59', ask: '#a8da62', keskesor: '#f59047',
+  pezkovi: '#daac62', belem: '#62b8da', pet: '#f5b847', hesp: '#e0885d', kon: '#daaa62', mal: '#e4a558',
+  sahmaran: '#dcaf60', gemi: '#e0b45d', kosk: '#daac62', heyv: '#6278da', keleh: '#daae62', roj: '#f5b247',
+  kadiz: '#7062da',
+};
+
+/** A shelf's light, for a gift with none of its own; the warm one for anything that is not a gift. */
+const GROUP_GLOW: Readonly<Record<GiftGroup, string>> = {
+  warm: '#ef9a4d',
+  flowers: '#ec5f74',
+  animals: '#e8a05a',
+  music: '#e3ae59',
+  sky: '#f5b847',
+  boats: '#62b8da',
+  houses: '#e4a558',
+  legends: '#f58747',
+};
+
+/** The colour a gift glows in as it is opened, by its sku. */
+export function giftGlow(sku: string): string {
+  const def = giftOfSku(sku);
+  if (!def) return GROUP_GLOW.warm;
+  return GLOW[def.id] ?? GROUP_GLOW[def.group];
+}
+
 /** What a gift means in `locale` (English where the locale is not an interface language), by its sku; null for any other item. */
 export function giftMeaning(sku: string, locale: string): string | null {
   const def = giftOfSku(sku);

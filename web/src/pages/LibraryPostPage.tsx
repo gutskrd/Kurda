@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
 import { ErrorState } from '../components/states';
@@ -17,6 +17,10 @@ import type { FeedItem, PostEngagement } from '../lib/types';
 import { useGrowsInto } from '../lib/viewTransition';
 import { ReportAction } from '../reports/ReportAction';
 import { HeldPost } from '../pictures/PictureCheck';
+import { PostGiftOpen } from '../gifts/GiftMoment';
+
+/** A gift's id as the notice names it. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false };
 
@@ -24,12 +28,14 @@ const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, like
  * One written post in full (a gotin, çîrok or helbest): its pictures, laid out as on the wall and opening full size, its
  * author, source and comments, and editing for the author. Under it, the wall's action row with counts fetched for the
  * reader, since the post itself is public and cached for everyone. A post held while its picture is checked tells its
- * author that only they can see it.
+ * author that only they can see it. Arriving from a gift's notice (`?gift=<id>`), its author sees that gift open.
  */
 export function LibraryPostPage(): React.JSX.Element {
   const t = useT();
   const { user, client, status } = useAuth();
   const { id } = useParams<{ id: string }>();
+  const [search, setSearch] = useSearchParams();
+  const giftId = search.get('gift');
   const { data: post, error, loading, reload } = useApiGet<ComposedPost>(`/library/posts/${id}`);
   const [editing, setEditing] = useState(false);
   // Kept with its post, so another post's numbers never show here for a moment.
@@ -77,6 +83,21 @@ export function LibraryPostPage(): React.JSX.Element {
 
   return (
     <div className="container container-narrow">
+      {status === 'signedIn' && giftId && UUID.test(giftId) && (
+        <PostGiftOpen
+          giftId={giftId}
+          onDone={() =>
+            setSearch(
+              (now) => {
+                const next = new URLSearchParams(now);
+                next.delete('gift');
+                return next;
+              },
+              { replace: true },
+            )
+          }
+        />
+      )}
       <Link to={back.to} className="back-link">
         <ArrowIcon size={16} />
         {back.label}

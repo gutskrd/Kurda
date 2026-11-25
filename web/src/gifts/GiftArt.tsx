@@ -30,7 +30,7 @@ const KILIM: Readonly<Record<GiftTier, Palette>> = {
 };
 
 /** An id usable inside url(#…), since React's ids contain characters a fragment would need escaped. */
-function useSvgId(prefix: string): string {
+export function useSvgId(prefix: string): string {
   return `${prefix}${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 }
 
@@ -130,25 +130,6 @@ export function GiftBox({
   );
 }
 
-/** The Newroz fire for a legendary gift: three flickering flames (CSS) with embers drifting up. */
-export function NewrozFlame({ className }: { className?: string }): React.JSX.Element {
-  const glow = useSvgId('flameglow');
-  return (
-    <svg className={`newroz-flame${className ? ` ${className}` : ''}`} viewBox="0 0 120 160" aria-hidden="true" focusable="false">
-      <defs>
-        <radialGradient id={glow} cx="0.5" cy="0.75" r="0.6">
-          <stop offset="0" stopColor="rgba(255,190,80,0.75)" />
-          <stop offset="1" stopColor="rgba(255,120,40,0)" />
-        </radialGradient>
-      </defs>
-      <ellipse cx="60" cy="118" rx="58" ry="42" fill={`url(#${glow})`} />
-      <path className="flame-outer" d="M60 150 C24 150 18 112 34 86 C40 98 46 100 48 92 C46 70 56 44 70 26 C70 52 92 66 94 98 C96 124 84 150 60 150 Z" fill="#d9381e" />
-      <path className="flame-mid" d="M60 150 C36 150 34 122 44 104 C48 112 54 112 54 104 C54 90 62 76 70 66 C72 86 86 98 84 120 C82 140 74 150 60 150 Z" fill="#f28c28" />
-      <path className="flame-core" d="M60 150 C46 150 44 134 50 122 C54 128 58 126 58 120 C60 112 64 104 68 100 C70 114 78 124 74 138 C72 146 66 150 60 150 Z" fill="#ffd75e" />
-    </svg>
-  );
-}
-
 /**
  * The night a grand gift opens on: a sky of stars that come out one by one and a slow glow rising behind the gift, in
  * the stage's own gold (`--stage-gold`); CSS twinkles it, and under Reduce Motion it is simply there.
@@ -175,28 +156,6 @@ export function NightSky({ className }: { className?: string }): React.JSX.Eleme
         <circle key={i} className="night-sky-star" cx={star.x} cy={star.y} r={star.r} fill="currentColor" style={{ animationDelay: `${star.delay}ms` } as CSSProperties} />
       ))}
     </svg>
-  );
-}
-
-/**
- * Pomegranate seeds and gold sparks that fly when a gift opens, placed by a seeded scatter so each burst is the same;
- * CSS reads each piece's custom properties.
- */
-export function Confetti({ count = 18, spread = 1, className }: { count?: number; spread?: number; className?: string }): React.JSX.Element {
-  return (
-    <span className={`gift-confetti${className ? ` ${className}` : ''}`} aria-hidden="true">
-      {Array.from({ length: count }, (_, i) => {
-        const angle = (i / count) * Math.PI * 2 + scatter(i) * 0.6;
-        const distance = (70 + scatter(i, 3) * 90) * spread;
-        const style = {
-          '--dx': `${Math.round(Math.cos(angle) * distance)}px`,
-          '--dy': `${Math.round(Math.sin(angle) * distance - 30 * spread)}px`,
-          '--rot': `${Math.round(scatter(i, 5) * 540 - 270)}deg`,
-          '--delay': `${Math.round(scatter(i, 9) * 120)}ms`,
-        } as CSSProperties;
-        return <i key={i} className={i % 3 === 0 ? 'spark' : 'seed'} style={style} />;
-      })}
-    </span>
   );
 }
 

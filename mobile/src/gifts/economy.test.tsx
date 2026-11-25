@@ -8,18 +8,18 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate: vi.fn(), goBack: vi.fn(), isFocused: () => true, addListener: () => () => undefined }) }));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
-import { Animated } from 'react-native';
-import type { GiftCard } from '@kurda/shared';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { AccessibilityInfo, Animated } from 'react-native';
+import { GIFT_MOMENT_LOOK, GIFT_REDUCED_MOTION_MS, type GiftCard } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { GiftBubble } from './GiftBubble';
-import { GiftUnwrap } from './GiftUnwrap';
+import { GiftUnwrap, PostGiftOpen } from './GiftUnwrap';
+import { GiftSendAnimation } from './GiftSendAnimation';
 import { BagNews } from './BagNews';
 import { GiftLimitPage } from './GiftLimitPage';
 import { isKnownAdult, plusPitchAllowed } from './nudges';
-import { unwrapPlan } from './motion';
 import { DailyZer } from '../daily/DailyZer';
 
 patchReactNativeWeb();
@@ -49,10 +49,39 @@ describe('a grand gift on the phone', () => {
   });
   afterEach(() => vi.restoreAllMocks());
 
-  it('plays on the whole screen with the night sky, and keeps the sky under Reduce Motion', () => {
-    expect(unwrapPlan('grand', false)).toMatchObject({ stage: 'full', sky: true, flame: false });
-    expect(unwrapPlan('grand', true)).toMatchObject({ stage: 'full', sky: true, particles: [] });
-    expect(unwrapPlan('legendary', false).sky).toBe(false);
+  it('opens in its own light on the night sky, the rays behind it and sparkles round it', async () => {
+    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: moon({ myOpened: true }), equippable: null }) });
+    renderWithProviders(<GiftUnwrap target={{ giftId: 'g1', card: moon(), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />);
+    expect(screen.getByTestId('gift-moment-grand')).toBeTruthy();
+    expect(screen.getByTestId('night-sky')).toBeTruthy();
+    expect(screen.getByTestId('gift-rays')).toBeTruthy();
+    expect(screen.getAllByTestId('gift-sparkle')).toHaveLength(GIFT_MOMENT_LOOK.grand.sparkles);
+    expect(screen.getByRole('heading', { name: 'Gift from Azad' })).toBeTruthy();
+    const client = testAuth.client as unknown as { calls: Array<{ method: string; path: string }> };
+    await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/gifts/g1/open')).toBe(true));
+  });
+
+  it('holds its light still under Reduce Motion, and goes straight to the gift', async () => {
+    vi.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: moon({ myOpened: true }), equippable: null }) });
+    const loop = vi.spyOn(Animated, 'loop');
+    renderWithProviders(<GiftUnwrap target={{ giftId: 'g1', card: moon(), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />);
+    // the sparkles stand where they are, lit, once the setting is known
+    await waitFor(() => expect(screen.getAllByTestId('gift-sparkle')[0]!.style.opacity).toBe('0.8'));
+    loop.mockClear();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, GIFT_REDUCED_MOTION_MS + 50));
+    });
+    expect(await screen.findByText(/The full moon/)).toBeTruthy();
+    expect(loop).not.toHaveBeenCalled();
+  });
+
+  it('gives a common gift a gentle light, without the sky or sparkles', () => {
+    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: moon({ tier: 'common', myOpened: true }), equippable: null }) });
+    renderWithProviders(<GiftUnwrap target={{ giftId: 'g1', card: moon({ tier: 'common' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />);
+    expect(screen.getByTestId('gift-moment-common')).toBeTruthy();
+    expect(screen.queryByTestId('night-sky')).toBeNull();
+    expect(screen.queryAllByTestId('gift-sparkle')).toHaveLength(0);
   });
 
   it('opens with its meaning under the Kurmancî name, and offers Send one back', async () => {
@@ -61,7 +90,7 @@ describe('a grand gift on the phone', () => {
     const onClose = vi.fn();
     renderWithProviders(<GiftUnwrap target={{ giftId: 'g1', card: moon(), fromName: 'Azad' }} onClose={onClose} onOpened={() => undefined} onThanks={async () => null} onSendBack={onSendBack} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
-    expect(await screen.findByText('The full moon')).toBeTruthy();
+    expect(await screen.findByText(/The full moon/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Send one back' }));
     expect(onClose).toHaveBeenCalled();
     expect(onSendBack).toHaveBeenCalled();
@@ -71,7 +100,7 @@ describe('a grand gift on the phone', () => {
     testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: moon({ myOpened: true }), equippable: null }) });
     renderWithProviders(<GiftUnwrap target={{ giftId: 'g1', card: moon(), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
-    await screen.findByText('The full moon');
+    await screen.findByText(/The full moon/);
     expect(screen.queryByRole('button', { name: 'Send one back' })).toBeNull();
   });
 
@@ -170,5 +199,37 @@ describe('suggestions to buy or join', () => {
     expect(plusPitchAllowed(false, true)).toBe(false);
     expect(plusPitchAllowed(undefined, true)).toBe(false);
     expect(plusPitchAllowed(true)).toBe(false);
+  });
+});
+
+describe('the sender’s moment on the phone', () => {
+  it('shows the gift it sent in the same light, smaller, with who it went to', () => {
+    renderWithProviders(
+      <GiftSendAnimation tier="common" item={{ sku: 'gift-cay', assetUrl: '/cosmetics/gifts/made-01-cay.png' }} announce="Gift sent to Rojda" onDone={() => undefined} />,
+    );
+    expect(screen.getByText('Gift sent to Rojda')).toBeTruthy();
+    expect(screen.getByTestId('gift-rays')).toBeTruthy();
+    expect(screen.queryAllByTestId('gift-sparkle')).toHaveLength(0);
+  });
+});
+
+describe('a gift given onto your post, from its notice', () => {
+  beforeEach(() => {
+    vi.spyOn(Animated, 'timing').mockImplementation(
+      () => ({ start: () => undefined, stop: () => undefined, reset: () => undefined }) as unknown as Animated.CompositeAnimation,
+    );
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it('opens on the server, then plays its moment with Close alone, since a post has no chat', async () => {
+    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: moon({ tier: 'common', myOpened: true }), equippable: null }) });
+    const onDone = vi.fn();
+    renderWithProviders(<PostGiftOpen giftId="g1" onDone={onDone} />);
+    expect(await screen.findByRole('heading', { name: 'Gift from Azad' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    expect(await screen.findByText(/The full moon/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Say thanks' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(onDone).toHaveBeenCalledTimes(1);
   });
 });

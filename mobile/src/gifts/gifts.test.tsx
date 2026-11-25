@@ -27,7 +27,7 @@ vi.mock('../realtime/useUserEvents', () => ({
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { AccessibilityInfo, Animated } from 'react-native';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
-import type { GiftCard, GiftCatalogItem, GiftChatRef, GiftUserEvent } from '@kurda/shared';
+import { GIFT_UNWRAP_MS, type GiftCard, type GiftCatalogItem, type GiftChatRef, type GiftUserEvent } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -407,16 +407,14 @@ describe('GiftPickerSheet', () => {
 
 describe('GiftUnwrap', () => {
   /*
-   * React-native-web has no native driver, so a native-driven animation ends as it starts; the unwrap's timings are
-   * held open instead, so the test can see it playing, skip it, or let it finish.
+   * React-native-web has no native driver, so a native-driven animation ends as it starts; the moment's timings are held
+   * open instead, so the light's loops and the words' fade never run here.
    */
-  const finish: Array<(r: { finished: boolean }) => void> = [];
   beforeEach(() => {
-    finish.length = 0;
     vi.spyOn(Animated, 'timing').mockImplementation(
       () =>
         ({
-          start: (cb?: (r: { finished: boolean }) => void) => cb && finish.push(cb),
+          start: () => undefined,
           stop: () => undefined,
           reset: () => undefined,
         }) as unknown as Animated.CompositeAnimation,
@@ -475,50 +473,72 @@ describe('GiftUnwrap', () => {
     expect(screen.getByText('Can’t reach Hevalo right now. Check your connection and try again.')).toBeTruthy();
   });
 
-  it('is felt once, as the lid comes off — or at the tap that skips to it', async () => {
+  it('is felt once, as the gift lands, whether the box waited its time or was skipped', async () => {
     vi.useFakeTimers();
     resetHaptics();
     const felt: string[] = [];
     const off = onHaptic((e) => felt.push(e));
-    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
-    const first = renderWithProviders(
-      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
-    );
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    expect(felt).toEqual(['celebrate']);
-    act(() => {
-      vi.advanceTimersByTime(3000);
-    });
-    // Once for the gift, not again as it finishes.
-    expect(felt).toEqual(['celebrate']);
-    first.unmount();
+    try {
+      testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
+      const first = renderWithProviders(
+        <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
+      );
+      // still in its box
+      act(() => {
+        vi.advanceTimersByTime(GIFT_UNWRAP_MS.common - 100);
+      });
+      expect(felt).toEqual([]);
+      // out of the box, then landing
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
+      expect(felt).toEqual(['celebrate']);
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      // Once for the gift, not again as it finishes.
+      expect(felt).toEqual(['celebrate']);
+      first.unmount();
 
-    felt.length = 0;
-    resetHaptics();
-    renderWithProviders(
-      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
-    expect(felt).toEqual(['celebrate']);
-    act(() => {
-      vi.advanceTimersByTime(3000);
-    });
-    expect(felt).toEqual(['celebrate']);
-    off();
-    vi.useRealTimers();
+      felt.length = 0;
+      resetHaptics();
+      renderWithProviders(
+        <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
+      expect(felt).toEqual(['celebrate']);
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(felt).toEqual(['celebrate']);
+    } finally {
+      off();
+      vi.useRealTimers();
+    }
   });
 
-  it('reveals the item by itself when the moment has played out', async () => {
-    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
-    renderWithProviders(
-      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
-    );
-    expect(screen.getByRole('button', { name: 'Skip' })).toBeTruthy();
-    act(() => finish[0]?.({ finished: true }));
-    expect(await screen.findByText('Gift from Azad')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
+  it('shows the gift by itself once the box has waited its time', () => {
+    vi.useFakeTimers();
+    try {
+      testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
+      renderWithProviders(
+        <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
+      );
+      expect(screen.getByRole('button', { name: 'Skip' })).toBeTruthy();
+      act(() => {
+        vi.advanceTimersByTime(GIFT_UNWRAP_MS.common);
+      });
+      expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
+      expect(screen.getByText('Newroz fire')).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shows no Wear it for something that is not worn, and says when opening failed', async () => {

@@ -850,7 +850,7 @@ function SignedInRoot() {
         {({ route, navigation }) => <ForgotPasswordForm email={route.params?.email} onBack={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="LibraryPost" options={card}>
-        {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} onExit={backFrom(navigation)} />}
+        {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} openGift={route.params.openGift} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       {/* A guest's two ways to an account, over the app: claiming this one, or signing in to another. Both close once the session belongs to an account. */}
       <RootStack.Screen name="ClaimAccount" options={{ presentation: 'fullScreenModal' }}>

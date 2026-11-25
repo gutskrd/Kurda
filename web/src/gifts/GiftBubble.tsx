@@ -3,17 +3,17 @@ import type { GiftCard, GiftRecipient } from '@kurda/shared';
 import { Avatar } from '../components/Avatar';
 import { CheckIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
-import { Confetti, GiftBox, GiftItemArt } from './GiftArt';
-import { GiftReveal, GiftStage, type GiftActions } from './GiftReveal';
+import { GiftBox, GiftItemArt } from './GiftArt';
+import { GiftMoment, type GiftActions } from './GiftMoment';
 import { playChime, unwrapMs } from './motion';
 import { haptic } from '../lib/haptics';
 
 type Phase = 'idle' | 'unwrapping' | 'revealed';
 
 /**
- * A gift message in the chat. To its recipient it is a wrapped present; a tap plays the unwrap for its tier (a burst
- * in the bubble, a confetti sheet, or a full-screen Newroz fire), skippable with a tap and a short fade under Reduce
- * Motion, then shows the item with Wear it, Say thanks and Close. The sender sees whether it was opened, live. In a
+ * A gift message in the chat. To its recipient it is a wrapped present; a tap opens the gift's moment (GiftMoment.tsx):
+ * the box waits in the gift's light for its tier's unwrap time, skippable with a tap and a short fade under Reduce
+ * Motion, then the gift springs out with Say thanks, Wear it and Close. The sender sees whether it was opened, live. In a
  * group everyone sees who it was for and who opened theirs; the item stays a surprise to anyone who has not. Everyone
  * else sees who it is from ("Gift from Hamo"), or "a Hevalo member" when the server does not name the sender to them.
  * A grand gift, once opened, stays on show in the chat for everyone in it: its picture large, in its glow.
@@ -146,60 +146,34 @@ export function GiftBubble({
   }
 
   // ---- The recipient's view ----
-  const legendaryOrRare = card.tier !== 'common';
   return (
     <>
-      {phase === 'revealed' && !legendaryOrRare ? (
-        <div className="gift-bubble is-revealed">
-          <GiftReveal card={shown} from={senderName} actions={actions} onClose={close} compact />
-        </div>
-      ) : phase === 'unwrapping' && !legendaryOrRare ? (
-        // The everyday unwrap: a burst in the bubble; a tap skips it.
-        <button type="button" className="gift-bubble is-bursting" onClick={() => void finish()} aria-label={t('gift.skip')}>
-          <span className="gift-burst">
-            <GiftBox tier="common" size={96} className="gift-opening" />
-            <Confetti count={14} spread={0.7} />
-          </span>
-          <span className="gift-bubble-title" role="status">
-            {t('gift.unwrapping')}
-          </span>
-        </button>
-      ) : (
-        <button
-          ref={bubbleRef}
-          type="button"
-          className={`gift-bubble is-mine-to-open${shown.myOpened ? ' is-opened' : ' is-wrapped'} gift-bubble-${card.tier}${shown.myOpened && card.tier === 'grand' ? ' gift-showpiece' : ''}`}
-          onClick={unwrap}
-          aria-label={shown.myOpened ? t('gift.seeAgain', { item: shown.name }) : t('gift.openFrom', { name: fromName })}
-        >
-          <span className="gift-bubble-art">
-            {shown.myOpened ? (
-              <GiftItemArt assetUrl={shown.assetUrl} category={shown.category} size={card.tier === 'grand' ? 132 : 64} />
-            ) : (
-              <GiftBox tier={card.tier} size={72} className="gift-waiting" />
-            )}
-          </span>
-          <span className="gift-bubble-text">
-            <span className="gift-bubble-title">{shown.myOpened ? shown.name : fromLine}</span>
-            <span className="gift-bubble-sub">{shown.myOpened ? fromLine : t('gift.tapToOpen')}</span>
-          </span>
-        </button>
-      )}
+      <button
+        ref={bubbleRef}
+        type="button"
+        className={`gift-bubble is-mine-to-open${shown.myOpened ? ' is-opened' : ' is-wrapped'} gift-bubble-${card.tier}${shown.myOpened && card.tier === 'grand' ? ' gift-showpiece' : ''}`}
+        onClick={unwrap}
+        aria-label={shown.myOpened ? t('gift.seeAgain', { item: shown.name }) : t('gift.openFrom', { name: fromName })}
+      >
+        <span className="gift-bubble-art">
+          {shown.myOpened ? (
+            <GiftItemArt assetUrl={shown.assetUrl} category={shown.category} size={card.tier === 'grand' ? 132 : 64} />
+          ) : (
+            <GiftBox tier={card.tier} size={72} className="gift-waiting" />
+          )}
+        </span>
+        <span className="gift-bubble-text">
+          <span className="gift-bubble-title">{shown.myOpened ? shown.name : fromLine}</span>
+          <span className="gift-bubble-sub">{shown.myOpened ? fromLine : t('gift.tapToOpen')}</span>
+        </span>
+      </button>
       {failed && (
         <span className="gift-bubble-error" role="alert">
           {t('gift.openFailed')}
         </span>
       )}
-      {legendaryOrRare && phase !== 'idle' && (
-        <GiftStage
-          tier={card.tier as 'rare' | 'legendary' | 'grand'}
-          card={shown}
-          from={senderName}
-          revealed={phase === 'revealed'}
-          onSkip={() => void finish()}
-          onClose={close}
-          actions={actions}
-        />
+      {phase !== 'idle' && (
+        <GiftMoment card={shown} from={senderName} revealed={phase === 'revealed'} actions={actions} onSkip={() => void finish()} onClose={close} />
       )}
     </>
   );

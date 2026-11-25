@@ -176,7 +176,7 @@ export function GroupThreadScreen({
   const readOnce = useRef(false);
   const [friends, setFriends] = useState<GiftFriend[] | null>(null);
   const [picking, setPicking] = useState(false);
-  const [flying, setFlying] = useState<{ tier: GiftTier; count: number; key: number } | null>(null);
+  const [flying, setFlying] = useState<{ tier: GiftTier; item: { sku: string; assetUrl: string | null }; count: number; key: number } | null>(null);
   // A group gift that reached only some of them: who it did not reach, and why.
   const [giftNote, setGiftNote] = useState<string | null>(null);
   const [unwrapping, setUnwrapping] = useState<UnwrapTarget | null>(null);
@@ -689,6 +689,7 @@ export function GroupThreadScreen({
         <GiftSendAnimation
           key={flying.key}
           tier={flying.tier}
+          item={flying.item}
           announce={t('gift.sentMany', { count: flying.count })}
           onDone={() => setFlying(null)}
         />
@@ -704,7 +705,7 @@ export function GroupThreadScreen({
           setPicking(false);
           const sent = result.message as Message | null;
           if (sent) setMessages((prev) => (prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]));
-          setFlying({ tier: item.tier, count: to.length, key: Date.now() });
+          setFlying({ tier: item.tier, item, count: to.length, key: Date.now() });
           setGiftNote(result.skipped.length > 0 ? skippedText(result.skipped, friends ?? [], t) : null);
         }}
       />

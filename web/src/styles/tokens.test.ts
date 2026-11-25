@@ -76,13 +76,15 @@ describe('the shared hues in the website’s tokens', () => {
   });
 });
 
-/** Every top-level rule's declarations, by its selector as written, comments taken out. */
+/** Every top-level rule's declarations, by each selector it names as written, comments taken out. */
 function rules(css: string): Map<string, Record<string, string>> {
   const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
   const out = new Map<string, Record<string, string>>();
   for (const m of bare.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-    const selector = m[1]!.trim();
-    out.set(selector, { ...out.get(selector), ...declared(m[2]!) });
+    for (const part of m[1]!.split(',')) {
+      const selector = part.trim();
+      out.set(selector, { ...out.get(selector), ...declared(m[2]!) });
+    }
   }
   return out;
 }
