@@ -1,80 +1,83 @@
 /*
- * Hevalo's design tokens in two schemes, matching the phone (mobile/src/theme/palette.ts). Three rules hold everywhere:
- * one face, two text sizes (`--text`, `--text-title`), and one accent, the icon's violet, on the main button alone
- * (`--accent`, worn only by `.btn-primary`). Everything else is the page, its ink and the greys between; what is chosen
- * or earned is shown in ink, weight and shape. Green and red only ever say right and wrong, never alone.
+ * Hevalo's design tokens in two schemes, matching the phone (mobile/src/theme/palette.ts) and the warm page and colour
+ * themes in @kurda/shared (themes.ts). Three rules hold everywhere: one face, two text sizes (`--text`,
+ * `--text-title`), and one main colour, the theme's, on the main button alone (`--accent`, worn by `.btn-primary`).
+ * The theme's second colour marks what is chosen (`--secondary`), gold what is earned, and Hevalo+'s own button has
+ * its own gold (`--plus-*`). Green and red only ever say right and wrong, never alone.
  *
- * Dark is the default on :root; light redefines the same names under `data-theme="light"`, set by theme/theme.ts.
- * Colours that differ by scheme belong here. Text colours meet WCAG AA (4.5:1, or 3:1 for large text and control
+ * Dark is the default on :root; light redefines the same names under `data-theme="light"`, set by theme/theme.ts, which
+ * also names the colour theme in `data-palette`. Text colours meet WCAG AA (4.5:1, or 3:1 for large text and control
  * edges), with close ones noted.
  */
 :root {
   /* the single, consistent page background behind every surface */
-  --app-bg: #100e1d;
+  /* the warm soft black every surface sits on: never pure black, which reads as a screen switched off */
+  --app-bg: #161412;
 
-  /* ink (light text on the base color): white with the page's violet in it */
-  --ink: #f3f1fb;
-  --ink-2: rgba(243, 241, 251, 0.86);
-  /* secondary text: ≈ #A6A4B0, 7.8:1 on the page, 6.8:1 on a card */
-  --ink-3: rgba(243, 241, 251, 0.66);
-  /* the quietest text a reader still has to read (placeholders, counts): 5.8:1 on the page, 5.1:1 on a card */
-  --ink-4: rgba(243, 241, 251, 0.56);
+  /* ink: a warm off-white */
+  --ink: #f4eee6;
+  --ink-2: rgba(244, 238, 230, 0.86);
+  /* secondary text: ≈ #A9A29A, 7.5:1 on the page, 6.5:1 on a card */
+  --ink-3: rgba(244, 238, 230, 0.66);
+  /* the quietest text a reader still has to read (placeholders, counts): 5.6:1 on the page, 4.9:1 on a card */
+  --ink-4: rgba(244, 238, 230, 0.56);
 
-  /* raised surfaces, lightest last: white laid thinly over the page's indigo, so each step keeps its colour */
-  --bg: rgba(255, 255, 255, 0.06); /* card/input fill */
-  --surface: rgba(255, 255, 255, 0.05);
-  --surface-2: rgba(255, 255, 255, 0.1);
-  --surface-3: rgba(255, 255, 255, 0.16);
+  /* raised surfaces, lightest last: warm white laid thinly over the page, so each step keeps its warmth */
+  --bg: rgba(255, 248, 240, 0.06); /* card/input fill */
+  --surface: rgba(255, 248, 240, 0.05);
+  --surface-2: rgba(255, 248, 240, 0.1);
+  --surface-3: rgba(255, 248, 240, 0.16);
   /* an opaque raised surface, for things that float over the page (menus, sheets) */
-  --surface-solid: #27243a;
+  --surface-solid: #2b2723;
   /* a panel that floats over the page — a menu, a toast, a dialog — near-opaque, and frosted where it is glass */
-  --panel-bg: #1e1b2e;
-  --panel-glass: rgba(20, 17, 33, 0.86);
+  --panel-bg: #211e1b;
+  --panel-glass: rgba(26, 23, 20, 0.86);
   /* the ray of light that crosses a placeholder while it waits (ui.css): its middle, and its edges */
-  --skeleton-ray: rgba(255, 255, 255, 0.14);
-  --skeleton-ray-soft: rgba(255, 255, 255, 0.05);
-  --separator: rgba(255, 255, 255, 0.08);
-  --border: rgba(255, 255, 255, 0.12);
-  --border-strong: rgba(255, 255, 255, 0.26);
+  --skeleton-ray: rgba(255, 248, 240, 0.14);
+  --skeleton-ray-soft: rgba(255, 248, 240, 0.05);
+  --separator: rgba(255, 248, 240, 0.08);
+  --border: rgba(255, 248, 240, 0.12);
+  --border-strong: rgba(255, 248, 240, 0.26);
   /* the edge of a field you type into: 3:1 against the page, as a control's edge must be */
-  --input-border: rgba(255, 255, 255, 0.36);
-  --input-bg: rgba(255, 255, 255, 0.07);
+  --input-border: rgba(255, 248, 240, 0.36);
+  --input-bg: rgba(255, 248, 240, 0.07);
 
   /* The top bar and floating panels are solid so no words show through; only the footer stays frosted (`--chrome-bg`). */
-  --nav-bg: #100e1d;
-  --chrome-bg: rgba(16, 14, 29, 0.78);
-  --scrim: rgba(4, 2, 12, 0.6);
+  --nav-bg: #161412;
+  --chrome-bg: rgba(22, 20, 18, 0.78);
+  --scrim: rgba(10, 8, 6, 0.6);
 
-  /* the one accent, on the main button alone: the violet lifted for the night, the day's ink on it (8.1:1) */
-  --accent: #bf9bfe;
-  --accent-hover: #ccb0ff;
-  --accent-ink: #14112e;
-  /* what is pressable or chosen elsewhere: the ink itself, with the page written on it */
-  --primary: #f3f1fb;
-  --primary-hover: #ffffff;
-  --primary-ink: #14112e;
-  /* the ink as a faint ground: a chosen row, a chip that is on */
-  --primary-soft: rgba(243, 241, 251, 0.1);
-  /* the capsule behind the chosen tab: the ink as a ground strong enough to read as the place you are on */
-  --capsule: rgba(243, 241, 251, 0.14);
+  /* what is pressable elsewhere: the ink itself, with the page written on it */
+  --primary: #f4eee6;
+  --primary-hover: #fffaf3;
+  --primary-ink: #1c1814;
+  /* the ink as a faint ground: a chosen row */
+  --primary-soft: rgba(244, 238, 230, 0.1);
 
-  /* what is earned (XP, Zêr, the streak, medals): the ink, set apart by shape and weight */
-  --gold: #f3f1fb;
-  --gold-ink: #f3f1fb;
-  --gold-soft: rgba(243, 241, 251, 0.1);
+  /* what is earned (XP, Zêr, the streak, medals): gold, the same in every colour theme */
+  --gold: #f2b632;
+  --gold-ink: #f5c85a;
+  --gold-soft: rgba(242, 182, 50, 0.16);
+  /* words on a gold fill */
+  --on-gold: #2a1d05;
+  /* Hevalo+'s own button (ui.css `.btn-plus`): a rich gold with a gold edge, set apart from the theme */
+  --plus-fill: linear-gradient(180deg, #f8d374, #e8a928);
+  --plus-edge: #f8d98a;
+  --plus-ink: #2a1d05;
+  --plus-glow: rgba(242, 182, 50, 0.3);
   /* The game stage's lamp gold (games/game-stage.css), the same in both schemes, so it is not `--gold`. */
   --stage-gold: #f2b632;
   --stage-gold-lip: #a8791a;
   --stage-gold-ink: #2a1d05;
   /*
-   * Chat bubbles: the reader's in the ink with the page written on it, the other person's a step off the page, each
-   * with its ink, so the thread, typing bubble and send button agree.
+   * Chat bubbles: the reader's in the theme's second colour (set with the theme, below), the other person's a step off
+   * the page, each with its ink, so the thread, typing bubble and send button agree.
    */
-  --bubble-mine: #f3f1fb;
-  --bubble-mine-ink: #14112e;
-  --bubble-theirs: #302c46;
-  --bubble-theirs-ink: #f3f1fb;
-  --gems: #f3f1fb;
+  --bubble-theirs: #34302b;
+  --bubble-theirs-ink: #f4eee6;
+  --gems: #f4eee6;
+  /* the small tile behind the deer in the header's mark */
+  --brand-tile: #3a332c;
   /*
    * A heart given is red and a post saved is yellow, as everywhere people like and keep things; only the glyph wears
    * them, never the count beside it. A saved bookmark has a deeper edge by day, where yellow alone is faint on white.
@@ -89,27 +92,25 @@
   /* something new waiting (an unread message, a gift): the small dot on a place, in the red every phone uses for it */
   --notice: #ff453a;
   --on-danger: #ffffff;
-  --success: #86e2a4;
-  --success-soft: rgba(87, 185, 107, 0.18);
+  --success: #8fd3a0;
+  --success-soft: rgba(120, 200, 140, 0.16);
   /*
-   * A switch in the ink rather than green, which means right: on is the ink's track with the page's knob, off a mid grey
-   * with a white one. Tracks are 3:1 or more on every surface, knobs 3.3:1 or more on their track.
+   * A switch in the theme's second colour rather than green, which means right (set with the theme, below); off is a
+   * mid grey with a light knob. Tracks are 3:1 or more on every surface, knobs 3:1 or more on their track.
    */
-  --switch-on: #f3f1fb;
-  --switch-on-thumb: #14112e;
-  --switch-off: #716e85;
-  --switch-off-thumb: #ffffff;
+  --switch-off: #7e746a;
+  --switch-off-thumb: #fffdf9;
   /* Something not reached yet, such as a higher league: a quiet grey shape with a lighter keyhole; not a control, so not held to 3:1. */
-  --locked: #2d2b3e;
-  --locked-mark: #55526a;
+  --locked: #2e2a26;
+  --locked-mark: #5a524a;
   /* someone online: a dot in the ink, never the only sign of it */
-  --online: #f3f1fb;
+  --online: #f4eee6;
 
-  --focus: rgba(243, 241, 251, 0.7);
+  --focus: rgba(244, 238, 230, 0.7);
 
   /* glass mechanics */
   --glass-blur: 20px;
-  --glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --glass-rim: inset 0 1px 0 rgba(255, 232, 204, 0.1);
 
   /* type: the device's own face, for every script and every line */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -173,11 +174,11 @@
      how it lifts the colours behind it, and its lift off the page; where a browser cannot bend the page, the tint is
      deeper so words behind never fight the chrome's */
   --glass-tint: transparent;
-  --glass-tint-still: rgba(30, 27, 46, 0.5);
+  --glass-tint-still: rgba(32, 29, 26, 0.5);
   /* a control's disc where it stands on a drawing (a chapter's banner) */
-  --on-art: rgba(16, 14, 29, 0.6);
+  --on-art: rgba(22, 20, 18, 0.6);
   --glass-optics: saturate(1.7) brightness(0.92);
-  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 0.5px rgba(255, 248, 240, 0.1);
 
   /* layout */
   --container: 1120px;
@@ -197,56 +198,57 @@
 }
 
 /*
- * Light: a white page with a breath of violet, white cards and deep indigo ink; the violet, deep enough for white
- * button text (6.1:1), is the main button's alone. Green and red are deep enough to read as text.
+ * Light: a warm soft white page, cards a step lighter with a warm hairline, and warm charcoal ink. Green and red are
+ * deep enough to read as text.
  */
 :root[data-theme='light'] {
-  --app-bg: #f6f4fd;
+  --app-bg: #faf7f2;
 
-  --ink: #14112e;
-  --ink-2: #2c2a46;
-  /* secondary: 6.3:1 on the page, 6.9:1 on a card */
-  --ink-3: #595870;
-  /* 4.7:1 on the page */
-  --ink-4: #6d6b85;
+  --ink: #2b2621;
+  --ink-2: #463f38;
+  /* secondary: 5.6:1 on the page, 5.9:1 on a card */
+  --ink-3: #6b6259;
+  /* 4.6:1 on the page */
+  --ink-4: #766c62;
 
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --surface-2: rgba(20, 17, 46, 0.06);
-  --surface-3: rgba(20, 17, 46, 0.1);
-  --surface-solid: #ffffff;
-  --panel-bg: #ffffff;
-  --panel-glass: rgba(255, 255, 255, 0.94);
-  /* on a light grey box the ray has to be nearly white to be seen crossing it */
-  --skeleton-ray: rgba(255, 255, 255, 0.85);
-  --skeleton-ray-soft: rgba(255, 255, 255, 0.4);
-  --separator: rgba(20, 17, 46, 0.08);
-  --border: rgba(20, 17, 46, 0.1);
-  --border-strong: rgba(20, 17, 46, 0.22);
-  --input-border: rgba(20, 17, 46, 0.42);
-  --input-bg: #ffffff;
+  --bg: #fffdf9;
+  --surface: #fffdf9;
+  --surface-2: rgba(43, 38, 33, 0.06);
+  --surface-3: rgba(43, 38, 33, 0.1);
+  --surface-solid: #fffdf9;
+  --panel-bg: #fffdf9;
+  --panel-glass: rgba(255, 253, 249, 0.94);
+  /* on a light box the ray has to be nearly white to be seen crossing it */
+  --skeleton-ray: rgba(255, 253, 249, 0.85);
+  --skeleton-ray-soft: rgba(255, 253, 249, 0.4);
+  --separator: rgba(43, 38, 33, 0.08);
+  --border: rgba(43, 38, 33, 0.1);
+  --border-strong: rgba(43, 38, 33, 0.22);
+  --input-border: rgba(43, 38, 33, 0.42);
+  --input-bg: #fffefb;
 
-  --nav-bg: #ffffff;
-  --chrome-bg: rgba(246, 244, 253, 0.86);
-  --scrim: rgba(16, 12, 36, 0.42);
+  --nav-bg: #fffdf9;
+  --chrome-bg: rgba(250, 247, 242, 0.86);
+  --scrim: rgba(22, 20, 18, 0.42);
 
-  --accent: #862be2;
-  --accent-hover: #780dd1;
-  --accent-ink: #ffffff;
-  --primary: #14112e;
-  --primary-hover: #2c2a46;
-  --primary-ink: #ffffff;
-  --primary-soft: rgba(20, 17, 46, 0.06);
-  --capsule: rgba(20, 17, 46, 0.15);
+  --primary: #2b2621;
+  --primary-hover: #463f38;
+  --primary-ink: #fffdf9;
+  --primary-soft: rgba(43, 38, 33, 0.06);
 
-  --gold: #14112e;
-  --gold-ink: #14112e;
-  --gold-soft: rgba(20, 17, 46, 0.06);
-  --bubble-mine: #14112e;
-  --bubble-mine-ink: #ffffff;
-  --bubble-theirs: #e7e4f1;
-  --bubble-theirs-ink: #14112e;
-  --gems: #14112e;
+  /* the sun's gold for fills and marks, a deeper ochre for words in gold (5.4:1 on the page) */
+  --gold: #e3a21a;
+  --gold-ink: #8a5d0a;
+  --gold-soft: rgba(227, 162, 26, 0.14);
+  --on-gold: #3a2604;
+  --plus-fill: linear-gradient(180deg, #f7cb5e, #e3a21a);
+  --plus-edge: #b97f12;
+  --plus-ink: #3a2604;
+  --plus-glow: rgba(227, 162, 26, 0.35);
+  --bubble-theirs: #f0eae1;
+  --bubble-theirs-ink: #2b2621;
+  --gems: #2b2621;
+  --brand-tile: #efe6d9;
   --like: #e0263f;
   --saved: #f5b400;
   --saved-edge: #a87600;
@@ -258,52 +260,136 @@
   /* 5.9:1 on a card, 4.8:1 on its own soft tint over a grey panel */
   --success: #17723a;
   --success-soft: rgba(26, 122, 58, 0.1);
-  --switch-on: #14112e;
-  --switch-on-thumb: #ffffff;
-  --switch-off: #7f7e91;
-  --switch-off-thumb: #ffffff;
-  --locked: #dfdeea;
-  --locked-mark: #a4a2b2;
-  --online: #14112e;
+  --switch-off: #857a6f;
+  --switch-off-thumb: #fffdf9;
+  --locked: #e8e1d7;
+  --locked-mark: #aba092;
+  --online: #2b2621;
 
-  --focus: rgba(20, 17, 46, 0.6);
+  --focus: rgba(43, 38, 33, 0.6);
 
-  --glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --glass-rim: inset 0 1px 0 rgba(255, 253, 249, 0.7);
 
-  /* a shadow leans toward the ink rather than toward grey, so a raised thing stays clean */
-  --shadow-sm: 0 1px 3px rgba(46, 40, 74, 0.08);
-  --shadow: 0 8px 28px rgba(46, 40, 74, 0.1);
-  --shadow-lg: 0 24px 64px rgba(46, 40, 74, 0.16);
-  --shadow-control: 0 2px 8px rgba(46, 40, 74, 0.1);
-  --shadow-raised: 0 6px 16px rgba(46, 40, 74, 0.12);
+  /* a shadow leans warm rather than grey, as a lamp casts one */
+  --shadow-sm: 0 1px 3px rgba(58, 47, 37, 0.08);
+  --shadow: 0 8px 28px rgba(58, 47, 37, 0.1);
+  --shadow-lg: 0 24px 64px rgba(58, 47, 37, 0.16);
+  --shadow-control: 0 2px 8px rgba(58, 47, 37, 0.1);
+  --shadow-raised: 0 6px 16px rgba(58, 47, 37, 0.12);
   --glass-tint: transparent;
-  --glass-tint-still: rgba(255, 255, 255, 0.55);
-  --on-art: rgba(255, 255, 255, 0.78);
+  --glass-tint-still: rgba(255, 253, 249, 0.55);
+  --on-art: rgba(255, 253, 249, 0.78);
   --glass-optics: saturate(1.8) brightness(1.08);
-  --glass-shadow: 0 10px 30px rgba(46, 40, 74, 0.12), 0 0 0 0.5px rgba(46, 40, 74, 0.08), inset 0 0 0 0.5px rgba(255, 255, 255, 0.5);
+  --glass-shadow: 0 10px 30px rgba(58, 47, 37, 0.12), 0 0 0 0.5px rgba(58, 47, 37, 0.08), inset 0 0 0 0.5px rgba(255, 253, 249, 0.5);
 
   color-scheme: light;
 }
 
 /*
- * The shared hues' classes, kept so a ground or a mark has its steps, now the page's greys: colour is the main
- * button's alone. `--hue-deep` on `--hue-tint` or `--hue-wash` still clears 7:1. Dark first, then light.
+ * The colour themes (@kurda/shared themes.ts; theme/theme.ts names one in `data-palette`): the main colour on the main
+ * button alone, and the second colour for what is chosen, a switch that is on, the tab you are on and your own chat
+ * bubble. By night both are deep jewel tones with the soft white on them. Dark first, then light; tokens.test.ts holds
+ * every value to the shared module.
  */
-.hue-violet { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-indigo { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-blue { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-teal { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-green { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-gold { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-orange { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-red { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-pink { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-:root[data-theme='light'] .hue-violet { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-indigo { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-blue { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-teal { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-green { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-gold { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-orange { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-red { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-pink { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
+:root[data-palette='hearth'] {
+  --accent: #b4573c;
+  --accent-hover: #9a4a33;
+  --accent-ink: #fff8ee;
+  --secondary: #4f6e4b;
+  --secondary-ink: #fff8ee;
+  --secondary-text: #a9c29b;
+}
+:root[data-theme='light'][data-palette='hearth'] {
+  --accent: #bc4e36;
+  --accent-hover: #9e3f2b;
+  --accent-ink: #fffdf9;
+  --secondary: #5b7356;
+  --secondary-ink: #fffdf9;
+  --secondary-text: #5b7356;
+}
+:root[data-palette='pomegranate'] {
+  --accent: #ba4552;
+  --accent-hover: #9c3843;
+  --accent-ink: #fff8ee;
+  --secondary: #5e6c30;
+  --secondary-ink: #fff8ee;
+  --secondary-text: #c2cc8a;
+}
+:root[data-theme='light'][data-palette='pomegranate'] {
+  --accent: #ad3a47;
+  --accent-hover: #8e2d39;
+  --accent-ink: #fffdf9;
+  --secondary: #5d6a2f;
+  --secondary-ink: #fffdf9;
+  --secondary-text: #5d6a2f;
+}
+:root[data-palette='zagros'] {
+  --accent: #1b7e6d;
+  --accent-hover: #166b5d;
+  --accent-ink: #fff8ee;
+  --secondary: #ad5539;
+  --secondary-ink: #fff8ee;
+  --secondary-text: #eda07f;
+}
+:root[data-theme='light'][data-palette='zagros'] {
+  --accent: #1f6f63;
+  --accent-hover: #17574d;
+  --accent-ink: #fffdf9;
+  --secondary: #ae5638;
+  --secondary-ink: #fffdf9;
+  --secondary-text: #ae5638;
+}
+/*
+ * What follows the second colour. By night a chosen chip is a tint with its word and edge in the second colour's light,
+ * a switch glows in that light, and a card has a faint warm light on its top edge instead of a shadow; by day the chip
+ * is filled and the card is flat.
+ */
+:root {
+  /* a chosen row's faint ground, and the capsule behind the chosen tab */
+  --secondary-soft: color-mix(in srgb, var(--secondary) 14%, transparent);
+  --capsule: color-mix(in srgb, var(--secondary) 18%, transparent);
+  --chosen-fill: color-mix(in srgb, var(--secondary) 20%, transparent);
+  --chosen-ink: var(--secondary-text);
+  --chosen-edge: color-mix(in srgb, var(--secondary) 50%, var(--secondary-text));
+  --switch-on: var(--secondary-text);
+  --switch-on-thumb: #1c1814;
+  --bubble-mine: var(--secondary);
+  --bubble-mine-ink: var(--secondary-ink);
+  --card-rim: inset 0 1px 0 rgba(255, 232, 204, 0.09);
+  /* the one picked among small pills of their own (a filter, a shelf): the ink filled by day, a tint of the second colour by night */
+  --picked-fill: color-mix(in srgb, var(--secondary) 24%, transparent);
+  --picked-ink: var(--secondary-text);
+}
+:root[data-theme='light'] {
+  --chosen-fill: var(--secondary);
+  --chosen-ink: var(--secondary-ink);
+  --chosen-edge: var(--secondary);
+  --switch-on: var(--secondary);
+  --switch-on-thumb: var(--secondary-ink);
+  --card-rim: 0 0 0 transparent;
+  --picked-fill: var(--primary);
+  --picked-ink: var(--primary-ink);
+}
+
+/*
+ * The shared hues' classes, kept so a ground or a mark has its steps, now the warm page's own: colour belongs to the
+ * theme. `--hue-deep` on `--hue-tint` or `--hue-wash` still clears 7:1. Dark first, then light.
+ */
+.hue-violet { --hue-tint: #221f1c; --hue-wash: #2e2a26; --hue-base: #8f857a; --hue-deep: #efe8df; }
+.hue-indigo { --hue-tint: #221f1c; --hue-wash: #2e2a26; --hue-base: #8f857a; --hue-deep: #efe8df; }
+.hue-blue { --hue-tint: #221f1c; --hue-wash: #2e2a26; --hue-base: #8f857a; --hue-deep: #efe8df; }
+.hue-teal { --hue-tint: #221f1c; --hue-wash: #2e2a26; --hue-base: #8f857a; --hue-deep: #efe8df; }
+.hue-green { --hue-tint: #221f1c; --hue-wash: #2e2a26; --hue-base: #8f857a; --hue-deep: #efe8df; }
+.hue-gold { --hue-tint: #221f1c; --hue-wash: #2e2a26; --hue-base: #8f857a; --hue-deep: #efe8df; }
+.hue-orange { --hue-tint: #221f1c; --hue-wash: #2e2a26; --hue-base: #8f857a; --hue-deep: #efe8df; }
+.hue-red { --hue-tint: #221f1c; --hue-wash: #2e2a26; --hue-base: #8f857a; --hue-deep: #efe8df; }
+.hue-pink { --hue-tint: #221f1c; --hue-wash: #2e2a26; --hue-base: #8f857a; --hue-deep: #efe8df; }
+:root[data-theme='light'] .hue-violet { --hue-tint: #f4efe8; --hue-wash: #eae3d9; --hue-base: #8e8478; --hue-deep: #2b2621; }
+:root[data-theme='light'] .hue-indigo { --hue-tint: #f4efe8; --hue-wash: #eae3d9; --hue-base: #8e8478; --hue-deep: #2b2621; }
+:root[data-theme='light'] .hue-blue { --hue-tint: #f4efe8; --hue-wash: #eae3d9; --hue-base: #8e8478; --hue-deep: #2b2621; }
+:root[data-theme='light'] .hue-teal { --hue-tint: #f4efe8; --hue-wash: #eae3d9; --hue-base: #8e8478; --hue-deep: #2b2621; }
+:root[data-theme='light'] .hue-green { --hue-tint: #f4efe8; --hue-wash: #eae3d9; --hue-base: #8e8478; --hue-deep: #2b2621; }
+:root[data-theme='light'] .hue-gold { --hue-tint: #f4efe8; --hue-wash: #eae3d9; --hue-base: #8e8478; --hue-deep: #2b2621; }
+:root[data-theme='light'] .hue-orange { --hue-tint: #f4efe8; --hue-wash: #eae3d9; --hue-base: #8e8478; --hue-deep: #2b2621; }
+:root[data-theme='light'] .hue-red { --hue-tint: #f4efe8; --hue-wash: #eae3d9; --hue-base: #8e8478; --hue-deep: #2b2621; }
+:root[data-theme='light'] .hue-pink { --hue-tint: #f4efe8; --hue-wash: #eae3d9; --hue-base: #8e8478; --hue-deep: #2b2621; }

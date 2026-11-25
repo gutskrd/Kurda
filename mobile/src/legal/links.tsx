@@ -63,7 +63,7 @@ export function AgreeLine({ style }: { style?: StyleProp<TextStyle> }): React.JS
       {parts.map((part, i) =>
         // The odd-indexed pieces are the placeholder names.
         i % 2 === 1 && (part === 'terms' || part === 'privacy') ? (
-          // Links are violet like everything pressable; the underline marks them without relying on colour.
+          // Links are ink like everything pressable; the underline marks them without relying on colour.
           <Text
             key={i}
             accessibilityRole="link"

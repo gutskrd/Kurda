@@ -43,6 +43,8 @@ import {
 } from './src/navigation/rootStack';
 import { ForgotPasswordForm, ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
+import { PlusScreen } from './src/plus/PlusScreen';
+import { PLUS_PAGE_OPEN } from './src/plus/open';
 import { VerifyEmailScreen } from './src/screens/auth/VerifyEmailScreen';
 import { BirthDatePromptScreen } from './src/screens/auth/BirthDatePromptScreen';
 import { AgeStopScreen } from './src/screens/auth/AgeStopScreen';
@@ -196,6 +198,8 @@ const linking: LinkingOptions<RootStackParamList> = {
       LeagueTable: 'app/rankings/league',
       // The website's "your next lesson", where a new account lands.
       NextLesson: 'app/learn/next',
+      // Hevalo+ at the website's address, while there is a page to open (plus/open.ts).
+      ...(PLUS_PAGE_OPEN ? { Plus: 'app/plus' } : {}),
       // Practice opens on its hub, where every kind is one tap away.
       PracticeHub: 'practice',
       // The two former games, at the lessons' own addresses (the website's too); their old `app/games/…` addresses are
@@ -433,6 +437,11 @@ function SignedInRoot() {
           />
         )}
       </RootStack.Screen>
+      {PLUS_PAGE_OPEN ? (
+        <RootStack.Screen name="Plus" options={{ presentation: 'fullScreenModal' }}>
+          {({ navigation }) => <PlusScreen onClose={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Tabs', { screen: 'Learn' }))} />}
+        </RootStack.Screen>
+      ) : null}
       <RootStack.Screen name="NextLesson" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (
           <NextLessonScreen

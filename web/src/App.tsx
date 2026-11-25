@@ -7,6 +7,7 @@ import { arrivalHeld } from './auth/arrival';
 import { MarketingLayout } from './layouts/MarketingLayout';
 import { AppLayout } from './layouts/AppLayout';
 import { FocusLayout } from './layouts/FocusLayout';
+import { PLUS_PAGE_OPEN } from './plus/open';
 import { AuthLayout } from './layouts/AuthLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppGate } from './components/AppGate';
@@ -22,6 +23,7 @@ import { NotFound } from './pages/NotFound';
  * bundler.
  */
 const LibraryPostPage = lazy(() => import('./pages/LibraryPostPage').then((m) => ({ default: m.LibraryPostPage })));
+const PlusPage = lazy(() => import('./plus/PlusPage').then((m) => ({ default: m.PlusPage })));
 const Saved = lazy(() => import('./pages/Saved').then((m) => ({ default: m.Saved })));
 const DimenPost = lazy(() => import('./pages/DimenPost').then((m) => ({ default: m.DimenPost })));
 const Games = lazy(() => import('./pages/Games').then((m) => ({ default: m.Games })));
@@ -241,6 +243,8 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="learn/review/:sessionId" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
         {/* A test that jumps ahead to a later chapter, from the offer on the path (learn/JumpTest.tsx). */}
         <Route path="learn/jump/:courseId/:unitId" element={<RequireAccount what="gate.what.course"><JumpTest /></RequireAccount>} />
+        {/* Hevalo+, alone on the screen with its own ✕; only while it is on sale, or to look at in development (plus/PlusPage.tsx). */}
+        {PLUS_PAGE_OPEN ? <Route path="plus" element={<PlusPage />} /> : null}
       </Route>
 
       {/* The app, open to read; pages about you or reaching others ask for an account themselves. */}

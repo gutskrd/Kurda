@@ -61,6 +61,62 @@
   background: var(--accent-hover);
   border-color: var(--accent-hover);
 }
+/*
+ * Hevalo+'s own button (components/PlusButton.tsx), the one control outside the colour theme: gold with a gold edge,
+ * taller and wider than the main button, with its value line and its way out beneath it. A sheen crosses it once as it
+ * arrives, and not at all under Reduce Motion.
+ */
+.plus-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+.btn-plus {
+  position: relative;
+  overflow: hidden;
+  height: 58px;
+  padding: 0 28px;
+  gap: 10px;
+  font-weight: 700;
+  background: var(--plus-fill);
+  color: var(--plus-ink);
+  border: 1.5px solid var(--plus-edge);
+  box-shadow: 0 8px 24px var(--plus-glow), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.btn-plus::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.55) 48%, transparent 66%);
+  transform: translateX(-120%);
+  animation: plus-shine 1100ms var(--ease-out) 400ms 1 both;
+  pointer-events: none;
+}
+.btn-plus:hover:not(:disabled) {
+  box-shadow: 0 10px 28px var(--plus-glow), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+@keyframes plus-shine {
+  to {
+    transform: translateX(120%);
+  }
+}
+.plus-cta-value {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text);
+  text-align: center;
+}
+.plus-cta-decline {
+  align-self: center;
+  color: var(--ink-2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-plus::after {
+    animation: none;
+    opacity: 0;
+  }
+}
 /* the surface-tone pill */
 .btn-secondary {
   background: var(--surface-2);
@@ -380,6 +436,7 @@ input[type='password']::-ms-clear {
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: var(--space-5);
+  box-shadow: var(--card-rim);
 }
 .card-link {
   display: block;

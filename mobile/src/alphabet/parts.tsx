@@ -60,7 +60,7 @@ export function PlayButton({
 }): React.JSX.Element | null {
   const { colors } = useTheme();
   if (!src || !player.supported) return null;
-  // Sounding: on, as a switch that is on is, in a wash of the violet with a violet edge.
+  // Sounding: on, as a switch that is on is, in a wash of the ink with an ink edge.
   const on = player.isPlaying(src);
   const side = BUTTON[size];
   return (

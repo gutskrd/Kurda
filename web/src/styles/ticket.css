@@ -5,7 +5,7 @@
  * each notch.
  *
  * The colour says what it is for, as on the phone (mobile/src/play/joinCode.ts): a game in its stamp's hue, a story
- * game in the page's violet, a friendship in the heart's colour, and a spent ticket in grey. Motion is in motion.css.
+ * game in the page's ink, a friendship in the heart's colour, and a spent ticket in grey. Motion is in motion.css.
  */
 .ticket {
   --t-accent: var(--primary);

@@ -1,9 +1,9 @@
 import { n, prefixFor } from '../art/svg.js';
 import type { CharacterId } from './types.js';
 
-/** The light each character stands in on a stage: the deer in his app icon's purple, Hamo in evening gold, Xezo in rose. */
+/** The light each character stands in on a stage: the deer in the green of the Zagros valleys, Hamo in evening gold, Xezo in rose. */
 export const CHARACTER_GLOW: Readonly<Record<CharacterId, { light: string; deep: string }>> = {
-  hevalo: { light: '#db7df5', deep: '#9a6cf1' },
+  hevalo: { light: '#8fd2c1', deep: '#3f9a89' },
   hamo: { light: '#f6c27a', deep: '#de8746' },
   xezo: { light: '#f5a3b5', deep: '#cf5f7b' },
 };

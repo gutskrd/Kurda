@@ -63,7 +63,7 @@ const WASH_FADE_MS = 420;
  * A notification: who it is from at its start (their face, or Hevalo's mark, with a badge for the kind), what happened
  * with the time after it, and at its end a picture of what it is about where there is one.
  *
- * New is shown three ways, never by colour alone: a violet dot, a faint violet wash across the row, and "Unread" for a
+ * New is shown three ways, never by colour alone: an ink dot, a faint ink wash across the row, and "Unread" for a
  * screen reader; both fade once read. Pulled toward its start it slides open on the settings and Delete, and pulled
  * most of the way across it goes at once. A long press opens it too, and a screen reader is offered Delete as an action
  * beside the inline one (Join, Open), which it could not otherwise reach.
@@ -105,7 +105,7 @@ export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
     return () => run.stop();
   }, [unread, reduce, fresh]);
 
-  // The app's violet at a tenth, as the website mixes it; the face's ring is the same colour made solid.
+  // The app's ink at a tenth, as the website mixes it; the face's ring is the same colour made solid.
   const wash = `${colors.primary}1A`;
   const ring = unread ? blend(colors.primary, colors.background, 0.1) : colors.background;
   const deleteWhat = t('notifications.deleteWhat', { what: title });

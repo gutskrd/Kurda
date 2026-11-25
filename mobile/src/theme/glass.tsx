@@ -26,7 +26,7 @@ export function GradientBackground({ children, style }: { children?: ReactNode; 
   );
 }
 
-/** A card: a fill light enough to read text off, with no blur, stroke, sheen or rim. */
+/** A card: a fill light enough to read text off, with no blur or stroke; by night a faint warm light along its top edge lifts it off the page. */
 export function GlassCard({
   children,
   style,
@@ -48,6 +48,7 @@ export function GlassCard({
         <View style={[styles.glassFace, padding === 'tight' && styles.glassFaceTight, { backgroundColor: colors.glassFill }, contentStyle]}>
           {children}
         </View>
+        {colors.scheme === 'dark' ? <View pointerEvents="none" style={[styles.rim, { backgroundColor: colors.cardRim }]} /> : null}
       </View>
     </View>
   );
@@ -168,9 +169,11 @@ export function ClayButton({
   const fill = outline ? 'transparent' : (toneColor ?? colors.controlTrack);
   const textColor = outline
     ? (toneColor ?? colors.textPrimary)
-    : toneColor
-      ? colors.textOnPrimary
-      : colors.textPrimary;
+    : tone === 'primary'
+      ? colors.textOnAccent
+      : toneColor
+        ? colors.textOnPrimary
+        : colors.textPrimary;
   // An outline button's rim is the whole button; a filled one needs none. A neutral rim is a lesson tile's quiet edge,
   // a step off the surface in both themes, so the button keeps its shape by day.
   const edge = outline ? (toneColor ?? tileTone(colors, 'idle').edge) : 'transparent';
@@ -255,8 +258,8 @@ const SEG_LINE = 18;
 /**
  * A segmented control: a track and a capsule that slides to the chosen option. The chosen word is the same size as
  * the others, only heavier, and the slide is the only motion: instant under Reduce Motion, mirrored in right-to-left
- * languages. The capsule is solid violet with the button label's colour, as on the website, so the choice reads at a
- * glance in both themes.
+ * languages. The capsule is the theme's second colour with its own word colour, as on the website, so the choice reads
+ * at a glance in both themes.
  */
 export function Segmented<T extends string>({
   options,
@@ -325,7 +328,7 @@ export function Segmented<T extends string>({
           pointerEvents="none"
           style={[
             styles.segCapsule,
-            { width: seg, backgroundColor: colors.primary, transform: [{ translateX: x }] },
+            { width: seg, backgroundColor: colors.chosenFill, borderColor: colors.chosenEdge, transform: [{ translateX: x }] },
           ]}
         />
       ) : null}
@@ -354,7 +357,7 @@ export function Segmented<T extends string>({
             <Text
               style={[
                 styles.segText,
-                { color: active ? colors.textOnPrimary : colors.textSecondary },
+                { color: active ? colors.chosenInk : colors.textSecondary },
                 active && styles.segTextActive,
                 wrap && styles.segTextWrap,
               ]}
@@ -387,6 +390,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   clip: { borderRadius: radii.lg, overflow: 'hidden' },
+  rim: { position: 'absolute', top: 0, left: 0, right: 0, height: 1 },
   glassFace: { borderRadius: radii.lg, padding: spacing.lg, overflow: 'hidden' },
   glassFaceTight: { paddingVertical: spacing.xs },
 
@@ -421,6 +425,7 @@ const styles = StyleSheet.create({
   // translucent fill shows through as a smudge.
   segCapsule: {
     position: 'absolute',
+    borderWidth: 1,
     left: 0,
     top: SEG_PAD,
     bottom: SEG_PAD,

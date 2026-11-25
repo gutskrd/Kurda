@@ -6,11 +6,11 @@
   --daily-gold-ink: #3a2400;
   /* The chart's two weeks: this one in gold, last one in grey; both 3:1 or more on the sheet. */
   --chart-now: #e8b739;
-  --chart-then: #6f6c84;
+  --chart-then: #857a6f;
 }
 :root[data-theme='light'] .daily-sheet {
   --chart-now: #b98300;
-  --chart-then: #8f8da3;
+  --chart-then: #958b80;
 }
 .daily {
   display: grid;

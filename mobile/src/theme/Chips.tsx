@@ -12,7 +12,7 @@ import { Skeleton } from './Skeleton';
 /**
  * A row of filter chips (All · Unread · Groups). Unlike the segmented control, which splits a screen into equal
  * halves, chips narrow a list, each as wide as its word, and the row scrolls sideways when words do not fit. The
- * chosen chip is solid violet with the button label's colour, as on the website, and is announced as selected.
+ * chosen chip is the theme’s second colour with its own word colour, as on the website, and is announced as selected.
  *
  * The row sits in the page's gutter but scrolls out to the screen's edges, so a clipped chip reads as "more this
  * way". Chips are drawn 36 tall and answer over 48 across their word plus half the gap each side, so there are no
@@ -75,16 +75,16 @@ export function Chips<T extends string>({
               reach="open"
               style={({ pressed }) => [
                 styles.chip,
-                { backgroundColor: active ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+                { backgroundColor: active ? colors.chosenFill : colors.controlTrack, borderColor: active ? colors.chosenEdge : 'transparent', opacity: pressed ? pressedDim : 1 },
               ]}
             >
-              <Text style={[styles.text, { color: active ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
+              <Text style={[styles.text, { color: active ? colors.chosenInk : colors.textPrimary }]} numberOfLines={1}>
                 {label}
               </Text>
               {/* The count turns over on the chosen chip, so it stays a mark of its own. */}
               {count ? (
-                <View style={[styles.count, { backgroundColor: active ? colors.textOnPrimary : colors.primary }]}>
-                  <Text style={[styles.countText, { color: active ? colors.primary : colors.textOnPrimary }]}>{count > 9 ? '9+' : count}</Text>
+                <View style={[styles.count, { backgroundColor: active ? colors.chosenInk : colors.primary }]}>
+                  <Text style={[styles.countText, { color: active ? (colors.scheme === 'dark' ? colors.background : colors.secondary) : colors.textOnPrimary }]}>{count > 9 ? '9+' : count}</Text>
                 </View>
               ) : null}
             </Pressable>
@@ -123,6 +123,7 @@ const styles = StyleSheet.create({
     minHeight: CHIP,
     paddingHorizontal: spacing.md - 2,
     borderRadius: radii.pill,
+    borderWidth: 1,
   },
   text: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   count: { minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },

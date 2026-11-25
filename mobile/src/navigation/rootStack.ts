@@ -32,6 +32,8 @@ export type RootStackParamList = {
   Lesson: { lessonId: string; courseId?: string };
   /** Finds the lesson Learn would start and opens it in its place (learn/NextLessonScreen): a new account's first. */
   NextLesson: undefined;
+  /** Hevalo+: what members get and the plans (plus/PlusScreen), only while it is on sale or in development. */
+  Plus: undefined;
   /**
    * A practice session, started at once. `exerciseIds`: practise these rather than what is due; `mode`: another kind of
    * practice from the hub, with `unitId` for a unit's review; `sessionId`: a review left part-way through, resumed.

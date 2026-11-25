@@ -104,15 +104,15 @@
 
 /* ---- the lesson player -------------------------------------------------------- */
 /*
- * Lessons wear Hevalo's own colours: the page and its cards, the ink for what is chosen, the violet on the one main
- * button (Check), and green and red only for right and wrong. Faint ridges of the page's own colour stand behind the
+ * Lessons wear Hevalo's own colours: the page and its cards, the ink for what is chosen, the theme's main colour on the
+ * one main button (Check), and green and red only for right and wrong. Faint ridges of the page's own colour stand behind the
  * top, by night and by day.
  */
 :root {
-  --lesson-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23141226'/%3E%3Cstop offset='1' stop-color='%23100e1d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%231b1830'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%2317152a'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
+  --lesson-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231c1916'/%3E%3Cstop offset='1' stop-color='%23161412'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%23231f1b'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%231e1a17'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
 }
 :root[data-theme='light'] {
-  --lesson-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23f1eefb'/%3E%3Cstop offset='1' stop-color='%23f6f4fd'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%23e8e5f6'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%23edeaf8'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
+  --lesson-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23f3eee6'/%3E%3Cstop offset='1' stop-color='%23faf7f2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%23ebe4d9'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%23f0eae1'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* the edge of what is pressed or said in a lesson (a tile, a speech bubble, a word's meanings), here and in its Tips */
@@ -465,12 +465,12 @@ html:has(.lesson-bar) {
 .tile:disabled {
   cursor: default;
 }
-/* picked, waiting for its partner or for Check: the accent the app keeps for the thing you are on */
+/* picked, waiting for its partner or for Check: the page's ink, as on the phone, so it is never taken for right, wrong or earned */
 .tile.is-picked {
-  --tile-edge: var(--gold);
-  --tile-lip: color-mix(in srgb, var(--gold) 62%, #000);
-  --tile-fill: color-mix(in srgb, var(--gold) 14%, var(--app-bg));
-  --tile-ink: var(--gold-ink);
+  --tile-edge: var(--primary);
+  --tile-lip: color-mix(in srgb, var(--primary) 62%, #000);
+  --tile-fill: color-mix(in srgb, var(--primary) 7%, var(--surface-solid));
+  --tile-ink: var(--ink);
 }
 .tile.is-right {
   --tile-edge: var(--success);
@@ -1625,7 +1625,7 @@ html:has(.lesson-bar) {
 .lesson-bar-go:focus-visible {
   border-radius: var(--r-lg);
 }
-/* nothing to check yet: a quiet grey of the page, not a faded violet */
+/* nothing to check yet: a quiet grey of the page, not a faded main colour */
 .lesson-bar-go:disabled {
   border-color: transparent;
   background: var(--surface-2);
@@ -1700,9 +1700,9 @@ html:has(.lesson-bar) {
 .lesson-bar.is-almost {
   --verdict: var(--gold);
   --verdict-ink: var(--gold-ink);
-  --on-verdict: var(--primary-ink);
+  --on-verdict: var(--on-gold);
   --go-fill: var(--gold);
-  --go-ink: var(--primary-ink);
+  --go-ink: var(--on-gold);
   --go-lip: color-mix(in srgb, var(--gold) 65%, #000);
   --portrait-ring: color-mix(in srgb, var(--ink) 18%, var(--app-bg));
   border-top-color: color-mix(in srgb, var(--ink) 18%, var(--app-bg));

@@ -4,7 +4,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 
 /**
- * A small button at the end of a row in a group's lists: filled in violet for the one thing to do (Add), outlined for
+ * A small button at the end of a row in a group's lists: filled in the ink for the one thing to do (Add), outlined for
  * the quieter state (Added). It stands alone at the row's end, so it reaches a fingertip past every edge.
  */
 export function Pill({

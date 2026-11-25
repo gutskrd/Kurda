@@ -11,8 +11,8 @@ import { radii, spacing, typography } from '../theme/tokens';
 
 /** The two weeks' colours, as on the website: this one in the fire's gold, last one in grey, both 3:1 or more on the sheet. */
 const CHART = {
-  light: { now: '#B98300', then: '#8F8DA3' },
-  dark: { now: '#E8B739', then: '#6F6C84' },
+  light: { now: '#B98300', then: '#958B80' },
+  dark: { now: '#E8B739', then: '#857A6F' },
 } as const;
 
 /** One thing the insights say, in words. */

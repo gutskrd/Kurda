@@ -65,7 +65,7 @@ export function EmptyState({
             reach="open"
             style={[styles.action, { backgroundColor: colors.accent }]}
           >
-            <Text style={[styles.actionText, { color: colors.textOnPrimary }]}>{action.label}</Text>
+            <Text style={[styles.actionText, { color: colors.textOnAccent }]}>{action.label}</Text>
           </PressableScale>
         ) : null}
         {secondary ? (

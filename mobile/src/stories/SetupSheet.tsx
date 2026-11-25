@@ -91,7 +91,7 @@ export function StoryPresetFields({
 }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const { t } = useI18n();
-  // The chosen story gets the violet wash like every chosen option; green is only for a right answer.
+  // The chosen story gets the warm wash like every chosen option; green is only for a right answer.
   const chosenFill = hueSteps(scheme, 'violet').wash;
   const set = (patch: Parameters<typeof changeSetup>[1]) => onChange(changeSetup(state, patch));
   const lengths = availableLengths(stories, state.dialect);

@@ -40,12 +40,12 @@
   height: 100%;
   object-fit: cover;
 }
-/* the deer on the lilac of the app icon's card, whole rather than cropped */
+/* the deer in a warm glow, whole rather than cropped */
 .maintenance-picture.is-own {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 50% 58%, rgba(184, 116, 240, 0.3), rgba(184, 116, 240, 0.1) 72%);
+  background: radial-gradient(circle at 50% 58%, rgba(227, 162, 26, 0.26), rgba(227, 162, 26, 0.08) 72%);
 }
 .maintenance-picture.is-own img {
   width: auto;
