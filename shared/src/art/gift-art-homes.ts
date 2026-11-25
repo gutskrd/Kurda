@@ -4,7 +4,7 @@
  * gift, the more there is in it to find.
  */
 import { type Drawing, type Pt } from './svg.js';
-import { along, blade, brush, ellipse, form, lerp, outline, paint, polygon, roundish, runs, shift, side, streaks, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
+import { along, blade, brush, ellipse, FLOOR, form, lerp, outline, paint, polygon, roundish, runs, shift, side, streaks, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
 
 // ─────────────────────────────────────────────────────────────────── belem
 
@@ -488,23 +488,34 @@ const LIMESTONE: Tone = { base: '#d9b67c', light: '#efd3a0', shade: '#a98550' };
 const RIGGING_DARK = '#3a2a20';
 
 export function kosk(dr: Drawing, rnd: Rnd): void {
-  // the paved terrace it stands on
-  const terrace = roundish(60, 104, 56, 8, rnd, { wobble: 0.03, tremor: 0.5, count: 30 });
-  paint(dr, outline(terrace), '#cdb994');
-  within(dr, outline(terrace), () => {
+  // the house and the plinth under it are drawn in one oblique: a point gx across, gy down its front and gz back lies at
+  // (gx + gz, gy - 0.39 gz), so the side wall, the roof's edge and the plinth all go back together
+  const at = (gx: number, gy: number, gz: number): Pt => [gx + gz, gy - 0.39 * gz];
+  const GROUND = 102;
+  // the stone plinth: its top paved, its front and side faces cut square; the house's shadow on it
+  const plinth = [at(8, GROUND, -6), at(94, GROUND, -6), at(94, GROUND, 20), at(8, GROUND, 20)];
+  const drop = (p: Pt): Pt => [p[0], p[1] + 4];
+  paint(dr, polygon([plinth[0]!, plinth[1]!, plinth[2]!, drop(plinth[2]!), drop(plinth[1]!), drop(plinth[0]!)].map(([x, y]): Pt => [x + 1.4, y + 2.4])), FLOOR, 0.14);
+  paint(dr, polygon(tremble([plinth[0]!, plinth[1]!, drop(plinth[1]!), drop(plinth[0]!)], rnd, 0.2)), '#a8946e');
+  paint(dr, polygon(tremble([plinth[1]!, plinth[2]!, drop(plinth[2]!), drop(plinth[1]!)], rnd, 0.2)), '#8c7954');
+  const paving = tremble(plinth, rnd, 0.2);
+  paint(dr, polygon(paving), '#cdb994');
+  within(dr, polygon(paving), () => {
     let joints = '';
-    for (let x = 10; x < 112; x += 7) joints += brush([[x, 97], [x - 1.4, 104], [x - 2.6, 112]], 0.4, rnd, { count: 4 });
+    for (let gx = 16; gx < 94; gx += 9) joints += brush([at(gx, GROUND, -6), at(gx + 0.4, GROUND, 20)], 0.4, rnd, { count: 4 });
+    joints += brush([at(8, GROUND, -2), at(94, GROUND, -2)], 0.4, rnd, { count: 4 });
     paint(dr, joints, '#a8946e', 0.7);
+    paint(dr, polygon([at(88, GROUND, 0), at(88, GROUND, 18), at(100, GROUND, 18), at(97, GROUND, 0)]), '#b3a07a');
   });
   // a cypress at its side
-  const cypress = tremble(blade([14, 104], [16, 28], 13, { at: 0.42, point: 0.5, count: 12 }), rnd, 0.4);
+  const cypress = tremble(blade([14, 103], [16, 28], 13, { at: 0.42, point: 0.5, count: 12 }), rnd, 0.4);
   paint(dr, outline(cypress), '#3e5a38');
   side(dr, cypress, -1.6, 0, '#2a4026');
   within(dr, outline(cypress), () => paint(dr, streaks(rnd, [8, 30, 22, 102], 22, 80, 6, 0.8), '#5e7e50', 0.8));
   // the house: its front in the light, the side wall in shade, a carved parapet round its flat roof
-  const sideWall = tremble(runs([[88, 40], [106, 32], [106, 95], [88, 102]], 4), rnd, 0.3);
+  const sideWall = tremble(runs([at(88, 40, 0), at(88, 40, 18), at(88, GROUND, 18), at(88, GROUND, 0)], 4), rnd, 0.3);
   paint(dr, outline(sideWall), LIMESTONE.shade);
-  const front = tremble(runs([[22, 40], [88, 40], [88, 102], [22, 102]], 4), rnd, 0.3);
+  const front = tremble(runs([at(22, 40, 0), at(88, 40, 0), at(88, GROUND, 0), at(22, GROUND, 0)], 4), rnd, 0.3);
   paint(dr, outline(front), LIMESTONE.base);
   within(dr, outline(front), () => {
     let courses = '';
@@ -516,12 +527,13 @@ export function kosk(dr: Drawing, rnd: Rnd): void {
   });
   within(dr, outline(sideWall), () => {
     let courses = '';
-    for (let y = 44; y < 100; y += 4.6) courses += brush([[87, y], [97, y - 4], [107, y - 8]], 0.35, rnd, { count: 4 });
+    for (let y = 44; y < 102; y += 4.6) courses += brush([at(87.5, y, 0), at(88, y, 9), at(88, y, 18.6)], 0.35, rnd, { count: 4 });
     paint(dr, courses, '#8a6a3e', 0.4);
-    for (const x of [93, 101]) paint(dr, outline(pointed(x, 4.2, 62 - (x - 88) * 0.44, 3, 72 - (x - 88) * 0.44)), '#5a4630');
+    for (const gz of [5, 13]) paint(dr, outline(pointed(88 + gz, 4.2, 62 - 0.39 * gz, 3, 72 - 0.39 * gz)), '#5a4630');
   });
-  const parapet = tremble(runs([[20, 41], [20, 33.6], [90, 33.6], [108, 25.6], [108, 32.6], [90, 41]], 3), rnd, 0.2);
+  const parapet = tremble(runs([at(20, 41, 0), at(20, 33.6, 0), at(90, 33.6, 0), at(90, 33.6, 19), at(90, 41, 19), at(90, 41, 0)], 3), rnd, 0.2);
   paint(dr, outline(parapet), LIMESTONE.light);
+  paint(dr, polygon([at(90, 33.6, 0), at(90, 33.6, 19), at(90, 41, 19), at(90, 41, 0)]), LIMESTONE.base, 0.55);
   let arcade = '';
   for (let x = 23; x < 88; x += 5) arcade += outline(pointed(x + 2, 3, 39.4, 2.6, 40.4));
   paint(dr, arcade, LIMESTONE.shade, 0.6);
@@ -565,7 +577,7 @@ export function kosk(dr: Drawing, rnd: Rnd): void {
   paint(dr, polygon([[22, 73], [88, 73], [88, 77.4], [22, 77.4]]), LIMESTONE.shade, 0.5);
   paint(dr, rosettes, LIMESTONE.light);
   // a pomegranate tree in fruit by the side wall, and geraniums in pots on the terrace
-  paint(dr, brush([[100, 104], [99, 92], [101, 82]], 2.2, rnd, { start: 1, end: 0.6 }), '#6a4a32');
+  paint(dr, brush([[100, 98], [99.4, 90], [101, 82]], 2.2, rnd, { start: 1, end: 0.6 }), '#6a4a32');
   const crown = roundish(101, 74, 13, 11, rnd, { wobble: 0.12, count: 16 });
   form(dr, crown, { base: '#5f8a48', light: '#86ad66', shade: '#3e6430' }, [-1.6, -1.6], [1.2, 1.2]);
   let fruit = '';
@@ -584,27 +596,36 @@ const HILL: Tone = { base: '#8ea36a', light: '#b3c58c', shade: '#66804c' };
 const KELEH_STONE: Tone = { base: '#cbb28a', light: '#e6d3ad', shade: '#98805e' };
 
 export function keleh(dr: Drawing, rnd: Rnd): void {
-  // the hill: steep, green, rock breaking through, the road winding up it to the gate
-  const hill = tremble([[2, 113], [10, 100], [22, 86], [32, 72], [42, 63], [60, 59], [78, 61], [88, 68], [100, 83], [110, 99], [118, 113], [60, 116]], rnd, 0.5);
+  // the hill: a broad tell, flat on top where the castle stands, its green flanks steep and rounded at the foot, rock
+  // breaking through them, and the road winding up to the gate
+  const hill = tremble([[8, 106], [11, 97], [16, 87], [20, 78], [24, 71], [31, 67.4], [46, 66.2], [61, 65.8], [76, 66.2], [90, 67.2], [96, 70.6], [100, 78], [104, 88], [108, 98], [112, 106], [104, 111.4], [84, 114], [60, 115], [36, 114], [16, 111.4]], rnd, 0.4);
   paint(dr, outline(hill), HILL.base);
   within(dr, outline(hill), () => {
-    paint(dr, polygon(tremble([[60, 59], [78, 61], [88, 68], [100, 83], [110, 99], [118, 113], [76, 116], [70, 90]], rnd, 0.4)), HILL.shade);
-    paint(dr, polygon(tremble([[2, 113], [10, 100], [22, 86], [32, 72], [42, 63], [50, 62], [36, 84], [26, 104]], rnd, 0.4)), HILL.light);
+    paint(dr, polygon(tremble([[70, 66], [96, 69], [104, 88], [116, 108], [100, 120], [74, 120], [80, 96]], rnd, 0.4)), HILL.shade);
+    paint(dr, polygon(tremble([[24, 70], [44, 66], [34, 84], [26, 104], [16, 120], [0, 120], [0, 90]], rnd, 0.4)), HILL.light);
     let rocks = '';
-    for (const [x, y, w] of [[30, 84, 8], [84, 78, 7], [94, 96, 9], [18, 102, 7], [64, 72, 6]] as const) rocks += polygon(tremble([[x - w / 2, y + 2], [x - w / 4, y - 2], [x + w / 3, y - 2.6], [x + w / 2, y + 2]], rnd, 0.3));
+    for (const [x, y, w] of [[20, 90, 8], [100, 86, 7], [96, 102, 9], [26, 102, 7], [44, 94, 6], [80, 104, 6], [62, 84, 5]] as const) rocks += polygon(tremble([[x - w / 2, y + 2], [x - w / 4, y - 2], [x + w / 3, y - 2.6], [x + w / 2, y + 2]], rnd, 0.3));
     paint(dr, rocks, '#a59a86');
-    paint(dr, streaks(rnd, [6, 62, 114, 114], 30, -30, 6, 0.8), HILL.light, 0.4);
-    paint(dr, brush([[62, 116], [40, 106], [72, 96], [50, 84], [62, 72], [60, 64]], 2.6, rnd, { start: 1, end: 0.7, peak: 0.3, count: 24 }), '#e3cfa2');
+    paint(dr, streaks(rnd, [10, 66, 110, 114], 30, -30, 6, 0.8), HILL.light, 0.4);
+    paint(dr, brush([[60, 116], [42, 106], [74, 97], [50, 87], [63, 77], [61, 68]], 2.6, rnd, { start: 1, end: 0.7, peak: 0.3, count: 24 }), '#e3cfa2');
   });
   // poplars and the village's houses at its foot
   let poplars = '';
-  for (const [x, y, h] of [[12, 106, 14], [18, 109, 11], [104, 105, 14], [110, 109, 11]] as const) poplars += outline(tremble(blade([x, y], [x, y - h], 4, { at: 0.4, point: 0.6, count: 6 }), rnd, 0.15));
+  for (const [x, y, h] of [[17, 107, 13], [23, 110, 10], [98, 108.6, 13], [104, 106, 11]] as const) poplars += outline(tremble(blade([x, y], [x, y - h], 4, { at: 0.4, point: 0.6, count: 6 }), rnd, 0.15));
   paint(dr, poplars, '#4f7a3e');
-  for (const [x, y] of [[26, 108], [34, 110], [86, 107], [94, 110]] as const) {
+  for (const [x, y] of [[31, 109], [39, 111.4], [80, 109.4], [88, 111]] as const) {
     paint(dr, polygon(tremble([[x - 3.6, y], [x + 3.6, y], [x + 3.6, y - 4.6], [x - 3.6, y - 4.6]], rnd, 0.15)), '#ead6ae');
     paint(dr, polygon([[x + 3.6, y], [x + 5.4, y - 1], [x + 5.4, y - 5.4], [x + 3.6, y - 4.6]]), '#bfa57c');
     paint(dr, ellipse(x - 1, y - 2.4, 0.7, 0.9), '#f2b54e');
   }
+  // the outer towers' footings: battered stone, coursed, running down into the rock of the flanks
+  for (const foot of [[[26.4, 66.6], [40.6, 66.6], [41.6, 73.4], [23.4, 75]], [[81.4, 66.6], [95.6, 66.6], [98.6, 75], [80.4, 73.4]]] as Pt[][]) {
+    const f = tremble(foot, rnd, 0.2);
+    paint(dr, polygon(f), KELEH_STONE.shade);
+    within(dr, polygon(f), () => paint(dr, brush([[20, 69.4], [60, 69.4], [100, 69.4]], 0.4, rnd, { count: 4 }) + brush([[20, 72.2], [60, 72.2], [100, 72.2]], 0.4, rnd, { count: 4 }), KELEH_STONE.base, 0.8));
+  }
+  // the castle, set on the plateau
+  dr.add('<g transform="translate(61 68) scale(0.86) translate(-61 -68)">');
   // the castle: the keep rising at the back with a red pennant, curtain walls between round towers, the gate
   const keep = tremble(runs([[44, 52], [44, 22], [60, 22], [60, 52]], 4), rnd, 0.2);
   form(dr, keep, KELEH_STONE, [-2.2, 0], [1.4, 0]);
@@ -634,4 +655,5 @@ export function keleh(dr: Drawing, rnd: Rnd): void {
   paint(dr, outline(pointed(62, 5, 63, 3.6, 70)), '#7a5434');
   paint(dr, brush(pointed(62, 9, 62, 6.4, 70).slice(1, -1), 0.9, rnd, { start: 1, end: 1, peak: 0.5, count: 12 }), KELEH_STONE.light);
   for (const [x, y] of [[29, 54], [93, 56]] as const) paint(dr, ellipse(x, y, 0.9, 1.3), '#f2b54e');
+  dr.add('</g>');
 }
