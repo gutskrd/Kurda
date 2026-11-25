@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useT } from '../i18n/I18nProvider';
-import { seasonalLogo } from '../brand/season';
+import { seasonalMark } from '../brand/season';
 
 /** Whether the deer has risen in this tab already; the bar redraws after every lesson, and should not animate each time. */
 let arrived = false;
@@ -17,7 +17,7 @@ export function Brand({ to = '/' }: { to?: string }): React.JSX.Element {
   });
   return (
     <Link to={to} className={`brand${arriving ? ' is-arriving' : ''}`} aria-label={t('brand.home')}>
-      <img className="brand-mark" src={seasonalLogo()} alt="" aria-hidden="true" />
+      <img className="brand-mark" src={seasonalMark()} alt="" aria-hidden="true" />
       <span>Hevalo</span>
     </Link>
   );

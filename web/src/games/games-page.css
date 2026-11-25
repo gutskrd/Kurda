@@ -80,7 +80,7 @@
   background: none;
   cursor: pointer;
 }
-/* The focus ring uses the stamp's deep ink, since the app's violet would vanish on a violet stamp's glow. */
+/* The focus ring uses the stamp's deep ink, since the app's own focus colour could vanish on a stamp's glow. */
 .gp-stamp-press:focus-visible {
   outline: 2px solid var(--hue-deep);
   outline-offset: 4px;

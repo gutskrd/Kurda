@@ -333,7 +333,7 @@ export function LessonsView({
                       onPress={() => setChosen(c.course.id)}
                       accessibilityRole="button"
                       accessibilityState={{ selected: on }}
-                      // The current course in solid violet, as every chosen chip is.
+                      // The current course in solid ink, as every chosen chip is.
                       style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
                     >
                       <Text style={[styles.chipText, dir.free, { color: on ? colors.textOnPrimary : colors.textSecondary }]} numberOfLines={1}>

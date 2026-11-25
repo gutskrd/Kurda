@@ -494,7 +494,7 @@
   height: 44px;
 }
 .kb-guide-select option {
-  color: #14112e;
+  color: #2b2621;
 }
 .kb-guide-steps {
   margin: 0;
@@ -630,7 +630,7 @@
   animation-delay: calc(var(--i) * 40ms);
 }
 .kb-confetti i:nth-child(3n) {
-  background: #b874f0;
+  background: var(--secondary);
 }
 .kb-confetti i:nth-child(3n + 1) {
   background: var(--success);

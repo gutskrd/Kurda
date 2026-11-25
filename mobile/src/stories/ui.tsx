@@ -127,7 +127,7 @@ export function Pill({
 
 /**
  * Choices that wrap onto more lines than a segmented control fits (the length filter): a labelled radio group of
- * fingertip-tall chips. The chosen one is solid violet, like the segmented control.
+ * fingertip-tall chips. The chosen one is solid ink, like the segmented control.
  */
 export function ChoiceChips<T extends string>({
   label,

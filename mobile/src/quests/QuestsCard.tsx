@@ -23,7 +23,7 @@ const CARD_HEIGHT = CHEST * CHEST_RATIO + 2 * (spacing.sm + 6) + 16;
  * Today's quests on Home, compact: a chest, "Daily quests" with the count done (or that a chest is ready,
  * today's or an earlier day's, with a dot and an occasional shake, ChestWobble), and a short bar for each of the
  * three. A tap opens the full list (QuestsScreen), where chests are opened. A ready chest's dot and text are
- * violet like the tab bar's dots; gold stays with the earned bars.
+ * ink like the tab bar's dots; gold stays with the earned bars.
  *
  * Reloaded whenever Home comes into view. Grey while loading; a failed load says so and a tap retries; with no
  * quests today the card is hidden.

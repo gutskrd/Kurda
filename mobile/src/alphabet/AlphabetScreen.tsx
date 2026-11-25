@@ -68,7 +68,7 @@ interface TileData {
   small?: string;
   /** Under the letter: the sound it is like, or its partner in the other script. */
   hint: string | null;
-  /** A violet dot, "look at this": a false friend, or a letter Arabic does not have. */
+  /** An ink dot, "look at this": a false friend, or a letter Arabic does not have. */
   dot: boolean;
 }
 
@@ -234,7 +234,7 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
 
 /**
  * One letter in the grid: the letter and its small form, a hint or its partner underneath, a tick once opened,
- * and a dot on a false friend. Read out as on the web: "C, like j". The dot, hint and tick use the app's violet
+ * and a dot on a false friend. Read out as on the web: "C, like j". The dot, hint and tick use the app's ink
  * for "look at this" and "on", not gold (earned) or green (a right answer).
  */
 function Tile({
@@ -278,7 +278,7 @@ function Tile({
   );
 }
 
-/** How many of this alphabet's letters have been opened here, in the violet of every progress bar. */
+/** How many of this alphabet's letters have been opened here, in the ink of every progress bar. */
 function Progress({ explored, total }: { explored: number; total: number }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();

@@ -168,7 +168,7 @@ export function RatingBox({
         </View>
       )}
 
-      {/* The stars fill from the reading-start side, and chosen ones are violet like any choice; gold is kept for what is earned. */}
+      {/* The stars fill from the reading-start side, and chosen ones are ink like any choice; gold is kept for what is earned. */}
       <View style={[styles.stars, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={t('appFeedback.question')}>
         {[1, 2, 3, 4, 5].map((n) => {
           const on = n <= stars;
@@ -202,7 +202,7 @@ export function RatingBox({
       ) : null}
 
       {settings || followUp === 'improve' ? (
-        // What it is about, as many as apply: one that is on is solid violet, as every chosen chip is.
+        // What it is about, as many as apply: one that is on is solid ink, as every chosen chip is.
         <View style={[styles.chips, { flexDirection: dir.row }]}>
           {APP_FEEDBACK_CATEGORIES.map((c) => {
             const on = categories.includes(c);

@@ -192,7 +192,7 @@ function Slot({
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
                   accessibilityLabel={postName(p)}
-                  // The one already chosen in the solid violet every chosen option wears.
+                  // The one already chosen in the solid ink every chosen option wears.
                   style={[
                     styles.option,
                     {

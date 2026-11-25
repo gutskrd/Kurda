@@ -1,10 +1,13 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
+import { PAGE, THEME } from '@kurda/shared';
 import { applyTheme, readThemePreference, resolveScheme, setThemePreference, DEFAULT_THEME } from './theme';
 
 afterEach(() => {
   localStorage.clear();
   vi.unstubAllGlobals();
   delete document.documentElement.dataset.theme;
+  delete document.documentElement.dataset.palette;
+  document.head.querySelector('meta[name="theme-color"]')?.remove();
 });
 
 /** A device that says it prefers light, or dark. */
@@ -18,6 +21,18 @@ function deviceLight(light: boolean): void {
 }
 
 describe('the colour scheme', () => {
+  it('names the colour theme on the root and gives the browser’s bar the page’s own colour, in either scheme', () => {
+    const meta = document.createElement('meta');
+    meta.name = 'theme-color';
+    document.head.append(meta);
+    deviceLight(false);
+    setThemePreference('light');
+    expect(document.documentElement.dataset.palette).toBe(THEME);
+    expect(meta.content).toBe(PAGE.light.page);
+    setThemePreference('dark');
+    expect(meta.content).toBe(PAGE.dark.page);
+  });
+
   it('is dark until somebody chooses otherwise, even on a light device', () => {
     deviceLight(true);
     expect(DEFAULT_THEME).toBe('dark');

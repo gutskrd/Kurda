@@ -321,9 +321,9 @@
   color: var(--ink);
 }
 .chip.active {
-  background: var(--primary);
-  color: var(--primary-ink);
-  border-color: var(--primary);
+  background: var(--secondary);
+  color: var(--secondary-ink);
+  border-color: var(--secondary);
 }
 /* a filter is still a target for a thumb: a full 44px where the pointer is a finger */
 @media (pointer: coarse) {
@@ -2418,7 +2418,7 @@ button.mkp-fact {
   width: 88px;
   height: 88px;
 }
-/* a link in running words: the app's violet, as everything that can be pressed is */
+/* a link in running words: the app's ink, as everything that can be pressed is */
 .link {
   color: var(--primary);
 }
@@ -4408,7 +4408,7 @@ button.mkp-fact {
   align-items: center;
   gap: 8px;
 }
-/* a saved word is on, and on is the violet of everything chosen, as a bookmarked story is */
+/* a saved word is on, and on is the ink of everything chosen, as a bookmarked story is */
 .dict-save.is-on {
   color: var(--primary);
 }

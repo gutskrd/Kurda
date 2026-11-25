@@ -15,7 +15,7 @@ const DISC = 34;
 /**
  * A conversation's message field: one rounded pill with the text on one side and Send inside it on the other,
  * growing upward to about five lines with Send staying by the last line. In a browser the focused field shows a
- * violet ring on the pill, since the browser's own would be a rectangle around the text; phones show only a
+ * ink ring on the pill, since the browser's own would be a rectangle around the text; phones show only a
  * caret.
  */
 export function MessageField({

@@ -105,7 +105,7 @@ function stopLook(stop: Stop): PathStopLook {
   return stop.state;
 }
 
-/** Whether a stop's card offers a lesson to play now, and so is the road's main button, in its violet. */
+/** Whether a stop's card offers a lesson to play now, and so is the road's main button, in its main colour. */
 function goes(stop: Stop): boolean {
   return stop.kind === 'skill' && stop.state !== 'locked' && Boolean(stop.launch);
 }

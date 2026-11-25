@@ -191,7 +191,7 @@
   background: var(--surface-2);
   color: var(--ink);
 }
-/* something new: a dot in the app's violet, with a ring of the bar's own colour so it reads on the glyph */
+/* something new: a dot in the app's ink, with a ring of the bar's own colour so it reads on the glyph */
 .nav-bell-dot {
   position: absolute;
   top: 9px;
@@ -439,7 +439,7 @@
 .note-slide.is-dragging {
   transition: none;
 }
-/* the wash is the violet of the bell's own dot, faintly: what is new is the one tinted thing in the list */
+/* the wash is the ink of the bell's own dot, faintly: what is new is the one tinted thing in the list */
 .note-row.is-unread .note-slide {
   background: linear-gradient(color-mix(in srgb, var(--primary) 10%, transparent), color-mix(in srgb, var(--primary) 10%, transparent)), var(--note-ground);
 }
@@ -1196,17 +1196,17 @@
   color: var(--ink);
 }
 /*
- * One look for "this one": the chosen half of a switch, the chosen tab, segment and option wear the page's ink with
- * the page's ground for their words, like a chosen chip (`.chip.active`, pages.css). Set here, after each control's
- * own rules.
+ * One look for "this one": the chosen half of a switch, the chosen tab, segment and option wear the theme's second
+ * colour with its own ink for their words, like a chosen chip (`.chip.active`, pages.css). Set here, after each
+ * control's own rules.
  */
 .switch-btn.is-active,
 .rank-by-btn.is-active,
 .seg-btn.is-active,
 .wordle-layout-option.is-on {
-  border-color: var(--primary);
-  background: var(--primary);
-  color: var(--primary-ink);
+  border-color: var(--secondary);
+  background: var(--secondary);
+  color: var(--secondary-ink);
 }
 /* what sits inside a chosen one takes its ink: a mark coloured for the page would be lost on it */
 .rank-by-btn.is-active .rank-by-xp {
@@ -1968,7 +1968,7 @@
   inset-inline-start: calc(100% * var(--at) / var(--places));
   inset-inline-end: calc(100% * (var(--places) - var(--at) - 1) / var(--places));
   border-radius: var(--r-pill);
-  /* a wash of the ink the chosen place is drawn in, so capsule and glyph are one thing */
+  /* a wash of the colour the chosen place is drawn in, so capsule and glyph are one thing */
   background: var(--capsule);
   transition:
     inset-inline-start var(--follow-ms) var(--follow-ease),
@@ -2017,9 +2017,9 @@
 .places-link:hover {
   color: var(--ink);
 }
-/* the one you are on: drawn in the ink, its glyph solid */
+/* the one you are on: drawn in the theme’s second colour, its glyph solid, over the capsule of the same */
 .places-link.active {
-  color: var(--primary);
+  color: var(--secondary);
 }
 .places-link:focus-visible {
   outline: 2px solid var(--focus);
@@ -2166,7 +2166,7 @@
   border-color: var(--surface-solid);
 }
 :root[data-theme='light'] .rail-dot.is-offline {
-  background: rgba(20, 17, 46, 0.28);
+  background: rgba(43, 38, 33, 0.28);
 }
 @media (min-width: 1180px) {
   :root[data-theme='light'] .app-main:has(.mkp-has-bg) ~ .social-rail {

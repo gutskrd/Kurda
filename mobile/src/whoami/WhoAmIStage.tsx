@@ -323,7 +323,7 @@ export function Foreheads({ dialect, seats, label }: { dialect: GameDialect; sea
               : s.answer === 'waiting'
                 ? t('games.whoAmI.seat.answering')
                 : done;
-        // Whose turn it is in the violet of where you are; green and red only for a right guess or a player out of
+        // Whose turn it is in the ink of where you are; green and red only for a right guess or a player out of
         // guesses.
         const tagColour = s.left
           ? colors.textSecondary

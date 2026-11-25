@@ -589,7 +589,7 @@ function ItemDetail({
 
       {bought ? (
         <>
-          {/* Yours now: ticked in the violet of what is yours and chosen, not the green of a right answer. */}
+          {/* Yours now: ticked in the ink of what is yours and chosen, not the green of a right answer. */}
           <View style={[styles.yours, { flexDirection: dir.row }]} accessibilityLiveRegion="polite" testID="shop-bought">
             <Icon name="check" size={20} color={colors.primary} />
             <Text style={[styles.yoursText, { color: colors.textPrimary }]}>{t('shop.itemIsYours', { name: item.name })}</Text>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DARK, LIGHT } from './palette';
+import { PAGE, REWARD_GOLD, THEME, THEMES } from '@kurda/shared';
+import { DARK, LIGHT, type Palette } from './palette';
 import { AA_LARGE, AA_NORMAL, contrastRatio, hexToRgb, type Rgb } from '../a11y/contrast';
 
 /** A translucent fill as it appears over what is behind it, since contrast is between opaque colours. */
@@ -51,13 +52,18 @@ for (const p of [LIGHT, DARK]) {
       expect(contrastRatio(p.textOnPrimary, p.accent)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
-    // A chosen chip, tab or segment is solid ink on the grey track the others sit on: its word reads as a button's
+    // A chosen chip, tab or segment is the second colour on the track the others sit on: its word reads as a button's
     // does, and the chip itself stands out from the track as a control must (WCAG 1.4.11).
     it('a chosen chip stands 3:1 off the track, on the page and on a card, with its word at AA', () => {
       for (const surface of [p.background, p.surface]) {
-        expect(contrastRatio(p.primary, over(p.controlTrack, surface)), surface).toBeGreaterThanOrEqual(AA_LARGE);
+        expect(contrastRatio(p.secondary, over(p.controlTrack, surface)), surface).toBeGreaterThanOrEqual(AA_LARGE);
       }
-      expect(contrastRatio(p.textOnPrimary, p.primary)).toBeGreaterThanOrEqual(AA_NORMAL);
+      expect(contrastRatio(p.textOnSecondary, p.secondary)).toBeGreaterThanOrEqual(AA_NORMAL);
+    });
+
+    // The chosen tab's glyph and label are drawn in the second colour on the bar, over its own faint capsule.
+    it('the chosen tab, in the second colour, meets AA on the bar', () => {
+      expect(contrastRatio(p.secondary, over(p.barFill, p.background))).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
     // Secondary text is body text too (previews, captions, times), so it is held to the full 4.5:1.
@@ -103,7 +109,7 @@ for (const p of [LIGHT, DARK]) {
       expect(contrastRatio(p.danger, p.background)).toBeGreaterThanOrEqual(AA_LARGE);
     });
 
-    // The unread dot and tab count are in the app's violet, with the number in the primary button label's colour.
+    // The unread dot and tab count are in the ink, with the number in the primary button label's colour.
     it('the unread badge stands out from the page (3:1) and its count is legible (4.5:1)', () => {
       expect(contrastRatio(p.primary, p.background)).toBeGreaterThanOrEqual(AA_LARGE);
       expect(contrastRatio(p.primary, over(p.barFill, p.background))).toBeGreaterThanOrEqual(AA_LARGE);
@@ -112,27 +118,45 @@ for (const p of [LIGHT, DARK]) {
   });
 }
 
+/** Violet to magenta, from `#rrggbb` or `rgba(r,g,b,a)`: the colours the interface no longer wears. */
+function isPurple(colour: string): boolean {
+  const rgba = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(colour);
+  const { r, g, b } = rgba ? { r: Number(rgba[1]), g: Number(rgba[2]), b: Number(rgba[3]) } : hexToRgb(colour);
+  const max = Math.max(r, g, b);
+  const chroma = max - Math.min(r, g, b);
+  if (chroma < 8) return false;
+  const hue = 60 * (max === r ? ((g - b) / chroma + 6) % 6 : max === g ? (b - r) / chroma + 2 : (r - g) / chroma + 4);
+  return hue >= 250 && hue <= 330;
+}
+
 describe('palette — the values the design settled on', () => {
-  it('keeps the dark page and its raised surfaces the ink taken almost to black', () => {
-    expect(DARK.background).toBe('#100E1D');
-    expect(DARK.surface).toBe('#1B192B');
-    expect(DARK.surfaceRaised).toBe('#27243A');
-    expect(DARK.gold).toBe(DARK.textPrimary);
+  it('sits on the warm page from @kurda/shared, never pure white by day or pure black by night', () => {
+    expect(LIGHT.background).toBe(PAGE.light.page);
+    expect(DARK.background).toBe(PAGE.dark.page);
+    expect(LIGHT.background).not.toBe('#FFFFFF');
+    expect(DARK.background).not.toBe('#000000');
+    expect(LIGHT.surface).toBe(PAGE.light.surface);
+    expect(DARK.surface).toBe(PAGE.dark.surface);
   });
 
-  it('keeps the light page a white with a breath of violet, with white surfaces, and what is earned in the ink', () => {
-    expect(LIGHT.background).toBe('#F6F4FD');
-    expect(LIGHT.surface).toBe('#FFFFFF');
-    expect(LIGHT.goldText).toBe(LIGHT.textPrimary);
-    expect(LIGHT.gold).toBe(LIGHT.textPrimary);
+  it('wears the chosen theme: its main colour on the main button, its second on what is chosen, and gold for what is earned', () => {
+    for (const [p, scheme] of [[LIGHT, 'light'], [DARK, 'dark']] as const) {
+      expect(p.accent).toBe(THEMES[THEME][scheme].primary);
+      expect(p.secondary).toBe(THEMES[THEME][scheme].secondary);
+      expect(p.bubbleMine).toBe(p.secondary);
+      expect(p.switchOn).toBe(p.secondary);
+      expect(p.gold).toBe(REWARD_GOLD[scheme].gold);
+      expect(p.primary).toBe(p.textPrimary);
+    }
   });
 
-  it('keeps one accent, the icon’s violet, deep by day and lifted by night, and draws everything else pressable in indigo ink', () => {
-    expect(LIGHT.accent).toBe('#862BE2');
-    expect(DARK.accent).toBe('#BF9BFE');
-    expect(LIGHT.textPrimary).toBe('#14112E');
-    expect(LIGHT.primary).toBe(LIGHT.textPrimary);
-    expect(DARK.primary).toBe(DARK.textPrimary);
-    expect(DARK.textOnPrimary).toBe(LIGHT.textPrimary);
+  it('has no violet anywhere in either palette', () => {
+    for (const p of [LIGHT, DARK] as Palette[]) {
+      for (const [key, value] of Object.entries(p)) {
+        for (const colour of Array.isArray(value) ? value : [value]) {
+          if (typeof colour === 'string' && /^(#|rgb)/.test(colour)) expect(isPurple(colour), `${p.scheme}.${key} ${colour}`).toBe(false);
+        }
+      }
+    }
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHRISTMAS_LOGO, PLAIN_LOGO, isChristmas, seasonalLogo } from './season';
+import { CHRISTMAS_LOGO, CHRISTMAS_MARK, PLAIN_LOGO, PLAIN_MARK, isChristmas, seasonalLogo, seasonalMark } from './season';
 
 /** Local time on purpose: the window is read from the visitor's own clock. */
 const on = (iso: string) => new Date(`${iso}T12:00:00`);
@@ -23,6 +23,8 @@ describe('the Christmas window', () => {
   it('hands back the drawing for the day', () => {
     expect(seasonalLogo(on('2026-12-24'))).toBe(CHRISTMAS_LOGO);
     expect(seasonalLogo(on('2026-07-04'))).toBe(PLAIN_LOGO);
+    expect(seasonalMark(on('2026-12-24'))).toBe(CHRISTMAS_MARK);
+    expect(seasonalMark(on('2026-07-04'))).toBe(PLAIN_MARK);
   });
 
   /** Every month of a year, so nothing but December and early January qualifies. */

@@ -157,8 +157,8 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
 }
 
 /**
- * The top card on the pale violet wash: what it offers and how much, Hamo at its end, and one button saying what
- * a session pays. One ground and one violet button every day, so the eye goes to the button. Hamo cheers on
+ * The top card on the page’s warm wash: what it offers and how much, Hamo at its end, and one button saying what
+ * a session pays. One ground and one main button every day, so the eye goes to the button. Hamo cheers on
  * arrival and greets a tap; the text says everything he would, so screen readers skip him. The button pops once
  * the card settles.
  */

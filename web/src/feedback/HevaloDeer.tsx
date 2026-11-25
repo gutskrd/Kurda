@@ -42,7 +42,7 @@ export function HevaloDeer({
       focusable="false"
       data-stars={board.kind === 'stars' ? stars : undefined}
     >
-      {/* The lilac card the logo's deer sits on, as a soft disc that stays put. */}
+      {/* A soft disc of warm light behind the deer, which stays put. */}
       <Layer markup={deerCard()} />
       <g className="deer-body">
         <image className="deer-mascot" href={MASCOT} x={DEER_PICTURE.x} y={DEER_PICTURE.y} width={DEER_PICTURE.w} height={DEER_PICTURE.h} />

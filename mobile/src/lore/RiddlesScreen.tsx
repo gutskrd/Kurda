@@ -210,7 +210,7 @@ export function RiddlesScreen({ dialect: asked, onExit }: { dialect?: GameDialec
 }
 
 /**
- * How far through the variety's riddles the reader is: a thin violet line, as progress along a road is, drawn once
+ * How far through the variety's riddles the reader is: a thin ink line, as progress along a road is, drawn once
  * where it stands.
  */
 function SolvedBar({ solved, total }: { solved: number; total: number }): React.JSX.Element {

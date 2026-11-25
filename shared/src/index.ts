@@ -918,7 +918,9 @@ export {
   TIER_METAL as ART_TIER_METAL,
   type Metal as ArtMetal,
 } from './art/palette.js';
-/** The nine hues things are coloured in beside the app's own violet, each in the same four steps, light and dark. */
+/** The warm page, the three colour themes on it, the reward gold and Hevalo+'s own button, for both apps. */
+export * from './themes.js';
+/** The nine hues drawings are coloured in, each in the same four steps, light and dark. */
 export { HUES, HUE_NAMES, hueSteps, isHueName, type HueName, type HueScheme, type HueSteps } from './hues.js';
 /** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
 export * from './art/fire.js';

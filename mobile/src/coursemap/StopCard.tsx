@@ -26,7 +26,7 @@ type Unit = PathUnit<SkillNode>;
 
 /**
  * The card a tapped stop opens, under it with an arrow up to it, as on the website. A topic to play now is the road's
- * main button: the card in its violet, its name, which lesson is next, and one light button that says what the lesson
+ * main button: the card in its main colour, its name, which lesson is next, and one light button that says what the lesson
  * pays, which a glint crosses now and then. Any other stop's card is a plain panel: what it is, its progress and one
  * action, or what opens it; a skill there lists its lessons.
  *
@@ -108,7 +108,7 @@ export function StopCard({
   );
 }
 
-/** A skill whose card offers a lesson to play now, and so is the road's main button, in its violet; else null. */
+/** A skill whose card offers a lesson to play now, and so is the road's main button, in its main colour; else null. */
 function goesNow(stop: Stop): Extract<Stop, { kind: 'skill' }> | null {
   return stop.kind === 'skill' && stop.state !== 'locked' && stop.launch ? stop : null;
 }
@@ -183,7 +183,7 @@ function GoCard({ stop, titleRef, actions }: { stop: Extract<Stop, { kind: 'skil
 function StartButton({ label, xp, onPress }: { label: string; xp: string | null; onPress: () => void }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const live = useMotionAlive();
-  // The violet by day; by night the violet is pale, so the day's ink is written on the white instead.
+  // The main colour by day; by night it is pale, so the night's dark ink is written on it instead.
   const words = scheme === 'dark' ? colors.textOnPrimary : colors.accent;
   const [width, setWidth] = useState(0);
   const glint = useRef(new Animated.Value(0)).current;

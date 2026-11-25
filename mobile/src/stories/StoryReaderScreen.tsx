@@ -892,7 +892,7 @@ function CheckCard({
   return (
     <Card style={styles.check}>
       <View style={styles.checkHead}>
-        {/* Open or locked is a state, not a right answer, so violet rather than green. */}
+        {/* Open or locked is a state, not a right answer, so ink rather than green. */}
         <Icon name={unlocked ? 'check' : 'lock'} size={20} color={unlocked ? colors.primary : colors.textSecondary} />
         <Text style={[styles.checkTitle, { color: colors.textPrimary }]} accessibilityRole="header">
           {t('stories.check.title')}

@@ -242,7 +242,7 @@
 .lore-solved-bar > span {
   display: block;
   height: 100%;
-  /* The progress violet, as on the phone. */
+  /* The progress ink, as on the phone. */
   background: var(--primary);
   border-radius: inherit;
   transition: width var(--dur-progress) var(--ease-out);

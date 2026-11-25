@@ -255,8 +255,8 @@ const SEG_LINE = 18;
 /**
  * A segmented control: a track and a capsule that slides to the chosen option. The chosen word is the same size as
  * the others, only heavier, and the slide is the only motion: instant under Reduce Motion, mirrored in right-to-left
- * languages. The capsule is solid violet with the button label's colour, as on the website, so the choice reads at a
- * glance in both themes.
+ * languages. The capsule is the theme's second colour with its own word colour, as on the website, so the choice reads
+ * at a glance in both themes.
  */
 export function Segmented<T extends string>({
   options,
@@ -325,7 +325,7 @@ export function Segmented<T extends string>({
           pointerEvents="none"
           style={[
             styles.segCapsule,
-            { width: seg, backgroundColor: colors.primary, transform: [{ translateX: x }] },
+            { width: seg, backgroundColor: colors.secondary, transform: [{ translateX: x }] },
           ]}
         />
       ) : null}
@@ -354,7 +354,7 @@ export function Segmented<T extends string>({
             <Text
               style={[
                 styles.segText,
-                { color: active ? colors.textOnPrimary : colors.textSecondary },
+                { color: active ? colors.textOnSecondary : colors.textSecondary },
                 active && styles.segTextActive,
                 wrap && styles.segTextWrap,
               ]}

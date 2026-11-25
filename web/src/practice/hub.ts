@@ -20,7 +20,7 @@ export interface KindRow {
   waiting: boolean;
 }
 
-/** Each kind's badge hue (shared hues), as the phone gives them; violet is left to the page's own accent. */
+/** Each kind's badge hue (shared hues), as the phone gives them; the interface draws them all in the page's own steps. */
 export const KIND_HUES: Record<KindKey | 'sentence' | 'hear', HueName> = {
   mistakes: 'pink',
   words: 'gold',

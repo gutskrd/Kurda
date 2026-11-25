@@ -47,20 +47,20 @@ export const TONES: Record<ColorScheme, Record<UnitTone, ToneColors>> = {
  * unit's colours (`TONES`). Must match path.css's `lp-tone-*` rules.
  */
 export const UNIT_INK: Record<ColorScheme, ToneColors> = {
-  dark: { fill: '#f3f1fb', lip: '#a9a6bb', ink: '#14112e', text: '#f3f1fb' },
-  light: { fill: '#14112e', lip: '#050410', ink: '#ffffff', text: '#14112e' },
+  dark: { fill: '#f4eee6', lip: '#b0a69b', ink: '#1c1814', text: '#f4eee6' },
+  light: { fill: '#2b2621', lip: '#14110e', ink: '#fffdf9', text: '#2b2621' },
 };
 
 /** Locked stops and the line still ahead, in each scheme. */
 export const REST: Record<ColorScheme, { fill: string; lip: string; ink: string; line: string }> = {
-  dark: { fill: '#2b283c', lip: '#1a1828', ink: '#9e9cb0', line: 'rgba(255,255,255,0.2)' },
-  light: { fill: '#e3e1ec', lip: '#cac8d7', ink: '#716e85', line: 'rgba(20,17,46,0.18)' },
+  dark: { fill: '#2e2a26', lip: '#1e1b18', ink: '#a39a8f', line: 'rgba(255,248,240,0.2)' },
+  light: { fill: '#e8e1d7', lip: '#d3cabd', ink: '#736a5f', line: 'rgba(43,38,33,0.18)' },
 };
 
 /** The glyph colour on an open stop's cream face and on a locked stop's stone. */
 export const FACE_INK: Record<ColorScheme, { paper: (tone: ToneColors) => string; stone: string }> = {
   light: { paper: (tone) => tone.text, stone: '#857861' },
-  dark: { paper: () => '#3d2a1f', stone: '#d6d2dc' },
+  dark: { paper: () => '#3d2a1f', stone: '#dad3c9' },
 };
 
 /**
@@ -68,8 +68,8 @@ export const FACE_INK: Record<ColorScheme, { paper: (tone: ToneColors) => string
  * pieces use the palette's `primary`, and a whole ring its `gold`.
  */
 export const RING: Record<ColorScheme, { track: string; edge: string }> = {
-  light: { track: '#fffaf0', edge: 'rgba(36, 24, 70, 0.32)' },
-  dark: { track: '#2b283c', edge: 'rgba(6, 4, 16, 0.6)' },
+  light: { track: '#fffaf0', edge: 'rgba(58, 44, 30, 0.32)' },
+  dark: { track: '#2e2a26', edge: 'rgba(10, 8, 6, 0.6)' },
 };
 
 /** A star on a finished topic's gold coin, edged so it stands off the gold. */

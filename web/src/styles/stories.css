@@ -115,7 +115,7 @@
   display: grid;
   gap: 10px;
 }
-/* the way back into a story: progress along a road, and a thing to press, so the violet (gold is for what is earned) */
+/* the way back into a story: progress along a road, and a thing to press, so the ink (gold is for what is earned) */
 .story-continue-card {
   display: flex;
   align-items: center;
@@ -826,7 +826,7 @@
   box-decoration-break: clone;
 }
 /*
- * The sentence being read sits on the violet wash (gold is for what is earned) and replays when tapped. The wash
+ * The sentence being read sits on the ink's wash (gold is for what is earned) and replays when tapped. The wash
  * matches the phone's hue step (StoryText.tsx), and the words keep 14:1 by day and 11:1 by night.
  */
 .story-sentence.is-reading {
@@ -835,7 +835,7 @@
   cursor: pointer;
 }
 
-/* the band's own wash, with the violet of what can be pressed on it: 4.6:1 by day, 5.4:1 by night */
+/* the band's own wash, with the ink of what can be pressed on it: 4.6:1 by day, 5.4:1 by night */
 .story-replay {
   display: inline-grid;
   place-items: center;
@@ -865,7 +865,7 @@
   font: inherit;
   color: inherit;
   cursor: help;
-  /* a word that opens its meaning can be pressed, so its dotted line is the violet */
+  /* a word that opens its meaning can be pressed, so its dotted line is the ink */
   text-decoration: underline dotted;
   text-decoration-color: var(--primary);
   text-decoration-thickness: 2px;
@@ -1045,7 +1045,7 @@
   background: var(--surface-2);
   color: var(--ink);
 }
-/* a saved word is on, and on is the violet, as a bookmarked story is */
+/* a saved word is on, and on is the ink, as a bookmarked story is */
 .story-save.is-on {
   color: var(--primary);
   border-color: color-mix(in srgb, var(--primary) 50%, transparent);
@@ -1517,7 +1517,7 @@
   --player-dim: var(--ink-4);
   --player-fill: var(--surface-2);
   --player-line: var(--border-strong);
-  /* how much has been heard: the violet of progress along a road, or the bar's own ink where the bar is the violet */
+  /* how much has been heard: the ink of progress along a road, or the bar's own ink where the bar is filled with it */
   --player-heard: var(--primary);
   display: inline-flex;
   flex-direction: column;
@@ -2188,7 +2188,7 @@
   /* focused by the page so a screen reader starts here; nothing to press */
   outline: none;
 }
-/* the ring beside the counter: filled as far as this question, in the violet of where you are, as the phone's steps are */
+/* the ring beside the counter: filled as far as this question, in the ink of where you are, as the phone's steps are */
 .sg-q-ring {
   flex: none;
   transform: rotate(-90deg);
@@ -2229,7 +2229,7 @@
 .sg-timebar span {
   display: block;
   height: 100%;
-  /* the time left: the violet of a road, until it runs short */
+  /* the time left: the ink of a road, until it runs short */
   background: var(--primary);
   transform-origin: left center;
   transition: transform 1s linear;

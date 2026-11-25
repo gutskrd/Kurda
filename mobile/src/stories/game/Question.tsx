@@ -232,7 +232,7 @@ export function Question({
 
       {status ? (
         <View style={styles.statusRow}>
-          {/* Sent but not judged: violet, so no tick says "right" before the reveal. */}
+          {/* Sent but not judged: ink, so no tick says "right" before the reveal. */}
           {locked ? <Icon name="check" size={16} color={colors.primary} /> : null}
           <Text style={[styles.status, { color: colors.textPrimary }]}>{status}</Text>
         </View>
