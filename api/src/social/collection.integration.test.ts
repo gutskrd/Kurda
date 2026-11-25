@@ -2,7 +2,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import type { CollectionGift, CollectionResponse } from '@kurda/shared';
+import { GIFT_STICKERS, type CollectionGift, type CollectionResponse } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
@@ -198,5 +198,33 @@ describe.skipIf(!DATABASE_URL)('a profile’s collection (integration)', () => {
   it('is not found across a block, either way', async () => {
     expect((await read(blocked, owner.id)).status).toBe(404);
     expect((await read(owner, blocked.id)).status).toBe(404);
+  });
+
+  it('counts a gift sticker however it came, in a chat or onto a post, with its picture and who gave it', async () => {
+    const sticker = GIFT_STICKERS[0]!;
+    // Two from a friend, one in their chat and one onto a post paid with a free gift; the newest from a teenage friend's post gift.
+    const given = await pool.query<{ id: string }>(
+      `INSERT INTO gifts (from_user_id, to_user_id, sku, price, currency, post_type, post_id, paid_with, created_at)
+       VALUES ($1, $3, $4, $5, 'zer', NULL, NULL, 'zer', now() - interval '3 minutes'),
+              ($1, $3, $4, $5, 'zer', 'library', gen_random_uuid(), 'free_gift', now() - interval '2 minutes'),
+              ($2, $3, $4, $5, 'zer', 'image', gen_random_uuid(), 'zer', now() - interval '1 minute')
+       RETURNING id`,
+      [friend.id, teen.id, owner.id, sticker.sku, sticker.price],
+    );
+    try {
+      const own = (await read(owner, owner.id)).body;
+      expect(own.received.items[0]).toMatchObject({ sku: sticker.sku, category: 'sticker', count: 3, assetUrl: `/cosmetics/${sticker.assetKey}` });
+      expect(givers(own.received.items)[sticker.sku]).toEqual([teen.id, friend.id, friend.id]);
+      // given, never worn: not among the icons
+      expect(own.icons.items.map((i) => i.sku)).not.toContain(sticker.sku);
+      // a stranger is told the adult friend, and not the teenager
+      expect(givers((await read(stranger, owner.id)).body.received.items)[sticker.sku]).toEqual([null, friend.id, friend.id]);
+      // and the friend sees both of theirs among what they sent, to the owner
+      const sent = (await read(friend, friend.id)).body.sent?.items.find((g) => g.sku === sticker.sku);
+      expect(sent).toMatchObject({ count: 2, assetUrl: `/cosmetics/${sticker.assetKey}` });
+      expect(sent?.people.map((p) => p.person?.id ?? null)).toEqual([owner.id, owner.id]);
+    } finally {
+      await pool.query(`DELETE FROM gifts WHERE id = ANY($1::uuid[])`, [given.rows.map((r) => r.id)]);
+    }
   });
 });
