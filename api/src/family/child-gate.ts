@@ -26,6 +26,8 @@ export const CHILD_ROUTES: ReadonlySet<string> = new Set([
   'GET /status',
   'GET /art/overrides',
   'GET /reactions',
+  // the season's look the app wears, which says nothing about anyone
+  'GET /events/active',
   // the child's side of the family: who is in it, asking a parent, and the way back to the parent on their phone
   'GET /me/family',
   'GET /me/family/purchase-requests',

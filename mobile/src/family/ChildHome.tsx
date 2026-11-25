@@ -65,6 +65,9 @@ export function ChildHome(): React.JSX.Element {
   const [mine, setMine] = useState<Mine | null>(null);
   const [asked, setAsked] = useState<'busy' | 'done' | null>(null);
   const [pin, setPin] = useState(false);
+  // Two tiles to a row, each half the row less the gap, so a row of one is a half like the others.
+  const [gridWidth, setGridWidth] = useState(0);
+  const tileWidth = gridWidth > 0 ? (gridWidth - TILE_GAP) / 2 : undefined;
   const parent = user?.child?.parentName ?? '';
 
   useFocusEffect(
@@ -90,14 +93,14 @@ export function ChildHome(): React.JSX.Element {
   const name = user?.displayName ?? '';
   const streak = mine?.streak?.current ?? 0;
   const tiles = (list: typeof LEARN) => (
-    <View style={[styles.grid, { flexDirection: dir.row }]}>
+    <View style={[styles.grid, { flexDirection: dir.row }]} onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}>
       {list.map((tile) => (
         <PressableScale
           key={tile.route}
           onPress={() => navigation.navigate(tile.route as never)}
           accessibilityRole="button"
           accessibilityLabel={t(tile.label)}
-          style={[styles.tile, { backgroundColor: colors.glassFill, shadowColor: colors.softShadow }]}
+          style={[styles.tile, tileWidth ? { width: tileWidth } : styles.half, { backgroundColor: colors.glassFill, shadowColor: colors.softShadow }]}
           testID={`child-tile-${tile.route}`}
         >
           <Icon name={tile.icon} size={28} color={colors.textPrimary} />
@@ -135,7 +138,7 @@ export function ChildHome(): React.JSX.Element {
           </View>
         </Pressable>
 
-        <ClayButton label={t('child.start')} icon="play" tone="primary" size="large" onPress={() => navigation.navigate('NextLesson')} testID="child-start" />
+        <ClayButton label={t('child.start')} tone="primary" size="large" onPress={() => navigation.navigate('NextLesson')} testID="child-start" />
 
         <Text style={[styles.section, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
           {t('child.section.learn')}
@@ -178,6 +181,9 @@ export function ChildHome(): React.JSX.Element {
   );
 }
 
+/** The room between two tiles, across and down. */
+const TILE_GAP = spacing.sm + 4;
+
 const styles = StyleSheet.create({
   page: { paddingHorizontal: layout.gutter, gap: spacing.md },
   hello: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm, borderRadius: radii.lg },
@@ -186,11 +192,10 @@ const styles = StyleSheet.create({
   stats: { alignItems: 'center', gap: spacing.xs + 2, flexWrap: 'wrap' },
   stat: { fontSize: typography.sizes.text, marginEnd: spacing.sm },
   section: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, marginTop: spacing.sm },
-  grid: { flexWrap: 'wrap', gap: spacing.sm + 4 },
+  grid: { flexWrap: 'wrap', gap: TILE_GAP },
+  half: { width: '47%' },
   tile: {
-    flexBasis: '30%',
-    flexGrow: 1,
-    minHeight: 96,
+    minHeight: 104,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
