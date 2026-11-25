@@ -9,6 +9,7 @@ import {
   giftGlow,
   giftMeaning,
   giftSeed,
+  giftSenderName,
   type EquippableCategory,
   type GiftCard,
   type GiftMomentLook,
@@ -50,7 +51,8 @@ const ART: Readonly<Record<GiftTier, number>> = { common: 140, rare: 156, legend
  * The moment a gift is opened (shared gift-moment.ts), the same as on the website: the screen dims to night, the
  * wrapped box waits in the gift's own light for its tier's unwrap time (a tap skips it), then the gift springs out
  * large on its glow as the rays come up behind it and light sparkles drift, under "Gift from Rojda", with its Kurmancî
- * name and meaning and Say thanks, Send one back (a known adult's only, the parent decides) or Close. The tier sets the
+ * name and meaning and Say thanks, Send one back (a known adult's only, the parent decides) or Close; a gift on a post,
+ * with no chat to thank in, has Close alone (`PostGiftOpen`). The tier sets the
  * strength: a gentle glow and short rays for a common gift, brighter rays and sparkles for a rare one, and a grand one
  * keeps its night sky. Everything moves on the native driver; under Reduce Motion the light is there and still.
  *
@@ -69,9 +71,9 @@ export function GiftUnwrap({
   onOpened: (card: GiftCard) => void;
   /**
    * Send the thank-you into the chat; resolves to null when it went, or to the server's refusal, said here since the
-   * chat's own notice is behind this.
+   * chat's own notice is behind this. Absent for a gift on a post, which has no chat.
    */
-  onThanks: () => Promise<ApiError | null>;
+  onThanks?: () => Promise<ApiError | null>;
   /** Open the gift sheet for whoever sent it; left out where nothing can be sent back. */
   onSendBack?: () => void;
 }): React.JSX.Element {
@@ -156,7 +158,7 @@ export function GiftUnwrap({
   };
 
   const thank = (): void => {
-    if (thanked !== 'idle') return;
+    if (!onThanks || thanked !== 'idle') return;
     setThanked('busy');
     setThanksError(null);
     void onThanks().then((error) => {
@@ -214,16 +216,20 @@ export function GiftUnwrap({
                   </Text>
                 ) : (
                   <View style={styles.actions}>
-                    <ClayButton
-                      label={thanked === 'done' ? t('gift.unwrap.thanked') : t('gift.unwrap.thanks')}
-                      icon={thanked === 'done' ? 'check' : 'heart'}
-                      tone="primary"
-                      size="large"
-                      busy={thanked === 'busy'}
-                      disabled={thanked === 'done'}
-                      onPress={thank}
-                      style={styles.stretch}
-                    />
+                    {onThanks ? (
+                      <ClayButton
+                        label={thanked === 'done' ? t('gift.unwrap.thanked') : t('gift.unwrap.thanks')}
+                        icon={thanked === 'done' ? 'check' : 'heart'}
+                        tone="primary"
+                        size="large"
+                        busy={thanked === 'busy'}
+                        disabled={thanked === 'done'}
+                        onPress={thank}
+                        style={styles.stretch}
+                      />
+                    ) : (
+                      <ClayButton label={t('social.close')} tone="primary" size="large" onPress={onClose} style={styles.stretch} />
+                    )}
                     {equippable ? (
                       <ClayButton
                         label={wearShown ? t('gift.unwrap.wearing') : t('gift.unwrap.wear')}
@@ -260,15 +266,47 @@ export function GiftUnwrap({
                 {/* A refused thank-you (a chat mute, the automatic pause) says why here; the way to Account standing closes
                    this first. */}
                 <SendErrorNotice error={thanksError} onDismiss={() => setThanksError(null)} onNavigate={onClose} style={styles.notice} />
-                <Pressable onPress={onClose} accessibilityRole="button" style={({ pressed }) => [styles.close, pressed && heldDim]}>
-                  <Text style={[styles.closeText, { color: colors.textSecondary }]}>{t('social.close')}</Text>
-                </Pressable>
+                {onThanks ? (
+                  <Pressable onPress={onClose} accessibilityRole="button" style={({ pressed }) => [styles.close, pressed && heldDim]}>
+                    <Text style={[styles.closeText, { color: colors.textSecondary }]}>{t('social.close')}</Text>
+                  </Pressable>
+                ) : null}
               </Animated.View>
             </View>
           </View>
         </DarkScheme>
       </ReachReset>
     </Modal>
+  );
+}
+
+/**
+ * A gift given onto your own post, opened from its notice: it is opened on the server first, for the card to show, then
+ * its moment plays over the post with Close alone. Nothing shows if it cannot be opened (not yours, or gone).
+ */
+export function PostGiftOpen({ giftId, onDone }: { giftId: string; onDone: () => void }): React.JSX.Element | null {
+  const { client } = useAuth();
+  const [card, setCard] = useState<GiftCard | null>(null);
+  const done = useRef(onDone);
+  done.current = onDone;
+  useEffect(() => {
+    let alive = true;
+    void openGift(client, giftId).then((res) => {
+      if (!alive) return;
+      if (res.ok) setCard(res.data.card);
+      else done.current();
+    });
+    return () => {
+      alive = false;
+    };
+  }, [client, giftId]);
+  if (!card) return null;
+  return (
+    <GiftUnwrap
+      target={{ giftId, card, fromName: giftSenderName(card.from) ?? '' }}
+      onClose={() => done.current()}
+      onOpened={() => undefined}
+    />
   );
 }
 

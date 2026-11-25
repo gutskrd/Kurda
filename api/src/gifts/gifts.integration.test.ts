@@ -1303,6 +1303,12 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       expect(note.rows[0]!.data).toMatchObject({ postId, sku: sticker.sku, fromUserId: friend.id });
       const { lo, hi } = canonicalPair(friend.id, author.id);
       expect((await pool.query(`SELECT 1 FROM dm_messages WHERE user_lo = $1 AND user_hi = $2`, [lo, hi])).rowCount).toBe(0);
+      // the notice names the author's own gift, which opens on the post as any gift does
+      const giftId = note.rows[0]!.data.giftId as string;
+      expect(pushedTo(author.id, 'post_gift')[0]).toMatchObject({ giftId });
+      const opened = await call('POST', `/gifts/${giftId}/open`, author);
+      expect(opened.statusCode, opened.body).toBe(200);
+      expect(opened.json().card).toMatchObject({ sku: sticker.sku, name: 'Gul', myOpened: true, from: { userId: friend.id } });
     });
 
     it('takes one from anyone when both are known adults, and from nobody else not yet a day a friend', async () => {

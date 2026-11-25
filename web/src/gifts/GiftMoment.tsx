@@ -1,7 +1,8 @@
 /**
  * The moment a gift is opened (shared gift-moment.ts): the screen dims, the gift springs in large in the middle on a
  * round glow of its own colour, a ring of light rays turns slowly behind it and light sparkles drift, under "Gift from
- * Rojda", with its Kurmancî name and meaning below and Say thanks, Send one back (a known adult's only) and Close. Its
+ * Rojda", with its Kurmancî name and meaning below and Say thanks, Send one back (a known adult's only) and Close (a
+ * gift on a post, with no chat to thank in, has Close alone). Its
  * tier sets how strong the light is, and a grand gift keeps its night sky. While the server opens it the wrapped box
  * waits in the same light, for the tier's unwrap time; a tap or Skip goes straight to the gift. The rays turn by a CSS
  * transform, so nothing is drawn again frame by frame; under Reduce Motion the light is there and nothing moves.
@@ -18,6 +19,7 @@ import {
   GIFT_SENT_MS,
   giftGlow,
   giftMeaning,
+  giftSenderName,
   giftRaysPath,
   giftSeed,
   giftSparkles,
@@ -25,6 +27,7 @@ import {
   type GiftMomentLook,
   type GiftTier,
 } from '@kurda/shared';
+import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { wrapTab } from '../components/Sheet';
 import { CheckIcon } from '../components/icons';
@@ -35,7 +38,9 @@ import { prefersReducedMotion } from '../lib/motion';
 import { useOptimisticSend } from '../lib/optimistic';
 import { SendError } from '../reports/SendError';
 import { CelebrationArt } from '../ranks/Celebration';
+import { giftsWereOpened } from '../shop/useUnseenGifts';
 import { GiftBox, GiftItemArt, NightSky, useSvgId } from './GiftArt';
+import { unwrapMs } from './motion';
 
 /** What a thread lets a gift do: open it, say thanks in the chat, or wear it. */
 export interface GiftActions {
@@ -137,7 +142,8 @@ export function GiftMoment({
   /** who sent it as the server names them to this reader; empty when it may not */
   from: string;
   revealed: boolean;
-  actions: GiftActions;
+  /** what the gift's chat lets it do; absent for a gift on a post */
+  actions?: GiftActions;
   onSkip: () => void;
   onClose: () => void;
 }): React.JSX.Element {
@@ -185,6 +191,7 @@ export function GiftMoment({
 
   /** Worn or thanked at once; a refusal takes it back and says why under the buttons. */
   async function run(kind: 'wear' | 'thank'): Promise<void> {
+    if (!actions) return;
     const shown = kind === 'wear' ? setWorn : setThanked;
     setFailed(null);
     shown(true);
@@ -233,7 +240,7 @@ export function GiftMoment({
               {t('gift.revealed', { item: card.name, name: from || t('gift.someone') })}
             </p>
             <div className="gift-moment-actions">
-              {thanked ? (
+              {!actions ? null : thanked ? (
                 <span className="gift-done" role="status">
                   <CheckIcon size={15} /> {t('gift.thanked')}
                 </span>
@@ -242,7 +249,7 @@ export function GiftMoment({
                   {t('gift.sayThanks')}
                 </Button>
               )}
-              {card.equippable &&
+              {actions && card.equippable &&
                 (worn ? (
                   <span className="gift-done" role="status">
                     <CheckIcon size={15} /> {t('gift.wearing')}
@@ -252,7 +259,7 @@ export function GiftMoment({
                     {t('gift.wear')}
                   </Button>
                 ))}
-              {actions.sendBack && card.from && (
+              {actions?.sendBack && card.from && (
                 <Button
                   variant="secondary"
                   onClick={() => {
@@ -263,7 +270,7 @@ export function GiftMoment({
                   {t('gift.sendBack')}
                 </Button>
               )}
-              <Button variant="ghost" onClick={onClose}>
+              <Button variant={actions ? 'ghost' : 'primary'} size={actions ? 'md' : 'lg'} onClick={onClose}>
                 {t('gift.close')}
               </Button>
             </div>
@@ -343,4 +350,41 @@ export function GiftSentMoment({
     </div>,
     document.body,
   );
+}
+
+/**
+ * A gift given onto your own post, opened from its notice: it is opened on the server (`POST /gifts/:id/open`), then
+ * its moment plays over the post as in a chat, with Close alone, since a post has no chat to thank in. Nothing shows
+ * if it cannot be opened (not yours, or gone).
+ */
+export function PostGiftOpen({ giftId, onDone }: { giftId: string; onDone: () => void }): React.JSX.Element | null {
+  const { client } = useAuth();
+  const [card, setCard] = useState<GiftCard | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const done = useRef(onDone);
+  done.current = onDone;
+
+  useEffect(() => {
+    let live = true;
+    void client.post<{ card: GiftCard }>(`/gifts/${encodeURIComponent(giftId)}/open`).then((res) => {
+      if (!live) return;
+      if (res.ok) {
+        giftsWereOpened();
+        setCard(res.data.card);
+      } else done.current();
+    });
+    return () => {
+      live = false;
+    };
+  }, [client, giftId]);
+
+  // the box waits its tier's time, as in a chat; a tap goes on at once
+  useEffect(() => {
+    if (!card) return;
+    const wait = window.setTimeout(() => setRevealed(true), unwrapMs(card.tier));
+    return () => window.clearTimeout(wait);
+  }, [card]);
+
+  if (!card) return null;
+  return <GiftMoment card={card} from={giftSenderName(card.from) ?? ''} revealed={revealed} onSkip={() => setRevealed(true)} onClose={() => done.current()} />;
 }

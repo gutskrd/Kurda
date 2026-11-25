@@ -670,16 +670,18 @@ export class GiftService {
 
   /**
    * After the commit, a gift onto a post: its author hears live (`post_gift`) and in the notification list, which the apps
-   * word from `data`. There is no chat message, so no card to unwrap; the post shows its gifts.
+   * word from `data`. There is no chat message; the notice names the author's own gift (`giftId`), so following it opens
+   * the gift in its light on the post (`POST /gifts/:id/open`), and the post shows its gifts.
    */
   private async deliverToPost(settled: Settled, post: PostRef, fromId: string, sender: Sender): Promise<void> {
     const warn = (what: string) => (err: unknown) => this.deps.log?.warn({ err, batchId: settled.batchId }, what);
     const authorId = settled.given[0]?.toId;
-    if (!authorId) return;
+    const giftId = settled.given[0]?.giftId;
+    if (!authorId || !giftId) return;
     // The author can see whoever could give onto their post (the post's own rule), so the sender is named.
     const from = { name: sender.name, avatarUrl: sender.avatarUrl };
     await this.deps.realtime
-      .notifyUser(authorId, { type: 'post_gift', postType: post.type, postId: post.id, batchId: settled.batchId, sku: settled.item.sku, from })
+      .notifyUser(authorId, { type: 'post_gift', postType: post.type, postId: post.id, batchId: settled.batchId, giftId, sku: settled.item.sku, from })
       .catch(warn('post_gift not pushed'));
     await this.deps.inbox
       ?.recordAll([
@@ -694,6 +696,7 @@ export class GiftService {
               postType: post.type,
               postId: post.id,
               batchId: settled.batchId,
+              giftId,
               sku: settled.item.sku,
               fromUserId: fromId,
               fromName: sender.name,

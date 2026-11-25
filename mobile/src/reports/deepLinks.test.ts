@@ -17,6 +17,12 @@ describe('socialDeepLink', () => {
     }
   });
 
+  it('opens the post a gift was given onto, opening the author’s own gift there when the notice names it', () => {
+    expect(resolveDeepLink({ kind: 'post_gift', postType: 'library', postId: U, giftId: G })).toEqual({ screen: 'LibraryPost', params: { postId: U, openGift: G } });
+    expect(resolveDeepLink({ kind: 'post_gift', postType: 'library', postId: U })).toEqual({ screen: 'LibraryPost', params: { postId: U } });
+    expect(resolveDeepLink({ kind: 'post_gift', postType: 'library', postId: U, giftId: 'not-an-id' })).toEqual({ screen: 'LibraryPost', params: { postId: U } });
+  });
+
   it('opens the chat a gift is in, to unwrap it there', () => {
     expect(resolveDeepLink({ kind: 'gift', giftId: 'g1', chat: `dm:${U}` })).toEqual({
       screen: 'Chat',

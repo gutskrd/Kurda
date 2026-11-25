@@ -15,7 +15,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { GiftBubble } from './GiftBubble';
-import { GiftUnwrap } from './GiftUnwrap';
+import { GiftUnwrap, PostGiftOpen } from './GiftUnwrap';
 import { GiftSendAnimation } from './GiftSendAnimation';
 import { BagNews } from './BagNews';
 import { GiftLimitPage } from './GiftLimitPage';
@@ -210,5 +210,26 @@ describe('the sender’s moment on the phone', () => {
     expect(screen.getByText('Gift sent to Rojda')).toBeTruthy();
     expect(screen.getByTestId('gift-rays')).toBeTruthy();
     expect(screen.queryAllByTestId('gift-sparkle')).toHaveLength(0);
+  });
+});
+
+describe('a gift given onto your post, from its notice', () => {
+  beforeEach(() => {
+    vi.spyOn(Animated, 'timing').mockImplementation(
+      () => ({ start: () => undefined, stop: () => undefined, reset: () => undefined }) as unknown as Animated.CompositeAnimation,
+    );
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it('opens on the server, then plays its moment with Close alone, since a post has no chat', async () => {
+    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: moon({ tier: 'common', myOpened: true }), equippable: null }) });
+    const onDone = vi.fn();
+    renderWithProviders(<PostGiftOpen giftId="g1" onDone={onDone} />);
+    expect(await screen.findByRole('heading', { name: 'Gift from Azad' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    expect(await screen.findByText(/The full moon/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Say thanks' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(onDone).toHaveBeenCalledTimes(1);
   });
 });

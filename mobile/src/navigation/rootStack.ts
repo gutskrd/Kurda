@@ -169,7 +169,8 @@ export type RootStackParamList = {
   WordSet: { set: string; script?: AlphabetScript };
   Saved: undefined;
   EditProfile: undefined;
-  LibraryPost: { postId: string };
+  /** `openGift`: the reader's own gift given onto it, opened as the post shows (from its notice). */
+  LibraryPost: { postId: string; openGift?: string };
   /**
    * The post composer: a new post, or `postId` to edit one of yours. `pickPictures` opens the photo library at once,
    * and `meme` makes the pictures a meme.
