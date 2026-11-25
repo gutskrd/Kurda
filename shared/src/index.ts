@@ -355,9 +355,13 @@ export {
   ALPHABET_CLIP_GROUPS,
   ALPHABET_CLIP_MAX_SECONDS,
   LETTER_CLIPS,
+  alphabetClipWord,
+  borrowedAlphabetTake,
   isAlphabetClipKey,
+  sameWordClips,
   type AlphabetClip,
   type AlphabetClipGroup,
+  type BorrowedTake,
 } from './alphabet-audio.js';
 /**
  * Words to know (colours, numbers, days and months), taught as the alphabet is: each word in both dialects with its

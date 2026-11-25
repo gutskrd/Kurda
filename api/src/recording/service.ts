@@ -222,9 +222,10 @@ export class RecordingPeopleService {
     return { lesson: new Map(lesson.rows.map((r) => [r.key, r.speaker])), alphabet: new Map(alphabet.rows.map((r) => [r.key, r.speaker])) };
   }
 
-  /** The takes of these lines, by line id, with who recorded each. */
+  /** The takes of these lines, by line id, with who recorded each: a line's own, else one filed under another of its keys. */
   async takes(lines: readonly ScriptLine[]): Promise<Map<string, Take>> {
-    const keys = (store: LineStore): string[] => [...new Set(lines.filter((l) => l.store === store).map((l) => l.key))];
+    const filed = lines.flatMap((l) => [{ store: l.store, key: l.key }, ...l.also]);
+    const keys = (store: LineStore): string[] => [...new Set(filed.filter((f) => f.store === store).map((f) => f.key))];
     type Row = { key: string; url: string; duration_ms: number | null; updated_at: Date; speaker: SpeakerId | null; username: string | null };
     const read = (sql: string, list: string[]) => (list.length === 0 ? Promise.resolve({ rows: [] as Row[] }) : this.pool.query<Row>(sql, [list]));
     const [lesson, alphabet] = await Promise.all([
@@ -239,10 +240,15 @@ export class RecordingPeopleService {
         keys('alphabet'),
       ),
     ]);
-    const out = new Map<string, Take>();
+    const found = new Map<string, Take>();
     const take = (r: Row): Take => ({ url: r.url, durationMs: r.duration_ms, updatedAt: r.updated_at.toISOString(), speaker: r.speaker, by: r.username });
-    for (const r of lesson.rows) out.set(`lesson|${r.key}`, take(r));
-    for (const r of alphabet.rows) out.set(`alphabet|${r.key}`, take(r));
+    for (const r of lesson.rows) found.set(`lesson|${r.key}`, take(r));
+    for (const r of alphabet.rows) found.set(`alphabet|${r.key}`, take(r));
+    const out = new Map<string, Take>();
+    for (const l of lines) {
+      const t = [{ store: l.store, key: l.key }, ...l.also].map((f) => found.get(`${f.store}|${f.key}`)).find((x) => x !== undefined);
+      if (t) out.set(l.id, t);
+    }
     return out;
   }
 

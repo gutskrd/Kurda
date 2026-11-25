@@ -97,9 +97,10 @@ function SecurityStatus(): React.JSX.Element | null {
 /** What still needs a recording, each line opening the studio on what is missing. */
 function Recordings(): React.JSX.Element {
   const lessons = useLoad(() => api<Listing>('/admin/lesson-audio'), []);
-  const letters = useLoad(() => api<{ recordings: Array<{ key: string }> }>('/admin/alphabet/audio'), []);
+  const letters = useLoad(() => api<{ recordings: Array<{ key: string }>; borrowed?: Array<{ key: string }> }>('/admin/alphabet/audio'), []);
 
-  const lettersDone = letters.data ? new Set(letters.data.recordings.map((r) => r.key)) : null;
+  // a word playing another take of the same word is as good as recorded (alphabet/routes.ts on the API)
+  const lettersDone = letters.data ? new Set([...letters.data.recordings, ...(letters.data.borrowed ?? [])].map((r) => r.key)) : null;
   const missingOf = (clips: readonly AlphabetClip[]) => (lettersDone ? clips.filter((c) => !lettersDone.has(c.key)).length : null);
   const items = lessons.data?.items ?? null;
   const storyMissing = items ? items.filter((i) => !i.recorded && i.usedIn.some(isStoryUsage)).length : null;

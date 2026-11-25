@@ -3,12 +3,15 @@
  * ALPHABET_CLIPS. `GET /alphabet/audio` is public; the admin PUT stores a short mono WAV for one sound, optionally
  * with its speaker and lip-sync timeline, and DELETE brings back the synthesised clip. The key travels in the query
  * string because it holds characters (ç, ḧ, colons) that are awkward in a path. Editing is for the content roles;
- * the PUT is also open to voice actors recording their linked lines.
+ * the PUT is also open to voice actors recording their linked lines. A word with no take of its own plays the same
+ * word's take from elsewhere (`borrowedAlphabetTake`), so nobody records it twice.
  */
 import type { FastifyInstance } from 'fastify';
 import {
   ALPHABET_CLIPS,
   ALPHABET_CLIP_MAX_SECONDS,
+  alphabetClipWord,
+  borrowedAlphabetTake,
   isAlphabetClipKey,
   type AlphabetAudioResponse,
   type LipsyncData,
@@ -50,10 +53,32 @@ interface Row {
 const CLIPS = new Map(ALPHABET_CLIPS.map((clip) => [clip.key, clip]));
 
 /** What a sound's recording says, in its script, for a timeline made from its words. */
-function wordsOf(row: Pick<Row, 'key' | 'duration_ms'>): SpokenWords | undefined {
-  const clip = CLIPS.get(row.key);
+function wordsOf(key: string, durationMs: number | null): SpokenWords | undefined {
+  const clip = CLIPS.get(key);
   if (!clip) return undefined;
-  return { text: clip.say, durationMs: row.duration_ms, script: clip.script === 'ckb' ? 'arabic' : 'latin' };
+  return { text: clip.say, durationMs, script: clip.script === 'ckb' ? 'arabic' : 'latin' };
+}
+
+/** The lesson recordings a word on these pages may borrow, by the word as a lesson recording is keyed. */
+const LESSON_WORDS = [...new Set(ALPHABET_CLIPS.flatMap((clip) => alphabetClipWord(clip) ?? []))];
+
+/**
+ * Every take the pages play, by clip key: each clip's own, else the one it borrows (`from` says where), read with the
+ * columns `columns` names from both tables.
+ */
+export async function takesWithBorrowed(db: FastifyInstance['db'], columns: string): Promise<Array<{ key: string; row: Row; from: { store: 'alphabet' | 'lesson'; key: string } | null }>> {
+  const [own, lessons] = await Promise.all([
+    db.query<Row>(`SELECT key, ${columns} FROM alphabet_audio ORDER BY key`),
+    db.query<Row>(`SELECT key, ${columns} FROM lesson_audio WHERE key = ANY($1::text[])`, [LESSON_WORDS]),
+  ]);
+  const ownByKey = new Map(own.rows.map((r) => [r.key, r]));
+  const lessonByKey = new Map(lessons.rows.map((r) => [r.key, r]));
+  const out: Array<{ key: string; row: Row; from: { store: 'alphabet' | 'lesson'; key: string } | null }> = own.rows.map((row) => ({ key: row.key, row, from: null }));
+  for (const clip of ALPHABET_CLIPS) {
+    const borrowed = borrowedAlphabetTake(clip, ownByKey, lessonByKey);
+    if (borrowed) out.push({ key: clip.key, row: borrowed.take, from: { store: borrowed.store, key: borrowed.key } });
+  }
+  return out;
 }
 
 function keyFrom(query: unknown): string {
@@ -76,37 +101,38 @@ export function registerAlphabetAudioRoutes(app: FastifyInstance, config: AppCon
 
   /** Public: the page asks once, and plays a recording wherever there is one. */
   app.get('/alphabet/audio', async (req, reply): Promise<AlphabetAudioResponse> => {
-    const { rows } = await app.db.query<Row>(
-      `SELECT key, url, duration_ms, ${voiceColumns()} FROM alphabet_audio ORDER BY key`,
-    );
+    const takes = await takesWithBorrowed(app.db, `url, duration_ms, ${voiceColumns()}`);
     if (!req.user) reply.header('cache-control', 'public, max-age=60');
     const voices: Record<string, RecordingVoice> = {};
-    for (const r of rows) {
-      const voice = voiceOf(r, wordsOf(r));
-      if (voice) voices[r.key] = voice;
+    for (const t of takes) {
+      const voice = voiceOf(t.row, wordsOf(t.key, t.row.duration_ms));
+      if (voice) voices[t.key] = voice;
     }
     return {
-      clips: Object.fromEntries(rows.map((r) => [r.key, r.url])),
+      clips: Object.fromEntries(takes.map((t) => [t.key, t.row.url])),
       // Sent only once a sound has a speaker, so the payload is unchanged until then.
       ...(Object.keys(voices).length > 0 ? { voices } : {}),
     };
   });
 
-  /** The admin list: the public one plus when each was recorded and its stored timeline, for previewing the mouth. */
+  /**
+   * The admin list: the public one plus when each was recorded and its stored timeline, for previewing the mouth. A
+   * word that plays another key's take is listed under `borrowed` with where it comes from, so nobody records it again.
+   */
   app.get('/admin/alphabet/audio', { preHandler: canRecord }, async () => {
-    const { rows } = await app.db.query<Row>(
-      `SELECT key, url, duration_ms, updated_at, speaker, lipsync FROM alphabet_audio ORDER BY key`,
-    );
+    const takes = await takesWithBorrowed(app.db, 'url, duration_ms, updated_at, speaker, lipsync');
+    const shown = (t: (typeof takes)[number]) => ({
+      key: t.key,
+      url: t.row.url,
+      durationMs: t.row.duration_ms,
+      updatedAt: t.row.updated_at,
+      speaker: t.row.speaker,
+      hasLipsync: t.row.lipsync !== null,
+      lipsync: t.row.lipsync,
+    });
     return {
-      recordings: rows.map((r) => ({
-        key: r.key,
-        url: r.url,
-        durationMs: r.duration_ms,
-        updatedAt: r.updated_at,
-        speaker: r.speaker,
-        hasLipsync: r.lipsync !== null,
-        lipsync: r.lipsync,
-      })),
+      recordings: takes.filter((t) => t.from === null).map(shown),
+      borrowed: takes.flatMap((t) => (t.from ? [{ ...shown(t), from: t.from }] : [])),
     };
   });
 

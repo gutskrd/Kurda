@@ -4,6 +4,7 @@ import {
   LETTER_CLIPS,
   REACTION_LINES,
   WORD_SET_CLIPS,
+  alphabetClipWord,
   conversationClips,
   conversationLineKey,
   lessonAudioKey,
@@ -124,9 +125,13 @@ describe('the recording script', () => {
     // a road conversation's line under its words, so a line its lesson taught is one recording
     for (const c of conversationClips(conversation)) expect(keys).toContain(lessonAudioKey(c.text));
     for (const p of storyParagraphs(story.body)) for (const s of storyAudioSentences(p)) expect(keys).toContain(lessonAudioKey(s));
-    // the letters and the word sets in the alphabet's store, under their clip keys
-    const clips = new Set(lines.filter((l) => l.store === 'alphabet').map((l) => l.key));
-    expect(clips).toEqual(new Set([...WORD_SET_CLIPS, ...LETTER_CLIPS].map((c) => c.key)));
+    // every letter and word-set clip is said somewhere: under its own key, under another clip saying the same word, or by
+    // the lesson line that says it
+    const filed = new Set(lines.flatMap((l) => [`${l.store}|${l.key}`, ...l.also.map((a) => `${a.store}|${a.key}`)]));
+    for (const c of [...WORD_SET_CLIPS, ...LETTER_CLIPS]) {
+      const word = alphabetClipWord(c);
+      expect(filed.has(`alphabet|${c.key}`) || (word !== null && filed.has(`lesson|${word}`))).toBe(true);
+    }
     const line = lines.find((l) => l.text === 'Silav! Bi xêr hatî!')!;
     expect(line).toMatchObject({ id: `lesson|${lessonAudioKey('Silav! Bi xêr hatî!')}`, conversation: null, voice: 'hamo', cue: 'In the conversation ‘Bi xêr hatî!’.' });
     // a line said in a card and in a conversation is one recording, the part's character's
@@ -362,6 +367,29 @@ describe('the recording script', () => {
     expect(people[0]!.about).toBe('The warm uncle.');
   });
 
+  it('asks for a word once: the lesson line that says it, or one line for every clip that says it', () => {
+    const pairs = { pairs: [{ left: 'sêv', right: 'apple' }, { left: 'ba', right: 'wind' }, { left: 'ker', right: 'donkey' }] };
+    const lines = buildScript({ exercises: [exercise({ type: 'match_pairs', payload: { ...pairs, voice: 'hevalo' } })], stories: [], games: [], plan: PLAN });
+    // the alphabet's example word joins Hevalo's line, and its page plays that take
+    const apple = lines.find((l) => l.key === 'sêv')!;
+    expect(apple.voice).toBe('hevalo');
+    expect(apple.places.map((p) => p.kind)).toEqual(['lesson', 'alphabet']);
+    expect(lines.some((l) => l.store === 'alphabet' && l.text === 'sêv')).toBe(false);
+    // a word on the word sets and the alphabet page alike is one narrator line, filed under the first
+    const one = lines.filter((l) => l.store === 'alphabet' && lessonAudioKey(l.text) === 'yek');
+    expect(one).toHaveLength(1);
+    expect(one[0]!.places.length).toBe(2);
+    expect(one[0]!.also.length).toBeGreaterThan(0);
+    // a letter's sound and a minimal pair's word keep lines of their own
+    expect(lines.find((l) => l.key === 'kmr:sound:b')).toMatchObject({ voice: NARRATOR.kmr });
+    expect(lines.find((l) => l.key === 'pair:ker')).toMatchObject({ voice: NARRATOR.kmr });
+    // within each voice no words are asked for twice
+    for (const voice of new Set(lines.map((l) => l.voice))) {
+      const said = lines.filter((l) => l.voice === voice).map((l) => `${l.dialect}|${lessonAudioKey(l.text)}`);
+      expect(new Set(said).size).toBe(said.length);
+    }
+  });
+
   it('counts a line as recorded only by a take of its own character, or of none', () => {
     const recorded: RecordedKeys = { lesson: new Map([['sêv', 'hamo'], ['nan', 'hamo'], ['av', null]]), alphabet: new Map() };
     const line = (key: string, speaker: ScriptLine['speaker']) => ({ store: 'lesson' as const, key, speaker });
@@ -372,6 +400,11 @@ describe('the recording script', () => {
     expect(isRecorded(line('av', 'xezo'), recorded)).toBe(true);
     expect(isRecorded(line('nan', null), recorded)).toBe(true);
     expect(isRecorded(line('çay', 'hamo'), recorded)).toBe(false);
+    // a take filed under another key the same words are filed under counts
+    const alphabet: RecordedKeys = { lesson: new Map(), alphabet: new Map([['kmr:word:y', null]]) };
+    const yek = { store: 'alphabet' as const, key: 'words:numbers:kmr:1', speaker: null, also: [{ store: 'alphabet' as const, key: 'kmr:word:y' }] };
+    expect(isRecorded(yek, alphabet)).toBe(true);
+    expect(isRecorded({ ...yek, also: [] }, alphabet)).toBe(false);
   });
 
   it('counts, narrows and pages one voice’s lines in script order', () => {

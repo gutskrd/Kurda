@@ -332,6 +332,38 @@ describe('who says each recording', () => {
     expect(within(studio).queryByText(/timed from the words/)).toBeNull();
   });
 
+  it('counts a word that plays the lessons’ take of it as recorded, and says whose take it is', async () => {
+    const user = userEvent.setup();
+    fakeApi(
+      on(
+        'GET',
+        '/admin/alphabet/audio',
+        json({
+          recordings: [],
+          borrowed: [
+            {
+              key: 'kmr:word:s',
+              url: 'https://cdn.test/sev.wav',
+              durationMs: 700,
+              updatedAt: '2026-10-01T10:00:00.000Z',
+              speaker: 'hevalo',
+              hasLipsync: false,
+              lipsync: null,
+              from: { store: 'lesson', key: 'sêv' },
+            },
+          ],
+        }),
+      ),
+    );
+    location.hash = '#/audio/letters?show=recorded';
+    renderUi(<AudioStudio />);
+    await user.click(await screen.findByRole('button', { name: /^sêv/ }));
+    const studio = screen.getByRole('complementary', { name: 'Record this sound' });
+    expect(within(studio).getByText('Already recorded')).toBeInTheDocument();
+    expect(within(studio).getByText(/plays Hevalo’s recording in the lessons, so nobody has to say it again/)).toBeInTheDocument();
+    expect(within(studio).getByRole('button', { name: 'Play with Hevalo' })).toBeInTheDocument();
+  });
+
   it('sends an alphabet sound up with its character and a timeline read in its own script', async () => {
     const user = userEvent.setup();
     take.wav = encodeWav(speechPcm(0.9));

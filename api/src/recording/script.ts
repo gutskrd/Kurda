@@ -5,7 +5,9 @@
  * everywhere the text is said and earlier studio takes show as done. Hevalo's and Xezo's reaction lines come last, each
  * filed by `reactionKey`.
  *
- * A text said in several places is one line, filed where the course first says it, listing every place. It belongs
+ * A text said in several places is one line, filed where the course first says it, listing every place. A word on the
+ * alphabet or word-set pages is the lesson line that already says it, or one line for every clip saying it, since those
+ * pages play that take (alphabet/routes.ts); only a letter's sound and a minimal pair's word keep lines of their own. It belongs
  * to the voice of the first place in course order that plans a character for it (a conversation part, an exercise's
  * `voice`, a game line's speaker), as `plannedSpeaker` decides, else to its variety's narrator. A match-pairs card
  * replays a word met elsewhere, so its item's `voice` counts only for a line no other place plans. Pure: the service
@@ -22,6 +24,7 @@ import {
   REACTION_TONE,
   SPEAKERS,
   WORD_SET_CLIPS,
+  alphabetClipWord,
   conversationClips,
   conversationLineKey,
   isConversationLineKey,
@@ -31,6 +34,7 @@ import {
   normalizeKurdish,
   reactionKey,
   roadStoryChapter,
+  sameWordClips,
   storyAudioSentences,
   storyParagraphs,
   toDialect,
@@ -173,6 +177,8 @@ export interface ScriptLine {
   store: LineStore;
   /** what the take is filed under, exactly as the studio files it */
   key: string;
+  /** Other keys the same words are filed under, which play this take: a take under any of them is this line's. */
+  also: Array<{ store: LineStore; key: string }>;
   /** what to say, as the first place writes it */
   text: string;
   dialect: ScriptDialect;
@@ -381,11 +387,17 @@ interface Entry {
   reaction?: ScriptLine['reaction'];
   before?: ScriptLine['before'];
   partSpeaker?: SpeakerId | null;
+  /** other keys the same words are filed under (`ScriptLine.also`) */
+  also?: ScriptLine['also'];
 }
 
 class Builder {
   private readonly drafts = new Map<string, Draft>();
   private readonly order: Draft[] = [];
+
+  has(id: string): boolean {
+    return this.drafts.has(id);
+  }
 
   add(e: Entry): void {
     if (e.key === '') return;
@@ -405,12 +417,14 @@ class Builder {
       if (e.guess) found.guesses.push(e.guess);
       found.conversation ??= e.conversation ?? null;
       if (found.partSpeaker === undefined && e.partSpeaker !== undefined) found.partSpeaker = e.partSpeaker;
+      for (const a of e.also ?? []) if (!found.also.some((x) => x.store === a.store && x.key === a.key)) found.also.push(a);
       return;
     }
     const draft: Draft = {
       id,
       store: e.store,
       key: e.key,
+      also: [...(e.also ?? [])],
       text: e.text,
       dialect: e.dialect,
       hint: e.hint ?? null,
@@ -449,6 +463,7 @@ class Builder {
         seq,
         store: d.store,
         key: d.key,
+        also: d.also,
         text: d.text,
         dialect: d.dialect,
         voice,
@@ -624,23 +639,43 @@ function groupTitle(group: AlphabetClipGroup): string {
   return ALPHABET_CLIP_GROUPS.find((g) => g.group === group)?.title ?? group;
 }
 
-function addClips(builder: Builder, clips: readonly AlphabetClip[], kind: 'words' | 'alphabet'): void {
+/**
+ * The alphabet's and the word sets' clips. A letter's sound is a line of its own. A word the lessons already ask a
+ * character for joins that line, and the pages play its take; any other word is one line for every clip that says it,
+ * filed under the first. A minimal pair's word never joins a character's line, so both halves keep one voice.
+ */
+function addClips(builder: Builder, clips: readonly AlphabetClip[], kind: 'words' | 'alphabet', filed: Map<string, string>): void {
   const area = kind === 'words' ? 'Word sets' : 'Alphabet';
   for (const c of clips) {
     const dialect: ScriptDialect = c.script === 'ckb' ? 'ckb' : 'kmr';
     const title = groupTitle(c.group);
     // a word set's word is shown as what it means (a colour, a number, a day); a letter as itself
     const shown = kind === 'words' && lessonAudioKey(c.letter) !== lessonAudioKey(c.say) ? c.letter : null;
+    const place: LinePlace = { kind, label: `${area} · ${title} · ${c.letter}`, status: 'published', voice: NARRATOR[dialect], ref: null };
+    const section = { id: `${kind}:${c.group}`, label: `${area} · ${title}` };
+    const word = alphabetClipWord(c);
+    if (word !== null && c.group !== 'pair' && builder.has(`lesson|${word}`)) {
+      builder.add({ store: 'lesson', key: word, text: c.say, dialect, planned: null, place, section, sure: shown });
+      continue;
+    }
+    const first = word === null ? undefined : filed.get(`${c.script}|${word}`);
+    if (first !== undefined) {
+      builder.add({ store: 'alphabet', key: first, text: c.say, dialect, planned: null, place, section, sure: shown, also: [{ store: 'alphabet', key: c.key }] });
+      continue;
+    }
+    if (word !== null) filed.set(`${c.script}|${word}`, c.key);
     builder.add({
       store: 'alphabet',
       key: c.key,
       text: c.say,
       dialect,
       planned: null,
-      place: { kind, label: `${area} · ${title} · ${c.letter}`, status: 'published', voice: NARRATOR[dialect], ref: null },
-      section: { id: `${kind}:${c.group}`, label: `${area} · ${title}` },
+      place,
+      section,
       sure: shown,
       hint: c.hint ?? (c.group.endsWith('-word') ? `the example word for ${c.letter}` : null),
+      // a take already made under another clip saying this word plays here too
+      also: sameWordClips(c).map((other) => ({ store: 'alphabet' as const, key: other.key })),
     });
   }
 }
@@ -739,8 +774,9 @@ export function buildScript(input: ScriptInput): ScriptLine[] {
     builder,
     input.stories.filter((s) => !told.has(s.id)),
   );
-  addClips(builder, input.words ?? WORD_SET_CLIPS, 'words');
-  addClips(builder, input.letters ?? LETTER_CLIPS, 'alphabet');
+  const filed = new Map<string, string>();
+  addClips(builder, input.words ?? WORD_SET_CLIPS, 'words', filed);
+  addClips(builder, input.letters ?? LETTER_CLIPS, 'alphabet', filed);
   addGames(builder, input.games);
   addReactions(builder, input.reactions ?? []);
   const glossary = new Map<string, string>();
@@ -805,13 +841,15 @@ export function tally(lines: readonly ScriptLine[], done: (line: ScriptLine) => 
 export type RecordedKeys = Record<LineStore, ReadonlyMap<string, SpeakerId | null>>;
 
 /**
- * Whether a line is recorded: it has a take, and the take is not another character's. A line given to another
- * character after it was recorded (a word that is now Hevalo's, recorded by Hamo) is the new voice's to record.
+ * Whether a line is recorded: it has a take under its key or any other key its words are filed under, and the take is
+ * not another character's. A line given to another character after it was recorded (a word that is now Hevalo's,
+ * recorded by Hamo) is the new voice's to record.
  */
-export function isRecorded(line: Pick<ScriptLine, 'store' | 'key' | 'speaker'>, recorded: RecordedKeys): boolean {
-  const said = recorded[line.store].get(line.key);
-  if (said === undefined) return false;
-  return said === null || line.speaker === null || said === line.speaker;
+export function isRecorded(line: Pick<ScriptLine, 'store' | 'key' | 'speaker'> & { also?: ScriptLine['also'] }, recorded: RecordedKeys): boolean {
+  return [{ store: line.store, key: line.key }, ...(line.also ?? [])].some(({ store, key }) => {
+    const said = recorded[store].get(key);
+    return said !== undefined && (said === null || line.speaker === null || said === line.speaker);
+  });
 }
 
 export interface LineFilter {

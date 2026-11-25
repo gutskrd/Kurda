@@ -3,6 +3,7 @@ import {
   ALPHABET_CLIPS,
   ALPHABET_CLIP_GROUPS,
   ALPHABET_CLIP_MAX_SECONDS,
+  CHARACTER_NAMES,
   SYNTHESISED_ALPHABET_CLIPS,
   SYNTHESISED_WORD_CLIPS,
   isWordSetClipKey,
@@ -29,6 +30,11 @@ interface Recording {
   lipsync?: LipsyncData | null;
 }
 
+/** A word with no take of its own that plays the same word's take from elsewhere, so nobody records it twice. */
+interface Borrowed extends Recording {
+  from: { store: 'alphabet' | 'lesson'; key: string };
+}
+
 export type Filter = 'missing' | 'recorded' | 'all';
 
 /**
@@ -39,6 +45,7 @@ export type Filter = 'missing' | 'recorded' | 'all';
  */
 export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}): React.JSX.Element {
   const [recordings, setRecordings] = useState<Record<string, Recording>>({});
+  const [borrowed, setBorrowed] = useState<Record<string, Borrowed>>({});
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [filter, setFilter] = useState<Filter>(initialFilter ?? 'missing');
@@ -59,8 +66,9 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
 
   const load = useCallback(async () => {
     try {
-      const res = await api<{ recordings: Recording[] }>('/admin/alphabet/audio');
+      const res = await api<{ recordings: Recording[]; borrowed?: Borrowed[] }>('/admin/alphabet/audio');
       setRecordings(Object.fromEntries(res.recordings.map((r) => [r.key, r])));
+      setBorrowed(Object.fromEntries((res.borrowed ?? []).map((r) => [r.key, r])));
       setError(null);
     } catch (err) {
       setError(err);
@@ -78,16 +86,17 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
   useEffect(() => {
     if (!loaded || started.current) return;
     started.current = true;
-    const first = ALPHABET_CLIPS.find((c) => !recordings[c.key]);
+    const first = ALPHABET_CLIPS.find((c) => !recordings[c.key] && !borrowed[c.key]);
     if (first) setSelectedKey(first.key);
     else if (!initialFilter) setFilter('all');
-  }, [loaded, recordings]);
+  }, [loaded, recordings, borrowed]);
 
-  const done = ALPHABET_CLIPS.filter((c) => recordings[c.key]).length;
+  // A word that plays another take of the same word needs no recording of its own.
+  const covered = (key: string, have: Record<string, Recording> = recordings): boolean => Boolean(have[key] ?? borrowed[key]);
+  const done = ALPHABET_CLIPS.filter((c) => covered(c.key)).length;
   const shown = useMemo(
-    () =>
-      ALPHABET_CLIPS.filter((c) => (filter === 'all' ? true : filter === 'recorded' ? !!recordings[c.key] : !recordings[c.key] || c.key === selected)),
-    [filter, recordings, selected],
+    () => ALPHABET_CLIPS.filter((c) => (filter === 'all' ? true : filter === 'recorded' ? covered(c.key) : !covered(c.key) || c.key === selected)),
+    [filter, recordings, borrowed, selected],
   );
   const clip = ALPHABET_CLIPS.find((c) => c.key === selected)!;
 
@@ -96,7 +105,7 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
     const at = ALPHABET_CLIPS.findIndex((c) => c.key === after);
     for (let i = 1; i <= ALPHABET_CLIPS.length; i++) {
       const c = ALPHABET_CLIPS[(at + i) % ALPHABET_CLIPS.length]!;
-      if (!have[c.key]) return c.key;
+      if (!covered(c.key, have)) return c.key;
     }
     return null;
   };
@@ -165,7 +174,10 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
                       <span className="aa-item-say" dir={c.script === 'ckb' ? 'rtl' : 'ltr'} lang={c.script === 'ckb' ? 'ckb' : 'ku'}>
                         {c.say}
                       </span>
-                      <span className={`aa-dot${recordings[c.key] ? ' is-done' : ''}`} aria-label={recordings[c.key] ? 'recorded' : 'not recorded'} />
+                      <span
+                        className={`aa-dot${covered(c.key) ? ' is-done' : ''}`}
+                        aria-label={recordings[c.key] ? 'recorded' : borrowed[c.key] ? 'plays another take of this word' : 'not recorded'}
+                      />
                     </button>
                   ))}
                 </div>
@@ -179,6 +191,7 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
           ref={studio}
           clip={clip}
           recording={recordings[clip.key] ?? null}
+          borrowed={borrowed[clip.key] ?? null}
           nextSpeaker={nextSpeaker}
           onSpeaker={(speaker) => {
             const recording = recordings[clip.key];
@@ -208,10 +221,20 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
   );
 }
 
+/** Where a borrowed take comes from, in a sentence: “Hevalo’s recording in the lessons”, “the recording for Y y”. */
+function borrowedFrom(b: Borrowed): string {
+  const who = b.speaker ? `${CHARACTER_NAMES[b.speaker]}’s recording` : 'the recording';
+  if (b.from.store === 'lesson') return `${who} in the lessons`;
+  const other = ALPHABET_CLIPS.find((c) => c.key === b.from.key);
+  const group = other ? ALPHABET_CLIP_GROUPS.find((g) => g.group === other.group)?.title : null;
+  return other ? `${who} for ${other.letter}${group ? ` (${group.toLowerCase()})` : ''}` : who;
+}
+
 function Studio({
   ref,
   clip,
   recording,
+  borrowed,
   nextSpeaker,
   onSpeaker,
   onPrev,
@@ -222,6 +245,8 @@ function Studio({
   ref: React.Ref<HTMLElement>;
   clip: AlphabetClip;
   recording: Recording | null;
+  /** The same word's take from elsewhere that plays here while this one has none. */
+  borrowed: Borrowed | null;
   /** Who says it when it is recorded now, if it has no recording yet. */
   nextSpeaker: Speaker;
   onSpeaker: (speaker: Speaker) => void;
@@ -240,7 +265,9 @@ function Studio({
     <aside ref={ref} className="card aa-studio" aria-label="Record this sound">
       <div className="aa-studio-head">
         <span className="subtle">{group}</span>
-        <span className={`badge${recording ? ' ok' : ''}`}>{recording ? 'Recorded' : synthesised ? 'Synthesised voice' : 'No sound yet'}</span>
+        <span className={`badge${recording || borrowed ? ' ok' : ''}`}>
+          {recording ? 'Recorded' : borrowed ? 'Already recorded' : synthesised ? 'Synthesised voice' : 'No sound yet'}
+        </span>
       </div>
 
       <div className="aa-say-label">Say</div>
@@ -251,6 +278,25 @@ function Studio({
       {clip.group !== 'pair' && !word && clip.letter !== clip.say && (
         <div className="subtle aa-for">
           for the letter <strong dir="auto">{clip.letter}</strong>
+        </div>
+      )}
+      {!recording && borrowed && (
+        <div className="aa-borrowed">
+          <p>
+            This word plays {borrowedFrom(borrowed)}, so nobody has to say it again. Record here only if this page should have a take of its own.
+          </p>
+          {borrowed.speaker ? (
+            <SpeakingPreview
+              key={`${borrowed.url}|${borrowed.speaker}`}
+              speaker={borrowed.speaker}
+              url={borrowed.url}
+              text={clip.say}
+              lipsync={borrowed.lipsync ?? (borrowed.hasLipsync ? undefined : null)}
+              durationMs={borrowed.durationMs}
+            />
+          ) : (
+            <audio controls preload="none" src={borrowed.url} aria-label={`The take of ${clip.say} that plays here`} />
+          )}
         </div>
       )}
 
