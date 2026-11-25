@@ -516,7 +516,7 @@ describe('Shop: your bird and your tree', () => {
   });
   const TODAY = '2026-11-13';
   const growing = (over: Partial<TreeRecord> = {}) =>
-    treeView({ species: 'hinar', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 9, water: 2, harvests: 0, ...over }, TODAY);
+    treeView({ species: 'hinar', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 24, water: 2, harvests: 0, ...over }, TODAY);
   /** GET /me/tree: this tree (or none), every kind, these bought, this much Zêr. */
   const mine = (tree: ReturnType<typeof growing> | null, over: { owned?: string[]; zer?: number } = {}): MyTree => ({
     tree,

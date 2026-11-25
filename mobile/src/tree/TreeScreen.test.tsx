@@ -25,7 +25,7 @@ afterEach(cleanup);
 
 const TODAY = '2026-11-13';
 const view = (over: Partial<TreeRecord> = {}): TreeView =>
-  treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 5, water: 2, harvests: 0, ...over }, TODAY);
+  treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 10, water: 2, harvests: 0, ...over }, TODAY);
 
 /** GET /me/tree: this tree (or none), every kind, these bought, this much Zêr. */
 const mine = (tree: TreeView | null, over: { owned?: string[]; zer?: number } = {}): MyTree => ({
@@ -65,13 +65,13 @@ describe('the tree’s screen', () => {
   });
 
   it('shows the tree with how far it is to its next stage and the water held', async () => {
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 9, water: 3 }))) });
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 24, water: 3 }))) });
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByRole('heading', { name: 'Berû' })).toBeTruthy();
     expect(screen.getByText('Oak · Sapling · Day 13')).toBeTruthy();
     expect(screen.getByRole('img', { name: 'Berû, Sapling' })).toBeTruthy();
     const bar = screen.getByRole('progressbar', { name: 'Next: Young tree' });
-    expect(within(bar).getByText('2 / 7')).toBeTruthy();
+    expect(within(bar).getByText('6 / 22')).toBeTruthy();
     expect(screen.getByText('Water: 3')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Water the tree' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Pour all 3' })).toBeTruthy();
@@ -80,8 +80,8 @@ describe('the tree’s screen', () => {
   });
 
   it('pours one water, and celebrates when that grew the tree', async () => {
-    const watered: Watered = { tree: view({ waterings: 7, water: 1 }), poured: 1, grew: 3, harvests: 0, zer: 0, revived: false };
-    const client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 6, water: 2 }))), 'POST /me/tree/water': ok(watered) });
+    const watered: Watered = { tree: view({ waterings: 18, water: 1 }), poured: 1, grew: 3, harvests: 0, zer: 0, revived: false };
+    const client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 17, water: 2 }))), 'POST /me/tree/water': ok(watered) });
     testAuth.client = client;
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Water the tree' }));
@@ -95,8 +95,8 @@ describe('the tree’s screen', () => {
   });
 
   it('pours all that is held at once, and celebrates a harvest with what it paid', async () => {
-    const after = view({ waterings: 49, water: 0, harvests: 1 });
-    const client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 45, water: 4 }))), 'POST /me/tree/water': ok({ tree: after, poured: 4, grew: null, harvests: 1, zer: 25, revived: false } satisfies Watered) });
+    const after = view({ waterings: 148, water: 0, harvests: 1 });
+    const client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 144, water: 4 }))), 'POST /me/tree/water': ok({ tree: after, poured: 4, grew: null, harvests: 1, zer: 25, revived: false } satisfies Watered) });
     testAuth.client = client;
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByRole('progressbar', { name: 'Next harvest' })).toBeTruthy();
@@ -108,8 +108,8 @@ describe('the tree’s screen', () => {
   });
 
   it('says plainly how a tree left dry is faring, and that water brought it back', async () => {
-    const dry = treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: '2026-11-08', waterings: 15, water: 1, harvests: 0 }, TODAY);
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(dry)), 'POST /me/tree/water': ok({ tree: view({ waterings: 16, water: 0 }), poured: 1, grew: null, harvests: 0, zer: 0, revived: true } satisfies Watered) });
+    const dry = treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: '2026-11-08', waterings: 45, water: 1, harvests: 0 }, TODAY);
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(dry)), 'POST /me/tree/water': ok({ tree: view({ waterings: 46, water: 0 }), poured: 1, grew: null, harvests: 0, zer: 0, revived: true } satisfies Watered) });
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     const health = await screen.findByTestId('tree-health');
     expect(within(health).getByText('Wilting')).toBeTruthy();
@@ -137,7 +137,7 @@ describe('the tree’s screen', () => {
   });
 
   it('floats a thought of water by a tree that wants some, and not by one that is well', async () => {
-    const dry = treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: '2026-11-08', waterings: 15, water: 1, harvests: 0 }, TODAY);
+    const dry = treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: '2026-11-08', waterings: 45, water: 1, harvests: 0 }, TODAY);
     testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(dry)) });
     const { unmount } = renderWithProviders(<TreeScreen onExit={() => undefined} />);
     await screen.findByTestId('tree-health');
@@ -150,12 +150,12 @@ describe('the tree’s screen', () => {
   });
 
   it('shows what is being grown toward: the next stage in a ring closed by how far it has come', async () => {
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 9, water: 3 }))) });
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 24, water: 3 }))) });
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     await screen.findByRole('progressbar', { name: 'Next: Young tree' });
-    // Two of the seven waterings to the next stage.
+    // Six of the twenty-two drops to the next stage.
     const fill = screen.getByTestId('tree-goal-fill');
-    expect(Number(fill.getAttribute('stroke-dashoffset')) / Number(fill.getAttribute('stroke-dasharray'))).toBeCloseTo(1 - 2 / 7, 4);
+    expect(Number(fill.getAttribute('stroke-dashoffset')) / Number(fill.getAttribute('stroke-dasharray'))).toBeCloseTo(1 - 6 / 22, 4);
     // The tree itself, and the stage after it in the ring.
     expect(screen.getAllByTestId('tree-art')).toHaveLength(2);
   });

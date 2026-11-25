@@ -2,6 +2,7 @@ import type pg from 'pg';
 import {
   TREE_KINDS,
   TREE_SPECIES,
+  TREE_WATER_PER_LESSON,
   canPlant,
   isTreeSpecies,
   plantTree,
@@ -26,7 +27,7 @@ type Executor = Pick<pg.Pool, 'query'>;
 export const TREE_HARVEST_REASON = 'tree_harvest';
 export const TREE_PURCHASE_REASON = 'tree_purchase';
 
-/** The most water anybody holds: far more than learning earns, and what the column allows. */
+/** The most drops anybody holds: far more than learning earns, and what the column allows. */
 const WATER_MOST = 9999;
 
 /** A kind as the nursery shows it: its cost, and whether it is the learner's to plant. */
@@ -88,11 +89,11 @@ function recordOf(row: TreeRow): TreeRecord | null {
 }
 
 /**
- * Water for a completed lesson or practice session: one more held by the learner's tree, if planted. Called inside the
- * completion's transaction once per completion, so a session never earns twice. Nothing is earned before planting;
- * the first tree comes with the water to raise its seed.
+ * Water for a completed lesson or practice session: a lesson's drops more held by the learner's tree, if planted. Called
+ * inside the completion's transaction once per completion, so a session never earns twice. Nothing is earned before
+ * planting; the first tree comes with the water to raise its seed.
  */
-export async function earnWater(db: Executor, userId: string, amount = 1): Promise<WaterEarned | null> {
+export async function earnWater(db: Executor, userId: string, amount = TREE_WATER_PER_LESSON): Promise<WaterEarned | null> {
   const res = await db.query<{ water: number; was: number }>(
     `UPDATE user_trees t SET water = LEAST($3::int, t.water + $2::int), updated_at = now()
        FROM (SELECT water FROM user_trees WHERE user_id = $1 FOR UPDATE) old

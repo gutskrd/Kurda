@@ -15,7 +15,7 @@ afterEach(() => {
 
 const TODAY = '2026-11-13';
 const view = (over: Partial<TreeRecord> = {}, today = TODAY): TreeView =>
-  treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 5, water: 2, harvests: 0, ...over }, today);
+  treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 10, water: 2, harvests: 0, ...over }, today);
 
 /** GET /me/tree: this tree or none, every kind, these bought, and this much Zêr. */
 const mine = (tree: TreeView | null, over: { owned?: string[]; zer?: number } = {}): MyTree => ({
@@ -77,13 +77,13 @@ describe('TreePage', () => {
   });
 
   it('shows the tree with how far it is to its next stage and the water held', async () => {
-    server({ 'GET /me/tree': mine(view({ waterings: 9, water: 3 })) });
+    server({ 'GET /me/tree': mine(view({ waterings: 24, water: 3 })) });
     renderApp(<TreePage />);
     expect(await screen.findByRole('heading', { name: 'Berû' })).toBeInTheDocument();
     expect(screen.getByText('Oak · Sapling · Day 13')).toBeInTheDocument();
     const bar = screen.getByRole('progressbar', { name: 'Next: Young tree' });
-    expect(bar).toHaveAttribute('aria-valuenow', '2');
-    expect(bar).toHaveAttribute('aria-valuemax', '7');
+    expect(bar).toHaveAttribute('aria-valuenow', '6');
+    expect(bar).toHaveAttribute('aria-valuemax', '22');
     expect(screen.getByText('Water: 3')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Water the tree' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Pour all 3' })).toBeInTheDocument();
@@ -96,8 +96,8 @@ describe('TreePage', () => {
   });
 
   it('pours one water, and says so when that grew the tree', async () => {
-    const before = view({ waterings: 6, water: 2 });
-    const after = view({ waterings: 7, water: 1 });
+    const before = view({ waterings: 17, water: 2 });
+    const after = view({ waterings: 18, water: 1 });
     const watered: Watered = { tree: after, poured: 1, grew: 3, harvests: 0, zer: 0, revived: false };
     const calls = server({ 'GET /me/tree': mine(before), 'POST /me/tree/water': watered });
     // Straight to the result, as under Reduce Motion.
@@ -114,8 +114,8 @@ describe('TreePage', () => {
   });
 
   it('plays the pour in the scene, lets the tree be seen to grow where it stands, and only then says that it grew', async () => {
-    const before = view({ waterings: 6, water: 2 });
-    const after = view({ waterings: 7, water: 1 });
+    const before = view({ waterings: 17, water: 2 });
+    const after = view({ waterings: 18, water: 1 });
     server({ 'GET /me/tree': mine(before), 'POST /me/tree/water': { tree: after, poured: 1, grew: 3, harvests: 0, zer: 0, revived: false } satisfies Watered });
     const { container } = renderApp(<TreePage />);
     const water = await screen.findByRole('button', { name: 'Water the tree' });
@@ -139,7 +139,7 @@ describe('TreePage', () => {
   });
 
   it('hangs a swing from a great tree that is well, in the breeze with it, and none from one left to wilt', async () => {
-    server({ 'GET /me/tree': mine(view({ waterings: 40 })) });
+    server({ 'GET /me/tree': mine(view({ waterings: 130 })) });
     const { container, unmount } = renderApp(<TreePage />);
     await screen.findByRole('heading', { name: 'Berû' });
     const plant = container.querySelector('.tree-stage-art .tree-art-plant');
@@ -147,7 +147,7 @@ describe('TreePage', () => {
     expect(plant?.querySelector('.tree-art-sway.is-swaying > .tree-art-swing')).not.toBeNull();
     expect(container.querySelector('.tree-stage-art .tree-art > .tree-art-front')).not.toBeNull();
     unmount();
-    server({ 'GET /me/tree': mine(view({ waterings: 40, lastWateredOn: '2026-11-08' })) });
+    server({ 'GET /me/tree': mine(view({ waterings: 130, lastWateredOn: '2026-11-08' })) });
     const dry = renderApp(<TreePage />);
     expect(await screen.findByText('Wilting')).toBeInTheDocument();
     expect(dry.container.querySelector('.tree-art-swing')).toBeNull();
@@ -155,7 +155,7 @@ describe('TreePage', () => {
 
   it('stands in the scene of the learner’s own season, with the season blowing past it', async () => {
     const month = vi.spyOn(Date.prototype, 'getMonth').mockReturnValue(3);
-    server({ 'GET /me/tree': mine(view({ species: 'behiv', waterings: 30 })) });
+    server({ 'GET /me/tree': mine(view({ species: 'behiv', waterings: 80 })) });
     const { container, unmount } = renderApp(<TreePage />);
     await screen.findByRole('heading', { name: 'Behîv' });
     // April is spring, and an almond in blossom sheds petals on the wind.
@@ -168,7 +168,7 @@ describe('TreePage', () => {
     unmount();
     // January: the same page under snow.
     month.mockReturnValue(0);
-    server({ 'GET /me/tree': mine(view({ waterings: 1 })) });
+    server({ 'GET /me/tree': mine(view({ waterings: 2 })) });
     const winter = renderApp(<TreePage />);
     await screen.findByRole('heading', { name: 'Berû' });
     expect(winter.container.querySelector('.tree-stage')).toHaveClass('is-winter');
@@ -177,7 +177,7 @@ describe('TreePage', () => {
 
   it('floats a thought of water by a tree that wants some, and stills the air round one left to wilt', async () => {
     vi.spyOn(Date.prototype, 'getMonth').mockReturnValue(10);
-    server({ 'GET /me/tree': mine(view({ waterings: 15, water: 1, lastWateredOn: '2026-11-08' })) });
+    server({ 'GET /me/tree': mine(view({ waterings: 45, water: 1, lastWateredOn: '2026-11-08' })) });
     const { container, unmount } = renderApp(<TreePage />);
     expect(await screen.findByText('Wilting')).toBeInTheDocument();
     expect(container.querySelector('.tree-thought')).not.toBeNull();
@@ -191,26 +191,26 @@ describe('TreePage', () => {
   });
 
   it('shows what is being grown toward: the next stage in its ring, or what a full-grown tree bears', async () => {
-    server({ 'GET /me/tree': mine(view({ waterings: 9, water: 3 })) });
+    server({ 'GET /me/tree': mine(view({ waterings: 24, water: 3 })) });
     const { container, unmount } = renderApp(<TreePage />);
     const ring = await screen.findByRole('progressbar', { name: 'Next: Young tree' });
-    // Two of the seven waterings to the next stage close that share of the ring.
+    // Six of the twenty-two drops to the next stage close that share of the ring.
     const fill = ring.querySelector<SVGCircleElement>('.tree-goal-fill');
     const round = Number(fill?.style.strokeDasharray);
-    expect(Number(fill?.style.strokeDashoffset) / round).toBeCloseTo(1 - 2 / 7, 4);
+    expect(Number(fill?.style.strokeDashoffset) / round).toBeCloseTo(1 - 6 / 22, 4);
     // The picture in it is the next stage, not this one.
     expect(ring.querySelector('.tree-goal-art .tree-art')).not.toBeNull();
     expect(container.querySelectorAll('.tree-art')).toHaveLength(2);
     unmount();
-    server({ 'GET /me/tree': mine(view({ waterings: 45, water: 0 })) });
+    server({ 'GET /me/tree': mine(view({ waterings: 142, water: 0 })) });
     renderApp(<TreePage />);
     const harvest = await screen.findByRole('progressbar', { name: 'Next harvest' });
     expect(harvest.querySelector('.tree-goal-art .tree-art')).toBeNull();
   });
 
   it('pours all that is held at once, and celebrates a harvest with what it paid', async () => {
-    const before = view({ waterings: 45, water: 4 });
-    const after = view({ waterings: 49, water: 0, harvests: 1 });
+    const before = view({ waterings: 144, water: 4 });
+    const after = view({ waterings: 148, water: 0, harvests: 1 });
     const calls = server({ 'GET /me/tree': mine(before, { zer: 10 }), 'POST /me/tree/water': { tree: after, poured: 4, grew: null, harvests: 1, zer: 25, revived: false } satisfies Watered });
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: /reduce/.test(q), media: q, addEventListener: () => undefined, removeEventListener: () => undefined, addListener: () => undefined, removeListener: () => undefined }));
     renderApp(<TreePage />);
@@ -223,9 +223,9 @@ describe('TreePage', () => {
   });
 
   it('says plainly how a tree left dry is faring, and that water brought it back', async () => {
-    const dry = view({ waterings: 15, water: 1, lastWateredOn: '2026-11-08' });
+    const dry = view({ waterings: 45, water: 1, lastWateredOn: '2026-11-08' });
     expect(dry.health).toBe('wilting');
-    server({ 'GET /me/tree': mine(dry), 'POST /me/tree/water': { tree: view({ waterings: 16, water: 0 }), poured: 1, grew: null, harvests: 0, zer: 0, revived: true } satisfies Watered });
+    server({ 'GET /me/tree': mine(dry), 'POST /me/tree/water': { tree: view({ waterings: 46, water: 0 }), poured: 1, grew: null, harvests: 0, zer: 0, revived: true } satisfies Watered });
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: /reduce/.test(q), media: q, addEventListener: () => undefined, removeEventListener: () => undefined, addListener: () => undefined, removeListener: () => undefined }));
     renderApp(<TreePage />);
     expect(await screen.findByText('Wilting')).toBeInTheDocument();
