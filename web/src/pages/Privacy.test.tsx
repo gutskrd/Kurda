@@ -43,11 +43,11 @@ describe('the privacy policy on keeping banned people out', () => {
     expect(en['privacy.retention.body']).toMatch(/90 days.*a year for anything suspicious.*30 days.*180 days/);
   });
 
-  it('sits under Keeping it safe, after how content is checked', () => {
+  it('sits under Keeping it safe, after how content is checked and when messages are read', () => {
     renderApp(<Privacy />);
     const section = screen.getByRole('heading', { name: 'Keeping it safe' }).closest('section')!;
     const paragraphs = within(section).getAllByText(/./, { selector: 'p' });
-    expect(paragraphs.map((p) => p.textContent)).toEqual([en['privacy.safety.body'], en['privacy.safety.returns']]);
+    expect(paragraphs.map((p) => p.textContent)).toEqual([en['privacy.safety.body'], en['privacy.safety.messages'], en['privacy.safety.returns']]);
   });
 
   it('reads in Soranî on the page itself', async () => {
@@ -55,6 +55,37 @@ describe('the privacy policy on keeping banned people out', () => {
     await preloadCatalogue();
     renderApp(<Privacy />);
     expect(await screen.findByText(ckb['privacy.safety.returns']!)).toBeInTheDocument();
+  });
+});
+
+describe('the privacy policy on reading letters and messages', () => {
+  it('says when the safety team may read one, in every language the app speaks', () => {
+    for (const [code, catalogue] of Object.entries(CATALOGUES)) {
+      const text = catalogue['privacy.safety.messages'];
+      expect(text, code).toBeTruthy();
+      if (code !== 'en') expect(text, code).not.toBe(en['privacy.safety.messages']);
+    }
+  });
+
+  it('names the only times, that each is recorded, and that it is never for anything else', () => {
+    const text = en['privacy.safety.messages'];
+    expect(text).toMatch(/only when someone in the conversation reports it, when an automatic safety check flags it, or for a specific safety or legal reason/);
+    expect(text).toMatch(/Each time our staff open one, it is recorded/);
+    expect(text).toMatch(/never read for anything else, and never for advertising/);
+  });
+
+  it('says how long a flagged letter or message is kept, in every language', () => {
+    expect(en['privacy.retention.body']).toMatch(/A letter or message an automatic safety check flags is kept with its case until a year after the case is decided, or until your account is deleted if that is sooner/);
+    for (const [code, catalogue] of Object.entries(CATALOGUES)) {
+      if (code !== 'en') expect(catalogue['privacy.retention.body'], code).not.toBe(en['privacy.retention.body']);
+    }
+  });
+
+  it('reads in Kurmancî on the page itself', async () => {
+    localStorage.setItem('hevalo_locale', 'ku');
+    await preloadCatalogue();
+    renderApp(<Privacy />);
+    expect(await screen.findByText(ku['privacy.safety.messages']!)).toBeInTheDocument();
   });
 });
 

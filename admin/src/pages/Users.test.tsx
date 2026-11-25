@@ -368,6 +368,24 @@ describe('a person', () => {
     expect(await screen.findByText('Signed out of 1 session.')).toBeInTheDocument();
   });
 
+  it('offers a superadmin a safety review of the account, and nobody else', async () => {
+    show(at, OWNER, detailRoute(person()));
+    expect(await screen.findByRole('link', { name: 'Open a safety review…' })).toHaveAttribute('href', `#/safety-reviews?user=${SUBJECT_ID}`);
+    expect(screen.getByText(/@baran is not told/)).toBeInTheDocument();
+  });
+
+  it('offers no safety review to a moderator', async () => {
+    show(at, MODERATOR, detailRoute(person()));
+    expect(await screen.findByRole('heading', { name: 'Profile' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Open a safety review…' })).not.toBeInTheDocument();
+  });
+
+  it('offers no safety review of a child’s profile, which writes to nobody', async () => {
+    show(at, OWNER, detailRoute(person({ kind: 'child' })));
+    expect(await screen.findByRole('heading', { name: 'Profile' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Open a safety review…' })).not.toBeInTheDocument();
+  });
+
   it('shows the wallet and ledger, and lets only a superadmin change a balance', async () => {
     const user = userEvent.setup();
     const { calls } = show(`${at}/wallet`, OWNER, detailRoute(person()), on('POST', `/admin/users/${SUBJECT_ID}/wallet`, json({ ok: true, balance: 700 })));

@@ -820,6 +820,19 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`DELETE FROM letter_widget_tokens WHERE user_id = $1`);
   await q(`DELETE FROM letter_widget_prefs WHERE user_id = $1`);
   await q(`DELETE FROM group_messages WHERE sender_id = $1`);
+  // What the automatic checks flagged in their words goes with them, as a picture of theirs waiting for a person does:
+  // an open case closes saying why, every one of their text-flag cases forgets the words it kept, and the flags go.
+  // The cases and their decisions stay as moderation records.
+  await q(
+    `UPDATE moderation_cases SET status = 'no_violation', resolution = 'no_violation', resolved_at = now(), claimed_by = NULL,
+            lease_until = NULL, resolution_note = 'the account was closed, and what was flagged went with it', updated_at = now()
+      WHERE source = 'text_flag' AND subject_user_id = $1 AND status IN ('open','in_review','escalated')`,
+  );
+  await q(
+    `UPDATE moderation_cases SET evidence = jsonb_build_object('pruned', true), removed_content = NULL, updated_at = now()
+      WHERE source = 'text_flag' AND subject_user_id = $1 AND NOT (evidence ? 'pruned')`,
+  );
+  await q(`DELETE FROM moderation_flags WHERE author_id = $1`);
   // A group gift for them alone goes; one to several friends stays for the others, no longer listing a closed account
   // (gifts/cards.ts).
   await q(

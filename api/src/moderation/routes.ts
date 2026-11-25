@@ -7,7 +7,7 @@ import { requireCapability } from '../admin/routes.js';
 const moderators = [requireAuth, requireCapability('moderation.act')];
 import type { ModerationService } from './service.js';
 
-/** Message reporting + admin moderation queue. */
+/** Message reporting, and resolving the old table's reports; their feed is gone, since new reports are cases. */
 export function registerModerationRoutes(app: FastifyInstance, moderation: ModerationService): void {
   /** Report a message; captures ~10 surrounding messages as context. */
   app.post(
@@ -28,11 +28,6 @@ export function registerModerationRoutes(app: FastifyInstance, moderation: Moder
       return moderation.report(req.user!.id, messageType, messageId, reason);
     },
   );
-
-  /** Admin: open moderation queue with context. */
-  app.get('/admin/moderation/reports', { preHandler: moderators }, async (req) => ({
-    reports: await moderation.pendingReports(req.user!.id),
-  }));
 
   /** Admin: resolve a report ('actioned' records an offense against the author). */
   app.post(

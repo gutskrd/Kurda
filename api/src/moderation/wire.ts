@@ -26,6 +26,8 @@ import { SanctionsService } from './sanctions-service.js';
 import { purgeDue, settleTakedowns, takedownsToSettle } from './takedown.js';
 import { inTransaction } from './tx.js';
 import { isTrustedNetwork, registerTrustedNetworkRoutes, TrustedNetworksService } from '../net/trusted-networks.js';
+import { AuditService } from '../admin/audit-service.js';
+import { MessageAccessService } from '../message-access/service.js';
 
 /** Test seams: how many moderators there are, where urgent emails go, and the picture checker (null for none). */
 export interface ModerationOptions {
@@ -49,6 +51,8 @@ export interface ModerationKit {
   alerts: ModerationAlerts;
   pictures: PictureReviewService;
   returns: PossibleReturnsService;
+  /** staff reading letters and private chats, and its record (message-access/service.ts) */
+  access: MessageAccessService;
 }
 
 declare module 'fastify' {
@@ -167,9 +171,12 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
   });
   app.decorate('returns', returns);
 
+  // A moderator reading a reported or flagged letter or message is recorded, as every other reading of one is.
+  const access = new MessageAccessService(app.db, { audit: new AuditService(app.db), securityLog: () => app.securityLog });
+
   registerReportRoutes(app, config, { reports, sanctions, appeals, pictures });
-  registerModerationQueueRoutes(app, { queue, cases, sanctions, appeals, returns });
-  registerPictureRoutes(app, { pictures, cases });
+  registerModerationQueueRoutes(app, { queue, cases, sanctions, appeals, returns, access });
+  registerPictureRoutes(app, { pictures, cases, access });
   registerTrustedNetworkRoutes(app, new TrustedNetworksService(app.db));
 
   /** Takedowns whose ban was lifted or whose Hide suspension ended come back, one person at a time. */
@@ -227,5 +234,5 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
     clearInterval(retention);
   });
 
-  return { reports, sanctions, cases, queue, appeals, alerts, pictures, returns };
+  return { reports, sanctions, cases, queue, appeals, alerts, pictures, returns, access };
 }

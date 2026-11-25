@@ -43,10 +43,22 @@ const SUGGESTIONS = [
   'POST /admin/experiments',
   'POST /admin/fraud/reviews',
   'POST /admin/leagues',
+  'safety_review.',
+  'case.read_messages',
 ];
+
+/** What the trail's named actions (`safety_review.grant`, not a method and route) were, in words. */
+const NAMED_ACTIONS: Readonly<Record<string, { verb: string; where: string }>> = {
+  'safety_review.grant': { verb: 'Opened a safety review', where: 'letters and private chats' },
+  'safety_review.end': { verb: 'Ended a safety review', where: 'letters and private chats' },
+  'safety_review.list': { verb: 'Listed the conversations', where: 'safety review' },
+  'safety_review.read': { verb: 'Read a conversation', where: 'safety review' },
+  'case.read_messages': { verb: 'Read the letter or message', where: 'moderation › cases' },
+};
 
 /** "POST /admin/users/:id/ban" → "Ban · users" — the verb a person would use, then where. */
 export function describeAction(action: string): { verb: string; where: string } {
+  if (Object.hasOwn(NAMED_ACTIONS, action)) return NAMED_ACTIONS[action]!;
   const [method = '', path = ''] = action.split(' ');
   const parts = path.split('/').filter((p) => p && p !== 'admin' && !p.startsWith(':'));
   const last = parts[parts.length - 1] ?? '';

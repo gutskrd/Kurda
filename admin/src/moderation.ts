@@ -719,6 +719,7 @@ const HISTORY_ACTION: Readonly<Record<string, string>> = {
   item_grant: 'Item given',
   item_revoke: 'Item taken back',
   plus_grant: 'Hevalo+ given',
+  'case.read_messages': 'Read the letter or message',
 };
 
 /** One line of a case's (or a person's) history: what happened, in words. */

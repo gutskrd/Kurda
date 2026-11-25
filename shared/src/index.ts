@@ -1002,3 +1002,5 @@ export * from './parental.js';
 export * from './family.js';
 /** Icons Hevalo draws itself in the icon family's weight, where the family has none for the job. */
 export * from './glyphs.js';
+/** When staff may read letters and private chats: reports, automatic flags, and safety reviews, each on the Access log. */
+export * from './message-access.js';

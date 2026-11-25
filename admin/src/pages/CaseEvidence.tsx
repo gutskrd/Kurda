@@ -28,7 +28,7 @@ export function Evidence({ detail, sensitive }: { detail: CaseDetail; sensitive:
   return (
     <Section title="What was reported" className="case-evidence">
       {shown ? (
-        <Snapshot snapshot={shown} media={detail.media} sensitive={sensitive} />
+        <Snapshot snapshot={shown} media={detail.media} sensitive={sensitive} flagged={!first && !!autoSnapshot} />
       ) : legacy ? (
         <p className="section-text">
           This came from an older version of the app, which kept no copy of the content. The reporters’ words and the automatic
@@ -76,8 +76,24 @@ function automatedFacts(evidence: Record<string, unknown>): Array<{ label: strin
   return noticeFields(rest);
 }
 
-/** One captured thing: who, when, what it said, its pictures, and what was around it. */
-export function Snapshot({ snapshot: s, media, sensitive }: { snapshot: EvidenceSnapshot; media: CaseMediaItem[]; sensitive: boolean }): React.JSX.Element {
+/** Letters and private messages, which only someone in the conversation or an automatic check brings to a case. */
+const PRIVATE_TARGETS: ReadonlySet<string> = new Set(['letter', 'dm_message', 'group_message']);
+
+/**
+ * One captured thing: who, when, what it said, its pictures, and what was around it. An automatic flag on a letter or
+ * private message (`flagged`) holds the flagged one alone, and says so.
+ */
+export function Snapshot({
+  snapshot: s,
+  media,
+  sensitive,
+  flagged = false,
+}: {
+  snapshot: EvidenceSnapshot;
+  media: CaseMediaItem[];
+  sensitive: boolean;
+  flagged?: boolean;
+}): React.JSX.Element {
   const byKey = new Map(media.map((m) => [m.key, m]));
   const pictures = s.pictures ?? s.mediaKeys.map((k) => ({ mediaKey: k, altText: null }));
   // A plain text message says nothing by being one.
@@ -138,7 +154,13 @@ export function Snapshot({ snapshot: s, media, sensitive }: { snapshot: Evidence
           })}
         </div>
       )}
-      {s.context && s.context.length > 0 && <ChatContext messages={s.context} />}
+      {s.context && s.context.length > 0 && <ChatContext messages={s.context} letters={s.targetType === 'letter'} />}
+      {flagged && PRIVATE_TARGETS.has(s.targetType) && (!s.context || s.context.length === 0) && (
+        <p className="note">
+          An automatic check flagged this one alone. Nobody in the conversation reported it, so the {s.targetType === 'letter' ? 'letters' : 'messages'}{' '}
+          around it are not shown.
+        </p>
+      )}
       {s.game && (
         <div className="snapshot-game">
           <p>
@@ -169,18 +191,28 @@ export function Snapshot({ snapshot: s, media, sensitive }: { snapshot: Evidence
   );
 }
 
-/** The conversation around a reported message, the message itself marked. */
-function ChatContext({ messages }: { messages: EvidenceMessage[] }): React.JSX.Element {
+/**
+ * The conversation around a reported message or letter, the reported one marked: the few before and after it, kept
+ * so the report can be judged, and never reported themselves.
+ */
+function ChatContext({ messages, letters }: { messages: EvidenceMessage[]; letters: boolean }): React.JSX.Element {
+  const others = messages.filter((m) => !m.reported).length;
   return (
     <div className="chat-context">
-      <h3 className="drawer-sub">The conversation around it</h3>
+      <h3 className="drawer-sub">{letters ? 'The letters around it' : 'The conversation around it'}</h3>
+      {others > 0 && (
+        <p className="section-text subtle">
+          {others === 1 ? 'One other' : `${others} others`} from the same {letters ? 'correspondence' : 'conversation'}, kept with the report so it
+          can be judged. Only the one marked was reported.
+        </p>
+      )}
       <ol className="chat-lines">
         {messages.map((m) => (
           <li key={m.id} className={`chat-line${m.reported ? ' is-reported' : ''}`} aria-current={m.reported ? 'true' : undefined}>
             <div className="chat-line-head">
               {m.senderId ? <UserLink user={{ id: m.senderId, username: m.username }} /> : <span className="subtle">Deleted account</span>}
               <Time value={m.createdAt} mode="absolute" />
-              {m.reported && <Badge tone="bad">Reported message</Badge>}
+              {m.reported ? <Badge tone="bad">{letters ? 'Reported letter' : 'Reported message'}</Badge> : <Badge>Context</Badge>}
             </div>
             <div className="chat-line-body" dir="auto">
               {m.body ?? <span className="subtle">{m.kind === 'text' ? 'No text' : `A ${m.kind.replace(/_/g, ' ')}`}</span>}

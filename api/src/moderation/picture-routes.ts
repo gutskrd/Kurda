@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { PICTURE_CASE_VIEWS, PICTURE_REVIEW_NOTE_MAX, REPORT_CATEGORY_KEYS, type PictureCaseView, type PictureDecision } from '@kurda/shared';
 import { requireCapability } from '../admin/routes.js';
 import { AuditService } from '../admin/audit-service.js';
+import type { MessageAccessService } from '../message-access/service.js';
 import { requireAccount, requireAuth } from '../plugins/auth.js';
 import type { CasesService } from './cases-service.js';
 import type { StoredPicture } from './picture-release.js';
@@ -33,10 +34,14 @@ export function sendStoredPicture(reply: FastifyReply, file: StoredPicture): Fas
  * The Picture checks page and asking for a person. Admin routes need the `moderation.act` capability and, under
  * /admin, a verified second factor; decisions are audited by the admin audit hook, and every fetch of a picture's bytes
  * writes its own audit entry, since a GET is not otherwise audited. The case-evidence bytes route serves the case view
- * the same way, so evidence shows under the console's image policy.
+ * the same way, so evidence shows under the console's image policy. A letter's drawing and its words are a letter read,
+ * so the list, the picture and the case's file record them on the Access log as a case does.
  */
-export function registerPictureRoutes(app: FastifyInstance, deps: { pictures: PictureReviewService; cases: CasesService }): void {
-  const { pictures, cases } = deps;
+export function registerPictureRoutes(
+  app: FastifyInstance,
+  deps: { pictures: PictureReviewService; cases: CasesService; access: MessageAccessService },
+): void {
+  const { pictures, cases, access } = deps;
   const guard = [requireAuth, requireCapability('moderation.act')];
   const audit = new AuditService(app.db);
   const audited = (adminId: string, action: string, caseId: string, requestId: string, after?: unknown) =>
@@ -46,13 +51,22 @@ export function registerPictureRoutes(app: FastifyInstance, deps: { pictures: Pi
 
   app.get('/admin/pictures', { schema: { querystring: listQuery }, preHandler: guard }, async (req) => {
     const q = req.query as z.infer<typeof listQuery>;
-    return pictures.list((q.view ?? 'waiting') as PictureCaseView, q.cursor, req.user!.id);
+    const list = await pictures.list((q.view ?? 'waiting') as PictureCaseView, q.cursor, req.user!.id);
+    const letters = list.items.filter((i) => i.surface === 'letter');
+    await access.casesRead(
+      req.user!.id,
+      letters.map((i) => ({ id: i.caseId, source: 'image_flag' as const, subject_user_id: i.owner?.id ?? null })),
+      String(req.id),
+    );
+    return list;
   });
 
   app.get('/admin/pictures/:id/image', { schema: { params: idParam }, preHandler: guard }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const file = await pictures.image(id, req.user!.id);
     await audited(req.user!.id, 'GET /admin/pictures/:id/image', id, String(req.id));
+    const c = await cases.find(app.db, id);
+    if (c) await access.caseRead(req.user!.id, c, String(req.id));
     return sendStoredPicture(reply, file);
   });
 
@@ -69,6 +83,9 @@ export function registerPictureRoutes(app: FastifyInstance, deps: { pictures: Pi
       const { key } = req.query as { key: string };
       const file = await cases.evidenceFile(id, key, req.user!.id);
       await audited(req.user!.id, 'GET /admin/moderation/cases/:id/media', id, String(req.id), { key });
+      // a letter's drawing is a letter read, as the case itself is
+      const c = await cases.find(app.db, id);
+      if (c) await access.caseRead(req.user!.id, c, String(req.id));
       return sendStoredPicture(reply, file);
     },
   );
