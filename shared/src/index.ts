@@ -584,6 +584,8 @@ export * from './play.js';
 export * from './gifts.js';
 /** The gifts themselves, their meanings, and the gift bag; the safeguards on spending Zêr on them. */
 export * from './gift-catalogue.js';
+/** The moment a gift is opened (and the sender's, as it goes): its glow, rays, sparkles and timing. */
+export * from './gift-moment.js';
 export * from './gift-safety.js';
 
 /** The learning games: the registry, the two varieties as 'kmr' | 'ckb' with their script rules, content schemas and round shapes. */
