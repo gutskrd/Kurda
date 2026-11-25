@@ -197,6 +197,7 @@ export function useSettingsCatalog(): { categories: Category[]; leaves: Leaf[] }
       { key: 'visibility', icon: 'eye', title: t('settings.privacy.title'), terms: [], open: page('visibility') },
       // The only way to undo a block: a blocked person is a 404 to you, so no other screen can offer it.
       { key: 'blocked', icon: 'block', title: t('settings.blocked.title'), terms: [], open: () => navigation.navigate('BlockedUsers') },
+      { key: 'giftLimit', icon: 'gift', title: t('settings.giftLimit.title'), terms: [t('settings.giftLimit.lead')], open: page('giftLimit') },
       { key: 'leagues', icon: 'trophy', title: t('settings.leagues.title'), terms: [], open: page('leagues') },
     ]),
     ...on('sounds', [

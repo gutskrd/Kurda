@@ -63,7 +63,8 @@ export function usePostGifts(item: FeedItem): {
 
 /**
  * The small row of gifts under a post: the first few pictures, how many, and who gave them ("Gifts from Hamo and 3
- * others"), as the reader may see them. A tap lists every gift with its giver. Nothing when there are none.
+ * others"), as the reader may see them, with a grand gift shown large ahead of them so it stays on show. A tap lists
+ * every gift with its giver. Nothing when there are none.
  */
 export function PostGiftsRow({ item, gifts }: { item: Pick<FeedItem, 'targetType' | 'id'>; gifts: PostGifts }): React.JSX.Element | null {
   const { colors } = useTheme();
@@ -87,10 +88,23 @@ export function PostGiftsRow({ item, gifts }: { item: Pick<FeedItem, 'targetType
         testID="post-gifts"
         style={({ pressed }) => [styles.row, { flexDirection: dir.row, opacity: pressed ? pressedDim : 1 }]}
       >
+        {gifts.items.some((g) => g.tier === 'grand') ? (
+          <View style={[styles.pictures, { flexDirection: dir.row }]} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden testID="post-gifts-grand">
+            {gifts.items
+              .filter((g) => g.tier === 'grand')
+              .slice(0, 3)
+              .map((g) => (
+                <ItemArt key={g.sku} category="gift" path={g.assetUrl} width={56} />
+              ))}
+          </View>
+        ) : null}
         <View style={[styles.pictures, { flexDirection: dir.row }]} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-          {gifts.items.slice(0, 3).map((g) => (
-            <ItemArt key={g.sku} category="sticker" path={g.assetUrl} width={22} />
-          ))}
+          {gifts.items
+            .filter((g) => g.tier !== 'grand')
+            .slice(0, 3)
+            .map((g) => (
+              <ItemArt key={g.sku} category="sticker" path={g.assetUrl} width={22} />
+            ))}
         </View>
         <Text style={[styles.count, { color: colors.textPrimary }]}>{count}</Text>
         <Text style={[styles.words, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>

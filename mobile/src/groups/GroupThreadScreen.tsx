@@ -503,7 +503,10 @@ export function GroupThreadScreen({
     [post, refusedSend],
   );
 
-  const openPicker = (): void => {
+  /** The friend a gift is being sent back to, chosen already when the sheet opens. */
+  const [backTo, setBackTo] = useState<string[] | undefined>(undefined);
+  const openPicker = (to?: string): void => {
+    setBackTo(to ? [to] : undefined);
     setPicking(true);
     if (friends === null) void loadFriends();
   };
@@ -657,7 +660,7 @@ export function GroupThreadScreen({
           <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
             {canGiveGifts(user) ? (
               <Pressable
-                onPress={openPicker}
+                onPress={() => openPicker()}
                 accessibilityRole="button"
                 accessibilityLabel={t('gift.button')}
                 style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
@@ -694,6 +697,7 @@ export function GroupThreadScreen({
         visible={picking && friends !== null}
         chat={{ kind: 'group', groupId }}
         friends={friends ?? []}
+        initialChosen={backTo}
         onClose={() => setPicking(false)}
         onSent={(result, item, to) => {
           setPicking(false);
@@ -715,6 +719,8 @@ export function GroupThreadScreen({
           onClose={() => setUnwrapping(null)}
           onOpened={(card) => setMessages((prev) => withCard(prev, card))}
           onThanks={() => post(t('gift.thanksMessage'))}
+          // to whoever sent it, if they are a friend here (the sheet checks), the bag first
+          onSendBack={canGiveGifts(user) && unwrapping.card.from ? () => openPicker(unwrapping.card.from!.userId) : undefined}
         />
       ) : null}
 

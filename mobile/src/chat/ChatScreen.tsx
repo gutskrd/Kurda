@@ -456,6 +456,8 @@ export function ChatScreen({
           onClose={() => setUnwrapping(null)}
           onOpened={(card: GiftCard) => setMessages((prev) => withCard(prev, card))}
           onThanks={() => post(t('gift.thanksMessage'))}
+          // back to the friend this chat is with, the bag first; a child's profile gives nothing
+          onSendBack={canGiveGifts(user) ? () => setPicking(true) : undefined}
         />
       ) : null}
 

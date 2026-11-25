@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { Pressable, ReachReset } from '../theme/Pressable';
-import type { EquippableCategory, GiftCard } from '@kurda/shared';
+import { giftMeaning, type EquippableCategory, type GiftCard } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { assetUrl } from '../api/env';
 import { describeError } from '../api/errors';
@@ -30,7 +30,7 @@ import { SHEET_MAX_WIDTH } from '../reports/sheet';
 import { SendErrorNotice } from '../reports/SendError';
 import { openGift, wearGift } from './api';
 import { giftsSeen, refreshGiftBadge } from '../shop/useUnseenGifts';
-import { GiftBox, NewrozFlame, Seed, Spark } from './art';
+import { GiftBox, NewrozFlame, NightSky, Seed, Spark } from './art';
 import { unwrapPlan, type Particle } from './motion';
 import { heldDim } from '../theme/MotionParts';
 
@@ -43,18 +43,21 @@ export interface UnwrapTarget {
 
 /**
  * Unwrapping a present, sized by the gift's tier (shared `GIFT_UNWRAP_MS`): a common gift bursts in a small card, a
- * rare one rises in a sheet throwing pomegranate seeds, a legendary one takes the whole screen with the Newroz flame. A
- * tap skips it; under Reduce Motion it is a short fade to the item. A haptic plays once as the lid comes off (or at the
- * skip). It runs on the native driver with one progress value, so a busy JS thread cannot make it stutter.
+ * rare one rises in a sheet throwing pomegranate seeds, a legendary one takes the whole screen with the Newroz flame,
+ * and a grand one (the moon, the sun, the galaxy) turns the whole screen to a night sky as it rises. A tap skips it;
+ * under Reduce Motion it is a short fade to the item, the sky standing still. A haptic plays once as the lid comes off
+ * (or at the skip). It runs on the native driver with one progress value, so a busy JS thread cannot make it stutter.
  *
- * Then the item, who it is from, and Wear it, Say thanks (sent by the parent) or Close. The gift is opened on the
- * server as the animation starts (`POST /gifts/:id/open`); `onOpened` hands back the fresh card for the bubble.
+ * Then the item with its Kurmancî name and what it means, who it is from, and Wear it, Say thanks (sent by the parent),
+ * Send one back (the gift sheet for the sender, opening on the bag) or Close. The gift is opened on the server as the
+ * animation starts (`POST /gifts/:id/open`); `onOpened` hands back the fresh card for the bubble.
  */
 export function GiftUnwrap({
   target,
   onClose,
   onOpened,
   onThanks,
+  onSendBack,
 }: {
   target: UnwrapTarget;
   onClose: () => void;
@@ -64,13 +67,16 @@ export function GiftUnwrap({
    * chat's own notice is behind this.
    */
   onThanks: () => Promise<ApiError | null>;
+  /** Open the gift sheet for whoever sent it; left out where nothing can be sent back. */
+  onSendBack?: () => void;
 }): React.JSX.Element {
   const { client } = useAuth();
   const theme = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
   const reduce = useReducedMotion();
   const card = target.card;
+  const meaning = giftMeaning(card.sku, locale);
   const plan = useMemo(() => unwrapPlan(card.tier, reduce), [card.tier, reduce]);
   // The full-screen moment is staged on night-dark in either scheme.
   const full = plan.stage === 'full';
@@ -177,6 +183,7 @@ export function GiftUnwrap({
   };
 
   const art = full ? 220 : plan.stage === 'sheet' ? 180 : 140;
+  const [stageSize, setStageSize] = useState<{ width: number; height: number } | null>(null);
 
   const content = (
     <View
@@ -192,7 +199,13 @@ export function GiftUnwrap({
           !full && { backgroundColor: colors.background },
         ]}
         accessibilityViewIsModal
+        onLayout={plan.sky ? (e) => setStageSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height }) : undefined}
       >
+        {plan.sky && stageSize ? (
+          <View style={styles.sky} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="night-sky">
+            <NightSky width={stageSize.width} height={stageSize.height} gold={colors.gold} />
+          </View>
+        ) : null}
         <Pressable
           onPress={revealed ? undefined : reveal}
           disabled={revealed}
@@ -217,9 +230,10 @@ export function GiftUnwrap({
           // Both platforms: VoiceOver's elements-hidden and TalkBack's no-hide-descendants.
           aria-hidden={!revealed}
         >
-          <Text style={[styles.name, { color: colors.textPrimary }]} accessibilityRole="header">
+          <Text style={[styles.name, { color: colors.textPrimary }]} accessibilityRole="header" accessibilityLanguage={meaning ? 'ku' : undefined}>
             {card.name}
           </Text>
+          {meaning ? <Text style={[styles.from, { color: colors.textSecondary }]}>{meaning}</Text> : null}
           {/* Unnamed when the viewer may not see who sent it (blocked, closed, or hidden from them). */}
           <Text style={[styles.from, { color: colors.textSecondary }]}>{target.fromName ? t('gift.from', { name: target.fromName }) : t('gift.fromMember')}</Text>
           {openError ? (
@@ -250,6 +264,20 @@ export function GiftUnwrap({
                 onPress={thank}
                 style={styles.stretch}
               />
+              {onSendBack ? (
+                <ClayButton
+                  label={t('gift.sendBack')}
+                  icon="gift"
+                  tone="neutral"
+                  variant="outline"
+                  size="large"
+                  onPress={() => {
+                    onClose();
+                    onSendBack();
+                  }}
+                  style={styles.stretch}
+                />
+              ) : null}
             </View>
           )}
           {actionError ? (
@@ -434,6 +462,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fullStage: { flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' },
+  sky: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   stage: { width: '100%', alignItems: 'center', justifyContent: 'center' },
   layer: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   itemImage: {},

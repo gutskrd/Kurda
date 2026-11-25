@@ -122,6 +122,7 @@ export function PrivacyPage(): React.JSX.Element {
       />
       {/* The only way to undo a block: a blocked person is a 404 to you, so no other screen can offer it. */}
       <SettingsRow icon="block" title={t('settings.blocked.title')} onPress={() => navigation.navigate('BlockedUsers')} />
+      <SettingsRow icon="gift" title={t('settings.giftLimit.title')} onPress={page('giftLimit')} />
       <SettingsRow
         icon="trophy"
         title={t('settings.leagues.title')}

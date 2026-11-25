@@ -1,21 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Pressable } from '../theme/Pressable';
 import {
-  DEFAULT_ITEM_FILTER,
   GIFTS_PER_DAY,
   GIFTS_PER_FRIEND_PER_DAY,
   MAX_GIFT_RECIPIENTS,
-  applyItemFilter,
-  categoriesIn,
-  countByCategory,
-  groupByCategory,
-  isFiltered,
-  itemCategory,
+  ZER_ON_SALE,
+  giftLockFor,
+  giftMeaning,
+  giftShelves,
+  type BagEntry,
   type GiftCatalogItem,
   type GiftChatRef,
-  type ItemCategory,
-  type ItemFilter,
+  type GiftConfirmDetails,
+  type GiftGroup,
+  type GiftLock,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
@@ -28,19 +28,19 @@ import { useTheme } from '../theme/ThemeProvider';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
-import { SearchField } from '../theme/SearchField';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { Avatar } from '../profile/Avatar';
 import { restrictionOf } from '../reports/sendErrors';
 import { SendErrorNotice } from '../reports/SendError';
 import { useDirection } from '../reports/direction';
-import { EmptyState } from '../theme/EmptyState';
-import { KIND_LABEL, ZER, kindWithCount, withinBalance } from '../shop/format';
-import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SEARCH_MAX, SortChip, ToggleChip } from '../shop/ItemFilters';
+import { ZER } from '../shop/format';
+import { ItemArt, ToggleChip } from '../shop/ItemFilters';
 import { ZerValue, useZerValue } from '../shop/value';
 import { giftCatalog, newGiftKey, sendGift, type GiftCatalog, type PostTarget, type SentGift } from './api';
 import { Loading } from '../theme/Loading';
 import { pressedDim } from '../theme/motion';
+import type { RootNavigation } from '../navigation/rootStack';
+import { display } from '../theme/fonts';
 
 /** A friend a gift can go to. */
 export interface GiftFriend {
@@ -52,11 +52,13 @@ export interface GiftFriend {
 /**
  * Choosing a gift, the sheet behind a chat's gift button and a post's. In a direct message the friend is already chosen,
  * and on a post its author; in a group it starts with who (only your friends among the members, the server's rule too,
- * with "All my friends here"). Then what: the gift stickers first, then everything on sale, by kind as the shop sorts
- * it, with search, order, "Within my Zêr" and "Hide ones they already have"; each with its price and what it is worth,
- * your Zêr, which recipients already own a unique item, and what you cannot afford. A member's free gifts can pay for
- * a small one. When the rules do not let a gift go yet, one calm line says why instead. Send closes the sheet on the
- * send animation.
+ * with "All my friends here"), unless a gift is being sent back to one of them. Then what: the gift bag first, the small
+ * gifts everyone earns, with how many of each; then the gifts by shelf, cheapest first, each with its Kurmancî name and
+ * what it means in the reader's language, its price and what that is worth, and a lock with the reason where it cannot
+ * go (not enough Zêr, or a safeguard for these recipients). "Get Zêr" shows only while Zêr is on sale and never to
+ * anyone under 18. A member's free gifts can pay for a small one. A big send stops for one more look with its money
+ * amount, sent with the server's token. When the rules do not let a gift go yet, one calm line says why instead. Send
+ * closes the sheet on the send animation.
  */
 export function GiftPickerSheet({
   visible,
@@ -65,6 +67,7 @@ export function GiftPickerSheet({
   friends,
   onClose,
   onSent,
+  initialChosen,
 }: {
   visible: boolean;
   /** the chat the gift is posted in; left out for a gift onto a post */
@@ -75,17 +78,22 @@ export function GiftPickerSheet({
   friends: GiftFriend[];
   onClose: () => void;
   onSent: (result: SentGift, item: GiftCatalogItem, to: GiftFriend[]) => void;
+  /** In a group, the friend a gift is being sent back to, chosen already. */
+  initialChosen?: string[];
 }): React.JSX.Element {
   const { t } = useI18n();
   const group = chat?.kind === 'group';
-  const [step, setStep] = useState<'who' | 'what'>(group ? 'who' : 'what');
-  const [chosen, setChosen] = useState<string[]>(group ? [] : friends.map((f) => f.userId));
+  const preset = group ? (initialChosen ?? []).filter((id) => friends.some((f) => f.userId === id)) : [];
+  const presetKey = preset.join(',');
+  const [step, setStep] = useState<'who' | 'what'>(group && preset.length === 0 ? 'who' : 'what');
+  const [chosen, setChosen] = useState<string[]>(group ? preset : friends.map((f) => f.userId));
 
   useEffect(() => {
     if (!visible) return;
-    setStep(group ? 'who' : 'what');
-    setChosen(group ? [] : friends.map((f) => f.userId));
-  }, [visible, group, friends]);
+    const back = presetKey ? presetKey.split(',') : [];
+    setStep(group && back.length === 0 ? 'who' : 'what');
+    setChosen(group ? back : friends.map((f) => f.userId));
+  }, [visible, group, friends, presetKey]);
 
   const recipients = friends.filter((f) => chosen.includes(f.userId));
   const name = friends[0]?.name ?? '';
@@ -215,6 +223,28 @@ function CheckRow({
   );
 }
 
+/** What is chosen: a gift from the bag, or one paid for in Zêr. */
+interface Choice {
+  item: GiftCatalogItem;
+  fromBag: boolean;
+}
+
+const GROUP_LABEL: Record<GiftGroup, TranslationKey> = {
+  warm: 'gift.group.warm',
+  flowers: 'gift.group.flowers',
+  animals: 'gift.group.animals',
+  music: 'gift.group.music',
+  sky: 'gift.group.sky',
+  boats: 'gift.group.boats',
+  houses: 'gift.group.houses',
+};
+
+/** The second confirmation's details, checked before they are trusted. */
+function confirmDetails(details: unknown): GiftConfirmDetails | null {
+  const d = details as Partial<GiftConfirmDetails> | null;
+  return d && typeof d.confirmToken === 'string' && typeof d.total === 'number' ? (d as GiftConfirmDetails) : null;
+}
+
 function WhatStep({
   chat,
   post,
@@ -234,109 +264,94 @@ function WhatStep({
   const { t, locale } = useI18n();
   const dir = useDirection();
   // Keyed on who, not the array: the parent passes a fresh array every render, and each one would be a new catalogue
-  // request and a reshuffled list.
+  // request.
   const idKey = recipients.map((r) => r.userId).join(',');
   const ids = useMemo(() => (idKey ? idKey.split(',') : []), [idKey]);
   const [catalog, setCatalog] = useState<GiftCatalog | null>(null);
   // A rule that keeps this gift from going is one calm line; only a failure to reach the server offers a retry.
   const [loadError, setLoadError] = useState<{ text: string; rule: boolean } | null>(null);
-  const [picked, setPicked] = useState<GiftCatalogItem | null>(null);
+  const [picked, setPicked] = useState<Choice | null>(null);
   const [busy, setBusy] = useState(false);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [note, setNote] = useState<string | null>(null);
-  // Finding one's way through the catalogue: the shop's kinds, search and orders.
-  const [filter, setFilter] = useState<ItemFilter>(DEFAULT_ITEM_FILTER);
-  const [affordableOnly, setAffordableOnly] = useState(false);
-  const [hideOwned, setHideOwned] = useState(false);
   const [useFree, setUseFree] = useState(false);
+  /** The server asked for the second look at a big gift: what to show, and its token. */
+  const [confirming, setConfirming] = useState<GiftConfirmDetails | null>(null);
   const value = useZerValue();
   // One key per choice, so a retry of the same gift replays it and never pays twice (a fresh key only if the server
   // says this one already named another request).
   const [keyRound, setKeyRound] = useState(0);
-  const key = useMemo(() => newGiftKey(), [picked?.sku, idKey, keyRound]);
+  const key = useMemo(() => newGiftKey(), [picked?.item.sku, picked?.fromBag, idKey, keyRound]);
 
   const load = useCallback(() => {
     setLoadError(null);
     void giftCatalog(client, post ?? ids).then((res) => {
-      if (res.ok) setCatalog(res.data);
-      else setLoadError({ text: giftErrorText(res.error, t), rule: GIFT_RULES.has(res.error.code ?? '') });
+      if (res.ok) {
+        setCatalog(res.data);
+        // a reload after a price change keeps the choice at its new price
+        setPicked((p) => {
+          const fresh = p ? res.data.items.find((i) => i.sku === p.item.sku) : undefined;
+          return p && fresh ? { ...p, item: fresh } : null;
+        });
+      } else setLoadError({ text: giftErrorText(res.error, t), rule: GIFT_RULES.has(res.error.code ?? '') });
     });
   }, [client, ids, post, t]);
 
   useEffect(load, [load]);
 
   // On a post the author is the one recipient, whom the server names in `alreadyOwnedBy`.
-  const owners = useCallback((item: GiftCatalogItem) => (post ? item.alreadyOwnedBy : item.alreadyOwnedBy.filter((id) => ids.includes(id))), [ids, post]);
-  const total = picked ? picked.price * (recipients.length - owners(picked).length) : 0;
-  const affordable = useCallback(
-    (item: GiftCatalogItem) =>
-      catalog ? withinBalance(item, catalog.balance, Math.max(1, recipients.length - owners(item).length)) : false,
-    [catalog, recipients.length, owners],
-  );
+  const owners = useCallback((item: GiftCatalogItem) => (post ? [] : item.alreadyOwnedBy.filter((id) => ids.includes(id))), [ids, post]);
+  const giving = (item: GiftCatalogItem): number => Math.max(1, recipients.length - owners(item).length);
+  const lockOf = (item: GiftCatalogItem): GiftLock | 'funds' | null =>
+    giftLockFor(item, giving(item), catalog?.limits) ?? (catalog && item.price * giving(item) > catalog.balance.zer ? 'funds' : null);
+  const bagCount = (sku: string): number => catalog?.bag?.find((b) => b.sku === sku)?.count ?? 0;
 
-  const all = useMemo(() => catalog?.items ?? [], [catalog]);
-  const kinds = useMemo(() => categoriesIn(all), [all]);
-  const category: ItemCategory | 'all' = filter.category === 'all' || kinds.includes(filter.category) ? filter.category : 'all';
-  // "Hide ones they already have": what every recipient already owns.
-  const keep = useCallback(
-    (item: GiftCatalogItem) =>
-      (!affordableOnly || affordable(item)) && (!hideOwned || owners(item).length < recipients.length),
-    [affordableOnly, affordable, hideOwned, owners, recipients.length],
-  );
-  const counts = useMemo(() => countByCategory(applyItemFilter(all, { ...filter, category: 'all' }, keep)), [all, filter, keep]);
-  const shown = useMemo(() => applyItemFilter(all, { ...filter, category }, keep, locale), [all, filter, category, keep, locale]);
-  const groups = useMemo(() => groupByCategory(shown), [shown]);
-  const filtered = isFiltered({ ...filter, category }) || affordableOnly || hideOwned;
-  const clear = (): void => {
-    setFilter(DEFAULT_ITEM_FILTER);
-    setAffordableOnly(false);
-    setHideOwned(false);
-  };
-  // A choice the filters have hidden stays chosen, and is named by the Send button.
-  const pickedHidden = picked !== null && !shown.some((i) => i.sku === picked.sku);
+  const amount = (n: number): string => formatNumber(n, locale);
+  const priceWords = (item: GiftCatalogItem): string => `${amount(item.price)} ${ZER}, ${value(item.price)}`;
+  const total = picked ? picked.item.price * giving(picked.item) : 0;
   // A member's free gifts pay for a small gift, one a recipient, only when there are enough for everyone it goes to.
-  const giving = picked ? Math.max(1, recipients.length - owners(picked).length) : 1;
-  const canUseFree = picked !== null && picked.freeGiftEligible && (catalog?.freeGifts ?? 0) >= giving;
+  const canUseFree = picked !== null && !picked.fromBag && picked.item.freeGiftEligible && (catalog?.freeGifts ?? 0) >= giving(picked.item);
   const free = useFree && canUseFree;
-  // A new filter shows its results from the top, not from the longer list's scroll position.
-  const scroller = useRef<ScrollView>(null);
-  const filterKey = JSON.stringify([filter, affordableOnly, hideOwned]);
-  const lastFilterKey = useRef(filterKey);
-  useEffect(() => {
-    if (lastFilterKey.current === filterKey) return;
-    lastFilterKey.current = filterKey;
-    scroller.current?.scrollTo({ y: 0, animated: false });
-  }, [filterKey]);
 
-  const send = (): void => {
+  const send = (confirmToken?: string): void => {
     if (!picked || busy) return;
     setBusy(true);
     setSendError(null);
     setNote(null);
     // Given: felt as it goes, and felt as an error if it did not go.
     haptic('tap');
-    const base = { sku: picked.sku, idempotencyKey: key, expectedPrice: picked.price, ...(free ? { useFreeGift: true } : {}) };
-    void sendGift(
-      client,
-      post ? { ...base, post } : { ...base, toUserIds: ids.filter((id) => !owners(picked).includes(id)), chat: chat! },
-    ).then((res) => {
+    const base = {
+      sku: picked.item.sku,
+      idempotencyKey: key,
+      expectedPrice: picked.item.price,
+      ...(picked.fromBag ? { fromBag: true } : free ? { useFreeGift: true } : {}),
+      ...(confirmToken ? { confirmToken } : {}),
+    };
+    void sendGift(client, post ? { ...base, post } : { ...base, toUserIds: ids.filter((id) => !owners(picked.item).includes(id)), chat: chat! }).then((res) => {
       setBusy(false);
       if (res.ok) {
+        setConfirming(null);
         if (res.data.sent.length === 0) {
           // Nobody could be given it: say why here rather than animate a gift that went nowhere.
           setNote(skippedText(res.data.skipped, recipients, t));
           return;
         }
-        onSent(res.data, picked, recipients.filter((r) => res.data.sent.includes(r.userId)));
+        onSent(res.data, picked.item, recipients.filter((r) => res.data.sent.includes(r.userId)));
         return;
       }
+      const asked = res.error.code === 'GIFT_NEEDS_CONFIRM' ? confirmDetails(res.error.details) : null;
+      if (asked) {
+        setConfirming(asked);
+        return;
+      }
+      setConfirming(null);
       haptic('error');
-      // What is on offer changed while the sheet was open (a new price, a Newroz item gone): say so and show the
-      // catalogue as it is now.
+      // What is on offer changed while the sheet was open (a new price, a Newroz gift gone, the bag emptied): say so and
+      // show the catalogue as it is now.
       const code = res.error.code;
-      if (code === 'PRICE_CHANGED' || (code && GONE.has(code))) {
-        setPicked(null);
-        setNote(code === 'PRICE_CHANGED' ? t('shop.priceChangedBody') : t('gift.picker.unavailable'));
+      if (code === 'PRICE_CHANGED' || code === 'BAG_EMPTY' || (code && GONE.has(code))) {
+        if (code !== 'BAG_EMPTY') setPicked(null);
+        setNote(code === 'PRICE_CHANGED' ? t('shop.priceChangedBody') : giftErrorText(res.error, t));
         load();
         return;
       }
@@ -373,70 +388,26 @@ function WhatStep({
     );
   }
 
-  // Every amount is grouped and in the reader's own digits, as in the shop.
-  const amount = (n: number): string => formatNumber(n, locale);
-  const priceWords = (item: GiftCatalogItem): string => `${amount(item.price)} ${ZER}, ${value(item.price)}`;
-
-  const tile = (item: GiftCatalogItem): React.JSX.Element => {
-    const own = owners(item);
-    const everyone = own.length >= recipients.length;
-    const canPay = affordable(item) || (item.freeGiftEligible && catalog.freeGifts >= Math.max(1, recipients.length - own.length));
-    const disabled = everyone || !canPay;
-    const selected = picked?.sku === item.sku;
-    const wide = itemCategory(item.category) === 'background';
-    const ownedLine = everyone
-      ? recipients.length > 1
-        ? t('gift.picker.allHaveIt')
-        : t('gift.picker.hasIt')
-      : own.length > 0
-        ? t('gift.picker.someHaveIt', { count: own.length })
-        : null;
+  if (confirming && picked) {
     return (
-      <Pressable
-        key={item.sku}
-        onPress={() => setPicked(item)}
-        disabled={disabled}
-        accessibilityRole="radio"
-        accessibilityState={{ selected, disabled }}
-        aria-checked={selected}
-        aria-disabled={disabled}
-        accessibilityLabel={[item.name, priceWords(item), ownedLine, !canPay && !everyone ? t('gift.picker.cantAfford') : null]
-          .filter(Boolean)
-          .join(', ')}
-        style={({ pressed }) => [
-          styles.item,
-          {
-            backgroundColor: colors.controlTrack,
-            borderColor: selected ? colors.gold : 'transparent',
-            opacity: disabled ? 0.45 : pressed ? pressedDim : 1,
-          },
-        ]}
-      >
-        {/* A background as its 16:9 picture; an icon, and the art-less tag, on a square. */}
-        <View style={[styles.itemArt, wide ? null : styles.itemArtSquare]}>
-          <ItemArt category={item.category} path={item.assetUrl} width={wide ? undefined : 64} />
-          {item.tier !== 'common' ? (
-            <View style={[styles.tier, dir.row === 'row-reverse' ? styles.tierLeft : styles.tierRight, { backgroundColor: colors.gold }]}>
-              <Text style={[styles.tierText, { color: colors.textOnGold }]}>{t(TIER_LABEL[item.tier])}</Text>
-            </View>
-          ) : null}
-        </View>
-        {/* A Kurmancî name, read in its own direction whatever the app language. */}
-        <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
-          {item.name}
-        </Text>
-        <View style={[styles.priceRow, { flexDirection: dir.row }]}>
-          <Icon name="coin" size={14} color={colors.gold} />
-          <Text style={[styles.price, { color: colors.textPrimary }]}>{amount(item.price)}</Text>
-        </View>
-        <ZerValue zer={item.price} style={dir.text} />
-        {ownedLine ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{ownedLine}</Text> : null}
-        {!canPay && !everyone ? (
-          <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{t('gift.picker.cantAfford')}</Text>
-        ) : null}
-      </Pressable>
+      <BigGiftConfirm
+        item={picked.item}
+        names={recipients.filter((r) => !owners(picked.item).includes(r.userId)).map((r) => r.name)}
+        details={confirming}
+        busy={busy}
+        note={note}
+        onConfirm={() => send(confirming.confirmToken)}
+        onBack={() => {
+          setConfirming(null);
+          setNote(null);
+        }}
+      />
     );
-  };
+  }
+
+  const items = catalog.items;
+  const bag = (catalog.bag ?? []).filter((b) => b.count > 0 && items.some((i) => i.sku === b.sku));
+  const nudges = ZER_ON_SALE && catalog.nudges === true;
 
   return (
     <>
@@ -454,53 +425,63 @@ function WhatStep({
         ) : null}
       </View>
 
-      {/* The search and the kinds stay put while the gifts scroll under them. */}
-      {all.length > 0 ? (
-        <View style={styles.filters}>
-          <SearchField
-            value={filter.query}
-            onChangeText={(query) => setFilter((f) => ({ ...f, query }))}
-            label={t('gift.picker.search')}
-            maxLength={SEARCH_MAX}
-            style={styles.gutter}
-          />
-          <KindChips
-            options={(['all', ...kinds] as const).map((k) => ({ key: k, label: t(KIND_LABEL[k]), count: counts[k], a11y: kindWithCount(t, k, counts[k]) }))}
-            value={category}
-            onChange={(next) => setFilter((f) => ({ ...f, category: next }))}
-            label={t('shop.kind.label')}
-            inset={layout.gutter}
-          />
-        </View>
-      ) : null}
-
-      <SheetScrollView ref={scroller} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
-        {all.length === 0 ? (
+      <SheetScrollView contentContainerStyle={styles.scroll}>
+        {items.length === 0 ? (
           <Text style={[styles.note, styles.gutter, dir.text, { color: colors.textSecondary }]}>{t('gift.picker.empty')}</Text>
         ) : (
           <>
-            <OptionRow inset={layout.gutter}>
-              <SortChip value={filter.sort} onChange={(sort) => setFilter((f) => ({ ...f, sort }))} />
-              <ToggleChip label={t('shop.filter.withinZer')} value={affordableOnly} onChange={setAffordableOnly} />
-              <ToggleChip label={t('gift.picker.hideOwned')} value={hideOwned} onChange={setHideOwned} />
-            </OptionRow>
-            {/* The All chip says how many there are; narrowed, the count and the way back are worth a line. */}
-            {filtered && shown.length > 0 ? (
-              <View style={styles.gutter}>
-                <ResultsLine count={shown.length} onClear={clear} />
-              </View>
+            {catalog.limits?.left != null ? (
+              <Text style={[styles.note, styles.gutter, dir.text, { color: colors.textSecondary }]}>{t('gift.limit.leftLine', { zer: amount(catalog.limits.left) })}</Text>
             ) : null}
-            {shown.length === 0 ? (
-              <EmptyState title={t('shop.noMatches.title')} body={t('shop.noMatches.body')} action={{ label: t('shop.filter.clear'), onPress: clear }} />
-            ) : (
-              groups.map((group) => (
-                <View key={group.category} style={styles.group}>
-                  {/* Under All, each kind under its own heading; one kind needs none, since its chip says it. */}
-                  {category === 'all' ? <KindHeading kind={group.category} count={group.items.length} style={styles.gutter} /> : null}
-                  <View style={[styles.grid, { flexDirection: dir.row }]}>{group.items.map(tile)}</View>
+            <View style={[styles.bag, { borderColor: colors.separator, backgroundColor: colors.controlTrack }]} testID="gift-bag">
+              <Text style={[styles.heading, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
+                {t('gift.bag.title')}
+              </Text>
+              {bag.length === 0 ? (
+                <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{t('gift.bag.empty')}</Text>
+              ) : (
+                <View style={[styles.grid, styles.gridInset, { flexDirection: dir.row }]}>
+                  {bag.map((entry) => {
+                    const item = items.find((i) => i.sku === entry.sku)!;
+                    return (
+                      <BagTile
+                        key={entry.sku}
+                        entry={entry}
+                        meaning={giftMeaning(entry.sku, locale)}
+                        enough={bagCount(entry.sku) >= giving(item)}
+                        selected={picked?.fromBag === true && picked.item.sku === entry.sku}
+                        onPress={() => setPicked({ item, fromBag: true })}
+                      />
+                    );
+                  })}
                 </View>
-              ))
-            )}
+              )}
+            </View>
+            {giftShelves(items).map((shelf) => (
+              <View key={shelf.group} style={styles.group}>
+                <Text style={[styles.heading, styles.gutter, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
+                  {t(GROUP_LABEL[shelf.group])}
+                </Text>
+                <View style={[styles.grid, { flexDirection: dir.row }]}>
+                  {shelf.items.map((item) => (
+                    <GiftTile
+                      key={item.sku}
+                      item={item}
+                      meaning={giftMeaning(item.sku, locale)}
+                      lock={lockOf(item)}
+                      maxPrice={catalog.limits?.maxPrice ?? null}
+                      owned={owners(item).length}
+                      recipients={recipients.length}
+                      selected={picked?.fromBag === false && picked.item.sku === item.sku}
+                      priceWords={priceWords(item)}
+                      nudges={nudges}
+                      onPress={() => setPicked({ item, fromBag: false })}
+                      onGetZer={onClose}
+                    />
+                  ))}
+                </View>
+              </View>
+            ))}
           </>
         )}
       </SheetScrollView>
@@ -511,16 +492,6 @@ function WhatStep({
           <Text style={[styles.note, styles.center, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
             {note}
           </Text>
-        ) : null}
-        {picked && pickedHidden ? (
-          <View style={[styles.selected, { flexDirection: dir.row }]} accessible accessibilityLabel={`${t('gift.picker.selected', { name: picked.name })}, ${priceWords(picked)}`}>
-            <ItemArt category={picked.category} path={picked.assetUrl} width={itemCategory(picked.category) === 'background' ? 40 : 24} />
-            <Text style={[styles.selectedText, { color: colors.textPrimary }]} numberOfLines={1}>
-              {t('gift.picker.selected', { name: picked.name })}
-            </Text>
-            <Icon name="coin" size={14} color={colors.gold} />
-            <Text style={[styles.price, { color: colors.textPrimary }]}>{amount(picked.price)}</Text>
-          </View>
         ) : null}
         {canUseFree ? (
           <View style={[styles.freeRow, { flexDirection: dir.row }]}>
@@ -533,28 +504,228 @@ function WhatStep({
         <ClayButton
           label={
             picked
-              ? free
-                ? t('gift.picker.sendFree')
-                : recipients.length > 1
-                  ? `${t('gift.picker.sendTotal', { total: amount(total), currency: ZER })} · ${value(total)}`
-                  : t('gift.picker.send')
+              ? picked.fromBag
+                ? t('gift.picker.sendFromBag')
+                : free
+                  ? t('gift.picker.sendFree')
+                  : recipients.length > 1
+                    ? `${t('gift.picker.sendTotal', { total: amount(total), currency: ZER })} · ${value(total)}`
+                    : t('gift.picker.send')
               : t('gift.picker.pick')
           }
           icon="gift"
           tone="primary"
           size="large"
           busy={busy}
-          disabled={!picked}
-          onPress={send}
+          disabled={!picked || (!picked.fromBag && !free && lockOf(picked.item) !== null)}
+          onPress={() => send()}
         />
       </View>
     </>
   );
 }
 
-const TIER_LABEL: Record<'rare' | 'legendary', TranslationKey> = {
+/** One kind of gift in the bag: free to give, with how many are left. */
+function BagTile({
+  entry,
+  meaning,
+  enough,
+  selected,
+  onPress,
+}: {
+  entry: BagEntry;
+  meaning: string | null;
+  enough: boolean;
+  selected: boolean;
+  onPress: () => void;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const dir = useDirection();
+  const count = t('gift.bag.count', { count: formatNumber(entry.count, locale) });
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!enough}
+      accessibilityRole="radio"
+      accessibilityState={{ selected, disabled: !enough }}
+      aria-checked={selected}
+      aria-disabled={!enough}
+      accessibilityLabel={[entry.name, meaning, count, t('gift.bag.free')].filter(Boolean).join(', ')}
+      style={({ pressed }) => [
+        styles.item,
+        { backgroundColor: colors.background, borderColor: selected ? colors.gold : 'transparent', opacity: !enough ? 0.45 : pressed ? pressedDim : 1 },
+      ]}
+    >
+      <View style={[styles.itemArt, styles.itemArtSquare]}>
+        <ItemArt category="gift" path={entry.assetUrl} width={64} />
+      </View>
+      <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={2} accessibilityLanguage="ku">
+        {entry.name}
+      </Text>
+      {meaning ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{meaning}</Text> : null}
+      <Text style={[styles.price, dir.text, { color: colors.textPrimary }]}>{count}</Text>
+      {!enough ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{t('gift.bag.notEnough')}</Text> : null}
+    </Pressable>
+  );
+}
+
+/** A gift on a shelf: its Kurmancî name and meaning, its price and worth, and a lock with the reason when it cannot go. */
+function GiftTile({
+  item,
+  meaning,
+  lock,
+  maxPrice,
+  owned,
+  recipients,
+  selected,
+  priceWords,
+  nudges,
+  onPress,
+  onGetZer,
+}: {
+  item: GiftCatalogItem;
+  meaning: string | null;
+  lock: GiftLock | 'funds' | null;
+  maxPrice: number | null;
+  owned: number;
+  recipients: number;
+  selected: boolean;
+  priceWords: string;
+  /** whether a "Get Zêr" may be offered: Zêr on sale, and a known adult */
+  nudges: boolean;
+  onPress: () => void;
+  onGetZer: () => void;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const dir = useDirection();
+  const everyone = owned >= recipients;
+  // the safeguards rule it out; one beyond the balance alone can still be looked at, and the Send button says so
+  const ruled = everyone || lock === 'over_limit' || lock === 'spend_limit';
+  const why =
+    lock === 'over_limit'
+      ? t('gift.lock.overLimit', { zer: formatNumber(maxPrice ?? 0, locale) })
+      : lock === 'spend_limit'
+        ? t('gift.lock.spendLimit')
+        : lock === 'funds'
+          ? t('gift.lock.funds')
+          : null;
+  const ownedLine = everyone ? (recipients > 1 ? t('gift.picker.allHaveIt') : t('gift.picker.hasIt')) : owned > 0 ? t('gift.picker.someHaveIt', { count: owned }) : null;
+  return (
+    <View style={styles.cell}>
+      <Pressable
+        onPress={onPress}
+        disabled={ruled}
+        accessibilityRole="radio"
+        accessibilityState={{ selected, disabled: ruled }}
+        aria-checked={selected}
+        aria-disabled={ruled}
+        accessibilityLabel={[item.name, meaning, priceWords, why, ownedLine].filter(Boolean).join(', ')}
+        style={({ pressed }) => [
+          styles.item,
+          { backgroundColor: colors.controlTrack, borderColor: selected ? colors.gold : 'transparent', opacity: ruled ? 0.45 : pressed ? pressedDim : 1 },
+        ]}
+      >
+        <View style={[styles.itemArt, styles.itemArtSquare]}>
+          <ItemArt category={item.category} path={item.assetUrl} width={64} />
+          {item.tier !== 'common' ? (
+            <View style={[styles.tier, dir.row === 'row-reverse' ? styles.tierLeft : styles.tierRight, { backgroundColor: colors.gold }]}>
+              <Text style={[styles.tierText, { color: colors.textOnGold }]}>{t(TIER_LABEL[item.tier])}</Text>
+            </View>
+          ) : null}
+        </View>
+        {/* A Kurmancî name, read in its own direction whatever the app language. */}
+        <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={2} accessibilityLanguage="ku">
+          {item.name}
+        </Text>
+        {meaning ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{meaning}</Text> : null}
+        <View style={[styles.priceRow, { flexDirection: dir.row }]}>
+          <Icon name={lock ? 'lock' : 'coin'} size={14} color={lock ? colors.textSecondary : colors.gold} />
+          <Text style={[styles.price, { color: colors.textPrimary }]}>{formatNumber(item.price, locale)}</Text>
+        </View>
+        <ZerValue zer={item.price} style={dir.text} />
+        {why ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{why}</Text> : null}
+        {ownedLine ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{ownedLine}</Text> : null}
+      </Pressable>
+      {lock === 'funds' && nudges ? <GetZer onLeave={onGetZer} /> : null}
+    </View>
+  );
+}
+
+/** "Get Zêr", to the shop where Zêr is sold, for a known adult while it is on sale (`ZER_ON_SALE`). */
+function GetZer({ onLeave }: { onLeave: () => void }): React.JSX.Element {
+  const { t } = useI18n();
+  const navigation = useNavigation<RootNavigation>();
+  return (
+    <ClayButton
+      label={t('gift.getZer')}
+      variant="outline"
+      onPress={() => {
+        onLeave();
+        navigation.navigate('Shop');
+      }}
+    />
+  );
+}
+
+/**
+ * The second look at a big gift, asked for by the server: the gift, who it is for, and what it costs in money and in
+ * Zêr, said large, with "Send it" and a plain "Go back" that changes nothing.
+ */
+function BigGiftConfirm({
+  item,
+  names,
+  details,
+  busy,
+  note,
+  onConfirm,
+  onBack,
+}: {
+  item: GiftCatalogItem;
+  names: string[];
+  details: GiftConfirmDetails;
+  busy: boolean;
+  note: string | null;
+  onConfirm: () => void;
+  onBack: () => void;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const value = useZerValue();
+  const dir = useDirection();
+  return (
+    <SheetScrollView contentContainerStyle={[styles.body, styles.confirm]} testID="gift-confirm">
+      <ItemArt category={item.category} path={item.assetUrl} width={120} />
+      <Text style={[styles.confirmTitle, { color: colors.textPrimary }]} accessibilityRole="header">
+        {t('gift.confirm.title')}
+      </Text>
+      <Text style={[styles.note, styles.center, { color: colors.textSecondary }]}>
+        {item.name} · {t('gift.confirm.for', { names: names.join(', ') })}
+      </Text>
+      <Text style={[styles.confirmMoney, { color: colors.textPrimary }]}>{value(details.total)}</Text>
+      <View style={[styles.priceRow, { flexDirection: dir.row }]}>
+        <Icon name="coin" size={14} color={colors.gold} />
+        <Text style={[styles.price, { color: colors.textPrimary }]}>{t('gift.confirm.zer', { zer: formatNumber(details.total, locale) })}</Text>
+      </View>
+      <Text style={[styles.note, styles.center, { color: colors.textSecondary }]}>{t('gift.confirm.note')}</Text>
+      {note ? (
+        <Text style={[styles.note, styles.center, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
+          {note}
+        </Text>
+      ) : null}
+      <View style={styles.confirmActions}>
+        <ClayButton label={t('gift.confirm.send')} icon="gift" tone="primary" size="large" busy={busy} onPress={onConfirm} />
+        <ClayButton label={t('gift.confirm.back')} variant="outline" size="large" disabled={busy} onPress={onBack} />
+      </View>
+    </SheetScrollView>
+  );
+}
+
+const TIER_LABEL: Record<'rare' | 'legendary' | 'grand', TranslationKey> = {
   rare: 'gift.tier.rare',
   legendary: 'gift.tier.legendary',
+  grand: 'gift.tier.grand',
 };
 
 const SKIP_KEY: Record<SentGift['skipped'][number]['reason'], TranslationKey> = {
@@ -584,7 +755,7 @@ const GONE = new Set(['ITEM_UNAVAILABLE', 'NOT_GIFTABLE', 'ITEM_NOT_FOUND']);
  * A refusal from the gift routes in the reader's language: the routes answer in English for developers, and anything
  * unforeseen is "the gift didn't go".
  */
-export function giftErrorText(error: ApiError, t: (key: TranslationKey) => string): string {
+export function giftErrorText(error: ApiError, t: (key: TranslationKey, vars?: Record<string, string | number>) => string): string {
   switch (error.code) {
     case 'NOT_FRIENDS':
       return t('gift.picker.onlyFriends');
@@ -596,6 +767,16 @@ export function giftErrorText(error: ApiError, t: (key: TranslationKey) => strin
     case 'NOT_GIFTABLE':
     case 'ITEM_NOT_FOUND':
       return t('gift.picker.unavailable');
+    case 'BAG_EMPTY':
+      return t('gift.error.bagEmpty');
+    case 'GIFT_OVER_LIMIT': {
+      const max = (error.details as { maxPrice?: number } | undefined)?.maxPrice ?? 0;
+      return t('gift.error.overLimit', { zer: max });
+    }
+    case 'GIFT_SPEND_LIMIT': {
+      const d = (error.details ?? {}) as { left?: number; by?: string };
+      return t(d.by === 'minor_month' ? 'gift.error.monthLimit' : 'gift.error.ownLimit', { zer: d.left ?? 0 });
+    }
     default:
       // Offline, the server down, too many tries: said as everywhere else.
       return error.kind === 'client' ? t('gift.picker.failed') : describeError(error, t);
@@ -624,7 +805,15 @@ const styles = StyleSheet.create({
   group: { gap: spacing.sm, marginTop: spacing.sm },
   // Two columns edge to edge with the leftover width as the gap, so both line up with the header.
   grid: { flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.sm, paddingHorizontal: layout.gutter },
-  item: { width: '48.5%', borderRadius: radii.md, borderWidth: 2, padding: spacing.sm, gap: 4, minHeight: 150 },
+  gridInset: { paddingHorizontal: 0 },
+  cell: { width: '48.5%', gap: 4 },
+  item: { width: '100%', borderRadius: radii.md, borderWidth: 2, padding: spacing.sm, gap: 4, minHeight: 150 },
+  bag: { marginHorizontal: layout.gutter, padding: spacing.sm, borderRadius: radii.lg, borderWidth: 1, borderStyle: 'dashed', gap: spacing.sm },
+  heading: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  confirm: { alignItems: 'center', gap: spacing.sm, paddingTop: spacing.sm },
+  confirmTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  confirmMoney: { ...display(typography.sizes.title), fontVariant: ['tabular-nums'] },
+  confirmActions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.sm },
   itemArt: { alignItems: 'center', justifyContent: 'center' },
   itemArtSquare: { height: 72 },
   selected: { alignItems: 'center', gap: spacing.sm, minHeight: 28 },
