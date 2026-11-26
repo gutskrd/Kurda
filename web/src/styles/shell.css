@@ -1823,7 +1823,8 @@
 
 /* The phone top takes the page's own colour, without a line, with shapes resting on it; it stays put as the page scrolls. */
 .nav-phone {
-  border-bottom-color: transparent;
+  /* no edge at all: a transparent one would still paint the fading background's top again in its strip, a dark line */
+  border-bottom: 0;
   background: var(--app-bg);
 }
 .nav-phone .nav-inner {

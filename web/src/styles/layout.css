@@ -21,7 +21,23 @@
   height: var(--nav-bottom);
   padding-top: env(safe-area-inset-top, 0px);
   background: var(--nav-bg);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid transparent;
+}
+/*
+ * The bar's edge shows only once the page has scrolled under it, fading in over the first few pixels, so it never cuts
+ * across a banner at the top of a page. Where scrolling cannot drive it, the bar has no edge.
+ */
+@supports (animation-timeline: scroll()) {
+  .nav {
+    animation: nav-edge linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 24px;
+  }
+  @keyframes nav-edge {
+    to {
+      border-bottom-color: var(--border);
+    }
+  }
 }
 .nav-inner {
   height: 100%;
