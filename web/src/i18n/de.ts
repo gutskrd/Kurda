@@ -3415,6 +3415,12 @@ export const de: Catalogue = {
   'footer.privacy': 'Datenschutz',
   'footer.terms': 'Nutzungsbedingungen',
   'footer.teach': 'Wie Hevalo lehrt',
+  // what a download button says while the phone apps are not out (landing/AppSoon.tsx)
+  'landing.soon.ios': 'Hevalo für iPhone und iPad',
+  'landing.soon.android': 'Hevalo für Android',
+  'landing.soon.title': 'Kommt sehr bald',
+  'landing.soon.body': 'Die Apps für dein Handy sind unterwegs. Fang heute hier im Browser an, und dasselbe Konto wartet in den Apps auf dich.',
+  'landing.soon.start': 'Im Web starten',
   'landing.hero.title1': 'Kurdisch lernen.',
   'landing.hero.title2': 'Zusammen spielen.',
   'landing.hero.lead': 'Kurze Lektionen, danach Wortspiele, in denen du das gerade Gelernte gegen deine Freunde einsetzt. Wir fangen mit Kurmandschi an.',

@@ -3406,6 +3406,12 @@ export const ar: Catalogue = {
   'footer.privacy': 'الخصوصية',
   'footer.terms': 'الشروط',
   'footer.teach': 'كيف يعلّم Hevalo',
+  // what a download button says while the phone apps are not out (landing/AppSoon.tsx)
+  'landing.soon.ios': 'Hevalo لأجهزة iPhone وiPad',
+  'landing.soon.android': 'Hevalo لأجهزة Android',
+  'landing.soon.title': 'قريبًا جدًا',
+  'landing.soon.body': 'تطبيقات الهاتف في الطريق. ابدأ اليوم هنا في متصفحك، وسينتظرك الحساب نفسه في التطبيقات.',
+  'landing.soon.start': 'ابدأ على الويب',
   'landing.hero.title1': 'تعلّم الكردية.',
   'landing.hero.title2': 'العبوا معًا.',
   'landing.hero.lead': 'دروس قصيرة، ثم ألعاب كلمات تستخدم فيها ما تعلّمته للتوّ ضد أصدقائك. نبدأ بالكرمانجية.',

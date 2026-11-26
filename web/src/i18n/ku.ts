@@ -3418,6 +3418,12 @@ export const ku: Catalogue = {
   'footer.privacy': 'Nihênî',
   'footer.terms': 'Merc',
   'footer.teach': 'Hevalo çawa hîn dike',
+  // what a download button says while the phone apps are not out (landing/AppSoon.tsx)
+  'landing.soon.ios': 'Hevalo ji bo iPhone û iPad',
+  'landing.soon.android': 'Hevalo ji bo Android',
+  'landing.soon.title': 'Pir nêzîk',
+  'landing.soon.body': 'Sepanên telefonê di rê de ne. Îro li vir di geroka xwe de dest pê bike, û heman hesab wê di sepanan de li benda te be.',
+  'landing.soon.start': 'Li ser webê dest pê bike',
   'landing.hero.title1': 'Fêrî kurdî bibe.',
   'landing.hero.title2': 'Bi hev re bilîzin.',
   'landing.hero.lead':

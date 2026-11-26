@@ -3414,6 +3414,12 @@ export const nl: Catalogue = {
   'footer.privacy': 'Privacy',
   'footer.terms': 'Voorwaarden',
   'footer.teach': 'Hoe Hevalo lesgeeft',
+  // what a download button says while the phone apps are not out (landing/AppSoon.tsx)
+  'landing.soon.ios': 'Hevalo voor iPhone en iPad',
+  'landing.soon.android': 'Hevalo voor Android',
+  'landing.soon.title': 'Komt heel binnenkort',
+  'landing.soon.body': 'De apps voor je telefoon zijn onderweg. Begin vandaag hier in je browser, dan wacht hetzelfde account op je in de apps.',
+  'landing.soon.start': 'Begin op het web',
   'landing.hero.title1': 'Leer Koerdisch.',
   'landing.hero.title2': 'Speel samen.',
   'landing.hero.lead': 'Korte lessen, en daarna woordspellen waarin je wat je net hebt geleerd tegen je vrienden inzet. We beginnen met Kurmanci.',

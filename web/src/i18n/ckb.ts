@@ -3420,6 +3420,12 @@ export const ckb: Catalogue = {
   'footer.privacy': 'تایبەتێتی',
   'footer.terms': 'مەرجەکان',
   'footer.teach': 'Hevalo چۆن فێر دەکات',
+  // what a download button says while the phone apps are not out (landing/AppSoon.tsx)
+  'landing.soon.ios': 'Hevalo بۆ iPhone و iPad',
+  'landing.soon.android': 'Hevalo بۆ Android',
+  'landing.soon.title': 'زۆر بەم زووانە',
+  'landing.soon.body': 'ئەپەکانی مۆبایل لە ڕێگادان. ئەمڕۆ لێرە لە وێبگەڕەکەتدا دەست پێبکە، و هەمان هەژمار لە ئەپەکاندا چاوەڕێت دەکات.',
+  'landing.soon.start': 'لەسەر وێب دەست پێبکە',
   'landing.hero.title1': 'فێری کوردی ببە.',
   'landing.hero.title2': 'پێکەوە یاری بکەن.',
   'landing.hero.lead': 'وانەی کورت، پاشان یاریی وشە کە تێیدا ئەوەی تازە فێری بوویت دژی هاوڕێکانت بەکاری دەهێنیت. سەرەتا بە کورمانجی دەست پێ دەکەین.',

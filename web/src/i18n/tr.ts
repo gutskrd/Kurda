@@ -3410,6 +3410,12 @@ export const tr: Catalogue = {
   'footer.privacy': 'Gizlilik',
   'footer.terms': 'Koşullar',
   'footer.teach': 'Hevalo nasıl öğretir',
+  // what a download button says while the phone apps are not out (landing/AppSoon.tsx)
+  'landing.soon.ios': 'iPhone ve iPad için Hevalo',
+  'landing.soon.android': 'Android için Hevalo',
+  'landing.soon.title': 'Çok yakında',
+  'landing.soon.body': 'Telefon uygulamaları yolda. Bugün burada, tarayıcında başla; aynı hesap uygulamalarda da seni bekliyor olacak.',
+  'landing.soon.start': 'Web’de başla',
   'landing.hero.title1': 'Kürtçe öğren.',
   'landing.hero.title2': 'Birlikte oyna.',
   'landing.hero.lead': 'Kısa dersler, ardından yeni öğrendiklerini arkadaşlarına karşı kullandığın kelime oyunları. İşe Kurmanciyle başlıyoruz.',

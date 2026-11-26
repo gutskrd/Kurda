@@ -1,0 +1,296 @@
+/*
+ * The card a download button opens while the phone apps are not out (landing/AppSoon.tsx), and the footer's app entries
+ * that open it. Its own file, since the footer is on every public page. The pigeon's flight and the letter's opening are
+ * timed here; under Reduce Motion the card is simply there, with the pigeon perched and the letter open.
+ */
+
+/* the footer's "iOS (coming soon)" and "Android (coming soon)": its quiet lines, now buttons */
+.footer-soon-button {
+  display: block;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  font-size: var(--text);
+  text-align: start;
+  cursor: pointer;
+}
+.footer-soon-button:hover {
+  color: var(--ink);
+}
+.footer-soon-button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+@media (pointer: coarse) {
+  .footer-soon-button {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0;
+  }
+}
+
+/* ---- the card, portalled to the end of the page ------------------------------ */
+.soon-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(10px) saturate(0.85);
+  backdrop-filter: blur(10px) saturate(0.85);
+  animation: soon-show 280ms ease both;
+}
+.soon-overlay.is-leaving {
+  animation: soon-hide 220ms ease forwards;
+  pointer-events: none;
+}
+.soon-card {
+  position: relative;
+  width: min(100%, 400px);
+  padding: 52px 20px 20px;
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  touch-action: none;
+}
+.soon-grip {
+  position: absolute;
+  top: 10px;
+  left: calc(50% - 20px);
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border-strong);
+}
+@media (hover: hover) and (pointer: fine) {
+  .soon-grip {
+    display: none;
+  }
+}
+.soon-platforms {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.soon-platform {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--ink-4);
+}
+/* the platform that was tapped, in the ink */
+.soon-platform.is-on {
+  background: var(--ink);
+  color: var(--app-bg);
+}
+.soon-letter {
+  margin-top: 18px;
+  padding: 20px 20px 16px;
+  border-radius: 14px;
+  background: var(--soon-paper);
+  color: var(--soon-ink);
+  text-align: start;
+  box-shadow:
+    0 1px 0 var(--soon-edge),
+    0 12px 26px rgba(0, 0, 0, 0.2);
+  transform-origin: 50% 0;
+  animation: soon-unfold 640ms var(--ease-emphasis) 0.15s both;
+}
+.soon-card.has-bird .soon-letter {
+  animation-delay: 1.1s;
+}
+.soon-letter > * {
+  animation: soon-rise 420ms var(--ease-emphasis) both;
+  animation-delay: calc(var(--soon-at, 0.15s) + 0.35s);
+}
+.soon-card.has-bird .soon-letter > * {
+  --soon-at: 1.1s;
+}
+.soon-letter > :nth-child(2) {
+  animation-delay: calc(var(--soon-at, 0.15s) + 0.5s);
+}
+.soon-letter > :nth-child(3) {
+  animation-delay: calc(var(--soon-at, 0.15s) + 0.65s);
+}
+.soon-letter > :nth-child(4) {
+  animation-delay: calc(var(--soon-at, 0.15s) + 0.85s);
+}
+.soon-kicker,
+.soon-sign {
+  color: var(--soon-muted);
+}
+.soon-title {
+  margin-top: 4px;
+  color: inherit;
+  font-size: var(--text-title);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+[dir='rtl'] .soon-title {
+  letter-spacing: normal;
+}
+.soon-body {
+  margin-top: 8px;
+  line-height: 1.55;
+}
+.soon-sign {
+  margin-top: 10px;
+  font-style: italic;
+  text-align: end;
+}
+.soon-actions {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+.soon-card.is-dragged {
+  transition: none;
+}
+/* the pigeon stands on the card's top edge, on the far side from where it flew in */
+.soon-bird {
+  position: absolute;
+  top: calc(var(--soon-bird) * -0.83);
+  inset-inline-end: 24px;
+  width: var(--soon-bird);
+  height: var(--soon-bird);
+  pointer-events: none;
+}
+[dir='rtl'] .soon-bird {
+  transform: scaleX(-1);
+}
+.soon-frame,
+.soon-flight {
+  position: absolute;
+  inset: 0;
+}
+.soon-frame svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.soon-flight {
+  transform-origin: 50% 83%;
+  animation:
+    soon-fly 820ms cubic-bezier(0.3, 0.1, 0.25, 1) 0.15s both,
+    soon-hide 1ms linear 0.97s forwards;
+}
+.soon-flight .is-up {
+  animation: soon-flap 240ms steps(1, end) infinite;
+}
+.soon-flight .is-down {
+  animation: soon-flap 240ms steps(1, end) -120ms infinite;
+}
+.soon-frame.is-holding {
+  animation:
+    soon-show 1ms linear 0.97s both,
+    soon-hide 1ms linear 1.3s forwards;
+}
+.soon-frame.is-perched {
+  animation:
+    soon-show 1ms linear 1.3s both,
+    soon-hide 1ms linear 2s forwards,
+    soon-show 1ms linear 2.6s forwards;
+}
+.soon-frame.is-happy {
+  animation:
+    soon-show 1ms linear 2s both,
+    soon-hide 1ms linear 2.6s forwards;
+}
+.soon-frame.is-blink {
+  opacity: 0;
+  animation: soon-blink 4.6s steps(1, end) 3.6s infinite;
+}
+/* Under Reduce Motion it is simply there: the pigeon perched, the letter open. */
+.soon-overlay.is-still .soon-card *,
+.soon-overlay.is-still {
+  animation-delay: 0s !important;
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+@keyframes soon-show {
+  from {
+    opacity: 0;
+    visibility: visible;
+  }
+  to {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+@keyframes soon-hide {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+@keyframes soon-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes soon-unfold {
+  from {
+    opacity: 0;
+    transform: perspective(700px) rotateX(-72deg) scaleY(0.6);
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes soon-flap {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes soon-fly {
+  from {
+    opacity: 0;
+    transform: translate(170px, -210px) scale(0.4);
+  }
+  20% {
+    opacity: 1;
+  }
+  60% {
+    transform: translate(52px, -84px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes soon-blink {
+  0% {
+    opacity: 0;
+  }
+  96% {
+    opacity: 1;
+  }
+}

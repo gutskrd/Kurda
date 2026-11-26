@@ -3518,6 +3518,12 @@ export const en = {
   'footer.privacy': 'Privacy',
   'footer.terms': 'Terms',
   'footer.teach': 'How Hevalo teaches',
+  // what a download button says while the phone apps are not out (landing/AppSoon.tsx)
+  'landing.soon.ios': 'Hevalo for iPhone and iPad',
+  'landing.soon.android': 'Hevalo for Android',
+  'landing.soon.title': 'Coming very soon',
+  'landing.soon.body': 'The phone apps are on their way. Start here in your browser today, and the same account will be waiting in the apps.',
+  'landing.soon.start': 'Start on the web',
   'landing.hero.title1': 'Learn Kurdish.',
   'landing.hero.title2': 'Play together.',
   'landing.hero.lead': 'Short lessons, then word games where you use what you just learned against your friends. We start with Kurmanji.',
