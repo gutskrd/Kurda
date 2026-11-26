@@ -204,6 +204,7 @@ export * from './win-link.js';
 /** What a win's card says, in the sender's language. */
 export * from './win-words.js';
 export * from './tab-bar-scroll.js';
+export * from './selector-lens.js';
 /** The lesson path a course map is drawn as: the current skill, milestones, unit colours and stop places. */
 export {
   PATH_GEOMETRY,
