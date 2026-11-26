@@ -11,8 +11,9 @@ vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 
-/** A moment of the loop when he is the spinning ring. */
-const RING_AT = Array.from({ length: 200 }, (_, i) => i / 200).find((t) => deerLoopAt(t).open === 1) as number;
+/** Moments of the loop: as he flows into the spinner, and as the spinner. */
+const FLOWING_AT = Array.from({ length: 200 }, (_, i) => i / 200).find((t) => deerLoopAt(t).morph > 0.4) as number;
+const SPINNING_AT = Array.from({ length: 200 }, (_, i) => i / 200).find((t) => deerLoopAt(t).morph === 1) as number;
 
 /** Every timing asked for, with the value it drives, and how many loops were started; none actually runs. */
 function recordMotion(): { timings: { value: Animated.Value; config: Animated.TimingAnimationConfig }[]; loops: number } {
@@ -58,9 +59,12 @@ describe('DeerLoader', () => {
     expect(clock?.config).toMatchObject({ toValue: 1, useNativeDriver: true });
     const path = container.querySelector('path') as SVGPathElement;
     expect(path.getAttribute('d')).toBe(deerMarkPath());
-    // The ring as the ring, and back at the start the deer again.
-    act(() => clock?.value.setValue(RING_AT));
-    expect(path.getAttribute('d')).toBe(deerFormPath(deerLoopAt(RING_AT)));
+    // Flowing out, then the spinner, and back at the start the deer again.
+    for (const at of [FLOWING_AT, SPINNING_AT]) {
+      act(() => clock?.value.setValue(at));
+      expect(path.getAttribute('d')).toBe(deerFormPath(deerLoopAt(at)));
+    }
+    expect(path.getAttribute('d')).not.toBe(deerMarkPath());
     act(() => clock?.value.setValue(1));
     expect(path.getAttribute('d')).toBe(deerMarkPath());
     // Whole turns on, not turned back, so the next loop carries on from here.

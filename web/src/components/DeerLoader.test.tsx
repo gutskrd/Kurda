@@ -5,8 +5,9 @@ import { I18nProvider } from '../i18n/I18nProvider';
 import { DeerLoader } from './DeerLoader';
 import { Loading } from './states';
 
-/** A moment of the loop when he is the spinning ring. */
-const RING_AT = Array.from({ length: 200 }, (_, i) => i / 200).find((t) => deerLoopAt(t).open === 1) as number;
+/** Moments of the loop: as he flows into the spinner, and as the spinner. */
+const FLOWING_AT = Array.from({ length: 200 }, (_, i) => i / 200).find((t) => deerLoopAt(t).morph > 0.4) as number;
+const SPINNING_AT = Array.from({ length: 200 }, (_, i) => i / 200).find((t) => deerLoopAt(t).morph === 1) as number;
 
 /** What `animate` was asked to play, and a clock the test can set. */
 interface Played {
@@ -100,10 +101,13 @@ describe('DeerLoader', () => {
     const { container } = render(<DeerLoader size={120} />);
     const path = container.querySelector('path') as SVGPathElement;
     expect(path.getAttribute('d')).toBe(deerMarkPath());
-    // As the ring, wherever in the loop that is.
-    (played[0] as Played).animation.currentTime = RING_AT * DEER_LOOP_MS;
-    step();
-    expect(path.getAttribute('d')).toBe(deerFormPath(deerLoopAt(RING_AT)));
+    // Flowing out and then as the spinner, wherever in the loop those are.
+    for (const at of [FLOWING_AT, SPINNING_AT]) {
+      (played[0] as Played).animation.currentTime = at * DEER_LOOP_MS;
+      step();
+      expect(path.getAttribute('d')).toBe(deerFormPath(deerLoopAt(at)));
+    }
+    expect(path.getAttribute('d')).not.toBe(deerMarkPath());
     (played[0] as Played).animation.currentTime = DEER_LOOP_MS;
     step();
     expect(path.getAttribute('d')).toBe(deerMarkPath());

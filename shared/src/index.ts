@@ -1022,7 +1022,7 @@ export { HAND_STAMP_CARD, HAND_STAMP_FLIP, HAND_STAMP_VIEW, handStampCardAt, han
 export { HUES, HUE_NAMES, hueSteps, isHueName, type HueName, type HueScheme, type HueSteps } from './hues.js';
 /** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
 export * from './art/fire.js';
-/** Hevalo's mark, the owner's deer looking back, and its loop as the apps' loader: he curls into a ball and spins back out. */
+/** Hevalo's mark, the owner's deer looking back, and its loop as the apps' loader: he flows into a spinner and back. */
 export {
   DEER_BREATH_LOW,
   DEER_BREATH_MS,
@@ -1031,9 +1031,6 @@ export {
   DEER_MARK_FULL_FROM,
   DEER_MARK_VIEW,
   deerBreathAt,
-  deerCurlKeyframes,
-  deerCurlOutline,
-  deerCurlPath,
   deerEyesOpen,
   deerFormKey,
   deerFormOutline,
