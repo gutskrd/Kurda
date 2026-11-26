@@ -17,6 +17,7 @@ import { childPhoneOnly, fromBrowser } from './child-gate.js';
 import type { ChildService } from './children.js';
 import type { FamilyService } from './service.js';
 import type { ChildSessions, SignedIn } from './sessions.js';
+import type { PairingWatch } from './pairing-watch.js';
 
 /**
  * Families and child profiles (family/), all under the caller's own account but the sign-ins:
@@ -35,7 +36,7 @@ import type { ChildSessions, SignedIn } from './sessions.js';
  *   DELETE /me/family/children/:childId                 deleted now, with everything in it
  *   POST   /me/family/children/:childId/export          the child's data, as their parent's download
  *   GET    /me/family/children/:childId/export
- *   POST   /me/family/children/:childId/pairing         six digits for the child's own phone (10 an hour)
+ *   POST   /me/family/children/:childId/pairing         eight digits for the child's own phone (10 an hour)
  *   DELETE /me/family/children/:childId/devices/:id     one of the child's phones signed out
  *   POST   /me/family/children/:childId/switch          the parent's phone becomes the child's, until the PIN (phone only)
  *   POST   /me/family/children/:childId/convert  { email, password, username }   at 13, the teen's own account
@@ -57,7 +58,10 @@ const CODE_LIMITS: RateLimitOptions[] = [
   { max: 10, windowMs: FIFTEEN_MINUTES, per: 'user-or-ip', onStoreDown: 'local', bucket: 'family-code' },
   { max: 20, windowMs: FIFTEEN_MINUTES, per: 'ip', wideNetwork: true, onStoreDown: 'local', bucket: 'family-code' },
 ];
-/** Six digits are a short secret: guessing is held back per network, and still while Redis is down. */
+/**
+ * Eight digits are still a short secret: guessing is held back per network, and still while Redis is down; the failures
+ * from every network together are watched (pairing-watch.ts).
+ */
 const PAIRING_LIMITS: RateLimitOptions[] = [
   { max: 10, windowMs: FIFTEEN_MINUTES, per: 'ip', onStoreDown: 'local', bucket: 'child-pairing' },
   { max: 20, windowMs: FIFTEEN_MINUTES, per: 'ip', wideNetwork: true, onStoreDown: 'local', bucket: 'child-pairing' },
@@ -121,10 +125,12 @@ export interface FamilyRouteDeps {
   children: ChildService;
   sessions: ChildSessions;
   gdpr: GdprService;
+  /** failed pairings counted across every network, which warns when there are many (pairing-watch.ts) */
+  pairingWatch?: PairingWatch;
 }
 
 export function registerFamilyRoutes(app: FastifyInstance, config: AppConfig, deps: FamilyRouteDeps): void {
-  const { families, children, sessions, gdpr } = deps;
+  const { families, children, sessions, gdpr, pairingWatch } = deps;
   const me = (req: FastifyRequest): string => req.user!.id;
 
   app.get('/me/family', { preHandler: requireMember }, async (req) => families.overview(me(req)));
@@ -219,7 +225,10 @@ export function registerFamilyRoutes(app: FastifyInstance, config: AppConfig, de
 
   app.post('/auth/child/pair', { schema: { body: codeBody }, config: { rateLimit: PAIRING_LIMITS } }, async (req) => {
     if (fromBrowser(req, config)) throw childPhoneOnly();
-    const result = await sessions.pair((req.body as z.infer<typeof codeBody>).code, deviceIdOf(req));
+    const result = await sessions.pair((req.body as z.infer<typeof codeBody>).code, deviceIdOf(req)).catch(async (err: unknown) => {
+      if (err instanceof AppError && err.code === 'PAIRING_CODE_INVALID') await pairingWatch?.failed();
+      throw err;
+    });
     await app.securityLog.record('signin.succeeded', { userId: result.user.id, child: true, details: { method: 'child_pairing' } });
     return signedIn(result);
   });

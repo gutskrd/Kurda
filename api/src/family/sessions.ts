@@ -1,6 +1,6 @@
 /**
  * How a child is signed in, on the phone alone: on the parent's own phone by a profile switch, which puts the
- * parent's session away until the family PIN brings it back; or on the child's own phone with a six-digit code the
+ * parent's session away until the family PIN brings it back; or on the child's own phone with an eight-digit code the
  * parent shows, used once within minutes. Every child session is bound to the phone that opened it (auth/service.ts
  * `refresh` refuses it anywhere else) and keeps no address, network or name of the device; the parent sees each phone
  * and can sign it out.

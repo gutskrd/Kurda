@@ -8,6 +8,7 @@ import {
   isValidPin,
   normalizeFamilyCode,
   normalizePairingCode,
+  PAIRING_CODE_LENGTH,
 } from './family.js';
 
 const NOW = new Date(Date.UTC(2026, 10, 25));
@@ -49,11 +50,21 @@ describe('family and pairing codes', () => {
     expect(formatFamilyCode('ABCDEFGH')).toBe('ABCD-EFGH');
   });
 
-  it('reads a pairing code as six digits', () => {
-    expect(normalizePairingCode('123 456')).toBe('123456');
-    expect(normalizePairingCode('12345')).toBeNull();
-    expect(normalizePairingCode('12345a')).toBeNull();
-    expect(formatPairingCode('123456')).toBe('123 456');
+  it('reads a pairing code as eight digits, however it is spaced or pasted', () => {
+    expect(PAIRING_CODE_LENGTH).toBe(8);
+    expect(normalizePairingCode('1234 5678')).toBe('12345678');
+    expect(normalizePairingCode(' 1234-5678\n')).toBe('12345678');
+    expect(normalizePairingCode('123 456')).toBeNull();
+    expect(normalizePairingCode('1234567')).toBeNull();
+    expect(normalizePairingCode('1234567a')).toBeNull();
+    expect(normalizePairingCode('123456789')).toBeNull();
+  });
+
+  it('shows a pairing code in two groups of four, and one being typed as far as it goes', () => {
+    expect(formatPairingCode('12345678')).toBe('1234 5678');
+    expect(formatPairingCode('1234')).toBe('1234');
+    expect(formatPairingCode('12345')).toBe('1234 5');
+    expect(formatPairingCode('')).toBe('');
   });
 
   it('takes a PIN of four to six digits', () => {

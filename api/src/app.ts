@@ -227,6 +227,7 @@ import { FamilyService } from './family/service.js';
 import { ChildService } from './family/children.js';
 import { ChildSessions } from './family/sessions.js';
 import { registerFamilyRoutes } from './family/routes.js';
+import { PairingWatch } from './family/pairing-watch.js';
 import { GdprService } from './gdpr/service.js';
 
 const pkg = JSON.parse(
@@ -749,7 +750,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       log: app.log,
     });
     families.useChildren(childProfiles);
-    registerFamilyRoutes(app, config, { families, children: childProfiles, sessions: new ChildSessions(app.db, config), gdpr: familyGdpr });
+    const pairingWatch = new PairingWatch({ redis: app.hasDecorator('redis') ? app.redis : null, log: app.log, registry: metricsRegistry });
+    registerFamilyRoutes(app, config, { families, children: childProfiles, sessions: new ChildSessions(app.db, config), gdpr: familyGdpr, pairingWatch });
     if (config.NODE_ENV !== 'test') {
       const familyUpkeep = () => void childProfiles.upkeep().catch((err) => app.log.warn({ err }, 'family upkeep failed'));
       familyUpkeep();

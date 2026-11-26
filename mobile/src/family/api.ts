@@ -80,7 +80,7 @@ export interface PurchaseRequest {
   decidedAt: string | null;
 }
 
-/** A code that works once until it runs out: the family's for an adult, or the six digits for a child's phone. */
+/** A code that works once until it runs out: the family's for an adult, or the eight digits for a child's phone. */
 export interface TimedCode {
   code: string;
   expiresAt: string;

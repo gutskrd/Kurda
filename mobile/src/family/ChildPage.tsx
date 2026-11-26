@@ -319,8 +319,8 @@ function ConvertSheet({ visible, childId, name, onClose }: { visible: boolean; c
 export const PAIR_POLL_MS = 4000;
 
 /**
- * Setting up a child's own phone: six digits, large, for ten minutes and once, and what to do on the child's phone.
- * The page watches for a new phone among the child's devices, then says so and goes back to the child's page.
+ * Setting up a child's own phone: eight digits in two groups of four, large, for ten minutes and once, and what to do on
+ * the child's phone. The page watches for a new phone among the child's devices, then says so and goes back to the child's page.
  */
 export function PairingPage({ teenId: childId, onExit }: { teenId: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();

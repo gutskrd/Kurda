@@ -328,11 +328,17 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('families and child profiles (integ
       expect((await call(kid, 'GET', '/me')).json().user).toMatchObject({ kind: 'child', child: { returnable: false } });
       // a code works once
       const code = (await call(parent, 'POST', `/me/family/children/${child.userId}/pairing`)).json().code as string;
-      expect(code).toMatch(/^\d{6}$/);
+      expect(code).toMatch(/^\d{8}$/);
       const first = await app.inject({ method: 'POST', url: '/auth/child/pair', payload: { code }, headers: { 'x-device-id': 'kid-a' }, remoteAddress: ip() });
       expect(first.statusCode).toBe(200);
       const twice = await app.inject({ method: 'POST', url: '/auth/child/pair', payload: { code }, headers: { 'x-device-id': 'kid-b' }, remoteAddress: ip() });
       expect(twice.json()).toMatchObject({ code: 'PAIRING_CODE_INVALID' });
+      // a code that does not work is counted with every other network's, for the warning when there are many
+      const failed = async () => Number(/^child_pairings_failed_total (\d+)$/m.exec((await app.inject({ method: 'GET', url: '/metrics' })).body)?.[1] ?? NaN);
+      const before = await failed();
+      const typed = await app.inject({ method: 'POST', url: '/auth/child/pair', payload: { code: '0000 0000' }, headers: { 'x-device-id': 'kid-c' }, remoteAddress: ip() });
+      expect(typed.json()).toMatchObject({ code: 'PAIRING_CODE_INVALID' });
+      expect(await failed()).toBe(before + 1);
       // the session refreshes only on its own phone, and keeps no name of it
       const elsewhere = await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken: kid.refresh }, headers: { 'x-device-id': 'another-phone' }, remoteAddress: ip() });
       expect(elsewhere.statusCode).toBe(401);
