@@ -4,14 +4,20 @@
  * Rojda", with its Kurmancî name and meaning below and Say thanks, Send one back (a known adult's only) and Close (a
  * gift on a post, with no chat to thank in, has Close alone). Its
  * tier sets how strong the light is, and a grand gift keeps its night sky. While the server opens it the wrapped box
- * waits in the same light, for the tier's unwrap time; a tap or Skip goes straight to the gift. The rays turn by a CSS
- * transform, so nothing is drawn again frame by frame; under Reduce Motion the light is there and nothing moves.
+ * unwraps in the same light for the tier's unwrap time (shared gift-box-motion.ts): it shakes, the lid and bow pop off,
+ * the light bursts out and the rays come up with it, and the open box gives way as the gift springs out. A tap or Skip
+ * goes straight to the gift. Everything moves by transform, so nothing is drawn again frame by frame; under Reduce
+ * Motion the box and the light stand still and the gift fades in.
  *
  * The sender's own (`GiftSentMoment`) is the same light, smaller and brief, as a gift goes.
  */
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
+  GIFT_BOX_EXIT_MS,
+  GIFT_BOX_SEND_ITEM,
+  GIFT_BOX_SEND_MS,
+  GIFT_BOX_UNWRAPS,
   GIFT_MOMENT_LOOK,
   GIFT_MOMENT_MS,
   GIFT_SENT_FADE_MS,
@@ -168,6 +174,24 @@ export function GiftMoment({
   // Escape skips while the box waits and closes once the gift is out, read through a ref so the listener is set up once.
   const escape = useRef(onSkip);
   escape.current = revealed ? onClose : onSkip;
+  // The rays come up as the light bursts out of the box, and the open box stays a moment as the gift springs out of it.
+  const [burst, setBurst] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  useEffect(() => {
+    if (revealed || still) return;
+    const id = window.setTimeout(() => setBurst(true), GIFT_BOX_UNWRAPS[card.tier].burstMs);
+    return () => window.clearTimeout(id);
+  }, [revealed, still, card.tier]);
+  const [wasRevealed, setWasRevealed] = useState(revealed);
+  if (wasRevealed !== revealed) {
+    setWasRevealed(revealed);
+    setLeaving(revealed && !still);
+  }
+  useEffect(() => {
+    if (!leaving) return;
+    const id = window.setTimeout(() => setLeaving(false), GIFT_BOX_EXIT_MS);
+    return () => window.clearTimeout(id);
+  }, [leaving]);
 
   useEffect(() => {
     restore.current = document.activeElement as HTMLElement | null;
@@ -222,16 +246,17 @@ export function GiftMoment({
         <h2 className="gift-moment-title" ref={titleRef} tabIndex={-1}>
           {title}
         </h2>
-        <GiftLight sku={card.sku} look={look} art={art} lit={revealed} still={still}>
+        <GiftLight sku={card.sku} look={look} art={art} lit={revealed || burst} still={still}>
           {revealed ? (
             <div className="celebrate is-playing gift-moment-art">
               <CelebrationArt flecks={look.burst} seed={giftSeed(card.sku)} reach={art} still={still}>
                 <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={art} />
               </CelebrationArt>
             </div>
-          ) : (
-            <GiftBox tier={card.tier} size={Math.round(art * 0.82)} className="gift-moment-box" />
-          )}
+          ) : null}
+          {!revealed || leaving ? (
+            <GiftBox tier={card.tier} size={Math.round(art * 1.05)} motion={still ? 'still' : revealed ? 'exit' : 'unwrap'} className="gift-moment-box" />
+          ) : null}
         </GiftLight>
         {revealed ? (
           <div className="gift-moment-words">
@@ -305,9 +330,10 @@ export function GiftMoment({
 }
 
 /**
- * The sender's moment as a gift goes: the gift in the same light, smaller, with who it went to, gone after a moment or a
- * tap. Under Reduce Motion it is shown still and goes as soon. A chat announces its sends itself, so there this says
- * nothing to a screen reader; elsewhere (`announce`) its line is said once.
+ * The sender's moment as a gift goes: the gift in the same light, smaller, with who it went to, then wrapped in its
+ * tier's box, tied and sent off (shared `GIFT_BOX_SEND`), gone after a moment or a tap. Under Reduce Motion the gift is
+ * shown still and goes as soon. A chat announces its sends itself, so there this says nothing to a screen reader;
+ * elsewhere (`announce`) its line is said once.
  */
 export function GiftSentMoment({
   item,
@@ -315,7 +341,7 @@ export function GiftSentMoment({
   announce = false,
   onDone,
 }: {
-  item: { sku: string; assetUrl: string | null; category: string };
+  item: { sku: string; assetUrl: string | null; category: string; tier?: GiftTier };
   /** "Sent to Rojda." */
   line: string;
   announce?: boolean;
@@ -325,15 +351,30 @@ export function GiftSentMoment({
   const done = useRef(onDone);
   done.current = onDone;
   const [leaving, setLeaving] = useState(false);
+  const wrapped = !still && item.tier !== undefined;
+  const art = useRef<HTMLSpanElement>(null);
+
+  // The gift goes into its box as the box lands over it, on the box's own clock.
+  useLayoutEffect(() => {
+    const el = art.current;
+    if (!wrapped || !el || typeof el.animate !== 'function') return;
+    const run = el.animate(
+      GIFT_BOX_SEND_ITEM.map((k) => ({ offset: k.at, opacity: k.o, transform: `scale(${k.sx}, ${k.sy})` })),
+      { duration: GIFT_BOX_SEND_MS, fill: 'both' },
+    );
+    return () => run.cancel();
+  }, [wrapped]);
 
   useEffect(() => {
-    const leave = window.setTimeout(() => setLeaving(true), GIFT_SENT_MS);
-    const gone = window.setTimeout(() => done.current(), GIFT_SENT_MS + (still ? 0 : GIFT_SENT_FADE_MS));
+    // A wrapped gift stays until its box has flown, as on the phone, which fades in first.
+    const stay = wrapped ? GIFT_BOX_SEND_MS : GIFT_SENT_MS;
+    const leave = window.setTimeout(() => setLeaving(true), stay);
+    const gone = window.setTimeout(() => done.current(), stay + (still ? 0 : GIFT_SENT_FADE_MS));
     return () => {
       window.clearTimeout(leave);
       window.clearTimeout(gone);
     };
-  }, [still]);
+  }, [still, wrapped]);
 
   return createPortal(
     <div
@@ -344,8 +385,11 @@ export function GiftSentMoment({
     >
       <GiftLight sku={item.sku} look={GIFT_SENT_LOOK} art={96} lit still={still}>
         <span className="gift-sent-art">
-          <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={96} />
+          <span className="gift-sent-item" ref={art}>
+            <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={96} />
+          </span>
         </span>
+        {wrapped && item.tier ? <GiftBox tier={item.tier} size={120} motion="send" /> : null}
       </GiftLight>
       <p className="gift-sent-line" role={announce ? 'status' : undefined}>
         {line}

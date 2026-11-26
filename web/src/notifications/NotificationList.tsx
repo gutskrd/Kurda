@@ -460,7 +460,7 @@ export function NotePicture({ picture }: { picture: NoticePicture }): React.JSX.
       {svg ? (
         <span className="note-picture-art" dangerouslySetInnerHTML={{ __html: svg }} />
       ) : picture.kind === 'gift' ? (
-        <GiftBox tier="rare" size={34} />
+        <GiftBox tier="rare" size={42} />
       ) : (
         <Fire size={32} level={NOTE_FIRE} still />
       )}

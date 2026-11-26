@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Image, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { AccessibilityInfo, Animated, Image, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable, ReachReset } from '../theme/Pressable';
 import {
+  GIFT_BOX_EXIT_MS,
+  GIFT_BOX_UNWRAPS,
   GIFT_MOMENT_LOOK,
   GIFT_MOMENT_MS,
   GIFT_REDUCED_MOTION_MS,
@@ -49,7 +51,9 @@ const ART: Readonly<Record<GiftTier, number>> = { common: 140, rare: 156, legend
 
 /**
  * The moment a gift is opened (shared gift-moment.ts), the same as on the website: the screen dims to night, the
- * wrapped box waits in the gift's own light for its tier's unwrap time (a tap skips it), then the gift springs out
+ * wrapped box unwraps in the gift's own light for its tier's unwrap time (shared gift-box-motion.ts: it shakes, the lid
+ * and bow pop off and the light bursts out, bringing the rays up), a tap skipping it; then the gift springs out of the
+ * open box
  * large on its glow as the rays come up behind it and light sparkles drift, under "Gift from Rojda", with its Kurmancî
  * name and meaning and Say thanks, Send one back (a known adult's only, the parent decides) or Close; a gift on a post,
  * with no chat to thank in, has Close alone (`PostGiftOpen`). The tier sets the
@@ -85,6 +89,7 @@ export function GiftUnwrap({
   const meaning = giftMeaning(card.sku, locale);
   const look = GIFT_MOMENT_LOOK[card.tier];
   const art = ART[card.tier];
+  const box = Math.round(art * 1.05);
   // The moment is night in either scheme.
   const colors = PALETTES.dark;
   const details = useRef(new Animated.Value(0)).current;
@@ -122,11 +127,30 @@ export function GiftUnwrap({
     };
   }, [client, target.giftId, t]);
 
-  // The box waits for the tier's unwrap time, or the short fade under Reduce Motion; a tap goes on at once.
+  // The box unwraps for the tier's unwrap time, or the short fade under Reduce Motion; a tap goes on at once.
   useEffect(() => {
     const wait = setTimeout(() => setRevealed(true), reduce ? GIFT_REDUCED_MOTION_MS : GIFT_UNWRAP_MS[card.tier]);
     return () => clearTimeout(wait);
   }, [card.tier, reduce]);
+
+  // The rays come up as the light bursts out of the box; the open box stays a moment as the gift springs out of it.
+  const [burst, setBurst] = useState(false);
+  useEffect(() => {
+    if (revealed || reduce) return;
+    const at = setTimeout(() => setBurst(true), GIFT_BOX_UNWRAPS[card.tier].burstMs);
+    return () => clearTimeout(at);
+  }, [revealed, reduce, card.tier]);
+  const [leaving, setLeaving] = useState(false);
+  const [wasRevealed, setWasRevealed] = useState(revealed);
+  if (wasRevealed !== revealed) {
+    setWasRevealed(revealed);
+    setLeaving(revealed && !reduce);
+  }
+  useEffect(() => {
+    if (!leaving) return;
+    const gone = setTimeout(() => setLeaving(false), GIFT_BOX_EXIT_MS);
+    return () => clearTimeout(gone);
+  }, [leaving]);
 
   useEffect(() => {
     if (!revealed) return;
@@ -192,8 +216,20 @@ export function GiftUnwrap({
                 accessibilityLabel={revealed ? undefined : t('common.skip')}
                 style={styles.stage}
               >
-                <GiftLight sku={card.sku} look={look} art={art} lit={revealed} still={reduce}>
-                  {revealed ? <Landed card={card} size={art} look={look} gold={colors.gold} /> : <Waiting card={card} size={art * 0.82} still={reduce} gold={colors.gold} />}
+                <GiftLight sku={card.sku} look={look} art={art} lit={revealed || burst} still={reduce}>
+                  <View style={[styles.landed, { width: art, height: art }]}>
+                    {revealed ? <Landed card={card} size={art} look={look} gold={colors.gold} /> : null}
+                    {!revealed || leaving ? (
+                      // larger than the gift's square, since the drawing leaves room round the box, and centred on it
+                      <GiftBox
+                        size={box}
+                        tier={card.tier}
+                        motion={reduce ? 'still' : revealed ? 'exit' : 'unwrap'}
+                        style={[styles.boxStand, { left: (art - box) / 2, top: (art - box) / 2 }]}
+                        testID="gift-box"
+                      />
+                    ) : null}
+                  </View>
                 </GiftLight>
               </Pressable>
 
@@ -310,23 +346,6 @@ export function PostGiftOpen({ giftId, onDone }: { giftId: string; onDone: () =>
   );
 }
 
-/** The wrapped box waiting in the light: it wiggles, something is in there; still under Reduce Motion. */
-function Waiting({ card, size, still, gold }: { card: GiftCard; size: number; still: boolean; gold: string }): React.JSX.Element {
-  const wiggle = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (still) return;
-    const run = Animated.loop(Animated.timing(wiggle, { toValue: 1, duration: 1100, easing: Easing.inOut(Easing.sin), useNativeDriver: true }));
-    run.start();
-    return () => run.stop();
-  }, [still, wiggle]);
-  const rotate = wiggle.interpolate({ inputRange: [0, 0.2, 0.4, 0.6, 1], outputRange: ['0deg', '-5deg', '4deg', '0deg', '0deg'] });
-  return (
-    <Animated.View style={still ? undefined : { transform: [{ rotate }] }} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <GiftBox size={size} tier={card.tier} gold={gold} />
-    </Animated.View>
-  );
-}
-
 /**
  * The gift out of its box: it springs in on the app's celebration (theme/CelebrationParts.tsx), with the ring widening
  * once and, for a rare or grand gift, flecks of its colour thrown out (shared `BURST`), felt as it lands.
@@ -363,6 +382,7 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.title), textAlign: 'center' },
   stage: { alignItems: 'center', justifyContent: 'center' },
   landed: { alignItems: 'center', justifyContent: 'center' },
+  boxStand: { position: 'absolute' },
   itemFallback: { borderRadius: radii.lg, alignItems: 'center', justifyContent: 'center' },
   details: { width: '100%', alignItems: 'center', gap: spacing.sm },
   line: { fontSize: typography.sizes.text, textAlign: 'center' },
