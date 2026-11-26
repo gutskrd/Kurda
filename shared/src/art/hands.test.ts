@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HAND_PHONE_SCREEN, HAND_PHONE_VIEW, handPhoneSvg } from './hand-phone.js';
-import { HAND_STAMP_CARD, HAND_STAMP_FLIP, HAND_STAMP_VIEW, handStampCardAt, handStampFlip, handStampPointsAt, handStampShapesAt, handStampSvg } from './hand-stamp.js';
+import { HAND_STAMP_CARD, HAND_STAMP_FLIP, HAND_STAMP_VIEW, handStampBonesAt, handStampCardAt, handStampFlip, handStampPointsAt, handStampShapesAt, handStampSvg } from './hand-stamp.js';
 import type { Pt } from './svg.js';
 import { SKIN } from './hand-paint.js';
 
@@ -167,7 +167,7 @@ describe('the turn of the stamp in the hand', () => {
     }
   });
 
-  it('moves every point of every shape smoothly: nothing jumps from one moment to the next, nor pulls away from its neighbours', () => {
+  it('moves every point of every shape smoothly: nothing jumps from one moment to the next', () => {
     const gap = (pts: readonly Pt[], k: number): number => Math.hypot(pts[k]![0] - pts[(k + 1) % pts.length]![0], pts[k]![1] - pts[(k + 1) % pts.length]![1]);
     const rest = handStampPointsAt(0);
     const widest = Object.fromEntries(Object.entries(rest).map(([name, pts]) => [name, Math.max(...pts.map((_, k) => gap(pts, k)))]));
@@ -177,39 +177,85 @@ describe('the turn of the stamp in the hand', () => {
       for (const [name, pts] of Object.entries(now)) {
         pts.forEach(([x, y], k) => {
           const [[px, py], [bx, by]] = [last[name]![k]!, before[name]![k]!];
-          // the fastest of the turn, the web closing as the index finger swings back, moves a little over four frame units in 5 ms
-          expect(Math.hypot(x - px, y - py), `${name}[${k}] at ${ms} ms`).toBeLessThan(4.5);
+          // the fastest of the turn, the thumb swinging as the stamp passes edge-on, moves a point under five frame units in 5 ms
+          expect(Math.hypot(x - px, y - py), `${name}[${k}] at ${ms} ms`).toBeLessThan(5.5);
           // and its speed only ever changes gently, so nothing snaps from one moment to the next
-          expect(Math.hypot(x - 2 * px + bx, y - 2 * py + by), `${name}[${k}] at ${ms} ms`).toBeLessThan(0.5);
-          if (pts.length > 1) expect(gap(pts, k), `${name}[${k}] at ${ms} ms`).toBeLessThan(1.75 * widest[name]!);
+          expect(Math.hypot(x - 2 * px + bx, y - 2 * py + by), `${name}[${k}] at ${ms} ms`).toBeLessThan(1);
+          // nor does any point pull far from its neighbours (the wedges stretch most, as the middle finger reaches out)
+          if (pts.length > 1) expect(gap(pts, k), `${name}[${k}] at ${ms} ms`).toBeLessThan(3 * widest[name]!);
         });
       }
       [before, last] = [last, now];
     }
   });
 
-  it('keeps the thumb over the stamp’s foot all through the turn, pinching it there', () => {
-    const c = HAND_STAMP_CARD;
+  it('bends every joint only as a hand does: the fingers curl and never bend back, and the thumb barely bends sideways', () => {
+    const way = (p: Pt, q: Pt): number => (Math.atan2(q[1] - p[1], q[0] - p[0]) * 180) / Math.PI;
+    const bend = (p: Pt, q: Pt, r: Pt): number => ((((way(q, r) - way(p, q)) % 360) + 540) % 360) - 180;
     for (const ms of MOMENTS) {
-      const s = handStampCardAt(ms);
-      const thumb = handStampPointsAt(ms).thumb!;
-      const a = (s.lean * Math.PI) / 180;
-      const half = (c.w / 2) * Math.abs(Math.cos((s.turn * Math.PI) / 180));
-      const corner = (x: number, y: number): Pt => [s.cx + x * Math.cos(a) - y * Math.sin(a), s.cy + x * Math.sin(a) + y * Math.cos(a)];
-      const [l, r] = [corner(-half, c.h / 2), corner(half, c.h / 2)];
-      const touches =
-        inside(l, thumb) ||
-        inside(r, thumb) ||
-        thumb.some((p, i) => crosses(p, thumb[(i + 1) % thumb.length]!, l, r)) ||
-        inside([(l[0] + r[0]) / 2, (l[1] + r[1]) / 2], thumb);
-      expect(touches, `the stamp's foot clear of the thumb at ${ms} ms`).toBe(true);
-      // and the pad itself is on the stamp, a little above its foot
-      const pad = handStampPointsAt(ms).pad![0]!;
-      const [dx, dy] = [pad[0] - s.cx, pad[1] - s.cy];
-      const [lx, ly] = [dx * Math.cos(a) + dy * Math.sin(a), -dx * Math.sin(a) + dy * Math.cos(a)];
-      expect(Math.abs(lx)).toBeLessThanOrEqual(half + 0.5);
-      expect(Math.abs(ly)).toBeLessThan(c.h / 2 - 1);
+      const { thumb, index, reaching } = handStampBonesAt(ms).joints;
+      // the index finger curls toward the thumb (turning anticlockwise on the screen) at its knuckle and its middle joint
+      for (const k of [1, 2]) {
+        const b = bend(index[k - 1]!, index[k]!, index[k + 1]!);
+        expect(b, `index joint ${k} at ${ms} ms`).toBeLessThanOrEqual(2);
+        expect(b, `index joint ${k} at ${ms} ms`).toBeGreaterThan(-95);
+      }
+      // seen from the nail, the thumb's joint bends toward the palm, so hardly at all across the picture
+      expect(Math.abs(bend(thumb[0]!, thumb[1]!, thumb[2]!)), `thumb at ${ms} ms`).toBeLessThan(12);
+      // the middle finger curls up round the stamp's edge (clockwise on the screen), never back
+      const m = bend(reaching[0]!, reaching[1]!, reaching[2]!);
+      expect(m, `middle finger at ${ms} ms`).toBeGreaterThan(-5);
+      expect(m, `middle finger at ${ms} ms`).toBeLessThan(95);
     }
+  });
+
+  /** The stamp's corners `ms` into a turn, on the frame: its foot's two, then its top's. */
+  const stampAt = (ms: number): Pt[] => {
+    const c = HAND_STAMP_CARD;
+    const s = handStampCardAt(ms);
+    const a = (s.lean * Math.PI) / 180;
+    const half = (c.w / 2) * Math.abs(Math.cos((s.turn * Math.PI) / 180));
+    const corner = (x: number, y: number): Pt => [s.cx + x * Math.cos(a) - y * Math.sin(a), s.cy + x * Math.sin(a) + y * Math.cos(a)];
+    return [corner(-half, c.h / 2), corner(half, c.h / 2), corner(half, -c.h / 2), corner(-half, -c.h / 2)];
+  };
+  const toSegment = ([x, y]: Pt, a: Pt, b: Pt): number => {
+    const [dx, dy] = [b[0] - a[0], b[1] - a[1]];
+    const t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy || 1)));
+    return Math.hypot(x - a[0] - t * dx, y - a[1] - t * dy);
+  };
+  /** How far apart two outlines are, 0 where they overlap. */
+  const apart = (p: readonly Pt[], q: readonly Pt[]): number => {
+    const edges = (r: readonly Pt[]): [Pt, Pt][] => r.map((v, i) => [v, r[(i + 1) % r.length]!]);
+    if (p.some((v) => inside(v, q)) || q.some((v) => inside(v, p)) || edges(p).some(([a, b]) => edges(q).some(([c, d]) => crosses(a, b, c, d)))) return 0;
+    return Math.min(...p.map((v) => Math.min(...edges(q).map(([a, b]) => toSegment(v, a, b)))), ...q.map((v) => Math.min(...edges(p).map(([a, b]) => toSegment(v, a, b)))));
+  };
+
+  it('pinches the stamp’s foot between the thumb in front and the index finger behind, all through the turn', () => {
+    for (const ms of MOMENTS) {
+      const stamp = stampAt(ms);
+      const turn = handStampCardAt(ms).turn;
+      const facing = Math.abs(Math.cos((turn * Math.PI) / 180)) >= 0.5;
+      // the thumb lies over the stamp's foot while its face shows; edge-on, the foot sits in the shadow between thumb and
+      // finger, as close as the reference holds it (about ten frame units)
+      const foot = apart(handStampPointsAt(ms).thumb!, [stamp[0]!, stamp[1]!]);
+      expect(foot, `the stamp's foot ${foot.toFixed(1)} from the thumb at ${ms} ms`).toBeLessThanOrEqual(facing ? 0 : 12);
+      // and while the stamp faces us, turned no more than about 40 degrees, the thumb's pad is on it
+      if (Math.abs(Math.cos((turn * Math.PI) / 180)) >= 0.75) expect(apart([handStampBonesAt(ms).pad], stamp), `the pad off the stamp at ${ms} ms`).toBeLessThan(0.5);
+    }
+  });
+
+  it('keeps the index finger on the stamp’s back, but for the moment the reference’s lets go', () => {
+    // As the reference does, the finger stays where it is while the stamp, held a third turned, turns off it, and a
+    // finger's width opens between them (the reference's widest is 28 frame units); then it comes back to push.
+    const lets = (ms: number): boolean => ms > 240 && ms < 560;
+    let widest = 0;
+    for (const ms of MOMENTS) {
+      const gap = apart(handStampBonesAt(ms).index, stampAt(ms));
+      if (lets(ms)) widest = Math.max(widest, gap);
+      else expect(gap, `the index finger ${gap.toFixed(1)} off the stamp at ${ms} ms`).toBeLessThan(1);
+    }
+    expect(widest).toBeGreaterThan(15);
+    expect(widest).toBeLessThan(32);
   });
 
   it('refuses a step that is not a positive time', () => {

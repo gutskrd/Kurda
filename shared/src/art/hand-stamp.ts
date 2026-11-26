@@ -71,16 +71,14 @@ function brushRing(points: readonly Pt[], width: number): string {
 }
 
 /**
- * A digit: its centre line from base to tip, its half-width on each side at each point (`a` the side to its right
- * looking toward the tip, `b` the other), how far its tip runs on past the last point as a share of its width there,
- * and the joint its tip bends at.
+ * A digit's build: its half-width on each side at each point of its centre line, from root to tip (`a` the side to
+ * its right looking toward the tip, `b` the other), and how far its tip runs on past the last point as a share of its
+ * width there. Where its centre line runs in each pose comes from the turn's track below.
  */
-interface Digit {
-  centre: Pt[];
+interface Build {
   a: number[];
   b: number[];
   tip: number;
-  joint?: number;
 }
 
 /*
@@ -88,118 +86,74 @@ interface Digit {
  * finger narrows a touch between its joints and swells a little at them and at its pad, and its two sides differ, as
  * a real finger's do.
  */
-const THUMB: Digit = {
-  centre: [[736, 900], [730, 800], [722, 722], [714, 660], [706, 600], [700, 540], [697, 498]],
-  a: [92, 86, 74, 66, 63, 62, 57],
-  b: [66, 66, 66, 63, 60, 60, 55],
-  tip: 1.12,
-  joint: 4,
-};
-const INDEX: Digit = {
-  centre: [[974, 900], [966, 800], [957, 728], [938, 664], [902, 612], [866, 570], [824, 532], [788, 503], [766, 486]],
-  a: [54, 56, 56, 55, 53, 50, 47, 46, 43],
-  b: [68, 65, 61, 57, 58, 52, 47, 46, 42],
-  tip: 1.18,
-  joint: 5,
-};
-const REACHING: Digit = {
-  centre: [[702, 598], [640, 604], [586, 611], [546, 616], [516, 620]],
-  a: [42, 40, 38, 37, 35],
-  b: [44, 42, 41, 42, 39],
-  tip: 1.15,
-};
-const CURLED: Digit = {
-  centre: [[702, 688], [630, 690], [580, 692], [552, 694]],
-  a: [29, 27, 26, 25],
-  b: [30, 29, 28, 27],
-  tip: 1.1,
-};
-const KNUCKLES = { thumb: [716, 760] as Pt, index: [960, 760] as Pt, reaching: [690, 600] as Pt, curled: [690, 692] as Pt };
-
-
-/* ---- poses --------------------------------------------------------------------------------------------------------- */
+const THUMB: Build = { a: [92, 86, 74, 66, 63, 62, 57], b: [66, 66, 66, 63, 60, 60, 55], tip: 1.12 };
+const INDEX: Build = { a: [60, 62, 61, 58, 55, 53, 51, 48, 45], b: [66, 64, 62, 60, 56, 53, 51, 48, 44], tip: 1.15 };
+const REACHING: Build = { a: [42, 40, 38, 37, 35], b: [44, 42, 41, 42, 39], tip: 1.15 };
+const CURLED: Build = { a: [29, 27, 26, 25], b: [30, 29, 28, 27], tip: 1.1 };
 
 /**
- * One turn, as whole poses of the hand 80 ms apart, drawn from the reference's frames: the stamp straightens as the hand
- * gathers itself; it turns a third of the way and holds while the index finger lifts off its back and curls, and the
- * middle finger rises behind it; then the fingers push it over, the hand rolling up with it, the stamp swinging down
- * past edge-on with its other face coming round; and it lands upright and settles back to its lean.
- *
- * Each pose says how the hand stands: the whole hand's move (in the frame's units) and turn about the wrist; the
- * thumb's move and turn about its root, its tip's bend and how much its pad flattens against the stamp; and the index
- * finger's turn and the bend at its middle joint, and the middle and ring fingers' turns. Every pose is drawn whole
- * from that, each digit one continuous outline along its bent centre line, and the turn passes from pose to pose by
- * moving every point of every shape along a smooth curve.
+ * The bones, on the grid: the thumb's from its joint to its tip and back to its root, and how far its root bone turns
+ * from in line with its tip toward a point below the frame; the index finger's from its tip joint to its tip and from its middle joint back to its knuckle and root; the
+ * middle finger's from its joint to its tip. How far each tip's round runs past the point it rounds about, to find
+ * that point from a tip's outermost point.
  */
-interface Pose {
-  hand: readonly [number, number, number];
-  thumb: readonly [number, number, number];
-  thumbTip: readonly [number, number];
-  index: number;
-  indexTip: number;
-  reaching: number;
-  curled: number;
+const BONES = { thumb: { tip: 163, root: 300, round: 63, bend: 0.2 }, index: { tip: 125, knuckle: 150, root: 260 }, reaching: { tip: 85, round: 43 } } as const;
+const THUMB_ROOT: Pt = [736, 900];
+const CURLED_REST: readonly Pt[] = [[702, 688], [630, 690], [580, 692], [552, 694]];
+
+/* ---- the turn ----------------------------------------------------------------------------------------------------- */
+
+/**
+ * One turn of the reference, frame by frame, 80 ms apart, as measured from it on the grid (which lies over the
+ * reference's own frame). Angles are in degrees, clockwise from pointing right as on the screen, each the way a
+ * segment points toward its tip. For each frame:
+ * - `thumb`: the middle its tip rounds about, and the middle of the thumb across its joint;
+ * - `index`: the middle of the crease at its middle joint and at its tip joint (both on its inner side), and the way
+ *   its tip segment and its root segment point;
+ * - `reaching`: the middle finger's outermost point, the way its tip points and the way its root points, and how far
+ *   its root runs under the thumb: as the reference shows it, and where the reference hides it (behind the stamp or
+ *   the thumb), placed between the frames either side, under what hides it;
+ * - `ring`: how far the ring finger has slid from where it rests;
+ * - `card`: the stamp's lean from rest and its turn about its upright, and its middle;
+ * - `web`: how far the hand has opened between the index finger and the thumb, 0 to 1, as far down as the background
+ *   shows between them.
+ * The index finger stays on the stamp's back except while the stamp is held a third turned, when the stamp turns off
+ * it and it waits, curled, a finger's width from the stamp's edge; the middle finger then holds the stamp's far edge.
+ */
+interface Frame {
+  thumb: readonly [number, number, number, number];
+  index: readonly [number, number, number, number, number, number];
+  reaching: readonly [number, number, number, number, number];
+  ring: readonly [number, number];
+  card: readonly [number, number, number, number];
+  web: number;
 }
+const TRACK: readonly Frame[] = [
+  { thumb: [690, 493, 720, 670], index: [908, 653, 825, 571, -150.1, -100.7], reaching: [462, 590, 165, 165, 100], ring: [0, 0], card: [0, 0, 645.1, 302.9], web: 0 },
+  { thumb: [694, 492, 712, 670], index: [920, 652, 835, 563, -151.4, -94.8], reaching: [459, 587, 163.8, 163.8, 100], ring: [-4, 0], card: [-1.2, 0, 641, 297.4], web: 0 },
+  { thumb: [687, 487, 705, 670], index: [928, 650, 850, 550, -153.7, -93.1], reaching: [443, 505, 191.7, 191.7, 100], ring: [-20, 4], card: [-5.2, 0, 624.4, 288.4], web: 0 },
+  { thumb: [680, 484, 689, 672], index: [945, 645, 866, 541, -155.4, -92.2], reaching: [445, 454, 220.8, 195, 150], ring: [-40, 0], card: [-12.3, 0, 596.7, 280.6], web: 0.3 },
+  { thumb: [666, 470, 668, 665], index: [994, 637, 911, 543, -152.1, -79.3], reaching: [448, 403, 249.8, 200, 200], ring: [-45, 0], card: [-15.8, 30, 571.8, 287.9], web: 1 },
+  { thumb: [666, 473, 675, 668], index: [1027, 636, 942, 531, -160.1, -72.2], reaching: [448, 398, 256.3, 200, 200], ring: [-40, 5], card: [-16.2, 33, 570.3, 296.7], web: 1 },
+  { thumb: [673, 479, 678, 670], index: [1040, 635, 956, 526, -165.5, -70.3], reaching: [448, 398, 256.3, 200, 200], ring: [-32, 8], card: [-16, 34, 568, 303.1], web: 1 },
+  { thumb: [687, 506, 714, 650], index: [919, 612, 826, 499, -150.8, -98.6], reaching: [455, 409, 255, 200, 200], ring: [-10, 12], card: [-14.2, 32, 578.4, 298.6], web: 0.5 },
+  { thumb: [705, 505, 792, 658], index: [896, 614, 803, 492, -137.2, -104.5], reaching: [505, 366, 236.3, 226, 250], ring: [-30, 60], card: [-59.4, 84, 547, 312], web: 0 },
+  { thumb: [620, 400, 680, 660], index: [890, 620, 805, 493, -132.6, -104.3], reaching: [502, 503, 205.6, 200, 100], ring: [-30, 40], card: [-53.4, 92, 589, 287], web: 0 },
+  { thumb: [623, 464, 645, 655], index: [875, 627, 787, 526, -146.5, -109.8], reaching: [500, 640, 175, 175, 70], ring: [-20, 60], card: [-64.1, 130, 555, 406], web: 0.4 },
+  { thumb: [648, 481, 675, 670], index: [852, 643, 755, 533, -141.4, -104.7], reaching: [490, 680, 151.4, 151.4, 70], ring: [-10, 60], card: [-61.9, 148, 536, 435], web: 0.3 },
+  { thumb: [659, 489, 685, 669], index: [879, 654, 759, 556, -143.4, -95.5], reaching: [492, 680, 142.5, 142.5, 70], ring: [0, 50], card: [-45.2, 154, 574, 419], web: 0 },
+  { thumb: [680, 493, 703, 663], index: [890, 644, 799, 557, -145.1, -95.4], reaching: [494, 680, 133.5, 133.5, 90], ring: [10, 35], card: [-16.3, 157, 642.8, 344.7], web: 0 },
+  { thumb: [687, 492, 710, 662], index: [900, 658, 812, 574, -149.7, -95.6], reaching: [476, 623, 153.4, 153.4, 100], ring: [12, 12], card: [-5, 166, 640.3, 328.2], web: 0 },
+  { thumb: [698, 489, 714, 662], index: [906, 657, 818, 576, -149.8, -96.8], reaching: [466, 609, 159.4, 159.4, 100], ring: [8, 7], card: [-3.1, 174, 641.4, 319.8], web: 0 },
+  { thumb: [701, 493, 712, 660], index: [908, 656, 822, 573, -149.5, -95], reaching: [466, 601, 160.5, 160.5, 100], ring: [4, 4], card: [1.2, 178, 641.7, 316.9], web: 0 },
+];
 const FLIP_FRAME_MS = 80;
-const POSES: readonly Pose[] = [
-  { hand: [0, 0, 0], thumb: [0, 0, 0], thumbTip: [0, 0], index: 0, indexTip: 0, reaching: 0, curled: 0 },
-  { hand: [0, 0, 0.5], thumb: [0.1, -0.8, 0.5], thumbTip: [0, 0], index: 1, indexTip: 0, reaching: 0, curled: 0 },
-  { hand: [0, -1, 1], thumb: [0.2, -3.3, 1], thumbTip: [-1, 0.01], index: 3, indexTip: -1, reaching: 2, curled: 1 },
-  { hand: [0, -1.5, 1.5], thumb: [-0.4, -7.2, 2], thumbTip: [-2, 0.02], index: 6, indexTip: -3, reaching: 6, curled: 2 },
-  { hand: [0, -2, 0], thumb: [-2.6, -8.9, -6], thumbTip: [4, 0.03], index: 20, indexTip: -16, reaching: 18, curled: 5 },
-  { hand: [0, -2, -1], thumb: [-3.2, -6.9, -8], thumbTip: [6, 0.035], index: 30, indexTip: -30, reaching: 30, curled: 7 },
-  { hand: [0, -2, -1], thumb: [-3, -5.2, -9], thumbTip: [6, 0.035], index: 34, indexTip: -36, reaching: 34, curled: 8 },
-  { hand: [5.7, -5.1, -5], thumb: [-2, -4.4, -6], thumbTip: [8, 0.03], index: 12, indexTip: -6, reaching: 24, curled: 8 },
-  { hand: [15.7, -12, -14], thumb: [-1, -2, -4], thumbTip: [12, 0.05], index: 8, indexTip: 18, reaching: 55, curled: 18 },
-  { hand: [22, -17, -20], thumb: [0, -1, -3], thumbTip: [14, 0.06], index: 10, indexTip: 22, reaching: 62, curled: 24 },
-  { hand: [13.5, -9.3, -12], thumb: [0, 0, -1], thumbTip: [8, 0.04], index: 4, indexTip: 10, reaching: 32, curled: 14 },
-  { hand: [5.7, -3.1, -5], thumb: [-0.4, -0.1, 1], thumbTip: [2, 0.015], index: -5, indexTip: -2, reaching: 10, curled: 6 },
-  { hand: [2.3, -1, -2], thumb: [0, 0, 1], thumbTip: [0, 0.005], index: -6, indexTip: -1, reaching: 3, curled: 2 },
-  { hand: [0, 0, 0.8], thumb: [0, 0, 0.5], thumbTip: [-1, 0], index: -3, indexTip: 0, reaching: 0, curled: 1 },
-  { hand: [0, 0, 0.6], thumb: [0, 0, 0.3], thumbTip: [-0.5, 0], index: -1, indexTip: 0, reaching: -1, curled: 0 },
-  { hand: [0, 0, 0.2], thumb: [0, 0, 0], thumbTip: [0, 0], index: 0, indexTip: 0, reaching: 0, curled: 0 },
-  { hand: [0, 0, 0], thumb: [0, 0, 0], thumbTip: [0, 0], index: 0, indexTip: 0, reaching: 0, curled: 0 },
-  { hand: [0, 0, 0], thumb: [0, 0, 0], thumbTip: [0, 0], index: 0, indexTip: 0, reaching: 0, curled: 0 },
-];
-/**
- * The stamp in each pose: its lean from rest and its turn about its upright, in degrees, as measured from the
- * reference, and where under the thumb's pad it is held, from where it is held at rest (in the frame's units, across
- * and down the stamp): it slides a little through the fingers as they turn it, the thumb riding up with it as it is
- * lifted, so the pad never leaves the stamp's foot.
- */
-const CARD_POSES: readonly (readonly [number, number, number, number])[] = [
-  [0, 0, 0, 0],
-  [-1.2, 0, 2, 0.8],
-  [-5.2, 0, 4.7, 1.4],
-  [-12.3, 0, 8, 1.6],
-  [-15.8, 30, -1, 1.6],
-  [-16.2, 33, -5, 1.4],
-  [-16, 34, -6, 1.2],
-  [-14.2, 32, -2.4, 1.6],
-  [-59.4, 84, -6, -2],
-  [-53.4, 92, -8, -3],
-  [-75.6, 112, -10, 0],
-  [-83.6, 136, -8, 1.6],
-  [-52, 146, -6, -3],
-  [-16.3, 156, -6, -4],
-  [-5, 166, -3, -4],
-  [-3.1, 174, -2, -3],
-  [1.2, 178, 0.5, -1.5],
-  [0, 180, 0, 0],
-];
 
 /** How long one turn takes, and how far through it the stamp is edge-on and shows its other face. */
-export const HAND_STAMP_FLIP = { ms: (POSES.length - 1) * FLIP_FRAME_MS, edgeOn: 9 / (POSES.length - 1) } as const;
+export const HAND_STAMP_FLIP = { ms: TRACK.length * FLIP_FRAME_MS, edgeOn: 9 / TRACK.length } as const;
 
-/** The wrist the whole hand turns about, on the grid. */
+/** The wrist, on the grid, toward which the web sags as it opens. */
 const WRIST: Pt = [780, 800];
-
-/** `p` turned `deg` degrees about `o` (clockwise on the screen, as CSS turns). */
-function turn([x, y]: Pt, [ox, oy]: Pt, deg: number): Pt {
-  const r = (deg * Math.PI) / 180;
-  const [u, v] = [x - ox, y - oy];
-  return [ox + u * Math.cos(r) - v * Math.sin(r), oy + u * Math.sin(r) + v * Math.cos(r)];
-}
 
 /** A digit as it stands in a pose: its centre line and its half-widths, on the grid. */
 interface Posed {
@@ -208,47 +162,83 @@ interface Posed {
   b: number[];
   tip: number;
 }
+type DigitName = 'thumb' | 'index' | 'reaching' | 'curled';
+
+const toward = (deg: number): Pt => [Math.cos((deg * Math.PI) / 180), Math.sin((deg * Math.PI) / 180)];
+const heading = ([x, y]: Pt): number => (Math.atan2(y, x) * 180) / Math.PI;
+const step = ([x, y]: Pt, [dx, dy]: Pt, k: number): Pt => [x + dx * k, y + dy * k];
+const unit = ([x, y]: Pt): Pt => {
+  const l = Math.hypot(x, y) || 1;
+  return [x / l, y / l];
+};
+/** A centre line along a digit's bones: its joints from root to tip, each bone cut into so many equal steps. */
+function along(joints: readonly Pt[], cuts: readonly number[]): Pt[] {
+  const out: Pt[] = [joints[0]!];
+  cuts.forEach((c, i) => {
+    const [p, q] = [joints[i]!, joints[i + 1]!];
+    for (let k = 1; k <= c; k++) out.push([p[0] + ((q[0] - p[0]) * k) / c, p[1] + ((q[1] - p[1]) * k) / c]);
+  });
+  return out;
+}
+
+/** A digit as the turn's track places it: its build, along its joints from root to tip, each bone cut into so many steps. */
+const placed = (b: Build, joints: readonly Pt[], cuts: readonly number[]): Posed => ({ centre: along(joints, cuts), a: b.a, b: b.b, tip: b.tip });
 
 /**
- * A digit in a pose: turned about its knuckle and moved, its tip bent about the joint and flattened a little along
- * itself (`squash`, widening as it shortens), then carried with the whole hand.
+ * The thumb in a frame of the track: its tip's middle as measured, its tip bone pointing the way the reference's does,
+ * and its root bone between in line with it and toward a point below the frame, so it swings with its tip from the
+ * wrist rather than bending sideways at its joint, which seen from the nail a thumb barely does.
  */
-function posed(d: Digit, knuckle: Pt, by: { move?: readonly [number, number]; turn: number; bend?: number; squash?: number }, hand: Pose['hand']): Posed {
-  const [mx, my] = by.move ?? [0, 0];
-  let centre = d.centre.map((p) => {
-    const q = turn(p, knuckle, by.turn);
-    return [q[0] + mx / K, q[1] + my / K] as Pt;
-  });
-  const a = [...d.a];
-  const b = [...d.b];
-  if (d.joint !== undefined) {
-    const j = d.joint;
-    const joint = centre[j]!;
-    centre = centre.map((p, i) => (i > j ? turn(p, joint, by.bend ?? 0) : p));
-    const sq = by.squash ?? 0;
-    if (sq) {
-      const end = centre[centre.length - 1]!;
-      const len = Math.hypot(end[0] - joint[0], end[1] - joint[1]) || 1;
-      const [ux, uy] = [(end[0] - joint[0]) / len, (end[1] - joint[1]) / len];
-      centre = centre.map((p, i) => {
-        if (i <= j) return p;
-        const along = (p[0] - joint[0]) * ux + (p[1] - joint[1]) * uy;
-        const across = -(p[0] - joint[0]) * uy + (p[1] - joint[1]) * ux;
-        const [s, c] = [along * (1 - sq), across * (1 + sq * 0.6)];
-        return [joint[0] + s * ux - c * uy, joint[1] + s * uy + c * ux] as Pt;
-      });
-      for (let i = j + 1; i < a.length; i++) {
-        a[i] = a[i]! * (1 + sq * 0.6);
-        b[i] = b[i]! * (1 + sq * 0.6);
-      }
-    }
-  }
-  const carried = centre.map((p) => {
-    const q = turn(p, WRIST, hand[2]);
-    return [q[0] + hand[0] / K, q[1] + hand[1] / K] as Pt;
-  });
-  return { centre: carried, a, b, tip: d.tip };
+function thumbIn(f: Frame): Posed {
+  const [ex, ey, jx, jy] = f.thumb;
+  const way = heading([ex - jx, ey - jy]);
+  const joint = step([ex, ey], toward(way), -BONES.thumb.tip);
+  const below = heading([joint[0] - THUMB_ROOT[0], joint[1] - THUMB_ROOT[1]]);
+  const root = step(joint, toward(way + BONES.thumb.bend * (below - way)), -BONES.thumb.root);
+  return placed(THUMB, [root, joint, [ex, ey]], [3, 3]);
 }
+
+/** The index finger in a frame of the track: its joints lie halfway into it from their creases, toward its back. */
+function indexIn(f: Frame): Posed {
+  const [mx, my, dx, dy, tipWay, rootWay] = f.index;
+  const middleWay = heading([dx - mx, dy - my]);
+  const middle = step([mx, my], toward((middleWay + rootWay) / 2 + 90), 35);
+  const last = step([dx, dy], toward((middleWay + tipWay) / 2 + 90), 30);
+  const joints = [step(middle, toward(rootWay), -BONES.index.root), step(middle, toward(rootWay), -BONES.index.knuckle), middle, last, step(last, toward(tipWay), BONES.index.tip)];
+  return placed(INDEX, joints, [1, 2, 3, 2]);
+}
+
+/** The middle finger in a frame of the track, its root under the thumb. */
+function reachingIn(f: Frame): Posed {
+  const [rx, ry, way, rootWay, rootLength] = f.reaching;
+  const tip = step([rx, ry], toward(way), -BONES.reaching.round);
+  const joint = step(tip, toward(way), -BONES.reaching.tip);
+  return placed(REACHING, [step(joint, toward(rootWay), -rootLength), joint, tip], [2, 2]);
+}
+
+/** The poses, one per frame of the track and the rest it starts and ends at. */
+interface Pose {
+  digits: Record<DigitName, Posed>;
+  web: number;
+}
+const POSES: readonly Pose[] = (() => {
+  return [...TRACK, TRACK[0]!].map((f) => {
+    const thumb = thumbIn(f);
+    const curled = f.ring;
+    return {
+      digits: {
+        thumb,
+        index: indexIn(f),
+        reaching: reachingIn(f),
+        curled: { centre: CURLED_REST.map(([x, y]) => [x + curled[0], y + curled[1]] as Pt), a: CURLED.a, b: CURLED.b, tip: CURLED.tip },
+      },
+      web: f.web,
+    };
+  });
+})();
+/** The stamp's track, ending where it began but turned over, its other face showing. */
+const CARD_TRACK = [...TRACK.map((f) => f.card), [TRACK[0]!.card[0], 180, TRACK[0]!.card[2], TRACK[0]!.card[3]] as const];
+
 
 /** The direction along a posed digit at a point of its centre line, from its neighbours. */
 function alongAt(d: Posed, i: number): Pt {
@@ -309,25 +299,9 @@ function digitSides(d: Posed): { a: Pt[]; b: Pt[]; cap: Pt[] } {
   return { a, b, cap };
 }
 
-/** The hand's digits in a pose. */
-function digitsIn(p: Pose): Record<'thumb' | 'index' | 'reaching' | 'curled', Posed> {
-  return {
-    thumb: posed(THUMB, KNUCKLES.thumb, { move: [p.thumb[0], p.thumb[1]], turn: p.thumb[2], bend: p.thumbTip[0], squash: p.thumbTip[1] }, p.hand),
-    index: posed(INDEX, KNUCKLES.index, { turn: p.index, bend: p.indexTip }, p.hand),
-    reaching: posed(REACHING, KNUCKLES.reaching, { turn: p.reaching }, p.hand),
-    curled: posed(CURLED, KNUCKLES.curled, { turn: p.curled }, p.hand),
-  };
-}
-/** A point of the palm, carried with the whole hand. */
-const onHand = (p: Pose, q: Pt): Pt => {
-  const r = turn(q, WRIST, p.hand[2]);
-  return [r[0] + p.hand[0] / K, r[1] + p.hand[1] / K];
-};
-
 /* ---- the shapes ---------------------------------------------------------------------------------------------------- */
 
-const REST = digitsIn(POSES[0]!);
-type DigitName = keyof typeof REST;
+const REST = POSES[0]!.digits;
 /** A shape's points held on a digit, from where they are drawn at rest. */
 const held = (digit: DigitName, points: readonly Pt[]): { digit: DigitName; at: [number, number][] } => ({ digit, at: points.map((q) => holdOn(REST[digit], q)) });
 const ride = (h: { digit: DigitName; at: [number, number][] }, ds: Record<DigitName, Posed>): Pt[] => h.at.map(([u, v]) => onDigit(ds[h.digit], u, v));
@@ -375,19 +349,24 @@ function webIn(p: Pose, ds: Record<DigitName, Posed>): { index: number; thumb: n
       }),
     );
   }
-  const open = Math.min(1, Math.max(0, (p.index - 2) / 30));
+  const open = p.web;
   const [ci, ct] = closed!;
   // (no higher on the index finger than where its tip begins, so its points along the side never crowd its tip)
   return { index: Math.min(7.3, ci) + (2.5 - Math.min(7.3, ci)) * open, thumb: ct + (2.3 - ct) * open, open };
 }
 
-/** The palm's points the outline of the fingers behind runs through below the frame, and the wedge's, above the middle finger. */
+/**
+ * The palm's points the outline of the fingers behind runs through below the frame, and the wedge's above the middle
+ * finger. Between the web and the wedge the outline passes under the thumb through the middle finger's root, low
+ * enough to stay clear of the index finger's tip.
+ */
 const BELOW: readonly Pt[] = [[690, 900], [1060, 940]];
-const WEDGE_TOP = held('reaching', [[650, 524], [590, 536]]);
-const WEDGE_DEEP = held('reaching', [[646, 544], [624, 556], [612, 566]]);
+const WEDGE_TOP = held('reaching', [[668, 470], [608, 488]]);
+const CROTCH = held('reaching', [[690, 540]]);
+const WEDGE_DEEP = held('reaching', [[660, 478], [632, 486], [612, 494]]);
 /** Where the wedge and its deepest part close, under the thumb: held on the middle finger like the rest of them, so neither can fold. */
-const WEDGE_SHUT = held('reaching', [[652, 544]]);
-const WEDGE_DEEP_SHUT = held('reaching', [[650, 568]]);
+const WEDGE_SHUT = held('reaching', [[676, 478]]);
+const WEDGE_DEEP_SHUT = held('reaching', [[668, 490]]);
 
 /** The nail: a soft, nearly square shield across the thumb's tip, its free edge pale, set into the skin. */
 const NAIL = held('thumb', [[660, 470], [672, 456], [700, 452], [728, 456], [740, 470], [742, 512], [732, 536], [700, 542], [668, 536], [658, 512]]);
@@ -397,18 +376,34 @@ const FREE_EDGE = held('thumb', [[662, 470], [674, 457], [700, 453], [726, 457],
 const LINES: readonly { name: string; on: ReturnType<typeof held>; width: number; opacity: number; ink?: string; layer: 'back' | 'front' }[] = [
   { name: 'nail-rim', on: held('thumb', [[662, 476], [658, 504], [668, 532], [700, 543], [732, 532], [742, 504], [738, 476]]), width: 1.2, opacity: 0.8, layer: 'front' },
   { name: 'cuticle', on: held('thumb', [[668, 552], [700, 560], [732, 552]]), width: 0.8, opacity: 0.5, layer: 'front' },
-  { name: 'thumb-joint', on: held('thumb', [[684, 602], [702, 596], [722, 600]]), width: 1, opacity: 0.7, layer: 'front' },
-  { name: 'thumb-joint-2', on: held('thumb', [[690, 614], [704, 610], [718, 613]]), width: 0.6, opacity: 0.5, layer: 'front' },
+  { name: 'thumb-joint', on: held('thumb', [[704, 654], [722, 648], [742, 652]]), width: 1, opacity: 0.7, layer: 'front' },
+  { name: 'thumb-joint-2', on: held('thumb', [[710, 666], [724, 662], [738, 665]]), width: 0.6, opacity: 0.5, layer: 'front' },
   { name: 'thumb-fold', on: held('thumb', [[782, 650], [790, 690], [794, 730]]), width: 1.3, opacity: 0.75, layer: 'front' },
-  { name: 'thumb-root', on: held('thumb', [[652, 700], [678, 712], [706, 714]]), width: 0.9, opacity: 0.55, layer: 'front' },
-  { name: 'index-joint', on: held('index', [[880, 626], [900, 612], [922, 598]]), width: 1.2, opacity: 0.85, layer: 'back' },
-  { name: 'index-joint-2', on: held('index', [[889, 638], [906, 627], [922, 617]]), width: 0.7, opacity: 0.55, layer: 'back' },
-  { name: 'index-last', on: held('index', [[812, 512], [826, 506], [842, 498]]), width: 0.8, opacity: 0.6, layer: 'back' },
-  { name: 'index-nail', on: held('index', [[719, 472], [722, 458], [732, 446], [746, 440]]), width: 1.1, opacity: 0.8, ink: INK.nail, layer: 'back' },
-  { name: 'reaching-joint', on: held('reaching', [[592, 590], [588, 606], [590, 624]]), width: 1.1, opacity: 0.85, layer: 'back' },
-  { name: 'reaching-joint-2', on: held('reaching', [[606, 594], [603, 607], [605, 620]]), width: 0.7, opacity: 0.6, layer: 'back' },
+  { name: 'thumb-root', on: held('thumb', [[668, 720], [692, 730], [716, 732]]), width: 0.9, opacity: 0.55, layer: 'front' },
+  { name: 'index-joint', on: held('index', [[908, 666], [924, 652], [942, 638]]), width: 1.2, opacity: 0.85, layer: 'back' },
+  { name: 'index-joint-2', on: held('index', [[915, 676], [930, 664], [946, 650]]), width: 0.7, opacity: 0.55, layer: 'back' },
+  { name: 'index-last', on: held('index', [[822, 572], [833, 558], [845, 544]]), width: 0.8, opacity: 0.6, layer: 'back' },
+  { name: 'index-nail', on: held('index', [[693, 471], [696, 458], [705, 448], [718, 443]]), width: 1.1, opacity: 0.8, ink: INK.nail, layer: 'back' },
+  { name: 'reaching-joint', on: held('reaching', [[592, 536], [588, 552], [590, 570]]), width: 1.1, opacity: 0.85, layer: 'back' },
+  { name: 'reaching-joint-2', on: held('reaching', [[606, 540], [603, 553], [605, 566]]), width: 0.7, opacity: 0.6, layer: 'back' },
   { name: 'curled-joint', on: held('curled', [[578, 676], [574, 692], [578, 708]]), width: 0.8, opacity: 0.6, layer: 'back' },
 ];
+
+/** How far from `p` along `n` the line first meets the polyline `line`, or a long way if it never does. */
+function reachOf(p: Pt, n: Pt, line: readonly Pt[]): number {
+  let best = 400;
+  for (let i = 0; i < line.length - 1; i++) {
+    const [a, b] = [line[i]!, line[i + 1]!];
+    const [sx, sy] = [b[0] - a[0], b[1] - a[1]];
+    const den = n[0] * sy - n[1] * sx;
+    if (!den) continue;
+    const [qx, qy] = [a[0] - p[0], a[1] - p[1]];
+    const t = (qx * sy - qy * sx) / den;
+    const g = (qx * n[1] - qy * n[0]) / den;
+    if (g >= 0 && g <= 1 && t > -200 && t < best) best = t;
+  }
+  return best;
+}
 
 /**
  * Every shape of the hand in a pose, on the grid, each with the same points in the same order in every pose, so the
@@ -421,7 +416,7 @@ const LINES: readonly { name: string; on: ReturnType<typeof held>; width: number
  *   thumb's pad, where it holds the stamp (a single point, for placing the stamp).
  */
 function shapesIn(p: Pose): Record<string, Pt[]> {
-  const ds = digitsIn(p);
+  const ds = p.digits;
   const I = digitSides(ds.index);
   const R = digitSides(ds.reaching);
   const C = digitSides(ds.curled);
@@ -431,7 +426,7 @@ function shapesIn(p: Pose): Record<string, Pt[]> {
   // from where the outline runs on under the thumb to the middle finger.
   const web = webIn(p, ds);
   const [wa, wb] = [sideAt(ds.index, web.index, -1), sideAt(ds.thumb, web.thumb, 1, 4)];
-  const palm = onHand(p, WRIST);
+  const palm = WRIST;
   const [ex, ey] = [wb[0] - wa[0], wb[1] - wa[1]];
   const toward = Math.sign(-ey * (palm[0] - wa[0]) + ex * (palm[1] - wa[1])) || 1;
   const sag = 0.3 * web.open * toward;
@@ -442,35 +437,45 @@ function shapesIn(p: Pose): Record<string, Pt[]> {
     ...I.cap,
     ...[0, 1, 2, 3, 4, 5, 6].map((k) => sideAt(ds.index, 8 + ((web.index - 8) * k) / 6, -1)),
     ...webEdge,
-    ...wedgeTop,
+    ...ride(CROTCH, ds),
+    wedgeTop[1]!,
     ...R.a.slice(2),
     ...R.cap,
     ...R.b.slice().reverse(),
     ...C.a,
     ...C.cap,
     ...C.b.slice().reverse(),
-    ...BELOW.map((q) => onHand(p, q)),
+    ...BELOW,
   ];
   const thumb = [...T.a, ...T.cap, ...T.b.slice().reverse()];
   const curled = [...C.a, ...C.cap, ...C.b.slice().reverse()];
-  const tIn = (u: number, inset: number, side: 1 | -1): Pt => {
-    const i = Math.min(ds.thumb.a.length - 1, Math.round(u));
-    const h = side > 0 ? ds.thumb.a[i]! : ds.thumb.b[i]!;
-    return onDigit(ds.thumb, u, side * (h - inset));
-  };
-  const iOut = (u: number, extra: number): Pt => {
-    const i = Math.min(ds.index.b.length - 1, Math.round(u));
-    return onDigit(ds.index, u, -(ds.index.b[i]! + extra));
-  };
-  // The gap between the index finger and the thumb, below the web: down the finger's inner side from the web, across
-  // the palm, up under the thumb's edge and back along the web.
-  const slit = [
-    ...[0, 1, 2, 3, 4, 5, 6, 7].map((k) => sideAt(ds.index, web.index * (1 - k / 7), -1)),
-    onHand(p, [910, 935]),
-    ...[0, 1, 2, 3, 4, 5].map((k) => sideAt(ds.thumb, (web.thumb * k) / 5, 1, 24 - k)),
-    ...webEdge.slice().reverse(),
-  ];
-  const slitDeep = [iOut(4, 10), iOut(3, 16), iOut(2, 22), iOut(0.5, 28), onHand(p, [880, 935]), tIn(0.5, 8, 1), tIn(2, 6, 1), tIn(3.5, 6, 1)];
+  // The gap between the index finger and the thumb: down the finger's inner side from a little above the web (the web's
+  // own edge clips it) to the frame's foot, then back up across the gap, each point straight out from its point on the
+  // finger as far as the thumb's edge and a little under it, or barely off the finger where the thumb lies over it, so
+  // the gap closes up rather than folding over itself.
+  const inner = [0, 1, 2, 3, 4, 5, 6, 7].map((k) => web.index + 0.4 - (web.index + 0.4 - 1.2) * (k / 7));
+  // (the thumb's edge drawn on past its root and its tip, so the line across meets it wherever the thumb lies)
+  const edge = [step(T.a[0]!, unit([T.a[0]![0] - T.a[1]![0], T.a[0]![1] - T.a[1]![1]]), 400), ...T.a, ...T.cap.slice(0, 2)];
+  const [e1, e2] = [edge[edge.length - 2]!, edge[edge.length - 1]!];
+  edge.push(step(e2, unit([e2[0] - e1[0], e2[1] - e1[1]]), 400));
+  // (all straight out the same way, from the middle of that stretch of the finger, so none can cross another)
+  const [side, middle] = [sideAt(ds.index, inner[4]!, -1), onDigit(ds.index, inner[4]!, 0)];
+  const way = unit([side[0] - middle[0], side[1] - middle[1]]);
+  const across = inner.map((u) => {
+    const p = sideAt(ds.index, u, -1);
+    return { p, d: Math.min(160, reachOf(p, way, edge)) };
+  });
+  const out = (k: number, by: number): Pt => step(across[k]!.p, way, Math.max(2, across[k]!.d + by));
+  const slit = [...across.map((q) => q.p), ...[7, 6, 5, 4, 3, 2, 1, 0].map((k) => out(k, 40))];
+  // and its deepest part, a strip along the thumb's edge low in the gap, from under the thumb to a little way out from
+  // it, never past the index finger
+  const finger = [step(I.b[0]!, unit([I.b[0]![0] - I.b[1]![0], I.b[0]![1] - I.b[1]![1]]), 400), ...I.b];
+  const low = [1.8, 2.2, 2.6, 3, 3.4].map((u) => {
+    const p = sideAt(ds.thumb, u, 1);
+    const n = unit([p[0] - onDigit(ds.thumb, u, 0)[0], p[1] - onDigit(ds.thumb, u, 0)[1]]);
+    return { p, n, d: reachOf(p, n, finger) };
+  });
+  const slitDeep = [...low.map((q, k) => step(q.p, q.n, Math.max(1, Math.min(18 - 3 * k, q.d - 2)))), ...low.slice().reverse().map((q) => step(q.p, q.n, -24))];
   const wedge = [...wedgeTop, R.a[2]!, R.a[1]!, R.a[0]!, ...ride(WEDGE_SHUT, ds)];
   const wedgeDeep = [...ride(WEDGE_DEEP, ds), onDigit(ds.reaching, 1.2, ds.reaching.a[1]! + 6), ...ride(WEDGE_DEEP_SHUT, ds)];
   return {
@@ -483,7 +488,12 @@ function shapesIn(p: Pose): Record<string, Pt[]> {
     thumb,
     nail: ride(NAIL, ds),
     freeEdge: ride(FREE_EDGE, ds),
-    pad: [onDigit(ds.thumb, ds.thumb.centre.length - 1, 0)],
+    pad: [onDigit(ds.thumb, ds.thumb.centre.length - 0.3, 0)],
+    // for checking the drawing, not drawn: each digit's joints, root to tip, and the index finger's whole outline
+    'check:thumb': [0, 3, 6].map((i) => ds.thumb.centre[i]!),
+    'check:index': [1, 3, 6, 8].map((i) => ds.index.centre[i]!),
+    'check:reaching': [0, 2, 4].map((i) => ds.reaching.centre[i]!),
+    'check:index-outline': [...I.a, ...I.cap, ...I.b.slice().reverse()],
     ...Object.fromEntries(LINES.map((l) => [l.name, ride(l.on, ds)])),
   };
 }
@@ -526,7 +536,7 @@ const SPLINES: Record<string, { xs: number[][]; ys: number[][]; bx: number[][]; 
     return [name, { xs, ys, bx: xs.map(splineBends), by: ys.map(splineBends) }];
   }),
 );
-const CARD_BENDS = [0, 1, 2, 3].map((c) => splineBends(CARD_POSES.map((q) => q[c]!)));
+const CARD_BENDS = [0, 1, 2, 3].map((c) => splineBends(CARD_TRACK.map((q) => q[c]!)));
 
 /** Every shape's points at `ms` into a turn, on the frame. */
 function pointsAt(ms: number): Record<string, Pt[]> {
@@ -596,7 +606,16 @@ export function handStampSvg(opts: HandStampOptions): string {
 /** Every shape's path `ms` into a turn, by its `data-shape` name, for redrawing the hand each frame of a turn. */
 export function handStampShapesAt(ms: number): Record<string, string> {
   const pts = pointsAt(ms);
-  return Object.fromEntries(Object.entries(pts).filter(([name]) => name !== 'pad').map(([name, p]) => [name, pathOf(name, p)]));
+  return Object.fromEntries(Object.entries(pts).filter(([name]) => PAINT.some((q) => q.name === name) || name === 'back' || name === 'thumb').map(([name, p]) => [name, pathOf(name, p)]));
+}
+
+/**
+ * For checking the drawing, `ms` into a turn, on the frame: each digit's joints from root to tip (the thumb's, the
+ * index finger's from its knuckle, the middle finger's), the index finger's whole outline, and the thumb's pad.
+ */
+export function handStampBonesAt(ms: number): { joints: Record<'thumb' | 'index' | 'reaching', Pt[]>; index: Pt[]; pad: Pt } {
+  const pts = pointsAt(ms);
+  return { joints: { thumb: pts['check:thumb']!, index: pts['check:index']!, reaching: pts['check:reaching']! }, index: pts['check:index-outline']!, pad: pts.pad![0]! };
 }
 
 /** Every shape's points `ms` into a turn, on the frame, for checking the drawing. */
@@ -604,28 +623,12 @@ export function handStampPointsAt(ms: number): Record<string, Pt[]> {
   return pointsAt(ms);
 }
 
-/** Where the thumb's pad pinches the stamp at rest, and where it is held on the stamp then, seen from the stamp. */
-const PINCH: Pt = KEYS.pad![0]![0]!;
-const HELD: Pt = (() => {
-  const c = HAND_STAMP_CARD;
-  const r = (c.turn * Math.PI) / 180;
-  const [px, py] = [PINCH[0] - c.cx, PINCH[1] - c.cy];
-  return [px * Math.cos(r) + py * Math.sin(r), -px * Math.sin(r) + py * Math.cos(r)];
-})();
-
-/**
- * The stamp `ms` into a turn: its middle, its lean and its turn about its upright, placed where the thumb's pad holds
- * it. Turned about its upright, the held point comes in toward the stamp's middle as the stamp narrows to its edge, so
- * the pad stays on it.
- */
+/** The stamp `ms` into a turn: its middle on the frame, its lean and its turn about its upright, as the reference moves it. */
 export function handStampCardAt(ms: number): { cx: number; cy: number; lean: number; turn: number } {
-  const c = HAND_STAMP_CARD;
   const t = (Math.max(0, Math.min(HAND_STAMP_FLIP.ms, ms)) / HAND_STAMP_FLIP.ms) * (POSES.length - 1);
-  const [lean, flip, across, down] = [0, 1, 2, 3].map((k) => onSpline(CARD_POSES.map((q) => q[k]!), CARD_BENDS[k]!, t));
-  const pad = pointsAt(ms).pad![0]!;
-  const a = ((c.turn + lean!) * Math.PI) / 180;
-  const [hx, hy] = [(HELD[0] + across!) * Math.abs(Math.cos((flip! * Math.PI) / 180)), HELD[1] + down!];
-  return { cx: pad[0] - (hx * Math.cos(a) - hy * Math.sin(a)), cy: pad[1] - (hx * Math.sin(a) + hy * Math.cos(a)), lean: c.turn + lean!, turn: flip! };
+  const [lean, flip, x, y] = [0, 1, 2, 3].map((k) => onSpline(CARD_TRACK.map((q) => q[k]!), CARD_BENDS[k]!, t));
+  const [cx, cy] = at([x!, y!]);
+  return { cx, cy, lean: HAND_STAMP_CARD.turn + lean!, turn: flip! };
 }
 
 /** The stamp's transforms through one turn, every `stepMs`, about its own middle, from rest to rest with its other face showing. */
