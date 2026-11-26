@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { dropLens, lensSupported, takeLens, type Lens } from '@kurda/shared/src/glass-lens';
 import { floating } from './floating';
 import { useTheme } from './ThemeProvider';
 import { radii } from './tokens';
@@ -36,6 +38,53 @@ export function useGlassShape(lift: 'control' | 'raised'): ViewStyle[] {
   return [floating[lift], { backgroundColor: colors.barFill, shadowColor: colors.softShadow }];
 }
 
+/**
+ * The lens a choice lifts into as it moves (theme/selectorLens.ts): clear glass with a lit rim and a faint split of
+ * colour at its edge, which in a browser that can bend what lies behind an element (Chromium) also refracts the tabs it
+ * passes over, as the website's does (shared glass-lens.ts). Never drawn at rest.
+ */
+export function LensFill({ radius }: { radius: number }): React.JSX.Element {
+  const { colors } = useTheme();
+  const ref = useRef<View>(null);
+  useEffect(() => {
+    const el = ref.current as unknown as HTMLElement | null;
+    if (!el || !lensSupported() || typeof ResizeObserver === 'undefined') return;
+    let lens: Lens | null = null;
+    let shape = '';
+    const fit = () => {
+      const width = el.offsetWidth;
+      const height = el.offsetHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      const next = `${width}x${height}@${dpr}`;
+      if (next === shape || width < 8 || height < 8) return;
+      shape = next;
+      const was = lens;
+      lens = takeLens({ width, height, radius: Math.min(radius, width / 2, height / 2) }, dpr, true);
+      if (was) dropLens(was);
+      el.style.backdropFilter = lens.filter ? `url(#${lens.filter})` : '';
+    };
+    const watch = new ResizeObserver(fit);
+    watch.observe(el);
+    fit();
+    return () => {
+      watch.disconnect();
+      if (lens) dropLens(lens);
+    };
+  }, [radius]);
+  return (
+    <View
+      ref={ref}
+      pointerEvents="none"
+      style={[
+        StyleSheet.absoluteFill,
+        styles.lens,
+        { borderRadius: radius, backgroundColor: colors.lensFill, borderTopColor: colors.lensShine, borderBottomColor: colors.lensRim, borderLeftColor: colors.lensWarm, borderRightColor: colors.lensCool },
+      ]}
+    />
+  );
+}
+
 const styles = StyleSheet.create({
   clear: { backgroundColor: 'transparent' },
+  lens: { borderWidth: 1.5 },
 });

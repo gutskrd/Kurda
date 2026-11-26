@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 
@@ -6,6 +6,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../theme/Icon';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useReduceTransparency } from '../a11y/useReduceTransparency';
 import { useTheme } from '../theme/ThemeProvider';
 import { fitted, radii, typography } from '../theme/tokens';
 import { duration } from '../theme/motion';
@@ -14,13 +15,14 @@ import { useDirection } from '../reports/direction';
 import { useUnread } from '../messages/unread';
 import { haptic } from '../feedback/haptics';
 import { springTo, timing, usePressScale } from '../theme/animate';
-import { TAB_BAR_SCROLL, TAB_CAPSULE } from '@kurda/shared';
+import { TAB_BAR_SCROLL } from '@kurda/shared';
+import { useSelectorLens, type SelectorPieces } from '../theme/selectorLens';
 import { TAB_BAR_HEIGHT, TAB_BAR_SIDE, tabBarLift, useKeyboardShown } from './tabBarLayout';
 import { resetTabBar, useTabBarCompact } from './tabBarScroll';
 import { TABS, type TabName } from './tabs';
 import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { useAuth } from '../auth/AuthContext';
-import { GlassFill, useGlassShape } from '../theme/LiquidGlass';
+import { GlassFill, LensFill, useGlassShape } from '../theme/LiquidGlass';
 
 /** The glyphs, and your picture, as large as a glyph within its ring. */
 const GLYPH = 24;
@@ -54,6 +56,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   const dir = useDirection();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
+  // Asked for less transparency, the choice moves as a solid capsule, without a lens.
+  const solid = useReduceTransparency();
   const { messages, counts, refresh } = useUnread();
   // The signed-in session, for the picture on the Profile tab.
   const { user } = useAuth();
@@ -77,41 +81,15 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   }, [compact, size]);
 
   /*
-   * The capsule behind the chosen tab, by its two ends (shared `TAB_CAPSULE`). Moving to another tab, the end in front
-   * springs there first, a little past it, and the one behind follows, so the capsule stretches toward the tab and
-   * settles round it, lifting larger and lighter on the way. It is drawn once the row has been measured and arrives
-   * without a slide the first time.
+   * The capsule behind the chosen tab. Moving to another tab it lifts into a clear lens over the tabs, glides there on a
+   * spring, stretching with its speed, and settles back into the dark capsule (theme/selectorLens.ts, shared
+   * selector-lens.ts). It is drawn once the row has been measured and arrives without a move the first time.
    */
   const [row, setRow] = useState({ width: 0, height: 0 });
   const slot = row.width > 0 ? row.width / state.routes.length : 0;
   // Counted from the left whichever way the tabs run.
   const place = mirrored ? state.routes.length - 1 - state.index : state.index;
-  const start = useRef(new Animated.Value(0)).current;
-  const end = useRef(new Animated.Value(0)).current;
-  const lift = useRef(new Animated.Value(0)).current;
-  const placed = useRef<number | null>(null);
-  useEffect(() => {
-    if (slot <= 0) return;
-    const from = place * slot;
-    const to = from + slot;
-    const was = placed.current;
-    placed.current = place;
-    if (reduceMotion || was === null || was === place) {
-      start.setValue(from);
-      end.setValue(to);
-      lift.setValue(0);
-      return;
-    }
-    const forward = place > was;
-    const rise = Math.round(TAB_CAPSULE.liftMs / 3);
-    const run = Animated.parallel([
-      springTo(forward ? end : start, forward ? to : from, 'tabLead'),
-      springTo(forward ? start : end, forward ? from : to, 'tabFollow'),
-      Animated.sequence([timing(lift, 1, rise), timing(lift, 0, TAB_CAPSULE.liftMs - rise)]),
-    ]);
-    run.start();
-    return () => run.stop();
-  }, [place, slot, reduceMotion, start, end, lift]);
+  const lens = useSelectorLens(place, slot, row.height, state.routes.length, reduceMotion);
 
   if (typing) return null;
 
@@ -128,7 +106,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
           }}
         >
           {slot > 0 && row.height > 0 ? (
-            <Capsule start={start} end={end} lift={lift} width={row.width} slot={slot} height={row.height} ink={colors.tabCapsule} fill={CAPSULE_FILL[scheme]} />
+            <Capsule pieces={lens} slot={slot} height={row.height} ink={solid ? colors.surfaceRaised : colors.tabCapsule} fill={solid ? 1 : CAPSULE_FILL[scheme]} />
           ) : null}
           {state.routes.map((route, i) => {
             const tab = TABS.find((x) => x.name === route.name);
@@ -186,6 +164,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
               </TabButton>
             );
           })}
+          {slot > 0 && row.height > 0 && !solid ? <Lens pieces={lens} slot={slot} height={row.height} /> : null}
         </View>
       </Animated.View>
     </View>
@@ -239,51 +218,36 @@ function TabFace({
 }
 
 /**
- * The capsule, drawn as two round ends and the span between them so its ends stay round however far it stretches.
- * The pieces are solid ink under one shared opacity, so where they overlap the tint does not double. Its ends stop at
- * the bar's, so running past an end tab squeezes it against the wall instead of out of the bar.
+ * The capsule, drawn as two round ends and the span between them so its ends stay round however far it stretches. The
+ * pieces are solid under one shared opacity, so where they overlap the tint does not double; they scale from their
+ * outer edges, which stop at the bar's.
  */
-function Capsule({
-  start,
-  end,
-  lift,
-  width,
-  slot,
-  height,
-  ink,
-  fill,
-}: {
-  start: Animated.Value;
-  end: Animated.Value;
-  lift: Animated.Value;
-  width: number;
-  slot: number;
-  height: number;
-  ink: string;
-  fill: number;
-}): React.JSX.Element {
-  const pieces = useMemo(() => {
-    const wall = { inputRange: [0, width], outputRange: [0, width], extrapolate: 'clamp' as const };
-    const left = start.interpolate(wall);
-    const right = end.interpolate(wall);
-    const span = Animated.add(Animated.subtract(right, left), new Animated.Value(-height));
-    return {
-      left,
-      endCap: Animated.add(right, new Animated.Value(-height)),
-      // The span is `slot` wide as drawn, scaled about its middle to reach from one end's centre to the other's.
-      spanX: Animated.add(Animated.multiply(Animated.add(left, right), 0.5), new Animated.Value(-slot / 2)),
-      spanScale: span.interpolate({ inputRange: [0, slot], outputRange: [0, 1], extrapolateLeft: 'clamp' }),
-      grow: lift.interpolate({ inputRange: [0, 1], outputRange: [1, TAB_CAPSULE.liftScale] }),
-      tint: lift.interpolate({ inputRange: [0, 1], outputRange: [fill, fill * TAB_CAPSULE.liftFill] }),
-    };
-  }, [start, end, lift, width, slot, height, fill]);
+function Capsule({ pieces, slot, height, ink, fill }: { pieces: SelectorPieces; slot: number; height: number; ink: string; fill: number }): React.JSX.Element {
   const piece = { height, backgroundColor: ink };
   const cap = { width: height, borderRadius: radii.pill };
   return (
-    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: pieces.tint }]} needsOffscreenAlphaCompositing testID="tab-pill">
-      <Animated.View style={[styles.piece, piece, cap, { transform: [{ translateX: pieces.left }, { scale: pieces.grow }] }]} />
-      <Animated.View style={[styles.piece, piece, cap, { transform: [{ translateX: pieces.endCap }, { scale: pieces.grow }] }]} />
-      <Animated.View style={[styles.piece, piece, { width: slot, transform: [{ translateX: pieces.spanX }, { scaleX: pieces.spanScale }, { scaleY: pieces.grow }] }]} />
+    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: Animated.multiply(pieces.tint, fill) }]} needsOffscreenAlphaCompositing testID="tab-pill">
+      <Animated.View style={[styles.piece, piece, cap, { transformOrigin: 'left center', transform: [{ translateX: pieces.left }, { scale: pieces.scale }] }]} />
+      <Animated.View style={[styles.piece, piece, cap, { transformOrigin: 'right center', transform: [{ translateX: pieces.endLeft }, { scale: pieces.scale }] }]} />
+      <Animated.View
+        style={[styles.piece, piece, { width: slot, transformOrigin: 'left center', transform: [{ translateX: pieces.spanLeft }, { scaleX: pieces.spanScale }, { scaleY: pieces.scale }] }]}
+      />
+    </Animated.View>
+  );
+}
+
+/** The lens over the tabs while the choice moves: clear glass, one tab wide at rest, stretched and lifted by the move. */
+function Lens({ pieces, slot, height }: { pieces: SelectorPieces; slot: number; height: number }): React.JSX.Element {
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.piece,
+        { width: slot, height, opacity: pieces.lens, transformOrigin: 'left center', transform: [{ translateX: pieces.left }, { scaleX: pieces.lensScale }, { scaleY: pieces.scale }] },
+      ]}
+      testID="tab-lens"
+    >
+      <LensFill radius={height / 2} />
     </Animated.View>
   );
 }

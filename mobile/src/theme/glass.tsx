@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Animated, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Pressable, type Reach } from './Pressable';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,7 +10,9 @@ import { useI18n } from '../i18n/I18nContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useDirection } from '../reports/direction';
 import { haptic } from '../feedback/haptics';
-import { springTo, usePressSink } from './animate';
+import { usePressSink } from './animate';
+import { useSelectorLens } from './selectorLens';
+import { LensFill } from './LiquidGlass';
 import { pressedDim } from './motion';
 import { heldRow, heldDim } from './MotionParts';
 import { EmptyState } from './EmptyState';
@@ -305,7 +307,6 @@ export function Segmented<T extends string>({
   // The capsule's position, counted from the left whichever way the options run.
   const index = mirrored ? options.length - 1 - chosen : chosen;
   const seg = box.w > 0 ? (box.w - SEG_PAD * 2) / options.length : 0;
-  const x = useRef(new Animated.Value(0)).current;
   const padV = groupLabel || size === 'large' ? SEG_PAD_V_TALL : 6;
   /*
    * Each segment's reach differs by side. Vertically it covers the track's ring and continues to 48 (9 for a 30-point
@@ -314,16 +315,11 @@ export function Segmented<T extends string>({
    */
   const reachV = Math.max(SEG_PAD, (MIN_REACH - (padV * 2 + SEG_LINE)) / 2);
 
-  useEffect(() => {
-    if (seg <= 0) return;
-    const to = SEG_PAD + index * seg;
-    if (reduceMotion) {
-      x.setValue(to);
-      return;
-    }
-    // The interface's own spring: no bounce, settled within 300 ms.
-    springTo(x, to, 'chrome').start();
-  }, [index, seg, x, reduceMotion]);
+  // The choice moves as every selector's does: the capsule lifts into a clear lens over the options, glides and settles
+  // (theme/selectorLens.ts); under Reduce Motion it only fades in at its place.
+  const inner = Math.max(box.h - SEG_PAD * 2, 0);
+  const lens = useSelectorLens(index, seg, inner, options.length, reduceMotion);
+  const moving = { transformOrigin: 'left center' as const, transform: [{ translateX: lens.left }, { scaleX: lens.lensScale }, { scaleY: lens.scale }] };
 
   return (
     <View
@@ -337,7 +333,8 @@ export function Segmented<T extends string>({
           pointerEvents="none"
           style={[
             styles.segCapsule,
-            { width: seg, backgroundColor: colors.chosenFill, borderColor: colors.chosenEdge, transform: [{ translateX: x }] },
+            { left: SEG_PAD, width: seg, backgroundColor: colors.chosenFill, borderColor: colors.chosenEdge, opacity: lens.tint },
+            moving,
           ]}
         />
       ) : null}
@@ -382,6 +379,11 @@ export function Segmented<T extends string>({
           </Pressable>
         );
       })}
+      {seg > 0 && !reduceMotion ? (
+        <Animated.View pointerEvents="none" style={[styles.segCapsule, styles.segLens, { left: SEG_PAD, width: seg, opacity: lens.lens }, moving]}>
+          <LensFill radius={inner / 2} />
+        </Animated.View>
+      ) : null}
     </View>
   );
 }
@@ -445,6 +447,8 @@ const styles = StyleSheet.create({
     bottom: SEG_PAD,
     borderRadius: radii.pill,
   },
+  // The lens over the options while the choice moves; it draws its own edge.
+  segLens: { borderWidth: 0 },
   segItem: { flex: 1, paddingVertical: 6, paddingHorizontal: spacing.xs, alignItems: 'center', justifyContent: 'center' },
   segText: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium, lineHeight: SEG_LINE },
   segTextActive: { fontWeight: typography.weights.semibold },

@@ -75,5 +75,29 @@ export function useGlassShape(lift: 'control' | 'raised'): ViewStyle[] {
 
 const styles = StyleSheet.create({
   rim: { borderWidth: 1 },
+  lens: { borderWidth: 1.5 },
   clear: { backgroundColor: 'transparent' },
 });
+
+/**
+ * The lens a choice lifts into as it moves (theme/selectorLens.ts): on iOS 26 the system's clear glass, which bends and
+ * magnifies the tabs it passes over as the system's own tab bar does; elsewhere clear glass of our own with a lit rim
+ * and a faint split of colour at its edge. Never drawn at rest.
+ */
+export function LensFill({ radius }: { radius: number }): React.JSX.Element {
+  const { colors, scheme } = useTheme();
+  if (SYSTEM_GLASS) {
+    return <GlassView glassEffectStyle="clear" colorScheme={scheme} pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius }]} />;
+  }
+  return (
+    <View
+      pointerEvents="none"
+      style={[
+        StyleSheet.absoluteFill,
+        styles.lens,
+        { borderRadius: radius, backgroundColor: colors.lensFill, borderTopColor: colors.lensShine, borderBottomColor: colors.lensRim, borderLeftColor: colors.lensWarm, borderRightColor: colors.lensCool },
+      ]}
+    />
+  );
+}
+
