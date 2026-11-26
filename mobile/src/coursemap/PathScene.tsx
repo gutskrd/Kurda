@@ -106,14 +106,14 @@ function loopStyle(kind: ChapterLoopKind, t: Animated.Value, origin: string): ob
 /** How long each kind of vignette's loop takes, once round, as on the website (path.css). */
 const LOOP_MS: Record<ChapterLoopKind, number> = { rise: 2800, fall: 4200, swing: 2800, creak: 4400, flicker: 1400, bob: 1800, orbit: 3200 };
 
-/** A chapter's vignette in its banner, standing on the banner's foot, with its one moving part laid over it. */
-export function ChapterArt({ chapter, ground, height }: { chapter: number; ground: string; height: number }): React.JSX.Element {
+/** A chapter's vignette in its banner, standing on the banner's foot, with its one moving part laid over it, moving while `live`. */
+export function ChapterArt({ chapter, ground, height, live: shown = true }: { chapter: number; ground: string; height: number; live?: boolean }): React.JSX.Element {
   const id = chapterArtOf(chapter);
   const loop = CHAPTER_ART_LOOP[id];
   const s = height / CHAPTER_ART.h;
   const still = useMemo(() => chapterArtSvg({ chapter: id, ground, height }), [id, ground, height]);
   const moving = useMemo(() => chapterArtSvg({ chapter: id, part: 'loop', height: loop.h * s }), [id, loop, s]);
-  const live = useMotionAlive();
+  const live = useMotionAlive() && shown;
   const t = useLoop(live, LOOP_MS[loop.kind]);
   const origin = `${(((loop.px - loop.x) / loop.w) * 100).toFixed(1)}% ${(((loop.py - loop.y) / loop.h) * 100).toFixed(1)}%`;
   return (

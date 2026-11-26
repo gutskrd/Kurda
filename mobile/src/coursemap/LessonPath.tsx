@@ -525,6 +525,7 @@ export const LessonPath = memo(function LessonPath({
                       openGuide={guideOf(unit)}
                       onRail={onOpenRail}
                       testID="lp-unit-head"
+                      live={moving(unit.unitId)}
                     />
                   ) : (
                     <UnitDivider number={unit.number} title={unit.title} />
@@ -780,6 +781,7 @@ export function UnitFace({
   openGuide,
   onRail,
   testID,
+  live = true,
 }: {
   number: number;
   title: string;
@@ -789,6 +791,8 @@ export function UnitFace({
   openGuide?: () => void;
   onRail?: () => void;
   testID?: string;
+  /** On screen, so its vignette may move; the pinned one always is. */
+  live?: boolean;
 }): React.JSX.Element {
   const { t, locale } = useI18n();
   const dir = useDirection();
@@ -827,7 +831,7 @@ export function UnitFace({
           </View>
           {/* The chapter's own vignette, standing on the kilim beside its name, on the side the seam is. */}
           <View style={[styles.pinArt, mirrored ? styles.pinArtLeft : styles.pinArtEnd]} pointerEvents="none">
-            <ChapterArt chapter={number - 1} ground={tone.lip} height={PIN_ART_H} />
+            <ChapterArt chapter={number - 1} ground={tone.lip} height={PIN_ART_H} live={live} />
           </View>
         </View>
         {buttons ? (
