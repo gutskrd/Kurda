@@ -22,7 +22,9 @@ import { DarkScheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { WornFace, partOf } from './Bundles';
 
+/** The frame round your face, and the disc of the background behind it, wider so it shows round the frame. */
 const ART = 176;
+const SET = 232;
 
 export function BundleMoment({
   bundle,
@@ -63,7 +65,7 @@ export function BundleMoment({
               <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header">
                 {t('bundle.isYours', { name: bundle.name })}
               </Text>
-              <GiftLight sku={bundle.id} look={GIFT_MOMENT_LOOK.rare} art={ART} lit still={reduce} glow={bundleGlow(bundle.id)}>
+              <GiftLight sku={bundle.id} look={GIFT_MOMENT_LOOK.rare} art={SET} lit still={reduce} glow={bundleGlow(bundle.id)}>
                 <Animated.View style={[styles.set, { opacity: pop, transform: [{ scale }] }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
                   {background ? <Image source={{ uri: background }} style={styles.disc} resizeMode="cover" /> : null}
                   <WornFace frameUrl={partOf(bundle, 'frame')?.assetUrl} iconUrl={partOf(bundle, 'icon')?.assetUrl} size={ART} />
@@ -113,8 +115,8 @@ const styles = StyleSheet.create({
   dim: { opacity: 0.9 },
   panel: { width: '100%', maxWidth: 420, alignItems: 'center', gap: spacing.sm },
   title: { ...display(typography.sizes.title), textAlign: 'center' },
-  set: { width: ART, height: ART, alignItems: 'center', justifyContent: 'center' },
-  disc: { position: 'absolute', top: ART * 0.08, left: ART * 0.08, width: ART * 0.84, height: ART * 0.84, borderRadius: radii.pill },
+  set: { width: SET, height: SET, alignItems: 'center', justifyContent: 'center' },
+  disc: { position: 'absolute', top: 0, left: 0, width: SET, height: SET, borderRadius: radii.pill },
   center: { alignSelf: 'center' },
   list: { flexWrap: 'wrap', justifyContent: 'center', columnGap: spacing.md, rowGap: 2 },
   line: { fontSize: typography.sizes.text, textAlign: 'center' },

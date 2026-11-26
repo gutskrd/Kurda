@@ -21,7 +21,9 @@ import { TagPill } from '../profile/TagPill';
 import { ItemPicture } from './ItemPicture';
 import { partOf } from './Bundles';
 
+/** The frame round your face, and the disc of the background behind it, wider so it shows round the frame. */
 const ART = 176;
+const SET = 232;
 
 export function BundleMoment({
   bundle,
@@ -71,7 +73,7 @@ export function BundleMoment({
         <h2 className="gift-moment-title" ref={title} tabIndex={-1}>
           {t('bundle.isYours', { name: bundle.name })}
         </h2>
-        <GiftLight sku={bundle.id} look={GIFT_MOMENT_LOOK.rare} art={ART} lit still={still} glow={bundleGlow(bundle.id)}>
+        <GiftLight sku={bundle.id} look={GIFT_MOMENT_LOOK.rare} art={SET} lit still={still} glow={bundleGlow(bundle.id)}>
           <span className={`bundle-moment-set${still ? '' : ' is-popping'}`}>
             {background?.assetUrl && (
               <span className="bundle-moment-disc" aria-hidden="true">

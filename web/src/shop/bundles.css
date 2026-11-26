@@ -358,19 +358,20 @@
 }
 
 /* ---- a bundle bought (shop/BundleMoment.tsx), in the gift moment's light ------------------------------------------- */
+/* the background as a disc wider than the frame, so it shows round it like a sky */
 .bundle-moment-set {
   position: relative;
   display: grid;
   place-items: center;
-  width: 176px;
-  height: 176px;
+  width: 232px;
+  height: 232px;
 }
 .bundle-moment-set.is-popping {
   animation: celebrate-arrive 560ms var(--ease-spring) both;
 }
 .bundle-moment-disc {
   position: absolute;
-  inset: 8%;
+  inset: 0;
   border-radius: 50%;
   overflow: hidden;
 }
