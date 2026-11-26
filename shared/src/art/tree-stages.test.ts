@@ -223,11 +223,19 @@ describe('the stages, one after another', () => {
     }
   });
 
-  it('comes up out of the seed where it lay: the sprout’s seed is the seed’s own, in the same place', () => {
+  it('comes up out of the earth where the seed lay, between the two halves of its coat, and nothing of it floats', () => {
     for (const species of TREE_SPECIES) {
-      // A seed's outline is the first thing drawn of its plant.
-      const outline = (stage: TreeStage): string => /<path d="([^"]+)"/.exec(plantOf(species, stage))![1]!;
-      expect(outline(1), species).toBe(outline(0));
+      for (const health of TREE_HEALTHS) {
+        const seed = extent(plantOf(species, 0, health));
+        const sprout = extent(plantOf(species, 1, health));
+        // The earth drawn up in front, alone in the seed's front layer.
+        const earth = extent(treeSvg({ species, stage: 0, health, part: 'front', title: 'A tree' }));
+        // The seed lies across the middle and into the earth; the sprout's stem goes down into the earth too.
+        expect(seed.bottom, `${species} ${health} seed`).toBeGreaterThan(earth.top);
+        expect(sprout.bottom, `${species} ${health} sprout`).toBeGreaterThan(earth.top);
+        // It stands over where the seed lay, its leaves hanging aside a little as it goes without water.
+        expect(Math.abs((sprout.left + sprout.right) / 2 - (seed.left + seed.right) / 2), `${species} ${health}`).toBeLessThan(16);
+      }
     }
   });
 

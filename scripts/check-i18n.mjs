@@ -15,7 +15,8 @@
  * through `t('…')`, or through a record of `MessageKey`s that something else
  * looks up, or as a JSX attribute like `what="gate.what.course"` — or any
  * file under `shared/src`, which holds the few keys both apps read the same
- * way (a level's plain name, `levelNameKey`).
+ * way (a level's plain name, `levelNameKey`), or under `web/scripts`, whose
+ * build of the published dictionary labels its pages from the catalogues.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -23,6 +24,7 @@ import { join, dirname } from 'node:path';
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'web', 'src');
 const SHARED = join(dirname(fileURLToPath(import.meta.url)), '..', 'shared', 'src');
+const SCRIPTS = join(dirname(fileURLToPath(import.meta.url)), '..', 'web', 'scripts');
 
 /** The catalogues themselves: every key is written there by definition. */
 const CATALOGUE = /[/\\]i18n[/\\](en|ku|ckb|nl|de|es|fr|tr|ar)\.ts$/;
@@ -39,7 +41,7 @@ function sources(dir) {
 
 const english = readFileSync(join(SRC, 'i18n', 'en.ts'), 'utf8');
 const keys = [...english.matchAll(/^ {2}'([^']+)':/gm)].map((m) => m[1]);
-const code = [...sources(SRC), ...sources(SHARED)]
+const code = [...sources(SRC), ...sources(SHARED), ...sources(SCRIPTS)]
   .map((f) => readFileSync(f, 'utf8'))
   .join('\n');
 
