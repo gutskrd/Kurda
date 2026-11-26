@@ -109,7 +109,8 @@ export const up = async (pgm) => {
       `INSERT INTO shop_items
          (sku, name, description, category, currency, price, is_unique, active, in_stock, asset_key, premium_only, display_order)
        VALUES ($1, $2, $3, 'tag', 'zer', $4, true, true, true, NULL, false, $5)
-       ON CONFLICT (sku) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description, display_order = EXCLUDED.display_order`,
+       ON CONFLICT (sku) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description, display_order = EXCLUDED.display_order,
+         active = true, in_stock = true, retired_at = NULL`,
       [sku, name, description, price, displayOrder],
     );
   }
@@ -189,9 +190,10 @@ export const up = async (pgm) => {
 };
 
 /**
- * Takes the bundles, the word tags and the ladder back. A bundle's background, frame and icon stay owned and its gifts
- * stay in the bag; the record of each bundle and of what it put in a bag goes, since the old rules know no bundle, and
- * so do the word tags, since nothing before this could show one. A price an admin changed since is left as it is.
+ * Takes the bundles, the word tags and the ladder back. A bundle's background, frame, icon and tag stay owned and its
+ * gifts stay in the bag; the record of each bundle and of what it put in a bag goes, since the old rules know no bundle.
+ * A word tag nobody has goes, and one somebody bought stays theirs, off sale. A price an admin changed since is left as
+ * it is.
  */
 export const down = async (pgm) => {
   const db = pgm.db;
@@ -208,7 +210,15 @@ export const down = async (pgm) => {
   await db.query(`DROP TABLE shop_bundles`);
 
   await db.query(`ALTER TABLE users DROP COLUMN equipped_tag_sku`);
-  await db.query(`DELETE FROM shop_items WHERE sku = ANY($1)`, [TAGS.map(([sku]) => sku)]);
+  // A word tag someone has stays theirs, retired as the catalogue retires an owned item (shop/catalogue.ts), since
+  // deleting it would take what they paid for; running `up` again puts it back on sale.
+  const tags = TAGS.map(([sku]) => sku);
+  await db.query(
+    `UPDATE shop_items i SET active = false, in_stock = false, retired_at = COALESCE(i.retired_at, now())
+      WHERE i.sku = ANY($1) AND EXISTS (SELECT 1 FROM user_entitlements e WHERE e.sku = i.sku)`,
+    [tags],
+  );
+  await db.query(`DELETE FROM shop_items i WHERE i.sku = ANY($1) AND NOT EXISTS (SELECT 1 FROM user_entitlements e WHERE e.sku = i.sku)`, [tags]);
 
   await db.query(`UPDATE shop_items s SET price = r.before FROM shop_repricing r WHERE r.sku = s.sku AND s.price = r.after`);
   await db.query(`DROP TABLE shop_repricing`);

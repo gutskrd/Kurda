@@ -337,6 +337,41 @@ describe.skipIf(!DATABASE_URL)('bundles (integration)', () => {
     await pool.query(`UPDATE shop_bundles SET price = $2, active = true WHERE id = $1`, [BUNDLE, PRICE]);
   });
 
+  it('keeps a word tag someone bought when migration 1751000890000 is rolled back, and puts it on sale again when it runs again', async () => {
+    const path = '../../migrations/1751000890000_fairer-prices-and-bundles.js';
+    const migration = (await import(/* @vite-ignore */ path)) as Record<'up' | 'down', (pgm: unknown) => Promise<void>> & {
+      TAGS: Array<[string, ...unknown[]]>;
+    };
+    const buyer = await person('rollback');
+    await fund(buyer, 1000);
+    const bought = await call('POST', '/shop/purchase', buyer, { sku: 'tag-heval', idempotencyKey: key() });
+    expect(bought.statusCode, bought.body).toBe(200);
+    const client = await pool.connect();
+    try {
+      // In a transaction it rolls back, so the catalogue everyone else here reads stays as it is.
+      await client.query('BEGIN');
+      const pgm = { db: { query: (sql: string, params?: unknown[]) => client.query(sql, params) } };
+      const tag = async () =>
+        (await client.query<{ active: boolean; retired: boolean }>(`SELECT active, retired_at IS NOT NULL AS retired FROM shop_items WHERE sku = 'tag-heval'`)).rows[0];
+      const owned = async () => (await client.query(`SELECT 1 FROM user_entitlements WHERE user_id = $1 AND sku = 'tag-heval'`, [buyer.id])).rowCount;
+      await migration.down(pgm);
+      // what was paid for stays theirs, off sale; a tag nobody bought goes
+      expect(await owned()).toBe(1);
+      expect(await tag()).toEqual({ active: false, retired: true });
+      const unowned = await client.query(
+        `SELECT 1 FROM shop_items i WHERE i.sku = ANY($1) AND NOT EXISTS (SELECT 1 FROM user_entitlements e WHERE e.sku = i.sku)`,
+        [migration.TAGS.map(([sku]) => sku)],
+      );
+      expect(unowned.rowCount).toBe(0);
+      await migration.up(pgm);
+      expect(await tag()).toEqual({ active: true, retired: false });
+      expect(await owned()).toBe(1);
+    } finally {
+      await client.query('ROLLBACK');
+      client.release();
+    }
+  });
+
   it('lets a buyer wear the word tag by their name, and shows it on their profile only while they own it', async () => {
     const buyer = await person('wear');
     const viewer = await person('look');
