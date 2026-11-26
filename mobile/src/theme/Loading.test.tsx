@@ -1,37 +1,36 @@
 // @vitest-environment jsdom
 import { cleanup, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { hexToRgb } from '../a11y/contrast';
+import { deerMarkPath } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
-import { Loading } from './Loading';
+import { Loading, LOADING_SIZE } from './Loading';
 import { DARK, LIGHT } from './palette';
 
 vi.mock('react-native', () => import('../play/testing/native'));
+vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 
 patchReactNativeWeb();
 afterEach(cleanup);
 
-const css = (hex: string): string => {
-  const { r, g, b } = hexToRgb(hex);
-  return `rgb(${r}, ${g}, ${b})`;
-};
-
 describe('Loading', () => {
-  it('says what it is to a screen reader, and waits in the quiet grey', () => {
+  it('says what it is to a screen reader, and waits as the deer in the ink', () => {
     const { container } = renderWithProviders(<Loading />);
-    expect(screen.getByRole('progressbar', { name: 'Loading…' })).toBeTruthy();
-    // Whichever scheme the test device is in: the caption grey, not the ink of something pressable.
-    const drawn = [...container.querySelectorAll('circle')].map((c) => c.style.stroke);
-    expect(drawn.length).toBeGreaterThan(0);
-    const grey = [LIGHT.textSecondary, DARK.textSecondary].flatMap((hex) => [hex, css(hex)]);
-    for (const stroke of drawn) expect(grey).toContain(stroke);
+    const bar = screen.getByRole('progressbar', { name: 'Loading…' });
+    expect(bar).toBeTruthy();
+    const path = container.querySelector('path') as SVGPathElement;
+    // He starts as the mark itself, small enough to leave his eyes out, in the ink of whichever scheme the device is in.
+    expect(path.getAttribute('d')).toBe(deerMarkPath({ eyes: false }));
+    expect([LIGHT.primary, DARK.primary]).toContain(path.getAttribute('fill'));
+    expect(container.querySelector('svg')?.getAttribute('width')).toBe(String(LOADING_SIZE.small));
   });
 
-  it('says something more exact where that is known', () => {
-    renderWithProviders(<Loading label="Adding up your answers" size="large" />);
+  it('says something more exact where that is known, and is bigger for a whole screen', () => {
+    const { container } = renderWithProviders(<Loading label="Adding up your answers" size="large" />);
     expect(screen.getByRole('progressbar', { name: 'Adding up your answers' })).toBeTruthy();
     expect(screen.queryByRole('progressbar', { name: 'Loading…' })).toBeNull();
+    expect(container.querySelector('svg')?.getAttribute('width')).toBe(String(LOADING_SIZE.large));
+    expect(container.querySelector('path')?.getAttribute('d')).toBe(deerMarkPath());
   });
 });
