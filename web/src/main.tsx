@@ -38,7 +38,7 @@ import './styles/ranks.css';
 import './styles/motion.css';
 // The shell's newer parts: the top bar and its menu, the bell, the five places' pages.
 import './styles/shell.css';
-// Liquid glass on the floating chrome, after the shell's own fills (glass/lens.ts).
+// Glass on the floating chrome, after the shell's own fills.
 import './styles/glass.css';
 // Each control's touch reach, after every control's own rules (lib/reach.ts).
 import './styles/reach.css';

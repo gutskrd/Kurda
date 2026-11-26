@@ -9,7 +9,6 @@ import { Fire } from '../components/Fire';
 import { CheckIcon, DictionaryIcon, TextIcon } from '../components/icons';
 import { useAuth } from '../auth/AuthProvider';
 import { useLocale, useT } from '../i18n/I18nProvider';
-import { useGlass } from '../glass/useGlass';
 import { CoursePath } from '../learn/CoursePath';
 import type { PracticeDue } from '../learn/types';
 import type { MeProfile, StreakSummary } from '../lib/types';
@@ -101,11 +100,10 @@ function LearnTools(): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const { status } = useAuth();
-  const glass = useGlass<HTMLDivElement>();
   const words = t('words.title');
   const dictionary = t('nav.dictionary');
   return (
-    <div ref={glass} className="learn-tools glass">
+    <div className="learn-tools glass">
       <Link to="/app/learn/words" className="learn-tools-btn" aria-label={words} title={words}>
         <TextIcon size={22} />
       </Link>

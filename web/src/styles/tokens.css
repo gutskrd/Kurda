@@ -184,15 +184,22 @@
    */
   --shadow-control: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-raised: 0 6px 16px rgba(0, 0, 0, 0.12);
-  /* liquid glass on the floating chrome (glass.css; its graded tint is drawn by glass/lens.ts): any tint under that,
-     how it lifts the colours behind it, and its lift off the page; where a browser cannot bend the page, the tint is
-     deeper so words behind never fight the chrome's */
-  --glass-tint: transparent;
-  --glass-tint-still: rgba(26, 38, 43, 0.5);
+  /*
+   * The floating chrome's glass (glass.css): a neutral grey, cool rather than warm, that the page passes under blurred,
+   * with a hairline edge, a faint line of light along its top and a soft lift; deeper where a browser cannot blur. The
+   * chosen tab sits in a darker capsule inset in it, its glyph and name in `--tab-chosen`.
+   */
+  --glass-fill: rgba(42, 45, 49, 0.62);
+  --glass-fill-still: rgba(34, 37, 41, 0.94);
+  --glass-edge: rgba(255, 255, 255, 0.12);
+  --glass-shine: rgba(255, 255, 255, 0.09);
+  --tab-capsule: #000000;
+  --tab-capsule-fill: 0.34;
+  --tab-chosen: var(--accent-text);
   /* a control's disc where it stands on a drawing (a chapter's banner) */
   --on-art: rgba(19, 28, 32, 0.6);
-  --glass-optics: saturate(1.7) brightness(0.92);
-  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 0.5px rgba(238, 243, 245, 0.1);
+  --glass-optics: blur(24px) saturate(1.6);
+  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
 
   /* layout */
   --container: 1120px;
@@ -300,11 +307,15 @@
   --shadow-lg: 0 24px 64px rgba(23, 36, 43, 0.16);
   --shadow-control: 0 2px 8px rgba(23, 36, 43, 0.1);
   --shadow-raised: 0 6px 16px rgba(23, 36, 43, 0.12);
-  --glass-tint: transparent;
-  --glass-tint-still: rgba(253, 254, 254, 0.55);
+  --glass-fill: rgba(250, 251, 252, 0.74);
+  --glass-fill-still: rgba(250, 251, 252, 0.96);
+  --glass-edge: rgba(23, 36, 43, 0.09);
+  --glass-shine: rgba(255, 255, 255, 0.9);
+  --tab-capsule: #17242b;
+  --tab-capsule-fill: 0.07;
   --on-art: rgba(253, 254, 254, 0.78);
-  --glass-optics: saturate(1.8) brightness(1.08);
-  --glass-shadow: 0 10px 30px rgba(23, 36, 43, 0.12), 0 0 0 0.5px rgba(23, 36, 43, 0.08), inset 0 0 0 0.5px rgba(253, 254, 254, 0.5);
+  --glass-optics: blur(24px) saturate(1.8);
+  --glass-shadow: 0 6px 20px rgba(23, 36, 43, 0.1);
 
   color-scheme: light;
 }
