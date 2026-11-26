@@ -174,12 +174,25 @@ describe('the front page', () => {
     expect(screen.getByRole('dialog')).toHaveTextContent('Hevalo for Android');
   });
 
-  it('ends as it starts: Hevalo and the same ways in', () => {
+  it('offers the two download buttons twice, in the hero and beside the phone, and nowhere else', () => {
+    show();
+    const hero = screen.getByRole('heading', { level: 1 }).closest('section')!;
+    const phone = document.getElementById('phone')!;
+    for (const name of ['Download for iOS', 'Download for Android']) {
+      expect(screen.getAllByRole('button', { name })).toHaveLength(2);
+      expect(within(hero).getByRole('button', { name })).toBeInTheDocument();
+      expect(within(phone).getByRole('button', { name })).toBeInTheDocument();
+    }
+    expect(document.querySelectorAll('.fp-store')).toHaveLength(4);
+  });
+
+  it('ends with Hevalo, the way to start and the way back in', () => {
     show();
     const end = document.getElementById('join')!;
     expect(within(end).getByRole('heading', { level: 2, name: 'Your first Kurdish words are waiting.' })).toBeInTheDocument();
     expect(within(end).getByRole('link', { name: 'Start learning, it’s free' })).toHaveAttribute('href', '/register');
-    expect(within(end).getByRole('button', { name: 'Download for Android' })).toBeInTheDocument();
+    expect(within(end).getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
+    expect(within(end).queryByRole('button')).toBeNull();
   });
 });
 
@@ -205,7 +218,7 @@ describe('the apps-coming-soon card', () => {
     show();
     const button = screen.getAllByRole('button', { name: 'Download for iOS' })[0]!;
     fireEvent.click(button);
-    expect(screen.getByRole('link', { name: 'Start on the web' })).toHaveFocus();
+    expect(within(screen.getByRole('dialog')).getByRole('link', { name: 'Start on the web' })).toHaveFocus();
     act(() => {
       fireEvent.keyDown(window, { key: 'Escape' });
     });
@@ -227,6 +240,6 @@ describe('the apps-coming-soon card', () => {
     const close = within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' });
     close.focus();
     fireEvent.keyDown(window, { key: 'Tab' });
-    expect(screen.getByRole('link', { name: 'Start on the web' })).toHaveFocus();
+    expect(within(screen.getByRole('dialog')).getByRole('link', { name: 'Start on the web' })).toHaveFocus();
   });
 });

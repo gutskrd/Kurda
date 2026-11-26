@@ -16,27 +16,31 @@ export function Ku({ children, className }: { children: ReactNode; className?: s
 }
 
 /**
- * The ways in, the same at the top and the foot of the page: start on the web, or one of the phone apps (coming soon),
- * or sign in.
+ * The ways in: start on the web, or sign in. At the top of the page (`apps`) the phone apps' two buttons sit between
+ * them; the only other pair is beside the phone further down, and the page's foot has just the two ways in.
  */
-export function JoinButtons(): React.JSX.Element {
+export function JoinButtons({ apps = false }: { apps?: boolean }): React.JSX.Element {
   const t = useT();
   return (
     <div className="fp-join-buttons">
       <Link to="/register" className="btn btn-primary btn-lg btn-block fp-start">
         {t('landing.join.start')}
       </Link>
-      <p className="fp-or">
-        <span>{t('landing.hero.or')}</span>
-      </p>
-      <AppSoonButton platform="ios" look="store">
-        <IosIcon size={20} />
-        {t('landing.hero.ios')}
-      </AppSoonButton>
-      <AppSoonButton platform="android" look="store">
-        <AndroidIcon size={20} />
-        {t('landing.hero.android')}
-      </AppSoonButton>
+      {apps && (
+        <>
+          <p className="fp-or">
+            <span>{t('landing.hero.or')}</span>
+          </p>
+          <AppSoonButton platform="ios" look="store">
+            <IosIcon size={20} />
+            {t('landing.hero.ios')}
+          </AppSoonButton>
+          <AppSoonButton platform="android" look="store">
+            <AndroidIcon size={20} />
+            {t('landing.hero.android')}
+          </AppSoonButton>
+        </>
+      )}
       <p className="fp-login">
         {t('landing.hero.haveAccount')}{' '}
         <Link to="/login" className="fp-login-link reach-line">
