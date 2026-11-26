@@ -22,8 +22,19 @@ export function poolOptions(config: AppConfig): pg.PoolConfig {
   };
 }
 
-export function createPool(config: AppConfig): pg.Pool {
-  return new pg.Pool(poolOptions(config));
+/** How long an idle connection beyond the warm ones is kept, so a reader's next page reuses it rather than opening one. */
+export const IDLE_CONNECTION_MS = 60_000;
+
+/**
+ * A pool. `warm` connections, once opened, stay open: on a small database a new connection's handshake and password
+ * check cost far more than the queries a page sends, and a page sends its first dozen requests at once.
+ */
+export function createPool(config: AppConfig, { warm = 0, onIdleError }: { warm?: number; onIdleError?: (err: Error) => void } = {}): pg.Pool {
+  const pool = new pg.Pool({ ...poolOptions(config), min: warm, idleTimeoutMillis: IDLE_CONNECTION_MS });
+  // A connection the database drops while it waits here is replaced on the next query; unheard, the error would end the
+  // process.
+  pool.on('error', (err) => onIdleError?.(err));
+  return pool;
 }
 
 /** Minimal query surface so the health check is testable without Postgres. */

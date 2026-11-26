@@ -124,21 +124,23 @@ import { PaintBrushBroad } from '@phosphor-icons/react/dist/icons/PaintBrushBroa
 import { Pen } from '@phosphor-icons/react/dist/icons/Pen';
 import { Highlighter } from '@phosphor-icons/react/dist/icons/Highlighter';
 import { Swatches } from '@phosphor-icons/react/dist/icons/Swatches';
-import type { Icon, IconWeight } from '@phosphor-icons/react';
+import type { Icon } from '@phosphor-icons/react';
 import { useMemo } from 'react';
 import { HEVALO_GLYPHS, coinSvg, type CurrencyOptions, type HevaloGlyph } from '@kurda/shared';
+import type { IconWeightUsed } from '../lib/iconWeights';
 
 /** `regular` is closest to the 1.7px strokes of the earlier hand-drawn set. */
-export const ICON_WEIGHT: IconWeight = 'regular';
+export const ICON_WEIGHT: IconWeightUsed = 'regular';
 
 interface P {
   size?: number;
   className?: string;
-  weight?: IconWeight;
+  /** Only the weights the build keeps (lib/iconWeights.ts). */
+  weight?: IconWeightUsed;
 }
 
 /** Name an icon for what it means here, so the glyph can change in one place. */
-function named(Glyph: Icon, fallbackSize: number, defaultWeight: IconWeight = ICON_WEIGHT) {
+function named(Glyph: Icon, fallbackSize: number, defaultWeight: IconWeightUsed = ICON_WEIGHT) {
   return function NamedIcon({ size = fallbackSize, className, weight = defaultWeight }: P): React.JSX.Element {
     return <Glyph size={size} className={className} weight={weight} aria-hidden />;
   };

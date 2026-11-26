@@ -134,9 +134,13 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
     return pollWhileVisible(refreshUnread, COUNT_POLL_MS);
   }, [signedIn, loadGroups, refreshUnread]);
 
-  // opening a conversation clears its badge, so recount when the URL changes
+  // Opening a conversation clears its badge, so recount when the URL changes; the first count is the poll's own.
+  const counted = useRef<string | null>(null);
   useEffect(() => {
-    if (signedIn) refreshUnread();
+    const open = `${openConversation.dm ?? ''}|${openConversation.group ?? ''}`;
+    const before = counted.current;
+    counted.current = open;
+    if (signedIn && before !== null && before !== open) refreshUnread();
   }, [openConversation.dm, openConversation.group, signedIn, refreshUnread]);
 
   // Subscribe to every group's room, not only the one that is open.
