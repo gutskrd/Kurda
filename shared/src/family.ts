@@ -20,14 +20,23 @@ export const FAMILY_CODE_TTL_HOURS = 48;
 export const FAMILY_CODE_LENGTH = 8;
 
 /** A child's phone is paired with a code of this many digits, shown on the parent's phone for this long. */
-export const PAIRING_CODE_LENGTH = 6;
+export const PAIRING_CODE_LENGTH = 8;
 export const PAIRING_CODE_TTL_MINUTES = 10;
 
 /** A family PIN is this many digits; wrong guesses lock it for a while after this many in a row. */
 export const PIN_MIN_LENGTH = 4;
 export const PIN_MAX_LENGTH = 6;
 export const PIN_TRIES = 5;
-export const PIN_LOCK_MINUTES = 15;
+/**
+ * How long each run of PIN_TRIES wrong PINs locks it, in minutes: the first for a quarter of an hour, the next for an
+ * hour, and every one after that for a day, until the right PIN is entered.
+ */
+export const PIN_LOCK_STEPS: readonly number[] = [15, 60, 24 * 60];
+
+/** How long the `lock`th lock in a row lasts, in minutes (`lock` from 1). */
+export function pinLockMinutes(lock: number): number {
+  return PIN_LOCK_STEPS[Math.min(Math.max(1, lock), PIN_LOCK_STEPS.length) - 1]!;
+}
 
 /** A child's name or nickname, as short as a name on a badge. */
 export const CHILD_NAME_MAX = 24;
@@ -77,15 +86,18 @@ export function formatFamilyCode(code: string): string {
   return code.length === FAMILY_CODE_LENGTH ? `${code.slice(0, 4)}-${code.slice(4)}` : code;
 }
 
-/** A pairing code as typed, digits only, or null when it is not six of them. */
+/** A pairing code as typed or pasted, digits only, or null when it is not eight of them; spaces and hyphens are ignored. */
 export function normalizePairingCode(input: string): string | null {
   const code = input.replace(/[\s-]/g, '');
   return new RegExp(`^\\d{${PAIRING_CODE_LENGTH}}$`).test(code) ? code : null;
 }
 
-/** A pairing code as shown: two groups of three, easy to read across a room. */
+/** A pairing code as shown, or as far as it is typed: groups of four digits ("1234 5678"), easy to read across a room. */
 export function formatPairingCode(code: string): string {
-  return code.length === PAIRING_CODE_LENGTH ? `${code.slice(0, 3)} ${code.slice(3)}` : code;
+  return code
+    .replace(/\D/g, '')
+    .slice(0, PAIRING_CODE_LENGTH)
+    .replace(/(\d{4})(?=\d)/g, '$1 ');
 }
 
 /** Four to six digits. */

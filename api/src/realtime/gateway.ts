@@ -29,6 +29,8 @@ export const CLOSE_TOO_MANY_MESSAGES = 4008;
 export const SESSION_CHECK_MS = 60_000;
 /** Bus-only instruction for `revoke`: handled by each node, never delivered. */
 const REVOKE_EVENT = 'rt_revoke';
+/** Control event on a user's channel: close the connections one session opened (`endSession`). */
+const END_SESSION_EVENT = 'rt_end_session';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The session a connection was opened in: the account and its sign-in (refresh token family). */
@@ -144,6 +146,14 @@ export class RealtimeGateway {
    */
   async publish(roomId: string, event: RoomEvent): Promise<void> {
     await this.bus.publish(roomId, event);
+  }
+
+  /**
+   * Closes, on whichever node holds them, the connections one session opened, at once rather than at the next session
+   * check: a phone switched to a child's profile must stop hearing its parent's messages the moment it changes hands.
+   */
+  async endSession(userId: string, familyId: string): Promise<void> {
+    await this.bus.publish(`user:${userId}`, { type: END_SESSION_EVENT, familyId });
   }
 
   /** Direct push to a single user's connection on whichever node. */
@@ -367,6 +377,14 @@ export class RealtimeGateway {
 
   private deliverLocal(roomId: string, event: RoomEvent): void {
     const members = this.roomMembers.get(roomId);
+    if (event.type === END_SESSION_EVENT) {
+      for (const conn of [...(members ?? [])]) {
+        if (conn.familyId === null || conn.familyId !== event.familyId) continue;
+        conn.socket.close(CLOSE_BAD_TICKET, 'session ended');
+        this.dropConnection(conn);
+      }
+      return;
+    }
     if (event.type === REVOKE_EVENT) {
       for (const conn of [...(members ?? [])]) {
         if (conn.userId !== event.userId) continue;

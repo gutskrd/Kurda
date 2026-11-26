@@ -8,7 +8,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { CHILD_CONSENT_VERSION, MAX_CHILDREN_PER_PARENT, MAX_FAMILY_SIZE, PIN_TRIES, formatFamilyCode } from '@kurda/shared';
+import { CHILD_CONSENT_VERSION, MAX_CHILDREN_PER_PARENT, MAX_FAMILY_SIZE, PIN_LOCK_STEPS, PIN_TRIES, formatFamilyCode } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { issueAccessToken } from '../auth/tokens.js';
@@ -17,6 +17,7 @@ import { SEND_EMAIL_JOB_NAME } from '../jobs/email.js';
 import { GdprService } from '../gdpr/service.js';
 import { pushMutedByParent } from '../parental/supervision.js';
 import { ChildService } from './children.js';
+import { ChildSessions } from './sessions.js';
 import { childLinkToken } from './notices.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -295,6 +296,69 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('families and child profiles (integ
       expect((await call(kid, 'GET', '/me')).statusCode).toBe(401);
     });
 
+    it('locks the PIN longer for each run of wrong tries, tells the parent once a long lock starts, and forgets it all on the right PIN', async () => {
+      const parent = await adult();
+      const child = await addChild(parent);
+      await setPin(parent);
+      // the service itself, since the route holds anyone to a few tries a quarter-hour before the PIN's own lock
+      const sessions = new ChildSessions(pool, config);
+      const switched = async () => {
+        await switchTo(await parentPhone(parent), child.userId);
+        const r = await pool.query<{ family_id: string }>(
+          `SELECT family_id::text FROM refresh_tokens WHERE user_id = $1 AND return_to IS NOT NULL AND revoked_at IS NULL ORDER BY created_at DESC LIMIT 1`,
+          [child.userId],
+        );
+        return r.rows[0]!.family_id;
+      };
+      const giveBack = (family: string, pin: string) => sessions.returnToParent(child.userId, family, pin, 'parent-phone', undefined);
+      const wrongRun = async (family: string) => {
+        let last: unknown = null;
+        for (let i = 0; i < PIN_TRIES; i++) last = await giveBack(family, '0000').catch((err: unknown) => err);
+        return last as { code: string; details: { retryAfterSec: number } };
+      };
+      const unlock = () => pool.query(`UPDATE family_pins SET locked_until = now() - interval '1 second' WHERE parent_id = $1`, [parent.id]);
+      const minutes = (r: { details: { retryAfterSec: number } }) => Math.round(r.details.retryAfterSec / 60);
+      const told = () => notices(parent.id, 'family_pin_locked');
+
+      const family = await switched();
+      const first = await wrongRun(family);
+      expect(first.code).toBe('FAMILY_PIN_LOCKED');
+      expect(minutes(first)).toBe(PIN_LOCK_STEPS[0]);
+      expect(await told()).toHaveLength(0);
+      await unlock();
+      expect(minutes(await wrongRun(family))).toBe(PIN_LOCK_STEPS[1]);
+      expect(await told()).toHaveLength(1);
+      await unlock();
+      expect(minutes(await wrongRun(family))).toBe(PIN_LOCK_STEPS[2]);
+      await unlock();
+      expect(minutes(await wrongRun(family))).toBe(PIN_LOCK_STEPS[2]);
+      // told once, when the first long lock began
+      expect(await told()).toHaveLength(1);
+
+      // the right PIN forgets the run, so the next five wrong ones lock for the shortest time again
+      await unlock();
+      expect((await giveBack(family, '2468')).user.id).toBe(parent.id);
+      expect(minutes(await wrongRun(await switched()))).toBe(PIN_LOCK_STEPS[0]);
+    });
+
+    it('gives the parent’s phone back with the PIN after the child’s session on it has renewed', async () => {
+      const parent = await adult();
+      const child = await addChild(parent);
+      const phone = await parentPhone(parent);
+      await setPin(parent);
+      const kid = await switchTo(phone, child.userId);
+      // the access token runs out within minutes, so the phone renews the child's session while the child learns
+      const renewed = await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken: kid.refresh }, headers: { 'x-device-id': kid.device }, remoteAddress: ip() });
+      expect(renewed.statusCode, renewed.body).toBe(200);
+      const later = { ...kid, token: renewed.json().accessToken as string, refresh: renewed.json().refreshToken as string };
+      expect((await call(later, 'GET', '/me')).json().user).toMatchObject({ kind: 'child', child: { returnable: true } });
+      const back = await call(later, 'POST', '/auth/child/return', { pin: '2468' });
+      expect(back.statusCode, back.body).toBe(200);
+      expect(back.json().user.id).toBe(parent.id);
+      // the renewed child session is the one that ends
+      expect((await call(later, 'GET', '/me')).statusCode).toBe(401);
+    });
+
     it('changes the PIN only with the PIN, or resets it with the password', async () => {
       const parent = await adult();
       await setPin(parent, '1357');
@@ -310,11 +374,17 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('families and child profiles (integ
       expect((await call(kid, 'GET', '/me')).json().user).toMatchObject({ kind: 'child', child: { returnable: false } });
       // a code works once
       const code = (await call(parent, 'POST', `/me/family/children/${child.userId}/pairing`)).json().code as string;
-      expect(code).toMatch(/^\d{6}$/);
+      expect(code).toMatch(/^\d{8}$/);
       const first = await app.inject({ method: 'POST', url: '/auth/child/pair', payload: { code }, headers: { 'x-device-id': 'kid-a' }, remoteAddress: ip() });
       expect(first.statusCode).toBe(200);
       const twice = await app.inject({ method: 'POST', url: '/auth/child/pair', payload: { code }, headers: { 'x-device-id': 'kid-b' }, remoteAddress: ip() });
       expect(twice.json()).toMatchObject({ code: 'PAIRING_CODE_INVALID' });
+      // a code that does not work is counted with every other network's, for the warning when there are many
+      const failed = async () => Number(/^child_pairings_failed_total (\d+)$/m.exec((await app.inject({ method: 'GET', url: '/metrics' })).body)?.[1] ?? NaN);
+      const before = await failed();
+      const typed = await app.inject({ method: 'POST', url: '/auth/child/pair', payload: { code: '0000 0000' }, headers: { 'x-device-id': 'kid-c' }, remoteAddress: ip() });
+      expect(typed.json()).toMatchObject({ code: 'PAIRING_CODE_INVALID' });
+      expect(await failed()).toBe(before + 1);
       // the session refreshes only on its own phone, and keeps no name of it
       const elsewhere = await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken: kid.refresh }, headers: { 'x-device-id': 'another-phone' }, remoteAddress: ip() });
       expect(elsewhere.statusCode).toBe(401);
@@ -420,6 +490,75 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('families and child profiles (integ
       }
     });
 
+    it('rests at bedtime and once the day’s limit is used: no lesson, practice, game or story begins, while a lesson under way finishes', async () => {
+      const parent = await adult();
+      const child = await addChild(parent);
+      const kid = await pair(parent, child.userId);
+      const none = '00000000-0000-4000-8000-000000000000';
+      const learning: Array<[Method, string, Record<string, unknown>?]> = [
+        ['GET', `/lessons/${none}/session`],
+        ['POST', `/courses/${none}/jump`, {}],
+        ['POST', `/courses/${none}/placement`, {}],
+        ['POST', '/practice/session', {}],
+        ['PUT', `/stories/${none}/progress`, { paragraph: 1 }],
+        ['POST', '/riddles/test/guess', { guess: 'x' }],
+        ['POST', '/proverbs/rounds', {}],
+        ['POST', '/games/solo/sessions', {}],
+        ['POST', `/games/solo/sessions/${none}/answers`, {}],
+        ['POST', '/games/who-am-i/couch/deal', {}],
+        ['POST', '/wordle/daily', {}],
+        ['POST', `/wordle/games/${none}/guesses`, { guess: 'xxxxx' }],
+        ['POST', '/rhyme/training', {}],
+        ['POST', '/race', {}],
+      ];
+      const paused = async () => {
+        for (const [method, url, payload] of learning) {
+          const res = await call(kid, method, url, payload);
+          expect(res.json()?.code, `${method} ${url}`).toBe('PARENTAL_PAUSED');
+          expect(res.statusCode).toBe(403);
+          expect(res.json().details?.paused, `${method} ${url}`).toMatch(/^(bedtime|limit)$/);
+        }
+      };
+      // before any limit the same requests reach their routes
+      for (const [method, url, payload] of learning) {
+        expect((await call(kid, method, url, payload)).json()?.code, `${method} ${url}`).not.toBe('PARENTAL_PAUSED');
+      }
+
+      // the day's fifteen minutes used up
+      await pool.query(`UPDATE parental_controls SET daily_limit_minutes = 15, time_zone = 'UTC' WHERE teen_id = $1`, [child.userId]);
+      await pool.query(
+        `INSERT INTO parental_usage (teen_id, day, minutes) VALUES ($1, (now() AT TIME ZONE 'UTC')::date, 15)
+         ON CONFLICT (teen_id, day) DO UPDATE SET minutes = 15`,
+        [child.userId],
+      );
+      await paused();
+      // what the resting screen needs, and finishing a lesson already under way, still work
+      for (const [method, url, payload] of [
+        ['GET', '/me'],
+        ['GET', '/me/today'],
+        ['GET', '/me/family'],
+        ['POST', '/me/usage', { timeZone: 'UTC' }],
+        ['POST', `/sessions/${none}/answers`, { exerciseId: none, answer: 'x' }],
+        ['POST', `/sessions/${none}/complete`],
+        ['POST', `/practice/sessions/${none}/answers`, { exerciseId: none, answer: 'x' }],
+      ] as Array<[Method, string, Record<string, unknown>?]>) {
+        const res = await call(kid, method, url, payload);
+        expect(res.json()?.code, `${method} ${url}`).not.toBe('PARENTAL_PAUSED');
+        expect(res.statusCode, `${method} ${url} ${res.body.slice(0, 200)}`).toBeLessThan(500);
+      }
+      expect((await call(kid, 'GET', '/me')).json().user.supervision).toMatchObject({ paused: 'limit' });
+
+      // and at bedtime, the limit lifted
+      const hour = new Date().getUTCHours();
+      const at = (h: number) => `${String((h + 24) % 24).padStart(2, '0')}:00`;
+      await pool.query(`UPDATE parental_controls SET daily_limit_minutes = NULL, bedtime_from = $2, bedtime_to = $3 WHERE teen_id = $1`, [
+        child.userId,
+        at(hour - 1),
+        at(hour + 2),
+      ]);
+      await paused();
+    });
+
     it('keeps a child out of everyone else’s sight: no profile, no search, no letters', async () => {
       const parent = await adult();
       const child = await addChild(parent, { name: 'Zilanzilan' });
@@ -482,16 +621,41 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('families and child profiles (integ
       expect((await call(kid, 'GET', '/me')).statusCode).toBe(401);
     });
 
-    it('takes the profile with the email’s link, and keeps an unused one with the warning’s', async () => {
+    it('takes the profile with the email’s link, and keeps an unused one with the warning’s, each only once confirmed', async () => {
       const parent = await adult();
       const child = await addChild(parent);
-      const keep = await app.inject({ method: 'POST', url: '/family/child-link', payload: { token: childLinkToken(config.JWT_SECRET, child.userId, 'keep') }, remoteAddress: ip() });
+      const link = (token: string, body: Record<string, unknown> = { confirm: true }) =>
+        app.inject({ method: 'POST', url: '/family/child-link', payload: { token, ...body }, remoteAddress: ip() });
+      const keep = await link(childLinkToken(config.JWT_SECRET, child.userId, 'keep'));
       expect(keep.json()).toEqual({ done: 'kept' });
       const forged = childLinkToken('another-secret-entirely', child.userId, 'remove');
-      expect((await app.inject({ method: 'POST', url: '/family/child-link', payload: { token: forged }, remoteAddress: ip() })).statusCode).toBe(404);
-      const remove = await app.inject({ method: 'POST', url: '/family/child-link', payload: { token: childLinkToken(config.JWT_SECRET, child.userId, 'remove') }, remoteAddress: ip() });
+      expect((await link(forged)).statusCode).toBe(404);
+      const token = childLinkToken(config.JWT_SECRET, child.userId, 'remove');
+      // what the page shows first: the profile it is about, by name, and nothing done
+      const preview = await app.inject({ method: 'POST', url: '/family/child-link/preview', payload: { token }, remoteAddress: ip() });
+      expect(preview.json()).toEqual({ action: 'remove', child: { name: 'Rojîn' } });
+      expect(await gone(child.userId)).toBe(false);
+      // a link opened by a mail program or a scanner, without the parent's confirmation, does nothing
+      expect((await link(token, {})).statusCode).toBe(400);
+      expect(await gone(child.userId)).toBe(false);
+      const remove = await link(token);
       expect(remove.json()).toEqual({ done: 'removed' });
       expect(await gone(child.userId)).toBe(true);
+      expect((await app.inject({ method: 'POST', url: '/family/child-link/preview', payload: { token }, remoteAddress: ip() })).json()).toEqual({ action: 'remove', child: null });
+    });
+
+    it('lets the email’s delete link work for a week, not a season', async () => {
+      const parent = await adult();
+      const child = await addChild(parent);
+      const sixDaysAgo = new Date(Date.now() - 6 * 86_400_000);
+      const eightDaysAgo = new Date(Date.now() - 8 * 86_400_000);
+      const preview = (token: string) => app.inject({ method: 'POST', url: '/family/child-link/preview', payload: { token }, remoteAddress: ip() });
+      expect((await preview(childLinkToken(config.JWT_SECRET, child.userId, 'remove', sixDaysAgo))).statusCode).toBe(200);
+      const old = await preview(childLinkToken(config.JWT_SECRET, child.userId, 'remove', eightDaysAgo));
+      expect(old.statusCode).toBe(404);
+      expect(old.json()).toMatchObject({ code: 'FAMILY_LINK_INVALID' });
+      const [mail] = await mailTo(await emailOf(parent.id), 'family-child-added');
+      expect(mail?.data.vars.link).toMatch(/\/family\/child\?action=remove&token=/);
     });
 
     it('goes with the parent’s account when that account is deleted at the end of its grace period', async () => {

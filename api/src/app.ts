@@ -227,6 +227,7 @@ import { FamilyService } from './family/service.js';
 import { ChildService } from './family/children.js';
 import { ChildSessions } from './family/sessions.js';
 import { registerFamilyRoutes } from './family/routes.js';
+import { PairingWatch } from './family/pairing-watch.js';
 import { GdprService } from './gdpr/service.js';
 
 const pkg = JSON.parse(
@@ -430,7 +431,6 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   if (config.DATABASE_URL) {
     // Earned Zêr under the daily cap, and the staff-tunable rules shared by leagues, achievements, lessons and tournaments.
     const earnService = new EarnService(app.db, new WalletService(app.db));
-    registerEarnRoutes(app, earnService);
 
     // Friends and friend milestones, needed by the services below.
     const friends = new FriendService(app.db);
@@ -749,7 +749,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       log: app.log,
     });
     families.useChildren(childProfiles);
-    registerFamilyRoutes(app, config, { families, children: childProfiles, sessions: new ChildSessions(app.db, config), gdpr: familyGdpr });
+    const pairingWatch = new PairingWatch({ redis: app.hasDecorator('redis') ? app.redis : null, log: app.log, registry: metricsRegistry });
+    registerFamilyRoutes(app, config, { families, children: childProfiles, sessions: new ChildSessions(app.db, config), gdpr: familyGdpr, pairingWatch });
     if (config.NODE_ENV !== 'test') {
       const familyUpkeep = () => void childProfiles.upkeep().catch((err) => app.log.warn({ err }, 'family upkeep failed'));
       familyUpkeep();
@@ -778,13 +779,17 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const events = new EventService(app.db, app.cache);
     registerEventRoutes(app, events);
     // Shop and event config with dual-admin approval.
-    registerConfigRoutes(
-      app,
-      new ConfigService(app.db, {
-        shop: new ShopService(app.db, new WalletService(app.db), app.cache),
-        events,
-      }),
-    );
+    // and the earn rules and an admin's own Hevalo+, which pay Zêr, through the same Approvals
+    const userAdmin = new UserAdminService(app.db, new WalletService(app.db), moderationKit);
+    const approvals = new ConfigService(app.db, {
+      shop: new ShopService(app.db, new WalletService(app.db), app.cache),
+      events,
+      earn: earnService,
+      plus: async (adminId, change, approvedBy) =>
+        (await userAdmin.grantPlus(adminId, change.userId, change.days, change.reason, undefined, new Date(), approvedBy)).ok,
+    });
+    registerConfigRoutes(app, approvals);
+    registerEarnRoutes(app, earnService, approvals);
     // Event quests and reward claims: progress from the ledgers over the event window, claims paying Zêr with a 72-hour
     // grace period.
     registerQuestRoutes(
@@ -794,7 +799,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     app.addHook('onClose', async () => clearInterval(reminderSweep));
     // Admin user management: search, detail, moderation and ledger adjustments, sharing the moderation services so the
     // second-approval count matches.
-    registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db), moderationKit), adminTotp!);
+    registerUserAdminRoutes(app, userAdmin, adminTotp!, approvals);
     // Immutable audit trail logging every admin change and search.
     registerAuditLog(app, new AuditService(app.db), adminTotp!);
     // the security log: sign-ins, lockouts, attacks and staff access, for superadmins

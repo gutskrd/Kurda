@@ -20,6 +20,8 @@ describe.skipIf(!DATABASE_URL)('giving Hevalo+ from the console (integration)', 
   const s = Date.now().toString(36);
   const userIds: string[] = [];
   let owner = '';
+  let ownerId = '';
+  let second = '';
   let moderator = '';
   let member = '';
   let memberId = '';
@@ -57,7 +59,8 @@ describe.skipIf(!DATABASE_URL)('giving Hevalo+ from the console (integration)', 
     app = buildApp(config);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
-    owner = (await register('pgOwner', '10.96.0.1', '{superadmin}')).token;
+    ({ token: owner, id: ownerId } = await register('pgOwner', '10.96.0.1', '{superadmin}'));
+    second = (await register('pgSecond', '10.96.0.4', '{admin}')).token;
     moderator = (await register('pgMod', '10.96.0.2', '{moderator}')).token;
     ({ token: member, id: memberId } = await register('pgMember', '10.96.0.3', '{}'));
   });
@@ -116,6 +119,25 @@ describe.skipIf(!DATABASE_URL)('giving Hevalo+ from the console (integration)', 
     const more = await give({ days: 7, reason: 'One more week', idempotencyKey: `grant-two-${s}` });
     expect(new Date(more.json().premiumUntil as string).getTime()).toBe(end + 7 * 86_400_000);
     expect(await grants()).toHaveLength(2);
+  });
+
+  it('gives an admin’s own account Hevalo+ only once a second admin approves it in Approvals', async () => {
+    const asked = await give({ days: 30, reason: 'To see what members see', idempotencyKey: `self-${s}` }, owner, ownerId);
+    expect(asked.statusCode, asked.body).toBe(202);
+    expect(asked.json()).toMatchObject({ status: 'pending' });
+    expect(await until(ownerId)).toBeNull();
+    expect(await grants(ownerId)).toEqual([]);
+    const call = (method: 'GET' | 'POST', url: string, token: string) => app.inject({ method, url, headers: { authorization: `Bearer ${token}` } });
+    const pending = (await call('GET', '/admin/config/changes', second)).json().pending as Array<{ id: string; target: string; payload: { userId: string; days: number } }>;
+    const change = pending.find((c) => c.target === 'plus_grant' && c.payload.userId === ownerId)!;
+    expect(change.payload).toMatchObject({ days: 30 });
+    // not by themselves
+    expect((await call('POST', `/admin/config/changes/${change.id}/approve`, owner)).statusCode).toBe(403);
+    expect(await until(ownerId)).toBeNull();
+    const approved = await call('POST', `/admin/config/changes/${change.id}/approve`, second);
+    expect(approved.statusCode, approved.body).toBe(200);
+    expect((await until(ownerId))!.getTime()).toBeGreaterThan(Date.now() + 29 * 86_400_000);
+    expect(await grants(ownerId)).toEqual([{ reason: 'To see what members see', meta: expect.objectContaining({ days: 30 }) }]);
   });
 
   it('answers 404 for a person who is not there', async () => {

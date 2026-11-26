@@ -448,12 +448,13 @@ export class StreakService {
       const sessions = this.sessionsOn(before, today) + (kind === 'session' ? 1 : 0);
       const run = streak.ended ?? null;
       const open = run !== null && repairStanding(run, today) === 'open';
-      if (kind === 'session' && winsBack(sessions) && open && (await this.recordRestore(tx, userId, run, today, 'won_back'))) {
-        streak = restore(streak, today);
-      }
+      const wonBack = kind === 'session' && winsBack(sessions) && open && (await this.recordRestore(tx, userId, run, today, 'won_back'));
+      if (wonBack) streak = restore(streak, today);
       await this.saveWithTally(tx, userId, streak, tally);
       await tx.query(`UPDATE user_streaks SET sessions_on = $2::date, sessions_today = $3 WHERE user_id = $1`, [userId, today, sessions]);
-      const milestone = await this.payMilestones(tx, userId, settle(before.state, today).currentStreak, streak.currentStreak, today, plus, now);
+      // a run won back reached its own milestones before it ended, so only those past its length are new
+      const from = Math.max(settle(before.state, today).currentStreak, wonBack ? run.days : 0);
+      const milestone = await this.payMilestones(tx, userId, from, streak.currentStreak, today, plus, now);
       return { ...(await this.summary(tx, userId, before, streak, tally, now, timeZone, sessions)), milestone };
     });
   }
@@ -546,7 +547,8 @@ export class StreakService {
       // A run recorded as restored whose row says otherwise is corrected here too, without using another restore.
       state = standing === 'open' ? restore(settled, today) : settled;
       if (state !== settled || moved(loaded.state, settled)) await this.save(client, userId, state);
-      if (state !== settled) await this.payMilestones(client, userId, settled.currentStreak, state.currentStreak, today, plus, now);
+      // as when one is won back, only the milestones past the run's own length are new
+      if (state !== settled) await this.payMilestones(client, userId, Math.max(settled.currentStreak, run.days), state.currentStreak, today, plus, now);
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);

@@ -5,7 +5,7 @@ export type AuthStackParamList = {
   Login: { email?: string } | undefined;
   Register: undefined;
   ForgotPassword: { email?: string } | undefined;
-  /** "My parent gave me a code": a child's own phone signing in with the six digits (family/ChildCodeScreen). */
+  /** "My parent gave me a code": a child’s own phone signing in with the eight digits (family/ChildCodeScreen). */
   ChildCode: undefined;
 };
 

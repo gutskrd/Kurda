@@ -185,7 +185,7 @@ interface AuthContextValue {
   requestPasswordReset(email: string): Promise<string | null>;
   logout(): Promise<void>;
   /**
-   * A child's own phone, with the six digits their parent showed (POST /auth/child/pair): a session for the child, bound
+   * A child's own phone, with the eight digits their parent showed (POST /auth/child/pair): a session for the child, bound
    * to this phone. Resolves to the failure, or null on success.
    */
   childSignIn(code: string): Promise<AuthFailure | null>;

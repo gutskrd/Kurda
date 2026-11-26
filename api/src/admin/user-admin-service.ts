@@ -441,10 +441,18 @@ export class UserAdminService {
    * bought.
    *
    * The change and its history entry (`plus_grant`, with reason and end before and after) are one transaction under the
-   * account's lock. Once per `requestKey` per admin; the repeat answers `duplicate`. Admins may grant their own account
-   * (the owner is often the only one and needs to see what members see), and that is recorded too.
+   * account's lock. Once per `requestKey` per admin; the repeat answers `duplicate`. An admin's own account is given it
+   * only from Approvals, once a second admin approves (admin/config-service.ts), who is named in the history.
    */
-  async grantPlus(adminId: string, userId: string, days: number, reason: string, requestKey?: string, now: Date = new Date()): Promise<PlusGrantResult> {
+  async grantPlus(
+    adminId: string,
+    userId: string,
+    days: number,
+    reason: string,
+    requestKey?: string,
+    now: Date = new Date(),
+    approvedBy?: string,
+  ): Promise<PlusGrantResult> {
     if (!Number.isInteger(days) || days < 1 || days > PLUS_GRANT_MAX_DAYS) {
       throw new Error(`a Hevalo+ grant is 1 to ${PLUS_GRANT_MAX_DAYS} whole days, got ${days}`);
     }
@@ -478,7 +486,7 @@ export class UserAdminService {
         userId,
         adminId,
         reason,
-        JSON.stringify({ days, before: user.premium_until, after: until, ...(requestKey ? { requestKey } : {}) }),
+        JSON.stringify({ days, before: user.premium_until, after: until, ...(requestKey ? { requestKey } : {}), ...(approvedBy ? { approvedBy } : {}) }),
       ]);
       await client.query('COMMIT');
       return { ok: true, premiumUntil: until };

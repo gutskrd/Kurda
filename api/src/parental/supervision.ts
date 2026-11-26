@@ -234,6 +234,15 @@ export async function assertParentalAllowed(db: Executor, userId: string, contro
 }
 
 /**
+ * Refuses with 403 PARENTAL_PAUSED during bedtime or once the day's limit is used, whatever the switches say; nothing
+ * for anyone not supervised. For what a child's session may not begin while Hevalo rests (family/child-gate.ts).
+ */
+export async function assertNotPaused(db: Executor, userId: string): Promise<void> {
+  const state = await guardRead(db, userId);
+  if (state?.paused) throw parentalPaused(state);
+}
+
+/**
  * Whether a parent left `control` on for this person: true for anyone not supervised. For what others do to a teen
  * (adding them to a group, accepting their old request), what reaches them live, and the shop list.
  */

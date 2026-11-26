@@ -234,6 +234,19 @@ describe('Earn rules', () => {
     expect(await screen.findByText('Saved the rule for league_promotion.')).toBeInTheDocument();
   });
 
+  it('says a raise waits in Approvals for a second admin', async () => {
+    const user = userEvent.setup();
+    fakeApi(on('GET', '/admin/earn-rules', json({ rules: [rule] })), on('PUT', '/admin/earn-rules/league_promotion', json({ status: 'pending', id: 'c-1' }, 202)));
+    renderUi(<EarnRules />);
+    await user.click(await screen.findByRole('button', { name: 'Edit' }));
+    const amount = screen.getByLabelText(/^zêr each time/i);
+    await user.clear(amount);
+    await user.type(amount, '80');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Save the rule' }));
+    expect(await screen.findByText('The change to league_promotion pays more, so it waits in Approvals for a second admin.')).toBeInTheDocument();
+  });
+
   it('refuses an amount out of range before asking', async () => {
     const user = userEvent.setup();
     const { calls } = fakeApi(on('GET', '/admin/earn-rules', json({ rules: [rule] })));

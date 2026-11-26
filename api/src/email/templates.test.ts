@@ -15,6 +15,18 @@ describe('renderEmail', () => {
     expect(ku.text).toContain('https://k/reset');
   });
 
+  /** The delete link a parent gets for a child's profile opens a page that asks first, and works for a week (family/notices.ts). */
+  it('says the child profile’s delete link asks before it deletes and lasts 7 days, in both languages', async () => {
+    const { CHILD_LINK_DAYS } = await import('../family/notices.js');
+    expect(CHILD_LINK_DAYS.remove).toBe(7);
+    for (const locale of EMAIL_LOCALES) {
+      const r = renderEmail('family-child-added', locale, { username: 'dilan', child: 'Rojîn', link: 'https://k/family/child', time: 't', privacy: 'p' });
+      expect(r.text, locale).toMatch(/\b7\b/);
+      expect(r.text, locale).not.toMatch(/\b90\b/);
+      expect(r.text, locale).toMatch(locale === 'en' ? /only once you confirm/ : /piştrast bikî/);
+    }
+  });
+
   it('leaves unknown placeholders intact', () => {
     expect(renderEmail('deletion-notice', 'en', {}).text).toContain('{graceDays}');
   });

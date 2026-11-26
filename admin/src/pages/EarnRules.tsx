@@ -19,7 +19,8 @@ function cooldown(s: number): string {
 
 /**
  * Earn rules: the Zêr each staff-tunable action earns (a league promotion, a tournament win), the daily cap, and the wait
- * before it pays again. A change applies to everyone's next Zêr earned that way, so it is asked first.
+ * before it pays again. A change applies to everyone's next Zêr earned that way, so it is asked first; one that pays more
+ * waits in Approvals for a second admin.
  */
 export function EarnRules(): React.JSX.Element {
   const toast = useToast();
@@ -59,9 +60,9 @@ export function EarnRules(): React.JSX.Element {
           key={editing.key}
           rule={editing}
           onClose={() => setEditing(null)}
-          onSaved={async () => {
+          onSaved={async (message) => {
             setEditing(null);
-            toast.success(`Saved the rule for ${editing.key}.`);
+            toast.success(message);
             await list.reload();
           }}
         />
@@ -70,7 +71,7 @@ export function EarnRules(): React.JSX.Element {
   );
 }
 
-function RuleForm({ rule, onClose, onSaved }: { rule: EarnRule; onClose: () => void; onSaved: () => Promise<void> }): React.JSX.Element {
+function RuleForm({ rule, onClose, onSaved }: { rule: EarnRule; onClose: () => void; onSaved: (message: string) => Promise<void> }): React.JSX.Element {
   const dialogs = useDialogs();
   const [amount, setAmount] = useState(String(rule.amount));
   const [cap, setCap] = useState(rule.dailyCap === null ? '' : String(rule.dailyCap));
@@ -96,8 +97,12 @@ function RuleForm({ rule, onClose, onSaved }: { rule: EarnRule; onClose: () => v
     setBusy(true);
     setProblem(null);
     try {
-      await api(`/admin/earn-rules/${encodeURIComponent(rule.key)}`, { method: 'PUT', body: { amount: n, dailyCap: c, cooldownSeconds: w, active } });
-      await onSaved();
+      // a change that pays more waits for a second admin (202); one that pays the same or less applies now
+      const res = await api<{ ok?: true; status?: 'pending' }>(`/admin/earn-rules/${encodeURIComponent(rule.key)}`, {
+        method: 'PUT',
+        body: { amount: n, dailyCap: c, cooldownSeconds: w, active },
+      });
+      await onSaved(res.status === 'pending' ? `The change to ${rule.key} pays more, so it waits in Approvals for a second admin.` : `Saved the rule for ${rule.key}.`);
     } catch (err) {
       setProblem(errorLine(err, 'earn rules'));
     } finally {

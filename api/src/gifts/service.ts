@@ -144,7 +144,7 @@ interface GiftViews {
  *   gifts from their monthly box are counted out, three a month.
  * - Not while muted from chat, with the same answers as a message (403 MUTED, then CHAT_MUTED).
  * - Within the safeguards (safety.ts): at most 500 Zêr a gift from or to anyone under 18, 2,000 Zêr a month spent by
- *   them, an adult's own limit, and a second confirmation for a send of 2,000 Zêr or more, all decided under the
+ *   them (gifts from their bag counted at their price), an adult's own limit, and a second confirmation for a send of 2,000 Zêr or more, all decided under the
  *   sender's lock with their Zêr row locked, so two quick sends cannot both pass.
  * - From the gift bag as from Zêr, under every rule above; the bag is the only thing a bag's gifts can leave by.
  *
@@ -397,7 +397,7 @@ export class GiftService {
       if (candidates.length > 0) {
         // the Zêr row before the bag, the one order every path takes (bag.ts)
         await lockZerRow(client, fromId);
-        await assertWithinBounds(client, fromId, candidates, item.price, total);
+        await assertWithinBounds(client, fromId, candidates, item.price, total, input.fromBag ? item.price * candidates.length : 0);
         if (paying && total >= BIG_GIFT_CONFIRM_ZER) {
           // never ask someone to confirm what they cannot pay for
           if ((await zerHeld(client, fromId)) < total) throw new InsufficientFundsError();
