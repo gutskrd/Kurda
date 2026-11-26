@@ -1594,6 +1594,7 @@ export const fr: Catalogue = {
   'gate.what.profile': 'avoir un profil',
   'gate.what.settings': 'modifier tes réglages',
   'footer.tagline': 'Apprendre le kurde. Jouer ensemble.',
+  'footer.story': 'Le kurde vit dans les cuisines, aux mariages et dans les appels à la famille. Hevalo le garde près de toi, quelques mots à la fois.',
   'footer.join': 'Rejoindre Hevalo',
   'footer.app': 'Application',
   'footer.iosSoon': 'iOS (bientôt)',

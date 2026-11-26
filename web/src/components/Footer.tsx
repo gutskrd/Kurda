@@ -22,7 +22,7 @@ export function Footer(): React.JSX.Element {
           <div className="footer-about">
             <Brand />
             <p className="muted" style={{ marginTop: 12, fontSize: 'var(--text)' }}>
-              {t('footer.tagline')}
+              {t('footer.story')}
             </p>
             {/* Kurmancî in every language on purpose: it is the app's own motto line. */}
             <p className="kurdish" lang="ku" style={{ marginTop: 10 }}>

@@ -1595,6 +1595,7 @@ export const nl: Catalogue = {
   'gate.what.profile': 'een profiel te hebben',
   'gate.what.settings': 'je instellingen te wijzigen',
   'footer.tagline': 'Leer Koerdisch. Speel samen.',
+  'footer.story': 'Koerdisch leeft in keukens, op bruiloften en in telefoontjes naar huis. Hevalo houdt het dichtbij, een paar woorden per keer.',
   'footer.join': 'Word lid van Hevalo',
   'footer.app': 'App',
   'footer.iosSoon': 'iOS (binnenkort)',

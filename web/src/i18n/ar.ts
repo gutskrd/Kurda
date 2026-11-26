@@ -1588,6 +1588,7 @@ export const ar: Catalogue = {
   'gate.what.profile': 'يكون لك ملف شخصي',
   'gate.what.settings': 'تغيّر إعداداتك',
   'footer.tagline': 'تعلّموا الكردية. العبوا معًا.',
+  'footer.story': 'تعيش الكردية في المطابخ وفي الأعراس وفي المكالمات مع الأهل. وHevalo يبقيها قريبة منك، بضع كلمات في كل مرة.',
   'footer.join': 'انضم إلى Hevalo',
   'footer.app': 'التطبيق',
   'footer.iosSoon': 'iOS (قريبًا)',

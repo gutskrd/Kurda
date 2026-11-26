@@ -1590,6 +1590,7 @@ export const tr: Catalogue = {
   'gate.what.profile': 'bir profilin olması',
   'gate.what.settings': 'ayarlarını değiştirmek',
   'footer.tagline': 'Kürtçe öğren. Birlikte oyna.',
+  'footer.story': 'Kürtçe mutfaklarda, düğünlerde ve eve açılan telefonlarda yaşar. Hevalo onu sana yakın tutar, her seferinde birkaç kelime.',
   'footer.join': 'Hevalo’ya katıl',
   'footer.app': 'Uygulama',
   'footer.iosSoon': 'iOS (yakında)',

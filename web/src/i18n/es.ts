@@ -1593,6 +1593,7 @@ export const es: Catalogue = {
   'gate.what.profile': 'tener un perfil',
   'gate.what.settings': 'cambiar tus ajustes',
   'footer.tagline': 'Aprende kurdo. Juega en compañía.',
+  'footer.story': 'El kurdo vive en las cocinas, en las bodas y en las llamadas a casa. Hevalo te lo mantiene cerca, unas pocas palabras cada vez.',
   'footer.join': 'Únete a Hevalo',
   'footer.app': 'App',
   'footer.iosSoon': 'iOS (próximamente)',

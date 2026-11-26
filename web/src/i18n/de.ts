@@ -1595,6 +1595,7 @@ export const de: Catalogue = {
   'gate.what.profile': 'ein Profil zu haben',
   'gate.what.settings': 'deine Einstellungen zu ändern',
   'footer.tagline': 'Kurdisch lernen. Zusammen spielen.',
+  'footer.story': 'Kurdisch lebt in Küchen, auf Hochzeiten und in Anrufen nach Hause. Hevalo hält es dir nah, ein paar Wörter auf einmal.',
   'footer.join': 'Hevalo beitreten',
   'footer.app': 'App',
   'footer.iosSoon': 'iOS (demnächst)',
