@@ -211,7 +211,7 @@ export function useSlidingCapsule(control: RefObject<HTMLElement | null>, capsul
         const x = from.x + (to.x - from.x) * f.at;
         const w = (from.w + (to.w - from.w) * f.at) * (1 + f.stretch) * f.scale;
         const left = x - (w - (from.w + (to.w - from.w) * f.at)) / 2;
-        frames.push({ transform: `translate(${left - to.x}px, ${(from.y - to.y) * (1 - f.at)}px) scale(${w / to.w}, ${f.scale})`, opacity: 0.35 + 0.65 * f.tint });
+        frames.push({ transform: `translate(${left - to.x}px, ${(from.y - to.y) * (1 - f.at)}px) scale(${w / to.w}, ${f.scale * f.squash})`, opacity: 0.35 + 0.65 * f.tint });
         if (f.phase === 'rest') break;
         t += 1000 / 60;
       }

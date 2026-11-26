@@ -227,10 +227,10 @@ function Capsule({ pieces, slot, height, ink, fill }: { pieces: SelectorPieces; 
   const cap = { width: height, borderRadius: radii.pill };
   return (
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: Animated.multiply(pieces.tint, fill) }]} needsOffscreenAlphaCompositing testID="tab-pill">
-      <Animated.View style={[styles.piece, piece, cap, { transformOrigin: 'left center', transform: [{ translateX: pieces.left }, { scale: pieces.scale }] }]} />
-      <Animated.View style={[styles.piece, piece, cap, { transformOrigin: 'right center', transform: [{ translateX: pieces.endLeft }, { scale: pieces.scale }] }]} />
+      <Animated.View style={[styles.piece, piece, cap, { transformOrigin: 'left center', transform: [{ translateX: pieces.left }, { scaleX: pieces.scale }, { scaleY: pieces.scaleY }] }]} />
+      <Animated.View style={[styles.piece, piece, cap, { transformOrigin: 'right center', transform: [{ translateX: pieces.endLeft }, { scaleX: pieces.scale }, { scaleY: pieces.scaleY }] }]} />
       <Animated.View
-        style={[styles.piece, piece, { width: slot, transformOrigin: 'left center', transform: [{ translateX: pieces.spanLeft }, { scaleX: pieces.spanScale }, { scaleY: pieces.scale }] }]}
+        style={[styles.piece, piece, { width: slot, transformOrigin: 'left center', transform: [{ translateX: pieces.spanLeft }, { scaleX: pieces.spanScale }, { scaleY: pieces.scaleY }] }]}
       />
     </Animated.View>
   );
@@ -243,7 +243,7 @@ function Lens({ pieces, slot, height }: { pieces: SelectorPieces; slot: number; 
       pointerEvents="none"
       style={[
         styles.piece,
-        { width: slot, height, opacity: pieces.lens, transformOrigin: 'left center', transform: [{ translateX: pieces.left }, { scaleX: pieces.lensScale }, { scaleY: pieces.scale }] },
+        { width: slot, height, opacity: pieces.lens, transformOrigin: 'left center', transform: [{ translateX: pieces.left }, { scaleX: pieces.lensScale }, { scaleY: pieces.scaleY }] },
       ]}
       testID="tab-lens"
     >

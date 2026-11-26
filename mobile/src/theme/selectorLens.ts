@@ -27,7 +27,7 @@ export function sampleMove(move: SelectorMove, now: number): { frames: LensFrame
 /** What the pieces need: positions in points from the left, scales and opacities, for every frame. */
 export function piecesFor(frames: LensFrame[], slot: number, height: number, width: number) {
   return frames.map((f) => {
-    const centre = (f.at + 0.5) * slot;
+    const centre = (f.at + f.lead + 0.5) * slot;
     const w = slot * (1 + f.stretch) * f.scale;
     const h = height * f.scale;
     const left = Math.max(centre - w / 2, -2);
@@ -39,6 +39,7 @@ export function piecesFor(frames: LensFrame[], slot: number, height: number, wid
       spanScale: slot > 0 ? Math.max(right - left - h, 0) / slot : 0,
       lensScale: slot > 0 ? (right - left) / slot : 0,
       scale: f.scale,
+      scaleY: f.scale * f.squash,
       tint: f.tint,
       lens: f.lens,
     };
@@ -112,6 +113,7 @@ export function useSelectorLens(place: number, slot: number, height: number, cou
       spanScale: pick((p) => p.spanScale),
       lensScale: pick((p) => p.lensScale),
       scale: pick((p) => p.scale),
+      scaleY: pick((p) => p.scaleY),
       tint: Animated.multiply(pick((p) => p.tint), fade),
       lens: pick((p) => p.lens),
     };

@@ -11,15 +11,22 @@ import { springFor, type SpringSpec } from './motion-physics.js';
 export const SELECTOR_LENS = {
   /** From the tap until the tint has gone and the lens is up, in milliseconds (measured: about 67). */
   liftMs: 70,
-  /** The glide to the new choice: about 95% of the way at 200 ms and still at 230, with a breath of overshoot. */
-  glide: { duration: 0.34, bounce: 0.12 } satisfies SpringSpec,
+  /**
+   * The glide to the new choice, fitted to the reference by least squares: a spring set off with a kick (`kick`, in
+   * spans per second), so a third of the way goes in the first 50 ms, 90% by about 210 ms, with a breath of overshoot.
+   */
+  glide: { duration: 0.58, bounce: 0.1 } satisfies SpringSpec,
+  kick: 8,
   /** How much larger than the capsule at rest the lens is, both ways (it rises a little past the bar's height). */
   lensScale: 1.12,
   /** How much wider it stretches at the height of the glide, as a share of its width (measured: about 0.45). */
   stretch: 0.45,
-  /** When the tint starts to come back over the new choice, and how long it and the shrink take (measured: 317, ~70). */
-  settleAtMs: 300,
-  settleMs: 90,
+  /** When the tint starts to come back over the new choice, and how long it and the shrink take (measured: ~300, ~85). */
+  settleAtMs: 298,
+  settleMs: 85,
+  /** How much flatter it gets as it stretches, and how far its leading edge runs ahead, both with its speed. */
+  squash: 0.25,
+  lead: 0.18,
   /** A move never takes longer than this, whatever the spring is still doing in its last hundredths. */
   longestMs: 520,
 } as const;
@@ -53,11 +60,15 @@ export interface LensFrame {
   tint: number;
   /** How much the lens bends what lies under it, 0 to 1: nothing at rest. */
   lens: number;
+  /** Its height against its width's scale: below 1 as it stretches, flattening like a drop on the move. */
+  squash: number;
+  /** How far its middle runs ahead of `at` toward where it is going, in places. */
+  lead: number;
 }
 
 /** A move from `from` to `to`, starting now. */
 export function planSwitch(from: number, to: number, now: number): SelectorMove {
-  return { from, to, start: now, velocity: 0, lifted: now };
+  return { from, to, start: now, velocity: SELECTOR_LENS.kick * (to - from), lifted: now };
 }
 
 const smooth = (k: number): number => {
@@ -92,7 +103,7 @@ export function lensAt(move: SelectorMove, now: number): LensFrame {
   const since = now - move.lifted;
   const span = move.to - move.from;
   if (ms >= SELECTOR_LENS.longestMs || span === 0) {
-    return { phase: 'rest', at: move.to, velocity: 0, scale: 1, stretch: 0, tint: 1, lens: 0 };
+    return { phase: 'rest', at: move.to, velocity: 0, scale: 1, stretch: 0, tint: 1, lens: 0, squash: 1, lead: 0 };
   }
   const { x, v } = springAt(SELECTOR_LENS.glide, Math.max(ms, 0) / 1000, span !== 0 ? move.velocity / span : 0);
   const at = move.from + span * x;
@@ -100,7 +111,9 @@ export function lensAt(move: SelectorMove, now: number): LensFrame {
   // Lifting: the tint goes and the lens rises over the first `liftMs` of the run, not again for a retarget.
   const rise = smooth(since / SELECTOR_LENS.liftMs);
   // Settling: the tint returns and the lens sinks over `settleMs`, from `settleAtMs` of this move.
-  const fall = smooth((ms - SELECTOR_LENS.settleAtMs) / SELECTOR_LENS.settleMs);
+  // The tint returns quickly at first, as it does in the reference, then eases in.
+  const k = Math.min(Math.max((ms - SELECTOR_LENS.settleAtMs) / SELECTOR_LENS.settleMs, 0), 1);
+  const fall = 1 - (1 - k) * (1 - k);
   const up = rise * (1 - fall);
   // The stretch follows the speed: widest at the height of the glide, gone as it arrives.
   const pace = Math.min(Math.abs(v) / 6, 1);
@@ -113,6 +126,8 @@ export function lensAt(move: SelectorMove, now: number): LensFrame {
     stretch: SELECTOR_LENS.stretch * pace * up,
     tint: 1 - up,
     lens: up,
+    squash: 1 - SELECTOR_LENS.squash * pace * up,
+    lead: Math.sign(velocity) * SELECTOR_LENS.lead * pace * up,
   };
 }
 

@@ -32,7 +32,8 @@ function restFill(el: HTMLElement): number {
 /** The pieces' transforms and opacities for one frame, from the reading edge, the capsule squeezed against the walls. */
 export function selectorStyles(f: LensFrame, box: SelectorBox, fill: number) {
   const { slot, height, width } = box;
-  const centre = (f.at + 0.5) * slot;
+  const centre = (f.at + f.lead + 0.5) * slot;
+  const tall = f.scale * f.squash;
   const w = slot * (1 + f.stretch) * f.scale;
   const h = height * f.scale;
   // The lens may reach a hair past the bar's ends, never further; the capsule beneath stops at them.
@@ -40,16 +41,16 @@ export function selectorStyles(f: LensFrame, box: SelectorBox, fill: number) {
   const right = Math.min(centre + w / 2, width + 2);
   const along = Math.max(right - left - h, 0);
   return {
-    start: `translateX(${left}px) scale(${f.scale})`,
-    end: `translateX(${right - height}px) scale(${f.scale})`,
-    span: `translateX(${left + h / 2}px) scale(${slot > 0 ? along / slot : 0}, ${f.scale})`,
-    lens: `translateX(${left}px) scale(${slot > 0 ? (right - left) / slot : 0}, ${f.scale})`,
+    start: `translateX(${left}px) scale(${f.scale}, ${tall})`,
+    end: `translateX(${right - height}px) scale(${f.scale}, ${tall})`,
+    span: `translateX(${left + h / 2}px) scale(${slot > 0 ? along / slot : 0}, ${tall})`,
+    lens: `translateX(${left}px) scale(${slot > 0 ? (right - left) / slot : 0}, ${tall})`,
     group: fill * f.tint,
     lensOpacity: f.lens,
   };
 }
 
-const REST = (at: number): LensFrame => ({ phase: 'rest', at, velocity: 0, scale: 1, stretch: 0, tint: 1, lens: 0 });
+const REST = (at: number): LensFrame => ({ phase: 'rest', at, velocity: 0, scale: 1, stretch: 0, tint: 1, lens: 0, squash: 1, lead: 0 });
 
 /** Runs one selector's moves. */
 export class SelectorLens {

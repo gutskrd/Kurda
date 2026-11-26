@@ -27,16 +27,16 @@ describe('a selector on the website', () => {
 
   it('draws the capsule round its place at rest, with no lens', () => {
     const s = selectorStyles(lensAt(planSwitch(1, 1, 0), 0), box, 0.34);
-    expect(s.start).toBe('translateX(80px) scale(1)');
-    expect(s.end).toBe('translateX(110px) scale(1)');
+    expect(s.start).toBe('translateX(80px) scale(1, 1)');
+    expect(s.end).toBe('translateX(110px) scale(1, 1)');
     expect(s.group).toBeCloseTo(0.34);
     expect(s.lensOpacity).toBe(0);
   });
 
   it('keeps the lens within a hair of the bar’s ends however it stretches', () => {
-    const f = { phase: 'moving' as const, at: 0, velocity: 0, scale: 1.12, stretch: 0.45, tint: 0, lens: 1 };
+    const f = { phase: 'moving' as const, at: 0, velocity: 0, scale: 1.12, stretch: 0.45, tint: 0, lens: 1, squash: 1, lead: 0 };
     expect(selectorStyles(f, box, 1).lens).toMatch(/^translateX\(-2px\)/);
-    expect(selectorStyles({ ...f, at: 3 }, box, 1).end).toBe(`translateX(${320 + 2 - 50}px) scale(1.12)`);
+    expect(selectorStyles({ ...f, at: 3 }, box, 1).end).toBe(`translateX(${320 + 2 - 50}px) scale(1.12, 1.12)`);
   });
 
   it('plays a move as one run of keyframes per piece, the lens up and the tint out on the way', () => {
@@ -61,7 +61,7 @@ describe('a selector on the website', () => {
     lens.place(0);
     lens.moveTo(3);
     expect(played.map((p) => p.el)).toEqual(['group']);
-    expect(els.start.style.transform).toBe('translateX(240px) scale(1)');
+    expect(els.start.style.transform).toBe('translateX(240px) scale(1, 1)');
     expect(els.lens.style.opacity).toBe('0');
   });
 });

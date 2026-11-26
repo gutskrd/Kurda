@@ -319,7 +319,7 @@ export function Segmented<T extends string>({
   // (theme/selectorLens.ts); under Reduce Motion it only fades in at its place.
   const inner = Math.max(box.h - SEG_PAD * 2, 0);
   const lens = useSelectorLens(index, seg, inner, options.length, reduceMotion);
-  const moving = { transformOrigin: 'left center' as const, transform: [{ translateX: lens.left }, { scaleX: lens.lensScale }, { scaleY: lens.scale }] };
+  const moving = { transformOrigin: 'left center' as const, transform: [{ translateX: lens.left }, { scaleX: lens.lensScale }, { scaleY: lens.scaleY }] };
 
   return (
     <View
