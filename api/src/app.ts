@@ -295,7 +295,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
   const health = new HealthRegistry();
   if (config.DATABASE_URL) {
-    const pool = createPool(config);
+    // Four kept open: enough for a page's first requests to skip the handshake, few enough for a small database.
+    const pool = createPool(config, { warm: 4, onIdleError: (err) => app.log.warn({ err }, 'an idle database connection was dropped') });
     app.decorate('db', pool);
     // Reconcile the configured admin allowlist once the server is up (idempotent; grants only to confirmed addresses).
     app.addHook('onReady', async () => {
