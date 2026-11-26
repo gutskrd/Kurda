@@ -6,7 +6,7 @@ import {
   DEER_BREATH_MS,
   DEER_CURL_STEPS,
   DEER_LOOP_MS,
-  DEER_MARK_EYES_FROM,
+  DEER_MARK_FULL_FROM,
   DEER_MARK_VIEW,
   deerCurlPath,
   deerLoopAt,
@@ -33,7 +33,7 @@ export function DeerLoader({ size = 48, style }: { size?: number; style?: StyleP
   const phase = useRef(new Animated.Value(0)).current;
   const breath = useRef(new Animated.Value(1)).current;
   const [step, setStep] = useState(0);
-  const eyes = size >= DEER_MARK_EYES_FROM;
+  const small = size < DEER_MARK_FULL_FROM;
 
   useEffect(() => {
     if (!awake) return;
@@ -68,7 +68,7 @@ export function DeerLoader({ size = 48, style }: { size?: number; style?: StyleP
     ];
   }, [phase, size]);
 
-  const d = useMemo(() => deerCurlPath(step / DEER_CURL_STEPS, { eyes }), [step, eyes]);
+  const d = useMemo(() => deerCurlPath(step / DEER_CURL_STEPS, { small }), [step, small]);
 
   return (
     <Animated.View

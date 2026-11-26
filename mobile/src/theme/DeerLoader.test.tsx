@@ -77,11 +77,11 @@ describe('DeerLoader', () => {
     expect(view.style.transform).toContain('scaleY(1)');
   });
 
-  it('leaves his eyes out when drawn too small for them', async () => {
+  it('is drawn as the small mark when too small for his eyes and three tines', async () => {
     recordMotion();
     const { container } = renderWithProviders(<DeerLoader size={24} />);
     await settle();
-    expect(container.querySelector('path')?.getAttribute('d')).toBe(deerMarkPath({ eyes: false }));
+    expect(container.querySelector('path')?.getAttribute('d')).toBe(deerMarkPath({ small: true }));
   });
 
   it('only breathes in opacity under Reduce Motion', async () => {

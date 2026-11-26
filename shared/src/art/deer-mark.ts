@@ -1,7 +1,8 @@
 /**
  * Hevalo's mark: the owner's deer, his back to us and looking back over his shoulder, traced as one shape in a
  * 100-unit square (his head, antlers and ears and the curl of his body, with his eyes and the crescent between chin and
- * body cut out), so it is drawn in a single colour. It is also the apps' loader: in one clockwise turn he curls into a
+ * body cut out), so it is drawn in a single colour. His antlers are redrawn after Hevalo's own, as in the character rig: a beam
+ * sweeping up and outward with three rounded tines, tallest outside. It is also the apps' loader: in one clockwise turn he curls into a
  * ball, rolls, and spins back out into exactly where he started.
  *
  * The curl is a morph between shapes of matched points: the trace cut into 96 segments by length, and a ball whose rim
@@ -16,13 +17,17 @@ import { n } from './svg.js';
 /** The square every frame of the mark is drawn in; the ball turns about its middle. */
 export const DEER_MARK_VIEW = 100;
 
-/** Below this many pixels the eyes are left out, as holes that small blur into the head. */
-export const DEER_MARK_EYES_FROM = 32;
+/**
+ * From this many pixels the mark is drawn whole. Below it, the small mark leaves out his eyes, holes that small blur
+ * into the head, and gives each antler one tine on its beam, since three run together into a crown.
+ */
+export const DEER_MARK_FULL_FROM = 32;
 
 /**
- * The trace, as cubic runs (a start point, then three points per curve), cut where his crescent opens and at its tip:
- * the chin's edge of the crescent, the body's edge, then the rest of the outline round to the chin again. The outline
- * runs clockwise and his eyes the other way, so a nonzero fill cuts them out.
+ * The owner's drawing as traced, as cubic runs (a start point, then three points per curve), cut where his crescent
+ * opens and at its tip: the chin's edge of the crescent, the body's edge, then the rest of the outline round to the chin
+ * again, with the antlers as he drew them. The outline runs clockwise and his eyes the other way, so a nonzero fill
+ * cuts them out.
  */
 const TRACE = {
   upper: [
@@ -57,6 +62,79 @@ const TRACE = {
     68.33, 41.98, 67.99, 40.57, 65.97, 37.78, 64.67, 40.12, 63.55, 42.14, 63.69, 44.79, 64.27, 46.94, 64.68, 48.49,
     66.96, 50.39, 68.09, 48.28, 69.1, 46.41, 68.81, 43.94, 68.33, 41.98
   ],
+} as const;
+
+/**
+ * The antlers after Hevalo's, each a run that replaces the traced antler between two cuts on the traced rim (a segment
+ * of it and how far along), meeting the rim there along its own tangent. They are even-width strokes with round ends,
+ * filleted into the head, and mirrored about his middle; the small mark's have one tine each.
+ */
+const ANTLERS = {
+  full: {
+    left: {
+      from: [8, 0.9135],
+      to: [20, 0.4085],
+      run: [
+        29.62, 28.95, 30.47, 29.53, 31.12, 30.58, 32.09, 30.96, 32.68, 31.18, 33.42, 30.9, 33.53, 30.23, 33.64,
+        29.59, 33.12, 29.01, 32.75, 28.55, 31.78, 27.37, 30.66, 26.44, 29.42, 25.55, 26.28, 23.32, 23.27, 20.14,
+        22.18, 16.35, 21.78, 14.94, 21.66, 13.47, 21.58, 12, 21.48, 10.04, 20.93, 7.4, 23.06, 6.3, 23.45, 6.11,
+        23.87, 5.99, 24.31, 5.98, 24.88, 5.97, 25.44, 6.12, 25.93, 6.42, 27.84, 7.62, 27.47, 10.57, 27.63, 12.53,
+        27.68, 13.1, 27.83, 14.92, 28.54, 15.05, 29.18, 15.17, 29.49, 13.24, 29.59, 12.79, 29.74, 12.13, 29.88,
+        11.44, 30.21, 10.84, 30.93, 9.52, 32.55, 8.92, 33.94, 9.52, 36.86, 10.79, 35.29, 14.53, 34.93, 16.85, 34.84,
+        17.4, 34.54, 18.96, 34.96, 19.4, 35.4, 19.85, 36.45, 18.29, 36.68, 17.99, 37.54, 16.83, 38.41, 15.52, 40.02,
+        15.48, 40.55, 15.47, 41.08, 15.61, 41.55, 15.88, 42.08, 16.19, 42.51, 16.67, 42.76, 17.24, 43.51, 18.98,
+        42.28, 20.46, 41.33, 21.81, 41.01, 22.27, 40.04, 23.56, 40.38, 24.13, 40.71, 24.72, 42.44, 23.92, 42.92,
+        23.77, 43.49, 23.61, 44.08, 23.56, 44.63, 23.37
+      ],
+    },
+    right: {
+      from: [21, 0.249],
+      to: [32, 0.0285],
+      run: [
+        57.14, 22.97, 57.68, 23.16, 58.24, 23.26, 58.79, 23.41, 59.28, 23.54, 61.04, 24.25, 61.34, 23.63, 61.62,
+        23.04, 60.66, 21.83, 60.33, 21.37, 59.91, 20.78, 59.45, 20.18, 59.19, 19.49, 58.66, 18.11, 59.21, 16.5,
+        60.55, 15.81, 62.37, 14.86, 63.82, 15.99, 64.87, 17.41, 65.31, 18.01, 65.73, 18.66, 66.27, 19.17, 66.46,
+        19.35, 66.82, 19.65, 67.04, 19.37, 67.42, 18.89, 67.15, 17.48, 67.06, 16.91, 66.69, 14.54, 65.11, 10.8,
+        68.02, 9.53, 69.41, 8.92, 71.04, 9.51, 71.76, 10.83, 72.09, 11.43, 72.23, 12.12, 72.38, 12.78, 72.48, 13.22,
+        72.8, 15.24, 73.47, 15.04, 74.16, 14.84, 74.29, 13.13, 74.34, 12.54, 74.51, 10.57, 74.13, 7.59, 76.08, 6.41,
+        76.55, 6.12, 77.1, 5.97, 77.65, 5.98, 78.09, 5.99, 78.52, 6.1, 78.9, 6.3, 81.04, 7.39, 80.5, 9.93, 80.4,
+        11.89, 80.32, 13.38, 80.21, 14.89, 79.8, 16.34, 78.81, 19.79, 75.99, 23.04, 73.15, 25.15, 71.9, 26.09, 70.63,
+        26.93, 69.6, 28.13, 69.23, 28.56, 68.68, 29.22, 68.97, 29.82, 69.22, 30.31, 69.82, 30.32, 70.23, 30.04,
+        70.87, 29.61, 71.59, 28.43, 72.32, 27.84
+      ],
+    },
+  },
+  small: {
+    left: {
+      from: [8, 0.9135],
+      to: [20, 0.4085],
+      run: [
+        29.62, 28.95, 30.46, 29.52, 31.07, 30.5, 32, 30.91, 32.5, 31.13, 33.15, 31.02, 33.34, 30.45, 33.55, 29.81,
+        32.99, 29.17, 32.62, 28.72, 31.61, 27.47, 30.43, 26.52, 29.13, 25.6, 26.08, 23.41, 23.07, 20.1, 22, 16.43,
+        21.58, 15.02, 21.46, 13.55, 21.38, 12.08, 21.27, 10.05, 20.74, 7.52, 22.91, 6.35, 24.68, 5.39, 26.83, 6.4,
+        27.4, 8.27, 28.29, 11.16, 26.95, 13.54, 29.3, 16.83, 29.7, 17.39, 30.2, 18.16, 30.85, 18.43, 31.9, 18.87,
+        32.62, 16.78, 33.04, 16.09, 33.5, 15.31, 34.02, 14.58, 34.55, 13.85, 35.74, 12.19, 37.18, 10.47, 39.46, 11.6,
+        40.86, 12.29, 41.52, 13.93, 41.03, 15.41, 40.65, 16.55, 39.77, 17.51, 39.1, 18.49, 38.33, 19.63, 37.71,
+        20.85, 37.25, 22.14, 37.1, 22.56, 36.97, 23.01, 37.02, 23.46, 37.13, 24.31, 38.21, 25.76, 39.17, 25.52,
+        39.74, 25.37, 40.66, 24.61, 41.42, 24.32, 41.96, 24.12, 42.51, 23.88, 43.07, 23.73, 43.59, 23.6, 44.12,
+        23.55, 44.63, 23.37
+      ],
+    },
+    right: {
+      from: [21, 0.249],
+      to: [32, 0.0275],
+      run: [
+        57.14, 22.97, 58.17, 23.34, 59.33, 23.56, 60.41, 23.92, 61.36, 24.24, 62.28, 25.11, 62.96, 25.27, 63.97,
+        25.52, 64.92, 24.23, 64.96, 23.33, 64.99, 22.81, 64.79, 22.31, 64.61, 21.83, 64.13, 20.61, 63.54, 19.46,
+        62.8, 18.39, 62.14, 17.43, 61.29, 16.5, 60.93, 15.38, 60.45, 13.88, 61.15, 12.22, 62.59, 11.56, 64.87, 10.51,
+        66.26, 12.23, 67.45, 13.87, 67.96, 14.59, 68.47, 15.31, 68.93, 16.07, 69.34, 16.76, 70.07, 18.85, 71.1,
+        18.44, 71.77, 18.18, 72.26, 17.4, 72.66, 16.84, 75.03, 13.55, 73.69, 11.2, 74.57, 8.29, 75.14, 6.41, 77.27,
+        5.39, 79.05, 6.34, 81.21, 7.49, 80.71, 9.95, 80.6, 11.97, 80.52, 13.43, 80.41, 14.91, 80.01, 16.32, 79.04,
+        19.78, 76.24, 23.04, 73.45, 25.21, 72.17, 26.19, 70.83, 27.04, 69.77, 28.27, 69.43, 28.67, 68.84, 29.35,
+        69.19, 29.9, 69.44, 30.31, 69.96, 30.22, 70.29, 29.97, 70.9, 29.53, 71.57, 28.45, 72.31, 27.85
+      ],
+    },
+  },
 } as const;
 
 type Pt = readonly [number, number];
@@ -360,14 +438,49 @@ interface Shapes {
   eyes: Float64Array[];
 }
 
-let shapes: Shapes | null = null;
+/** The traced rim with each antler replaced by its redrawn run; everything outside the cuts is the trace as it was. */
+function rimWithAntlers(small: boolean): Seg[] {
+  const rim = runSegments(TRACE.rim);
+  const { left, right } = small ? ANTLERS.small : ANTLERS.full;
+  const out: Seg[] = [];
+  // The next whole segment of the rim to keep, and what is left of the one the last antler ended in.
+  let at = 0;
+  let carry: Seg | null = null;
+  for (const { from, to, run } of [left, right]) {
+    if (carry) out.push(carry);
+    out.push(...rim.slice(at, from[0]));
+    const [before] = split(rim[from[0]] as Seg, from[1]);
+    const [, after] = split(rim[to[0]] as Seg, to[1]);
+    const curves = runSegments(run);
+    // The run's ends are put exactly on the cuts, so rounding leaves no gap.
+    const first = curves[0] as Seg;
+    const last = curves[curves.length - 1] as Seg;
+    curves[0] = [before[3], first[1], first[2], first[3]];
+    curves[curves.length - 1] = [last[0], last[1], last[2], after[0]];
+    out.push(before, ...curves);
+    carry = after;
+    at = to[0] + 1;
+  }
+  if (carry) out.push(carry);
+  out.push(...rim.slice(at));
+  return out;
+}
 
-/** Built on first use: the deer and the ball cut to matching points, and the keyframes between them. */
-function curlShapes(): Shapes {
-  if (shapes) return shapes;
-  const chin = subdivide(runSegments(TRACE.upper), SEGMENTS.chin);
-  const body = subdivide(runSegments(TRACE.lower), SEGMENTS.body);
-  const rim = subdivide(runSegments(TRACE.rim), SEGMENTS.rim);
+/** The mark's outline as its three runs: the crescent's chin edge, its body edge, and the rest with the new antlers. */
+function markRuns(small: boolean): { chin: Seg[]; body: Seg[]; rim: Seg[] } {
+  return { chin: runSegments(TRACE.upper), body: runSegments(TRACE.lower), rim: rimWithAntlers(small) };
+}
+
+const built: { full: Shapes | null; small: Shapes | null } = { full: null, small: null };
+
+/** Built on first use for each size of mark: the deer and the ball cut to matching points, and the keyframes between. */
+function curlShapes(small = false): Shapes {
+  const cached = built[small ? 'small' : 'full'];
+  if (cached) return cached;
+  const runs = markRuns(small);
+  const chin = subdivide(runs.chin, SEGMENTS.chin);
+  const body = subdivide(runs.body, SEGMENTS.body);
+  const rim = subdivide(runs.rim, SEGMENTS.rim);
   const [ballChin, ballBody, ballRim] = ballRuns();
   const deer = flatten([...chin, ...body, ...rim]);
   const ball = flatten([
@@ -419,13 +532,14 @@ function curlShapes(): Shapes {
     reach.push((reach[k - 1] as number) + farthest(a, b));
   }
   const total = reach[reach.length - 1] as number;
-  shapes = { keys, reach: reach.map((r) => r / total), eyes };
+  const shapes = { keys, reach: reach.map((r) => r / total), eyes };
+  built[small ? 'small' : 'full'] = shapes;
   return shapes;
 }
 
 /** The outline's control points at `curl` (0 the deer, 1 the ball), between the two keyframes either side. */
-function outlineAt(curl: number): Float64Array {
-  const { keys, reach } = curlShapes();
+function outlineAt(curl: number, small: boolean): Float64Array {
+  const { keys, reach } = curlShapes(small);
   const c = Math.min(1, Math.max(0, curl));
   let k = 0;
   while (k < keys.length - 2 && (reach[k + 1] as number) < c) k++;
@@ -448,11 +562,18 @@ function eyeAt(eye: Float64Array, shut: number): Float64Array {
   return out;
 }
 
-/** The mark as drawn, his eyes cut out unless `eyes` is false (for the smallest sizes, `DEER_MARK_EYES_FROM`). */
-export function deerMarkPath({ eyes = true }: { eyes?: boolean } = {}): string {
-  const outline = [...runSegments(TRACE.upper), ...runSegments(TRACE.lower), ...runSegments(TRACE.rim)];
-  const parts = [loopPath(flatten(outline))];
-  if (eyes) for (const run of [TRACE.eyeLeft, TRACE.eyeRight]) parts.push(loopPath(flatten(runSegments(run))));
+/** The mark, whole, or `small` below `DEER_MARK_FULL_FROM` pixels: no eyes, one tine to each antler. */
+export function deerMarkPath({ small = false }: { small?: boolean } = {}): string {
+  const { chin, body, rim } = markRuns(small);
+  const parts = [loopPath(flatten([...chin, ...body, ...rim]))];
+  if (!small) for (const run of [TRACE.eyeLeft, TRACE.eyeRight]) parts.push(loopPath(flatten(runSegments(run))));
+  return parts.join('');
+}
+
+/** The owner's drawing as traced, his first antlers and all, for checks against the picture. */
+export function deerMarkTracedPath(): string {
+  const parts = [loopPath(flatten([...runSegments(TRACE.upper), ...runSegments(TRACE.lower), ...runSegments(TRACE.rim)]))];
+  for (const run of [TRACE.eyeLeft, TRACE.eyeRight]) parts.push(loopPath(flatten(runSegments(run))));
   return parts.join('');
 }
 
@@ -461,11 +582,11 @@ export function deerMarkPath({ eyes = true }: { eyes?: boolean } = {}): string {
  * a seam), measured by how far its fastest point has gone, so even steps of `curl` are even steps to the eye. His eyes
  * close over the first tenth, as a line, and are gone after it.
  */
-export function deerCurlPath(curl: number, { eyes = true }: { eyes?: boolean } = {}): string {
-  if (curl <= 0) return deerMarkPath({ eyes });
-  const parts = [loopPath(outlineAt(curl))];
+export function deerCurlPath(curl: number, { small = false }: { small?: boolean } = {}): string {
+  if (curl <= 0) return deerMarkPath({ small });
+  const parts = [loopPath(outlineAt(curl, small))];
   const shut = 1 - deerEyesOpen(curl);
-  if (eyes && shut < 1) for (const eye of curlShapes().eyes) parts.push(loopPath(eyeAt(eye, shut)));
+  if (!small && shut < 1) for (const eye of curlShapes().eyes) parts.push(loopPath(eyeAt(eye, shut)));
   return parts.join('');
 }
 
@@ -473,8 +594,8 @@ export function deerCurlPath(curl: number, { eyes = true }: { eyes?: boolean } =
 export const DEER_CURL_STEPS = 96;
 
 /** The outline at `curl` as a flat list of control points, three points to a segment, for checks. */
-export function deerCurlOutline(curl: number): Float64Array {
-  return outlineAt(curl);
+export function deerCurlOutline(curl: number, { small = false }: { small?: boolean } = {}): Float64Array {
+  return outlineAt(curl, small);
 }
 
 /** How open his eyes are at `curl`: 1 open, 0 shut. */
@@ -483,8 +604,8 @@ export function deerEyesOpen(curl: number): number {
 }
 
 /** The keyframes and eyes, for checks: each a flat list of control points, three points to a segment. */
-export function deerCurlKeyframes(): { outline: readonly Float64Array[]; eyes: readonly Float64Array[] } {
-  const { keys, eyes } = curlShapes();
+export function deerCurlKeyframes({ small = false }: { small?: boolean } = {}): { outline: readonly Float64Array[]; eyes: readonly Float64Array[] } {
+  const { keys, eyes } = curlShapes(small);
   return { outline: keys, eyes };
 }
 
@@ -507,8 +628,8 @@ export const DEER_BREATH_LOW = 0.45;
 const BEATS = {
   curl: [0.02, 0.32],
   squash: [0.3, 0.46],
-  unfurl: [0.42, 0.91],
-  turn: [0.02, 0.91],
+  unfurl: [0.42, 0.93],
+  turn: [0.02, 0.93],
 } as const;
 
 /** How far the ball gives as it lands in the turn: wider, and lower by as much as it is shorter. */

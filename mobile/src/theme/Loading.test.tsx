@@ -20,8 +20,8 @@ describe('Loading', () => {
     const bar = screen.getByRole('progressbar', { name: 'Loading…' });
     expect(bar).toBeTruthy();
     const path = container.querySelector('path') as SVGPathElement;
-    // He starts as the mark itself, small enough to leave his eyes out, in the ink of whichever scheme the device is in.
-    expect(path.getAttribute('d')).toBe(deerMarkPath({ eyes: false }));
+    // He starts as the small mark itself (no eyes, one tine to each antler), in the ink of whichever scheme the device is in.
+    expect(path.getAttribute('d')).toBe(deerMarkPath({ small: true }));
     expect([LIGHT.primary, DARK.primary]).toContain(path.getAttribute('fill'));
     expect(container.querySelector('svg')?.getAttribute('width')).toBe(String(LOADING_SIZE.small));
   });

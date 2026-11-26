@@ -109,9 +109,9 @@ describe('DeerLoader', () => {
     expect(path.getAttribute('d')).toBe(deerMarkPath());
   });
 
-  it('leaves his eyes out when drawn too small for them', () => {
+  it('is drawn as the small mark when too small for his eyes and three tines', () => {
     const { container } = render(<DeerLoader size={24} />);
-    expect(container.querySelector('path')?.getAttribute('d')).toBe(deerMarkPath({ eyes: false }));
+    expect(container.querySelector('path')?.getAttribute('d')).toBe(deerMarkPath({ small: true }));
   });
 
   it('only breathes under Reduce Motion', () => {

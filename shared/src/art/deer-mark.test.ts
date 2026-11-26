@@ -12,8 +12,20 @@ import {
   deerLoopAt,
   deerLoopTrack,
   deerMarkPath,
+  deerMarkTracedPath,
   type DeerLoopPose,
 } from './deer-mark.js';
+
+/** His middle, about which the redrawn antlers are mirrored, as the trace has it. */
+const AXIS = 51;
+
+/** Where each antler is, with room round it: everything outside these is the owner's drawing as traced. */
+const ANTLER_ZONES = [
+  { x: [17, 47], y: [2, 33] },
+  { x: [55, 85], y: [2, 33] },
+] as const;
+
+const inZone = ([x, y]: Pt): boolean => ANTLER_ZONES.some((z) => x >= z.x[0] && x <= z.x[1] && y >= z.y[0] && y <= z.y[1]);
 
 type Pt = [number, number];
 
@@ -79,7 +91,8 @@ function posed(p: Pt, pose: DeerLoopPose): Pt {
 describe('the deer mark', () => {
   it('is one compound path: his outline and his two eyes, each closed, all inside the square', () => {
     const subpaths = parse(deerMarkPath());
-    expect(subpaths.map((s) => s.length)).toEqual([46, 4, 4]);
+    expect(subpaths).toHaveLength(3);
+    expect(subpaths.slice(1).map((s) => s.length)).toEqual([4, 4]);
     for (const segs of subpaths) {
       for (const p of segs.flat()) {
         expect(Number.isFinite(p[0]) && Number.isFinite(p[1])).toBe(true);
@@ -87,7 +100,51 @@ describe('the deer mark', () => {
         expect(Math.max(...p)).toBeLessThanOrEqual(DEER_MARK_VIEW);
       }
     }
-    expect(parse(deerMarkPath({ eyes: false })).map((s) => s.length)).toEqual([46]);
+    expect(parse(deerMarkPath({ small: true }))).toHaveLength(1);
+  });
+
+  it('is the owner’s drawing as traced everywhere but the antlers, his eyes included', () => {
+    const now = parse(deerMarkPath());
+    const traced = parse(deerMarkTracedPath());
+    // Points along each outline, and each outline drawn finely enough to measure against.
+    const a = sample(now[0] as Pt[][], 20);
+    const b = sample(traced[0] as Pt[][], 20);
+    const fineA = sample(now[0] as Pt[][], 400);
+    const fineB = sample(traced[0] as Pt[][], 400);
+    const gap = (p: Pt, set: Pt[]): number => Math.min(...set.map((q) => Math.hypot(p[0] - q[0], p[1] - q[1])));
+    // Every point of either outline away from the other is at an antler, and most of him is untouched.
+    const moved = a.map((p) => gap(p, fineB) > 0.03);
+    a.forEach((p, i) => moved[i] && expect(inZone(p), `${p}`).toBe(true));
+    for (const p of b.filter((q) => gap(q, fineA) > 0.03)) expect(inZone(p), `${p}`).toBe(true);
+    // By length, what changed is under half his outline: the antlers, three tines a side, and nothing more.
+    let changed = 0;
+    let whole = 0;
+    a.forEach((p, i) => {
+      const q = a[(i + 1) % a.length] as Pt;
+      const step = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      whole += step;
+      if (moved[i]) changed += step;
+    });
+    expect(changed / whole).toBeLessThan(0.5);
+    expect(now.slice(1)).toEqual(traced.slice(1));
+  });
+
+  it('has antlers after Hevalo’s, mirrored about his middle and well inside the square, three tines whole and one small', () => {
+    for (const small of [false, true]) {
+      const points = sample(parse(deerMarkPath({ small }))[0] as Pt[][], 40).filter(([, y]) => y < 22);
+      const left = points.filter(([x]) => x < AXIS);
+      const right = points.filter(([x]) => x > AXIS);
+      const gap = (p: Pt, set: Pt[]): number => Math.min(...set.map((q) => Math.hypot(p[0] - q[0], p[1] - q[1])));
+      for (const [x, y] of left) expect(gap([2 * AXIS - x, y], right)).toBeLessThan(0.25);
+      for (const [x, y] of right) expect(gap([2 * AXIS - x, y], left)).toBeLessThan(0.25);
+      expect(Math.min(...points.map(([, y]) => y))).toBeGreaterThan(4);
+      expect(Math.min(...points.map(([x]) => x))).toBeGreaterThan(15);
+      expect(Math.max(...points.map(([x]) => x))).toBeLessThan(DEER_MARK_VIEW - 15);
+      // Tips are where the outline turns back down: on each side, the beam's own and its tines'.
+      const tips = (side: Pt[]): number =>
+        side.filter((p, i) => i > 3 && i < side.length - 4 && side.slice(i - 4, i + 5).every((q) => q[1] >= p[1])).length;
+      expect([tips(left), tips(right)]).toEqual(small ? [2, 2] : [3, 3]);
+    }
   });
 
   it('cuts his eyes out under a nonzero fill: they wind the other way round from his outline', () => {
@@ -134,12 +191,12 @@ describe('the curl', () => {
       expect(subpaths.length).toBe(deerEyesOpen(c) > 0 ? 3 : 1);
       if (c >= 0.15) expect(subpaths).toHaveLength(1);
     }
-    expect(parse(deerCurlPath(0.5, { eyes: false }))).toHaveLength(1);
+    expect(parse(deerCurlPath(0.5, { small: true }))).toHaveLength(1);
   });
 
   it('is exactly the mark when not curled at all', () => {
     expect(deerCurlPath(0)).toBe(deerMarkPath());
-    expect(deerCurlPath(0, { eyes: false })).toBe(deerMarkPath({ eyes: false }));
+    expect(deerCurlPath(0, { small: true })).toBe(deerMarkPath({ small: true }));
   });
 });
 
@@ -227,12 +284,12 @@ describe('the loop', () => {
       const pose = deerLoopAt(f / frames);
       if (pose.curl < prev.curl) {
         unfurled++;
-        const a = deerCurlOutline(prev.curl);
-        const b = deerCurlOutline(pose.curl);
-        const moved = farthest(a, b);
-        // Under two and a half units of the square a frame (three pixels at 120); the antlers and ears, last, under one.
-        expect(moved).toBeLessThan(2.5);
-        if (pose.curl < 0.2) expect(moved).toBeLessThan(1);
+        for (const small of [false, true]) {
+          const moved = farthest(deerCurlOutline(prev.curl, { small }), deerCurlOutline(pose.curl, { small }));
+          // Under two and a half units of the square a frame (three pixels at 120); the antlers and ears, last, under one.
+          expect(moved).toBeLessThan(2.5);
+          if (pose.curl < 0.2) expect(moved).toBeLessThan(1);
+        }
         // His eyes take several frames to open.
         expect(deerEyesOpen(pose.curl) - deerEyesOpen(prev.curl)).toBeLessThan(0.2);
       }
@@ -241,11 +298,13 @@ describe('the loop', () => {
     // The way back takes at least as long as the way in.
     expect(unfurled / frames).toBeGreaterThanOrEqual(0.4);
     // Where an app draws the curl in steps, neighbouring steps differ by less than half a unit anywhere.
-    let step = deerCurlOutline(0);
-    for (let k = 1; k <= DEER_CURL_STEPS; k++) {
-      const next = deerCurlOutline(k / DEER_CURL_STEPS);
-      expect(farthest(step, next)).toBeLessThan(0.5);
-      step = next;
+    for (const small of [false, true]) {
+      let step = deerCurlOutline(0, { small });
+      for (let k = 1; k <= DEER_CURL_STEPS; k++) {
+        const next = deerCurlOutline(k / DEER_CURL_STEPS, { small });
+        expect(farthest(step, next)).toBeLessThan(0.5);
+        step = next;
+      }
     }
   });
 

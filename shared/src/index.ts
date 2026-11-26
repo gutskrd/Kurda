@@ -959,7 +959,7 @@ export {
   DEER_BREATH_MS,
   DEER_CURL_STEPS,
   DEER_LOOP_MS,
-  DEER_MARK_EYES_FROM,
+  DEER_MARK_FULL_FROM,
   DEER_MARK_VIEW,
   deerBreathAt,
   deerCurlKeyframes,
@@ -969,6 +969,7 @@ export {
   deerLoopAt,
   deerLoopTrack,
   deerMarkPath,
+  deerMarkTracedPath,
   type DeerLoopPose,
 } from './art/deer-mark.js';
 /** A drawing bent through a map of the plane, as his head turned in the round is drawn. */
