@@ -523,6 +523,17 @@ export function describeError(error: ApiError, t: Translate, locale?: string): s
   }
 }
 
+const NO_SESSION: TokenStorage = { get: () => null, set: () => undefined, clear: () => undefined };
+let anonymous: ApiClient | null = null;
+
+/**
+ * A client that never sends the session, for reads that are the same for everyone, so the browser may keep the answer
+ * (http/cache-policy.ts on the server) and no token refresh can start beside the session's own.
+ */
+export function publicClient(): ApiClient {
+  return (anonymous ??= new ApiClient(API_URL, NO_SESSION, () => undefined));
+}
+
 /** Build a client bound to browser storage. `onLogout` re-renders the app. */
 export function createApiClient(
   onLogout: () => void,
