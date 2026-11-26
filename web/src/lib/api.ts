@@ -200,9 +200,10 @@ export class ApiClient {
       let res: Response;
       try {
         // A plain GET may already have been asked while the session was being checked (lib/earlyAnswers.ts).
-        const early = method === 'GET' && !options.headers && !options.signal ? await takeEarlyAnswer(path, tokens?.accessToken) : null;
+        const early = method === 'GET' && !options.headers && !options.signal ? takeEarlyAnswer(path, tokens?.accessToken) : null;
+        // Awaited only when there is one, so a request with none starts in the same turn, as it always has.
         res =
-          early ??
+          (early && (await early)) ??
           (await this.timedFetch(
             `${this.baseUrl}${path}`,
             {
