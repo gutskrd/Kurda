@@ -67,7 +67,11 @@ export function Approvals(): React.JSX.Element {
   async function approve(c: PendingChange): Promise<void> {
     const yes = await dialogs.confirm(
       c.target === 'shop_bundle'
-        ? { title: `Sell the bundle “${s(c.payload.id)}” for ${Number(c.payload.price).toLocaleString()} Zêr?`, body: 'It takes effect in the shop at once.', confirmLabel: 'Approve' }
+        ? {
+            title: `Sell the bundle “${s(c.payload.id)}” for ${Number(c.payload.price).toLocaleString()} Zêr?`,
+            body: 'It takes effect in the shop at once.',
+            confirmLabel: 'Approve',
+          }
         : {
             title: c.target === 'shop_item' ? `Apply the change to “${s(c.payload.name)}”?` : `Schedule “${s(c.payload.name)}”?`,
             body: c.target === 'shop_item' ? 'It takes effect in the shop at once.' : 'The event goes live in its window, with its rewards.',
