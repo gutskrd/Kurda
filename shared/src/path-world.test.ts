@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PATH_GEOMETRY, PATH_MASCOT, PATH_RETURN, lessonPath, mascotSpot, type PathSkill } from './lesson-path.js';
 import { PATH_SCENES, PATH_SCENE_BOX, PATH_SCENE_IDS } from './art/path-scenes.js';
-import { PATH_SEAL } from './art/path-land.js';
 import { characterArt, cropBox, sampleKeys } from './characters/index.js';
 import {
   PATH_LANDMARKS,
@@ -18,6 +17,7 @@ import {
   PATH_REPRESS_SHADOW,
   PATH_WAX_GOLD,
   PATH_WAX_FIRE,
+  flickerAt,
   waxGlintAt,
   PATH_APPLE_REACH,
   PATH_START_WORDS,
@@ -344,32 +344,66 @@ describe('a finished stop’s wax seal', () => {
     expect(at(PATH_REPRESS_SHADOW.shown, at2 + 0.04)).toBe(Math.max(...PATH_REPRESS_SHADOW.shown.map(([, v]) => v)));
   });
 
-  it('gilds the seal with fire once the third sun is pressed in: lit at its foot, up over it, and out over its top', () => {
-    const { front, rise, wide, shown, lick, embers, embersShown, puffShown, ms, outAt } = PATH_WAX_FIRE;
+  it('ignites the suns when the third is pressed in: they kindle, a corona circles the rim gilding it, flares and settles', () => {
+    const { ms, kindle, blaze, shudder, proud, sweep, sweepRight, sweepLeft, tongues, flicker, flash, glow, sparks, haptics } = PATH_WAX_FIRE;
     const at = (track: readonly (readonly [number, number])[], t: number): number => sampleKeys(track, t);
-    // the front starts below the seal's foot, so none of it is gold yet, and ends over its top, so all of it is
-    const [top, foot] = [PATH_SEAL.cy - PATH_SEAL.r, PATH_SEAL.cy + PATH_SEAL.r];
-    expect(at(front, 0)).toBeGreaterThan(foot);
-    expect(at(front, 1)).toBeLessThan(top);
-    // it only ever rises, and crosses the seal in about two thirds of a second
-    for (let i = 1; i < front.length; i++) expect(front[i]![1]).toBeLessThanOrEqual(front[i - 1]![1]);
-    const crossed = (y: number): number => front.find(([, v]) => v <= y)![0];
-    const crossing = (crossed(top + 2) - crossed(foot - 2)) * ms;
-    expect(crossing).toBeGreaterThanOrEqual(600);
-    expect(crossing).toBeLessThanOrEqual(800);
-    // the flames stand on the front, never wider than the seal, and are out before it starts and after it ends
-    for (const t of [0.2, 0.5, 0.7]) {
-      expect(at(rise, t)).toBeCloseTo(at(front, t) - PATH_SEAL.cy, 1);
-      expect(at(wide, t)).toBeLessThanOrEqual(1);
-      expect(at(lick, t)).toBeGreaterThan(0.5);
+    const first = (track: readonly (readonly [number, number])[], v: number): number => track.find(([, x]) => x >= v)![0];
+    // about a second and a half, punchy: the suns kindle in about a quarter of a second as the seal shudders
+    expect(ms).toBeGreaterThanOrEqual(1300);
+    expect(ms).toBeLessThanOrEqual(1600);
+    const lit = first(kindle, 1);
+    expect(lit * ms).toBeGreaterThan(200);
+    expect(lit * ms).toBeLessThan(300);
+    expect(Math.max(...shudder.filter(([t]) => t < lit).map(([, v]) => Math.abs(v)))).toBeGreaterThan(0.5);
+    expect(at(shudder, lit + 0.05)).toBe(0);
+    // the corona starts as they are lit, races once round clockwise in about six tenths of a second, and the gold
+    // follows it in two halves, the right then the left
+    expect(at(sweep, lit - 0.01)).toBe(0);
+    const closed = first(sweep, 360);
+    expect((closed - lit) * ms).toBeGreaterThan(500);
+    expect((closed - lit) * ms).toBeLessThan(700);
+    for (let i = 1; i < sweep.length; i++) expect(sweep[i]![1]).toBeGreaterThanOrEqual(sweep[i - 1]![1]);
+    for (const t of [0.25, 0.4, 0.55]) expect(at(sweepRight, t) + at(sweepLeft, t)).toBeCloseTo(at(sweep, t), 0);
+    expect(at(PATH_WAX_FIRE.gilded, closed - 0.01)).toBe(0);
+    expect(at(PATH_WAX_FIRE.gilded, closed + 0.02)).toBe(1);
+    expect(Math.max(...sweepRight.map(([, v]) => v))).toBe(180);
+    // a dozen tongues of flame evenly round the rim, of a few sizes, each rising as the leading flame reaches it, all
+    // gone into the seal at the end, and flickering with the small flame's own motion
+    expect(tongues).toHaveLength(12);
+    expect(new Set(tongues.map((tg) => tg.size)).size).toBeGreaterThan(2);
+    for (const tg of tongues) {
+      const reached = lit + ((closed - lit) * tg.angle) / 360;
+      expect(at(tg.grow, reached - 0.005), `${tg.angle}`).toBeCloseTo(0, 2);
+      expect(at(tg.grow, reached + 0.04), `${tg.angle}`).toBeGreaterThan(0.8);
+      expect(tg.grow[tg.grow.length - 1]![1]).toBe(0);
     }
-    expect(at(shown, 0)).toBe(0);
-    expect(at(shown, 1)).toBe(0);
-    // embers rise off the flames, and a puff is left where they go out
-    expect(at(embers, 0.7)).toBeLessThan(at(rise, 0.7));
-    expect(at(embersShown, 0.6)).toBeGreaterThan(0);
-    expect(Math.max(...puffShown.map(([t, v]) => (t > outAt - 0.06 ? v : 0)))).toBeGreaterThan(0);
-    expect(outAt).toBeLessThan(1);
+    const poses = [0, 0.25, 0.5, 0.75].map((t) => flickerAt(flicker.outer, t));
+    expect(new Set(poses.map((p) => p.sy)).size).toBeGreaterThan(1);
+    expect(flicker.inner.periodMs).toBeLessThan(flicker.outer.periodMs);
+    // as the ring closes the suns burn white-gold, the seal swells a touch, a soft flash blooms behind it and lights the
+    // road, and they are all out at the end
+    expect(at(blaze, closed + 0.06)).toBeGreaterThan(0.8);
+    expect(Math.max(...proud.map(([, v]) => v))).toBeGreaterThan(1.01);
+    expect(Math.max(...proud.map(([, v]) => v))).toBeLessThan(1.05);
+    expect(proud[proud.length - 1]![1]).toBe(1);
+    expect(at(flash, closed - 0.01)).toBe(0);
+    expect(Math.max(...flash.map(([, v]) => v))).toBeGreaterThan(0.8);
+    for (const track of [kindle, blaze, flash, glow]) expect(track[track.length - 1]![1]).toBe(0);
+    // eight to twelve sparks fly up from the flare and drift, each its own size, speed and fade
+    expect(sparks.length).toBeGreaterThanOrEqual(8);
+    expect(sparks.length).toBeLessThanOrEqual(12);
+    expect(new Set(sparks.map((sp) => sp.size)).size).toBe(sparks.length);
+    for (const sp of sparks) {
+      expect(sp.y[sp.y.length - 1]![1]).toBeLessThan(sp.y[0]![1] - 15);
+      expect(at(sp.shown, 0)).toBe(0);
+      expect(at(sp.shown, 1)).toBe(0);
+    }
+    const ends = sparks.map((sp) => [...sp.shown].reverse().find(([, v]) => v > 0)?.[0] ?? 0);
+    expect(new Set(ends.map((e) => Math.round(e * 100))).size).toBeGreaterThan(4);
+    // a tap as they kindle, a tick halfway round, a firm tap at the flare, spaced so none is dropped
+    expect(haptics.kindle).toBeLessThan(haptics.halfway);
+    expect((haptics.halfway - haptics.kindle) * ms).toBeGreaterThan(250);
+    expect((haptics.flare - haptics.halfway) * ms).toBeGreaterThan(250);
   });
 
   it('turns gold once the third sun is pressed in, and glints at each stop’s own time within its round', () => {

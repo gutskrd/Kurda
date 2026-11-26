@@ -126,6 +126,7 @@ import { Highlighter } from '@phosphor-icons/react/dist/icons/Highlighter';
 import { Swatches } from '@phosphor-icons/react/dist/icons/Swatches';
 // What a lesson on the road is: new words, a conversation, or practice.
 import { ChatsCircle } from '@phosphor-icons/react/dist/icons/ChatsCircle';
+import { Stamp } from '@phosphor-icons/react/dist/icons/Stamp';
 import { Barbell } from '@phosphor-icons/react/dist/icons/Barbell';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 import { useMemo } from 'react';
@@ -359,6 +360,8 @@ export const PaperIcon = named(Swatches, 18);
 export const WordsIcon = named(TextAa, 34, 'fill');
 export const TalkIcon = named(ChatsCircle, 34, 'fill');
 export const PracticeIcon = named(Barbell, 34, 'fill');
+/** The stamp that presses a finished topic's wax seal on the road. */
+export const StampIcon = named(Stamp, 96, 'fill');
 
 /** Show or hide a password: one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

@@ -747,9 +747,10 @@ describe('a course map', () => {
       await waitFor(() => expect(c.querySelector('.lp-wax-tool')).not.toBeNull(), { timeout: 3000 });
       expect(c.querySelector('.lp-wax')).toHaveAttribute('data-suns', '3');
       expect(c.querySelector('.lp-wax-gold')).not.toBeNull();
-      // Fire gilds it: the gold seen through a window under the flames, which sweep up over it.
-      expect(c.querySelector('.lp-wax-window .lp-wax-gold')).not.toBeNull();
-      expect(c.querySelector('.lp-wax-fire')).not.toBeNull();
+      // Its suns ignite: a corona of flame circles the rim, the gold turning in behind it, and its suns glow.
+      expect(c.querySelectorAll('.lp-wax-half .lp-wax-gold')).toHaveLength(2);
+      expect(c.querySelectorAll('.lp-wax-tongue')).toHaveLength(12);
+      expect(c.querySelector('.lp-wax-kindle')).not.toBeNull();
       // It was sealed before, so it is not sealed again: no drop of wax this time.
       expect(c).not.toHaveClass('is-stamping');
       expect(c.querySelector('.lp-wax-blob')).toBeNull();

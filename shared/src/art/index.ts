@@ -199,7 +199,7 @@ export {
   pathSignpostSvg,
   pathWaxSvg,
   pathWaxColours,
-  pathStampToolSvg,
+  pathSealFireSvg,
   pathStopSvg,
   PATH_SEAL,
   PATH_WAX,

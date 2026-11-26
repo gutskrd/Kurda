@@ -187,6 +187,7 @@ const MAP = {
   'lesson-words': { glyph: 'TextAa', weight: 'fill', note: 'web WordsIcon — a lesson bringing in new words; not Review’s cards' },
   'lesson-talk': { glyph: 'ChatsCircle', weight: 'fill', note: 'web TalkIcon — a lesson with a conversation to take part in' },
   'lesson-practice': { glyph: 'Barbell', weight: 'fill', note: 'web PracticeIcon — a lesson going over words already met' },
+  stamp: { glyph: 'Stamp', weight: 'fill', note: 'web StampIcon — the stamp that presses a finished topic’s wax seal' },
 };
 
 /** Every shape in one weight of one glyph, in the order Phosphor draws them. */

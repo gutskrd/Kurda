@@ -10,13 +10,15 @@ import {
   PATH_SEAL,
   PATH_STOP_ART,
   PATH_WAX_FIRE,
+  flickerAt,
+  pathSealFireSvg,
   PATH_WAX_GOLD,
-  pathStampToolSvg,
   pathWaxSvg,
   sampleKeys,
   waxGlintAt,
 } from '@kurda/shared';
 import { haptic } from '../feedback/haptics';
+import { Icon } from '../theme/Icon';
 import { radii } from '../theme/tokens';
 import { STOP_FACE } from './PathWorld';
 
@@ -69,15 +71,10 @@ export function WaxSeal({
       was: again ? wax('seal', again.from) : null,
       blob: pressing ? pathWaxSvg({ part: 'blob', dark }) : null,
       splash: pressing ? pathWaxSvg({ part: 'splash', dark }) : null,
-      tool: moving ? pathStampToolSvg({ dark }) : null,
-      // The fire that gilds it as its third sun is pressed in: its band of flame, the embers off it and its puff.
-      fire: warmAt !== null ? pathWaxSvg({ part: 'fire', dark }) : null,
-      embers: warmAt !== null ? pathWaxSvg({ part: 'embers', dark }) : null,
-      puff: warmAt !== null ? pathWaxSvg({ part: 'puff', dark }) : null,
     };
-  }, [stopKey, worn, dark, gold, suns, moving, pressing, again, warmAt]);
-  // Once the stamp has lifted from its third sun, fire sweeps up over the seal and the wax turns gold behind it, felt as a
-  // light tap as it lights and a stronger one as it goes out.
+  }, [stopKey, worn, dark, gold, suns, moving, pressing, again]);
+  // Once the stamp has lifted from its third sun, the suns ignite and fire gilds the seal (`SealIgnite`), felt as a light
+  // tap as they kindle, a tick as the corona is halfway round and a firm tap at the flare.
   const warm = useRef(new Animated.Value(warmAt === null ? 1 : 0)).current;
   useEffect(() => {
     if (warmAt === null) {
@@ -88,7 +85,12 @@ export function WaxSeal({
     const at = warmAt + PATH_WAX_GOLD.afterMs;
     const run = Animated.timing(warm, { toValue: 1, duration: PATH_WAX_FIRE.ms, delay: at, easing: Easing.linear, useNativeDriver: true });
     run.start();
-    const knocks = [setTimeout(() => haptic('tap'), at), setTimeout(() => haptic('celebrate'), at + PATH_WAX_FIRE.ms * PATH_WAX_FIRE.outAt)];
+    const { ms, haptics } = PATH_WAX_FIRE;
+    const knocks = [
+      setTimeout(() => haptic('tap'), at + ms * haptics.kindle),
+      setTimeout(() => haptic('select'), at + ms * haptics.halfway),
+      setTimeout(() => haptic('celebrate'), at + ms * haptics.flare),
+    ];
     return () => {
       run.stop();
       knocks.forEach(clearTimeout);
@@ -102,9 +104,16 @@ export function WaxSeal({
   // The suns pressed in show from the press, under the stamp; a round later the ones before give way then.
   const shownFrom = [[0, 0], [m.pressAt, 0], [m.pressAt + 0.01, 1], [1, 1]] as const;
   const { blobY, blobShown, splat, splash, splashShown, flow, poured } = PATH_STAMP_MOMENT;
+  const { shudder, proud } = PATH_WAX_FIRE;
   return (
-    <View style={styles.wax} pointerEvents="none" aria-hidden testID={moving ? 'lp-wax-pressing' : `lp-wax-${suns}${gold ? '-gold' : ''}`}>
-      {t && xml.pour && xml.seal && xml.tool ? (
+    <Animated.View
+      style={[styles.wax, warmAt !== null ? { transformOrigin: POUR_ORIGIN, transform: [{ translateX: stampTrack(warm, shudder) }, { scale: stampTrack(warm, proud) }] } : null]}
+      pointerEvents="none"
+      aria-hidden
+      testID={moving ? 'lp-wax-pressing' : `lp-wax-${suns}${gold ? '-gold' : ''}`}
+    >
+      {xml.gold && warmAt !== null ? <SealGlow dark={dark} warm={warm} /> : null}
+      {t && xml.pour && xml.seal ? (
         <>
           {pressing ? (
             <Animated.View
@@ -156,57 +165,152 @@ export function WaxSeal({
           <View style={styles.face}>
             <Animated.View style={[styles.shadow, { opacity: stampTrack(t, shadow.shown), transform: [{ scale: stampTrack(t, shadow.size) }] }]} />
           </View>
-          {/* The stamp, seen from the side, leans about its die's foot. */}
+          {/* The icon set's own Stamp, in the page's ink, leans about its pad's foot. */}
           <Animated.View
             style={[
               styles.tool,
               { opacity: stampTrack(t, m.toolShown), transform: [{ translateY: stampTrack(t, m.toolY) }, { rotate: stampTrack(t, m.tilt).interpolate(DEGREES) }] },
             ]}
           >
-            <SvgXml xml={xml.tool} width={PATH_STAMP_TOOL.w} height={PATH_STAMP_TOOL.h} />
+            <Icon name="stamp" size={PATH_STAMP_TOOL.icon.size} style={styles.glyph} />
           </Animated.View>
         </>
       ) : xml.coat ? (
         layer(xml.coat)
       ) : null}
-      {xml.gold && warmAt !== null && xml.fire && xml.embers && xml.puff ? (
-        <>
-          {/* The gold through a window whose top is the flames' front, moved up while the gold inside is moved back down. */}
-          <Animated.View testID="lp-wax-window" style={[StyleSheet.absoluteFill, styles.window, { transform: [{ translateY: stampTrack(warm, fire.front) }] }]}>
-            <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateY: stampTrack(warm, fire.back) }] }]}>{layer(xml.gold)}</Animated.View>
+      {xml.gold && warmAt !== null ? (
+        <SealIgnite stopKey={stopKey} suns={suns} dark={dark} gold={xml.gold} warm={warm} />
+      ) : xml.gold ? (
+        // Over the red, the whole seal's size: laid beside it, the two would share its height.
+        <View style={StyleSheet.absoluteFill}>{layer(xml.gold)}</View>
+      ) : null}
+      {xml.gold && !worn && live ? <WaxGlint stopKey={stopKey} warmAt={warmAt} /> : null}
+    </Animated.View>
+  );
+}
+
+/** One of the seal's drawings, on its tile's canvas. */
+function drawn(svg: string): React.JSX.Element {
+  return <SvgXml xml={svg} width={PATH_STOP_ART.box} height={PATH_STOP_ART.box} />;
+}
+
+/** The ignite's warm light behind a seal (shared `PATH_WAX_FIRE`): its light on the road round it, and the flash at the flare. */
+function SealGlow({ dark, warm }: { dark: boolean; warm: Animated.Value }): React.JSX.Element {
+  const flash = useMemo(() => pathSealFireSvg({ part: 'flash', dark }), [dark]);
+  const { glow, flash: bloom, flashSize } = PATH_WAX_FIRE;
+  return (
+    <>
+      <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: POUR_ORIGIN, opacity: stampTrack(warm, glow), transform: [{ scale: GLOW_SCALE }] }]}>
+        {drawn(flash)}
+      </Animated.View>
+      <Animated.View
+        style={[StyleSheet.absoluteFill, { transformOrigin: POUR_ORIGIN, opacity: stampTrack(warm, bloom), transform: [{ scale: stampTrack(warm, flashSize) }] }]}
+      >
+        {drawn(flash)}
+      </Animated.View>
+    </>
+  );
+}
+
+/**
+ * A seal's suns igniting as its third is pressed in (shared `PATH_WAX_FIRE`), over the red seal, as on the website: the
+ * gold shown through two half discs turning about its middle behind the corona's leading flame, the suns glowing orange
+ * then white-gold, the corona's tongues rising round the rim and flickering, and the sparks of the flare. Decorative.
+ */
+function SealIgnite({ stopKey, suns, dark, gold, warm }: { stopKey: string; suns: number; dark: boolean; gold: string; warm: Animated.Value }): React.JSX.Element {
+  const { kindle, blaze, sweepRight, sweepLeft, gilded, lean, tongues, flicker, sparks } = PATH_WAX_FIRE;
+  const xml = useMemo(
+    () => ({
+      kindle: pathWaxSvg({ seed: stopKey, suns, part: 'kindle', dark }),
+      blaze: pathWaxSvg({ seed: stopKey, suns, part: 'blaze', dark }),
+      outer: pathSealFireSvg({ part: 'outer', dark }),
+      inner: pathSealFireSvg({ part: 'inner', dark }),
+      spark: pathSealFireSvg({ part: 'spark', dark }),
+    }),
+    [stopKey, suns, dark],
+  );
+  // The corona's flicker: one clock for the tongues' bodies and one for their hearts, each tongue out of step.
+  const outer = useRef(new Animated.Value(0)).current;
+  const inner = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loops = ([[outer, flicker.outer], [inner, flicker.inner]] as const).map(([clock, motion]) =>
+      Animated.loop(Animated.timing(clock, { toValue: 1, duration: motion.periodMs, easing: Easing.linear, useNativeDriver: true })),
+    );
+    loops.forEach((l) => l.start());
+    return () => loops.forEach((l) => l.stop());
+  }, [outer, inner, flicker]);
+  const flickers = (clock: Animated.Value, motion: typeof flicker.outer, offset: number) => {
+    const inputRange = Array.from({ length: 17 }, (_, i) => i / 16);
+    const poses = inputRange.map((x) => flickerAt(motion, x + motion.phase + offset));
+    return [
+      { scaleX: clock.interpolate({ inputRange, outputRange: poses.map((p) => p.sx) }) },
+      { scaleY: clock.interpolate({ inputRange, outputRange: poses.map((p) => p.sy) }) },
+      { skewX: clock.interpolate({ inputRange, outputRange: poses.map((p) => `${p.skew}deg`) }) },
+    ];
+  };
+  const turn = (keys: readonly (readonly [number, number])[], sign: number) => stampTrack(warm, keys.map(([at, v]) => [at, sign * v] as const)).interpolate(DEGREES);
+  return (
+    <>
+      {/* The gold, shown behind the leading flame through a half disc turning in each half of the seal. */}
+      <View testID="lp-wax-half" style={[styles.half, { left: PATH_SEAL.cx }]}>
+        <Animated.View style={[styles.half, { left: -PATH_SEAL.cx, transformOrigin: `100% ${CY}%`, transform: [{ rotate: turn(sweepRight, 1) }] }]}>
+          <Animated.View style={[styles.turned, { left: 0, transformOrigin: POUR_ORIGIN, transform: [{ rotate: turn(sweepRight, -1) }] }]}>
+            {drawn(gold)}
           </Animated.View>
+        </Animated.View>
+      </View>
+      <View testID="lp-wax-half" style={[styles.half, { left: 0 }]}>
+        <Animated.View style={[styles.half, { left: PATH_SEAL.cx, transformOrigin: `0% ${CY}%`, transform: [{ rotate: turn(sweepLeft, 1) }] }]}>
+          <Animated.View style={[styles.turned, { left: -PATH_SEAL.cx, transformOrigin: POUR_ORIGIN, transform: [{ rotate: turn(sweepLeft, -1) }] }]}>
+            {drawn(gold)}
+          </Animated.View>
+        </Animated.View>
+      </View>
+      {/* Once the ring has closed, the gold whole, over the seam between its halves. */}
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: stampTrack(warm, gilded) }]}>{drawn(gold)}</Animated.View>
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: stampTrack(warm, kindle) }]}>{drawn(xml.kindle)}</Animated.View>
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: stampTrack(warm, blaze) }]}>{drawn(xml.blaze)}</Animated.View>
+      {tongues.map((t, i) => (
+        <View
+          key={t.angle}
+          testID={i === 0 ? 'lp-wax-fire' : undefined}
+          style={[StyleSheet.absoluteFill, { transformOrigin: POUR_ORIGIN, transform: [{ rotate: `${t.angle}deg` }, { scaleX: t.flip ? -1 : 1 }] }]}
+        >
           <Animated.View
-            testID="lp-wax-fire"
             style={[
               StyleSheet.absoluteFill,
+              // Leaning back from the way the ring runs, whichever way the tongue is turned.
               {
-                transformOrigin: POUR_ORIGIN,
-                opacity: stampTrack(warm, fire.shown),
-                transform: [{ translateY: stampTrack(warm, fire.rise) }, { scaleX: stampTrack(warm, fire.wide) }, { scaleY: stampTrack(warm, fire.lick) }],
+                transformOrigin: ROOT_ORIGIN,
+                transform: [{ scale: stampTrack(warm, t.grow.map(([at, v]) => [at, v * t.size] as const)) }, { skewX: `${t.flip ? -lean : lean}deg` }],
               },
             ]}
           >
-            {layer(xml.fire)}
+            <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: ROOT_ORIGIN, transform: flickers(outer, flicker.outer, i * 0.37) }]}>
+              {drawn(xml.outer)}
+            </Animated.View>
+            <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: ROOT_ORIGIN, transform: flickers(inner, flicker.inner, i * 0.37) }]}>
+              {drawn(xml.inner)}
+            </Animated.View>
           </Animated.View>
-          <Animated.View
-            style={[StyleSheet.absoluteFill, { opacity: stampTrack(warm, fire.embersShown), transform: [{ translateY: stampTrack(warm, fire.embers) }] }]}
-          >
-            {layer(xml.embers)}
-          </Animated.View>
-          <Animated.View
-            style={[
-              StyleSheet.absoluteFill,
-              { transformOrigin: PUFF_ORIGIN, opacity: stampTrack(warm, fire.puffShown), transform: [{ scale: stampTrack(warm, fire.puff) }] },
-            ]}
-          >
-            {layer(xml.puff)}
-          </Animated.View>
-        </>
-      ) : xml.gold ? (
-        layer(xml.gold)
-      ) : null}
-      {xml.gold && !worn && live ? <WaxGlint stopKey={stopKey} warmAt={warmAt} /> : null}
-    </View>
+        </View>
+      ))}
+      {sparks.map((k, i) => (
+        <Animated.View
+          key={i}
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              transformOrigin: SPARK_ORIGIN,
+              opacity: stampTrack(warm, k.shown),
+              transform: [{ translateX: stampTrack(warm, k.x) }, { translateY: stampTrack(warm, k.y) }, { scale: k.size }],
+            },
+          ]}
+        >
+          {drawn(xml.spark)}
+        </Animated.View>
+      ))}
+    </>
   );
 }
 
@@ -257,12 +361,14 @@ const SAMPLES = 40;
 /** Where the drop lands and splashes and the poured disc spreads from: the seal's middle (shared PATH_SEAL), on the tile's canvas. */
 const POUR_ORIGIN = `${(PATH_SEAL.cx / PATH_STOP_ART.box) * 100}% ${(PATH_SEAL.cy / PATH_STOP_ART.box) * 100}%`;
 const BLOB_ORIGIN = POUR_ORIGIN;
-/** Where the gilding fire's puff swells from: the seal's top. */
-const PUFF_ORIGIN = `${(PATH_SEAL.cx / PATH_STOP_ART.box) * 100}% ${((PATH_SEAL.cy - PATH_SEAL.r) / PATH_STOP_ART.box) * 100}%`;
-/** The gilding fire's tracks, and the gold's move back against its window's. */
-const fire = { ...PATH_WAX_FIRE, back: PATH_WAX_FIRE.front.map(([at, y]) => [at, -y] as const) };
+/** The seal's middle down its canvas, as a share; where the corona's tongues stand on the rim, and the sparks leave it. */
+const CY = (PATH_SEAL.cy / PATH_STOP_ART.box) * 100;
+const ROOT_ORIGIN = `50% ${((PATH_SEAL.cy - PATH_SEAL.r + 3) / PATH_STOP_ART.box) * 100}%`;
+const SPARK_ORIGIN = `50% ${((PATH_SEAL.cy - PATH_SEAL.r) / PATH_STOP_ART.box) * 100}%`;
+/** How much wider than the flash its light on the road round the stop is laid. */
+const GLOW_SCALE = 1.9;
 /** A lean in degrees, as a rotation. */
-const DEGREES = { inputRange: [-90, 90], outputRange: ['-90deg', '90deg'] };
+const DEGREES = { inputRange: [-360, 360], outputRange: ['-360deg', '360deg'] };
 /** How far a glint's band travels either side of the seal's middle, past its wax. */
 const GLINT_REACH = 52;
 
@@ -278,8 +384,12 @@ const styles = StyleSheet.create({
     height: PATH_STAMP_TOOL.h,
     transformOrigin: '50% 92%',
   },
-  // The window onto the gold as fire gilds it.
-  window: { overflow: 'hidden' },
+  // The Stamp glyph's whole 256 square on the stamp's canvas.
+  glyph: { position: 'absolute', left: PATH_STAMP_TOOL.icon.x, top: PATH_STAMP_TOOL.icon.y },
+  // A half of the seal's canvas, cut to it: the clip each half of the gilding turns in, and the half disc that turns.
+  half: { position: 'absolute', top: 0, width: PATH_SEAL.cx, height: PATH_STOP_ART.box, overflow: 'hidden' },
+  // The gold inside a turning half disc, its whole canvas.
+  turned: { position: 'absolute', top: 0, width: PATH_STOP_ART.box, height: PATH_STOP_ART.box },
   // The seal's face, a circle on the tile's canvas, which a glint crosses and the stamp's shadow falls on.
   face: {
     position: 'absolute',

@@ -8,6 +8,7 @@
  * so both apps agree and right-to-left pages mirror them like the stops. The drawings are in art/path-land.ts and
  * art/path-landmark.ts.
  */
+import { FIRE_LOOP_STOPS, FIRE_SMALL, FIRE_SMALL_CALM, calmMotion, fireDrawing, type FireMotion } from './art/fire.js';
 import { PATH_SEAL } from './art/path-land.js';
 import { PATH_SCENE_IDS, type PathSceneId } from './art/path-scenes.js';
 import { seeded } from './art/svg.js';
@@ -376,40 +377,84 @@ export const PATH_REPRESS_SHADOW = stampShadow(PATH_STAMP_REPRESS);
 
 /**
  * A topic's seal turning gold as its third sun is pressed in: once the stamp has lifted away, `afterMs` after its press
- * ends, a band of flame lights at the seal's foot and sweeps up over it, gilding the wax behind it (`PATH_WAX_FIRE`), and
- * one glint crosses it over `glintMs`. A gold seal in view glints again every `everyMs`, each stop at its own time
- * (`waxGlintAt`): a pale band `band` points wide, leaning `tilt` degrees. Under Reduce Motion it is simply gold, and still.
+ * ends, its suns ignite and a corona of fire races round its rim, gilding it (`PATH_WAX_FIRE`), and one glint crosses it
+ * over `glintMs`. A gold seal in view glints again every `everyMs`, each stop at its own time (`waxGlintAt`): a pale band
+ * `band` points wide, leaning `tilt` degrees. Under Reduce Motion it is simply gold, and still.
  */
 export const PATH_WAX_GOLD = { afterMs: 120, glintMs: 1400, everyMs: 9000, band: 9, tilt: 24 } as const;
 
-/** Where the flames stand on the seal's canvas, over the fire: below its foot, up over it, and out above its top. */
-const FIRE_FRONT: Keys = [[0, 104], [0.1, 97], [0.14, 95], [0.78, 27], [0.9, 18], [1, 18]];
-const FIRE_AT = Array.from({ length: 41 }, (_, i) => i / 40);
+/** Moments of the fire, as shares of its `ms`: the suns kindle, the corona circles the rim and closes, it flares and settles. */
+const LIT = 0.18;
+const CLOSED = 0.6;
+const FLARE = 0.62;
+const SETTLE = 0.72;
+const FIRE_AT = Array.from({ length: 81 }, (_, i) => i / 80);
 const fireKeys = (value: (t: number) => number): Array<[number, number]> => FIRE_AT.map((t): [number, number] => [t, Math.round(value(t) * 1000) / 1000]);
+/** How far round the rim the leading flame has come, in degrees clockwise from its top. */
+const turned = (t: number): number => 360 * Math.min(1, Math.max(0, (t - LIT) / (CLOSED - LIT)));
+/** The small flame's flicker (fire.ts), quickened and at full strength, for the corona's tongues. */
+const SMALL_FLAME = fireDrawing({ stage: 'blaze', growth: 0 }, FIRE_SMALL).tongues;
+const quick = (motion: FireMotion): FireMotion => ({ ...calmMotion(motion, 1 / FIRE_SMALL_CALM), periodMs: Math.round(motion.periodMs * 0.3) });
+/** A flame's flicker at `at` of its period: its stretch across and up and its lean, eased through its poses and back. */
+export function flickerAt(motion: FireMotion, at: number): { sx: number; sy: number; skew: number } {
+  const stops = [...FIRE_LOOP_STOPS, 1];
+  const of = (k: 'sx' | 'sy' | 'skew', rest: number): Keys => stops.map((t, i) => [t, motion.poses[i % motion.poses.length]![k] ?? rest] as const);
+  const t = ((at % 1) + 1) % 1;
+  return { sx: sampleKeys(of('sx', 1), t), sy: sampleKeys(of('sy', 1), t), skew: sampleKeys(of('skew', 0), t) };
+}
 
 /**
- * The fire that gilds a seal, over `ms`, on the seal's canvas (`PATH_SEAL`): `front` is how far down the flames stand,
- * the wax gold below it; it lights at the seal's foot, sweeps up over it in about two thirds of a second and goes out over
- * its top. The band of flame (`pathWaxSvg` part `fire`, drawn standing on the seal's middle) moves up with it (`rise`),
- * as wide as the seal is there (`wide`), licking (`lick`, its height) and showing (`shown`); two embers rise off it
- * (`embers`, `embersShown`), and a soft puff is left where it goes out (`puff`, `puffShown`). A phone taps as it lights
- * and again, more strongly, as it goes out at `outAt`.
+ * The suns ignite, over `ms`, on the seal's canvas (`PATH_SEAL`), the story of the Kurdish sun and the Newroz fire that
+ * turns the year. The suns kindle from within, deep red to orange (`kindle`, the opacity of their glow), as the seal
+ * shudders (`shudder`, across). A corona of flame then bursts up round the rim and races once round it clockwise:
+ * `sweep` is how far round its leading flame has come, in degrees, and behind it the wax turns gold, shown through two
+ * half discs turning about the seal's middle (`sweepRight` for the right half, then `sweepLeft`). Each of the corona's
+ * `tongues` stands at its `angle`, a little bigger or smaller (`size`), some turned the other way (`flip`), leaning back
+ * from the way the ring runs (`lean`, degrees of skew), and grows as the leading flame reaches it (`grow`), flickering
+ * all the while with the small flame's own motion (`flicker`); once the ring closes the gold is whole (`gilded`). As
+ * the ring closes the suns burn white-gold (`blaze`), the seal swells a touch (`proud`), a soft flash blooms behind it
+ * (`flash`, `flashSize`) and lights the road round it (`glow`), and sparks fly up and drift (`sparks`, each its own size,
+ * speed and fade). Then the flames sink back into the seal and the suns cool into its gold emboss. A phone taps as the
+ * suns kindle, ticks as the corona is halfway, and taps firmly at the flare (`haptics`, shares of `ms`).
  */
 export const PATH_WAX_FIRE = {
-  ms: 1000,
-  outAt: 0.86,
-  front: FIRE_FRONT,
-  rise: fireKeys((t) => sampleKeys(FIRE_FRONT, t) - PATH_SEAL.cy),
-  wide: fireKeys((t) => Math.max(0.2, Math.sqrt(Math.max(0, 1 - ((sampleKeys(FIRE_FRONT, t) - PATH_SEAL.cy) / PATH_SEAL.r) ** 2)))),
-  lick: [
-    [0, 0], [0.1, 0.9], [0.18, 0.75], [0.26, 1.05], [0.34, 0.85], [0.42, 1.1], [0.5, 0.85],
-    [0.58, 1.05], [0.66, 0.9], [0.74, 1.05], [0.82, 0.8], [0.92, 0.3], [1, 0],
-  ],
-  shown: [[0, 0], [0.06, 1], [0.84, 1], [0.95, 0], [1, 0]],
-  embers: fireKeys((t) => sampleKeys(FIRE_FRONT, t) - PATH_SEAL.cy - 16 * Math.max(0, (t - 0.3) / 0.7)),
-  embersShown: [[0, 0], [0.3, 0], [0.36, 1], [0.8, 0.7], [0.95, 0], [1, 0]],
-  puff: [[0, 0.6], [0.82, 0.6], [1, 1.4]],
-  puffShown: [[0, 0], [0.82, 0], [0.88, 0.7], [1, 0]],
+  ms: 1400,
+  haptics: { kindle: 0, halfway: (LIT + CLOSED) / 2, flare: FLARE },
+  kindle: [[0, 0], [0.02, 0], [LIT, 1], [SETTLE, 1], [0.9, 0], [1, 0]],
+  blaze: [[0, 0], [0.2, 0], [CLOSED, 0.9], [0.68, 1], [0.76, 0.85], [0.95, 0], [1, 0]],
+  shudder: [[0, 0], [0.03, 0.9], [0.06, -0.9], [0.09, 0.7], [0.12, -0.5], [0.15, 0.25], [LIT, 0], [1, 0]],
+  proud: [[0, 1], [FLARE, 1], [0.67, 1.035], [0.78, 1.012], [0.9, 1], [1, 1]],
+  sweep: fireKeys(turned),
+  sweepRight: fireKeys((t) => Math.min(180, turned(t))),
+  sweepLeft: fireKeys((t) => Math.max(0, turned(t) - 180)),
+  gilded: [[0, 0], [CLOSED, 0], [CLOSED + 0.005, 1], [1, 1]],
+  lean: 10,
+  tongues: Array.from({ length: 12 }, (_, i) => {
+    const angle = i * 30;
+    const at = LIT + ((CLOSED - LIT) * angle) / 360;
+    const grow: Array<[number, number]> = [[0, 0], [at, 0], [at + 0.03, 1.15]];
+    if (at + 0.06 < FLARE) grow.push([at + 0.06, 1]);
+    grow.push([0.66, 1.35], [SETTLE, 1.05], [0.86, 0.35], [0.94, 0], [1, 0]);
+    return { angle, size: [1, 0.72, 1.12, 0.84, 1.04, 0.76][i % 6]!, flip: i % 2 === 1, grow };
+  }),
+  flicker: { outer: quick(SMALL_FLAME[0]!.motion), inner: quick(SMALL_FLAME[1]!.motion) },
+  flash: [[0, 0], [CLOSED, 0], [0.64, 0.95], [SETTLE, 0.55], [0.86, 0], [1, 0]],
+  flashSize: [[0, 0.7], [CLOSED, 0.7], [0.7, 1.12], [0.86, 1.25], [1, 1.25]],
+  glow: [[0, 0], [0.2, 0.15], [CLOSED, 0.32], [0.68, 0.55], [0.85, 0.2], [1, 0]],
+  sparks: Array.from({ length: 10 }, (_, i) => {
+    const rand = seeded(`seal-spark|${i}`);
+    const [x0, rise, drift] = [(rand() - 0.5) * 52, 22 + rand() * 22, (rand() - 0.5) * 22];
+    const [size, start, span] = [0.7 + rand() * 0.9, 0.6 + rand() * 0.08, 0.18 + rand() * 0.14];
+    // From the rim where it leaves, up and away, slowing as it goes; fading at its own pace.
+    const y0 = PATH_SEAL.r - Math.sqrt(Math.max(0, PATH_SEAL.r ** 2 - x0 ** 2));
+    const end = Math.min(1, start + span);
+    return {
+      size: Math.round(size * 100) / 100,
+      x: [[0, x0], [start, x0], [end, x0 + drift], [1, x0 + drift]] as Keys,
+      y: [[0, y0], [start, y0], [end, y0 - rise], [1, y0 - rise]] as Keys,
+      shown: [[0, 0], [start, 0], [start + 0.02, 1], [start + span * 0.55, 0.85], [end, 0], [1, 0]] as Keys,
+    };
+  }),
 } as const;
 
 /** How far into its round of glints a stop's gold seal starts, in ms, so the gold seals down a road glint at their own times. */
