@@ -16,6 +16,7 @@ import {
   PATH_STAMP_SHADOW,
   PATH_REPRESS_SHADOW,
   PATH_WAX_GOLD,
+  PATH_WAX_FIRE,
   PATH_STOP_ART,
   chapterArtOf,
   chapterArtSvg,
@@ -369,8 +370,9 @@ export function PathChest({ open, dark, size, played }: { open: boolean; dark: b
  * sealing once (shared `PATH_STAMP_MOMENT`) after `delay`: a big drop of red wax falls onto the tile and splashes, the
  * tile melts under it as the wax flows out round, and the brass stamp presses the seal as it squashes and lifts away, its
  * sun pressed in; then `onStamped` is told. With `from`, a round later, the stamp comes back after `delay` and presses
- * again (shared `PATH_STAMP_REPRESS`), the `from` suns giving way to `suns`. `warming` turns the wax gold once the stamp
- * has lifted, with one glint (shared `PATH_WAX_GOLD`); a gold seal glints again now and then while `live` and on screen.
+ * again (shared `PATH_STAMP_REPRESS`), the `from` suns giving way to `suns`. With `warming`, once the stamp has lifted a
+ * band of fire sweeps up over the seal and gilds it (shared `PATH_WAX_FIRE`), then one glint crosses it (shared
+ * `PATH_WAX_GOLD`); a gold seal glints again now and then while `live` and on screen.
  * Decorative.
  */
 export function WaxSeal({
@@ -393,7 +395,7 @@ export function WaxSeal({
   /** A round later: the suns it had, until the stamp presses the new one in. */
   from?: number | null;
   gold: boolean;
-  /** Its third sun has just been pressed in: the wax warms into gold. */
+  /** Its third sun has just been pressed in: fire sweeps over it and gilds it. */
   warming: boolean;
   worn: boolean;
   /** Its unit is near the screen and motion is welcome. */
@@ -409,6 +411,12 @@ export function WaxSeal({
     pathWaxSvg({ seed: stopKey, gold: golden, worn, suns: count, part, dark, idPrefix: `${prefix}${part}${count}${golden ? 'g' : ''}` });
   const coat = useMarkup(() => (moving ? '' : wax('whole', suns)), [moving, stopKey, worn, suns, dark, prefix]);
   const goldCoat = useMarkup(() => (gold ? wax('whole', suns, true) : ''), [gold, stopKey, worn, suns, dark, prefix]);
+  // The fire that gilds it as its third sun is pressed in: its band of flame, the embers off it and its puff.
+  const fire = useMarkup(
+    () => (warming ? (['fire', 'embers', 'puff'] as const).map((part) => pathWaxSvg({ part, dark, idPrefix: `${prefix}${part}` })).join('|') : ''),
+    [warming, dark, prefix],
+  );
+  const [flame = '', embers = '', puff = ''] = fire.__html.split('|');
   const pour = useMarkup(() => (moving ? wax('pour', suns) : ''), [moving, stopKey, worn, suns, dark, prefix]);
   const seal = useMarkup(() => (moving ? wax('seal', suns) : ''), [moving, stopKey, worn, suns, dark, prefix]);
   const was = useMarkup(() => (pressed ? wax('seal', from) : ''), [pressed, from, stopKey, worn, dark, prefix]);
@@ -424,6 +432,10 @@ export function WaxSeal({
     shadow: useRef<HTMLSpanElement>(null),
     tool: useRef<HTMLSpanElement>(null),
     gold: useRef<HTMLSpanElement>(null),
+    window: useRef<HTMLSpanElement>(null),
+    flame: useRef<HTMLSpanElement>(null),
+    embers: useRef<HTMLSpanElement>(null),
+    puff: useRef<HTMLSpanElement>(null),
   };
   const done = useRef(onStamped);
   done.current = onStamped;
@@ -441,11 +453,6 @@ export function WaxSeal({
       end();
       return;
     }
-    const sample = (keys: readonly (readonly [number, number])[]): number[] => STAMP_FRAMES.map((t) => sampleKeys(keys, t));
-    const frames = (keys: Array<readonly (readonly [number, number])[]>, each: (v: number[]) => Keyframe): Keyframe[] => {
-      const values = keys.map(sample);
-      return STAMP_FRAMES.map((offset, i) => ({ offset, ...each(values.map((v) => v[i]!)) }));
-    };
     const timing = { duration: m.ms, delay, fill: 'both' as const };
     // The suns pressed in show from the press, under the stamp; a round later the ones before give way then.
     const shownFrom: Array<readonly [number, number]> = [[0, 0], [m.pressAt, 0], [m.pressAt + 0.01, 1], [1, 1]];
@@ -474,13 +481,22 @@ export function WaxSeal({
       runs.forEach((r) => r?.cancel());
     };
   }, [moving, pressing, delay, stopKey]);
-  // The wax warming into gold once the stamp has lifted from its third sun.
+  // Once the stamp has lifted from its third sun, fire sweeps up over the seal and the wax turns gold behind it: the gold
+  // shows through a window whose top is the flames' front, moved one way while the gold inside is moved back.
   const warmAt = (pressed ? delay + PATH_STAMP_REPRESS.ms : 0) + PATH_WAX_GOLD.afterMs;
   useLayoutEffect(() => {
-    const el = refs.gold.current;
-    if (!warming || !el || typeof el.animate !== 'function') return;
-    const run = el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: PATH_WAX_GOLD.warmMs, delay: warmAt, easing: 'ease-in-out', fill: 'backwards' });
-    return () => run.cancel();
+    const [win, coat] = [refs.window.current, refs.gold.current];
+    if (!warming || !win || !coat || typeof win.animate !== 'function') return;
+    const { front, rise, wide, lick, shown, embers: up, embersShown, puff: swell, puffShown, ms } = PATH_WAX_FIRE;
+    const timing = { duration: ms, delay: warmAt, fill: 'both' as const };
+    const runs = [
+      win.animate(frames([front], ([y]) => ({ transform: `translateY(${y}px)` })), timing),
+      coat.animate(frames([front], ([y]) => ({ transform: `translateY(${-y!}px)` })), timing),
+      refs.flame.current?.animate(frames([rise, wide, lick, shown], ([y, w, h, o]) => ({ transform: `translateY(${y}px) scale(${w}, ${h})`, opacity: o })), timing),
+      refs.embers.current?.animate(frames([up, embersShown], ([y, o]) => ({ transform: `translateY(${y}px)`, opacity: o })), timing),
+      refs.puff.current?.animate(frames([swell, puffShown], ([k, o]) => ({ transform: `scale(${k})`, opacity: o })), timing),
+    ];
+    return () => runs.forEach((r) => r?.cancel());
   }, [warming, warmAt]);
   return (
     <span className="lp-wax" aria-hidden="true" data-suns={suns}>
@@ -500,8 +516,19 @@ export function WaxSeal({
       ) : (
         <span className="lp-wax-coat" dangerouslySetInnerHTML={coat} />
       )}
-      {gold && <span ref={refs.gold} className="lp-wax-coat lp-wax-gold" dangerouslySetInnerHTML={goldCoat} />}
-      {gold && !worn && live && <WaxGlint stopKey={stopKey} firstAt={warming ? warmAt + PATH_WAX_GOLD.warmMs : null} />}
+      {gold && warming ? (
+        <>
+          <span ref={refs.window} className="lp-wax-window">
+            <span ref={refs.gold} className="lp-wax-coat lp-wax-gold" dangerouslySetInnerHTML={goldCoat} />
+          </span>
+          <span ref={refs.flame} className="lp-wax-coat lp-wax-fire" dangerouslySetInnerHTML={{ __html: flame }} />
+          <span ref={refs.embers} className="lp-wax-coat lp-wax-fire" dangerouslySetInnerHTML={{ __html: embers }} />
+          <span ref={refs.puff} className="lp-wax-coat lp-wax-puff" dangerouslySetInnerHTML={{ __html: puff }} />
+        </>
+      ) : (
+        gold && <span className="lp-wax-coat lp-wax-gold" dangerouslySetInnerHTML={goldCoat} />
+      )}
+      {gold && !worn && live && <WaxGlint stopKey={stopKey} firstAt={warming ? warmAt + PATH_WAX_FIRE.ms : null} />}
     </span>
   );
 }
@@ -550,6 +577,11 @@ export function WaxLegend({ dark }: { dark: boolean }): React.JSX.Element {
 
 /** The moments a stamping moment is sampled at. */
 const STAMP_FRAMES = Array.from({ length: 41 }, (_, i) => i / 40);
+/** Keyframes for the web's animations from the shared tracks, sampled at `STAMP_FRAMES`, each turned into styles by `each`. */
+function frames(keys: Array<readonly (readonly [number, number])[]>, each: (v: number[]) => Keyframe): Keyframe[] {
+  const values = keys.map((track) => STAMP_FRAMES.map((t) => sampleKeys(track, t)));
+  return STAMP_FRAMES.map((offset, i) => ({ offset, ...each(values.map((v) => v[i]!)) }));
+}
 /** How far a glint's band travels either side of the seal's middle, past its wax. */
 const GLINT_REACH = 52;
 /** A seal's drawing in a card's legend: its 112-point canvas at this size, the seal itself about 26 points across. */

@@ -53,14 +53,16 @@ export function barPieces(of: number): Array<{ x: number; w: number }> {
 
 /**
  * The suns pressed into a finished topic's seal, one for each full round, in the seal's own terms (its middle at 0, 0 and
- * its radius 1): one large in the middle, two side by side a little smaller, or three with the middle one higher, like a
- * crown. A topic finished before its rounds were counted shows one. `r` is how far a sun's rays reach.
+ * its radius 1): one large in the middle, two side by side a little smaller, or three of a size in a triangle, one above
+ * and two below, the gaps between them the same as to the fine ring round the field. A topic finished before its rounds
+ * were counted shows one. `r` is how far a sun's rays reach.
  */
 export function sealSuns(rounds: number): Array<{ x: number; y: number; r: number }> {
   const suns = Math.max(1, Math.min(TOPIC_STARS, Math.floor(rounds) || 1));
   if (suns === 1) return [{ x: 0, y: 0, r: 0.53 }];
   if (suns === 2) return [{ x: -0.3, y: 0, r: 0.285 }, { x: 0.3, y: 0, r: 0.285 }];
-  return [{ x: -0.355, y: 0.085, r: 0.2 }, { x: 0, y: -0.14, r: 0.225 }, { x: 0.355, y: 0.085, r: 0.2 }];
+  // Each 0.315 from the middle, so the gaps between them and to the ring at 0.615 are alike.
+  return [{ x: -0.2728, y: 0.1575, r: 0.245 }, { x: 0, y: -0.315, r: 0.245 }, { x: 0.2728, y: 0.1575, r: 0.245 }];
 }
 
 /** The Kurdish sun's rays: twenty-one, as on the flag. */

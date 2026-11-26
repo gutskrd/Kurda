@@ -77,7 +77,7 @@ describe('a topic’s suns', () => {
     expect(TOPIC_STARS).toBe(3);
   });
 
-  it('lays them in the seal’s field: one large in the middle, two side by side, three with the middle one higher', () => {
+  it('lays them in the seal’s field: one large in the middle, two side by side, three of a size in a triangle', () => {
     // inside the fine line ringing the field, at six tenths of the seal's radius
     for (const rounds of [1, 2, 3]) {
       const suns = sealSuns(rounds);
@@ -90,11 +90,20 @@ describe('a topic’s suns', () => {
     }
     expect(sealSuns(1)[0]!.r).toBeGreaterThan(sealSuns(2)[0]!.r);
     expect(sealSuns(2)[0]!.r).toBeGreaterThan(sealSuns(3)[0]!.r);
-    // the crown: the middle of three a little higher than the others, and centred
-    const [l, m, r] = sealSuns(3);
+    // three alike in an equilateral triangle, one above and two below, centred as a group, as far apart as from the ring
+    const three = sealSuns(3);
+    const [l, m, r] = three;
+    expect(new Set(three.map((s) => s.r)).size).toBe(1);
     expect(m!.y).toBeLessThan(l!.y);
     expect(m!.x).toBe(0);
     expect(l!.x + r!.x).toBe(0);
+    const apart = (a: { x: number; y: number }, b: { x: number; y: number }): number => Math.hypot(a.x - b.x, a.y - b.y);
+    expect(apart(l!, m!)).toBeCloseTo(apart(l!, r!), 3);
+    expect(apart(m!, r!)).toBeCloseTo(apart(l!, r!), 3);
+    expect(three.reduce((y, s) => y + s.y, 0)).toBeCloseTo(0, 3);
+    const between = apart(l!, r!) - 2 * l!.r;
+    const toRing = 0.615 - (Math.hypot(l!.x, l!.y) + l!.r);
+    expect(between).toBeCloseTo(toRing, 2);
   });
 
   it('draws the Kurdish sun: a round middle and twenty-one pointed rays, the first straight up, or fewer when asked', () => {

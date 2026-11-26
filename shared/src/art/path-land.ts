@@ -11,6 +11,8 @@ import type { PathGround } from '../path-world.js';
 import { roadLight } from './light.js';
 import { CANVAS, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
 import { kilimAlong } from './paint.js';
+import { fireColours } from './fire-colours.js';
+import { SHAPE_ROOT, SMALL_SHAPES, mapPath } from './fire-shapes.js';
 import { VALLEY, dusk, ellipsePath, fill, smoothPath, stroke, warm } from './valley.js';
 
 // ───────────────────────────────────────────────────────────── the lands
@@ -310,9 +312,11 @@ export interface PathWaxOptions {
   suns?: number;
   /**
    * The whole seal; or, for its moment, the poured disc alone, the seal's pressed face alone, the drop of wax that falls
-   * onto the tile first, or the droplets it throws out as it lands.
+   * onto the tile first, or the droplets it throws out as it lands; or, as a third sun turns it gold, the band of flame
+   * that crosses it (standing on its middle), the embers rising off the flame, and the puff where it goes out (at its
+   * top).
    */
-  part?: 'whole' | 'pour' | 'seal' | 'blob' | 'splash';
+  part?: 'whole' | 'pour' | 'seal' | 'blob' | 'splash' | 'fire' | 'embers' | 'puff';
   dark?: boolean;
   /** Display size in points; the drawing is `PATH_STOP_ART.box` square, laid as the tile is. */
   size?: number;
@@ -334,7 +338,7 @@ export function sunRays(reach: number): number {
 export function pathWaxSvg(opts: PathWaxOptions = {}): string {
   const { dark = false, gold = false, worn = false } = opts;
   const part = opts.part ?? 'whole';
-  if (!['whole', 'pour', 'seal', 'blob', 'splash'].includes(part)) throw new RangeError(`art: no wax part ${String(part)}`);
+  if (!['whole', 'pour', 'seal', 'blob', 'splash', 'fire', 'embers', 'puff'].includes(part)) throw new RangeError(`art: no wax part ${String(part)}`);
   const size = opts.size ?? PATH_STOP_ART.box;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
   const B = PATH_STOP_ART.box;
@@ -370,6 +374,28 @@ export function pathWaxSvg(opts: PathWaxOptions = {}): string {
     `aria-hidden="true" focusable="false" id="${prefix}">` +
     `${defs ? `<defs>${defs}</defs>` : ''}${body}</svg>`;
 
+  if (part === 'fire' || part === 'embers' || part === 'puff') {
+    // Hevalo's own fire (fire-shapes.ts, fire-colours.ts): its small flame's deep orange body, gold drop and pale heart.
+    const flame = fireColours({ stage: 'campfire', scheme: dark ? 'dark' : 'light' }).tongues;
+    if (part === 'embers') return wrapIt(fill(ellipsePath(cx - 11, cy - 13, 1.3, 1.3), flame.core[0]) + fill(ellipsePath(cx + 13, cy - 17, 1, 1), flame.outer[1]));
+    if (part === 'puff') {
+      // A soft puff of warm smoke where the flames go out over the seal's top.
+      const puff = [ellipsePath(cx - 6, cy - r - 2, 6, 5), ellipsePath(cx + 5, cy - r - 4, 7, 6), ellipsePath(cx, cy - r - 8, 5, 4.5)].join('');
+      return wrapIt(`<path d="${puff}" fill="${dark ? '#f2e6d8' : '#ffffff'}" fill-opacity="${dark ? 0.45 : 0.8}"/>`);
+    }
+    // A row of tongues across the seal standing on its middle, of a few heights, every other one turned the other way so
+    // that they lick unevenly.
+    const tall = [10, 14, 11, 16, 12, 15, 10];
+    let tongues = '';
+    tall.forEach((h, i) => {
+      const x = cx - r + 6 + (i * (2 * r - 12)) / (tall.length - 1);
+      const k = h / 123;
+      const turn = i % 2 === 0 ? 1 : -1;
+      const at = (d: string): string => mapPath(d, (px, py) => [x + (px - SHAPE_ROOT[0]) * k * turn, cy + 1 + (py - SHAPE_ROOT[1]) * k]);
+      tongues += fill(at(SMALL_SHAPES.outer), flame.outer[0]) + fill(at(SMALL_SHAPES.core), flame.core[0]) + fill(at(SMALL_SHAPES.heart), flame.heart[0]);
+    });
+    return wrapIt(tongues);
+  }
   if (part === 'splash') {
     // A few droplets thrown up and out round where the drop lands, the larger low and to the sides.
     const drops = ([[-168, 15, 2.3], [-128, 17, 1.5], [-92, 19, 1.2], [-52, 16, 1.8], [-14, 14, 2.4]] as const)

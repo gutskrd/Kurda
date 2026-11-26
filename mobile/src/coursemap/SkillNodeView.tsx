@@ -209,7 +209,7 @@ export function SkillNodeView({
   const stamped = useRef(stamp?.onStamped);
   stamped.current = stamp?.onStamped;
   const pressDelay = stamp?.delay ?? 0;
-  // Sealed in its moment just now: with three suns, its wax warms into gold.
+  // Sealed in its moment just now: with three suns, fire gilds its wax.
   const [fresh, setFresh] = useState(false);
   useEffect(() => {
     if (!pressing) return;
@@ -270,7 +270,7 @@ export function SkillNodeView({
     transform: [{ scaleX: stampTrack(t, squash.map(([at, v]) => [at, 2 - v] as const)) }, { scaleY: stampTrack(t, squash) }],
   });
   const squashed = pressing ? squashOf(moment, PATH_STAMP_MOMENT.squash) : pressFrom !== null && pressingAgain ? squashOf(again, PATH_STAMP_REPRESS.squash) : null;
-  // Its third sun pressed in now: once the stamp has lifted, the wax warms into gold. Under Reduce Motion it is simply gold.
+  // Its third sun pressed in now: once the stamp has lifted, fire gilds the wax. Under Reduce Motion it is simply gold.
   const warmAt =
     suns < TOPIC_STARS || reduce ? null : fresh ? 0 : pressFrom !== null && pressFrom < TOPIC_STARS ? PATH_RETURN.finishAtMs + PATH_STAMP_REPRESS.ms : null;
   // Once sealed its tile and glyph are gone, the seal in their place; in the moment they melt under the spreading wax.

@@ -8,6 +8,7 @@
  * so both apps agree and right-to-left pages mirror them like the stops. The drawings are in art/path-land.ts and
  * art/path-landmark.ts.
  */
+import { PATH_SEAL } from './art/path-land.js';
 import { PATH_SCENE_IDS, type PathSceneId } from './art/path-scenes.js';
 import { seeded } from './art/svg.js';
 import { sampleKeys } from './characters/life.js';
@@ -375,11 +376,41 @@ export const PATH_REPRESS_SHADOW = stampShadow(PATH_STAMP_REPRESS);
 
 /**
  * A topic's seal turning gold as its third sun is pressed in: once the stamp has lifted away, `afterMs` after its press
- * ends, the wax warms from red into gold over `warmMs`, and one glint crosses it over `glintMs`. A gold seal in view
- * glints again every `everyMs`, each stop at its own time (`waxGlintAt`): a pale band `band` points wide, leaning `tilt`
- * degrees. Under Reduce Motion it is simply gold, and still.
+ * ends, a band of flame lights at the seal's foot and sweeps up over it, gilding the wax behind it (`PATH_WAX_FIRE`), and
+ * one glint crosses it over `glintMs`. A gold seal in view glints again every `everyMs`, each stop at its own time
+ * (`waxGlintAt`): a pale band `band` points wide, leaning `tilt` degrees. Under Reduce Motion it is simply gold, and still.
  */
-export const PATH_WAX_GOLD = { afterMs: 120, warmMs: 650, glintMs: 1400, everyMs: 9000, band: 9, tilt: 24 } as const;
+export const PATH_WAX_GOLD = { afterMs: 120, glintMs: 1400, everyMs: 9000, band: 9, tilt: 24 } as const;
+
+/** Where the flames stand on the seal's canvas, over the fire: below its foot, up over it, and out above its top. */
+const FIRE_FRONT: Keys = [[0, 104], [0.1, 97], [0.14, 95], [0.78, 27], [0.9, 18], [1, 18]];
+const FIRE_AT = Array.from({ length: 41 }, (_, i) => i / 40);
+const fireKeys = (value: (t: number) => number): Array<[number, number]> => FIRE_AT.map((t): [number, number] => [t, Math.round(value(t) * 1000) / 1000]);
+
+/**
+ * The fire that gilds a seal, over `ms`, on the seal's canvas (`PATH_SEAL`): `front` is how far down the flames stand,
+ * the wax gold below it; it lights at the seal's foot, sweeps up over it in about two thirds of a second and goes out over
+ * its top. The band of flame (`pathWaxSvg` part `fire`, drawn standing on the seal's middle) moves up with it (`rise`),
+ * as wide as the seal is there (`wide`), licking (`lick`, its height) and showing (`shown`); two embers rise off it
+ * (`embers`, `embersShown`), and a soft puff is left where it goes out (`puff`, `puffShown`). A phone taps as it lights
+ * and again, more strongly, as it goes out at `outAt`.
+ */
+export const PATH_WAX_FIRE = {
+  ms: 1000,
+  outAt: 0.86,
+  front: FIRE_FRONT,
+  rise: fireKeys((t) => sampleKeys(FIRE_FRONT, t) - PATH_SEAL.cy),
+  wide: fireKeys((t) => Math.max(0.2, Math.sqrt(Math.max(0, 1 - ((sampleKeys(FIRE_FRONT, t) - PATH_SEAL.cy) / PATH_SEAL.r) ** 2)))),
+  lick: [
+    [0, 0], [0.1, 0.9], [0.18, 0.75], [0.26, 1.05], [0.34, 0.85], [0.42, 1.1], [0.5, 0.85],
+    [0.58, 1.05], [0.66, 0.9], [0.74, 1.05], [0.82, 0.8], [0.92, 0.3], [1, 0],
+  ],
+  shown: [[0, 0], [0.06, 1], [0.84, 1], [0.95, 0], [1, 0]],
+  embers: fireKeys((t) => sampleKeys(FIRE_FRONT, t) - PATH_SEAL.cy - 16 * Math.max(0, (t - 0.3) / 0.7)),
+  embersShown: [[0, 0], [0.3, 0], [0.36, 1], [0.8, 0.7], [0.95, 0], [1, 0]],
+  puff: [[0, 0.6], [0.82, 0.6], [1, 1.4]],
+  puffShown: [[0, 0], [0.82, 0], [0.88, 0.7], [1, 0]],
+} as const;
 
 /** How far into its round of glints a stop's gold seal starts, in ms, so the gold seals down a road glint at their own times. */
 export function waxGlintAt(stopKey: string): number {

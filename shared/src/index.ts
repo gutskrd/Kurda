@@ -269,6 +269,7 @@ export {
   PATH_REPRESS_SHADOW,
   stampShadow,
   PATH_WAX_GOLD,
+  PATH_WAX_FIRE,
   waxGlintAt,
   PATH_SCENE_ORDER,
   PATH_SCENERY,

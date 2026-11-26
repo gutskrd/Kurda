@@ -87,6 +87,7 @@ import {
   type PathStopLook,
 } from './path-land.js';
 import { SUN_RAYS } from '../lesson-rounds.js';
+import { fireColours } from './fire-colours.js';
 import { CHAPTER_ART, CHAPTER_ART_IDS, CHAPTER_ART_LOOP, CHAPTER_LOOP_KINDS, chapterArtOf, chapterArtSvg } from './chapter-art.js';
 import { PATH_SCENES, PATH_SCENE_BOX, PATH_SCENE_IDS, PATH_SCENE_SPRITES, PATH_SCENE_SPRITE_BOX, PATH_SLATE_LETTERS, pathScenePropSvg, pathSceneSpriteSvg } from './path-scenes.js';
 import { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg } from './path-landmark.js';
@@ -1700,7 +1701,7 @@ describe('the lesson path’s world', () => {
     };
     for (const dark of [false, true]) {
       const scheme = dark ? 'dark' : 'light';
-      for (const part of ['whole', 'pour', 'seal', 'blob', 'splash'] as const) {
+      for (const part of ['whole', 'pour', 'seal', 'blob', 'splash', 'fire', 'embers', 'puff'] as const) {
         for (const gold of [false, true]) for (const suns of [1, 2, 3]) sound(pathWaxSvg({ seed: 's:a', part, gold, suns, dark, idPrefix: 'w' }), view);
       }
       sound(pathWaxSvg({ seed: 's:a', worn: true, dark }), view);
@@ -1713,6 +1714,9 @@ describe('the lesson path’s world', () => {
       expect(pathWaxSvg({ seed: 's:a', dark })).toContain(red.face);
       expect(pathWaxSvg({ seed: 's:a', gold: true, dark })).toContain(PATH_WAX.gold[scheme].face);
       expect(pathWaxSvg({ seed: 's:a', gold: true, dark })).not.toContain(red.face);
+      // the fire that gilds it is Hevalo's own: its small flame's deep orange body, gold drop and pale heart
+      const flame = fireColours({ stage: 'campfire', scheme }).tongues;
+      for (const colour of [flame.outer[0], flame.core[0], flame.heart[0]]) expect(pathWaxSvg({ part: 'fire', dark })).toContain(colour);
       // glossy, a streak or two on its lip; worn, matte and dulled, none of its colours left as they were
       expect(pathWaxSvg({ seed: 's:a', dark })).toContain(red.gloss);
       const worn = pathWaxSvg({ seed: 's:a', worn: true, dark });

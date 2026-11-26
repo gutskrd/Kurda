@@ -6,6 +6,7 @@ import {
   PATH_START_WORDS,
   PATH_STAMP_MOMENT,
   PATH_STAMP_REPRESS,
+  PATH_WAX_FIRE,
   PATH_WAX_GOLD,
   TOPIC_STARS,
   isSoraniDialect,
@@ -504,8 +505,8 @@ function useReturnStep(ret: PathReturn | null): number | null {
     const marks = [settleMs, finishAtMs, nextAtMs, openAtMs, bubbleAtMs];
     // In order, each a moment after the last.
     const timers = marks.map((ms, i) => window.setTimeout(() => setAt({ ret, step: i + 1 }), ms));
-    // Over once the bubble has moved on and a stop pressed again has warmed into gold, if its third sun made it so.
-    const pressed = finishAtMs + PATH_STAMP_REPRESS.ms + PATH_WAX_GOLD.afterMs + PATH_WAX_GOLD.warmMs;
+    // Over once the bubble has moved on and a stop pressed again has been gilded by fire, if its third sun made it so.
+    const pressed = finishAtMs + PATH_STAMP_REPRESS.ms + PATH_WAX_GOLD.afterMs + PATH_WAX_FIRE.ms;
     timers.push(window.setTimeout(() => setAt({ ret, step: null }), Math.max(bubbleAtMs + Math.max(bubbleMs, popMs, 400), pressed + 40)));
     return () => timers.forEach((id) => window.clearTimeout(id));
   }, [ret]);
@@ -659,7 +660,7 @@ export function CoursePath({
     if (next.size !== stamped.size) setStamped(next);
     writeStamps(courseId, next);
   }, [path, stamped, reduceMotion, courseId]);
-  // Stops sealed in their moment on this visit, whose wax warms into gold if it was sealed with three suns.
+  // Stops sealed in their moment on this visit: fire gilds the wax of one sealed with three suns.
   const [fresh, setFresh] = useState<ReadonlySet<string>>(() => new Set());
   const stampDone = useCallback((key: string) => {
     setStamped((had) => (had && !had.has(key) ? new Set([...had, key]) : had));
@@ -826,7 +827,7 @@ export function CoursePath({
     return { ...now, from: before };
   };
   /**
-   * A sealed topic's seal at this moment: the suns pressed in it and whether it is warming into gold. A round made whole
+   * A sealed topic's seal at this moment: the suns pressed in it and whether fire is gilding it. A round made whole
    * on the return is pressed in by the stamp as the stop finishes, `from` the suns it had before.
    */
   const waxNow = (stop: SkillStop<SkillNode>): { suns: number; from: number | null; warming: boolean } => {

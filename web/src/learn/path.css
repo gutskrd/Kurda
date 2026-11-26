@@ -993,8 +993,18 @@ button.lp-scard:focus-visible {
   line-height: 0;
 }
 .lp-wax-pour,
-.lp-wax-blob {
+.lp-wax-blob,
+.lp-wax-fire {
   transform-origin: 56px 61px;
+}
+/* The gilding fire's window onto the gold, its top the flames' front, and the puff where they go out, over the top. */
+.lp-wax-window {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.lp-wax-puff {
+  transform-origin: 56px 25px;
 }
 /* The stamp leans about its die's foot. */
 .lp-wax-tool {

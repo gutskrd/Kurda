@@ -532,8 +532,9 @@ describe('a topic’s bar and wax seal', () => {
     const c = () => screen.getByRole('button', { name: /^Topic c, / });
     expect(within(c()).getByTestId('lp-wax-2')).toBeTruthy();
     view.rerender(<LessonPath map={after} due={0} onFocus={() => undefined} />);
-    // The stamp comes back and presses the third sun in, and its wax ends gold.
+    // The stamp comes back and presses the third sun in, and fire gilds its wax.
     await waitFor(() => expect(within(c()).getByTestId('lp-wax-3-gold')).toBeTruthy(), { timeout: 4000 });
+    expect(within(c()).getByTestId('lp-wax-fire')).toBeTruthy();
     cleanup();
     patchReactNativeWeb({ reduceMotion: true });
   });

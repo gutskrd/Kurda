@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PATH_GEOMETRY, PATH_MASCOT, PATH_RETURN, lessonPath, mascotSpot, type PathSkill } from './lesson-path.js';
 import { PATH_SCENES, PATH_SCENE_BOX, PATH_SCENE_IDS } from './art/path-scenes.js';
+import { PATH_SEAL } from './art/path-land.js';
 import { characterArt, cropBox, sampleKeys } from './characters/index.js';
 import {
   PATH_LANDMARKS,
@@ -16,6 +17,7 @@ import {
   PATH_STAMP_REPRESS,
   PATH_REPRESS_SHADOW,
   PATH_WAX_GOLD,
+  PATH_WAX_FIRE,
   waxGlintAt,
   PATH_APPLE_REACH,
   PATH_START_WORDS,
@@ -340,6 +342,34 @@ describe('a finished stop’s wax seal', () => {
     expect(PATH_RETURN.finishAtMs + ms * at2).toBeLessThan(PATH_RETURN.nextAtMs);
     // its shadow darkest while it is pressed down
     expect(at(PATH_REPRESS_SHADOW.shown, at2 + 0.04)).toBe(Math.max(...PATH_REPRESS_SHADOW.shown.map(([, v]) => v)));
+  });
+
+  it('gilds the seal with fire once the third sun is pressed in: lit at its foot, up over it, and out over its top', () => {
+    const { front, rise, wide, shown, lick, embers, embersShown, puffShown, ms, outAt } = PATH_WAX_FIRE;
+    const at = (track: readonly (readonly [number, number])[], t: number): number => sampleKeys(track, t);
+    // the front starts below the seal's foot, so none of it is gold yet, and ends over its top, so all of it is
+    const [top, foot] = [PATH_SEAL.cy - PATH_SEAL.r, PATH_SEAL.cy + PATH_SEAL.r];
+    expect(at(front, 0)).toBeGreaterThan(foot);
+    expect(at(front, 1)).toBeLessThan(top);
+    // it only ever rises, and crosses the seal in about two thirds of a second
+    for (let i = 1; i < front.length; i++) expect(front[i]![1]).toBeLessThanOrEqual(front[i - 1]![1]);
+    const crossed = (y: number): number => front.find(([, v]) => v <= y)![0];
+    const crossing = (crossed(top + 2) - crossed(foot - 2)) * ms;
+    expect(crossing).toBeGreaterThanOrEqual(600);
+    expect(crossing).toBeLessThanOrEqual(800);
+    // the flames stand on the front, never wider than the seal, and are out before it starts and after it ends
+    for (const t of [0.2, 0.5, 0.7]) {
+      expect(at(rise, t)).toBeCloseTo(at(front, t) - PATH_SEAL.cy, 1);
+      expect(at(wide, t)).toBeLessThanOrEqual(1);
+      expect(at(lick, t)).toBeGreaterThan(0.5);
+    }
+    expect(at(shown, 0)).toBe(0);
+    expect(at(shown, 1)).toBe(0);
+    // embers rise off the flames, and a puff is left where they go out
+    expect(at(embers, 0.7)).toBeLessThan(at(rise, 0.7));
+    expect(at(embersShown, 0.6)).toBeGreaterThan(0);
+    expect(Math.max(...puffShown.map(([t, v]) => (t > outAt - 0.06 ? v : 0)))).toBeGreaterThan(0);
+    expect(outAt).toBeLessThan(1);
   });
 
   it('turns gold once the third sun is pressed in, and glints at each stop’s own time within its round', () => {
