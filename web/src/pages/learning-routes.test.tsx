@@ -359,8 +359,17 @@ describe('a course map', () => {
     // Nothing due, so no review stop.
     expect(within(unit).queryByRole('button', { name: /^Review/ })).not.toBeInTheDocument();
 
-    // One tap from the map into the lesson up next.
-    expect(within(unit).getByRole('link', { name: 'Continue: Greetings' })).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
+    // One tap from the map into the lesson up next, its bubble in the course's own words whatever the reader's language.
+    const bubble = within(unit).getByRole('link', { name: 'Continue: Greetings' });
+    expect(bubble).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
+    expect(within(bubble).getByText('Berdewam bike!')).toHaveAttribute('lang', 'ku');
+
+    // The unit wears its own colour, on its banner and round its stops, and someone peeks in beside its road.
+    expect(unit).toHaveClass('lp-tone-meadow');
+    expect(pin).toHaveClass('lp-tone-meadow');
+    expect(pin.querySelector('.lp-pin-colour')).not.toBeNull();
+    expect(unit.querySelector('.lp-peek')).not.toBeNull();
+    expect(unit.querySelector('.lp-peek')).toHaveAttribute('aria-hidden', 'true');
 
     // The courses, to move between them.
     expect(screen.getByRole('navigation', { name: 'Your courses' })).toBeInTheDocument();
@@ -403,7 +412,7 @@ describe('a course map', () => {
     expect(within(next).getByText('On its way: Hamo is recording it now.')).toBeInTheDocument();
   });
 
-  it('opens a card on a stop: the one to do now in violet with one button, a locked one saying what opens it', async () => {
+  it('opens a card on a stop: the one to do now in its unit’s colour with one button, a locked one saying what opens it', async () => {
     serve({
       'GET /courses/c1/map': basics,
       'GET /practice/due': { due: 0, available: 3 },

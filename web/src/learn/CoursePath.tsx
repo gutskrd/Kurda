@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import {
   PATH_GEOMETRY,
   PATH_RETURN,
+  PATH_START_WORDS,
   TOPIC_STARS,
+  isSoraniDialect,
   lessonPath,
   lessonXpRange,
   localeDir,
@@ -36,7 +38,7 @@ import { JumpSheet } from './JumpSheet';
 import { courseProgress, lessonStates } from './map';
 import { RoundStars, StarRow, TopicRing } from './PathRing';
 import { SectionCard, UnitDivider, UnitPin, levelWords, useUnitAtTop } from './PathSections';
-import { StopArt, UnitLandmark, UnitRail, UpcomingUnit, useUnitsOnScreen, useWidth, type RailSection } from './PathWorld';
+import { StopArt, UnitLandmark, UnitRail, UnitScenery, UpcomingUnit, useUnitsOnScreen, useWidth, type RailSection } from './PathWorld';
 import { useDarkPage } from '../theme/useDarkPage';
 import { preloadLesson } from './preloadLesson';
 import type { CourseMap as Map, CourseSummary, PracticeDue, SkillNode } from './types';
@@ -105,7 +107,7 @@ function stopLook(stop: Stop): PathStopLook {
   return stop.state;
 }
 
-/** Whether a stop's card offers a lesson to play now, and so is the road's main button, in its main colour. */
+/** Whether a stop's card offers a lesson to play now, and so is the road's main button, in its unit's colour. */
 function goes(stop: Stop): boolean {
   return stop.kind === 'skill' && stop.state !== 'locked' && Boolean(stop.launch);
 }
@@ -698,6 +700,8 @@ export function CoursePath({
 
   const progress = courseProgress(data);
   const list = courses.data?.courses ?? [];
+  // The bubble over the stop to do now speaks the course's own dialect, whatever the reader's language.
+  const startWords = PATH_START_WORDS[isSoraniDialect(list.find((c) => c.id === courseId)?.dialect) ? 'sorani' : 'kurmanji'];
   const current = path.current;
   const placedOf = (key: string | null): { unitId: string; x: number; y: number } | null => {
     for (const u of path.units) {
@@ -838,6 +842,7 @@ export function CoursePath({
                           {spot && here && (
                             <PathMascot x={spot.x} y={spot.y} flip={sign * spot.x > sign * here.x} cheer={cheer} onPress={() => current && setOpenKey(current)} />
                           )}
+                          <UnitScenery unit={unit} dark={dark} near={near} mascot={spot} />
                           {unit.stops.map(({ stop: real, x, y }, k) => {
                             const stop = drawnAs(real);
                             const isOpen = openKey === stop.key;
@@ -868,7 +873,9 @@ export function CoursePath({
                                     state={{ title: stop.skill.title, from: home }}
                                     aria-label={`${stop.lessonsDone > 0 ? t('learn.continue') : t('learn.start')}: ${stop.skill.title}`}
                                   >
-                                    {stop.lessonsDone > 0 ? t('learn.continue') : t('learn.start')}
+                                    <span lang={startWords === PATH_START_WORDS.sorani ? 'ckb' : 'ku'} dir="auto">
+                                      {stop.lessonsDone > 0 ? startWords.going : startWords.start}
+                                    </span>
                                   </Link>
                                 )}
                                 {jumpHere && (

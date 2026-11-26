@@ -8,7 +8,7 @@ import { RING, STAR } from './path';
 
 /**
  * A topic's ring and stars on the lesson path. The rules and geometry are shared (lesson-rounds.ts), so the website
- * draws the same: one piece per lesson, in the main colour once finished in the current round, gold all round once every round
+ * draws the same: one piece per lesson, in its unit's colour once finished in the current round, gold all round once every round
  * is played, and a star per round on the finished coin.
  *
  * After a lesson the ring animates from `from`: new pieces fill in turn, and a whole round turns the ring gold with
@@ -37,7 +37,7 @@ export function TopicRing({
   from?: RingShown | null;
   /** A round was completed since: the ring fills, goes gold, then starts the next round. */
   roundDone?: boolean;
-  /** The colour finished pieces are drawn in, where not the ink: the main colour of the stop to do now. */
+  /** The colour finished pieces are drawn in, where not the ink: the unit's colour of the stop to do now. */
   tint?: string;
   /** Fills the other way round, for a mirrored right-to-left path. */
   mirrored?: boolean;

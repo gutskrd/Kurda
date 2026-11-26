@@ -121,6 +121,24 @@ describe('the lesson path', () => {
     expect(screen.queryByTestId('lp-callout-bobbing')).toBeNull();
   });
 
+  it('speaks the course’s own dialect in the bubble over the stop to do now, whatever the reader’s language', () => {
+    client();
+    renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
+    expect(within(button('Continue: Family')).getByText('Berdewam bike!')).toBeTruthy();
+    cleanup();
+    renderWithProviders(<LessonPath map={MAP} dialect="sorani" due={0} onFocus={() => undefined} />);
+    expect(within(button('Continue: Family')).getByText('بەردەوام بە!')).toBeTruthy();
+  });
+
+  it('stands someone peeking and a painted chest beside each unit’s road, out of the screen reader’s way', () => {
+    client();
+    renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
+    // Unit 1 has room for a chest beside its second stop; Xezo peeks in beside its first, there being no fourth.
+    expect(screen.getAllByTestId('lp-peek-xezo').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('lp-chest').length).toBeGreaterThan(0);
+    for (const chest of screen.getAllByTestId('lp-chest')) expect(chest.getAttribute('aria-hidden')).toBe('true');
+  });
+
   it('starts the next lesson in one tap from the bubble over the current skill', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);

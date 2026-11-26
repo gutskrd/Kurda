@@ -2,7 +2,7 @@ import { PATH_RING, TOPIC_STARS, ringPieces, roundStars, starPath } from '@kurda
 
 /**
  * A topic's ring and stars on the lesson path, by the same rule and shapes as the phone (@kurda/shared lesson-rounds.ts):
- * one ring piece per lesson, in the main colour once finished in the current round, gold all round once all three rounds are played,
+ * one ring piece per lesson, in its unit's colour once finished in the current round, gold all round once all three rounds are played,
  * and a star per round on a finished topic's coin. During a return (learn/CoursePath.tsx, `PATH_RETURN`) the pieces fill
  * one after another from `from`, the ring turns gold when a round completes, and an `earned` star drops in; path.css
  * moves them and holds them under reduced motion. Decorative; the stop's words say it all.

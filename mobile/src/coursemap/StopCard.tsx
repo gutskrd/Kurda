@@ -26,8 +26,8 @@ type Unit = PathUnit<SkillNode>;
 
 /**
  * The card a tapped stop opens, under it with an arrow up to it, as on the website. A topic to play now is the road's
- * main button: the card in its main colour, its name, which lesson is next, and one light button that says what the lesson
- * pays, which a glint crosses now and then. Any other stop's card is a plain panel: what it is, its progress and one
+ * main button: the card in its unit's colour on its lip, its name, which lesson is next, and one button on the page's
+ * own ground that says what the lesson pays, which a glint crosses now and then. Any other stop's card is a plain panel: what it is, its progress and one
  * action, or what opens it; a skill there lists its lessons.
  *
  * A chapter's story says what opens it while shut; once open, it opens the reader and offers the chapter's review
@@ -83,7 +83,7 @@ export function StopCard({
   const cardLeft = left + (width - cardWidth) / 2;
   const arrowLeft = Math.max(ARROW_INSET, Math.min(cardWidth - ARROW_INSET - ARROW, pointAt - (cardLeft - left) - ARROW / 2));
   const go = goesNow(stop);
-  const face = go ? colors.accent : colors.surfaceRaised;
+  const face = go ? tone.fill : colors.surfaceRaised;
   const edge = go ? 'transparent' : colors.separator;
   return (
     <Animated.View
@@ -95,9 +95,9 @@ export function StopCard({
       onLayout={(e: LayoutChangeEvent) => onSize?.(e.nativeEvent.layout.height)}
       testID={go ? 'lp-card-go' : 'lp-card'}
     >
-      <View style={[styles.card, { backgroundColor: face, borderColor: edge, shadowColor: colors.softShadow }]}>
+      <View style={[styles.card, { backgroundColor: face, borderColor: edge, shadowColor: colors.softShadow }, go ? { borderBottomWidth: 6, borderBottomColor: tone.lip } : null]}>
         {go ? (
-          <GoCard stop={go} titleRef={title} actions={actions} />
+          <GoCard stop={go} tone={tone} titleRef={title} actions={actions} />
         ) : (
           <PanelCard stop={stop} unit={unit} tone={tone} titleRef={title} actions={actions} />
         )}
@@ -108,7 +108,7 @@ export function StopCard({
   );
 }
 
-/** A skill whose card offers a lesson to play now, and so is the road's main button, in its main colour; else null. */
+/** A skill whose card offers a lesson to play now, and so is the road's main button, in its unit's colour; else null. */
 function goesNow(stop: Stop): Extract<Stop, { kind: 'skill' }> | null {
   return stop.kind === 'skill' && stop.state !== 'locked' && stop.launch ? stop : null;
 }
@@ -145,15 +145,14 @@ function xpOf(stop: Extract<Stop, { kind: 'skill' }>, t: ReturnType<typeof useI1
 }
 
 /** A topic to play now: its name, which lesson or round is next, its stars, and the one button. */
-function GoCard({ stop, titleRef, actions }: { stop: Extract<Stop, { kind: 'skill' }>; titleRef: Ref<Text>; actions: StopActions }): React.JSX.Element {
-  const { colors } = useTheme();
+function GoCard({ stop, tone, titleRef, actions }: { stop: Extract<Stop, { kind: 'skill' }>; tone: ToneColors; titleRef: Ref<Text>; actions: StopActions }): React.JSX.Element {
   const { t, locale } = useI18n();
   const dir = useDirection();
   const { skill } = stop;
   const lessons = skill.lessons ?? [];
   const at = lessons.findIndex((l) => l.lessonId === stop.launch);
   const action = actionOf(stop, t, actions);
-  const ink = colors.textOnAccent;
+  const ink = tone.ink;
   // A finished topic is played again in rounds, so it says which round; any other says which lesson is next.
   const where =
     stop.state === 'done' && stop.rounds > 0
@@ -170,21 +169,21 @@ function GoCard({ stop, titleRef, actions }: { stop: Extract<Stop, { kind: 'skil
       </Text>
       {where ? <Text style={[styles.goLine, dir.text, { color: ink }]}>{where}</Text> : null}
       {stop.rounds > 0 ? <Stars rounds={stop.rounds} /> : null}
-      {action ? <StartButton label={action.label} xp={xpOf(stop, t, locale)} onPress={action.go} /> : null}
+      {action ? <StartButton label={action.label} xp={xpOf(stop, t, locale)} tone={tone} onPress={action.go} /> : null}
       {skill.hasGrammar ? <Tips skill={skill} colour={ink} onTips={actions.onTips} /> : null}
     </>
   );
 }
 
 /**
- * The card's one light button: the lesson's word and what it pays, raised on a lip it sinks into when pressed. A glint
- * crosses it now and then while the road is alive; under Reduce Motion it holds still.
+ * The card's one button: the lesson's word and what it pays, in the unit's colour on the page's own ground, raised on a
+ * lip of the unit's colour it sinks into when pressed. A glint crosses it now and then while the road is alive; under
+ * Reduce Motion it holds still.
  */
-function StartButton({ label, xp, onPress }: { label: string; xp: string | null; onPress: () => void }): React.JSX.Element {
+function StartButton({ label, xp, tone, onPress }: { label: string; xp: string | null; tone: ToneColors; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const live = useMotionAlive();
-  // The main colour on the button's warm white, by day and by night.
-  const words = colors.accent;
+  const words = tone.text;
   const [width, setWidth] = useState(0);
   const glint = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -210,14 +209,19 @@ function StartButton({ label, xp, onPress }: { label: string; xp: string | null;
       testID="lp-card-start"
       onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
       // The label and what the lesson pays stack, so the longest pair fits a narrow phone.
-      style={({ pressed }) => [styles.start, pressed ? styles.startPressed : null, xp ? styles.startStacked : { flexDirection: 'row' }]}
+      style={({ pressed }) => [
+        styles.start,
+        { backgroundColor: colors.background, borderBottomColor: tone.lip },
+        pressed ? styles.startPressed : null,
+        xp ? styles.startStacked : { flexDirection: 'row' },
+      ]}
     >
       {live && width > 0 ? (
         <Animated.View
           pointerEvents="none"
           style={[
             styles.glint,
-            { width: width * 0.22, backgroundColor: `${colors.accent}38` },
+            { width: width * 0.22, backgroundColor: `${tone.fill}38` },
             // Seen only while it crosses, so it never rests at the button's edge.
             { opacity: glint.interpolate({ inputRange: [0, 0.04, 0.96, 1], outputRange: [0, 1, 1, 0] }) },
             { transform: [{ translateX: glint.interpolate({ inputRange: [0, 1], outputRange: [-width * 0.3, width * 1.1] }) }, { skewX: '-20deg' }] },
@@ -481,10 +485,8 @@ const styles = StyleSheet.create({
     minHeight: 50,
     marginTop: spacing.xs,
     paddingHorizontal: spacing.md,
-    borderRadius: radii.pill,
+    borderRadius: radii.md + 2,
     borderBottomWidth: 4,
-    borderBottomColor: 'rgba(0,0,0,0.18)',
-    backgroundColor: '#FFFDF9',
   },
   startPressed: { marginTop: spacing.xs + 3, borderBottomWidth: 1 },
   startText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 0.6 },

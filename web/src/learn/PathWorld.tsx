@@ -2,10 +2,14 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import {
   PATH_LANDMARK_LOOP,
   landmarkBox,
+  letterBirdSvg,
+  pathChestSvg,
   pathLandmarkSvg,
   pathLoopSvg,
+  pathPeeker,
   pathSignpostSvg,
   pathStopSvg,
+  unitScenery,
   type PathBox,
   type PathLand,
   type PathStopLook,
@@ -124,6 +128,77 @@ export function StopArt({ look, tone, dark, near }: { look: PathStopLook; tone: 
     </>
   );
 }
+
+/**
+ * A unit's playful touches beside its road (shared `unitScenery`): someone peeking up over a mound at the stops, a
+ * different one each unit (shared `pathPeeker`), and the unit's painted sandûq, shut until the unit is done and then open
+ * on its gold. Both are decorative and out of the reading order; a press makes the peeker pop up and the chest hop, for
+ * the fun of it, and nothing moves under reduced motion (path.css).
+ */
+export function UnitScenery({
+  unit,
+  dark,
+  near,
+  mascot,
+}: {
+  unit: Unit;
+  dark: boolean;
+  near: boolean;
+  /** Where Hevalo stands beside the stop to do now in this unit, if he is here. */
+  mascot: { x: number; y: number } | null;
+}): React.JSX.Element | null {
+  const spots = useMemo(() => unitScenery(unit.stops, mascot), [unit.stops, mascot]);
+  const [played, setPlayed] = useState<'peek' | 'chest' | null>(null);
+  useEffect(() => {
+    if (!played) return;
+    const done = window.setTimeout(() => setPlayed(null), PLAY_MS);
+    return () => window.clearTimeout(done);
+  }, [played]);
+  if (!near) return null;
+  const who = pathPeeker(unit.number - 1);
+  const won = unit.total > 0 && unit.done === unit.total;
+  return (
+    <>
+      {spots.peek && (
+        <li className={`lp-peek is-${spots.peek.x < 0 ? 'start' : 'end'}${played === 'peek' ? ' is-popping' : ''}`} aria-hidden="true" style={{ top: spots.peek.y, '--px': `${spots.peek.x}px` } as React.CSSProperties}>
+          <button type="button" className="lp-peek-hit" tabIndex={-1} aria-hidden="true" onClick={() => setPlayed('peek')}>
+            <span className="lp-peek-who">
+              {who === 'pigeon' ? <Pigeon dark={dark} facingLeft={spots.peek.x > 0} /> : <SpeakingCharacter speaker={who} audio={null} crop="bust" size={PEEK_SIZE} decorative mirrored={spots.peek.x > 0} />}
+            </span>
+            <span className="lp-peek-mound" />
+          </button>
+        </li>
+      )}
+      {spots.chest && (
+        <li className={`lp-chest${played === 'chest' ? ' is-hopping' : ''}`} aria-hidden="true" style={{ top: spots.chest.y, '--cx': `${spots.chest.x}px` } as React.CSSProperties}>
+          <button type="button" className="lp-chest-hit" tabIndex={-1} aria-hidden="true" onClick={() => setPlayed('chest')}>
+            <Chest open={won} dark={dark} />
+          </button>
+        </li>
+      )}
+    </>
+  );
+}
+
+/** How long a peeker's pop or a chest's hop plays. */
+const PLAY_MS = 700;
+/** A peeker's height, head and shoulders over the mound. */
+const PEEK_SIZE = 92;
+
+function Pigeon({ dark, facingLeft }: { dark: boolean; facingLeft: boolean }): React.JSX.Element {
+  const id = useId().replace(/[^A-Za-z0-9]/g, '');
+  const art = useMemo(() => ({ __html: letterBirdSvg({ bird: 0, pose: 'hello', facingLeft, size: PEEK_SIZE, idPrefix: `lppg${id}${dark ? 'd' : 'l'}` }) }), [facingLeft, dark, id]);
+  return <span className="lp-peek-bird" dangerouslySetInnerHTML={art} />;
+}
+
+function Chest({ open, dark }: { open: boolean; dark: boolean }): React.JSX.Element {
+  const id = useId().replace(/[^A-Za-z0-9]/g, '');
+  const art = useMemo(() => ({ __html: pathChestSvg({ open, dark, size: CHEST_SIZE, idPrefix: `lpch${id}` }) }), [open, dark, id]);
+  return <span className="lp-chest-art" dangerouslySetInnerHTML={art} />;
+}
+
+/** The sandûq's size beside the road: a stop's, so it reads as one of the road's own things. */
+const CHEST_SIZE = 96;
 
 /** A unit as the rail lists it. */
 export interface RailUnit {

@@ -349,6 +349,7 @@ export function LessonsView({
                 <LessonPath
                   key={entry.course.id}
                   map={entry.map}
+                  dialect={entry.course.dialect}
                   due={due ?? 0}
                   openReview={openReview}
                   onFocus={onFocus}

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import Svg, { Defs, Ellipse, Path, RadialGradient, Stop as GradientStop } from 'react-native-svg';
 import { PATH_GEOMETRY, PATH_MOTION, PATH_RETURN, PATH_STOP_ART, type PathStop, type PathStopLook, type RingChange, type UnitTone } from '@kurda/shared';
@@ -49,9 +49,10 @@ const PULSE_AT_MS = 700;
  * wear a ring with one piece per lesson (TopicRing). A chapter ends at its story, and a jumpable unit's first stop
  * is drawn as a gate. Pressed, the face sinks into its base.
  *
- * The current skill is the road's main button: it stands higher in a glow of the theme's main colour, wears a star and
- * its ring in that colour, and a "Start" flag above; now and then a glint sweeps it and sparks wink on it. It bobs while
- * the path is in view. None of it moves under Reduce Motion.
+ * The current skill is the road's main button: it stands higher in a glow of its unit's colour, breathes out a ring of
+ * it, wears a star and its ring in that colour, and a bubble of the course's own words floats above it; now and then a
+ * glint sweeps it and sparks wink on it. It bobs while the path is in view, and every stop squishes under a finger.
+ * None of it moves under Reduce Motion.
  *
  * After a lesson, `change` animates what it did to the stop: the ring fills, the stop pops and turns gold, a star
  * drops in, a padlock gives way to a number, a prize bursts open, and the flag arrives last. Under Reduce Motion
@@ -84,7 +85,7 @@ export function SkillNodeView({
   unitTone: UnitTone;
   /** The stop's full screen-reader label. */
   label: string;
-  /** The flag text over the current skill, and its screen-reader label. */
+  /** The bubble's words over the current skill, in the course's own language, and its screen-reader label. */
   callout?: { text: string; label: string };
   /** What a return from a lesson changed here, played once. */
   change?: StopChange | null;
@@ -163,7 +164,8 @@ export function SkillNodeView({
     };
   }, [change, finishing, opening, unlocking, pop, lock, shut, before, wobble]);
 
-  const glyph = glyphOf(stop, look, tone, FACE_INK[scheme], colors.textOnAccent);
+  const glyph = glyphOf(stop, look, tone, FACE_INK[scheme], tone.ink);
+  const squish = useSquish();
   const tilt = wobble.interpolate({ inputRange: [-1, 1], outputRange: [`${-PATH_MOTION.wobble}deg`, `${PATH_MOTION.wobble}deg`] });
   const lifted = rise ? { opacity: rise, transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [PATH_MOTION.rise, 0] }) }] } : null;
   // Its ring now, and as it was before a lesson that moved it on.
@@ -176,9 +178,11 @@ export function SkillNodeView({
   return (
     <Animated.View style={[styles.stop, { left, top }, lifted]} pointerEvents="box-none">
       <Animated.View style={[StyleSheet.absoluteFill, bob ? { transform: [{ translateY: bob }] } : null]} pointerEvents="box-none">
-        {callout && onStart ? <Callout text={callout.text} label={callout.label} arriving={!!change?.arriving} bobbing={bobbing} onPress={onStart} /> : null}
-        {jump ? <Callout text={jump.text} label={label} arriving={false} bobbing={false} onPress={onPress} /> : null}
-        {raised && stop.kind === 'skill' ? <Glow fill={colors.accent} /> : null}
+        {callout && onStart ? (
+          <Callout text={callout.text} label={callout.label} tone={tone} arriving={!!change?.arriving} bobbing={bobbing} onPress={onStart} />
+        ) : null}
+        {jump ? <Callout text={jump.text} label={label} tone={tone} arriving={false} bobbing={false} onPress={onPress} /> : null}
+        {raised && stop.kind === 'skill' ? <Glow fill={tone.fill} live={bobbing} /> : null}
         <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: pop }, { rotate: tilt }] }]} pointerEvents="none">
           {/* The ring is the topic in hand: the one to do now, or one a return is filling. */}
           {ring && stop.kind === 'skill' && (raised || moved) ? (
@@ -188,7 +192,7 @@ export function SkillNodeView({
               ring={ring}
               from={moved ? ringAt(stop, moved.from) : null}
               roundDone={roundDone}
-              tint={raised ? colors.accent : undefined}
+              tint={raised ? tone.fill : undefined}
               mirrored={dir.rtl}
             />
           ) : null}
@@ -218,8 +222,11 @@ export function SkillNodeView({
             accessibilityState={expanded === undefined ? undefined : { expanded }}
             testID={`lp-node-${jump ? 'jump' : testName(stop)}`}
             hitSlop={4}
-            style={({ pressed }) => [styles.face, { transform: [{ translateY: pressed ? PRESS : 0 }] }]}
+            onPressIn={squish.onPressIn}
+            onPressOut={squish.onPressOut}
+            style={styles.face}
           >
+            <Animated.View style={[StyleSheet.absoluteFill, squish.style]}>
             {near ? (
               unlocking ? (
                 <>
@@ -276,10 +283,11 @@ export function SkillNodeView({
               </View>
             ) : null}
             {stop.kind === 'skill' && stop.finish === 'refresh' ? (
-              <View style={[styles.badge, { backgroundColor: tone.ink === '#ffffff' ? '#ffffff' : '#fbf5e6', borderColor: tone.fill }]} pointerEvents="none">
+              <View style={[styles.badge, { backgroundColor: colors.background, borderColor: tone.fill }]} pointerEvents="none">
                 <Icon name="review" size={14} color={tone.text} />
               </View>
             ) : null}
+            </Animated.View>
           </Pressable>
         </Animated.View>
       </Animated.View>
@@ -289,7 +297,7 @@ export function SkillNodeView({
 
 /**
  * The glyph on a stop's face: a skill's number or padlock, or review's arrows. A finished coin carries its stars
- * instead (a check only on a map too old to count them), the current skill a star in the ink its main colour takes, and
+ * instead (a check only on a map too old to count them), the current skill a star in its unit's ink, and
  * the drawn stops carry their own.
  */
 function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_INK)['dark'], onNow: string): { icon?: IconName; number?: number; colour: string } | null {
@@ -311,7 +319,7 @@ function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_I
 /** A stop far from the screen, as a plain round in its drawing's colour. */
 function plainColour(look: string, tone: ToneColors, rest: (typeof REST)['dark']): { face: string; lip: string } {
   if (look === 'done' || look === 'strong' || look === 'refresh' || look === 'story') return { face: GOLD_TOKEN.face, lip: GOLD_TOKEN.lip };
-  if (look === 'current') return { face: tone.fill, lip: tone.lip };
+  if (look === 'current' || look === 'available' || look === 'review' || look === 'jump') return { face: tone.fill, lip: tone.lip };
   return { face: rest.fill, lip: rest.lip };
 }
 
@@ -381,13 +389,19 @@ function Shine(): React.JSX.Element | null {
   );
 }
 
-/** The size of the glow the current skill stands in. */
+/** The size of the glow the current skill stands in, and of the ring it breathes out. */
 const GLOW = { rx: 66, ry: 32 } as const;
+const BREATH = { everyMs: 2200, grow: 0.6 } as const;
 
-/** The glow under the current skill, which swells once as the path opens so the eye finds it. Native driver; still under Reduce Motion. */
-function Glow({ fill }: { fill: string }): React.JSX.Element {
+/**
+ * The glow under the current skill in its unit's colour, which swells once as the path opens so the eye finds it, and
+ * a ring of the same colour the stop breathes out, over and over, while the path is in view. Native driver; still
+ * under Reduce Motion.
+ */
+function Glow({ fill, live }: { fill: string; live: boolean }): React.JSX.Element {
   const reduce = useReducedMotion();
   const pulse = useRef(new Animated.Value(1)).current;
+  const breath = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (reduce) return;
     const run = Animated.sequence([Animated.delay(PULSE_AT_MS), timing(pulse, PULSE + 0.06, duration.quick + 40), springTo(pulse, 1, 'bouncy')]);
@@ -395,36 +409,88 @@ function Glow({ fill }: { fill: string }): React.JSX.Element {
     return () => run.stop();
     // Once, on first draw.
   }, []);
+  useEffect(() => {
+    if (reduce || !live) {
+      breath.setValue(0);
+      return;
+    }
+    const run = Animated.loop(timing(breath, 1, BREATH.everyMs, { easing: Easing.out(Easing.quad) }));
+    run.start();
+    return () => run.stop();
+  }, [reduce, live, breath]);
   return (
-    <Animated.View style={[styles.glow, { transform: [{ scale: pulse }] }]} pointerEvents="none">
-      <Svg width={2 * GLOW.rx} height={2 * GLOW.ry}>
-        <Defs>
-          <RadialGradient id="lpGlow" cx="50%" cy="50%" r="50%">
-            <GradientStop offset="0" stopColor={fill} stopOpacity={0.6} />
-            <GradientStop offset="0.55" stopColor={fill} stopOpacity={0.28} />
-            <GradientStop offset="1" stopColor={fill} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Ellipse cx={GLOW.rx} cy={GLOW.ry} rx={GLOW.rx} ry={GLOW.ry} fill="url(#lpGlow)" />
-      </Svg>
-    </Animated.View>
+    <>
+      <Animated.View style={[styles.glow, { transform: [{ scale: pulse }] }]} pointerEvents="none">
+        <Svg width={2 * GLOW.rx} height={2 * GLOW.ry}>
+          <Defs>
+            <RadialGradient id="lpGlow" cx="50%" cy="50%" r="50%">
+              <GradientStop offset="0" stopColor={fill} stopOpacity={0.6} />
+              <GradientStop offset="0.55" stopColor={fill} stopOpacity={0.28} />
+              <GradientStop offset="1" stopColor={fill} stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Ellipse cx={GLOW.rx} cy={GLOW.ry} rx={GLOW.rx} ry={GLOW.ry} fill="url(#lpGlow)" />
+        </Svg>
+      </Animated.View>
+      {!reduce && live ? (
+        <Animated.View
+          style={[
+            styles.breath,
+            { borderColor: fill, opacity: breath.interpolate({ inputRange: [0, 1], outputRange: [0.6, 0] }), transform: [{ scale: breath.interpolate({ inputRange: [0, 1], outputRange: [1, 1 + BREATH.grow] }) }] },
+          ]}
+          pointerEvents="none"
+          testID="lp-breath"
+        />
+      ) : null}
+    </>
   );
 }
 
 /**
- * The "Start" flag over the current skill and the learner on it. It bobs with the stop while the screen is in view
- * and the app is in front, never under Reduce Motion, and gives under a finger like every button. "Jump here?" over
- * a later unit stays still, since it is an offer rather than the next step.
+ * A stop squished down into its base under a finger, springing back up with a little bounce as it is let go. Under
+ * Reduce Motion it simply sinks.
+ */
+function useSquish(): { style: object; onPressIn: () => void; onPressOut: () => void } {
+  const reduce = useReducedMotion();
+  const press = useRef(new Animated.Value(0)).current;
+  return {
+    style: {
+      transform: [
+        { translateY: press.interpolate({ inputRange: [0, 1], outputRange: [0, PRESS] }) },
+        { scaleX: press.interpolate({ inputRange: [0, 1], outputRange: [1, reduce ? 1 : 1.06] }) },
+        { scaleY: press.interpolate({ inputRange: [0, 1], outputRange: [1, reduce ? 1 : 0.92] }) },
+      ],
+    },
+    onPressIn: () => {
+      press.stopAnimation();
+      if (reduce) press.setValue(1);
+      else timing(press, 1, 60).start();
+    },
+    onPressOut: () => {
+      if (reduce) press.setValue(0);
+      else springTo(press, 0, 'bouncy').start();
+    },
+  };
+}
+
+/**
+ * The bubble over the current skill: the course's own words ("Ji vir dest pê bike!") on the page's ground inside an
+ * edge of its unit's colour, its words in that colour, on a lip of it, floating gently above the stop while the screen
+ * is in view and the app is in front, never under Reduce Motion. It gives under a finger like every button. "Jump
+ * here?" over a later unit wears the same in its own unit's colour, and stays still, since it is an offer rather than
+ * the next step.
  */
 function Callout({
   text,
   label,
+  tone,
   arriving,
   bobbing,
   onPress,
 }: {
   text: string;
   label: string;
+  tone: ToneColors;
   /** It just moved here from the previous stop, so it fades in once the rest of the path has moved. */
   arriving: boolean;
   bobbing: boolean;
@@ -433,6 +499,7 @@ function Callout({
   const { colors } = useTheme();
   const reduce = useReducedMotion();
   const shown = useRef(new Animated.Value(arriving && !reduce ? 0 : 1)).current;
+  const float = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (reduce || !arriving) {
       shown.setValue(1);
@@ -442,19 +509,46 @@ function Callout({
     run.start();
     return () => run.stop();
   }, [reduce, arriving, shown]);
-  // The app's ink with the words written on it, as the website's, on a lip of shadow.
-  const pill = { face: colors.primary, edge: 'rgba(0,0,0,0.28)', words: colors.textOnPrimary };
+  useEffect(() => {
+    if (reduce || !bobbing) {
+      float.setValue(0);
+      return;
+    }
+    const half = FLOAT.periodMs / 2;
+    const run = Animated.loop(
+      Animated.sequence([
+        timing(float, 1, half, { easing: Easing.inOut(Easing.sin) }),
+        timing(float, 0, half, { easing: Easing.inOut(Easing.sin) }),
+      ]),
+    );
+    run.start();
+    return () => run.stop();
+  }, [reduce, bobbing, float]);
+  const lift = float.interpolate({ inputRange: [0, 1], outputRange: [0, -FLOAT.rise] });
   return (
-    <Animated.View style={[styles.calloutWrap, { opacity: shown }]} pointerEvents="box-none" testID={bobbing ? 'lp-callout-bobbing' : undefined}>
-      <View style={[styles.calloutLip, { backgroundColor: pill.edge }]}>
-        <PressableScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={6} style={[styles.callout, { backgroundColor: pill.face }]}>
-          <Text style={[styles.calloutText, { color: pill.words }]}>{text}</Text>
+    <Animated.View
+      style={[styles.calloutWrap, { opacity: shown, transform: [{ translateY: lift }] }]}
+      pointerEvents="box-none"
+      testID={bobbing ? 'lp-callout-bobbing' : undefined}
+    >
+      <View style={[styles.calloutLip, { backgroundColor: tone.lip }]}>
+        <PressableScale
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          hitSlop={6}
+          style={[styles.callout, { backgroundColor: colors.background, borderColor: tone.fill }]}
+        >
+          <Text style={[styles.calloutText, { color: tone.text }]}>{text}</Text>
         </PressableScale>
       </View>
-      <View style={[styles.calloutTip, { backgroundColor: pill.face }]} />
+      <View style={[styles.calloutTip, { backgroundColor: colors.background, borderColor: tone.fill }]} />
     </Animated.View>
   );
 }
+
+/** How far the bubble floats up and back, and how long once round. */
+const FLOAT = { rise: 6, periodMs: 3600 } as const;
 
 const CALLOUT_WIDTH = 200;
 const STOP_HEIGHT = NODE + PATH_STOP_ART.raised;
@@ -506,6 +600,7 @@ const styles = StyleSheet.create({
   glint: { position: 'absolute', top: -20, width: 18, height: 104, backgroundColor: 'rgba(255, 255, 255, 0.45)' },
   spark: { position: 'absolute' },
   glow: { position: 'absolute', left: STOP_FACE.x - GLOW.rx, top: STOP_FACE.y + PATH_STOP_ART.raised + 4 - GLOW.ry },
+  breath: { position: 'absolute', left: FACE.left, top: FACE.top, width: FACE.width, height: FACE.height, borderRadius: radii.pill, borderWidth: 4 },
   calloutWrap: {
     position: 'absolute',
     // Above the stop and the ring round it, with a little air.
@@ -514,24 +609,26 @@ const styles = StyleSheet.create({
     width: CALLOUT_WIDTH,
     alignItems: 'center',
   },
-  calloutLip: { borderRadius: radii.pill, paddingBottom: 3 },
+  calloutLip: { borderRadius: radii.md, paddingBottom: 4 },
   callout: {
-    minHeight: 38,
-    paddingHorizontal: spacing.md + 2,
-    borderRadius: radii.pill,
+    minHeight: 42,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.md,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   calloutText: {
     fontSize: typography.sizes.text,
     fontWeight: typography.weights.bold,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
   },
+  // The tail pointing down at the stop, its edge in the unit's colour.
   calloutTip: {
-    width: 12,
-    height: 12,
-    marginTop: -9,
+    width: 14,
+    height: 14,
+    marginTop: -10,
+    borderRightWidth: 2,
+    borderBottomWidth: 2,
     transform: [{ rotate: '45deg' }],
   },
 });
