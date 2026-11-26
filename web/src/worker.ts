@@ -610,14 +610,18 @@ async function respond(request: Request, env: Env): Promise<Response> {
 const FRONT = /<div id="root" data-prerendered="\/"><!--front-->[\s\S]*?<!--\/front--><\/div>/;
 
 /**
- * The shell arrives with the front page drawn into it (scripts/prerender.ts), and with the front page's title. Every other
- * address gets it empty and named plainly, so a crawler never reads the front page under it; a listed page's own head
- * replaces the title again below. A shell without the front page goes out as it came.
+ * The shell arrives with the front page drawn into it (scripts/prerender.ts), and with the front page's titles. Every other
+ * address gets it empty and named plainly, so neither a crawler nor a link preview reads the front page under it; a listed
+ * page's own head replaces the titles again below. A shell without the front page goes out as it came.
  */
 async function withoutFront(shell: Response): Promise<Response> {
   const html = await shell.text();
   if (!FRONT.test(html)) return new Response(html, shell);
-  const out = new Response(html.replace(FRONT, '<div id="root"></div>').replace(/<title>[^<]*<\/title>/, '<title>Hevalo</title>'), shell);
+  const plain = html
+    .replace(FRONT, '<div id="root"></div>')
+    .replace(/<title>[^<]*<\/title>/, '<title>Hevalo</title>')
+    .replace(/(<meta (?:property="og:title"|name="twitter:title") content=")[^"]*"/g, '$1Hevalo"');
+  const out = new Response(plain, shell);
   out.headers.delete('content-length');
   return out;
 }
@@ -685,4 +689,5 @@ export const __test = {
   dictionaryOf,
   notFound,
   SITE_HEADERS,
+  withoutFront,
 };

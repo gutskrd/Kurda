@@ -480,6 +480,52 @@ describe('a scanner’s probe', () => {
   });
 });
 
+/** The built shell carries the front page drawn into it (scripts/prerender.ts), and only `/` may be read with it. */
+describe('the front page drawn into the shell', () => {
+  const { withoutFront } = __test;
+  const named = 'Hevalo — Learn Kurdish and Kurmanji with friends';
+  const drawn =
+    `<!doctype html><html><head><title>${named}</title><meta property="og:title" content="${named}" />` +
+    `<meta name="twitter:title" content="${named}" /></head><body>` +
+    '<div id="root" data-prerendered="/"><!--front--><main><h1>Learn Kurdish with a friend.</h1></main><!--/front--></div></body></html>';
+  const served = () => new Response(drawn, { status: 200, headers: { 'content-type': 'text/html', 'content-length': String(drawn.length) } });
+
+  it('is taken out for every other address, and the page named plainly', async () => {
+    const res = await withoutFront(served());
+    const out = await res.text();
+    expect(out).toContain('<div id="root"></div>');
+    expect(out).not.toContain('<h1>');
+    expect(out).not.toContain(named);
+    expect(out).toContain('<title>Hevalo</title>');
+    expect(out).toContain('<meta property="og:title" content="Hevalo" />');
+    expect(out).toContain('<meta name="twitter:title" content="Hevalo" />');
+    expect(res.status).toBe(200);
+    // The body is shorter now, so the old length would cut it off.
+    expect(res.headers.get('content-length')).toBeNull();
+  });
+
+  it('leaves a shell without it as it came', async () => {
+    const plain = '<!doctype html><title>Hevalo</title><div id="root"></div>';
+    expect(await (await withoutFront(new Response(plain))).text()).toBe(plain);
+  });
+
+  it('never reaches an app address through the edge', async () => {
+    const env = { ASSETS: { fetch: vi.fn(async () => served()) } } as unknown as Parameters<typeof worker.fetch>[1];
+    const out = await (await worker.fetch(new Request('https://hevalo.app/app/civak'), env)).text();
+    expect(out).toContain('<div id="root"></div>');
+    expect(out).not.toContain('Learn Kurdish with a friend.');
+  });
+
+  const fileSystem = 'node:fs';
+  const here = import.meta.url;
+
+  it('is marked as the build marks it', async () => {
+    const { readFileSync } = (await import(/* @vite-ignore */ fileSystem)) as { readFileSync(file: URL, encoding: 'utf8'): string };
+    const build = readFileSync(new URL('../scripts/prerender.ts', here), 'utf8');
+    expect(build).toContain('<div id="root" data-prerendered="/"><!--front-->${body}<!--/front--></div>');
+  });
+});
+
 /** What the edge script returns may not carry `_headers`, so it brings the site's security headers itself. */
 describe('the site’s security headers', () => {
   const { SITE_HEADERS } = __test;
