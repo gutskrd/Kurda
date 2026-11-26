@@ -1594,6 +1594,7 @@ export const fr: Catalogue = {
   'gate.what.profile': 'avoir un profil',
   'gate.what.settings': 'modifier tes réglages',
   'footer.tagline': 'Apprendre le kurde. Jouer ensemble.',
+  'footer.join': 'Rejoindre Hevalo',
   'footer.app': 'Application',
   'footer.iosSoon': 'iOS (bientôt)',
   'footer.androidSoon': 'Android (bientôt)',

@@ -1600,6 +1600,7 @@ export const ckb: Catalogue = {
   'gate.what.profile': 'پرۆفایلت هەبێت',
   'gate.what.settings': 'ڕێکخستنەکانت بگۆڕیت',
   'footer.tagline': 'فێری کوردی ببە. پێکەوە یاری بکەن.',
+  'footer.join': 'بەشداری Hevalo بکە',
   'footer.app': 'ئەپ',
   'footer.iosSoon': 'iOS (بەم زووانە)',
   'footer.androidSoon': 'Android (بەم زووانە)',

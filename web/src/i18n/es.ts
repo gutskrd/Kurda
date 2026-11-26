@@ -1593,6 +1593,7 @@ export const es: Catalogue = {
   'gate.what.profile': 'tener un perfil',
   'gate.what.settings': 'cambiar tus ajustes',
   'footer.tagline': 'Aprende kurdo. Juega en compañía.',
+  'footer.join': 'Únete a Hevalo',
   'footer.app': 'App',
   'footer.iosSoon': 'iOS (próximamente)',
   'footer.androidSoon': 'Android (próximamente)',

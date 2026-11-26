@@ -1670,6 +1670,7 @@ export const en = {
 
   // ---- the footer, the nav’s own words, and the rest of settings -----
   'footer.tagline': 'Learn Kurdish. Play together.',
+  'footer.join': 'Join Hevalo',
   'footer.app': 'App',
   'footer.iosSoon': 'iOS (coming soon)',
   'footer.androidSoon': 'Android (coming soon)',

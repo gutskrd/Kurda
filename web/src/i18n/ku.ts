@@ -1597,6 +1597,7 @@ export const ku: Catalogue = {
   'gate.what.profile': 'profîleke te hebe',
   'gate.what.settings': 'tu mîhengên xwe biguherînî',
   'footer.tagline': 'Fêrî kurdî bibe. Bi hev re bilîzin.',
+  'footer.join': 'Tevlî Hevalo bibe',
   'footer.app': 'Sepan',
   'footer.iosSoon': 'iOS (di rê de)',
   'footer.androidSoon': 'Android (di rê de)',

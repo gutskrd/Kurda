@@ -30,20 +30,31 @@ export function Hero(): React.JSX.Element {
   const figure = useRef<HTMLDivElement>(null);
   useTiltLean(figure);
 
-  // The news turns over slowly while the page is in front, and not at all under Reduce Motion.
+  // The news goes round once, slowly, and settles on the first; it holds still under a pointer or the keyboard, and
+  // under Reduce Motion it does not turn at all.
+  const [held, setHeld] = useState(false);
+  const [turns, setTurns] = useState(0);
   useEffect(() => {
-    if (prefersReducedMotion()) return;
-    const timer = window.setInterval(() => {
-      if (!document.hidden) setNews((n) => (n + 1) % NEWS.length);
+    if (held || turns >= NEWS.length || prefersReducedMotion()) return;
+    const timer = window.setTimeout(() => {
+      setNews((n) => (n + 1) % NEWS.length);
+      setTurns((n) => n + 1);
     }, NEWS_MS);
-    return () => window.clearInterval(timer);
-  }, []);
+    return () => window.clearTimeout(timer);
+  }, [held, turns]);
 
   const said = taps > 0 ? GREETINGS[(taps - 1) % GREETINGS.length]! : null;
   return (
     <section className="fp-hero" aria-labelledby="fp-hero-title">
       <div className="fp-hero-in">
-        <a className="fp-pill" href={NEWS[news]!.to}>
+        <a
+          className="fp-pill"
+          href={NEWS[news]!.to}
+          onPointerEnter={() => setHeld(true)}
+          onPointerLeave={() => setHeld(false)}
+          onFocus={() => setHeld(true)}
+          onBlur={() => setHeld(false)}
+        >
           <span className="fp-pill-new">{t('landing.news.new')}</span>
           {/* All three stacked in one place, so the pill keeps the width of the longest and never jumps. */}
           <span className="fp-pill-texts">

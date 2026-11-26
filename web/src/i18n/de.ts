@@ -1595,6 +1595,7 @@ export const de: Catalogue = {
   'gate.what.profile': 'ein Profil zu haben',
   'gate.what.settings': 'deine Einstellungen zu ändern',
   'footer.tagline': 'Kurdisch lernen. Zusammen spielen.',
+  'footer.join': 'Hevalo beitreten',
   'footer.app': 'App',
   'footer.iosSoon': 'iOS (demnächst)',
   'footer.androidSoon': 'Android (demnächst)',
