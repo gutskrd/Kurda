@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Button } from './Button';
+import { DeerLoader } from './DeerLoader';
 import { useT } from '../i18n/I18nProvider';
 
 /** Hevalo over an empty or failed state, as on the phone; loaded apart so the pages that never show one stay light. */
@@ -14,12 +15,13 @@ export function StateArt({ puzzled = false }: { puzzled?: boolean }): React.JSX.
   );
 }
 
+/** A page or section waiting on something: the deer curling into a ball, labelled for screen readers ("Loading…" or `label`). */
 export function Loading({ label }: { label?: string }): React.JSX.Element {
   const t = useT();
   const text = label ?? t('common.loading');
   return (
     <div className="spinner-center" role="status" aria-live="polite">
-      <div className="spinner" />
+      <DeerLoader size={48} />
       <span className="sr-only">{text}</span>
     </div>
   );

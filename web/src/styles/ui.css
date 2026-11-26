@@ -532,6 +532,7 @@ input[type='password']::-ms-clear {
   font-size: var(--text);
 }
 
+/* The plain ring, kept for small waits inside a control (a button, a player); pages and sections wait with the deer. */
 .spinner {
   width: 22px;
   height: 22px;
@@ -551,6 +552,17 @@ input[type='password']::-ms-clear {
   from {
     opacity: 0;
   }
+}
+/* The deer loader (components/DeerLoader.tsx) in the ink; it turns about its middle, on its own layer. */
+.deer-loader {
+  display: block;
+  color: var(--ink);
+  overflow: visible;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+.deer-loader path {
+  fill: currentColor;
 }
 @keyframes spin {
   to {

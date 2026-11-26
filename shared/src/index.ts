@@ -957,6 +957,28 @@ export { PLUS_HERO_VIEW, plusHeroFigure, plusHeroSky, plusHeroSparkles } from '.
 export { HUES, HUE_NAMES, hueSteps, isHueName, type HueName, type HueScheme, type HueSteps } from './hues.js';
 /** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
 export * from './art/fire.js';
+/** Hevalo's mark, the owner's deer looking back, and its loop as the apps' loader: he curls into a ball and spins back out. */
+export {
+  DEER_BREATH_LOW,
+  DEER_BREATH_MS,
+  DEER_LOOP_MS,
+  DEER_LOOP_TURNS,
+  DEER_MARK_FULL_FROM,
+  DEER_MARK_VIEW,
+  deerBreathAt,
+  deerCurlKeyframes,
+  deerCurlOutline,
+  deerCurlPath,
+  deerEyesOpen,
+  deerFormKey,
+  deerFormOutline,
+  deerFormPath,
+  deerLoopAt,
+  deerLoopTrack,
+  deerMarkPath,
+  deerMarkTracedPath,
+  type DeerLoopPose,
+} from './art/deer-mark.js';
 /** A drawing bent through a map of the plane, as his head turned in the round is drawn. */
 export { mapMarkup, mapPath, type PlaneMap } from './art/warp.js';
 /** The wrapped gift box, and how it waits, opens and gives way, drawn and played the same by both apps. */
