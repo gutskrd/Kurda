@@ -88,7 +88,8 @@ export function StoryPlayer(): React.JSX.Element {
   };
 
   return (
-    <div ref={root} className={`fp-player${playing ? '' : ' is-paused'}${still ? ' is-still' : ''}`} style={{ '--story-ms': `${story.ms}ms` } as CSSProperties}>
+    // Held still, the scenes are not paused but finished at once, so each shows how it ends.
+    <div ref={root} className={`fp-player${still ? ' is-still' : playing ? '' : ' is-paused'}`} style={{ '--story-ms': `${story.ms}ms` } as CSSProperties}>
       <div className="fp-player-bar">
         <div className="fp-segs" role="tablist" aria-label={t('landing.stories.label')} onKeyDown={onKey}>
           {STORIES.map((s, i) => (

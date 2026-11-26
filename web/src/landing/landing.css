@@ -877,7 +877,7 @@
 
 /* a letter by pigeon */
 .fp-sc--letter {
-  --win: 190px;
+  --win: 172px;
   --bird: calc(var(--win) * 0.46);
   align-items: center;
   gap: 14px;
@@ -953,7 +953,7 @@
 }
 .fp-paper-line {
   display: grid;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 .fp-paper-ku {
   font-weight: 800;
@@ -1348,6 +1348,11 @@
   display: grid;
   gap: 2px;
   margin-top: 12px;
+}
+/* a Kurmancî title reads left to right, and still lines up with the page's start on a right-to-left page */
+.fp-legend-text > *,
+.fp-paper-line > * {
+  justify-self: start;
 }
 .fp-legend-ku {
   font-weight: 800;
