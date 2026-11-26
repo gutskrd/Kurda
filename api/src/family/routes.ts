@@ -46,7 +46,8 @@ import type { PairingWatch } from './pairing-watch.js';
  *   POST   /me/family/purchase-requests/:id/approve|decline   their parent answers
  *   POST   /auth/child/pair           { code }          a child's phone signs in with the code (phone only; 10 per 15 minutes per network)
  *   POST   /auth/child/return         { pin }           the parent's phone back from a child's session (10 per 15 minutes)
- *   POST   /family/child-link         { token }         what a link in a parent's email does: delete, or keep an unused profile
+ *   POST   /family/child-link/preview { token }         what such a link is about: what it does and the child's name (changes nothing)
+ *   POST   /family/child-link  { token, confirm: true }    what it does once the parent confirms: delete, or keep an unused profile
  *
  * A child, member or ask the caller has nothing to do with answers 404 like an unknown id.
  */
@@ -100,7 +101,10 @@ const convertBody = z.strictObject({
 });
 const pinBody = z.strictObject({ pin, currentPin: pin.optional(), password: z.string().min(1).max(PASSWORD_MAX).optional() });
 const askBody = z.strictObject({ kind: z.enum(PURCHASE_REQUEST_KINDS), product: z.string().min(1).max(100) });
-const linkBody = z.object({ token: z.string().min(20).max(300) });
+const linkToken = z.string().min(20).max(300);
+/** The parent's own press on the page the link opens; a link merely opened sends nothing, so it never deletes. */
+const linkBody = z.object({ token: linkToken, confirm: z.literal(true) });
+const linkPreviewBody = z.object({ token: linkToken });
 
 /** The app's install id, which a child's session is bound to. */
 function deviceIdOf(req: FastifyRequest): string | null {
@@ -244,7 +248,11 @@ export function registerFamilyRoutes(app: FastifyInstance, config: AppConfig, de
     return signedIn(result);
   });
 
-  app.post('/family/child-link', { schema: { body: linkBody }, config: { rateLimit: { max: 20, windowMs: HOUR, per: 'ip' as const, onStoreDown: 'local' as const } } }, async (req) =>
+  const linkLimit = { max: 20, windowMs: HOUR, per: 'ip' as const, onStoreDown: 'local' as const };
+  app.post('/family/child-link/preview', { schema: { body: linkPreviewBody }, config: { rateLimit: { ...linkLimit, bucket: 'child-link-preview' } } }, async (req) =>
+    children.linkPreview((req.body as z.infer<typeof linkPreviewBody>).token),
+  );
+  app.post('/family/child-link', { schema: { body: linkBody }, config: { rateLimit: linkLimit } }, async (req) =>
     children.byLink((req.body as z.infer<typeof linkBody>).token),
   );
 }

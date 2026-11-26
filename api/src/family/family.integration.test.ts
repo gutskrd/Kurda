@@ -621,16 +621,41 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('families and child profiles (integ
       expect((await call(kid, 'GET', '/me')).statusCode).toBe(401);
     });
 
-    it('takes the profile with the email’s link, and keeps an unused one with the warning’s', async () => {
+    it('takes the profile with the email’s link, and keeps an unused one with the warning’s, each only once confirmed', async () => {
       const parent = await adult();
       const child = await addChild(parent);
-      const keep = await app.inject({ method: 'POST', url: '/family/child-link', payload: { token: childLinkToken(config.JWT_SECRET, child.userId, 'keep') }, remoteAddress: ip() });
+      const link = (token: string, body: Record<string, unknown> = { confirm: true }) =>
+        app.inject({ method: 'POST', url: '/family/child-link', payload: { token, ...body }, remoteAddress: ip() });
+      const keep = await link(childLinkToken(config.JWT_SECRET, child.userId, 'keep'));
       expect(keep.json()).toEqual({ done: 'kept' });
       const forged = childLinkToken('another-secret-entirely', child.userId, 'remove');
-      expect((await app.inject({ method: 'POST', url: '/family/child-link', payload: { token: forged }, remoteAddress: ip() })).statusCode).toBe(404);
-      const remove = await app.inject({ method: 'POST', url: '/family/child-link', payload: { token: childLinkToken(config.JWT_SECRET, child.userId, 'remove') }, remoteAddress: ip() });
+      expect((await link(forged)).statusCode).toBe(404);
+      const token = childLinkToken(config.JWT_SECRET, child.userId, 'remove');
+      // what the page shows first: the profile it is about, by name, and nothing done
+      const preview = await app.inject({ method: 'POST', url: '/family/child-link/preview', payload: { token }, remoteAddress: ip() });
+      expect(preview.json()).toEqual({ action: 'remove', child: { name: 'Rojîn' } });
+      expect(await gone(child.userId)).toBe(false);
+      // a link opened by a mail program or a scanner, without the parent's confirmation, does nothing
+      expect((await link(token, {})).statusCode).toBe(400);
+      expect(await gone(child.userId)).toBe(false);
+      const remove = await link(token);
       expect(remove.json()).toEqual({ done: 'removed' });
       expect(await gone(child.userId)).toBe(true);
+      expect((await app.inject({ method: 'POST', url: '/family/child-link/preview', payload: { token }, remoteAddress: ip() })).json()).toEqual({ action: 'remove', child: null });
+    });
+
+    it('lets the email’s delete link work for a week, not a season', async () => {
+      const parent = await adult();
+      const child = await addChild(parent);
+      const sixDaysAgo = new Date(Date.now() - 6 * 86_400_000);
+      const eightDaysAgo = new Date(Date.now() - 8 * 86_400_000);
+      const preview = (token: string) => app.inject({ method: 'POST', url: '/family/child-link/preview', payload: { token }, remoteAddress: ip() });
+      expect((await preview(childLinkToken(config.JWT_SECRET, child.userId, 'remove', sixDaysAgo))).statusCode).toBe(200);
+      const old = await preview(childLinkToken(config.JWT_SECRET, child.userId, 'remove', eightDaysAgo));
+      expect(old.statusCode).toBe(404);
+      expect(old.json()).toMatchObject({ code: 'FAMILY_LINK_INVALID' });
+      const [mail] = await mailTo(await emailOf(parent.id), 'family-child-added');
+      expect(mail?.data.vars.link).toMatch(/\/family\/child\?action=remove&token=/);
     });
 
     it('goes with the parent’s account when that account is deleted at the end of its grace period', async () => {

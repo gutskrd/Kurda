@@ -90,8 +90,11 @@ export function pinLockedNotice(minutes: number, until: Date): Notification {
 /** What a signed link in a parent's email does. */
 export type ChildLinkAction = 'remove' | 'keep';
 
-/** How long each link works: the confirmation's delete link a season, the warning's keep link past the deletion. */
-export const CHILD_LINK_DAYS: Record<ChildLinkAction, number> = { remove: 90, keep: 45 };
+/**
+ * How long each link works: the confirmation's delete link a week, so an old email lying about deletes nothing, and the
+ * warning's keep link past the deletion it warns of.
+ */
+export const CHILD_LINK_DAYS: Record<ChildLinkAction, number> = { remove: 7, keep: 45 };
 
 const LINK_LABEL = 'hevalo-family-link-v1';
 
