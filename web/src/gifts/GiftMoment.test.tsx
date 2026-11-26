@@ -33,6 +33,18 @@ describe('the sender’s moment', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
+  it('wraps the gift in its tier’s box, ties it and sends it off, and simply shows the gift under Reduce Motion', () => {
+    const { unmount } = renderApp(<GiftSentMoment item={{ ...tea, tier: 'rare' }} line="Sent to rojda." onDone={() => undefined} />);
+    expect(document.querySelector('.gift-sent .gift-box')).toHaveAttribute('data-motion', 'send');
+    expect(document.querySelector('.gift-sent .gift-box')).toHaveClass('gift-box-rare');
+    expect(document.querySelector('.gift-sent .gift-item-art')).not.toBeNull();
+    unmount();
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener() {}, removeEventListener() {} }));
+    renderApp(<GiftSentMoment item={{ ...tea, tier: 'rare' }} line="Sent to rojda." onDone={() => undefined} />);
+    expect(document.querySelector('.gift-sent .gift-box')).toBeNull();
+    expect(document.querySelector('.gift-sent .gift-item-art')).not.toBeNull();
+  });
+
   it('says nothing to a screen reader in a chat, which announces the send itself', () => {
     renderApp(<GiftSentMoment item={tea} line="Sent to rojda." onDone={() => undefined} />);
     expect(screen.queryByRole('status')).toBeNull();

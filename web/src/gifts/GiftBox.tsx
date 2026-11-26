@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import { useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react';
 import {
   GIFT_BOX_EXIT,
   GIFT_BOX_FOOT,
@@ -6,6 +6,7 @@ import {
   GIFT_BOX_IDLE,
   GIFT_BOX_LID_PARTS,
   GIFT_BOX_REST,
+  GIFT_BOX_SEND,
   GIFT_BOX_SHUT,
   GIFT_BOX_UNWRAPS,
   giftBoxDrawing,
@@ -25,17 +26,18 @@ import './gift-box.css';
 /**
  * The wrapped gift (shared art/gift-box.ts), drawn and moved as on the phone. Each part is its own small picture over
  * the same frame, so the browser moves them by transform and opacity alone and nothing is drawn again: `idle` hops now
- * and then with a glint between, `unwrap` plays the tier's opening and stays open and lit, and `exit` lets the open
- * box give way to the gift. Under Reduce Motion, or where the browser cannot animate, it stands still. Decorative
- * (aria-hidden); the words beside it say what it is.
+ * and then with a glint between, `unwrap` plays the tier's opening and stays open and lit, `exit` lets the open box
+ * give way to the gift, and `send` drops it over a gift being sent, ties its bow and flies it off. Under Reduce Motion,
+ * or where the browser cannot animate, it stands still. Decorative (aria-hidden); the words beside it say what it is.
  */
-export type GiftBoxMotion = 'still' | 'idle' | 'unwrap' | 'exit';
+export type GiftBoxMotion = 'still' | 'idle' | 'unwrap' | 'exit' | 'send';
 
 /** The play behind each motion. */
 function playOf(motion: GiftBoxMotion, tier: GiftTier): GiftBoxPlay | null {
   if (motion === 'idle') return GIFT_BOX_IDLE;
   if (motion === 'unwrap') return GIFT_BOX_UNWRAPS[tier];
   if (motion === 'exit') return GIFT_BOX_EXIT;
+  if (motion === 'send') return GIFT_BOX_SEND;
   return null;
 }
 
@@ -86,7 +88,8 @@ export function GiftBox({
   const glintRefs = useRef<Array<HTMLElement | null>>([]);
   const view = drawing.view.w;
 
-  useEffect(() => {
+  // Started before the first paint, so a play that begins hidden or open is never seen standing shut for a frame.
+  useLayoutEffect(() => {
     if (!play || prefersReducedMotion()) return;
     const unit = size / view;
     const timing: KeyframeAnimationOptions = {

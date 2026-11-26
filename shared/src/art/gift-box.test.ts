@@ -4,6 +4,7 @@
  * end where the renderers expect, squash before they spring, and fit each tier's unwrap time.
  */
 import { describe, expect, it } from 'vitest';
+import { GIFT_SENT_FADE_MS, GIFT_SENT_MS } from '../gift-moment.js';
 import { GIFT_TIERS, GIFT_UNWRAP_MS, type GiftTier } from '../gifts.js';
 import { HUES } from '../hues.js';
 import {
@@ -20,6 +21,9 @@ import {
 import {
   GIFT_BOX_EXIT,
   GIFT_BOX_GLINT_PHASES,
+  GIFT_BOX_SEND,
+  GIFT_BOX_SEND_ITEM,
+  GIFT_BOX_SEND_MS,
   GIFT_BOX_IDLE,
   GIFT_BOX_REST,
   GIFT_BOX_TRACKS,
@@ -324,6 +328,26 @@ describe('how the gift box moves', () => {
       expect(at('sparks', 1).o).toBe(0);
       expect(at('splash', 1).o).toBe(0);
     }
+  });
+
+  it('wraps the sent gift, ties its bow and sends it off within the sender’s moment', () => {
+    wellFormed(GIFT_BOX_SEND, 'send');
+    expect(GIFT_BOX_SEND_MS).toBe(GIFT_SENT_FADE_MS + GIFT_SENT_MS);
+    const at = (name: keyof typeof GIFT_BOX_SEND.tracks, share: number) => giftBoxPoseAt(GIFT_BOX_SEND.tracks[name]!, share);
+    // the gift shows first, alone; the box drops over it and it is gone inside
+    expect(at('hop', 0).o).toBe(0);
+    const landed = GIFT_BOX_SEND.tracks.hop!.find((k) => k.o === 1 && k.y === 0)!.at;
+    expect(giftBoxPoseAt(GIFT_BOX_SEND_ITEM, landed - 0.06).o).toBe(1);
+    expect(giftBoxPoseAt(GIFT_BOX_SEND_ITEM, landed + 0.06).o).toBe(0);
+    // the bow is tied only once the box is down, and pops past its size before it settles
+    for (const part of ['loopLeft', 'loopRight', 'knot'] as const) {
+      expect(first(GIFT_BOX_SEND.tracks[part]!), part).toBeGreaterThan(landed);
+      expect(Math.max(...GIFT_BOX_SEND.tracks[part]!.map((k) => k.sx)), part).toBeGreaterThan(1.1);
+    }
+    // then it flies up and away, smaller, and is gone as the moment ends
+    expect(at('hop', 1)).toMatchObject({ o: 0 });
+    expect(at('hop', 1).y).toBeLessThan(-40);
+    expect(at('hop', 1).sx).toBeLessThan(1);
   });
 
   it('gives way to the gift from where the unwrap leaves it, and plays every glint frame in turn', () => {

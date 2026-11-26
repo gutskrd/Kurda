@@ -1250,6 +1250,10 @@ button.gift-bubble:active {
   line-height: 0;
   animation: celebrate-arrive 520ms var(--ease-spring) both;
 }
+/* the gift itself, which goes into its box as the box lands over it (GiftMoment.tsx) */
+.gift-sent-item {
+  display: block;
+}
 .gift-sent-line {
   margin: 0;
   font-size: var(--text);

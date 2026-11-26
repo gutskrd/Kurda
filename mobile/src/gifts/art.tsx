@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Animated, Easing, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop, SvgXml } from 'react-native-svg';
 import {
@@ -8,6 +8,7 @@ import {
   GIFT_BOX_IDLE,
   GIFT_BOX_LID_PARTS,
   GIFT_BOX_REST,
+  GIFT_BOX_SEND,
   GIFT_BOX_SHUT,
   GIFT_BOX_UNWRAPS,
   giftBoxDrawing,
@@ -29,16 +30,18 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
  * The gift's own art: the wrapped box (shared art/gift-box.ts), drawn and moved as on the website, and the night sky a
  * grand gift opens on. Each part of the box is its own small picture over the same frame, so parts move on the native
  * driver with nothing drawn again: `idle` hops now and then with a glint between (only while its screen is in front),
- * `unwrap` plays the tier's opening and stays open and lit, and `exit` lets the open box give way to the gift. Under
- * Reduce Motion it stands still. Decorative: the words beside it say what it is.
+ * `unwrap` plays the tier's opening and stays open and lit, `exit` lets the open box give way to the gift, and `send`
+ * drops it over a gift being sent, ties its bow and flies it off. Under Reduce Motion it stands still. Decorative: the
+ * words beside it say what it is.
  */
-export type GiftBoxMotion = 'still' | 'idle' | 'unwrap' | 'exit';
+export type GiftBoxMotion = 'still' | 'idle' | 'unwrap' | 'exit' | 'send';
 
 /** The play behind each motion. */
 function playOf(motion: GiftBoxMotion, tier: GiftTier): GiftBoxPlay | null {
   if (motion === 'idle') return GIFT_BOX_IDLE;
   if (motion === 'unwrap') return GIFT_BOX_UNWRAPS[tier];
   if (motion === 'exit') return GIFT_BOX_EXIT;
+  if (motion === 'send') return GIFT_BOX_SEND;
   return null;
 }
 
@@ -94,11 +97,11 @@ export function GiftBox({
   const wanted = playOf(motion, tier);
   // A waiting box moves only while its screen is in front; an opening one plays through, unless motion is reduced.
   const play = wanted && (wanted.loop ? alive : !reduce) ? wanted : null;
-  const progress = useRef(new Animated.Value(0)).current;
+  // A clock of its own for each play, so the next one never shows the last one's end for a frame.
+  const progress = useMemo(() => new Animated.Value(0), [play]);
   const unit = size / drawing.view.w;
 
   useEffect(() => {
-    progress.setValue(0);
     if (!play) return;
     const run = Animated.timing(progress, { toValue: 1, duration: play.ms, easing: Easing.linear, useNativeDriver: true, isInteraction: false });
     const anim = play.loop

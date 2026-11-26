@@ -2,11 +2,13 @@
  * How the gift box moves (gift-box.ts), the same on the website and the phone: an occasional hop while it waits, with
  * squash and stretch, the bow following a beat behind, sparks over it and gold thrown out as it lands, and a glint now
  * and then; the unwrap, which shakes harder and harder, squashes, lets the ribbon go, pops the lid and bow off and lets
- * the light out, longer and grander for a richer tier (`GIFT_UNWRAP_MS`); and the box giving way to the gift. Each play
+ * the light out, longer and grander for a richer tier (`GIFT_UNWRAP_MS`); the box giving way to the gift; and the
+ * sender's send, in which the box is wrapped round the gift, tied and sent off. Each play
  * is a track of keys per moving part, already eased and sampled, so a renderer only joins its keys with straight lines:
  * the web hands them to the browser's animations and the phone to its native driver, and both play the same motion.
  * Under Reduce Motion nothing here plays; the box stands still and the moments fade.
  */
+import { GIFT_SENT_FADE_MS, GIFT_SENT_MS } from '../gift-moment.js';
 import { GIFT_UNWRAP_MS, type GiftTier } from '../gifts.js';
 
 /** A part's pose: moved by x and y in the drawing's units, turned `rot` degrees and scaled about its pivot, and seen. */
@@ -403,7 +405,7 @@ export const GIFT_BOX_UNWRAPS: Readonly<Record<GiftTier, GiftBoxUnwrap>> = {
 
 // ─────────────────────────────────────────────────────────────── giving way
 
-/** The open box giving way to the gift: it sinks a little, shrinks and fades as the light swells, while the gift springs out. */
+/** The open box giving way to the gift: it sinks a little, shrinks and fades as its light swells, while the gift springs out. */
 export const GIFT_BOX_EXIT_MS = 320;
 
 /** The open box's pose for every part, as the unwrap leaves it. */
@@ -418,12 +420,115 @@ export const GIFT_BOX_EXIT: GiftBoxPlay = (() => {
   for (const name of GIFT_BOX_TRACKS) {
     const from = openPose(name);
     if (name === 'hop') tracks.hop = track(ms, from, [[ms, { y: 5, sx: 0.84, sy: 0.84, o: 0 }, 'in']]);
-    else if (name === 'light') tracks.light = track(ms, from, [[ms, { sx: 1.5, sy: 1.5, o: 0 }, 'out']]);
+    // the light swells as the gift comes out of it, and goes with the box rather than before it
+    else if (name === 'light') tracks.light = track(ms, from, [[ms, { sx: 1.4, sy: 1.4 }, 'out']]);
     else if (name === 'shadow') tracks.shadow = track(ms, from, [[ms, { sx: 0.7, sy: 0.7, o: 0 }, 'in']]);
     else tracks[name] = track(ms, from, []);
   }
   return { ms, loop: false, tracks, glints: [] };
 })();
+
+// ─────────────────────────────────────────────────────────────── sending
+
+/** The sender's moment as a gift goes (shared gift-moment.ts): the gift shows, then is wrapped, tied and sent off. */
+export const GIFT_BOX_SEND_MS = GIFT_SENT_FADE_MS + GIFT_SENT_MS;
+/** When the dropped box lands over the gift, hiding it. */
+const SEND_LAND = 600;
+
+/**
+ * The send: the gift springs in on its own, the box drops over it and lands with a squash, the ribbon slides into place,
+ * the bow pops on with the tag swinging, and the box crouches, hops and flies up and away, smaller as it goes.
+ */
+export const GIFT_BOX_SEND: GiftBoxPlay = (() => {
+  const ms = GIFT_BOX_SEND_MS;
+  const popOn: GiftBoxPose = { ...HIDDEN, sx: 0, sy: 0 };
+  const loop: Beat[] = [
+    [SEND_LAND + 100, {}],
+    [SEND_LAND + 110, { o: 1 }, 'linear'],
+    [SEND_LAND + 260, { sx: 1.18, sy: 1.18, rot: -6 }, 'out'],
+    [SEND_LAND + 360, { sx: 0.94, sy: 0.94, rot: 4 }],
+    [SEND_LAND + 460, { sx: 1, sy: 1, rot: 0 }],
+    [1180, { rot: -8, sy: 0.9 }, 'out'],
+    [1330, { rot: 10, sy: 1.1 }],
+    [1500, { rot: 0, sy: 1 }],
+  ];
+  const tail: Beat[] = [
+    [SEND_LAND + 120, {}],
+    [SEND_LAND + 130, { o: 1 }, 'linear'],
+    [SEND_LAND + 280, { sx: 1, sy: 1, rot: 10 }, 'out'],
+    [SEND_LAND + 400, { rot: -4 }],
+    [SEND_LAND + 500, { rot: 0 }],
+    [1330, { rot: 12 }, 'out'],
+    [1500, { rot: 0 }],
+  ];
+  return {
+    ms,
+    loop: false,
+    tracks: {
+      hop: track(ms, { ...HIDDEN, y: -46, sx: 0.9, sy: 1.1 }, [
+        [380, {}],
+        [440, { o: 1 }, 'linear'],
+        [SEND_LAND, { y: 0, sx: 0.92, sy: 1.1 }, 'in'],
+        [SEND_LAND + 80, { sx: 1.14, sy: 0.86 }, 'out'],
+        [SEND_LAND + 200, { sx: 0.97, sy: 1.04 }],
+        [SEND_LAND + 300, { sx: 1, sy: 1 }],
+        [1080, {}],
+        [1180, { sx: 1.1, sy: 0.88 }, 'out'],
+        [1330, { y: -34, sx: 0.86, sy: 1.1 }, 'out'],
+        [ms, { y: -78, sx: 0.55, sy: 0.6, o: 0 }, 'in'],
+      ]),
+      shadow: track(ms, { ...HIDDEN, sx: 0.5, sy: 0.5 }, [
+        [440, {}],
+        [SEND_LAND, { o: 1, sx: 1, sy: 1 }, 'in'],
+        [SEND_LAND + 80, { sx: 1.08, sy: 1.08 }, 'out'],
+        [SEND_LAND + 200, { sx: 1, sy: 1 }],
+        [1180, { sx: 1.05, sy: 1.05 }],
+        [1400, { o: 0, sx: 0.6, sy: 0.6 }, 'out'],
+      ]),
+      splash: track(ms, { ...HIDDEN, sx: 0.6, sy: 0.6 }, [
+        [SEND_LAND, {}],
+        [SEND_LAND + 80, { o: 1, sx: 1, sy: 1, y: -1 }, 'out'],
+        [SEND_LAND + 350, { o: 0, sx: 1.25, sy: 1.25, y: 1 }, 'in'],
+      ]),
+      // the ribbon slides down into place before the bow is tied
+      ribbon: track(ms, { ...HIDDEN, y: -8 }, [
+        [SEND_LAND + 20, {}],
+        [SEND_LAND + 160, { o: 1, y: 0 }, 'out'],
+      ]),
+      loopLeft: track(ms, popOn, loop),
+      loopRight: track(ms, popOn, mirror(loop)),
+      tailLeft: track(ms, { ...HIDDEN, sx: 0.2, sy: 0.2 }, tail),
+      tailRight: track(ms, { ...HIDDEN, sx: 0.2, sy: 0.2 }, mirror(tail)),
+      knot: track(ms, popOn, [
+        [SEND_LAND + 90, {}],
+        [SEND_LAND + 100, { o: 1 }, 'linear'],
+        [SEND_LAND + 220, { sx: 1.25, sy: 1.25 }, 'out'],
+        [SEND_LAND + 320, { sx: 1, sy: 1 }],
+      ]),
+      tag: track(ms, { ...HIDDEN, rot: 30 }, [
+        [SEND_LAND + 180, {}],
+        [SEND_LAND + 200, { o: 1 }, 'linear'],
+        [SEND_LAND + 360, { rot: -14 }, 'out'],
+        [SEND_LAND + 500, { rot: 7 }],
+        [1230, { rot: -3 }],
+        [1330, { rot: 12 }],
+        [1500, { rot: 0 }],
+      ]),
+      sparks: track(ms, { ...HIDDEN, sx: 0.6, sy: 0.6 }, [
+        [1180, {}],
+        [1260, { o: 1, sx: 1, sy: 1, y: -2 }, 'out'],
+        [1480, { o: 0, sx: 1.2, sy: 1.2, y: -8 }, 'in'],
+      ]),
+    },
+    glints: [],
+  };
+})();
+
+/** The gift itself through the send, on the same clock: shown until the box lands over it, then gone inside. */
+export const GIFT_BOX_SEND_ITEM: readonly GiftBoxKey[] = track(GIFT_BOX_SEND_MS, REST, [
+  [SEND_LAND - 40, {}],
+  [SEND_LAND + 40, { o: 0, sx: 0.85, sy: 0.85 }, 'in'],
+]);
 
 // ─────────────────────────────────────────────────────────────── the glint
 

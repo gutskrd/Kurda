@@ -11,10 +11,12 @@
  *
  * The sender's own (`GiftSentMoment`) is the same light, smaller and brief, as a gift goes.
  */
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   GIFT_BOX_EXIT_MS,
+  GIFT_BOX_SEND_ITEM,
+  GIFT_BOX_SEND_MS,
   GIFT_BOX_UNWRAPS,
   GIFT_MOMENT_LOOK,
   GIFT_MOMENT_MS,
@@ -325,9 +327,10 @@ export function GiftMoment({
 }
 
 /**
- * The sender's moment as a gift goes: the gift in the same light, smaller, with who it went to, gone after a moment or a
- * tap. Under Reduce Motion it is shown still and goes as soon. A chat announces its sends itself, so there this says
- * nothing to a screen reader; elsewhere (`announce`) its line is said once.
+ * The sender's moment as a gift goes: the gift in the same light, smaller, with who it went to, then wrapped in its
+ * tier's box, tied and sent off (shared `GIFT_BOX_SEND`), gone after a moment or a tap. Under Reduce Motion the gift is
+ * shown still and goes as soon. A chat announces its sends itself, so there this says nothing to a screen reader;
+ * elsewhere (`announce`) its line is said once.
  */
 export function GiftSentMoment({
   item,
@@ -335,7 +338,7 @@ export function GiftSentMoment({
   announce = false,
   onDone,
 }: {
-  item: { sku: string; assetUrl: string | null; category: string };
+  item: { sku: string; assetUrl: string | null; category: string; tier?: GiftTier };
   /** "Sent to Rojda." */
   line: string;
   announce?: boolean;
@@ -345,6 +348,19 @@ export function GiftSentMoment({
   const done = useRef(onDone);
   done.current = onDone;
   const [leaving, setLeaving] = useState(false);
+  const wrapped = !still && item.tier !== undefined;
+  const art = useRef<HTMLSpanElement>(null);
+
+  // The gift goes into its box as the box lands over it, on the box's own clock.
+  useLayoutEffect(() => {
+    const el = art.current;
+    if (!wrapped || !el || typeof el.animate !== 'function') return;
+    const run = el.animate(
+      GIFT_BOX_SEND_ITEM.map((k) => ({ offset: k.at, opacity: k.o, transform: `scale(${k.sx}, ${k.sy})` })),
+      { duration: GIFT_BOX_SEND_MS, fill: 'both' },
+    );
+    return () => run.cancel();
+  }, [wrapped]);
 
   useEffect(() => {
     const leave = window.setTimeout(() => setLeaving(true), GIFT_SENT_MS);
@@ -364,8 +380,11 @@ export function GiftSentMoment({
     >
       <GiftLight sku={item.sku} look={GIFT_SENT_LOOK} art={96} lit still={still}>
         <span className="gift-sent-art">
-          <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={96} />
+          <span className="gift-sent-item" ref={art}>
+            <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={96} />
+          </span>
         </span>
+        {wrapped && item.tier ? <GiftBox tier={item.tier} size={120} motion="send" /> : null}
       </GiftLight>
       <p className="gift-sent-line" role={announce ? 'status' : undefined}>
         {line}
