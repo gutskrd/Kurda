@@ -13,6 +13,7 @@ import { dialectName } from '../learn/map';
 import { inReaderLanguage, rememberTranslations, rememberedTranslations, riddlePath, useLoreDialect, visitorRiddle } from './api';
 import { CATEGORY_KEY, DIFFICULTY_KEY, STATE_KEY } from './labels';
 import { GuestNote, ShelfSwitch, Translated, VarietySwitch } from './LoreParts';
+import { useArrival } from '../lib/motion';
 import './lore.css';
 
 type Load = { state: 'loading' } | { state: 'ready'; list: RiddleList } | { state: 'error'; message: string };
@@ -94,6 +95,8 @@ function Riddles(): React.JSX.Element {
     return out;
   }, [list]);
   const shown = (list?.riddles ?? []).filter((r) => !difficulty || r.difficulty === difficulty);
+  // The first screenful rises in once, as the phone's does (styles/motion.css).
+  const arriving = useArrival(shown.length > 0, 'riddles');
   // Offer the toggle only when some question has a translation to show.
   const translatable = (list?.riddles ?? []).some((r) => inReaderLanguage(r.translations, locale, r.dialect) !== null);
 
@@ -136,7 +139,7 @@ function Riddles(): React.JSX.Element {
                 <FilterChip key={d} on={difficulty === d} onPick={() => choose(d)} label={t(DIFFICULTY_KEY[d])} count={counts[d]} />
               ))}
             </fieldset>
-            <ol className="lore-list">
+            <ol className={arriving ? 'lore-list rise-in' : 'lore-list'}>
               {shown.map((r) => (
                 <li key={r.slug}>
                   <RiddleRow card={r} signedIn={signedIn} translations={translations} today={r.slug === list.daily} />

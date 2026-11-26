@@ -11,6 +11,7 @@ import { LeagueCard } from '../leagues/LeagueCard';
 import { RankList, RankRow } from '../ui/RankRow';
 import { BOARD_NAME, BoardAmount, BoardSwitch, SpanSwitch, boardFor, isRankKind, type BoardType, type RankKind, type XpSpan } from '../ui/BoardSwitch';
 import type { MessageKey } from '../i18n/en';
+import { useArrival } from '../lib/motion';
 
 interface Entry {
   userId: string;
@@ -169,6 +170,7 @@ function Leaderboard({ type, scope }: { type: BoardType; scope: Scope }): React.
   }, [meInList, entries]);
 
   const shown = entries.length;
+  const arriving = useArrival(shown > 0, 'rankings');
   const hasMore = board !== null && shown < board.total;
   const pinned = board?.me != null && (meAt === 'absent' || meAt === 'below');
 
@@ -199,7 +201,7 @@ function Leaderboard({ type, scope }: { type: BoardType; scope: Scope }): React.
             </p>
           )}
 
-          <RankList label={t(BOARD_NAME[type])}>
+          <RankList label={t(BOARD_NAME[type])} arriving={arriving}>
             {entries.map((e) => (
               <RankRow
                 key={e.userId}
