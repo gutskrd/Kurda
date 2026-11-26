@@ -32,9 +32,12 @@
   --surface-3: rgba(156, 190, 204, 0.2);
   /* an opaque raised surface, for things that float over the page (menus, sheets) */
   --surface-solid: #1f2b30;
-  /* a panel that floats over the page — a menu, a toast, a dialog — near-opaque, and frosted where it is glass */
-  --panel-bg: #1f2b30;
-  --panel-glass: rgba(26, 38, 43, 0.9);
+  /*
+   * a panel that floats over the page — a menu, a toast, a dialog — near-opaque, and frosted where it is glass: the
+   * floating chrome's neutral grey rather than the page's slate, so everything that floats is one material
+   */
+  --panel-bg: #23272b;
+  --panel-glass: rgba(35, 39, 43, 0.92);
   /* the ray of light that crosses a placeholder while it waits (ui.css): its middle, and its edges */
   --skeleton-ray: rgba(156, 190, 204, 0.16);
   --skeleton-ray-soft: rgba(156, 190, 204, 0.06);

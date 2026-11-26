@@ -130,7 +130,9 @@ export interface Palette {
   glassRimFar: string;
   /** The neutral grey of the glass that blurs the page behind it, where it is drawn by the app rather than the system. */
   glassTint: string;
-  /** The chosen tab's glyph and name, and the darker capsule of glass inset behind it, drawn at `TAB_CAPSULE_FILL`. */
+  /** A sheet or menu floating over the page: the floating chrome's neutral grey rather than the page's slate. */
+  panel: string;
+  /** The chosen tab's glyph and name, and the darker capsule of glass inset behind it, drawn faint (TabBar.tsx `CAPSULE_FILL`). */
   tabChosen: string;
   tabCapsule: string;
   /** A control's disc where it stands on a drawing (a chapter's banner): the page's colour, mostly opaque. */
@@ -223,6 +225,7 @@ export const LIGHT: Palette = {
   glassRim: 'rgba(255,255,255,0.9)',
   glassRimFar: 'rgba(23,36,43,0.09)',
   glassTint: 'rgba(250,251,252,0.74)',
+  panel: '#FDFEFE',
   tabChosen: DAY.text,
   tabCapsule: PAGE.light.ink,
   onArt: 'rgba(253,254,254,0.78)',
@@ -295,6 +298,7 @@ export const DARK: Palette = {
   glassRim: 'rgba(255,255,255,0.14)',
   glassRimFar: 'rgba(255,255,255,0.1)',
   glassTint: 'rgba(42,45,49,0.62)',
+  panel: '#23272B',
   tabChosen: NIGHT.text,
   tabCapsule: '#000000',
   onArt: 'rgba(19,28,32,0.6)',
