@@ -260,6 +260,35 @@ describe.skipIf(!DATABASE_URL)('winning a streak back (integration)', () => {
       expect(await learnTimes(who.id, '2026-03-09', 3)).toMatchObject({ current: 14, milestone: { days: 14, zer: 60 } });
       expect(await milestonesPaid(who.id)).toEqual([60]);
     });
+
+    it('pays nothing again for the milestones a long streak reached before it ended, won back or restored free', async () => {
+      // A run of 100 days to the 1st of July, each milestone paid on the day the run reached it, some over sixty days ago.
+      const reached: Array<[number, string, number]> = [
+        [7, '2026-03-30', 40],
+        [14, '2026-04-06', 60],
+        [30, '2026-04-22', 120],
+        [60, '2026-05-22', 150],
+        [100, '2026-07-01', 250],
+      ];
+      const longRun = async () => {
+        const who = await learner();
+        await plus(who.id, '2030-01-01T00:00:00Z');
+        await seed(who.id, 100, '2026-07-01');
+        for (const [days, on, zer] of reached) {
+          await pool.query(`INSERT INTO streak_milestones (user_id, days, paid_on, zer) VALUES ($1, $2, $3, $4)`, [who.id, days, on, zer]);
+        }
+        await streaks.get(who.id, 'UTC', at('2026-07-03'));
+        return who;
+      };
+
+      const wonBack = await longRun();
+      expect(await learnTimes(wonBack.id, '2026-07-03', 3)).toMatchObject({ current: 101, milestone: null });
+      expect(await milestonesPaid(wonBack.id)).toEqual([]);
+
+      const restored = await longRun();
+      expect((await streaks.repair(restored.id, 'UTC', at('2026-07-03'))).duplicate).toBe(false);
+      expect(await milestonesPaid(restored.id)).toEqual([]);
+    });
   });
 
   describe('over HTTP', () => {
