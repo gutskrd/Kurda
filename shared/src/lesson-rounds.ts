@@ -64,14 +64,14 @@ export function ringPieces(of: number): string[] {
 }
 
 /**
- * Where a topic's stars stand on its gold coin, in the stop's points: one large in the middle, two side by side, or three
- * in a shallow arc with the middle one larger and higher. `r` is a star's outer radius.
+ * Where a topic's stars stand on its finished tile, in the stop's points: in a row along the tile's near edge, under the
+ * hoofprint pressed into it, following the edge's curve, the middle one a little larger. `r` is a star's outer radius.
  */
 export function roundStars(rounds: number): Array<{ x: number; y: number; r: number }> {
   const stars = Math.max(0, Math.min(TOPIC_STARS, Math.floor(rounds)));
-  if (stars === 1) return [{ x: 36, y: 30, r: 14 }];
-  if (stars === 2) return [{ x: 25, y: 31, r: 11 }, { x: 47, y: 31, r: 11 }];
-  if (stars === 3) return [{ x: 19.5, y: 33, r: 9.5 }, { x: 36, y: 28, r: 11 }, { x: 52.5, y: 33, r: 9.5 }];
+  if (stars === 1) return [{ x: 36, y: 48, r: 8 }];
+  if (stars === 2) return [{ x: 28, y: 47.5, r: 7.4 }, { x: 44, y: 47.5, r: 7.4 }];
+  if (stars === 3) return [{ x: 20.5, y: 46.5, r: 6.8 }, { x: 36, y: 48.5, r: 7.4 }, { x: 51.5, y: 46.5, r: 6.8 }];
   return [];
 }
 
