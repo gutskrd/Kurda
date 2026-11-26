@@ -5,15 +5,16 @@ import { DEFAULT_PAPER, paperColors } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import { AndroidIcon, IosIcon } from '../components/icons';
 import { wrapTab } from '../components/Sheet';
-import { prefersReducedMotion } from '../lib/motion';
 import { lockPageScroll } from '../lib/scrollLock';
+import { prefersReducedMotion, useSlidingCapsule } from '../lib/motion';
 import type { SoonFrame } from './soonArt';
 import './soon.css';
 
 /**
  * What a tap on "Download for iOS" or "Download for Android" opens while the phone apps are not out: the page blurs and
  * dims, a card rises from the button that was tapped, and the pen-pal pigeon flies in with a letter that unfolds to say
- * the apps are coming and that everything can start here today. It names the platform that was tapped. Escape, a tap
+ * the apps are coming and that everything can start here today. It opens on the platform that was tapped, and a switch
+ * at its top turns it to the other, the letter's words crossing over softly. Escape, a tap
  * on the dim, a swipe down and Close all put it away, focus stays inside it, and returns to the button. Under Reduce
  * Motion it simply appears, with the pigeon already perched and the letter open. It asks for nothing: no address, no
  * list to join.
@@ -62,9 +63,19 @@ const BIRD_PX = 132;
 /** How far a finger has to pull the card down, or how fast, for it to go. */
 const SWIPE = { px: 90, speed: 0.6 } as const;
 
-function AppSoonCard({ platform, opener, onClose }: { platform: AppPlatform; opener: RefObject<HTMLElement | null>; onClose: () => void }): React.JSX.Element {
+const PLATFORMS: readonly { key: AppPlatform; label: 'landing.soon.optionIos' | 'landing.soon.optionAndroid'; name: 'landing.soon.ios' | 'landing.soon.android' }[] = [
+  { key: 'ios', label: 'landing.soon.optionIos', name: 'landing.soon.ios' },
+  { key: 'android', label: 'landing.soon.optionAndroid', name: 'landing.soon.android' },
+];
+
+function AppSoonCard({ platform: tapped, opener, onClose }: { platform: AppPlatform; opener: RefObject<HTMLElement | null>; onClose: () => void }): React.JSX.Element {
   const t = useT();
   const id = useId().replace(/[^A-Za-z0-9]/g, '');
+  const [platform, setPlatform] = useState(tapped);
+  const [switched, setSwitched] = useState(false);
+  const which = useRef<HTMLFieldSetElement>(null);
+  const capsule = useRef<HTMLSpanElement>(null);
+  useSlidingCapsule(which, capsule, '.is-active', platform);
   const card = useRef<HTMLDivElement>(null);
   const overlay = useRef<HTMLDivElement>(null);
   const [still] = useState(prefersReducedMotion);
@@ -216,16 +227,22 @@ function AppSoonCard({ platform, opener, onClose }: { platform: AppPlatform; ope
       >
         <span className="soon-grip" aria-hidden="true" />
         {frames && <SoonBird frames={frames} />}
-        <span className="soon-platforms" aria-hidden="true">
-          <span className={`soon-platform${platform === 'ios' ? ' is-on' : ''}`}>
-            <IosIcon size={22} />
-          </span>
-          <span className={`soon-platform${platform === 'android' ? ' is-on' : ''}`}>
-            <AndroidIcon size={22} />
-          </span>
-        </span>
+        {/* Which phone: real radios under the segments, so arrow keys and screen readers work. */}
+        <fieldset ref={which} className="soon-which">
+          <legend className="sr-only">{t('landing.soon.which')}</legend>
+          <span ref={capsule} className="seg-capsule soon-which-capsule" aria-hidden="true" />
+          {PLATFORMS.map((p) => (
+            <label key={p.key} className={`soon-which-btn${p.key === platform ? ' is-active' : ''}`}>
+              <input type="radio" name={`${id}-which`} value={p.key} checked={p.key === platform} onChange={() => (setPlatform(p.key), setSwitched(true))} />
+              {p.key === 'ios' ? <IosIcon size={18} /> : <AndroidIcon size={18} />}
+              <span>{t(p.label)}</span>
+            </label>
+          ))}
+        </fieldset>
         <div className="soon-letter">
-          <p className="soon-kicker">{t(platform === 'ios' ? 'landing.soon.ios' : 'landing.soon.android')}</p>
+          <p className={`soon-kicker${switched ? ' is-switched' : ''}`} key={platform}>
+            {t(PLATFORMS.find((p) => p.key === platform)!.name)}
+          </p>
           <h2 id={`${id}-title`} className="soon-title">
             {t('landing.soon.title')}
           </h2>

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderApp } from '../test/utils';
 import { Landing } from './Landing';
 import { forgetVisitor } from '../landing/visitor';
@@ -52,12 +52,27 @@ describe('the front page', () => {
     fireEvent.click(within(words).getByRole('button', { name: 'Next word' }));
     // A miss says what the word means, and is not counted.
     fireEvent.click(within(words).getByRole('button', { name: 'grandfather' }));
-    expect(within(words).getByText(/Not quite: it means “grandmother”/)).toBeInTheDocument();
+    expect(words.querySelector('.fp-quiz-say[aria-live]')).toHaveTextContent(/Not quite: it means “grandmother”/);
     fireEvent.click(within(words).getByRole('button', { name: 'Next word' }));
     fireEvent.click(within(words).getByRole('button', { name: 'Welcome!' }));
     fireEvent.click(within(words).getByRole('button', { name: 'See your words' }));
     expect(within(words).getByText(/Three Kurdish words/)).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'You already know 2 Kurdish words. Keep them.' })).toBeInTheDocument();
+  });
+
+  it('moves nothing when an answer is chosen: its words go into a place kept for them, as tall as the longest', () => {
+    show();
+    const words = document.getElementById('first-words')!;
+    const after = words.querySelector('.fp-quiz-after')!;
+    const teacher = words.querySelector('.fp-words-teacher');
+    const shape = (): string[] => [...after.children].map((el) => `${el.tagName}.${el.className}`);
+    const before = shape();
+    // every word's longest answer lies there unseen from the start, so the place is already as tall as it gets
+    expect(after.querySelectorAll('.fp-quiz-room[aria-hidden="true"]')).toHaveLength(3);
+    fireEvent.click(within(words).getByRole('button', { name: 'home' }));
+    expect(shape()).toEqual(before);
+    expect(words.querySelector('.fp-words-teacher')).toBe(teacher);
+    expect(words.querySelector('.fp-quiz-say[aria-live]')).toHaveTextContent(/Not quite/);
   });
 
   it('plays no sound for the first words, since none of them has a recording in the build', () => {
@@ -139,6 +154,24 @@ describe('the front page', () => {
     expect(within(legends).getByRole('link', { name: 'Open the stories' })).toHaveAttribute('href', '/app/learn/stories');
   });
 
+  it('runs the legends as an endless row of two sets, the second unseen by screen readers, and still under Reduce Motion', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }));
+    show();
+    let legends = document.getElementById('legends')!;
+    const sets = legends.querySelectorAll('.fp-legend-row');
+    expect(sets).toHaveLength(2);
+    expect(sets[1]).toHaveAttribute('aria-hidden', 'true');
+    for (const img of sets[1]!.querySelectorAll('img')) expect(img).toHaveAttribute('alt', '');
+    expect(within(legends).getAllByRole('img')).toHaveLength(5);
+    expect(legends.querySelector('.fp-legend-rail')).toHaveClass('is-endless');
+    cleanup();
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(prefers-reduced-motion: reduce)', media: query, addEventListener() {}, removeEventListener() {} }));
+    show();
+    legends = document.getElementById('legends')!;
+    expect(legends.querySelectorAll('.fp-legend-row')).toHaveLength(1);
+    expect(legends.querySelector('.fp-legend-rail')).not.toHaveClass('is-endless');
+  });
+
   it('holds up each game’s stamp in turn, turns to the next on a tap, and leads to the games page', async () => {
     show();
     const learn = document.getElementById('learn')!;
@@ -204,14 +237,26 @@ describe('the apps-coming-soon card', () => {
     expect(card).toHaveAccessibleDescription(/The phone apps are on their way/);
     expect(within(card).getByText('Hevalo for iPhone and iPad')).toBeInTheDocument();
     expect(within(card).getByRole('link', { name: 'Start on the web' })).toHaveAttribute('href', '/register');
-    // It asks for nothing: no address to leave, no list to join.
-    expect(card.querySelector('input, form')).toBeNull();
+    // It asks for nothing: no address to leave, no list to join; its only inputs choose which phone it talks about.
+    expect(card.querySelector('input:not([type="radio"]), textarea, form')).toBeNull();
   });
 
   it('says Android when Android was tapped', () => {
     show();
     fireEvent.click(screen.getAllByRole('button', { name: 'Download for Android' })[0]!);
     expect(within(screen.getByRole('dialog')).getByText('Hevalo for Android')).toBeInTheDocument();
+  });
+
+  it('opens on the platform tapped, and a labelled switch turns it to the other', () => {
+    show();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Download for iOS' })[0]!);
+    const card = screen.getByRole('dialog');
+    const which = within(card).getByRole('group', { name: 'Which phone' });
+    expect(within(which).getByRole('radio', { name: 'iOS' })).toBeChecked();
+    fireEvent.click(within(which).getByRole('radio', { name: 'Android' }));
+    expect(within(which).getByRole('radio', { name: 'Android' })).toBeChecked();
+    expect(within(card).getByText('Hevalo for Android')).toBeInTheDocument();
+    expect(within(card).queryByText('Hevalo for iPhone and iPad')).toBeNull();
   });
 
   it('closes with Escape, the dim behind it or Close, and gives focus back to the button', () => {
@@ -240,6 +285,7 @@ describe('the apps-coming-soon card', () => {
     const close = within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' });
     close.focus();
     fireEvent.keyDown(window, { key: 'Tab' });
-    expect(within(screen.getByRole('dialog')).getByRole('link', { name: 'Start on the web' })).toHaveFocus();
+    // round to the top of the card: the switch for which phone
+    expect(within(screen.getByRole('dialog')).getByRole('radio', { name: 'iOS' })).toHaveFocus();
   });
 });
