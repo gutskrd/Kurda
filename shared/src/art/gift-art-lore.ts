@@ -549,41 +549,59 @@ function face(dr: Drawing, rnd: Rnd): void {
   }
   paint(dr, brush(chin, 1.1, rnd, { start: 0.05, end: 0.05, peak: 0.5, count: 18 }), '#b48a7a', 0.7);
 
-  // the brows: thin dark arcs, high and evenly arched, thinning to a point at both ends
-  const browAt = (side: -1 | 1): Pt[] => [[13.6, 110.4], [11.8, 108.6], [9, 107.6], [6.3, 108.1], [4.3, 109.6]].map(([dx, y]) => P(CX + side * dx!, y!));
-  const arch = { start: 0.15, end: 0.25, peak: 0.45, count: 20 };
-  paint(dr, brush(browAt(-1), 1.9, rnd, arch) + brush(browAt(1), 1.9, rnd, arch), '#26181a');
-  // the eyes: almonds a quarter of the way down, one eye's width apart, each with its white, its iris (the left
-  // violet-brown, the right grey) and pupil, a catch of light, a heavy dark upper lid winging out past the corner and a
-  // fine line under it
+  // the brows: dark confident arches close over the eyes, each one stroke of the brush, full and a little square where it
+  // starts by the bridge of the nose, rising to its peak two-thirds of the way out and tapering toward the outer corner
+  const BROW = [[4.8, 109.6], [8, 108.6], [11.4, 107.8], [14.3, 107.5], [17.2, 108], [19.8, 109.5]] as const;
+  const browAt = (side: -1 | 1): Pt[] => BROW.map(([dx, y]) => P(CX + side * dx, y));
+  const arch = { start: 0.85, end: 0.04, peak: 0.32, count: 24 };
+  paint(dr, brush(browAt(-1), 2.4, rnd, arch) + brush(browAt(1), 2.4, rnd, arch), '#21140f');
+  // the eyes, painted as a folk painter paints a beauty: wide almonds lifted at their outer corners, lined with kohl that
+  // wings out past the corner, a few lashes, large irises (the left violet-brown, the right grey-blue) with dark rims,
+  // black pupils and the same catch of light in each, bright whites either side, and a warm shadow in the lid's crease
   for (const side of [-1, 1] as const) {
     const ex = CX + side * 11.8;
     const ey = 113.2;
-    const almond: Pt[] = [];
-    for (let i = 0; i < 20; i++) {
-      const t = (i / 20) * Math.PI * 2;
-      const c = Math.cos(t);
-      const s = Math.sin(t);
-      almond.push(P(ex + 6.7 * Math.sign(c) * Math.abs(c) ** 0.85, ey + (s < 0 ? 2.7 : 2) * s + (side * c > 0 ? 0.25 : 0)));
-    }
-    paint(dr, outline(almond), '#f4ede3');
+    const inner: Pt = [ex - side * 7, ey + 0.3];
+    const outer: Pt = [ex + side * 7.5, ey - 0.6];
+    const arc = (lift: number, steps = 12, from = 0, to = 1): Pt[] => {
+      const pts: Pt[] = [];
+      for (let k = 0; k <= steps; k++) {
+        const t = from + ((to - from) * k) / steps;
+        const x = inner[0] + (outer[0] - inner[0]) * t;
+        const y = inner[1] + (outer[1] - inner[1]) * t - lift * Math.sin(Math.PI * t ** 0.92);
+        pts.push(P(x, y));
+      }
+      return pts;
+    };
+    const upper = arc(3.1);
+    const lower = arc(-2.3);
+    const almond = [...upper, ...lower.slice(1, -1).reverse()];
+    paint(dr, outline(arc(4.6, 12, 0.08, 0.95)), '#d9b6a4', 0.4);
+    paint(dr, outline(almond), '#fbf8f2');
+    const [ix, iy] = [ex - side * 0.2, ey + 0.05];
     within(dr, outline(almond), () => {
-      const ix = ex - side * 0.5;
-      paint(dr, ellipse(...P(ix, ey + 0.2), 5, 5), side < 0 ? '#5e4048' : '#8a909e');
-      paint(dr, ellipse(...P(ix, ey + 0.2), 3.4, 3.4), side < 0 ? '#7a5a64' : '#a2a8b4', 0.8);
-      paint(dr, ellipse(...P(ix, ey + 0.2), 2, 2), '#1a1014');
-      paint(dr, ellipse(...P(ix - 0.9, ey - 0.6), 0.8, 0.8), '#fbf7f0');
+      const [rim, base, light] = side < 0 ? ['#2c1822', '#5c3a4a', '#8a6476'] : ['#2e3c4c', '#7590aa', '#a6bdd0'];
+      paint(dr, ellipse(...P(ix, iy), 5.6, 5.6), rim);
+      paint(dr, ellipse(...P(ix, iy), 4.6, 4.6), base);
+      paint(dr, touch(...P(ix + 0.2, iy + 1.3), 5.4, 1.9, 0), light, 0.8);
+      paint(dr, ellipse(...P(ix, iy), 2.3, 2.3), '#0d080a');
+      paint(dr, brush(upper.map(([x, y]): Pt => [x, y + 1.1]), 2.4, rnd, { start: 0.5, end: 0.5, peak: 0.5, count: 16 }), '#c8b4ac', 0.5);
+      paint(dr, ellipse(...P(ix - 0.85, iy - 0.85), 0.95, 0.95) + ellipse(...P(ix + 0.7, iy + 0.55), 0.4, 0.4), '#ffffff');
     });
-    const lid: Pt[] = [];
-    for (let i = 0; i <= 10; i++) {
-      const c = Math.cos(Math.PI - (i / 10) * Math.PI);
-      lid.push(P(ex + side * 6.9 * c, ey - 2.7 * Math.sin((i / 10) * Math.PI) - 0.15));
+    // the kohl: bold along the upper lid, thickening outward into a short wing; finer below, meeting it at the corner
+    const wing = P(outer[0] + side * 2.6, outer[1] - 1.3);
+    paint(dr, brush([...arc(3.25, 12, 0.02, 1), wing], 3.4, rnd, { start: 0.3, end: 0.02, peak: 0.82, count: 30 }), '#120c0c');
+    const under = [...arc(-2.35, 10, 0.12, 1), P(outer[0] + side * 0.6, outer[1] - 0.25)];
+    paint(dr, brush(under, 1.2, rnd, { start: 0.15, end: 0.6, peak: 0.85, count: 20 }), '#24161a', 0.9);
+    let lashes = '';
+    const lid = arc(3.35, 12);
+    for (const k of [7, 8, 9, 10, 11]) {
+      const [x, y] = lid[k]!;
+      const lean = (k - 6) * 0.22;
+      const lash: Pt[] = [[x, y], [x + side * (0.6 + lean), y - 1.4], [x + side * (1.3 + lean * 1.4), y - 2.1]];
+      lashes += brush(lash, 0.7, rnd, { start: 1, end: 0.05, peak: 0.1, count: 5 });
     }
-    lid.push(P(ex + side * 8, ey + 0.1));
-    paint(dr, brush(side < 0 ? lid.reverse() : lid, 2.8, rnd, { start: 0.3, end: 0.15, peak: 0.7, count: 24 }), '#1e1418');
-    const lower: Pt[] = [];
-    for (let i = 1; i < 10; i++) lower.push(P(ex + 6.4 * Math.cos(Math.PI - (i / 10) * Math.PI), ey + 1.95 * Math.sin((i / 10) * Math.PI)));
-    paint(dr, brush(lower, 0.7, rnd, { start: 0.2, end: 0.2, peak: 0.5, count: 16 }), '#9a7468', 0.8);
+    paint(dr, lashes, '#120c0c');
   }
   // the nose: one short soft line down its shaded side, and two small nostril marks just above the mouth
   paint(dr, brush([P(302.6, 116.6), P(302.2, 121.4), P(302.6, 125.6)], 1.1, rnd, { start: 0.1, end: 0.5, peak: 0.75, count: 10 }), '#bf9888', 0.8);
