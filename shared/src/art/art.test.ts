@@ -71,7 +71,6 @@ import {
   PATH_STOP_ART,
   PATH_STOP_LOOKS,
   PATH_STOP_TONES,
-  hoofprintPath,
   pathChestSvg,
   pathCoinSvg,
   pathKilimSvg,
@@ -1673,25 +1672,19 @@ describe('the lesson path’s world', () => {
     expect(() => pathMilestoneSvg({ won: true, part: 'face', size: 0 })).toThrow(RangeError);
   });
 
-  it('strikes Hevalo’s stamp in gold foil, its rim pressed by hand a little differently on every stop', () => {
+  it('strikes Hevalo’s seal in gold foil, pressed by hand and tilted a little differently on every stop', () => {
     const view = `0 0 ${PATH_STAMP_ART.box} ${PATH_STAMP_ART.box}`;
     for (const dark of [false, true]) {
       for (const worn of [false, true]) sound(pathStampSvg({ seed: 's:a', worn, dark, idPrefix: 'm' }), view);
       expect(pathStampSvg({ seed: 's:a', dark })).toContain(PATH_GOLD[dark ? 'dark' : 'light'].face);
     }
-    // the same stop's stamp is the same every time, another's rim wavers its own way, and a worn one is rubbed
+    // the same stop's seal is the same every time, another's is tilted and wavers its own way, and a worn one is rubbed
     expect(pathStampSvg({ seed: 's:a' })).toBe(pathStampSvg({ seed: 's:a' }));
     expect(pathStampSvg({ seed: 's:a' })).not.toBe(pathStampSvg({ seed: 's:b' }));
     expect(pathStampSvg({ seed: 's:a', worn: true })).not.toContain(PATH_GOLD.light.face);
-    // Hevalo's prints in it: a step of two, four standing together, or none, each a cloven print of four parts
-    const parts = (svg: string): number => (/<clipPath[^>]*><path d="([^"]*)"/.exec(svg)?.[1]?.match(/Z/g) ?? []).length;
-    const rim = parts(pathStampSvg({ seed: 's:a', prints: 0 }));
-    expect(parts(pathStampSvg({ seed: 's:a' })) - rim).toBe(8);
-    expect(parts(pathStampSvg({ seed: 's:a', prints: 4 })) - rim).toBe(16);
-    // they walk the way they are told, toes first: turned, the same prints move round the seal's middle
-    expect(pathStampSvg({ seed: 's:a', heading: 150 })).not.toBe(pathStampSvg({ seed: 's:a', heading: 210 }));
-    expect(hoofprintPath(10, 10, 1, 180)).toBe(hoofprintPath(10, 10, 1, -180));
-    expect(hoofprintPath(10, 10, 1, 180).startsWith('M8.5 23.5')).toBe(true);
+    // a seal and nothing more: its rim, sixteen beads and a fine inner ring, and no glyph or print inside
+    const shapes = (svg: string): number => (/<clipPath[^>]*><path d="([^"]*)"/.exec(svg)?.[1]?.match(/M/g) ?? []).length;
+    expect(shapes(pathStampSvg({ seed: 's:a' }))).toBe(2 + 16 + 2);
     sound(pathStampToolSvg({ dark: true, size: 58 }), '0 0 40 56');
     expect(() => pathStampSvg({ size: 0 })).toThrow(RangeError);
   });

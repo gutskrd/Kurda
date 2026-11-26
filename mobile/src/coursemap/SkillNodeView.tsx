@@ -59,15 +59,12 @@ const PULSE_AT_MS = 700;
 
 /**
  * How a finished topic's stamp shows: `pressing` plays its moment once after `delay` (shared `PATH_STAMP_MOMENT`), a
- * light tap felt as it lands, then `onStamped`; otherwise it is simply there. Hevalo's prints in it point `heading`
- * degrees clockwise from up, toward the next stop, four together where he `rest`s (shared `stopPrints`).
+ * light tap felt as it lands, then `onStamped`; otherwise it is simply there.
  */
 export interface StopStamp {
   pressing: boolean;
   delay: number;
   onStamped: () => void;
-  heading: number;
-  rest: boolean;
 }
 
 /**
@@ -364,7 +361,7 @@ export function SkillNodeView({
               </Animated.View>
             ) : null}
             {stamp && near && stop.kind === 'skill' ? (
-              <TileStamp stopKey={stop.key} dark={scheme === 'dark'} worn={stop.finish === 'refresh'} heading={stamp.heading} rest={stamp.rest} moment={pressing ? moment : null} />
+              <TileStamp stopKey={stop.key} dark={scheme === 'dark'} worn={stop.finish === 'refresh'} moment={pressing ? moment : null} />
             ) : null}
             {/* Its stars, once stamped: a round won on the return lights its new one once the stamp has settled. */}
             {stamp && !pressing && near && stop.kind === 'skill' && stop.rounds > 0 ? (

@@ -200,7 +200,6 @@ export {
   pathStampSvg,
   pathStampToolSvg,
   pathStopSvg,
-  hoofprintPath,
   PATH_STAMP_ART,
   type PathStampOptions,
   tilePath,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PATH_GEOMETRY, PATH_MASCOT, lessonPath, mascotSpot, type PathSkill } from './lesson-path.js';
-import { PATH_SCENE_IDS } from './art/path-scenes.js';
+import { PATH_SCENES, PATH_SCENE_BOX, PATH_SCENE_IDS } from './art/path-scenes.js';
+import { characterArt, cropBox, sampleKeys } from './characters/index.js';
 import {
   PATH_LANDMARKS,
   PATH_LANDS,
@@ -18,7 +19,6 @@ import {
   pathScene,
   sceneBeat,
   sceneBeatMs,
-  stopPrints,
   unitScenery,
   type PathBox,
 } from './path-world.js';
@@ -166,7 +166,7 @@ describe('the scenes beside the road', () => {
     expect(sceneBeat('slate', -1)).toEqual(beats[5]);
   });
 
-  it('flies the pigeon in to land on its post, teeter, settle and leave, all in one flight', () => {
+  it('flies the pigeon in from the edge to land on its twig, teeter, settle and leave by the edge, all in one flight', () => {
     for (const track of [PATH_PIGEON_FLIGHT.x, PATH_PIGEON_FLIGHT.y, PATH_PIGEON_FLIGHT.tilt, PATH_PIGEON_FLIGHT.shown]) {
       expect(track[0]![0]).toBe(0);
       expect(track[track.length - 1]![0]).toBe(1);
@@ -181,6 +181,13 @@ describe('the scenes beside the road', () => {
     expect(PATH_PIGEON_FLIGHT.shown[0]![1]).toBe(0);
     expect(PATH_PIGEON_FLIGHT.shown[PATH_PIGEON_FLIGHT.shown.length - 1]![1]).toBe(0);
     expect(sceneBeat('letter', 3)).toEqual(sceneBeat('letter', 0));
+    // it faces in on the way in and turns round to fly back out by the edge it came from
+    const face = (t: number): number => PATH_PIGEON_FLIGHT.face.filter(([k]) => k <= t).at(-1)![1];
+    expect(face(0)).toBe(1);
+    expect(face(from)).toBe(1);
+    expect(face(1)).toBe(-1);
+    expect(PATH_PIGEON_FLIGHT.x[0]![1]).toBeLessThan(0);
+    expect(PATH_PIGEON_FLIGHT.x[PATH_PIGEON_FLIGHT.x.length - 1]![1]).toBeLessThan(0);
   });
 
   it('times each beat a little differently, never far from the scene’s own beat', () => {
@@ -210,29 +217,48 @@ describe('the scenes beside the road', () => {
   });
 });
 
+describe('the scenes’ figures through all their motion', () => {
+  const times = Array.from({ length: 101 }, (_, i) => i / 100);
+  // A point of the figure's box, from the middle of its foot, as it stands in the scene: stretched, then leant.
+  const placed = (scene: 'apple' | 'tea' | 'slate', u: number, v: number, stretch: number, turn: number): [number, number] => {
+    const { ax, ay, lean } = PATH_SCENES[scene].actor;
+    const a = ((lean + turn) * Math.PI) / 180;
+    const [x, y] = [u, v * stretch];
+    return [ax + x * Math.cos(a) - y * Math.sin(a), ay + x * Math.sin(a) + y * Math.cos(a)];
+  };
+
+  it('keeps each character’s head, the top of its drawing, inside its scene at every moment, never cut by the scene’s top or far side', () => {
+    for (const scene of ['apple', 'tea', 'slate'] as const) {
+      const { who, actor } = PATH_SCENES[scene];
+      const frame = cropBox(characterArt(who as 'hevalo' | 'hamo' | 'xezo'), actor.crop);
+      const w = (actor.h * frame.w) / frame.h;
+      for (const t of times) {
+        // Only Hevalo reaches for his apple; the others lean in as they stand. Room for a nod or a tilt on top: 10 points.
+        const stretch = scene === 'apple' ? sampleKeys(PATH_APPLE_REACH.stretch, t) : 1;
+        const turn = scene === 'apple' ? sampleKeys(PATH_APPLE_REACH.turn, t) : 0;
+        for (const u of [-w / 2, w / 2]) {
+          const [x, y] = placed(scene, u, -actor.h, stretch, turn);
+          expect(y, `${scene} at ${t}`).toBeGreaterThanOrEqual(10);
+          expect(x, `${scene} at ${t}`).toBeLessThanOrEqual(PATH_SCENE_BOX.w - 10);
+        }
+      }
+    }
+  });
+
+  it('keeps the pigeon inside its scene but for the edge it flies in and out by', () => {
+    const { ax, ay, h } = PATH_SCENES.letter.actor;
+    for (const t of times) {
+      const [x, y] = [sampleKeys(PATH_PIGEON_FLIGHT.x, t), sampleKeys(PATH_PIGEON_FLIGHT.y, t)];
+      // its 64-point canvas, its feet at the perch
+      const top = ay - (h * 100) / 120 + y;
+      expect(top, `${t}`).toBeGreaterThanOrEqual(0);
+      expect(top + h, `${t}`).toBeLessThanOrEqual(PATH_SCENE_BOX.h);
+      expect(ax + x + h / 2, `${t}`).toBeLessThanOrEqual(PATH_SCENE_BOX.w);
+    }
+  });
+});
+
 describe('a finished stop’s stamp', () => {
-  it('points Hevalo’s prints from each finished stop toward the next one on the road, mirrored right to left', () => {
-    const road = [0, -1, 0, 1, 0].map((lean, i) => ({ stop: { kind: 'skill' }, x: lean * PATH_GEOMETRY.sway, y: PATH_GEOMETRY.pad + i * PATH_GEOMETRY.step }));
-    const along = (k: number, sign: 1 | -1 = 1): number => stopPrints(road, k, sign).heading;
-    // the road runs down the screen, so the prints point down, leaning the way the next stop leans
-    const slant = (Math.atan2(PATH_GEOMETRY.sway, PATH_GEOMETRY.step) * 180) / Math.PI;
-    expect(along(0)).toBeCloseTo(180 + slant, 0);
-    expect(along(1)).toBeCloseTo(180 - slant, 0);
-    expect(along(2)).toBeCloseTo(180 - slant, 0);
-    expect(along(3)).toBeCloseTo(180 + slant, 0);
-    // a right-to-left line leans the other way
-    expect(along(0, -1)).toBeCloseTo(180 - slant, 0);
-    // after the last stop, straight on down
-    expect(along(4)).toBe(180);
-  });
-
-  it('stands Hevalo on all four at the chapter’s last topic, the pause before its milestone, and nowhere else', () => {
-    const road = ['skill', 'skill', 'review', 'skill', 'story'].map((kind, i) => ({ stop: { kind }, x: 0, y: i * 100 }));
-    expect(road.map((_, k) => stopPrints(road, k).rest)).toEqual([false, false, false, true, false]);
-    const trophy = [{ stop: { kind: 'skill' }, x: 0, y: 0 }, { stop: { kind: 'trophy' }, x: 0, y: 100 }];
-    expect(stopPrints(trophy, 0).rest).toBe(true);
-  });
-
   it('presses halfway through its moment: the print appears and the tile squashes as it lands, and all ends as it was drawn', () => {
     const { pressAt, toolY, squash, printShown, toolShown } = PATH_STAMP_MOMENT;
     const at = (track: readonly (readonly [number, number])[], t: number): number | undefined => track.find(([k]) => k === t)?.[1];

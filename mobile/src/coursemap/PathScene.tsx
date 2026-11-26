@@ -177,8 +177,9 @@ function track(t: Animated.Value, keys: readonly (readonly [number, number])[], 
 const SAMPLES = 48;
 
 /**
- * The pigeon trying to land on the twig's tip with its letter in its beak (shared `PATH_PIGEON_FLIGHT`, on `t`), and
- * hopping when tapped; a member's pigeon from the letters, in its own colours by day and night alike.
+ * The pigeon flying in from the screen's edge to land on the twig's tip with its letter in its beak, and back out again
+ * (shared `PATH_PIGEON_FLIGHT`, on `t`), and hopping when tapped; a member's pigeon from the letters, in its own colours
+ * by day and night alike.
  */
 function Pigeon({ moving, hop, t }: { moving: boolean; hop: number; t: Animated.Value }): React.JSX.Element {
   const { actor } = PATH_SCENES.letter;
@@ -202,7 +203,12 @@ function Pigeon({ moving, hop, t }: { moving: boolean; hop: number; t: Animated.
   const flight = moving
     ? {
         opacity: track(t, PATH_PIGEON_FLIGHT.shown),
-        transform: [{ translateX: track(t, PATH_PIGEON_FLIGHT.x) }, { translateY: track(t, PATH_PIGEON_FLIGHT.y) }, { rotate: track(t, PATH_PIGEON_FLIGHT.tilt, 'deg') }],
+        transform: [
+          { translateX: track(t, PATH_PIGEON_FLIGHT.x) },
+          { translateY: track(t, PATH_PIGEON_FLIGHT.y) },
+          { rotate: track(t, PATH_PIGEON_FLIGHT.tilt, 'deg') },
+          { scaleX: track(t, PATH_PIGEON_FLIGHT.face) },
+        ],
       }
     : null;
   return (

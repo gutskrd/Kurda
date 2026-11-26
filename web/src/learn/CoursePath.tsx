@@ -12,7 +12,6 @@ import {
   localeDir,
   mascotSpot,
   pathChanges,
-  stopPrints,
   pathLand,
   pathSnapshot,
   type LessonPath as Path,
@@ -944,8 +943,6 @@ export function CoursePath({
                             // A finished topic is stamped: already, or now in its moment; until then it is its tile as before.
                             const stamping = stampNext === stop.key;
                             const isStamped = stop.kind === 'skill' && stop.state === 'done' && (reduceMotion || (stamped?.has(stop.key) ?? true));
-                            // Hevalo's prints on its seal walk on toward the next stop, mirrored with the line.
-                            const prints = stopPrints(unit.stops, k, rtl ? -1 : 1);
                             const stars = stop.kind === 'skill' && isStamped && !stamping ? starsNow(stop) : null;
                             // A later chapter that can be tested into: its first stop offers the test rather than its card.
                             const jumpHere = unit.jumpKey === stop.key;
@@ -1009,8 +1006,6 @@ export function CoursePath({
                                         stopKey={stop.key}
                                         dark={dark}
                                         worn={stop.finish === 'refresh'}
-                                        heading={prints.heading}
-                                        rest={prints.rest}
                                         pressing={stamping && !isStamped}
                                         delay={playing ? 0 : STAMP_SETTLE_MS}
                                         onStamped={stampDone}

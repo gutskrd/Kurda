@@ -276,15 +276,17 @@ export function sceneBeat(scene: PathSceneId, beat: number): SceneBeat {
 }
 
 /**
- * The pigeon's try at landing on the fence post with its letter, round once in `ms`: it flies in, hovers, overshoots,
- * comes back and lands, teeters, settles with the letter, then flies off and away until its next try. `x` and `y` are
- * points from its place on the post (on the road's start side; the apps mirror `x` on the other), `tilt` degrees, and
- * `shown` its opacity. It is on the post from `perched[0]` to `perched[1]` of the way round, and flapping otherwise.
+ * The pigeon's try at landing on the twig's tip with its letter, round once in `ms`: it flies in from the screen's edge,
+ * overshoots, comes back and lands, teeters, settles with the letter, then turns round and flies back out by the edge
+ * until its next try, never leaving its scene but by that edge. `x` and `y` are points from its place on the twig (on
+ * the road's start side; the apps mirror `x` on the other), `tilt` degrees, `face` 1 facing in and -1 facing out, and
+ * `shown` its opacity. It is on the twig from `perched[0]` to `perched[1]` of the way round, and flapping otherwise.
  */
 export const PATH_PIGEON_FLIGHT = {
   ms: 11000,
-  x: [[0, -96], [0.06, -84], [0.22, -8], [0.3, 10], [0.38, -2], [0.44, 0], [0.86, 0], [0.92, 26], [1, 96]],
-  y: [[0, -70], [0.06, -62], [0.22, -20], [0.3, -14], [0.38, -18], [0.44, 0], [0.86, 0], [0.92, -20], [1, -76]],
+  x: [[0, -150], [0.06, -128], [0.22, -34], [0.3, 8], [0.38, -2], [0.44, 0], [0.86, 0], [0.9, -8], [0.94, -70], [1, -160]],
+  y: [[0, -34], [0.06, -36], [0.22, -30], [0.3, -12], [0.38, -16], [0.44, 0], [0.86, 0], [0.9, -14], [0.94, -30], [1, -38]],
+  face: [[0, 1], [0.88, 1], [0.895, -1], [1, -1]],
   tilt: [[0, 0], [0.44, 0], [0.48, 16], [0.52, -11], [0.56, 7], [0.6, -3], [0.64, 0], [1, 0]],
   shown: [[0, 0], [0.06, 1], [0.94, 1], [1, 0]],
   perched: [0.44, 0.88],
@@ -295,24 +297,11 @@ export const PATH_PIGEON_FLIGHT = {
   x: readonly (readonly [number, number])[];
   y: readonly (readonly [number, number])[];
   tilt: readonly (readonly [number, number])[];
+  face: readonly (readonly [number, number])[];
   shown: readonly (readonly [number, number])[];
   perched: readonly [number, number];
   twig: readonly (readonly [number, number])[];
 };
-
-/**
- * Hevalo's prints on a finished stop's seal: `heading`, the way they point, in degrees clockwise from straight up, from
- * this stop toward the next one on the road (straight on down after the last), as the stops are laid out across the
- * screen (`sign` -1 where the line runs right to left); and `rest`, whether he stands there on all four, as he does at
- * the chapter's last topic, the road's pause before its milestone.
- */
-export function stopPrints(stops: readonly { stop: { kind: string }; x: number; y: number }[], k: number, sign: 1 | -1 = 1): { heading: number; rest: boolean } {
-  const here = stops[k];
-  const next = stops[k + 1];
-  if (!here || !next) return { heading: 180, rest: false };
-  const heading = ((Math.atan2(sign * (next.x - here.x), -(next.y - here.y)) * 180) / Math.PI + 360) % 360;
-  return { heading: Math.round(heading * 10) / 10, rest: next.stop.kind === 'story' || next.stop.kind === 'trophy' };
-}
 
 /**
  * The moment a finished stop is stamped, the first time the learner comes back to the road after finishing it: the

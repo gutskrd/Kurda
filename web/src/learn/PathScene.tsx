@@ -104,8 +104,9 @@ const FRAMES = Array.from({ length: 49 }, (_, i) => i / 48);
 const sampled = (keys: readonly (readonly [number, number])[]): number[] => FRAMES.map((t) => sampleKeys(keys, t));
 
 /**
- * The pigeon trying to land on the twig's tip with its letter in its beak (shared `PATH_PIGEON_FLIGHT`), the twig giving
- * under it, and hopping when tapped; a member's pigeon from the letters, in its own colours by day and night alike.
+ * The pigeon flying in from the screen's edge to land on the twig's tip with its letter in its beak, and back out again
+ * (shared `PATH_PIGEON_FLIGHT`), the twig giving under it, and hopping when tapped; a member's pigeon from the letters,
+ * in its own colours by day and night alike.
  */
 function Pigeon({ moving, hop, stage }: { moving: boolean; hop: number; stage: React.RefObject<HTMLSpanElement | null> }): React.JSX.Element {
   const { actor } = PATH_SCENES.letter;
@@ -120,10 +121,11 @@ function Pigeon({ moving, hop, stage }: { moving: boolean; hop: number; stage: R
   useEffect(() => {
     const el = flight.current;
     if (!moving || !el || typeof el.animate !== 'function') return;
-    const { ms, x, y, tilt, shown, perched: [from, to] } = PATH_PIGEON_FLIGHT;
-    const [xs, ys, ts, ss, gs] = [sampled(x), sampled(y), sampled(tilt), sampled(shown), sampled(PATH_PIGEON_FLIGHT.twig)];
+    const { ms, x, y, tilt, face, shown, perched: [from, to] } = PATH_PIGEON_FLIGHT;
+    const [xs, ys, ts, ss, gs, fs] = [sampled(x), sampled(y), sampled(tilt), sampled(shown), sampled(PATH_PIGEON_FLIGHT.twig), sampled(face)];
     const forever = { duration: ms, iterations: Infinity };
-    const path = el.animate(FRAMES.map((offset, i) => ({ offset, transform: `translate(${xs[i]}px, ${ys[i]}px) rotate(${ts[i]}deg)`, opacity: ss[i] })), forever);
+    const at = (i: number): string => `translate(${xs[i]}px, ${ys[i]}px) rotate(${ts[i]}deg) scaleX(${fs[i]})`;
+    const path = el.animate(FRAMES.map((offset, i) => ({ offset, transform: at(i), opacity: ss[i] })), forever);
     // On the twig between landing and taking off; in the air, flapping, the rest of the way round.
     const swap = (on: number[]): Keyframe[] => [0, from, from, to, to, 1].map((offset, i) => ({ offset, opacity: on[i] }));
     const sit = sitting.current?.animate(swap([0, 0, 1, 1, 0, 0]), forever);
@@ -357,17 +359,15 @@ export function PathChest({ open, dark, size, played }: { open: boolean; dark: b
 }
 
 /**
- * Hevalo's stamp on a finished stop's tile (shared `pathStampSvg`): his prints in a seal, walking toward the next stop
- * (`heading`), four together where he rests, and rubbed a little where a refresh would help. `pressing` plays its moment once (shared `PATH_STAMP_MOMENT`) after `delay`: the brass
- * stamp hovers in, draws up, presses down as the tile squashes under it and the print appears, and lifts away; then
- * `onStamped` is told. Decorative.
+ * Hevalo's stamp on a finished stop's tile (shared `pathStampSvg`): a gold seal pressed by hand, tilted its own way, and
+ * rubbed a little where a refresh would help. `pressing` plays its moment once (shared `PATH_STAMP_MOMENT`) after
+ * `delay`: the brass stamp hovers in, draws up, presses down as the tile squashes under it and the print appears, and
+ * lifts away; then `onStamped` is told. Decorative.
  */
 export function TileStamp({
   stopKey,
   dark,
   worn,
-  heading,
-  rest,
   pressing,
   delay,
   onStamped,
@@ -375,18 +375,12 @@ export function TileStamp({
   stopKey: string;
   dark: boolean;
   worn: boolean;
-  /** Where his prints point, in degrees clockwise from up, and whether he stands on all four (shared `stopPrints`). */
-  heading: number;
-  rest: boolean;
   pressing: boolean;
   delay: number;
   onStamped: (key: string) => void;
 }): React.JSX.Element {
   const prefix = `lpst${useId().replace(/[^A-Za-z0-9]/g, '')}`;
-  const print = useMarkup(
-    () => pathStampSvg({ seed: stopKey, dark, worn, heading, prints: rest ? 4 : 2, idPrefix: `${prefix}p` }),
-    [stopKey, dark, worn, heading, rest, prefix],
-  );
+  const print = useMarkup(() => pathStampSvg({ seed: stopKey, dark, worn, idPrefix: `${prefix}p` }), [stopKey, dark, worn, prefix]);
   const tool = useMarkup(() => pathStampToolSvg({ dark, size: STAMP_TOOL_W, idPrefix: `${prefix}t` }), [dark, prefix]);
   const printRef = useRef<HTMLSpanElement>(null);
   const toolRef = useRef<HTMLSpanElement>(null);

@@ -14,7 +14,6 @@ import {
   pathChanges,
   pathLand,
   pathSnapshot,
-  stopPrints,
   type LessonPath as Path,
   type PathChanges,
   type PathSection,
@@ -92,8 +91,8 @@ function finishedKeys(path: Path<SkillNode>): string[] {
   return path.units.flatMap((u) => u.stops.filter((p) => p.stop.kind === 'skill' && p.stop.state === 'done').map((p) => p.stop.key));
 }
 
-/** Nothing to do once a stamp simply there is stamped. */
-const noop = (): void => undefined;
+/** A stamp simply there. */
+const STAMP_SHOWN: StopStamp = { pressing: false, delay: 0, onStamped: () => undefined };
 /** A stamp waits this long on a plain visit, so the tile is seen as it was before it is stamped. */
 const STAMP_SETTLE_MS = 450;
 
@@ -459,18 +458,14 @@ export const LessonPath = memo(function LessonPath({
     return null;
   })();
   /** A finished topic’s stamp: there already, being pressed now, or waiting its turn; a return's own waits for its moment. */
-  const stampOf = (unit: Unit, k: number): StopStamp | null => {
-    const stop = unit.stops[k]!.stop;
+  const stampOf = (stop: Unit['stops'][number]['stop']): StopStamp | null => {
     if (stop.kind !== 'skill' || stop.state !== 'done') return null;
-    // Hevalo's prints on its seal walk on toward the next stop, mirrored with the line.
-    const prints = stopPrints(unit.stops, k, sign < 0 ? -1 : 1);
-    const shown: StopStamp = { pressing: false, delay: 0, onStamped: noop, ...prints };
     const finishing = !!stopChanges[stop.key]?.finishing;
-    if (reduce) return shown;
-    if (!stamped) return finishing ? null : shown;
-    if (stamped.has(stop.key)) return shown;
+    if (reduce) return STAMP_SHOWN;
+    if (!stamped) return finishing ? null : STAMP_SHOWN;
+    if (stamped.has(stop.key)) return STAMP_SHOWN;
     if (stop.key !== stampNext) return null;
-    return { ...prints, pressing: true, delay: finishing ? PATH_RETURN.finishAtMs : STAMP_SETTLE_MS, onStamped: () => stampDone(stop.key) };
+    return { pressing: true, delay: finishing ? PATH_RETURN.finishAtMs : STAMP_SETTLE_MS, onStamped: () => stampDone(stop.key) };
   };
 
   // The current stop bobs while its unit is in view.
@@ -651,7 +646,7 @@ export const LessonPath = memo(function LessonPath({
                                 tone={tone}
                                 left={cx(placed.x) - NODE / 2}
                                 change={stopChanges[placed.stop.key] ?? null}
-                                stamp={stampOf(unit, k)}
+                                stamp={stampOf(placed.stop)}
                                 jump={jumpHere}
                                 near={full}
                                 bob={placed.stop.key === bobAt && !waiting ? bob : null}

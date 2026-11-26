@@ -1190,6 +1190,10 @@ button.lp-scard:focus-visible {
   line-height: 0;
   list-style: none;
 }
+/* Beside the stop he hops, rocks and cheers past his drawing's own box, so nothing of him is cut there. */
+.lp-mascot .speaking-character > svg {
+  overflow: visible;
+}
 @media (max-width: 339px) {
   .lp-mascot {
     display: none;
@@ -1254,6 +1258,14 @@ button.lp-scard:focus-visible {
   justify-content: center;
   transform-origin: 50% 100%;
 }
+/*
+ * A character's drawing may move past its own box as it acts (a nod, a tilt, a stretch), so nothing of it is cut there:
+ * only the scene's edges cut it, and a cropped figure's foot, where its body runs on out of sight.
+ */
+.lp-actor .speaking-character > svg {
+  overflow: visible;
+  clip-path: inset(-60% -60% 0 -60%);
+}
 .lp-gives {
   inset: 0;
 }
@@ -1271,7 +1283,9 @@ button.lp-scard:focus-visible {
 .lp-chalk.is-written {
   opacity: 1;
 }
+/* Every layer of the pigeon a box of its own, the flight's above all, since a transform moves nothing inline. */
 .lp-pigeon > span,
+.lp-pigeon-hop > span,
 .lp-pigeon-flight > span,
 .lp-pigeon-fly > span {
   position: absolute;

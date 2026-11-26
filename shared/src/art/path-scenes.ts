@@ -31,7 +31,8 @@ export const PATH_SCENE_BOX = { w: 150, h: 164 } as const;
 
 /**
  * Where everything in a scene stands. `actor` is the character: its crop drawn `h` high, the middle of its foot at
- * (`ax`, `ay`), leaning in `lean` degrees about that point, so all but what leans in is past the edge; the pigeon is
+ * (`ax`, `ay`), leaning in `lean` degrees about that point, so all but what leans in is past the edge, the head whole
+ * and clear of it through every act; the pigeon is
  * drawn from the letters' art with its feet at that point. `below` is how far past the box's foot the character runs on
  * before it is gone past the edge, so the apps let it show that far. `back` props are behind the actor and `front` ones
  * before it; a prop named in `gives` turns about its root at the edge when tugged or landed on.
@@ -57,7 +58,7 @@ export const PATH_SCENES: Readonly<Record<PathSceneId, SceneLayout>> = {
   },
   tea: {
     who: 'hamo',
-    actor: { crop: 'half', h: 126, ax: -30, ay: 176, lean: 32 },
+    actor: { crop: 'half', h: 126, ax: -25, ay: 176, lean: 32 },
     below: 0,
     back: {},
     front: { tray: { x: 0, y: 118, w: 104, h: 46 } },
@@ -65,7 +66,7 @@ export const PATH_SCENES: Readonly<Record<PathSceneId, SceneLayout>> = {
   },
   slate: {
     who: 'xezo',
-    actor: { crop: 'half', h: 128, ax: -22, ay: 178, lean: 26 },
+    actor: { crop: 'half', h: 128, ax: -5, ay: 178, lean: 26 },
     below: 0,
     back: {},
     front: { slate: { x: 0, y: 112, w: 96, h: 52 } },
@@ -73,11 +74,11 @@ export const PATH_SCENES: Readonly<Record<PathSceneId, SceneLayout>> = {
   },
   letter: {
     who: 'pigeon',
-    actor: { crop: 'full', h: 64, ax: 108, ay: 66, lean: 0 },
+    actor: { crop: 'full', h: 64, ax: 108, ay: 96, lean: 0 },
     below: 0,
     back: {},
-    front: { twig: { x: 0, y: 30, w: 136, h: 64 } },
-    gives: { twig: { x: 0, y: 66 } },
+    front: { twig: { x: 0, y: 60, w: 136, h: 64 } },
+    gives: { twig: { x: 0, y: 96 } },
   },
 };
 
@@ -236,7 +237,8 @@ const PROPS: Readonly<Record<string, Paint>> = {
       }
       out += fill(ellipsePath(x, y, 1.3, 1.3), c('#f2b632'));
     }
-    return out;
+    // Drawn from its own top, lowered so the pigeon has room above it to fly in.
+    return `<g transform="translate(0 30)">${out}</g>`;
   },
 };
 

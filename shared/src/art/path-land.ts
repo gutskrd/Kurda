@@ -275,42 +275,15 @@ export function pathStopSvg(opts: PathStopOptions): string {
 }
 
 /**
- * Hevalo's hoofprint as path data: the two halves of a deer's slot with the dewclaws behind, about 32 points tall at `s`
- * 1, centred on (`x`, `y`), its toes pointing `turn` degrees clockwise from straight up.
- */
-export function hoofprintPath(x: number, y: number, s = 1, turn = 0): string {
-  const a = (turn * Math.PI) / 180;
-  const [cos, sin] = [Math.cos(a), Math.sin(a)];
-  const at = (u: number, v: number): string => `${n(x + (u * cos - v * sin) * s)} ${n(y + (u * sin + v * cos) * s)}`;
-  const half = (m: 1 | -1): string =>
-    `M${at(m * 1.5, -13.5)}C${at(m * 7.4, -10.6)} ${at(m * 10.6, -1.4)} ${at(m * 10.2, 5.6)}C${at(m * 9.9, 10.4)} ${at(m * 4.9, 12.2)} ${at(m * 2.2, 9.4)}C${at(m * 0.5, 3.6)} ${at(m * 0.2, -5.6)} ${at(m * 1.5, -13.5)}Z`;
-  const claw = (m: 1 | -1): string => `M${at(m * 4.4, 15)}C${at(m * 6, 14.4)} ${at(m * 7.4, 15.4)} ${at(m * 7, 16.8)}C${at(m * 6.5, 18)} ${at(m * 4.6, 17.8)} ${at(m * 4.4, 15)}Z`;
-  return half(1) + half(-1) + claw(1) + claw(-1);
-}
-
-/**
  * The stamp's canvas, the seal's middle on it and its radius, and its rim's width: in the upper part of the tile's face,
  * leaving room for the topic's stars along the near edge (shared `roundStars`). The apps lay the canvas over the stop
  * from (8, 2) of its 72-point button.
  */
 export const PATH_STAMP_ART = { box: 56, cx: 28, cy: 23, r: 17.5, rim: 3 } as const;
 
-/**
- * Where Hevalo's prints stand in the seal, in the print's own frame (forward is up), and how big each is: a step of two,
- * one hoof ahead of the other along the way he walks, or four standing together where he rests.
- */
-const PRINTS: Record<2 | 4, { s: number; at: ReadonlyArray<readonly [number, number]> }> = {
-  2: { s: 0.4, at: [[-2.6, 5.4], [2.6, -5.4]] },
-  4: { s: 0.3, at: [[-4.2, -4.8], [4.2, -4.8], [-4.6, 5.6], [4.6, 5.6]] },
-};
-
 export interface PathStampOptions {
-  /** Each stamp's own press: the rim's unevenness, from the stop it is on. */
+  /** Each stamp's own press: its tilt and the rim's unevenness, from the stop it is on. */
   seed?: string;
-  /** Which way Hevalo's prints point, in degrees clockwise from straight up: toward the next stop (shared `stopPrints`). */
-  heading?: number;
-  /** His prints in the seal: a step of two, four standing together where he rests, or none. */
-  prints?: 0 | 2 | 4;
   /** Worn, where a refresh would help: the foil a little rubbed. */
   worn?: boolean;
   dark?: boolean;
@@ -319,38 +292,37 @@ export interface PathStampOptions {
 }
 
 /**
- * Hevalo's stamp on a finished tile: a round seal with his prints in it, walking on toward the next stop, struck in gold
- * foil and pressed into the tile, so a shadow lies along the inside of its upper left edges. The rim is pressed by hand:
- * a little thicker here, thinner there, never quite round.
+ * Hevalo's stamp on a finished tile: a gold-foil seal pressed into the tile, so a shadow lies along the inside of its
+ * upper left edges. It is pressed by hand, a little off round and tilted its own way, its rim thicker here and thinner
+ * there; inside the rim a ring of beads and a fine inner ring, as on a struck seal, pressed in the foil's own shade.
  */
 export function pathStampSvg(opts: PathStampOptions = {}): string {
-  const { dark = false, heading = 180 } = opts;
+  const { dark = false } = opts;
   const { box: B, cx, cy, r, rim } = PATH_STAMP_ART;
   const size = opts.size ?? B;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
-  const count = opts.prints ?? 2;
-  const prefix = prefixFor(opts.idPrefix, 'stamp', opts.seed, heading, count, opts.worn, dark);
+  const prefix = prefixFor(opts.idPrefix, 'stamp', opts.seed, opts.worn, dark);
   const g = PATH_GOLD[dark ? 'dark' : 'light'];
   const foil = opts.worn ? mix(g.face, '#9aa6ac', 0.35) : g.face;
   const shade = opts.worn ? mix(g.side, '#6f7a80', 0.35) : g.side;
   const rand = seeded(`stamp|${opts.seed ?? ''}`);
-  // The rim: an outer and an inner edge, each wavering a little round the circle, as a hand presses unevenly.
-  const ring = (radius: number, wobble: number): string => {
-    const pts: Pt[] = [];
-    for (let i = 0; i < 28; i++) {
-      const a = (i / 28) * Math.PI * 2;
-      const k = radius + (rand() - 0.5) * wobble;
-      pts.push([cx + Math.cos(a) * k, cy + Math.sin(a) * k]);
-    }
-    return smoothPath(pts, true);
+  // Each stop's own press: a few degrees of tilt either way, the seal a touch shorter across it than along it.
+  const tilt = ((rand() - 0.5) * 20 * Math.PI) / 180;
+  const at = (a: number, k: number): Pt => {
+    const [u, v] = [Math.cos(a) * k, Math.sin(a) * k * 0.95];
+    return [cx + u * Math.cos(tilt) - v * Math.sin(tilt), cy + u * Math.sin(tilt) + v * Math.cos(tilt)];
   };
+  // An edge round the seal, wavering a little as a hand presses unevenly.
+  const ring = (radius: number, wobble: number): string =>
+    smoothPath(Array.from({ length: 28 }, (_, i) => at((i / 28) * Math.PI * 2, radius + (rand() - 0.5) * wobble)), true);
   let marks = ring(r, 0.8) + reverse(ring(r - rim, 1.2));
-  // His prints, each turned with the way he walks, set out in his own frame turned the same way.
-  if (count) {
-    const { s, at } = PRINTS[count];
-    const a = (heading * Math.PI) / 180;
-    for (const [u, v] of at) marks += hoofprintPath(cx + u * Math.cos(a) - v * Math.sin(a), cy + u * Math.sin(a) + v * Math.cos(a), s, heading);
+  // A ring of beads inside the rim, and a fine ring nearer the middle.
+  for (let i = 0; i < 16; i++) {
+    const [x, y] = at(((i + 0.5) / 16) * Math.PI * 2, r - rim - 2.4);
+    marks += ellipsePath(x, y, 0.8, 0.8);
   }
+  const inner = r * 0.42;
+  marks += ring(inner + 0.6, 0.3) + reverse(ring(inner - 0.6, 0.3));
   const clip = `${prefix}m`;
   // Pressed in: the foil's own shade along the inside of its upper left edges, a faint dark edge round it for any tile.
   const body =

@@ -5,28 +5,23 @@ import { PATH_STAMP_ART, PATH_STAMP_MOMENT, pathStampSvg, pathStampToolSvg, samp
 import { STOP_FACE } from './PathWorld';
 
 /**
- * Hevalo's stamp on a finished stop's tile (shared `pathStampSvg`), as on the website: his prints in a seal, walking
- * toward the next stop (`heading`), four together where he rests, and rubbed a little where a refresh would help. With `moment` running from 0 to 1 (SkillNodeView times it), the
- * stamping plays (shared `PATH_STAMP_MOMENT`): the brass stamp hovers in, draws up, presses down as the print appears,
- * and lifts away. Decorative.
+ * Hevalo's stamp on a finished stop's tile (shared `pathStampSvg`), as on the website: a gold seal pressed by hand,
+ * tilted its own way, and rubbed a little where a refresh would help. With `moment` running from 0 to 1 (SkillNodeView
+ * times it), the stamping plays (shared `PATH_STAMP_MOMENT`): the brass stamp hovers in, draws up, presses down as the
+ * print appears, and lifts away. Decorative.
  */
 export function TileStamp({
   stopKey,
   dark,
   worn,
-  heading,
-  rest,
   moment,
 }: {
   stopKey: string;
   dark: boolean;
   worn: boolean;
-  /** Where his prints point, in degrees clockwise from up, and whether he stands on all four (shared `stopPrints`). */
-  heading: number;
-  rest: boolean;
   moment: Animated.Value | null;
 }): React.JSX.Element {
-  const print = useMemo(() => pathStampSvg({ seed: stopKey, dark, worn, heading, prints: rest ? 4 : 2 }), [stopKey, dark, worn, heading, rest]);
+  const print = useMemo(() => pathStampSvg({ seed: stopKey, dark, worn }), [stopKey, dark, worn]);
   const tool = useMemo(() => (moment ? pathStampToolSvg({ dark, size: TOOL.w }) : null), [moment, dark]);
   const { printShown, printScale, toolY, toolShown } = PATH_STAMP_MOMENT;
   const box = PATH_STAMP_ART.box;

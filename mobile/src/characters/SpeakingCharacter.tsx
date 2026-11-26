@@ -734,7 +734,7 @@ export function SpeakingCharacter({
           ) : (
             <Layer xml={layers.body} width={width} height={height} />
           )}
-          <Animated.View style={[StyleSheet.absoluteFill, nod]}>
+          <Animated.View style={[StyleSheet.absoluteFill, nod]} testID="sc-head">
             {turn && rig?.antlers ? (
               <TurnedHead
                 layers={layers}
