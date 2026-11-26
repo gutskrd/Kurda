@@ -169,6 +169,20 @@ describe('the inventory (Edit profile → Cosmetics)', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Tags');
   });
 
+  it('wears a word tag by the name with a tap, beside the Kurdish tag that is managed with the other tags', async () => {
+    const { client } = open([...BACKGROUNDS, TAG, owned('tag-dengbej', 'Dengbêj', 'tag')]);
+    client.put = vi.fn(async (path: string, body?: unknown) => {
+      client.calls.push({ method: 'PUT', path, body });
+      return ok({});
+    }) as typeof client.put;
+    fireEvent.click(await screen.findByRole('tab', { name: 'Tags, 2 items' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Dengbêj' }));
+    await waitFor(() => expect(client.calls.find((c) => c.method === 'PUT')).toMatchObject({ path: '/me/cosmetics/tag', body: { sku: 'tag-dengbej' } }));
+    expect(screen.getByRole('button', { name: 'Dengbêj, equipped' })).toBeTruthy();
+    expect(screen.getByText('Kurdish Tag')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Open Tags' })).toBeTruthy();
+  });
+
   it('opens on the first kind you own any of, and points to the Shop for a kind you have none of', async () => {
     open(ICONS);
     expect(await screen.findByRole('button', { name: 'Îstîkan, equipped' })).toBeTruthy();

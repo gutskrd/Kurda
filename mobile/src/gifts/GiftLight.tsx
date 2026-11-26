@@ -15,6 +15,7 @@ export function GiftLight({
   art,
   lit,
   still,
+  glow: colour,
   children,
 }: {
   sku: string;
@@ -23,10 +24,12 @@ export function GiftLight({
   art: number;
   lit: boolean;
   still: boolean;
+  /** the light's colour, where it is not the gift's own (a bundle's) */
+  glow?: string;
   children: ReactNode;
 }): React.JSX.Element {
   const { width } = useWindowDimensions();
-  const glow = giftGlow(sku);
+  const glow = colour ?? giftGlow(sku);
   const size = Math.round(art * look.halo);
   const raysSize = Math.min(width, 600);
   const rays = useMemo(() => giftRaysPath(look.rays, look.reach), [look.rays, look.reach]);

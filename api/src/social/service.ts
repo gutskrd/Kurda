@@ -1,5 +1,16 @@
 import type pg from 'pg';
-import { foldDiacritics, handleName, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileBadge, type ProfileLeague, type ShowcaseBadge } from '@kurda/shared';
+import {
+  KURDISH_TAG_SKU,
+  foldDiacritics,
+  handleName,
+  normalizeKurdish,
+  toLeagueTier,
+  type LeagueTier,
+  type ProfileBadge,
+  type ProfileLeague,
+  type ProfileWordTag,
+  type ShowcaseBadge,
+} from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { FriendService } from '../friends/service.js';
 import { premiumUntilSql, resolveAvatarUrl } from '../cosmetics/access.js';
@@ -68,6 +79,8 @@ export interface PublicProfile {
   frameSku?: string | null;
   /** That frame's picture when it is a shop frame; season frames are drawn by the apps. */
   frameAssetKey?: string | null;
+  /** The word tag they wear by their name, while they own it (shared shop-tags.ts). */
+  tag?: ProfileWordTag | null;
   /** badges earned (and the legacy tournament win) */
   achievements?: number;
   /** the three badges they chose to show; a minor's only to themselves and friends */
@@ -236,6 +249,7 @@ export class SocialService {
       tier: string | null;
       frame_sku: string | null;
       frame_asset: string | null;
+      tag: ProfileWordTag | null;
       achievements: number;
       equipped_background_sku: string | null;
       bg_asset: string | null;
@@ -284,6 +298,11 @@ export class SocialService {
               CASE WHEN EXISTS (SELECT 1 FROM user_entitlements ef
                                  WHERE ef.user_id = u.id AND ef.sku = u.equipped_frame_sku)
                    THEN (SELECT fr.asset_key FROM shop_items fr WHERE fr.sku = u.equipped_frame_sku AND fr.category = 'frame') END AS frame_asset,
+              -- the word tag by the name, as a frame: worn only while owned, and never the Kurdish tag, a main tag of its own
+              CASE WHEN EXISTS (SELECT 1 FROM user_entitlements et
+                                 WHERE et.user_id = u.id AND et.sku = u.equipped_tag_sku)
+                   THEN (SELECT jsonb_build_object('sku', tg.sku, 'label', tg.name, 'meaning', tg.description) FROM shop_items tg
+                          WHERE tg.sku = u.equipped_tag_sku AND tg.category = 'tag' AND tg.sku <> '${KURDISH_TAG_SKU}') END AS tag,
               -- badges earned, and the one old award no badge replaced (the tournament win)
               ((SELECT count(*)::int FROM user_badges ub WHERE ub.user_id = u.id AND ub.tier > 0)
                + (SELECT count(*)::int FROM user_achievements ua
@@ -395,6 +414,7 @@ export class SocialService {
       league: toLeagueTier(u.tier) ? { tier: toLeagueTier(u.tier)! } : null,
       frameSku: u.frame_sku,
       frameAssetKey: u.frame_asset,
+      tag: u.tag,
       achievements: u.achievements,
       badges: shown?.showcase,
       earnedBadges: shown?.earned,

@@ -120,6 +120,7 @@ interface MeRow {
   selected_avatar_key: string | null;
   equipped_background_sku: string | null;
   equipped_icon_sku: string | null;
+  equipped_tag_sku: string | null;
   premium_icon_enabled: boolean;
   premium_until: Date | null;
   country: string | null;
@@ -230,6 +231,9 @@ export function createMeReader(app: FastifyInstance): (userId: string) => Promis
       selectedAvatarKey: row.selected_avatar_key,
       equippedBackgroundSku: row.equipped_background_sku,
       equippedIconSku: row.equipped_icon_sku,
+      equippedTagSku: row.equipped_tag_sku,
+      // the word tag as others see it, worn only while owned
+      tag: publicDto.tag ?? null,
       premiumUntil: row.plus_until ?? null,
       supervision,
       // a child's parent, and whether this session is the one opened on the parent's phone, which the PIN gives back

@@ -600,6 +600,10 @@ export * from './games/index.js';
 /** Shop items by kind: the categories, search, filters and orders the shop, the inventory and the gift picker share. */
 export * from './shop-items.js';
 export * from './shop-descriptions.js';
+/** The price ladder and the rarity each step is shown as, word tags worn by the name, and bundles sold for less than their parts. */
+export * from './shop-prices.js';
+export * from './shop-tags.js';
+export * from './shop-bundles.js';
 export * from './chat-cards.js';
 /** Unread chat counts for the badges, a group's capped, and how a badge writes one. */
 export * from './chat-unread.js';

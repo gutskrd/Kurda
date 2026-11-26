@@ -5,7 +5,7 @@ import { claimArt, releaseArt } from '../shop/art.js';
 import type { EarnRule } from '../earn/service.js';
 import { AppError } from '../plugins/errors.js';
 
-export type ConfigTarget = 'shop_item' | 'event' | 'earn_rule' | 'plus_grant';
+export type ConfigTarget = 'shop_item' | 'event' | 'earn_rule' | 'plus_grant' | 'shop_bundle';
 export type ChangeStatus = 'pending' | 'applied' | 'rejected';
 
 /** Price at/above which a shop change needs a second admin's sign-off. */
@@ -17,7 +17,16 @@ export interface ProposeResult {
 }
 export type ProposeError = {
   ok: false;
-  reason: 'invalid-target' | 'past-schedule' | 'bad-window' | 'bad-price' | 'invalid-payload' | 'art-missing' | 'art-wrong-kind';
+  reason:
+    | 'invalid-target'
+    | 'past-schedule'
+    | 'bad-window'
+    | 'bad-price'
+    | 'invalid-payload'
+    | 'art-missing'
+    | 'art-wrong-kind'
+    | 'bundle-not-found'
+    | 'bundle-saves-nothing';
 };
 export type ProposeOutcome = ({ ok: true } & ProposeResult) | ProposeError;
 
@@ -59,24 +68,32 @@ export function earnRulePaysMore(current: EarnRule | null, next: EarnRule): bool
   return current.dailyCap !== null && (next.dailyCap === null || next.dailyCap > current.dailyCap);
 }
 
+/** A bundle's price as Approvals takes it (shop/bundles.ts): what would stop it, and setting it as the admin who decided. */
+export interface BundlePrices {
+  priceProblem(id: string, price: number): Promise<'bundle-not-found' | 'bundle-saves-nothing' | null>;
+  setPrice(id: string, price: number, adminId: string): Promise<void>;
+}
+
 /**
- * Shop, event and earning configuration with dual-admin approval. A non-sensitive upsert applies immediately; a
- * sensitive one (large price, currency-granting event, an earn rule that pays more, Hevalo+ for an admin's own account)
- * waits for a different admin. Applying delegates to the services that own each (which validate and bust their
- * caches). Past-dated events are rejected.
+ * Shop, bundle, event and earning configuration with dual-admin approval. A non-sensitive upsert applies immediately;
+ * a sensitive one (large price, currency-granting event, an earn rule that pays more, Hevalo+ for an admin's own
+ * account) waits for a different admin. Applying delegates to the services that own each (which validate and bust
+ * their caches). Past-dated events are rejected.
  */
 export class ConfigService {
   private readonly pool: pg.Pool;
   private readonly shop: ShopService;
   private readonly events: EventService;
   private readonly appliers: ConfigAppliers;
+  private readonly bundles: BundlePrices | null;
   private readonly now: () => Date;
 
-  constructor(pool: pg.Pool, deps: { shop: ShopService; events: EventService; now?: () => Date } & ConfigAppliers) {
+  constructor(pool: pg.Pool, deps: { shop: ShopService; events: EventService; bundles?: BundlePrices; now?: () => Date } & ConfigAppliers) {
     this.pool = pool;
     this.shop = deps.shop;
     this.events = deps.events;
     this.appliers = { earn: deps.earn, plus: deps.plus };
+    this.bundles = deps.bundles ?? null;
     this.now = deps.now ?? (() => new Date());
   }
 
@@ -105,13 +122,14 @@ export class ConfigService {
 
   /** Propose an upsert. Applies now if low-impact, else queues for approval. */
   async propose(proposerId: string, target: ConfigTarget, payload: Record<string, unknown>): Promise<ProposeOutcome> {
-    if (target !== 'shop_item' && target !== 'event') return { ok: false, reason: 'invalid-target' };
-    const invalid = this.validate(target, payload);
+    if (target !== 'shop_item' && target !== 'event' && !(target === 'shop_bundle' && this.bundles)) return { ok: false, reason: 'invalid-target' };
+    const invalid =
+      this.validate(target, payload) ?? (target === 'shop_bundle' ? await this.bundles!.priceProblem(payload.id as string, payload.price as number) : null);
     if (invalid) return { ok: false, reason: invalid };
 
     const sensitive = this.isSensitive(target, payload);
     if (!sensitive) {
-      await this.apply(target, payload);
+      await this.apply(target, payload, { proposerId, reviewerId: proposerId });
       const row = await this.record(target, payload, false, 'applied', proposerId, proposerId);
       return { ok: true, status: 'applied', id: row };
     }
@@ -193,6 +211,10 @@ export class ConfigService {
   // ---- internals ------------------------------------------------------------
 
   private validate(target: ConfigTarget, p: Record<string, unknown>): ProposeError['reason'] | null {
+    if (target === 'shop_bundle') {
+      if (typeof p.id !== 'string' || p.id === '') return 'invalid-payload';
+      return Number.isInteger(p.price) && (p.price as number) > 0 && (p.price as number) <= 10_000_000 ? null : 'bad-price';
+    }
     if (target === 'shop_item') {
       if (typeof p.sku !== 'string' || typeof p.name !== 'string' || typeof p.currency !== 'string') return 'invalid-payload';
       if (typeof p.price !== 'number' || p.price < 0) return 'bad-price';
@@ -209,7 +231,7 @@ export class ConfigService {
   }
 
   private isSensitive(target: ConfigTarget, p: Record<string, unknown>): boolean {
-    if (target === 'shop_item') return typeof p.price === 'number' && p.price >= SENSITIVE_PRICE;
+    if (target === 'shop_item' || target === 'shop_bundle') return typeof p.price === 'number' && p.price >= SENSITIVE_PRICE;
     // events that grant currency/rewards are sensitive
     const rewards = p.rewards as Record<string, unknown> | undefined;
     return !!rewards && Object.keys(rewards).length > 0;
@@ -218,9 +240,15 @@ export class ConfigService {
   /**
    * Apply a change. A shop proposal names only what it changes, but the shop's upsert writes the whole row, so every
    * field the proposal omits is taken from the current item (otherwise a price change would wipe the picture, premium
-   * flag, position, sale window and kind).
+   * flag, position, sale window and kind). `who` decided it: the proposer for a change that needed nobody else, else
+   * the approving reviewer.
    */
-  private async apply(target: ConfigTarget, p: Record<string, unknown>, who: { proposerId: string | null; reviewerId: string } | null = null): Promise<void> {
+  private async apply(target: ConfigTarget, p: Record<string, unknown>, who: { proposerId: string | null; reviewerId: string }): Promise<void> {
+    if (target === 'shop_bundle') {
+      if (!this.bundles) throw new Error('bundles are not wired into approvals');
+      await this.bundles.setPrice(p.id as string, p.price as number, who.reviewerId);
+      return;
+    }
     if (target === 'earn_rule') {
       if (!this.appliers.earn) throw new Error('earn rules are not wired into approvals');
       await this.appliers.earn.upsertRule({
@@ -233,7 +261,7 @@ export class ConfigService {
       return;
     }
     if (target === 'plus_grant') {
-      if (!this.appliers.plus || !who?.proposerId) throw new Error('a Hevalo+ grant is applied from Approvals, for the admin who asked');
+      if (!this.appliers.plus || !who.proposerId) throw new Error('a Hevalo+ grant is applied from Approvals, for the admin who asked');
       const given = await this.appliers.plus(who.proposerId, { userId: p.userId as string, days: p.days as number, reason: p.reason as string }, who.reviewerId);
       if (!given) throw new AppError('NOT_FOUND', 404, 'that account is gone');
       return;

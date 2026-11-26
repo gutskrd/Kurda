@@ -145,6 +145,7 @@ export function UserProfile(): React.JSX.Element {
     country: profile.country ? { code: profile.country, name: countryName(profile.country, locale) ?? profile.country } : null,
     frameSku: profile.frameSku ?? null,
     frameUrl: profile.frameUrl ?? null,
+    tag: profile.tag ?? null,
   };
 
   return (

@@ -1007,6 +1007,21 @@ button.feature {
 .shop-thumb-frame {
   max-width: 112px;
 }
+/* a word tag is shown as the pill it is worn as, on the tile's own ground */
+.shop-thumb-tag {
+  max-width: none;
+  aspect-ratio: auto;
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+}
+.shop-tag-art {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
 .shop-thumb img,
 .shop-thumb video {
   width: 100%;

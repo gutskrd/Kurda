@@ -78,6 +78,27 @@ describe('Approvals', () => {
     expect(within(plus).getByText('Own Hevalo+')).toBeInTheDocument();
   });
 
+
+  it('says what a bundle’s new price would be, as a bundle', async () => {
+    setToken('tok');
+    fakeApi(
+      on('GET', '/me', json({ user: { id: 'me-1', username: 'rojda', roles: ['admin'] } })),
+      on(
+        'GET',
+        '/admin/config/changes',
+        json({ pending: [{ id: 'c-bundle', target: 'shop_bundle', payload: { id: 'cayxane', price: 600 }, sensitive: true, proposerId: 'other-2', createdAt: '2026-10-12T10:00:00.000Z' }] }),
+      ),
+    );
+    renderUi(
+      <AuthProvider>
+        <Approvals />
+      </AuthProvider>,
+    );
+    const row = (await screen.findByText('cayxane')).closest('tr') as HTMLElement;
+    expect(row).toHaveTextContent('600 Zêr for the bundle');
+    expect(within(row).getByText('Bundle')).toBeInTheDocument();
+  });
+
   it('will not offer to approve your own change, and asks before approving another admin’s', async () => {
     const user = userEvent.setup();
     const { calls } = show();

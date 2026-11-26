@@ -14,8 +14,8 @@ export interface InventoryItem {
   assetUrl: string | null;
 }
 
-/** The two cosmetics you wear on a profile. Avatars have their own endpoint. */
-export type CosmeticSlot = 'background' | 'icon';
+/** The cosmetics worn on a profile through `PUT /me/cosmetics/<slot>`, the word tag among them; avatars and frames have their own. */
+export type CosmeticSlot = 'background' | 'icon' | 'tag';
 
 export function inventory(client: ApiClient): Promise<ApiResult<{ items: InventoryItem[] }>> {
   return client.get<{ items: InventoryItem[] }>('/me/inventory');

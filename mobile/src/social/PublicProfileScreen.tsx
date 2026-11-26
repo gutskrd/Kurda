@@ -22,7 +22,7 @@ import { friendActionLabel, isActionable, isUndo, undoAction, type FriendStatus 
 import { knownTier, leagueName } from '../leagues/format';
 import { Framed, frameTierOf } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
-import { badgesInOrder, countryName, fireLevel, type ProfileBadge, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
+import { badgesInOrder, countryName, fireLevel, type ProfileBadge, type ProfileLeague, type ProfileWordTag, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import { Flag } from '../profile/cosmetic-parts';
 import { Avatar } from '../profile/Avatar';
 import { ActivityGrid, ActivityTabs, ProfileActivitySkeleton, nearEnd, useProfileActivity } from '../profile/ProfileActivity';
@@ -71,6 +71,8 @@ interface Profile {
   frameSku?: string | null;
   /** The picture of a frame from the shop; a season frame is drawn from its SKU. */
   frameUrl?: string | null;
+  /** The word tag worn by the name, while it is owned. */
+  tag?: ProfileWordTag | null;
   /** Badges earned (and the legacy tournament win). */
   achievements?: number;
   /** The three badges they chose to show. */
@@ -305,6 +307,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                       stats={profile.private ? undefined : <ProfileFacts facts={facts(profile)} head />}
                       name={shownName}
                       level={profile.private ? null : level}
+                      tag={profile.private ? null : profile.tag}
                       handle={`@${profile.username}`}
                       handleAside={
                         profile.private ? null : (

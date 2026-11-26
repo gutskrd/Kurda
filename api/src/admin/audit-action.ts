@@ -38,6 +38,7 @@ export function auditTargetType(routeUrl: string): string | null {
   if (routeUrl.startsWith('/admin/appeals/:id')) return 'appeal';
   if (routeUrl.startsWith('/admin/users/:id') || routeUrl.startsWith('/admin/antibot/:userId')) return 'user';
   if (routeUrl.startsWith('/shop/items/:sku')) return 'shop_item';
+  if (routeUrl.startsWith('/admin/shop/bundles/:id')) return 'shop_bundle';
   if (routeUrl.startsWith('/admin/tags/:key')) return 'tag';
   if (routeUrl.startsWith('/admin/earn-rules/:key')) return 'earn_rule';
   if (routeUrl.startsWith('/admin/events/:key')) return 'event';

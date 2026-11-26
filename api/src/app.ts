@@ -32,6 +32,8 @@ import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
 import { registerShopRoutes } from './shop/routes.js';
 import { registerShopAdminRoutes } from './shop/admin-routes.js';
+import { BundleService } from './shop/bundles.js';
+import { registerBundleRoutes } from './shop/bundle-routes.js';
 import { ArtOverrideService } from './art/overrides.js';
 import { registerArtRoutes } from './art/routes.js';
 import { RefreshedNotices } from './shop/refreshed.js';
@@ -779,14 +781,21 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const events = new EventService(app.db, app.cache);
     registerEventRoutes(app, events);
     // Shop and event config with dual-admin approval.
-    // and the earn rules and an admin's own Hevalo+, which pay Zêr, through the same Approvals
+    // and the earn rules and an admin's own Hevalo+, which pay Zêr, and a bundle's price of 500 or more, through the
+    // same Approvals
     const userAdmin = new UserAdminService(app.db, new WalletService(app.db), moderationKit);
+    const bundleService = new BundleService(app.db, new WalletService(app.db), (k) => (app.storage ? app.storage.publicUrl(k) : null));
+    const bundleAudit = new AuditService(app.db);
     const approvals = new ConfigService(app.db, {
       shop: new ShopService(app.db, new WalletService(app.db), app.cache),
       events,
       earn: earnService,
       plus: async (adminId, change, approvedBy) =>
         (await userAdmin.grantPlus(adminId, change.userId, change.days, change.reason, undefined, new Date(), approvedBy)).ok,
+      bundles: {
+        priceProblem: (id, price) => bundleService.priceProblem(id, price),
+        setPrice: async (id, price, adminId) => void (await bundleService.editBundle(bundleAudit, adminId, 'approvals', id, { price }, { approved: true })),
+      },
     });
     registerConfigRoutes(app, approvals);
     registerEarnRoutes(app, earnService, approvals);
@@ -938,6 +947,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     });
     // the admin's art uploads, partial edits, and delete-or-retire
     registerShopAdminRoutes(app, shop, config);
+    // themed sets sold for less than their parts, gifts for the bag included
+    registerBundleRoutes(app, bundleService);
     // Pictures put in place of the built-in art: badges, emblems, frames, default avatars, event banners.
     registerArtRoutes(app, new ArtOverrideService(app.db, (key) => (app.storage ? app.storage.publicUrl(key) : null)));
     // taking Hevalo offline for a while, and the status the apps ask while it is

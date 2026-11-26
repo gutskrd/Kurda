@@ -65,13 +65,29 @@ only to an account the server knows is an adult and only while Hevalo+ is on sal
 
 | What | Zêr |
 |---|---|
-| Backgrounds | 200–300 |
-| Icons | 300–450 |
-| Frames | 600–1,000 |
+| Backgrounds | 120 / 150 / 200 (a few free) |
+| Icons | 150 / 200 / 250 |
+| Word tags | 100 / 150 / 200 |
+| Frames | 250 / 350 / 450, the five showpieces 600 |
+| Bundles | 375–650 |
 | Trees | 400–1,100 |
 | Changing the letter bird | 250 |
 | The Kurdish tag | 250 |
 | Gifts | 1–100,000 |
+
+- **A ladder by craft** (shared `PRICE_LADDER`). Each step is a rarity the shop names beside the price: Classic,
+  Fine, Rare and, for the five showpiece frames, Masterwork. A background costs about what a flower gift or a kitten
+  does, a frame about what a samovar or a frame drum does; the dearest frame is under two months of Hevalo+, which lends
+  every members' icon and background besides, so owning one look outright never undercuts the plan. Prices moved down
+  only where they were still as shipped (migration 1751000890000); a purchase stays final and what was paid stays in
+  the ledger.
+- **Word tags.** A Kurmancî word or phrase worn as a pill by the name (Heval, Dilovan, Mêvanperwer, Dengbêj…), one at
+  a time, shown only while owned.
+- **Bundles.** A background, a frame, an icon and a word tag that belong together, with a few small gifts for the gift
+  bag (five teas and two coffees, an apple, a flower), for 43–48% less than the parts. Someone who owns some of the
+  parts pays the bundle's own rate on the rest, never under a fifth of its price; once every cosmetic is theirs it is
+  not sold to them. The saving and "Best value" are computed and shown only to known adults; everyone else sees the
+  same bundles and prices without them. A child's profile buys nothing.
 
 Streak restore is no longer bought: a member gets one free restore a month (as today), and anyone wins a broken streak
 back by finishing three lessons or practice sessions in one day within the three-day window. A price of 500 Zêr or

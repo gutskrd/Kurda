@@ -108,6 +108,7 @@ export const CHILD_ROUTES: ReadonlySet<string> = new Set([
   'PUT /me/cosmetics/background',
   'PUT /me/cosmetics/icon',
   'PUT /me/cosmetics/frame',
+  'PUT /me/cosmetics/tag',
   'PUT /me/cosmetics/icon/visibility',
   // games played alone or passed round one phone
   'GET /games/availability',

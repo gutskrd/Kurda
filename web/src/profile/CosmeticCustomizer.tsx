@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { applyItemFilter, countByCategory, DEFAULT_ITEM_FILTER, isFiltered, itemCategory, shopItemDescription, type ItemFilter } from '@kurda/shared';
+import { applyItemFilter, countByCategory, DEFAULT_ITEM_FILTER, isFiltered, isWordTag, itemCategory, shopItemDescription, type ItemFilter } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError, requestId } from '../lib/api';
 import type { ApiError, InventoryItem, MeProfile, PurchaseResult, ShopItem } from '../lib/types';
@@ -24,11 +24,12 @@ import { ZerValue } from '../shop/ZerValue';
 import { PictureFrame, SeasonFrame, frameTier } from '../ranks/art';
 import { rankTierNamed } from '../ranks/names';
 import { useAvatarSrc } from '../art/overrides';
+import { TagPill } from './TagPill';
 
-/** The kinds the inventory keeps, in the shared order. Tags only appear once one is owned. */
+/** The kinds the inventory keeps, in the shared order. */
 type Kind = 'background' | 'icon' | 'frame' | 'tag';
-/** The kinds that are worn on a profile, each through `PUT /me/cosmetics/<kind>`. */
-type Wearable = Exclude<Kind, 'tag'>;
+/** The kinds that are worn on a profile, each through `PUT /me/cosmetics/<kind>`; of the tags, the word tags. */
+type Wearable = Kind;
 type Ownership = 'all' | 'owned' | 'notOwned';
 type Currency = 'zer';
 
@@ -46,17 +47,18 @@ interface Tile {
   currency: Currency;
 }
 
-/** What an empty tab says. The Tags tab is only there once a tag is owned, so it is never empty. */
+/** What an empty tab says. */
 const EMPTY: Readonly<Record<Wearable, MessageKey>> = {
   background: 'edit.noBackgrounds',
   icon: 'edit.noIcons',
   frame: 'edit.noFrames',
+  tag: 'edit.noTags',
 };
 
 /**
  * Owned items (`/me/inventory`) then items for sale (`/shop`), since an owned unique item is not in the shop. Season
- * frames, given while game ranks ran, appear only once owned, and tags only as owned, since the tag on sale is bought in
- * the Shop.
+ * frames, given while game ranks ran, appear only once owned, and the Kurdish tag only as owned, since it is bought in
+ * the Shop; word tags on sale are offered here as frames are.
  */
 function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { description?: string | null }>, locale: string): Tile[] {
   const map = new Map<string, Tile>();
@@ -78,7 +80,7 @@ function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { descrip
   }
   for (const it of shop) {
     const kind = itemCategory(it.category);
-    if ((kind !== 'background' && kind !== 'icon' && kind !== 'frame') || map.has(it.sku)) continue;
+    if (map.has(it.sku) || !(kind === 'background' || kind === 'icon' || kind === 'frame' || (kind === 'tag' && isWordTag(it)))) continue;
     map.set(it.sku, {
       sku: it.sku,
       name: it.name,
@@ -167,12 +169,14 @@ export function CosmeticCustomizer({
   const background = wearing('background');
   const icon = wearing('icon');
   const frame = wearing('frame');
+  const tag = wearing('tag');
   const lines = {
     background: useOptimistic(me.equippedBackgroundSku ?? null, background.send, background.options),
     icon: useOptimistic(me.equippedIconSku ?? null, icon.send, icon.options),
     frame: useOptimistic(frameSku, frame.send, frame.options),
+    tag: useOptimistic(me.equippedTagSku ?? null, tag.send, tag.options),
   };
-  const worn: Record<Wearable, string | null> = { background: lines.background[0], icon: lines.icon[0], frame: lines.frame[0] };
+  const worn: Record<Wearable, string | null> = { background: lines.background[0], icon: lines.icon[0], frame: lines.frame[0], tag: lines.tag[0] };
   const [iconEnabled, wantIconEnabled] = useOptimistic(me.premiumIconEnabled ?? true, (enabled) => client.put('/me/cosmetics/icon/visibility', { enabled }), {
     onSaved: onChanged,
     onFailed: (error) => setMsg({ kind: 'err', text: failureText(error, t) }),
@@ -224,7 +228,7 @@ export function CosmeticCustomizer({
   // every kind, searched and narrowed and sorted: what the tabs count
   const matching = applyItemFilter(named, { ...filter, category: 'all' }, keep, locale);
   const counts = countByCategory(matching);
-  const isWorn = (tile: Tile): boolean => tile.category !== 'tag' && worn[tile.category] === tile.sku;
+  const isWorn = (tile: Tile): boolean => worn[tile.category] === tile.sku;
   const inTab = matching.filter((tile) => tile.category === active);
   // what you own (or wear: a Premium item can be worn unbought) comes first, in the chosen order within each
   const yours = (tile: Tile): boolean => tile.owned || isWorn(tile);
@@ -285,9 +289,7 @@ export function CosmeticCustomizer({
                 equipped={isWorn(tile)}
                 balance={balances[tile.currency]}
                 busy={busy}
-                onEquip={(sku) => {
-                  if (tile.category !== 'tag') equip(tile.category, sku);
-                }}
+                onEquip={(sku) => equip(tile.category, sku)}
                 onBuy={() => void buy(tile)}
               />
             ))}
@@ -313,7 +315,6 @@ export function CosmeticCustomizer({
 /** A kind with nothing in it yet. */
 function EmptyKind({ kind }: { kind: Kind }): React.JSX.Element | null {
   const t = useT();
-  if (kind === 'tag') return null;
   return (
     <p className="muted" style={{ margin: 0 }}>
       {t(EMPTY[kind])}
@@ -342,7 +343,9 @@ function CosmeticTile({
 }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
-  const equippable = tile.category !== 'tag' && (tile.owned || (tile.premiumOnly && premium));
+  // the Kurdish tag is a main tag, shown and hidden under Tags; every other kind is worn from here
+  const managed = tile.category === 'tag' && !isWordTag(tile);
+  const equippable = !managed && (tile.owned || (tile.premiumOnly && premium));
   // A free item goes through the buy path, which the server grants without charging, so no balance is needed.
   const buyable = !tile.owned && tile.price != null && tile.price >= 0;
   const free = tile.price === 0;
@@ -368,6 +371,8 @@ function CosmeticTile({
               {face ? <img src={face} alt="" /> : <span className="art-frame-blank" />}
             </PictureFrame>
           </span>
+        ) : tile.category === 'tag' && !managed ? (
+          <TagPill tag={{ label: tile.name, meaning: tile.description }} />
         ) : tile.assetUrl ? (
           <ItemPicture src={tile.assetUrl} />
         ) : (
@@ -394,8 +399,8 @@ function CosmeticTile({
           </span>
         )}
       </figcaption>
-      {tile.category === 'tag' ? (
-        // a tag is not worn from here: it is shown and hidden under Tags, further down this page
+      {managed ? (
+        // the Kurdish tag is not worn from here: it is shown and hidden under Tags, further down this page
         <a href="#tags" className="btn btn-secondary btn-sm cosmetic-action">
           {t('edit.manageTags')}
         </a>

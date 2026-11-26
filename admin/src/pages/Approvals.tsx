@@ -5,7 +5,7 @@ import { Badge, Button, PageHeader, Section, Table, Time, UserLink, errorLine, u
 
 interface PendingChange {
   id: string;
-  target: 'shop_item' | 'event' | 'earn_rule' | 'plus_grant';
+  target: 'shop_item' | 'event' | 'earn_rule' | 'plus_grant' | 'shop_bundle';
   payload: Record<string, unknown>;
   sensitive: boolean;
   proposerId: string | null;
@@ -20,7 +20,7 @@ function day(v: unknown): string {
 }
 
 /** What each kind of change is called on the list. */
-const KIND: Record<PendingChange['target'], string> = { shop_item: 'Shop item', event: 'Event', earn_rule: 'Earn rule', plus_grant: 'Own Hevalo+' };
+const KIND: Record<PendingChange['target'], string> = { shop_item: 'Shop item', event: 'Event', earn_rule: 'Earn rule', plus_grant: 'Own Hevalo+', shop_bundle: 'Bundle' };
 
 /** An earn rule as it would pay: "80 Zêr each time, at most 200 a day, 60 s between". */
 function rulePays(p: Record<string, unknown>): string {
@@ -32,6 +32,14 @@ function rulePays(p: Record<string, unknown>): string {
 /** What a change would do, in a line or two a second admin can judge. */
 function Change({ c }: { c: PendingChange }): React.JSX.Element {
   const p = c.payload;
+  if (c.target === 'shop_bundle') {
+    return (
+      <>
+        <strong>{s(p.id)}</strong>
+        <span className="cell-sub">{Number(p.price).toLocaleString()} Zêr for the bundle</span>
+      </>
+    );
+  }
   if (c.target === 'earn_rule') {
     return (
       <>
@@ -89,6 +97,10 @@ export function Approvals(): React.JSX.Element {
       event: { title: `Schedule “${s(c.payload.name)}”?`, body: 'The event goes live in its window, with its rewards.' },
       earn_rule: { title: `Let ${s(c.payload.key)} pay more?`, body: `${rulePays(c.payload)}, for everyone, from the next Zêr earned that way.` },
       plus_grant: { title: 'Give the admin who asked Hevalo+ for their own account?', body: 'Membership pays Zêr, so it is never given to oneself alone.' },
+      shop_bundle: {
+        title: `Sell the bundle “${s(c.payload.id)}” for ${Number(c.payload.price).toLocaleString()} Zêr?`,
+        body: 'It takes effect in the shop at once.',
+      },
     };
     const yes = await dialogs.confirm({ ...asked[c.target], confirmLabel: 'Approve' });
     if (!yes) return;
@@ -109,7 +121,7 @@ export function Approvals(): React.JSX.Element {
   /** Your own change: taken back, kept on record as withdrawn (the reject route, with that reason). */
   async function withdraw(c: PendingChange): Promise<void> {
     const yes = await dialogs.confirm({
-      title: `Withdraw your change to “${s(c.payload.name ?? c.payload.key ?? 'Hevalo+')}”?`,
+      title: `Withdraw your change to “${s(c.payload.name ?? c.payload.key ?? c.payload.id ?? 'Hevalo+')}”?`,
       body: 'Nothing is changed, and it leaves this list. You can propose it again.',
       confirmLabel: 'Withdraw',
     });
@@ -159,8 +171,8 @@ export function Approvals(): React.JSX.Element {
       <PageHeader
         title="Approvals"
         subtitle={
-          'Shop items priced at 500 or more, events that give rewards, earn rules that pay more and an admin’s Hevalo+ for ' +
-          'their own account wait here for a second admin. Nobody can approve their own.'
+          'Shop items and bundles priced at 500 or more, events that give rewards, earn rules that pay more and an admin’s ' +
+          'Hevalo+ for their own account wait here for a second admin. Nobody can approve their own.'
         }
         actions={
           <Button icon="refresh" onClick={() => void list.reload()} disabled={list.loading}>

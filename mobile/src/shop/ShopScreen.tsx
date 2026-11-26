@@ -11,8 +11,12 @@ import {
   giftTierFor,
   groupByCategory,
   isFiltered,
+  isWordTag,
   itemCategory,
   shopItemDescription,
+  type BundlePurchaseResult,
+  type BundleView,
+  type BundlesView,
   type ItemCategory,
   type ItemFilter,
 } from '@kurda/shared';
@@ -59,6 +63,11 @@ import { YourBird, useLettersHome } from './YourBird';
 import { YourTree, useShopTree } from './YourTree';
 import { MembersBox } from './MembersBox';
 import { ZerValue, useZerValue } from './value';
+import { BundleDetail, BundleRow, RarityText, partOf } from './Bundles';
+import { BundleMoment } from './BundleMoment';
+import { ProfilePreview, canTryOn, lookOf, type PreviewLook } from './ProfilePreview';
+import { TagPill } from '../profile/TagPill';
+import type { TranslationKey } from '../i18n/translations';
 import { useNarrowPage } from '../theme/pageWidth';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
@@ -76,8 +85,9 @@ const GUTTER = layout.gutter;
  * The shop, sorted by kind: every item under its kind (Backgrounds, Icons, Frames, Tags, and "More" for an admin's own
  * categories) in the browser's order, each with a count and picture. Above the list, a search over names and meanings
  * ("cay" and "tea" both find Çay), one kind at a time, an order and "Within my Zêr"; received gifts sit above the
- * catalogue, and the search and kinds stick at the top once scrolled past. Over the search, rows for your pen pal bird
- * and your tree (YourBird, YourTree), read with the catalogue.
+ * catalogue, and the search and kinds stick at the top once scrolled past. The bundles lead (Bundles.tsx), and over the
+ * search are rows for your pen pal bird and your tree (YourBird, YourTree), read with the catalogue. Anything worn, and
+ * any bundle, can be tried on your own profile from its sheet.
  *
  * Every purchase is final and the item's sheet says so beside Buy; dear items ask once more. Every price has its money
  * value beside it (`ZerValue`), and a Hevalo+ member finds the month's box above the catalogue.
@@ -106,6 +116,13 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   // A gift from the shop goes into your chat with that friend: fly it there, then say where it is.
   const [sentGift, setSentGift] = useState<{ item: ShopItem; to: { userId: string; username: string; name: string }; flying: boolean } | null>(null);
   const [filter, setFilter] = useState<ItemFilter>(DEFAULT_ITEM_FILTER);
+  // Bundles, priced for you; the one open in its sheet, why its purchase did not go through, and the one just bought.
+  const [bundles, setBundles] = useState<BundlesView | null>(null);
+  const [openBundle, setOpenBundle] = useState<BundleView | null>(null);
+  const [bundleError, setBundleError] = useState<string | null>(null);
+  const [unwrapped, setUnwrapped] = useState<BundleView | null>(null);
+  // A look being tried on, in the sheet it was opened from.
+  const [trying, setTrying] = useState<PreviewLook | null>(null);
   const [affordableOnly, setAffordableOnly] = useState(false);
   // The search and the kinds are pinned once the received gifts have scrolled away; pinned, they (and the bar above)
   // take a fill and a hairline, as a navigation bar does over scrolled content.
@@ -121,7 +138,14 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
       client.get<{ balances: Balances }>('/me/wallet'),
       letters.reload(),
       tree.reload(),
-    ]).then(([cat, wallet]) => {
+      client.get<BundlesView>('/shop/bundles'),
+    ]).then(([cat, wallet, , , bundled]) => {
+      if (bundled.ok) {
+        const fresh = bundled.data.bundles ?? [];
+        setBundles({ bundles: fresh, nudges: bundled.data.nudges === true });
+        // An open bundle shows its fresh price, after one changed.
+        setOpenBundle((open) => (open ? (fresh.find((b) => b.id === open.id) ?? open) : open));
+      }
       // Each description in the reader's language, so what is searched is what is read.
       if (cat.ok) setItems(cat.data.items.map((item) => ({ ...item, description: shopItemDescription(item, locale) })));
       if (wallet.ok) {
@@ -175,10 +199,59 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
     [client, load, t],
   );
 
+  /** Buys the open bundle at the price shown; the server works the price out again and refuses one that changed. */
+  const buyBundle = useCallback(
+    async (bundle: BundleView) => {
+      setBusy(true);
+      setBundleError(null);
+      const res = await client.post<BundlePurchaseResult>('/shop/bundles/purchase', {
+        bundle: bundle.id,
+        idempotencyKey: attemptKey(bundle.id),
+        expectedPrice: bundle.quote.price,
+      });
+      setBusy(false);
+      if (res.ok) {
+        haptic('tap');
+        setBalances({ zer: res.data.balance });
+        setOpenBundle(null);
+        setUnwrapped(bundle);
+        void load();
+        return;
+      }
+      const why: Record<string, TranslationKey> = {
+        PRICE_CHANGED: 'bundle.priceChanged',
+        BAG_FULL: 'bundle.bagFull',
+        BUNDLE_UNAVAILABLE: 'bundle.unavailable',
+        ALREADY_OWNED: 'bundle.complete',
+      };
+      const key = why[res.error.code ?? ''];
+      if (!isMaintenance(res.error)) haptic('error');
+      setBundleError(key ? t(key) : describeError(res.error, t));
+      if (res.error.code === 'PRICE_CHANGED' || res.error.code === 'ALREADY_OWNED') void load();
+    },
+    [client, load, t],
+  );
+
+  /** Puts a bought bundle's whole set on at once; true when every part went on. */
+  const wearSet = useCallback(
+    async (bundle: BundleView): Promise<boolean> => {
+      const kinds = ['background', 'icon', 'frame', 'tag'] as const;
+      const results = await Promise.all(
+        kinds.map((kind) => {
+          const part = partOf(bundle, kind);
+          return part ? client.put(`/me/cosmetics/${kind}`, { sku: part.sku }) : Promise.resolve({ ok: true as const });
+        }),
+      );
+      return results.every((r) => r.ok);
+    },
+    [client],
+  );
+
   /** The item's sheet goes, and with it the word that it was just bought. */
   const closeItem = useCallback(() => {
     setSelected(null);
     setBought(null);
+    setTrying(null);
   }, []);
 
   const confirmBuy = useCallback(
@@ -278,6 +351,15 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         >
           <View style={[styles.inbox, styles.column]} onLayout={(e) => setInboxHeight(e.nativeEvent.layout.height)}>
             <ReceivedGifts />
+            {/* Bundles lead the shop: a set that belongs together, priced for you. */}
+            <BundleRow
+              view={bundles}
+              onOpen={(b) => {
+                setBundleError(null);
+                setTrying(null);
+                setOpenBundle(b);
+              }}
+            />
             <MembersBox />
             <View style={styles.ownRows}>
               <YourBird home={letters} zer={purse} onZer={learnZer} />
@@ -351,8 +433,10 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         </ScrollView>
 
         {/* No title in the header: the item's own name heads the sheet, under its picture. */}
-        <BottomSheet visible={selected !== null} onClose={closeItem}>
-          {selected ? (
+        <BottomSheet visible={selected !== null} onClose={closeItem} onBack={trying ? () => setTrying(null) : undefined}>
+          {selected && trying ? (
+            <ProfilePreview look={trying} />
+          ) : selected ? (
             <ItemDetail
               item={selected}
               balances={balances}
@@ -365,9 +449,37 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                 setSelected(null);
                 setGifting(it);
               }}
+              onTryOn={canTryOn(selected) ? () => setTrying(lookOf(selected)) : undefined}
             />
           ) : null}
         </BottomSheet>
+
+        <BottomSheet
+          visible={openBundle !== null}
+          onClose={() => {
+            if (busy) return;
+            setOpenBundle(null);
+            setTrying(null);
+          }}
+          onBack={trying ? () => setTrying(null) : undefined}
+        >
+          {openBundle && trying ? (
+            <ProfilePreview look={trying} />
+          ) : openBundle ? (
+            <BundleDetail
+              bundle={openBundle}
+              nudges={bundles?.nudges === true}
+              zer={balances.zer}
+              busy={busy}
+              error={bundleError}
+              onBuy={() => void buyBundle(openBundle)}
+              onTryOn={() => setTrying(Object.assign({}, ...openBundle.parts.map(lookOf)) as PreviewLook)}
+              onEarnMore={onEarnMore}
+            />
+          ) : null}
+        </BottomSheet>
+
+        {unwrapped ? <BundleMoment bundle={unwrapped} onWear={() => wearSet(unwrapped)} onClose={() => setUnwrapped(null)} /> : null}
 
         {gifting ? (
           <GiftSheet
@@ -504,6 +616,8 @@ function ShopCard({ item, balances, onPress }: { item: ShopItem; balances: Balan
       <View style={styles.cardArt}>
         {kind === 'frame' && item.assetUrl ? (
           <FrameArt path={item.assetUrl} width={FRAME_ART} />
+        ) : isWordTag(item) ? (
+          <TagPill tag={{ label: item.name, meaning: null }} style={styles.tagArt} />
         ) : kind === 'background' ? (
           <ItemArt category={item.category} path={item.assetUrl} style={styles.stretch} />
         ) : (
@@ -521,6 +635,7 @@ function ShopCard({ item, balances, onPress }: { item: ShopItem; balances: Balan
           {item.description}
         </Text>
       ) : null}
+      <RarityText item={item} />
       <View style={[styles.priceRow, { flexDirection: dir.row }]}>
         {item.price === 0 ? (
           // A price like any other: green is for a right answer.
@@ -551,6 +666,7 @@ function ItemDetail({
   onBuy,
   onEarnMore,
   onGift,
+  onTryOn,
 }: {
   item: ShopItem;
   balances: Balances;
@@ -561,6 +677,8 @@ function ItemDetail({
   onBuy: (item: ShopItem) => void;
   onEarnMore: () => void;
   onGift: (item: ShopItem) => void;
+  /** Lays it over your own profile, where it is something worn. */
+  onTryOn?: () => void;
 }) {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -576,6 +694,8 @@ function ItemDetail({
       <Pop when={bought}>
         {itemCategory(item.category) === 'frame' && item.assetUrl ? (
           <FrameArt path={item.assetUrl} width={160} style={styles.preview} />
+        ) : isWordTag(item) ? (
+          <TagPill tag={{ label: item.name, meaning: item.description }} style={styles.preview} />
         ) : (
           <ItemArt category={item.category} path={item.assetUrl} width={artWidth} style={styles.preview} />
         )}
@@ -584,6 +704,7 @@ function ItemDetail({
         {item.name}
       </Text>
       {item.description ? <Text style={[styles.detailDesc, { color: colors.textSecondary }]}>{item.description}</Text> : null}
+      <RarityText item={item} />
       {bought ? null : (
         <Text style={[styles.detailPrice, { color: colors.textPrimary }]}>{priceWords(item, t, locale, value)}</Text>
       )}
@@ -614,6 +735,7 @@ function ItemDetail({
             onPress={() => onBuy(item)}
             style={styles.stretch}
           />
+          {onTryOn ? <ClayButton label={t('shop.tryOn')} icon="eye" onPress={onTryOn} style={styles.stretch} /> : null}
           {/* Said where the money is spent: nothing bought can be handed back. */}
           {item.price > 0 ? <Text style={[styles.finalNote, { color: colors.textSecondary }]}>{t('shop.finalNote')}</Text> : null}
           {/* Buying it for somebody else costs the same, so it sits beside Buy (quieter, since most people buy for
@@ -681,6 +803,7 @@ const styles = StyleSheet.create({
   itemName: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   itemDesc: { fontSize: typography.sizes.text, lineHeight: 22 },
   stretch: { alignSelf: 'stretch' },
+  tagArt: { alignSelf: 'center' },
   // At the card's foot, so the prices of a row line up whatever their meanings' length.
   priceRow: { alignItems: 'center', gap: spacing.xs, marginTop: 'auto', paddingTop: spacing.xs },
   price: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },

@@ -49,6 +49,7 @@ interface Me {
   profilePhotoPending?: PendingPicture | null;
   equippedBackgroundSku?: string | null;
   equippedIconSku?: string | null;
+  equippedTagSku?: string | null;
   premiumIconEnabled?: boolean;
   /* `/me` sends these two. */
   favoritePoem?: FavoriteRef | null;
@@ -387,6 +388,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
             <CosmeticPicker
               equippedBackground={me?.equippedBackgroundSku ?? null}
               equippedIcon={me?.equippedIconSku ?? null}
+              equippedTag={me?.equippedTagSku ?? null}
               iconVisible={me?.premiumIconEnabled ?? true}
               onChanged={load}
             />
