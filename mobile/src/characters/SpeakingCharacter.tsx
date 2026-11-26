@@ -92,6 +92,11 @@ export interface SpeakingCharacterProps {
    * way.
    */
   reaction?: CharacterReaction | null;
+  /**
+   * An act to play now (shared `ACTS`, by name), and again each time `at` changes: a scene's beat beside the road, where
+   * the same act comes round again.
+   */
+  cue?: { act: ActName; at: number } | null;
   /** Asleep where there is nothing to do yet: eyes shut, a slow breath, a drifting "z" (shared `RESTING`). */
   resting?: boolean;
   /**
@@ -170,6 +175,7 @@ export function SpeakingCharacter({
   gaze = null,
   quiet = false,
   reaction = null,
+  cue = null,
   resting = false,
   onPress,
   turn = null,
@@ -402,6 +408,12 @@ export function SpeakingCharacter({
     const id = later(160, () => playRef.current('arrive'));
     return () => clearTimeout(id);
   }, [reaction, rig, later, resting, speaker]);
+  // A cue plays as given, once for each beat it is given on.
+  const cueAct = cue?.act ?? null;
+  const cueAt = cue?.at ?? null;
+  useEffect(() => {
+    if (cueAct) playRef.current(cueAct);
+  }, [cueAct, cueAt]);
   useEffect(() => stopAct, [stopAct]);
 
   // ---- Breathing, and the head's drift ----
@@ -722,7 +734,7 @@ export function SpeakingCharacter({
           ) : (
             <Layer xml={layers.body} width={width} height={height} />
           )}
-          <Animated.View style={[StyleSheet.absoluteFill, nod]}>
+          <Animated.View style={[StyleSheet.absoluteFill, nod]} testID="sc-head">
             {turn && rig?.antlers ? (
               <TurnedHead
                 layers={layers}

@@ -1,8 +1,24 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import Svg, { Defs, Ellipse, Path, RadialGradient, Stop as GradientStop } from 'react-native-svg';
-import { PATH_GEOMETRY, PATH_MOTION, PATH_RETURN, PATH_STOP_ART, type PathStop, type PathStopLook, type RingChange, type UnitTone } from '@kurda/shared';
+import Svg, { Defs, Ellipse, RadialGradient, Stop as GradientStop } from 'react-native-svg';
+import {
+  PATH_GEOMETRY,
+  PATH_GOLD,
+  PATH_MILESTONE_ART,
+  PATH_MOTION,
+  PATH_RETURN,
+  PATH_STAMP_MOMENT,
+  PATH_STAMP_REPRESS,
+  PATH_STOP_ART,
+  TOPIC_STARS,
+  pathWaxColours,
+  type LessonKind,
+  type PathStop,
+  type PathStopLook,
+  type RingChange,
+  type UnitTone,
+} from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
 import { useDirection } from '../reports/direction';
@@ -12,9 +28,10 @@ import { duration } from '../theme/motion';
 import { PressableScale } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { FACE_INK, REST, ringAt, ringOf, stopLook, type ToneColors } from './path';
-import { STOP_FACE, StopArt } from './PathWorld';
-import { RoundStars, TopicRing } from './TopicRing';
+import { FACE_INK, REST, barAt, barOf, stopLook, type ToneColors } from './path';
+import { MilestoneArt, STOP_FACE, StopArt } from './PathWorld';
+import { WaxSeal, stampTrack } from './WaxSeal';
+import { TopicBar } from './TopicBar';
 import type { SkillNode } from './types';
 
 const { node: NODE } = PATH_GEOMETRY;
@@ -24,9 +41,9 @@ const PRESS = PATH_STOP_ART.press;
 type Stop = PathStop<SkillNode>;
 
 /**
- * What a return from a lesson changed about this stop (shared `pathChanges`, timed by `PATH_RETURN`): its ring
- * moved on (`ring`), it finished and turns gold from `wasLook`, it opened, the bubble moved here, or a unit's prize
- * was won.
+ * What a return from a lesson changed about this stop (shared `pathChanges`, timed by `PATH_RETURN`): its bar moved
+ * on (`ring`), it finished (and became its wax seal, `WaxSeal`) from `wasLook`, it opened, the bubble moved here, or a unit's
+ * prize was won.
  */
 export interface StopChange {
   ring?: RingChange;
@@ -44,19 +61,29 @@ const PULSE = 1.08;
 const PULSE_AT_MS = 700;
 
 /**
- * One stop on the lesson path: a raised disc in its unit's colour (shared drawing) whose glyph says what it is, a
- * gold coin with one to three stars when done, a number when open, a padlock when locked, arrows for review. Skills
- * wear a ring with one piece per lesson (TopicRing). A chapter ends at its story, and a jumpable unit's first stop
- * is drawn as a gate. Pressed, the face sinks into its base.
+ * How a finished topic's wax seal shows: `pressing` plays its sealing once after `delay` (shared `PATH_STAMP_MOMENT`), a
+ * light tap felt as the stamp presses, then `onStamped`; otherwise it is simply there, in its tile's place.
+ */
+export interface StopStamp {
+  pressing: boolean;
+  delay: number;
+  onStamped: () => void;
+}
+
+/**
+ * One stop on the lesson path: a thick round tile in its unit's colour (shared drawing) whose glyph says what its next lesson
+ * is (or its number), a round wax seal in its place once done, a low slate disc with a padlock when locked, arrows for
+ * review. The topic in hand wears a slim bar over its tile with one piece per lesson (TopicBar). A chapter ends at its
+ * milestone, a seal on a stone drum with the chapter's number, and a jumpable unit's first stop is drawn as a gate.
+ * Pressed, the face sinks into its base.
  *
- * The current skill is the road's main button: it stands higher in a glow of its unit's colour, breathes out a ring of
- * it, wears a star and its ring in that colour, and a bubble of the course's own words floats above it; now and then a
- * glint sweeps it and sparks wink on it. It bobs while the path is in view, and every stop squishes under a finger.
- * None of it moves under Reduce Motion.
+ * The current skill is the road's main button: it stands higher in a glow of its unit's colour under its bar, and a
+ * bubble of the course's own words floats above them; now and then a glint sweeps it. It bobs while the path is in
+ * view, and every stop squishes under a finger. None of it moves under Reduce Motion.
  *
- * After a lesson, `change` animates what it did to the stop: the ring fills, the stop pops and turns gold, a star
- * drops in, a padlock gives way to a number, a prize bursts open, and the flag arrives last. Under Reduce Motion
- * there is no `change`.
+ * After a lesson, `change` animates what it did to the stop: the bar fills, the stop becomes its wax seal (`stamp`), a
+ * padlock gives way to a glyph, a prize bursts open, and the flag arrives last. Under Reduce Motion there is no
+ * `change`, and the seal is simply there.
  */
 export function SkillNodeView({
   stop,
@@ -68,7 +95,10 @@ export function SkillNodeView({
   callout,
   change,
   jump,
+  milestone = null,
+  stamp = null,
   near = true,
+  live = false,
   bob = null,
   bobbing = false,
   rise = null,
@@ -91,8 +121,14 @@ export function SkillNodeView({
   change?: StopChange | null;
   /** The flag text over the first stop of a unit that can be jumped to. */
   jump?: { text: string };
+  /** A unit's last stop, its milestone: the unit's number, written on its seal. */
+  milestone?: { number: string } | null;
+  /** A finished topic's stamp, shown or being pressed; null while it waits for its moment. */
+  stamp?: StopStamp | null;
   /** Drawn in full; far from the screen it is a plain round in its colour. */
   near?: boolean;
+  /** Its unit is in view and the app in front, so a gold tile may glint. */
+  live?: boolean;
   /** The current stop's bob. */
   bob?: Animated.Value | null;
   /** Whether the bob is running, so tests can tell. */
@@ -106,6 +142,7 @@ export function SkillNodeView({
 }): React.JSX.Element {
   const { scheme, colors } = useTheme();
   const dir = useDirection();
+  const reduce = useReducedMotion();
   const rest = REST[scheme];
   const look = stopLook(stop, !!jump);
   const raised = stop.kind === 'skill' && stop.state === 'current';
@@ -132,7 +169,7 @@ export function SkillNodeView({
     before.setValue(was ? 1 : 0);
   }
   useEffect(() => {
-    if (!finishing && !opening && !unlocking) return;
+    if (!opening && !unlocking) return;
     const half = PATH_RETURN.popMs / 2;
     if (unlocking) {
       const at = PATH_MOTION.wobbleAtMs;
@@ -149,31 +186,110 @@ export function SkillNodeView({
         clearTimeout(knock);
       };
     }
-    const at = finishing ? PATH_RETURN.finishAtMs : PATH_RETURN.openAtMs;
-    const run = Animated.parallel([
-      Animated.sequence([Animated.delay(at), timing(pop, POP, half), springTo(pop, 1, 'bouncy')]),
-      ...(opening ? [timing(lock, 0, PATH_RETURN.glyphMs, { delay: at })] : []),
-      // It turns gold as it pops.
-      ...(finishing ? [timing(before, 0, half, { delay: at })] : []),
-    ]);
+    const at = PATH_RETURN.openAtMs;
+    const run = Animated.parallel([Animated.sequence([Animated.delay(at), timing(pop, POP, half), springTo(pop, 1, 'bouncy')]), timing(lock, 0, PATH_RETURN.glyphMs, { delay: at })]);
     run.start();
-    const knock = opening ? setTimeout(() => haptic('tap'), at) : null;
+    const knock = setTimeout(() => haptic('tap'), at);
     return () => {
       run.stop();
-      if (knock) clearTimeout(knock);
+      clearTimeout(knock);
     };
-  }, [change, finishing, opening, unlocking, pop, lock, shut, before, wobble]);
+  }, [change, opening, unlocking, pop, lock, shut, wobble]);
+  // A finished stop it was before, from the first frame until it is stamped.
+  useEffect(() => {
+    if (!finishing) return;
+    const run = timing(before, 0, PATH_RETURN.popMs / 2, { delay: PATH_RETURN.finishAtMs });
+    run.start();
+    return () => run.stop();
+  }, [change, finishing, before]);
+
+  // The stamping moment, once: the tile squashes under the stamp as it lands, felt as a light tap.
+  const moment = useRef(new Animated.Value(0)).current;
+  const pressing = !!stamp?.pressing;
+  const stamped = useRef(stamp?.onStamped);
+  stamped.current = stamp?.onStamped;
+  const pressDelay = stamp?.delay ?? 0;
+  // Sealed in its moment just now: with three suns, fire gilds its wax.
+  const [fresh, setFresh] = useState(false);
+  useEffect(() => {
+    if (!pressing) return;
+    moment.setValue(0);
+    const { ms, pressAt } = PATH_STAMP_MOMENT;
+    const run = Animated.timing(moment, { toValue: 1, duration: ms, delay: pressDelay, easing: Easing.linear, useNativeDriver: true, isInteraction: false });
+    run.start(({ finished }) => {
+      if (!finished) return;
+      setFresh(true);
+      stamped.current?.();
+    });
+    const knock = setTimeout(() => haptic('tap'), pressDelay + ms * pressAt);
+    return () => {
+      run.stop();
+      clearTimeout(knock);
+    };
+  }, [pressing, pressDelay, moment]);
 
   const glyph = glyphOf(stop, look, tone, FACE_INK[scheme], tone.ink);
+  // A stop's drawing, base or face: a tile, or for the unit's last stop its milestone, won once open.
+  const art = (l: PathStopLook, part: 'base' | 'face'): React.JSX.Element =>
+    milestone ? (
+      <MilestoneArt won={l === 'story' || l === 'chestOpen'} part={part} near />
+    ) : (
+      <StopArt look={l} tone={unitTone} part={part} near />
+    );
   const squish = useSquish();
   const tilt = wobble.interpolate({ inputRange: [-1, 1], outputRange: [`${-PATH_MOTION.wobble}deg`, `${PATH_MOTION.wobble}deg`] });
   const lifted = rise ? { opacity: rise, transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [PATH_MOTION.rise, 0] }) }] } : null;
-  // Its ring now, and as it was before a lesson that moved it on.
-  const ring = near ? ringOf(stop) : null;
+  // Its bar now, and as it was before a lesson that moved it on.
+  const bar = near ? barOf(stop) : null;
   const moved = change?.ring && stop.kind === 'skill' ? change.ring : null;
   const roundDone = !!moved && moved.to.rounds > moved.from.rounds;
-  // The stars on a finished skill's coin; the one this lesson earned drops in.
-  const stars = stop.kind === 'skill' && stop.state === 'done' && stop.rounds > 0 ? stop.rounds : 0;
+  // A round made whole on a stop already sealed: the stamp comes back as the stop finishes and presses the new sun in,
+  // felt as a light tap; until then it shows the suns it had.
+  const again = useRef(new Animated.Value(0)).current;
+  const three = (n: number): number => Math.min(TOPIC_STARS, Math.max(1, n));
+  const pressFrom = roundDone && moved && moved.from.rounds >= 1 && !!stamp && !pressing && !reduce ? three(moved.from.rounds) : null;
+  const [pressingAgain, setPressingAgain] = useState(pressFrom !== null);
+  useEffect(() => {
+    if (pressFrom === null) return;
+    setPressingAgain(true);
+    again.setValue(0);
+    const { ms, pressAt } = PATH_STAMP_REPRESS;
+    const at = PATH_RETURN.finishAtMs;
+    const run = Animated.timing(again, { toValue: 1, duration: ms, delay: at, easing: Easing.linear, useNativeDriver: true, isInteraction: false });
+    run.start(({ finished }) => finished && setPressingAgain(false));
+    const knock = setTimeout(() => haptic('tap'), at + ms * pressAt);
+    return () => {
+      run.stop();
+      clearTimeout(knock);
+    };
+  }, [pressFrom, again]);
+  const suns = stop.kind === 'skill' ? three(stop.rounds) : 1;
+  // Squashed under the stamp in its moment, or a little as it presses again.
+  const squashOf = (t: Animated.Value, squash: readonly (readonly [number, number])[]) => ({
+    transformOrigin: '50% 85%',
+    transform: [{ scaleX: stampTrack(t, squash.map(([at, v]) => [at, 2 - v] as const)) }, { scaleY: stampTrack(t, squash) }],
+  });
+  const squashed = pressing ? squashOf(moment, PATH_STAMP_MOMENT.squash) : pressFrom !== null && pressingAgain ? squashOf(again, PATH_STAMP_REPRESS.squash) : null;
+  // Its third sun pressed in now: once the stamp has lifted, fire gilds the wax. Under Reduce Motion it is simply gold.
+  const warmAt =
+    suns < TOPIC_STARS || reduce ? null : fresh ? 0 : pressFrom !== null && pressFrom < TOPIC_STARS ? PATH_RETURN.finishAtMs + PATH_STAMP_REPRESS.ms : null;
+  // Once sealed its tile and glyph are gone, the seal in their place; in the moment they melt under the spreading wax.
+  const sealed = !!stamp && !pressing;
+  const melt = PATH_STAMP_MOMENT.melt.map(([at, v]) => [at, 1 - v] as const);
+  const glyphShown = pressing ? stampTrack(moment, melt) : stamp ? 0 : 1;
+  const slump = (k: number): Array<readonly [number, number]> => PATH_STAMP_MOMENT.melt.map(([at, v]) => [at, 1 + k * v] as const);
+  const melting = pressing
+    ? {
+        transformOrigin: '50% 90%',
+        opacity: stampTrack(moment, melt),
+        transform: [{ scaleX: stampTrack(moment, slump(0.12)) }, { scaleY: stampTrack(moment, slump(-0.45)) }],
+      }
+    : null;
+  const tile = (drawing: React.JSX.Element): React.JSX.Element | null =>
+    sealed ? null : melting ? <Animated.View style={[StyleSheet.absoluteFill, melting]}>{drawing}</Animated.View> : drawing;
+  // Drawn plain far off: a seal in its wax, else its tile's colours.
+  const wax = pathWaxColours(scheme === 'dark', suns >= TOPIC_STARS);
+  const plain = stamp ? { face: wax.face, lip: wax.shade } : plainColour(look, tone, rest);
 
   return (
     <Animated.View style={[styles.stop, { left, top }, lifted]} pointerEvents="box-none">
@@ -182,39 +298,37 @@ export function SkillNodeView({
           <Callout text={callout.text} label={callout.label} tone={tone} arriving={!!change?.arriving} bobbing={bobbing} onPress={onStart} />
         ) : null}
         {jump ? <Callout text={jump.text} label={label} tone={tone} arriving={false} bobbing={false} onPress={onPress} /> : null}
-        {raised && stop.kind === 'skill' ? <Glow fill={tone.fill} live={bobbing} /> : null}
-        <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: pop }, { rotate: tilt }] }]} pointerEvents="none">
-          {/* The ring is the topic in hand: the one to do now, or one a return is filling. */}
-          {ring && stop.kind === 'skill' && (raised || moved) ? (
-            <TopicRing
-              // A return remounts the ring so it starts again.
-              key={moved ? 'moving' : 'still'}
-              ring={ring}
-              from={moved ? ringAt(stop, moved.from) : null}
-              roundDone={roundDone}
-              tint={raised ? tone.fill : undefined}
-              mirrored={dir.rtl}
-            />
-          ) : null}
-          {near ? <StopArt look={look} tone={unitTone} part="base" near={near} /> : <View style={[styles.plainLip, { backgroundColor: plainColour(look, tone, rest).lip }]} />}
+        {raised && stop.kind === 'skill' ? <Glow fill={tone.fill} /> : null}
+        {/* The bar is the topic in hand: the one to do now, or one a return is filling. */}
+        {bar && stop.kind === 'skill' && (raised || moved) ? (
+          <TopicBar
+            // A return remounts the bar so it starts again.
+            key={moved ? 'moving' : 'still'}
+            bar={bar}
+            from={moved ? barAt(stop, moved.from) : null}
+            roundDone={roundDone}
+            tint={tone.fill}
+            mirrored={dir.rtl}
+          />
+        ) : null}
+        <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: pop }, { rotate: tilt }] }, squashed]} pointerEvents="none">
+          {near ? tile(art(look, 'base')) : <View style={[styles.plainLip, { backgroundColor: plain.lip }]} />}
           {opening && near ? (
             // The locked stone it was, over it until it opens.
             <Animated.View style={[StyleSheet.absoluteFill, { opacity: lock }]}>
               <StopArt look="locked" tone={unitTone} part="base" near />
             </Animated.View>
           ) : null}
-          {was && near ? (
-            <Animated.View style={[StyleSheet.absoluteFill, { opacity: before }]}>
-              <StopArt look={was} tone={unitTone} part="base" near />
-            </Animated.View>
-          ) : null}
-          {unlocking && near ? (
-            <Animated.View style={[StyleSheet.absoluteFill, { opacity: shut }]}>
-              <StopArt look={shutLook} tone={unitTone} part="base" near />
-            </Animated.View>
-          ) : null}
+          {was && near
+            ? tile(
+                <Animated.View style={[StyleSheet.absoluteFill, { opacity: before }]}>
+                  <StopArt look={was} tone={unitTone} part="base" near />
+                </Animated.View>,
+              )
+            : null}
+          {unlocking && near ? <Animated.View style={[StyleSheet.absoluteFill, { opacity: shut }]}>{art(shutLook, 'base')}</Animated.View> : null}
         </Animated.View>
-        <Animated.View style={[styles.popped, { transform: [{ scale: pop }, { rotate: tilt }] }]} pointerEvents="box-none">
+        <Animated.View style={[styles.popped, { transform: [{ scale: pop }, { rotate: tilt }] }, squashed]} pointerEvents="box-none">
           <Pressable
             onPress={onPress}
             accessibilityRole="button"
@@ -230,10 +344,8 @@ export function SkillNodeView({
             {near ? (
               unlocking ? (
                 <>
-                  <StopArt look={look} tone={unitTone} part="face" near />
-                  <Animated.View style={[StyleSheet.absoluteFill, { opacity: shut }]}>
-                    <StopArt look={shutLook} tone={unitTone} part="face" near />
-                  </Animated.View>
+                  {art(look, 'face')}
+                  <Animated.View style={[StyleSheet.absoluteFill, { opacity: shut }]}>{art(shutLook, 'face')}</Animated.View>
                 </>
               ) : opening ? (
                 <>
@@ -243,17 +355,19 @@ export function SkillNodeView({
                   </Animated.View>
                 </>
               ) : was ? (
-                <>
-                  <StopArt look={look} tone={unitTone} part="face" near />
-                  <Animated.View style={[StyleSheet.absoluteFill, { opacity: before }]}>
-                    <StopArt look={was} tone={unitTone} part="face" near />
-                  </Animated.View>
-                </>
+                tile(
+                  <>
+                    <StopArt look={look} tone={unitTone} part="face" near />
+                    <Animated.View style={[StyleSheet.absoluteFill, { opacity: before }]}>
+                      <StopArt look={was} tone={unitTone} part="face" near />
+                    </Animated.View>
+                  </>,
+                )
               ) : (
-                <StopArt look={look} tone={unitTone} part="face" near />
+                tile(art(look, 'face'))
               )
             ) : (
-              <View style={[styles.plainFace, { backgroundColor: plainColour(look, tone, rest).face }]} />
+              <View style={[styles.plainFace, { backgroundColor: plain.face }]} />
             )}
             {opening && !glyph ? (
               // The current stop: its padlock goes and the learner arrives on it.
@@ -262,9 +376,20 @@ export function SkillNodeView({
               </Animated.View>
             ) : null}
             {raised && near ? <Shine /> : null}
-            {stars > 0 ? <RoundStars rounds={stars} earned={roundDone} /> : null}
+            {milestone ? (
+              <View style={styles.milestoneNumber} pointerEvents="none">
+                {unlocking ? (
+                  <>
+                    <Text style={[styles.number, { color: PATH_GOLD[scheme].ink }]}>{milestone.number}</Text>
+                    <Animated.Text style={[styles.number, styles.glyphLayer, { color: rest.ink, opacity: shut }]}>{milestone.number}</Animated.Text>
+                  </>
+                ) : (
+                  <Text style={[styles.number, { color: look === 'story' || look === 'chestOpen' ? PATH_GOLD[scheme].ink : rest.ink }]}>{milestone.number}</Text>
+                )}
+              </View>
+            ) : null}
             {glyph ? (
-              <View style={styles.glyph} pointerEvents="none">
+              <Animated.View style={[styles.glyph, { opacity: glyphShown }]} pointerEvents="none">
                 {stop.kind === 'skill' && stop.state === 'available' && opening ? (
                   // The padlock it had, giving way to its number.
                   <>
@@ -280,7 +405,20 @@ export function SkillNodeView({
                 ) : glyph.icon ? (
                   <Icon name={glyph.icon} size={28} color={glyph.colour} style={glyph.icon === 'skip-forward' ? dir.flip : undefined} />
                 ) : null}
-              </View>
+              </Animated.View>
+            ) : null}
+            {stamp && near && stop.kind === 'skill' ? (
+              <WaxSeal
+                stopKey={stop.key}
+                dark={scheme === 'dark'}
+                suns={suns}
+                gold={!pressing && suns >= TOPIC_STARS}
+                warmAt={warmAt}
+                worn={stop.finish === 'refresh'}
+                live={live && !reduce}
+                moment={pressing ? moment : null}
+                again={pressFrom !== null && pressingAgain ? { t: again, from: pressFrom } : null}
+              />
             ) : null}
             {stop.kind === 'skill' && stop.finish === 'refresh' ? (
               <View style={[styles.badge, { backgroundColor: colors.background, borderColor: tone.fill }]} pointerEvents="none">
@@ -296,36 +434,37 @@ export function SkillNodeView({
 }
 
 /**
- * The glyph on a stop's face: a skill's number or padlock, or review's arrows. A finished coin carries its stars
- * instead (a check only on a map too old to count them), the current skill a star in its unit's ink, and
- * the drawn stops carry their own.
+ * The glyph on a stop's face, in its unit's ink: what a topic's next lesson is (letters for new words, a conversation,
+ * practice), or from a server too old to say, its number (a star on the stop to do now); a padlock on a shut stone, and
+ * review's arrows. A finished tile's glyph melts away with it into its seal; the drawn stops carry their own.
  */
 function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_INK)['dark'], onNow: string): { icon?: IconName; number?: number; colour: string } | null {
   if (stop.kind === 'review') return { icon: 'review', colour: ink.paper(tone) };
   if (stop.kind !== 'skill' || look === 'jump') return null;
   switch (stop.state) {
-    // Cream on gold in every chapter, so what was earned looks the same everywhere.
     case 'done':
-      return stop.rounds > 0 ? null : { icon: 'check', colour: DONE_INK };
+      return stop.launchKind ? { icon: KIND_GLYPH[stop.launchKind], colour: ink.paper(tone) } : null;
     case 'current':
-      return { icon: 'star-fill', colour: onNow };
+      return { icon: KIND_GLYPH[stop.launchKind ?? 'none'], colour: onNow };
     case 'available':
-      return { number: stop.number, colour: ink.paper(tone) };
+      return stop.launchKind ? { icon: KIND_GLYPH[stop.launchKind], colour: ink.paper(tone) } : { number: stop.number, colour: ink.paper(tone) };
     case 'locked':
       return { icon: 'lock', colour: ink.stone };
   }
 }
 
+/** What a topic's next lesson is, as its glyph. */
+const KIND_GLYPH: Record<LessonKind | 'none', IconName> = { words: 'lesson-words', talk: 'lesson-talk', practice: 'lesson-practice', none: 'star-fill' };
+
 /** A stop far from the screen, as a plain round in its drawing's colour. */
 function plainColour(look: string, tone: ToneColors, rest: (typeof REST)['dark']): { face: string; lip: string } {
-  if (look === 'done' || look === 'strong' || look === 'refresh' || look === 'story') return { face: GOLD_TOKEN.face, lip: GOLD_TOKEN.lip };
-  if (look === 'current' || look === 'available' || look === 'review' || look === 'jump') return { face: tone.fill, lip: tone.lip };
+  if (look === 'strong' || look === 'story') return { face: GOLD_TOKEN.face, lip: GOLD_TOKEN.lip };
+  if (look === 'current' || look === 'available' || look === 'review' || look === 'jump' || look === 'done' || look === 'refresh') return { face: tone.fill, lip: tone.lip };
   return { face: rest.fill, lip: rest.lip };
 }
 
-/** A finished stop's gold and glyph colours (shared art/path-land.ts), for drawing it plain. */
+/** A won milestone's gold (shared art/path-land.ts), for drawing it plain. */
 const GOLD_TOKEN = { face: '#e9a93b', lip: '#b8781f' } as const;
-const DONE_INK = '#fffaf0';
 
 /** A stable name per kind of stop, for tests and the screenshots that check the path. */
 function testName(stop: Stop): string {
@@ -335,20 +474,10 @@ function testName(stop: Stop): string {
 
 /** The stop's face in its 72-point button (shared PATH_STOP_ART: radii 36 by 31 about `STOP_FACE`). */
 const FACE = { left: STOP_FACE.x - 36, top: STOP_FACE.y - 31, width: 72, height: 62 } as const;
-/** How often the glint crosses the stop to do now, how long it takes, and where its sparks wink after it. */
+/** How often the glint crosses the stop to do now, and how long it takes. */
 const GLINT = { everyMs: 3600, crossMs: 1300, firstMs: 1000 } as const;
-const SPARKS = [
-  { x: 22, y: 18, size: 11, at: 500 },
-  { x: 46, y: 24, size: 8, at: 700 },
-  { x: 36, y: 40, size: 7, at: 900 },
-] as const;
-/** A four-pointed spark, 10 units square. */
-const SPARK_PATH = 'M5 0L6.1 3.9L10 5L6.1 6.1L5 10L3.9 6.1L0 5L3.9 3.9Z';
 
-/**
- * Now and then a glint of light sweeps the face of the stop to do now, and a few sparks wink on it after, as on the
- * website. Native driver; none of it under Reduce Motion.
- */
+/** Now and then a glint of light sweeps the face of the stop to do now, as on the website. Native driver; none under Reduce Motion. */
 function Shine(): React.JSX.Element | null {
   const reduce = useReducedMotion();
   const sweep = useRef(new Animated.Value(0)).current;
@@ -364,7 +493,6 @@ function Shine(): React.JSX.Element | null {
     };
   }, [reduce, sweep]);
   if (reduce) return null;
-  const crossAt = GLINT.crossMs / GLINT.everyMs;
   return (
     <View style={[styles.shine, FACE]} pointerEvents="none">
       <Animated.View
@@ -373,35 +501,20 @@ function Shine(): React.JSX.Element | null {
           { transform: [{ translateX: sweep.interpolate({ inputRange: [0, 1], outputRange: [-48, FACE.width + 24] }) }, { rotate: '20deg' }] },
         ]}
       />
-      {SPARKS.map((spark) => {
-        // Each spark grows and goes in a moment after the glint has passed.
-        const at = Math.min(0.99, crossAt * (spark.at / GLINT.crossMs) + crossAt * 0.4);
-        const scale = sweep.interpolate({ inputRange: [0, at, at + 0.04, at + 0.1, 1], outputRange: [0, 0, 1, 0, 0], extrapolate: 'clamp' });
-        return (
-          <Animated.View key={`${spark.x}-${spark.y}`} style={[styles.spark, { left: spark.x - spark.size / 2, top: spark.y - spark.size / 2, transform: [{ scale }] }]}>
-            <Svg width={spark.size} height={spark.size} viewBox="0 0 10 10">
-              <Path d={SPARK_PATH} fill="#ffffff" />
-            </Svg>
-          </Animated.View>
-        );
-      })}
     </View>
   );
 }
 
-/** The size of the glow the current skill stands in, and of the ring it breathes out. */
+/** The size of the glow the current skill stands in. */
 const GLOW = { rx: 66, ry: 32 } as const;
-const BREATH = { everyMs: 2200, grow: 0.6 } as const;
 
 /**
- * The glow under the current skill in its unit's colour, which swells once as the path opens so the eye finds it, and
- * a ring of the same colour the stop breathes out, over and over, while the path is in view. Native driver; still
- * under Reduce Motion.
+ * The glow under the current skill in its unit's colour, which swells once as the path opens so the eye finds it.
+ * Native driver; still under Reduce Motion.
  */
-function Glow({ fill, live }: { fill: string; live: boolean }): React.JSX.Element {
+function Glow({ fill }: { fill: string }): React.JSX.Element {
   const reduce = useReducedMotion();
   const pulse = useRef(new Animated.Value(1)).current;
-  const breath = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (reduce) return;
     const run = Animated.sequence([Animated.delay(PULSE_AT_MS), timing(pulse, PULSE + 0.06, duration.quick + 40), springTo(pulse, 1, 'bouncy')]);
@@ -409,40 +522,19 @@ function Glow({ fill, live }: { fill: string; live: boolean }): React.JSX.Elemen
     return () => run.stop();
     // Once, on first draw.
   }, []);
-  useEffect(() => {
-    if (reduce || !live) {
-      breath.setValue(0);
-      return;
-    }
-    const run = Animated.loop(timing(breath, 1, BREATH.everyMs, { easing: Easing.out(Easing.quad) }));
-    run.start();
-    return () => run.stop();
-  }, [reduce, live, breath]);
   return (
-    <>
-      <Animated.View style={[styles.glow, { transform: [{ scale: pulse }] }]} pointerEvents="none">
-        <Svg width={2 * GLOW.rx} height={2 * GLOW.ry}>
-          <Defs>
-            <RadialGradient id="lpGlow" cx="50%" cy="50%" r="50%">
-              <GradientStop offset="0" stopColor={fill} stopOpacity={0.6} />
-              <GradientStop offset="0.55" stopColor={fill} stopOpacity={0.28} />
-              <GradientStop offset="1" stopColor={fill} stopOpacity={0} />
-            </RadialGradient>
-          </Defs>
-          <Ellipse cx={GLOW.rx} cy={GLOW.ry} rx={GLOW.rx} ry={GLOW.ry} fill="url(#lpGlow)" />
-        </Svg>
-      </Animated.View>
-      {!reduce && live ? (
-        <Animated.View
-          style={[
-            styles.breath,
-            { borderColor: fill, opacity: breath.interpolate({ inputRange: [0, 1], outputRange: [0.6, 0] }), transform: [{ scale: breath.interpolate({ inputRange: [0, 1], outputRange: [1, 1 + BREATH.grow] }) }] },
-          ]}
-          pointerEvents="none"
-          testID="lp-breath"
-        />
-      ) : null}
-    </>
+    <Animated.View style={[styles.glow, { transform: [{ scale: pulse }] }]} pointerEvents="none">
+      <Svg width={2 * GLOW.rx} height={2 * GLOW.ry}>
+        <Defs>
+          <RadialGradient id="lpGlow" cx="50%" cy="50%" r="50%">
+            <GradientStop offset="0" stopColor={fill} stopOpacity={0.6} />
+            <GradientStop offset="0.55" stopColor={fill} stopOpacity={0.28} />
+            <GradientStop offset="1" stopColor={fill} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Ellipse cx={GLOW.rx} cy={GLOW.ry} rx={GLOW.rx} ry={GLOW.ry} fill="url(#lpGlow)" />
+      </Svg>
+    </Animated.View>
   );
 }
 
@@ -583,6 +675,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   glyphLayer: { position: 'absolute' },
+  // On the milestone's seal: its middle, in the button's points (shared PATH_MILESTONE_ART).
+  milestoneNumber: {
+    position: 'absolute',
+    left: 0,
+    width: NODE,
+    top: PATH_MILESTONE_ART.y + PATH_MILESTONE_ART.cy - 18,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   number: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   badge: {
     position: 'absolute',
@@ -598,13 +700,11 @@ const styles = StyleSheet.create({
   // Clipped to the face: a pill on its box, within a point of the oval at every edge.
   shine: { position: 'absolute', overflow: 'hidden', borderRadius: radii.pill },
   glint: { position: 'absolute', top: -20, width: 18, height: 104, backgroundColor: 'rgba(255, 255, 255, 0.45)' },
-  spark: { position: 'absolute' },
   glow: { position: 'absolute', left: STOP_FACE.x - GLOW.rx, top: STOP_FACE.y + PATH_STOP_ART.raised + 4 - GLOW.ry },
-  breath: { position: 'absolute', left: FACE.left, top: FACE.top, width: FACE.width, height: FACE.height, borderRadius: radii.pill, borderWidth: 4 },
   calloutWrap: {
     position: 'absolute',
-    // Above the stop and the ring round it, with a little air.
-    bottom: STOP_HEIGHT + 20,
+    // Above the stop and the bar over it, its tail clear of the bar.
+    bottom: STOP_HEIGHT + 28,
     left: (NODE - CALLOUT_WIDTH) / 2,
     width: CALLOUT_WIDTH,
     alignItems: 'center',

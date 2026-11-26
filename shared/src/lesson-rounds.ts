@@ -1,28 +1,28 @@
 /**
- * A topic's rounds: how many times over its lessons were played, shown as the ring round its stop and the stars on its
- * gold coin. The ring has one piece per lesson; a piece fills as each lesson is first finished, and a whole ring turns the
- * stop gold with its first star. Replaying fills the next round piece by piece, up to three stars, after which the ring
- * stays whole.
+ * A topic's rounds: how many times over its lessons were played, shown as the bar over its stop and the suns pressed
+ * into its wax seal. The bar has one piece per lesson; a piece fills as each lesson is first finished, and once the bar
+ * is full the stop becomes a wax seal with its first sun. Replaying fills the next round piece by piece, and each full
+ * round is pressed into the seal as another sun, up to three.
  *
  * So rounds are the fewest finishes of any one lesson (at most `TOPIC_STARS`) and pieces are the lessons finished more
  * often than that. The server computes them per topic (api/src/coursemap) and both apps draw from its numbers and from the
- * shapes here (`ringPieces`, `roundStars`), so a ring is the same everywhere.
+ * shapes here (`barPieces`), so a bar is the same everywhere.
  */
 
-/** The most rounds a topic counts, and the most stars it can wear. */
+/** The most rounds a topic counts, and the most suns its seal can wear. */
 export const TOPIC_STARS = 3;
 
 export interface TopicRounds {
   /** full rounds played: every lesson finished at least this many times, at most `TOPIC_STARS` */
   rounds: number;
-  /** The ring's filled pieces: lessons finished more than `rounds` times, or every piece once all rounds are played. */
+  /** The bar's filled pieces: lessons finished more than `rounds` times, or every piece once all rounds are played. */
   pieces: number;
 }
 
 /**
- * A topic's rounds and filled pieces from how many times each lesson was finished, in any order; no lessons, no ring.
+ * A topic's rounds and filled pieces from how many times each lesson was finished, in any order; no lessons, no bar.
  * Counts that are not whole non-negative numbers are read as the nearest that is, so a stray older value cannot break a
- * ring.
+ * bar.
  */
 export function topicRounds(times: readonly number[]): TopicRounds {
   if (times.length === 0) return { rounds: 0, pieces: 0 };
@@ -33,56 +33,58 @@ export function topicRounds(times: readonly number[]): TopicRounds {
 }
 
 /**
- * The ring round a stop, in the stop's points (its 72-point button): an ellipse a little outside the token (`cx`, `cy`,
- * `rx`, `ry`), `width` thick, cut into one arc per lesson with `gap` degrees between. Pieces start at the top and go
- * clockwise, mirrored on right-to-left pages like the path. `box` is the square holding it, from `-pad`, for an app to lay
- * a drawing of that size over the button.
+ * The bar over a stop, in the stop's points (its 72-point button): a slim progress bar just above the tile, a touch
+ * wider than it, `w` wide from `x`, its top at `y` (above the button) and `h` thick, cut into one piece per lesson with
+ * `gap` between, so the bubble over the stop sits above it. Its two ends are round and its cuts nearly square (`cut`
+ * round), so it reads as one bar. Pieces fill from the start of the line, mirrored on right-to-left pages like the path.
  */
-export const PATH_RING = { cx: 36, cy: 35, rx: 45, ry: 44, width: 6, gap: 14, pad: 12, box: 96 } as const;
+export const PATH_BAR = { x: -2, y: -16, w: 76, h: 6, gap: 3, cut: 1.5 } as const;
 
-/** A number for a path, to a tenth of a point. */
-function n(v: number): string {
-  return String(Math.round(v * 10) / 10);
-}
-
-/** The ring's pieces as SVG path data, one arc per lesson from the top; a gap is never more than a third of a piece, so many lessons still read as a ring. */
-export function ringPieces(of: number): string[] {
+/** The bar's pieces from the start: each one's left edge and width, in the stop's points; no lessons, no bar. */
+export function barPieces(of: number): Array<{ x: number; w: number }> {
   if (!(of >= 1)) return [];
   const count = Math.floor(of);
-  const { cx, cy, rx, ry } = PATH_RING;
-  const span = 360 / count;
-  const gap = Math.min(PATH_RING.gap, span / 3);
-  const at = (deg: number): string => {
-    const r = (deg * Math.PI) / 180;
-    return `${n(cx + rx * Math.sin(r))} ${n(cy - ry * Math.cos(r))}`;
-  };
-  return Array.from({ length: count }, (_, k) => {
-    const from = k * span + gap / 2;
-    const to = (k + 1) * span - gap / 2;
-    return `M${at(from)}A${rx} ${ry} 0 ${to - from > 180 ? 1 : 0} 1 ${at(to)}`;
-  });
+  const { x, w, gap } = PATH_BAR;
+  // Many lessons share the bar with narrower gaps, down to a hairline, before their pieces grow thinner than the bar is thick.
+  const space = Math.max(1, Math.min(gap, (w - count * PATH_BAR.h) / Math.max(1, count - 1)));
+  const each = (w - space * (count - 1)) / count;
+  return Array.from({ length: count }, (_, k) => ({ x: Math.round((x + k * (each + space)) * 10) / 10, w: Math.round(each * 10) / 10 }));
 }
 
 /**
- * Where a topic's stars stand on its gold coin, in the stop's points: one large in the middle, two side by side, or three
- * in a shallow arc with the middle one larger and higher. `r` is a star's outer radius.
+ * The suns pressed into a finished topic's seal, one for each full round, in the seal's own terms (its middle at 0, 0 and
+ * its radius 1): one large in the middle, two side by side a little smaller, or three of a size in a triangle, one above
+ * and two below, the gaps between them the same as to the fine ring round the field. A topic finished before its rounds
+ * were counted shows one. `r` is how far a sun's rays reach.
  */
-export function roundStars(rounds: number): Array<{ x: number; y: number; r: number }> {
-  const stars = Math.max(0, Math.min(TOPIC_STARS, Math.floor(rounds)));
-  if (stars === 1) return [{ x: 36, y: 30, r: 14 }];
-  if (stars === 2) return [{ x: 25, y: 31, r: 11 }, { x: 47, y: 31, r: 11 }];
-  if (stars === 3) return [{ x: 19.5, y: 33, r: 9.5 }, { x: 36, y: 28, r: 11 }, { x: 52.5, y: 33, r: 9.5 }];
-  return [];
+export function sealSuns(rounds: number): Array<{ x: number; y: number; r: number }> {
+  const suns = Math.max(1, Math.min(TOPIC_STARS, Math.floor(rounds) || 1));
+  if (suns === 1) return [{ x: 0, y: 0, r: 0.53 }];
+  if (suns === 2) return [{ x: -0.3, y: 0, r: 0.285 }, { x: 0.3, y: 0, r: 0.285 }];
+  // Each 0.315 from the middle, so the gaps between them and to the ring at 0.615 are alike.
+  return [{ x: -0.2728, y: 0.1575, r: 0.245 }, { x: 0, y: -0.315, r: 0.245 }, { x: 0.2728, y: 0.1575, r: 0.245 }];
 }
 
-/** A five-pointed star as SVG path data, point up, inner corners at two fifths of `r`, for drawing with round joins. */
-export function starPath(x: number, y: number, r: number): string {
-  const points = Array.from({ length: 10 }, (_, i) => {
-    const radius = i % 2 === 0 ? r : r * 0.42;
-    const a = (i * Math.PI) / 5;
-    return `${n(x + radius * Math.sin(a))} ${n(y - radius * Math.cos(a))}`;
+/** The Kurdish sun's rays: twenty-one, as on the flag. */
+export const SUN_RAYS = 21;
+
+/**
+ * A sun as SVG path data: a round middle half as wide as its reach, and `rays` pointed rays round it, evenly spaced, the
+ * first pointing straight up, reaching `r` from its middle. Fewer, broader rays keep a small sun crisp.
+ */
+export function sunPath(x: number, y: number, r: number, rays = SUN_RAYS): string {
+  const round = (v: number): string => String(Math.round(v * 100) / 100);
+  const at = (radius: number, a: number): string => `${round(x + radius * Math.sin(a))} ${round(y - radius * Math.cos(a))}`;
+  const disc = r * 0.5;
+  // Slender rays with clear gaps between, as pressed suns have; fewer rays are a little broader at the foot.
+  const half = (Math.PI / rays) * (rays >= SUN_RAYS ? 0.45 : rays >= 15 ? 0.52 : 0.6);
+  const arc = `A${round(disc)} ${round(disc)} 0 1 0`;
+  const middle = `M${round(x - disc)} ${round(y)}${arc} ${round(x + disc)} ${round(y)}${arc} ${round(x - disc)} ${round(y)}Z`;
+  const spikes = Array.from({ length: rays }, (_, i) => {
+    const a = (i * 2 * Math.PI) / rays;
+    return `M${at(r * 0.57, a - half)}L${at(r, a)}L${at(r * 0.57, a + half)}Z`;
   });
-  return `M${points.join('L')}Z`;
+  return middle + spikes.join('');
 }
 
 /**

@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { roadStoryChapter, topicRounds } from '@kurda/shared';
+import { lessonKind, roadStoryChapter, topicRounds, type LessonKind } from '@kurda/shared';
 import { ROAD_COURSE } from '../content/road-seed.js';
 import { skillStrength } from '../placement/skill-strength.js';
 import { PUBLISHED_SQL } from '../stories/service.js';
@@ -21,6 +21,8 @@ export interface LessonNode {
   completed: boolean;
   /** how many times they have finished it, any version, replays included */
   times: number;
+  /** what the lesson is, from its exercises: a conversation, new words, or practice of words met before */
+  kind: LessonKind;
 }
 
 export interface SkillNode {
@@ -118,9 +120,13 @@ export class CourseMapService {
          ORDER BY u.position ASC, s.position ASC`,
         [courseId],
       ),
-      // the learner-visible published lesson per (skill, position)
-      this.pool.query<{ id: string; skill_id: string; position: number; title_en: string }>(
-        `SELECT DISTINCT ON (l.skill_id, l.position) l.id, l.skill_id, l.position, l.title_en
+      // The learner-visible published lesson per (skill, position), with what its exercises make it: whether one is a
+      // conversation, and how many words they bring in for the first time.
+      this.pool.query<{ id: string; skill_id: string; position: number; title_en: string; talk: boolean; fresh: number }>(
+        `SELECT DISTINCT ON (l.skill_id, l.position) l.id, l.skill_id, l.position, l.title_en,
+                EXISTS (SELECT 1 FROM exercises e WHERE e.lesson_id = l.id AND e.type = 'conversation') talk,
+                COALESCE((SELECT sum(jsonb_array_length(e.payload->'new')) FROM exercises e
+                          WHERE e.lesson_id = l.id AND jsonb_typeof(e.payload->'new') = 'array'), 0)::int fresh
          FROM lessons l JOIN skills s ON s.id = l.skill_id JOIN units u ON u.id = s.unit_id
          WHERE u.course_id = $1 AND l.status = 'published'
          ORDER BY l.skill_id, l.position, l.version DESC`,
@@ -166,7 +172,7 @@ export class CourseMapService {
     for (const l of lessons.rows) {
       const list = lessonsBySkill.get(l.skill_id) ?? [];
       const times = timesAt.get(`${l.skill_id}:${l.position}`) ?? 0;
-      list.push({ lessonId: l.id, position: l.position, title: l.title_en, completed: times > 0, times });
+      list.push({ lessonId: l.id, position: l.position, title: l.title_en, completed: times > 0, times, kind: lessonKind({ talk: l.talk, fresh: l.fresh }) });
       lessonsBySkill.set(l.skill_id, list);
     }
     const reviewsBySkill = new Map<string, Array<{ easiness: number; repetitions: number }>>();

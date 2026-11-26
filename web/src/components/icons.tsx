@@ -124,6 +124,9 @@ import { PaintBrushBroad } from '@phosphor-icons/react/dist/icons/PaintBrushBroa
 import { Pen } from '@phosphor-icons/react/dist/icons/Pen';
 import { Highlighter } from '@phosphor-icons/react/dist/icons/Highlighter';
 import { Swatches } from '@phosphor-icons/react/dist/icons/Swatches';
+// What a lesson on the road is: new words, a conversation, or practice.
+import { ChatsCircle } from '@phosphor-icons/react/dist/icons/ChatsCircle';
+import { Barbell } from '@phosphor-icons/react/dist/icons/Barbell';
 import type { Icon } from '@phosphor-icons/react';
 import { useMemo } from 'react';
 import { HEVALO_GLYPHS, coinSvg, type CurrencyOptions, type HevaloGlyph } from '@kurda/shared';
@@ -353,6 +356,11 @@ export const PenIcon = named(Pen, 18);
 export const BrushIcon = named(PaintBrushBroad, 18);
 export const MarkerIcon = named(Highlighter, 18);
 export const PaperIcon = named(Swatches, 18);
+
+/* What the lesson the road's stop to do now opens is, on its face: letters for new words, a conversation, a workout. */
+export const WordsIcon = named(TextAa, 34, 'fill');
+export const TalkIcon = named(ChatsCircle, 34, 'fill');
+export const PracticeIcon = named(Barbell, 34, 'fill');
 
 /** Show or hide a password: one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {
