@@ -1,18 +1,19 @@
 /**
- * A hand holding a phone upright, its screen toward us, for the front page's panel about the phone apps: a right hand as
- * its owner sees it, rising from the lower right out of a knit sleeve, the phone resting in its palm, four fingertips
- * curled round its left edge and the thumb laid over its right. Flat cut-outs lit from the upper left, one shade step and
- * one light step on each form. Two layers on one frame: `back` (sleeve, hand and phone, its screen dark) and `front` (the
- * fingertips, the thumb and the camera island), so an app can lay something live on the screen (`HAND_PHONE_SCREEN`)
- * between them.
+ * A hand holding a phone upright, its screen toward us, for the front page's panel about the phone apps, traced from the
+ * owner's reference: the palm behind the phone's lower half, the thumb resting up along its right edge, the four
+ * fingers wrapped round its left edge so only their pads show, and the wrist leaving at the lower right in the red knit
+ * sleeve (hand-paint.ts). Two layers on one frame: `back` (the hand, the sleeve and the phone, its screen dark) and
+ * `front` (the finger pads over the bezel and the camera island), so an app can lay something live on the screen
+ * (`HAND_PHONE_SCREEN`) between them; nothing of the hand crosses the glass.
  */
 import { Drawing, n, prefixFor, type Pt } from './svg.js';
+import { SKIN, flat, knitSleeve, smooth } from './hand-paint.js';
 
 /** The panel's frame in drawing units, square. */
 export const HAND_PHONE_VIEW = { w: 320, h: 320 } as const;
 
 /** The phone: its centre, its lean (degrees, negative to the left), its size and its corners' radius. */
-const PHONE = { cx: 134, cy: 116, turn: -8, w: 92, h: 188, r: 15 } as const;
+const PHONE = { cx: 136, cy: 112, turn: -2, w: 92, h: 188, r: 15 } as const;
 /** The black bezel round the glass. */
 const BEZEL = 3.6;
 
@@ -29,130 +30,91 @@ export const HAND_PHONE_SCREEN = {
   turn: PHONE.turn,
 } as const;
 
-interface Tones {
-  shade: string;
-  face: string;
-  light: string;
-}
-
-/** The skin: its shade, face and light, the darker line of a crease, and the nails a step lighter. */
-const SKIN = { shade: '#c08663', face: '#dca784', light: '#eec5a2', crease: '#a5694a', nail: '#ebc3a8' } as const;
-/** The knit sleeve: a warm madder red, its ribbing a step darker. */
-const KNIT = { shade: '#7e3428', face: '#9c4434', light: '#b45a45', rib: '#6f2c22' } as const;
 /** The phone's black, the light along its metal edge, the dark glass, and the island and buttons. */
 const INK = { body: '#101517', edge: '#47535a', glass: '#0b1013', island: '#030506', button: '#20282c' } as const;
 
 /** Where the light falls from, in the phone's own frame: the upper left. */
 const LIGHT: Pt = [-0.6, -0.8];
 
-/** A closed outline through `points`, smoothed into one flowing curve. */
-function smooth(points: readonly Pt[]): string {
-  const m = points.length;
-  const at = (i: number): Pt => points[((i % m) + m) % m]!;
-  let d = `M${n(at(0)[0])} ${n(at(0)[1])}`;
-  for (let i = 0; i < m; i++) {
-    const [a, b, c, e] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
-    d += `C${n(b[0] + (c[0] - a[0]) / 6)} ${n(b[1] + (c[1] - a[1]) / 6)} ${n(c[0] - (e[0] - b[0]) / 6)} ${n(c[1] - (e[1] - b[1]) / 6)} ${n(c[0])} ${n(c[1])}`;
-  }
-  return `${d}Z`;
-}
-
-/** An open curve through `points`, for a crease or a rib. */
-function line(points: readonly Pt[]): string {
-  let d = `M${n(points[0]![0])} ${n(points[0]![1])}`;
-  for (let i = 1; i < points.length; i++) {
-    const [a, b, c, e] = [points[Math.max(0, i - 2)]!, points[i - 1]!, points[i]!, points[Math.min(points.length - 1, i + 1)]!];
-    d += `C${n(b[0] + (c[0] - a[0]) / 6)} ${n(b[1] + (c[1] - a[1]) / 6)} ${n(c[0] - (e[0] - b[0]) / 6)} ${n(c[1] - (e[1] - b[1]) / 6)} ${n(c[0])} ${n(c[1])}`;
-  }
-  return d;
-}
+/** The hand is traced in the reference's own pixels, where the phone spans 315 to 612 across and 95 to 700 down. */
+const REF = { cx: 463.5, cy: 397.5, k: PHONE.h / 605 } as const;
+const at = (x: number, y: number): Pt => [(x - REF.cx) * REF.k, (y - REF.cy) * REF.k];
+const traced = (points: readonly Pt[]): string => smooth(points.map(([x, y]) => at(x, y)));
 
 /** A rounded rectangle centred on (`x`, `y`). */
 const box = (x: number, y: number, w: number, h: number, r: number, fill: string): string =>
   `<rect x="${n(x - w / 2)}" y="${n(y - h / 2)}" width="${n(w)}" height="${n(h)}" rx="${n(r)}" fill="${fill}"/>`;
 
-/**
- * A matte form lit from the upper left: its face, the shade along its far side (where the face, moved toward the light,
- * leaves the form uncovered), and a soft light along its near edge. `reach` is how wide each step is.
- */
-function matte(dr: Drawing, d: string, tones: Tones, reach: number, lightReach = reach * 0.45): string {
-  const clip = dr.clip(d);
-  const move = (k: number): string => ` transform="translate(${n(LIGHT[0] * k)} ${n(LIGHT[1] * k)})"`;
-  return (
-    `<g clip-path="url(#${clip})">` +
-    `<path d="${d}" fill="${tones.shade}"/>` +
-    `<path d="${d}" fill="${tones.face}"${move(reach)}/>` +
-    `<path d="M-400 -400H400V400H-400Z${d}" fill="${tones.light}" fill-rule="evenodd"${move(-lightReach)}/>` +
-    `</g>`
-  );
-}
+/** The middle, ring and little fingers' pads, each just over the bezel's outer edge and never reaching the glass. */
+const PADS: readonly (readonly Pt[])[] = [
+  [[248, 392], [256, 366], [279, 357], [305, 358], [319, 372], [320, 404], [316, 432], [296, 445], [268, 445], [251, 428]],
+  [[246, 500], [253, 471], [276, 458], [303, 457], [317, 469], [318, 505], [313, 535], [294, 550], [266, 549], [249, 530]],
+  [[258, 601], [264, 573], [283, 561], [305, 561], [318, 574], [319, 605], [314, 632], [297, 647], [276, 647], [261, 627]],
+];
 
 /**
- * The palm and forearm in one piece, behind the phone: the heel of the hand and the inside of the wrist below it, the
- * ball of the thumb past its right edge, and the palm's edge past its left, under the fingers.
+ * The hand behind the phone: the palm and the thumb resting up its right edge in one piece, with the wrist and arm
+ * running on under the sleeve; the palm's side in shade where it shows between the thumb and the phone; the index
+ * finger tucked behind the phone's edge; and, a shade step down, each lower finger's side above its pad.
  */
-function hand(dr: Drawing): string {
-  const outline = smooth([
-    [-40, 60],
-    [-54, 70],
-    [-58, 90],
-    [-55, 114],
-    [-42, 136],
-    [-18, 156],
-    [-2, 176],
-    [20, 214],
-    [50, 270],
-    [80, 360],
-    [200, 340],
-    [124, 222],
-    [90, 178],
-    [74, 160],
-    [72, 140],
-    [76, 116],
-    [70, 96],
-    [56, 78],
-    [44, 64],
+function hand(): string {
+  const palm = traced([
+    [600, 330],
+    [612, 270],
+    [621, 250],
+    [636, 238],
+    [652, 241],
+    [664, 255],
+    [676, 283],
+    [697, 321],
+    [716, 357],
+    [732, 397],
+    [750, 446],
+    [763, 481],
+    [769, 512],
+    [770, 565],
+    [770, 640],
+    [772, 702],
+    [785, 731],
+    [820, 771],
+    [860, 830],
+    [900, 900],
+    [960, 1010],
+    [1010, 1110],
+    [700, 1110],
+    [640, 975],
+    [615, 900],
+    [596, 856],
+    [577, 818],
+    [550, 787],
+    [511, 757],
+    [470, 726],
+    [436, 701],
+    [430, 640],
+    [500, 480],
   ]);
-  let out = matte(dr, outline, SKIN, 4.2);
-  // On the skin alone: the phone's own shade on the palm it rests in, a step down from the skin, just below and right of
-  // it; the line round the ball of the thumb; and the crease of the wrist, faint, where the hand bends back.
-  const { w, h, r } = PHONE;
-  const crease = (points: readonly Pt[], width: number, opacity: number): string =>
-    `<path d="${line(points)}" fill="none" stroke="${SKIN.crease}" stroke-width="${n(width)}" stroke-linecap="round" opacity="${n(opacity)}"/>`;
-  out +=
-    `<g clip-path="url(#${dr.clip(outline)})"><rect x="${n(3 - w / 2)}" y="${n(4.5 - h / 2)}" width="${w}" height="${h}" rx="${r}" fill="${SKIN.shade}" opacity="0.85"/>` +
-    crease([[40, 98], [30, 122], [28, 146], [36, 160]], 1.3, 0.38) +
-    crease([[-20, 172], [22, 176], [62, 166], [96, 156]], 1.2, 0.3) +
-    `</g>`;
-  return out;
-}
-
-/** The sleeve: a knit cuff just above the wrist, ribbed along the arm, and the sleeve beyond it out of the picture. */
-function sleeve(dr: Drawing): string {
-  const cuff = smooth([
-    [-8, 200],
-    [36, 184],
-    [76, 168],
-    [98, 160],
-    [111, 166],
-    [120, 182],
-    [156, 254],
-    [196, 340],
-    [230, 420],
-    [40, 440],
-    [14, 330],
-    [-16, 222],
+  const wedge = traced([
+    [606, 388],
+    [628, 388],
+    [645, 394],
+    [644, 430],
+    [636, 465],
+    [622, 492],
+    [606, 504],
   ]);
-  let out = matte(dr, cuff, KNIT, 5, 2.4);
-  // The ribs run along the arm from the cuff's edge.
-  let ribs = '';
-  for (let i = 0; i < 11; i++) {
-    const t = (i + 0.5) / 11;
-    const top: Pt = [-10 + t * 120, 206 - t * 44 - Math.sin(t * Math.PI) * 3];
-    ribs += line([top, [top[0] + 12, top[1] + 22], [top[0] + 22, top[1] + 40]]);
-  }
-  out += `<g clip-path="url(#${dr.clip(cuff)})"><path d="${ribs}" fill="none" stroke="${KNIT.rib}" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/></g>`;
-  return out;
+  const index = traced([
+    [251, 270],
+    [262, 252],
+    [283, 244],
+    [305, 247],
+    [324, 254],
+    [324, 338],
+    [300, 326],
+    [275, 309],
+    [255, 292],
+  ]);
+  const sides = PADS.map((pad) => flat(traced(pad.map(([x, y]) => [x + 15, y - 9] as Pt)), SKIN.shade)).join('');
+  return flat(palm, SKIN.face) + flat(wedge, SKIN.shade) + sides + flat(index, SKIN.face);
 }
 
 /** The phone: its buttons, its black body with light along the metal edge, and the dark glass. */
@@ -175,54 +137,8 @@ function phone(dr: Drawing): string {
   return out;
 }
 
-/** One fingertip curled round the phone's left edge: where along the edge, how thick, and how far onto the glass it reaches. */
-function fingertip(dr: Drawing, y: number, thick: number, reach: number, tilt: number): string {
-  const edge = -PHONE.w / 2;
-  const r = thick / 2;
-  const [x0, x1] = [edge - 15, edge + reach];
-  const outline = smooth([
-    [x0 + 3, y - r * 0.94],
-    [x0 + (x1 - x0) * 0.55, y - r + tilt * 0.5],
-    [x1 - r * 0.5, y - r * 0.8 + tilt],
-    [x1, y - r * 0.06 + tilt],
-    [x1 - r * 0.42, y + r * 0.76 + tilt],
-    [x0 + (x1 - x0) * 0.55, y + r * 0.96 + tilt * 0.5],
-    [x0 + 2, y + r * 0.9],
-    [x0 - r * 0.3, y],
-  ]);
-  let out = matte(dr, outline, SKIN, 2.8);
-  // The nail, on the top of the tip where it rests on the glass, a step lighter than the skin.
-  out += `<ellipse cx="${n(x1 - r * 0.56)}" cy="${n(y + tilt * 0.8)}" rx="${n(r * 0.34)}" ry="${n(r * 0.46)}" fill="${SKIN.nail}"/>`;
-  return out;
-}
-
-/** The thumb, from the ball of the thumb past the phone's right edge, laid over the glass toward its middle, its nail at the tip. */
-function thumb(dr: Drawing): string {
-  const outline = smooth([
-    [53, 122],
-    [46, 102],
-    [39, 84],
-    [33, 70],
-    [31, 60],
-    [34, 52],
-    [42, 50],
-    [49, 56],
-    [59, 70],
-    [67, 88],
-    [72, 106],
-    [74, 126],
-    [64, 136],
-  ]);
-  let out = matte(dr, outline, SKIN, 3.2);
-  // The nail near the tip, along the thumb, a step lighter than the skin.
-  out += `<rect x="35" y="52.5" width="10.5" height="13" rx="5" fill="${SKIN.nail}" transform="rotate(-30 40 59)"/>`;
-  // The crease across the knuckle, where the thumb bends.
-  out += `<path d="${line([[45, 84], [51, 80], [58, 79]])}" fill="none" stroke="${SKIN.crease}" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>`;
-  return out;
-}
-
 export interface HandPhoneOptions {
-  /** `back`: the sleeve, the hand and the phone with its screen dark; `front`: the fingertips, thumb and island over it. */
+  /** `back`: the hand, the sleeve and the phone with its screen dark; `front`: the finger pads and the island over it. */
   part: 'back' | 'front';
   idPrefix?: string;
 }
@@ -231,15 +147,13 @@ export interface HandPhoneOptions {
 export function handPhoneSvg(opts: HandPhoneOptions): string {
   const dr = new Drawing(prefixFor(opts.idPrefix, 'hand-phone', opts.part));
   if (opts.part === 'back') {
-    dr.add(hand(dr) + sleeve(dr) + phone(dr));
+    // The sleeve sits on the wrist where the reference's frame ends, its arm leaving down and a little to the right.
+    dr.add(hand() + knitSleeve(dr, at(758, 905), -27, 0.9) + phone(dr));
   } else if (opts.part === 'front') {
     const s = HAND_PHONE_SCREEN;
     // The camera island at the top of the glass, over whatever the screen shows.
     dr.add(box(0, -s.h / 2 + 10, 26, 7.6, 3.8, INK.island));
-    for (const [y, thick, reach, tilt] of [[2, 21, 9, 1], [22.5, 21.5, 10, 1.2], [43, 20, 9, 1.4], [61.5, 17, 6.5, 1.6]] as const) {
-      dr.add(fingertip(dr, y, thick, reach, tilt));
-    }
-    dr.add(thumb(dr));
+    dr.add(PADS.map((pad) => flat(traced(pad), SKIN.face)).join(''));
   } else {
     throw new RangeError(`art: no hand-phone part called ${String(opts.part)}`);
   }
