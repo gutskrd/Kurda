@@ -1,12 +1,12 @@
 /*
- * Hevalo's icon with eyes that follow the pointer (brand/HevaloMark.tsx). Each eye is a share of the icon, placed so
- * the pupil at rest sits where the drawing's own pupil was (scripts/generate-brand-marks.mjs, at ICON).
+ * Hevalo's icon with eyes that follow the pointer (brand/HevaloMark.tsx). Each eye is the drawing's eye white as a share
+ * of the icon, and the pupil at rest is the logo's large pupil (EYES and PUPIL in scripts/generate-brand-marks.mjs).
  */
 .hevalo-mark { position: relative; display: inline-block; flex: none; line-height: 0; user-select: none; }
 .hevalo-mark img { display: block; width: 100%; height: 100%; }
-.hevalo-eye { position: absolute; top: 56.727%; width: 14.712%; height: 16.941%; clip-path: ellipse(50% 50% at 50% 50%); pointer-events: none; }
-.hevalo-eye.is-left { left: 28.711%; }
-.hevalo-eye.is-right { left: 55.216%; }
+.hevalo-eye { position: absolute; top: 55.154%; width: 18.113%; height: 20.751%; clip-path: ellipse(50% 50% at 50% 50%); pointer-events: none; }
+.hevalo-eye.is-left { left: 27.314%; }
+.hevalo-eye.is-right { left: 53.869%; }
 .hevalo-pupil {
   position: absolute; top: 17.7%; width: 53.79%; height: 70.59%;
   border-radius: 50%; background: #532e28;
