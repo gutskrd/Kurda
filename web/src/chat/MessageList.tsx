@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, type ReactNode } from 'react';
 import type { ChatMessageKind } from '@kurda/shared';
 import { MessageLine } from '../reports/MessageMenu';
 import { Avatar } from '../components/Avatar';
@@ -61,6 +61,7 @@ export function MessageList<T extends ChatMessage>({
 }): React.JSX.Element {
   const locale = useLocale();
   const t = useT();
+  const fresh = useFreshMessages(messages, myId);
   // The locale names weekdays and months, which `toLocaleDateString` would otherwise take from the browser.
   const sections = groupMessages(messages, new Date(), {
     locale,
@@ -115,7 +116,7 @@ export function MessageList<T extends ChatMessage>({
                         key={m.id}
                         className={`bubble${mine ? ' mine' : ''}${i === 0 ? ' is-first' : ''}${isLast ? ' is-last bubble-tail' : ''}${
                           m.kind && m.kind !== 'text' ? ' is-card' : ''
-                        }${!m.deleted && isEmojiOnly(words) ? ' is-emoji' : ''}${m.pending ? ` is-${m.pending}` : ''}`}
+                        }${!m.deleted && isEmojiOnly(words) ? ' is-emoji' : ''}${m.pending ? ` is-${m.pending}` : ''}${fresh.has(m.id) ? ' is-arriving' : ''}`}
                         title={timeLabel(m.createdAt, locale) || undefined}
                       >
                         {m.deleted ? (
@@ -186,4 +187,33 @@ export function MessageList<T extends ChatMessage>({
       ))}
     </>
   );
+}
+
+/**
+ * The messages that arrived while the thread was open, which rise in as they come (styles/motion.css): one you have
+ * just written, and one someone else sent. What the thread opened with, older history loaded above, and your message
+ * coming back confirmed (a new id for a bubble already shown) just appear. A bubble keeps its mark, so a draw in the
+ * middle of its rise does not cut it short; the animation plays only as it first appears.
+ */
+function useFreshMessages(messages: readonly ChatMessage[], myId: string | undefined): ReadonlySet<string> {
+  const known = useRef<Set<string> | null>(null);
+  const arrived = useRef(new Set<string>());
+  if (known.current === null && messages.length > 0) known.current = new Set(messages.map((m) => m.id));
+  const seen = known.current;
+  if (seen) {
+    let lastSeen = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (seen.has(messages[i]!.id)) {
+        lastSeen = i;
+        break;
+      }
+    }
+    messages.forEach((m, i) => {
+      if (i > lastSeen && !seen.has(m.id) && (m.pending || m.senderId !== myId)) arrived.current.add(m.id);
+    });
+  }
+  useEffect(() => {
+    for (const m of messages) known.current?.add(m.id);
+  });
+  return arrived.current;
 }

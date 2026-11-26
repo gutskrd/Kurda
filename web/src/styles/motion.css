@@ -711,6 +711,29 @@
   animation-duration: var(--dur);
 }
 
+/* ---- a message arriving ----------------------------------------------------------- */
+/*
+ * A message sent or received while the thread is open rises from the composer's edge and grows from its sender's
+ * corner (chat/MessageList.tsx), as on the phone (mobile/src/chat/MessageRow.tsx); the thread as it opens just appears.
+ */
+@keyframes bubble-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+.bubble.is-arriving {
+  transform-origin: 0 100%;
+  animation: bubble-arrive var(--dur) var(--ease-out) both;
+}
+.bubble.mine.is-arriving,
+[dir='rtl'] .bubble.is-arriving {
+  transform-origin: 100% 100%;
+}
+[dir='rtl'] .bubble.mine.is-arriving {
+  transform-origin: 0 100%;
+}
+
 /* ---- a like ------------------------------------------------------------------ */
 /* the heart pops (feed.css) with six small sparks thrown a few pixels out, once per like (FeedCard) */
 .fcard-like {
