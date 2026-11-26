@@ -940,9 +940,9 @@ export function UnitFace({
   );
 }
 
-/** The vignette's height in the banner, the banner's own, and the room the name leaves it. */
-const PIN_ART_H = 116;
-const PIN_ART_ROOM = 100;
+/** The vignette's height in the banner, a size down from the banner's own so a long name keeps whole words beside it, and the room the name leaves it. */
+const PIN_ART_H = 90;
+const PIN_ART_ROOM = 90;
 /** How far a banner stands above its lip. */
 const BANNER_LIP = 6;
 

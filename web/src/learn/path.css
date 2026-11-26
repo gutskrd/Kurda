@@ -241,6 +241,16 @@
   line-height: 0;
   pointer-events: none;
 }
+/* On a phone's width the vignette steps down a size, so a long name keeps whole words beside it. */
+@media (max-width: 699px) {
+  .lp-pin-scene {
+    scale: 0.78;
+    transform-origin: 100% 100%;
+  }
+  [dir='rtl'] .lp-pin-scene {
+    transform-origin: 0 100%;
+  }
+}
 .lp-pin-scene.is-arriving {
   animation: lp-pin-words-in 260ms var(--ease-out) both;
 }
@@ -281,12 +291,17 @@
   margin: 0;
   /* Clear of the vignette's things (shared CHAPTER_ART); its quiet hill may run on under the words. */
   position: relative;
-  padding-inline-end: 100px;
+  padding-inline-end: 120px;
   font-family: var(--font-sans);
   font-size: var(--text-title);
   font-weight: 800;
   line-height: 1.1;
   overflow-wrap: anywhere;
+}
+@media (max-width: 699px) {
+  .lp-pin-title {
+    padding-inline-end: 90px;
+  }
 }
 /* Past a seam in the lip's colour, as a notebook's spine: the guide over the rail's flag. */
 .lp-pin-actions {
@@ -860,15 +875,16 @@ button.lp-scard:focus-visible {
 .lp-node.is-done .lp-node-glyph {
   color: var(--u-ink);
 }
-.lp-node.is-done .lp-node-glyph > :not(.lp-node-badge) {
-  transition: opacity 120ms linear;
-}
 .lp-node.is-stamped .lp-node-glyph > :not(.lp-node-badge) {
   opacity: 0;
 }
 .lp-node.is-stamping .lp-node-glyph > :not(.lp-node-badge) {
-  opacity: 0;
-  transition-delay: var(--stamp-press, 650ms);
+  animation: lp-glyph-out 120ms linear var(--stamp-press, 650ms) both;
+}
+@keyframes lp-glyph-out {
+  to {
+    opacity: 0;
+  }
 }
 /* On a closed stop's flat slate. */
 .lp-node.is-locked .lp-node-glyph {
