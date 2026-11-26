@@ -75,7 +75,6 @@ export function TreeGrowth(): React.JSX.Element {
     window.scrollTo({ top: top + (run * (s + 0.5)) / TREE_STAGES, behavior: 'smooth' });
   };
 
-  const lessons = lessonsFor(stage);
   return (
     <div className="fp-tree-scene" ref={box}>
       <div className="fp-tree-art" role="img" aria-label={t('landing.tree.label', { stage: stageName(t, stage) })}>
@@ -83,10 +82,15 @@ export function TreeGrowth(): React.JSX.Element {
           <span key={i} className={`fp-tree-layer${i === stage ? ' is-on' : i < stage ? ' is-past' : ''}`} dangerouslySetInnerHTML={l} />
         ))}
       </div>
-      <p className="fp-tree-caption" aria-live="polite">
-        <strong>{stageName(t, stage)}</strong>
-        <span>{lessons === 0 ? t('landing.tree.firstDay') : t('landing.tree.after', { count: lessons })}</span>
-      </p>
+      {/* Every stage's caption in one place, only the stage's shown, so a longer one moves nothing as the tree grows. */}
+      <div className="fp-tree-captions">
+        {STAGES.map((s) => (
+          <p key={s} className={`fp-tree-caption${s === stage ? ' is-on' : ''}`} aria-hidden={s === stage ? undefined : true}>
+            <strong>{stageName(t, s)}</strong>
+            <span>{lessonsFor(s) === 0 ? t('landing.tree.firstDay') : t('landing.tree.after', { count: lessonsFor(s) })}</span>
+          </p>
+        ))}
+      </div>
       <div className="fp-tree-dots" role="group" aria-label={t('tree.stages')}>
         {STAGES.map((s) => (
           <button key={s} type="button" className={`fp-tree-dot${s === stage ? ' is-on' : s < stage ? ' is-past' : ''}`} aria-pressed={s === stage} aria-label={stageName(t, s)} onClick={() => show(s)} />

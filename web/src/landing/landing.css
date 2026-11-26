@@ -1263,16 +1263,25 @@
   width: 100%;
   height: 100%;
 }
+.fp-tree-captions {
+  display: grid;
+  width: 100%;
+}
 .fp-tree-caption {
+  grid-area: 1 / 1;
   display: flex;
   flex-wrap: wrap;
   align-content: center;
   justify-content: center;
   gap: 0 10px;
-  /* two lines kept, so a longer stage name moves nothing under it */
   min-height: 3.2em;
   color: var(--ink-3);
   line-height: 1.6;
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+.fp-tree-caption.is-on {
+  opacity: 1;
 }
 .fp-tree-caption strong {
   color: var(--ink);
@@ -1588,6 +1597,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .fp-pill-text,
+  .fp-tree-caption,
   .fp-tree-layer {
     transition: none;
   }
