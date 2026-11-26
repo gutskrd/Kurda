@@ -599,7 +599,7 @@
 /* Its place keeps its size before it draws: the stamp's frame is the tallest thing in it. */
 .fp-flip-place {
   grid-area: games;
-  min-height: calc(300px * var(--fp-flip-scale));
+  min-height: calc(262px * var(--fp-flip-scale));
   margin-top: 36px;
   --fp-flip-scale: 0.72;
 }
@@ -615,12 +615,12 @@
   align-items: center;
   gap: 22px;
 }
-/* a soft panel the sleeve leaves by its foot, as the phone's does */
+/* a soft panel the hand leaves by its foot, as the phone's does */
 .fp-flip-frame {
   position: relative;
   flex: none;
-  width: calc(240px * var(--fp-flip-scale));
-  height: calc(300px * var(--fp-flip-scale));
+  width: calc(260px * var(--fp-flip-scale));
+  height: calc(262px * var(--fp-flip-scale));
   overflow: hidden;
   border-radius: var(--r-xl);
   background: var(--surface-2);
@@ -629,8 +629,9 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 240px;
-  height: 300px;
+  /* the hand's frame, shared HAND_STAMP_VIEW, drawn one to one and scaled */
+  width: 260px;
+  height: 262px;
   transform: scale(var(--fp-flip-scale));
   transform-origin: 0 0;
 }

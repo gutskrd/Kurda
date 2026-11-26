@@ -78,12 +78,12 @@ describe('the hand holding up a game’s stamp', () => {
     expect(stampBack).toContain('data-part="fingers"');
   });
 
-  it('wears the same skin and sleeve as the hand holding the phone', () => {
-    for (const c of [SKIN.face, SKIN.shade, KNIT.face, KNIT.rib]) {
-      expect(colours(back)).toContain(c);
-      expect(colours(stampBack)).toContain(c);
-    }
+  it('wears the same skin and sleeve as the hand holding the phone, and paints its gaps and lines in one dark shadow', () => {
+    for (const c of [SKIN.face, SKIN.shade, KNIT.face, KNIT.rib]) expect(colours(back)).toContain(c);
+    expect(colours(stampBack)).toContain(SKIN.face);
     expect(colours(stampFront)).toContain(SKIN.face);
+    // the skin, and one shadow for the gaps between the digits and for the thumbnail and creases
+    expect(new Set([...colours(stampBack), ...colours(stampFront)]).size).toBe(2);
   });
 
   it('covers only the stamp’s foot with the thumb, never its picture', () => {

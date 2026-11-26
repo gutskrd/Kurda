@@ -1,69 +1,169 @@
 /**
- * A hand holding up a game's stamp to show it, for the front page's games moment: the same hand and red knit sleeve as
- * the one holding the phone (hand-paint.ts), rising from the bottom, the stamp pinched at its foot between the thumb in
- * front and the fingers behind. Two layers on one frame: `back` (the sleeve, the palm and the fingers behind the stamp)
- * and `front` (the thumb), so an app can lay the stamp itself (`HAND_STAMP_CARD`) between them and turn it over. The
- * thumb and the fingers are groups marked `data-part`, so an app can shift them a little as the stamp turns.
+ * A hand holding up a game's stamp to show it, for the front page's games moment, posed after the owner's reference: seen
+ * from the front and a little below, the thumb in front and upright pressing the stamp's lower strip, the index finger
+ * behind it on the right curving up and over, and the other fingers curled behind to the left, the nearest reaching out
+ * with a rounded tip. Flat colour in the same skin as the hand holding the phone (hand-paint.ts), the gaps between the
+ * digits and the stamp a dark shadow, and thin dark lines only for the thumbnail, a few creases and the thumb's edge.
+ *
+ * Two layers on one frame: `back` (the palm and the fingers behind the stamp) and `front` (the thumb), so an app can lay
+ * the stamp itself (`HAND_STAMP_CARD`) between them and turn it over. The thumb and the fingers are groups marked
+ * `data-part`, so an app can shift them a little as the stamp turns.
  */
 import { Drawing, n, prefixFor, type Pt } from './svg.js';
-import { SKIN, flat, knitSleeve, line, smooth } from './hand-paint.js';
+import { SKIN, flat, line, smooth } from './hand-paint.js';
 
-/** The frame in drawing units, which the front page draws one to one in pixels. */
-export const HAND_STAMP_VIEW = { w: 240, h: 300 } as const;
+/** The frame in drawing units, which the front page draws one to one in pixels; the hand leaves it at its foot. */
+export const HAND_STAMP_VIEW = { w: 260, h: 262 } as const;
 
 /**
- * Where the stamp is held: a box `w` by `h` centred on (`cx`, `cy`), upright. The thumb covers only its foot: the top
- * `clear` units of it, where its picture goes, are never covered.
+ * Where the stamp is held: a box `w` by `h` centred on (`cx`, `cy`), turned `turn` degrees. The thumb covers only its
+ * foot: the top `clear` units of it, where its picture goes, are never covered.
  */
-export const HAND_STAMP_CARD = { cx: 120, cy: 96, w: 128, h: 152, clear: 130 } as const;
+export const HAND_STAMP_CARD = { cx: 91, cy: 90, w: 128, h: 152, turn: 3, clear: 116 } as const;
 
-/** The palm behind the stamp's foot: the heel of the hand either side of the thumb, narrowing to the wrist under the sleeve. */
+/** The shadow in the gaps between the digits and behind the stamp, and the thin lines, a dark aubergine. */
+const GAP = '#3d2f36';
+
+/**
+ * The hand is modelled in the reference's own pixels, where the card it holds spans 492 to 808 across and ends at 506;
+ * this places those on the frame, the card's foot on the stamp's.
+ */
+const K = 0.438;
+const at = ([x, y]: Pt): Pt => [(x - 465) * K + 10, (y - 506) * K + (HAND_STAMP_CARD.cy + HAND_STAMP_CARD.h / 2)];
+const shape = (points: readonly Pt[]): string => smooth(points.map(at));
+const stroke = (points: readonly Pt[], width = 1.1): string =>
+  `<path d="${line(points.map(at))}" fill="none" stroke="${GAP}" stroke-width="${n(width)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+/** The palm behind everything, under the fingers and out of the frame at its foot, as wide as the hand is there. */
 const PALM: readonly Pt[] = [
-  [112, 170],
-  [160, 164],
-  [194, 186],
-  [196, 226],
-  [184, 256],
-  [176, 330],
-  [104, 330],
-  [100, 268],
-  [92, 236],
-  [94, 204],
+  [600, 690],
+  [700, 630],
+  [800, 600],
+  [920, 640],
+  [1005, 690],
+  [1022, 780],
+  [1026, 900],
+  [600, 900],
+  [590, 760],
 ];
 
-/**
- * The fingers, curled round behind the stamp: the index finger up its back, its tip peeking past the right edge, and the
- * middle, ring and little fingers folded under it beside the thumb, so only their pads show, stacked, each a touch smaller.
- */
-const FINGERS: readonly (readonly Pt[])[] = [
-  [[178, 126], [192, 124], [202, 132], [205, 150], [203, 172], [194, 180], [180, 176], [172, 158], [172, 138]],
-  [[152, 170], [178, 167], [195, 173], [202, 185], [197, 196], [180, 199], [154, 197]],
-  [[154, 200], [178, 199], [192, 205], [196, 216], [190, 225], [175, 227], [155, 225]],
-  [[154, 228], [173, 228], [185, 234], [187, 244], [180, 251], [166, 252], [154, 249]],
+/** The other fingers, curled behind to the left: the nearest reaching out with a rounded tip, the next tucked lower. */
+const REACHING: readonly Pt[] = [
+  [652, 600],
+  [626, 570],
+  [601, 537],
+  [577, 514],
+  [556, 532],
+  [521, 551],
+  [491, 566],
+  [471, 583],
+  [467, 601],
+  [477, 616],
+  [501, 624],
+  [536, 622],
+  [571, 614],
+  [606, 604],
+  [650, 610],
+];
+const TUCKED: readonly Pt[] = [
+  [650, 668],
+  [604, 671],
+  [562, 684],
+  [522, 699],
+  [484, 715],
+  [452, 742],
+  [470, 800],
+  [650, 800],
 ];
 
-/** The thumb, from under the sleeve up the middle of the hand to the stamp's foot, its tip on the margin below the cover. */
+/** The index finger, behind the stamp on the right: from the palm up and over, its tip out of sight behind the stamp. */
+const INDEX: readonly Pt[] = [
+  [772, 470],
+  [792, 458],
+  [836, 480],
+  [893, 512],
+  [942, 549],
+  [982, 592],
+  [1006, 638],
+  [1016, 700],
+  [1022, 780],
+  [1026, 900],
+  [920, 900],
+  [905, 790],
+  [890, 728],
+  [868, 680],
+  [838, 630],
+  [806, 594],
+  [782, 578],
+  [772, 520],
+];
+
+/** The gaps in shadow: under the reaching finger, between the thumb and the index finger, and above the tucked one. */
+const GAPS: readonly (readonly Pt[])[] = [
+  [
+    [572, 512],
+    [627, 505],
+    [632, 575],
+    [612, 550],
+    [590, 528],
+  ],
+  [
+    [778, 576],
+    [806, 590],
+    [840, 626],
+    [870, 678],
+    [890, 730],
+    [876, 764],
+    [836, 750],
+    [814, 704],
+    [800, 652],
+    [786, 610],
+  ],
+  [
+    [602, 672],
+    [630, 666],
+    [644, 722],
+    [620, 716],
+  ],
+];
+
+/** The thumb, upright in front, a long even digit with a rounded tip, widening at its foot into the palm. */
 const THUMB: readonly Pt[] = [
-  [119, 300],
-  [116, 262],
-  [114, 226],
-  [115, 194],
-  [119, 172],
-  [126, 160],
-  [135, 155],
-  [145, 157],
-  [151, 166],
-  [153, 186],
-  [154, 218],
-  [157, 262],
-  [160, 300],
+  [697, 431],
+  [719, 433],
+  [737, 445],
+  [752, 466],
+  [762, 495],
+  [770, 530],
+  [778, 570],
+  [786, 610],
+  [795, 650],
+  [806, 700],
+  [814, 760],
+  [818, 830],
+  [622, 830],
+  [628, 760],
+  [634, 700],
+  [632, 640],
+  [629, 580],
+  [626, 530],
+  [627, 498],
+  [635, 470],
+  [650, 449],
+  [672, 435],
 ];
 
-/** A shape moved by (`dx`, `dy`), for the shade step showing past it. */
-const moved = (points: readonly Pt[], dx: number, dy: number): Pt[] => points.map(([x, y]) => [x + dx, y + dy] as Pt);
+/** The shadow beside the thumb's tip, where it presses the stamp and the index finger meets it from behind. */
+const TIP_GAP: readonly Pt[] = [
+  [746, 462],
+  [771, 470],
+  [776, 514],
+  [762, 502],
+  [753, 482],
+];
 
 export interface HandStampOptions {
-  /** `back`: the sleeve, palm and fingers behind the stamp; `front`: the thumb over its foot. */
+  /** `back`: the palm and the fingers behind the stamp; `front`: the thumb over its foot. */
   part: 'back' | 'front';
   idPrefix?: string;
 }
@@ -72,20 +172,26 @@ export interface HandStampOptions {
 export function handStampSvg(opts: HandStampOptions): string {
   const dr = new Drawing(prefixFor(opts.idPrefix, 'hand-stamp', opts.part));
   if (opts.part === 'back') {
-    // The palm, and in a shade step its side between the thumb and the folded fingers, and each finger's side above its pad.
-    dr.add(flat(smooth(PALM), SKIN.face) + flat(smooth([[150, 166], [168, 166], [166, 250], [150, 256]]), SKIN.shade));
-    const sides = FINGERS.slice(1).map((f) => flat(smooth(moved(f, 5, -5)), SKIN.shade)).join('');
-    dr.add(`<g data-part="fingers">${sides}${FINGERS.map((f) => flat(smooth(f), SKIN.face)).join('')}</g>`);
-    // The sleeve on the wrist, its arm leaving straight down out of the picture.
-    dr.add(knitSleeve(dr, [141, 280], -4, 0.66));
-  } else if (opts.part === 'front') {
-    // The thumb, with the shade of its side toward the palm, the line of its nail at the tip and a crease at the knuckle.
-    const crease = (points: readonly Pt[], opacity: number): string =>
-      `<path d="${line(points)}" fill="none" stroke="${SKIN.crease}" stroke-width="1.2" stroke-linecap="round" opacity="${n(opacity)}"/>`;
+    // Each gap goes down before the finger beside it, so the finger's edge stays clean against the shadow.
+    dr.add(flat(shape(PALM), SKIN.face));
     dr.add(
-      `<g data-part="thumb">${flat(smooth(moved(THUMB, -2.5, 1.5)), SKIN.shade)}${flat(smooth(THUMB), SKIN.face)}` +
-        crease([[124, 182], [124, 170], [130, 163], [140, 162], [146, 169], [147, 182]], 0.5) +
-        crease([[126, 213], [135, 216], [146, 213]], 0.35) +
+      `<g data-part="fingers">${flat(shape(GAPS[2]!), GAP)}${flat(shape(TUCKED), SKIN.face)}${flat(shape(GAPS[0]!), GAP)}` +
+        `${flat(shape(REACHING), SKIN.face)}${flat(shape(GAPS[1]!), GAP)}${flat(shape(INDEX), SKIN.face)}` +
+        // The crease at the index finger's middle joint, and the one at its knuckle beside the thumb.
+        stroke([[890, 665], [910, 652], [930, 642]]) +
+        stroke([[810, 585], [824, 572], [837, 560]]) +
+        `</g>`,
+    );
+  } else if (opts.part === 'front') {
+    dr.add(
+      `<g data-part="thumb">${flat(shape(TIP_GAP), GAP)}${flat(shape(THUMB), SKIN.face)}` +
+        // The thumbnail and its moon, two short creases at the knuckle, and the line of its foot either side.
+        stroke([[636, 472], [642, 510], [660, 540], [690, 556], [720, 552], [742, 534], [752, 505], [750, 478], [742, 458]]) +
+        stroke([[672, 542], [700, 532], [730, 537]], 0.9) +
+        stroke([[700, 667], [728, 662], [757, 660]], 0.9) +
+        stroke([[703, 681], [733, 676], [763, 673]], 0.9) +
+        stroke([[633, 660], [642, 685], [650, 702]], 0.9) +
+        stroke([[790, 600], [800, 660], [812, 720]], 0.9) +
         `</g>`,
     );
   } else {

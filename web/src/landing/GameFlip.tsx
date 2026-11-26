@@ -33,7 +33,7 @@ const BACK = { __html: handStampSvg({ part: 'back', idPrefix: 'fpFlipBack' }) };
 const FRONT = { __html: handStampSvg({ part: 'front', idPrefix: 'fpFlipFront' }) };
 const C = HAND_STAMP_CARD;
 /** The cover on the stamp, inset from the perforations as on the games page's stamps, and clear of the thumb. */
-const COVER = { pad: 14, size: Math.min(C.w, C.clear) - 28 } as const;
+const COVER = { pad: 14, size: Math.min(C.w - 28, C.clear - 16) } as const;
 
 /** A game's stamp without its words: the paper in the game's hue, a paper for each scheme, and its still cover. */
 function StampFace({ game }: { game: GameEmblem }): React.JSX.Element {
@@ -89,7 +89,8 @@ export function GameFlip(): React.JSX.Element {
   const game = GAMES[index]!;
   const name = t(game.name);
   const meaning = game.meaning ? t(game.meaning) : null;
-  const card = { left: C.cx - C.w / 2, top: C.cy - C.h / 2, width: C.w, height: C.h };
+  // Held a little tilted, as a hand holds a card up; it turns about its own upright.
+  const card = { left: C.cx - C.w / 2, top: C.cy - C.h / 2, width: C.w, height: C.h, transform: `rotate(${C.turn}deg)` };
   return (
     <div
       ref={box}
