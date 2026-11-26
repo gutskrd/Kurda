@@ -6,19 +6,19 @@ import { LeagueEmblem } from '../ranks/art';
 import { TreeArt } from '../tree/TreeArt';
 import './collection.css';
 
-/** The pictures in the row, small enough to sit beside the handle and still read. */
-const ICON = 32;
+/** The pictures in the row: small, so the row stays lighter than the name, and still easy to tell apart. */
+const ICON = 26;
 
 /** One picture of the row, decorative: the pill's own name says what it holds. */
 function RowArt({ item }: { item: BadgeRowItem }): React.JSX.Element {
   if (item.kind === 'league') return <LeagueEmblem tier={item.tier} size={ICON} title="" />;
   if (item.kind === 'tree') return <TreeArt species={item.tree.species} stage={item.tree.stage} health={item.tree.health} size={ICON} />;
-  return <Medal view={item.badge} size={ICON} shine={false} />;
+  return <Medal view={item.badge} size={ICON} shine={false} bare />;
 }
 
 /**
- * The badge row beside a profile's handle: one small pill with the league, the tree and the badges, "+N" for the rest,
- * opening the profile's collection. Somebody with nothing to show has none; your own shows a quiet one, since the
+ * The badge row beside a profile's handle: the league, the tree and the badges in a quiet row, without their tier
+ * marks, and "+N" for the rest as a muted count, the whole row one press that opens the profile's collection. Somebody with nothing to show has none; your own shows a quiet one, since the
  * collection also shows what there is to earn.
  */
 export function BadgePill({

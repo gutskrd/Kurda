@@ -133,10 +133,13 @@ export function BadgeMedal({
   title,
   shine = false,
   playing = false,
+  bare = false,
 }: {
   badgeKey: string;
   /** 1–4; 0 draws the locked medallion. */
   tier: number;
+  /** Without the tier's pips or tag, for a picture too small for them to be more than noise (a profile's badge row). */
+  bare?: boolean;
   state?: MedalState;
   size?: number;
   title: string;
@@ -152,8 +155,8 @@ export function BadgeMedal({
   const uploaded = useArtOverride('badge', badgeKey, badgeLevelName(artTier));
   const picture = shown === 'secret' ? null : uploaded;
   const svg = useMemo(
-    () => (known && !picture ? badgeSvg({ key: badgeKey as never, tier: artTier, state: shown, size, title, idPrefix: id }) : null),
-    [known, picture, badgeKey, artTier, shown, size, title, id],
+    () => (known && !picture ? badgeSvg({ key: badgeKey as never, tier: artTier, state: shown, size, title, idPrefix: id, ...(bare ? { tiers: 1 } : {}) }) : null),
+    [known, picture, badgeKey, artTier, shown, size, title, id, bare],
   );
   const glint = useMemo(
     () =>

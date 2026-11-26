@@ -29,11 +29,14 @@ export function Medal({
   size,
   shine = true,
   playing = false,
+  bare = false,
 }: {
   view: MedalView;
   size: number;
   shine?: boolean;
   playing?: boolean;
+  /** Without the tier's pips or tag (ranks/art.tsx `BadgeMedal`). */
+  bare?: boolean;
 }): React.JSX.Element | null {
   const t = useT();
   return (
@@ -45,6 +48,7 @@ export function Medal({
       title={medalTitle(t, view)}
       shine={shine}
       playing={playing}
+      bare={bare}
     />
   );
 }
