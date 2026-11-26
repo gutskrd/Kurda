@@ -54,14 +54,13 @@ const PADS: readonly (readonly Pt[])[] = [
 
 /**
  * The hand behind the phone: the palm and the thumb resting up its right edge in one piece, with the wrist and arm
- * running on under the sleeve; the palm's side in shade where it shows between the thumb and the phone; the index
+ * running on under the sleeve; the web between the thumb and the phone a shade step down, the palm behind; the index
  * finger tucked behind the phone's edge; and, a shade step down, each lower finger's side above its pad.
  */
 function hand(): string {
+  // The palm and thumb in one piece, the thumb its own digit: up the phone's right edge it touches the phone only near
+  // its tip, then parts from it, the background showing between, down to the web where it joins the palm.
   const palm = traced([
-    [600, 330],
-    [612, 270],
-    [621, 250],
     [636, 238],
     [652, 241],
     [664, 255],
@@ -91,16 +90,37 @@ function hand(): string {
     [470, 726],
     [436, 701],
     [430, 640],
-    [500, 480],
+    [540, 560],
+    [604, 514],
+    [614, 500],
+    [623, 480],
+    [633, 460],
+    [640, 442],
+    [642, 420],
+    [642, 390],
+    [641, 374],
+    [636, 361],
+    [629, 349],
+    [621, 338],
+    [616, 325],
+    [613, 310],
+    [613, 285],
+    [615, 268],
+    [618, 255],
+    [625, 244],
   ]);
+  // The web between the thumb and the phone, where the palm behind it shows a shade step down; it runs a little under
+  // the thumb, which is drawn over it, so no seam shows between them.
   const wedge = traced([
-    [606, 388],
-    [628, 388],
-    [645, 394],
-    [644, 430],
-    [636, 465],
-    [622, 492],
-    [606, 504],
+    [600, 394],
+    [613, 397],
+    [626, 407],
+    [640, 418],
+    [646, 440],
+    [638, 462],
+    [627, 483],
+    [616, 504],
+    [600, 510],
   ]);
   const index = traced([
     [251, 270],
@@ -114,15 +134,15 @@ function hand(): string {
     [255, 292],
   ]);
   const sides = PADS.map((pad) => flat(traced(pad.map(([x, y]) => [x + 15, y - 9] as Pt)), SKIN.shade)).join('');
-  return flat(palm, SKIN.face) + flat(wedge, SKIN.shade) + sides + flat(index, SKIN.face);
+  return flat(wedge, SKIN.shade) + flat(palm, SKIN.face) + sides + flat(index, SKIN.face);
 }
 
 /** The phone: its buttons, its black body with light along the metal edge, and the dark glass. */
 function phone(dr: Drawing): string {
   const { w, h, r } = PHONE;
   let out = '';
-  // The volume buttons on the left edge and the side button on the right, standing just proud of it.
-  for (const [x, y, len] of [[-w / 2, -46, 16], [-w / 2, -24, 16], [w / 2, -34, 26]] as const) {
+  // The volume buttons on the left edge and the side button on the right, standing just proud of it, above the thumb.
+  for (const [x, y, len] of [[-w / 2, -46, 16], [-w / 2, -24, 16], [w / 2, -68, 24]] as const) {
     out += box(x, y, 3.4, len, 1.4, INK.button);
   }
   const body =
