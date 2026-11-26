@@ -1,0 +1,1565 @@
+/*
+ * The front page (pages/Landing.tsx and landing/*): a calm centred hero, then one scene per section, each laid out its
+ * own way so the scroll keeps changing. The page's own rules sit under `.lp`, since marketing.css's shared heading and
+ * lead classes also dress the About, FAQ and legal pages. Scenes are timed here: each beat waits for its `--at`, and a
+ * paused player stops them all. Everything self-moving stops under Reduce Motion, with each scene left at its end.
+ */
+
+/* ---- the page's measures --------------------------------------------------- */
+.lp {
+  /* the download buttons: a dark slate by night, the ink by day, each on a darker lip */
+  --lp-store-bg: #1f2b30;
+  --lp-store-hover: #26353b;
+  --lp-store-lip: #0b1215;
+  --lp-store-ink: var(--ink);
+  /* a soft light behind a figure, never a brand colour */
+  --lp-glow: rgba(238, 243, 245, 0.07);
+  overflow-x: clip;
+}
+:root[data-theme='light'] .lp {
+  --lp-store-bg: #17242b;
+  --lp-store-hover: #22333b;
+  --lp-store-lip: #050b0e;
+  --lp-store-ink: #f7f9fa;
+  --lp-glow: rgba(23, 36, 43, 0.06);
+}
+.lp-wrap {
+  width: min(100% - 32px, 1080px);
+  margin-inline: auto;
+}
+.lp-center {
+  display: flex;
+  justify-content: center;
+}
+
+/* ---- type ------------------------------------------------------------------ */
+.lp .lp-title,
+.lp .lp-h2 {
+  font-size: var(--text-title);
+  font-weight: 800;
+  line-height: 1.14;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.lp .lp-h2 {
+  max-width: 22ch;
+}
+.lp .lp-lead {
+  font-size: var(--text);
+  line-height: 1.6;
+  color: var(--ink-3);
+  max-width: 44ch;
+  text-wrap: pretty;
+}
+.lp .lp-head .lp-lead {
+  margin-top: 14px;
+}
+.lp .lp-head--center {
+  text-align: center;
+}
+.lp .lp-head--center :is(.lp-h2, .lp-lead) {
+  margin-inline: auto;
+}
+/* "Others do this. We do that.": the first half quieter, the second in the ink. */
+.lp-contrast > span {
+  display: block;
+}
+.lp-contrast-them {
+  color: var(--ink-4);
+}
+.lp-ku {
+  font-family: var(--font-sans);
+}
+[dir='rtl'] :is(.lp .lp-title, .lp .lp-h2) {
+  letter-spacing: normal;
+}
+
+/* ---- rhythm ---------------------------------------------------------------- */
+.lp .lp-section {
+  padding-block: clamp(72px, 11vw, 136px);
+}
+.lp .lp-head {
+  margin-bottom: clamp(28px, 4vw, 44px);
+}
+
+/* ---- the ways in ----------------------------------------------------------- */
+.lp-join-buttons {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  max-width: 380px;
+  margin: 30px auto 0;
+}
+.lp-start {
+  height: 56px;
+}
+.lp-or {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 2px 0;
+  color: var(--ink-4);
+}
+.lp-or::before,
+.lp-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.lp-store {
+  --lip-h: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--r-lg);
+  background: var(--lp-store-bg);
+  color: var(--lp-store-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 var(--lip-h) 0 var(--lp-store-lip);
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background var(--dur-fast) ease,
+    transform var(--dur-slow) var(--ease-spring),
+    box-shadow var(--dur-slow) var(--ease-spring);
+}
+.lp-store:hover {
+  background: var(--lp-store-hover);
+}
+.lp-store:active {
+  transform: translateY(var(--lip-h));
+  box-shadow: 0 0 0 transparent;
+}
+.lp-store:focus-visible,
+.lp-hevalo-hit:focus-visible,
+.lp-chip-button:focus-visible,
+.lp-option:focus-visible,
+.lp-seg:focus-visible,
+.lp-player-hold:focus-visible,
+.lp-tree-dot:focus-visible,
+.lp-pill:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.lp-store svg {
+  flex: none;
+  margin-top: -2px;
+}
+.lp-login {
+  margin-top: 8px;
+  color: var(--ink-3);
+  text-align: center;
+}
+.lp-login-link {
+  color: var(--accent-text);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---- hero ------------------------------------------------------------------ */
+.lp-hero {
+  position: relative;
+  padding: clamp(28px, 6vw, 64px) 16px clamp(56px, 8vw, 96px);
+  text-align: center;
+}
+.lp-hero-in {
+  display: grid;
+  justify-items: center;
+  max-width: 460px;
+  margin-inline: auto;
+}
+.lp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  height: 38px;
+  padding: 0 12px 0 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color var(--dur) ease;
+}
+.lp-pill:hover {
+  border-color: var(--border-strong);
+}
+.lp-pill-new {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 700;
+  line-height: 1.2;
+}
+/* the three items share one place, so the pill keeps the width of the longest */
+.lp-pill-texts {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+}
+.lp-pill-text {
+  grid-area: 1 / 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 360ms ease,
+    transform 480ms var(--ease-emphasis);
+}
+.lp-pill-text.is-on {
+  opacity: 1;
+  transform: none;
+}
+.lp-pill-arrow {
+  flex: none;
+  color: var(--ink-4);
+}
+[dir='rtl'] .lp-pill-arrow {
+  transform: scaleX(-1);
+}
+
+.lp-hevalo {
+  position: relative;
+  margin-top: clamp(18px, 4vw, 36px);
+  rotate: var(--lp-lean, 0deg);
+  transform-origin: 50% 100%;
+}
+/* light behind him, as if he stood in it */
+.lp-hevalo::before,
+.lp-final-hevalo::before {
+  content: '';
+  position: absolute;
+  inset: -10% -45% -4%;
+  z-index: -1;
+  background: radial-gradient(closest-side, var(--lp-glow), transparent);
+  pointer-events: none;
+}
+.lp-hevalo-hit {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-xl);
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.lp-hevalo .speaking-character,
+.lp-final-hevalo .speaking-character {
+  display: block;
+  height: clamp(180px, 26vh, 290px);
+  width: auto;
+}
+.lp-say {
+  position: absolute;
+  inset-inline-start: 66%;
+  top: 2%;
+  margin: 0;
+  pointer-events: none;
+}
+.lp-say-bubble {
+  display: grid;
+  gap: 2px;
+  width: max-content;
+  max-width: 170px;
+  padding: 9px 13px;
+  border: 1px solid var(--border);
+  border-radius: 16px 16px 16px 4px;
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-sm);
+  text-align: start;
+  transform-origin: 0 100%;
+  animation: lp-pop 420ms var(--ease-spring) both;
+}
+[dir='rtl'] .lp-say-bubble {
+  border-radius: 16px 16px 4px 16px;
+  transform-origin: 100% 100%;
+}
+.lp-say-ku {
+  font-weight: 800;
+}
+.lp-say-gloss {
+  color: var(--ink-3);
+}
+.lp-hero .lp-title {
+  margin-top: clamp(18px, 3vw, 28px);
+}
+.lp-hero-lead {
+  margin: 12px auto 0;
+}
+
+/* ---- who for --------------------------------------------------------------- */
+.lp-who {
+  padding: clamp(40px, 6vw, 64px) 16px;
+  border-block: 1px solid var(--separator);
+  background: var(--surface-2);
+  text-align: center;
+}
+.lp-who-title {
+  font-size: var(--text-title);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+[dir='rtl'] .lp-who-title {
+  letter-spacing: normal;
+}
+.lp-who-answers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: 640px;
+  margin: 22px auto 0;
+}
+.lp-chip-button {
+  --lip-h: 3px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 2px solid var(--btn-edge);
+  border-radius: var(--r-pill);
+  background: var(--app-bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 var(--lip-h) 0 var(--btn-edge);
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    transform var(--dur-slow) var(--ease-spring),
+    box-shadow var(--dur-slow) var(--ease-spring);
+}
+.lp-chip-button:active {
+  transform: translateY(var(--lip-h));
+  box-shadow: 0 0 0 transparent;
+}
+/* what is chosen is shown in the ink */
+.lp-chip-button.is-on {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--app-bg);
+  box-shadow: 0 var(--lip-h) 0 var(--ink-3);
+}
+.lp-who-reply {
+  max-width: 44ch;
+  min-height: 3.2em;
+  margin: 18px auto 0;
+  color: var(--ink-3);
+  line-height: 1.6;
+}
+
+/* ---- three first words ------------------------------------------------------ */
+.lp-words-scene {
+  display: grid;
+  justify-items: center;
+  max-width: 460px;
+  margin-inline: auto;
+}
+.lp-words-teacher .speaking-character {
+  display: block;
+  height: 132px;
+  width: auto;
+}
+@media (min-width: 760px) {
+  .lp-words-scene {
+    grid-template-columns: 200px minmax(0, 1fr);
+    align-items: end;
+    gap: 24px;
+    max-width: 720px;
+  }
+  .lp-words-teacher .speaking-character {
+    height: 240px;
+  }
+}
+.lp-quiz {
+  width: 100%;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+}
+.lp-quiz-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink-4);
+}
+.lp-quiz-steps {
+  display: flex;
+  gap: 6px;
+}
+.lp-quiz-step {
+  width: 26px;
+  height: 6px;
+  border-radius: 6px;
+  background: var(--surface-3);
+}
+.lp-quiz-step.is-done,
+.lp-quiz-step.is-on {
+  background: var(--accent);
+}
+.lp-quiz-step.is-on {
+  opacity: 0.5;
+}
+.lp-quiz-word {
+  margin-top: 20px;
+  font-size: var(--text-title);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-align: center;
+  animation: lp-rise 420ms var(--ease-emphasis) both;
+}
+.lp-quiz-ask {
+  margin-top: 4px;
+  color: var(--ink-3);
+  text-align: center;
+}
+.lp-quiz-options {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+.lp-option {
+  --lip-h: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 18px;
+  border: 2px solid var(--btn-edge);
+  border-radius: var(--r-lg);
+  background: var(--app-bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--text);
+  font-weight: 700;
+  text-align: start;
+  cursor: pointer;
+  box-shadow: 0 var(--lip-h) 0 var(--btn-edge);
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    opacity var(--dur) ease,
+    transform var(--dur-slow) var(--ease-spring),
+    box-shadow var(--dur-slow) var(--ease-spring);
+}
+.lp-option:active:not([aria-disabled]) {
+  transform: translateY(var(--lip-h));
+  box-shadow: 0 0 0 transparent;
+}
+.lp-option[aria-disabled] {
+  cursor: default;
+}
+/* right and wrong in their own colours, each with its mark, never the colour alone */
+.lp-option.is-right {
+  border-color: var(--success);
+  background: var(--success-soft);
+  box-shadow: 0 var(--lip-h) 0 var(--success);
+  animation: lp-nod 420ms var(--ease-spring);
+}
+.lp-option.is-right svg {
+  color: var(--success);
+}
+.lp-option.is-wrong {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  box-shadow: 0 var(--lip-h) 0 var(--danger);
+  animation: lp-shake 360ms ease;
+}
+.lp-option.is-wrong svg {
+  color: var(--danger);
+}
+.lp-option.is-out {
+  opacity: 0.5;
+}
+.lp-quiz-after {
+  min-height: 124px;
+  margin-top: 16px;
+}
+.lp-quiz-say {
+  color: var(--ink-2);
+  line-height: 1.55;
+  animation: lp-rise 360ms var(--ease-emphasis) both;
+}
+.lp-quiz-next {
+  width: 100%;
+  margin-top: 14px;
+}
+.lp-quiz-done {
+  display: grid;
+  gap: 14px;
+  min-height: 300px;
+  align-content: center;
+  animation: lp-rise 420ms var(--ease-emphasis) both;
+}
+.lp-quiz-count {
+  font-size: var(--text-title);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-align: center;
+  text-wrap: balance;
+}
+.lp-quiz-count:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.lp-quiz-learned {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lp-quiz-learned li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink-3);
+}
+.lp-quiz-learned-ku {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+/* ---- scenes that play themselves ------------------------------------------- */
+.lp-stories-grid {
+  display: grid;
+}
+@media (min-width: 1000px) {
+  .lp-stories-grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: 56px;
+  }
+}
+/* the player's place, kept its size before the scenes arrive */
+.lp-player-place {
+  min-height: 572px;
+}
+.lp-player {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  max-width: 540px;
+  margin-inline: auto;
+}
+.lp-player-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.lp-segs {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.lp-seg {
+  display: grid;
+  gap: 8px;
+  padding: 6px 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-4);
+  font-family: var(--font-sans);
+  font-size: var(--text);
+  font-weight: 700;
+  text-align: start;
+  cursor: pointer;
+}
+.lp-seg.is-on {
+  color: var(--ink);
+}
+.lp-seg-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.lp-seg-bar {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--surface-3);
+}
+.lp-seg-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+[dir='rtl'] .lp-seg-fill {
+  transform-origin: 100% 50%;
+}
+.lp-seg.is-past .lp-seg-fill {
+  transform: none;
+}
+.lp-seg.is-on .lp-seg-fill {
+  animation: lp-fill var(--story-ms) linear both;
+}
+.lp-player.is-still .lp-seg.is-on .lp-seg-fill {
+  animation: none;
+  transform: none;
+}
+.lp-player-hold {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink);
+  cursor: pointer;
+}
+.lp-stage {
+  position: relative;
+  height: 480px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: var(--surface);
+}
+.lp-scene {
+  position: absolute;
+  inset: 0;
+}
+.lp-player-note {
+  color: var(--ink-4);
+  text-align: center;
+}
+
+/* Every beat waits for its moment; a paused player stops them all where they are. */
+.lp-b {
+  animation: lp-rise 440ms var(--ease-emphasis) var(--at, 0s) both;
+}
+.lp-blip,
+.lp-b.lp-gone-later {
+  animation:
+    lp-rise 360ms var(--ease-emphasis) var(--at, 0s) both,
+    lp-hide 200ms ease var(--out, 99s) forwards;
+}
+.lp-gone {
+  animation: lp-hide 200ms ease var(--at, 0s) forwards;
+}
+.lp-shown {
+  animation:
+    lp-show 1ms linear var(--at, 0s) both,
+    lp-hide 1ms linear var(--out, 99s) forwards;
+}
+.lp-shown.is-back {
+  animation:
+    lp-show 1ms linear var(--at, 0s) both,
+    lp-hide 1ms linear var(--out, 99s) forwards,
+    lp-show 1ms linear var(--back, 99s) forwards;
+}
+.lp-player.is-paused .lp-stage *,
+.lp-player.is-paused .lp-seg-fill {
+  animation-play-state: paused !important;
+}
+/* Held still, every scene shows how it ends. */
+.lp-player.is-still .lp-stage * {
+  animation-delay: 0s !important;
+  animation-duration: 1ms !important;
+}
+
+.lp-sc {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+}
+
+/* a friend's game */
+.lp-chat-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--separator);
+  font-weight: 700;
+}
+.lp-face {
+  flex: none;
+  border-radius: 50%;
+  background: var(--surface-2);
+}
+.lp-online {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--online);
+}
+.lp-sc-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: lp-up 560ms var(--ease-emphasis) var(--at, 0s) both;
+}
+.lp-chat-slot {
+  display: grid;
+  min-height: 92px;
+}
+.lp-chat-slot > * {
+  grid-area: 1 / 1;
+  align-self: start;
+  justify-self: start;
+}
+.lp-typing {
+  display: inline-flex;
+  gap: 5px;
+  padding: 13px 15px;
+  border-radius: 18px 18px 18px 6px;
+  background: var(--bubble-theirs);
+}
+[dir='rtl'] .lp-typing {
+  border-radius: 18px 18px 6px 18px;
+}
+.lp-typing i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  animation: lp-dot 900ms ease-in-out infinite;
+}
+.lp-typing i:nth-child(2) {
+  animation-delay: 150ms;
+}
+.lp-typing i:nth-child(3) {
+  animation-delay: 300ms;
+}
+.lp-invite {
+  width: min(100%, 320px);
+}
+.lp-race {
+  display: grid;
+  gap: 6px;
+}
+.lp-race-who {
+  display: grid;
+  grid-template-columns: 22px 64px 1fr;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-3);
+}
+.lp-race-bar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--surface-3);
+}
+.lp-race-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: 0 50%;
+  animation: lp-race-you 3.4s linear var(--at, 0s) both;
+}
+[dir='rtl'] .lp-race-fill {
+  transform-origin: 100% 50%;
+}
+.lp-race-fill.is-friend {
+  background: var(--ink-4);
+  animation-name: lp-race-friend;
+}
+.lp-gboard {
+  display: grid;
+  gap: 6px;
+  justify-content: center;
+  direction: ltr;
+}
+.lp-grow {
+  display: grid;
+  grid-template-columns: repeat(5, 38px);
+  gap: 6px;
+}
+.lp-gtile {
+  position: relative;
+  height: 38px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+}
+/* the game's own colours (pages.css): white on green, near-black on yellow */
+.lp-gface {
+  position: absolute;
+  inset: -2px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  font-weight: 800;
+  line-height: 1;
+  animation: lp-flip 420ms var(--ease-emphasis) both;
+  animation-delay: calc(var(--at, 0s) + var(--i, 0) * 90ms);
+}
+.lp-gface.is-green {
+  background: #2e7d5b;
+  color: #fff;
+}
+.lp-gface.is-yellow {
+  background: #b8922e;
+  color: #111;
+}
+.lp-gface.is-gray {
+  background: var(--surface-3);
+  color: var(--ink-2);
+}
+.lp-gresult {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--app-bg);
+}
+.lp-gresult > span:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.lp-gresult-word {
+  font-size: var(--text-title);
+  font-weight: 800;
+  line-height: 1;
+}
+.lp-gresult-gloss,
+.lp-gresult-won {
+  color: var(--ink-3);
+}
+.lp-bubble {
+  display: grid;
+  gap: 2px;
+  align-self: flex-start;
+  padding: 10px 14px;
+  border-radius: 18px 18px 18px 6px;
+  background: var(--bubble-theirs);
+  color: var(--bubble-theirs-ink);
+}
+[dir='rtl'] .lp-bubble {
+  border-radius: 18px 18px 6px 18px;
+}
+.lp-bubble-ku {
+  font-weight: 800;
+}
+.lp-bubble-gloss {
+  color: var(--ink-3);
+}
+
+/* a letter by pigeon */
+.lp-sc--letter {
+  --win: 190px;
+  --bird: calc(var(--win) * 0.46);
+  align-items: center;
+  gap: 14px;
+}
+.lp-window {
+  position: relative;
+  flex: none;
+  width: var(--win);
+  height: var(--win);
+}
+.lp-window-art,
+.lp-window-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.lp-pigeon {
+  position: absolute;
+  left: var(--bird-x);
+  top: var(--bird-y);
+  width: var(--bird);
+  height: var(--bird);
+}
+.lp-pigeon-frame,
+.lp-pigeon-flight {
+  position: absolute;
+  inset: 0;
+}
+.lp-pigeon-frame svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.lp-pigeon-flight {
+  transform-origin: var(--feet);
+  animation:
+    var(--arrive) var(--arrive-ms) cubic-bezier(0.3, 0.1, 0.3, 1) var(--at, 0s) both,
+    lp-hide 1ms linear var(--out, 99s) forwards;
+}
+.lp-pigeon-flight .is-up {
+  animation: lp-flap var(--beat-ms) steps(1, end) infinite;
+}
+.lp-pigeon-flight .is-down {
+  animation: lp-flap var(--beat-ms) steps(1, end) calc(var(--beat-ms) / -2) infinite;
+}
+.lp-envelope {
+  position: absolute;
+  left: 34%;
+  top: 72%;
+  width: 22%;
+}
+.lp-envelope svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.lp-paper {
+  width: min(100%, 340px);
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--lp-paper, #fbf3e4);
+  color: var(--lp-paper-ink, #1f2a4d);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+.lp-unfold {
+  transform-origin: 50% 0;
+  animation: lp-unfold 640ms var(--ease-emphasis) var(--at, 0s) both;
+}
+.lp-paper-from,
+.lp-paper-gloss,
+.lp-paper-sign {
+  color: var(--lp-paper-muted, #5b5f73);
+}
+.lp-paper-line {
+  display: grid;
+  margin-top: 6px;
+}
+.lp-paper-ku {
+  font-weight: 800;
+}
+.lp-paper-ku > span,
+.lp-paper-gloss {
+  display: inline-block;
+}
+.lp-paper-sign {
+  margin-top: 8px;
+  font-style: italic;
+  text-align: end;
+}
+
+/* the road, stamped */
+.lp-sc--road {
+  align-items: center;
+}
+.lp-road-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+.lp-road-band {
+  display: grid;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.lp-road-unit {
+  font-weight: 800;
+}
+.lp-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gold-ink);
+  font-weight: 800;
+}
+.lp-swap {
+  display: grid;
+}
+.lp-swap > * {
+  grid-area: 1 / 1;
+}
+.lp-pop {
+  animation-name: lp-pop;
+  animation-timing-function: var(--ease-spring);
+}
+.lp-road {
+  position: relative;
+  flex: none;
+  width: 300px;
+  height: 360px;
+}
+[dir='rtl'] .lp-road {
+  direction: ltr;
+}
+.lp-road-path {
+  position: absolute;
+  inset: 0;
+}
+.lp-road-bed {
+  fill: none;
+  stroke: var(--surface-3);
+  stroke-width: 22;
+  stroke-linecap: round;
+}
+.lp-road-line {
+  fill: none;
+  stroke: var(--ink-4);
+  stroke-width: 2;
+  stroke-dasharray: 2 10;
+  stroke-linecap: round;
+  opacity: 0.6;
+}
+.lp-stop {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.lp-stop > * {
+  position: absolute;
+  translate: -50% -50%;
+}
+.lp-node {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  font-size: var(--text);
+  font-weight: 800;
+}
+.lp-node.is-locked {
+  background: var(--locked);
+  color: var(--locked-mark);
+}
+/* the stop to do now wears the accent */
+.lp-node.is-current {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow:
+    0 4px 0 var(--accent-lip),
+    0 0 0 6px var(--accent-soft);
+}
+.lp-stamp {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 58px;
+  color: var(--on-gold);
+  rotate: -7deg;
+}
+/* a finished lesson is earned, so its stamp is gold */
+.lp-stamp svg {
+  grid-area: 1 / 1;
+  overflow: visible;
+}
+.lp-stamp-paper {
+  fill: var(--gold);
+}
+.lp-stamp-frame {
+  fill: none;
+  stroke: var(--on-gold);
+  stroke-opacity: 0.35;
+  stroke-width: 1.5;
+}
+.lp-stamp > :last-child {
+  grid-area: 1 / 1;
+}
+.lp-press {
+  animation: lp-press 520ms var(--ease-spring) var(--at, 0s) both;
+}
+.lp-walker {
+  position: absolute;
+  translate: -50% -50%;
+}
+.lp-leg {
+  display: block;
+  animation: lp-leg 1100ms var(--ease-emphasis) var(--at, 0s) both;
+}
+.lp-hop {
+  display: block;
+  animation: lp-hop 1100ms ease-in-out var(--at, 0s) both;
+}
+
+/* ---- the table ------------------------------------------------------------- */
+.lp-table .lp-wrap {
+  display: grid;
+}
+@media (min-width: 1000px) {
+  .lp-table .lp-wrap {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 56px;
+  }
+  .lp-table .lp-head {
+    order: 2;
+    margin-bottom: 0;
+  }
+}
+.lp-table-scene {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+.lp-table-host {
+  position: relative;
+}
+.lp-table-host .speaking-character {
+  display: block;
+  height: clamp(196px, 26vh, 260px);
+  width: auto;
+}
+.lp-table-bubble {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(100%, 360px);
+  min-height: 96px;
+  margin: 0;
+  padding: 14px 20px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+/* its tail points up at Hamo */
+.lp-table-bubble::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: calc(50% - 8px);
+  width: 16px;
+  height: 16px;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  background: var(--surface-solid);
+  transform: rotate(45deg);
+}
+.lp-table-said {
+  display: grid;
+  gap: 4px;
+  animation: lp-pop 420ms var(--ease-spring) both;
+}
+.lp-table-ku {
+  font-size: var(--text-title);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.lp-table-gloss {
+  color: var(--ink-3);
+}
+.lp-table-phrases {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 460px;
+}
+.lp-table-phrases .lp-chip-button {
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+/* ---- the tree, grown by the scroll ----------------------------------------- */
+.lp-tree {
+  position: relative;
+  height: 220vh;
+  height: 220svh;
+}
+.lp-tree-hold {
+  position: sticky;
+  top: var(--nav-bottom, 64px);
+  display: grid;
+  align-items: center;
+  height: calc(100vh - var(--nav-bottom, 64px));
+  height: calc(100svh - var(--nav-bottom, 64px));
+  overflow: clip;
+}
+.lp-tree-grid {
+  display: grid;
+  align-content: center;
+  gap: 8px;
+}
+.lp-tree .lp-head {
+  margin-bottom: 0;
+}
+@media (min-width: 1000px) {
+  .lp-tree-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 56px;
+  }
+}
+.lp-tree-place {
+  width: min(100%, 420px, calc((100svh - var(--nav-bottom, 64px) - 300px) / 1.2));
+  min-width: 240px;
+  aspect-ratio: 1 / 1.2;
+  margin-inline: auto;
+}
+.lp-tree-scene {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+.lp-tree-art {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+}
+.lp-tree-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(0.92);
+  transform-origin: 50% 86%;
+  transition:
+    opacity 420ms ease,
+    transform 640ms var(--ease-spring);
+}
+.lp-tree-layer.is-past {
+  transform: scale(1.04);
+}
+.lp-tree-layer.is-on {
+  opacity: 1;
+  transform: none;
+}
+.lp-tree-layer svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.lp-tree-caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 10px;
+  color: var(--ink-3);
+}
+.lp-tree-caption strong {
+  color: var(--ink);
+}
+.lp-tree-dots {
+  display: flex;
+  gap: 4px;
+}
+.lp-tree-dot {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+.lp-tree-dot::after {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  transition:
+    background var(--dur) ease,
+    transform var(--dur-slow) var(--ease-spring);
+}
+.lp-tree-dot.is-past::after {
+  background: var(--ink-4);
+}
+.lp-tree-dot.is-on::after {
+  background: var(--accent);
+  transform: scale(1.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-tree {
+    height: auto;
+  }
+  .lp-tree-hold {
+    position: static;
+    height: auto;
+    padding-block: clamp(72px, 11vw, 136px);
+  }
+}
+
+/* ---- legends ---------------------------------------------------------------- */
+.lp-legend-rail {
+  overflow-x: auto;
+  padding: 4px 16px 20px;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 16px;
+  scrollbar-width: none;
+}
+.lp-legend-rail::-webkit-scrollbar {
+  display: none;
+}
+.lp-legend-row {
+  display: flex;
+  gap: 14px;
+  width: max-content;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  will-change: transform;
+}
+.lp-legend {
+  width: min(76vw, 300px);
+  scroll-snap-align: center;
+}
+.lp-legend-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+  transition: transform 600ms var(--ease-emphasis);
+}
+.lp-legend:hover .lp-legend-art {
+  transform: translateY(-4px);
+}
+.lp-legend-text {
+  display: grid;
+  gap: 2px;
+  margin-top: 12px;
+}
+.lp-legend-ku {
+  font-weight: 800;
+}
+.lp-legend-name {
+  color: var(--ink-3);
+}
+@media (min-width: 900px) {
+  .lp-legend-rail {
+    overflow: visible;
+  }
+  .lp-legend {
+    width: clamp(180px, 16vw, 236px);
+  }
+}
+.lp-legends .lp-center {
+  margin-top: 24px;
+}
+
+/* ---- questions -------------------------------------------------------------- */
+.lp-faq-wrap {
+  max-width: 720px;
+}
+.lp-faq-all {
+  display: inline-block;
+  margin-top: 20px;
+}
+
+/* ---- the last word ---------------------------------------------------------- */
+.lp-final {
+  padding-inline: 16px;
+  text-align: center;
+}
+.lp-final-in {
+  display: grid;
+  justify-items: center;
+  max-width: 460px;
+  margin-inline: auto;
+}
+.lp-final-hevalo {
+  position: relative;
+  margin-bottom: 20px;
+}
+.lp-final .lp-lead {
+  margin: 12px auto 0;
+}
+
+/* ---- keyframes -------------------------------------------------------------- */
+@keyframes lp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lp-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lp-show {
+  from {
+    opacity: 0;
+    visibility: visible;
+  }
+  to {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+@keyframes lp-hide {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+@keyframes lp-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes lp-dot {
+  0%,
+  60%,
+  100% {
+    transform: none;
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+@keyframes lp-up {
+  to {
+    transform: translateY(var(--up, 0px));
+  }
+}
+@keyframes lp-race-you {
+  from {
+    transform: scaleX(0.04);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes lp-race-friend {
+  from {
+    transform: scaleX(0.04);
+  }
+  to {
+    transform: scaleX(0.6);
+  }
+}
+@keyframes lp-flip {
+  from {
+    opacity: 0;
+    transform: rotateX(90deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lp-flap {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes lp-unfold {
+  from {
+    opacity: 0;
+    transform: perspective(700px) rotateX(-72deg) scaleY(0.6);
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lp-press {
+  0% {
+    opacity: 0;
+    transform: scale(1.9) rotate(-14deg);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lp-leg {
+  from {
+    transform: none;
+  }
+  to {
+    transform: translate(var(--dx), var(--dy));
+  }
+}
+@keyframes lp-hop {
+  0%,
+  50%,
+  100% {
+    transform: none;
+  }
+  25%,
+  75% {
+    transform: translateY(-12px);
+  }
+}
+@keyframes lp-nod {
+  40% {
+    transform: scale(1.03);
+  }
+}
+@keyframes lp-shake {
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-pill-text,
+  .lp-tree-layer {
+    transition: none;
+  }
+  .lp-hevalo {
+    rotate: none;
+  }
+}

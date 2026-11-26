@@ -6,34 +6,17 @@ import { Landing } from '../pages/Landing';
 import { About } from '../pages/About';
 import { Faq } from '../pages/Faq';
 import { en } from '../i18n/en';
-import { PRINCIPLES } from './principles';
 
 /**
  * Every link to "How Hevalo teaches" (the front page, the public footer, About and the FAQ), and that each anchor
  * names a real section.
  */
 describe('the ways in to How Hevalo teaches', () => {
-  it('gives the front page a section of four principles, each a link to its own', () => {
+  it('answers on the front page what research the lessons follow, with the way to the full page', () => {
     renderApp(<Landing />);
-    const section = document.getElementById('how-it-teaches')!;
-    expect(within(section).getByRole('heading', { level: 2, name: en['landing.science.title'] })).toBeInTheDocument();
-
-    const ids = new Set(PRINCIPLES.map((p) => p.id));
-    const cards = within(section)
-      .getAllByRole('link')
-      .filter((a) => a.getAttribute('href')?.includes('#'));
-    expect(cards).toHaveLength(4);
-    for (const a of cards) {
-      const [path, anchor] = a.getAttribute('href')!.split('#');
-      expect(path).toBe('/how-hevalo-teaches');
-      expect(ids, `#${anchor} names no section`).toContain(anchor);
-      // The card is named for the principle it opens.
-      expect(a).toHaveTextContent(en[PRINCIPLES.find((p) => p.id === anchor)!.title]);
-    }
-    expect(within(section).getByRole('link', { name: 'How Hevalo teaches, with the studies' })).toHaveAttribute(
-      'href',
-      '/how-hevalo-teaches',
-    );
+    const section = document.getElementById('faq')!;
+    const answer = within(section).getByText(en['faq.research.q']).closest('details')!;
+    expect(within(answer).getByRole('link', { name: en['footer.teach'] })).toHaveAttribute('href', '/how-hevalo-teaches');
   });
 
   it('is in the footer, under Company', () => {
