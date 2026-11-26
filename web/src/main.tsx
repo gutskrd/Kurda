@@ -74,7 +74,14 @@ if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('show
  * The page's own code is fetched alongside the session check and the catalogue rather than after them; a link's page as
  * it is reached for; and once the page has settled, the parts behind its buttons and, for an account, the other places.
  */
-const session = createTokenStorage().get();
+const session = (() => {
+  try {
+    return createTokenStorage().get();
+  } catch {
+    // Storage the browser has blocked holds no session to start with.
+    return null;
+  }
+})();
 // A signed-in page's first questions are asked now, with the session check, instead of after it (lib/earlyAnswers.ts).
 startEarlyAnswers(window.location.pathname, session?.accessToken);
 warmRoute(window.location.pathname);
