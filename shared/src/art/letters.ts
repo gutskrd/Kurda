@@ -1,17 +1,18 @@
 /**
- * The pictures for letters by bird (shared/src/letters.ts): your window seen from inside a room, the pigeons, and a
- * letter in its envelope. Each window layer is its own same-sized picture (`part`) so apps can stack and animate them;
- * `whole` is all of it, still. The pigeon is drawn separately (`letterBirdSvg`) so it can stand on the sill in front of
- * the room or fly out behind it; `LETTER_SILL` places it and `LETTER_FLIGHT` is its flight path.
+ * The pictures for letters by bird (shared/src/letters.ts): your window seen from inside a village room, deep in a mud
+ * wall with an old wooden frame, shutters and sill, the pigeons, and a letter in its envelope. Each window layer is its
+ * own same-sized picture (`part`) so apps can stack and animate them; `whole` is all of it, still. The pigeon is drawn
+ * separately (`letterBirdSvg`) so it can stand on the sill in front of the room or fly out behind it; `LETTER_SILL`
+ * places it and `LETTER_FLIGHT` is its flight path.
  */
 import { LETTER_BIRDS } from '../letters.js';
-import { form, ring, rr, type Tones } from './cutout.js';
+import { fill, form, line as stroke, ring, rr, type Tones } from './cutout.js';
 import { leaf } from './paint.js';
 import { PIGEON_PECK, pigeon, pigeonHolds, pigeonShadow, type PigeonPose } from './pigeon.js';
-import { Drawing, checkSize, linearAt, mix, n, prefixFor, radialAt, radialBox, seeded, tint, type Pt } from './svg.js';
+import { Drawing, checkSize, linearAt, mix, n, n2, prefixFor, radialAt, radialBox, seeded, tint, type Pt } from './svg.js';
 import type { TreeSky } from './tree-scene.js';
 
-/** What changes with the hour: the country outside, and the room's colours in its light. */
+/** What changes with the hour: the country outside, and the room's mud and wood in its light. */
 interface Hour {
   sky: readonly [top: string, horizon: string];
   /** The sun or moon: position, radius, colour and glow. */
@@ -25,14 +26,20 @@ interface Hour {
   grass: string;
   flowers: readonly [string, string, string];
   heart: string;
-  wall: readonly [lit: string, base: string];
-  soffit: string;
-  jamb: readonly [lit: string, shade: string];
-  frame: readonly [paint: string, shade: string];
-  sill: readonly [top: string, front: string];
-  glass: string;
+  /** The sun-dried mud plaster of the wall and its reveal. */
+  mud: Tones;
+  /** The old walnut of the lintel and frame. */
+  wood: Tones;
+  /** The weathered poplar boards of the shutters and sill. */
+  board: Tones;
+  /** The darkest wood: joints, grooves, nails and the gaps where wood meets mud. */
+  joint: string;
   /** The light coming in, and its strength on the sill. */
   light: readonly [string, number];
+  /** A lamp lit in the room, low on the left: its colour and strength. */
+  lamp?: readonly [string, number];
+  /** A low sun's light across the shutter that faces it: its strength. */
+  sun?: number;
   night?: true;
 }
 
@@ -49,13 +56,11 @@ const HOURS: Record<TreeSky, Hour> = {
     grass: '#5f9a3e',
     flowers: ['#f9df4b', '#f2708f', '#a6d8f4'],
     heart: '#f06d8c',
-    wall: ['#f8efe2', '#efe0cb'],
-    soffit: '#d9c4a8',
-    jamb: ['#efdfc8', '#e2ccae'],
-    frame: ['#fcf9f3', '#e6ddcd'],
-    sill: ['#fbf6ee', '#e3d6c2'],
-    glass: '#d6ecf6',
-    light: ['#fffbe9', 0.55],
+    mud: { light: '#ecce9f', base: '#d9b07b', shade: '#b98d5c' },
+    wood: { light: '#a97851', base: '#875a39', shade: '#5f3d25' },
+    board: { light: '#ccab85', base: '#a88563', shade: '#7c5f43' },
+    joint: '#45291a',
+    light: ['#fff4d6', 0.5],
   },
   dawn: {
     sky: ['#f2b9a4', '#fde7d2'],
@@ -69,13 +74,12 @@ const HOURS: Record<TreeSky, Hour> = {
     grass: '#678f42',
     flowers: ['#f9df4b', '#f2708f', '#a6d8f4'],
     heart: '#f06d8c',
-    wall: ['#f8e6da', '#eed4c4'],
-    soffit: '#d9bba8',
-    jamb: ['#f0d9ca', '#e2c4b0'],
-    frame: ['#fdf6f1', '#e9d8cd'],
-    sill: ['#fcf3ed', '#e6d0c2'],
-    glass: '#f1dcd4',
-    light: ['#ffe9d2', 0.5],
+    mud: { light: '#f0cda9', base: '#dcad86', shade: '#bc8b64' },
+    wood: { light: '#ac7656', base: '#895a3e', shade: '#613f2b' },
+    board: { light: '#d1a98a', base: '#ab8467', shade: '#7f5e48' },
+    joint: '#47291c',
+    light: ['#ffe2c4', 0.5],
+    sun: 0.3,
   },
   dusk: {
     sky: ['#c0664f', '#f7bf9c'],
@@ -89,13 +93,13 @@ const HOURS: Record<TreeSky, Hour> = {
     grass: '#58833c',
     flowers: ['#f6d25a', '#ee6f8e', '#b5c8f0'],
     heart: '#e9627f',
-    wall: ['#f1d9cf', '#e3c3b6'],
-    soffit: '#c9a395',
-    jamb: ['#e6c8bb', '#d4ad9e'],
-    frame: ['#fbf1ec', '#e3cfc6'],
-    sill: ['#f8ece6', '#ddc5ba'],
-    glass: '#e9c6c0',
-    light: ['#ffdcc0', 0.45],
+    mud: { light: '#f3c78f', base: '#d6a26f', shade: '#ae7a52' },
+    wood: { light: '#ae774d', base: '#855637', shade: '#5c3b26' },
+    board: { light: '#d4a67b', base: '#aa7f5a', shade: '#7c5a3f' },
+    joint: '#432718',
+    light: ['#ffc77e', 0.55],
+    lamp: ['#ffb35c', 0.14],
+    sun: 0.36,
   },
   night: {
     sky: ['#0b1d22', '#1e464a'],
@@ -109,20 +113,23 @@ const HOURS: Record<TreeSky, Hour> = {
     grass: '#1c3329',
     flowers: ['#d9c35a', '#c9667f', '#8fb0d6'],
     heart: '#c25a74',
-    wall: ['#3a332c', '#2c2621'],
-    soffit: '#211c18',
-    jamb: ['#352e27', '#29231e'],
-    frame: ['#e6ddd0', '#c2b6a6'],
-    sill: ['#e0d6c8', '#bcae9c'],
-    glass: '#24484c',
-    light: ['#f3d9a8', 0.2],
+    mud: { light: '#7a573a', base: '#5c402c', shade: '#45301f' },
+    wood: { light: '#6a4a31', base: '#47301f', shade: '#311f14' },
+    board: { light: '#7b5f45', base: '#5b4431', shade: '#3e2e21' },
+    joint: '#22140c',
+    light: ['#c4d2ff', 0.2],
+    lamp: ['#ffa04a', 0.46],
     night: true,
   },
 };
 
-/** The window on its 120-unit square: the edge of the wall's thickness, the frame set back in it, the opening, and the sill. */
-const REVEAL = { x0: 16, y0: 12, x1: 104, y1: 92 } as const;
-const FRAME = { x0: 22, y0: 18, x1: 98, y1: 88 } as const;
+/**
+ * The window on its 120-unit square: where the wall's face turns into its deep reveal, the frame set back in it, the
+ * opening, the sill, and the lintel beam over it all.
+ */
+const REVEAL = { x0: 14, y0: 11, x1: 106, y1: 92 } as const;
+const FRAME = { x0: 21, y0: 17, x1: 99, y1: 88 } as const;
+const LINTEL = { x0: 8, x1: 112, y0: 2.2, y1: 8.6 } as const;
 const OPENING = { x0: 25.4, y0: 21.4, x1: 94.6, y1: 85.4 } as const;
 /** Where the country shows through the window on its 120-unit square; a pigeon flying out is wholly inside it once behind the room. */
 export const LETTER_OPENING = OPENING;
@@ -137,7 +144,7 @@ export type LetterWindowPart = (typeof LETTER_WINDOW_PARTS)[number];
 
 /**
  * How far each layer shifts with the eye, as a share of the window's width at the extreme: nearer country more, the
- * room and casements not at all, so the frame holds still and the outside turns behind it.
+ * room and shutters not at all, so the frame holds still and the outside turns behind it.
  */
 export const LETTER_WINDOW_DEPTH: Readonly<Record<LetterWindowPart, number>> = { sky: 0.006, clouds: 0.012, far: 0.02, near: 0.04, room: 0, left: 0, right: 0, plant: 0, light: 0 };
 
@@ -740,10 +747,49 @@ function nearPart(dr: Drawing, h: Hour): void {
   flower(dr, 52, 84.6, 1.3, blue, tint(blue, 0.35));
 }
 
-/** A clay pot on the sill at `x`, `y`: its shade, body and rim. Its plant is drawn separately (`plant`). */
-function pot(dr: Drawing, x: number, y: number): void {
+/** A closed outline rounded through `pts`: it runs through the midpoints between them, each point bending it. */
+function smoothLoop(pts: readonly Pt[]): string {
+  const mid = (a: Pt, b: Pt): Pt => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const start = mid(pts[pts.length - 1]!, pts[0]!);
+  let d = `M${n(start[0])} ${n(start[1])}`;
+  pts.forEach((p, i) => {
+    const m = mid(p, pts[(i + 1) % pts.length]!);
+    d += `Q${n(p[0])} ${n(p[1])} ${n(m[0])} ${n(m[1])}`;
+  });
+  return `${d}Z`;
+}
+
+/**
+ * Where the wall's face turns into the reveal: an oblong smoothed by hand, rounded where the plaster wraps round its
+ * corners and a little out of true along its sides. Seeded, so it is the same at every hour and on every device.
+ */
+const REVEAL_EDGE = (() => {
+  const rand = seeded('letter-window-reveal');
+  const wobble = (s: number): number => (rand() - 0.5) * 2 * s;
+  const { x0, y0, x1, y1 } = REVEAL;
+  const corners: Pt[] = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+  const pts: Pt[] = [];
+  corners.forEach((c, i) => {
+    const next = corners[(i + 1) % 4]!;
+    pts.push([c[0] + Math.sign(60 - c[0]) * 0.5 + wobble(0.3), c[1] + Math.sign(52 - c[1]) * 0.5 + wobble(0.3)]);
+    // Points along the side, the first and last close to the corners so the plaster's turn stays tight.
+    const len = Math.hypot(next[0] - c[0], next[1] - c[1]);
+    const steps = Math.round((len - 9) / 11);
+    const along = [4.5, ...Array.from({ length: steps - 1 }, (_, k) => 4.5 + ((len - 9) * (k + 1)) / steps), len - 4.5];
+    const level = c[1] === next[1];
+    for (const dist of along) {
+      const t = dist / len;
+      const w = wobble(0.45);
+      pts.push([c[0] + (next[0] - c[0]) * t + (level ? 0 : w), c[1] + (next[1] - c[1]) * t + (level ? w : 0)]);
+    }
+  });
+  return smoothLoop(pts);
+})();
+
+/** A clay pot on the sill at `x`, `y`: its shadow, body and rim. Its plant is drawn separately (`plant`). */
+function pot(dr: Drawing, shadow: string, x: number, y: number): void {
   const clay: Tones = { light: '#eea17a', base: '#d9825b', shade: '#b8663f' };
-  dr.add(`<ellipse cx="${n(x)}" cy="${n(y + 0.4)}" rx="7.4" ry="1.4" fill="#1f1a16" opacity="0.16"/>`);
+  dr.add(`<ellipse cx="${n(x)}" cy="${n(y + 0.4)}" rx="7.4" ry="1.4" fill="${shadow}" opacity="0.24"/>`);
   form(dr, `M${n(x - 5.6)} ${n(y - 7)}L${n(x + 5.6)} ${n(y - 7)}L${n(x + 4.2)} ${n(y)}L${n(x - 4.2)} ${n(y)}Z`, clay, 0.8, 0.6);
   dr.add(`<path d="${rr(x - 6.6, y - 8.6, 13.2, 2.6, 1)}" fill="${clay.light}"/>`);
 }
@@ -765,81 +811,208 @@ function plant(dr: Drawing, h: Hour, x: number, y: number): void {
   flower(dr, x - 3.6, y - 14.6, 1, h.flowers[0], h.heart);
 }
 
-/** The room round the window: its wall, the wall's thickness, the set-back frame, the sill and its pot. */
+/** The hand-drawn marks on the window's square: the mud's sweeps, patches and cracks, and the grain of the wood. */
+const HAND = {
+  sweeps:
+    'M13 109.4C22 105.8 38 104.6 52 106.2C38 106.6 24 107.6 13 109.4ZM44 114.6C54 111.2 70 110.6 82 112C70 112.4 56 113.2 44 114.6Z' +
+    'M2.6 44C1.4 36 2.6 26 6.4 18.6C4.6 27 4 35 2.6 44ZM117.6 92C119 82 118.6 71 115.4 62.4C116.6 72 117.4 82 117.6 92Z',
+  patches:
+    'M86.6 107.8L97.4 106.2Q103.6 105.6 105.6 108.4L106.4 112.6Q106.4 115.4 102.6 115.6L91 116.2Q87.4 116 86.8 113Z' +
+    'M1.4 67.6L6.2 66.4Q8.2 66.4 8.2 68.4L8 76.4Q7.8 78.6 5.6 78.6L2.2 78.8Q0.6 78.6 0.8 76.6Z',
+  patchEdges: 'M106.4 112.6Q106.4 115.4 102.6 115.6L91 116.2Q87.4 116 86.8 113M8 76.4Q7.8 78.6 5.6 78.6L2.2 78.8',
+  cracks:
+    'M12.8 101.6L11.6 103.8L12.2 105.4L10 108.6L10.5 110.4L8.2 114M10.9 107L13.6 108.4L14.2 110.6' +
+    'M112.6 8.6L113.8 10.8L113.4 12.4L115.6 14.6L115.2 16.4L117.8 19.6M113.4 12.4L111.6 14.2M86.4 120L87.8 117.2L87.2 115.8',
+  lintelGrain: 'M10 4.4C26 3.9 44 5 62 4.5S96 4.1 110 4.7M18 6.1C32 6.6 46 5.9 58 6.3M70 6.4C80 6 92 6.6 104 6.2',
+  frameGrain: 'M30 19.4C48 18.9 66 19.8 88 19.2M23.2 26C23 42 23.6 58 23.2 80M96.8 28C97 46 96.5 62 96.9 82M34 86.8C50 87.1 70 86.5 86 86.9',
+  sillGrain:
+    'M24 89.7C40 89.3 56 90.1 74 89.6S92 89.4 97 89.9M15.6 92.4C30 91.9 44 92.8 58 92.3M66 92.6C78 92.2 90 92.9 104.4 92.4' +
+    'M12 94.9C24 94.5 36 95.3 46 94.9M74 95C86 94.6 98 95.2 108 94.8',
+  sillFrontGrain: 'M16 98.7C34 98.3 52 99.1 70 98.6M78 99.5C88 99.1 98 99.7 106 99.3',
+} as const;
+
+/**
+ * The marks of a hand-plastered mud wall where it shows beside the shutters and under the sill: the sweeps of the hand
+ * that smoothed it, two patches of newer plaster, chopped straw and grit, and hairline cracks running from the ends of
+ * the lintel and the sill.
+ */
+function mudMarks(dr: Drawing, h: Hour): void {
+  const { mud, joint } = h;
+  fill(dr, HAND.sweeps, mud.light);
+  fill(dr, HAND.patches, mix(mud.base, mud.light, 0.4));
+  // The newer plaster stands a hair proud along its foot and one side.
+  stroke(dr, HAND.patchEdges, mud.shade, 0.4);
+  // Straw and grit on a loose grid over the open wall, each place jittered and some left bare, so they lie scattered but even.
+  const rand = seeded('letter-window-straw');
+  const places: Pt[] = [];
+  for (let x = 4; x < 118; x += 7.5) for (const y of [105, 110.5, 116]) places.push([x, y]);
+  for (let y = 13; y < 100; y += 7.5) places.push([4.2, y], [115.8, y]);
+  let straw = '';
+  let grit = '';
+  for (const [px, py] of places) {
+    const [keep, x, y] = [rand(), px + (rand() - 0.5) * 5, py + (rand() - 0.5) * 4];
+    if (keep < 0.35) continue;
+    if (keep < 0.6) {
+      grit += `<circle cx="${n(x)}" cy="${n(y)}" r="${n(0.26 + rand() * 0.18)}"/>`;
+      continue;
+    }
+    // A blade of straw, slightly bent.
+    const [a, r, bend] = [(rand() - 0.5) * 2.4, 0.45 + rand() * 0.75, (rand() - 0.5) * 0.6];
+    const [dx, dy] = [Math.cos(a) * r, Math.sin(a) * r];
+    straw += `M${n(x - dx)} ${n(y - dy)}Q${n(x - dy * bend)} ${n(y + dx * bend)} ${n(x + dx)} ${n(y + dy)}`;
+  }
+  stroke(dr, straw, mix(mud.light, '#f8dc9c', 0.45), 0.42);
+  dr.add(`<g fill="${mud.shade}">${grit}</g>`);
+  stroke(dr, HAND.cracks, mix(mud.shade, joint, 0.45), 0.36);
+}
+
+/** The lintel: an old squared beam set into the mud over the window, worn along its top, a row of notches cut along its foot. */
+function lintel(dr: Drawing, h: Hour): void {
+  const { wood, joint } = h;
+  const { x0, x1, y0, y1 } = LINTEL;
+  // The shadow it throws on the plaster below, and the dark gap where the mud was packed round the wood.
+  fill(dr, `M${x0 + 1} ${y1}H${x1 - 1}L${x1 - 2.4} ${n(y1 + 1.6)}H${x0 + 2.4}Z`, joint, ' opacity="0.22"');
+  fill(dr, `M${n(x0 - 0.6)} ${n(y0 - 0.5)}H${n(x1 + 0.6)}V${n(y1 + 0.5)}H${n(x0 - 0.6)}Z`, joint, ' opacity="0.55"');
+  fill(dr, `M${x0} ${n(y0 + 0.2)}L${x1} ${y0}L${n(x1 - 0.2)} ${y1}L${n(x0 + 0.3)} ${y1}Z`, wood.base);
+  fill(dr, `M${x0} ${n(y0 + 0.2)}L${x1} ${y0}V${n(y0 + 1.1)}L${x0} ${n(y0 + 1.3)}Z`, wood.light);
+  stroke(dr, HAND.lintelGrain, wood.shade, 0.35);
+  dr.add(`<ellipse cx="86" cy="5.1" rx="1.3" ry="0.7" fill="${wood.shade}"/>`);
+  let notches = '';
+  for (let i = 0; i < 21; i++) {
+    const x = 15.4 + i * 4.3;
+    notches += `M${n(x)} ${y1}L${n(x + 1.6)} ${n(y1 - 1.9)}L${n(x + 3.2)} ${y1}Z`;
+  }
+  fill(dr, notches, wood.shade);
+}
+
+/** The frame: its head and foot between two stiles, the dark joints and the gap round it, its inside edge in shade. */
+function frame(dr: Drawing, h: Hour): void {
+  const { wood, joint } = h;
+  const [f, o] = [FRAME, OPENING];
+  const inside = `M${f.x0} ${f.y0}V${f.y1}H${f.x1}V${f.y0}Z`;
+  fill(dr, `M${n(f.x0 - 0.6)} ${n(f.y0 - 0.6)}H${n(f.x1 + 0.6)}V${f.y1}H${n(f.x0 - 0.6)}Z${inside}`, joint, ' fill-rule="evenodd" opacity="0.6"');
+  fill(dr, `M${f.x0} ${f.y0}H${f.x1}V${f.y1}H${f.x0}ZM${o.x0} ${o.y0}V${o.y1}H${o.x1}V${o.y0}Z`, wood.base, ' fill-rule="evenodd"');
+  stroke(dr, HAND.frameGrain, wood.shade, 0.32);
+  stroke(dr, `M${o.x0} ${f.y0}V${o.y0}M${o.x1} ${f.y0}V${o.y0}M${o.x0} ${o.y1}V${f.y1}M${o.x1} ${o.y1}V${f.y1}`, joint, 0.45);
+  // Its own thickness inside the opening: the head's underside and one stile's side in shade, the foot's top worn pale.
+  fill(dr, `M${o.x0} ${o.y0}H${o.x1}L${n(o.x1 - 1.4)} ${n(o.y0 + 1.6)}H${n(o.x0 + 1.4)}V${o.y1}H${o.x0}Z`, wood.shade);
+  fill(dr, `M${n(o.x0 + 1.4)} ${n(o.y1 - 0.8)}H${o.x1}V${o.y1}H${n(o.x0 + 1.4)}Z`, wood.light);
+}
+
+/** The sill: a thick old board, its top pale where the light falls, grained and knotted, its front in shade over its shadow. */
+function sill(dr: Drawing, h: Hour): void {
+  const { board: wood, joint } = h;
+  const { x0, x1, y, depth } = SILL_FRONT;
+  const [foot, bend, low] = [n(y + depth), n(y + depth + 2), n(y + depth + 2.8)];
+  const under = `M${x0 + 1} ${foot}H${x1 - 1}C${x1 - 2} ${bend} ${x1 - 5} ${low} ${x1 - 9} ${low}H${x0 + 9}C${x0 + 5} ${low} ${x0 + 2} ${bend} ${x0 + 1} ${foot}Z`;
+  fill(dr, under, joint, ' opacity="0.26"');
+  fill(dr, `M${FRAME.x0} ${FRAME.y1}H${FRAME.x1}L${x1} ${y}H${x0}Z`, wood.light);
+  stroke(dr, HAND.sillGrain, wood.base, 0.36);
+  dr.add(`<ellipse cx="18.8" cy="93.7" rx="1.3" ry="0.55" fill="${wood.base}"/><ellipse cx="103" cy="90.6" rx="1" ry="0.45" fill="${wood.base}"/>`);
+  stroke(dr, `M${FRAME.x0} ${FRAME.y1}H${FRAME.x1}`, joint, 0.6);
+  // Its front: the worn, rounded nosing, then the face in shade.
+  fill(dr, rr(x0, y, x1 - x0, depth, 1.4), wood.shade);
+  fill(dr, `M${x0 + 0.8} ${y}H${x1 - 0.8}Q${x1} ${y} ${x1} ${y + 0.8}V${n(y + 1.3)}H${x0}V${y + 0.8}Q${x0} ${y} ${x0 + 0.8} ${y}Z`, wood.base);
+  stroke(dr, HAND.sillFrontGrain, joint, 0.3, ' opacity="0.5"');
+}
+
+/** The room round the window: the mud wall and its deep reveal, the lintel, the wooden frame, the sill and its pot. */
 function roomPart(dr: Drawing, h: Hour): void {
+  const { mud } = h;
   const { x0, y0, x1, y1 } = REVEAL;
-  // The wall, lighter near the window, with a hole for the window.
-  const wall = dr.id('w');
-  dr.def(radialAt(wall, [[0, h.wall[0]], [1, h.wall[1]]], 60, 50, 80));
-  dr.add(`<path d="M0 0H120V120H0ZM${x0} ${y0}V${y1}H${x1}V${y0}Z" fill="url(#${wall})" fill-rule="evenodd"/>`);
-  // The wall's thickness: the shaded soffit over the window and its two sides, one lit and one not.
-  dr.add(`<path d="M${x0} ${y0}H${x1}L${FRAME.x1} ${FRAME.y0}H${FRAME.x0}Z" fill="${h.soffit}"/>`);
-  dr.add(`<path d="M${x0} ${y0}L${FRAME.x0} ${FRAME.y0}V${FRAME.y1}L${x0} ${y1}Z" fill="${h.jamb[0]}"/>`);
-  dr.add(`<path d="M${x1} ${y0}L${FRAME.x1} ${FRAME.y0}V${FRAME.y1}L${x1} ${y1}Z" fill="${h.jamb[1]}"/>`);
-  // The white frame, with its own inner thickness at the top and left.
-  const o = OPENING;
-  dr.add(`<path d="M${FRAME.x0} ${FRAME.y0}H${FRAME.x1}V${FRAME.y1}H${FRAME.x0}ZM${o.x0} ${o.y0}V${o.y1}H${o.x1}V${o.y0}Z" fill="${h.frame[0]}" fill-rule="evenodd"/>`);
-  dr.add(`<path d="M${o.x0} ${o.y0}H${o.x1}L${n(o.x1 - 1.4)} ${n(o.y0 + 1.6)}H${n(o.x0 + 1.4)}V${o.y1}H${o.x0}Z" fill="${h.frame[1]}"/>`);
-  // The sill reaching into the room: its lit top, its front, and the shade it throws on the wall below.
-  const s = SILL_FRONT;
-  dr.add(`<path d="M${FRAME.x0} ${FRAME.y1}H${FRAME.x1}L${s.x1} ${s.y}H${s.x0}Z" fill="${h.sill[0]}"/>`);
-  const under = dr.id('u');
-  dr.def(linearAt(under, [[0, '#1f1a16', 0.16], [1, '#1f1a16', 0]], 0, s.y + s.depth, 0, s.y + s.depth + 7));
-  dr.add(`<path d="M${s.x0 + 1} ${n(s.y + s.depth)}H${s.x1 - 1}C${s.x1 - 4} ${n(s.y + s.depth + 4)} ${s.x1 - 8} ${n(s.y + s.depth + 7)} ${s.x1 - 14} ${n(s.y + s.depth + 7)}H${s.x0 + 14}C${s.x0 + 8} ${n(s.y + s.depth + 7)} ${s.x0 + 4} ${n(s.y + s.depth + 4)} ${s.x0 + 1} ${n(s.y + s.depth)}Z" fill="url(#${under})"/>`);
-  dr.add(`<path d="${rr(s.x0, s.y, s.x1 - s.x0, s.depth, 1.6)}" fill="${h.sill[1]}"/>`);
+  const f = FRAME;
+  // The reveal, reaching a little under the wall's uneven edge: the jamb the light reaches, the one it does not, and
+  // the soffit under the lintel in shade.
+  const [a0, b0, a1, b1] = [x0 - 1.5, y0 - 1.5, x1 + 1.5, y1 + 1.5];
+  fill(dr, `M${a0} ${b0}L${f.x0} ${f.y0}V${f.y1}L${a0} ${b1}Z`, mud.light);
+  fill(dr, `M${a1} ${b0}L${f.x1} ${f.y0}V${f.y1}L${a1} ${b1}Z`, mud.base);
+  fill(dr, `M${a0} ${b0}H${a1}L${f.x1} ${f.y0}H${f.x0}Z`, mud.shade);
+  // The frame keeps the sky's light off the soffit next to it.
+  const cast = 2.4 / (f.y0 - b0);
+  fill(dr, `M${n(f.x0 - (f.x0 - a0) * cast)} ${n(f.y0 - 2.4)}H${n(f.x1 + (a1 - f.x1) * cast)}L${f.x1} ${f.y0}H${f.x0}Z`, h.joint, ' opacity="0.3"');
+  // The wall's face with the reveal cut out of it, its marks, and the plaster's rounded turn catching the light.
+  fill(dr, `M0 0H120V120H0Z${REVEAL_EDGE}`, mud.base, ' fill-rule="evenodd"');
+  mudMarks(dr, h);
+  dr.add(`<path d="${REVEAL_EDGE}" fill="none" stroke="${mud.light}" stroke-width="1.1"/>`);
+  lintel(dr, h);
+  frame(dr, h);
+  sill(dr, h);
   // A few seeds on the sill either side of the pigeon's place, for it to peck at.
-  const seed = h.night ? '#c2b8a8' : '#f1dfbd';
+  const seed = mix(h.board.light, '#fff6e0', 0.6);
   for (const [x, y, turn] of [[64.6, 94.6, 20], [67.4, 95.4, -30], [69.2, 94.2, 60], [35.4, 94.8, -20], [32.8, 95.6, 35], [31, 94.4, -60]] as const) {
     dr.add(`<ellipse cx="${n(x)}" cy="${n(y)}" rx="0.95" ry="0.6" fill="${seed}" transform="rotate(${turn} ${n(x)} ${n(y)})"/>`);
   }
-  pot(dr, 90, 94.6);
+  pot(dr, h.joint, 90, 94.6);
 }
 
 /**
- * One casement swung open into the room on its hinge at the frame: the free edge taller than the hinge since it is
- * nearer, with its frame, four panes catching the light, and its free edge's thickness.
+ * One wooden shutter folded open into the room on its hinge at the frame, the free edge taller than the hinge since it
+ * is nearer: three planks held by two nailed battens, lozenges carved between them, the free edge's thickness, and the
+ * shadow it throws on the wall, which it carries as it stirs. The right one is turned from the light and darker, and a
+ * low sun lays a band of light across the one that faces it.
  */
-function casementPart(dr: Drawing, h: Hour, side: 'left' | 'right'): void {
-  const hinge = side === 'left' ? FRAME.x0 + 2 : FRAME.x1 - 2;
+function shutterPart(dr: Drawing, h: Hour, side: 'left' | 'right'): void {
+  const { joint, board } = h;
+  const wood: Tones = side === 'left' ? board : { light: mix(board.light, board.base, 0.4), base: mix(board.base, board.shade, 0.3), shade: board.shade };
+  const hinge = side === 'left' ? 24 : 96;
   const free = side === 'left' ? 9.6 : 110.4;
+  const out = side === 'left' ? -1 : 1;
   const [ht, hb, ft, fb] = [FRAME.y0 + 1, FRAME.y1 - 0.4, 12, 94.6];
-  // A point on the casement: `u` across from hinge to free edge, `v` down from its top.
+  // A point on the shutter: `u` across from hinge to free edge, `v` down from its top.
   const at = (u: number, v: number): Pt => {
     const top = ht + (ft - ht) * u;
     const bottom = hb + (fb - hb) * u;
     return [hinge + (free - hinge) * u, top + (bottom - top) * v];
   };
-  const quad = (u0: number, v0: number, u1: number, v1: number): string => {
-    const [a, b, c, d] = [at(u0, v0), at(u1, v0), at(u1, v1), at(u0, v1)];
-    return `M${n(a[0])} ${n(a[1])}L${n(b[0])} ${n(b[1])}L${n(c[0])} ${n(c[1])}L${n(d[0])} ${n(d[1])}Z`;
+  const poly = (...p: Pt[]): string => `M${p.map((q) => `${n(q[0])} ${n(q[1])}`).join('L')}Z`;
+  const quad = (u0: number, v0: number, u1: number, v1: number): string => poly(at(u0, v0), at(u1, v0), at(u1, v1), at(u0, v1));
+  const seg = (u0: number, v0: number, u1: number, v1: number): string => {
+    const [p, q] = [at(u0, v0), at(u1, v1)];
+    return `M${n(p[0])} ${n(p[1])}L${n(q[0])} ${n(q[1])}`;
   };
-  // The open casement's edge, standing out toward us.
-  const edge = side === 'left' ? -1 : 1;
-  dr.add(`<path d="M${n(free)} ${ft}L${n(free + edge * 1.2)} ${n(ft + 0.6)}L${n(free + edge * 1.2)} ${n(fb - 0.6)}L${n(free)} ${fb}Z" fill="${h.frame[1]}"/>`);
-  dr.add(`<path d="${quad(0, 0, 1, 1)}" fill="${h.frame[0]}"/>`);
-  const glass = mix(h.glass, h.wall[1], 0.25);
-  const panes = [quad(0.12, 0.04, 0.48, 0.48), quad(0.56, 0.04, 0.9, 0.48), quad(0.12, 0.52, 0.48, 0.96), quad(0.56, 0.52, 0.9, 0.96)];
-  for (const pane of panes) dr.add(`<path d="${pane}" fill="${glass}"/>`);
-  // The light in the glass: a pale band across each pane, clipped to the panes.
-  dr.add(`<g clip-path="url(#${dr.clip(panes.join(''))})">`);
-  const [g0, g1] = [at(0.1, 0.18), at(1, 0.02)];
-  const [g2, g3] = [at(1, 0.16), at(0.1, 0.32)];
-  dr.add(`<path d="M${n(g0[0])} ${n(g0[1])}L${n(g1[0])} ${n(g1[1])}L${n(g2[0])} ${n(g2[1])}L${n(g3[0])} ${n(g3[1])}Z" fill="#ffffff" opacity="${h.night ? '0.16' : '0.5'}"/>`);
-  const [g4, g5] = [at(0.1, 0.62), at(1, 0.46)];
-  const [g6, g7] = [at(1, 0.52), at(0.1, 0.68)];
-  dr.add(`<path d="M${n(g4[0])} ${n(g4[1])}L${n(g5[0])} ${n(g5[1])}L${n(g6[0])} ${n(g6[1])}L${n(g7[0])} ${n(g7[1])}Z" fill="#ffffff" opacity="${h.night ? '0.1' : '0.3'}"/>`);
-  dr.add('</g>');
+  fill(dr, poly([free, ft + 1.4], [free + out * 2.6, ft + 3.2], [free + out * 2.6, fb - 1.6], [free, fb]), joint, ` opacity="${side === 'left' ? '0.26' : '0.18'}"`);
+  fill(dr, poly([free, ft], [free + out * 1.2, ft + 0.6], [free + out * 1.2, fb - 0.6], [free, fb]), wood.shade);
+  fill(dr, quad(0, 0, 1, 1), wood.base);
+  // The grain of each plank and the grooves between them.
+  stroke(dr, seg(0.17, 0.22, 0.16, 0.46) + seg(0.5, 0.56, 0.5, 0.78) + seg(0.84, 0.24, 0.85, 0.4) + seg(0.82, 0.6, 0.83, 0.76), wood.shade, 0.32);
+  stroke(dr, seg(1 / 3, 0, 1 / 3, 1) + seg(2 / 3, 0, 2 / 3, 1), joint, 0.4);
+  // The battens standing proud and catching the light, the shade under them, and their nails.
+  let nails = '';
+  for (const [v0, v1] of [[0.09, 0.16], [0.84, 0.91]] as const) {
+    fill(dr, quad(0, v1, 1, v1 + 0.014), wood.shade);
+    fill(dr, quad(0, v0, 1, v1), wood.light);
+    for (const u of [1 / 6, 0.5, 5 / 6]) {
+      const [x, y] = at(u, (v0 + v1) / 2);
+      nails += `<circle cx="${n(x)}" cy="${n(y)}" r="${n(0.36 + 0.14 * u)}"/>`;
+    }
+  }
+  dr.add(`<g fill="${joint}">${nails}</g>`);
+  // Lozenges carved down the middle plank, the middle one with a smaller one cut inside it.
+  const lozenge = (v: number, du: number, dv: number): string => poly(at(0.5, v - dv), at(0.5 + du, v), at(0.5, v + dv), at(0.5 - du, v));
+  fill(dr, lozenge(0.5, 0.13, 0.075) + lozenge(0.355, 0.08, 0.042) + lozenge(0.645, 0.08, 0.042), wood.shade);
+  fill(dr, lozenge(0.5, 0.06, 0.035), wood.light);
+  // A low sun comes in nearly level from its side of the sky and lies across the shutter facing it.
+  if (h.sun && h.orb[0] < 60 === (side === 'right')) fill(dr, poly(at(0, 0.3), at(1, 0.4), at(1, 0.74), at(0, 0.62)), h.light[0], ` opacity="${n2(h.sun)}"`);
 }
 
-/** The window's light lying on the sill, and its glow in the room. */
+/** The hour's light on the sill, cut by the frame, and its glow in the room; a lamp's warmth low on the left at evening. */
 function lightPart(dr: Drawing, h: Hour): void {
   const [colour, strength] = h.light;
-  const glow = dr.id('g');
-  dr.def(linearAt(glow, [[0, colour, strength], [1, colour, strength * 0.25]], 0, FRAME.y1, 0, SILL_FRONT.y));
-  dr.add(`<path d="M36 ${FRAME.y1}H80L86 ${SILL_FRONT.y}H30Z" fill="url(#${glow})"/>`);
-  const air = dr.id('r');
-  dr.def(radialAt(air, [[0, colour, strength * 0.35], [1, colour, 0]], 60, 50, 46));
-  dr.add(`<rect x="10" y="8" width="100" height="92" fill="url(#${air})"/>`);
+  // From high on the right, it falls on the sill a little left of the opening.
+  dr.add(`<path d="M31 ${FRAME.y1}H91L84 ${SILL_FRONT.y}H23Z" fill="${colour}" opacity="${n2(strength * 0.6)}"/>`);
+  if (!h.night) {
+    const air = dr.id('r');
+    dr.def(radialAt(air, [[0, colour, strength * 0.3], [1, colour, 0]], 60, 52, 46));
+    dr.add(`<rect x="10" y="8" width="100" height="92" fill="url(#${air})"/>`);
+  }
+  if (h.lamp) {
+    // Lamplight lies on the room, not on the country outside.
+    const [warm, glow] = h.lamp;
+    const lamp = dr.id('l');
+    const o = OPENING;
+    dr.def(radialAt(lamp, [[0, warm, glow], [0.45, warm, glow * 0.45], [1, warm, 0]], 4, 124, 96));
+    dr.add(`<path d="M0 0H120V120H0ZM${o.x0} ${o.y0}V${o.y1}H${o.x1}V${o.y0}Z" fill="url(#${lamp})" fill-rule="evenodd"/>`);
+  }
 }
 
 export interface LetterWindowOptions {
@@ -868,8 +1041,8 @@ export function letterWindowSvg(opts: LetterWindowOptions = {}): string {
     far: () => farPart(dr, h),
     near: () => nearPart(dr, h),
     room: () => roomPart(dr, h),
-    left: () => casementPart(dr, h, 'left'),
-    right: () => casementPart(dr, h, 'right'),
+    left: () => shutterPart(dr, h, 'left'),
+    right: () => shutterPart(dr, h, 'right'),
     plant: () => plant(dr, h, 90, 94.6),
     light: () => lightPart(dr, h),
   };
