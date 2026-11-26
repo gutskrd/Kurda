@@ -191,8 +191,8 @@ export const DARK = [
     en: 'Eclipse',
     // the moment the moon covers the sun, the face being the moon: round it the sun's corona, a wavy band of light, gold
     // at its edge, pale gold within and pearl next to the moon; out of it the streamers reach as thin washes of light,
-    // longest to either side, with fine short plumes at the poles; a thin white rim hugs the moon's edge, and at the
-    // upper right the last of the sun breaks through as a diamond ring, a bead of light with smaller beads trailing it
+    // longest to either side, with fine short plumes at the poles; a thin white rim hugs the moon's edge, and low on the
+    // left the last of the sun breaks through as a diamond ring, a bead of light with smaller beads trailing it
     still(rnd) {
       const s = new Still(rnd);
       const RIM = RI + 3;
@@ -210,7 +210,7 @@ export const DARK = [
       // [angle, length, width, bend]: helmet streamers, each a rounded dome standing on the band and drawn out into one
       // long fine ray, longest along the sun's equator; fine plumes at the poles
       const streamers = [
-        [-6, 78, 44, -0.08], [19, 54, 38, 0.1], [62, 26, 30, 0.06], [122, 24, 30, -0.06],
+        [-6, 78, 44, -0.08], [19, 54, 38, 0.1], [62, 26, 30, 0.06], [-58, 24, 30, -0.06],
         [166, 66, 42, -0.1], [194, 86, 48, 0.08], [230, 34, 32, 0.1], [-120, 36, 32, -0.08],
       ].map(([a, len, wide, bend]) => [a + (rnd() - 0.5) * 2, len + rnd() * 4, wide, bend]);
       const dome = ([a, len, wide], grow = 1, widen = 1) =>
@@ -222,7 +222,8 @@ export const DARK = [
         for (let i = -3; i <= 3; i++) plumes.push([pole + i * 6 + (rnd() - 0.5) * 2, 16 + (3 - Math.abs(i)) * 4 + rnd() * 5, 18, i * 0.08]);
       }
       const corona = (grow, widen) => [...streamers.map((st) => dome(st, grow, widen)), ...streamers.map((st) => tail(st, grow, widen)), ...plumes.map((pl) => tail(pl, grow, widen))];
-      const ringAt = -40;
+      // low on the left, where an icon worn on the face's shoulder never covers it, whichever way the page reads
+      const ringAt = 128;
       const bead = P(ringAt, RIM - 1);
 
       // the streamers are light rather than things: soft-edged, with no line round them, gold at their edge and near
@@ -251,7 +252,7 @@ export const DARK = [
         cv.add(`<path d="${sparkle(bead, ringAt + 45, 56, 32)}" fill="#fffdf5"/>`);
         cv.add(`<path d="${sparkle(bead, ringAt, 28, 20)}" fill="#fffdf5"/>`);
         cv.add(`<circle cx="${n(bead[0])}" cy="${n(bead[1])}" r="9" fill="#ffffff"/>`);
-        for (const [a, r] of [[-55, 4.6], [-63, 3.6], [-70, 2.8], [-76, 2.1]]) {
+        for (const [a, r] of [[ringAt + 15, 4.6], [ringAt + 23, 3.6], [ringAt + 30, 2.8], [ringAt + 36, 2.1]]) {
           const [x, y] = P(a, RIM + 2.5);
           cv.add(`<circle cx="${n(x)}" cy="${n(y)}" r="${n(r + 1.4)}" fill="#d29e45"/><circle cx="${n(x)}" cy="${n(y)}" r="${r}" fill="#ffffff"/>`);
         }
