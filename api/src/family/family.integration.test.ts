@@ -295,6 +295,24 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('families and child profiles (integ
       expect((await call(kid, 'GET', '/me')).statusCode).toBe(401);
     });
 
+    it('gives the parent’s phone back with the PIN after the child’s session on it has renewed', async () => {
+      const parent = await adult();
+      const child = await addChild(parent);
+      const phone = await parentPhone(parent);
+      await setPin(parent);
+      const kid = await switchTo(phone, child.userId);
+      // the access token runs out within minutes, so the phone renews the child's session while the child learns
+      const renewed = await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken: kid.refresh }, headers: { 'x-device-id': kid.device }, remoteAddress: ip() });
+      expect(renewed.statusCode, renewed.body).toBe(200);
+      const later = { ...kid, token: renewed.json().accessToken as string, refresh: renewed.json().refreshToken as string };
+      expect((await call(later, 'GET', '/me')).json().user).toMatchObject({ kind: 'child', child: { returnable: true } });
+      const back = await call(later, 'POST', '/auth/child/return', { pin: '2468' });
+      expect(back.statusCode, back.body).toBe(200);
+      expect(back.json().user.id).toBe(parent.id);
+      // the renewed child session is the one that ends
+      expect((await call(later, 'GET', '/me')).statusCode).toBe(401);
+    });
+
     it('changes the PIN only with the PIN, or resets it with the password', async () => {
       const parent = await adult();
       await setPin(parent, '1357');

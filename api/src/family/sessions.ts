@@ -176,8 +176,7 @@ export class ChildSessions {
       const pin = await client.query(`SELECT 1 FROM family_pins WHERE parent_id = $1`, [parentId]);
       if (!pin.rowCount) throw pinRequired();
       const child = await this.user(client, childId);
-      const tokens = await issueTokenPair(this.config, client, child, { deviceId });
-      await client.query(`UPDATE refresh_tokens SET return_to = $2 WHERE family_id = $1`, [tokens.familyId, parentId]);
+      const tokens = await issueTokenPair(this.config, client, child, { deviceId, returnTo: parentId });
       if (parentFamily) await client.query(`UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND family_id::text = $2 AND revoked_at IS NULL`, [parentId, parentFamily]);
       return { user: toPublicUser(child), tokens };
     });

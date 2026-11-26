@@ -94,6 +94,8 @@ export interface SessionOptions {
   /** the sign-in asked not to be remembered: UNREMEMBERED_TTL_DAYS, not REFRESH_TOKEN_TTL_DAYS */
   shortLived?: boolean;
   sessionStartedAt?: Date;
+  /** a child's session on the parent's phone: the parent the family PIN gives it back to (family/sessions.ts), kept by every rotation */
+  returnTo?: string | null;
 }
 
 /**
@@ -148,10 +150,10 @@ export async function issueTokenPair(
   );
   const deviceHash = opts.deviceHash ?? (opts.deviceId ? sessionDeviceHash(config, user.id, opts.deviceId) : null);
   const inserted = await executor.query<{ id: string }>(
-    `INSERT INTO refresh_tokens (user_id, token_hash, family_id, device_name, expires_at, session_started_at, device_hash, short_lived)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO refresh_tokens (user_id, token_hash, family_id, device_name, expires_at, session_started_at, device_hash, short_lived, return_to)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING id`,
-    [user.id, hashRefreshToken(raw), familyId, opts.deviceName ?? null, expiresAt, startedAt, deviceHash, shortLived],
+    [user.id, hashRefreshToken(raw), familyId, opts.deviceName ?? null, expiresAt, startedAt, deviceHash, shortLived, opts.returnTo ?? null],
   );
   // a sign-in (a new family; a rotation only carries one on) past MAX_SESSIONS ends the oldest
   if (!opts.familyId) await endOldestSessions(executor, user.id);

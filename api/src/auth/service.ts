@@ -867,6 +867,7 @@ export class AuthService {
         revoked_at: Date | null;
         replaced_by: string | null;
         session_started_at: Date;
+        return_to: string | null;
       }>(`SELECT * FROM refresh_tokens WHERE token_hash = $1 FOR UPDATE`, [
         hashRefreshToken(rawToken),
       ]);
@@ -937,6 +938,8 @@ export class AuthService {
         shortLived: row.short_lived,
         // the session keeps its start, so SESSION_MAX_DAYS ends it however often it refreshes
         sessionStartedAt: new Date(row.session_started_at),
+        // and a child's session on the parent's phone keeps the parent its PIN gives the phone back to
+        returnTo: row.return_to,
       });
       await client.query(
         `UPDATE refresh_tokens SET revoked_at = now(), replaced_by = $2 WHERE id = $1`,
