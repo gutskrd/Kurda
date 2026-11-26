@@ -5,6 +5,7 @@ import { BookIcon, CheckIcon, FlagIcon, LockIcon, NextIcon } from '../components
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { useDarkPage } from '../theme/useDarkPage';
+import { ChapterArt } from './PathScene';
 import type { SkillNode } from './types';
 
 /**
@@ -61,8 +62,8 @@ export function useUnitAtTop(root: React.RefObject<HTMLElement | null>, units: r
 
 /**
  * The open section's heading, pinned under the bar: "Section 1 · Chapter 2" over the top unit's name, on the unit's own
- * colour standing on its darker lip, with a kilim trim woven along its foot, its guide as a book on the far side and the
- * rail's flag where there is no room for the rail. As the next unit comes up its colour slides in over the last one's,
+ * colour standing on its darker lip, with a kilim trim woven along its foot, the chapter's painted vignette standing on
+ * it beside the name, and its guide as a book on the far side over the rail's flag where there is no room for the rail. As the next unit comes up its colour slides in over the last one's,
  * or simply changes under reduced motion (path.css). A one-section course is not named. It is for the eye; each unit's
  * own heading is in the page order for screen readers.
  */
@@ -113,9 +114,15 @@ export function UnitPin({
       {was && <span className={`lp-pin-colour lp-tone-${was.tone}`} aria-hidden="true" />}
       <span key={unit.unitId} className={`lp-pin-colour${was ? ' is-arriving' : ''}`} aria-hidden="true" />
       {trim && <span className="lp-pin-kilim" aria-hidden="true" dangerouslySetInnerHTML={trim} />}
-      <div key={`w${unit.unitId}`} className={`lp-pin-words${was ? ' is-arriving' : ''}`}>
-        <p className="lp-pin-eyebrow">{section !== null ? t('coursemap.sectionUnit', { section: n(section), unit: n(unit.number) }) : t('coursemap.unit', { n: n(unit.number) })}</p>
-        <p className="lp-pin-title">{unit.title}</p>
+      <div className="lp-pin-body">
+        <div key={`w${unit.unitId}`} className={`lp-pin-words${was ? ' is-arriving' : ''}`}>
+          <p className="lp-pin-eyebrow">{section !== null ? t('coursemap.sectionUnit', { section: n(section), unit: n(unit.number) }) : t('coursemap.unit', { n: n(unit.number) })}</p>
+          <p className="lp-pin-title">{unit.title}</p>
+        </div>
+        {/* The chapter's own vignette, standing on the kilim beside its name. */}
+        <span key={`a${unit.unitId}`} className={`lp-pin-scene${was ? ' is-arriving' : ''}`}>
+          <ChapterArt chapter={unit.number - 1} ground={colours.lip} height={PIN_ART_H} />
+        </span>
       </div>
       {/* At the far end, past a seam in the lip's colour, as a book of the unit's guide and the rail's flag. */}
       <div className="lp-pin-actions">
@@ -133,6 +140,8 @@ export function UnitPin({
   );
 }
 
+/** The vignette's height in the banner; path.css keeps the title clear of its width. */
+const PIN_ART_H = 76;
 /** How long a new unit's colour takes to slide in over the last one's (path.css `lp-pin-slide`). */
 const PIN_SLIDE_MS = 260;
 /** The kilim trim's height, and how far in from the banner's sides it runs. */

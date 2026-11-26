@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import type { InitialEntry } from 'react-router-dom';
@@ -12,6 +12,7 @@ import { Lesson } from './Lesson';
 import { Review } from './Review';
 import { NextLesson } from './NextLesson';
 import { onNotice } from '../lib/notice';
+import { TalkIcon } from '../components/icons';
 
 /* The learning routes as a learner moves through them (Learn, a course map, a lesson, a review, the next lesson after sign-up), against a scripted API. */
 
@@ -364,16 +365,47 @@ describe('a course map', () => {
     expect(bubble).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
     expect(within(bubble).getByText('Berdewam bike!')).toHaveAttribute('lang', 'ku');
 
-    // The unit wears its own colour, on its banner and round its stops, and someone peeks in beside its road.
+    // The unit wears its own colour, on its banner and round its stops, its banner has its chapter's vignette, and its
+    // sandûq stands beside its road; Hevalo, standing by the stop to do now, is not drawn again eating his apple.
     expect(unit).toHaveClass('lp-tone-meadow');
     expect(pin).toHaveClass('lp-tone-meadow');
     expect(pin.querySelector('.lp-pin-colour')).not.toBeNull();
-    expect(unit.querySelector('.lp-peek')).not.toBeNull();
-    expect(unit.querySelector('.lp-peek')).toHaveAttribute('aria-hidden', 'true');
+    expect(pin.querySelector('.lp-pin-art')).toHaveAttribute('aria-hidden', 'true');
+    expect(pin.querySelector('.lp-pin-art')).toHaveAttribute('data-art', 'door');
+    expect(unit.querySelector('.lp-chest')).toHaveAttribute('aria-hidden', 'true');
+    expect(unit.querySelector('.lp-scene')).toBeNull();
 
     // The courses, to move between them.
     expect(screen.getByRole('navigation', { name: 'Your courses' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Newroz' })).toHaveAttribute('href', '/app/learn/course/c2');
+  });
+
+  it('sets a scene beside a chapter’s road with its rounds strung under it, numbers its milestone, and shows what the lesson up next is', async () => {
+    const twice = skill({ skillId: 'hi', title: 'Hello', state: 'completed', lessons: [lesson('h1', true)], rounds: 2, pieces: 0 });
+    const road: Map = {
+      course: { id: 'c1', title: 'Kurmanji for Beginners' },
+      units: [
+        { unitId: 'u1', title: 'Hello', skills: [twice, { ...twice, skillId: 'hi2', title: 'Tea', lessons: [lesson('h2', true)] }, { ...twice, skillId: 'hi3', title: 'Bread', lessons: [lesson('h3', true)] }] },
+        { unitId: 'u2', title: 'Family', skills: [skill({ skillId: 'fam', title: 'Family', state: 'unlocked', lessons: [{ ...lesson('f1'), kind: 'talk' }] })] },
+      ],
+    };
+    serve({ 'GET /courses/c1/map': road, 'GET /courses': courses, 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+
+    const first = await screen.findByRole('region', { name: 'Chapter 1, Hello' });
+    // Hevalo eats his apple over the orchard wall in the first chapter, for the eye only, its two rounds lit on its garland.
+    const scene = first.querySelector('.lp-scene');
+    expect(scene).toHaveAttribute('data-scene', 'apple');
+    expect(scene).toHaveAttribute('aria-hidden', 'true');
+    expect(scene!.querySelector('.lp-garland')).toHaveAttribute('data-lit', '2');
+    // The milestone ending the chapter bears its number, and its trophy is won.
+    expect(within(first).getByRole('button', { name: 'Chapter 1 trophy, earned' })).toHaveClass('is-milestone');
+    expect(first.querySelector('.lp-milestone-num')).toHaveTextContent('1');
+    expect(first.querySelector('.lp-milestone-num')).toHaveClass('is-won');
+    // The stop to do now wears the glyph of what its lesson is, here a conversation, and no star.
+    const now = screen.getByRole('button', { name: /^Family, You are here/ });
+    const talk = render(<TalkIcon size={34} />).container.querySelector('svg')!.innerHTML;
+    expect(now.querySelector('.lp-node-glyph svg')!.innerHTML).toBe(talk);
   });
 
   it('ends a chapter with Hamo’s story, shut until the chapter is done, and names the chapter on its way', async () => {

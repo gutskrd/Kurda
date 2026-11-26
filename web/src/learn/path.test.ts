@@ -41,7 +41,7 @@ describe('the road’s colours in its stylesheet', () => {
   });
 
   it('keeps every motion of the road for those who have not asked for less', () => {
-    for (const name of ['lp-pulse', 'lp-float', 'lp-peek', 'lp-shiver', 'lp-bob']) {
+    for (const name of ['lp-pulse', 'lp-float', 'lp-shiver', 'lp-bob', 'lp-crumb', 'lp-toss', 'lp-flap', 'lp-coin', 'lp-creak', 'lp-leaf']) {
       const used = [...css.matchAll(new RegExp(`animation:[^;]*\\b${name}\\b`, 'g'))];
       expect(used.length, name).toBeGreaterThan(0);
       for (const m of used) {

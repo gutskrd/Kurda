@@ -13,6 +13,7 @@ import {
   pathChanges,
   pathLand,
   pathSnapshot,
+  unitRounds,
   type LessonPath as Path,
   type PathChanges,
   type PathSnapshot,
@@ -28,7 +29,7 @@ import { useApiGet, type ApiState } from '../lib/useApi';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { LinkButton } from '../components/Button';
 import { Sheet } from '../components/Sheet';
-import { ArrowIcon, BookIcon, CheckIcon, LockIcon, RepostIcon, StarIcon } from '../components/icons';
+import { ArrowIcon, BookIcon, CheckIcon, LockIcon, PracticeIcon, RepostIcon, StarIcon, TalkIcon, WordsIcon } from '../components/icons';
 import { ErrorState } from '../components/states';
 import { CourseMapSkeleton } from '../components/skeletons';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -38,7 +39,7 @@ import { JumpSheet } from './JumpSheet';
 import { courseProgress, lessonStates } from './map';
 import { RoundStars, StarRow, TopicRing } from './PathRing';
 import { SectionCard, UnitDivider, UnitPin, levelWords, useUnitAtTop } from './PathSections';
-import { StopArt, UnitLandmark, UnitRail, UnitScenery, UpcomingUnit, useUnitsOnScreen, useWidth, type RailSection } from './PathWorld';
+import { MilestoneArt, StopArt, UnitLandmark, UnitRail, UnitScenery, UpcomingUnit, useUnitsOnScreen, useWidth, type RailSection } from './PathWorld';
 import { useDarkPage } from '../theme/useDarkPage';
 import { preloadLesson } from './preloadLesson';
 import type { CourseMap as Map, CourseSummary, PracticeDue, SkillNode } from './types';
@@ -61,43 +62,42 @@ const lessonHref = (lessonId: string, courseId: string): string =>
   `/app/learn/lesson/${lessonId}?course=${encodeURIComponent(courseId)}`;
 
 /**
- * The glyph on a stop, so its kind shows by shape as well as colour. A finished topic's coin shows its stars instead
- * (`RoundStars`; a check on a map too old to count them); the story, the chest and the learner's own stop carry none.
+ * The glyph on a stop, so its kind shows by shape as well as colour. The stop to do now shows what its lesson is: word
+ * cards, a conversation, or practice (a star from a server too old to say). A finished topic's tile carries Hevalo's
+ * hoofprint in its drawing and its stars (`RoundStars`); the milestone carries its chapter's number instead.
  */
 function Glyph({ stop }: { stop: Stop }): React.JSX.Element | null {
   if (stop.kind === 'review') return <RepostIcon size={28} weight="bold" />;
   if (stop.kind === 'trophy' || stop.kind === 'story') return null;
-  // The stop to do now wears a star, as the road's main button.
-  if (stop.state === 'current') return <StarIcon size={34} weight="fill" />;
+  if (stop.state === 'current') {
+    if (stop.launchKind === 'words') return <WordsIcon size={34} />;
+    if (stop.launchKind === 'talk') return <TalkIcon size={34} />;
+    if (stop.launchKind === 'practice') return <PracticeIcon size={34} />;
+    return <StarIcon size={34} weight="fill" />;
+  }
   if (stop.state === 'locked') return <LockIcon size={26} weight="bold" />;
   if (stop.state === 'done') {
-    const refresh = stop.finish === 'refresh' && (
-      // Still done, with a small sign that a review would help.
+    // Still done, with a small sign that a review would help.
+    return stop.finish === 'refresh' ? (
       <span className="lp-node-badge">
         <RepostIcon size={14} weight="bold" />
       </span>
-    );
-    return (
-      <>
-        {stop.rounds > 0 ? null : <CheckIcon size={32} weight="bold" />}
-        {refresh}
-      </>
-    );
+    ) : null;
   }
   return <span className="lp-node-num">{stop.number}</span>;
 }
 
 function stopClass(stop: Stop): string {
   if (stop.kind === 'review') return 'is-review';
-  if (stop.kind === 'trophy') return `is-trophy${stop.earned ? ' is-earned' : ''}`;
-  if (stop.kind === 'story') return `is-story${stop.open ? ' is-won' : ' is-closed'}`;
+  if (stop.kind === 'trophy') return `is-milestone is-trophy${stop.earned ? ' is-earned' : ''}`;
+  if (stop.kind === 'story') return `is-milestone is-story${stop.open ? ' is-won' : ' is-closed'}`;
   return `is-${stop.state}${stop.finish ? ` is-${stop.finish}` : ''}`;
 }
 
 /**
- * How a stop is drawn (shared `pathStopSvg`): a finished skill is a gold coin whatever its review strength, faded only
- * when a refresh would help; review is an open stop; a chapter's story is a scroll tied on stone until the chapter is
- * done, then open on gold; a unit without a story ends at its chest.
+ * How a stop is drawn (shared `pathStopSvg`): a finished skill is a gold tile whatever its review strength, faded only
+ * when a refresh would help; review is an open stop. A unit's last stop, its story or its trophy, is drawn as its
+ * milestone (`MilestoneArt`), and this look says only whether it is won.
  */
 function stopLook(stop: Stop): PathStopLook {
   if (stop.kind === 'review') return 'review';
@@ -842,7 +842,7 @@ export function CoursePath({
                           {spot && here && (
                             <PathMascot x={spot.x} y={spot.y} flip={sign * spot.x > sign * here.x} cheer={cheer} onPress={() => current && setOpenKey(current)} />
                           )}
-                          <UnitScenery unit={unit} dark={dark} near={near} mascot={spot} />
+                          <UnitScenery unit={unit} dark={dark} near={near} mascot={spot} rtl={rtl} reduce={reduceMotion} />
                           {unit.stops.map(({ stop: real, x, y }, k) => {
                             const stop = drawnAs(real);
                             const isOpen = openKey === stop.key;
@@ -855,6 +855,8 @@ export function CoursePath({
                             const wobbling = wonNow && step! >= STEP.finish && !(step! >= STEP.open);
                             const unlocking = wonNow && step! >= STEP.open;
                             const look = wonNow && step! < STEP.open ? (real.kind === 'story' ? 'storyLocked' : 'chest') : stopLook(stop);
+                            // The milestone, the unit's last stop, stays slate until the moment its chapter is won.
+                            const milestone = real.kind === 'story' || real.kind === 'trophy';
                             // On a return the bubble waits for its moment, then arrives at the new stop.
                             const bubble = isCurrent && (!playing || step! >= STEP.bubble);
                             const ring = stop.kind === 'skill' && stop.lessonsTotal > 0 ? ringNow(stop) : null;
@@ -899,7 +901,16 @@ export function CoursePath({
                                     <TopicRing of={stop.lessonsTotal} filled={ring.filled} whole={ring.whole} from={ring.from} />
                                   )}
                                   <span className="lp-node-face">
-                                    <StopArt look={look} tone={unit.tone} dark={dark} near={near} />
+                                    {milestone ? (
+                                      <>
+                                        <MilestoneArt won={won && !(wonNow && step! < STEP.open)} rounds={unitRounds(unit.stops)} dark={dark} near={near} />
+                                        <span className={`lp-milestone-num${won && !(wonNow && step! < STEP.open) ? ' is-won' : ''}`} aria-hidden="true">
+                                          {new Intl.NumberFormat(locale).format(unit.number)}
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <StopArt look={look} tone={unit.tone} dark={dark} near={near} />
+                                    )}
                                     {/* Now and then a glint sweeps the stop to do now, and a few sparks wink round it. */}
                                     {isCurrent && near && (
                                       <span className="lp-shine" aria-hidden="true">

@@ -188,7 +188,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: 96px;
+  min-height: 116px;
   margin-bottom: 6px;
   padding: var(--space-3) 0 calc(var(--space-3) + 14px) var(--space-5);
   border-radius: var(--r-lg);
@@ -227,11 +227,45 @@
 .lp-pin-kilim > svg {
   display: block;
 }
+/* The words at the top and, at their far end standing on the kilim, the chapter's vignette; the name keeps clear of it. */
+.lp-pin-body {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: flex-start;
+}
 .lp-pin-words {
   flex: 1;
   min-width: 0;
   display: grid;
   gap: 2px;
+}
+.lp-pin-scene {
+  position: absolute;
+  inset-inline-end: var(--space-1);
+  bottom: calc(-1 * (var(--space-3) + 14px) + 2px);
+  line-height: 0;
+  pointer-events: none;
+}
+.lp-pin-scene.is-arriving {
+  animation: lp-pin-words-in 260ms var(--ease-out) both;
+}
+.lp-pin-art {
+  position: relative;
+  display: block;
+}
+.lp-pin-still,
+.lp-pin-loop {
+  position: absolute;
+  line-height: 0;
+}
+.lp-pin-still {
+  inset: 0;
+}
+.lp-pin-art svg {
+  display: block;
 }
 .lp-pin-words.is-arriving {
   animation: lp-pin-words-in 260ms var(--ease-out) both;
@@ -252,16 +286,20 @@
 }
 .lp-pin-title {
   margin: 0;
+  /* Clear of the vignette (PathSections.tsx PIN_ART_H, the art's canvas 120 by 100). */
+  padding-inline-end: 94px;
   font-family: var(--font-sans);
   font-size: var(--text-title);
   font-weight: 800;
   line-height: 1.1;
   overflow-wrap: anywhere;
 }
-/* Past a seam in the lip's colour, as a notebook's spine. */
+/* Past a seam in the lip's colour, as a notebook's spine: the guide over the rail's flag. */
 .lp-pin-actions {
   align-self: stretch;
   display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
   gap: 2px;
   margin-block: calc(-1 * var(--space-3)) calc(-1 * (var(--space-3) + 14px));
@@ -739,6 +777,38 @@ button.lp-scard:focus-visible {
     translate var(--dur-slow) var(--ease-spring),
     scale var(--dur-slow) var(--ease-spring);
 }
+/* A unit's milestone stands lower and taller than a tile (shared PATH_MILESTONE_ART: a box 112 by 136 from -20, -16). */
+.lp-art.is-milestone {
+  top: -16px;
+  height: 136px;
+}
+/* Its chapter's number, in the middle of its seal (the seal's middle at 56, 58 of its box). */
+.lp-milestone-num {
+  position: absolute;
+  inset-inline: 0;
+  top: 24px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  font-size: var(--text-title);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--lp-rest-ink);
+  transform-origin: 50% 90%;
+  transition:
+    translate var(--dur-slow) var(--ease-spring),
+    scale var(--dur-slow) var(--ease-spring);
+  pointer-events: none;
+}
+.lp-milestone-num.is-won {
+  color: var(--lp-gold-ink);
+}
+.lp-node:active .lp-milestone-num {
+  translate: 0 7px;
+  scale: 1.06 0.92;
+  transition-duration: 60ms;
+}
 /* A press squishes the stop down into its base, and it springs back up when let go. */
 .lp-node:active .lp-art-face,
 .lp-node:active .lp-node-glyph,
@@ -1060,19 +1130,71 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * A unit's playful touches (PathWorld.tsx `UnitScenery`), placed from the logical start like the stops: someone peeking
- * up over a mound of the slate at the stops, and the unit's painted sandûq beside its road.
+ * A unit's playful touches (PathWorld.tsx `UnitScenery`, PathScene.tsx), placed from the logical start like the stops:
+ * its little scene on a 120-point stage, mirrored on the road's far side so it faces the road, and its sandûq.
  */
-.lp-peek {
+.lp-scene {
   position: absolute;
   z-index: 1;
-  inset-inline-start: calc(50% + var(--px, 0px) - 52px);
-  width: 104px;
-  height: 96px;
-  margin-top: -58px;
+  inset-inline-start: calc(50% + var(--sx, 0px) - 60px);
+  width: 120px;
+  height: 120px;
+  margin-top: -60px;
   list-style: none;
 }
-.lp-peek-hit,
+.lp-scene-stage {
+  position: relative;
+  display: block;
+}
+.lp-scene-stage.is-flipped {
+  transform: scaleX(-1);
+}
+.lp-scene-stage > span,
+.lp-scene-hit {
+  position: absolute;
+  line-height: 0;
+}
+.lp-scene-stage svg {
+  display: block;
+}
+.lp-scene-hit {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.lp-actor {
+  display: flex;
+  justify-content: center;
+}
+/* The slate's letters read the right way round on either side of the road. */
+.lp-scene-stage.is-flipped .lp-chalk > svg {
+  transform: scaleX(-1);
+}
+.lp-chalk {
+  opacity: 0;
+}
+.lp-chalk.is-written {
+  opacity: 1;
+}
+.lp-pigeon > span,
+.lp-pigeon-flight > span,
+.lp-pigeon-fly > span {
+  position: absolute;
+  inset: 0;
+  display: block;
+  line-height: 0;
+}
+.lp-chest {
+  position: absolute;
+  z-index: 1;
+  inset-inline-start: calc(50% + var(--cx, 0px) - 48px);
+  width: 96px;
+  height: 96px;
+  margin-top: -52px;
+  list-style: none;
+}
 .lp-chest-hit {
   position: relative;
   display: block;
@@ -1084,64 +1206,28 @@ button.lp-scard:focus-visible {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-/* The mound hides the peeker's foot, so only head and shoulders show over it. */
-.lp-peek-hit {
-  overflow: hidden;
-  border-radius: 0 0 var(--r-lg) var(--r-lg);
-}
-.lp-peek-who {
-  position: absolute;
-  inset-inline: 0;
-  bottom: -4px;
-  display: flex;
-  justify-content: center;
-  line-height: 0;
-  transform-origin: 50% 100%;
-}
-.lp-peek.is-start .lp-peek-who {
-  rotate: 7deg;
-}
-.lp-peek.is-end .lp-peek-who {
-  rotate: -7deg;
-}
-[dir='rtl'] .lp-peek.is-start .lp-peek-who {
-  rotate: -7deg;
-}
-[dir='rtl'] .lp-peek.is-end .lp-peek-who {
-  rotate: 7deg;
-}
-/* The pigeon is small enough to stand on the mound rather than hide behind it. */
-.lp-peek-bird {
+.lp-chest-art {
+  position: relative;
   display: block;
-  width: 92px;
-  height: 92px;
-  margin-bottom: 14px;
-}
-.lp-peek-mound {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: 26px;
-  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-  background: var(--lp-rest);
-  box-shadow: inset 0 -6px 0 var(--lp-rest-lip);
-}
-.lp-chest {
-  position: absolute;
-  z-index: 1;
-  inset-inline-start: calc(50% + var(--cx, 0px) - 48px);
   width: 96px;
   height: 96px;
-  margin-top: -52px;
-  list-style: none;
-}
-.lp-chest-art {
-  display: block;
   line-height: 0;
   transform-origin: 50% 90%;
 }
+.lp-chest-part {
+  position: absolute;
+  inset: 0;
+  line-height: 0;
+}
+.lp-coin {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  line-height: 0;
+  opacity: 0;
+}
 @media (max-width: 339px) {
-  .lp-peek,
+  .lp-scene,
   .lp-chest {
     display: none;
   }
@@ -1171,18 +1257,86 @@ button.lp-scard:focus-visible {
     pointer-events: none;
     animation: lp-pulse 2.2s var(--ease-out) infinite;
   }
-  /* The peeker leans in for a look now and then; the chest gives a little shiver. */
-  .lp-unit.is-seen .lp-peek-who {
-    animation: lp-peek 5.2s ease-in-out infinite;
-  }
+  /* A shut chest gives a little shiver now and then; tapped, it rattles on its lock, and open it tosses out its gold. */
   .lp-unit.is-seen .lp-chest-art {
     animation: lp-shiver 4.6s ease-in-out 1.2s infinite;
   }
-  .lp-peek.is-popping .lp-peek-who {
-    animation: lp-pop-up 700ms var(--ease-spring);
+  .lp-chest-art.is-rattling {
+    animation: lp-shiver-now 520ms ease-in-out;
   }
-  .lp-chest.is-hopping .lp-chest-art {
+  .lp-chest-art.is-rattling .lp-chest-lid {
+    animation: lp-rattle 520ms ease-in-out;
+  }
+  .lp-chest-art.is-bursting {
     animation: lp-hop 700ms var(--ease-spring);
+  }
+  .lp-chest-art.is-bursting .lp-chest-lid {
+    animation: lp-lid-pop 640ms var(--ease-spring) both;
+  }
+  .lp-chest-art.is-bursting .lp-coin {
+    animation: lp-coin 1s var(--ease-out) both;
+  }
+  /* The scenes, beat by beat (shared PATH_SCENE_MOTION), only while in view and in front. */
+  .lp-scene-stage.is-moving .is-falling {
+    animation: lp-crumb 900ms ease-in both;
+  }
+  .lp-scene-stage.is-moving .is-dropping {
+    transform-origin: 50% 0;
+    animation: lp-core-drop 800ms ease-in both;
+  }
+  .lp-scene-stage.is-moving .is-growing {
+    transform-origin: 50% 0;
+    animation: lp-grow 900ms var(--ease-spring) 300ms both;
+  }
+  .lp-scene-stage.is-moving .lp-apple.is-offered {
+    transform-origin: 50% 0;
+    animation: lp-offer 1s var(--ease-spring);
+  }
+  .lp-scene-stage.is-moving .is-rising {
+    animation: lp-hic 900ms ease-out both;
+  }
+  .lp-scene-stage.is-moving .is-steaming {
+    animation: lp-rise-away 2.8s linear infinite;
+  }
+  .lp-scene-stage.is-moving .is-tossed {
+    animation: lp-toss 560ms ease-in-out both;
+  }
+  .lp-scene-stage.is-moving .is-splashing {
+    animation: lp-splash 520ms ease-out 520ms both;
+  }
+  .lp-scene-stage.is-moving .lp-chalk {
+    transition: opacity 420ms ease-out;
+  }
+  .lp-scene-stage.is-moving .lp-pigeon-wing.is-up {
+    animation: lp-flap 360ms step-end infinite;
+  }
+  .lp-scene-stage.is-moving .lp-pigeon-wing.is-down {
+    animation: lp-flap 360ms step-end -180ms infinite;
+  }
+  .lp-scene-stage.is-moving .lp-pigeon-hop.is-hopping {
+    animation: lp-hop 600ms var(--ease-spring);
+  }
+  /* The banner's vignette: its one moving part, gently (shared CHAPTER_ART_LOOP). */
+  .lp-pin-loop.is-rise {
+    animation: lp-pin-rise 2.8s linear infinite;
+  }
+  .lp-pin-loop.is-fall {
+    animation: lp-leaf 4.2s ease-in-out infinite;
+  }
+  .lp-pin-loop.is-swing {
+    animation: lp-swing 2.8s ease-in-out infinite;
+  }
+  .lp-pin-loop.is-creak {
+    animation: lp-creak 4.4s ease-in-out infinite;
+  }
+  .lp-pin-loop.is-flicker {
+    animation: lp-flicker 0.7s ease-in-out infinite alternate;
+  }
+  .lp-pin-loop.is-bob {
+    animation: lp-bus 0.9s ease-in-out infinite alternate;
+  }
+  .lp-pin-loop.is-orbit {
+    animation: lp-orbit 3.2s linear infinite;
   }
   .lp-unit.is-waiting .lp-node {
     opacity: 0;
@@ -1232,25 +1386,198 @@ button.lp-scard:focus-visible {
     scale: 1.6;
   }
 }
-@keyframes lp-peek {
-  0%,
-  62%,
-  100% {
+@keyframes lp-crumb {
+  0% {
+    opacity: 1;
     translate: 0 0;
   }
-  70%,
-  88% {
-    translate: 0 -10px;
+  100% {
+    opacity: 0;
+    translate: 2px 24px;
   }
 }
-@keyframes lp-pop-up {
+@keyframes lp-core-drop {
+  to {
+    opacity: 0;
+    translate: 0 40px;
+    rotate: 28deg;
+  }
+}
+@keyframes lp-grow {
+  from {
+    opacity: 0;
+    scale: 0.2;
+  }
+}
+@keyframes lp-offer {
   40% {
-    translate: 0 -22px;
-    scale: 1.06 0.96;
+    scale: 1.35;
+    rotate: -16deg;
   }
   70% {
-    translate: 0 2px;
-    scale: 0.98 1.03;
+    scale: 1.2;
+    rotate: 8deg;
+  }
+}
+@keyframes lp-hic {
+  0% {
+    opacity: 0;
+    translate: 0 4px;
+    scale: 0.6;
+  }
+  30% {
+    opacity: 1;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 -18px;
+  }
+}
+@keyframes lp-toss {
+  0% {
+    translate: 0 0;
+  }
+  50% {
+    translate: -24px -24px;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: -48px 2px;
+  }
+}
+@keyframes lp-splash {
+  0% {
+    opacity: 0;
+    scale: 0.6;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.2;
+  }
+}
+@keyframes lp-flap {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes lp-shiver-now {
+  20% {
+    rotate: -6deg;
+  }
+  45% {
+    rotate: 6deg;
+  }
+  70% {
+    rotate: -3deg;
+  }
+}
+@keyframes lp-rattle {
+  25%,
+  75% {
+    translate: 0 -3px;
+  }
+  50% {
+    translate: 0 1px;
+  }
+}
+@keyframes lp-lid-pop {
+  0% {
+    opacity: 0;
+    scale: 1 0.3;
+  }
+  60% {
+    opacity: 1;
+    scale: 1 1.12;
+  }
+}
+@keyframes lp-coin {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+    scale: 0.6;
+  }
+  15% {
+    opacity: 1;
+  }
+  55% {
+    translate: var(--cx) var(--cy);
+    rotate: var(--cr);
+    scale: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: calc(var(--cx) * 1.25) calc(var(--cy) + 34px);
+    rotate: calc(var(--cr) * 2);
+  }
+}
+/* Steam or smoke over a vignette rises only a little, so it never reaches the banner's words. */
+@keyframes lp-pin-rise {
+  0% {
+    opacity: 0;
+    translate: 0 3px;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 -5px;
+  }
+}
+@keyframes lp-leaf {
+  0% {
+    opacity: 0;
+    translate: 0 -4px;
+    rotate: -20deg;
+  }
+  15% {
+    opacity: 1;
+  }
+  50% {
+    translate: -6px 30px;
+    rotate: 25deg;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 2px 60px;
+    rotate: -10deg;
+  }
+}
+@keyframes lp-creak {
+  0%,
+  60%,
+  100% {
+    scale: 1 1;
+  }
+  75% {
+    scale: 0.86 1;
+  }
+  88% {
+    scale: 0.96 1;
+  }
+}
+@keyframes lp-bus {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -2px;
   }
 }
 @keyframes lp-shiver {
@@ -1363,9 +1690,9 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * Returning from a lesson (learn/CoursePath.tsx, PATH_RETURN): the finished stop pops and draws its check, the opened one
- * pops as its number replaces the padlock, a chest wobbles and bursts, and the bubble and learner move on. None of it
- * runs under reduced motion.
+ * Returning from a lesson (learn/CoursePath.tsx, PATH_RETURN): the finished stop pops into gold with Hevalo's print, the
+ * opened one pops as its number replaces the padlock, a milestone wobbles and turns gold, and the bubble and learner move
+ * on. None of it runs under reduced motion.
  */
 @keyframes lp-node-pop {
   50% {
@@ -1386,9 +1713,6 @@ button.lp-scard:focus-visible {
 .lp-node.is-finishing .lp-node-face,
 .lp-node.is-opening .lp-node-face {
   animation: lp-node-pop var(--dur-slow) var(--ease-spring);
-}
-.lp-node.is-finishing .lp-node-glyph > svg {
-  animation: check-draw calc(var(--dur) + 60ms) var(--ease-out) 60ms both;
 }
 .lp-node.is-opening .lp-node-glyph > * {
   animation: lp-glyph-in var(--dur-fast) ease-out both;
