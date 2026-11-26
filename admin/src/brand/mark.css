@@ -4,9 +4,9 @@
  */
 .hevalo-mark { position: relative; display: inline-block; flex: none; line-height: 0; user-select: none; }
 .hevalo-mark img { display: block; width: 100%; height: 100%; }
-.hevalo-eye { position: absolute; top: 48.118%; width: 13.9%; height: 16.235%; clip-path: ellipse(50% 50% at 50% 50%); pointer-events: none; }
-.hevalo-eye.is-left { left: 29.857%; }
-.hevalo-eye.is-right { left: 55.079%; }
+.hevalo-eye { position: absolute; top: 56.727%; width: 14.712%; height: 16.941%; clip-path: ellipse(50% 50% at 50% 50%); pointer-events: none; }
+.hevalo-eye.is-left { left: 28.711%; }
+.hevalo-eye.is-right { left: 55.216%; }
 .hevalo-pupil {
   position: absolute; top: 17.7%; width: 53.79%; height: 70.59%;
   border-radius: 50%; background: #532e28;
