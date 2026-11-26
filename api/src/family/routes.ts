@@ -192,6 +192,11 @@ export function registerFamilyRoutes(app: FastifyInstance, config: AppConfig, de
     if (fromBrowser(req, config)) throw childPhoneOnly();
     const { childId } = req.params as z.infer<typeof childParam>;
     const result = await sessions.switchTo(me(req), req.user!.familyId, childId, deviceIdOf(req));
+    // the parent's live connection on this phone goes with their session, so none of their messages reach the child
+    const parentSession = req.user!.familyId;
+    if (parentSession && app.hasDecorator('realtime')) {
+      await app.realtime.endSession(me(req), parentSession).catch((err: unknown) => req.log.warn({ err }, 'a switched phone’s connection was left to the session check'));
+    }
     await app.securityLog.record('signin.succeeded', { userId: childId, child: true, details: { method: 'family_switch' } });
     return signedIn(result);
   });
