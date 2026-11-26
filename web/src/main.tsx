@@ -10,6 +10,7 @@ import { unlockOnFirstTap } from './lib/sound';
 import { preloadParts, whenPageSettles } from './lib/lazyPart';
 import { warmLinksOnIntent, warmPlaces, warmRoute } from './lib/routeWarmup';
 import { createTokenStorage } from './lib/tokenStorage';
+import { startEarlyAnswers } from './lib/earlyAnswers';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/ui.css';
@@ -74,6 +75,8 @@ if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('show
  * it is reached for; and once the page has settled, the parts behind its buttons and, for an account, the other places.
  */
 const session = createTokenStorage().get();
+// A signed-in page's first questions are asked now, with the session check, instead of after it (lib/earlyAnswers.ts).
+startEarlyAnswers(window.location.pathname, session?.accessToken);
 warmRoute(window.location.pathname);
 warmLinksOnIntent();
 whenPageSettles(() => {

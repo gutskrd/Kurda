@@ -15,6 +15,7 @@ import {
 import { restrictionOf, restrictionText, suspensionOf } from '../reports/restriction';
 import { limitErrorText } from './limits';
 import { deviceId } from './deviceId';
+import { takeEarlyAnswer } from './earlyAnswers';
 import { durationInWords } from './timeWords';
 import { usernameRefusalText } from './usernameText';
 import { rejectionText } from '../pictures/words';
@@ -198,15 +199,19 @@ export class ApiClient {
       const withAuth = tokens && !headers.authorization ? { ...headers, authorization: `Bearer ${tokens.accessToken}` } : headers;
       let res: Response;
       try {
-        res = await this.timedFetch(
-          `${this.baseUrl}${path}`,
-          {
-            method,
-            headers: withAuth,
-            body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-          },
-          options.signal,
-        );
+        // A plain GET may already have been asked while the session was being checked (lib/earlyAnswers.ts).
+        const early = method === 'GET' && !options.headers && !options.signal ? await takeEarlyAnswer(path, tokens?.accessToken) : null;
+        res =
+          early ??
+          (await this.timedFetch(
+            `${this.baseUrl}${path}`,
+            {
+              method,
+              headers: withAuth,
+              body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+            },
+            options.signal,
+          ));
       } catch {
         return { ok: false, error: { kind: 'network', message: 'network request failed' } satisfies ApiError };
       }
