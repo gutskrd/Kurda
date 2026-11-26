@@ -1,23 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { TAB_BAR_SCROLL, TAB_CAPSULE, springEasing, tabBarScroll } from '@kurda/shared';
+import { TAB_BAR_SCROLL, tabBarScroll } from '@kurda/shared';
+import { dropLens, lensSupported, takeLens, type Lens } from '@kurda/shared/src/glass-lens';
+import { SelectorLens } from '../lib/selectorLens';
 import { useAuth } from '../auth/AuthProvider';
 import { UserIcon } from '../components/icons';
 import type { NavItem } from '../components/TopNav';
 import { useT } from '../i18n/I18nProvider';
-
-/** The capsule's springs as transition curves, and its lift, the same numbers as the phone app's (shared `TAB_CAPSULE`). */
-const LEAD = springEasing(TAB_CAPSULE.lead);
-const FOLLOW = springEasing(TAB_CAPSULE.follow);
-const CAPSULE_STYLE = {
-  '--lead-ease': LEAD.easing,
-  '--lead-ms': `${LEAD.ms}ms`,
-  '--follow-ease': FOLLOW.easing,
-  '--follow-ms': `${FOLLOW.ms}ms`,
-  '--lift-scale': TAB_CAPSULE.liftScale,
-  '--lift-fill': TAB_CAPSULE.liftFill,
-  '--lift-ms': `${TAB_CAPSULE.liftMs}ms`,
-} as React.CSSProperties;
 
 /**
  * The phone's bar of places (`useNavLinks`), floating over the bottom of the window like the phone app's
@@ -41,19 +30,6 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
   // counted from the reading edge; the styles turn it into a place along the bar, in either direction
   const at = items.findIndex((l) => l.owns?.(pathname));
 
-  // Which way the capsule last moved, so the end in front can lead and the one behind follow, and a lift that changes
-  // name on every move so it plays again.
-  const [was, setWas] = useState(at);
-  const [lead, setLead] = useState<'end' | 'start'>('end');
-  const [lift, setLift] = useState<'a' | 'b' | null>(null);
-  if (at !== was) {
-    setWas(at);
-    if (at >= 0 && was >= 0) {
-      setLead(at > was ? 'end' : 'start');
-      setLift(lift === 'a' ? 'b' : 'a');
-    }
-  }
-
   // One place's width and the row's height, in pixels, for the capsule's transforms (CSS cannot divide one length by
   // another); measured before the first paint, so the capsule is there from the start.
   const row = useRef<HTMLDivElement>(null);
@@ -74,6 +50,40 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
     return () => watch.disconnect();
   }, [items.length]);
 
+  // The capsule and the lens over it move by the shared selector motion (lib/selectorLens.ts): placed on the first draw
+  // and after a resize, lifted into the lens and glided on each change of place.
+  const parts = { group: useRef<HTMLSpanElement>(null), start: useRef<HTMLSpanElement>(null), end: useRef<HTMLSpanElement>(null), span: useRef<HTMLSpanElement>(null), lens: useRef<HTMLSpanElement>(null) };
+  const runner = useRef<SelectorLens | null>(null);
+  const placed = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const { group, start, end, span, lens } = parts;
+    if (!group.current || !start.current || !end.current || !span.current || box.slot <= 0 || at < 0) return;
+    const size = { slot: box.slot, height: box.height, width: box.slot * items.length };
+    runner.current ??= new SelectorLens({ group: group.current, start: start.current, end: end.current, span: span.current, lens: lens.current }, size);
+    if (placed.current === null || placed.current === at) runner.current.place(at, size);
+    else runner.current.moveTo(at);
+    placed.current = at;
+    // Reads the refs as they are; a new runner is made only when the capsule itself is drawn again.
+  }, [at, box.slot, box.height, items.length]);
+  useEffect(() => () => runner.current?.stop(), []);
+
+  // Where the browser can bend what lies behind an element (Chromium), the lens refracts the places under it.
+  useEffect(() => {
+    const el = parts.lens.current;
+    if (!el || box.slot <= 0 || !lensSupported()) return;
+    const made: Lens = takeLens({ width: box.slot, height: box.height, radius: box.height / 2 }, Math.min(window.devicePixelRatio || 1, 3), true);
+    if (made.filter) {
+      el.style.setProperty('--lens-filter', `url(#${made.filter})`);
+      el.dataset.bends = '';
+    }
+    return () => {
+      dropLens(made);
+      el.style.removeProperty('--lens-filter');
+      delete el.dataset.bends;
+    };
+    // The lens is cut to one place at rest; its stretch and lift scale it.
+  }, [box.slot, box.height]);
+
   // Small while the page scrolls down; each page starts with the bar full size.
   const [compact, setCompact] = useState(false);
   useEffect(() => {
@@ -92,18 +102,14 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
       aria-label={t('nav.primary')}
       style={{ '--compact': TAB_BAR_SCROLL.compactScale } as React.CSSProperties}
     >
-      <div
-        ref={row}
-        className={`places-row is-leading-${lead}${lift ? ` is-lift-${lift}` : ''}`}
-        style={{ ...CAPSULE_STYLE, '--places': items.length, '--at': Math.max(at, 0), '--slot': box.slot, '--row-h': box.height } as React.CSSProperties}
-      >
+      <div ref={row} className="places-row" style={{ '--places': items.length } as React.CSSProperties}>
         {at >= 0 && (
           // Two round ends and the span between them, so the ends stay round however far it stretches.
           <span className="places-track" aria-hidden="true">
-            <span className="places-capsule">
-              <span className="places-cap is-start" />
-              <span className="places-span" />
-              <span className="places-cap is-end" />
+            <span ref={parts.group} className="places-capsule">
+              <span ref={parts.start} className="places-cap is-start" />
+              <span ref={parts.span} className="places-span" />
+              <span ref={parts.end} className="places-cap is-end" />
             </span>
           </span>
         )}
@@ -146,6 +152,12 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
             );
           })}
         </ul>
+        {/* The lens: clear glass over the places while the choice moves, bending what it passes over. */}
+        {at >= 0 && (
+          <span className="places-lens-layer" aria-hidden="true">
+            <span ref={parts.lens} className="places-lens" />
+          </span>
+        )}
       </div>
     </nav>
   );

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
-import { celebrationEndMs, celebrationPlan } from '@kurda/shared';
+import { celebrationEndMs, celebrationPlan, lensAt, planSwitch } from '@kurda/shared';
 import { haptic } from './haptics';
 
 /**
@@ -183,9 +183,9 @@ export function useInFront(ref: RefObject<Element | null>): boolean {
 
 /**
  * Keeps a segmented control's chosen ground (`capsule`) under its chosen option (`chosen`, a selector within the
- * control) and slides it there when the choice changes, as the phone's capsule does: transform only, in `--dur` on
- * `--ease-out`, the motion of Learn's switch. It is placed before the first paint and again when the control is
- * resized, without moving; under Reduce Motion it is simply placed.
+ * control) and moves it there when the choice changes as every selector does (shared selector-lens.ts): lifted into a
+ * lens, glided and settled, transform and opacity only. It is placed before the first paint and again when the control
+ * is resized, without moving; under Reduce Motion it is simply placed.
  */
 export function useSlidingCapsule(control: RefObject<HTMLElement | null>, capsule: RefObject<HTMLElement | null>, chosen: string, value: string): void {
   const last = useRef<{ x: number; y: number; w: number } | null>(null);
@@ -201,10 +201,26 @@ export function useSlidingCapsule(control: RefObject<HTMLElement | null>, capsul
       last.current = to;
       if (!slide || !from || !playsMotion() || typeof cap.animate !== 'function') return;
       if (from.x === to.x && from.y === to.y && from.w === to.w) return;
-      const tokens = getComputedStyle(document.documentElement);
-      const ms = parseFloat(tokens.getPropertyValue('--dur')) || LEAVE_MS;
-      const easing = tokens.getPropertyValue('--ease-out').trim() || 'ease-out';
-      cap.animate([{ transform: `translate(${from.x - to.x}px, ${from.y - to.y}px) scaleX(${from.w / to.w})` }, { transform: 'none' }], { duration: ms, easing });
+      // The move every selector makes (shared selector-lens.ts): sampled a frame at a time, from here to there, the
+      // ground lifting into a lens, stretching with its speed and settling back.
+      const move = planSwitch(0, 1, 0);
+      const frames: Keyframe[] = [];
+      let t = 0;
+      for (;;) {
+        const f = lensAt(move, t);
+        const x = from.x + (to.x - from.x) * f.at;
+        const w = (from.w + (to.w - from.w) * f.at) * (1 + f.stretch) * f.scale;
+        const left = x - (w - (from.w + (to.w - from.w) * f.at)) / 2;
+        frames.push({ transform: `translate(${left - to.x}px, ${(from.y - to.y) * (1 - f.at)}px) scale(${w / to.w}, ${f.scale})`, opacity: 0.35 + 0.65 * f.tint });
+        if (f.phase === 'rest') break;
+        t += 1000 / 60;
+      }
+      cap.classList.add('is-lens');
+      const run = cap.animate(frames, { duration: t, easing: 'linear' });
+      void run.finished.then(
+        () => cap.classList.remove('is-lens'),
+        () => cap.classList.remove('is-lens'),
+      );
     },
     [control, capsule, chosen],
   );

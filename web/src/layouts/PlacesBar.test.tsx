@@ -129,10 +129,10 @@ describe('the bar of places', () => {
     expect(learn).toHaveAttribute('aria-current', 'page');
     expect(learn).toHaveClass('active');
     expect(within(learn).getByTestId('learn-filled')).toBeInTheDocument();
-    // one capsule, a place wide, under the second of four
+    // one capsule, and one lens over the places for when the choice moves, in a bar of four
     const row = container.querySelector<HTMLElement>('.places-row')!;
     expect(container.querySelectorAll('.places-capsule')).toHaveLength(1);
-    expect(row.style.getPropertyValue('--at')).toBe('1');
+    expect(container.querySelectorAll('.places-lens')).toHaveLength(1);
     expect(row.style.getPropertyValue('--places')).toBe('4');
 
     for (const name of ['Home', 'Messages', 'Profile']) {
@@ -155,13 +155,12 @@ describe('the bar of places', () => {
     }
   });
 
-  it('moves the capsule to the place chosen', async () => {
+  it('moves the choice to the place chosen, the same capsule still drawn', async () => {
     const { container } = show('/app');
-    const row = container.querySelector<HTMLElement>('.places-row')!;
-    expect(row.style.getPropertyValue('--at')).toBe('0');
+    const capsule = container.querySelector('.places-capsule');
     await userEvent.click(screen.getByRole('link', { name: 'Messages' }));
     expect(screen.getByTestId('where').textContent).toBe('/app/messages');
-    expect(row.style.getPropertyValue('--at')).toBe('2');
+    expect(container.querySelector('.places-capsule')).toBe(capsule);
     expect(screen.getByRole('link', { name: 'Messages' })).toHaveAttribute('aria-current', 'page');
   });
 
@@ -226,29 +225,6 @@ describe('the bar of places', () => {
     const { container } = show('/app');
     await screen.findByRole('link', { name: 'Home' });
     expect(container.querySelector('.places-bar')).not.toHaveAttribute('dir');
-  });
-
-  it('leads the capsule with its end toward the place chosen, so it stretches that way', async () => {
-    const { container } = show('/app');
-    const row = container.querySelector<HTMLElement>('.places-row')!;
-    await userEvent.click(screen.getByRole('link', { name: 'Messages' }));
-    expect(row).toHaveClass('is-leading-end');
-    await userEvent.click(screen.getByRole('link', { name: 'Home' }));
-    expect(row).toHaveClass('is-leading-start');
-  });
-
-  it('lifts the capsule again on every move, and not when the page first opens', async () => {
-    const { container } = show('/app');
-    const row = container.querySelector<HTMLElement>('.places-row')!;
-    expect(row.className).not.toMatch(/is-lift/);
-    await userEvent.click(screen.getByRole('link', { name: 'Messages' }));
-    expect(row).toHaveClass('is-lift-a');
-    await userEvent.click(screen.getByRole('link', { name: 'Home' }));
-    expect(row).toHaveClass('is-lift-b');
-    expect(row).not.toHaveClass('is-lift-a');
-    // the springs' curves travel with the row, from the numbers the phone app uses
-    expect(row.style.getPropertyValue('--lead-ease')).toMatch(/^linear\(0, /);
-    expect(row.style.getPropertyValue('--lead-ms')).toMatch(/^\d+ms$/);
   });
 
   it('shrinks while the page scrolls down, and comes back on a scroll up', async () => {

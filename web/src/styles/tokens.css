@@ -198,6 +198,13 @@
   --glass-shine: rgba(255, 255, 255, 0.09);
   --tab-capsule: #000000;
   --tab-capsule-fill: 0.34;
+  /* the lens a choice lifts into as it moves: clear and a little brighter than the bar, its rim lit, its edge split */
+  --lens-fill: rgba(255, 255, 255, 0.13);
+  --lens-rim: rgba(255, 255, 255, 0.34);
+  --lens-shine: rgba(255, 255, 255, 0.5);
+  --lens-warm: rgba(255, 120, 120, 0.22);
+  --lens-cool: rgba(110, 180, 255, 0.24);
+  --lens-shadow: rgba(0, 0, 0, 0.22);
   --tab-chosen: var(--accent-text);
   /* a control's disc where it stands on a drawing (a chapter's banner) */
   --on-art: rgba(19, 28, 32, 0.6);
@@ -316,6 +323,12 @@
   --glass-shine: rgba(255, 255, 255, 0.9);
   --tab-capsule: #17242b;
   --tab-capsule-fill: 0.07;
+  --lens-fill: rgba(255, 255, 255, 0.58);
+  --lens-rim: rgba(255, 255, 255, 0.9);
+  --lens-shine: rgba(255, 255, 255, 1);
+  --lens-warm: rgba(255, 110, 110, 0.16);
+  --lens-cool: rgba(90, 160, 255, 0.18);
+  --lens-shadow: rgba(23, 36, 43, 0.12);
   --on-art: rgba(253, 254, 254, 0.78);
   --glass-optics: blur(24px) saturate(1.8);
   --glass-shadow: 0 6px 20px rgba(23, 36, 43, 0.1);

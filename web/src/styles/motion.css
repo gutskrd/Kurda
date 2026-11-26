@@ -689,6 +689,34 @@
 .is-changing-page .learn-head .switch-capsule {
   view-transition-name: learn-switch;
 }
+/*
+ * It moves as every selector does (shared selector-lens.ts): over the move's 420 ms it lifts into a brighter, larger
+ * lens with a lit rim, glides on the spring's curve and settles back into its ground.
+ */
+::view-transition-group(learn-switch) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.32, 1.04);
+}
+::view-transition-image-pair(learn-switch) {
+  border-radius: var(--r-pill);
+  animation: learn-lens 420ms linear both;
+}
+@keyframes learn-lens {
+  0%,
+  100% {
+    scale: 1;
+    box-shadow: none;
+  }
+  16%,
+  72% {
+    scale: 1.12;
+    box-shadow:
+      inset 0 0 0 0.75px var(--lens-rim),
+      inset 0 1.5px 1px var(--lens-shine),
+      inset 1.5px 0 1px var(--lens-warm),
+      inset -1.5px 0 1px var(--lens-cool);
+  }
+}
 ::view-transition-group(*),
 ::view-transition-old(*),
 ::view-transition-new(*) {
