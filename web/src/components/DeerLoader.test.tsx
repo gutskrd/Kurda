@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEER_BREATH_LOW, DEER_BREATH_MS, DEER_LOOP_MS, deerCurlPath, deerLoopAt, deerMarkPath } from '@kurda/shared';
+import { DEER_BREATH_LOW, DEER_BREATH_MS, DEER_LOOP_MS, DEER_LOOP_TURNS, deerFormPath, deerLoopAt, deerMarkPath } from '@kurda/shared';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { DeerLoader } from './DeerLoader';
 import { Loading } from './states';
 
-/** A moment of the loop when he is wholly the ball. */
-const BALL_AT = Array.from({ length: 200 }, (_, i) => i / 200).find((t) => deerLoopAt(t).curl === 1) as number;
+/** A moment of the loop when he is the spinning ring. */
+const RING_AT = Array.from({ length: 200 }, (_, i) => i / 200).find((t) => deerLoopAt(t).open === 1) as number;
 
 /** What `animate` was asked to play, and a clock the test can set. */
 interface Played {
@@ -78,7 +78,7 @@ describe('Loading', () => {
 });
 
 describe('DeerLoader', () => {
-  it('turns and squashes as one Web Animation, the length of the loop, ending where it starts', () => {
+  it('turns as one Web Animation, the length of the loop, ending where it starts', () => {
     reduceMotion(false);
     holdFrames();
     const played = playAnimations();
@@ -86,24 +86,24 @@ describe('DeerLoader', () => {
     expect(played).toHaveLength(1);
     const [{ keyframes, options }] = played as [Played];
     expect(options).toMatchObject({ duration: DEER_LOOP_MS, iterations: Infinity });
-    // It ends a whole turn on from where it starts, so each loop meets the next without turning back.
-    expect(String(keyframes[0]?.transform)).toContain('rotate(0deg)');
-    expect(String(keyframes[keyframes.length - 1]?.transform)).toBe(String(keyframes[0]?.transform).replace('rotate(0deg)', 'rotate(360deg)'));
+    // It ends whole turns on from where it starts, so each loop meets the next without turning back.
+    expect(String(keyframes[0]?.transform)).toBe('rotate(0deg)');
+    expect(String(keyframes[keyframes.length - 1]?.transform)).toBe(`rotate(${360 * DEER_LOOP_TURNS}deg)`);
     const turns = keyframes.map((k) => Number(/rotate\(([-\d.]+)deg\)/.exec(String(k.transform))?.[1]));
     turns.slice(1).forEach((turn, i) => expect(turn).toBeGreaterThanOrEqual(turns[i] as number));
   });
 
-  it('draws the curl from that animation’s clock, so the shape keeps time with the roll', () => {
+  it('draws the shape from that animation’s clock, so it keeps time with the turn', () => {
     reduceMotion(false);
     const step = holdFrames();
     const played = playAnimations();
     const { container } = render(<DeerLoader size={120} />);
     const path = container.querySelector('path') as SVGPathElement;
     expect(path.getAttribute('d')).toBe(deerMarkPath());
-    // As the ball, wherever in the loop that is.
-    (played[0] as Played).animation.currentTime = BALL_AT * DEER_LOOP_MS;
+    // As the ring, wherever in the loop that is.
+    (played[0] as Played).animation.currentTime = RING_AT * DEER_LOOP_MS;
     step();
-    expect(path.getAttribute('d')).toBe(deerCurlPath(1));
+    expect(path.getAttribute('d')).toBe(deerFormPath(deerLoopAt(RING_AT)));
     (played[0] as Played).animation.currentTime = DEER_LOOP_MS;
     step();
     expect(path.getAttribute('d')).toBe(deerMarkPath());

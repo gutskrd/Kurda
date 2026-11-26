@@ -2,15 +2,17 @@
  * Hevalo's mark: the owner's deer, his back to us and looking back over his shoulder, traced as one shape in a
  * 100-unit square (his head, antlers and ears and the curl of his body, with his eyes and the crescent between chin and
  * body cut out), so it is drawn in a single colour. His antlers are redrawn after Hevalo's own, as in the character rig: a beam
- * sweeping up and outward with three rounded tines, tallest outside. It is also the apps' loader: in one clockwise turn he curls into a
- * ball, rolls, and spins back out into exactly where he started.
+ * sweeping up and outward with three rounded tines, tallest outside. It is also the apps' loader: turning clockwise
+ * the whole time, he curls into a ball, the ball opens into a round-capped ring that sweeps like a spinner, closes
+ * again, and he spins back out into exactly where he started.
  *
  * The curl is a morph between shapes of matched points: the trace cut into 96 segments by length, and a ball whose rim
  * and seam (his crescent, wound into a spiral) are cut at the same shares. In between, detail leaves first: the
  * difference between deer and ball is blurred along the outline more and more as he curls, so the antlers and ears
  * shrink into his head before the body rounds and nothing in between is lumpy. The curl is paced by its fastest point,
- * so no part of him appears or goes all at once. Turning and squashing are transforms about the ball's centre, the
- * middle of the square, so each app can run them on its compositor.
+ * so no part of him appears or goes all at once. The ring is matched to the ball the same way, its gap at his
+ * crescent's mouth. The turn is a transform about the ball's centre, the middle of the square, so each app can run it
+ * on its compositor.
  */
 import { n } from './svg.js';
 
@@ -434,6 +436,10 @@ interface Shapes {
   keys: Float64Array[];
   /** How far the outline's fastest point has moved by each keyframe, as a share of the whole curl. */
   reach: number[];
+  /** That whole distance, in units of the square. */
+  length: number;
+  /** Where each segment starts along its run (the crescent's chin edge, its body edge, the rest), as shares. */
+  shares: { chin: number[]; body: number[]; rim: number[] };
   /** His eyes, open. */
   eyes: Float64Array[];
 }
@@ -532,7 +538,8 @@ function curlShapes(small = false): Shapes {
     reach.push((reach[k - 1] as number) + farthest(a, b));
   }
   const total = reach[reach.length - 1] as number;
-  const shapes = { keys, reach: reach.map((r) => r / total), eyes };
+  const shares = { chin: startShares(chin), body: startShares(body), rim: startShares(rim) };
+  const shapes = { keys, reach: reach.map((r) => r / total), length: total, shares, eyes };
   built[small ? 'small' : 'full'] = shapes;
   return shapes;
 }
@@ -609,10 +616,93 @@ export function deerCurlKeyframes({ small = false }: { small?: boolean } = {}): 
   return { outline: keys, eyes };
 }
 
+/* ---- the ring ------------------------------------------------------------------------------------------------ */
+
+/**
+ * The spinner the ball opens into: a thick ring with round ends, as wide as the ball, its gap where his crescent's
+ * mouth was (`gap` degrees, clockwise from three o'clock). `arc` is how far round it reaches between the middles of its
+ * ends: `open` as it forms, `tight` at its shortest. The inner edge splits `split` degrees past the leading end: the
+ * crescent's chin edge (the curl's core) shrinks into that end as the hole opens, and its body edge becomes the inside.
+ */
+const RING = { width: 13, gap: 25, split: 20, open: 300, tight: 175 } as const;
+
+/** A run of circular arcs: centre, radius, and start and end angles in degrees. */
+type Arcs = readonly { x: number; y: number; r: number; from: number; to: number }[];
+
+/** Cubic segments along a run of arcs, starting at the given shares of its length, their handles along it. */
+function alongArcs(arcs: Arcs, shares: readonly number[]): Seg[] {
+  const lengths = arcs.map((a) => (Math.abs(a.to - a.from) * Math.PI * a.r) / 180);
+  const total = lengths.reduce((x, y) => x + y, 0);
+  const at = (share: number): [Pt, Pt] => {
+    let left = Math.min(1, Math.max(0, share)) * total;
+    let i = 0;
+    while (i < arcs.length - 1 && left > (lengths[i] as number)) left -= lengths[i++] as number;
+    const a = arcs[i] as Arcs[number];
+    const f = (lengths[i] as number) > 0 ? left / (lengths[i] as number) : 0;
+    const deg = a.from + (a.to - a.from) * f;
+    const rad = (deg * Math.PI) / 180;
+    const turn = Math.sign(a.to - a.from) || 1;
+    return [
+      [a.x + Math.cos(rad) * a.r, a.y + Math.sin(rad) * a.r],
+      [-Math.sin(rad) * turn, Math.cos(rad) * turn],
+    ];
+  };
+  const stops = [...shares, 1];
+  const out: Seg[] = [];
+  for (let i = 0; i < shares.length; i++) {
+    const [p, tp] = at(stops[i] as number);
+    const [q, tq] = at(stops[i + 1] as number);
+    const h = (((stops[i + 1] as number) - (stops[i] as number)) * total) / 3;
+    out.push([p, [p[0] + tp[0] * h, p[1] + tp[1] * h], [q[0] - tq[0] * h, q[1] - tq[1] * h], q]);
+  }
+  return out;
+}
+
+const rings = new Map<string, Float64Array>();
+
+/** The ring reaching `arc` degrees round, matched point for point to the ball it opens from. */
+function ringOutline(arc: number, small: boolean): Float64Array {
+  const key = `${small ? 's' : 'f'}${arc}`;
+  const cached = rings.get(key);
+  if (cached) return cached;
+  const { shares } = curlShapes(small);
+  const outer = BALL.r;
+  const inner = BALL.r - RING.width;
+  const middle = (outer + inner) / 2;
+  const cap = RING.width / 2;
+  // Its trailing end, and its leading end clockwise from it.
+  const tail = RING.gap + (360 - arc) / 2;
+  const lead = tail + arc;
+  const end = (deg: number): Pt => [BALL.x + Math.cos((deg * Math.PI) / 180) * middle, BALL.y + Math.sin((deg * Math.PI) / 180) * middle];
+  const [lx, ly] = end(lead);
+  const [tx, ty] = end(tail);
+  const chin: Arcs = [
+    { x: lx, y: ly, r: cap, from: lead, to: lead + 180 },
+    { x: BALL.x, y: BALL.y, r: inner, from: lead, to: lead - RING.split },
+  ];
+  const body: Arcs = [
+    { x: BALL.x, y: BALL.y, r: inner, from: lead - RING.split, to: tail },
+    { x: tx, y: ty, r: cap, from: tail + 180, to: tail + 360 },
+  ];
+  const rim: Arcs = [{ x: BALL.x, y: BALL.y, r: outer, from: tail, to: lead }];
+  const out = flatten([...alongArcs(chin, shares.chin), ...alongArcs(body, shares.body), ...alongArcs(rim, shares.rim)]);
+  rings.set(key, out);
+  return out;
+}
+
+/** How far the fastest point moves as the ball opens into the ring, in units of the square. */
+function openLength(small: boolean): number {
+  const keys = curlShapes(small).keys;
+  return farthest(keys[keys.length - 1] as Float64Array, ringOutline(RING.open, small));
+}
+
 /* ---- the loop ------------------------------------------------------------------------------------------------- */
 
-/** One loop: curl in, roll, spin out, and a beat as the deer before the next. */
-export const DEER_LOOP_MS = 1700;
+/** One loop: curl in, open into the spinner, sweep round, close and spin back out, and a beat as the deer. */
+export const DEER_LOOP_MS = 2300;
+
+/** Whole clockwise turns in a loop. */
+export const DEER_LOOP_TURNS = 2;
 
 /** The Reduce Motion version's breath, in and out, slower than the loop. */
 export const DEER_BREATH_MS = 2000;
@@ -621,31 +711,27 @@ export const DEER_BREATH_MS = 2000;
 export const DEER_BREATH_LOW = 0.45;
 
 /**
- * Where in the loop (shares of it) each movement starts and ends. One clockwise turn runs from his first curl to his
- * last unfurl, so he spins out of the ball and settles upright as the last of him grows back; the way out is longer
- * than the way in.
+ * Where in the loop (shares of it) each movement starts and ends: into the ring (curling, then opening), the spinner's
+ * sweep, and out again (closing, then unfurling), which is the longest. The turn gathers over the way in, holds its
+ * speed through the sweep and the closing, and eases away as he unfurls, so he settles upright as the last of him
+ * grows back.
  */
 const BEATS = {
-  curl: [0.02, 0.32],
-  squash: [0.3, 0.46],
-  unfurl: [0.42, 0.93],
-  turn: [0.02, 0.93],
+  in: [0.02, 0.3],
+  sweep: [0.3, 0.52],
+  out: [0.52, 0.93],
 } as const;
 
-/** How far the ball gives as it lands in the turn: wider, and lower by as much as it is shorter. */
-const SQUASH = { x: 0.045, y: 0.05 } as const;
-
-/** The mark's pose at a moment of the loop; transforms are about the middle of the square, applied turn first. */
+/** The mark's pose at a moment of the loop. Its shape is `curl`, then `open`, then `arc`; it turns about its middle. */
 export interface DeerLoopPose {
   /** How far into the ball he is curled, 0 to 1 (`deerCurlPath`). */
   curl: number;
-  /** Degrees turned clockwise, 0 to 360 over the loop. */
+  /** How far the ball has opened into the ring, 0 to 1. */
+  open: number;
+  /** How far round the ring reaches, in degrees between the middles of its ends. */
+  arc: number;
+  /** Degrees turned clockwise, from 0 to `DEER_LOOP_TURNS` whole turns over the loop. */
   turn: number;
-  /** Width and height scale, upright whatever the turn. */
-  scaleX: number;
-  scaleY: number;
-  /** How far down it moves, in units of the square, so the squashed ball keeps its bottom where it was. */
-  drop: number;
 }
 
 /** Smootherstep: no speed at either end, so every movement starts and lands softly. */
@@ -673,38 +759,114 @@ function bezierEase(x1: number, y1: number, x2: number, y2: number): (x: number)
   };
 }
 
-/** Into the ball: even in and out. */
-const CURL_IN = bezierEase(0.45, 0, 0.55, 1);
-/** Out of it: starting softly from the ball, then a long, gentle settle with nothing past the deer. */
-const CURL_OUT = bezierEase(0.35, 0, 0.15, 1);
-/** The turn: gathering as he curls, quickest as the ball, slowing all the way into upright. */
-const TURN = bezierEase(0.45, 0, 0.35, 1);
+/** Into the ring: even in and out. */
+const WAY_IN = bezierEase(0.45, 0, 0.55, 1);
+/** Out of it: starting softly from the ring, then a long, gentle settle with nothing past the deer. */
+const WAY_OUT = bezierEase(0.25, 0, 0.3, 1);
 
 const within = (t: number, [a, b]: readonly [number, number]): number => (t - a) / (b - a);
+
+/** Where the way out leaves the ring and starts to unfurl, as a share of the loop. */
+let unfurlFrom: number | null = null;
+
+function unfurlStart(): number {
+  if (unfurlFrom !== null) return unfurlFrom;
+  const curl = curlShapes().length;
+  const left = curl / (curl + openLength(false));
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (1 - WAY_OUT(mid) > left) lo = mid;
+    else hi = mid;
+  }
+  unfurlFrom = BEATS.out[0] + ((lo + hi) / 2) * (BEATS.out[1] - BEATS.out[0]);
+  return unfurlFrom;
+}
+
+/**
+ * The turn at `x` of the loop, in degrees: its speed rises as a smoothstep over the way in, holds through the sweep
+ * and the closing, and falls as one while he unfurls, so neither the speed nor its change ever jumps. The integrals of
+ * those ramps are written out.
+ */
+function turnAt(x: number): number {
+  const [a, b] = BEATS.in;
+  const [c, d] = [unfurlStart(), BEATS.out[1]];
+  const up = b - a;
+  const hold = c - b;
+  const down = d - c;
+  const speed = (360 * DEER_LOOP_TURNS) / (up / 2 + hold + down / 2);
+  if (x <= a) return 0;
+  if (x < b) {
+    const u = (x - a) / up;
+    return speed * up * (u ** 3 - u ** 4 / 2);
+  }
+  if (x < c) return speed * (up / 2 + (x - b));
+  if (x < d) {
+    const u = (x - c) / down;
+    return speed * (up / 2 + hold + down * (u - u ** 3 + u ** 4 / 2));
+  }
+  return 360 * DEER_LOOP_TURNS;
+}
+
+/** The shape along the way between deer and ring, `m` 0 to 1, paced by the fastest point over both legs. */
+function wayAt(m: number): { curl: number; open: number } {
+  const curl = curlShapes().length;
+  const split = curl / (curl + openLength(false));
+  return m <= split ? { curl: m / split, open: 0 } : { curl: 1, open: (m - split) / (1 - split) };
+}
 
 /** The pose `t` of the way through a loop (any number: it wraps), the same at 0 and 1. */
 export function deerLoopAt(t: number): DeerLoopPose {
   const x = ((t % 1) + 1) % 1;
-  const curl = x < BEATS.unfurl[0] ? CURL_IN(within(x, BEATS.curl)) : 1 - CURL_OUT(within(x, BEATS.unfurl));
-  const s = within(x, BEATS.squash);
-  const give = s > 0 && s < 1 ? Math.sin(Math.PI * s) ** 2 : 0;
-  const scaleY = 1 - SQUASH.y * give;
-  return {
-    curl,
-    turn: 360 * TURN(within(x, BEATS.turn)),
-    scaleX: 1 + SQUASH.x * give,
-    scaleY,
-    drop: BALL.r * (1 - scaleY),
-  };
+  const turn = turnAt(x);
+  if (x >= BEATS.sweep[0] && x < BEATS.sweep[1]) {
+    // The sweep: the trailing end catches up and the leading end runs on again, while the whole turns.
+    const give = Math.sin(Math.PI * within(x, BEATS.sweep)) ** 2;
+    return { curl: 1, open: 1, arc: RING.open - (RING.open - RING.tight) * give, turn };
+  }
+  const m = x < BEATS.sweep[0] ? WAY_IN(within(x, BEATS.in)) : 1 - WAY_OUT(within(x, BEATS.out));
+  return { ...wayAt(m), arc: RING.open, turn };
+}
+
+/** How finely the opening and the ring's reach are stepped where redrawing costs something. */
+const OPEN_STEPS = 192;
+const ARC_STEP = 1;
+
+/** The shape of a pose in the steps each app redraws at: two poses with the same key draw the same. */
+export function deerFormKey(pose: DeerLoopPose): string {
+  const curl = Math.round(pose.curl * DEER_CURL_STEPS);
+  const open = Math.round(pose.open * OPEN_STEPS);
+  const arc = open > 0 ? Math.round(pose.arc / ARC_STEP) : 0;
+  return `${curl}:${open}:${arc}`;
+}
+
+/** The outline of a pose's shape, as stepped by `deerFormKey`, as a flat list of control points, for checks. */
+export function deerFormOutline(pose: DeerLoopPose, { small = false }: { small?: boolean } = {}): Float64Array {
+  const open = Math.round(pose.open * OPEN_STEPS) / OPEN_STEPS;
+  if (open <= 0) return outlineAt(Math.round(pose.curl * DEER_CURL_STEPS) / DEER_CURL_STEPS, small);
+  const keys = curlShapes(small).keys;
+  const ball = keys[keys.length - 1] as Float64Array;
+  if (open >= 1) return ringOutline(Math.round(pose.arc / ARC_STEP) * ARC_STEP, small);
+  const ring = ringOutline(RING.open, small);
+  const out = new Float64Array(ball.length);
+  for (let i = 0; i < ball.length; i++) out[i] = (ball[i] as number) + ((ring[i] as number) - (ball[i] as number)) * open;
+  return out;
+}
+
+/** A pose's shape as a path: the deer curling (`deerCurlPath`), the ball opening, or the ring, all in one colour. */
+export function deerFormPath(pose: DeerLoopPose, { small = false }: { small?: boolean } = {}): string {
+  if (Math.round(pose.open * OPEN_STEPS) <= 0) return deerCurlPath(Math.round(pose.curl * DEER_CURL_STEPS) / DEER_CURL_STEPS, { small });
+  return loopPath(deerFormOutline(pose, { small }));
 }
 
 /**
- * The loop sampled at `steps` + 1 evenly spaced moments, for keyframe and interpolation tables. The last is the first a
- * whole turn on, so a table that repeats meets itself without turning back.
+ * The loop sampled at `steps` + 1 evenly spaced moments, for keyframe and interpolation tables. The last is the first
+ * whole turns on, so a table that repeats meets itself without turning back.
  */
-export function deerLoopTrack(steps = 60): { at: number[]; poses: DeerLoopPose[] } {
+export function deerLoopTrack(steps = 240): { at: number[]; poses: DeerLoopPose[] } {
   const at = Array.from({ length: steps + 1 }, (_, i) => i / steps);
-  return { at, poses: at.map((t) => (t === 1 ? { ...deerLoopAt(0), turn: 360 } : deerLoopAt(t))) };
+  return { at, poses: at.map((t) => (t === 1 ? { ...deerLoopAt(0), turn: 360 * DEER_LOOP_TURNS } : deerLoopAt(t))) };
 }
 
 /** The breath's opacity `t` of the way through it: full at the start and end, `DEER_BREATH_LOW` halfway. */

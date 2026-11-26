@@ -2,7 +2,7 @@
 import { act, cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Animated } from 'react-native';
-import { DEER_BREATH_LOW, DEER_BREATH_MS, DEER_LOOP_MS, deerCurlPath, deerLoopAt, deerMarkPath } from '@kurda/shared';
+import { DEER_BREATH_LOW, DEER_BREATH_MS, DEER_LOOP_MS, DEER_LOOP_TURNS, deerFormPath, deerLoopAt, deerMarkPath } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { DeerLoader } from './DeerLoader';
@@ -11,8 +11,8 @@ vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 
-/** A moment of the loop when he is wholly the ball. */
-const BALL_AT = Array.from({ length: 200 }, (_, i) => i / 200).find((t) => deerLoopAt(t).curl === 1) as number;
+/** A moment of the loop when he is the spinning ring. */
+const RING_AT = Array.from({ length: 200 }, (_, i) => i / 200).find((t) => deerLoopAt(t).open === 1) as number;
 
 /** Every timing asked for, with the value it drives, and how many loops were started; none actually runs. */
 function recordMotion(): { timings: { value: Animated.Value; config: Animated.TimingAnimationConfig }[]; loops: number } {
@@ -49,7 +49,7 @@ afterEach(() => {
 });
 
 describe('DeerLoader', () => {
-  it('loops once a loop’s length on the native driver, and draws the curl the clock has reached', async () => {
+  it('loops once a loop’s length on the native driver, and draws the shape the clock has reached', async () => {
     const seen = recordMotion();
     const { container } = renderWithProviders(<DeerLoader size={120} />);
     await settle();
@@ -58,23 +58,22 @@ describe('DeerLoader', () => {
     expect(clock?.config).toMatchObject({ toValue: 1, useNativeDriver: true });
     const path = container.querySelector('path') as SVGPathElement;
     expect(path.getAttribute('d')).toBe(deerMarkPath());
-    // As the ball he is the ball, and back at the start the deer again.
-    act(() => clock?.value.setValue(BALL_AT));
-    expect(path.getAttribute('d')).toBe(deerCurlPath(1));
+    // The ring as the ring, and back at the start the deer again.
+    act(() => clock?.value.setValue(RING_AT));
+    expect(path.getAttribute('d')).toBe(deerFormPath(deerLoopAt(RING_AT)));
     act(() => clock?.value.setValue(1));
     expect(path.getAttribute('d')).toBe(deerMarkPath());
-    // A whole turn on, not turned back, so the next loop carries on from here.
+    // Whole turns on, not turned back, so the next loop carries on from here.
     const view = container.querySelector('[data-testid="deer-loader"]') as HTMLElement;
-    expect(view.style.transform).toContain('rotate(360deg)');
+    expect(view.style.transform).toContain(`rotate(${360 * DEER_LOOP_TURNS}deg)`);
   });
 
-  it('turns, squashes and drops by transforms alone, upright at the start', async () => {
+  it('turns by its transform alone, upright at the start', async () => {
     recordMotion();
     renderWithProviders(<DeerLoader size={48} />);
     await settle();
     const view = document.querySelector('[data-testid="deer-loader"]') as HTMLElement;
-    expect(view.style.transform).toContain('rotate(0deg)');
-    expect(view.style.transform).toContain('scaleY(1)');
+    expect(view.style.transform).toBe('rotate(0deg)');
   });
 
   it('is drawn as the small mark when too small for his eyes and three tines', async () => {

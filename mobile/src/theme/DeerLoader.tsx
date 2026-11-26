@@ -4,25 +4,29 @@ import Svg, { Path } from 'react-native-svg';
 import {
   DEER_BREATH_LOW,
   DEER_BREATH_MS,
-  DEER_CURL_STEPS,
   DEER_LOOP_MS,
   DEER_MARK_FULL_FROM,
   DEER_MARK_VIEW,
-  deerCurlPath,
+  deerFormKey,
+  deerFormPath,
   deerLoopAt,
   deerLoopTrack,
+  type DeerLoopPose,
 } from '@kurda/shared';
 import { useScreenAwake } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from './ThemeProvider';
 
-/** The loop sampled for the native driver's tables: its moments, and the turn, squash and drop at each. */
-const TRACK = deerLoopTrack(60);
+/** The loop sampled for the native driver's table: its moments and the turn at each, finely enough to stay smooth. */
+const TRACK = deerLoopTrack();
+
+/** The first frame's pose: the deer, upright. */
+const REST = deerLoopAt(0);
 
 /**
- * Hevalo's mark as the loader (shared deer-mark.ts): he curls into a ball and spins back out, in the ink. The
- * turn and squash run on the native driver; the curl is redrawn from the same clock as it passes each step, so a busy
- * JavaScript thread may hold the shape a moment but never stops the roll. Under Reduce Motion it only breathes in
+ * Hevalo's mark as the loader (shared deer-mark.ts): he curls into a ball, spins as a ring and spins back out, in the
+ * ink. The turn runs on the native driver; the shape is redrawn from the same clock whenever it changes, so a busy
+ * JavaScript thread may hold the shape a moment but never stops the turn. Under Reduce Motion it only breathes in
  * opacity, and nothing moves while its screen is behind another or the app is in the background. To assistive
  * technology it is hidden: the caller says what is loading.
  */
@@ -32,7 +36,7 @@ export function DeerLoader({ size = 48, style }: { size?: number; style?: StyleP
   const reduce = useReducedMotion();
   const phase = useRef(new Animated.Value(0)).current;
   const breath = useRef(new Animated.Value(1)).current;
-  const [step, setStep] = useState(0);
+  const [form, setForm] = useState<DeerLoopPose>(REST);
   const small = size < DEER_MARK_FULL_FROM;
 
   useEffect(() => {
@@ -47,28 +51,30 @@ export function DeerLoader({ size = 48, style }: { size?: number; style?: StyleP
         breath.setValue(1);
       };
     }
-    const id = phase.addListener(({ value }) => setStep(Math.round(deerLoopAt(value).curl * DEER_CURL_STEPS)));
+    let drawn = deerFormKey(REST);
+    const id = phase.addListener(({ value }) => {
+      const pose = deerLoopAt(value);
+      const key = deerFormKey(pose);
+      if (key === drawn) return;
+      drawn = key;
+      setForm(pose);
+    });
     const loop = Animated.loop(Animated.timing(phase, { toValue: 1, duration: DEER_LOOP_MS, easing: Easing.linear, useNativeDriver: true }));
     loop.start();
     return () => {
       loop.stop();
       phase.removeListener(id);
       phase.setValue(0);
-      setStep(0);
+      setForm(REST);
     };
   }, [awake, reduce, phase, breath]);
 
-  const transform = useMemo(() => {
-    const along = (pick: (pose: (typeof TRACK.poses)[number]) => number) => phase.interpolate({ inputRange: TRACK.at, outputRange: TRACK.poses.map(pick) });
-    return [
-      { translateY: along((pose) => (pose.drop * size) / DEER_MARK_VIEW) },
-      { scaleX: along((pose) => pose.scaleX) },
-      { scaleY: along((pose) => pose.scaleY) },
-      { rotate: phase.interpolate({ inputRange: TRACK.at, outputRange: TRACK.poses.map((pose) => `${pose.turn}deg`) }) },
-    ];
-  }, [phase, size]);
+  const transform = useMemo(
+    () => [{ rotate: phase.interpolate({ inputRange: TRACK.at, outputRange: TRACK.poses.map((pose) => `${pose.turn}deg`) }) }],
+    [phase],
+  );
 
-  const d = useMemo(() => deerCurlPath(step / DEER_CURL_STEPS, { small }), [step, small]);
+  const d = useMemo(() => deerFormPath(form, { small }), [form, small]);
 
   return (
     <Animated.View
