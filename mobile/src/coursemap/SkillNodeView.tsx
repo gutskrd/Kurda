@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import Svg, { Defs, Ellipse, Path, RadialGradient, Stop as GradientStop } from 'react-native-svg';
-import { PATH_GEOMETRY, PATH_MOTION, PATH_RETURN, PATH_STOP_ART, type PathStop, type PathStopLook, type RingChange, type UnitTone } from '@kurda/shared';
+import { PATH_GEOMETRY, PATH_GOLD, PATH_MILESTONE_ART, PATH_MOTION, PATH_RETURN, PATH_STOP_ART, type LessonKind, type PathStop, type PathStopLook, type RingChange, type UnitTone } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
 import { useDirection } from '../reports/direction';
@@ -13,7 +13,7 @@ import { PressableScale } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { FACE_INK, REST, ringAt, ringOf, stopLook, type ToneColors } from './path';
-import { STOP_FACE, StopArt } from './PathWorld';
+import { MilestoneArt, STOP_FACE, StopArt } from './PathWorld';
 import { RoundStars, TopicRing } from './TopicRing';
 import type { SkillNode } from './types';
 
@@ -44,14 +44,15 @@ const PULSE = 1.08;
 const PULSE_AT_MS = 700;
 
 /**
- * One stop on the lesson path: a raised disc in its unit's colour (shared drawing) whose glyph says what it is, a
- * gold coin with one to three stars when done, a number when open, a padlock when locked, arrows for review. Skills
- * wear a ring with one piece per lesson (TopicRing). A chapter ends at its story, and a jumpable unit's first stop
- * is drawn as a gate. Pressed, the face sinks into its base.
+ * One stop on the lesson path: a thick tile in its unit's colour (shared drawing) whose glyph says what it is, gold
+ * with Hevalo's hoofprint and one to three stars when done, a number when open, a slate stone with a padlock when
+ * locked, arrows for review. Skills wear a ring with one piece per lesson (TopicRing). A chapter ends at its milestone,
+ * a seal on a stone drum with the chapter's number, and a jumpable unit's first stop is drawn as a gate. Pressed, the
+ * face sinks into its base.
  *
  * The current skill is the road's main button: it stands higher in a glow of its unit's colour, breathes out a ring of
- * it, wears a star and its ring in that colour, and a bubble of the course's own words floats above it; now and then a
- * glint sweeps it and sparks wink on it. It bobs while the path is in view, and every stop squishes under a finger.
+ * it, wears the glyph of what its lesson is and its ring in that colour, and a bubble of the course's own words floats
+ * above it; now and then a glint sweeps it and sparks wink on it. It bobs while the path is in view, and every stop squishes under a finger.
  * None of it moves under Reduce Motion.
  *
  * After a lesson, `change` animates what it did to the stop: the ring fills, the stop pops and turns gold, a star
@@ -68,6 +69,7 @@ export function SkillNodeView({
   callout,
   change,
   jump,
+  milestone = null,
   near = true,
   bob = null,
   bobbing = false,
@@ -91,6 +93,8 @@ export function SkillNodeView({
   change?: StopChange | null;
   /** The flag text over the first stop of a unit that can be jumped to. */
   jump?: { text: string };
+  /** A unit's last stop, its milestone: the unit's number, written on its seal, and its rounds, set as stars in its drum. */
+  milestone?: { number: string; rounds: number } | null;
   /** Drawn in full; far from the screen it is a plain round in its colour. */
   near?: boolean;
   /** The current stop's bob. */
@@ -165,6 +169,13 @@ export function SkillNodeView({
   }, [change, finishing, opening, unlocking, pop, lock, shut, before, wobble]);
 
   const glyph = glyphOf(stop, look, tone, FACE_INK[scheme], tone.ink);
+  // A stop's drawing, base or face: a tile, or for the unit's last stop its milestone, won once open.
+  const art = (l: PathStopLook, part: 'base' | 'face'): React.JSX.Element =>
+    milestone ? (
+      <MilestoneArt won={l === 'story' || l === 'chestOpen'} rounds={milestone.rounds} part={part} near />
+    ) : (
+      <StopArt look={l} tone={unitTone} part={part} near />
+    );
   const squish = useSquish();
   const tilt = wobble.interpolate({ inputRange: [-1, 1], outputRange: [`${-PATH_MOTION.wobble}deg`, `${PATH_MOTION.wobble}deg`] });
   const lifted = rise ? { opacity: rise, transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [PATH_MOTION.rise, 0] }) }] } : null;
@@ -196,7 +207,7 @@ export function SkillNodeView({
               mirrored={dir.rtl}
             />
           ) : null}
-          {near ? <StopArt look={look} tone={unitTone} part="base" near={near} /> : <View style={[styles.plainLip, { backgroundColor: plainColour(look, tone, rest).lip }]} />}
+          {near ? art(look, 'base') : <View style={[styles.plainLip, { backgroundColor: plainColour(look, tone, rest).lip }]} />}
           {opening && near ? (
             // The locked stone it was, over it until it opens.
             <Animated.View style={[StyleSheet.absoluteFill, { opacity: lock }]}>
@@ -208,11 +219,7 @@ export function SkillNodeView({
               <StopArt look={was} tone={unitTone} part="base" near />
             </Animated.View>
           ) : null}
-          {unlocking && near ? (
-            <Animated.View style={[StyleSheet.absoluteFill, { opacity: shut }]}>
-              <StopArt look={shutLook} tone={unitTone} part="base" near />
-            </Animated.View>
-          ) : null}
+          {unlocking && near ? <Animated.View style={[StyleSheet.absoluteFill, { opacity: shut }]}>{art(shutLook, 'base')}</Animated.View> : null}
         </Animated.View>
         <Animated.View style={[styles.popped, { transform: [{ scale: pop }, { rotate: tilt }] }]} pointerEvents="box-none">
           <Pressable
@@ -230,10 +237,8 @@ export function SkillNodeView({
             {near ? (
               unlocking ? (
                 <>
-                  <StopArt look={look} tone={unitTone} part="face" near />
-                  <Animated.View style={[StyleSheet.absoluteFill, { opacity: shut }]}>
-                    <StopArt look={shutLook} tone={unitTone} part="face" near />
-                  </Animated.View>
+                  {art(look, 'face')}
+                  <Animated.View style={[StyleSheet.absoluteFill, { opacity: shut }]}>{art(shutLook, 'face')}</Animated.View>
                 </>
               ) : opening ? (
                 <>
@@ -250,7 +255,7 @@ export function SkillNodeView({
                   </Animated.View>
                 </>
               ) : (
-                <StopArt look={look} tone={unitTone} part="face" near />
+                art(look, 'face')
               )
             ) : (
               <View style={[styles.plainFace, { backgroundColor: plainColour(look, tone, rest).face }]} />
@@ -263,6 +268,18 @@ export function SkillNodeView({
             ) : null}
             {raised && near ? <Shine /> : null}
             {stars > 0 ? <RoundStars rounds={stars} earned={roundDone} /> : null}
+            {milestone ? (
+              <View style={styles.milestoneNumber} pointerEvents="none">
+                {unlocking ? (
+                  <>
+                    <Text style={[styles.number, { color: PATH_GOLD[scheme].ink }]}>{milestone.number}</Text>
+                    <Animated.Text style={[styles.number, styles.glyphLayer, { color: rest.ink, opacity: shut }]}>{milestone.number}</Animated.Text>
+                  </>
+                ) : (
+                  <Text style={[styles.number, { color: look === 'story' || look === 'chestOpen' ? PATH_GOLD[scheme].ink : rest.ink }]}>{milestone.number}</Text>
+                )}
+              </View>
+            ) : null}
             {glyph ? (
               <View style={styles.glyph} pointerEvents="none">
                 {stop.kind === 'skill' && stop.state === 'available' && opening ? (
@@ -296,25 +313,27 @@ export function SkillNodeView({
 }
 
 /**
- * The glyph on a stop's face: a skill's number or padlock, or review's arrows. A finished coin carries its stars
- * instead (a check only on a map too old to count them), the current skill a star in its unit's ink, and
- * the drawn stops carry their own.
+ * The glyph on a stop's face: a skill's number or padlock, or review's arrows. The stop to do now shows what its
+ * lesson is (word cards, a conversation, practice; a star from a server too old to say), in its unit's ink. A finished
+ * tile carries Hevalo's hoofprint in its drawing and its stars; the drawn stops carry their own.
  */
 function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_INK)['dark'], onNow: string): { icon?: IconName; number?: number; colour: string } | null {
   if (stop.kind === 'review') return { icon: 'review', colour: ink.paper(tone) };
   if (stop.kind !== 'skill' || look === 'jump') return null;
   switch (stop.state) {
-    // Cream on gold in every chapter, so what was earned looks the same everywhere.
     case 'done':
-      return stop.rounds > 0 ? null : { icon: 'check', colour: DONE_INK };
+      return null;
     case 'current':
-      return { icon: 'star-fill', colour: onNow };
+      return { icon: KIND_GLYPH[stop.launchKind ?? 'none'], colour: onNow };
     case 'available':
       return { number: stop.number, colour: ink.paper(tone) };
     case 'locked':
       return { icon: 'lock', colour: ink.stone };
   }
 }
+
+/** What the lesson the stop to do now opens is, as its glyph. */
+const KIND_GLYPH: Record<LessonKind | 'none', IconName> = { words: 'lesson-words', talk: 'lesson-talk', practice: 'lesson-practice', none: 'star-fill' };
 
 /** A stop far from the screen, as a plain round in its drawing's colour. */
 function plainColour(look: string, tone: ToneColors, rest: (typeof REST)['dark']): { face: string; lip: string } {
@@ -323,9 +342,8 @@ function plainColour(look: string, tone: ToneColors, rest: (typeof REST)['dark']
   return { face: rest.fill, lip: rest.lip };
 }
 
-/** A finished stop's gold and glyph colours (shared art/path-land.ts), for drawing it plain. */
+/** A finished stop's gold (shared art/path-land.ts), for drawing it plain. */
 const GOLD_TOKEN = { face: '#e9a93b', lip: '#b8781f' } as const;
-const DONE_INK = '#fffaf0';
 
 /** A stable name per kind of stop, for tests and the screenshots that check the path. */
 function testName(stop: Stop): string {
@@ -583,6 +601,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   glyphLayer: { position: 'absolute' },
+  // On the milestone's seal: its middle, in the button's points (shared PATH_MILESTONE_ART).
+  milestoneNumber: {
+    position: 'absolute',
+    left: 0,
+    width: NODE,
+    top: PATH_MILESTONE_ART.y + PATH_MILESTONE_ART.cy - 18,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   number: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   badge: {
     position: 'absolute',

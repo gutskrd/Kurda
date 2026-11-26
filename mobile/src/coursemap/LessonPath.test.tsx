@@ -18,6 +18,7 @@ import { LessonPath, PinnedUnit, type UnitPlace } from './LessonPath';
 import { TONES } from './path';
 import { UnitRailSheet } from './PathWorld';
 import type { CourseMap, SkillNode } from './types';
+import { ICON_PATHS } from '../theme/icon-paths';
 
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => navigation.navigate.mockReset());
@@ -130,13 +131,36 @@ describe('the lesson path', () => {
     expect(within(button('Continue: Family')).getByText('بەردەوام بە!')).toBeTruthy();
   });
 
-  it('stands someone peeking and a painted chest beside each unit’s road, out of the screen reader’s way', () => {
+  it('stands a little scene and a painted chest beside each unit’s road, out of the screen reader’s way', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
-    // Unit 1 has room for a chest beside its second stop; Xezo peeks in beside its first, there being no fourth.
-    expect(screen.getAllByTestId('lp-peek-xezo').length).toBeGreaterThan(0);
+    // Unit 1 has room for a chest beside its second stop, and Hevalo eats his apple beside its third, there being no
+    // fourth; he is not by the stop to do now there, so he is not drawn twice.
+    const scene = screen.getByTestId('lp-scene-apple');
+    expect(scene.getAttribute('aria-hidden')).toBe('true');
     expect(screen.getAllByTestId('lp-chest').length).toBeGreaterThan(0);
     for (const chest of screen.getAllByTestId('lp-chest')) expect(chest.getAttribute('aria-hidden')).toBe('true');
+    // A tap on him is his own moment, not a stop's card.
+    fireEvent.click(screen.getByTestId('lp-scene-apple-tap'));
+    expect(screen.queryByTestId('lp-card-go')).toBeNull();
+  });
+
+  it('sets its chapter’s vignette in the banner, numbers each milestone, and shows what the lesson up next is', () => {
+    client();
+    const talk: CourseMap = {
+      ...MAP,
+      units: MAP.units.map((u, i) => (i === 1 ? { ...u, skills: u.skills.map((sk, k) => (k === 0 ? { ...sk, lessons: (sk.lessons ?? []).map((l) => ({ ...l, kind: 'talk' as const })) } : sk)) } : u)),
+    };
+    renderWithProviders(<LessonPath map={talk} due={0} onFocus={() => undefined} />);
+    // The first chapter's banner: Hamo's blue gate, Hevalo peeking round it, out of the screen reader's way.
+    expect(screen.getByTestId('lp-chapter-art-door').getAttribute('aria-hidden')).toBe('true');
+    // Each chapter ends at its milestone, its number on its seal.
+    const [first, second] = screen.getAllByTestId('lp-node-trophy');
+    expect(within(first!).getByText('1')).toBeTruthy();
+    expect(within(second!).getByText('2')).toBeTruthy();
+    // The stop to do now wears the glyph of a conversation.
+    const now = button('Family, you are here, 1 of 3 lessons done');
+    expect(now.innerHTML).toContain(ICON_PATHS['lesson-talk'][0]);
   });
 
   it('starts the next lesson in one tap from the bubble over the current skill', () => {
@@ -336,7 +360,8 @@ describe('the lesson path', () => {
       expect(screen.getByRole('heading', { name: 'Chapter 2, Family & Food' })).toBeTruthy();
       expect(screen.queryByText('Basics')).toBeNull();
       cleanup();
-      return fades.mock.calls.map(([, config]) => config);
+      // The vignette's own gentle loop is decorative, not part of the turn.
+      return fades.mock.calls.map(([, config]) => config).filter((config) => config.isInteraction !== false);
     };
 
     patchReactNativeWeb({ reduceMotion: false });

@@ -9,7 +9,7 @@ import { RING, STAR } from './path';
 /**
  * A topic's ring and stars on the lesson path. The rules and geometry are shared (lesson-rounds.ts), so the website
  * draws the same: one piece per lesson, in its unit's colour once finished in the current round, gold all round once every round
- * is played, and a star per round on the finished coin.
+ * is played, and a star per round along the finished tile.
  *
  * After a lesson the ring animates from `from`: new pieces fill in turn, and a whole round turns the ring gold with
  * the stop (`PATH_RETURN.finishAtMs`), drops its star in (`starAtMs`), then starts the next round. Opacity and scale
@@ -132,7 +132,7 @@ function MovingRing({
 }
 
 /**
- * A finished topic's stars (one to three) on its gold coin, cream with a deep gold edge so they read on the gold.
+ * A finished topic's stars (one to three) along its gold tile's near edge, cream with a deep gold edge so they read on the gold.
  * `earned` drops the newest star in (`PATH_RETURN.starAtMs`).
  */
 export function RoundStars({ rounds, earned = false }: { rounds: number; earned?: boolean }): React.JSX.Element | null {

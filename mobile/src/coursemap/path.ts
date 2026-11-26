@@ -49,7 +49,7 @@ export const RING: Record<ColorScheme, { track: string; edge: string }> = {
   dark: { track: '#2e3c43', edge: 'rgba(5, 8, 10, 0.6)' },
 };
 
-/** A star on a finished topic's gold coin, edged so it stands off the gold. */
+/** A star on a finished topic's gold tile, edged so it stands off the gold. */
 export const STAR = { fill: '#fffaf0', edge: '#a8691a' } as const;
 
 /** Blends two #rrggbb colours, `t` of the way from `a` to `b`. */
@@ -120,9 +120,9 @@ export function ringAt(stop: Pick<SkillStop<SkillNode>, 'lessonsTotal'>, at: { r
 }
 
 /**
- * How a stop is drawn (shared `pathStopSvg`). A finished skill is a gold coin whatever its review strength, and
- * fades only when a refresh would help. A chapter's story is a scroll on stone until the chapter is done; a unit
- * without a story ends at its chest. With `jump`, the stop is drawn as the gate a jump goes through.
+ * How a stop is drawn (shared `pathStopSvg`). A finished skill is a gold tile whatever its review strength, and
+ * fades only when a refresh would help. A unit's last stop, its story or its trophy, is drawn as its milestone, and
+ * this look says only whether it is won. With `jump`, the stop is drawn as the gate a jump goes through.
  */
 export function stopLook(stop: PathStop<SkillNode>, jump = false): PathStopLook {
   if (jump) return 'jump';

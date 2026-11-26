@@ -16,6 +16,7 @@ import {
   pathKilimSvg,
   pathLand,
   pathSnapshot,
+  unitRounds,
   type LessonPath as Path,
   type PathChanges,
   type PathSection,
@@ -41,6 +42,7 @@ import { JumpSheet } from './JumpSheet';
 import { REST, TONES, levelWords, stopLabel, type ToneColors } from './path';
 import { MASCOT_MIN_WIDTH, PathMascot } from './PathMascot';
 import { UnitLandmark, UnitScenery, UpcomingSign, type RailSection } from './PathWorld';
+import { ChapterArt } from './PathScene';
 import { SkillNodeView, type StopChange } from './SkillNodeView';
 import { StopCard, type StopActions } from './StopCard';
 import { UnitGuide } from './UnitGuide';
@@ -729,6 +731,7 @@ function PathStopView({
       callout={current ? { text: word, label: `${said}: ${current.skill.title}` } : undefined}
       change={change}
       jump={jump ? { text: t('coursemap.jump.bubble') } : undefined}
+      milestone={stop.kind === 'story' || stop.kind === 'trophy' ? { number: formatNumber(unit.number, locale), rounds: unitRounds(unit.stops) } : null}
       near={near}
       bob={bob}
       bobbing={bobbing}
@@ -794,6 +797,8 @@ export function UnitFace({
   const eyebrow = section !== null ? t('coursemap.path.sectionUnit', { section: formatNumber(section, locale), unit: formatNumber(number, locale) }) : chapter;
   const sectionWords = section !== null ? t('coursemap.path.section', { n: formatNumber(section, locale) }) : null;
   const buttons = Boolean(openGuide || onRail);
+  // The app mirrors its own rows for a right-to-left language; the far end is then on the left.
+  const mirrored = dir.row === 'row-reverse';
   const trim = useMemo(
     // A hidden screen can be laid out at no size at all; the trim waits for a real one.
     () => (width > 2 * TRIM.inset ? pathKilimSvg({ width: width - 2 * TRIM.inset, height: TRIM.height, ink: tone.ink, eye: tone.fill, idPrefix: `unitface${number}` }) : null),
@@ -817,12 +822,16 @@ export function UnitFace({
         <View style={styles.pin}>
           <View style={styles.pinWords} accessible accessibilityRole="header" accessibilityLabel={unitHeading(chapter, title, sectionWords)}>
             <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]}>{eyebrow}</Text>
-            {/* Course text keeps its own direction on a right-to-left page. */}
-            <Text style={[styles.pinTitle, dir.free, { color: tone.ink }]}>{title}</Text>
+            {/* Course text keeps its own direction on a right-to-left page, clear of the vignette. */}
+            <Text style={[styles.pinTitle, dir.free, mirrored ? styles.pinTitleBesideLeft : styles.pinTitleBeside, { color: tone.ink }]}>{title}</Text>
+          </View>
+          {/* The chapter's own vignette, standing on the kilim beside its name, on the side the seam is. */}
+          <View style={[styles.pinArt, mirrored ? styles.pinArtLeft : styles.pinArtEnd]} pointerEvents="none">
+            <ChapterArt chapter={number - 1} ground={tone.lip} height={PIN_ART_H} />
           </View>
         </View>
         {buttons ? (
-          <View style={[styles.pinActions, { flexDirection: dir.row, borderColor: tone.lip }, dir.rtl ? styles.seamEnd : styles.seamStart]}>
+          <View style={[styles.pinActions, { borderColor: tone.lip }, dir.rtl ? styles.seamEnd : styles.seamStart]}>
             {openGuide ? (
               <Pressable
                 onPress={openGuide}
@@ -852,6 +861,9 @@ export function UnitFace({
   );
 }
 
+/** The vignette's height in the banner, and the room the name leaves it. */
+const PIN_ART_H = 76;
+const PIN_ART_ROOM = 94;
 /** The kilim trim along a banner's foot: its height, and how far in from the banner's sides it runs. */
 const TRIM = { height: 12, inset: 14 } as const;
 /** How far a banner stands above its lip. */
@@ -1056,10 +1068,18 @@ const styles = StyleSheet.create({
   // The banner stands on its lip: room under the face for it, and the lip the face's shape, set that far down.
   bannerStand: { paddingBottom: BANNER_LIP, zIndex: 2 },
   bannerLip: { position: 'absolute', left: 0, right: 0, top: BANNER_LIP, bottom: 0, borderRadius: radii.lg },
-  banner: { borderRadius: radii.lg, overflow: 'hidden', minHeight: 96, alignItems: 'stretch' },
+  banner: { borderRadius: radii.lg, overflow: 'hidden', minHeight: 116, alignItems: 'stretch' },
   trim: { position: 'absolute', left: TRIM.inset, bottom: 8, opacity: 0.32 },
-  pin: { flex: 1, justifyContent: 'center', paddingTop: spacing.sm + 4, paddingBottom: spacing.sm + 4 + 14, paddingHorizontal: spacing.md },
-  pinActions: { alignItems: 'center', gap: 2, paddingHorizontal: spacing.xs, paddingBottom: 14 },
+  // The words at the top, the vignette standing below them at the far end.
+  pin: { flex: 1, justifyContent: 'flex-start', paddingTop: spacing.sm + 4, paddingBottom: spacing.sm + 4 + 14, paddingHorizontal: spacing.md },
+  // Standing on the kilim at the words' far end; the name keeps clear of it.
+  pinArt: { position: 'absolute', bottom: 2 },
+  pinArtEnd: { end: spacing.xs },
+  pinArtLeft: { left: spacing.xs },
+  pinTitleBeside: { paddingEnd: PIN_ART_ROOM },
+  pinTitleBesideLeft: { paddingLeft: PIN_ART_ROOM },
+  // The guide over the unit map, past the seam.
+  pinActions: { flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2, paddingHorizontal: spacing.xs, paddingBottom: 14 },
   seamStart: { borderLeftWidth: 2 },
   seamEnd: { borderRightWidth: 2 },
   pinnedClip: { overflow: 'hidden', borderRadius: radii.lg },
