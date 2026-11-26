@@ -94,8 +94,6 @@
   --bubble-theirs: #253238;
   --bubble-theirs-ink: #eef3f5;
   --gems: #eef3f5;
-  /* the small tile behind the deer in the header's mark */
-  --brand-tile: #1f2b30;
   /*
    * A heart given is red and a post saved is yellow, as everywhere people like and keep things; only the glyph wears
    * them, never the count beside it. A saved bookmark has a deeper edge by day, where yellow alone is faint on white.
@@ -282,7 +280,6 @@
   --bubble-theirs: #e4eaed;
   --bubble-theirs-ink: #17242b;
   --gems: #17242b;
-  --brand-tile: #e4eaed;
   --like: #e0263f;
   --saved: #f5b400;
   --saved-edge: #a87600;

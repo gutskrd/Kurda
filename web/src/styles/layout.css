@@ -200,11 +200,9 @@ button.nav-link {
   box-sizing: border-box;
   width: 30px;
   height: 30px;
-  /* the deer on a small warm tile of the page's own, so the mark sits in the page rather than on a card of its own */
-  padding: 2px;
+  /* the app icon in small: its square is rounded here, as a phone rounds it */
   border-radius: 9px;
-  background: var(--brand-tile);
-  object-fit: contain;
+  object-fit: cover;
   /* a soft shadow keeps the tile crisp on bright photo areas */
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
   transition:

@@ -5,7 +5,7 @@
 
 export const PLAIN_LOGO = '/logo.png';
 export const CHRISTMAS_LOGO = '/logo-christmas.png';
-/** The deer alone, without the icon's card, for the header's mark, which draws its own tile in the page's colours. */
+/** The app icon as a square, for the header's mark, which the page rounds. */
 export const PLAIN_MARK = '/logo-mark.png';
 export const CHRISTMAS_MARK = '/logo-mark-christmas.png';
 
