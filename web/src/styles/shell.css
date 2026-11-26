@@ -2227,16 +2227,16 @@
 :root[data-theme='light'] .pc-banner {
   background:
     radial-gradient(120% 160% at 15% 0%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 62%),
-    linear-gradient(180deg, #eaeae7, #dddcd8);
+    linear-gradient(180deg, #e9eef0, #dce3e7);
 }
 :root[data-theme='light'] .level-ring-track {
-  stroke: #e0e0dc;
+  stroke: #dce3e7;
 }
 :root[data-theme='light'] .rail-dot {
   border-color: var(--surface-solid);
 }
 :root[data-theme='light'] .rail-dot.is-offline {
-  background: rgba(43, 38, 33, 0.28);
+  background: rgba(23, 36, 43, 0.28);
 }
 @media (min-width: 1180px) {
   :root[data-theme='light'] .app-main:has(.mkp-has-bg) ~ .social-rail {
