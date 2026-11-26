@@ -932,25 +932,20 @@ button.lp-scard:focus-visible {
 [dir='rtl'] .lp-callout {
   translate: 50% 0;
 }
-/* the tail pointing down at the stop: its edge, then its ground over it */
-.lp-callout::before,
+/* the tail pointing down at the stop: the bubble's ground with its edge and lip on the two sides that show */
 .lp-callout::after {
   content: '';
   position: absolute;
+  top: calc(100% - 7px);
   left: 50%;
   width: 14px;
   height: 14px;
   margin-left: -7px;
-  rotate: 45deg;
-}
-.lp-callout::before {
-  top: calc(100% - 4px);
-  background: var(--u-fill);
-  box-shadow: 3px 3px 0 var(--u-lip);
-}
-.lp-callout::after {
-  top: calc(100% - 7px);
+  border-right: 2px solid var(--u-fill);
+  border-bottom: 2px solid var(--u-fill);
   background: var(--app-bg);
+  box-shadow: 3px 3px 0 var(--u-lip);
+  rotate: 45deg;
 }
 .lp-callout:hover {
   color: var(--u-text);

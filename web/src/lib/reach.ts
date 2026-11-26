@@ -116,6 +116,9 @@ export const LARGE_ENOUGH = [
   '.gift-moment',
   '.gift-sent',
   '.gift-skip',
+  // The road's peeker and sandûq, each a 96px picture a tap makes pop up or hop (learn/path.css).
+  '.lp-peek-hit',
+  '.lp-chest-hit',
   '.user-actions-btn',
   '.editor-history-btn',
   '.framer-zoom-btn',
