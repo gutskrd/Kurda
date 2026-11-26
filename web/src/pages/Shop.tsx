@@ -128,9 +128,10 @@ function boughtMessage(sku: string, category: string): MessageKey {
 /**
  * The Shop: browse, buy and gift by kind (backgrounds, icons, tags, and "More"), with counts on the tabs and a section
  * per kind under All. Search (with or without Kurdish letters), sort and filters (affordable, free) live in the address,
- * so they survive a reload and Back. Anything priced asks first and says purchases are final. Above the catalogue are
- * your bird and tree (shop/YourBird.tsx, shop/YourTree.tsx), bought or swapped here. Buying grants ownership; equipping
- * is in Edit Profile. The server owns prices, ownership and payment (POST /shop/purchase, /shop/gift).
+ * so they survive a reload and Back. Anything priced asks first and says purchases are final, and anything worn can be
+ * tried on your own profile first. The bundles lead the page (shop/Bundles.tsx); above the catalogue are your bird and
+ * tree (shop/YourBird.tsx, shop/YourTree.tsx), bought or swapped here. Buying grants ownership; equipping is in Edit
+ * Profile. The server owns prices, ownership and payment (POST /shop/purchase, /shop/bundles/purchase, /shop/gift).
  */
 export function Shop(): React.JSX.Element {
   const { client } = useAuth();

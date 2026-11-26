@@ -85,8 +85,9 @@ const GUTTER = layout.gutter;
  * The shop, sorted by kind: every item under its kind (Backgrounds, Icons, Frames, Tags, and "More" for an admin's own
  * categories) in the browser's order, each with a count and picture. Above the list, a search over names and meanings
  * ("cay" and "tea" both find Çay), one kind at a time, an order and "Within my Zêr"; received gifts sit above the
- * catalogue, and the search and kinds stick at the top once scrolled past. Over the search, rows for your pen pal bird
- * and your tree (YourBird, YourTree), read with the catalogue.
+ * catalogue, and the search and kinds stick at the top once scrolled past. The bundles lead (Bundles.tsx), and over the
+ * search are rows for your pen pal bird and your tree (YourBird, YourTree), read with the catalogue. Anything worn, and
+ * any bundle, can be tried on your own profile from its sheet.
  *
  * Every purchase is final and the item's sheet says so beside Buy; dear items ask once more. Every price has its money
  * value beside it (`ZerValue`), and a Hevalo+ member finds the month's box above the catalogue.
