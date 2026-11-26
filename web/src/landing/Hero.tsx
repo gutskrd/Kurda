@@ -1,15 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
-import { useT } from '../i18n/I18nProvider';
+import { useEffect, useState } from 'react';
+import { localeDir } from '@kurda/shared';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { ArrowIcon } from '../components/icons';
-import { SpeakingCharacter, type CharacterReaction } from '../characters/SpeakingCharacter';
+import type { CharacterReaction } from '../characters/SpeakingCharacter';
+import { HevaloPeek } from '../characters/HevaloPeek';
 import { prefersReducedMotion } from '../lib/motion';
 import { GREETINGS } from './samples';
-import { JoinButtons, Ku, useTiltLean } from './parts';
+import { JoinButtons, Ku, useWide } from './parts';
 
 /**
- * The top of the front page: what is new, Hevalo himself, one line of what this is, and the ways in. It stays light, so
- * it paints quickly on a slow phone: the deer is one inline drawing, and the pictures further down load later.
+ * The top of the front page: what is new, Hevalo himself bursting through the page toward us (the apps' own torn-page
+ * peek, characters/HevaloPeek), one line of what this is, and the ways in. It stays light, so it paints quickly on a
+ * slow phone: the deer and his torn page are inline drawings, and the pictures further down load later.
  */
 
 /** Only what has really shipped, each pointing at the part of the page that shows it. */
@@ -27,8 +30,8 @@ export function Hero(): React.JSX.Element {
   const t = useT();
   const [news, setNews] = useState(0);
   const [taps, setTaps] = useState(0);
-  const figure = useRef<HTMLDivElement>(null);
-  useTiltLean(figure);
+  const wide = useWide();
+  const rtl = localeDir(useLocale()) === 'rtl';
 
   // The news goes round once, slowly, and settles on the first; it holds still under a pointer or the keyboard, and
   // under Reduce Motion it does not turn at all.
@@ -67,21 +70,15 @@ export function Hero(): React.JSX.Element {
           <ArrowIcon size={16} className="fp-pill-arrow" />
         </a>
 
-        <div className="fp-hevalo" ref={figure}>
+        {/* Each tap he leans further out and the torn edge flutters; the two names take turns, so each tap plays anew. */}
+        <div className="fp-hevalo" data-tap={taps > 0 ? (taps % 2) + 1 : undefined}>
           <button
             type="button"
             className="fp-hevalo-hit"
             aria-label={t('landing.hero.tapHevalo')}
             onClick={() => setTaps((n) => n + 1)}
           >
-            <SpeakingCharacter
-              speaker="hevalo"
-              audio={null}
-              crop="full"
-              decorative
-              reaction={taps > 0 ? TAPS[(taps - 1) % TAPS.length]! : null}
-              className="fp-hevalo-art"
-            />
+            <HevaloPeek size={wide ? 272 : 224} reaction={taps > 0 ? TAPS[(taps - 1) % TAPS.length]! : null} flip={rtl} />
           </button>
           {/* What he says when tapped, with what it means; read out as it changes. */}
           <p className="fp-say" aria-live="polite">

@@ -18,8 +18,11 @@ const src = new URL('../', here);
 
 /** The front page's stylesheets, each with the start every name it defines must have. */
 const OWN: Record<string, string> = { 'landing/landing.css': 'fp-', 'landing/soon.css': 'soon-' };
-/** What a front-page stylesheet may name besides its own: states, the page's root, and the characters it sizes. */
-const BORROWED = /^(is-|has-)|^fp$|^speaking-character$/;
+/**
+ * What a front-page stylesheet may name besides its own: states, the page's root, the characters it sizes, and the parts
+ * of Hevalo's torn-page peek it moves on a tap.
+ */
+const BORROWED = /^(is-|has-)|^fp$|^speaking-character$|^hevalo-peek-(place|art)$/;
 /** Timing words that look like names inside an `animation` value. */
 const TIMING = new Set(['ease-in', 'ease-out', 'ease-in-out', 'step-start', 'step-end', 'jump-start', 'jump-end', 'jump-none', 'jump-both']);
 

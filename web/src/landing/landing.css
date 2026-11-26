@@ -12,8 +12,6 @@
   --fp-store-hover: #26353b;
   --fp-store-lip: #0b1215;
   --fp-store-ink: var(--ink);
-  /* a soft light behind a figure, never a brand colour */
-  --fp-glow: rgba(238, 243, 245, 0.07);
   overflow-x: clip;
 }
 :root[data-theme='light'] .fp {
@@ -21,7 +19,6 @@
   --fp-store-hover: #22333b;
   --fp-store-lip: #050b0e;
   --fp-store-ink: #f7f9fa;
-  --fp-glow: rgba(23, 36, 43, 0.06);
 }
 .fp-wrap {
   width: min(100% - 32px, 1080px);
@@ -237,20 +234,8 @@
 
 .fp-hevalo {
   position: relative;
-  /* room above for his jump, so his antlers never meet the pill */
-  margin-top: clamp(40px, 6vw, 56px);
-  rotate: var(--fp-lean, 0deg);
-  transform-origin: 50% 100%;
-}
-/* light behind him, as if he stood in it */
-.fp-hevalo::before,
-.fp-final-hevalo::before {
-  content: '';
-  position: absolute;
-  inset: -10% -45% -4%;
-  z-index: -1;
-  background: radial-gradient(closest-side, var(--fp-glow), transparent);
-  pointer-events: none;
+  /* room above for his antlers as he leans out, so they never meet the pill */
+  margin-top: clamp(20px, 4vw, 36px);
 }
 .fp-hevalo-hit {
   display: block;
@@ -261,18 +246,29 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.fp-hevalo .speaking-character,
-.fp-final-hevalo .speaking-character {
-  display: block;
-  height: clamp(180px, 26vh, 290px);
-  width: auto;
+/*
+ * A tap leans him a little further out of the torn page and sets its edge fluttering. The peek's own stylesheet
+ * (characters/characters.css) turns him with the phone's tilt by `rotate` and pops him through by `scale` when the page
+ * opens, so these use `translate` and `scale` on the figure and `scale` and `rotate` on the tear, after the pop.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .fp .fp-hevalo[data-tap='1'] .hevalo-peek-place {
+    animation: fp-peek-out-a 700ms var(--ease-spring) both;
+  }
+  .fp .fp-hevalo[data-tap='2'] .hevalo-peek-place {
+    animation: fp-peek-out-b 700ms var(--ease-spring) both;
+  }
+  .fp .fp-hevalo[data-tap='1'] .hevalo-peek-art:is(.is-back, .is-front) {
+    animation: fp-peek-flutter-a 620ms ease-out both;
+  }
+  .fp .fp-hevalo[data-tap='2'] .hevalo-peek-art:is(.is-back, .is-front) {
+    animation: fp-peek-flutter-b 620ms ease-out both;
+  }
 }
 /*
  * The characters move past their frames when they jump, lean or tilt, so nothing of them is ever cut off: a whole
  * figure may go past every edge, and a bust past every edge but its foot, where the bust is meant to end.
  */
-.fp-hevalo .speaking-character > svg,
-.fp-final-hevalo .speaking-character > svg,
 .fp-walker .speaking-character > svg {
   overflow: visible;
 }
@@ -283,9 +279,9 @@
 }
 .fp-say {
   position: absolute;
-  /* beside his head, clear of his face */
-  inset-inline-start: 76%;
-  top: 4%;
+  /* up beside his head, past the tip of his antler */
+  inset-inline-start: 84%;
+  top: -6%;
   margin: 0;
   pointer-events: none;
 }
@@ -293,8 +289,8 @@
   display: grid;
   gap: 2px;
   width: max-content;
-  /* never past a narrow phone's edge, wherever Hevalo stands */
-  max-width: min(170px, calc(50vw - 46px));
+  /* never past a narrow phone's edge: he stands in the middle, and the bubble starts a third of his width past it */
+  max-width: min(170px, calc(50vw - 82px));
   padding: 9px 13px;
   border: 1px solid var(--border);
   border-radius: 16px 16px 16px 4px;
@@ -1779,7 +1775,7 @@
 }
 .fp-final-hevalo {
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 .fp-final .fp-lead {
   margin: 12px auto 0;
@@ -1957,6 +1953,46 @@
     transform: translateX(5px);
   }
 }
+@keyframes fp-peek-out-a {
+  35% {
+    translate: 0 -4%;
+    scale: 1.07;
+  }
+}
+@keyframes fp-peek-out-b {
+  35% {
+    translate: 0 -4%;
+    scale: 1.07;
+  }
+}
+@keyframes fp-peek-flutter-a {
+  20% {
+    scale: 1.04 0.97;
+    rotate: 1.5deg;
+  }
+  45% {
+    scale: 0.98 1.02;
+    rotate: -1deg;
+  }
+  70% {
+    scale: 1.01;
+    rotate: 0.4deg;
+  }
+}
+@keyframes fp-peek-flutter-b {
+  20% {
+    scale: 1.04 0.97;
+    rotate: -1.5deg;
+  }
+  45% {
+    scale: 0.98 1.02;
+    rotate: 1deg;
+  }
+  70% {
+    scale: 1.01;
+    rotate: -0.4deg;
+  }
+}
 @keyframes fp-flip-ready {
   to {
     transform: rotateY(-10deg);
@@ -2019,9 +2055,6 @@
   .fp-tree-caption,
   .fp-tree-layer {
     transition: none;
-  }
-  .fp-hevalo {
-    rotate: none;
   }
   .fp-phone-hold,
   .fp-flip-turn,

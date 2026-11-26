@@ -1,9 +1,7 @@
 import { useEffect, useState, type ReactNode, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
-import { PEEK_LEAN, leanFor, stepLean, tiltFromOrientation } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import { AndroidIcon, IosIcon } from '../components/icons';
-import { prefersReducedMotion } from '../lib/motion';
 import { AppSoonButton } from './AppSoon';
 
 /** Pieces the front page's sections share. */
@@ -86,41 +84,16 @@ export function useOnScreen(ref: RefObject<Element | null>, threshold = 0.25): b
   return on;
 }
 
-/**
- * Leans `ref` with a phone's tilt, as Hevalo leans in the app (shared peek-lean.ts): the browser's orientation events,
- * the shared spring, and `--fp-lean` for the stylesheet. It never asks for motion access, so where a browser would ask
- * first, or has no sensor, he stands as he is; off under Reduce Motion, and each frame runs only while he is moving.
- */
-export function useTiltLean(ref: RefObject<HTMLElement | null>): void {
+/** Whether the window is wide enough for the larger figures (a tablet or wider), and stays in step as it changes. */
+export function useWide(): boolean {
+  const query = '(min-width: 760px)';
+  const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.matchMedia?.(query).matches === true);
   useEffect(() => {
-    const el = ref.current;
-    if (!el || typeof window.DeviceOrientationEvent === 'undefined' || prefersReducedMotion()) return;
-    let state = { angle: 0, speed: 0, settled: true };
-    let target = 0;
-    let frame: number | null = null;
-    let last = 0;
-    const tick = (now: number): void => {
-      const seconds = last ? (now - last) / 1000 : 1 / 60;
-      last = now;
-      state = stepLean(state, target, seconds);
-      el.style.setProperty('--fp-lean', `${state.angle.toFixed(2)}deg`);
-      frame = state.settled ? null : requestAnimationFrame(tick);
-    };
-    const onTilt = (event: DeviceOrientationEvent): void => {
-      const tilt = tiltFromOrientation(event.beta, event.gamma, screen.orientation?.angle ?? 0);
-      if (tilt == null) return;
-      const wanted = leanFor(tilt);
-      if (Math.abs(wanted - target) < PEEK_LEAN.wakeDeg) return;
-      target = wanted;
-      if (frame == null) {
-        last = 0;
-        frame = requestAnimationFrame(tick);
-      }
-    };
-    window.addEventListener('deviceorientation', onTilt);
-    return () => {
-      window.removeEventListener('deviceorientation', onTilt);
-      if (frame != null) cancelAnimationFrame(frame);
-    };
-  }, [ref]);
+    const m = window.matchMedia?.(query);
+    if (!m) return;
+    const change = (): void => setWide(m.matches);
+    m.addEventListener?.('change', change);
+    return () => m.removeEventListener?.('change', change);
+  }, []);
+  return wide;
 }
