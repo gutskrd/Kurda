@@ -663,9 +663,6 @@
 .fp-flip-face.is-back {
   transform: rotateY(180deg);
 }
-.fp-flip-art [data-part] {
-  transform-box: view-box;
-}
 .fp-flip-paper {
   position: absolute;
   display: block;
