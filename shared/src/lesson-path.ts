@@ -12,6 +12,19 @@ import { TOPIC_STARS, nextInRound, topicRounds, type TopicRounds } from './lesso
 /** A skill's state as the server sends it (api/src/coursemap/node-state.ts). */
 export type PathSkillState = 'locked' | 'unlocked' | 'completed' | 'gold' | 'decayed';
 
+/**
+ * What a lesson is, as the map tells it from its exercises (`lessonKind`): `words`, it brings new words; `talk`, it holds
+ * a conversation to take part in; `practice`, it goes over words already met.
+ */
+export const LESSON_KINDS = ['words', 'talk', 'practice'] as const;
+export type LessonKind = (typeof LESSON_KINDS)[number];
+
+/** A lesson's kind from its exercises: a conversation makes it a talk, new words make it words, and the rest is practice. */
+export function lessonKind({ talk, fresh }: { talk: boolean; fresh: number }): LessonKind {
+  if (talk) return 'talk';
+  return fresh > 0 ? 'words' : 'practice';
+}
+
 /** One lesson of a skill, as the map lists it. */
 export interface PathLesson {
   lessonId: string;
@@ -19,6 +32,8 @@ export interface PathLesson {
   completed: boolean;
   /** how many times this learner finished it; older responses omit it, and a completed lesson then reads as once */
   times?: number;
+  /** what the lesson is; older responses omit it */
+  kind?: LessonKind;
 }
 
 /** What the path needs of a skill; each app passes its own, richer type through. */
@@ -98,6 +113,8 @@ export interface SkillStop<S extends PathSkill> {
    * the next round. Null for a locked skill or one with nothing published.
    */
   launch: string | null;
+  /** What the lesson it opens is, shown on the stop to do now; null without one, or from a server too old to say. */
+  launchKind: LessonKind | null;
   /** the skill whose finishing opens this one; named on a locked stop */
   after: S | null;
 }
@@ -315,6 +332,7 @@ export function lessonPath<S extends PathSkill>(map: PathMapInput<S>, { due = 0,
       const finished = FINISHED.has(skill.state);
       const state: StopState = finished ? 'done' : skill.state === 'locked' ? 'locked' : skill === currentSkill ? 'current' : 'available';
       const { rounds, pieces } = roundsOf(skill);
+      const launch = launchOf(skill);
       stops.push({
         kind: 'skill',
         key: `s:${skill.skillId}`,
@@ -326,7 +344,8 @@ export function lessonPath<S extends PathSkill>(map: PathMapInput<S>, { due = 0,
         lessonsTotal: lessons.length,
         rounds,
         pieces,
-        launch: launchOf(skill),
+        launch,
+        launchKind: lessons.find((l) => l.lessonId === launch)?.kind ?? null,
         after: previous,
       });
       if (reviewAfter === skill) stops.push({ kind: 'review', key: 'review', due });
