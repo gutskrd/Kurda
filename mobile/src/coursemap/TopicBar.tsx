@@ -73,13 +73,24 @@ export function TopicBar({
     return () => run.stop();
   }, [from, target, roundDone, bar.whole, bar.filled, shown, gold]);
   if (pieces.length === 0) return null;
-  const { h } = PATH_BAR;
+  const { h, cut } = PATH_BAR;
+  // Cut from one bar: round at its two ends, nearly square where it is cut.
+  const ends = (k: number): object => {
+    const first = k === 0;
+    const last = k === pieces.length - 1;
+    const [left, right] = mirrored ? [last, first] : [first, last];
+    return {
+      borderRadius: cut,
+      ...(left ? { borderTopLeftRadius: h / 2, borderBottomLeftRadius: h / 2 } : null),
+      ...(right ? { borderTopRightRadius: h / 2, borderBottomRightRadius: h / 2 } : null),
+    };
+  };
   return (
     <View style={styles.bar} pointerEvents="none" aria-hidden testID="lp-bar">
       {pieces.map((p, k) => (
         <View
           key={k}
-          style={[styles.piece, { left: mirrored ? 72 - p.x - p.w : p.x, width: p.w, height: h, borderRadius: h / 2, backgroundColor: TRACK[scheme] }]}
+          style={[styles.piece, ends(k), { left: mirrored ? PATH_BAR.w - (p.x - PATH_BAR.x) - p.w : p.x - PATH_BAR.x, width: p.w, height: h, backgroundColor: TRACK[scheme] }]}
           testID={k < bar.filled ? 'lp-bar-filled' : undefined}
         >
           {/* Filled from the start of the line, in the unit's colour, and gold over it once full. */}
@@ -112,8 +123,8 @@ export function RoundPrints({ rounds }: { rounds: number }): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  // Over the stop's 72-point button, its top `PATH_BAR.y` above it.
-  bar: { position: 'absolute', left: 0, top: PATH_BAR.y, width: 72, height: PATH_BAR.h },
+  // Over the stop's 72-point button, a touch wider than it, its top `PATH_BAR.y` above it.
+  bar: { position: 'absolute', left: PATH_BAR.x, top: PATH_BAR.y, width: PATH_BAR.w, height: PATH_BAR.h },
   piece: { position: 'absolute', top: 0, overflow: 'hidden' },
   prints: { gap: 6 },
 });

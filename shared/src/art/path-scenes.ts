@@ -50,8 +50,9 @@ export const PATH_SCENES: Readonly<Record<PathSceneId, SceneLayout>> = {
     who: 'hevalo',
     actor: { crop: 'half', h: 157, ax: -31, ay: 198, lean: 40 },
     below: 60,
-    back: {},
-    front: { bough: { x: 0, y: 10, w: 120, h: 100 } },
+    // The bough is behind his head, its twig running down behind it; only the apple, on its short stalk, is in front.
+    back: { bough: { x: 0, y: 10, w: 120, h: 100 } },
+    front: {},
     gives: { bough: { x: 0, y: 32 } },
   },
   tea: {
@@ -80,8 +81,8 @@ export const PATH_SCENES: Readonly<Record<PathSceneId, SceneLayout>> = {
   },
 };
 
-/** Where the apple hangs from the bough, and where its bites face: the stalk's top, on the scene. */
-export const PATH_APPLE_AT = { x: 39, y: 104 } as const;
+/** Where the apple hangs at his mouth, its bites toward him: the top of its canvas, on the scene; its short stalk starts 11 points lower. */
+export const PATH_APPLE_AT = { x: 39, y: 108 } as const;
 
 /** Where the sugar bowl and the glass stand on the tray, on the scene: the cubes hop from one to the other. */
 export const PATH_TEA_AT = { bowl: { x: 66, y: 140 }, glass: { x: 40, y: 128 } } as const;
@@ -90,7 +91,7 @@ export const PATH_TEA_AT = { bowl: { x: 66, y: 140 }, glass: { x: 40, y: 128 } }
 export const PATH_SCENE_SPRITES = ['apple-0', 'apple-1', 'apple-2', 'apple-3', 'apple-4', 'core', 'crumbs', 'cube', 'splash', 'steam', 'letter-e', 'letter-c', 'letter-s', 'hic'] as const;
 export type PathSceneSprite = (typeof PATH_SCENE_SPRITES)[number];
 
-/** Each sprite's own canvas, in points; the apps lay it at the size it is drawn. The apple's canvas hangs from its stalk's top. */
+/** Each sprite's own canvas, in points; the apps lay it at the size it is drawn. The apple's canvas starts a little above its short stalk. */
 export const PATH_SCENE_SPRITE_BOX: Readonly<Record<PathSceneSprite, { w: number; h: number }>> = {
   'apple-0': { w: 30, h: 40 },
   'apple-1': { w: 30, h: 40 },
@@ -178,8 +179,8 @@ function leaf(x: number, y: number, len: number, angle: number, face: string, sh
 }
 
 const PROPS: Readonly<Record<string, Paint>> = {
-  // An apple bough reaching in from the edge over Hevalo's antlers, a twig dropping from it to the apple, its leaves in
-  // two layers: the far ones darker, the near ones lit.
+  // An apple bough reaching in from the edge over Hevalo's antlers, a twig dropping from it behind his head to where the
+  // apple hangs at his mouth, its leaves in two layers: the far ones darker, the near ones lit.
   'apple:bough': (c) => {
     const far = { face: c(VALLEY.leafShade), shade: c('#3e6c33') };
     const near = { face: c(VALLEY.leafLight), shade: c(VALLEY.leaf) };
@@ -187,7 +188,7 @@ const PROPS: Readonly<Record<string, Paint>> = {
     out += fill('M-4 18C20 13 46 13 70 20C84 24 96 30 106 40C96 33 84 29 70 27C48 21 22 21 -4 26Z', c(VALLEY.trunk));
     out += fill('M-4 18C20 13 46 13 70 20C84 24 96 30 106 40C92 30 78 25 66 23C44 18 20 18 -4 21Z', c('#a3714a'));
     // The twig the apple hangs from.
-    out += stroke('M34 21C39 36 41 58 40 76', c(VALLEY.trunk), 2.2) + stroke('M40 76L39 94', c(VALLEY.trunk), 1.5);
+    out += stroke('M34 21C39 36 41 58 40 76', c(VALLEY.trunk), 2.2) + stroke('M40 76L39 98', c(VALLEY.trunk), 1.5);
     out += leaf(30, 18, 21, 150, near.face, near.shade) + leaf(64, 22, 23, 32, near.face, near.shade) + leaf(96, 34, 18, 70, near.face, near.shade);
     out += leaf(39, 40, 17, -20, near.face, near.shade) + leaf(40, 56, 14, 200, far.face, far.shade);
     // Drawn from the bough's own top, lowered to where it reaches in over his head.
@@ -274,11 +275,11 @@ function bittenApple(bites: number): { outline: string; marks: string } {
   return { outline, marks };
 }
 
-/** The apple on its stalk with `bites` bites out of it, lit from the upper left, one highlight and its shaded side. */
+/** The apple on its short stalk with `bites` bites out of it, lit from the upper left, one highlight and its shaded side. */
 function apple(bites: number, c: (hex: string, amount?: number) => string, prefix: string): string {
   const { outline, marks } = bittenApple(bites);
   const clip = `${prefix}a`;
-  let out = stroke('M15 0Q15.6 8 15 15', c(WOOD.dark), 1.6);
+  let out = stroke('M15 11Q15.3 13 15 15', c(WOOD.dark), 1.6);
   out += `<defs><clipPath id="${clip}"><path d="${outline}"/></clipPath></defs>`;
   out += fill(outline, c('#c43a2e'));
   out += `<g clip-path="url(#${clip})">`;
@@ -286,16 +287,15 @@ function apple(bites: number, c: (hex: string, amount?: number) => string, prefi
   out += fill('M27 22C28 32 22 40 14 39C20 36 25 30 27 22Z', c('#9c2a22'));
   if (bites > 0) out += fill(marks, c('#fbf0d6'));
   out += '</g>';
-  // One highlight where the light falls, and the leaf on its stalk.
+  // One highlight where the light falls.
   out += fill(ellipsePath(10.4, 19, 2.4, 1.6), c('#ffd9cc'));
-  out += fill('M15.6 6Q22 1 27 4Q21 9.6 15.6 6Z', c(VALLEY.leaf)) + fill('M15.6 6Q21 6.4 27 4Q21 9.6 15.6 6Z', c(VALLEY.leafShade));
   return out;
 }
 
 /** The core left once the apple is eaten: its waist bitten to the pips, the stalk still on it. */
 function appleCore(c: (hex: string, amount?: number) => string): string {
   return (
-    stroke('M15 0V14', c(WOOD.dark), 1.6) +
+    stroke('M15 11V14', c(WOOD.dark), 1.6) +
     fill('M7 15Q15 11 23 15Q24 19 19 22Q16 25 16 29Q16 33 20 36Q22 39 15 40Q8 39 10 36Q14 33 14 29Q14 25 11 22Q6 19 7 15Z', c('#fbf0d6')) +
     fill('M7 15Q15 11 23 15Q22 17.4 15 17.4Q8 17.4 7 15ZM10 36Q15 37.4 20 36Q22 39 15 40Q8 39 10 36Z', c('#c43a2e')) +
     fill(ellipsePath(14.2, 27, 1, 1.6) + ellipsePath(15.8, 30, 1, 1.6), c('#4a2a1a'))

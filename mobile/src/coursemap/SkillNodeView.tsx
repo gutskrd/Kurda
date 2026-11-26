@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
   calloutWrap: {
     position: 'absolute',
     // Above the stop and the bar over it, its tail clear of the bar.
-    bottom: STOP_HEIGHT + 30,
+    bottom: STOP_HEIGHT + 28,
     left: (NODE - CALLOUT_WIDTH) / 2,
     width: CALLOUT_WIDTH,
     alignItems: 'center',

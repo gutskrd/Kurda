@@ -428,6 +428,10 @@ export function PathScene({
   const apple = { x: PATH_APPLE_AT.x - appleBox.w / 2, y: PATH_APPLE_AT.y };
   const hit = scene === 'letter' ? { left: 70, top: 20, width: 70, height: 70 } : { left: 0, top: 30, width: 90, height: PATH_SCENE_BOX.h - 30 };
   const prop = (p: string): React.JSX.Element => <Prop key={p} scene={scene} prop={p} dark={dark} />;
+  const gives = (p: string): boolean => p in layout.gives;
+  // What gives when tugged or landed on turns about its root at the edge, carrying what hangs from it, before or behind
+  // the character alike.
+  const sway = [styles.stage, root ? { transformOrigin: `${root.x}px ${root.y}px` } : null, giving ? { transform: [{ rotate: giving }] } : null];
   return (
     <View
       style={[styles.scene, { left, top, height: PATH_SCENE_BOX.h + layout.below }, flip ? styles.flipped : null]}
@@ -436,15 +440,17 @@ export function PathScene({
       importantForAccessibility="no-hide-descendants"
       testID={`lp-scene-${scene}`}
     >
-      {Object.keys(layout.back).map(prop)}
+      {Object.keys(layout.back).filter((p) => !gives(p)).map(prop)}
+      <Animated.View style={sway} pointerEvents="none">
+        {Object.keys(layout.back).filter(gives).map(prop)}
+      </Animated.View>
       {actorArt ? (
         <Animated.View style={[styles.abs, { left: ax - width / 2, top: ay - h, width, height: h, transformOrigin: '50% 100%', transform: leaning }]}>
           <SpeakingCharacter speaker={layout.who as 'hevalo' | 'hamo' | 'xezo'} player={null} playing={false} crop={layout.actor.crop} height={h} cue={cue} />
         </Animated.View>
       ) : null}
-      {/* What gives when tugged or landed on turns about its root at the edge, carrying what hangs from it. */}
-      <Animated.View style={[styles.stage, root ? { transformOrigin: `${root.x}px ${root.y}px` } : null, giving ? { transform: [{ rotate: giving }] } : null]} pointerEvents="none">
-        {Object.keys(layout.front).filter((p) => p === 'bough' || p === 'twig').map(prop)}
+      <Animated.View style={sway} pointerEvents="none">
+        {Object.keys(layout.front).filter(gives).map(prop)}
         {scene === 'apple' ? (
           now.growing && moving ? (
             <Regrow key={`grow${beat}`} x={apple.x} y={apple.y} dark={dark} />
@@ -457,7 +463,7 @@ export function PathScene({
       </Animated.View>
       {/* The pigeon lands on its twig, so it is drawn over it. */}
       {layout.who === 'pigeon' ? <Pigeon moving={moving} hop={tap.count} t={flight} /> : null}
-      {Object.keys(layout.front).filter((p) => p !== 'bough' && p !== 'twig').map(prop)}
+      {Object.keys(layout.front).filter((p) => !gives(p)).map(prop)}
       {scene === 'apple' ? (
         <>
           {now.crumbs && moving ? <Crumbs key={`crumbs${beat}`} x={PATH_APPLE_AT.x - 10} y={PATH_APPLE_AT.y + 30} dark={dark} /> : null}

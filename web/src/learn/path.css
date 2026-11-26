@@ -905,25 +905,35 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * A topic's bar just above its tile (learn/PathRing.tsx, shared PATH_BAR: 60 by 8 from 6, -20 of the stop): a rounded
- * piece per lesson on a quiet track, filled in its unit's colour once finished in the current round, and gold once full.
- * Returning from a lesson the new pieces fill in turn (`--d`, `--t`) from the line's start.
+ * A topic's bar just above its tile (learn/PathRing.tsx, shared PATH_BAR: 76 by 6 from -2, -16 of the stop, a touch
+ * wider than the tile): a rounded piece per lesson on a quiet track, filled in its unit's colour once finished in the
+ * current round, and gold once full. Returning from a lesson the new pieces fill in turn (`--d`, `--t`) from the line's
+ * start.
  */
 .lp-bar-over {
   position: absolute;
-  inset-inline-start: 0;
-  top: -20px;
-  width: var(--node);
-  height: 8px;
+  inset-inline-start: -2px;
+  top: -16px;
+  width: 76px;
+  height: 6px;
   pointer-events: none;
 }
 .lp-bar-piece {
   position: absolute;
   top: 0;
-  height: 8px;
-  border-radius: var(--r-pill);
+  height: 6px;
+  /* Cut from one bar (shared PATH_BAR `cut`): round at its two ends, nearly square where it is cut. */
+  border-radius: 1.5px;
   background: var(--lp-track);
   overflow: hidden;
+}
+.lp-bar-piece:first-child {
+  border-start-start-radius: 3px;
+  border-end-start-radius: 3px;
+}
+.lp-bar-piece:last-child {
+  border-start-end-radius: 3px;
+  border-end-end-radius: 3px;
 }
 .lp-bar-ink {
   display: block;
@@ -1002,7 +1012,7 @@ button.lp-scard:focus-visible {
 .lp-callout {
   position: absolute;
   /* its tail clear of the bar over the stop */
-  bottom: calc(var(--node) + 38px);
+  bottom: calc(var(--node) + 36px);
   inset-inline-start: calc(50% + var(--x, 0px));
   translate: -50% 0;
   z-index: 4;

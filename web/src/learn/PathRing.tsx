@@ -1,4 +1,4 @@
-import { TOPIC_STARS, barPieces, hoofprintPath } from '@kurda/shared';
+import { PATH_BAR, TOPIC_STARS, barPieces, hoofprintPath } from '@kurda/shared';
 
 /**
  * A topic's progress over its stop and its rounds in its card, by the same rule and shapes as the phone (@kurda/shared
@@ -32,7 +32,7 @@ export function TopicBar({
   return (
     <span className={`lp-bar-over${whole ? ' is-whole' : ''}`} aria-hidden="true" data-testid="lp-bar" data-filled={filled}>
       {pieces.map((p, k) => (
-        <span key={k} className="lp-bar-piece" style={{ insetInlineStart: p.x, width: p.w }}>
+        <span key={k} className="lp-bar-piece" style={{ insetInlineStart: p.x - PATH_BAR.x, width: p.w }}>
           <span
             className={`lp-bar-ink${k < filled ? ' is-filled' : ''}`}
             style={k >= start && k < filled ? ({ '--d': `${Math.round((k - start) * step)}ms`, '--t': `${Math.round(step)}ms` } as React.CSSProperties) : undefined}

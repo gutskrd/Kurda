@@ -51,15 +51,18 @@ describe('the bar over a topic’s stop', () => {
     expect(four[3]!.x + four[3]!.w).toBeCloseTo(x + w, 0);
   });
 
-  it('stays over the tile, its pieces never shorter than the bar is thick until there is no other way', () => {
+  it('spans the tile and a touch more, each piece a bar rather than a dot until there is no other way', () => {
     for (const of of [1, 2, 3, 4, 5, 6]) {
       const pieces = barPieces(of);
-      expect(pieces[0]!.x).toBeGreaterThanOrEqual(0);
-      expect(pieces[pieces.length - 1]!.x + pieces[pieces.length - 1]!.w).toBeLessThanOrEqual(72);
-      for (const p of pieces) expect(p.w, `${of} pieces`).toBeGreaterThanOrEqual(h);
+      // centred over the 72-point tile, no more than a few points past it either side
+      expect(pieces[0]!.x).toBeGreaterThanOrEqual(-4);
+      expect(pieces[0]!.x + pieces[pieces.length - 1]!.x + pieces[pieces.length - 1]!.w).toBeCloseTo(72, 0);
+      expect(pieces[pieces.length - 1]!.x + pieces[pieces.length - 1]!.w).toBeLessThanOrEqual(76);
+      for (const p of pieces) expect(p.w, `${of} pieces`).toBeGreaterThanOrEqual(1.5 * h);
     }
+    expect(w).toBeGreaterThanOrEqual(72);
     // so many lessons that only a hairline is left between them
-    const many = barPieces(9);
+    const many = barPieces(16);
     expect(many[1]!.x - (many[0]!.x + many[0]!.w)).toBeCloseTo(1, 0);
   });
 

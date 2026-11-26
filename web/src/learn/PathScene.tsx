@@ -108,7 +108,7 @@ const sampled = (keys: readonly (readonly [number, number])[]): number[] => FRAM
  * The pigeon trying to land on the twig's tip with its letter in its beak (shared `PATH_PIGEON_FLIGHT`), the twig giving
  * under it, and hopping when tapped; a member's pigeon from the letters, in its own colours by day and night alike.
  */
-function Pigeon({ moving, hop, twig }: { moving: boolean; hop: number; twig: React.RefObject<HTMLSpanElement | null> }): React.JSX.Element {
+function Pigeon({ moving, hop, stage }: { moving: boolean; hop: number; stage: React.RefObject<HTMLSpanElement | null> }): React.JSX.Element {
   const { actor } = PATH_SCENES.letter;
   const size = actor.h;
   const prefix = `lppg${useId().replace(/[^A-Za-z0-9]/g, '')}`;
@@ -129,14 +129,14 @@ function Pigeon({ moving, hop, twig }: { moving: boolean; hop: number; twig: Rea
     const swap = (on: number[]): Keyframe[] => [0, from, from, to, to, 1].map((offset, i) => ({ offset, opacity: on[i] }));
     const sit = sitting.current?.animate(swap([0, 0, 1, 1, 0, 0]), forever);
     const fly = flying.current?.animate(swap([1, 1, 0, 0, 1, 1]), forever);
-    const give = twig.current?.animate(FRAMES.map((offset, i) => ({ offset, transform: `rotate(${gs[i]}deg)` })), forever);
+    const give = [...(stage.current?.querySelectorAll<HTMLElement>('.lp-gives') ?? [])].map((g) => g.animate(FRAMES.map((offset, i) => ({ offset, transform: `rotate(${gs[i]}deg)` })), forever));
     return () => {
       path.cancel();
       sit?.cancel();
       fly?.cancel();
-      give?.cancel();
+      give.forEach((g) => g.cancel());
     };
-  }, [moving, twig]);
+  }, [moving, stage]);
   return (
     <span className="lp-pigeon" style={{ left: actor.ax - size / 2, top: actor.ay - (size * 100) / 120, width: size, height: size }}>
       <span key={hop} className={`lp-pigeon-hop${hop > 0 ? ' is-hopping' : ''}`}>
@@ -174,7 +174,6 @@ export function PathScene({ scene, flip, dark, reduce }: { scene: PathSceneId; f
   const layout = PATH_SCENES[scene];
   const root = useRef<HTMLSpanElement>(null);
   const actorRef = useRef<HTMLSpanElement>(null);
-  const giveRef = useRef<HTMLSpanElement>(null);
   const inFront = useInFront(root);
   const moving = inFront && !reduce;
   const [beat, setBeat] = useState(0);
@@ -199,15 +198,16 @@ export function PathScene({ scene, flip, dark, reduce }: { scene: PathSceneId; f
   useEffect(() => {
     if (!moving || scene !== 'apple' || !now.crumbs) return;
     const head = actorRef.current;
-    const bough = giveRef.current;
     if (!head || typeof head.animate !== 'function') return;
     const [ss, ts, gs] = [sampled(PATH_APPLE_REACH.stretch), sampled(PATH_APPLE_REACH.turn), sampled(PATH_APPLE_REACH.tug)];
     const lean = layout.actor.lean;
     const reach = head.animate(FRAMES.map((offset, i) => ({ offset, transform: `rotate(${lean + ts[i]!}deg) scaleY(${ss[i]})` })), { duration: PATH_APPLE_REACH.ms });
-    const tug = bough?.animate(FRAMES.map((offset, i) => ({ offset, transform: `rotate(${gs[i]}deg)` })), { duration: PATH_APPLE_REACH.ms });
+    const tug = [...(root.current?.querySelectorAll<HTMLElement>('.lp-gives') ?? [])].map((g) =>
+      g.animate(FRAMES.map((offset, i) => ({ offset, transform: `rotate(${gs[i]}deg)` })), { duration: PATH_APPLE_REACH.ms }),
+    );
     return () => {
       reach.cancel();
-      tug?.cancel();
+      tug.forEach((t) => t.cancel());
     };
   }, [moving, scene, beat, now.crumbs, layout.actor.lean]);
   // A tap's moment lasts until the next beat, whose act then follows.
@@ -223,9 +223,18 @@ export function PathScene({ scene, flip, dark, reduce }: { scene: PathSceneId; f
   const hiccup = scene === 'apple' && tapped === 'hiccup';
   const give = layout.gives.bough ?? layout.gives.twig;
   const prop = (p: string): React.JSX.Element => <Prop key={p} scene={scene} prop={p} dark={dark} />;
+  const gives = (p: string): boolean => p in layout.gives;
+  // What gives when tugged or landed on turns about its root at the edge, carrying what hangs from it, before or behind
+  // the character alike.
+  const giving = (key: string, children: React.ReactNode): React.JSX.Element => (
+    <span key={key} className="lp-gives" style={give ? { transformOrigin: `${give.x}px ${give.y}px` } : undefined}>
+      {children}
+    </span>
+  );
   return (
     <span ref={root} className={`lp-scene-stage${flip ? ' is-flipped' : ''}${moving ? ' is-moving' : ''}`} style={{ width: PATH_SCENE_BOX.w, height: PATH_SCENE_BOX.h }}>
-      {Object.keys(layout.back).map(prop)}
+      {Object.keys(layout.back).filter((p) => !gives(p)).map(prop)}
+      {giving('back', Object.keys(layout.back).filter(gives).map(prop))}
       {art && frame && (
         <span
           ref={actorRef}
@@ -235,29 +244,31 @@ export function PathScene({ scene, flip, dark, reduce }: { scene: PathSceneId; f
           <SpeakingCharacter speaker={layout.who as 'hevalo' | 'hamo' | 'xezo'} audio={null} crop={layout.actor.crop} size={layout.actor.h} decorative cue={cue} />
         </span>
       )}
-      {/* What gives when tugged or landed on turns about its root at the edge, carrying what hangs from it. */}
-      <span ref={giveRef} className="lp-gives" style={give ? { transformOrigin: `${give.x}px ${give.y}px` } : undefined}>
-        {Object.keys(layout.front).filter((p) => p === 'bough' || p === 'twig').map(prop)}
-        {scene === 'apple' &&
-          (now.growing ? (
-            <>
-              <Sprite key={`core${beat}`} sprite="core" x={apple.x - appleBox.w / 2} y={apple.y} dark={dark} className="is-dropping" />
-              <Sprite key={`new${beat}`} sprite="apple-0" x={apple.x - appleBox.w / 2} y={apple.y} dark={dark} className="is-growing" />
-            </>
-          ) : (
-            <Sprite
-              key={offering ? `offer${tap.count}` : 'apple'}
-              sprite={bitten >= 5 ? 'core' : (`apple-${bitten}` as PathSceneSprite)}
-              x={apple.x - appleBox.w / 2}
-              y={apple.y}
-              dark={dark}
-              className={`lp-apple${offering ? ' is-offered' : ''}`}
-            />
-          ))}
-      </span>
+      {giving(
+        'front',
+        <>
+          {Object.keys(layout.front).filter(gives).map(prop)}
+          {scene === 'apple' &&
+            (now.growing ? (
+              <>
+                <Sprite key={`core${beat}`} sprite="core" x={apple.x - appleBox.w / 2} y={apple.y} dark={dark} className="is-dropping" />
+                <Sprite key={`new${beat}`} sprite="apple-0" x={apple.x - appleBox.w / 2} y={apple.y} dark={dark} className="is-growing" />
+              </>
+            ) : (
+              <Sprite
+                key={offering ? `offer${tap.count}` : 'apple'}
+                sprite={bitten >= 5 ? 'core' : (`apple-${bitten}` as PathSceneSprite)}
+                x={apple.x - appleBox.w / 2}
+                y={apple.y}
+                dark={dark}
+                className={`lp-apple${offering ? ' is-offered' : ''}`}
+              />
+            ))}
+        </>,
+      )}
       {/* The pigeon lands on its twig, so it is drawn over it. */}
-      {layout.who === 'pigeon' && <Pigeon moving={moving} hop={tap.count} twig={giveRef} />}
-      {Object.keys(layout.front).filter((p) => p !== 'bough' && p !== 'twig').map(prop)}
+      {layout.who === 'pigeon' && <Pigeon moving={moving} hop={tap.count} stage={root} />}
+      {Object.keys(layout.front).filter((p) => !gives(p)).map(prop)}
       {scene === 'apple' && (
         <>
           {now.crumbs && <Sprite key={`crumbs${beat}`} sprite="crumbs" x={apple.x - 10} y={apple.y + 30} dark={dark} className="is-falling" style={{ animationDelay: `${Math.round(PATH_APPLE_REACH.ms * PATH_APPLE_REACH.biteAt)}ms` }} />}

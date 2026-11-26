@@ -32,12 +32,12 @@ export function topicRounds(times: readonly number[]): TopicRounds {
 }
 
 /**
- * The bar over a stop, in the stop's points (its 72-point button): a slim row of rounded pieces just above the tile,
- * `w` wide from `x`, its top at `y` (above the button) and `h` thick, one piece per lesson with `gap` between, so the
- * bubble over the stop sits above it. Pieces fill from the start of the line, mirrored on right-to-left pages like the
- * path.
+ * The bar over a stop, in the stop's points (its 72-point button): a slim progress bar just above the tile, a touch
+ * wider than it, `w` wide from `x`, its top at `y` (above the button) and `h` thick, cut into one piece per lesson with
+ * `gap` between, so the bubble over the stop sits above it. Its two ends are round and its cuts nearly square (`cut`
+ * round), so it reads as one bar. Pieces fill from the start of the line, mirrored on right-to-left pages like the path.
  */
-export const PATH_BAR = { x: 6, y: -20, w: 60, h: 8, gap: 3 } as const;
+export const PATH_BAR = { x: -2, y: -16, w: 76, h: 6, gap: 3, cut: 1.5 } as const;
 
 /** The bar's pieces from the start: each one's left edge and width, in the stop's points; no lessons, no bar. */
 export function barPieces(of: number): Array<{ x: number; w: number }> {
