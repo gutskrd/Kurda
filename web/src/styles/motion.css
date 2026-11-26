@@ -931,14 +931,17 @@
   pointer-events: none;
   animation: like-burst var(--dur-slow) var(--ease-out) both;
 }
-/* the toast rises in, stays, and fades by itself */
-@keyframes note-in {
+/*
+ * the toast rises in, stays, and fades by itself; named for the ticket, since the notification rows' own `note-in`
+ * (shell.css, loaded later) would otherwise replace it and drop the toast's centring while it rises
+ */
+@keyframes ticket-note-in {
   from {
     opacity: 0;
     transform: translate(-50%, 14px) scale(0.96);
   }
 }
-@keyframes note-out {
+@keyframes ticket-note-out {
   to {
     opacity: 0;
     transform: translate(-50%, 6px);
@@ -946,8 +949,8 @@
 }
 .code-ticket-note {
   animation:
-    note-in var(--dur-slow) var(--ease-spring) both,
-    note-out var(--dur) var(--ease-out) 2500ms forwards;
+    ticket-note-in var(--dur-slow) var(--ease-spring) both,
+    ticket-note-out var(--dur) var(--ease-out) 2500ms forwards;
 }
 
 /* ---- tickets ------------------------------------------------------------------ */

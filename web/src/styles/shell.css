@@ -418,7 +418,7 @@
 .note-row {
   position: relative;
   overflow: hidden;
-  animation: note-in 340ms var(--ease-out) both;
+  animation: note-in var(--dur-slow) var(--ease-out) both;
   animation-delay: calc(var(--i, 0) * 22ms);
 }
 .note-slide {
