@@ -685,6 +685,10 @@
 .is-changing-page:has(.modal-overlay, .sheet-overlay) :is(.nav, .places-bar) {
   view-transition-name: none;
 }
+/* Learn's chosen group: its ground slides from the group left to the one chosen while the page beneath cross-fades. */
+.is-changing-page .learn-head .switch-capsule {
+  view-transition-name: learn-switch;
+}
 ::view-transition-group(*),
 ::view-transition-old(*),
 ::view-transition-new(*) {

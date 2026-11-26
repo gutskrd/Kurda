@@ -5,7 +5,8 @@ import { LEARN_PATHS, rememberLearnView, type LearnView } from './learnView';
 
 /**
  * Learn's heading with the Lessons · Stories · Games switch. The switch is links, since each group has its own address,
- * and it replaces the address so Back leaves Learn. Visiting a group records it (`learnView`) for the Learn tab.
+ * and it replaces the address so Back leaves Learn. Visiting a group records it (`learnView`) for the Learn tab. The
+ * chosen ground slides to the group chosen as the page changes, as the phone's capsule does.
  */
 export function LearnHeader({ view }: { view: LearnView }): React.JSX.Element {
   const t = useT();
@@ -29,6 +30,8 @@ export function LearnHeader({ view }: { view: LearnView }): React.JSX.Element {
             className={`switch-btn${view === tab.view ? ' is-active' : ''}`}
             aria-current={view === tab.view ? 'page' : undefined}
           >
+            {/* The chosen ground, its own element so it can travel to the next group as the page changes (styles/motion.css). */}
+            {view === tab.view && <span className="switch-capsule" aria-hidden="true" />}
             {tab.label}
           </Link>
         ))}
