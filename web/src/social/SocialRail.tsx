@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { unreadLabel } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { CloseButton } from '../components/CloseButton';
 import { ChatsIcon, GameIcon, ChevronIcon } from '../components/icons';
-import { DmThread } from '../chat/DmThread';
-import { GroupThread } from '../chat/GroupThread';
 import { RailStrip } from './RailStrip';
 import { elapsed, lastSeen } from './time';
 import { useRail, useRailPresent } from './RailProvider';
@@ -16,6 +14,11 @@ import { RequestTicket } from './FriendTickets';
 import { useT } from '../i18n/I18nProvider';
 import { GroupAvatar } from '../groups/GroupAvatar';
 import { useOptimisticSend, type ShownChange } from '../lib/optimistic';
+import { lazyPart } from '../lib/lazyPart';
+
+// The docked conversations load apart from the rail, and are fetched before anyone opens one (lib/lazyPart.ts).
+const DmThread = lazyPart(() => import('../chat/DmThread').then((m) => m.DmThread));
+const GroupThread = lazyPart(() => import('../chat/GroupThread').then((m) => m.GroupThread));
 
 /** What the dock beside the rail shows: one slot, so opening another conversation replaces it. */
 type DockTarget =
@@ -94,24 +97,26 @@ export function SocialRail(): React.JSX.Element | null {
       </aside>
 
       {/* A conversation docked beside the rail on a wide screen, anchored to the rail's current edge. */}
-      {dock?.kind === 'dm' && (
-        <DmThread
-          key={dock.id}
-          className={`rail-chat${collapsed ? ' is-tight' : ''}`}
-          otherId={dock.id}
-          otherName={dock.name}
-          onSent={refresh}
-          onClose={() => setDock(null)}
-        />
-      )}
-      {dock?.kind === 'group' && (
-        <GroupThread
-          key={dock.id}
-          className={`rail-chat${collapsed ? ' is-tight' : ''}`}
-          groupId={dock.id}
-          onClose={() => setDock(null)}
-        />
-      )}
+      <Suspense fallback={null}>
+        {dock?.kind === 'dm' && (
+          <DmThread
+            key={dock.id}
+            className={`rail-chat${collapsed ? ' is-tight' : ''}`}
+            otherId={dock.id}
+            otherName={dock.name}
+            onSent={refresh}
+            onClose={() => setDock(null)}
+          />
+        )}
+        {dock?.kind === 'group' && (
+          <GroupThread
+            key={dock.id}
+            className={`rail-chat${collapsed ? ' is-tight' : ''}`}
+            groupId={dock.id}
+            onClose={() => setDock(null)}
+          />
+        )}
+      </Suspense>
 
       <RailToasts arrivals={toasts} onDismiss={dismiss} onOpen={() => setOpen(true)} />
     </>

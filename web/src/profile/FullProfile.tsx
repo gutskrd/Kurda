@@ -1,16 +1,19 @@
-import { useLayoutEffect, useState } from 'react';
+import { Suspense, useLayoutEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { FavoriteRef, LevelInfo, ProfileBackground, ProfileIcon } from '../lib/types';
 import { Flag } from '../components/Flag';
 import { badgesInOrder, compactCount, fireLevel, toLeagueTier, type ProfileBadge, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import { ProfileHead } from './ProfileHead';
 import { BadgePill } from './BadgeRow';
-import { CollectionSheet } from './CollectionSheet';
 import { Fire } from '../components/Fire';
 import { BookIcon, CalendarIcon, ChevronIcon, FeatherIcon, LockIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { useWordFit } from '../lib/useWordFit';
+import { lazyPart } from '../lib/lazyPart';
+
+// The collection, with every badge, tree and frame drawn, loads apart from the profile it opens from (lib/lazyPart.ts).
+const CollectionSheet = lazyPart(() => import('./CollectionSheet').then((m) => m.CollectionSheet));
 
 /** Normalized data a Hevalo profile renders (self or another user). */
 export interface FullProfileView {
@@ -330,13 +333,15 @@ export function FullProfile({
         </ProfileHead>
 
         {showcase && view.id && (
-          <CollectionSheet
-            open={collecting}
-            onClose={() => setCollecting(false)}
-            owner={{ userId: view.id, name: view.name, own, league: showcase.league, tree: showcase.tree, showcase: showcase.badges, earned: showcase.earned }}
-            onShowcase={onShowcase}
-            onWorn={onWorn}
-          />
+          <Suspense fallback={null}>
+            <CollectionSheet
+              open={collecting}
+              onClose={() => setCollecting(false)}
+              owner={{ userId: view.id, name: view.name, own, league: showcase.league, tree: showcase.tree, showcase: showcase.badges, earned: showcase.earned }}
+              onShowcase={onShowcase}
+              onWorn={onWorn}
+            />
+          </Suspense>
         )}
         {notice}
         {activity}

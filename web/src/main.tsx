@@ -7,6 +7,7 @@ import { startArtOverrides } from './art/overrides';
 import { installPressFeedback } from './lib/press';
 import { watchOpeners } from './lib/opener';
 import { unlockOnFirstTap } from './lib/sound';
+import { preloadParts, whenPageSettles } from './lib/lazyPart';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/ui.css';
@@ -65,6 +66,9 @@ watchOpeners();
 unlockOnFirstTap();
 // In development, `?show-reach` tints each control's touch area (styles/reach.css).
 if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('show-reach')) document.documentElement.classList.add('show-reach');
+
+// Once the page has settled, the parts behind its buttons are fetched, so they are here before they are opened.
+whenPageSettles(preloadParts);
 
 /*
  * Only one catalogue ships in the entry chunk, so the reader's is fetched before the first render; rendering first would

@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { useT } from '../i18n/I18nProvider';
 import { PlusIcon } from '../components/icons';
-import { Composer } from '../composer/Composer';
+import { lazyPart } from '../lib/lazyPart';
+
+// Loaded apart from the wall, and fetched before anyone opens it (lib/lazyPart.ts).
+const Composer = lazyPart(() => import('../composer/Composer').then((m) => m.Composer));
 
 /** The button that opens the composer (composer/) for any post: the wall's primary button. */
 export function PostButton({ onPosted }: { onPosted: () => void }): React.JSX.Element {
@@ -14,20 +17,30 @@ export function PostButton({ onPosted }: { onPosted: () => void }): React.JSX.El
 
   return (
     <>
-      <button type="button" className="post-plus" onClick={() => setOpen(true)} aria-label={t('post.open')} aria-haspopup="dialog">
+      <button
+        type="button"
+        className="post-plus"
+        onClick={() => setOpen(true)}
+        onPointerEnter={Composer.preload}
+        onFocus={Composer.preload}
+        aria-label={t('post.open')}
+        aria-haspopup="dialog"
+      >
         <PlusIcon size={18} weight="bold" />
         {/* The word shows on a wide screen, the + on a narrow one. */}
         <span className="post-plus-word">{t('post.button')}</span>
       </button>
 
       {open && (
-        <Composer
-          onClose={() => setOpen(false)}
-          onPosted={() => {
-            setOpen(false);
-            onPosted();
-          }}
-        />
+        <Suspense fallback={null}>
+          <Composer
+            onClose={() => setOpen(false)}
+            onPosted={() => {
+              setOpen(false);
+              onPosted();
+            }}
+          />
+        </Suspense>
       )}
     </>
   );
