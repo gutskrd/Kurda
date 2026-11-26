@@ -234,7 +234,8 @@
 
 .fp-hevalo {
   position: relative;
-  margin-top: clamp(18px, 4vw, 36px);
+  /* room above for his jump, so his antlers never meet the pill */
+  margin-top: clamp(40px, 6vw, 56px);
   rotate: var(--fp-lean, 0deg);
   transform-origin: 50% 100%;
 }
@@ -263,10 +264,25 @@
   height: clamp(180px, 26vh, 290px);
   width: auto;
 }
+/*
+ * The characters move past their frames when they jump, lean or tilt, so nothing of them is ever cut off: a whole
+ * figure may go past every edge, and a bust past every edge but its foot, where the bust is meant to end.
+ */
+.fp-hevalo .speaking-character > svg,
+.fp-final-hevalo .speaking-character > svg,
+.fp-walker .speaking-character > svg {
+  overflow: visible;
+}
+.fp-words-teacher .speaking-character > svg,
+.fp-table-host .speaking-character > svg {
+  overflow: visible;
+  clip-path: inset(-300% -300% 0 -300%);
+}
 .fp-say {
   position: absolute;
-  inset-inline-start: 66%;
-  top: 2%;
+  /* beside his head, clear of his face */
+  inset-inline-start: 76%;
+  top: 4%;
   margin: 0;
   pointer-events: none;
 }
@@ -274,7 +290,8 @@
   display: grid;
   gap: 2px;
   width: max-content;
-  max-width: 170px;
+  /* never past a narrow phone's edge, wherever Hevalo stands */
+  max-width: min(170px, calc(50vw - 46px));
   padding: 9px 13px;
   border: 1px solid var(--border);
   border-radius: 16px 16px 16px 4px;
@@ -380,14 +397,15 @@
   width: auto;
 }
 @media (min-width: 760px) {
+  /* Xezo takes her own width beside the card, so her hair is never under it or past the page's edge */
   .fp-words-scene {
-    grid-template-columns: 200px minmax(0, 1fr);
+    grid-template-columns: max-content minmax(0, 1fr);
     align-items: end;
-    gap: 24px;
-    max-width: 720px;
+    gap: 20px;
+    max-width: 740px;
   }
   .fp-words-teacher .speaking-character {
-    height: 240px;
+    height: clamp(180px, 20vw, 240px);
   }
 }
 .fp-quiz {
