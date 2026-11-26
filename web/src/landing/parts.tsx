@@ -26,22 +26,22 @@ export function JoinButtons(): React.JSX.Element {
   return (
     <div className="fp-join-buttons">
       <Link to="/register" className="btn btn-primary btn-lg btn-block fp-start">
-        {t('landing.hero.start')}
+        {t('landing.join.start')}
       </Link>
       <p className="fp-or">
         <span>{t('landing.hero.or')}</span>
       </p>
-      <AppSoonButton platform="ios" className="fp-store">
+      <AppSoonButton platform="ios" look="store">
         <IosIcon size={20} />
         {t('landing.hero.ios')}
       </AppSoonButton>
-      <AppSoonButton platform="android" className="fp-store">
+      <AppSoonButton platform="android" look="store">
         <AndroidIcon size={20} />
         {t('landing.hero.android')}
       </AppSoonButton>
       <p className="fp-login">
         {t('landing.hero.haveAccount')}{' '}
-        <Link to="/login" className="fp-login-link">
+        <Link to="/login" className="fp-login-link reach-line">
           {t('landing.hero.login')}
         </Link>
       </p>

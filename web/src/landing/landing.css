@@ -318,6 +318,8 @@
   letter-spacing: normal;
 }
 .fp-who-answers {
+  --reach-room-x: 10px;
+  --reach-room-y: 10px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -581,7 +583,9 @@
 }
 .fp-seg {
   display: grid;
+  align-content: end;
   gap: 8px;
+  min-height: 48px;
   padding: 6px 0;
   border: 0;
   border-radius: 6px;
@@ -628,6 +632,7 @@
   transform: none;
 }
 .fp-player-hold {
+  --reach-room-x: 12px;
   display: grid;
   place-items: center;
   flex: none;
@@ -1176,6 +1181,8 @@
   color: var(--ink-3);
 }
 .fp-table-phrases {
+  --reach-room-x: 8px;
+  --reach-room-y: 8px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -1271,6 +1278,7 @@
   color: var(--ink);
 }
 .fp-tree-dots {
+  --reach-room-x: 4px;
   display: flex;
   gap: 4px;
 }

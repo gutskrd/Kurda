@@ -67,6 +67,12 @@ export const REACH_CONTROLS = [
   '.fcard-gifts',
   // The Hevalo+ page's fine-print links, restore and the terms, side by side under its button (plus/plus.css).
   '.plus-link',
+  // The front page's news pill (38px tall), its answer chips and Hamo's phrases (40 to 44px), the scenes' pause (40px)
+  // and the tree's stage dots (28px), each row setting its own room (landing/landing.css).
+  '.fp-pill',
+  '.fp-chip-button',
+  '.fp-player-hold',
+  '.fp-tree-dot',
 ] as const;
 
 /** Links on a line of their own, enlarged only under a coarse pointer. */
@@ -146,6 +152,13 @@ export const LARGE_ENOUGH = [
   '.plus-plan',
   // A full profile's icon tabs and its grid's tiles, and the line of who they know (styles/profile.css): each at least
   // 48px tall and wider still.
+  // The front page's Hevalo (a figure 180px tall or more), its quiz answers, scene tabs and store buttons (each 48px
+  // tall or more and wider still), and the dim behind the apps-coming-soon card, the whole screen (landing/*.css).
+  '.fp-hevalo-hit',
+  '.fp-answer',
+  '.fp-seg',
+  '.fp-store',
+  '.soon-overlay',
   '.pg-tab',
   '.pg-tile',
   '.mkp-friends-line',

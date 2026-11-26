@@ -58,10 +58,10 @@ export function Footer(): React.JSX.Element {
 
           <div className="footer-col">
             <h2 className="footer-heading">{t('footer.app')}</h2>
-            <AppSoonButton platform="ios" className="footer-soon-button">
+            <AppSoonButton platform="ios" look="line">
               {t('footer.iosSoon')}
             </AppSoonButton>
-            <AppSoonButton platform="android" className="footer-soon-button">
+            <AppSoonButton platform="android" look="line">
               {t('footer.androidSoon')}
             </AppSoonButton>
           </div>

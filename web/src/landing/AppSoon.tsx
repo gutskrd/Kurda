@@ -28,8 +28,11 @@ function preloadArt(): void {
   art.catch(() => (art = null));
 }
 
-/** A button that opens the card. Every iOS and Android link on the public pages is one of these. */
-export function AppSoonButton({ platform, className, children }: { platform: AppPlatform; className?: string; children: ReactNode }): React.JSX.Element {
+/**
+ * A button that opens the card. Every iOS and Android link on the public pages is one of these: a dark store button
+ * on the front page (`store`), or a line of the footer (`line`).
+ */
+export function AppSoonButton({ platform, look, children }: { platform: AppPlatform; look: 'store' | 'line'; children: ReactNode }): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLButtonElement>(null);
   return (
@@ -37,7 +40,7 @@ export function AppSoonButton({ platform, className, children }: { platform: App
       <button
         ref={ref}
         type="button"
-        className={className}
+        className={look === 'store' ? 'fp-store' : 'soon-footer reach-line'}
         aria-haspopup="dialog"
         onPointerEnter={preloadArt}
         onFocus={preloadArt}

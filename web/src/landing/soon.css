@@ -5,7 +5,7 @@
  */
 
 /* the footer's "iOS (coming soon)" and "Android (coming soon)": its quiet lines, now buttons */
-.footer-soon-button {
+.soon-footer {
   display: block;
   padding: 4px 0;
   border: 0;
@@ -16,16 +16,16 @@
   text-align: start;
   cursor: pointer;
 }
-.footer-soon-button:hover {
+.soon-footer:hover {
   color: var(--ink);
 }
-.footer-soon-button:focus-visible {
+.soon-footer:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
   border-radius: 4px;
 }
 @media (pointer: coarse) {
-  .footer-soon-button {
+  .soon-footer {
     display: flex;
     align-items: center;
     min-height: 44px;
