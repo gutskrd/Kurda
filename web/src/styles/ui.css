@@ -1,45 +1,52 @@
 /* ---- buttons ----------------------------------------------------------- */
 /*
- * One button in three weights, all pills: primary (in the accent) for a screen's next step, secondary in a surface tone, and ghost as a
- * word that lights up on hover; destructive is red. 44px tall by default; `btn-sm` suits rows on a pointer and grows
- * back to 44px on touch.
+ * One button in three weights, chunky and round: primary, a solid fill in the accent standing on its darker lip, for a
+ * screen's next step; secondary, outlined on a lip of its edge's colour; and ghost, a word that lights up on hover.
+ * Destructive is red on its own lip. A press pushes a lipped button down into its lip, and it springs back up when let
+ * go. 44px tall by default; `btn-sm` suits rows on a pointer and grows back to 44px on touch.
  */
 .btn {
+  /* how far a lipped button stands above its lip, and so how far a press pushes it */
+  --lip-h: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   font-family: var(--font-sans);
   font-size: var(--text);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1;
   padding: 0 20px;
   height: 44px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-lg);
   border: 1px solid transparent;
   background: transparent;
   color: var(--ink);
   cursor: pointer;
   white-space: nowrap;
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
   transition:
     background var(--dur-fast) ease,
     border-color var(--dur-fast) ease,
     color var(--dur-fast) ease,
-    transform var(--dur) var(--ease-spring);
+    transform var(--dur-slow) var(--ease-spring),
+    box-shadow var(--dur-slow) var(--ease-spring);
 }
 .btn:active:not(:disabled) {
   /* gives a little under the finger, and springs back when it is let go (tokens.css) */
   transform: scale(var(--press-scale));
-  transition-duration: var(--dur-fast), var(--dur-fast), var(--dur-fast), 80ms;
+  transition-duration: var(--dur-fast), var(--dur-fast), var(--dur-fast), 60ms, 60ms;
 }
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 .btn-sm {
+  --lip-h: 3px;
   height: 36px;
   padding: 0 14px;
+  border-radius: var(--r-md);
   font-size: var(--text);
 }
 .btn-lg {
@@ -51,15 +58,32 @@
   width: 100%;
 }
 
-/* the main button, the one thing in the accent */
+/* the main button: the accent standing on its darker lip */
 .btn-primary {
   background: var(--accent);
   color: var(--accent-ink);
   border-color: var(--accent);
+  box-shadow: 0 var(--lip-h) 0 var(--accent-lip);
+  font-weight: 800;
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
+}
+/* pressed down into the lip, which disappears under it */
+.btn-primary:active:not(:disabled),
+.btn-secondary:active:not(:disabled),
+.btn-danger:active:not(:disabled) {
+  transform: translateY(var(--lip-h));
+  box-shadow: 0 0 0 transparent;
+}
+/* nothing to do yet: the flat slate of what is not open, not a faded accent */
+.btn-primary:disabled {
+  background: var(--locked);
+  border-color: var(--locked);
+  box-shadow: 0 var(--lip-h) 0 transparent;
+  color: var(--ink-4);
+  opacity: 1;
 }
 /*
  * Hevalo+'s own button (components/PlusButton.tsx), the one control outside the colour theme: gold with a gold edge,
@@ -117,15 +141,16 @@
     opacity: 0;
   }
 }
-/* the surface-tone pill */
+/* the outlined button: the page's ground inside an edge of the third surface step, standing on a lip of the same */
 .btn-secondary {
-  background: var(--surface-2);
+  background: transparent;
   color: var(--ink);
-  border-color: var(--border);
+  border: 2px solid var(--btn-edge);
+  box-shadow: 0 var(--lip-h) 0 var(--btn-edge);
 }
 .btn-secondary:hover:not(:disabled) {
-  background: var(--surface-3);
-  border-color: var(--border-strong);
+  background: var(--surface-2);
+  border-color: var(--btn-edge);
 }
 .btn-ghost {
   color: var(--ink-2);
@@ -134,11 +159,12 @@
   background: var(--surface-2);
   color: var(--ink);
 }
-/* destructive, confirmed: the fill. Before confirming it is only red words */
+/* destructive, confirmed: the fill on its own darker lip. Before confirming it is only red words */
 .btn-danger {
   background: var(--danger-fill);
   border-color: var(--danger-fill);
   color: var(--on-danger);
+  box-shadow: 0 var(--lip-h) 0 color-mix(in srgb, var(--danger-fill) 66%, #000);
 }
 .btn-danger:hover:not(:disabled) {
   background: color-mix(in srgb, var(--danger-fill) 88%, #000);
@@ -146,6 +172,7 @@
 .btn-danger-text,
 .btn-danger-text:hover:not(:disabled) {
   color: var(--danger);
+  box-shadow: none;
 }
 
 /* On touch screens every button is a full 44px target, small ones included. */

@@ -50,7 +50,7 @@
   inset-block: 0;
   inset-inline-start: 0;
   border-radius: inherit;
-  background: var(--ink);
+  background: var(--accent);
 }
 .course-progress-text {
   font-size: var(--text);
@@ -104,15 +104,15 @@
 
 /* ---- the lesson player -------------------------------------------------------- */
 /*
- * Lessons wear Hevalo's own colours: the page and its cards, the ink for what is chosen, the theme's main colour on the
- * one main button (Check), and green and red only for right and wrong. Faint ridges of the page's own colour stand behind the
- * top, by night and by day.
+ * Lessons wear Hevalo's own colours: the slate page and its surfaces, the ink for what is chosen, the one accent on the
+ * main button (Check) and the progress bar, and green and red only for right and wrong. Faint ridges of the page's own
+ * colour stand behind the top, by night and by day, as on the phone.
  */
 :root {
-  --lesson-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231c1916'/%3E%3Cstop offset='1' stop-color='%23161412'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%23231f1b'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%231e1a17'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
+  --lesson-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23182125'/%3E%3Cstop offset='1' stop-color='%23131c20'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%23222b2f'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%231d2629'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
 }
 :root[data-theme='light'] {
-  --lesson-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23f3eee6'/%3E%3Cstop offset='1' stop-color='%23faf7f2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%23ebe4d9'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%23f0eae1'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
+  --lesson-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23f1f4f5'/%3E%3Cstop offset='1' stop-color='%23f7f9fa'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%23eaeced'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%23edeff1'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* the edge of what is pressed or said in a lesson (a tile, a speech bubble, a word's meanings), here and in its Tips */
@@ -222,14 +222,14 @@ html:has(.lesson-bar) {
 [dir='rtl'] .lesson-run-label {
   transform-origin: 100% 100%;
 }
-/* the lesson's own bar is thicker than a course's, in the ink with a soft light along its top */
+/* the lesson's own bar is thicker than a course's, in the accent with a soft light along its top */
 .lesson-progress {
-  height: 12px;
-  background: var(--surface-2);
+  height: 16px;
+  background: var(--locked);
 }
 .lesson-progress > span {
   overflow: hidden;
-  background: var(--primary);
+  background: var(--accent);
   transition: background var(--dur) ease;
 }
 /* a light run along the fill each time it moves on (styles/motion.css) */
@@ -243,8 +243,8 @@ html:has(.lesson-bar) {
 .lesson-progress > span::after {
   content: '';
   position: absolute;
-  inset: 2px 6px auto;
-  height: 3px;
+  inset: 4px 8px auto;
+  height: 4px;
   border-radius: inherit;
   background: color-mix(in srgb, #fff 30%, transparent);
 }
@@ -975,7 +975,7 @@ html:has(.lesson-bar) {
   }
 }
 .lesson-slow-chip.is-on {
-  border-color: var(--primary);
+  border-color: var(--accent-text);
   background: var(--primary-soft);
   color: var(--ink);
 }
@@ -1027,7 +1027,7 @@ html:has(.lesson-bar) {
 }
 .lesson-gap.is-filled {
   min-width: 2em;
-  border-bottom-color: var(--primary);
+  border-bottom-color: var(--accent-text);
 }
 .lesson-gap.is-right {
   border-bottom-color: var(--success);
@@ -1568,7 +1568,7 @@ html:has(.lesson-bar) {
   /* the one button's colours (`.lesson-bar-go`), which a verdict sheet changes for its own */
   --go-fill: var(--accent);
   --go-ink: var(--accent-ink);
-  --go-lip: color-mix(in srgb, var(--accent) 65%, #000);
+  --go-lip: var(--accent-lip);
   position: sticky;
   bottom: 0;
   z-index: 20;
@@ -1599,49 +1599,56 @@ html:has(.lesson-bar) {
 .lesson-bar-start:empty {
   display: none;
 }
-/* Check, Continue and the results' next step: one size and place, pressed like a tile, in the verdict's colour once graded. */
+/*
+ * Check, Continue and the results' next step: one size and place, a chunky button on its darker lip, in the accent
+ * until graded and then in the verdict's colour. A press pushes it down into the lip and it springs back up.
+ */
 .lesson-bar-go {
   min-width: 180px;
   height: 54px;
   margin-inline-start: auto;
-  margin-bottom: 3.5px;
+  margin-bottom: 5px;
   border: 0;
   border-radius: var(--r-lg);
   background: var(--go-fill);
-  box-shadow: 0 3.5px 0 var(--go-lip);
+  box-shadow: 0 5px 0 var(--go-lip);
   color: var(--go-ink);
   font-size: var(--text);
   font-weight: 800;
   letter-spacing: 0.02em;
+  transition:
+    background var(--dur) ease,
+    color var(--dur) ease,
+    transform var(--dur-slow) var(--ease-spring),
+    box-shadow var(--dur-slow) var(--ease-spring);
 }
 .lesson-bar-go:hover:not(:disabled) {
   border-color: transparent;
-  background: color-mix(in srgb, var(--go-fill) 90%, var(--app-bg));
+  background: color-mix(in srgb, var(--go-fill) 90%, #fff);
 }
 .lesson-bar-go:active:not(:disabled) {
-  transform: translateY(3.5px);
+  transform: translateY(5px);
   box-shadow: 0 0 0 var(--go-lip);
+  transition-duration: var(--dur-fast), var(--dur-fast), 60ms, 60ms;
 }
 .lesson-bar-go:focus-visible {
   border-radius: var(--r-lg);
 }
-/* nothing to check yet: a quiet grey of the page, not a faded main colour */
+/* nothing to check yet: the flat slate of what is not open, not a faded accent */
 .lesson-bar-go:disabled {
   border-color: transparent;
-  background: var(--surface-2);
-  box-shadow: 0 3.5px 0 transparent;
+  background: var(--locked);
+  box-shadow: 0 5px 0 transparent;
   color: var(--ink-4);
   opacity: 1;
 }
 /* what else the bar holds: cards on the page, or on the verdict's colour */
 .lesson-bar .btn-secondary {
-  border: 1.5px solid var(--border);
-  background: var(--bg);
+  background: var(--app-bg);
   color: var(--ink);
 }
 .lesson-bar .btn-secondary:hover:not(:disabled) {
-  border-color: var(--border-strong);
-  background: var(--bg);
+  background: var(--surface-2);
 }
 .lesson-bar-note {
   display: flex;
@@ -1674,7 +1681,7 @@ html:has(.lesson-bar) {
   width: 180px;
   height: 54px;
   margin-inline-start: auto;
-  margin-bottom: 3.5px;
+  margin-bottom: 5px;
   border-radius: var(--r-lg);
 }
 @media (max-width: 480px) {
@@ -1692,7 +1699,7 @@ html:has(.lesson-bar) {
   --on-verdict: var(--primary-ink);
   --go-fill: var(--success);
   --go-ink: var(--primary-ink);
-  --go-lip: color-mix(in srgb, var(--success) 70%, #000);
+  --go-lip: color-mix(in srgb, var(--success) 62%, #000);
   --portrait-ring: color-mix(in srgb, var(--success) 40%, var(--app-bg));
   border-top-color: color-mix(in srgb, var(--success) 40%, var(--app-bg));
   background: color-mix(in srgb, var(--success) 14%, var(--app-bg));

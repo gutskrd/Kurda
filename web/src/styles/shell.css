@@ -608,13 +608,13 @@
   height: 44px;
 }
 .note-picture--letter {
-  background: color-mix(in srgb, #fbf3e4 70%, var(--surface-2));
+  background: color-mix(in srgb, var(--ink) 8%, var(--surface-2));
 }
 .note-picture--gift {
   background: color-mix(in srgb, var(--primary) 10%, var(--surface-2));
 }
 .note-picture--streak {
-  background: color-mix(in srgb, #ff8a3d 14%, var(--surface-2));
+  background: color-mix(in srgb, var(--gold) 14%, var(--surface-2));
 }
 
 /* with a mouse or a keyboard: mark it read and take it away, at the row's end over the picture, while the row is pointed at or in focus */
@@ -699,7 +699,7 @@
   color: var(--ink);
 }
 .note-under-delete {
-  background: var(--danger, #d8493b);
+  background: var(--danger);
   color: #fff;
 }
 .note-under-btn:focus-visible {
@@ -2017,9 +2017,9 @@
 .places-link:hover {
   color: var(--ink);
 }
-/* the one you are on: drawn in the theme’s second colour, its glyph solid, over the capsule of the same */
+/* the one you are on: drawn in the accent, its glyph solid, over the capsule of the same */
 .places-link.active {
-  color: var(--secondary-text);
+  color: var(--accent-text);
 }
 .places-link:focus-visible {
   outline: 2px solid var(--focus);

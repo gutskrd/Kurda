@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PAGE, PLUS_STYLE, REWARD_GOLD, THEME, THEME_NAMES, THEMES, themeColors, type ThemeScheme } from './themes.js';
+import { ACCENT, ANSWER, PAGE, PLUS_STYLE, REWARD_GOLD, accentColors, type ThemeScheme } from './themes.js';
 import { hueSteps } from './hues.js';
 
 /** WCAG relative luminance of `#rrggbb`. */
@@ -27,7 +27,7 @@ function hueOf(colour: string): { hue: number; chroma: number } {
   return { hue: hue * 60, chroma };
 }
 
-/** Violet to magenta: the colours the interface no longer wears. */
+/** Violet to magenta: the colours the interface does not wear. */
 const isPurple = (colour: string): boolean => {
   const { hue, chroma } = hueOf(colour);
   return chroma >= 8 && hue >= 250 && hue <= 330;
@@ -37,26 +37,32 @@ const SCHEMES: readonly ThemeScheme[] = ['light', 'dark'];
 const AA = 4.5;
 const CONTROL = 3;
 
-describe('the warm page', () => {
-  it('is never pure white by day or pure black by night', () => {
+describe('the slate page', () => {
+  it('is the reference slate by night and a soft white by day, never pure white or black', () => {
+    expect(PAGE.dark.page).toBe('#131C20');
     expect(PAGE.light.page).not.toBe('#FFFFFF');
-    expect(PAGE.dark.page).not.toBe('#000000');
     expect(luminance(PAGE.light.page)).toBeLessThan(0.95);
-    expect(luminance(PAGE.dark.page)).toBeGreaterThan(0.005);
+    expect(luminance(PAGE.light.page)).toBeGreaterThan(0.9);
   });
 
-  it('leans warm: red leads blue on the page, its surfaces and its words, in both schemes', () => {
+  it('leans cool: blue leads red on the page, its surfaces and its words, in both schemes', () => {
     for (const scheme of SCHEMES) {
-      for (const colour of [PAGE[scheme].page, PAGE[scheme].surface, PAGE[scheme].raised, PAGE[scheme].ink, PAGE[scheme].inkSoft]) {
-        expect(parseInt(colour.slice(1, 3), 16), `${scheme} ${colour}`).toBeGreaterThan(parseInt(colour.slice(5, 7), 16));
+      const p = PAGE[scheme];
+      for (const colour of [p.page, p.surface, p.raised, p.high, p.ink, p.inkSoft]) {
+        expect(parseInt(colour.slice(5, 7), 16), `${scheme} ${colour}`).toBeGreaterThan(parseInt(colour.slice(1, 3), 16));
       }
     }
   });
 
-  it('steps up from the page to a card by day, and lifts by night', () => {
-    expect(luminance(PAGE.light.surface)).toBeGreaterThan(luminance(PAGE.light.page));
-    expect(luminance(PAGE.dark.surface)).toBeGreaterThan(luminance(PAGE.dark.page));
-    expect(luminance(PAGE.dark.raised)).toBeGreaterThan(luminance(PAGE.dark.surface));
+  it('steps its surfaces away from the page: lighter by night, greyer by day', () => {
+    const night = PAGE.dark;
+    expect(luminance(night.surface)).toBeGreaterThan(luminance(night.page));
+    expect(luminance(night.raised)).toBeGreaterThan(luminance(night.surface));
+    expect(luminance(night.high)).toBeGreaterThan(luminance(night.raised));
+    const day = PAGE.light;
+    expect(luminance(day.surface)).toBeLessThan(luminance(day.page));
+    expect(luminance(day.raised)).toBeLessThan(luminance(day.surface));
+    expect(luminance(day.high)).toBeLessThan(luminance(day.raised));
   });
 
   it('writes both kinds of words at AA on the page and on its surfaces', () => {
@@ -79,64 +85,64 @@ describe('the warm page', () => {
   });
 });
 
-describe('the three themes', () => {
-  it('names the theme both apps wear', () => {
-    expect(THEME_NAMES).toContain(THEME);
-    expect(themeColors('light')).toBe(THEMES[THEME].light);
-  });
-
-  it.each(THEME_NAMES)('gives %s no violet, in either scheme', (name) => {
+describe('the one accent', () => {
+  it('is green in both schemes, and the scheme’s own', () => {
     for (const scheme of SCHEMES) {
-      for (const colour of Object.values(THEMES[name][scheme])) expect(isPurple(colour), `${scheme} ${colour}`).toBe(false);
+      const { hue, chroma } = hueOf(ACCENT[scheme].fill);
+      expect(hue, scheme).toBeGreaterThan(130);
+      expect(hue, scheme).toBeLessThan(160);
+      expect(chroma, scheme).toBeGreaterThan(100);
+      expect(accentColors(scheme)).toBe(ACCENT[scheme]);
     }
   });
 
-  it.each(THEME_NAMES)('writes %s’s words at AA on both its colours, in both schemes', (name) => {
+  // Main buttons say a word in the text size, bold: 4.5:1, as small words must be.
+  it('writes words on its fill at AA, and on its lip too, in both schemes', () => {
     for (const scheme of SCHEMES) {
-      const t = THEMES[name][scheme];
-      expect(contrast(t.onPrimary, t.primary), `${scheme} on the main colour`).toBeGreaterThanOrEqual(AA);
-      expect(contrast(t.onPrimary, t.primaryPressed), `${scheme} on the main colour pressed`).toBeGreaterThanOrEqual(AA);
-      expect(contrast(t.onSecondary, t.secondary), `${scheme} on the second colour`).toBeGreaterThanOrEqual(AA);
+      const a = ACCENT[scheme];
+      expect(contrast(a.ink, a.fill), `${scheme} on the fill`).toBeGreaterThanOrEqual(AA);
+      expect(contrast(a.ink, a.lip), `${scheme} on the lip`).toBeGreaterThanOrEqual(CONTROL);
     }
   });
 
-  // A filled control has to stand off the page and a card (WCAG 1.4.11); by day the main colour is also written as words.
-  it.each(THEME_NAMES)('stands %s’s colours 3:1 off the page and a card, and writes the main colour as words by day', (name) => {
+  // A filled control stands off what it sits on (WCAG 1.4.11), and the accent as words reads at AA.
+  it('stands 3:1 off the page and its surfaces, and reads as words at AA on them', () => {
     for (const scheme of SCHEMES) {
-      const t = THEMES[name][scheme];
-      for (const ground of [PAGE[scheme].page, PAGE[scheme].surface]) {
-        expect(contrast(t.primary, ground), `${scheme} main on ${ground}`).toBeGreaterThanOrEqual(CONTROL);
+      const a = ACCENT[scheme];
+      const p = PAGE[scheme];
+      for (const ground of [p.page, p.surface, p.raised]) {
+        expect(contrast(a.fill, ground), `${scheme} fill on ${ground}`).toBeGreaterThanOrEqual(CONTROL);
+        expect(contrast(a.text, ground), `${scheme} text on ${ground}`).toBeGreaterThanOrEqual(AA);
       }
-      // A filled bubble sits on the page.
-      expect(contrast(t.secondary, PAGE[scheme].page), `${scheme} second on the page`).toBeGreaterThanOrEqual(CONTROL);
-    }
-    for (const ground of [PAGE.light.page, PAGE.light.surface, PAGE.light.raised]) {
-      expect(contrast(THEMES[name].light.primary, ground), `main as words on ${ground}`).toBeGreaterThanOrEqual(AA);
     }
   });
 
-  it.each(THEME_NAMES)('writes %s’s second colour as words at AA on the page and its surfaces, by day and by night', (name) => {
+  it('sits its lip below its fill, so a button reads as raised and presses into it', () => {
+    for (const scheme of SCHEMES) {
+      const a = ACCENT[scheme];
+      expect(luminance(a.lip), scheme).toBeLessThan(luminance(a.fill));
+      expect(Math.abs(hueOf(a.lip).hue - hueOf(a.fill).hue), scheme).toBeLessThan(8);
+    }
+  });
+});
+
+describe('right and wrong answers', () => {
+  it('read at AA on the page and its surfaces', () => {
     for (const scheme of SCHEMES) {
       for (const ground of [PAGE[scheme].page, PAGE[scheme].surface, PAGE[scheme].raised]) {
-        expect(contrast(THEMES[name][scheme].secondaryText, ground), `${scheme} on ${ground}`).toBeGreaterThanOrEqual(AA);
+        expect(contrast(ANSWER[scheme].right.text, ground), `${scheme} right on ${ground}`).toBeGreaterThanOrEqual(AA);
+        expect(contrast(ANSWER[scheme].wrong.text, ground), `${scheme} wrong on ${ground}`).toBeGreaterThanOrEqual(AA);
       }
     }
   });
 
-  // By night a lit pastel glares on the warm black, so both colours stay deep enough to carry the page's light ink.
-  it.each(THEME_NAMES)('keeps %s’s night colours deep: the soft white reads on both at AA', (name) => {
-    const t = THEMES[name].dark;
-    expect(contrast(PAGE.light.surface, t.primary)).toBeGreaterThanOrEqual(AA - 0.2);
-    expect(contrast(t.onPrimary, t.primary)).toBeGreaterThanOrEqual(AA);
-    expect(luminance(t.primary)).toBeLessThan(0.2);
-    expect(luminance(t.secondary)).toBeLessThan(0.2);
-  });
-
-  it.each(THEME_NAMES)('keeps %s’s two colours apart, so the main action is never mistaken for what is chosen', (name) => {
+  // A right answer is never mistaken for the button that checks it: another green, a step apart in hue and lightness.
+  it('keeps a right answer’s green apart from the accent', () => {
     for (const scheme of SCHEMES) {
-      const t = THEMES[name][scheme];
-      const gap = Math.abs(hueOf(t.primary).hue - hueOf(t.secondary).hue);
-      expect(Math.min(gap, 360 - gap), scheme).toBeGreaterThanOrEqual(60);
+      const right = ANSWER[scheme].right.text;
+      expect(right, scheme).not.toBe(ACCENT[scheme].text);
+      expect(Math.abs(hueOf(right).hue - hueOf(ACCENT[scheme].fill).hue), scheme).toBeGreaterThanOrEqual(10);
+      expect(Math.abs(hueOf(right).chroma - hueOf(ACCENT[scheme].fill).chroma), scheme).toBeGreaterThanOrEqual(40);
     }
   });
 });
@@ -145,8 +151,15 @@ describe('the reward gold and Hevalo+', () => {
   it('writes gold words at AA on the page and its cards, and words on gold at AA', () => {
     for (const scheme of SCHEMES) {
       const { gold, goldText, onGold } = REWARD_GOLD[scheme];
-      for (const ground of [PAGE[scheme].page, PAGE[scheme].surface]) expect(contrast(goldText, ground), scheme).toBeGreaterThanOrEqual(AA);
+      for (const ground of [PAGE[scheme].page, PAGE[scheme].surface, PAGE[scheme].raised]) expect(contrast(goldText, ground), scheme).toBeGreaterThanOrEqual(AA);
       expect(contrast(onGold, gold), scheme).toBeGreaterThanOrEqual(AA);
+    }
+  });
+
+  it('keeps the gold apart from the accent', () => {
+    for (const scheme of SCHEMES) {
+      const gap = Math.abs(hueOf(REWARD_GOLD[scheme].gold).hue - hueOf(ACCENT[scheme].fill).hue);
+      expect(Math.min(gap, 360 - gap), scheme).toBeGreaterThanOrEqual(60);
     }
   });
 

@@ -148,15 +148,16 @@ export interface PlacedStop<S extends PathSkill> {
   trail: 'walked' | 'ahead' | null;
 }
 
-/** The unit colours the apps know; the apps hold the colour values. */
-export const UNIT_TONES = ['meadow', 'river', 'clay', 'dusk', 'pine', 'rose', 'saffron'] as const;
+/** The unit colours the apps know; the values are art/path-land.ts's `PATH_STOP_TONES`. */
+export const UNIT_TONES = ['meadow', 'river', 'clay', 'dusk', 'pine', 'rose', 'saffron', 'pomegranate'] as const;
 export type UnitTone = (typeof UNIT_TONES)[number];
 
 /**
- * The order units take their colours in: only the warm ones, so a path reads as the land it teaches. The blue and the
- * violet stay named for what still uses them (a streak's ice) and are never dealt to units.
+ * The order units take their colours in, so each chapter the road enters turns a new colour: meadow green, iris, teal,
+ * sky, rose, Newroz orange and pomegranate. Saffron is never dealt to a unit, since a yellow stop would be taken for a
+ * finished one's gold.
  */
-export const UNIT_TONE_ORDER: readonly UnitTone[] = ['clay', 'saffron', 'meadow', 'rose', 'pine'];
+export const UNIT_TONE_ORDER: readonly UnitTone[] = ['meadow', 'dusk', 'pine', 'river', 'rose', 'clay', 'pomegranate'];
 
 /** The colour of a course's unit, by its place in the course from 0. */
 export function unitTone(index: number): UnitTone {

@@ -36,7 +36,7 @@ import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography, wash } from '../theme/tokens';
 import { JumpSheet } from './JumpSheet';
-import { REST, UNIT_INK, levelWords, stopLabel, type ToneColors } from './path';
+import { REST, TONES, levelWords, stopLabel, type ToneColors } from './path';
 import { MASCOT_MIN_WIDTH, PathMascot } from './PathMascot';
 import { UnitLandmark, UpcomingSign, type RailSection } from './PathWorld';
 import { SkillNodeView, type StopChange } from './SkillNodeView';
@@ -306,7 +306,7 @@ export const LessonPath = memo(function LessonPath({
         bottom: s + top + height,
         number: unit.number,
         title: unit.title,
-        tone: UNIT_INK[scheme],
+        tone: TONES[scheme][unit.tone],
         section: named ? unit.section : null,
         done: unit.done,
         total: unit.total,
@@ -327,7 +327,7 @@ export const LessonPath = memo(function LessonPath({
           unitId: u.unitId,
           number: u.number,
           title: u.title,
-          tone: UNIT_INK[scheme],
+          tone: TONES[scheme][u.tone],
           done: u.done,
           total: u.total,
           here: u.stops.some((p) => p.stop.key === path.current),
@@ -484,7 +484,7 @@ export const LessonPath = memo(function LessonPath({
             }}
           >
             {section.units.map((unit, i) => {
-              const tone = UNIT_INK[scheme];
+              const tone = TONES[scheme][unit.tone];
               const land = pathLand(unit.number - 1);
               const full = drawn.has(unit.unitId);
               const rise = riseOf(unit);
@@ -588,7 +588,7 @@ export const LessonPath = memo(function LessonPath({
             key={opened.stop.key}
             stop={opened.stop}
             unit={opened.unit}
-            tone={UNIT_INK[scheme]}
+            tone={TONES[scheme][opened.unit.tone]}
             top={opened.top}
             left={-layout.gutter}
             width={width}
@@ -609,7 +609,7 @@ export const LessonPath = memo(function LessonPath({
       <UnitGuide guide={guide} onClose={() => setGuide(null)} />
       <JumpSheet
         unit={jumpTo}
-        tone={jumpTo ? UNIT_INK[scheme] : null}
+        tone={jumpTo ? TONES[scheme][jumpTo.tone] : null}
         onClose={() => setJumpTo(null)}
         onStart={() => {
           if (!jumpTo) return;

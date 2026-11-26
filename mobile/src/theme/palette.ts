@@ -1,44 +1,38 @@
 /**
- * The light and dark palettes: the warm page and the colour theme from `@kurda/shared` (themes.ts), so both apps wear
- * the same. The theme's main colour is the main button's alone (`accent`), its second colour marks what is chosen or in
- * progress (`secondary`), gold is what is earned, and words and glyphs are the page's warm ink (`primary`). Green and
- * red mean right and wrong but are never the only signal.
+ * The light and dark palettes: the slate page and the one accent from `@kurda/shared` (themes.ts), so both apps wear
+ * the same. Most of a screen is the page; the accent fills the main buttons and progress bars and marks the chosen tab
+ * and chip, a switch that is on, links and the stop to do now. Gold is what is earned, and words and glyphs are the
+ * page's slate ink (`primary`). Green and red mean right and wrong but are never the only signal.
  *
  * Components read the active `Palette` from ThemeProvider, and `palette.contrast.test.ts` holds every text-on-surface
  * pair to WCAG AA.
  */
-import { PAGE, REWARD_GOLD, themeColors } from '@kurda/shared';
+import { ACCENT, ANSWER, PAGE, REWARD_GOLD } from '@kurda/shared';
 import type { ColorScheme } from './appearance';
 
 export interface Palette {
   scheme: ColorScheme;
 
   /*
-   * `accent` is the theme's main colour, the main button's fill and nothing else's, with `textOnAccent` written on it.
-   * `primary` is the ink for what is pressable (a glyph, a link), the same as `textPrimary`, with `textOnPrimary`
-   * written on it. `secondary` is the theme's second colour as a fill (your chat bubble), with `textOnSecondary` on it,
-   * and `secondaryText` the same colour as words and marks (the tab you are on).
+   * `accent` is the one accent's fill (a main button, a progress bar, a switch that is on), with `textOnAccent` written
+   * on it and `accentLip` the darker edge a main button stands on; `accentText` is the accent as words and marks on the
+   * page (a link, the tab you are on) and `accentSoft` its faint tint. `primary` is the ink for what is pressable (a
+   * glyph), the same as `textPrimary`, with `textOnPrimary` written on it.
    */
   primary: string;
   accent: string;
   textOnAccent: string;
-  secondary: string;
-  textOnSecondary: string;
-  secondaryText: string;
-  /**
-   * A chosen chip or segment: the second colour filled, with its own word colour, by day; by night a tint of it with
-   * its word and edge in `secondaryText`, since a lit fill shouts on the dark page.
-   */
+  accentLip: string;
+  accentText: string;
+  accentSoft: string;
+  /** A chosen chip or segment: a tint of the accent with its word and edge in the accent, in both schemes. */
   chosenFill: string;
   chosenInk: string;
   chosenEdge: string;
-  /**
-   * The one picked among a row of small choices drawn as pills of their own (a year, a month, a filter): the ink filled
-   * by day, as they always were; by night the second colour's tint with its word in its light, as a chosen chip is.
-   */
+  /** The one picked among a row of small choices drawn as pills of their own (a year, a month, a filter), as a chosen chip. */
   pickedFill: string;
   pickedInk: string;
-  /** A faint warm light along a card's top edge by night, which lifts it off the page without a shadow; none by day. */
+  /** A line of light along a card's top edge; none, since cards are flat steps of the slate. */
   cardRim: string;
   gold: string;
   danger: string;
@@ -78,12 +72,18 @@ export interface Palette {
 
   /** The border of buttons and tiles. */
   clayBorder: string;
+  /**
+   * A chunky button that means nothing in particular: a flat slate fill on its darker lip. An outlined button's edge
+   * and the lip it stands on are `btnEdge`, the third step of the slate.
+   */
+  neutralFill: string;
+  neutralLip: string;
+  btnEdge: string;
   softShadow: string; // Outer drop-shadow colour.
 
   controlTrack: string; // Inactive segmented control track.
   /**
-   * A switch's track and knob, on and off. On is the second colour, like everything chosen, not green, which here means
-   * a right answer. Each track clears 3:1 on every surface and each knob 3:1 on its track (WCAG 1.4.11), and the knob's side
+   * A switch's track and knob, on and off. On is the accent, like everything chosen; a right answer has its own green. Each track clears 3:1 on every surface and each knob 3:1 on its track (WCAG 1.4.11), and the knob's side
    * also shows the state. The knob has its own colour on every platform, since iOS's white knob vanished on a white
    * dark-mode track.
    */
@@ -110,8 +110,8 @@ export interface Palette {
   surfaceRaised: string;
 
   /**
-   * A conversation's two voices, matching the website's `--bubble-*`: your words on the theme's second colour, the
-   * other side's in the page's ink on a step under the page. All four are solid, since a bubble's tail is a second shape beside it and two
+   * A conversation's two voices, matching the website's `--bubble-*`: your words on the accent, the other side's in
+   * the page's ink on a step off the page. All four are solid, since a bubble's tail is a second shape beside it and two
    * translucent shapes would show their overlap.
    */
   bubbleMine: string;
@@ -150,84 +150,76 @@ export interface Palette {
   savedEdge: string;
 }
 
-const DAY = themeColors('light');
-const NIGHT = themeColors('dark');
-
-/** A #rrggbb colour at an opacity, as rgba(). */
-function rgba(hex: string, a: number): string {
-  return `rgba(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(',')},${a})`;
-}
-
-/** Two #rrggbb colours blended, `t` of the way from `a` to `b`. */
-function mix(a: string, b: string, t: number): string {
-  const channel = (hex: string, i: number): number => parseInt(hex.slice(1 + 2 * i, 3 + 2 * i), 16);
-  return `#${[0, 1, 2].map((i) => Math.round(channel(a, i) + (channel(b, i) - channel(a, i)) * t).toString(16).padStart(2, '0')).join('')}`.toUpperCase();
-}
+const DAY = ACCENT.light;
+const NIGHT = ACCENT.dark;
 
 export const LIGHT: Palette = {
   scheme: 'light',
   primary: PAGE.light.ink,
-  accent: DAY.primary,
-  textOnAccent: DAY.onPrimary,
-  secondary: DAY.secondary,
-  textOnSecondary: DAY.onSecondary,
-  secondaryText: DAY.secondaryText,
-  chosenFill: DAY.secondary,
-  chosenInk: DAY.onSecondary,
-  chosenEdge: DAY.secondary,
-  pickedFill: PAGE.light.ink,
-  pickedInk: '#FFFDF9',
+  accent: DAY.fill,
+  textOnAccent: DAY.ink,
+  accentLip: DAY.lip,
+  accentText: DAY.text,
+  accentSoft: 'rgba(0,134,59,0.08)',
+  chosenFill: 'rgba(0,134,59,0.08)',
+  chosenInk: DAY.text,
+  chosenEdge: DAY.text,
+  pickedFill: 'rgba(0,134,59,0.08)',
+  pickedInk: DAY.text,
   cardRim: 'transparent',
   gold: REWARD_GOLD.light.gold,
-  danger: '#B83A2E',
+  danger: ANSWER.light.wrong.text,
   like: '#E0263F',
   saved: '#F5B400',
   savedEdge: '#A87600',
-  success: '#2F7A45',
-  successFill: '#E2F2E1',
-  dangerFill: '#FBE9E4',
+  success: ANSWER.light.right.text,
+  successFill: '#E6EFE1',
+  dangerFill: '#FAE8E6',
 
   textPrimary: PAGE.light.ink,
   textSecondary: PAGE.light.inkSoft,
-  textOnPrimary: '#FFFDF9',
+  textOnPrimary: '#F7F9FA',
   textOnGold: REWARD_GOLD.light.onGold,
 
-  // A warm soft white, so cards a step lighter lift off it with only a hairline.
+  // A soft clean white, with light grey surfaces stepped down from it.
   background: PAGE.light.page,
-  gradient: ['#FCFAF6', PAGE.light.page, '#F6F2EB'],
+  gradient: ['#F9FBFB', PAGE.light.page, '#F2F5F7'],
 
-  // Nothing is blurred behind it, so this is the whole surface: the card's warm white, a card without a shadow.
-  glassFill: 'rgba(255,253,249,0.9)',
-  glassBorder: 'rgba(255,253,249,0.5)',
+  // Nothing is blurred behind it, so this is the whole surface: a near-white card without a shadow.
+  glassFill: 'rgba(253,254,254,0.9)',
+  glassBorder: 'rgba(253,254,254,0.5)',
 
-  scrim: 'rgba(22,20,18,0.48)',
-  textOnScrim: '#FFFDF9',
-  separator: 'rgba(43,38,33,0.08)',
+  scrim: 'rgba(10,18,22,0.48)',
+  textOnScrim: '#F7F9FA',
+  separator: 'rgba(23,36,43,0.08)',
 
-  clayBorder: 'rgba(255,253,249,0.8)',
-  // A shadow leaning warm rather than grey, as a lamp casts one.
-  softShadow: '#3A2F25',
+  clayBorder: 'rgba(253,254,254,0.8)',
+  neutralFill: PAGE.light.raised,
+  neutralLip: '#C9D4D9',
+  btnEdge: PAGE.light.high,
+  // A shadow in the slate's own blue-grey.
+  softShadow: '#17242B',
 
-  controlTrack: 'rgba(43,38,33,0.06)',
-  switchOn: DAY.secondary,
-  switchOnThumb: DAY.onSecondary,
-  switchOff: '#857A6F',
-  switchOffThumb: '#FFFDF9',
-  selectedFill: PAGE.light.surface,
-  locked: '#E8E1D7',
-  lockedMark: '#ABA092',
+  controlTrack: 'rgba(23,36,43,0.06)',
+  switchOn: DAY.fill,
+  switchOnThumb: DAY.ink,
+  switchOff: '#71838B',
+  switchOffThumb: '#FDFEFE',
+  selectedFill: '#FDFEFE',
+  locked: '#DCE3E7',
+  lockedMark: '#9AABB3',
 
   surface: PAGE.light.surface,
   surfaceRaised: PAGE.light.raised,
-  bubbleMine: DAY.secondary,
-  bubbleMineInk: DAY.onSecondary,
-  bubbleTheirs: '#F0EAE1',
+  bubbleMine: DAY.fill,
+  bubbleMineInk: DAY.ink,
+  bubbleTheirs: PAGE.light.raised,
   bubbleTheirsInk: PAGE.light.ink,
-  barFill: PAGE.light.surface,
-  glassRim: 'rgba(255,253,249,0.9)',
-  glassRimFar: 'rgba(43,38,33,0.07)',
-  glassTint: 'rgba(255,253,249,0.22)',
-  onArt: 'rgba(255,253,249,0.78)',
+  barFill: '#FDFEFE',
+  glassRim: 'rgba(253,254,254,0.9)',
+  glassRimFar: 'rgba(23,36,43,0.07)',
+  glassTint: 'rgba(253,254,254,0.22)',
+  onArt: 'rgba(253,254,254,0.78)',
   goldText: REWARD_GOLD.light.goldText,
   notice: '#FF3B30',
 };
@@ -235,67 +227,69 @@ export const LIGHT: Palette = {
 export const DARK: Palette = {
   scheme: 'dark',
   primary: PAGE.dark.ink,
-  accent: NIGHT.primary,
-  textOnAccent: NIGHT.onPrimary,
-  secondary: NIGHT.secondary,
-  textOnSecondary: NIGHT.onSecondary,
-  secondaryText: NIGHT.secondaryText,
-  chosenFill: rgba(NIGHT.secondary, 0.2),
-  chosenInk: NIGHT.secondaryText,
-  chosenEdge: mix(NIGHT.secondary, NIGHT.secondaryText, 0.5),
-  pickedFill: rgba(NIGHT.secondary, 0.24),
-  pickedInk: NIGHT.secondaryText,
-  cardRim: 'rgba(255,232,204,0.09)',
+  accent: NIGHT.fill,
+  textOnAccent: NIGHT.ink,
+  accentLip: NIGHT.lip,
+  accentText: NIGHT.text,
+  accentSoft: 'rgba(50,212,107,0.14)',
+  chosenFill: 'rgba(50,212,107,0.14)',
+  chosenInk: NIGHT.text,
+  chosenEdge: NIGHT.text,
+  pickedFill: 'rgba(50,212,107,0.14)',
+  pickedInk: NIGHT.text,
+  cardRim: 'transparent',
   gold: REWARD_GOLD.dark.gold,
-  danger: '#FF9C90',
+  danger: ANSWER.dark.wrong.text,
   like: '#FF5A6A',
   saved: '#FFC83D',
   savedEdge: '#FFC83D',
-  success: '#8FD3A0',
-  successFill: 'rgba(120,200,140,0.16)',
-  dangerFill: 'rgba(245,140,120,0.16)',
+  success: ANSWER.dark.right.text,
+  successFill: ANSWER.dark.right.soft,
+  dangerFill: ANSWER.dark.wrong.soft,
 
   textPrimary: PAGE.dark.ink,
   textSecondary: PAGE.dark.inkSoft,
   // Words on the night's light ink, as on a chosen pill or an ink button.
-  textOnPrimary: '#1C1814',
+  textOnPrimary: '#131C20',
   textOnGold: REWARD_GOLD.dark.onGold,
 
-  // A warm soft black, like a room with the lamp low; never pure black, which reads as a screen switched off.
+  // The cool slate night; never pure black, which reads as a screen switched off.
   background: PAGE.dark.page,
-  gradient: ['#1A1715', PAGE.dark.page, '#1C1916'],
+  gradient: ['#152024', PAGE.dark.page, '#141E22'],
 
-  glassFill: 'rgba(255,248,240,0.06)',
-  glassBorder: 'rgba(255,248,240,0.12)',
+  glassFill: 'rgba(156,190,204,0.06)',
+  glassBorder: 'rgba(238,243,245,0.12)',
 
-  scrim: 'rgba(10,8,6,0.62)',
-  textOnScrim: '#FFFDF9',
-  separator: 'rgba(255,248,240,0.08)',
+  scrim: 'rgba(5,9,11,0.62)',
+  textOnScrim: '#F7F9FA',
+  separator: 'rgba(238,243,245,0.08)',
 
-  clayBorder: 'rgba(255,248,240,0.10)',
-  softShadow: '#0A0807',
+  clayBorder: 'rgba(238,243,245,0.10)',
+  neutralFill: PAGE.dark.high,
+  neutralLip: '#222D33',
+  btnEdge: PAGE.dark.high,
+  softShadow: '#05080A',
 
-  controlTrack: 'rgba(255,248,240,0.10)',
-  // The switch's track glows in the second colour's light, small enough not to shout, with the dark ink as its knob.
-  switchOn: NIGHT.secondaryText,
-  switchOnThumb: '#1C1814',
-  switchOff: '#7E746A',
-  switchOffThumb: '#FFFDF9',
-  selectedFill: 'rgba(255,248,240,0.16)',
-  locked: '#2E2A26',
-  lockedMark: '#5A524A',
+  controlTrack: 'rgba(156,190,204,0.1)',
+  switchOn: NIGHT.fill,
+  switchOnThumb: NIGHT.ink,
+  switchOff: '#6B7E87',
+  switchOffThumb: '#EEF3F5',
+  selectedFill: 'rgba(156,190,204,0.2)',
+  locked: '#2E3C43',
+  lockedMark: '#52656E',
 
   surface: PAGE.dark.surface,
   surfaceRaised: PAGE.dark.raised,
-  bubbleMine: NIGHT.secondary,
-  bubbleMineInk: NIGHT.onSecondary,
-  bubbleTheirs: '#34302B',
+  bubbleMine: NIGHT.fill,
+  bubbleMineInk: NIGHT.ink,
+  bubbleTheirs: '#253238',
   bubbleTheirsInk: PAGE.dark.ink,
   barFill: PAGE.dark.raised,
-  glassRim: 'rgba(255,248,240,0.3)',
-  glassRimFar: 'rgba(255,248,240,0.1)',
-  glassTint: 'rgba(32,29,26,0.3)',
-  onArt: 'rgba(22,20,18,0.6)',
+  glassRim: 'rgba(238,243,245,0.26)',
+  glassRimFar: 'rgba(238,243,245,0.1)',
+  glassTint: 'rgba(26,38,43,0.3)',
+  onArt: 'rgba(19,28,32,0.6)',
   goldText: REWARD_GOLD.dark.goldText,
   notice: '#FF453A',
 };

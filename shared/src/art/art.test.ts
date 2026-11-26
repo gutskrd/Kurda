@@ -61,7 +61,8 @@ import { LETTERS, letter } from './ink.js';
 import { DICTIONARY_TILE, dictionaryStillSvg, dictionarySvg, dictionaryTileSvg, dictionaryTiles } from './dictionary.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
-import { PATH_STOP_ART, PATH_STOP_LOOKS, PATH_STOP_TONES, pathSignpostSvg, pathStopSvg, type PathStopLook } from './path-land.js';
+import { UNIT_TONES } from '../lesson-path.js';
+import { PATH_REST, PATH_STOP_ART, PATH_STOP_LOOKS, PATH_STOP_TONES, pathChestSvg, pathKilimSvg, pathSignpostSvg, pathStopSvg, type PathStopLook } from './path-land.js';
 import { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg } from './path-landmark.js';
 import { PATH_LANDMARKS } from '../path-world.js';
 import { WORD_SET_IDS } from '../word-sets/words.js';
@@ -132,7 +133,6 @@ import { letterPaperSvg } from './letter-paper.js';
 import { WORD_PICTURES, WORD_PICTURE_IDS, wordPictureSvg, type WordPictureId } from './word-pictures.js';
 import { VALLEY, warm } from './valley.js';
 import { WORD_PICTURES as SHARED_WORD_PICTURES, wordPictureSvg as sharedWordPictureSvg } from '../index.js';
-import { themeColors } from '../themes.js';
 import { DRAW_TOOLS, PAINTS, PAPER_H, PAPER_STYLES, PAPER_TONES, PAPER_W, paperColors, type PaperStroke } from '../letter-paper.js';
 import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
 import { escapeXml } from './svg.js';
@@ -1516,7 +1516,7 @@ describe('the join ticket', () => {
  * since a path draws two or three at once.
  */
 describe('the lesson path’s world', () => {
-  const TONES = ['clay', 'saffron', 'meadow', 'rose', 'pine'] as const;
+  const TONES = UNIT_TONES;
 
   /** The structural rules, for a drawing that is decorative or of its own size. */
   function sound(svg: string, viewBox?: string): number {
@@ -1580,16 +1580,49 @@ describe('the lesson path’s world', () => {
         }
       }
     }
-    // every look its own: the stop to do now in the theme's main colour in every chapter, a finished one in gold
+    // every look its own: the stop to do now in its unit's own colour, a finished one in gold, a shut one in slate
     const looks = PATH_STOP_LOOKS.map((look) => (['base', 'face'] as const).map((part) => pathStopSvg({ look, tone: 'clay', part, idPrefix: 's' })).join(''));
-    expect(new Set(looks).size).toBe(PATH_STOP_LOOKS.length);
-    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'current', tone: 'river', part: 'face', idPrefix: 's' }));
-    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain(themeColors('light').primary.toLowerCase());
-    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', dark: true })).toContain(themeColors('dark').primary.toLowerCase());
-    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).not.toContain(PATH_STOP_TONES.light.clay.fill);
+    // review is drawn as an open stop; its glyph, set by the app, tells them apart
+    expect(new Set(looks.filter((_, i) => PATH_STOP_LOOKS[i] !== 'review')).size).toBe(PATH_STOP_LOOKS.length - 1);
+    for (const dark of [false, true]) {
+      const scheme = dark ? 'dark' : 'light';
+      for (const tone of TONES) {
+        const now = pathStopSvg({ look: 'current', tone, part: 'face', dark });
+        expect(now, `${scheme} ${tone}`).toContain(PATH_STOP_TONES[scheme][tone].fill);
+        expect(pathStopSvg({ look: 'current', tone, part: 'base', dark }), `${scheme} ${tone}`).toContain(PATH_STOP_TONES[scheme][tone].lip);
+      }
+      expect(pathStopSvg({ look: 'locked', tone: 'clay', part: 'face', dark })).toContain(PATH_REST[scheme].fill);
+      expect(pathStopSvg({ look: 'locked', tone: 'clay', part: 'face', dark })).not.toContain(PATH_STOP_TONES[scheme].clay.fill);
+    }
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', idPrefix: 's' })).not.toBe(pathStopSvg({ look: 'current', tone: 'river', part: 'face', idPrefix: 's' }));
     // gold is gold in every chapter: what was earned looks the same wherever it was earned
     expect(pathStopSvg({ look: 'done', tone: 'river', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'done', tone: 'clay', part: 'face', idPrefix: 's' }));
     expect(() => pathStopSvg({ look: 'gold' as PathStopLook, tone: 'clay', part: 'face' })).toThrow(RangeError);
+  });
+
+  it('weaves a unit’s kilim trim to any width, in the colours it is given', () => {
+    for (const [w, h] of [[358, 14], [120, 12], [12, 14]] as const) {
+      const svg = pathKilimSvg({ width: w, height: h, ink: '#0b290e', eye: '#72d577', idPrefix: 'k' });
+      sound(svg, `0 0 ${w} ${h}`);
+      expect(svg).toContain('#0b290e');
+      expect(svg).toContain('#72d577');
+    }
+    expect(() => pathKilimSvg({ width: 0, height: 14, ink: '#000000', eye: '#ffffff' })).toThrow(RangeError);
+  });
+
+  it('draws a unit’s sandûq shut or open, by day and by evening, wrapped in its kilim', () => {
+    const drawn = new Set<string>();
+    for (const open of [false, true]) {
+      for (const dark of [false, true]) {
+        const svg = pathChestSvg({ open, dark, size: 80, idPrefix: 'c' });
+        sound(svg, `0 0 ${PATH_STOP_ART.box} ${PATH_STOP_ART.box}`);
+        drawn.add(svg);
+      }
+    }
+    expect(drawn.size).toBe(4);
+    // the same chest is the trophy stop's face, standing on the road rather than on a puck, whatever the unit's colour
+    expect(pathStopSvg({ look: 'chest', tone: 'pine', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'chest', tone: 'rose', part: 'face', idPrefix: 's' }));
+    expect(() => pathChestSvg({ size: -1 })).toThrow(RangeError);
   });
 });
 

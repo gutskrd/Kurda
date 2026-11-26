@@ -12,7 +12,7 @@ import { Skeleton } from './Skeleton';
 /**
  * A row of filter chips (All · Unread · Groups). Unlike the segmented control, which splits a screen into equal
  * halves, chips narrow a list, each as wide as its word, and the row scrolls sideways when words do not fit. The
- * chosen chip is the theme’s second colour with its own word colour, as on the website, and is announced as selected.
+ * chosen chip is a tint of the accent with its word and edge in the accent, as on the website, and is announced as selected.
  *
  * The row sits in the page's gutter but scrolls out to the screen's edges, so a clipped chip reads as "more this
  * way". Chips are drawn 36 tall and answer over 48 across their word plus half the gap each side, so there are no
@@ -84,7 +84,7 @@ export function Chips<T extends string>({
               {/* The count turns over on the chosen chip, so it stays a mark of its own. */}
               {count ? (
                 <View style={[styles.count, { backgroundColor: active ? colors.chosenInk : colors.primary }]}>
-                  <Text style={[styles.countText, { color: active ? (colors.scheme === 'dark' ? colors.background : colors.secondary) : colors.textOnPrimary }]}>{count > 9 ? '9+' : count}</Text>
+                  <Text style={[styles.countText, { color: active ? colors.textOnAccent : colors.textOnPrimary }]}>{count > 9 ? '9+' : count}</Text>
                 </View>
               ) : null}
             </Pressable>

@@ -129,8 +129,8 @@ describe('a topic’s ring', () => {
     expect(ringAt({ lessonsTotal: 4 }, { rounds: 3, pieces: 0 })).toEqual({ of: 4, filled: 4, whole: true });
   });
 
-  it('draws the ring’s track so it shows on the land by day and by evening', () => {
-    expect(contrastRatio(RING.light.track, '#e9d79c')).toBeGreaterThan(1.2);
+  it('draws the ring’s track so it shows on the page by day and by evening', () => {
+    expect(contrastRatio(RING.light.track, PALETTES.light.background)).toBeGreaterThan(1.2);
     expect(RING.dark.track).toBe(REST.dark.fill);
   });
 });

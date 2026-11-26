@@ -46,7 +46,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--primary);
+  background: var(--accent);
   transform-origin: left center;
   transition: transform 1s linear;
 }

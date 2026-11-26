@@ -84,7 +84,7 @@ button {
 input[type='checkbox'],
 input[type='radio'],
 input[type='range'] {
-  accent-color: var(--primary);
+  accent-color: var(--accent);
 }
 
 :focus-visible {

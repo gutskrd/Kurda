@@ -73,8 +73,9 @@ describe('the avatar colours', () => {
     const course = Object.values(TONES.light).flatMap((t) => [t.fill, t.lip]);
     for (const bg of AVATAR_COLORS) expect(course, bg).toContain(bg);
     // Every tone of the path is somebody's colour: its fill, or for saffron (a gold white cannot be read on) its deeper
-    // edge.
+    // edge. Pomegranate's red is nobody's, since on a person it would read as an error.
     for (const [name, t] of Object.entries(TONES.light)) {
+      if (name === 'pomegranate') continue;
       const mine = name === 'saffron' ? t.lip : t.fill;
       expect(AVATAR_COLORS, mine).toContain(mine);
     }

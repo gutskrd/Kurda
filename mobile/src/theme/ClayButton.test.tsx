@@ -22,9 +22,9 @@ afterEach(() => {
   localStorage.removeItem('kurda_locale_v1');
 });
 
-/** The pill a button draws: the row holding its icon, label and badge. */
+/** The pill a button draws: the row holding its icon, label and badge, standing in front of its lip. */
 function pill(button: HTMLElement): HTMLElement {
-  return button.firstElementChild as HTMLElement;
+  return button.firstElementChild!.lastElementChild as HTMLElement;
 }
 
 describe('the app’s button', () => {
@@ -34,6 +34,22 @@ describe('the app’s button', () => {
     // A label that cannot shrink would run out of a button narrower than its words.
     expect(getComputedStyle(label).flexShrink).toBe('1');
     expect(getComputedStyle(label).textAlign).toBe('center');
+  });
+
+  it('stands on a darker lip in the accent when it is the main button, and an outlined one on the slate’s edge', () => {
+    renderWithProviders(
+      <>
+        <ClayButton label="Check" tone="primary" onPress={() => undefined} />
+        <ClayButton label="Skip" variant="outline" onPress={() => undefined} />
+      </>,
+    );
+    const [main, quiet] = screen.getAllByRole('button');
+    const lipOf = (b: HTMLElement): string => getComputedStyle(b.firstElementChild!.firstElementChild as HTMLElement).backgroundColor;
+    const faceOf = (b: HTMLElement): string => getComputedStyle(pill(b)).backgroundColor;
+    expect(faceOf(main!)).toBe('rgb(50, 212, 107)');
+    expect(lipOf(main!)).toBe('rgb(1, 154, 70)');
+    expect(lipOf(quiet!)).toBe('rgb(46, 60, 67)');
+    expect(getComputedStyle(pill(quiet!)).borderTopColor).toBe('rgb(46, 60, 67)');
   });
 
   it('puts its icon before its label, on the side the language starts from', async () => {

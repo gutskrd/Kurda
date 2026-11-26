@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 /*
- * The stories' colours, by the rule the phone keeps too: gold for what is earned; violet for what can be pressed, is
- * chosen or on, or asks for attention, and for progress. Stylesheets are read from disk, since an imported one is empty
+ * The stories' colours, by the rule the phone keeps too: gold for what is earned; the one accent for what is on and for
+ * progress; the ink for the rest of what can be pressed. Stylesheets are read from disk, since an imported one is empty
  * in tests (as styles/tokens.test.ts does).
  */
 interface FileSystem {
@@ -35,21 +35,20 @@ describe('the stories’ colours', () => {
     expect(level).toMatch(/color:\s*var\(--ink-3\)/);
   });
 
-  it('draw a saved word’s button and a read chapter’s tick in the violet, in the reader and the dictionary', () => {
-    for (const on of ['.story-save.is-on', '.story-contents-mark']) {
-      expect(declared(stories, on), on).toMatch(/color:\s*var\(--primary\)/);
-    }
-    expect(declared(pages, '.dict-save.is-on')).toMatch(/color:\s*var\(--primary\)/);
+  it('draw a saved word’s button in the accent, in the reader and the dictionary, and a read chapter’s tick in the ink', () => {
+    expect(declared(stories, '.story-save.is-on')).toMatch(/color:\s*var\(--accent-text\)/);
+    expect(declared(stories, '.story-contents-mark')).toMatch(/color:\s*var\(--primary\)/);
+    expect(declared(pages, '.dict-save.is-on')).toMatch(/color:\s*var\(--accent-text\)/);
   });
 
   it('fill every bookmark that is on in the saved yellow, as a saved post’s is', () => {
     expect(declared(sheet('ui.css'), '.saved-mark')).toMatch(/color:\s*var\(--saved\)/);
   });
 
-  it('draw how far the reading has come in the violet: the ring, a card’s hairline, the chapters read', () => {
-    expect(declared(stories, '.story-progress-ring-fill')).toMatch(/stroke:\s*var\(--primary\)/);
-    expect(declared(stories, '.story-card-progress > span')).toMatch(/background:\s*var\(--primary\)/);
-    expect(declared(stories, '.story-contents-bar > li.is-read')).toMatch(/background:\s*var\(--primary\)/);
+  it('draw how far the reading has come in the accent: the ring, a card’s hairline, the chapters read', () => {
+    expect(declared(stories, '.story-progress-ring-fill')).toMatch(/stroke:\s*var\(--accent\)/);
+    expect(declared(stories, '.story-card-progress > span')).toMatch(/background:\s*var\(--accent\)/);
+    expect(declared(stories, '.story-contents-bar > li.is-read')).toMatch(/background:\s*var\(--accent\)/);
   });
 
   it('underline a glossary word in the violet, and lay the violet’s own wash behind the sentence being read', () => {
@@ -57,8 +56,8 @@ describe('the stories’ colours', () => {
     expect(declared(stories, '.story-sentence.is-reading')).toMatch(/background:\s*var\(--hue-wash\)/);
   });
 
-  it('run the game’s time bar in the violet, and turn it and the clock red when time is short, as the phone does', () => {
-    expect(declared(stories, '.sg-timebar span')).toMatch(/background:\s*var\(--primary\)/);
+  it('run the game’s time bar in the accent, and turn it and the clock red when time is short, as the phone does', () => {
+    expect(declared(stories, '.sg-timebar span')).toMatch(/background:\s*var\(--accent\)/);
     expect(declared(stories, '.sg-timebar.is-low span')).toMatch(/background:\s*var\(--danger\)/);
     expect(declared(stories, '.sg-clock.is-low')).toMatch(/color:\s*var\(--danger\)/);
   });

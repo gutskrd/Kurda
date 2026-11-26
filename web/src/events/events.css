@@ -162,7 +162,7 @@
   inset-block: 0;
   inset-inline-start: 0;
   border-radius: inherit;
-  background: var(--primary);
+  background: var(--accent);
 }
 .event-quest.is-claimed .event-quest-bar > span {
   background: var(--success);

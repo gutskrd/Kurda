@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HUE_NAMES, PAGE, PLUS_STYLE, REWARD_GOLD, THEMES, THEME_NAMES, hueSteps, type HueScheme, type HueSteps } from '@kurda/shared';
+import { ACCENT, ANSWER, HUE_NAMES, PAGE, PLUS_STYLE, REWARD_GOLD, hueSteps, type HueScheme, type HueSteps } from '@kurda/shared';
 
 /*
  * The shared hues exist in shared/src/hues.ts and as tokens.css `.hue-*` classes, so every class is checked against
@@ -100,36 +100,41 @@ function isPurple(colour: string): boolean {
   return hue >= 250 && hue <= 330;
 }
 
-describe('the warm page and the colour themes in the website’s tokens', () => {
+describe('the slate page and the one accent in the website’s tokens', () => {
   const sheet = rules(tokens);
   const dark = sheet.get(':root')!;
   const light = sheet.get(":root[data-theme='light']")!;
 
-  it('sits on the shared warm page, never pure white by day or pure black by night', () => {
+  it('sits on the shared slate page, never pure white by day or pure black by night', () => {
     expect(dark['--app-bg']).toBe(PAGE.dark.page.toLowerCase());
     expect(light['--app-bg']).toBe(PAGE.light.page.toLowerCase());
     expect(light['--app-bg']).not.toBe('#ffffff');
     expect(dark['--app-bg']).not.toBe('#000000');
-    expect(light['--surface']).toBe(PAGE.light.surface.toLowerCase());
+    for (const [block, scheme] of [[dark, 'dark'], [light, 'light']] as const) {
+      expect(block['--surface'], scheme).toBe(PAGE[scheme].surface.toLowerCase());
+      expect(block['--ink'], scheme).toBe(PAGE[scheme].ink.toLowerCase());
+      expect(block['--ink-3'], scheme).toBe(PAGE[scheme].inkSoft.toLowerCase());
+    }
     expect(dark['--surface-solid']).toBe(PAGE.dark.raised.toLowerCase());
   });
 
-  it.each(THEME_NAMES)('gives %s the shared main and second colours, by night and by day', (name) => {
-    for (const [selector, scheme] of [[`:root[data-palette='${name}']`, 'dark'], [`:root[data-theme='light'][data-palette='${name}']`, 'light']] as const) {
-      const t = THEMES[name][scheme];
-      expect(sheet.get(selector), selector).toEqual({
-        '--accent': t.primary.toLowerCase(),
-        '--accent-hover': t.primaryPressed.toLowerCase(),
-        '--accent-ink': t.onPrimary.toLowerCase(),
-        '--secondary': t.secondary.toLowerCase(),
-        '--secondary-ink': t.onSecondary.toLowerCase(),
-        '--secondary-text': t.secondaryText.toLowerCase(),
-      });
+  it('gives the accent its shared colours, by night and by day', () => {
+    for (const [block, scheme] of [[dark, 'dark'], [light, 'light']] as const) {
+      const a = ACCENT[scheme];
+      expect(block['--accent'], scheme).toBe(a.fill.toLowerCase());
+      expect(block['--accent-lip'], scheme).toBe(a.lip.toLowerCase());
+      expect(block['--accent-ink'], scheme).toBe(a.ink.toLowerCase());
+      expect(block['--accent-text'], scheme).toBe(a.text.toLowerCase());
+      expect(block['--focus'], scheme).toBe(a.text.toLowerCase());
+      expect(block['--success'], scheme).toBe(ANSWER[scheme].right.text.toLowerCase());
+      expect(block['--danger'], scheme).toBe(ANSWER[scheme].wrong.text.toLowerCase());
     }
   });
 
-  it('keeps the main colour out of the schemes themselves, so only a theme sets it', () => {
-    for (const block of [dark, light]) expect(Object.keys(block).filter((k) => /^--(accent(-hover|-ink)?|secondary(-ink|-text)?)$/.test(k))).toEqual([]);
+  it('has no second colour and no colour theme to switch', () => {
+    const bare = tokens.replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(bare).not.toMatch(/--secondary/);
+    expect(bare).not.toMatch(/data-palette/);
   });
 
   it('gives gold and Hevalo+’s button the shared colours in both schemes', () => {

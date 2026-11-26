@@ -225,6 +225,14 @@ describe('lessonPath — units', () => {
     expect(path.units[1]!.guide).toEqual([]);
   });
 
+  it('turns each unit a new colour, seven in all, and never the gold of a finished stop', () => {
+    expect(new Set(UNIT_TONE_ORDER).size).toBe(UNIT_TONE_ORDER.length);
+    expect(UNIT_TONE_ORDER).toHaveLength(7);
+    expect(UNIT_TONE_ORDER).not.toContain('saffron');
+    const path = lessonPath(map(...Array.from({ length: 9 }, (_, i) => [skill(`s${i}`, 'locked', 0, 2)])));
+    path.units.slice(1).forEach((u, i) => expect(u.tone, `unit ${i + 2}`).not.toBe(path.units[i]!.tone));
+  });
+
   it('counts skills done per unit', () => {
     const path = lessonPath(map([skill('a', 'completed', 2), skill('b', 'unlocked')]));
     expect(path.units[0]).toMatchObject({ done: 1, total: 2 });

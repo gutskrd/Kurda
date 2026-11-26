@@ -33,7 +33,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { characterLayers } from '../characters/layers';
 import { duration } from '../theme/motion';
 import { DARK, LIGHT } from '../theme/palette';
-import { THEME, THEMES } from '@kurda/shared';
+import { ACCENT } from '@kurda/shared';
 import config from '../../app.json';
 import { Entrance, LaunchScreen } from './LaunchScreen';
 import { LAUNCH, SPLASH_BACKGROUND, SPLASH_DEER, SPLASH_IMAGE_WIDTH, heroPlace } from './launch/splash';
@@ -206,8 +206,8 @@ describe('the native splash', () => {
   });
 
   // The notification's small icon is tinted by the system, outside the app's palette, so app.json names the colour.
-  it('tints a notification in the theme’s main colour', () => {
+  it('tints a notification in the accent', () => {
     const notifications = config.expo.plugins.find((p) => Array.isArray(p) && p[0] === 'expo-notifications') as [string, { color: string }] | undefined;
-    expect(notifications?.[1].color).toBe(THEMES[THEME].light.primary);
+    expect(notifications?.[1].color).toBe(ACCENT.light.fill);
   });
 });

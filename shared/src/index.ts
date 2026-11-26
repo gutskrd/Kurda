@@ -256,10 +256,16 @@ export {
   PATH_LANDMARKS,
   PATH_LANDS,
   PATH_MOTION,
+  PATH_PEEKERS,
   PATH_SCENERY,
+  PATH_SCENERY_SPOT,
+  PATH_START_WORDS,
   landmarkBox,
   pathLand,
+  pathPeeker,
+  unitScenery,
   type PathBox,
+  type PathPeeker,
   type PathGround,
   type PathHost,
   type PathLand,
@@ -741,7 +747,13 @@ export {
   PATH_LANDMARK_LOOP,
   PATH_STOP_ART,
   PATH_STOP_LOOKS,
+  PATH_REST,
   PATH_STOP_TONES,
+  pathChestSvg,
+  pathKilimSvg,
+  type PathChestOptions,
+  type PathKilimOptions,
+  type UnitColours,
   pathLandmarkSvg,
   chapterBannerSvg,
   type ChapterBannerOptions,
@@ -933,7 +945,7 @@ export {
   TIER_METAL as ART_TIER_METAL,
   type Metal as ArtMetal,
 } from './art/palette.js';
-/** The warm page, the three colour themes on it, the reward gold and Hevalo+'s own button, for both apps. */
+/** The slate page, the one accent, right and wrong, the reward gold and Hevalo+'s own button, for both apps. */
 export * from './themes.js';
 /** The Hevalo+ page's picture: the sky, the deer with his crown, and gold sparkles, as three layers. */
 export { PLUS_HERO_VIEW, plusHeroFigure, plusHeroSky, plusHeroSparkles } from './art/plus-hero.js';

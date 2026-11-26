@@ -8,7 +8,7 @@
  * so both apps agree and right-to-left pages mirror them like the stops. The drawings are in art/path-land.ts and
  * art/path-landmark.ts.
  */
-import { PATH_GEOMETRY, PATH_RETURN } from './lesson-path.js';
+import { PATH_GEOMETRY, PATH_MASCOT, PATH_RETURN } from './lesson-path.js';
 
 /** The landmark that stands beside a unit's route. */
 export const PATH_LANDMARKS = [
@@ -107,3 +107,47 @@ export const PATH_MOTION = {
   /** a landmark's own small loop, once round */
   loopMs: 2800,
 } as const;
+
+/**
+ * The words in the bubble over the stop to do now, in the course's own dialect whatever the reader's language, so the
+ * road greets every learner in the language they are learning: "Start here!" for a topic not begun, "Keep going!" for
+ * one under way.
+ */
+export const PATH_START_WORDS: Readonly<Record<'kurmanji' | 'sorani', { start: string; going: string }>> = {
+  kurmanji: { start: 'Ji vir dest pê bike!', going: 'Berdewam bike!' },
+  sorani: { start: 'لێرەوە دەست پێ بکە!', going: 'بەردەوام بە!' },
+};
+
+/** Who peeks out beside a unit's road: the course's people and the pigeon, one to a unit, in turn. */
+export const PATH_PEEKERS = ['xezo', 'pigeon', 'hamo', 'hevalo'] as const;
+export type PathPeeker = (typeof PATH_PEEKERS)[number];
+
+/** Who peeks out beside a course's unit, by its place in the course from 0. */
+export function pathPeeker(index: number): PathPeeker {
+  const at = ((Math.floor(index) % PATH_PEEKERS.length) + PATH_PEEKERS.length) % PATH_PEEKERS.length;
+  return PATH_PEEKERS[at]!;
+}
+
+/**
+ * Where a unit's playful touches stand, in the stops' logical terms: `peek`, someone peeking in from the page's edge on
+ * the open side of the unit's fourth stop (or its second), and `chest`, the unit's painted sandûq on the open side of
+ * its second stop. `x` is the middle of each from the path's middle and `y` its middle from the unit's top. Either is
+ * left out where Hevalo stands beside the stop to do now (`mascot`, from `mascotSpot`), so nobody stands on him.
+ */
+export const PATH_SCENERY_SPOT = { peekAcross: 132, chestAcross: 112, clear: 96 } as const;
+
+export function unitScenery(
+  stops: readonly { x: number; y: number }[],
+  mascot: { x: number; y: number } | null = null,
+): { peek: { x: number; y: number } | null; chest: { x: number; y: number } | null } {
+  const { peekAcross, chestAcross, clear } = PATH_SCENERY_SPOT;
+  const beside = (stop: { x: number; y: number } | undefined, across: number, side: number): { x: number; y: number } | null =>
+    stop ? { x: (Math.sign(stop.x) === 0 ? side : -Math.sign(stop.x)) * across, y: stop.y } : null;
+  // Hevalo's middle, level with the stop he stands by.
+  const him = mascot ? { x: mascot.x, y: mascot.y + PATH_MASCOT.size / 2 } : null;
+  const free = (spot: { x: number; y: number } | null): { x: number; y: number } | null =>
+    spot && him && Math.sign(spot.x) === Math.sign(him.x) && Math.abs(spot.y - him.y) < clear ? null : spot;
+  const peek = free(beside(stops[3] ?? stops[1], peekAcross, -1));
+  const chest = stops.length > 2 ? free(beside(stops[1], chestAcross, 1)) : null;
+  return { peek, chest };
+}

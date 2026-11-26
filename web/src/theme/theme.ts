@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PAGE, THEME } from '@kurda/shared';
+import { PAGE } from '@kurda/shared';
 
 /**
  * Light or dark, chosen per browser rather than per account, since it is about the screen in use. Dark is the
@@ -35,14 +35,13 @@ function systemPrefersLight(): boolean | null {
 }
 
 /**
- * Puts the scheme and the colour theme on the root element, which every stylesheet colour keys off (styles/tokens.css),
- * and sets `theme-color` so a phone's address bar matches the page.
+ * Puts the scheme on the root element, which every stylesheet colour keys off (styles/tokens.css), and sets
+ * `theme-color` so a phone's address bar matches the page.
  */
 export function applyTheme(preference: ThemePreference = readThemePreference()): ColorScheme {
   const scheme = resolveScheme(preference, systemPrefersLight());
   const root = document.documentElement;
   root.dataset.theme = scheme;
-  root.dataset.palette = THEME;
   root.style.colorScheme = scheme;
   const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   if (meta) meta.content = PAGE[scheme].page;

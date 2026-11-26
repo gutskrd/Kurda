@@ -1,13 +1,14 @@
 /**
- * The lesson path's drawings in the painted valley style (valley.ts): the colours of each unit's land for its banner and
- * landmark, the stops as a base and a face a press pushes down (`pathStopSvg`; the app sets a skill's glyph), and the
- * signpost while the next unit is being made (`pathSignpostSvg`). Chapter landmarks are in path-landmark.ts.
+ * The lesson path's drawings in the painted valley style (valley.ts): the colours of each unit's land for its landmark,
+ * each unit's own vivid colour (`PATH_STOP_TONES`), the stops as a base and a face a press pushes down (`pathStopSvg`;
+ * the app sets a skill's glyph), a unit's painted sandûq (`pathChestSvg`), and the signpost while the next unit is being
+ * made (`pathSignpostSvg`). Chapter landmarks are in path-landmark.ts.
  */
 import type { UnitTone } from '../lesson-path.js';
 import type { PathGround } from '../path-world.js';
-import { themeColors } from '../themes.js';
 import { roadLight } from './light.js';
 import { CANVAS, mix, n, n2, prefixFor } from './svg.js';
+import { kilimAlong } from './paint.js';
 import { VALLEY, dusk, ellipsePath, fill, stroke, warm } from './valley.js';
 
 // ───────────────────────────────────────────────────────────── the lands
@@ -58,16 +59,10 @@ export function pathGroundView(ground: PathGround, dark = false): { far: string;
 // ───────────────────────────────────────────────────────────── the stops
 
 /**
- * A stop's picture: `box` points square with the stop's centre at (`cx`, `cy`). The token's face is `rx` × `ry`,
+ * A stop's picture: `box` points square with the stop's centre at (`cx`, `cy`). The puck's face is `rx` × `ry`,
  * standing `side` above the road (`raised` for the current skill); `press` is how far the face sinks under a finger.
  */
 export const PATH_STOP_ART = { box: 112, cx: 56, cy: 58, rx: 36, ry: 31, side: 10, raised: 13, press: 6 } as const;
-
-/** The colour theme's main colour, the main button's, which the current stop wears as the road's one way forward. */
-function now(dark: boolean): { face: string; side: string; ring: string } {
-  const t = themeColors(dark ? 'dark' : 'light');
-  return { face: t.primary.toLowerCase(), side: t.primaryPressed.toLowerCase(), ring: mix(t.primary, '#ffffff', dark ? 0.7 : 0.6) };
-}
 
 /** What a stop looks like, by what it is and how it stands. */
 export const PATH_STOP_LOOKS = [
@@ -88,69 +83,82 @@ export const PATH_STOP_LOOKS = [
 ] as const;
 export type PathStopLook = (typeof PATH_STOP_LOOKS)[number];
 
+/** A unit's colours: its `fill` and darker `lip`, `ink` written on the fill, and `text`, the colour as words on the page. */
+export interface UnitColours {
+  fill: string;
+  lip: string;
+  ink: string;
+  text: string;
+}
+
 /**
- * The units' colours: the `fill` and `lip` the apps paint a unit's banner with (mobile coursemap/path.ts, web
- * learn/path.css), also used for the current stop's token, deep by day and light by evening.
+ * Each unit's own vivid colour, part of the road's art: its banner, the stop to do now and the bubble over it. Bright
+ * with deep ink on the slate night, deep with white ink by day (saffron keeps a deep ink, since a yellow dark enough for
+ * white words is brown). The apps read these (mobile coursemap/path.ts, web learn/path.css, tested against them).
  */
-export const PATH_STOP_TONES: Record<'light' | 'dark', Record<UnitTone, { fill: string; lip: string }>> = {
+export const PATH_STOP_TONES: Record<'light' | 'dark', Record<UnitTone, UnitColours>> = {
   light: {
-    meadow: { fill: '#058644', lip: '#006531' },
-    river: { fill: '#0073df', lip: '#0157ac' },
-    clay: { fill: '#c45001', lip: '#973c00' },
-    dusk: { fill: '#6363eb', lip: '#4a47c0' },
-    pine: { fill: '#008282', lip: '#006262' },
-    rose: { fill: '#cd3688', lip: '#a51a6a' },
-    saffron: { fill: '#c37902', lip: '#8f5d04' },
+    meadow: { fill: '#118226', lip: '#036819', ink: '#ffffff', text: '#1e7729' },
+    dusk: { fill: '#864ad2', lip: '#623e96', ink: '#ffffff', text: '#714ca6' },
+    pine: { fill: '#007e6f', lip: '#006257', ink: '#ffffff', text: '#007066' },
+    river: { fill: '#0073bd', lip: '#005b9a', ink: '#ffffff', text: '#006aaa' },
+    rose: { fill: '#b2417f', lip: '#8a2b60', ink: '#ffffff', text: '#9b3b6e' },
+    clay: { fill: '#b55000', lip: '#8d3800', ink: '#ffffff', text: '#9d4700' },
+    pomegranate: { fill: '#bd4049', lip: '#932a33', ink: '#ffffff', text: '#a43a41' },
+    saffron: { fill: '#c37902', lip: '#8f5d04', ink: '#241600', text: '#885703' },
   },
   dark: {
-    meadow: { fill: '#78d694', lip: '#459b61' },
-    river: { fill: '#91c1ff', lip: '#5188cd' },
-    clay: { fill: '#ffa47a', lip: '#c16d45' },
-    dusk: { fill: '#aeb8fe', lip: '#767ecd' },
-    pine: { fill: '#57d4d4', lip: '#009a9a' },
-    rose: { fill: '#fd9ac6', lip: '#bc668e' },
-    saffron: { fill: '#eeb154', lip: '#b07a20' },
+    meadow: { fill: '#72d577', lip: '#479c4d', ink: '#0b290e', text: '#72d577' },
+    dusk: { fill: '#caa3ff', lip: '#9470cd', ink: '#261a3a', text: '#caa3ff' },
+    pine: { fill: '#00dac8', lip: '#00a091', ink: '#002a25', text: '#00dac8' },
+    river: { fill: '#3fc6ff', lip: '#0a8fd1', ink: '#00243b', text: '#3fc6ff' },
+    rose: { fill: '#ff8cc9', lip: '#c35f92', ink: '#361426', text: '#ff8cc9' },
+    clay: { fill: '#ff9c49', lip: '#c56c21', ink: '#371801', text: '#ff9c49' },
+    pomegranate: { fill: '#ff8c8f', lip: '#cd5f62', ink: '#391415', text: '#ff8c8f' },
+    saffron: { fill: '#e6b22d', lip: '#ac7d00', ink: '#2f1e00', text: '#e6b22d' },
   },
 };
 
-/** A token's colours: face, side, the ring inside its rim, and its highlight. */
+/**
+ * What is not open yet: a flat slate puck a step off the page, its padlock in a lighter grey, and the line still
+ * ahead. The apps read these too.
+ */
+export const PATH_REST: Record<'light' | 'dark', { fill: string; lip: string; ink: string; line: string }> = {
+  light: { fill: '#dce3e7', lip: '#c2cdd3', ink: '#5f717a', line: 'rgba(23,36,43,0.16)' },
+  dark: { fill: '#2e3c43', lip: '#222d33', ink: '#8a9ba3', line: 'rgba(238,243,245,0.16)' },
+};
+
+/** A puck's colours: face, side, and the highlight where the light falls on it (none on a flat locked one). */
 interface Token {
   face: string;
   side: string;
-  ring: string;
-  glint: string;
+  glint: string | null;
 }
 
 /** Every look's colours, by day and by evening. */
-function tokenOf(look: PathStopLook, t: { fill: string; lip: string }, dark: boolean): Token {
-  // A smooth river stone: pale by day, a warm moonlit grey by night, so the road keeps the page's warmth.
-  const stone: Token = dark
-    ? { face: '#4d463f', side: '#342f2a', ring: '#5e564d', glint: '#9a8f82' }
-    : { face: '#ece8e1', side: '#c6beb0', ring: '#f7f5f1', glint: '#ffffff' };
-  const cream: Token = dark
-    ? { face: '#efe4cc', side: t.lip, ring: t.fill, glint: '#fff8ea' }
-    : { face: VALLEY.cream, side: t.lip, ring: t.fill, glint: '#ffffff' };
-  const gold: Token = { face: warm(VALLEY.gold, dark), side: warm(VALLEY.goldDark, dark), ring: warm(VALLEY.goldLight, dark), glint: '#fff6dc' };
+function tokenOf(look: PathStopLook, t: UnitColours, dark: boolean): Token {
+  const rest = PATH_REST[dark ? 'dark' : 'light'];
+  const slate: Token = { face: rest.fill, side: rest.lip, glint: null };
+  const unit: Token = { face: t.fill, side: t.lip, glint: '#ffffff' };
+  const gold: Token = { face: warm(VALLEY.gold, dark), side: warm(VALLEY.goldDark, dark), glint: '#fff6dc' };
   switch (look) {
     case 'done':
       return gold;
     case 'strong':
-      return { face: warm('#f2b632', dark), side: warm('#a8691a', dark), ring: '#fff1c2', glint: '#ffffff' };
+      return { face: warm('#f2b632', dark), side: warm('#a8691a', dark), glint: '#ffffff' };
     case 'refresh':
-      return { face: mix(gold.face, stone.face, 0.5), side: mix(gold.side, stone.side, 0.5), ring: mix(gold.ring, stone.ring, 0.5), glint: stone.glint };
+      return { face: mix(gold.face, slate.face, 0.3), side: mix(gold.side, slate.side, 0.3), glint: '#ffffff' };
     case 'current':
-      return { ...now(dark), glint: '#ffffff' };
     case 'available':
-      return cream;
     case 'review':
-      return { ...cream, side: stone.side, ring: mix(t.fill, cream.face, 0.4) };
     case 'guide':
-      return { ...cream, ring: mix(t.fill, cream.face, 0.55) };
+    case 'jump':
+      return unit;
     // A chapter's story, open once every topic is done, is the chapter's prize, so it is gold.
     case 'story':
       return gold;
     default:
-      return stone;
+      return slate;
   }
 }
 
@@ -166,8 +174,9 @@ export interface PathStopOptions {
 }
 
 /**
- * One stop, base or face: a round token raised off the road. A skill's face has only its colour, ring and highlight,
- * and the app sets its glyph; the guide's book, story scroll, jump gate and chapter saddlebag are part of the face.
+ * One stop, base or face: a round puck raised off the road, flat in its colour with one highlight, or flat slate while
+ * it is shut. A skill's face has only its colour, and the app sets its glyph; the guide's book, story scroll and jump
+ * gate are part of the face. A unit's chest (`chest`, `chestOpen`) is a painted sandûq standing on the road instead.
  */
 export function pathStopSvg(opts: PathStopOptions): string {
   const { look, tone, part, dark = false } = opts;
@@ -179,38 +188,56 @@ export function pathStopSvg(opts: PathStopOptions): string {
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
   const { box: B, cx, cy, rx, ry } = PATH_STOP_ART;
   const prefix = prefixFor(opts.idPrefix, 'stop', look, tone, part, dark);
-  const bag = look === 'chest' || look === 'chestOpen';
-  const side = look === 'current' ? PATH_STOP_ART.raised : bag || look === 'jump' ? 5 : PATH_STOP_ART.side;
+  const shade = dark ? '#05080a' : '#17242b';
+
+  if (look === 'chest' || look === 'chestOpen') {
+    const body = part === 'base' ? `<path d="${ellipsePath(cx + 2, cy + 27, 34, 7)}" fill="${shade}" fill-opacity="${dark ? 0.4 : 0.14}"/>` : sanduq(cx, cy + 4, look === 'chestOpen', dark);
+    return wrap(prefix, size, B, body);
+  }
+
+  const side = look === 'current' ? PATH_STOP_ART.raised : look === 'jump' ? 8 : PATH_STOP_ART.side;
   const k = tokenOf(look, t, dark);
-  const shade = dark ? '#05060c' : '#3a2a12';
 
   if (part === 'base') {
-    let body = '';
-    // The current stop sits in a soft pool of its own colour, so the eye finds it.
-    if (look === 'current') {
-      const glow = now(dark).face;
-      body += `<path d="${ellipsePath(cx, cy + 4, rx + 16, ry + 13)}" fill="${glow}" fill-opacity="${dark ? 0.2 : 0.14}"/>`;
-      body += `<path d="${ellipsePath(cx, cy + 4, rx + 9, ry + 7)}" fill="${glow}" fill-opacity="${dark ? 0.24 : 0.18}"/>`;
-    }
     // Its shade on the road, then its side: the face extended down by `side`.
-    body += `<path d="${ellipsePath(cx + 4, cy + side + ry * 0.55, rx * 0.98, ry * 0.4)}" fill="${shade}" fill-opacity="${dark ? 0.32 : 0.16}"/>`;
+    let body = `<path d="${ellipsePath(cx + 3, cy + side + ry * 0.55, rx * 0.98, ry * 0.4)}" fill="${shade}" fill-opacity="${dark ? 0.36 : 0.12}"/>`;
     body += fill(`M${n(cx - rx)} ${n(cy)}L${n(cx - rx)} ${n(cy + side)}A${n(rx)} ${n(ry)} 0 0 0 ${n(cx + rx)} ${n(cy + side)}L${n(cx + rx)} ${n(cy)}Z${ellipsePath(cx, cy + side, rx, ry)}`, k.side);
     if (look === 'strong') body += stroke(`M${n(cx - rx - 2)} ${n(cy + side)}A${n(rx + 2)} ${n(ry + 2)} 0 0 0 ${n(cx + rx + 2)} ${n(cy + side)}`, warm('#f2b632', dark), 3);
     return wrap(prefix, size, B, body);
   }
 
-  // The face: its colour, the ring inside its rim, and one highlight where the light falls on its upper left.
+  // The face: its colour, and one highlight where the light falls on its upper left.
   let body = '';
   if (look === 'strong') body += fill(ellipsePath(cx, cy, rx + 3, ry + 3), warm('#ffd96a', dark));
   body += fill(ellipsePath(cx, cy, rx, ry), k.face);
-  body += `<path d="${ellipsePath(cx, cy, rx - 6, ry - 5.5)}" fill="none" stroke="${k.ring}" stroke-width="2.6"/>`;
-  body += `<path d="M${n(cx - rx * 0.78)} ${n(cy - ry * 0.12)}C${n(cx - rx * 0.78)} ${n(cy - ry * 0.7)} ${n(cx - rx * 0.3)} ${n(cy - ry * 0.92)} ${n(cx + rx * 0.08)} ${n(cy - ry * 0.86)}C${n(cx - rx * 0.32)} ${n(cy - ry * 0.7)} ${n(cx - rx * 0.6)} ${n(cy - ry * 0.46)} ${n(cx - rx * 0.78)} ${n(cy - ry * 0.12)}Z" fill="${k.glint}" fill-opacity="${dark ? 0.3 : 0.55}"/>`;
-  if (look === 'guide' || look === 'guideLocked') body += book(cx, cy - 2, look === 'guide' ? t : { fill: '#bdb09a', lip: '#9c8f78' }, dark);
+  if (k.glint) {
+    body += `<path d="M${n(cx - rx * 0.78)} ${n(cy - ry * 0.12)}C${n(cx - rx * 0.78)} ${n(cy - ry * 0.7)} ${n(cx - rx * 0.3)} ${n(cy - ry * 0.92)} ${n(cx + rx * 0.08)} ${n(cy - ry * 0.86)}C${n(cx - rx * 0.32)} ${n(cy - ry * 0.7)} ${n(cx - rx * 0.6)} ${n(cy - ry * 0.46)} ${n(cx - rx * 0.78)} ${n(cy - ry * 0.12)}Z" fill="${k.glint}" fill-opacity="${dark ? 0.28 : 0.32}"/>`;
+  }
+  if (look === 'guide' || look === 'guideLocked') body += book(cx, cy - 2, look === 'guide' ? t : { fill: PATH_REST[scheme].ink, lip: PATH_REST[scheme].lip }, dark);
   if (look === 'story') body += scroll(cx, cy - 2, dark, false);
   if (look === 'storyLocked') body += scroll(cx, cy - 2, dark, true);
   if (look === 'jump') body += gate(cx, cy + 2, dark);
-  if (bag) body += saddlebag(cx, cy + 1, look === 'chestOpen', dark);
   return wrap(prefix, size, B, body);
+}
+
+export interface PathChestOptions {
+  /** Thrown open on its gold, once its unit is done. */
+  open?: boolean;
+  dark?: boolean;
+  /** Display size in points; the drawing is `PATH_STOP_ART.box` square. */
+  size?: number;
+  idPrefix?: string;
+}
+
+/** A unit's painted sandûq on its own, with its shadow, for beside the road: shut while the unit is ahead, open on gold once it is done. */
+export function pathChestSvg(opts: PathChestOptions = {}): string {
+  const { open = false, dark = false } = opts;
+  const size = opts.size ?? PATH_STOP_ART.box;
+  if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
+  const { box: B, cx, cy } = PATH_STOP_ART;
+  const shade = dark ? '#05080a' : '#17242b';
+  const body = `<path d="${ellipsePath(cx + 2, cy + 31, 34, 7)}" fill="${shade}" fill-opacity="${dark ? 0.4 : 0.14}"/>${sanduq(cx, cy + 4, open, dark)}`;
+  return wrap(prefixFor(opts.idPrefix, 'chest', open, dark), size, B, body);
 }
 
 function wrap(prefix: string, size: number, box: number, body: string): string {
@@ -271,27 +298,90 @@ function gate(x: number, y: number, dark: boolean): string {
 }
 
 /**
- * The chapter's gift: a heybe, the woven saddlebag a guest's gifts come home in, with madder pockets, a row of indigo
- * lozenges and a tied flap; open, the flap is thrown back on gold and sweets.
+ * A unit's prize: a sandûq, the painted wooden dowry chest, wrapped round its middle in a strip of kilim with madder
+ * ground, cream lozenges and indigo eyes, brass at its corners and its lock. Open, the lid is thrown back on gold.
  */
-function saddlebag(x: number, y: number, open: boolean, dark: boolean): string {
+function sanduq(x: number, y: number, open: boolean, dark: boolean): string {
   const c = (hex: string): string => dusk(hex, dark, 0.2);
-  let out = fill(`M${n(x - 27)} ${n(y - 12)}h54v27a7 7 0 0 1 -7 7h-40a7 7 0 0 1 -7 -7Z`, c('#8f3a2c'));
-  out += fill(`M${n(x - 27)} ${n(y - 12)}h54v23a7 7 0 0 1 -7 7h-40a7 7 0 0 1 -7 -7Z`, c('#b6493a'));
-  out += stroke(`M${n(x - 27)} ${n(y - 3)}h54M${n(x - 27)} ${n(y + 9)}h54`, c('#f1d9a8'), 2);
-  let lozenges = '';
-  for (let i = 0; i < 5; i++) lozenges += `M${n(x - 20 + i * 10)} ${n(y + 3)}l4.5 -4.5l4.5 4.5l-4.5 4.5Z`;
-  out += fill(lozenges, c(VALLEY.indigo));
-  out += stroke(`M${n(x)} ${n(y - 12)}v24`, c('#7a2f24'), 2);
+  const wood = { lid: c('#bd7639'), lidLight: c('#d4904f'), body: c('#a8642f'), shade: c('#83491f'), seam: c('#5e3318') };
+  const brass = warm('#e2b24a', dark);
+  const madder = c('#b8323a');
+  let out = '';
   if (open) {
-    out += fill(`M${n(x - 27)} ${n(y - 12)}q27 -20 54 0q-27 -9 -54 0Z`, c('#7a2f24'));
-    out += fill(ellipsePath(x - 8, y - 14, 5, 2.4) + ellipsePath(x + 6, y - 15, 4.4, 2.2) + ellipsePath(x - 1, y - 17, 4, 2), warm('#f6c445', dark));
-    out += fill(ellipsePath(x + 14, y - 13, 3, 2.4), warm('#ffffff', dark));
+    // The lid thrown back, its inside toward us, with the kilim strip running over it.
+    out += fill(`M${n(x - 31)} ${n(y - 5)}L${n(x - 27)} ${n(y - 30)}Q${n(x)} ${n(y - 37)} ${n(x + 27)} ${n(y - 30)}L${n(x + 31)} ${n(y - 5)}Z`, wood.shade);
+    out += fill(`M${n(x - 7)} ${n(y - 5)}L${n(x - 6)} ${n(y - 34)}h12L${n(x + 7)} ${n(y - 5)}Z`, madder);
+    // The mouth, and the gold heaped in it, catching the light.
+    out += fill(`M${n(x - 31)} ${n(y - 5)}Q${n(x)} ${n(y - 13)} ${n(x + 31)} ${n(y - 5)}Z`, c('#4a2812'));
+    out += fill(ellipsePath(x - 12, y - 7, 9, 4) + ellipsePath(x + 3, y - 9, 11, 5) + ellipsePath(x + 17, y - 6, 8, 3.5), warm(VALLEY.gold, dark));
+    out += fill(ellipsePath(x + 1, y - 11, 4, 1.8) + ellipsePath(x - 13, y - 9, 3, 1.4), warm(VALLEY.goldLight, dark));
+  }
+  // The body, its foot in shade and a plank line along it.
+  out += fill(`M${n(x - 32)} ${n(y - 5)}h64v23a4 4 0 0 1 -4 4h-56a4 4 0 0 1 -4 -4Z`, wood.body);
+  out += fill(`M${n(x - 32)} ${n(y + 14)}h64v4a4 4 0 0 1 -4 4h-56a4 4 0 0 1 -4 -4Z`, wood.shade);
+  out += stroke(`M${n(x - 30)} ${n(y + 5)}h60`, wood.seam, 1.2);
+  if (!open) {
+    // The barrel lid, lit along its crown.
+    out += fill(`M${n(x - 32)} ${n(y - 5)}V${n(y - 12)}C${n(x - 32)} ${n(y - 23)} ${n(x + 32)} ${n(y - 23)} ${n(x + 32)} ${n(y - 12)}V${n(y - 5)}Z`, wood.lid);
+    out += fill(`M${n(x - 27)} ${n(y - 15)}C${n(x - 22)} ${n(y - 21)} ${n(x + 22)} ${n(y - 21)} ${n(x + 27)} ${n(y - 15)}C${n(x + 18)} ${n(y - 18)} ${n(x - 18)} ${n(y - 18)} ${n(x - 27)} ${n(y - 15)}Z`, wood.lidLight);
+  }
+  out += stroke(`M${n(x - 32)} ${n(y - 5)}h64`, wood.seam, 1.6);
+  // The kilim strip round its middle: madder ground, cream edges, a lozenge with an indigo eye on each face.
+  const top = open ? y - 5 : y - 20;
+  out += fill(`M${n(x - 7)} ${n(top)}h14V${n(y + 22)}h-14Z`, madder);
+  out += stroke(`M${n(x - 5.5)} ${n(top + 1)}V${n(y + 21)}M${n(x + 5.5)} ${n(top + 1)}V${n(y + 21)}`, c('#f3e1b5'), 1);
+  const marks = (open ? [y + 4, y + 14] : [y - 12, y + 4, y + 14]).map((my) => ({ p: [x, my] as [number, number], angle: 0 }));
+  out += kilimAlong(marks, 7, c('#f3e1b5'), c(VALLEY.indigo));
+  // Brass at the foot's corners, and the lock on the strip at the seam.
+  out += fill(`M${n(x - 32)} ${n(y + 14)}h7v8h-3a4 4 0 0 1 -4 -4ZM${n(x + 32)} ${n(y + 14)}h-7v8h3a4 4 0 0 0 4 -4Z`, brass);
+  if (!open) {
+    out += fill(`M${n(x - 5)} ${n(y - 8)}h10v9a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2Z`, brass);
+    out += fill(`${ellipsePath(x, y - 4.5, 1.6, 1.6)}M${n(x - 0.8)} ${n(y - 4)}h1.6v3h-1.6Z`, wood.seam);
   } else {
-    out += stroke(`M${n(x - 27)} ${n(y - 12)}q27 -15 54 0`, c('#7a2f24'), 3);
-    out += fill(ellipsePath(x, y - 17, 3.2, 3.2), c('#e9c060'));
+    // Two glints over the gold.
+    out += fill(sparkle(x - 18, y - 22, 4) + sparkle(x + 21, y - 17, 3), warm('#fff6dc', dark));
   }
   return out;
+}
+
+/** A four-pointed glint. */
+function sparkle(x: number, y: number, r: number): string {
+  const k = r * 0.28;
+  return `M${n(x)} ${n(y - r)}Q${n(x + k)} ${n(y - k)} ${n(x + r)} ${n(y)}Q${n(x + k)} ${n(y + k)} ${n(x)} ${n(y + r)}Q${n(x - k)} ${n(y + k)} ${n(x - r)} ${n(y)}Q${n(x - k)} ${n(y - k)} ${n(x)} ${n(y - r)}Z`;
+}
+
+// ───────────────────────────────────────────────────────────── the kilim trim
+
+export interface PathKilimOptions {
+  /** Width and height in points; the band repeats its motif along the width. */
+  width: number;
+  height: number;
+  /** The motif's colour and its lozenges' eyes, from the unit's own colours. */
+  ink: string;
+  eye: string;
+  idPrefix?: string;
+}
+
+/**
+ * The kilim trim along a unit's banner: a woven band of lozenges with eyes, beads between them and a sawtooth along each
+ * edge, as on a Kurdish kilim's border, in the unit's own colours so it reads as woven into the banner. Decorative.
+ */
+export function pathKilimSvg(opts: PathKilimOptions): string {
+  const { width: w, height: h, ink, eye } = opts;
+  if (!(w > 0) || !(h > 0) || !Number.isFinite(w) || !Number.isFinite(h)) throw new RangeError(`art: kilim needs a positive size, got ${String(w)} × ${String(h)}`);
+  const mid = h / 2;
+  const step = h * 1.6;
+  const count = Math.max(1, Math.floor(w / step));
+  const gap = w / count;
+  const marks = Array.from({ length: count }, (_, i) => ({ p: [gap * (i + 0.5), mid] as [number, number], angle: 0 }));
+  // The sawtooth along both edges, a tooth for each half step.
+  const tooth = gap / 2;
+  let teeth = '';
+  for (let x = 0; x < w - 0.5; x += tooth) {
+    teeth += `M${n(x)} 0L${n(x + tooth / 2)} ${n(h * 0.16)}L${n(x + tooth)} 0ZM${n(x)} ${n(h)}L${n(x + tooth / 2)} ${n(h * 0.84)}L${n(x + tooth)} ${n(h)}Z`;
+  }
+  const body = `<path d="${teeth}" fill="${ink}"/>${kilimAlong(marks, h * 0.56, ink, eye)}`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(w)}" height="${n2(h)}" viewBox="0 0 ${n2(w)} ${n2(h)}" aria-hidden="true" focusable="false" id="${prefixFor(opts.idPrefix, 'kilim', w, h)}">${body}</svg>`;
 }
 
 // ───────────────────────────────────────────────────────────── the signpost

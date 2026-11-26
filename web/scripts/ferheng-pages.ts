@@ -730,26 +730,28 @@ export const STYLE = `
 /* ---- tokens.css -------------------------------------------------------- */
 :root {
   color-scheme: dark;
-  --app-bg: #161412;
-  --ink: #f4eee6;
-  --ink-2: rgba(244, 238, 230, 0.86);
-  --ink-3: rgba(244, 238, 230, 0.66);
-  --ink-4: rgba(244, 238, 230, 0.56);
-  --bg: rgba(255, 248, 240, 0.06);
-  --surface: rgba(255, 248, 240, 0.05);
-  --surface-2: rgba(255, 248, 240, 0.1);
-  --border: rgba(255, 248, 240, 0.12);
-  --border-strong: rgba(255, 248, 240, 0.26);
-  /* the default colour theme's main colour by night (tokens.css \`data-palette\`), since these pages name no theme */
-  --accent: #1b7e6d;
-  --accent-hover: #166b5d;
-  --accent-ink: #fff8ee;
-  --primary: #f4eee6;
-  --primary-hover: #fffaf3;
-  --primary-ink: #1c1814;
+  --app-bg: #131c20;
+  --ink: #eef3f5;
+  --ink-2: #d3dde1;
+  --ink-3: #a3b2b9;
+  --ink-4: #8b9da6;
+  --bg: #1a262b;
+  --surface: #1a262b;
+  --surface-2: rgba(156, 190, 204, 0.1);
+  --border: rgba(238, 243, 245, 0.12);
+  --border-strong: rgba(238, 243, 245, 0.24);
+  /* the one accent by night, as the app draws it */
+  --accent: #32d46b;
+  --accent-hover: #4be07f;
+  --accent-lip: #019a46;
+  --accent-ink: #0a2a17;
+  --accent-text: #32d46b;
+  --primary: #eef3f5;
+  --primary-hover: #ffffff;
+  --primary-ink: #131c20;
   --gold: #f2b632;
   --gold-ink: #f5c85a;
-  --focus: rgba(244, 238, 230, 0.7);
+  --focus: #32d46b;
   --glass-blur: 20px;
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --r-xs: 6px;
@@ -1014,7 +1016,7 @@ main { padding-bottom: 8px; }
 /* ---- the entries ------------------------------------------------------- */
 .entries { margin-top: 20px; }
 .entry { padding: 20px 0; border-top: 1px solid var(--border); scroll-margin-top: calc(var(--nav-h) + 12px); }
-.entry:target { background: rgba(244, 238, 230, 0.06); box-shadow: inset 2px 0 0 var(--gold); padding-left: 14px; }
+.entry:target { background: rgba(238, 243, 245, 0.06); box-shadow: inset 2px 0 0 var(--gold); padding-left: 14px; }
 .hw { font-size: var(--text-title); margin: 0 0 10px; }
 .hw a:hover { color: var(--gold); }
 

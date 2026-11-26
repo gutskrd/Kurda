@@ -772,7 +772,7 @@ button.feature {
   opacity: 0.7;
 }
 .avatar-tile.is-selected {
-  border-color: var(--primary);
+  border-color: var(--accent-text);
   box-shadow: 0 0 0 2px var(--primary-soft);
 }
 .avatar-tile-none {
@@ -2420,7 +2420,7 @@ button.mkp-fact {
 }
 /* a link in running words: the app's ink, as everything that can be pressed is */
 .link {
-  color: var(--primary);
+  color: var(--accent-text);
 }
 
 
@@ -4410,7 +4410,7 @@ button.mkp-fact {
 }
 /* a saved word is on, and on is the ink of everything chosen, as a bookmarked story is */
 .dict-save.is-on {
-  color: var(--primary);
+  color: var(--accent-text);
 }
 /* a pronunciation with a character: the speaker beside its button (dictionary/EntryView.tsx) */
 .dict-voice {

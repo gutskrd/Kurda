@@ -1,8 +1,8 @@
 /**
  * The lesson's colours, taken from Hevalo's own palette (theme/palette.ts): the page and its cards, the ink for what
- * is chosen, a play button and the progress bar, and green and red only for right and wrong, with faint ridges of the
- * page's own colour along the top. Tiles and Check are the app's own (theme/tileTones.ts), so Check wears the one
- * violet. Pure data, so valley.test.ts can hold every text and ground pair to 4.5:1.
+ * is chosen and a play button, and green and red only for right and wrong, with faint ridges of the page's own colour
+ * along the top. Tiles, Check and the progress bar are the app's own (theme/tileTones.ts, ProgressBar.tsx), so Check
+ * and the bar wear the one accent. Pure data, so valley.test.ts can hold every text and ground pair to 4.5:1.
  */
 import { AA_NORMAL } from '../a11y/contrast';
 import { ensureContrast } from '../a11y/ensureContrast';

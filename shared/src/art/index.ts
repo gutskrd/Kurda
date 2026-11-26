@@ -186,10 +186,16 @@ export {
 export {
   PATH_STOP_ART,
   PATH_STOP_LOOKS,
+  PATH_REST,
   PATH_STOP_TONES,
+  pathChestSvg,
+  pathKilimSvg,
   pathSignpostSvg,
   pathStopSvg,
+  type PathChestOptions,
+  type PathKilimOptions,
   type PathSignpostOptions,
+  type UnitColours,
   type PathStopLook,
   type PathStopOptions,
 } from './path-land.js';
