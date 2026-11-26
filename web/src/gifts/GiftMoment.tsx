@@ -4,14 +4,18 @@
  * Rojda", with its Kurmancî name and meaning below and Say thanks, Send one back (a known adult's only) and Close (a
  * gift on a post, with no chat to thank in, has Close alone). Its
  * tier sets how strong the light is, and a grand gift keeps its night sky. While the server opens it the wrapped box
- * waits in the same light, for the tier's unwrap time; a tap or Skip goes straight to the gift. The rays turn by a CSS
- * transform, so nothing is drawn again frame by frame; under Reduce Motion the light is there and nothing moves.
+ * unwraps in the same light for the tier's unwrap time (shared gift-box-motion.ts): it shakes, the lid and bow pop off,
+ * the light bursts out and the rays come up with it, and the open box gives way as the gift springs out. A tap or Skip
+ * goes straight to the gift. Everything moves by transform, so nothing is drawn again frame by frame; under Reduce
+ * Motion the box and the light stand still and the gift fades in.
  *
  * The sender's own (`GiftSentMoment`) is the same light, smaller and brief, as a gift goes.
  */
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
+  GIFT_BOX_EXIT_MS,
+  GIFT_BOX_UNWRAPS,
   GIFT_MOMENT_LOOK,
   GIFT_MOMENT_MS,
   GIFT_SENT_FADE_MS,
@@ -165,6 +169,24 @@ export function GiftMoment({
   // Escape skips while the box waits and closes once the gift is out, read through a ref so the listener is set up once.
   const escape = useRef(onSkip);
   escape.current = revealed ? onClose : onSkip;
+  // The rays come up as the light bursts out of the box, and the open box stays a moment as the gift springs out of it.
+  const [burst, setBurst] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  useEffect(() => {
+    if (revealed || still) return;
+    const id = window.setTimeout(() => setBurst(true), GIFT_BOX_UNWRAPS[card.tier].burstMs);
+    return () => window.clearTimeout(id);
+  }, [revealed, still, card.tier]);
+  const [wasRevealed, setWasRevealed] = useState(revealed);
+  if (wasRevealed !== revealed) {
+    setWasRevealed(revealed);
+    setLeaving(revealed && !still);
+  }
+  useEffect(() => {
+    if (!leaving) return;
+    const id = window.setTimeout(() => setLeaving(false), GIFT_BOX_EXIT_MS);
+    return () => window.clearTimeout(id);
+  }, [leaving]);
 
   useEffect(() => {
     restore.current = document.activeElement as HTMLElement | null;
@@ -219,16 +241,17 @@ export function GiftMoment({
         <h2 className="gift-moment-title" ref={titleRef} tabIndex={-1}>
           {title}
         </h2>
-        <GiftLight sku={card.sku} look={look} art={art} lit={revealed} still={still}>
+        <GiftLight sku={card.sku} look={look} art={art} lit={revealed || burst} still={still}>
           {revealed ? (
             <div className="celebrate is-playing gift-moment-art">
               <CelebrationArt flecks={look.burst} seed={giftSeed(card.sku)} reach={art} still={still}>
                 <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={art} />
               </CelebrationArt>
             </div>
-          ) : (
-            <GiftBox tier={card.tier} size={Math.round(art * 0.82)} className="gift-moment-box" />
-          )}
+          ) : null}
+          {!revealed || leaving ? (
+            <GiftBox tier={card.tier} size={Math.round(art * 1.05)} motion={still ? 'still' : revealed ? 'exit' : 'unwrap'} className="gift-moment-box" />
+          ) : null}
         </GiftLight>
         {revealed ? (
           <div className="gift-moment-words">

@@ -11,7 +11,8 @@ import { haptic } from '../lib/haptics';
 type Phase = 'idle' | 'unwrapping' | 'revealed';
 
 /**
- * A gift message in the chat. To its recipient it is a wrapped present; a tap opens the gift's moment (GiftMoment.tsx):
+ * A gift message in the chat. To its recipient it is a wrapped present that hops now and then; a tap opens the gift's
+ * moment (GiftMoment.tsx):
  * the box waits in the gift's light for its tier's unwrap time, skippable with a tap and a short fade under Reduce
  * Motion, then the gift springs out with Say thanks, Wear it and Close. The sender sees whether it was opened, live. In a
  * group everyone sees who it was for and who opened theirs; the item stays a surprise to anyone who has not. Everyone
@@ -159,7 +160,7 @@ export function GiftBubble({
           {shown.myOpened ? (
             <GiftItemArt assetUrl={shown.assetUrl} category={shown.category} size={card.tier === 'grand' ? 132 : 64} />
           ) : (
-            <GiftBox tier={card.tier} size={72} className="gift-waiting" />
+            <GiftBox tier={card.tier} size={72} motion="idle" seed={card.batchId} />
           )}
         </span>
         <span className="gift-bubble-text">

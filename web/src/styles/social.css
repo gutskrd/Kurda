@@ -820,8 +820,8 @@
 }
 
 /*
- * Gifts in the chat (gifts/): CSS keyframes over the drawn SVG in GiftArt.tsx. The global Reduce Motion rule stops
- * them; the fades that still run are noted at the end of this section.
+ * Gifts in the chat (gifts/): the bubbles, the moment and its light. The wrapped box moves itself (GiftBox.tsx). The
+ * global Reduce Motion rule stops these keyframes; the fades that still run are noted at the end of this section.
  */
 
 /* ---- the composer's gift button ------------------------------------------ */
@@ -981,23 +981,6 @@ button.gift-bubble:active {
   height: 18px;
 }
 
-/* the wrapped present waits: a slow breath, and the bow catches the light */
-.gift-waiting {
-  animation: gift-breathe 2.8s ease-in-out infinite;
-  transform-origin: 50% 90%;
-}
-@keyframes gift-breathe {
-  0%,
-  100% {
-    transform: scale(1) rotate(0deg);
-  }
-  45% {
-    transform: scale(1.04) rotate(-2deg);
-  }
-  55% {
-    transform: scale(1.04) rotate(2deg);
-  }
-}
 
 /* ---- a gift's picture, and what was done with it ----------------------------- */
 .gift-item-art {
@@ -1120,25 +1103,9 @@ button.gift-bubble:active {
 .gift-moment .celebrate-glow {
   display: none;
 }
-/* the wrapped box waits in the light, wiggling: something is in there */
-.gift-moment-box {
-  animation: gift-wait 1.1s ease-in-out infinite;
-  transform-origin: 50% 90%;
-}
-@keyframes gift-wait {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  20% {
-    transform: rotate(-5deg) scale(1.03);
-  }
-  40% {
-    transform: rotate(4deg) scale(1.03);
-  }
-  60% {
-    transform: rotate(0deg);
-  }
+/* the wrapped box opens where the gift will stand (GiftBox.tsx plays it), and gives way to it in the same place */
+.gift-light-art > * {
+  grid-area: 1 / 1;
 }
 .gift-moment.gift-moment-grand .night-sky {
   position: fixed;
@@ -1568,7 +1535,6 @@ button.gift-bubble:active {
 .gift-arrival-art {
   flex: none;
   display: inline-grid;
-  animation: gift-breathe 2.8s ease-in-out infinite;
 }
 .gift-arrival-who {
   flex: none;
@@ -1623,9 +1589,6 @@ button.gift-bubble:active {
 
 /* ---- less motion: the light stands still, and the rest is a short fade ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .gift-waiting,
-  .gift-arrival-art,
-  .gift-moment-box,
   .gift-light-rays,
   .gift-light-glow,
   .gift-sent-art {

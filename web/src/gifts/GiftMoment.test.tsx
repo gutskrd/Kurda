@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { act, screen, within } from '@testing-library/react';
+import { useState } from 'react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { GIFT_SENT_FADE_MS, GIFT_SENT_LOOK, GIFT_SENT_MS, type GiftCard } from '@kurda/shared';
+import { GIFT_BOX_EXIT_MS, GIFT_BOX_UNWRAPS, GIFT_SENT_FADE_MS, GIFT_SENT_LOOK, GIFT_SENT_MS, type GiftCard } from '@kurda/shared';
 import { jsonResponse, renderApp } from '../test/utils';
-import { GiftSentMoment, PostGiftOpen } from './GiftMoment';
+import { GiftMoment, GiftSentMoment, PostGiftOpen } from './GiftMoment';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -45,6 +46,57 @@ describe('the sender’s moment', () => {
     expect(document.querySelector('.gift-sent .gift-light')).toHaveClass('is-still');
     (document.querySelector('.gift-sent') as HTMLElement).click();
     expect(onDone).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the gift’s moment', () => {
+  const card: GiftCard = {
+    batchId: 'b1',
+    sku: 'gift-heyv',
+    name: 'Heyv',
+    category: 'gift',
+    assetUrl: null,
+    tier: 'grand',
+    recipients: [{ name: 'baran', avatarUrl: null, isMe: true, opened: false }],
+    from: null,
+    myGiftId: 'g1',
+    myOpened: false,
+    equippable: null,
+  };
+  function Stage(): React.JSX.Element {
+    const [revealed, setRevealed] = useState(false);
+    return <GiftMoment card={card} from="Rojda" revealed={revealed} onSkip={() => setRevealed(true)} onClose={() => undefined} />;
+  }
+
+  it('unwraps the box in its light, brings the rays up as the light bursts out, and lets the box give way to the gift', () => {
+    vi.useFakeTimers();
+    renderApp(<Stage />);
+    const box = (): Element | null => document.querySelector('.gift-moment .gift-box');
+    expect(box()).toHaveAttribute('data-motion', 'unwrap');
+    expect(box()).toHaveClass('gift-box-grand');
+    const light = document.querySelector('.gift-moment .gift-light')!;
+    expect(light).not.toHaveClass('is-lit');
+    act(() => {
+      vi.advanceTimersByTime(GIFT_BOX_UNWRAPS.grand.burstMs);
+    });
+    expect(light).toHaveClass('is-lit');
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    // the gift is out, and the open box stays a moment as it springs out of it
+    expect(screen.getByText('Heyv')).toBeInTheDocument();
+    expect(box()).toHaveAttribute('data-motion', 'exit');
+    act(() => {
+      vi.advanceTimersByTime(GIFT_BOX_EXIT_MS);
+    });
+    expect(box()).toBeNull();
+  });
+
+  it('keeps the box still under Reduce Motion, and lets the gift simply take its place', () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener() {}, removeEventListener() {} }));
+    renderApp(<Stage />);
+    expect(document.querySelector('.gift-moment .gift-box')).toHaveAttribute('data-motion', 'still');
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    expect(screen.getByText('Heyv')).toBeInTheDocument();
+    expect(document.querySelector('.gift-moment .gift-box')).toBeNull();
   });
 });
 
