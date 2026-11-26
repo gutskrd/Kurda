@@ -959,9 +959,10 @@ button.lp-scard:focus-visible {
 /*
  * A finished tile sealed in wax (PathScene.tsx `TileWax`, shared `pathWaxSvg`), on the tile's own 112-point canvas laid
  * as its drawing is. In its moment the drop, the poured wax, the pressed seal and the brass stamp move apart: the drop
- * landing on the tile's middle (56, 72 of the canvas) and the pour spreading from the face's (56, 58); the stamp on its
- * 80 by 64 canvas (shared PATH_STAMP_TOOL) from -4, -22 of the stop. A gold tile's glint crosses its face, a rounded
- * square 72 by 60 from 20, 28 of the canvas.
+ * landing on the tile's middle (56, 72 of the canvas, shared PATH_WAX_DROP) and its droplets thrown out from there, the
+ * pour spreading from the face's (56, 58); the stamp on its 78 by 87 canvas (shared PATH_STAMP_TOOL) from -3, -44 of the
+ * stop. A gold tile's glint and the stamp's shadow are cut to its face, a rounded square 72 by 60 from 20, 28 of the
+ * canvas.
  */
 .lp-wax {
   position: absolute;
@@ -986,13 +987,14 @@ button.lp-scard:focus-visible {
 .lp-wax-tool {
   position: absolute;
   z-index: 1;
-  left: 16px;
-  top: 6px;
-  width: 80px;
-  height: 64px;
+  left: 17px;
+  top: -16px;
+  width: 78px;
+  height: 87px;
   line-height: 0;
 }
-.lp-wax-glint {
+/* The tile's face, which a gold tile's glint crosses and the stamp's shadow falls on, cut to it. */
+.lp-wax-face {
   position: absolute;
   left: 20px;
   top: 28px;
@@ -1000,6 +1002,17 @@ button.lp-scard:focus-visible {
   height: 60px;
   border-radius: 18px;
   overflow: hidden;
+}
+/* Dark, flat and soft at its edge for being faint; under the stamp's pad, a little below the face's middle. */
+.lp-wax-shadow {
+  position: absolute;
+  left: 4px;
+  top: 34px;
+  width: 64px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgb(5 8 10);
+  opacity: 0;
 }
 .lp-wax-band {
   position: absolute;
@@ -1017,38 +1030,6 @@ button.lp-scard:focus-visible {
   z-index: 6;
 }
 
-/*
- * A finished topic's stars set into its wax along the tile's near edge (PathRing.tsx `RoundStars`, shared
- * `roundStars`): gold, edged a little darker so they read on any unit's wax, and cream on gold wax. The newest lights in
- * with a short pop once the wax has settled (shared PATH_RETURN `starAtMs`).
- */
-.lp-stars {
-  position: absolute;
-  inset: 0;
-  overflow: visible;
-  pointer-events: none;
-}
-.lp-star {
-  fill: var(--gold);
-  stroke: rgb(58 35 6 / 0.45);
-  stroke-width: 1.4;
-  stroke-linejoin: round;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .lp-star.is-earned {
-    animation: lp-star-in 280ms var(--ease-out) both;
-  }
-}
-@keyframes lp-star-in {
-  from {
-    opacity: 0;
-    scale: 1.8;
-  }
-  70% {
-    opacity: 1;
-    scale: 0.9;
-  }
-}
 /* A topic card's three stars: gold for each round played, the bar's quiet track for the rest. */
 .lp-star-row {
   display: inline-flex;
@@ -1945,20 +1926,10 @@ button.lp-scard:focus-visible {
   font-size: var(--text);
   color: var(--ink-3);
 }
-/* A finished topic's card: its waxed tile, and the gold one three stars earn, each beside its word. */
+/* A finished topic's card: its waxed tile with one, two and three stars pressed in, the last gold. */
 .lp-wax-legend {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1) var(--space-4);
-  margin: 0;
-  font-size: var(--text);
-  color: var(--ink-3);
-}
-.lp-wax-key {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 /* The tile is about 26 points across in the middle of its 40-point drawing; only the tile shows. */
 .lp-wax-icon {
@@ -2024,8 +1995,7 @@ button.lp-scard:focus-visible {
   color: inherit;
   font-weight: 800;
 }
-.lp-pop.is-go .lp-pop-line,
-.lp-pop.is-go .lp-wax-legend {
+.lp-pop.is-go .lp-pop-line {
   color: inherit;
   opacity: 0.85;
 }

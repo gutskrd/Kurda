@@ -1996,7 +1996,6 @@ export const en = {
   'coursemap.roundsDone': 'All {last} rounds done',
   'coursemap.roundsWhy': 'Play its lessons again to fill the bar once more. Each full bar earns a star, and three stars turn its wax gold.',
   'coursemap.roundsAll': 'Three stars: every lesson here played three times.',
-  'coursemap.waxGold': 'Three stars',
   'lesson.title': 'Lesson',
   'lesson.loading': 'Opening the lesson…',
   'lesson.loadFailed': 'This lesson could not be opened',

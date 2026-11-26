@@ -9,6 +9,7 @@ import {
   PATH_MOTION,
   PATH_RETURN,
   PATH_STAMP_MOMENT,
+  PATH_STAMP_REPRESS,
   PATH_STOP_ART,
   TOPIC_STARS,
   type LessonKind,
@@ -29,7 +30,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { FACE_INK, REST, barAt, barOf, stopLook, type ToneColors } from './path';
 import { MilestoneArt, STOP_FACE, StopArt } from './PathWorld';
 import { TileWax, stampTrack } from './TileWax';
-import { RoundStars, TopicBar } from './TopicBar';
+import { TopicBar } from './TopicBar';
 import type { SkillNode } from './types';
 
 const { node: NODE } = PATH_GEOMETRY;
@@ -207,7 +208,7 @@ export function SkillNodeView({
   const stamped = useRef(stamp?.onStamped);
   stamped.current = stamp?.onStamped;
   const pressDelay = stamp?.delay ?? 0;
-  // Stamped in its moment just now: its newest star lights in as the stamp settles.
+  // Sealed in its moment just now: with three stars, its wax warms into gold.
   const [fresh, setFresh] = useState(false);
   useEffect(() => {
     if (!pressing) return;
@@ -241,17 +242,36 @@ export function SkillNodeView({
   const bar = near ? barOf(stop) : null;
   const moved = change?.ring && stop.kind === 'skill' ? change.ring : null;
   const roundDone = !!moved && moved.to.rounds > moved.from.rounds;
-  // Squashed under the stamp in its moment.
-  const { squash } = PATH_STAMP_MOMENT;
-  const squashed = pressing
-    ? {
-        transformOrigin: '50% 85%',
-        transform: [{ scaleX: stampTrack(moment, squash.map(([at, v]) => [at, 2 - v] as const)) }, { scaleY: stampTrack(moment, squash) }],
-      }
-    : null;
-  // A third star lighting now: once it has, the wax warms into gold. Under Reduce Motion it is simply gold.
-  const starDelay = fresh ? 0 : PATH_RETURN.starAtMs;
-  const warmAt = (roundDone || fresh) && stop.kind === 'skill' && stop.rounds >= TOPIC_STARS && !reduce ? starDelay : null;
+  // A round made whole on a stop already sealed: the stamp comes back as the stop finishes and presses the new star in,
+  // felt as a light tap; until then it shows the stars it had.
+  const again = useRef(new Animated.Value(0)).current;
+  const three = (n: number): number => Math.min(TOPIC_STARS, Math.max(1, n));
+  const pressFrom = roundDone && moved && moved.from.rounds >= 1 && !!stamp && !pressing && !reduce ? three(moved.from.rounds) : null;
+  const [pressingAgain, setPressingAgain] = useState(pressFrom !== null);
+  useEffect(() => {
+    if (pressFrom === null) return;
+    setPressingAgain(true);
+    again.setValue(0);
+    const { ms, pressAt } = PATH_STAMP_REPRESS;
+    const at = PATH_RETURN.finishAtMs;
+    const run = Animated.timing(again, { toValue: 1, duration: ms, delay: at, easing: Easing.linear, useNativeDriver: true, isInteraction: false });
+    run.start(({ finished }) => finished && setPressingAgain(false));
+    const knock = setTimeout(() => haptic('tap'), at + ms * pressAt);
+    return () => {
+      run.stop();
+      clearTimeout(knock);
+    };
+  }, [pressFrom, again]);
+  const stars = stop.kind === 'skill' ? three(stop.rounds) : 1;
+  // Squashed under the stamp in its moment, or a little as it presses again.
+  const squashOf = (t: Animated.Value, squash: readonly (readonly [number, number])[]) => ({
+    transformOrigin: '50% 85%',
+    transform: [{ scaleX: stampTrack(t, squash.map(([at, v]) => [at, 2 - v] as const)) }, { scaleY: stampTrack(t, squash) }],
+  });
+  const squashed = pressing ? squashOf(moment, PATH_STAMP_MOMENT.squash) : pressFrom !== null && pressingAgain ? squashOf(again, PATH_STAMP_REPRESS.squash) : null;
+  // Its third star pressed in now: once the stamp has lifted, the wax warms into gold. Under Reduce Motion it is simply gold.
+  const warmAt =
+    stars < TOPIC_STARS || reduce ? null : fresh ? 0 : pressFrom !== null && pressFrom < TOPIC_STARS ? PATH_RETURN.finishAtMs + PATH_STAMP_REPRESS.ms : null;
   // Once sealed the glyph is under the wax; in the moment it goes as the stamp presses, under the wax poured over it.
   const { pressAt } = PATH_STAMP_MOMENT;
   const glyphShown = pressing ? moment.interpolate({ inputRange: [0, pressAt, pressAt + 0.04, 1], outputRange: [1, 1, 0, 0] }) : stamp ? 0 : 1;
@@ -373,16 +393,14 @@ export function SkillNodeView({
                 stopKey={stop.key}
                 tone={unitTone}
                 dark={scheme === 'dark'}
-                gold={!pressing && stop.rounds >= TOPIC_STARS}
+                stars={stars}
+                gold={!pressing && stars >= TOPIC_STARS}
                 warmAt={warmAt}
                 worn={stop.finish === 'refresh'}
                 live={live && !reduce}
                 moment={pressing ? moment : null}
+                again={pressFrom !== null && pressingAgain ? { t: again, from: pressFrom } : null}
               />
-            ) : null}
-            {/* Its stars, once sealed: a round won on the return lights its new one once the wax has settled. */}
-            {stamp && !pressing && near && stop.kind === 'skill' && stop.rounds > 0 ? (
-              <RoundStars rounds={stop.rounds} earned={roundDone || fresh} delay={starDelay} gold={stop.rounds >= TOPIC_STARS} warmAt={warmAt} />
             ) : null}
             {stop.kind === 'skill' && stop.finish === 'refresh' ? (
               <View style={[styles.badge, { backgroundColor: colors.background, borderColor: tone.fill }]} pointerEvents="none">

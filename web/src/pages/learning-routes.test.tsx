@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { PATH_RETURN, PATH_STAMP_REPRESS } from '@kurda/shared';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import type { InitialEntry } from 'react-router-dom';
 import { renderApp, jsonResponse } from '../test/utils';
@@ -398,13 +399,13 @@ describe('a course map', () => {
     expect(scene).toHaveAttribute('data-scene', 'apple');
     expect(scene).toHaveAttribute('aria-hidden', 'true');
     expect(scene!.className).toMatch(/\bis-(start|end)\b/);
-    // Its finished topics, seen here for the first time, are simply sealed in wax, with no moment for each, and wear their two stars.
+    // Its finished topics, seen here for the first time, are simply sealed in wax, with no moment for each, their two
+    // stars pressed in.
     const hello = within(first).getByRole('button', { name: /^Hello, Done/ });
     expect(hello).toHaveClass('is-stamped');
     expect(hello).not.toHaveClass('is-stamping');
-    expect(hello.querySelector('.lp-wax')).not.toBeNull();
+    expect(hello.querySelector('.lp-wax')).toHaveAttribute('data-stars', '2');
     expect(hello.querySelector('.lp-wax-gold')).toBeNull();
-    expect(within(hello).getByTestId('lp-stars-2')).toBeInTheDocument();
     // The milestone ending the chapter bears its number, and its trophy is won.
     expect(within(first).getByRole('button', { name: 'Chapter 1 trophy, earned' })).toHaveClass('is-milestone');
     expect(first.querySelector('.lp-milestone-num')).toHaveTextContent('1');
@@ -655,21 +656,20 @@ describe('a course map', () => {
     const c = await screen.findByRole('button', { name: 'Topic c, Done — strong, all 3 rounds done' });
     expect(within(c).queryByTestId('lp-bar')).not.toBeInTheDocument();
     expect(c).toHaveClass('is-stamped');
-    expect(within(c).getByTestId('lp-stars-3')).toBeInTheDocument();
+    expect(c.querySelector('.lp-wax')).toHaveAttribute('data-stars', '3');
     expect(c.querySelector('.lp-wax-gold')).not.toBeNull();
     // Topic d, the one to do now: a piece filled of two, and no wax yet.
     const d = screen.getByRole('button', { name: /^Topic d/ });
     expect(within(d).getByTestId('lp-bar').querySelectorAll('.lp-bar-piece')).toHaveLength(2);
     expect(d.querySelectorAll('.lp-bar-ink.is-filled')).toHaveLength(1);
     expect(d.querySelector('.lp-wax')).toBeNull();
-    expect(within(d).queryByTestId(/lp-stars/)).not.toBeInTheDocument();
 
     await userEvent.click(c);
     const card = screen.getByRole('group', { name: 'Topic c' });
     expect(within(card).getByTestId('lp-card-stars-3')).toBeInTheDocument();
     expect(within(card).getByText('All 3 rounds done')).toBeInTheDocument();
-    // Its card says what its wax and gold wax mean.
-    expect(within(within(card).getByTestId('lp-wax-legend')).getByText('Three stars')).toBeInTheDocument();
+    // Its card shows its wax with one, two and three stars pressed in.
+    expect(within(card).getByTestId('lp-wax-legend').querySelectorAll('.lp-wax-icon')).toHaveLength(3);
   });
 
   it('plays a gold topic again from the lesson finished fewest times, and says the round it is in', async () => {
@@ -721,9 +721,42 @@ describe('a course map', () => {
     await waitFor(() => expect(within(d).getByTestId('lp-bar')).not.toHaveClass('is-whole'), { timeout: 3000 });
     expect(d.querySelectorAll('.lp-bar-ink.is-filled')).toHaveLength(0);
     expect(JSON.parse(localStorage.getItem('hevalo:stamped:c1')!)).toContain('s:d');
-    // Once the stamp has settled, its first star lights in.
-    await waitFor(() => expect(d.querySelector('.lp-star.is-earned')).not.toBeNull(), { timeout: 3000 });
-    expect(within(d).getByTestId('lp-stars-1')).toBeInTheDocument();
+    // Its first star pressed into the wax.
+    expect(d.querySelector('.lp-wax')).toHaveAttribute('data-stars', '1');
+  });
+
+  it('presses a sealed topic’s new star into its wax on coming back from the lesson that made its next round whole', async () => {
+    // As the path was drawn before the lesson: Topic c sealed with two stars, a lesson into its third round.
+    sessionStorage.setItem(
+      'hevalo:path:c1',
+      JSON.stringify({ 's:a': { state: 'done', done: 2, rounds: 1, pieces: 0 }, 's:b': { state: 'done', done: 2, rounds: 1, pieces: 1 }, 's:c': { state: 'done', done: 2, rounds: 2, pieces: 1 }, 's:d': { state: 'current', done: 1, rounds: 0, pieces: 1 }, 's:e': { state: 'locked', done: 0, rounds: 0, pieces: 0 }, 's:f': { state: 'locked', done: 0, rounds: 0, pieces: 0 } }),
+    );
+    localStorage.setItem('hevalo:stamped:c1', JSON.stringify(['s:a', 's:b', 's:c']));
+    serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
+    try {
+      routes('/app/learn/course/c1');
+
+      const c = await screen.findByRole('button', { name: /^Topic c/ });
+      const stop = c.closest('[data-stop]') ?? c.querySelector('[data-stop]');
+      // The page opens at the topic played, though another is current.
+      expect(scroll.mock.contexts[0]).toBe(stop);
+      // First with the two stars it had; then the stamp comes back and presses the third in, and its wax turns gold.
+      expect(c.querySelector('.lp-wax')).toHaveAttribute('data-stars', '2');
+      expect(c.querySelector('.lp-wax-gold')).toBeNull();
+      await waitFor(() => expect(c.querySelector('.lp-wax-tool')).not.toBeNull(), { timeout: 3000 });
+      expect(c.querySelector('.lp-wax')).toHaveAttribute('data-stars', '3');
+      expect(c.querySelector('.lp-wax-gold')).not.toBeNull();
+      // It was sealed before, so it is not sealed again: no drop of wax this time.
+      expect(c).not.toHaveClass('is-stamping');
+      expect(c.querySelector('.lp-wax-blob')).toBeNull();
+      // With no new current topic the page stays with it, its wax warming, rather than going back to the current one.
+      await waitFor(() => expect(c.querySelector('.lp-wax-tool')).toBeNull(), { timeout: 4000 });
+      await act(() => new Promise((done) => setTimeout(done, PATH_RETURN.bubbleAtMs - PATH_RETURN.finishAtMs - PATH_STAMP_REPRESS.ms + 300)));
+      expect(scroll.mock.contexts.filter((el) => el !== stop)).toEqual([]);
+    } finally {
+      scroll.mockRestore();
+    }
   });
 
   it('comes back to the section a lesson was played in, a finished one too, with its bar moving on', async () => {

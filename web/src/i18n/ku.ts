@@ -1911,7 +1911,6 @@ export const ku: Catalogue = {
   'coursemap.roundsDone': 'Hemû {last} dor qediyan',
   'coursemap.roundsWhy': 'Waneyên wê dîsa bike da ku şerît careke din tije bibe. Her şerîteke tije stêrkekê tîne, û bi sê stêrkan mûma wê zêrîn dibe.',
   'coursemap.roundsAll': 'Sê stêrk: te her waneya vir sê caran kir.',
-  'coursemap.waxGold': 'Sê stêrk',
   'lesson.title': 'Wane',
   'lesson.loading': 'Wane vedibe…',
   'lesson.loadFailed': 'Ev wane venebû',

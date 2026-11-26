@@ -182,7 +182,7 @@ function GoCard({
       </Text>
       {where ? <Text style={[styles.goLine, dir.text, { color: ink }]}>{where}</Text> : null}
       {stop.rounds > 0 ? <Stars rounds={stop.rounds} /> : null}
-      {stop.state === 'done' ? <WaxLegend unitTone={unit.tone} ink={ink} /> : null}
+      {stop.state === 'done' ? <WaxLegend unitTone={unit.tone} /> : null}
       {action ? <StartButton label={action.label} xp={xpOf(stop, t, locale)} tone={tone} onPress={action.go} /> : null}
       {skill.hasGrammar ? <Tips skill={skill} colour={ink} onTips={actions.onTips} /> : null}
     </>
@@ -251,30 +251,23 @@ function StartButton({ label, xp, tone, onPress }: { label: string; xp: string |
 /** The glint's pause between crossings and its crossing, close to the website's 2.8 s round. */
 const GLINT = { restMs: 1500, crossMs: 1300 } as const;
 
-/** What a topic's waxed tile says: sealed in its unit's wax once finished, and gold once it has all three stars. */
-function WaxLegend({ unitTone, ink }: { unitTone: UnitTone; ink: string }): React.JSX.Element {
+/** What a topic's wax becomes: a star pressed in for each full round, and gold with all three. Decorative. */
+function WaxLegend({ unitTone }: { unitTone: UnitTone }): React.JSX.Element {
   const { scheme } = useTheme();
-  const { t } = useI18n();
   const dir = useDirection();
-  const xml = useMemo(() => {
-    const dark = scheme === 'dark';
-    const key = (gold: boolean): string => pathWaxSvg({ tone: unitTone, seed: 'legend', gold, dark, size: WAX_KEY });
-    return { own: key(false), gold: key(true) };
-  }, [unitTone, scheme]);
-  const key = (svg: string, words: string): React.JSX.Element => (
-    <View style={[styles.waxKey, { flexDirection: dir.row }]}>
-      <View style={styles.waxIcon} aria-hidden>
-        <View style={styles.waxDrawing}>
-          <SvgXml xml={svg} width={WAX_KEY} height={WAX_KEY} />
-        </View>
-      </View>
-      <Text style={[styles.small, { color: ink }]}>{words}</Text>
-    </View>
+  const tiles = useMemo(
+    () => [1, 2, 3].map((stars) => pathWaxSvg({ tone: unitTone, seed: 'legend', stars, gold: stars === 3, dark: scheme === 'dark', size: WAX_KEY })),
+    [unitTone, scheme],
   );
   return (
-    <View style={[styles.waxLegend, { flexDirection: dir.row }]} testID="lp-wax-legend">
-      {key(xml.own, t('coursemap.path.waxDone'))}
-      {key(xml.gold, t('coursemap.path.waxGold'))}
+    <View style={[styles.waxLegend, { flexDirection: dir.row }]} aria-hidden testID="lp-wax-legend">
+      {tiles.map((svg, i) => (
+        <View key={i} style={styles.waxIcon}>
+          <View style={styles.waxDrawing}>
+            <SvgXml xml={svg} width={WAX_KEY} height={WAX_KEY} />
+          </View>
+        </View>
+      ))}
     </View>
   );
 }
@@ -457,7 +450,7 @@ function PanelCard({
         </View>
       ) : null}
       {stop.state === 'done' && stop.rounds > 0 ? line(t(stop.rounds < TOPIC_STARS ? 'coursemap.path.roundsWhy' : 'coursemap.path.roundsAll')) : null}
-      {stop.state === 'done' ? <WaxLegend unitTone={unit.tone} ink={colors.textSecondary} /> : null}
+      {stop.state === 'done' ? <WaxLegend unitTone={unit.tone} /> : null}
       {stop.state === 'done' ? line(stop.finish === 'refresh' ? t('coursemap.path.refreshWhy') : t('coursemap.strength', { percent: skill.strength })) : null}
       {stop.state === 'locked' ? line(stop.after ? t('coursemap.path.lockedAfter', { title: stop.after.title }) : t('coursemap.lockedBadge')) : null}
       {stop.state !== 'locked' && !stop.launch ? line(t('coursemap.path.notYet')) : null}
@@ -531,8 +524,7 @@ const styles = StyleSheet.create({
   // The tale's Kurdish title, under "Hamo's story".
   tale: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontStyle: 'italic' },
   small: { fontSize: typography.sizes.text },
-  waxLegend: { flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.md, rowGap: spacing.xs },
-  waxKey: { alignItems: 'center', gap: spacing.xs },
+  waxLegend: { gap: spacing.sm },
   // Only the tile shows, from the middle of its drawing.
   waxIcon: { width: 30, height: 32, overflow: 'hidden' },
   waxDrawing: { position: 'absolute', left: -5, top: -7 },

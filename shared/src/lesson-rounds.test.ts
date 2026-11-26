@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PATH_BAR, TOPIC_STARS, barPieces, nextInRound, roundStars, starPath, topicRounds } from './lesson-rounds.js';
-import { PATH_WAX_SEAL } from './art/path-land.js';
+import { PATH_BAR, TOPIC_STARS, barPieces, nextInRound, starPath, topicRounds, waxStars } from './lesson-rounds.js';
 
 describe('a topic’s rounds', () => {
   it('fills a piece of the first round for each lesson finished once', () => {
@@ -73,26 +72,33 @@ describe('the bar over a topic’s stop', () => {
 });
 
 describe('a topic’s stars', () => {
-  it('lights one star for each full round, none before the first and no more than three', () => {
-    expect(roundStars(0)).toEqual([]);
-    expect([1, 2, 3, 7].map((r) => roundStars(r).length)).toEqual([1, 2, 3, 3]);
+  it('presses one star into the wax for each full round, at least one and no more than three', () => {
+    expect([0, 1, 2, 3, 7].map((r) => waxStars(r).length)).toEqual([1, 1, 2, 3, 3]);
     expect(TOPIC_STARS).toBe(3);
   });
 
-  it('sets them into the wax along the tile’s near edge, on its face and clear of the diamond pressed above them', () => {
-    const { cx, cy, w, h } = PATH_WAX_SEAL;
-    // on the tile's face, a rounded square 72 by 60 round its middle at 36, 30 (its corners about a cubic's curve)
-    const onFace = (x: number, y: number): boolean => Math.abs((x - 36) / 36) ** 3 + Math.abs((y - 30) / 30) ** 3 < 1;
-    // outside the diamond, with a point to spare
-    const clear = (x: number, y: number): boolean => Math.abs(x - cx) / w + Math.abs(y - cy) / h > 1 + 1 / h;
+  it('lays them across the tile’s face: one large in the middle, two side by side, three with the middle one higher', () => {
+    // on the tile's face, a rounded square 72 by 60 round its middle at 36, 30 (its corners about a cubic's curve), with a
+    // point to spare
+    const onFace = (x: number, y: number): boolean => Math.abs((x - 36) / 35) ** 3 + Math.abs((y - 30) / 29) ** 3 < 1;
+    // a star's corners: its five points, and how far its arms reach across and its feet down
+    const corners = (s: { x: number; y: number; r: number }): Array<[number, number]> =>
+      [0, 1, 2, 3, 4].map((k): [number, number] => [s.x + s.r * Math.sin((k * 2 * Math.PI) / 5), s.y - s.r * Math.cos((k * 2 * Math.PI) / 5)]);
     for (const rounds of [1, 2, 3]) {
-      const stars = roundStars(rounds);
-      for (const s of stars) {
-        for (const [dx, dy] of [[-s.r, 0], [s.r, 0], [0, s.r]]) expect(onFace(s.x + dx!, s.y + dy!), `${rounds}`).toBe(true);
-        for (const [dx, dy] of [[0, -s.r], [-s.r * 0.95, -s.r * 0.31], [s.r * 0.95, -s.r * 0.31]]) expect(clear(s.x + dx!, s.y + dy!), `${rounds}`).toBe(true);
-      }
-      for (let i = 1; i < stars.length; i++) expect(stars[i]!.x - stars[i - 1]!.x).toBeGreaterThan(stars[i]!.r + stars[i - 1]!.r - 4);
+      const stars = waxStars(rounds);
+      for (const s of stars) for (const [x, y] of corners(s)) expect(onFace(x, y), `${rounds}`).toBe(true);
+      // side by side, apart, the outer ones level and the same size, the one star largest
+      for (let i = 1; i < stars.length; i++) expect(stars[i]!.x - stars[i - 1]!.x).toBeGreaterThan(stars[i]!.r + stars[i - 1]!.r - 6);
+      expect(stars[0]!.y).toBe(stars[stars.length - 1]!.y);
+      expect(stars[0]!.r).toBe(stars[stars.length - 1]!.r);
     }
+    expect(waxStars(1)[0]!.r).toBeGreaterThan(waxStars(2)[0]!.r);
+    expect(waxStars(2)[0]!.r).toBeGreaterThan(waxStars(3)[0]!.r);
+    // the crown: the middle of three a little higher than the others, and centred
+    const [l, m, r] = waxStars(3);
+    expect(m!.y).toBeLessThan(l!.y);
+    expect(m!.x).toBe(36);
+    expect(l!.x + r!.x).toBe(72);
   });
 
   it('draws a star as ten corners, point up', () => {

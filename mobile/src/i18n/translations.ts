@@ -3484,8 +3484,6 @@ export type TranslationKey =
   | 'coursemap.path.roundsDone'
   | 'coursemap.path.roundsWhy'
   | 'coursemap.path.roundsAll'
-  | 'coursemap.path.waxDone'
-  | 'coursemap.path.waxGold'
   | 'practice.hub.xp'
   | 'quests.monthly.title'
   | 'quests.monthly.soFar'
@@ -7709,8 +7707,6 @@ const en: Catalog = {
   'coursemap.path.roundsDone': 'All {last} rounds done',
   'coursemap.path.roundsWhy': 'Play its lessons again to fill the bar once more. Each full bar earns a star, and three stars turn its wax gold.',
   'coursemap.path.roundsAll': 'Three stars: every lesson here played three times.',
-  'coursemap.path.waxDone': 'Done',
-  'coursemap.path.waxGold': 'Three stars',
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'This month',
   'quests.monthly.soFar': '{done} of {possible} so far this month',
@@ -11906,8 +11902,6 @@ const ku: Catalog = {
   'coursemap.path.roundsDone': 'Hemû {last} dor qediyan',
   'coursemap.path.roundsWhy': 'Waneyên wê dîsa bike da ku şerît careke din tije bibe. Her şerîteke tije stêrkekê tîne, û bi sê stêrkan mûma wê zêrîn dibe.',
   'coursemap.path.roundsAll': 'Sê stêrk: te her waneya vir sê caran kir.',
-  'coursemap.path.waxDone': 'Qediya',
-  'coursemap.path.waxGold': 'Sê stêrk',
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Ev meh',
   'quests.monthly.soFar': '{done} ji {possible} heta niha di vê mehê de',
@@ -16103,8 +16097,6 @@ const de: Catalog = {
   'coursemap.path.roundsDone': 'Alle {last} Runden geschafft',
   'coursemap.path.roundsWhy': 'Mach die Lektionen noch einmal, um den Balken wieder zu füllen. Jeder volle Balken bringt einen Stern, und drei Sterne machen das Wachs golden.',
   'coursemap.path.roundsAll': 'Drei Sterne: Du hast jede Lektion hier dreimal gemacht.',
-  'coursemap.path.waxDone': 'Geschafft',
-  'coursemap.path.waxGold': 'Drei Sterne',
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Diesen Monat',
   'quests.monthly.soFar': '{done} von {possible} bisher in diesem Monat',
@@ -20300,8 +20292,6 @@ const es: Catalog = {
   'coursemap.path.roundsDone': 'Las {last} rondas hechas',
   'coursemap.path.roundsWhy': 'Vuelve a hacer sus lecciones para llenar la barra otra vez. Cada barra llena te da una estrella, y con tres estrellas su cera se vuelve dorada.',
   'coursemap.path.roundsAll': 'Tres estrellas: has hecho cada lección de aquí tres veces.',
-  'coursemap.path.waxDone': 'Hecho',
-  'coursemap.path.waxGold': 'Tres estrellas',
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Este mes',
   'quests.monthly.soFar': '{done} de {possible} hasta ahora este mes',
@@ -24497,8 +24487,6 @@ const tr: Catalog = {
   'coursemap.path.roundsDone': '{last} turun hepsi tamamlandı',
   'coursemap.path.roundsWhy': 'Çubuğu yeniden doldurmak için derslerini tekrar yap. Dolan her çubuk bir yıldız kazandırır; üç yıldızla mumu altın olur.',
   'coursemap.path.roundsAll': 'Üç yıldız: buradaki her dersi üç kez yaptın.',
-  'coursemap.path.waxDone': 'Bitti',
-  'coursemap.path.waxGold': 'Üç yıldız',
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Bu ay',
   'quests.monthly.soFar': 'Bu ay şimdiye kadar {done} / {possible}',
@@ -28694,8 +28682,6 @@ const ar: Catalog = {
   'coursemap.path.roundsDone': 'اكتملت الجولات كلها ({last})',
   'coursemap.path.roundsWhy': 'أعد دروسه لتملأ الشريط من جديد. كل شريط ممتلئ يمنحك نجمة، وثلاث نجوم تجعل شمعه ذهبيًا.',
   'coursemap.path.roundsAll': 'ثلاث نجوم: أكملت كل درس هنا ثلاث مرات.',
-  'coursemap.path.waxDone': 'مُنجز',
-  'coursemap.path.waxGold': 'ثلاث نجوم',
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'هذا الشهر',
   'quests.monthly.soFar': '{done} من {possible} حتى الآن هذا الشهر',
@@ -32891,8 +32877,6 @@ const fr: Catalog = {
   'coursemap.path.roundsDone': 'Les {last} tours terminés',
   'coursemap.path.roundsWhy': 'Refais ses leçons pour remplir la barre une fois de plus. Chaque barre pleine rapporte une étoile, et trois étoiles rendent sa cire dorée.',
   'coursemap.path.roundsAll': 'Trois étoiles : tu as fait chaque leçon d’ici trois fois.',
-  'coursemap.path.waxDone': 'Terminé',
-  'coursemap.path.waxGold': 'Trois étoiles',
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Ce mois-ci',
   'quests.monthly.soFar': '{done} sur {possible} jusqu’ici ce mois-ci',
@@ -37088,8 +37072,6 @@ const nl: Catalog = {
   'coursemap.path.roundsDone': 'Alle {last} rondes klaar',
   'coursemap.path.roundsWhy': 'Doe de lessen nog eens om de balk opnieuw te vullen. Elke volle balk levert een ster op, en bij drie sterren wordt de was goud.',
   'coursemap.path.roundsAll': 'Drie sterren: je hebt elke les hier drie keer gedaan.',
-  'coursemap.path.waxDone': 'Klaar',
-  'coursemap.path.waxGold': 'Drie sterren',
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Deze maand',
   'quests.monthly.soFar': '{done} van {possible} tot nu toe deze maand',
@@ -41286,8 +41268,6 @@ const ckb: Catalog = {
   'coursemap.path.roundsDone': 'هەر {last} گەڕەکە تەواو بوون',
   'coursemap.path.roundsWhy': 'وانەکانی دووبارە بکەرەوە بۆ ئەوەی شریتەکە جارێکی تر پڕ بێتەوە. هەر شریتێکی پڕ ئەستێرەیەک دەهێنێت، و بە سێ ئەستێرە مۆمەکەی زێڕین دەبێت.',
   'coursemap.path.roundsAll': 'سێ ئەستێرە: هەموو وانەیەکی ئێرەت سێ جار کردووە.',
-  'coursemap.path.waxDone': 'تەواو',
-  'coursemap.path.waxGold': 'سێ ئەستێرە',
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'ئەم مانگە',
   'quests.monthly.soFar': '{done} لە {possible} تا ئێستا لەم مانگە',

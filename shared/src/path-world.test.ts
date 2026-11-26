@@ -12,6 +12,9 @@ import {
   PATH_SCENERY_SPOT,
   PATH_SCENE_REACH,
   PATH_STAMP_MOMENT,
+  PATH_STAMP_SHADOW,
+  PATH_STAMP_REPRESS,
+  PATH_REPRESS_SHADOW,
   PATH_WAX_GOLD,
   waxGlintAt,
   PATH_APPLE_REACH,
@@ -261,21 +264,39 @@ describe('the scenes’ figures through all their motion', () => {
 });
 
 describe('a finished stop’s wax', () => {
-  const { pressAt, blobY, blobShown, splat, flow, poured, toolY, toolShown, squash, sealShown } = PATH_STAMP_MOMENT;
+  const { pressAt, blobY, blobShown, splat, splash, splashShown, flow, poured, toolY, toolShown, squash, sealShown } = PATH_STAMP_MOMENT;
   const at = (track: readonly (readonly [number, number])[], t: number): number => sampleKeys(track, t);
   const first = (track: readonly (readonly [number, number])[], v: number): number => track.find(([, x]) => x === v)![0];
 
   it('drops, splashes and flows out over the tile before the stamp comes, then presses halfway through as the tile squashes', () => {
-    // the drop lands, flattens as it splashes, and the wax flows out to its lip, overrunning a little, before the stamp shows
+    // the drop falls faster and faster, lands, flattens and throws its droplets out, and the wax flows out to its lip,
+    // overrunning a little, before the stamp shows
     const landed = first(blobY, 0);
+    const fall = blobY.filter(([t]) => t > 0.02 && t <= landed);
+    for (let i = 1; i < fall.length - 1; i++) {
+      const speed = (k: number): number => (fall[k]![1] - fall[k - 1]![1]) / (fall[k]![0] - fall[k - 1]![0]);
+      expect(speed(i + 1)).toBeGreaterThan(speed(i));
+    }
     expect(at(blobShown, landed)).toBe(1);
     expect(Math.min(...splat.map(([, v]) => v))).toBeLessThan(at(splat, landed - 0.02));
+    expect(at(splashShown, landed - 0.005)).toBe(0);
+    expect(at(splashShown, landed + 0.02)).toBeGreaterThan(0);
+    expect(splash[splash.length - 1]![1]).toBeGreaterThan(1);
+    expect(splashShown[splashShown.length - 1]![1]).toBe(0);
     expect(first(poured, 1)).toBeGreaterThan(landed);
     expect(Math.max(...flow.map(([, v]) => v))).toBeGreaterThan(1);
     const covered = flow.find(([, v]) => v >= 1)![0];
     expect(covered).toBeLessThan(first(toolShown, 1));
     expect(at(blobShown, covered)).toBe(0);
-    // at the press the stamp is down and the diamond is pressed in, hidden under it until it lifts
+    // it draws up before it presses, comes down faster and faster, and lifts past where it settles
+    const before = toolY.filter(([t]) => t >= 0.44 && t <= pressAt);
+    expect(Math.min(...toolY.filter(([t]) => t > 0.3 && t < 0.44).map(([, v]) => v))).toBeGreaterThan(before[0]![1]);
+    const speed = (i: number): number => (before[i]![1] - before[i - 1]![1]) / (before[i]![0] - before[i - 1]![0]);
+    for (let i = 2; i < before.length; i++) expect(speed(i)).toBeGreaterThan(speed(i - 1));
+    expect(Math.min(...toolY.filter(([t]) => t > pressAt).map(([, v]) => v))).toBeLessThan(toolY[toolY.length - 1]![1]);
+    // the tile squashes and the wax spreads a little again as it lands
+    expect(Math.max(...flow.filter(([t]) => t > pressAt).map(([, v]) => v))).toBeGreaterThan(1);
+    // at the press the stamp is down and the star is pressed in, hidden under it until it lifts
     expect(at(toolY, pressAt)).toBe(0);
     expect(at(sealShown, pressAt - 0.01)).toBe(0);
     expect(at(sealShown, pressAt + 0.02)).toBe(1);
@@ -287,8 +308,32 @@ describe('a finished stop’s wax', () => {
     expect(toolShown[toolShown.length - 1]![1]).toBe(0);
   });
 
-  it('turns gold after the third star has lit, and glints at each stop’s own time within its round', () => {
-    expect(PATH_WAX_GOLD.afterMs).toBeGreaterThanOrEqual(PATH_RETURN.starMs);
+  it('casts the stamp’s shadow on the tile, faint while it hovers and darkest and smallest as it presses', () => {
+    const { shown, size } = PATH_STAMP_SHADOW;
+    const at2 = (keys: readonly (readonly [number, number])[], t: number): number => sampleKeys(keys, t);
+    expect(at2(shown, 0)).toBe(0);
+    expect(at2(shown, 1)).toBe(0);
+    expect(at2(shown, pressAt)).toBe(Math.max(...shown.map(([, v]) => v)));
+    expect(at2(size, pressAt)).toBe(Math.min(...size.map(([, v]) => v)));
+    expect(at2(shown, 0.4)).toBeLessThan(at2(shown, pressAt) / 2);
+  });
+
+  it('presses a sealed tile again a round later: in, up, down hard so the tile squashes a little, and away', () => {
+    const { pressAt: at2, toolY: y, toolShown: shown2, squash: sq, ms } = PATH_STAMP_REPRESS;
+    expect(at(y, at2)).toBe(0);
+    expect(Math.min(...sq.map(([, v]) => v))).toBeGreaterThan(Math.min(...squash.map(([, v]) => v)));
+    expect(Math.min(...sq.map(([, v]) => v))).toBeLessThan(1);
+    expect(shown2[0]![1]).toBe(0);
+    expect(shown2[shown2.length - 1]![1]).toBe(0);
+    // shorter than the first sealing, and pressed before the bar starts its next round
+    expect(ms).toBeLessThan(PATH_STAMP_MOMENT.ms);
+    expect(PATH_RETURN.finishAtMs + ms * at2).toBeLessThan(PATH_RETURN.nextAtMs);
+    // its shadow darkest while it is pressed down
+    expect(at(PATH_REPRESS_SHADOW.shown, at2 + 0.04)).toBe(Math.max(...PATH_REPRESS_SHADOW.shown.map(([, v]) => v)));
+  });
+
+  it('turns gold once the third star is pressed in, and glints at each stop’s own time within its round', () => {
+    expect(PATH_WAX_GOLD.afterMs).toBeGreaterThanOrEqual(0);
     expect(PATH_WAX_GOLD.glintMs).toBeLessThan(PATH_WAX_GOLD.everyMs / 4);
     const starts = ['s:a', 's:b', 's:c', 's:d'].map(waxGlintAt);
     for (const v of starts) {

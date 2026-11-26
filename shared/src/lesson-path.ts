@@ -610,8 +610,8 @@ export function pathChanges<S extends PathSkill>(prev: PathSnapshot | null, path
  * (`settleMs`); the bar over the stop fills (`ringMs`); a finished stop is sealed in wax (`finishAtMs`, over `stampMs`,
  * the stamp pressing halfway); a full bar starts its next round once it has pressed (`nextAtMs`); an opened stop pops as
  * its lock turns into its glyph (`openAtMs`, `popMs`, `glyphMs`); the bubble reaches the new current stop as the page
- * scrolls there (`bubbleAtMs`, `bubbleMs`); and once the wax has settled, a round's new star lights on the stop
- * (`starAtMs`, `starMs`). Under Reduce Motion nothing plays.
+ * scrolls there (`bubbleAtMs`, `bubbleMs`). A round made whole on a stop already sealed is pressed in as a new star
+ * from `finishAtMs` (path-world.ts `PATH_STAMP_REPRESS`). Under Reduce Motion nothing plays.
  */
 export const PATH_RETURN = {
   settleMs: 300,
@@ -624,8 +624,6 @@ export const PATH_RETURN = {
   glyphMs: 120,
   bubbleAtMs: 1950,
   bubbleMs: 200,
-  starAtMs: 2000,
-  starMs: 280,
 } as const;
 
 /** Hevalo beside the current stop: his `size`, and how far from the middle he stands, on the far side of a leaning stop (`away`), never on the line. */

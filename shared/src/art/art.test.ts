@@ -1678,15 +1678,16 @@ describe('the lesson path’s world', () => {
     for (const dark of [false, true]) {
       const scheme = dark ? 'dark' : 'light';
       for (const tone of ['meadow', 'pomegranate', 'saffron'] as const) {
-        for (const part of ['whole', 'pour', 'seal', 'blob'] as const) {
-          for (const gold of [false, true]) sound(pathWaxSvg({ tone, seed: 's:a', part, gold, dark, idPrefix: 'w' }), view);
+        for (const part of ['whole', 'pour', 'seal', 'blob', 'splash'] as const) {
+          for (const gold of [false, true]) for (const stars of [1, 2, 3]) sound(pathWaxSvg({ tone, seed: 's:a', part, gold, stars, dark, idPrefix: 'w' }), view);
         }
         sound(pathWaxSvg({ tone, seed: 's:a', worn: true, dark }), view);
-        // a deeper tone of the unit's colour than its tile, and gold in the road's own finished gold
+        // a deeper tone of the unit's colour than its tile, and gold, the same for every unit
         const wax = pathWaxColours(tone, dark);
         expect(wax.face).not.toBe(PATH_STOP_TONES[scheme][tone].fill);
         expect(pathWaxSvg({ tone, seed: 's:a', dark })).toContain(wax.face);
-        expect(pathWaxSvg({ tone, seed: 's:a', gold: true, dark })).toContain(PATH_GOLD[scheme].face);
+        expect(pathWaxSvg({ tone, seed: 's:a', gold: true, dark })).toContain(pathWaxColours(tone, dark, true).face);
+        expect(pathWaxColours(tone, dark, true)).toEqual(pathWaxColours('meadow', dark, true));
         // worn, it is dulled: none of its own colours are left as they were
         expect(pathWaxSvg({ tone, seed: 's:a', worn: true, dark })).not.toContain(wax.face);
       }
@@ -1712,11 +1713,21 @@ describe('the lesson path’s world', () => {
       expect(Math.max(...ys), seed).toBeLessThan(cy + ry + side);
       expect(Math.max(...ys), seed).toBeLessThan(box);
     }
-    // the pour alone has nothing pressed in it, the seal alone is only what is pressed, and the whole tile is both
-    expect(pathWaxSvg({ tone: 'meadow', part: 'pour' })).not.toContain('evenodd');
-    expect(pathWaxSvg({ tone: 'meadow', part: 'seal' }).match(/fill-rule="evenodd"/g)).toHaveLength(3);
-    expect(pathWaxSvg({ tone: 'meadow' }).match(/fill-rule="evenodd"/g)).toHaveLength(3);
-    sound(pathStampToolSvg({ dark: true }), `0 0 ${PATH_STAMP_TOOL.w} ${PATH_STAMP_TOOL.h}`);
+    // pressed in it, a star for each round, a raised rim round a sunken field: the pour alone has none, the seal alone
+    // only those, and the whole tile both
+    const starsIn = (svg: string): number => (/<path d="([^"]*)" transform="translate\(0 0\)"/.exec(svg)?.[1]?.match(/M/g) ?? []).length;
+    for (const stars of [1, 2, 3]) {
+      expect(starsIn(pathWaxSvg({ tone: 'meadow', part: 'seal', stars }))).toBe(stars);
+      expect(starsIn(pathWaxSvg({ tone: 'meadow', stars }))).toBe(stars);
+    }
+    expect(starsIn(pathWaxSvg({ tone: 'meadow', part: 'pour' }))).toBe(0);
+    expect(pathWaxSvg({ tone: 'meadow', stars: 1 })).not.toBe(pathWaxSvg({ tone: 'meadow', stars: 2 }));
+    // the stamp is the icons' own: drawn on the Stamp glyph's 256 grid, its block as wide as the tile
+    sound(pathStampToolSvg({ dark: true }), '24 8 208 232');
+    // its pad carries the die of the stars it presses
+    expect(pathStampToolSvg({ stars: 2 })).not.toBe(pathStampToolSvg({ stars: 3 }));
+    expect(((224 - 32) / 208) * PATH_STAMP_TOOL.w).toBeCloseTo(PATH_STOP_ART.rx * 2, 0);
+    expect(PATH_STAMP_TOOL.h / PATH_STAMP_TOOL.w).toBeCloseTo(232 / 208, 1);
     expect(() => pathWaxSvg({ tone: 'meadow', size: 0 })).toThrow(RangeError);
     expect(() => pathWaxSvg({ tone: 'meadow', part: 'drip' as 'blob' })).toThrow(RangeError);
     expect(() => pathWaxColours('nowhere' as 'meadow', false)).toThrow(RangeError);

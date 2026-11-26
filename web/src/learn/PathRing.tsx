@@ -1,11 +1,12 @@
-import { PATH_BAR, PATH_GOLD, PATH_WAX_GOLD, TOPIC_STARS, barPieces, roundStars, starPath } from '@kurda/shared';
+import { PATH_BAR, TOPIC_STARS, barPieces, starPath } from '@kurda/shared';
 
 /**
- * A topic's progress over its stop, its stars on its tile and its rounds in its card, by the same rule and shapes as the
- * phone (@kurda/shared lesson-rounds.ts): a slim bar just above the tile with one piece per lesson, in its unit's colour
- * once finished in the current round, and gold once full; and a gold star for each full round, up to three. During a return (learn/CoursePath.tsx, `PATH_RETURN`) the new pieces fill
- * one after another from `from`; path.css runs the fill and holds it still under reduced motion. Decorative; the stop's
- * words say it all.
+ * A topic's progress over its stop and its rounds in its card, by the same rule and shapes as the phone (@kurda/shared
+ * lesson-rounds.ts): a slim bar just above the tile with one piece per lesson, in its unit's colour once finished in the
+ * current round, and gold once full; and in its card a gold star for each full round, up to three, which are pressed
+ * into its wax on the road (PathScene.tsx `TileWax`). During a return (learn/CoursePath.tsx, `PATH_RETURN`) the new
+ * pieces fill one after another from `from`; path.css runs the fill and holds it still under reduced motion. Decorative;
+ * the stop's words say it all.
  */
 
 /** How long a bar takes to fill from where it was, piece by piece. */
@@ -40,45 +41,6 @@ export function TopicBar({
         </span>
       ))}
     </span>
-  );
-}
-
-/**
- * A finished topic's stars set into its wax along the tile's near edge, one for each full round; `earned` lights the
- * newest in. On gold wax they are cream, changing as the wax warms into gold when `warming` (shared `PATH_WAX_GOLD`).
- */
-export function RoundStars({
-  rounds,
-  earned = false,
-  gold = false,
-  warming = false,
-  dark,
-}: {
-  rounds: number;
-  earned?: boolean;
-  gold?: boolean;
-  warming?: boolean;
-  dark: boolean;
-}): React.JSX.Element | null {
-  const stars = roundStars(rounds);
-  if (stars.length === 0) return null;
-  const onGold = PATH_GOLD[dark ? 'dark' : 'light'];
-  const { afterMs, warmMs } = PATH_WAX_GOLD;
-  return (
-    <svg className="lp-stars" width={72} height={72} viewBox="0 0 72 72" aria-hidden="true" focusable="false" data-testid={`lp-stars-${stars.length}`}>
-      {stars.map((s, i) => (
-        <path
-          key={i}
-          className={`lp-star${earned && i === stars.length - 1 ? ' is-earned' : ''}`}
-          d={starPath(s.x, s.y, s.r)}
-          style={{
-            transformOrigin: `${s.x}px ${s.y}px`,
-            ...(gold ? { fill: onGold.star, stroke: onGold.starEdge } : null),
-            ...(warming ? { transition: `fill ${warmMs}ms ease-in-out ${afterMs}ms, stroke ${warmMs}ms ease-in-out ${afterMs}ms` } : null),
-          }}
-        />
-      ))}
-    </svg>
   );
 }
 

@@ -12,6 +12,9 @@ import {
   PATH_SLATE_LETTERS,
   PATH_TEA_AT,
   PATH_STAMP_MOMENT,
+  PATH_STAMP_REPRESS,
+  PATH_STAMP_SHADOW,
+  PATH_REPRESS_SHADOW,
   PATH_WAX_GOLD,
   PATH_STOP_ART,
   chapterArtOf,
@@ -362,17 +365,20 @@ export function PathChest({ open, dark, size, played }: { open: boolean; dark: b
 }
 
 /**
- * A finished stop's tile sealed in wax (shared `pathWaxSvg`): a deeper tone of its unit's colour, gold once the topic
- * has all three stars, and dulled where a refresh would help. `pressing` plays its moment once (shared
- * `PATH_STAMP_MOMENT`) after `delay`: a big drop of wax falls onto the tile and splashes, the wax flows out over it, the
- * brass stamp presses the whole tile as it squashes, and lifts away to show the diamond pressed in it; then `onStamped`
- * is told. `warming` turns the wax gold once its third star has lit, with one glint (shared `PATH_WAX_GOLD`); a gold
- * tile glints again now and then while `live` and on screen. Decorative.
+ * A finished stop's tile sealed in wax (shared `pathWaxSvg`) with a star pressed in it for each full round: a deeper tone
+ * of its unit's colour, gold once it has all three stars, and dulled where a refresh would help. `pressing` plays its
+ * first sealing once (shared `PATH_STAMP_MOMENT`) after `delay`: a big drop of wax falls onto the tile and splashes, the
+ * wax flows out over it, and the brass stamp presses the whole tile as it squashes and lifts away, its stars pressed in;
+ * then `onStamped` is told. With `from`, a round later, the stamp comes back after `delay` and presses again (shared
+ * `PATH_STAMP_REPRESS`), the `from` stars giving way to `stars`. `warming` turns the wax gold once the stamp has lifted,
+ * with one glint (shared `PATH_WAX_GOLD`); a gold tile glints again now and then while `live` and on screen. Decorative.
  */
 export function TileWax({
   stopKey,
   tone,
   dark,
+  stars,
+  from = null,
   gold,
   warming,
   worn,
@@ -384,8 +390,12 @@ export function TileWax({
   stopKey: string;
   tone: UnitTone;
   dark: boolean;
+  /** The stars pressed in it, one for each full round. */
+  stars: number;
+  /** A round later: the stars it had, until the stamp presses the new one in. */
+  from?: number | null;
   gold: boolean;
-  /** Its third star has just lit: the wax warms into gold. */
+  /** Its third star has just been pressed in: the wax warms into gold. */
   warming: boolean;
   worn: boolean;
   /** Its unit is near the screen and motion is welcome. */
@@ -395,86 +405,117 @@ export function TileWax({
   onStamped: (key: string) => void;
 }): React.JSX.Element {
   const prefix = `lpwx${useId().replace(/[^A-Za-z0-9]/g, '')}`;
-  const wax = (part: 'whole' | 'pour' | 'seal', golden = false): string =>
-    pathWaxSvg({ tone, seed: stopKey, gold: golden, worn, part, dark, idPrefix: `${prefix}${part}${golden ? 'g' : ''}` });
-  const coat = useMarkup(() => (pressing ? '' : wax('whole')), [pressing, tone, stopKey, worn, dark, prefix]);
-  const goldCoat = useMarkup(() => (gold ? wax('whole', true) : ''), [gold, tone, stopKey, worn, dark, prefix]);
-  const pour = useMarkup(() => (pressing ? wax('pour') : ''), [pressing, tone, stopKey, worn, dark, prefix]);
-  const seal = useMarkup(() => (pressing ? wax('seal') : ''), [pressing, tone, stopKey, worn, dark, prefix]);
+  const pressed = from !== null;
+  const moving = pressing || pressed;
+  const wax = (part: 'whole' | 'pour' | 'seal', count: number, golden = false): string =>
+    pathWaxSvg({ tone, seed: stopKey, gold: golden, worn, stars: count, part, dark, idPrefix: `${prefix}${part}${count}${golden ? 'g' : ''}` });
+  const coat = useMarkup(() => (moving ? '' : wax('whole', stars)), [moving, tone, stopKey, worn, stars, dark, prefix]);
+  const goldCoat = useMarkup(() => (gold ? wax('whole', stars, true) : ''), [gold, tone, stopKey, worn, stars, dark, prefix]);
+  const pour = useMarkup(() => (moving ? wax('pour', stars) : ''), [moving, tone, stopKey, worn, stars, dark, prefix]);
+  const seal = useMarkup(() => (moving ? wax('seal', stars) : ''), [moving, tone, stopKey, worn, stars, dark, prefix]);
+  const was = useMarkup(() => (pressed ? wax('seal', from) : ''), [pressed, from, tone, stopKey, worn, dark, prefix]);
   const blob = useMarkup(() => (pressing ? pathWaxSvg({ tone, part: 'blob', dark, idPrefix: `${prefix}b` }) : ''), [pressing, tone, dark, prefix]);
-  const tool = useMarkup(() => (pressing ? pathStampToolSvg({ dark, idPrefix: `${prefix}t` }) : ''), [pressing, dark, prefix]);
-  const pourRef = useRef<HTMLSpanElement>(null);
-  const sealRef = useRef<HTMLSpanElement>(null);
-  const goldRef = useRef<HTMLSpanElement>(null);
-  const blobRef = useRef<HTMLSpanElement>(null);
-  const toolRef = useRef<HTMLSpanElement>(null);
+  const splash = useMarkup(() => (pressing ? pathWaxSvg({ tone, part: 'splash', dark, idPrefix: `${prefix}s` }) : ''), [pressing, tone, dark, prefix]);
+  const tool = useMarkup(() => (moving ? pathStampToolSvg({ dark, stars, idPrefix: `${prefix}t` }) : ''), [moving, dark, stars, prefix]);
+  const refs = {
+    pour: useRef<HTMLSpanElement>(null),
+    seal: useRef<HTMLSpanElement>(null),
+    was: useRef<HTMLSpanElement>(null),
+    blob: useRef<HTMLSpanElement>(null),
+    splash: useRef<HTMLSpanElement>(null),
+    shadow: useRef<HTMLSpanElement>(null),
+    tool: useRef<HTMLSpanElement>(null),
+    gold: useRef<HTMLSpanElement>(null),
+  };
   const done = useRef(onStamped);
   done.current = onStamped;
-  // Before the first paint, so no wax shows before it falls.
+  // Before the first paint, so nothing new shows before it is pressed.
   useLayoutEffect(() => {
-    if (!pressing) return;
-    const [pourEl, sealEl, blobEl, toolEl] = [pourRef.current, sealRef.current, blobRef.current, toolRef.current];
-    const face = pourEl?.closest<HTMLElement>('.lp-node-face');
-    if (!pourEl || !sealEl || !blobEl || !toolEl || typeof pourEl.animate !== 'function') {
-      done.current(stopKey);
+    if (!moving) return;
+    const el = (r: { current: HTMLSpanElement | null }): HTMLSpanElement | null => r.current;
+    const face = el(refs.pour)?.closest<HTMLElement>('.lp-node-face');
+    const m = pressing ? PATH_STAMP_MOMENT : PATH_STAMP_REPRESS;
+    const shadow = pressing ? PATH_STAMP_SHADOW : PATH_REPRESS_SHADOW;
+    const end = (): void => {
+      if (pressing) done.current(stopKey);
+    };
+    if (!el(refs.seal) || !el(refs.tool) || !el(refs.shadow) || typeof el(refs.seal)!.animate !== 'function') {
+      end();
       return;
     }
-    const { ms, blobY, blobShown, splat, flow, poured, toolY, toolShown, squash, sealShown } = PATH_STAMP_MOMENT;
     const sample = (keys: readonly (readonly [number, number])[]): number[] => STAMP_FRAMES.map((t) => sampleKeys(keys, t));
-    const [by, bs, bp, fl, ps, ty, ts, sq, ss] = [blobY, blobShown, splat, flow, poured, toolY, toolShown, squash, sealShown].map(sample) as number[][];
-    const frames = (each: (i: number) => Keyframe): Keyframe[] => STAMP_FRAMES.map((offset, i) => ({ offset, ...each(i) }));
-    const timing = { duration: ms, delay, fill: 'both' as const };
+    const frames = (keys: Array<readonly (readonly [number, number])[]>, each: (v: number[]) => Keyframe): Keyframe[] => {
+      const values = keys.map(sample);
+      return STAMP_FRAMES.map((offset, i) => ({ offset, ...each(values.map((v) => v[i]!)) }));
+    };
+    const timing = { duration: m.ms, delay, fill: 'both' as const };
+    // The stars pressed in show from the press, under the stamp; a round later the ones before give way then.
+    const shownFrom: Array<readonly [number, number]> = [[0, 0], [m.pressAt, 0], [m.pressAt + 0.01, 1], [1, 1]];
     const runs = [
-      blobEl.animate(frames((i) => ({ transform: `translateY(${by![i]}px) scale(${2 - bp![i]!}, ${bp![i]})`, opacity: bs![i] })), timing),
-      pourEl.animate(frames((i) => ({ transform: `scale(${fl![i]})`, opacity: ps![i] })), timing),
-      sealEl.animate(frames((i) => ({ opacity: ss![i] })), timing),
-      toolEl.animate(frames((i) => ({ transform: `translateY(${ty![i]}px)`, opacity: ts![i] })), timing),
-      face?.animate(frames((i) => ({ transform: `scale(${2 - sq![i]!}, ${sq![i]})` })), { duration: ms, delay }),
+      el(refs.tool)!.animate(frames([m.toolY, m.toolShown], ([y, o]) => ({ transform: `translateY(${y}px)`, opacity: o })), timing),
+      el(refs.shadow)!.animate(frames([shadow.size, shadow.shown], ([k, o]) => ({ transform: `scale(${k})`, opacity: o })), timing),
+      el(refs.seal)!.animate(frames([shownFrom], ([o]) => ({ opacity: o })), timing),
+      el(refs.was)?.animate(frames([shownFrom], ([o]) => ({ opacity: 1 - o! })), timing),
+      face?.animate(frames([m.squash], ([q]) => ({ transform: `scale(${2 - q!}, ${q})` })), { duration: m.ms, delay }),
     ];
-    const end = window.setTimeout(() => done.current(stopKey), delay + ms);
+    if (pressing) {
+      const { blobY, blobShown, splat, splash: spread, splashShown, flow, poured } = PATH_STAMP_MOMENT;
+      runs.push(
+        el(refs.blob)?.animate(frames([blobY, splat, blobShown], ([y, q, o]) => ({ transform: `translateY(${y}px) scale(${2 - q!}, ${q})`, opacity: o })), timing),
+        el(refs.splash)?.animate(frames([spread, splashShown], ([k, o]) => ({ transform: `scale(${k})`, opacity: o })), timing),
+        el(refs.pour)?.animate(frames([flow, poured], ([k, o]) => ({ transform: `scale(${k})`, opacity: o })), timing),
+      );
+    }
+    const timer = window.setTimeout(end, delay + m.ms);
     return () => {
-      window.clearTimeout(end);
+      window.clearTimeout(timer);
       runs.forEach((r) => r?.cancel());
     };
-  }, [pressing, delay, stopKey]);
-  // The wax warming into gold, after its third star has lit.
+  }, [moving, pressing, delay, stopKey]);
+  // The wax warming into gold once the stamp has lifted from its third star.
+  const warmAt = (pressed ? delay + PATH_STAMP_REPRESS.ms : 0) + PATH_WAX_GOLD.afterMs;
   useLayoutEffect(() => {
-    const el = goldRef.current;
+    const el = refs.gold.current;
     if (!warming || !el || typeof el.animate !== 'function') return;
-    const { warmMs, afterMs } = PATH_WAX_GOLD;
-    const run = el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: warmMs, delay: afterMs, easing: 'ease-in-out', fill: 'backwards' });
+    const run = el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: PATH_WAX_GOLD.warmMs, delay: warmAt, easing: 'ease-in-out', fill: 'backwards' });
     return () => run.cancel();
-  }, [warming]);
+  }, [warming, warmAt]);
   return (
-    <span className="lp-wax" aria-hidden="true">
-      {pressing ? (
+    <span className="lp-wax" aria-hidden="true" data-stars={stars}>
+      {moving ? (
         <>
-          <span ref={pourRef} className="lp-wax-coat lp-wax-pour" dangerouslySetInnerHTML={pour} />
-          <span ref={sealRef} className="lp-wax-coat" dangerouslySetInnerHTML={seal} />
-          <span ref={blobRef} className="lp-wax-coat lp-wax-blob" dangerouslySetInnerHTML={blob} />
-          <span ref={toolRef} className="lp-wax-tool" dangerouslySetInnerHTML={tool} />
+          <span ref={refs.pour} className="lp-wax-coat lp-wax-pour" dangerouslySetInnerHTML={pour} />
+          {pressed && <span ref={refs.was} className="lp-wax-coat" dangerouslySetInnerHTML={was} />}
+          <span ref={refs.seal} className="lp-wax-coat" dangerouslySetInnerHTML={seal} />
+          {pressing && <span ref={refs.blob} className="lp-wax-coat lp-wax-blob" dangerouslySetInnerHTML={blob} />}
+          {pressing && <span ref={refs.splash} className="lp-wax-coat lp-wax-blob" dangerouslySetInnerHTML={splash} />}
+          {/* The stamp's shadow on the tile's face, under the stamp. */}
+          <span className="lp-wax-face">
+            <span ref={refs.shadow} className="lp-wax-shadow" />
+          </span>
+          <span ref={refs.tool} className="lp-wax-tool" dangerouslySetInnerHTML={tool} />
         </>
       ) : (
         <span className="lp-wax-coat" dangerouslySetInnerHTML={coat} />
       )}
-      {gold && !pressing && <span ref={goldRef} className="lp-wax-coat lp-wax-gold" dangerouslySetInnerHTML={goldCoat} />}
-      {gold && !pressing && !worn && live && <WaxGlint stopKey={stopKey} warming={warming} />}
+      {gold && <span ref={refs.gold} className="lp-wax-coat lp-wax-gold" dangerouslySetInnerHTML={goldCoat} />}
+      {gold && !worn && live && <WaxGlint stopKey={stopKey} firstAt={warming ? warmAt + PATH_WAX_GOLD.warmMs : null} />}
     </span>
   );
 }
 
 /**
  * A pale band crossing a gold tile now and then (shared `PATH_WAX_GOLD`), each stop at its own time; just after it has
- * warmed into gold, the first one follows at once. Only while on screen and the tab is in front.
+ * warmed into gold, the first one at `firstAt`. Only while on screen and the tab is in front.
  */
-function WaxGlint({ stopKey, warming }: { stopKey: string; warming: boolean }): React.JSX.Element {
+function WaxGlint({ stopKey, firstAt }: { stopKey: string; firstAt: number | null }): React.JSX.Element {
   const box = useRef<HTMLSpanElement>(null);
   const band = useRef<HTMLSpanElement>(null);
   const shown = useInFront(box);
   useEffect(() => {
     const el = band.current;
     if (!shown || !el || typeof el.animate !== 'function') return;
-    const { everyMs, glintMs, afterMs, warmMs, tilt } = PATH_WAX_GOLD;
+    const { everyMs, glintMs, tilt } = PATH_WAX_GOLD;
     const across = (x: number): string => `translateX(${x}px) rotate(${tilt}deg)`;
     const run = el.animate(
       [
@@ -482,32 +523,29 @@ function WaxGlint({ stopKey, warming }: { stopKey: string; warming: boolean }): 
         { offset: glintMs / everyMs, transform: across(GLINT_REACH) },
         { offset: 1, transform: across(GLINT_REACH) },
       ],
-      { duration: everyMs, iterations: Infinity, easing: 'ease-in-out', delay: warming ? afterMs + warmMs : -waxGlintAt(stopKey) },
+      { duration: everyMs, iterations: Infinity, easing: 'ease-in-out', delay: firstAt ?? -waxGlintAt(stopKey) },
     );
     return () => run.cancel();
-  }, [shown, warming, stopKey]);
+  }, [shown, firstAt, stopKey]);
   return (
-    <span ref={box} className="lp-wax-glint">
+    <span ref={box} className="lp-wax-face">
       <span ref={band} className="lp-wax-band" style={{ width: PATH_WAX_GOLD.band }} />
     </span>
   );
 }
 
-/** What a topic's waxed tile says, for its card: sealed in its unit's wax once finished, gold once it has all three stars. */
-export function WaxLegend({ tone, dark, done, three }: { tone: UnitTone; dark: boolean; done: string; three: string }): React.JSX.Element {
-  const own = useMarkup(() => pathWaxSvg({ tone, seed: 'legend', dark, size: WAX_KEY }), [tone, dark]);
-  const gold = useMarkup(() => pathWaxSvg({ tone, seed: 'legend', gold: true, dark, size: WAX_KEY }), [tone, dark]);
+/** What a topic's wax becomes, for its card: a star pressed in for each full round, and gold with all three. Decorative. */
+export function WaxLegend({ tone, dark }: { tone: UnitTone; dark: boolean }): React.JSX.Element {
+  const tiles = useMarkup(
+    () => [1, 2, 3].map((stars) => pathWaxSvg({ tone, seed: 'legend', stars, gold: stars === 3, dark, size: WAX_KEY })).join('|'),
+    [tone, dark],
+  );
   return (
-    <p className="lp-wax-legend" data-testid="lp-wax-legend">
-      <span className="lp-wax-key">
-        <span className="lp-wax-icon" aria-hidden="true" dangerouslySetInnerHTML={own} />
-        {done}
-      </span>
-      <span className="lp-wax-key">
-        <span className="lp-wax-icon" aria-hidden="true" dangerouslySetInnerHTML={gold} />
-        {three}
-      </span>
-    </p>
+    <span className="lp-wax-legend" aria-hidden="true" data-testid="lp-wax-legend">
+      {tiles.__html.split('|').map((svg, i) => (
+        <span key={i} className="lp-wax-icon" dangerouslySetInnerHTML={{ __html: svg }} />
+      ))}
+    </span>
   );
 }
 

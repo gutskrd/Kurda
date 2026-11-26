@@ -1902,7 +1902,6 @@ export const ar: Catalogue = {
   'coursemap.roundsDone': 'اكتملت الجولات كلها ({last})',
   'coursemap.roundsWhy': 'أعد دروسه لتملأ الشريط من جديد. كل شريط ممتلئ يمنحك نجمة، وثلاث نجوم تجعل شمعه ذهبيًا.',
   'coursemap.roundsAll': 'ثلاث نجوم: أكملت كل درس هنا ثلاث مرات.',
-  'coursemap.waxGold': 'ثلاث نجوم',
   'lesson.title': 'درس',
   'lesson.loading': 'جارٍ فتح الدرس…',
   'lesson.loadFailed': 'تعذّر فتح هذا الدرس',

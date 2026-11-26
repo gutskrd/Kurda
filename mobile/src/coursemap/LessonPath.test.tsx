@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Animated } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -472,14 +472,12 @@ describe('a topic’s bar and wax', () => {
     expect(screen.getAllByTestId('lp-bar-filled')).toHaveLength(1);
     expect(screen.getAllByTestId(/^lp-wax/).length).toBeGreaterThan(0);
     const c = button('Topic c, done, and strong, all 3 rounds done');
-    expect(within(c).getByTestId('lp-stars-3')).toBeTruthy();
-    expect(within(c).getByTestId('lp-wax-gold')).toBeTruthy();
-    expect(within(c).getByTestId('lp-stars-on-gold')).toBeTruthy();
-    // Its card shows its three stars, that all three rounds are played, and what its wax and gold wax say.
+    expect(within(c).getByTestId('lp-wax-3-gold')).toBeTruthy();
+    // Its card shows its three stars, that all three rounds are played, and its wax with one, two and three stars.
     fireEvent.click(c);
     expect(screen.getByTestId('lp-card-stars-3')).toBeTruthy();
     expect(screen.getByText('All 3 rounds done')).toBeTruthy();
-    expect(within(screen.getByTestId('lp-wax-legend')).getByText('Three stars')).toBeTruthy();
+    expect(screen.getByTestId('lp-wax-legend')).toBeTruthy();
   });
 
   it('says the round a finished topic is in, and plays it again from the lesson finished fewest times', async () => {
@@ -488,8 +486,7 @@ describe('a topic’s bar and wax', () => {
     await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
     fireEvent.click(button('Section 1, Starter, First words and short sentences, Section complete, One chapter'));
     // Both its topics are sealed in their unit's wax with their first star, and neither wears a bar.
-    expect(screen.getAllByTestId('lp-wax')).toHaveLength(2);
-    expect(screen.getAllByTestId('lp-stars-1')).toHaveLength(2);
+    expect(screen.getAllByTestId('lp-wax-1')).toHaveLength(2);
     expect(screen.queryByTestId('lp-bar')).toBeNull();
     fireEvent.click(button('Topic b, done, and strong, round 2 of 3, 1 of 2 lessons'));
     expect(screen.getByText('Round 2 of 3 · 1 of 2 lessons')).toBeTruthy();
@@ -497,7 +494,7 @@ describe('a topic’s bar and wax', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'b2', courseId: 'c2' });
   });
 
-  it('fills the bar, seals the stop in wax and lights its star on coming back from a lesson that made a round whole', async () => {
+  it('fills the bar, seals the stop in wax with its first star on coming back from a lesson that made a round whole', async () => {
     client();
     patchReactNativeWeb({ reduceMotion: false });
     const before = levelled('c-return');
@@ -513,13 +510,30 @@ describe('a topic’s bar and wax', () => {
     expect(screen.getAllByTestId('lp-bar-gold').length).toBeGreaterThan(0);
     await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
     const d = screen.getByRole('button', { name: /^Topic d, (?!you)/ });
-    expect(within(d).getByTestId('lp-wax')).toBeTruthy();
-    // Its first star lights in as the wax settles.
-    expect(within(d).getByTestId('lp-stars-1')).toBeTruthy();
-    expect(within(d).getByTestId('lp-star-earned')).toBeTruthy();
+    // Its first star pressed into the wax.
+    expect(within(d).getByTestId('lp-wax-1')).toBeTruthy();
     expect(JSON.parse(localStorage.getItem('hevalo_stamped_v1:c-return') ?? '[]')).toContain('s:d');
     // The chapter's story is won with it.
     expect(button('Hamo’s story: Malbat')).toBeTruthy();
+    cleanup();
+    patchReactNativeWeb({ reduceMotion: true });
+  });
+
+  it('presses a sealed topic’s new star into its wax on coming back from the lesson that made its next round whole', async () => {
+    client();
+    patchReactNativeWeb({ reduceMotion: false });
+    const before = levelled('c-again');
+    const after = levelled('c-again');
+    // Topic c had two rounds, sealed on this phone; its third round is completed since.
+    before.units[1]!.skills[0] = { ...before.units[1]!.skills[0]!, lessons: [lesson('c1', 'Lesson c1', true, 3), lesson('c2', 'Lesson c2', true, 2)] };
+    localStorage.setItem('hevalo_stamped_v1:c-again', JSON.stringify(['s:a', 's:b', 's:c']));
+    const view = renderWithProviders(<LessonPath map={before} due={0} onFocus={() => undefined} />);
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    const c = () => screen.getByRole('button', { name: /^Topic c, / });
+    expect(within(c()).getByTestId('lp-wax-2')).toBeTruthy();
+    view.rerender(<LessonPath map={after} due={0} onFocus={() => undefined} />);
+    // The stamp comes back and presses the third star in, and its wax ends gold.
+    await waitFor(() => expect(within(c()).getByTestId('lp-wax-3-gold')).toBeTruthy(), { timeout: 4000 });
     cleanup();
     patchReactNativeWeb({ reduceMotion: true });
   });

@@ -1904,7 +1904,6 @@ export const tr: Catalogue = {
   'coursemap.roundsDone': '{last} turun hepsi tamamlandı',
   'coursemap.roundsWhy': 'Çubuğu yeniden doldurmak için derslerini tekrar yap. Dolan her çubuk bir yıldız kazandırır; üç yıldızla mumu altın olur.',
   'coursemap.roundsAll': 'Üç yıldız: buradaki her dersi üç kez yaptın.',
-  'coursemap.waxGold': 'Üç yıldız',
   'lesson.title': 'Ders',
   'lesson.loading': 'Ders açılıyor…',
   'lesson.loadFailed': 'Bu ders açılamadı',

@@ -201,7 +201,7 @@ export {
   pathWaxColours,
   pathStampToolSvg,
   pathStopSvg,
-  PATH_WAX_SEAL,
+  PATH_WAX_DROP,
   PATH_STAMP_TOOL,
   type PathWaxOptions,
   tilePath,

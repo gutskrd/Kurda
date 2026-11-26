@@ -1909,7 +1909,6 @@ export const de: Catalogue = {
   'coursemap.roundsDone': 'Alle {last} Runden geschafft',
   'coursemap.roundsWhy': 'Mach die Lektionen noch einmal, um den Balken wieder zu füllen. Jeder volle Balken bringt einen Stern, und drei Sterne machen das Wachs golden.',
   'coursemap.roundsAll': 'Drei Sterne: Du hast jede Lektion hier dreimal gemacht.',
-  'coursemap.waxGold': 'Drei Sterne',
   'lesson.title': 'Lektion',
   'lesson.loading': 'Die Lektion wird geöffnet…',
   'lesson.loadFailed': 'Diese Lektion ließ sich nicht öffnen',

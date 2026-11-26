@@ -1908,7 +1908,6 @@ export const fr: Catalogue = {
   'coursemap.roundsDone': 'Les {last} tours terminés',
   'coursemap.roundsWhy': 'Refais ses leçons pour remplir la barre une fois de plus. Chaque barre pleine rapporte une étoile, et trois étoiles rendent sa cire dorée.',
   'coursemap.roundsAll': 'Trois étoiles : tu as fait chaque leçon d’ici trois fois.',
-  'coursemap.waxGold': 'Trois étoiles',
   'lesson.title': 'Leçon',
   'lesson.loading': 'Ouverture de la leçon…',
   'lesson.loadFailed': 'Impossible d’ouvrir cette leçon',

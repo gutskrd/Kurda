@@ -6,6 +6,7 @@
  * are in path-landmark.ts.
  */
 import type { UnitTone } from '../lesson-path.js';
+import { starPath, waxStars } from '../lesson-rounds.js';
 import type { PathGround } from '../path-world.js';
 import { roadLight } from './light.js';
 import { CANVAS, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
@@ -273,21 +274,20 @@ export function pathStopSvg(opts: PathStopOptions): string {
   return wrap(prefix, size, B, (defs ? `<defs>${defs}</defs>` : '') + body);
 }
 
-/**
- * A finished tile's wax seal, in the stop's points: the kilim diamond pressed into the wax, its middle at (`cx`, `cy`) and
- * `w` and `h` from it to its points, high enough on the face to leave the near edge to the topic's stars (shared
- * `roundStars`).
- */
-export const PATH_WAX_SEAL = { cx: 36, cy: 27, w: 25, h: 16.5 } as const;
+/** The falling drop, on the tile's canvas: how far below the face's middle its foot is, where it lands and splashes. */
+export const PATH_WAX_DROP = { foot: 14 } as const;
+
+/** Gold wax, by day and by evening: its face, its edge's thickness and its light. */
+const WAX_GOLD = {
+  light: { face: '#d8952a', edge: '#8a5313', light: '#ffe6ad' },
+  dark: { face: '#e0a236', edge: '#94591a', light: '#fff0c6' },
+} as const;
 
 /** The wax for a unit: a deeper, richer tone of its own colour, or gold once a topic has all three stars; its face, its edge's thickness and its light. */
 export function pathWaxColours(tone: UnitTone, dark: boolean, gold = false): { face: string; edge: string; light: string } {
   const scheme = dark ? 'dark' : 'light';
-  if (gold) {
-    const g = PATH_GOLD[scheme];
-    // Shiny: its light much brighter than a unit's wax.
-    return { face: g.face, edge: g.side, light: dark ? '#fff5d6' : '#fff3cc' };
-  }
+  // Rich gold: deep amber, a bronze edge, and a warm, bright light.
+  if (gold) return WAX_GOLD[scheme];
   const t = PATH_STOP_TONES[scheme][tone];
   if (!t) throw new RangeError(`art: no unit tone ${String(tone)}`);
   return dark
@@ -304,11 +304,13 @@ export interface PathWaxOptions {
   gold?: boolean;
   /** Dulled and a touch matte, where a refresh would help. */
   worn?: boolean;
+  /** The stars pressed into it, one for each full round (shared `waxStars`): 1 to 3. */
+  stars?: number;
   /**
-   * The whole waxed tile; or, for its moment, the poured wax alone, the seal pressed into it alone, or the drop of wax
-   * that falls onto the tile first.
+   * The whole waxed tile; or, for its moment, the poured wax alone, the seal pressed into it alone, the drop of wax that
+   * falls onto the tile first, or the droplets it throws out as it lands.
    */
-  part?: 'whole' | 'pour' | 'seal' | 'blob';
+  part?: 'whole' | 'pour' | 'seal' | 'blob' | 'splash';
   dark?: boolean;
   /** Display size in points; the drawing is `PATH_STOP_ART.box` square, laid as the tile is. */
   size?: number;
@@ -317,20 +319,19 @@ export interface PathWaxOptions {
 
 /**
  * A finished tile sealed in wax, on the tile's own canvas: the whole tile coated, its wax poured over the face and run a
- * little past its far edge and sides in an uneven lip, its side a shade darker, one or two drips from its foot onto the
- * road, differently on every stop; glossy, its top lit in a band along its upper left edge. Pressed into it, large, a Kurdish kilim diamond: a
- * raised rim round a sunken field, an eye standing up in the middle and a hook from each side point. Each form has one
- * light and one shade. A deeper tone of the unit's colour, or gold; dulled toward slate, its light nearly gone, where a
- * refresh would help.
+ * little past its far edge and sides in an uneven lip, its side a shade darker, one or two drips running down it,
+ * differently on every stop; glossy, its top lit in a band along its upper left edge. Pressed into it, a star for each
+ * full round (shared `waxStars`). Each form has one light and one shade. A deeper tone of the unit's colour, or gold;
+ * dulled toward slate, its light nearly gone, where a refresh would help.
  */
 export function pathWaxSvg(opts: PathWaxOptions): string {
   const { tone, dark = false, gold = false, worn = false } = opts;
   const part = opts.part ?? 'whole';
-  if (!['whole', 'pour', 'seal', 'blob'].includes(part)) throw new RangeError(`art: no wax part ${String(part)}`);
+  if (!['whole', 'pour', 'seal', 'blob', 'splash'].includes(part)) throw new RangeError(`art: no wax part ${String(part)}`);
   const size = opts.size ?? PATH_STOP_ART.box;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
   const { box: B, cx, cy, rx, ry, side } = PATH_STOP_ART;
-  const prefix = prefixFor(opts.idPrefix, 'wax', tone, opts.seed, gold, worn, part, dark);
+  const prefix = prefixFor(opts.idPrefix, 'wax', tone, opts.seed, gold, worn, part, opts.stars, dark);
   const own = pathWaxColours(tone, dark, gold);
   const dull = (hex: string): string => mix(hex, PATH_REST[dark ? 'dark' : 'light'].lip, 0.3);
   const wax = worn ? { face: dull(own.face), edge: dull(own.edge), light: dull(mix(own.light, own.face, 0.65)) } : own;
@@ -347,12 +348,20 @@ export function pathWaxSvg(opts: PathWaxOptions): string {
     `aria-hidden="true" focusable="false" id="${prefix}">` +
     `${defs ? `<defs>${defs}</defs>` : ''}${body}</svg>`;
 
+  if (part === 'splash') {
+    // A few droplets thrown up and out round where the drop lands (`PATH_WAX_DROP`), the larger low and to the sides.
+    const [lx, ly] = [cx, cy + PATH_WAX_DROP.foot];
+    const drops = ([[-168, 15, 2.3], [-128, 17, 1.5], [-92, 19, 1.2], [-52, 16, 1.8], [-14, 14, 2.4]] as const)
+      .map(([deg, k, r]) => ellipsePath(lx + Math.cos((deg * Math.PI) / 180) * k, ly + Math.sin((deg * Math.PI) / 180) * k * 0.7, r, r * 0.9))
+      .join('');
+    return wrapIt(`<path d="${drops}" fill="${wax.face}" stroke="${wax.edge}" stroke-width="0.8"/>`);
+  }
   if (part === 'blob') {
-    // A big drop, round below and drawn up to a point above as it falls, its thickness under it.
-    const p = (dx: number, dy: number): string => `${n(cx + dx)} ${n(cy + dy)}`;
+    // A big drop, round below and drawn up to a point above as it falls, drawn from its foot (`PATH_WAX_DROP`).
+    const p = (dx: number, dy: number): string => `${n(cx + dx)} ${n(cy + PATH_WAX_DROP.foot + dy)}`;
     const drop =
-      `M${p(0, -20)}C${p(5, -12)} ${p(13, -6)} ${p(13, 2)}C${p(13, 10)} ${p(7, 14)} ${p(0, 14)}` +
-      `C${p(-7, 14)} ${p(-13, 10)} ${p(-13, 2)}C${p(-13, -6)} ${p(-5, -12)} ${p(0, -20)}Z`;
+      `M${p(0, -34)}C${p(5, -26)} ${p(13, -20)} ${p(13, -12)}C${p(13, -4)} ${p(7, 0)} ${p(0, 0)}` +
+      `C${p(-7, 0)} ${p(-13, -4)} ${p(-13, -12)}C${p(-13, -20)} ${p(-5, -26)} ${p(0, -34)}Z`;
     return wrapIt(lit(drop, wax.light, wax.face, 2, 2.4) + `<path d="${drop}" fill="none" stroke="${wax.edge}" stroke-width="1.2"/>`);
   }
 
@@ -378,76 +387,97 @@ export function pathWaxSvg(opts: PathWaxOptions): string {
       }),
       true,
     );
-    // Drips from its foot onto the road: one, or two apart.
+    // Drips run down its side from under the near edge, each ending in a bead: one, or two apart.
     const drips = [rand() * 44 - 22];
     if (rand() < 0.6) drips.push(drips[0]! + (drips[0]! < 0 ? 1 : -1) * (14 + rand() * 12));
-    const foot = cy + ry + side - 1;
+    const top = cy + ry - 1;
     const dripPath = drips
       .map((dx) => {
-        const [x, w, l] = [cx + dx, 2 + rand() * 1.2, 2 + rand() * 3.5];
-        const p = (dx: number, dy: number): string => `${n(x + dx)} ${n(foot + dy)}`;
+        // Some stop on the side, some run on a little past its foot.
+        const [w, l] = [2.2 + rand() * 1.4, side * (0.45 + rand() * 0.75)];
+        const p = (u: number, v: number): string => `${n(cx + dx + u)} ${n(top + v)}`;
         return (
-          `M${p(-w - 1.5, 0)}C${p(-w, 0.6)} ${p(-w, l * 0.5)} ${p(-w * 0.8, l)}` +
-          `C${p(-w * 0.6, l + w * 1.3)} ${p(w * 0.6, l + w * 1.3)} ${p(w * 0.8, l)}` +
-          `C${p(w, l * 0.5)} ${p(w, 0.6)} ${p(w + 1.5, 0)}Z`
+          `M${p(-w - 1.2, 0)}C${p(-w, 1)} ${p(-w * 0.75, l * 0.5)} ${p(-w * 0.85, l - w)}` +
+          `C${p(-w * 0.95, l + w * 0.95)} ${p(w * 0.95, l + w * 0.95)} ${p(w * 0.85, l - w)}` +
+          `C${p(w * 0.75, l * 0.5)} ${p(w, 1)} ${p(w + 1.2, 0)}Z`
         );
       })
       .join('');
-    // The whole tile coated, its side a shade darker: the pour swept down by the tile's height, and the drips below.
+    // The whole tile coated, its side a shade darker: the pour swept down by the tile's height; the drips over it in the
+    // wax's own colour.
     const swept = [0.25, 0.5, 0.75, 1].map((k) => `<path d="${outline}" transform="translate(0 ${n(side * k)})"/>`).join('');
-    body += `<g fill="${wax.edge}">${swept}<path d="${dripPath}"/></g>`;
+    body += `<g fill="${wax.edge}">${swept}</g>` + fill(dripPath, wax.face);
     // Its glossy top, lit in a band along its upper left edge.
     body += lit(outline, wax.light, wax.face, 2.6, 3.2);
   }
   if (part !== 'pour') {
-    // The seal, laid from the stop's points onto the tile's canvas.
-    const [mx, my] = [PATH_WAX_SEAL.cx + cx - 36, PATH_WAX_SEAL.cy + cy - 30];
-    const { w, h } = PATH_WAX_SEAL;
-    const diamond = (a: number, b: number): string => `M${n(mx)} ${n(my - b)}L${n(mx + a)} ${n(my)}L${n(mx)} ${n(my + b)}L${n(mx - a)} ${n(my)}Z`;
-    const field = diamond(w - 4.6, h - 3.1);
-    const rim = diamond(w, h) + field;
-    const eye = diamond(7.6, 5.2) + diamond(3.4, 2.4);
-    // A hook from each side point: an arm out along the middle, turned up at its end.
-    const hook = (sgn: 1 | -1): string => {
-      const x0 = mx + sgn * (w - 1);
-      const x1 = mx + sgn * (w + 4.2);
-      return `M${n(x0)} ${n(my - 1.2)}H${n(x1)}V${n(my - 4.4)}H${n(x1 + sgn * 2.4)}V${n(my + 1.2)}H${n(x0)}Z`;
-    };
-    const raised = (dx: number, dy: number, colour: string): string =>
-      `<g transform="translate(${dx} ${dy})" fill="${colour}"><path d="${rim}${eye}" fill-rule="evenodd"/><path d="${hook(1)}${hook(-1)}"/></g>`;
-    // The field sunk a shade below the wax; the rim, eye and hooks standing up from it, lit above and shaded below.
-    body += fill(field, mix(wax.face, wax.edge, 0.45)) + raised(1, 1.2, wax.edge) + raised(-0.8, -0.9, wax.light) + raised(0, 0, wax.face);
+    // The stars, laid from the stop's points onto the tile's canvas: each a raised rim round a sunken field, lit above and
+    // shaded below, its field in the shade inside its upper left edge; their points softened as pressed wax is.
+    const stars = waxStars(opts.stars ?? 1);
+    const star = (s: { x: number; y: number; r: number }, inset: number): string => starPath(s.x + cx - 36, s.y + cy - 30, s.r - inset);
+    const rims = stars.map((st) => star(st, 0)).join('');
+    const fields = stars.map((st) => star(st, Math.max(1.9, st.r * 0.14))).join('');
+    const soft = (d: string, colour: string, dx = 0, dy = 0): string =>
+      `<path d="${d}" transform="translate(${dx} ${dy})" fill="${colour}" stroke="${colour}" stroke-width="1.2" stroke-linejoin="round"/>`;
+    body += soft(rims, wax.edge, 1, 1.2) + soft(rims, wax.light, -0.8, -0.9) + soft(rims, wax.face);
+    body += lit(fields, wax.edge, mix(wax.face, wax.edge, 0.55), 0.8, 0.95);
   }
   return wrapIt(body);
 }
 
 /**
- * Where the stamp stands over a stop's 72-point button as it presses (`x`, `y`, its canvas `w` × `h`): its brass face
- * across the whole tile, its foot over the face's middle.
+ * Where the stamp stands over a stop's 72-point button as it presses (`x`, `y`, its canvas `w` × `h`): its block and pad
+ * as wide as the tile, the pad's foot across the face a little below its middle.
  */
-export const PATH_STAMP_TOOL = { w: 80, h: 64, x: -4, y: -22 } as const;
+export const PATH_STAMP_TOOL = { w: 78, h: 87, x: -3, y: -44 } as const;
+
+/** The bright line along the stamp's brass, where its lit top turns to its shaded front. */
+const BRASS_EDGE = '#fff4d4';
 
 /**
- * The stamp itself, for the moment a finished tile is sealed: a wide brass plate on a turned wooden handle, seen from
- * the side, its face down, as wide as a tile. On its own `PATH_STAMP_TOOL` canvas, its face along the bottom.
+ * The stamp itself, for the moment a finished tile is sealed: the icons' own stamp (the Stamp glyph's silhouette, on its
+ * 256 grid), painted. A tapering handle of polished walnut, lit down its left side and shaded down its right; a block of
+ * warm brass, its top lit, its front shaded, a bright line along the edge between; and under it the charcoal rubber pad,
+ * the die of the stars it presses (`stars`, as `waxStars` lays them) standing just proud of its foot. On its own `PATH_STAMP_TOOL` canvas, the pad along the bottom.
  */
-export function pathStampToolSvg(opts: { dark?: boolean; size?: number; idPrefix?: string } = {}): string {
+export function pathStampToolSvg(opts: { dark?: boolean; stars?: number; size?: number; idPrefix?: string } = {}): string {
   const { dark = false } = opts;
   const { w: W, h: H } = PATH_STAMP_TOOL;
   const size = opts.size ?? W;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
+  const id = prefixFor(opts.idPrefix, 'stamp-tool', dark);
   const c = (hex: string): string => dusk(hex, dark, 0.12);
   const g = PATH_GOLD[dark ? 'dark' : 'light'];
-  let body = fill('M34 30C34 25 36 22 40 22C44 22 46 25 46 30V41H34Z', c('#8a5428'));
-  body += fill('M40 22C44 22 46 25 46 30V41H42V30C42 26 41 23.5 40 22Z', c('#5e3518'));
-  body += fill(ellipsePath(40, 13, 10, 10.5), c('#b8773e'));
-  body += fill('M40 2.5C45.5 2.5 50 7 50 13C50 17.5 47.8 21 44.5 22.6C46.8 18.6 47.2 9.6 40 2.5Z', c('#8a5428'));
-  body += fill(ellipsePath(36.2, 9.6, 2.8, 3.4), c('#d39457'));
-  body += fill('M30 41H50L54 46H26Z', g.side);
-  body += fill('M6 46H74Q78 46 78 50V56Q78 59 75 59H5Q2 59 2 56V50Q2 46 6 46Z', g.face) + fill('M66 46H74Q78 46 78 50V56Q78 59 75 59H66Z', g.side);
-  body += fill('M1 59H79V62Q79 63 78 63H2Q1 63 1 62Z', g.side);
-  const id = prefixFor(opts.idPrefix, 'stamp-tool', dark);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2((size * H) / W)}" viewBox="0 0 ${W} ${H}" aria-hidden="true" focusable="false" id="${id}">${body}</svg>`;
+  const wood = { face: c('#6b4128'), light: c('#94643f'), shade: c('#43260f') };
+  const rubber = { face: c('#2a2c30'), light: c('#4a4d53') };
+  // The glyph's own outlines: the handle (moved by `dx`, `dy`), the block, and the pad.
+  const handleAt = (dx = 0, dy = 0): string =>
+    `M${n(88.72 + dx)} ${n(54.71 + dy)}A32 32 0 0 1 ${n(120 + dx)} ${n(16 + dy)}H${n(136 + dx)}A32 32 0 0 1 ${n(167.28 + dx)} ${n(54.71 + dy)}` +
+    `L${n(151.57 + dx)} ${n(128 + dy)}H${n(104.43 + dx)}Z`;
+  const handle = handleAt();
+  const block = 'M48 128H208A16 16 0 0 1 224 144V184A16 16 0 0 1 208 200H48A16 16 0 0 1 32 184V144A16 16 0 0 1 48 128Z';
+  const pad = 'M40 216H216A8 8 0 0 1 216 232H40A8 8 0 0 1 40 216Z';
+  const defs = [['h', handle], ['b', block], ['p', pad]].map(([k, d]) => `<clipPath id="${id}${k}"><path d="${d}"/></clipPath>`).join('');
+  // The handle: walnut, a soft light down its left side, where a copy of it moved right does not reach, and a shade down
+  // its right, where one moved left does not.
+  const strip = (dx: number, dy: number, colour: string): string => `<path d="${handle}${handleAt(dx, dy)}" fill="${colour}" fill-rule="evenodd"/>`;
+  let body = fill(handle, wood.face) + `<g clip-path="url(#${id}h)">${strip(9, 3, wood.light)}${strip(-9, 0, wood.shade)}</g>`;
+  // The block: its shaded front, its lit top, and the bright edge between them.
+  body += fill(block, g.side) + `<g clip-path="url(#${id}b)">${fill('M24 120H232V146H24Z', g.face)}${fill('M24 146H232V149H24Z', BRASS_EDGE)}</g>`;
+  // The pad, its upper edge catching the light, and the die of the stars it presses standing just proud of its foot,
+  // each where its star falls across the tile (32 to 224 of the grid is the tile's width).
+  const die = waxStars(opts.stars ?? 1)
+    .map((st) => {
+      const [x, w] = [32 + (st.x / 72) * 192, (st.r / 72) * 192 * 0.9];
+      return `M${n(x - w)} 230H${n(x + w)}L${n(x + w * 0.7)} 236.5H${n(x - w * 0.7)}Z`;
+    })
+    .join('');
+  body += fill(die, rubber.face) + fill(pad, rubber.face) + `<g clip-path="url(#${id}p)">${fill('M24 214H232V219H24Z', rubber.light)}</g>`;
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2((size * H) / W)}" viewBox="24 8 208 232" ` +
+    `aria-hidden="true" focusable="false" id="${id}">` +
+    `<defs>${defs}</defs>${body}</svg>`
+  );
 }
 
 // ───────────────────────────────────────────────────────────── the milestone

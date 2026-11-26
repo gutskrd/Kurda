@@ -1914,7 +1914,6 @@ export const ckb: Catalogue = {
   'coursemap.roundsDone': 'هەر {last} گەڕەکە تەواو بوون',
   'coursemap.roundsWhy': 'وانەکانی دووبارە بکەرەوە بۆ ئەوەی شریتەکە جارێکی تر پڕ بێتەوە. هەر شریتێکی پڕ ئەستێرەیەک دەهێنێت، و بە سێ ئەستێرە مۆمەکەی زێڕین دەبێت.',
   'coursemap.roundsAll': 'سێ ئەستێرە: هەموو وانەیەکی ئێرەت سێ جار کردووە.',
-  'coursemap.waxGold': 'سێ ئەستێرە',
   'lesson.title': 'وانە',
   'lesson.loading': 'وانەکە دەکرێتەوە…',
   'lesson.loadFailed': 'ئەم وانەیە نەکرایەوە',

@@ -1909,7 +1909,6 @@ export const nl: Catalogue = {
   'coursemap.roundsDone': 'Alle {last} rondes klaar',
   'coursemap.roundsWhy': 'Doe de lessen nog eens om de balk opnieuw te vullen. Elke volle balk levert een ster op, en bij drie sterren wordt de was goud.',
   'coursemap.roundsAll': 'Drie sterren: je hebt elke les hier drie keer gedaan.',
-  'coursemap.waxGold': 'Drie sterren',
   'lesson.title': 'Les',
   'lesson.loading': 'Les wordt geopend…',
   'lesson.loadFailed': 'Deze les kon niet worden geopend',

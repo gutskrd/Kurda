@@ -1907,7 +1907,6 @@ export const es: Catalogue = {
   'coursemap.roundsDone': 'Las {last} rondas hechas',
   'coursemap.roundsWhy': 'Vuelve a hacer sus lecciones para llenar la barra otra vez. Cada barra llena te da una estrella, y con tres estrellas su cera se vuelve dorada.',
   'coursemap.roundsAll': 'Tres estrellas: has hecho cada lección de aquí tres veces.',
-  'coursemap.waxGold': 'Tres estrellas',
   'lesson.title': 'Lección',
   'lesson.loading': 'Abriendo la lección…',
   'lesson.loadFailed': 'No se pudo abrir esta lección',

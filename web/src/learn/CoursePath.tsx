@@ -5,6 +5,8 @@ import {
   PATH_RETURN,
   PATH_START_WORDS,
   PATH_STAMP_MOMENT,
+  PATH_STAMP_REPRESS,
+  PATH_WAX_GOLD,
   TOPIC_STARS,
   isSoraniDialect,
   lessonPath,
@@ -37,7 +39,7 @@ import type { MessageKey } from '../i18n/en';
 import { GrammarNote } from './GrammarNote';
 import { JumpSheet } from './JumpSheet';
 import { courseProgress, lessonStates } from './map';
-import { RoundStars, StarRow, TopicBar } from './PathRing';
+import { StarRow, TopicBar } from './PathRing';
 import { TileWax, WaxLegend } from './PathScene';
 import { SectionCard, UnitDivider, UnitPin, levelWords, useUnitAtTop } from './PathSections';
 import { MilestoneArt, StopArt, UnitLandmark, UnitRail, UnitScenery, UpcomingUnit, useUnitsOnScreen, useWidth, type RailSection } from './PathWorld';
@@ -259,7 +261,7 @@ function StopCard({
         </h3>
         {where && <p className="lp-pop-line">{where}</p>}
         {stop.rounds > 0 && <StarRow rounds={stop.rounds} />}
-        {stop.state === 'done' && <WaxLegend tone={unit.tone} dark={dark} done={t('coursemap.state.done')} three={t('coursemap.waxGold')} />}
+        {stop.state === 'done' && <WaxLegend tone={unit.tone} dark={dark} />}
         <LinkButton to={action.to} state={{ title: skill.title, from: home }} block className="lp-pop-start">
           <span>{action.label}</span>
           {xp && <span className="lp-pop-start-xp">{t(action.again ? 'coursemap.xp.again' : 'coursemap.xp.first', { min: number(xp.min), max: number(xp.max) })}</span>}
@@ -325,7 +327,7 @@ function StopCard({
         </div>
       )}
       {stop.state === 'done' && stop.rounds > 0 && <p className="lp-pop-line">{t(stop.rounds >= TOPIC_STARS ? 'coursemap.roundsAll' : 'coursemap.roundsWhy')}</p>}
-      {stop.state === 'done' && <WaxLegend tone={unit.tone} dark={dark} done={t('coursemap.state.done')} three={t('coursemap.waxGold')} />}
+      {stop.state === 'done' && <WaxLegend tone={unit.tone} dark={dark} />}
       {stop.state === 'done' && (
         <p className="lp-pop-line">
           {stop.finish === 'refresh' ? t('coursemap.refreshWhy') : t('coursemap.strength', { percent: skill.strength })}
@@ -480,21 +482,23 @@ interface PathReturn {
 
 /**
  * The moments of a return (`PATH_RETURN`, counted from the draw as on the phone): the bar fills, a finished stop is
- * stamped, a full bar starts its next round, an opened stop loses its lock, the bubble moves on, and a round's new star
- * lights once the stamp has settled.
+ * sealed in wax or a sealed one pressed again with its new star, a full bar starts its next round, an opened stop loses
+ * its lock, and the bubble moves on.
  */
-const STEP = { fill: 1, finish: 2, next: 3, open: 4, bubble: 5, star: 6 } as const;
+const STEP = { fill: 1, finish: 2, next: 3, open: 4, bubble: 5 } as const;
 
 /** Where the return has got to (`STEP`), from 0 (drawn as it was) to `STEP.bubble`; null once over or with nothing to show. */
 function useReturnStep(ret: PathReturn | null): number | null {
   const [at, setAt] = useState<{ ret: PathReturn | null; step: number | null }>({ ret: null, step: null });
   useEffect(() => {
     if (!ret) return;
-    const { settleMs, finishAtMs, nextAtMs, openAtMs, bubbleAtMs, bubbleMs, popMs, starAtMs, starMs } = PATH_RETURN;
-    const marks = [settleMs, finishAtMs, nextAtMs, openAtMs, bubbleAtMs, starAtMs];
+    const { settleMs, finishAtMs, nextAtMs, openAtMs, bubbleAtMs, bubbleMs, popMs } = PATH_RETURN;
+    const marks = [settleMs, finishAtMs, nextAtMs, openAtMs, bubbleAtMs];
     // In order, each a moment after the last.
     const timers = marks.map((ms, i) => window.setTimeout(() => setAt({ ret, step: i + 1 }), ms));
-    timers.push(window.setTimeout(() => setAt({ ret, step: null }), Math.max(bubbleAtMs + Math.max(bubbleMs, popMs, 400), starAtMs + starMs + 40)));
+    // Over once the bubble has moved on and a stop pressed again has warmed into gold, if its third star made it so.
+    const pressed = finishAtMs + PATH_STAMP_REPRESS.ms + PATH_WAX_GOLD.afterMs + PATH_WAX_GOLD.warmMs;
+    timers.push(window.setTimeout(() => setAt({ ret, step: null }), Math.max(bubbleAtMs + Math.max(bubbleMs, popMs, 400), pressed + 40)));
     return () => timers.forEach((id) => window.clearTimeout(id));
   }, [ret]);
   if (!ret) return null;
@@ -647,7 +651,7 @@ export function CoursePath({
     if (next.size !== stamped.size) setStamped(next);
     writeStamps(courseId, next);
   }, [path, stamped, reduceMotion, courseId]);
-  // Stops stamped in their moment on this visit, whose newest star lights in as the stamp settles.
+  // Stops sealed in their moment on this visit, whose wax warms into gold if it was sealed with three stars.
   const [fresh, setFresh] = useState<ReadonlySet<string>>(() => new Set());
   const stampDone = useCallback((key: string) => {
     setStamped((had) => (had && !had.has(key) ? new Set([...had, key]) : had));
@@ -659,17 +663,22 @@ export function CoursePath({
     return pathRef.current.querySelector<HTMLElement>(`[data-stop="${key}"]`);
   }, []);
 
-  // Opening: the current skill in the middle of the screen, or on a return the previous one, which the page then follows
-  // to the new one. Learn opens at its top unless returning, with "Back to your lesson" when the stop is below.
+  /*
+   * Opening: the current skill in the middle of the screen, or on a return the stop the lesson was played on, so a stop
+   * replayed further back is seen taking its new star; the page then follows the bubble only if there is a new current
+   * skill. Learn opens at its top unless returning, with "Back to your lesson" when the stop is below.
+   */
   useLayoutEffect(() => {
     if (!path || scrolled.current) return;
     scrolled.current = true;
     if (!showHeader && !ret) return;
-    nodeOf(ret?.from ?? path.focus)?.scrollIntoView?.({ block: 'center', behavior: reduceMotion || ret ? 'auto' : 'smooth' });
+    const played = ret ? (ret.changes.ring[0]?.key ?? ret.changes.finished[0] ?? ret.from) : null;
+    nodeOf(played ?? path.focus)?.scrollIntoView?.({ block: 'center', behavior: reduceMotion || ret ? 'auto' : 'smooth' });
   }, [path, nodeOf, reduceMotion, ret, showHeader]);
+  const movesOn = (ret?.changes.current ?? null) !== null;
   useEffect(() => {
-    if (step === STEP.bubble && path?.focus) nodeOf(path.focus)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
-  }, [step, path, nodeOf]);
+    if (step === STEP.bubble && movesOn && path?.focus) nodeOf(path.focus)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+  }, [step, movesOn, path, nodeOf]);
 
   // The way back to the current skill, shown only while it is off screen (in the open section).
   useEffect(() => {
@@ -808,13 +817,20 @@ export function CoursePath({
     if (change.to.rounds > change.from.rounds && step! < STEP.next) return { filled: of, whole: step! >= STEP.finish, from: before };
     return { ...now, from: before };
   };
-  /** A finished topic's stars at this moment: a round won on the return lights its star once the stamp has settled. */
-  const starsNow = (stop: SkillStop<SkillNode>): { rounds: number; earned: boolean } => {
+  /**
+   * A sealed topic's wax at this moment: the stars pressed in it and whether it is warming into gold. A round made whole
+   * on the return is pressed in by the stamp as the stop finishes, `from` the stars it had before.
+   */
+  const waxNow = (stop: SkillStop<SkillNode>): { stars: number; from: number | null; warming: boolean } => {
     const change = playing ? ret.changes.ring.find((r) => r.key === stop.key) : undefined;
-    if (change && change.to.rounds > change.from.rounds) {
-      return step! < STEP.star ? { rounds: change.from.rounds, earned: false } : { rounds: stop.rounds, earned: true };
+    const three = (n: number): number => Math.min(TOPIC_STARS, n);
+    if (change && change.to.rounds > change.from.rounds && change.from.rounds >= 1) {
+      const [from, to] = [three(change.from.rounds), three(stop.rounds)];
+      if (step! < STEP.finish) return { stars: from, from: null, warming: false };
+      // The third star, pressed in now, turns it gold.
+      return { stars: to, from, warming: to === TOPIC_STARS && from !== TOPIC_STARS && !reduceMotion };
     }
-    return { rounds: stop.rounds, earned: fresh.has(stop.key) };
+    return { stars: three(stop.rounds), from: null, warming: fresh.has(stop.key) && stop.rounds >= TOPIC_STARS && !reduceMotion };
   };
   // The next finished stop to stamp, one at a time down the road, once its unit is in view; under reduced motion none
   // is played, and each is simply stamped.
@@ -945,10 +961,7 @@ export function CoursePath({
                             // A finished topic is stamped: already, or now in its moment; until then it is its tile as before.
                             const stamping = stampNext === stop.key;
                             const isStamped = stop.kind === 'skill' && stop.state === 'done' && (reduceMotion || (stamped?.has(stop.key) ?? true));
-                            const stars = stop.kind === 'skill' && isStamped && !stamping ? starsNow(stop) : null;
-                            // Three stars turn its wax gold: just now, as the third lights, it warms into gold.
-                            const goldNow = !!stars && stars.rounds >= TOPIC_STARS;
-                            const warming = goldNow && stars.earned && !reduceMotion;
+                            const wax = stop.kind === 'skill' && isStamped && !stamping ? waxNow(stop) : null;
                             // A later chapter that can be tested into: its first stop offers the test rather than its card.
                             const jumpHere = unit.jumpKey === stop.key;
                             return (
@@ -1011,8 +1024,11 @@ export function CoursePath({
                                         stopKey={stop.key}
                                         tone={unit.tone}
                                         dark={dark}
-                                        gold={goldNow}
-                                        warming={warming}
+                                        stars={wax?.stars ?? Math.min(TOPIC_STARS, stop.rounds)}
+                                        from={wax?.from ?? null}
+                                        // Three stars turn its wax gold.
+                                        gold={(wax?.stars ?? 0) >= TOPIC_STARS}
+                                        warming={wax?.warming ?? false}
                                         worn={stop.finish === 'refresh'}
                                         live={!reduceMotion}
                                         pressing={stamping && !isStamped}
@@ -1020,7 +1036,6 @@ export function CoursePath({
                                         onStamped={stampDone}
                                       />
                                     )}
-                                    {near && stars && <RoundStars rounds={stars.rounds} earned={stars.earned} gold={goldNow} warming={warming} dark={dark} />}
                                   </span>
                                 </button>
                                 {isOpen && (

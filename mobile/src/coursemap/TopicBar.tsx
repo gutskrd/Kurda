@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { PATH_BAR, PATH_GOLD, PATH_RETURN, PATH_WAX_GOLD, TOPIC_STARS, barPieces, roundStars, starPath } from '@kurda/shared';
+import { PATH_BAR, PATH_RETURN, TOPIC_STARS, barPieces, starPath } from '@kurda/shared';
 import { useDirection } from '../reports/direction';
 import { timing } from '../theme/animate';
 import { useTheme } from '../theme/ThemeProvider';
@@ -107,100 +107,8 @@ export function TopicBar({
   );
 }
 
-/** A star's edge, a little darker than the gold, so it reads on any unit's colour (as the website's path.css). */
-const STAR_EDGE = 'rgba(58, 35, 6, 0.45)';
-
-/**
- * A finished topic's stars set into its wax along the tile's near edge, one for each full round. `earned` lights the
- * newest in with a short pop after `delay`: once the wax has settled (`PATH_RETURN.starAtMs` on a return). On gold wax
- * they are cream; when the wax warms into gold (`warmAt`, shared `PATH_WAX_GOLD`) they turn cream with it.
- */
-export function RoundStars({
-  rounds,
-  earned = false,
-  delay = 0,
-  gold = false,
-  warmAt = null,
-}: {
-  rounds: number;
-  earned?: boolean;
-  delay?: number;
-  gold?: boolean;
-  warmAt?: number | null;
-}): React.JSX.Element | null {
-  const { colors, scheme } = useTheme();
-  const stars = roundStars(rounds);
-  const pop = useRef(new Animated.Value(earned ? 0 : 1)).current;
-  const cream = useRef(new Animated.Value(warmAt === null ? 1 : 0)).current;
-  useEffect(() => {
-    if (!earned) {
-      pop.setValue(1);
-      return;
-    }
-    pop.setValue(0);
-    const run = timing(pop, 1, PATH_RETURN.starMs, { delay });
-    run.start();
-    return () => run.stop();
-  }, [earned, delay, pop]);
-  useEffect(() => {
-    if (warmAt === null) {
-      cream.setValue(1);
-      return;
-    }
-    cream.setValue(0);
-    const run = timing(cream, 1, PATH_WAX_GOLD.warmMs, { delay: warmAt + PATH_WAX_GOLD.afterMs });
-    run.start();
-    return () => run.stop();
-  }, [warmAt, cream]);
-  if (stars.length === 0) return null;
-  const last = stars[stars.length - 1]!;
-  const before = earned ? stars.slice(0, -1) : stars;
-  const onGold = PATH_GOLD[scheme];
-  const one = (s: { x: number; y: number; r: number }, key: number, light = false) => (
-    <Path
-      key={key}
-      d={starPath(s.x, s.y, s.r)}
-      fill={light ? onGold.star : colors.gold}
-      stroke={light ? onGold.starEdge : STAR_EDGE}
-      strokeWidth={1.4}
-      strokeLinejoin="round"
-    />
-  );
-  // The newest star is drawn in its own box so it grows from its middle.
-  const size = last.r * 4;
-  return (
-    <View style={styles.stars} pointerEvents="none" aria-hidden testID={`lp-stars-${stars.length}`}>
-      <Svg width={72} height={72} viewBox="0 0 72 72">
-        {before.map((s, k) => one(s, k))}
-      </Svg>
-      {earned ? (
-        <Animated.View
-          style={[
-            styles.newest,
-            { left: last.x - size / 2, top: last.y - size / 2, width: size, height: size },
-            {
-              opacity: pop.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1] }),
-              transform: [{ scale: pop.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1.8, 0.9, 1] }) }],
-            },
-          ]}
-          testID="lp-star-earned"
-        >
-          <Svg width={size} height={size} viewBox={`${last.x - size / 2} ${last.y - size / 2} ${size} ${size}`}>
-            {one(last, 0)}
-          </Svg>
-        </Animated.View>
-      ) : null}
-      {/* Cream over the gold stars on gold wax, fading in as the wax warms. */}
-      {gold ? (
-        <Animated.View style={[StyleSheet.absoluteFill, { opacity: cream }]} testID="lp-stars-on-gold">
-          <Svg width={72} height={72} viewBox="0 0 72 72">
-            {stars.map((s, k) => one(s, k, true))}
-          </Svg>
-        </Animated.View>
-      ) : null}
-    </View>
-  );
-}
+/** A star's edge, darker than the gold, so it reads on any unit's wax (as the website's path.css). */
+const STAR_EDGE = 'rgba(40, 22, 4, 0.6)';
 
 /** A topic's three stars in its card: gold for each round played, the bar's quiet track for the rest. */
 export function StarRow({ rounds }: { rounds: number }): React.JSX.Element {
@@ -221,7 +129,5 @@ const styles = StyleSheet.create({
   // Over the stop's 72-point button, a touch wider than it, its top `PATH_BAR.y` above it.
   bar: { position: 'absolute', left: PATH_BAR.x, top: PATH_BAR.y, width: PATH_BAR.w, height: PATH_BAR.h },
   piece: { position: 'absolute', top: 0, overflow: 'hidden' },
-  stars: { position: 'absolute', left: 0, top: 0, width: 72, height: 72 },
-  newest: { position: 'absolute' },
   row: { gap: 4 },
 });

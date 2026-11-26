@@ -1,8 +1,8 @@
 /**
- * A topic's rounds: how many times over its lessons were played, shown as the bar over its stop and the stars on its
- * tile. The bar has one piece per lesson; a piece fills as each lesson is first finished, and once the bar is full the
- * stop is stamped with Hevalo's seal and earns its first star. Replaying fills the next round piece by piece, up to three
- * stars.
+ * A topic's rounds: how many times over its lessons were played, shown as the bar over its stop and the stars pressed
+ * into its wax. The bar has one piece per lesson; a piece fills as each lesson is first finished, and once the bar is
+ * full the stop is sealed in wax with its first star. Replaying fills the next round piece by piece, and each full round
+ * is pressed into the wax as another star, up to three.
  *
  * So rounds are the fewest finishes of any one lesson (at most `TOPIC_STARS`) and pieces are the lessons finished more
  * often than that. The server computes them per topic (api/src/coursemap) and both apps draw from its numbers and from the
@@ -52,16 +52,15 @@ export function barPieces(of: number): Array<{ x: number; w: number }> {
 }
 
 /**
- * Where a finished topic's stars stand on its tile, in the stop's points: in a row set into the wax along the tile's near
- * edge, under the diamond pressed in it (art/path-land.ts `PATH_WAX_SEAL`), following the edge's curve, the middle one a
- * little larger. `r` is a star's outer radius.
+ * The stars pressed into a finished topic's wax, in the stop's points, one for each full round: one large in the middle
+ * of the tile's face, two side by side a little smaller, or three with the middle one higher, a small crown. A topic
+ * finished before its rounds were counted shows one. `r` is a star's outer radius.
  */
-export function roundStars(rounds: number): Array<{ x: number; y: number; r: number }> {
-  const stars = Math.max(0, Math.min(TOPIC_STARS, Math.floor(rounds)));
-  if (stars === 1) return [{ x: 36, y: 52.5, r: 7.2 }];
-  if (stars === 2) return [{ x: 28.5, y: 52, r: 6.6 }, { x: 43.5, y: 52, r: 6.6 }];
-  if (stars === 3) return [{ x: 21.5, y: 51, r: 6 }, { x: 36, y: 53, r: 6.6 }, { x: 50.5, y: 51, r: 6 }];
-  return [];
+export function waxStars(rounds: number): Array<{ x: number; y: number; r: number }> {
+  const stars = Math.max(1, Math.min(TOPIC_STARS, Math.floor(rounds) || 1));
+  if (stars === 1) return [{ x: 36, y: 31, r: 18 }];
+  if (stars === 2) return [{ x: 22.5, y: 31, r: 13 }, { x: 49.5, y: 31, r: 13 }];
+  return [{ x: 15, y: 34.5, r: 10.5 }, { x: 36, y: 26, r: 11 }, { x: 57, y: 34.5, r: 10.5 }];
 }
 
 /** A five-pointed star as SVG path data, point up, inner corners at two fifths of `r`, for drawing with round joins. */
