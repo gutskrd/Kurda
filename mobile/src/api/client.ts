@@ -55,6 +55,16 @@ export interface ApiClientOptions {
 
 // 30 s because a free-tier host can take 20–40 s to cold-start after idle; a shorter timeout would abort a real wake-up.
 const DEFAULT_TIMEOUT_MS = 30_000;
+/** An early answer older than this when the screen asks is left, and the screen asks for itself. */
+const EARLY_STALE_MS = 5000;
+
+/** A GET asked before the screen that wants it exists (`ApiClient.prefetch`). */
+interface Early {
+  token: string;
+  response: Promise<Response | null>;
+  /** When the answer arrived, once it has. */
+  arrived: number | null;
+}
 
 interface RequestOptions {
   body?: unknown;
@@ -110,6 +120,7 @@ export class ApiClient {
   private readonly idGenerator: () => string;
   private readonly timeoutMs: number;
   private refreshInFlight: Promise<Refresh> | null = null;
+  private readonly early = new Map<string, Early>();
 
   constructor(private readonly opts: ApiClientOptions) {
     this.fetchFn = opts.fetchFn ?? ((url, init) => fetch(url, init));
@@ -144,6 +155,36 @@ export class ApiClient {
   async replaceAccessToken(accessToken: string): Promise<void> {
     const tokens = await this.opts.storage.get();
     if (tokens) await this.opts.storage.set({ ...tokens, accessToken });
+  }
+
+  /**
+   * Asks the first screens' plain GETs with the token the session check is about to use, before those screens exist.
+   * A request for the same path with the same token then takes the answer once instead of asking again; one not taken
+   * within a few seconds of arriving is left, and the screen asks for itself.
+   */
+  prefetch(paths: readonly string[], accessToken: string): void {
+    for (const path of paths) {
+      if (this.early.has(path) || !isPlainPath(path)) continue;
+      const entry: Early = { token: accessToken, response: Promise.resolve(null), arrived: null };
+      entry.response = this.timedFetch(`${this.opts.baseUrl}${path}`, { method: 'GET', headers: { authorization: `Bearer ${accessToken}` } }).then(
+        (res) => {
+          entry.arrived = Date.now();
+          return res;
+        },
+        () => null,
+      );
+      this.early.set(path, entry);
+    }
+  }
+
+  /** The early answer to `path` if it was asked with `accessToken` and is still fresh, handed over once. */
+  private takeEarly(path: string, accessToken: string | undefined): Promise<Response | null> | null {
+    const entry = this.early.get(path);
+    if (!entry) return null;
+    this.early.delete(path);
+    if (entry.token !== accessToken) return null;
+    if (entry.arrived !== null && Date.now() - entry.arrived > EARLY_STALE_MS) return null;
+    return entry.response;
   }
 
   get<T>(path: string, options?: RequestOptions): Promise<ApiResult<T>> {
@@ -184,16 +225,20 @@ export class ApiClient {
 
       let res: Response;
       try {
-        res = await this.timedFetch(`${this.opts.baseUrl}${path}`, {
-          method,
-          headers: withAuth,
-          body:
-            options.rawBody !== undefined
-              ? options.rawBody
-              : options.body !== undefined
-                ? JSON.stringify(options.body)
-                : undefined,
-        });
+        // A plain GET may already have been asked beside the session check (`prefetch`).
+        const early = method === 'GET' && !options.headers ? await this.takeEarly(path, tokens?.accessToken) : null;
+        res =
+          early ??
+          (await this.timedFetch(`${this.opts.baseUrl}${path}`, {
+            method,
+            headers: withAuth,
+            body:
+              options.rawBody !== undefined
+                ? options.rawBody
+                : options.body !== undefined
+                  ? JSON.stringify(options.body)
+                  : undefined,
+          }));
       } catch {
         return {
           ok: false,

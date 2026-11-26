@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { ApiClient } from '../api/client';
+import { FIRST_QUESTIONS, lastsAMinute } from '../api/firstQuestions';
 import { useHeartbeat } from './useHeartbeat';
 import { deviceTimeZone, useTimeZoneSync } from './timeZone';
 import { defaultApiBaseUrl } from '../api/env';
@@ -335,6 +336,8 @@ export function AuthProvider({
         if (!cancelled) setStatus('signedOut');
         return;
       }
+      // The first screen's questions go out with the session check rather than after it (api/firstQuestions.ts).
+      if (lastsAMinute(tokens.accessToken)) client.prefetch(FIRST_QUESTIONS, tokens.accessToken);
       const me = await client.get<{ user: SessionUser }>('/me');
       if (cancelled) return;
       if (me.ok) {
