@@ -14,6 +14,7 @@ import { makeLearner } from '../test/progress.js';
 import { WalletService } from '../wallet/service.js';
 import { grantBagGiftWithin } from '../gifts/bag.js';
 import { exportProgress } from '../gdpr/progress-export.js';
+import { AuditService } from '../admin/audit-service.js';
 import { BundleService } from './bundles.js';
 import { ShopService } from './service.js';
 
@@ -310,6 +311,30 @@ describe.skipIf(!DATABASE_URL)('bundles (integration)', () => {
     await expect(bundles.purchase(child.id, BUNDLE, key(), { expectedPrice: PRICE })).rejects.toMatchObject({ code: 'CHILD_NO_PURCHASES' });
     expect(await owns(child)).toEqual([]);
     expect(await zer(child)).toBe(1000);
+  });
+
+  it('lets an admin take a bundle off sale and change its price, through Approvals from 500 and never to its parts’ worth', async () => {
+    const admin = await person('admin');
+    const audit = new AuditService(pool);
+    await expect(bundles.editBundle(audit, admin.id, 'req-1', BUNDLE, { price: 520 })).rejects.toMatchObject({ code: 'PRICE_NEEDS_APPROVAL' });
+    // a bundle of the tag alone is worth 150, so 150 or more would save nothing
+    const small = `test-small-${suffix}`;
+    await pool.query(`INSERT INTO shop_bundles (id, name, price, display_order) VALUES ($1, 'Biçûk', 100, 98)`, [small]);
+    await pool.query(`INSERT INTO shop_bundle_parts (bundle_id, sku) VALUES ($1, $2)`, [small, TAG]);
+    await expect(bundles.editBundle(audit, admin.id, 'req-2', small, { price: 150 })).rejects.toMatchObject({ code: 'BUNDLE_SAVES_NOTHING' });
+    await pool.query(`DELETE FROM shop_bundles WHERE id = $1`, [small]);
+    const cheaper = await bundles.editBundle(audit, admin.id, 'req-3', BUNDLE, { price: 450 });
+    expect(cheaper).toMatchObject({ id: BUNDLE, price: 450, active: true, worth: WORTH });
+    const off = await bundles.editBundle(audit, admin.id, 'req-4', BUNDLE, { active: false });
+    expect(off.active).toBe(false);
+    expect((await listed(await person('after'))).mine).toBeUndefined();
+    const trail = await pool.query(`SELECT action, before, after FROM admin_audit_log WHERE target_id = $1 ORDER BY created_at`, [BUNDLE]);
+    expect(trail.rows).toEqual([
+      { action: 'shop.bundle.edit', before: { price: PRICE, active: true }, after: { price: 450, active: true } },
+      { action: 'shop.bundle.edit', before: { price: 450, active: true }, after: { price: 450, active: false } },
+    ]);
+    // back as it was, as an approved change would put it
+    await pool.query(`UPDATE shop_bundles SET price = $2, active = true WHERE id = $1`, [BUNDLE, PRICE]);
   });
 
   it('lets a buyer wear the word tag by their name, and shows it on their profile only while they own it', async () => {
