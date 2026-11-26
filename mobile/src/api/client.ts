@@ -226,9 +226,9 @@ export class ApiClient {
       let res: Response;
       try {
         // A plain GET may already have been asked beside the session check (`prefetch`).
-        const early = method === 'GET' && !options.headers ? await this.takeEarly(path, tokens?.accessToken) : null;
+        const early = method === 'GET' && !options.headers ? this.takeEarly(path, tokens?.accessToken) : null;
         res =
-          early ??
+          (early && (await early)) ??
           (await this.timedFetch(`${this.opts.baseUrl}${path}`, {
             method,
             headers: withAuth,
