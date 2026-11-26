@@ -780,7 +780,7 @@ button.lp-scard:focus-visible {
 }
 .lp-art-face,
 .lp-node-glyph,
-.lp-stamp {
+.lp-wax {
   transform-origin: 50% 90%;
   transition:
     translate var(--dur-slow) var(--ease-spring),
@@ -821,7 +821,7 @@ button.lp-scard:focus-visible {
 /* A press squishes the stop down into its base, and it springs back up when let go. */
 .lp-node:active .lp-art-face,
 .lp-node:active .lp-node-glyph,
-.lp-node:active .lp-stamp {
+.lp-node:active .lp-wax {
   translate: 0 7px;
   scale: 1.06 0.92;
   transition-duration: 60ms;
@@ -865,9 +865,9 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * The glyph in the unit's ink on its own colour. Once a finished stop is stamped it steps back and leaves the print alone
- * on the tile, a faint trace of it reading as a smudge; in the stamping moment it goes as the stamp comes down (shared
- * PATH_STAMP_MOMENT: pressed halfway through 1300ms).
+ * The glyph in the unit's ink on its own colour. A finished stop is sealed under its wax, the glyph with it; in the
+ * sealing moment it goes as the stamp comes down, under the wax already poured over it (shared PATH_STAMP_MOMENT:
+ * pressed halfway through 1300ms).
  */
 .lp-node.is-current .lp-node-glyph,
 .lp-node.is-available .lp-node-glyph,
@@ -957,33 +957,58 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * Hevalo's stamp on a finished tile (PathScene.tsx `TileStamp`, shared PATH_STAMP_ART: a 56-point canvas laid from 8, 2
- * of the stop, the seal's middle at 28, 23 of it); the brass stamp over it only in its moment, its face as wide as the
- * seal and landing level with the seal's middle.
+ * A finished tile sealed in wax (PathScene.tsx `TileWax`, shared `pathWaxSvg`), on the tile's own 112-point canvas laid
+ * as its drawing is. In its moment the drop, the poured wax, the pressed seal and the brass stamp move apart: the drop
+ * landing on the tile's middle (56, 72 of the canvas) and the pour spreading from the face's (56, 58); the stamp on its
+ * 80 by 64 canvas (shared PATH_STAMP_TOOL) from -4, -22 of the stop. A gold tile's glint crosses its face, a rounded
+ * square 72 by 60 from 20, 28 of the canvas.
  */
-.lp-stamp {
+.lp-wax {
   position: absolute;
-  left: 8px;
-  top: 2px;
-  width: 56px;
-  height: 56px;
+  inset-inline-start: -20px;
+  top: -28px;
+  width: 112px;
+  height: 112px;
   pointer-events: none;
 }
-.lp-stamp-print {
+.lp-wax-coat {
   position: absolute;
   inset: 0;
   display: block;
   line-height: 0;
-  transform-origin: 28px 23px;
 }
-.lp-stamp-tool {
+.lp-wax-pour {
+  transform-origin: 56px 58px;
+}
+.lp-wax-blob {
+  transform-origin: 56px 72px;
+}
+.lp-wax-tool {
   position: absolute;
   z-index: 1;
-  left: -1px;
-  top: -45px;
-  width: 58px;
-  height: 81px;
+  left: 16px;
+  top: 6px;
+  width: 80px;
+  height: 64px;
   line-height: 0;
+}
+.lp-wax-glint {
+  position: absolute;
+  left: 20px;
+  top: 28px;
+  width: 72px;
+  height: 60px;
+  border-radius: 18px;
+  overflow: hidden;
+}
+.lp-wax-band {
+  position: absolute;
+  top: -14px;
+  bottom: -14px;
+  left: 50%;
+  translate: -50% 0;
+  background: rgb(255 255 255 / 0.42);
+  transform: translateX(-52px) rotate(24deg);
 }
 .lp-node.is-stamping .lp-node-face {
   transform-origin: 50% 85%;
@@ -993,9 +1018,9 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * A finished topic's stars along its tile's near edge (PathRing.tsx `RoundStars`, shared `roundStars`): gold, as the
- * seal is, edged a little darker so they read on any unit's colour. The newest lights in with a short pop once the
- * stamp has settled (shared PATH_RETURN `starAtMs`).
+ * A finished topic's stars set into its wax along the tile's near edge (PathRing.tsx `RoundStars`, shared
+ * `roundStars`): gold, edged a little darker so they read on any unit's wax, and cream on gold wax. The newest lights in
+ * with a short pop once the wax has settled (shared PATH_RETURN `starAtMs`).
  */
 .lp-stars {
   position: absolute;
@@ -1775,8 +1800,8 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * Returning from a lesson (learn/CoursePath.tsx, PATH_RETURN): the finished stop pops into gold with Hevalo's print, the
- * opened one pops as its number replaces the padlock, a milestone wobbles and turns gold, and the bubble and learner move
+ * Returning from a lesson (learn/CoursePath.tsx, PATH_RETURN): the finished stop is sealed in wax, the opened one pops as
+ * its number replaces the padlock, a milestone wobbles and turns gold, and the bubble and learner move
  * on. None of it runs under reduced motion.
  */
 @keyframes lp-node-pop {
@@ -1812,7 +1837,7 @@ button.lp-scard:focus-visible {
   }
   .lp-art-face,
   .lp-node-glyph,
-  .lp-stamp {
+  .lp-wax {
     transition: none;
   }
 }
@@ -1920,6 +1945,32 @@ button.lp-scard:focus-visible {
   font-size: var(--text);
   color: var(--ink-3);
 }
+/* A finished topic's card: its waxed tile, and the gold one three stars earn, each beside its word. */
+.lp-wax-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  font-size: var(--text);
+  color: var(--ink-3);
+}
+.lp-wax-key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+/* The tile is about 26 points across in the middle of its 40-point drawing; only the tile shows. */
+.lp-wax-icon {
+  display: block;
+  width: 30px;
+  height: 32px;
+  overflow: hidden;
+  line-height: 0;
+}
+.lp-wax-icon svg {
+  margin: -7px 0 0 -5px;
+}
 .lp-pop-progress {
   display: grid;
   gap: 6px;
@@ -1973,7 +2024,8 @@ button.lp-scard:focus-visible {
   color: inherit;
   font-weight: 800;
 }
-.lp-pop.is-go .lp-pop-line {
+.lp-pop.is-go .lp-pop-line,
+.lp-pop.is-go .lp-wax-legend {
   color: inherit;
   opacity: 0.85;
 }

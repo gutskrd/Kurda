@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { PATH_BAR, PATH_RETURN, TOPIC_STARS, barPieces, roundStars, starPath } from '@kurda/shared';
+import { PATH_BAR, PATH_GOLD, PATH_RETURN, PATH_WAX_GOLD, TOPIC_STARS, barPieces, roundStars, starPath } from '@kurda/shared';
 import { useDirection } from '../reports/direction';
 import { timing } from '../theme/animate';
 import { useTheme } from '../theme/ThemeProvider';
@@ -13,7 +13,7 @@ import { TRACK } from './path';
  * once finished in the current round, and gold once full.
  *
  * After a lesson the bar moves on from `from`: the new pieces fill in turn, and a completed round fills it, turns it
- * gold as the stop is stamped (`PATH_RETURN.finishAtMs`), and once the print is down starts the next round
+ * gold as the stop is sealed (`PATH_RETURN.finishAtMs`), and once the stamp has pressed starts the next round
  * (`nextAtMs`). Opacity and scale only, on the native driver; under Reduce Motion there is no `from`.
  */
 
@@ -62,7 +62,7 @@ export function TopicBar({
     const turn: Animated.CompositeAnimation[] = [];
     if (roundDone) {
       turn.push(timing(gold, 1, 120, { delay: finishAtMs - 120 }));
-      // Once the print is down the next round begins; after the third the bar stays full and gold.
+      // Once the stamp has pressed the next round begins; after the third the bar stays full and gold.
       if (!bar.whole) {
         fill.push(timing(shown, bar.filled, 1, { delay: Math.max(0, nextAtMs - filledAt) }));
         turn.push(timing(gold, 0, 160, { delay: Math.max(0, nextAtMs - finishAtMs) }));
@@ -111,13 +111,27 @@ export function TopicBar({
 const STAR_EDGE = 'rgba(58, 35, 6, 0.45)';
 
 /**
- * A finished topic's stars along its tile's near edge, one for each full round. `earned` lights the newest in with a
- * short pop after `delay`: once the stamp has settled (`PATH_RETURN.starAtMs` on a return).
+ * A finished topic's stars set into its wax along the tile's near edge, one for each full round. `earned` lights the
+ * newest in with a short pop after `delay`: once the wax has settled (`PATH_RETURN.starAtMs` on a return). On gold wax
+ * they are cream; when the wax warms into gold (`warmAt`, shared `PATH_WAX_GOLD`) they turn cream with it.
  */
-export function RoundStars({ rounds, earned = false, delay = 0 }: { rounds: number; earned?: boolean; delay?: number }): React.JSX.Element | null {
-  const { colors } = useTheme();
+export function RoundStars({
+  rounds,
+  earned = false,
+  delay = 0,
+  gold = false,
+  warmAt = null,
+}: {
+  rounds: number;
+  earned?: boolean;
+  delay?: number;
+  gold?: boolean;
+  warmAt?: number | null;
+}): React.JSX.Element | null {
+  const { colors, scheme } = useTheme();
   const stars = roundStars(rounds);
   const pop = useRef(new Animated.Value(earned ? 0 : 1)).current;
+  const cream = useRef(new Animated.Value(warmAt === null ? 1 : 0)).current;
   useEffect(() => {
     if (!earned) {
       pop.setValue(1);
@@ -128,18 +142,36 @@ export function RoundStars({ rounds, earned = false, delay = 0 }: { rounds: numb
     run.start();
     return () => run.stop();
   }, [earned, delay, pop]);
+  useEffect(() => {
+    if (warmAt === null) {
+      cream.setValue(1);
+      return;
+    }
+    cream.setValue(0);
+    const run = timing(cream, 1, PATH_WAX_GOLD.warmMs, { delay: warmAt + PATH_WAX_GOLD.afterMs });
+    run.start();
+    return () => run.stop();
+  }, [warmAt, cream]);
   if (stars.length === 0) return null;
   const last = stars[stars.length - 1]!;
   const before = earned ? stars.slice(0, -1) : stars;
-  const one = (s: { x: number; y: number; r: number }, key: number) => (
-    <Path key={key} d={starPath(s.x, s.y, s.r)} fill={colors.gold} stroke={STAR_EDGE} strokeWidth={1.4} strokeLinejoin="round" />
+  const onGold = PATH_GOLD[scheme];
+  const one = (s: { x: number; y: number; r: number }, key: number, light = false) => (
+    <Path
+      key={key}
+      d={starPath(s.x, s.y, s.r)}
+      fill={light ? onGold.star : colors.gold}
+      stroke={light ? onGold.starEdge : STAR_EDGE}
+      strokeWidth={1.4}
+      strokeLinejoin="round"
+    />
   );
   // The newest star is drawn in its own box so it grows from its middle.
   const size = last.r * 4;
   return (
     <View style={styles.stars} pointerEvents="none" aria-hidden testID={`lp-stars-${stars.length}`}>
       <Svg width={72} height={72} viewBox="0 0 72 72">
-        {before.map(one)}
+        {before.map((s, k) => one(s, k))}
       </Svg>
       {earned ? (
         <Animated.View
@@ -155,6 +187,14 @@ export function RoundStars({ rounds, earned = false, delay = 0 }: { rounds: numb
         >
           <Svg width={size} height={size} viewBox={`${last.x - size / 2} ${last.y - size / 2} ${size} ${size}`}>
             {one(last, 0)}
+          </Svg>
+        </Animated.View>
+      ) : null}
+      {/* Cream over the gold stars on gold wax, fading in as the wax warms. */}
+      {gold ? (
+        <Animated.View style={[StyleSheet.absoluteFill, { opacity: cream }]} testID="lp-stars-on-gold">
+          <Svg width={72} height={72} viewBox="0 0 72 72">
+            {stars.map((s, k) => one(s, k, true))}
           </Svg>
         </Animated.View>
       ) : null}

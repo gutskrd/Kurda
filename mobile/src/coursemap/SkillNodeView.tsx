@@ -10,6 +10,7 @@ import {
   PATH_RETURN,
   PATH_STAMP_MOMENT,
   PATH_STOP_ART,
+  TOPIC_STARS,
   type LessonKind,
   type PathStop,
   type PathStopLook,
@@ -27,7 +28,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { FACE_INK, REST, barAt, barOf, stopLook, type ToneColors } from './path';
 import { MilestoneArt, STOP_FACE, StopArt } from './PathWorld';
-import { TileStamp, stampTrack } from './TileStamp';
+import { TileWax, stampTrack } from './TileWax';
 import { RoundStars, TopicBar } from './TopicBar';
 import type { SkillNode } from './types';
 
@@ -39,7 +40,7 @@ type Stop = PathStop<SkillNode>;
 
 /**
  * What a return from a lesson changed about this stop (shared `pathChanges`, timed by `PATH_RETURN`): its bar moved
- * on (`ring`), it finished (and is stamped, `TileStamp`) from `wasLook`, it opened, the bubble moved here, or a unit's
+ * on (`ring`), it finished (and is sealed in wax, `TileWax`) from `wasLook`, it opened, the bubble moved here, or a unit's
  * prize was won.
  */
 export interface StopChange {
@@ -58,8 +59,8 @@ const PULSE = 1.08;
 const PULSE_AT_MS = 700;
 
 /**
- * How a finished topic's stamp shows: `pressing` plays its moment once after `delay` (shared `PATH_STAMP_MOMENT`), a
- * light tap felt as it lands, then `onStamped`; otherwise it is simply there.
+ * How a finished topic's wax shows: `pressing` plays its sealing once after `delay` (shared `PATH_STAMP_MOMENT`), a
+ * light tap felt as the stamp presses, then `onStamped`; otherwise it is simply there.
  */
 export interface StopStamp {
   pressing: boolean;
@@ -69,18 +70,18 @@ export interface StopStamp {
 
 /**
  * One stop on the lesson path: a thick tile in its unit's colour (shared drawing) whose glyph says what its next lesson
- * is (or its number), the same tile stamped with Hevalo's hoofprint once done, a slate stone with a padlock when
- * locked, arrows for review. The topic in hand wears a slim bar over its tile with one piece per lesson (TopicBar). A
- * chapter ends at its milestone, a seal on a stone drum with the chapter's number, and a jumpable unit's first stop is
- * drawn as a gate. Pressed, the face sinks into its base.
+ * is (or its number), the same tile sealed in wax once done, a slate stone with a padlock when locked, arrows for
+ * review. The topic in hand wears a slim bar over its tile with one piece per lesson (TopicBar). A chapter ends at its
+ * milestone, a seal on a stone drum with the chapter's number, and a jumpable unit's first stop is drawn as a gate.
+ * Pressed, the face sinks into its base.
  *
  * The current skill is the road's main button: it stands higher in a glow of its unit's colour under its bar, and a
  * bubble of the course's own words floats above them; now and then a glint sweeps it. It bobs while the path is in
  * view, and every stop squishes under a finger. None of it moves under Reduce Motion.
  *
- * After a lesson, `change` animates what it did to the stop: the bar fills, the stop is stamped (`stamp`), a padlock
- * gives way to a glyph, a prize bursts open, and the flag arrives last. Under Reduce Motion there is no `change`, and
- * a stamp is simply there.
+ * After a lesson, `change` animates what it did to the stop: the bar fills, the stop is sealed in wax (`stamp`), a
+ * padlock gives way to a glyph, a prize bursts open, and the flag arrives last. Under Reduce Motion there is no
+ * `change`, and the wax is simply there.
  */
 export function SkillNodeView({
   stop,
@@ -95,6 +96,7 @@ export function SkillNodeView({
   milestone = null,
   stamp = null,
   near = true,
+  live = false,
   bob = null,
   bobbing = false,
   rise = null,
@@ -123,6 +125,8 @@ export function SkillNodeView({
   stamp?: StopStamp | null;
   /** Drawn in full; far from the screen it is a plain round in its colour. */
   near?: boolean;
+  /** Its unit is in view and the app in front, so a gold tile may glint. */
+  live?: boolean;
   /** The current stop's bob. */
   bob?: Animated.Value | null;
   /** Whether the bob is running, so tests can tell. */
@@ -136,6 +140,7 @@ export function SkillNodeView({
 }): React.JSX.Element {
   const { scheme, colors } = useTheme();
   const dir = useDirection();
+  const reduce = useReducedMotion();
   const rest = REST[scheme];
   const look = stopLook(stop, !!jump);
   const raised = stop.kind === 'skill' && stop.state === 'current';
@@ -244,7 +249,10 @@ export function SkillNodeView({
         transform: [{ scaleX: stampTrack(moment, squash.map(([at, v]) => [at, 2 - v] as const)) }, { scaleY: stampTrack(moment, squash) }],
       }
     : null;
-  // Once stamped the glyph steps back, leaving the print alone on the tile; in the moment it goes as the stamp lands.
+  // A third star lighting now: once it has, the wax warms into gold. Under Reduce Motion it is simply gold.
+  const starDelay = fresh ? 0 : PATH_RETURN.starAtMs;
+  const warmAt = (roundDone || fresh) && stop.kind === 'skill' && stop.rounds >= TOPIC_STARS && !reduce ? starDelay : null;
+  // Once sealed the glyph is under the wax; in the moment it goes as the stamp presses, under the wax poured over it.
   const { pressAt } = PATH_STAMP_MOMENT;
   const glyphShown = pressing ? moment.interpolate({ inputRange: [0, pressAt, pressAt + 0.04, 1], outputRange: [1, 1, 0, 0] }) : stamp ? 0 : 1;
 
@@ -361,11 +369,20 @@ export function SkillNodeView({
               </Animated.View>
             ) : null}
             {stamp && near && stop.kind === 'skill' ? (
-              <TileStamp stopKey={stop.key} dark={scheme === 'dark'} worn={stop.finish === 'refresh'} moment={pressing ? moment : null} />
+              <TileWax
+                stopKey={stop.key}
+                tone={unitTone}
+                dark={scheme === 'dark'}
+                gold={!pressing && stop.rounds >= TOPIC_STARS}
+                warmAt={warmAt}
+                worn={stop.finish === 'refresh'}
+                live={live && !reduce}
+                moment={pressing ? moment : null}
+              />
             ) : null}
-            {/* Its stars, once stamped: a round won on the return lights its new one once the stamp has settled. */}
+            {/* Its stars, once sealed: a round won on the return lights its new one once the wax has settled. */}
             {stamp && !pressing && near && stop.kind === 'skill' && stop.rounds > 0 ? (
-              <RoundStars rounds={stop.rounds} earned={roundDone || fresh} delay={fresh ? 0 : PATH_RETURN.starAtMs} />
+              <RoundStars rounds={stop.rounds} earned={roundDone || fresh} delay={starDelay} gold={stop.rounds >= TOPIC_STARS} warmAt={warmAt} />
             ) : null}
             {stop.kind === 'skill' && stop.finish === 'refresh' ? (
               <View style={[styles.badge, { backgroundColor: colors.background, borderColor: tone.fill }]} pointerEvents="none">

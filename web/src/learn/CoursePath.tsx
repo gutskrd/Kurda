@@ -38,7 +38,7 @@ import { GrammarNote } from './GrammarNote';
 import { JumpSheet } from './JumpSheet';
 import { courseProgress, lessonStates } from './map';
 import { RoundStars, StarRow, TopicBar } from './PathRing';
-import { TileStamp } from './PathScene';
+import { TileWax, WaxLegend } from './PathScene';
 import { SectionCard, UnitDivider, UnitPin, levelWords, useUnitAtTop } from './PathSections';
 import { MilestoneArt, StopArt, UnitLandmark, UnitRail, UnitScenery, UpcomingUnit, useUnitsOnScreen, useWidth, type RailSection } from './PathWorld';
 import { useDarkPage } from '../theme/useDarkPage';
@@ -65,8 +65,7 @@ const lessonHref = (lessonId: string, courseId: string): string =>
 /**
  * The glyph on a stop, so its kind shows by shape as well as colour. A topic's tile shows what its next lesson is:
  * letters for new words, a conversation, or practice (its number, or on the stop to do now a star, from a server too old
- * to say); stamped once finished, the glyph steps back under Hevalo's print (path.css). The milestone carries its
- * chapter's number.
+ * to say); once finished it is sealed under the wax (path.css). The milestone carries its chapter's number.
  */
 function Glyph({ stop }: { stop: Stop }): React.JSX.Element | null {
   if (stop.kind === 'review') return <RepostIcon size={28} weight="bold" />;
@@ -106,7 +105,7 @@ function stopClass(stop: Stop): string {
 }
 
 /**
- * How a stop is drawn (shared `pathStopSvg`): a finished skill is its unit's tile as before, stamped (`TileStamp`), and
+ * How a stop is drawn (shared `pathStopSvg`): a finished skill is its unit's tile as before, sealed in wax (`TileWax`),
  * faded a little when a refresh would help; review is an open stop. A unit's last stop, its story or its trophy, is drawn as its
  * milestone (`MilestoneArt`), and this look says only whether it is won.
  */
@@ -147,6 +146,7 @@ function StopCard({
 }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
+  const dark = useDarkPage();
   const reviewHref = review?.open ? `/app/learn/review/${encodeURIComponent(review.open)}` : '/app/learn/review';
   const number = (n: number): string => new Intl.NumberFormat(locale).format(n);
 
@@ -259,6 +259,7 @@ function StopCard({
         </h3>
         {where && <p className="lp-pop-line">{where}</p>}
         {stop.rounds > 0 && <StarRow rounds={stop.rounds} />}
+        {stop.state === 'done' && <WaxLegend tone={unit.tone} dark={dark} done={t('coursemap.state.done')} three={t('coursemap.waxGold')} />}
         <LinkButton to={action.to} state={{ title: skill.title, from: home }} block className="lp-pop-start">
           <span>{action.label}</span>
           {xp && <span className="lp-pop-start-xp">{t(action.again ? 'coursemap.xp.again' : 'coursemap.xp.first', { min: number(xp.min), max: number(xp.max) })}</span>}
@@ -324,6 +325,7 @@ function StopCard({
         </div>
       )}
       {stop.state === 'done' && stop.rounds > 0 && <p className="lp-pop-line">{t(stop.rounds >= TOPIC_STARS ? 'coursemap.roundsAll' : 'coursemap.roundsWhy')}</p>}
+      {stop.state === 'done' && <WaxLegend tone={unit.tone} dark={dark} done={t('coursemap.state.done')} three={t('coursemap.waxGold')} />}
       {stop.state === 'done' && (
         <p className="lp-pop-line">
           {stop.finish === 'refresh' ? t('coursemap.refreshWhy') : t('coursemap.strength', { percent: skill.strength })}
@@ -944,6 +946,9 @@ export function CoursePath({
                             const stamping = stampNext === stop.key;
                             const isStamped = stop.kind === 'skill' && stop.state === 'done' && (reduceMotion || (stamped?.has(stop.key) ?? true));
                             const stars = stop.kind === 'skill' && isStamped && !stamping ? starsNow(stop) : null;
+                            // Three stars turn its wax gold: just now, as the third lights, it warms into gold.
+                            const goldNow = !!stars && stars.rounds >= TOPIC_STARS;
+                            const warming = goldNow && stars.earned && !reduceMotion;
                             // A later chapter that can be tested into: its first stop offers the test rather than its card.
                             const jumpHere = unit.jumpKey === stop.key;
                             return (
@@ -1002,16 +1007,20 @@ export function CoursePath({
                                       <Glyph stop={stop} />
                                     </span>
                                     {near && stop.kind === 'skill' && stop.state === 'done' && (isStamped || stamping) && (
-                                      <TileStamp
+                                      <TileWax
                                         stopKey={stop.key}
+                                        tone={unit.tone}
                                         dark={dark}
+                                        gold={goldNow}
+                                        warming={warming}
                                         worn={stop.finish === 'refresh'}
+                                        live={!reduceMotion}
                                         pressing={stamping && !isStamped}
                                         delay={playing ? 0 : STAMP_SETTLE_MS}
                                         onStamped={stampDone}
                                       />
                                     )}
-                                    {near && stars && <RoundStars rounds={stars.rounds} earned={stars.earned} />}
+                                    {near && stars && <RoundStars rounds={stars.rounds} earned={stars.earned} gold={goldNow} warming={warming} dark={dark} />}
                                   </span>
                                 </button>
                                 {isOpen && (

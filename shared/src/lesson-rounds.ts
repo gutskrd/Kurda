@@ -52,14 +52,15 @@ export function barPieces(of: number): Array<{ x: number; w: number }> {
 }
 
 /**
- * Where a finished topic's stars stand on its tile, in the stop's points: in a row along the tile's near edge, under its
- * seal, following the edge's curve, the middle one a little larger. `r` is a star's outer radius.
+ * Where a finished topic's stars stand on its tile, in the stop's points: in a row set into the wax along the tile's near
+ * edge, under the diamond pressed in it (art/path-land.ts `PATH_WAX_SEAL`), following the edge's curve, the middle one a
+ * little larger. `r` is a star's outer radius.
  */
 export function roundStars(rounds: number): Array<{ x: number; y: number; r: number }> {
   const stars = Math.max(0, Math.min(TOPIC_STARS, Math.floor(rounds)));
-  if (stars === 1) return [{ x: 36, y: 51, r: 7.2 }];
-  if (stars === 2) return [{ x: 28.5, y: 50.5, r: 6.6 }, { x: 43.5, y: 50.5, r: 6.6 }];
-  if (stars === 3) return [{ x: 21.5, y: 49.5, r: 6 }, { x: 36, y: 51.5, r: 6.6 }, { x: 50.5, y: 49.5, r: 6 }];
+  if (stars === 1) return [{ x: 36, y: 52.5, r: 7.2 }];
+  if (stars === 2) return [{ x: 28.5, y: 52, r: 6.6 }, { x: 43.5, y: 52, r: 6.6 }];
+  if (stars === 3) return [{ x: 21.5, y: 51, r: 6 }, { x: 36, y: 53, r: 6.6 }, { x: 50.5, y: 51, r: 6 }];
   return [];
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PATH_BAR, TOPIC_STARS, barPieces, nextInRound, roundStars, starPath, topicRounds } from './lesson-rounds.js';
-import { PATH_STAMP_ART } from './art/path-land.js';
+import { PATH_WAX_SEAL } from './art/path-land.js';
 
 describe('a topic’s rounds', () => {
   it('fills a piece of the first round for each lesson finished once', () => {
@@ -79,15 +79,17 @@ describe('a topic’s stars', () => {
     expect(TOPIC_STARS).toBe(3);
   });
 
-  it('stands them along the tile’s near edge, on its face and clear of the seal above them', () => {
-    // the seal's foot, in the stop's points (its canvas laid from 8, 2)
-    const sealFoot = 2 + PATH_STAMP_ART.cy + PATH_STAMP_ART.r;
+  it('sets them into the wax along the tile’s near edge, on its face and clear of the diamond pressed above them', () => {
+    const { cx, cy, w, h } = PATH_WAX_SEAL;
+    // on the tile's face, a rounded square 72 by 60 round its middle at 36, 30 (its corners about a cubic's curve)
+    const onFace = (x: number, y: number): boolean => Math.abs((x - 36) / 36) ** 3 + Math.abs((y - 30) / 30) ** 3 < 1;
+    // outside the diamond, with a point to spare
+    const clear = (x: number, y: number): boolean => Math.abs(x - cx) / w + Math.abs(y - cy) / h > 1 + 1 / h;
     for (const rounds of [1, 2, 3]) {
       const stars = roundStars(rounds);
       for (const s of stars) {
-        // on the tile's face (72 by 60, round its middle at 36, 30)
-        expect(((s.x - 36) / 34) ** 2 + ((s.y + s.r - 30) / 30) ** 2, `${rounds}`).toBeLessThan(1);
-        expect(s.y - s.r, `${rounds}`).toBeGreaterThan(sealFoot);
+        for (const [dx, dy] of [[-s.r, 0], [s.r, 0], [0, s.r]]) expect(onFace(s.x + dx!, s.y + dy!), `${rounds}`).toBe(true);
+        for (const [dx, dy] of [[0, -s.r], [-s.r * 0.95, -s.r * 0.31], [s.r * 0.95, -s.r * 0.31]]) expect(clear(s.x + dx!, s.y + dy!), `${rounds}`).toBe(true);
       }
       for (let i = 1; i < stars.length; i++) expect(stars[i]!.x - stars[i - 1]!.x).toBeGreaterThan(stars[i]!.r + stars[i - 1]!.r - 4);
     }

@@ -114,9 +114,9 @@ export function barAt(stop: Pick<SkillStop<SkillNode>, 'lessonsTotal'>, at: { ro
 }
 
 /**
- * How a stop is drawn (shared `pathStopSvg`). A finished skill keeps its unit's tile, stamped with Hevalo's hoofprint
- * (TileStamp), and fades a little when a refresh would help. A unit's last stop, its story or its trophy, is drawn as its milestone, and
- * this look says only whether it is won. With `jump`, the stop is drawn as the gate a jump goes through.
+ * How a stop is drawn (shared `pathStopSvg`). A finished skill keeps its unit's tile under its wax (TileWax), faded a
+ * little when a refresh would help. A unit's last stop, its story or its trophy, is drawn as its milestone, and this look
+ * says only whether it is won. With `jump`, the stop is drawn as the gate a jump goes through.
  */
 export function stopLook(stop: PathStop<SkillNode>, jump = false): PathStopLook {
   if (jump) return 'jump';

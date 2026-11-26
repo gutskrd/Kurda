@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PATH_GEOMETRY, PATH_MASCOT, lessonPath, mascotSpot, type PathSkill } from './lesson-path.js';
+import { PATH_GEOMETRY, PATH_MASCOT, PATH_RETURN, lessonPath, mascotSpot, type PathSkill } from './lesson-path.js';
 import { PATH_SCENES, PATH_SCENE_BOX, PATH_SCENE_IDS } from './art/path-scenes.js';
 import { characterArt, cropBox, sampleKeys } from './characters/index.js';
 import {
@@ -12,6 +12,8 @@ import {
   PATH_SCENERY_SPOT,
   PATH_SCENE_REACH,
   PATH_STAMP_MOMENT,
+  PATH_WAX_GOLD,
+  waxGlintAt,
   PATH_APPLE_REACH,
   PATH_START_WORDS,
   landmarkBox,
@@ -258,17 +260,42 @@ describe('the scenes’ figures through all their motion', () => {
   });
 });
 
-describe('a finished stop’s stamp', () => {
-  it('presses halfway through its moment: the print appears and the tile squashes as it lands, and all ends as it was drawn', () => {
-    const { pressAt, toolY, squash, printShown, toolShown } = PATH_STAMP_MOMENT;
-    const at = (track: readonly (readonly [number, number])[], t: number): number | undefined => track.find(([k]) => k === t)?.[1];
+describe('a finished stop’s wax', () => {
+  const { pressAt, blobY, blobShown, splat, flow, poured, toolY, toolShown, squash, sealShown } = PATH_STAMP_MOMENT;
+  const at = (track: readonly (readonly [number, number])[], t: number): number => sampleKeys(track, t);
+  const first = (track: readonly (readonly [number, number])[], v: number): number => track.find(([, x]) => x === v)![0];
+
+  it('drops, splashes and flows out over the tile before the stamp comes, then presses halfway through as the tile squashes', () => {
+    // the drop lands, flattens as it splashes, and the wax flows out to its lip, overrunning a little, before the stamp shows
+    const landed = first(blobY, 0);
+    expect(at(blobShown, landed)).toBe(1);
+    expect(Math.min(...splat.map(([, v]) => v))).toBeLessThan(at(splat, landed - 0.02));
+    expect(first(poured, 1)).toBeGreaterThan(landed);
+    expect(Math.max(...flow.map(([, v]) => v))).toBeGreaterThan(1);
+    const covered = flow.find(([, v]) => v >= 1)![0];
+    expect(covered).toBeLessThan(first(toolShown, 1));
+    expect(at(blobShown, covered)).toBe(0);
+    // at the press the stamp is down and the diamond is pressed in, hidden under it until it lifts
     expect(at(toolY, pressAt)).toBe(0);
-    expect(at(printShown, pressAt)).toBe(0);
-    expect(printShown[printShown.length - 1]![1]).toBe(1);
+    expect(at(sealShown, pressAt - 0.01)).toBe(0);
+    expect(at(sealShown, pressAt + 0.02)).toBe(1);
     expect(Math.min(...squash.map(([, v]) => v))).toBeLessThan(1);
     expect(squash[squash.length - 1]![1]).toBe(1);
+    expect(flow[flow.length - 1]![1]).toBe(1);
     // the stamp is out of sight before it starts and after it lifts away
     expect(toolShown[0]![1]).toBe(0);
     expect(toolShown[toolShown.length - 1]![1]).toBe(0);
+  });
+
+  it('turns gold after the third star has lit, and glints at each stop’s own time within its round', () => {
+    expect(PATH_WAX_GOLD.afterMs).toBeGreaterThanOrEqual(PATH_RETURN.starMs);
+    expect(PATH_WAX_GOLD.glintMs).toBeLessThan(PATH_WAX_GOLD.everyMs / 4);
+    const starts = ['s:a', 's:b', 's:c', 's:d'].map(waxGlintAt);
+    for (const v of starts) {
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThan(PATH_WAX_GOLD.everyMs);
+    }
+    expect(new Set(starts).size).toBe(starts.length);
+    expect(waxGlintAt('s:a')).toBe(waxGlintAt('s:a'));
   });
 });

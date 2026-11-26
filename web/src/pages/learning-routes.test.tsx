@@ -398,11 +398,12 @@ describe('a course map', () => {
     expect(scene).toHaveAttribute('data-scene', 'apple');
     expect(scene).toHaveAttribute('aria-hidden', 'true');
     expect(scene!.className).toMatch(/\bis-(start|end)\b/);
-    // Its finished topics, seen here for the first time, are simply stamped, with no moment for each, and wear their two stars.
+    // Its finished topics, seen here for the first time, are simply sealed in wax, with no moment for each, and wear their two stars.
     const hello = within(first).getByRole('button', { name: /^Hello, Done/ });
     expect(hello).toHaveClass('is-stamped');
     expect(hello).not.toHaveClass('is-stamping');
-    expect(hello.querySelector('.lp-stamp')).not.toBeNull();
+    expect(hello.querySelector('.lp-wax')).not.toBeNull();
+    expect(hello.querySelector('.lp-wax-gold')).toBeNull();
     expect(within(hello).getByTestId('lp-stars-2')).toBeInTheDocument();
     // The milestone ending the chapter bears its number, and its trophy is won.
     expect(within(first).getByRole('button', { name: 'Chapter 1 trophy, earned' })).toHaveClass('is-milestone');
@@ -646,26 +647,29 @@ describe('a course map', () => {
     expect(within(screen.getByRole('dialog', { name: 'Jump to Chapter 4?' })).getByRole('link', { name: 'Start the test' })).toHaveAttribute('href', '/app/learn/jump/c1/r4');
   });
 
-  it('puts a bar over the topic to do now with a piece for each lesson, stamps a finished one with a star for each round, and says the round in its card', async () => {
+  it('puts a bar over the topic to do now with a piece for each lesson, seals a finished one in wax with a star for each round, and says the round in its card', async () => {
     serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
     routes('/app/learn/course/c1');
 
-    // Topic c has all three rounds: stamped, three stars on its tile, and no bar, which is for the topic to do now.
+    // Topic c has all three rounds: sealed in gold wax, three stars on its tile, and no bar, which is for the topic to do now.
     const c = await screen.findByRole('button', { name: 'Topic c, Done — strong, all 3 rounds done' });
     expect(within(c).queryByTestId('lp-bar')).not.toBeInTheDocument();
     expect(c).toHaveClass('is-stamped');
     expect(within(c).getByTestId('lp-stars-3')).toBeInTheDocument();
-    // Topic d, the one to do now: a piece filled of two, and no stamp yet.
+    expect(c.querySelector('.lp-wax-gold')).not.toBeNull();
+    // Topic d, the one to do now: a piece filled of two, and no wax yet.
     const d = screen.getByRole('button', { name: /^Topic d/ });
     expect(within(d).getByTestId('lp-bar').querySelectorAll('.lp-bar-piece')).toHaveLength(2);
     expect(d.querySelectorAll('.lp-bar-ink.is-filled')).toHaveLength(1);
-    expect(d.querySelector('.lp-stamp')).toBeNull();
+    expect(d.querySelector('.lp-wax')).toBeNull();
     expect(within(d).queryByTestId(/lp-stars/)).not.toBeInTheDocument();
 
     await userEvent.click(c);
     const card = screen.getByRole('group', { name: 'Topic c' });
     expect(within(card).getByTestId('lp-card-stars-3')).toBeInTheDocument();
     expect(within(card).getByText('All 3 rounds done')).toBeInTheDocument();
+    // Its card says what its wax and gold wax mean.
+    expect(within(within(card).getByTestId('lp-wax-legend')).getByText('Three stars')).toBeInTheDocument();
   });
 
   it('plays a gold topic again from the lesson finished fewest times, and says the round it is in', async () => {
@@ -712,7 +716,7 @@ describe('a course map', () => {
     // Then the bar full and gold as the stop is stamped.
     await waitFor(() => expect(within(d).getByTestId('lp-bar')).toHaveClass('is-whole'), { timeout: 3000 });
     await waitFor(() => expect(d).toHaveClass('is-stamped'), { timeout: 3000 });
-    expect(d.querySelector('.lp-stamp')).not.toBeNull();
+    expect(d.querySelector('.lp-wax')).not.toBeNull();
     // And the next round begins once the print is down: the bar empty again, and the stamp kept for next time.
     await waitFor(() => expect(within(d).getByTestId('lp-bar')).not.toHaveClass('is-whole'), { timeout: 3000 });
     expect(d.querySelectorAll('.lp-bar-ink.is-filled')).toHaveLength(0);

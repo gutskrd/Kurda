@@ -649,6 +649,7 @@ export const LessonPath = memo(function LessonPath({
                                 stamp={stampOf(placed.stop)}
                                 jump={jumpHere}
                                 near={full}
+                                live={moving(unit.unitId)}
                                 bob={placed.stop.key === bobAt && !waiting ? bob : null}
                                 bobbing={bobbing && placed.stop.key === path.current}
                                 rise={rise ? rise.interpolate({ inputRange: [0, from, to, 1], outputRange: [0, 0, 1, 1] }) : null}
@@ -779,6 +780,7 @@ function PathStopView({
   stamp,
   jump,
   near,
+  live,
   bob,
   bobbing,
   rise,
@@ -796,6 +798,8 @@ function PathStopView({
   stamp: StopStamp | null;
   jump: boolean;
   near: boolean;
+  /** Its unit is in view and the app in front. */
+  live: boolean;
   bob: Animated.Value | null;
   bobbing: boolean;
   rise: Animated.AnimatedInterpolation<number> | null;
@@ -826,6 +830,7 @@ function PathStopView({
       milestone={stop.kind === 'story' || stop.kind === 'trophy' ? { number: formatNumber(unit.number, locale) } : null}
       stamp={stamp}
       near={near}
+      live={live}
       bob={bob}
       bobbing={bobbing}
       rise={rise}

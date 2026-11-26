@@ -67,7 +67,7 @@ import {
   PATH_GOLD,
   PATH_MILESTONE_ART,
   PATH_REST,
-  PATH_STAMP_ART,
+  PATH_STAMP_TOOL,
   PATH_STOP_ART,
   PATH_STOP_LOOKS,
   PATH_STOP_TONES,
@@ -76,7 +76,8 @@ import {
   pathKilimSvg,
   pathMilestoneSvg,
   pathSignpostSvg,
-  pathStampSvg,
+  pathWaxSvg,
+  pathWaxColours,
   pathStampToolSvg,
   pathStopSvg,
   type PathStopLook,
@@ -1672,21 +1673,53 @@ describe('the lesson path’s world', () => {
     expect(() => pathMilestoneSvg({ won: true, part: 'face', size: 0 })).toThrow(RangeError);
   });
 
-  it('strikes Hevalo’s seal in gold foil, pressed by hand and tilted a little differently on every stop', () => {
-    const view = `0 0 ${PATH_STAMP_ART.box} ${PATH_STAMP_ART.box}`;
+  it('seals a finished tile in wax of its unit’s own deeper colour, poured a little differently on every stop, gold at three stars', () => {
+    const view = `0 0 ${PATH_STOP_ART.box} ${PATH_STOP_ART.box}`;
     for (const dark of [false, true]) {
-      for (const worn of [false, true]) sound(pathStampSvg({ seed: 's:a', worn, dark, idPrefix: 'm' }), view);
-      expect(pathStampSvg({ seed: 's:a', dark })).toContain(PATH_GOLD[dark ? 'dark' : 'light'].face);
+      const scheme = dark ? 'dark' : 'light';
+      for (const tone of ['meadow', 'pomegranate', 'saffron'] as const) {
+        for (const part of ['whole', 'pour', 'seal', 'blob'] as const) {
+          for (const gold of [false, true]) sound(pathWaxSvg({ tone, seed: 's:a', part, gold, dark, idPrefix: 'w' }), view);
+        }
+        sound(pathWaxSvg({ tone, seed: 's:a', worn: true, dark }), view);
+        // a deeper tone of the unit's colour than its tile, and gold in the road's own finished gold
+        const wax = pathWaxColours(tone, dark);
+        expect(wax.face).not.toBe(PATH_STOP_TONES[scheme][tone].fill);
+        expect(pathWaxSvg({ tone, seed: 's:a', dark })).toContain(wax.face);
+        expect(pathWaxSvg({ tone, seed: 's:a', gold: true, dark })).toContain(PATH_GOLD[scheme].face);
+        // worn, it is dulled: none of its own colours are left as they were
+        expect(pathWaxSvg({ tone, seed: 's:a', worn: true, dark })).not.toContain(wax.face);
+      }
+      // each unit's wax is its own
+      expect(new Set(UNIT_TONES.map((tone) => pathWaxColours(tone, dark).face)).size).toBe(UNIT_TONES.length);
     }
-    // the same stop's seal is the same every time, another's is tilted and wavers its own way, and a worn one is rubbed
-    expect(pathStampSvg({ seed: 's:a' })).toBe(pathStampSvg({ seed: 's:a' }));
-    expect(pathStampSvg({ seed: 's:a' })).not.toBe(pathStampSvg({ seed: 's:b' }));
-    expect(pathStampSvg({ seed: 's:a', worn: true })).not.toContain(PATH_GOLD.light.face);
-    // a seal and nothing more: its rim, sixteen beads and a fine inner ring, and no glyph or print inside
-    const shapes = (svg: string): number => (/<clipPath[^>]*><path d="([^"]*)"/.exec(svg)?.[1]?.match(/M/g) ?? []).length;
-    expect(shapes(pathStampSvg({ seed: 's:a' }))).toBe(2 + 16 + 2);
-    sound(pathStampToolSvg({ dark: true, size: 58 }), '0 0 40 56');
-    expect(() => pathStampSvg({ size: 0 })).toThrow(RangeError);
+    // the same stop's pour is the same every time; another stop's runs out and drips its own way
+    expect(pathWaxSvg({ tone: 'meadow', seed: 's:a' })).toBe(pathWaxSvg({ tone: 'meadow', seed: 's:a' }));
+    expect(pathWaxSvg({ tone: 'meadow', seed: 's:a' })).not.toBe(pathWaxSvg({ tone: 'meadow', seed: 's:b' }));
+    // the pour covers the face and runs a little past it, on the tile's canvas
+    const { cx, cy, rx, ry, side, box } = PATH_STOP_ART;
+    for (const seed of ['s:a', 's:b', 's:c', 's:d', 's:e']) {
+      const pour = /<path d="([^"]*)" transform="translate\(0 [\d.]+\)"/.exec(pathWaxSvg({ tone: 'meadow', seed, part: 'pour' }))![1]!;
+      const nums = pour.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+      const xs = nums.filter((_, i) => i % 2 === 0);
+      const ys = nums.filter((_, i) => i % 2 === 1);
+      expect(Math.min(...xs), seed).toBeLessThan(cx - rx);
+      expect(Math.max(...xs), seed).toBeGreaterThan(cx + rx);
+      expect(Math.min(...ys), seed).toBeLessThan(cy - ry);
+      expect(Math.min(...xs), seed).toBeGreaterThan(cx - rx - 6);
+      expect(Math.max(...xs), seed).toBeLessThan(cx + rx + 6);
+      expect(Math.min(...ys), seed).toBeGreaterThan(cy - ry - 6);
+      expect(Math.max(...ys), seed).toBeLessThan(cy + ry + side);
+      expect(Math.max(...ys), seed).toBeLessThan(box);
+    }
+    // the pour alone has nothing pressed in it, the seal alone is only what is pressed, and the whole tile is both
+    expect(pathWaxSvg({ tone: 'meadow', part: 'pour' })).not.toContain('evenodd');
+    expect(pathWaxSvg({ tone: 'meadow', part: 'seal' }).match(/fill-rule="evenodd"/g)).toHaveLength(3);
+    expect(pathWaxSvg({ tone: 'meadow' }).match(/fill-rule="evenodd"/g)).toHaveLength(3);
+    sound(pathStampToolSvg({ dark: true }), `0 0 ${PATH_STAMP_TOOL.w} ${PATH_STAMP_TOOL.h}`);
+    expect(() => pathWaxSvg({ tone: 'meadow', size: 0 })).toThrow(RangeError);
+    expect(() => pathWaxSvg({ tone: 'meadow', part: 'drip' as 'blob' })).toThrow(RangeError);
+    expect(() => pathWaxColours('nowhere' as 'meadow', false)).toThrow(RangeError);
   });
 
   it('builds the sandûq in parts that open: its body, its shut lid, and the open lid over its gold', () => {

@@ -607,10 +607,10 @@ export function pathChanges<S extends PathSkill>(prev: PathSnapshot | null, path
 
 /**
  * Returning to the path after a lesson, in ms from when it is drawn, alike on the phone and the website: the page settles
- * (`settleMs`); the bar over the stop fills (`ringMs`); a finished stop is stamped (`finishAtMs`, over `stampMs`, the
- * print landing halfway); a full bar starts its next round once the print is down (`nextAtMs`); an opened stop pops as its
- * lock turns into its glyph (`openAtMs`, `popMs`, `glyphMs`); the bubble reaches the new current stop as the page
- * scrolls there (`bubbleAtMs`, `bubbleMs`); and once the stamp has settled, a round's new star lights on the stop
+ * (`settleMs`); the bar over the stop fills (`ringMs`); a finished stop is sealed in wax (`finishAtMs`, over `stampMs`,
+ * the stamp pressing halfway); a full bar starts its next round once it has pressed (`nextAtMs`); an opened stop pops as
+ * its lock turns into its glyph (`openAtMs`, `popMs`, `glyphMs`); the bubble reaches the new current stop as the page
+ * scrolls there (`bubbleAtMs`, `bubbleMs`); and once the wax has settled, a round's new star lights on the stop
  * (`starAtMs`, `starMs`). Under Reduce Motion nothing plays.
  */
 export const PATH_RETURN = {

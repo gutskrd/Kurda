@@ -1,4 +1,4 @@
-import { PATH_BAR, TOPIC_STARS, barPieces, roundStars, starPath } from '@kurda/shared';
+import { PATH_BAR, PATH_GOLD, PATH_WAX_GOLD, TOPIC_STARS, barPieces, roundStars, starPath } from '@kurda/shared';
 
 /**
  * A topic's progress over its stop, its stars on its tile and its rounds in its card, by the same rule and shapes as the
@@ -43,10 +43,27 @@ export function TopicBar({
   );
 }
 
-/** A finished topic's stars along its tile's near edge, one for each full round; `earned` lights the newest in. */
-export function RoundStars({ rounds, earned = false }: { rounds: number; earned?: boolean }): React.JSX.Element | null {
+/**
+ * A finished topic's stars set into its wax along the tile's near edge, one for each full round; `earned` lights the
+ * newest in. On gold wax they are cream, changing as the wax warms into gold when `warming` (shared `PATH_WAX_GOLD`).
+ */
+export function RoundStars({
+  rounds,
+  earned = false,
+  gold = false,
+  warming = false,
+  dark,
+}: {
+  rounds: number;
+  earned?: boolean;
+  gold?: boolean;
+  warming?: boolean;
+  dark: boolean;
+}): React.JSX.Element | null {
   const stars = roundStars(rounds);
   if (stars.length === 0) return null;
+  const onGold = PATH_GOLD[dark ? 'dark' : 'light'];
+  const { afterMs, warmMs } = PATH_WAX_GOLD;
   return (
     <svg className="lp-stars" width={72} height={72} viewBox="0 0 72 72" aria-hidden="true" focusable="false" data-testid={`lp-stars-${stars.length}`}>
       {stars.map((s, i) => (
@@ -54,7 +71,11 @@ export function RoundStars({ rounds, earned = false }: { rounds: number; earned?
           key={i}
           className={`lp-star${earned && i === stars.length - 1 ? ' is-earned' : ''}`}
           d={starPath(s.x, s.y, s.r)}
-          style={{ transformOrigin: `${s.x}px ${s.y}px` }}
+          style={{
+            transformOrigin: `${s.x}px ${s.y}px`,
+            ...(gold ? { fill: onGold.star, stroke: onGold.starEdge } : null),
+            ...(warming ? { transition: `fill ${warmMs}ms ease-in-out ${afterMs}ms, stroke ${warmMs}ms ease-in-out ${afterMs}ms` } : null),
+          }}
         />
       ))}
     </svg>
