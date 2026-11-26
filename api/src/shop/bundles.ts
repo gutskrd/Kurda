@@ -321,8 +321,19 @@ export class BundleService {
   }
 
   /**
+   * Why a bundle could not take this price, before Approvals holds it for a second admin: no such bundle, or a price at
+   * or over its parts' worth, since a bundle must save something. Null when it could.
+   */
+  async priceProblem(id: string, price: number): Promise<'bundle-not-found' | 'bundle-saves-nothing' | null> {
+    const found = await this.pool.query(`SELECT 1 FROM shop_bundles WHERE id = $1`, [id]);
+    if (!found.rowCount) return 'bundle-not-found';
+    return price >= (await partsWorth(this.pool, id)) ? 'bundle-saves-nothing' : null;
+  }
+
+  /**
    * Admin: lists a bundle or takes it off sale, or changes its price. A new price of SENSITIVE_PRICE or more goes through
-   * Approvals, as an item's does; one at or over its parts' worth is refused, since a bundle must save something.
+   * Approvals, as an item's does (`approved` is Approvals applying one a second admin signed off); one at or over its
+   * parts' worth is refused, since a bundle must save something.
    */
   async editBundle(
     audit: AuditService,
@@ -330,6 +341,7 @@ export class BundleService {
     requestId: string,
     id: string,
     edit: { active?: boolean; price?: number },
+    opts: { approved?: boolean } = {},
   ): Promise<AdminBundle> {
     const client = await this.pool.connect();
     try {
@@ -339,14 +351,10 @@ export class BundleService {
       if (!before) throw new AppError('BUNDLE_NOT_FOUND', 404, 'no such bundle');
       const price = edit.price ?? before.price;
       if (price !== before.price) {
-        if (price >= SENSITIVE_PRICE) {
+        if (price >= SENSITIVE_PRICE && !opts.approved) {
           throw new AppError('PRICE_NEEDS_APPROVAL', 409, `a price of ${SENSITIVE_PRICE.toLocaleString('en')} or more goes through Approvals, where a second admin signs off`);
         }
-        const worth = await client.query<{ worth: number }>(
-          `SELECT COALESCE(sum(i.price * p.quantity), 0)::int AS worth FROM shop_bundle_parts p JOIN shop_items i ON i.sku = p.sku WHERE p.bundle_id = $1`,
-          [id],
-        );
-        if (price >= worth.rows[0]!.worth) throw new AppError('BUNDLE_SAVES_NOTHING', 400, 'a bundle must cost less than its parts');
+        if (price >= (await partsWorth(client, id))) throw new AppError('BUNDLE_SAVES_NOTHING', 400, 'a bundle must cost less than its parts');
       }
       const active = edit.active ?? before.active;
       await client.query(`UPDATE shop_bundles SET price = $2, active = $3, updated_at = now() WHERE id = $1`, [id, price, active]);
@@ -368,6 +376,15 @@ export class BundleService {
     }
     return (await this.allBundles()).find((b) => b.id === id)!;
   }
+}
+
+/** What a bundle's parts cost one by one. */
+async function partsWorth(db: Pick<pg.Pool, 'query'>, id: string): Promise<number> {
+  const worth = await db.query<{ worth: number }>(
+    `SELECT COALESCE(sum(i.price * p.quantity), 0)::int AS worth FROM shop_bundle_parts p JOIN shop_items i ON i.sku = p.sku WHERE p.bundle_id = $1`,
+    [id],
+  );
+  return worth.rows[0]!.worth;
 }
 
 /** The answer a purchase gives, from what it recorded. */

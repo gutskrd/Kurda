@@ -3,7 +3,7 @@ import type { ShopService } from '../shop/service.js';
 import type { EventService } from '../events/service.js';
 import { claimArt, releaseArt } from '../shop/art.js';
 
-export type ConfigTarget = 'shop_item' | 'event';
+export type ConfigTarget = 'shop_item' | 'event' | 'shop_bundle';
 export type ChangeStatus = 'pending' | 'applied' | 'rejected';
 
 /** Price at/above which a shop change needs a second admin's sign-off. */
@@ -15,7 +15,16 @@ export interface ProposeResult {
 }
 export type ProposeError = {
   ok: false;
-  reason: 'invalid-target' | 'past-schedule' | 'bad-window' | 'bad-price' | 'invalid-payload' | 'art-missing' | 'art-wrong-kind';
+  reason:
+    | 'invalid-target'
+    | 'past-schedule'
+    | 'bad-window'
+    | 'bad-price'
+    | 'invalid-payload'
+    | 'art-missing'
+    | 'art-wrong-kind'
+    | 'bundle-not-found'
+    | 'bundle-saves-nothing';
 };
 export type ProposeOutcome = ({ ok: true } & ProposeResult) | ProposeError;
 
@@ -32,33 +41,42 @@ export interface PendingChange {
   createdAt: Date;
 }
 
+/** A bundle's price as Approvals takes it (shop/bundles.ts): what would stop it, and setting it as the admin who decided. */
+export interface BundlePrices {
+  priceProblem(id: string, price: number): Promise<'bundle-not-found' | 'bundle-saves-nothing' | null>;
+  setPrice(id: string, price: number, adminId: string): Promise<void>;
+}
+
 /**
- * Shop and event configuration with dual-admin approval. A non-sensitive upsert applies immediately; a sensitive one
- * (large price, currency-granting event) waits for a different admin. Applying delegates to the Shop/Event services
- * (which validate and bust their caches). Past-dated events are rejected.
+ * Shop, bundle and event configuration with dual-admin approval. A non-sensitive upsert applies immediately; a
+ * sensitive one (large price, currency-granting event) waits for a different admin. Applying delegates to the
+ * services that own each (which validate and bust their caches). Past-dated events are rejected.
  */
 export class ConfigService {
   private readonly pool: pg.Pool;
   private readonly shop: ShopService;
   private readonly events: EventService;
+  private readonly bundles: BundlePrices | null;
   private readonly now: () => Date;
 
-  constructor(pool: pg.Pool, deps: { shop: ShopService; events: EventService; now?: () => Date }) {
+  constructor(pool: pg.Pool, deps: { shop: ShopService; events: EventService; bundles?: BundlePrices; now?: () => Date }) {
     this.pool = pool;
     this.shop = deps.shop;
     this.events = deps.events;
+    this.bundles = deps.bundles ?? null;
     this.now = deps.now ?? (() => new Date());
   }
 
   /** Propose an upsert. Applies now if low-impact, else queues for approval. */
   async propose(proposerId: string, target: ConfigTarget, payload: Record<string, unknown>): Promise<ProposeOutcome> {
-    if (target !== 'shop_item' && target !== 'event') return { ok: false, reason: 'invalid-target' };
-    const invalid = this.validate(target, payload);
+    if (target !== 'shop_item' && target !== 'event' && !(target === 'shop_bundle' && this.bundles)) return { ok: false, reason: 'invalid-target' };
+    const invalid =
+      this.validate(target, payload) ?? (target === 'shop_bundle' ? await this.bundles!.priceProblem(payload.id as string, payload.price as number) : null);
     if (invalid) return { ok: false, reason: invalid };
 
     const sensitive = this.isSensitive(target, payload);
     if (!sensitive) {
-      await this.apply(target, payload);
+      await this.apply(target, payload, proposerId);
       const row = await this.record(target, payload, false, 'applied', proposerId, proposerId);
       return { ok: true, status: 'applied', id: row };
     }
@@ -96,7 +114,7 @@ export class ConfigService {
       if (c.status !== 'pending') { await client.query('ROLLBACK'); return { ok: false, reason: 'not-pending' }; }
       if (c.proposer_id && c.proposer_id === reviewerId) { await client.query('ROLLBACK'); return { ok: false, reason: 'self-approve' }; }
 
-      await this.apply(c.target, c.payload);
+      await this.apply(c.target, c.payload, reviewerId);
       await client.query(
         `UPDATE admin_config_changes SET status = 'applied', reviewer_id = $2, decided_at = now() WHERE id = $1`,
         [id, reviewerId],
@@ -140,6 +158,10 @@ export class ConfigService {
   // ---- internals ------------------------------------------------------------
 
   private validate(target: ConfigTarget, p: Record<string, unknown>): ProposeError['reason'] | null {
+    if (target === 'shop_bundle') {
+      if (typeof p.id !== 'string' || p.id === '') return 'invalid-payload';
+      return Number.isInteger(p.price) && (p.price as number) > 0 && (p.price as number) <= 10_000_000 ? null : 'bad-price';
+    }
     if (target === 'shop_item') {
       if (typeof p.sku !== 'string' || typeof p.name !== 'string' || typeof p.currency !== 'string') return 'invalid-payload';
       if (typeof p.price !== 'number' || p.price < 0) return 'bad-price';
@@ -156,7 +178,7 @@ export class ConfigService {
   }
 
   private isSensitive(target: ConfigTarget, p: Record<string, unknown>): boolean {
-    if (target === 'shop_item') return typeof p.price === 'number' && p.price >= SENSITIVE_PRICE;
+    if (target === 'shop_item' || target === 'shop_bundle') return typeof p.price === 'number' && p.price >= SENSITIVE_PRICE;
     // events that grant currency/rewards are sensitive
     const rewards = p.rewards as Record<string, unknown> | undefined;
     return !!rewards && Object.keys(rewards).length > 0;
@@ -167,7 +189,12 @@ export class ConfigService {
    * field the proposal omits is taken from the current item (otherwise a price change would wipe the picture, premium
    * flag, position, sale window and kind).
    */
-  private async apply(target: ConfigTarget, p: Record<string, unknown>): Promise<void> {
+  /** Applies a change as `adminId` decided it: the proposer for one that needed nobody else, else the approver. */
+  private async apply(target: ConfigTarget, p: Record<string, unknown>, adminId: string): Promise<void> {
+    if (target === 'shop_bundle') {
+      await this.bundles!.setPrice(p.id as string, p.price as number, adminId);
+      return;
+    }
     if (target === 'shop_item') {
       const { rows } = await this.pool.query<{
         description: string | null; category: string; is_unique: boolean; active: boolean; in_stock: boolean;

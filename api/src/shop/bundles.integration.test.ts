@@ -9,7 +9,7 @@ import pg from 'pg';
 import { BAG_GIFTS_PER_DAY, giftSku, type BundlesView, type BundleView } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { issueAccessToken } from '../auth/tokens.js';
+import { issueAccessToken, issueTokenPair } from '../auth/tokens.js';
 import { makeLearner } from '../test/progress.js';
 import { WalletService } from '../wallet/service.js';
 import { grantBagGiftWithin } from '../gifts/bag.js';
@@ -17,6 +17,7 @@ import { exportProgress } from '../gdpr/progress-export.js';
 import { AuditService } from '../admin/audit-service.js';
 import { BundleService } from './bundles.js';
 import { ShopService } from './service.js';
+import { pass2fa } from '../test/admin-2fa.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -51,7 +52,7 @@ describe.skipIf(!DATABASE_URL)('bundles (integration)', () => {
     const who = await makeLearner(pool, `bu${tag.toLowerCase()}${suffix}`, { age });
     return { id: who.id, token: await issueAccessToken(config, { sub: who.id, ver: 0 }) };
   };
-  const call = (method: 'GET' | 'POST' | 'PUT', url: string, who: Account, payload?: unknown) =>
+  const call = (method: 'GET' | 'POST' | 'PUT' | 'PATCH', url: string, who: Account, payload?: unknown) =>
     app.inject({ method, url, headers: { authorization: `Bearer ${who.token}` }, ...(payload === undefined ? {} : { payload: payload as object }), remoteAddress: ip() });
   let k = 0;
   const key = () => `bundle-${suffix}-${++k}`;
@@ -334,6 +335,43 @@ describe.skipIf(!DATABASE_URL)('bundles (integration)', () => {
       { action: 'shop.bundle.edit', before: { price: 450, active: true }, after: { price: 450, active: false } },
     ]);
     // back as it was, as an approved change would put it
+    await pool.query(`UPDATE shop_bundles SET price = $2, active = true WHERE id = $1`, [BUNDLE, PRICE]);
+  });
+
+  it('changes a bundle’s price of 500 or more through Approvals, where a second admin signs off, as a shop item’s', async () => {
+    // staff on a session of their own, which the console's second factor is entered for
+    const staff = async (tag: string): Promise<Account> => {
+      const who = await person(tag);
+      await pool.query(`UPDATE users SET roles = '{admin}' WHERE id = $1`, [who.id]);
+      const session = await issueTokenPair(config, pool, { id: who.id, token_version: 0 });
+      const admin = { id: who.id, token: session.accessToken };
+      await pass2fa(app, admin.token, ip());
+      return admin;
+    };
+    const one = await staff('appr1');
+    const two = await staff('appr2');
+    const price = async () => (await pool.query<{ price: number }>(`SELECT price FROM shop_bundles WHERE id = $1`, [BUNDLE])).rows[0]!.price;
+    expect((await call('PATCH', `/admin/shop/bundles/${BUNDLE}`, one, { price: 600 })).json()).toMatchObject({ code: 'PRICE_NEEDS_APPROVAL' });
+    const proposed = await call('POST', '/admin/config/changes', one, { target: 'shop_bundle', payload: { id: BUNDLE, price: 600 } });
+    expect(proposed.statusCode, proposed.body).toBe(202);
+    expect(proposed.json()).toMatchObject({ status: 'pending' });
+    expect(await price()).toBe(PRICE);
+    const id = proposed.json().id as string;
+    const listedChange = ((await call('GET', '/admin/config/changes', two)).json().pending as Array<{ id: string; target: string }>).find((c) => c.id === id);
+    expect(listedChange).toMatchObject({ target: 'shop_bundle' });
+    // not by the admin who asked
+    expect((await call('POST', `/admin/config/changes/${id}/approve`, one)).statusCode).toBe(403);
+    const approved = await call('POST', `/admin/config/changes/${id}/approve`, two);
+    expect(approved.statusCode, approved.body).toBe(200);
+    expect(await price()).toBe(600);
+    const trail = await pool.query(`SELECT action, admin_id, after FROM admin_audit_log WHERE target_id = $1 AND action = 'shop.bundle.edit' ORDER BY created_at DESC LIMIT 1`, [BUNDLE]);
+    expect(trail.rows[0]).toMatchObject({ admin_id: two.id, after: { price: 600 } });
+    // never to its parts' worth, through Approvals either, and only a bundle there is
+    expect((await call('POST', '/admin/config/changes', one, { target: 'shop_bundle', payload: { id: BUNDLE, price: WORTH } })).json()).toMatchObject({ code: 'BUNDLE_SAVES_NOTHING' });
+    expect((await call('POST', '/admin/config/changes', one, { target: 'shop_bundle', payload: { id: 'no-such-bundle', price: 600 } })).json()).toMatchObject({ code: 'BUNDLE_NOT_FOUND' });
+    // a price under 500 sent this way applies at once
+    expect((await call('POST', '/admin/config/changes', one, { target: 'shop_bundle', payload: { id: BUNDLE, price: PRICE - 10 } })).json()).toMatchObject({ status: 'applied' });
+    expect(await price()).toBe(PRICE - 10);
     await pool.query(`UPDATE shop_bundles SET price = $2, active = true WHERE id = $1`, [BUNDLE, PRICE]);
   });
 

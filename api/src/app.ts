@@ -780,11 +780,18 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const events = new EventService(app.db, app.cache);
     registerEventRoutes(app, events);
     // Shop and event config with dual-admin approval.
+    // a bundle's price of 500 or more too, as an item's
+    const bundleService = new BundleService(app.db, new WalletService(app.db), (k) => (app.storage ? app.storage.publicUrl(k) : null));
+    const bundleAudit = new AuditService(app.db);
     registerConfigRoutes(
       app,
       new ConfigService(app.db, {
         shop: new ShopService(app.db, new WalletService(app.db), app.cache),
         events,
+        bundles: {
+          priceProblem: (id, price) => bundleService.priceProblem(id, price),
+          setPrice: async (id, price, adminId) => void (await bundleService.editBundle(bundleAudit, adminId, 'approvals', id, { price }, { approved: true })),
+        },
       }),
     );
     // Event quests and reward claims: progress from the ledgers over the event window, claims paying Zêr with a 72-hour
@@ -936,7 +943,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // the admin's art uploads, partial edits, and delete-or-retire
     registerShopAdminRoutes(app, shop, config);
     // themed sets sold for less than their parts, gifts for the bag included
-    registerBundleRoutes(app, new BundleService(app.db, shopWallet, (k) => (app.storage ? app.storage.publicUrl(k) : null)));
+    registerBundleRoutes(app, bundleService);
     // Pictures put in place of the built-in art: badges, emblems, frames, default avatars, event banners.
     registerArtRoutes(app, new ArtOverrideService(app.db, (key) => (app.storage ? app.storage.publicUrl(key) : null)));
     // taking Hevalo offline for a while, and the status the apps ask while it is
