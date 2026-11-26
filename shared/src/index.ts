@@ -783,6 +783,7 @@ export {
   pathWaxSvg,
   pathWaxColours,
   pathSealFireSvg,
+  PATH_SEAL_FLAME,
   PATH_SEAL,
   PATH_WAX,
   sunRays,

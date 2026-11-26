@@ -997,80 +997,21 @@ button.lp-scard:focus-visible {
   transform-origin: 56px 61px;
 }
 /*
- * The suns igniting (PathScene.tsx `SealGlow` and `SealIgnite`, shared PATH_WAX_FIRE), on the seal's canvas, its middle at
- * 56, 61: the warm light behind it, laid wider on the road; the gold through two half discs turning about its middle,
- * the right one first (each half of the seal a clip, inside it the other half's disc turning, and in that the gold
- * turned back so it stays still); the corona's tongues round the rim, each grown and flickered about its root at 56, 28;
- * and the sparks, sent up from the rim's top at 56, 25.
+ * The flame that gilds a seal (PathScene.tsx `SealFlame`, shared PATH_WAX_FIRE), on the seal's canvas: the gold through a
+ * window whose top is the flame's foot, and the flame drawn standing on the seal's middle at 56, 61, which it moves,
+ * widens and flickers about.
  */
-.lp-wax-glow {
-  transform: scale(1.9);
-  transform-origin: 56px 61px;
-  opacity: 0;
-}
-.lp-wax-flash {
-  transform-origin: 56px 61px;
-  opacity: 0;
-}
-.lp-wax-ignite,
-.lp-wax-tongue,
-.lp-wax-grow {
+.lp-wax-window {
   position: absolute;
   inset: 0;
-}
-.lp-wax-half,
-.lp-wax-turn {
-  position: absolute;
-  top: 0;
-  width: 56px;
-  height: 112px;
   overflow: hidden;
 }
-.lp-wax-half.is-left {
-  left: 0;
-}
-.lp-wax-half.is-right {
-  left: 56px;
-}
-.lp-wax-half.is-right > .lp-wax-turn {
-  left: -56px;
-  transform-origin: 56px 61px;
-}
-.lp-wax-half.is-left > .lp-wax-turn {
-  left: 56px;
-  transform-origin: 0 61px;
-}
-.lp-wax-turn > .lp-wax-coat {
-  inset: auto;
-  top: 0;
-  width: 112px;
-  height: 112px;
-  transform-origin: 56px 61px;
-}
-.lp-wax-half.is-right .lp-wax-turn > .lp-wax-coat {
-  left: 0;
-}
-.lp-wax-half.is-left .lp-wax-turn > .lp-wax-coat {
-  left: -56px;
-}
-.lp-wax-tongue {
-  transform-origin: 56px 61px;
-}
-.lp-wax-grow {
-  transform: scale(0);
-  transform-origin: 56px 28px;
-}
+.lp-wax-flame,
 .lp-wax-flick {
-  transform-origin: 56px 28px;
+  transform-origin: 56px 61px;
 }
-.lp-wax-whole,
-.lp-wax-kindle,
-.lp-wax-blaze,
-.lp-wax-spark {
+.lp-wax-flame {
   opacity: 0;
-}
-.lp-wax-spark {
-  transform-origin: 56px 25px;
 }
 /* The stamp, the Stamp icon in the page's ink, leans about its pad's foot. */
 .lp-wax-tool {

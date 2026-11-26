@@ -12,7 +12,6 @@ import { roadLight } from './light.js';
 import { CANVAS, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
 import { kilimAlong } from './paint.js';
 import { fireColours } from './fire-colours.js';
-import { SHAPE_ROOT, SMALL_SHAPES, mapPath } from './fire-shapes.js';
 import { VALLEY, dusk, ellipsePath, fill, smoothPath, stroke, warm } from './valley.js';
 
 // ───────────────────────────────────────────────────────────── the lands
@@ -312,10 +311,9 @@ export interface PathWaxOptions {
   suns?: number;
   /**
    * The whole seal; or, for its moment, the poured disc alone, the seal's pressed face alone, the drop of wax that falls
-   * onto the tile first, or the droplets it throws out as it lands; or, as a third sun turns it gold, its suns glowing
-   * from within, orange as they kindle and white-gold as they burn (`pathSealFireSvg` draws the fire round them).
+   * onto the tile first, or the droplets it throws out as it lands.
    */
-  part?: 'whole' | 'pour' | 'seal' | 'blob' | 'splash' | 'kindle' | 'blaze';
+  part?: 'whole' | 'pour' | 'seal' | 'blob' | 'splash';
   dark?: boolean;
   /** Display size in points; the drawing is `PATH_STOP_ART.box` square, laid as the tile is. */
   size?: number;
@@ -337,7 +335,7 @@ export function sunRays(reach: number): number {
 export function pathWaxSvg(opts: PathWaxOptions = {}): string {
   const { dark = false, gold = false, worn = false } = opts;
   const part = opts.part ?? 'whole';
-  if (!['whole', 'pour', 'seal', 'blob', 'splash', 'kindle', 'blaze'].includes(part)) throw new RangeError(`art: no wax part ${String(part)}`);
+  if (!['whole', 'pour', 'seal', 'blob', 'splash'].includes(part)) throw new RangeError(`art: no wax part ${String(part)}`);
   const size = opts.size ?? PATH_STOP_ART.box;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
   const B = PATH_STOP_ART.box;
@@ -391,17 +389,6 @@ export function pathWaxSvg(opts: PathWaxOptions = {}): string {
       );
     };
     return wrapIt(fill(drop(), wax.face) + steps(drop(), (dx, dy) => drop(dx, dy), 2.2, wax.light, wax.shade));
-  }
-
-  // The suns as they ignite, over the pressed ones: orange as they kindle, white-gold as they burn.
-  const sunsOf = (): { d: string } => {
-    const at = sealSuns(opts.suns ?? 1).map((sn) => ({ x: cx + sn.x * r, y: cy + sn.y * r, reach: sn.r * r }));
-    const rays = sunRays((Math.min(...at.map((sn) => sn.reach)) * size) / B);
-    return { d: at.map((sn) => sunPath(sn.x, sn.y, sn.reach, rays)).join('') };
-  };
-  if (part === 'kindle' || part === 'blaze') {
-    const flame = fireColours({ stage: 'newroz', scheme: dark ? 'dark' : 'light' }).tongues;
-    return wrapIt(fill(sunsOf().d, part === 'kindle' ? flame.outer[1] : flame.heart[1]));
   }
 
   let body = '';
@@ -459,37 +446,53 @@ export function pathWaxSvg(opts: PathWaxOptions = {}): string {
 }
 
 /**
- * The fire that gilds a seal as its third sun is pressed in, on the seal's canvas (`PATH_SEAL`), from Hevalo's own fire
- * (fire-shapes.ts, the Newroz fire's colours in fire-colours.ts): one tongue of its corona, standing on the seal's rim at
- * its top, its deep orange body (`outer`) or its saffron drop and white-gold heart (`inner`), for the app to set round the
- * rim and flicker; the soft warm `flash` that blooms behind the seal, also laid wider as its light on the road; and one
- * `spark`, a dot at the rim's top, for the app to send up and away.
+ * The fire that gilds a seal as its third sun is pressed in, on the seal's canvas (`PATH_SEAL`): one sheet of flame as
+ * wide as the seal, standing on its middle line, its foot rounded just under it, rising in a few pointed licks of
+ * different heights that lean a little the same way, the tallest a little off the middle. It is painted in three flat
+ * layers in Hevalo's fire colours (fire-colours.ts), each a step inside the last and drawn apart for the app to flicker
+ * on its own: a deep red-orange `shell`, a saffron `body`, and a pale `heart` low in it.
  */
-export function pathSealFireSvg(opts: { part: 'outer' | 'inner' | 'flash' | 'spark'; dark?: boolean; size?: number; idPrefix?: string }): string {
+export const PATH_SEAL_FLAME = { tall: 30, licks: [0.46, 0.76, 1, 0.66, 0.88, 0.5] } as const;
+
+export function pathSealFireSvg(opts: { part: 'shell' | 'body' | 'heart'; dark?: boolean; size?: number; idPrefix?: string }): string {
   const { part, dark = false } = opts;
-  if (!['outer', 'inner', 'flash', 'spark'].includes(part)) throw new RangeError(`art: no seal fire part ${String(part)}`);
+  if (!['shell', 'body', 'heart'].includes(part)) throw new RangeError(`art: no seal fire part ${String(part)}`);
   const size = opts.size ?? PATH_STOP_ART.box;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
   const B = PATH_STOP_ART.box;
   const { cx, cy, r } = PATH_SEAL;
   const id = prefixFor(opts.idPrefix, 'seal-fire', part, dark);
-  const flame = fireColours({ stage: 'newroz', scheme: dark ? 'dark' : 'light' }).tongues;
-  const svg = (body: string, defs = ''): string =>
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(size)}" viewBox="0 0 ${B} ${B}" aria-hidden="true" focusable="false" id="${id}">` +
-    `${defs ? `<defs>${defs}</defs>` : ''}${body}</svg>`;
-  if (part === 'flash') {
-    // Warm and soft, strongest at the seal and gone at its edge, with no hard rim.
-    const defs =
-      `<radialGradient id="${id}g" cx="${cx}" cy="${cy}" r="50" gradientUnits="userSpaceOnUse">` +
-      `<stop offset="0" stop-color="${flame.heart[0]}" stop-opacity="0.95"/><stop offset="0.45" stop-color="${flame.core[0]}" stop-opacity="0.55"/>` +
-      `<stop offset="1" stop-color="${flame.outer[0]}" stop-opacity="0"/></radialGradient>`;
-    return svg(`<path d="${ellipsePath(cx, cy, 50, 50)}" fill="url(#${id}g)"/>`, defs);
-  }
-  if (part === 'spark') return svg(fill(ellipsePath(cx, cy - r, 1.6, 1.6), flame.core[1]) + fill(ellipsePath(cx - 0.4, cy - r - 0.4, 0.7, 0.7), flame.heart[1]));
-  // The small flame's outline (fire-shapes.ts), drawn tall and slim, its root just inside the rim's top.
-  const at = (d: string): string => mapPath(d, (px, py) => [cx + (px - SHAPE_ROOT[0]) * 0.1, cy - r + 3 + (py - SHAPE_ROOT[1]) * 0.24]);
-  if (part === 'outer') return svg(fill(at(SMALL_SHAPES.outer), flame.outer[0]));
-  return svg(fill(at(SMALL_SHAPES.core), flame.core[0]) + fill(at(SMALL_SHAPES.heart), flame.heart[1]));
+  const flame = fireColours({ stage: 'campfire', scheme: dark ? 'dark' : 'light' }).tongues;
+  // Each layer narrower and lower than the one outside it: its share of the width, of the height, and its colour.
+  const [wide, high, colour] = part === 'shell' ? [1, 1, flame.outer[0]] : part === 'body' ? [0.78, 0.7, flame.core[0]] : [0.42, 0.44, flame.heart[0]];
+  const sheet = flameSheet(cx, cy, 2 * r * wide, PATH_SEAL_FLAME.tall * high, PATH_SEAL_FLAME.licks, 0.12);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(size)}" viewBox="0 0 ${B} ${B}" aria-hidden="true" focusable="false" id="${id}">${fill(sheet, colour)}</svg>`;
+}
+
+/**
+ * A sheet of flame standing on (`x`, `base`), `w` across: a pointed lick for each of `licks` (shares of `tall`), each
+ * swelling from the dip before it and drawn in to its tip, which leans by `lean` of its height; its sides run down
+ * into a foot rounded just under the base.
+ */
+function flameSheet(x: number, base: number, w: number, tall: number, licks: readonly number[], lean: number): string {
+  const p = (px: number, py: number): string => `${n(px)} ${n(py)}`;
+  const step = w / licks.length;
+  const tips = licks.map((k, i): Pt => [x - w / 2 + step * (i + 0.5) + tall * k * lean, base - tall * k]);
+  // The dips between licks, lower between short ones; the sides start a little up from the foot.
+  const dips: Pt[] = [[x - w / 2, base - tall * licks[0]! * 0.22]];
+  for (let i = 1; i < licks.length; i++) dips.push([x - w / 2 + step * i, base - tall * Math.min(licks[i - 1]!, licks[i]!) * 0.38]);
+  dips.push([x + w / 2, base - tall * licks[licks.length - 1]! * 0.22]);
+  // Its foot is rounded in at the corners, as a flame gathers where it burns, and not cut square.
+  let d = `M${p(x - w / 2 + 6, base + 3.5)}C${p(x - w / 2 + 1, base + 3)} ${p(x - w / 2 - 0.5, base - 1)} ${p(dips[0]![0], dips[0]![1])}`;
+  tips.forEach(([tx, ty], i) => {
+    const [lx, ly] = dips[i]!;
+    const [rx, ry] = dips[i + 1]!;
+    // Out from the dip in a swell, then in to the point; down the other side the same way.
+    d += `C${p(lx + (tx - lx) * 0.05, ly - (ly - ty) * 0.6)} ${p(tx - (tx - lx) * 0.35, ty + (ly - ty) * 0.28)} ${p(tx, ty)}`;
+    d += `C${p(tx + (rx - tx) * 0.3, ty + (ry - ty) * 0.32)} ${p(rx - (rx - tx) * 0.05, ry - (ry - ty) * 0.55)} ${p(rx, ry)}`;
+  });
+  d += `C${p(x + w / 2 + 0.5, base - 1)} ${p(x + w / 2 - 1, base + 3)} ${p(x + w / 2 - 6, base + 3.5)}Q${p(x, base + 5.5)} ${p(x - w / 2 + 6, base + 3.5)}Z`;
+  return d;
 }
 
 /**
