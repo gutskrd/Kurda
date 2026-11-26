@@ -1,5 +1,5 @@
 /** API contract types for the web client, matching the phone's (mobile/src/api/types.ts). */
-import type { AccountHold, FeedImage, SupervisionState, LeagueTier, PendingPicture, PictureRejection, PictureReviewState, ProfileBadge, ProfileLeague, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
+import type { AccountHold, FeedImage, SupervisionState, LeagueTier, PendingPicture, PictureRejection, PictureReviewState, ProfileBadge, ProfileLeague, ProfileWordTag, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
 
 import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding, PostGifts } from '@kurda/shared';
 
@@ -140,6 +140,8 @@ export interface ProfileCosmetics {
   favoriteStory?: FavoriteRef | null;
   /** ISO 3166 alpha-2 code (e.g. "DE"), shown as a flag and name. */
   country?: string | null;
+  /** The word tag worn by the name, while it is owned; absent on an older server. */
+  tag?: ProfileWordTag | null;
 }
 
 /** The signed-in user's full profile (GET /me). */
@@ -158,6 +160,7 @@ export interface MeProfile extends SessionUser, ProfileCosmetics {
   selectedAvatarKey?: string | null;
   equippedBackgroundSku?: string | null;
   equippedIconSku?: string | null;
+  equippedTagSku?: string | null;
   premiumIconEnabled?: boolean;
   premiumUntil?: string | null;
   /** The birth month on record, shown in Settings; null until answered, absent from older servers. */

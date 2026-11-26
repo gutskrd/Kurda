@@ -7,6 +7,8 @@ import { FrameOverlay } from '../ranks/art';
 import { rankTierNamed } from '../ranks/names';
 import { useAvatarSrc } from '../art/overrides';
 import { Horizon } from './Horizon';
+import type { ProfileWordTag } from '@kurda/shared';
+import { TagPill } from '../profile/TagPill';
 
 /**
  * A person as Hevalo shows one: their background as a banner, their face overlapping it, their name and level
@@ -27,6 +29,8 @@ interface ProfileCardProps {
   frameSku?: string | null;
   /** The picture of a shop frame, which is laid on rather than drawn. */
   frameUrl?: string | null;
+  /** The word tag worn by the name. */
+  tag?: ProfileWordTag | null;
   /** The person's id, seeding the horizon drawn when no background is worn; without it the banner is plain. */
   seed?: string;
   /** On the banner's far corner: the menu about this person, and whatever closes the card. */
@@ -53,6 +57,7 @@ export function ProfileCard({
   level,
   frameSku,
   frameUrl,
+  tag,
   seed,
   corner,
   meta,
@@ -97,6 +102,7 @@ export function ProfileCard({
               <Name className="pc-name" dir="auto">
                 {name}
               </Name>
+              {tag && <TagPill tag={tag} />}
               {premium && <PremiumPill />}
             </div>
             {(username || online) && (

@@ -1,0 +1,402 @@
+/* ---- bundles (shop/Bundles.tsx): the row the shop leads with ------------------------------------------------------ */
+.bundle-row {
+  margin: 8px 0 28px;
+}
+.bundle-row-sub {
+  margin: -4px 0 14px;
+}
+/* three to a row on a wide page; on a phone one card and the edge of the next, scrolled sideways */
+.bundle-track {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+@media (max-width: 640px) {
+  .bundle-track {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: minmax(78%, 1fr);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    margin-inline: -16px;
+    padding: 2px 16px 8px;
+    scroll-padding-inline: 16px;
+  }
+  .bundle-card {
+    scroll-snap-align: start;
+  }
+}
+.bundle-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.bundle-card.is-complete {
+  opacity: 0.8;
+}
+.bundle-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 12px 14px 14px;
+  flex: 1;
+}
+.bundle-card-body > .btn {
+  margin-top: auto;
+  align-self: stretch;
+}
+.bundle-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+.bundle-name,
+.bundle-sheet-name {
+  margin: 0;
+  font-size: var(--text-title);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.bundle-title {
+  margin: -2px 0 0;
+  color: var(--ink-3);
+  font-size: var(--text);
+}
+/* computed, said plainly, and in the ink: a fact about the price rather than a banner */
+.bundle-best {
+  flex: none;
+  padding: 1px 9px;
+  border: 1px solid var(--ink-3);
+  border-radius: var(--r-pill);
+  color: var(--ink);
+  font-size: var(--text);
+  font-weight: 600;
+}
+.bundle-price {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bundle-worth {
+  color: var(--ink-4);
+  font-weight: 500;
+  text-decoration-thickness: 1.5px;
+}
+.bundle-save {
+  color: var(--ink-2);
+  font-size: var(--text);
+  font-weight: 500;
+}
+.bundle-owned,
+.bundle-note {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text);
+}
+.bundle-warn {
+  margin: 8px 0 0;
+  color: var(--ink-2);
+  font-size: var(--text);
+}
+
+/* ---- the set worn together: background, your face in the frame, the icon, the tag, the gifts ---------------------- */
+.bundle-show {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  aspect-ratio: 16 / 10;
+  padding: 10px 12px;
+  overflow: hidden;
+  background: var(--bg);
+  isolation: isolate;
+}
+.bundle-show-large {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-md);
+}
+.bundle-show-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+.bundle-show-bg img,
+.bundle-show-bg video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.bundle-show-wearer {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+.bundle-show-face {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  line-height: 0;
+}
+.bundle-show-plain {
+  display: block;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.bundle-show-plain img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* the icon on the face's shoulder, as a profile wears it */
+.bundle-show-icon {
+  position: absolute;
+  top: 10%;
+  inset-inline-end: 6%;
+  width: 30%;
+  height: 30%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  z-index: 2;
+}
+/* on a picture the pill needs a ground of its own to be read */
+.bundle-show .tag-pill,
+.bundle-moment-tag.tag-pill {
+  background: var(--surface-solid);
+  border-color: var(--border-strong);
+}
+.bundle-show-gifts {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+  border-radius: var(--r-md);
+  background: var(--panel-glass);
+  border: 1px solid var(--border);
+}
+.bundle-show-gifts li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink);
+  font-size: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.bundle-show-gifts img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+/* ---- a bundle opened (shop/BundleSheet.tsx) ----------------------------------------------------------------------- */
+.bundle-sheet {
+  display: grid;
+  gap: 8px;
+}
+.bundle-sheet-name {
+  margin-top: 8px;
+}
+.bundle-story {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text);
+  line-height: 1.5;
+}
+.bundle-sheet-heading {
+  margin: 10px 0 0;
+  font-size: var(--text);
+  font-weight: 700;
+  color: var(--ink);
+}
+.bundle-parts,
+.bundle-gifts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.bundle-part,
+.bundle-gifts li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--separator);
+}
+.bundle-part-art,
+.bundle-gift-art {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 52px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+.bundle-part-background .bundle-part-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.bundle-part-icon .bundle-part-art img,
+.bundle-gift-art img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+.bundle-part-frame .bundle-part-art,
+.bundle-part-tag .bundle-part-art {
+  overflow: visible;
+}
+.tag-pill-mark-only {
+  padding: 6px 14px;
+}
+.bundle-part-words {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.bundle-part-name {
+  color: var(--ink);
+  font-size: var(--text);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.bundle-part-desc {
+  color: var(--ink-3);
+  font-size: var(--text);
+}
+.bundle-part-side {
+  flex: none;
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+.bundle-part-alone {
+  color: var(--ink-3);
+  font-size: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.bundle-part-owned {
+  color: var(--gold-ink);
+  font-size: var(--text);
+  font-weight: 600;
+}
+.bundle-sum {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.bundle-sheet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.bundle-sheet-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.bundle-short {
+  justify-self: end;
+}
+
+/* ---- the step on the price ladder, in the ink; a masterwork's in gold ---------------------------------------------- */
+.rarity {
+  display: inline-block;
+  color: var(--ink-3);
+  font-size: var(--text);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.rarity-rare {
+  color: var(--ink);
+}
+.rarity-masterwork {
+  color: var(--gold-ink);
+}
+
+/* ---- trying a look on (shop/ProfilePreview.tsx) -------------------------------------------------------------------- */
+.profile-preview {
+  display: grid;
+  gap: 12px;
+}
+.profile-preview-title {
+  margin: 0;
+  font-size: var(--text-title);
+  font-weight: 800;
+}
+.profile-preview-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.profile-preview-note {
+  margin: 0;
+}
+.profile-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ---- a bundle bought (shop/BundleMoment.tsx), in the gift moment's light ------------------------------------------- */
+.bundle-moment-set {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 176px;
+  height: 176px;
+}
+.bundle-moment-set.is-popping {
+  animation: celebrate-arrive 560ms var(--ease-spring) both;
+}
+.bundle-moment-disc {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.bundle-moment-disc img,
+.bundle-moment-disc video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.bundle-moment-face {
+  position: relative;
+  line-height: 0;
+}
+.bundle-moment-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  color: var(--ink-2);
+  font-size: var(--text);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bundle-moment-set.is-popping {
+    animation: none;
+  }
+}

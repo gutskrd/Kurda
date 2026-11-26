@@ -2,7 +2,7 @@ import { useLayoutEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { FavoriteRef, LevelInfo, ProfileBackground, ProfileIcon } from '../lib/types';
 import { Flag } from '../components/Flag';
-import { badgesInOrder, compactCount, fireLevel, toLeagueTier, type ProfileBadge, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
+import { badgesInOrder, compactCount, fireLevel, toLeagueTier, type ProfileBadge, type ProfileLeague, type ProfileWordTag, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import { ProfileHead } from './ProfileHead';
 import { BadgePill } from './BadgeRow';
 import { CollectionSheet } from './CollectionSheet';
@@ -39,6 +39,8 @@ export interface FullProfileView {
   frameUrl?: string | null;
   /** the year they joined, where it is theirs to know: your own profile says it */
   joinedYear?: number | null;
+  /** the word tag worn by the name */
+  tag?: ProfileWordTag | null;
 }
 
 /** One number about somebody, with the word for it; a link where there is a page behind the number. */
@@ -264,6 +266,7 @@ export function FullProfile({
           level={view.levelInfo}
           frameSku={view.frameSku}
           frameUrl={view.frameUrl}
+          tag={view.tag}
           corner={corner}
           stats={<ProfileFacts facts={facts} stack={false} />}
           handleAside={

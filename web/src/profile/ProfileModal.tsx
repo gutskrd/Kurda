@@ -287,6 +287,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         corner={corner}
         frameSku={target.kind === 'me' ? null : (other?.frameSku ?? null)}
         frameUrl={target.kind === 'me' ? null : (other?.frameUrl ?? null)}
+        tag={target.kind === 'me' ? (me?.tag ?? null) : (other?.tag ?? null)}
         meta={
           <>
             {(level || place) && (

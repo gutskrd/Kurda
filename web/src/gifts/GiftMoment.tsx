@@ -67,6 +67,7 @@ export function GiftLight({
   art,
   lit,
   still,
+  glow: colour,
   children,
 }: {
   sku: string;
@@ -75,12 +76,14 @@ export function GiftLight({
   art: number;
   lit: boolean;
   still: boolean;
+  /** the light's colour, where it is not the gift's own (a bundle's) */
+  glow?: string;
   children: ReactNode;
 }): React.JSX.Element {
   const gradient = useSvgId('rays');
   const rays = useMemo(() => giftRaysPath(look.rays, look.reach), [look.rays, look.reach]);
   const sparkles = useMemo(() => giftSparkles(look.sparkles, giftSeed(sku)), [look.sparkles, sku]);
-  const glow = giftGlow(sku);
+  const glow = colour ?? giftGlow(sku);
   const style = {
     '--glow': glow,
     // the celebration's flecks and ring take the gift's colour too

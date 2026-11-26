@@ -103,6 +103,7 @@ export function Profile(): React.JSX.Element {
     frameSku: shown?.frameSku ?? null,
     frameUrl: shown?.frameUrl ?? null,
     joinedYear: Number.isNaN(joined.getTime()) ? null : joined.getFullYear(),
+    tag: me.tag ?? null,
   };
   const number = (n: number): string => n.toLocaleString(locale);
   const maxFreezes = me.streak.maxFreezes ?? 1;

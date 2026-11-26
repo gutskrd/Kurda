@@ -1,0 +1,32 @@
+/* A word tag by the name: the page's ink on its own quiet ground, never a colour of its own; the diamond is the
+   kilim's, the one mark it carries. */
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 1px 10px 1px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: var(--text);
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.tag-pill > span[lang] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tag-pill-mark {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  rotate: 45deg;
+  border: 1.5px solid currentColor;
+  border-radius: 1px;
+  opacity: 0.7;
+}
