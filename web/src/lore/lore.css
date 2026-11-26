@@ -245,7 +245,6 @@
   /* The progress ink, as on the phone. */
   background: var(--accent);
   border-radius: inherit;
-  transition: width var(--dur-progress) var(--ease-out);
 }
 .lore-guest {
   margin-top: 0;

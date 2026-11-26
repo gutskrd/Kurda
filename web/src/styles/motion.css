@@ -239,28 +239,44 @@
   transform: translateX(calc((1 - var(--p, 0)) * 100%));
 }
 /*
- * Other moving bars (rank climb, profile level, game meters, letters and words opened) slide the same way on the same
- * token rather than animating width; their tracks clip the unearned part.
+ * Other moving bars (rank climb, profile level, game meters, letters and words opened, a story read, riddles solved, a
+ * race run, a picture uploading) slide the same way on the same token rather than animating width; their tracks clip
+ * the unearned part.
  */
 .rank-progress-fill,
 .pcard-level-fill,
 .player-meter > span,
-.ab-progress-track > span {
+.ab-progress-track > span,
+.story-card-progress > span,
+.lore-solved-bar > span,
+.race-progress-fill,
+.cmp-tile-progress > span {
   width: 100%;
   transform: translateX(calc((var(--p, 0) - 1) * 100%));
 }
 [dir='rtl'] .rank-progress-fill,
 [dir='rtl'] .pcard-level-fill,
 [dir='rtl'] .player-meter > span,
-[dir='rtl'] .ab-progress-track > span {
+[dir='rtl'] .ab-progress-track > span,
+[dir='rtl'] .story-card-progress > span,
+[dir='rtl'] .lore-solved-bar > span,
+[dir='rtl'] .race-progress-fill,
+[dir='rtl'] .cmp-tile-progress > span {
   transform: translateX(calc((1 - var(--p, 0)) * 100%));
 }
 /* a rank's bar only moves where a result moves it (ranks/RankResult.tsx); on its card it is simply where it stands */
 .rank-progress-fill.is-animated,
 .pcard-level-fill,
 .player-meter > span,
-.ab-progress-track > span {
+.ab-progress-track > span,
+.story-card-progress > span,
+.lore-solved-bar > span {
   transition: transform var(--dur-progress) var(--ease-out);
+}
+/* a race and an upload follow their value closely, so their fills keep up rather than ease */
+.race-progress-fill,
+.cmp-tile-progress > span {
+  transition: transform var(--dur-fast) linear;
 }
 /* and a light runs along the fill, once, the way it moved */
 @keyframes sheen {

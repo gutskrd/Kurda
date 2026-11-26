@@ -184,7 +184,7 @@ function SolvedCount({ solved, total }: { solved: number; total: number }): Reac
         {t('lore.riddles.solved', { solved: solved.toLocaleString(locale), total: total.toLocaleString(locale) })}
       </span>
       <span className="lore-solved-bar" aria-hidden="true">
-        <span style={{ width: `${share * 100}%` }} />
+        <span style={{ '--p': share } as React.CSSProperties} />
       </span>
     </p>
   );

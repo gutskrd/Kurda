@@ -56,7 +56,7 @@ describe('the library', () => {
     // A story part-read says how long is left, and shows it as a hairline.
     const started = cardOf('Bazar', shelf('Continue reading'));
     expect(within(started).getByText('2 min left')).toBeInTheDocument();
-    expect(started.querySelector('.story-card-progress > span')).toHaveStyle({ width: '50%' });
+    expect(started.querySelector('.story-card-progress > span')).toHaveStyle({ '--p': '0.5' });
   });
 
   it('shows the reader their progress: the ring of stories finished and the average check score', async () => {
