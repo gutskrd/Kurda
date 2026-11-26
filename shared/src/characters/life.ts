@@ -58,6 +58,8 @@ export type ActName =
   | 'sniff'
   | 'cheer'
   | 'hmm'
+  | 'nod'
+  | 'ponder'
   | 'wink'
   | 'surprised'
   | 'giggle'
@@ -71,10 +73,10 @@ export type ActName =
   | 'offer';
 
 /**
- * What a screen can ask a character to do about what it saw: a cheer for a right answer, a curious `hmm` for a miss, and
- * the rest for moments between. Each character plays them its way (`reactionAct`): only Hamo chuckles, only Xezo pouts.
+ * What a screen can ask a character to do about what it saw: a cheer for a right answer, a curious `hmm` for a miss (or,
+ * on a calm page, a quiet `nod` and a kind `ponder`), and the rest for moments between. Each character plays them its way (`reactionAct`): only Hamo chuckles, only Xezo pouts.
  */
-export type CharacterReaction = 'cheer' | 'hmm' | 'wink' | 'surprised' | 'giggle' | 'chuckle' | 'pout' | 'tongue';
+export type CharacterReaction = 'cheer' | 'hmm' | 'nod' | 'ponder' | 'wink' | 'surprised' | 'giggle' | 'chuckle' | 'pout' | 'tongue';
 
 /** An ear's flick: back, forward past rest, settled. */
 const TWITCH: Keys = [
@@ -274,6 +276,49 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
     look: { x: 0.7, y: -0.8 },
     mouth: [[0.2, 0.75, 'mbp']],
     eyes: blinkAt(0.78, 1700),
+  },
+  /**
+   * A quiet right answer, for a calm page: one small nod, brows lifting, eyes smiling and a grin, nothing more. No hop
+   * and no rocking, so it moves nothing beside the character.
+   */
+  nod: {
+    ms: 1300,
+    stretch: [
+      [0, 1],
+      [0.14, 0.988],
+      [0.32, 1.004],
+      [0.48, 1],
+      [1, 1],
+    ],
+    tilt: [
+      [0, 0],
+      [0.18, -1.5],
+      [0.75, -1.5],
+      [1, 0],
+    ],
+    brows: [[0.06, 0.8, 'raised']],
+    eyes: [[0.1, 0.85, 'happy']],
+    mouth: [[0.08, 0.88, 'grin']],
+  },
+  /**
+   * A quiet miss: the head tilts gently and holds, the eyes go up and aside as if weighing it, then a slow blink and a
+   * warm look back. Kind, never a shake of the head.
+   */
+  ponder: {
+    ms: 1700,
+    tilt: [
+      [0, 0],
+      [0.3, 5],
+      [0.72, 5],
+      [1, 0],
+    ],
+    look: { x: 0.6, y: -0.5 },
+    brows: [[0.15, 0.72, 'raised']],
+    mouth: [
+      [0.2, 0.72, 'mbp'],
+      [0.82, 0.98, 'grin'],
+    ],
+    eyes: [...blinkAt(0.72, 1700), [0.82, 0.98, 'happy']],
   },
   /** A wink: the near eye shut in a smile, a grin, the head dipped a touch that way; Xezo blushes with it. */
   wink: {
@@ -519,6 +564,7 @@ const OWN_WAY: Readonly<Record<CharacterId, Partial<Record<ActName, Partial<Act>
       ],
       cheeks: [[0.1, 1, 'blush']],
     },
+    nod: { cheeks: [[0.12, 0.9, 'blush']] },
   },
 };
 

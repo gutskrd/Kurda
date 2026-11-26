@@ -21,8 +21,8 @@ import { ChevronIcon } from '../components/icons';
 import { useOnScreen } from './parts';
 
 /**
- * The front page's games moment: a hand holds up one game's stamp at a time, and every couple of seconds turns it over
- * to show the next game's, through every game the games page lists. The turn is the shared one (art/hand-stamp.ts):
+ * The front page's games moment: a hand holds up one game's stamp at a time and turns it over to show the next game's,
+ * turn after turn on the reference's own clock, through every game the games page lists. The turn is the shared one (art/hand-stamp.ts):
  * the stamp turns on its own clock and the hand is drawn afresh from it every frame, each shape a whole outline passing
  * smoothly between the hand's drawn poses; the stamp's other face, the next game, comes round as it passes edge-on. A
  * tap turns it at once, and the link under it goes to the games page. It rests while off screen, hovered or focused;
@@ -41,8 +41,12 @@ const GAMES: readonly { id: GameEmblem; name: MessageKey; meaning?: MessageKey }
   { id: 'who-am-i', name: 'games.whoAmI.name', meaning: 'games.whoAmI.meaning' },
 ];
 
-/** How long a stamp is held up before it turns. */
-const HOLD_MS = 2400;
+/**
+ * How long a stamp is held up between turns beyond the turn's own still end: nothing, so turns run on as the
+ * reference's loop does. Where nothing can be animated the stamps move on only when tapped.
+ */
+const HOLD_MS = 0;
+const ANIMATES = typeof document !== 'undefined' && typeof document.documentElement.animate === 'function';
 
 const BACK = { __html: handStampSvg({ part: 'back', idPrefix: 'fpFlipBack' }) };
 const FRONT = { __html: handStampSvg({ part: 'front', idPrefix: 'fpFlipFront' }) };
@@ -100,7 +104,7 @@ export function GameFlip(): React.JSX.Element {
 
   // Held up for a moment, then turned, while it is seen and nobody is pointing at it.
   useEffect(() => {
-    if (still || !on || held || turning) return;
+    if (still || !on || held || turning || !ANIMATES) return;
     const timer = window.setTimeout(() => (document.hidden ? setWaited((n) => n + 1) : setTurning(true)), HOLD_MS);
     return () => window.clearTimeout(timer);
   }, [still, on, held, turning, index, waited]);

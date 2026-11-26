@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderApp } from '../test/utils';
 import { Landing } from './Landing';
 import { forgetVisitor } from '../landing/visitor';
@@ -52,12 +52,27 @@ describe('the front page', () => {
     fireEvent.click(within(words).getByRole('button', { name: 'Next word' }));
     // A miss says what the word means, and is not counted.
     fireEvent.click(within(words).getByRole('button', { name: 'grandfather' }));
-    expect(within(words).getByText(/Not quite: it means “grandmother”/)).toBeInTheDocument();
+    expect(words.querySelector('.fp-quiz-say[aria-live]')).toHaveTextContent(/Not quite: it means “grandmother”/);
     fireEvent.click(within(words).getByRole('button', { name: 'Next word' }));
     fireEvent.click(within(words).getByRole('button', { name: 'Welcome!' }));
     fireEvent.click(within(words).getByRole('button', { name: 'See your words' }));
     expect(within(words).getByText(/Three Kurdish words/)).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'You already know 2 Kurdish words. Keep them.' })).toBeInTheDocument();
+  });
+
+  it('moves nothing when an answer is chosen: its words go into a place kept for them, as tall as the longest it can say', () => {
+    show();
+    const words = document.getElementById('first-words')!;
+    const after = words.querySelector('.fp-quiz-after')!;
+    const teacher = words.querySelector('.fp-words-teacher');
+    const shape = (): string[] => [...after.children].map((el) => `${el.tagName}.${el.className}`);
+    const before = shape();
+    // the word's longest answer lies there unseen from the start, so the place is already as tall as it gets
+    expect(after.querySelector('.fp-quiz-room[aria-hidden="true"]')).toHaveTextContent(/Not quite: it means “friend”/);
+    fireEvent.click(within(words).getByRole('button', { name: 'home' }));
+    expect(shape()).toEqual(before);
+    expect(words.querySelector('.fp-words-teacher')).toBe(teacher);
+    expect(words.querySelector('.fp-quiz-say[aria-live]')).toHaveTextContent(/Not quite/);
   });
 
   it('plays no sound for the first words, since none of them has a recording in the build', () => {
@@ -139,6 +154,24 @@ describe('the front page', () => {
     expect(within(legends).getByRole('link', { name: 'Open the stories' })).toHaveAttribute('href', '/app/learn/stories');
   });
 
+  it('runs the legends as an endless row of two sets, the second unseen by screen readers, and still under Reduce Motion', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }));
+    show();
+    let legends = document.getElementById('legends')!;
+    const sets = legends.querySelectorAll('.fp-legend-row');
+    expect(sets).toHaveLength(2);
+    expect(sets[1]).toHaveAttribute('aria-hidden', 'true');
+    for (const img of sets[1]!.querySelectorAll('img')) expect(img).toHaveAttribute('alt', '');
+    expect(within(legends).getAllByRole('img')).toHaveLength(5);
+    expect(legends.querySelector('.fp-legend-rail')).toHaveClass('is-endless');
+    cleanup();
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(prefers-reduced-motion: reduce)', media: query, addEventListener() {}, removeEventListener() {} }));
+    show();
+    legends = document.getElementById('legends')!;
+    expect(legends.querySelectorAll('.fp-legend-row')).toHaveLength(1);
+    expect(legends.querySelector('.fp-legend-rail')).not.toHaveClass('is-endless');
+  });
+
   it('holds up each game’s stamp in turn, turns to the next on a tap, and leads to the games page', async () => {
     show();
     const learn = document.getElementById('learn')!;
@@ -171,41 +204,70 @@ describe('the front page', () => {
     await waitFor(() => expect(phone.querySelector('.fp-phone-screen .speaking-character')).not.toBeNull());
     expect(phone.querySelector('.fp-phone-hold')).toHaveAttribute('aria-hidden', 'true');
     fireEvent.click(within(phone).getByRole('button', { name: 'Download for Android' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('Hevalo for Android');
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Hevalo for Android');
   });
 
-  it('ends as it starts: Hevalo and the same ways in', () => {
+  it('offers the two download buttons twice, in the hero and beside the phone, and nowhere else', () => {
+    show();
+    const hero = screen.getByRole('heading', { level: 1 }).closest('section')!;
+    const phone = document.getElementById('phone')!;
+    for (const name of ['Download for iOS', 'Download for Android']) {
+      expect(screen.getAllByRole('button', { name })).toHaveLength(2);
+      expect(within(hero).getByRole('button', { name })).toBeInTheDocument();
+      expect(within(phone).getByRole('button', { name })).toBeInTheDocument();
+    }
+    expect(document.querySelectorAll('.fp-store')).toHaveLength(4);
+  });
+
+  it('ends with Hevalo, the way to start and the way back in', () => {
     show();
     const end = document.getElementById('join')!;
     expect(within(end).getByRole('heading', { level: 2, name: 'Your first Kurdish words are waiting.' })).toBeInTheDocument();
     expect(within(end).getByRole('link', { name: 'Start learning, it’s free' })).toHaveAttribute('href', '/register');
-    expect(within(end).getByRole('button', { name: 'Download for Android' })).toBeInTheDocument();
+    expect(within(end).getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
+    expect(within(end).queryByRole('button')).toBeNull();
   });
 });
 
-describe('the apps-coming-soon card', () => {
-  it('rises from a download button, names the platform, and offers the web instead', () => {
+describe('the apps-coming-soon card', async () => {
+  it('rises from a download button, names the platform, and offers the web instead', async () => {
     show();
     fireEvent.click(screen.getAllByRole('button', { name: 'Download for iOS' })[0]!);
+    await screen.findByRole('dialog');
     const card = screen.getByRole('dialog', { name: 'Coming very soon' });
     expect(card).toHaveAccessibleDescription(/The phone apps are on their way/);
     expect(within(card).getByText('Hevalo for iPhone and iPad')).toBeInTheDocument();
     expect(within(card).getByRole('link', { name: 'Start on the web' })).toHaveAttribute('href', '/register');
-    // It asks for nothing: no address to leave, no list to join.
-    expect(card.querySelector('input, form')).toBeNull();
+    // It asks for nothing: no address to leave, no list to join; its only inputs choose which phone it talks about.
+    expect(card.querySelector('input:not([type="radio"]), textarea, form')).toBeNull();
   });
 
-  it('says Android when Android was tapped', () => {
+  it('says Android when Android was tapped', async () => {
     show();
     fireEvent.click(screen.getAllByRole('button', { name: 'Download for Android' })[0]!);
+    await screen.findByRole('dialog');
     expect(within(screen.getByRole('dialog')).getByText('Hevalo for Android')).toBeInTheDocument();
   });
 
-  it('closes with Escape, the dim behind it or Close, and gives focus back to the button', () => {
+  it('opens on the platform tapped, and a labelled switch turns it to the other', async () => {
+    show();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Download for iOS' })[0]!);
+    await screen.findByRole('dialog');
+    const card = screen.getByRole('dialog');
+    const which = within(card).getByRole('group', { name: 'Which phone' });
+    expect(within(which).getByRole('radio', { name: 'iOS' })).toBeChecked();
+    fireEvent.click(within(which).getByRole('radio', { name: 'Android' }));
+    expect(within(which).getByRole('radio', { name: 'Android' })).toBeChecked();
+    expect(within(card).getByText('Hevalo for Android')).toBeInTheDocument();
+    expect(within(card).queryByText('Hevalo for iPhone and iPad')).toBeNull();
+  });
+
+  it('closes with Escape, the dim behind it or Close, and gives focus back to the button', async () => {
     show();
     const button = screen.getAllByRole('button', { name: 'Download for iOS' })[0]!;
     fireEvent.click(button);
-    expect(screen.getByRole('link', { name: 'Start on the web' })).toHaveFocus();
+    await screen.findByRole('dialog');
+    expect(within(screen.getByRole('dialog')).getByRole('link', { name: 'Start on the web' })).toHaveFocus();
     act(() => {
       fireEvent.keyDown(window, { key: 'Escape' });
     });
@@ -213,20 +275,24 @@ describe('the apps-coming-soon card', () => {
     expect(button).toHaveFocus();
 
     fireEvent.click(button);
+    await screen.findByRole('dialog');
     fireEvent.click(screen.getByRole('dialog').parentElement!);
     expect(screen.queryByRole('dialog')).toBeNull();
 
     fireEvent.click(button);
+    await screen.findByRole('dialog');
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('keeps Tab inside the card', () => {
+  it('keeps Tab inside the card', async () => {
     show();
     fireEvent.click(screen.getAllByRole('button', { name: 'Download for iOS' })[0]!);
+    await screen.findByRole('dialog');
     const close = within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' });
     close.focus();
     fireEvent.keyDown(window, { key: 'Tab' });
-    expect(screen.getByRole('link', { name: 'Start on the web' })).toHaveFocus();
+    // round to the top of the card: the switch for which phone
+    expect(within(screen.getByRole('dialog')).getByRole('radio', { name: 'iOS' })).toHaveFocus();
   });
 });

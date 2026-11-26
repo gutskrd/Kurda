@@ -78,6 +78,15 @@
 .fp .fp-head {
   margin-bottom: clamp(28px, 4vw, 44px);
 }
+/* On a phone every head is centred over what it introduces, as the hero's is: one headline, one short line under it. */
+@media (max-width: 759px) {
+  .fp .fp-head {
+    text-align: center;
+  }
+  .fp .fp-head :is(.fp-h2, .fp-lead) {
+    margin-inline: auto;
+  }
+}
 
 /* ---- the ways in ----------------------------------------------------------- */
 .fp-join-buttons {
@@ -319,9 +328,7 @@
 
 /* ---- who for --------------------------------------------------------------- */
 .fp-who {
-  padding: clamp(40px, 6vw, 64px) 16px;
-  border-block: 1px solid var(--separator);
-  background: var(--surface-2);
+  padding: clamp(48px, 8vw, 96px) 16px 0;
   text-align: center;
 }
 .fp-who-title {
@@ -503,7 +510,6 @@
   border-color: var(--danger);
   background: var(--danger-soft);
   box-shadow: 0 var(--lip-h) 0 var(--danger);
-  animation: fp-shake 360ms ease;
 }
 .fp-answer.is-wrong svg {
   color: var(--danger);
@@ -512,13 +518,25 @@
   opacity: 0.5;
 }
 .fp-quiz-after {
-  min-height: 124px;
+  display: grid;
   margin-top: 16px;
+}
+/* every answer's words share one spot, the unseen ones keeping it as tall as the longest */
+.fp-quiz-after > .fp-quiz-say {
+  grid-area: 1 / 1;
 }
 .fp-quiz-say {
   color: var(--ink-2);
   line-height: 1.55;
-  animation: fp-rise 360ms var(--ease-emphasis) both;
+}
+.fp-quiz-say:not(:empty) {
+  animation: fp-fade 320ms var(--ease-emphasis) both;
+}
+.fp-quiz-room {
+  visibility: hidden;
+}
+.fp-quiz-next-place {
+  min-height: 58px;
 }
 .fp-quiz-next {
   width: 100%;
@@ -610,6 +628,16 @@
   display: flex;
   align-items: center;
   gap: 22px;
+}
+@media (max-width: 479px) {
+  .fp-flip {
+    flex-direction: column;
+    gap: 18px;
+    text-align: center;
+  }
+  .fp-flip .fp-flip-words {
+    justify-items: center;
+  }
 }
 /* a soft panel the hand leaves by its foot, as the phone's does */
 .fp-flip-frame {
@@ -1520,6 +1548,7 @@
 }
 
 /* ---- legends ---------------------------------------------------------------- */
+/* Still (Reduce Motion): one set, a row to scroll by hand, snapping to each painting. */
 .fp-legend-rail {
   overflow-x: auto;
   padding: 4px 16px 20px;
@@ -1530,18 +1559,42 @@
 .fp-legend-rail::-webkit-scrollbar {
   display: none;
 }
+.fp-legend-track {
+  display: flex;
+  width: max-content;
+  margin: 0 auto;
+}
 .fp-legend-row {
   display: flex;
   gap: 14px;
-  width: max-content;
-  margin: 0 auto;
   padding: 0;
+  margin: 0;
   list-style: none;
+}
+/* Endless: two sets side by side, the gap between them the same as between paintings, moved only by its transform. */
+.fp-legend-rail.is-endless {
+  overflow: hidden;
+  scroll-snap-type: none;
+  padding-inline: 0;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.fp-legend-rail.is-endless:active {
+  cursor: grabbing;
+}
+.fp-legend-rail.is-endless .fp-legend-track {
+  gap: 14px;
+  margin: 0;
   will-change: transform;
 }
 .fp-legend {
   width: min(76vw, 300px);
   scroll-snap-align: center;
+}
+.fp-legend-rail.is-endless .fp-legend {
+  width: min(64vw, 260px);
 }
 .fp-legend-art {
   display: block;
@@ -1574,11 +1627,9 @@
   color: var(--ink-3);
 }
 @media (min-width: 900px) {
-  .fp-legend-rail {
-    overflow: visible;
-  }
-  .fp-legend {
-    width: clamp(180px, 16vw, 236px);
+  .fp-legend,
+  .fp-legend-rail.is-endless .fp-legend {
+    width: clamp(200px, 18vw, 260px);
   }
 }
 .fp-legends .fp-center {
@@ -1711,8 +1762,9 @@
   max-width: 720px;
 }
 .fp-faq-all {
-  display: inline-block;
-  margin-top: 20px;
+  display: block;
+  width: fit-content;
+  margin: 20px auto 0;
 }
 
 /* ---- the last word ---------------------------------------------------------- */
@@ -1898,12 +1950,9 @@
     transform: scale(1.03);
   }
 }
-@keyframes fp-shake {
-  25% {
-    transform: translateX(-5px);
-  }
-  75% {
-    transform: translateX(5px);
+@keyframes fp-fade {
+  from {
+    opacity: 0;
   }
 }
 @keyframes fp-peek-out-a {
@@ -1958,7 +2007,8 @@
   .fp-tree-layer {
     transition: none;
   }
-  .fp-phone-hold {
+  .fp-phone-hold,
+  .fp-quiz-say:not(:empty) {
     animation: none;
   }
 }

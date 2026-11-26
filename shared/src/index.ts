@@ -1019,7 +1019,7 @@ export { PLUS_HERO_VIEW, plusHeroFigure, plusHeroSky, plusHeroSparkles } from '.
 /** A hand holding a phone, for the front page's word about the phone apps: the hand, sleeve and phone, and the finger pads over its edge. */
 export { HAND_PHONE_SCREEN, HAND_PHONE_VIEW, handPhoneSvg, type HandPhoneOptions } from './art/hand-phone.js';
 /** A hand holding up a game's stamp and turning it over, for the front page's games moment: its layers and the turn's frames. */
-export { HAND_STAMP_CARD, HAND_STAMP_FLIP, HAND_STAMP_VIEW, handStampCardAt, handStampFlip, handStampPointsAt, handStampShapesAt, handStampSvg, type HandStampOptions } from './art/hand-stamp.js';
+export { HAND_STAMP_CARD, HAND_STAMP_FLIP, HAND_STAMP_VIEW, handStampCardAt, handStampFlip, handStampBonesAt, handStampPointsAt, handStampShapesAt, handStampSvg, type HandStampOptions } from './art/hand-stamp.js';
 /** The nine hues drawings are coloured in, each in the same four steps, light and dark. */
 export { HUES, HUE_NAMES, hueSteps, isHueName, type HueName, type HueScheme, type HueSteps } from './hues.js';
 /** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */

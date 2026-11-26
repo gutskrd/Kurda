@@ -9,8 +9,9 @@ import { learnWord } from './visitor';
 
 /**
  * Three real words learned on the page before anything is asked of the visitor: a word, three meanings, and Xezo, the
- * road's village teacher, pleased or curious at the answer. A right answer is kept in this browser (visitor.ts), so the
- * closing words can count it. None of these words has a recording in the website's build, so nothing plays.
+ * road's village teacher, meeting each answer calmly, a small nod for a right one and a kind tilt of the head for a
+ * miss, nothing that rocks or shakes. A right answer is kept in this browser (visitor.ts), so the closing words can
+ * count it. None of these words has a recording in the website's build, so nothing plays.
  */
 export function FirstWords(): React.JSX.Element {
   const t = useT();
@@ -37,17 +38,19 @@ export function FirstWords(): React.JSX.Element {
       learnWord(word.ku);
       setRight((n) => n + 1);
     }
-    // A miss gets a curious tilt, never a sad face; alternate so the same answer twice still plays.
-    setReaction(ok ? (reaction === 'cheer' ? 'giggle' : 'cheer') : reaction === 'hmm' ? 'surprised' : 'hmm');
+    setReaction(ok ? 'nod' : 'ponder');
   };
+  // Each word starts her afresh, so the next answer's reaction plays even when it is the same as the last.
   const next = (): void => {
     moved.current = true;
     setPicked(null);
+    setReaction(null);
     setStep((s) => s + 1);
   };
   const again = (): void => {
     moved.current = true;
     setPicked(null);
+    setReaction(null);
     setRight(0);
     setStep(0);
   };
@@ -101,19 +104,29 @@ export function FirstWords(): React.JSX.Element {
                 );
               })}
             </div>
-            {/* Its place is kept before an answer, so the answer moves nothing. */}
-            <div className="fp-quiz-after" aria-live="polite">
-              {picked && (
-                <>
-                  <p className="fp-quiz-say">
+            {/*
+              Its place is kept before an answer, as tall as the longest thing it can say for this word: that answer
+              lies in the same spot, unseen, under the one shown, so neither the card nor Xezo beside it moves.
+            */}
+            <div className="fp-quiz-after">
+              <p className="fp-quiz-say fp-quiz-room" aria-hidden="true">
+                <strong>{t('landing.words.notQuite', { meaning: t(word.right) })}</strong> {t(word.note)}
+              </p>
+              <p className="fp-quiz-say" aria-live="polite">
+                {picked && (
+                  <>
                     <strong>{t(picked === word.right ? 'landing.words.right' : 'landing.words.notQuite', { meaning: t(word.right) })}</strong>{' '}
                     {t(word.note)}
-                  </p>
+                  </>
+                )}
+              </p>
+              <div className="fp-quiz-next-place">
+                {picked && (
                   <button type="button" className="btn btn-primary fp-quiz-next" onClick={next}>
                     {t(step + 1 < FIRST_WORDS.length ? 'landing.words.next' : 'landing.words.finish')}
                   </button>
-                </>
-              )}
+                )}
+              </div>
             </div>
           </>
         )}
