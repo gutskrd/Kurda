@@ -31,6 +31,7 @@ export const en = {
   // ---- things every screen uses -------------------------------------------
   'common.loading': 'Loading…',
   'common.retry': 'Try again',
+  'net.loadFailed': 'Couldn’t load',
   'common.cancel': 'Cancel',
   'common.saved': 'Saved.',
   'common.somethingWentWrong': 'Something went wrong. Please try again.',
@@ -556,7 +557,9 @@ export const en = {
   'dictionary.source': 'Definitions from {source}, used under {licence}.',
   'saved.subtitle': 'Posts you kept to come back to. Only you can see this.',
   'saved.loading': 'Loading your saved posts…',
-  'saved.emptyLink': 'Community',
+  'saved.empty': 'Nothing saved yet',
+  'saved.empty.body': 'Tap the bookmark on any post to keep it here.',
+  'saved.empty.browse': 'Browse posts',
 
   // ---- rankings ------------------------------------------------------------
   'rankings.title': 'Rankings',
@@ -2423,8 +2426,6 @@ export const en = {
   'settings.blocked.none': 'You haven’t blocked anyone. You can block someone from their profile, or from your friends list.',
   'settings.blocked.since': 'blocked {date}',
   'settings.blocked.unblockHint': 'Unblocking lets that person find you and contact you again. It does not make you friends again, and they are not told either way.',
-  'saved.emptyLead': 'Nothing saved yet. Tap the bookmark on any post in',
-  'saved.emptyTail': 'to keep it here.',
   'auth.register.terms': 'By creating an account you agree to the Hevalo Terms and Privacy Policy.',
   'post.audioUnsupported': 'Your browser cannot play this recording.',
   'voice.play': 'Play',

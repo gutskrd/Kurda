@@ -1,5 +1,18 @@
+import { lazy, Suspense } from 'react';
 import { Button } from './Button';
 import { useT } from '../i18n/I18nProvider';
+
+/** Hevalo over an empty or failed state, as on the phone; loaded apart so the pages that never show one stay light. */
+const EmptyPicture = lazy(() => import('../characters/EmptyPicture'));
+
+/** The picture, or until it loads a space of its size, so the words under it never move; also for pages of their own (NotFound). */
+export function StateArt({ puzzled = false }: { puzzled?: boolean }): React.JSX.Element {
+  return (
+    <Suspense fallback={<span className="state-art" aria-hidden="true" />}>
+      <EmptyPicture puzzled={puzzled} />
+    </Suspense>
+  );
+}
 
 export function Loading({ label }: { label?: string }): React.JSX.Element {
   const t = useT();
@@ -22,10 +35,12 @@ export function ErrorState({
   onRetry?: () => void;
 }): React.JSX.Element {
   const t = useT();
-  // Not a default argument, which is evaluated before any hook has run.
-  const heading = title ?? t('common.somethingWentWrong');
+  // Not a default argument, which is evaluated before any hook has run. A page that can be loaded again says that it
+  // did not load, as the phone does, rather than that something went wrong.
+  const heading = title ?? (onRetry ? t('net.loadFailed') : t('common.somethingWentWrong'));
   return (
     <div className="state" role="alert">
+      <StateArt puzzled />
       <h2 className="state-title">{heading}</h2>
       <p>{message}</p>
       {onRetry && (
@@ -53,6 +68,7 @@ export function EmptyState({
 }): React.JSX.Element {
   return (
     <div className="state">
+      <StateArt />
       <h2 className="state-title">{title}</h2>
       {message && <p>{message}</p>}
       {action}
