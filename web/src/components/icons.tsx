@@ -124,6 +124,9 @@ import { PaintBrushBroad } from '@phosphor-icons/react/dist/icons/PaintBrushBroa
 import { Pen } from '@phosphor-icons/react/dist/icons/Pen';
 import { Highlighter } from '@phosphor-icons/react/dist/icons/Highlighter';
 import { Swatches } from '@phosphor-icons/react/dist/icons/Swatches';
+// The phone platforms, on the front page's download buttons.
+import { AppleLogo } from '@phosphor-icons/react/dist/icons/AppleLogo';
+import { AndroidLogo } from '@phosphor-icons/react/dist/icons/AndroidLogo';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 import { useMemo } from 'react';
 import { HEVALO_GLYPHS, coinSvg, type CurrencyOptions, type HevaloGlyph } from '@kurda/shared';
@@ -351,6 +354,10 @@ export const PenIcon = named(Pen, 18);
 export const BrushIcon = named(PaintBrushBroad, 18);
 export const MarkerIcon = named(Highlighter, 18);
 export const PaperIcon = named(Swatches, 18);
+
+/* The two phone platforms, solid as their own marks are, for the buttons that say the apps are coming (landing/AppSoon). */
+export const IosIcon = named(AppleLogo, 20, 'fill');
+export const AndroidIcon = named(AndroidLogo, 20, 'fill');
 
 /** Show or hide a password: one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {
