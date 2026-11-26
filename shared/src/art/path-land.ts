@@ -12,7 +12,6 @@ import { roadLight } from './light.js';
 import { CANVAS, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
 import { kilimAlong } from './paint.js';
 import { fireColours } from './fire-colours.js';
-import { SHAPE_ROOT, SMALL_SHAPES, mapPath } from './fire-shapes.js';
 import { VALLEY, dusk, ellipsePath, fill, smoothPath, stroke, warm } from './valley.js';
 
 // ───────────────────────────────────────────────────────────── the lands
@@ -312,11 +311,9 @@ export interface PathWaxOptions {
   suns?: number;
   /**
    * The whole seal; or, for its moment, the poured disc alone, the seal's pressed face alone, the drop of wax that falls
-   * onto the tile first, or the droplets it throws out as it lands; or, as a third sun turns it gold, the band of flame
-   * that crosses it (standing on its middle), the embers rising off the flame, and the puff where it goes out (at its
-   * top).
+   * onto the tile first, or the droplets it throws out as it lands.
    */
-  part?: 'whole' | 'pour' | 'seal' | 'blob' | 'splash' | 'fire' | 'embers' | 'puff';
+  part?: 'whole' | 'pour' | 'seal' | 'blob' | 'splash';
   dark?: boolean;
   /** Display size in points; the drawing is `PATH_STOP_ART.box` square, laid as the tile is. */
   size?: number;
@@ -338,7 +335,7 @@ export function sunRays(reach: number): number {
 export function pathWaxSvg(opts: PathWaxOptions = {}): string {
   const { dark = false, gold = false, worn = false } = opts;
   const part = opts.part ?? 'whole';
-  if (!['whole', 'pour', 'seal', 'blob', 'splash', 'fire', 'embers', 'puff'].includes(part)) throw new RangeError(`art: no wax part ${String(part)}`);
+  if (!['whole', 'pour', 'seal', 'blob', 'splash'].includes(part)) throw new RangeError(`art: no wax part ${String(part)}`);
   const size = opts.size ?? PATH_STOP_ART.box;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
   const B = PATH_STOP_ART.box;
@@ -374,28 +371,6 @@ export function pathWaxSvg(opts: PathWaxOptions = {}): string {
     `aria-hidden="true" focusable="false" id="${prefix}">` +
     `${defs ? `<defs>${defs}</defs>` : ''}${body}</svg>`;
 
-  if (part === 'fire' || part === 'embers' || part === 'puff') {
-    // Hevalo's own fire (fire-shapes.ts, fire-colours.ts): its small flame's deep orange body, gold drop and pale heart.
-    const flame = fireColours({ stage: 'campfire', scheme: dark ? 'dark' : 'light' }).tongues;
-    if (part === 'embers') return wrapIt(fill(ellipsePath(cx - 11, cy - 13, 1.3, 1.3), flame.core[0]) + fill(ellipsePath(cx + 13, cy - 17, 1, 1), flame.outer[1]));
-    if (part === 'puff') {
-      // A soft puff of warm smoke where the flames go out over the seal's top.
-      const puff = [ellipsePath(cx - 6, cy - r - 2, 6, 5), ellipsePath(cx + 5, cy - r - 4, 7, 6), ellipsePath(cx, cy - r - 8, 5, 4.5)].join('');
-      return wrapIt(`<path d="${puff}" fill="${dark ? '#f2e6d8' : '#ffffff'}" fill-opacity="${dark ? 0.45 : 0.8}"/>`);
-    }
-    // A row of tongues across the seal standing on its middle, of a few heights, every other one turned the other way so
-    // that they lick unevenly.
-    const tall = [10, 14, 11, 16, 12, 15, 10];
-    let tongues = '';
-    tall.forEach((h, i) => {
-      const x = cx - r + 6 + (i * (2 * r - 12)) / (tall.length - 1);
-      const k = h / 123;
-      const turn = i % 2 === 0 ? 1 : -1;
-      const at = (d: string): string => mapPath(d, (px, py) => [x + (px - SHAPE_ROOT[0]) * k * turn, cy + 1 + (py - SHAPE_ROOT[1]) * k]);
-      tongues += fill(at(SMALL_SHAPES.outer), flame.outer[0]) + fill(at(SMALL_SHAPES.core), flame.core[0]) + fill(at(SMALL_SHAPES.heart), flame.heart[0]);
-    });
-    return wrapIt(tongues);
-  }
   if (part === 'splash') {
     // A few droplets thrown up and out round where the drop lands, the larger low and to the sides.
     const drops = ([[-168, 15, 2.3], [-128, 17, 1.5], [-92, 19, 1.2], [-52, 16, 1.8], [-14, 14, 2.4]] as const)
@@ -459,10 +434,10 @@ export function pathWaxSvg(opts: PathWaxOptions = {}): string {
     body += stroke(circle(cx - 0.3, cy - 0.35, ring), wax.wallShade, 0.8) + stroke(circle(cx + 0.3, cy + 0.35, ring), wax.wallLight, 0.8);
     // The suns, raised: each lit along its upper left and shaded along its lower right, its rays kept crisp at the size
     // it is shown.
-    const suns = sealSuns(opts.suns ?? 1).map((s) => ({ x: cx + s.x * r, y: cy + s.y * r, reach: s.r * r }));
+    const suns = sealSuns(opts.suns ?? 1).map((sn) => ({ x: cx + sn.x * r, y: cy + sn.y * r, reach: sn.r * r }));
     // One count of rays for all of a seal's suns, as many as its smallest keeps crisp.
-    const rays = sunRays((Math.min(...suns.map((s) => s.reach)) * size) / B);
-    const sun = (dx: number, dy: number): string => suns.map((s) => sunPath(s.x + dx, s.y + dy, s.reach, rays)).join('');
+    const rays = sunRays((Math.min(...suns.map((sn) => sn.reach)) * size) / B);
+    const sun = (dx: number, dy: number): string => suns.map((sn) => sunPath(sn.x + dx, sn.y + dy, sn.reach, rays)).join('');
     const k = Math.min(0.85, Math.max(0.45, suns[0]!.reach / 22));
     body += `<path d="${sun(k, k * 1.15)}" fill="${wax.wallShade}"/><path d="${sun(-k * 0.8, -k * 0.95)}" fill="${wax.wallLight}"/>`;
     body += fill(sun(0, 0), mix(wax.face, wax.light, 0.3));
@@ -471,95 +446,62 @@ export function pathWaxSvg(opts: PathWaxOptions = {}): string {
 }
 
 /**
- * Where the stamp stands over a stop's 72-point button as it presses (`x`, `y`, its canvas `w` × `h`): its block and die
- * as wide as the seal, the die's foot across the seal a little below its middle.
+ * The fire that gilds a seal as its third sun is pressed in, on the seal's canvas (`PATH_SEAL`): one sheet of flame as
+ * wide as the seal, standing on its middle line, its foot rounded just under it, rising in a few pointed licks of
+ * different heights that lean a little the same way, the tallest a little off the middle. It is painted in three flat
+ * layers in Hevalo's fire colours (fire-colours.ts), each a step inside the last and drawn apart for the app to flicker
+ * on its own: a deep red-orange `shell`, a saffron `body`, and a pale `heart` low in it.
  */
-export const PATH_STAMP_TOOL = { w: 78, h: 87, x: -3, y: -44 } as const;
+export const PATH_SEAL_FLAME = { tall: 30, licks: [0.46, 0.76, 1, 0.66, 0.88, 0.5] } as const;
+
+export function pathSealFireSvg(opts: { part: 'shell' | 'body' | 'heart'; dark?: boolean; size?: number; idPrefix?: string }): string {
+  const { part, dark = false } = opts;
+  if (!['shell', 'body', 'heart'].includes(part)) throw new RangeError(`art: no seal fire part ${String(part)}`);
+  const size = opts.size ?? PATH_STOP_ART.box;
+  if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
+  const B = PATH_STOP_ART.box;
+  const { cx, cy, r } = PATH_SEAL;
+  const id = prefixFor(opts.idPrefix, 'seal-fire', part, dark);
+  const flame = fireColours({ stage: 'campfire', scheme: dark ? 'dark' : 'light' }).tongues;
+  // Each layer narrower and lower than the one outside it: its share of the width, of the height, and its colour.
+  const [wide, high, colour] = part === 'shell' ? [1, 1, flame.outer[0]] : part === 'body' ? [0.78, 0.7, flame.core[0]] : [0.42, 0.44, flame.heart[0]];
+  const sheet = flameSheet(cx, cy, 2 * r * wide, PATH_SEAL_FLAME.tall * high, PATH_SEAL_FLAME.licks, 0.12);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(size)}" viewBox="0 0 ${B} ${B}" aria-hidden="true" focusable="false" id="${id}">${fill(sheet, colour)}</svg>`;
+}
 
 /**
- * The stamp itself, for the moment a finished topic is sealed: the icons' own stamp (the Stamp glyph's silhouette, on its
- * 256 grid), made as a stationer's wax-seal stamp, lit from the upper left as the seal is. A teardrop handle of turned
- * walnut, ringed near its top and where it narrows, lit down its left side and shaded down its right, its knob polished;
- * a brass ferrule where it meets the block; a block of warm brass, its bevelled top edge catching the light over a lit top
- * and a shaded front with an engraved line and a rivet at each side; and under it, on a short neck, the round brass die.
- * All of it seen from the side at eye level, so the die shows only its edge, a thin plate with a bright rim along its top
- * and its underside dark; the suns it presses are seen only in the wax. Drawn larger than the road shows it (`size` over
- * 120), its handle shows its grain and its block a woven kilim band; at the road's size they are left out, so nothing
- * small goes muddy. On its own `PATH_STAMP_TOOL` canvas, the die along the bottom.
+ * A sheet of flame standing on (`x`, `base`), `w` across: a pointed lick for each of `licks` (shares of `tall`), each
+ * swelling from the dip before it and drawn in to its tip, which leans by `lean` of its height; its sides run down
+ * into a foot rounded just under the base.
  */
-export function pathStampToolSvg(opts: { dark?: boolean; size?: number; idPrefix?: string } = {}): string {
-  const { dark = false } = opts;
-  const { w: W, h: H } = PATH_STAMP_TOOL;
-  const size = opts.size ?? W;
-  if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
-  const fine = size > 120;
-  const id = prefixFor(opts.idPrefix, 'stamp-tool', dark, fine);
-  const c = (hex: string): string => dusk(hex, dark, 0.12);
-  const wood = { face: c('#5e3720'), light: c('#8d5d3a'), shade: c('#3a1f0e'), ring: c('#2c170a'), grain: c('#4f2d18'), sheen: c('#c08a5e') };
-  const brass = { face: c('#d9a441'), light: c('#f6d58a'), shade: c('#a06d1e'), deep: c('#6f4610'), edge: c('#fff1c9') };
-  // The glyph's own outlines: the handle (moved by `dx`, `dy`) and the block.
-  const handleAt = (dx = 0, dy = 0): string =>
-    `M${n(88.72 + dx)} ${n(54.71 + dy)}A32 32 0 0 1 ${n(120 + dx)} ${n(16 + dy)}H${n(136 + dx)}A32 32 0 0 1 ${n(167.28 + dx)} ${n(54.71 + dy)}` +
-    `L${n(151.57 + dx)} ${n(128 + dy)}H${n(104.43 + dx)}Z`;
-  const handle = handleAt();
-  const block = 'M46 128H210A14 14 0 0 1 224 142V184A14 14 0 0 1 210 198H46A14 14 0 0 1 32 184V142A14 14 0 0 1 46 128Z';
-  let defs = `<clipPath id="${id}h"><path d="${handle}"/></clipPath><clipPath id="${id}b"><path d="${block}"/></clipPath>`;
-  // Straight across the handle at height `y`, as a turned ring is seen from the side.
-  const across = (y: number): string => `M80 ${n(y)}H176`;
-
-  // The handle: walnut, a soft light down its left side, where a copy of it moved right does not reach, and a shade down
-  // its right, where one moved left does not; its turned rings, each a groove in shade over a lit lip; its knob's polish.
-  const strip = (dx: number, dy: number, colour: string): string => `<path d="${handle}${handleAt(dx, dy)}" fill="${colour}" fill-rule="evenodd"/>`;
-  let wood2 = strip(10, 3, wood.light) + strip(-10, 0, wood.shade);
-  if (fine) {
-    // A few strokes of grain running with the taper.
-    const grain = [[-6, 0.8], [11, 0.75]].map(([x, k]) => `M${n(128 + x! - 2)} 50C${n(128 + x! * 1.1)} 66 ${n(128 + x! * k!)} 84 ${n(128 + x! * 0.6)} 96`).join('');
-    wood2 += `<path d="${grain}" fill="none" stroke="${wood.grain}" stroke-width="1.3" stroke-linecap="round"/>`;
-  }
-  // Two fine rings just under the knob, where the taper starts, and one where it narrows to the ferrule.
-  const rings = fine ? [63, 69, 101] : [65, 101];
-  wood2 += rings.map((y) => stroke(across(y), wood.ring, fine ? 1.5 : 2.8) + stroke(across(y + (fine ? 1.8 : 2.8)), wood.light, fine ? 0.9 : 1.5)).join('');
-  wood2 += `<path d="${ellipsePath(0, 0, 6.5, 11)}" transform="translate(109 33) rotate(28)" fill="${wood.sheen}"/>`;
-  let body = fill(handle, wood.face) + `<g clip-path="url(#${id}h)">${wood2}</g>`;
-
-  // The ferrule: a short brass cylinder, lit at its left, shaded at its right, a bright edge along its top and foot.
-  const ferrule = 'M100 109H156V128H100Z';
-  defs += `<clipPath id="${id}f"><path d="${ferrule}"/></clipPath>`;
-  const turned =
-    fill('M100 109H112V128H100Z', brass.light) + fill('M144 109H156V128H144Z', brass.shade) + fill('M98 109H158V112H98Z M98 125H158V128H98Z', brass.edge);
-  body += fill(ferrule, brass.face) + `<g clip-path="url(#${id}f)">${turned}</g>`;
-
-  // The block: its shaded front, its lit top, the bevel along its top edge catching the light, an engraved line along its
-  // front (in a woven band, larger), and a rivet at each side.
-  let brass2 = fill('M24 128H232V152H24Z', brass.face) + fill('M24 128H232V135H24Z', brass.light) + fill('M24 135H232V137.5H24Z', brass.edge);
-  brass2 += fill('M24 186H232V198H24Z', brass.deep);
-  const engrave = (y: number): string => fill(`M44 ${y}H212V${y + 2.2}H44Z`, brass.deep) + fill(`M44 ${y + 2.2}H212V${y + 3.6}H44Z`, brass.light);
-  if (fine) {
-    const lozenges = Array.from({ length: 12 }, (_, i) => {
-      const x = 56 + i * 13.1;
-      return `M${n(x)} 168.5L${n(x + 4.5)} 173L${n(x)} 177.5L${n(x - 4.5)} 173Z`;
-    }).join('');
-    brass2 += engrave(162) + fill(lozenges, brass.deep) + engrave(181);
-  } else brass2 += engrave(170);
-  for (const x of [43, 213]) {
-    brass2 += fill(ellipsePath(x, 173, 5.2, 5.2), brass.deep) + fill(ellipsePath(x - 0.6, 172.4, 3.8, 3.8), brass.face);
-    brass2 += fill(ellipsePath(x - 1.6, 171.4, 1.6, 1.6), brass.edge);
-  }
-  body += fill(block, brass.shade) + `<g clip-path="url(#${id}b)">${brass2}</g>`;
-
-  // The short neck the die hangs from, and the die seen edge on: a thin brass plate, lit at its left end and shaded at its
-  // right, a bright rim along its top and its underside dark.
-  body += fill('M70 196H186V214H70Z', brass.deep) + fill('M70 196H84V214H70Z', brass.shade);
-  const die = 'M41 214H215A3 3 0 0 1 218 217V229A3 3 0 0 1 215 232H41A3 3 0 0 1 38 229V217A3 3 0 0 1 41 214Z';
-  defs += `<clipPath id="${id}d"><path d="${die}"/></clipPath>`;
-  const edge = fill('M30 214H226V229H30Z', brass.face) + fill('M30 214H50V229H30Z', brass.light) + fill('M206 214H226V229H206Z', brass.shade);
-  body += fill(die, brass.deep) + `<g clip-path="url(#${id}d)">${edge}${fill('M30 214H226V216.6H30Z', brass.edge)}</g>`;
-  return (
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2((size * H) / W)}" viewBox="24 8 208 232" ` +
-    `aria-hidden="true" focusable="false" id="${id}">` +
-    `<defs>${defs}</defs>${body}</svg>`
-  );
+function flameSheet(x: number, base: number, w: number, tall: number, licks: readonly number[], lean: number): string {
+  const p = (px: number, py: number): string => `${n(px)} ${n(py)}`;
+  const step = w / licks.length;
+  const tips = licks.map((k, i): Pt => [x - w / 2 + step * (i + 0.5) + tall * k * lean, base - tall * k]);
+  // The dips between licks, lower between short ones; the sides start a little up from the foot.
+  const dips: Pt[] = [[x - w / 2, base - tall * licks[0]! * 0.22]];
+  for (let i = 1; i < licks.length; i++) dips.push([x - w / 2 + step * i, base - tall * Math.min(licks[i - 1]!, licks[i]!) * 0.38]);
+  dips.push([x + w / 2, base - tall * licks[licks.length - 1]! * 0.22]);
+  // Its foot is rounded in at the corners, as a flame gathers where it burns, and not cut square.
+  let d = `M${p(x - w / 2 + 6, base + 3.5)}C${p(x - w / 2 + 1, base + 3)} ${p(x - w / 2 - 0.5, base - 1)} ${p(dips[0]![0], dips[0]![1])}`;
+  tips.forEach(([tx, ty], i) => {
+    const [lx, ly] = dips[i]!;
+    const [rx, ry] = dips[i + 1]!;
+    // Out from the dip in a swell, then in to the point; down the other side the same way.
+    d += `C${p(lx + (tx - lx) * 0.05, ly - (ly - ty) * 0.6)} ${p(tx - (tx - lx) * 0.35, ty + (ly - ty) * 0.28)} ${p(tx, ty)}`;
+    d += `C${p(tx + (rx - tx) * 0.3, ty + (ry - ty) * 0.32)} ${p(rx - (rx - tx) * 0.05, ry - (ry - ty) * 0.55)} ${p(rx, ry)}`;
+  });
+  d += `C${p(x + w / 2 + 0.5, base - 1)} ${p(x + w / 2 - 1, base + 3)} ${p(x + w / 2 - 6, base + 3.5)}Q${p(x, base + 5.5)} ${p(x - w / 2 + 6, base + 3.5)}Z`;
+  return d;
 }
+
+/**
+ * Where the stamp stands over a stop's 72-point button as it presses (`x`, `y`, its canvas `w` × `h`). The stamp is the
+ * icon set's own Stamp glyph, filled, in the page's ink; its canvas shows the glyph's 256 grid from 24, 8 to 232, 240,
+ * so its block and the pad under it are as wide as the seal, the pad's foot across the seal a little below its middle.
+ * `icon` is where the glyph's whole 256 square is drawn on the canvas, and how large.
+ */
+export const PATH_STAMP_TOOL = { w: 78, h: 87, x: -3, y: -44, icon: { size: 96, x: -9, y: -3 } } as const;
 
 // ───────────────────────────────────────────────────────────── the milestone
 
