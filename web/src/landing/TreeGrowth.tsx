@@ -34,6 +34,8 @@ export function TreeGrowth(): React.JSX.Element {
     const read = (): void => {
       frame = 0;
       const r = section.getBoundingClientRect();
+      // A jump far past the section (to the top of the page, say) leaves the tree as it last grew.
+      if (r.bottom < 0 || r.top > window.innerHeight) return;
       const run = r.height - window.innerHeight;
       const p = run > 0 ? Math.min(1, Math.max(0, -r.top / run)) : 1;
       setStage(Math.min(TREE_STAGES - 1, Math.floor(p * TREE_STAGES)) as TreeStage);

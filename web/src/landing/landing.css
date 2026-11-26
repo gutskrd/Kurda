@@ -76,7 +76,7 @@
 
 /* ---- rhythm ---------------------------------------------------------------- */
 .fp .fp-section {
-  padding-block: clamp(72px, 11vw, 136px);
+  padding-block: clamp(60px, 11vw, 136px);
 }
 .fp .fp-head {
   margin-bottom: clamp(28px, 4vw, 44px);
@@ -508,7 +508,7 @@
 .fp-quiz-done {
   display: grid;
   gap: 14px;
-  min-height: 300px;
+  min-height: 280px;
   align-content: center;
   animation: fp-rise 420ms var(--ease-emphasis) both;
 }
@@ -559,7 +559,7 @@
 }
 /* the player's place, kept its size before the scenes arrive */
 .fp-player-place {
-  min-height: 572px;
+  min-height: 580px;
 }
 .fp-player {
   display: grid;
@@ -1190,8 +1190,8 @@
 /* ---- the tree, grown by the scroll ----------------------------------------- */
 .fp-tree {
   position: relative;
-  height: 220vh;
-  height: 220svh;
+  height: 185vh;
+  height: 185svh;
 }
 .fp-tree-hold {
   position: sticky;
@@ -1218,9 +1218,10 @@
   }
 }
 .fp-tree-place {
-  width: min(100%, 420px, calc((100svh - var(--nav-bottom, 64px) - 300px) / 1.2));
+  width: min(100%, 420px, calc((100svh - var(--nav-bottom, 64px) - 300px) / 1.3));
   min-width: 240px;
-  aspect-ratio: 1 / 1.2;
+  /* the tree, its two-line caption and the stage dots */
+  aspect-ratio: 1 / 1.3;
   margin-inline: auto;
 }
 .fp-tree-scene {
@@ -1258,9 +1259,13 @@
 .fp-tree-caption {
   display: flex;
   flex-wrap: wrap;
+  align-content: center;
   justify-content: center;
-  gap: 4px 10px;
+  gap: 0 10px;
+  /* two lines kept, so a longer stage name moves nothing under it */
+  min-height: 3.2em;
   color: var(--ink-3);
+  line-height: 1.6;
 }
 .fp-tree-caption strong {
   color: var(--ink);
