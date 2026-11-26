@@ -87,7 +87,7 @@ interface Build {
  * a real finger's do.
  */
 const THUMB: Build = { a: [92, 86, 74, 66, 63, 62, 57], b: [66, 66, 66, 63, 60, 60, 55], tip: 1.12 };
-const INDEX: Build = { a: [60, 62, 61, 58, 55, 53, 51, 48, 45], b: [66, 64, 62, 60, 56, 53, 51, 48, 44], tip: 1.15 };
+const INDEX: Build = { a: [40, 46, 56, 58, 55, 53, 51, 48, 45], b: [66, 64, 62, 60, 56, 53, 51, 48, 44], tip: 1.15 };
 const REACHING: Build = { a: [42, 40, 38, 37, 35], b: [44, 42, 41, 42, 39], tip: 1.15 };
 const CURLED: Build = { a: [29, 27, 26, 25], b: [30, 29, 28, 27], tip: 1.1 };
 
@@ -113,7 +113,8 @@ const CURLED_REST: readonly Pt[] = [[702, 688], [630, 690], [580, 692], [552, 69
  * - `reaching`: the middle finger's outermost point, the way its tip points and the way its root points, and how far
  *   its root runs under the thumb: as the reference shows it, and where the reference hides it (behind the stamp or
  *   the thumb), placed between the frames either side, under what hides it;
- * - `ring`: how far the ring finger has slid from where it rests;
+ * - `ring`: how far the ring finger has slid from where it rests (down out of the frame, as the reference's goes, while the
+ *   middle finger takes its place at the stamp's turn);
  * - `card`: the stamp's lean from rest and its turn about its upright, and its middle;
  * - `web`: how far the hand has opened between the index finger and the thumb, 0 to 1, as far down as the background
  *   shows between them.
@@ -138,11 +139,11 @@ const TRACK: readonly Frame[] = [
   { thumb: [673, 479, 678, 670], index: [1040, 635, 956, 526, -165.5, -70.3], reaching: [448, 398, 256.3, 200, 200], ring: [-32, 8], card: [-16, 34, 568, 303.1], web: 1 },
   { thumb: [687, 506, 714, 650], index: [919, 612, 826, 499, -150.8, -98.6], reaching: [455, 409, 255, 200, 200], ring: [-10, 12], card: [-14.2, 32, 578.4, 298.6], web: 0.5 },
   { thumb: [705, 505, 792, 658], index: [896, 614, 803, 492, -137.2, -104.5], reaching: [505, 366, 236.3, 226, 250], ring: [-30, 60], card: [-59.4, 84, 547, 312], web: 0 },
-  { thumb: [620, 400, 680, 660], index: [890, 620, 805, 493, -132.6, -104.3], reaching: [502, 503, 205.6, 200, 100], ring: [-30, 40], card: [-53.4, 92, 589, 287], web: 0 },
-  { thumb: [623, 464, 645, 655], index: [875, 627, 787, 526, -146.5, -109.8], reaching: [500, 640, 175, 175, 70], ring: [-20, 60], card: [-64.1, 130, 555, 406], web: 0.4 },
-  { thumb: [648, 481, 675, 670], index: [852, 643, 755, 533, -141.4, -104.7], reaching: [490, 680, 151.4, 151.4, 70], ring: [-10, 60], card: [-61.9, 148, 536, 435], web: 0.3 },
-  { thumb: [659, 489, 685, 669], index: [879, 654, 759, 556, -143.4, -95.5], reaching: [492, 680, 142.5, 142.5, 70], ring: [0, 50], card: [-45.2, 154, 574, 419], web: 0 },
-  { thumb: [680, 493, 703, 663], index: [890, 644, 799, 557, -145.1, -95.4], reaching: [494, 680, 133.5, 133.5, 90], ring: [10, 35], card: [-16.3, 157, 642.8, 344.7], web: 0 },
+  { thumb: [620, 400, 680, 660], index: [890, 620, 805, 493, -132.6, -104.3], reaching: [502, 503, 205.6, 200, 100], ring: [-30, 60], card: [-53.4, 92, 589, 287], web: 0 },
+  { thumb: [623, 464, 645, 655], index: [875, 627, 787, 526, -146.5, -109.8], reaching: [500, 640, 175, 175, 70], ring: [-20, 90], card: [-64.1, 130, 555, 406], web: 0.4 },
+  { thumb: [648, 481, 675, 670], index: [852, 643, 755, 533, -141.4, -104.7], reaching: [490, 680, 151.4, 151.4, 70], ring: [-10, 90], card: [-61.9, 148, 536, 435], web: 0.3 },
+  { thumb: [659, 489, 685, 669], index: [879, 654, 759, 556, -143.4, -95.5], reaching: [492, 680, 142.5, 142.5, 70], ring: [0, 80], card: [-45.2, 154, 574, 419], web: 0 },
+  { thumb: [680, 493, 703, 663], index: [890, 644, 799, 557, -145.1, -95.4], reaching: [494, 680, 133.5, 133.5, 90], ring: [10, 50], card: [-16.3, 157, 642.8, 344.7], web: 0 },
   { thumb: [687, 492, 710, 662], index: [900, 658, 812, 574, -149.7, -95.6], reaching: [476, 623, 153.4, 153.4, 100], ring: [12, 12], card: [-5, 166, 640.3, 328.2], web: 0 },
   { thumb: [698, 489, 714, 662], index: [906, 657, 818, 576, -149.8, -96.8], reaching: [466, 609, 159.4, 159.4, 100], ring: [8, 7], card: [-3.1, 174, 641.4, 319.8], web: 0 },
   { thumb: [701, 493, 712, 660], index: [908, 656, 822, 573, -149.5, -95], reaching: [466, 601, 160.5, 160.5, 100], ring: [4, 4], card: [1.2, 178, 641.7, 316.9], web: 0 },
