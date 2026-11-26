@@ -78,6 +78,15 @@
 .fp .fp-head {
   margin-bottom: clamp(28px, 4vw, 44px);
 }
+/* On a phone every head is centred over what it introduces, as the hero's is: one headline, one short line under it. */
+@media (max-width: 759px) {
+  .fp .fp-head {
+    text-align: center;
+  }
+  .fp .fp-head :is(.fp-h2, .fp-lead) {
+    margin-inline: auto;
+  }
+}
 
 /* ---- the ways in ----------------------------------------------------------- */
 .fp-join-buttons {
@@ -319,9 +328,7 @@
 
 /* ---- who for --------------------------------------------------------------- */
 .fp-who {
-  padding: clamp(40px, 6vw, 64px) 16px;
-  border-block: 1px solid var(--separator);
-  background: var(--surface-2);
+  padding: clamp(48px, 8vw, 96px) 16px 0;
   text-align: center;
 }
 .fp-who-title {
@@ -621,6 +628,16 @@
   display: flex;
   align-items: center;
   gap: 22px;
+}
+@media (max-width: 479px) {
+  .fp-flip {
+    flex-direction: column;
+    gap: 18px;
+    text-align: center;
+  }
+  .fp-flip .fp-flip-words {
+    justify-items: center;
+  }
 }
 /* a soft panel the hand leaves by its foot, as the phone's does */
 .fp-flip-frame {
@@ -1745,8 +1762,9 @@
   max-width: 720px;
 }
 .fp-faq-all {
-  display: inline-block;
-  margin-top: 20px;
+  display: block;
+  width: fit-content;
+  margin: 20px auto 0;
 }
 
 /* ---- the last word ---------------------------------------------------------- */

@@ -105,15 +105,13 @@ export function FirstWords(): React.JSX.Element {
               })}
             </div>
             {/*
-              Its place is kept before an answer, as tall as the longest thing it will ever say: every word's answer
+              Its place is kept before an answer, as tall as the longest thing it can say for this word: that answer
               lies in the same spot, unseen, under the one shown, so neither the card nor Xezo beside it moves.
             */}
             <div className="fp-quiz-after">
-              {FIRST_WORDS.map((w) => (
-                <p key={w.ku} className="fp-quiz-say fp-quiz-room" aria-hidden="true">
-                  <strong>{t('landing.words.notQuite', { meaning: t(w.right) })}</strong> {t(w.note)}
-                </p>
-              ))}
+              <p className="fp-quiz-say fp-quiz-room" aria-hidden="true">
+                <strong>{t('landing.words.notQuite', { meaning: t(word.right) })}</strong> {t(word.note)}
+              </p>
               <p className="fp-quiz-say" aria-live="polite">
                 {picked && (
                   <>

@@ -74,6 +74,8 @@ export const REACH_CONTROLS = [
   '.fp-player-hold',
   '.fp-tree-dot',
   '.fp-flip-step',
+  // the apps-coming-soon card's iOS | Android switch (landing/soon.css)
+  '.soon-which-btn',
 ] as const;
 
 /** Links on a line of their own, enlarged only under a coarse pointer. */

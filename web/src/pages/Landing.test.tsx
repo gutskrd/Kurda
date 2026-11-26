@@ -60,15 +60,15 @@ describe('the front page', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'You already know 2 Kurdish words. Keep them.' })).toBeInTheDocument();
   });
 
-  it('moves nothing when an answer is chosen: its words go into a place kept for them, as tall as the longest', () => {
+  it('moves nothing when an answer is chosen: its words go into a place kept for them, as tall as the longest it can say', () => {
     show();
     const words = document.getElementById('first-words')!;
     const after = words.querySelector('.fp-quiz-after')!;
     const teacher = words.querySelector('.fp-words-teacher');
     const shape = (): string[] => [...after.children].map((el) => `${el.tagName}.${el.className}`);
     const before = shape();
-    // every word's longest answer lies there unseen from the start, so the place is already as tall as it gets
-    expect(after.querySelectorAll('.fp-quiz-room[aria-hidden="true"]')).toHaveLength(3);
+    // the word's longest answer lies there unseen from the start, so the place is already as tall as it gets
+    expect(after.querySelector('.fp-quiz-room[aria-hidden="true"]')).toHaveTextContent(/Not quite: it means “friend”/);
     fireEvent.click(within(words).getByRole('button', { name: 'home' }));
     expect(shape()).toEqual(before);
     expect(words.querySelector('.fp-words-teacher')).toBe(teacher);
