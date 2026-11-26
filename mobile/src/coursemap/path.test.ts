@@ -4,7 +4,7 @@ import { contrastRatio } from '../a11y/contrast';
 import { interpolate } from '../i18n/format';
 import { LOCALES, TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { PALETTES } from '../theme/palette';
-import { REST, RING, TONES, awayFrom, centredOffset, firstCourse, levelWords, mix, ringAt, ringOf, stopLabel } from './path';
+import { REST, TONES, TRACK, awayFrom, barAt, barOf, centredOffset, firstCourse, levelWords, mix, stopLabel } from './path';
 import type { CourseEntry } from './node';
 import type { CourseMap, SkillNode } from './types';
 
@@ -109,8 +109,8 @@ describe('what a stop says', () => {
   });
 });
 
-describe('a topic’s ring', () => {
-  it('shows the round being played, and the whole ring once all three are', () => {
+describe('a topic’s bar', () => {
+  it('shows the round being played, and the whole bar once all three are', () => {
     const path = lessonPath(
       map('c', [
         skill({ skillId: 'a', state: 'gold', lessons: [{ ...lesson('1', true), times: 2 }, { ...lesson('2', true), times: 1 }] }),
@@ -119,19 +119,19 @@ describe('a topic’s ring', () => {
       ]),
     );
     const [a, b, c, end] = path.units[0]!.stops.map((p) => p.stop);
-    expect(ringOf(a!)).toEqual({ of: 2, filled: 1, whole: false });
-    expect(ringOf(b!)).toEqual({ of: 2, filled: 2, whole: true });
-    expect(ringOf(c!)).toEqual({ of: 3, filled: 1, whole: false });
-    // The end of the unit has no ring.
-    expect(ringOf(end!)).toBeNull();
+    expect(barOf(a!)).toEqual({ of: 2, filled: 1, whole: false });
+    expect(barOf(b!)).toEqual({ of: 2, filled: 2, whole: true });
+    expect(barOf(c!)).toEqual({ of: 3, filled: 1, whole: false });
+    // The end of the unit has no bar.
+    expect(barOf(end!)).toBeNull();
     // And as it stood before a lesson.
-    expect(ringAt({ lessonsTotal: 4 }, { rounds: 1, pieces: 3 })).toEqual({ of: 4, filled: 3, whole: false });
-    expect(ringAt({ lessonsTotal: 4 }, { rounds: 3, pieces: 0 })).toEqual({ of: 4, filled: 4, whole: true });
+    expect(barAt({ lessonsTotal: 4 }, { rounds: 1, pieces: 3 })).toEqual({ of: 4, filled: 3, whole: false });
+    expect(barAt({ lessonsTotal: 4 }, { rounds: 3, pieces: 0 })).toEqual({ of: 4, filled: 4, whole: true });
   });
 
-  it('draws the ring’s track so it shows on the page by day and by evening', () => {
-    expect(contrastRatio(RING.light.track, PALETTES.light.background)).toBeGreaterThan(1.2);
-    expect(RING.dark.track).toBe(REST.dark.fill);
+  it('draws the bar’s track so it shows on the page by day and by evening', () => {
+    expect(contrastRatio(TRACK.light, PALETTES.light.background)).toBeGreaterThan(1.2);
+    expect(TRACK.dark).toBe(REST.dark.fill);
   });
 });
 

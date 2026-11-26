@@ -4,6 +4,8 @@ import { SvgXml } from 'react-native-svg';
 import {
   CHAPTER_ART,
   CHAPTER_ART_LOOP,
+  PATH_APPLE_AT,
+  PATH_APPLE_REACH,
   PATH_CHEST_HINGE,
   PATH_PIGEON_FLIGHT,
   PATH_SCENES,
@@ -12,18 +14,20 @@ import {
   PATH_SCENE_SPRITE_BOX,
   PATH_SLATE_LETTERS,
   PATH_STOP_ART,
+  PATH_TEA_AT,
   chapterArtOf,
   chapterArtSvg,
+  chapterLoopBox,
   characterArt,
   cropBox,
   letterBirdSvg,
   pathChestSvg,
   pathCoinSvg,
-  pathGarlandSvg,
   pathScenePropSvg,
   pathSceneSpriteSvg,
   sampleKeys,
   sceneBeat,
+  sceneBeatMs,
   type ActName,
   type ChapterLoopKind,
   type PathSceneId,
@@ -106,24 +110,35 @@ function loopStyle(kind: ChapterLoopKind, t: Animated.Value, origin: string): ob
 /** How long each kind of vignette's loop takes, once round, as on the website (path.css). */
 const LOOP_MS: Record<ChapterLoopKind, number> = { rise: 2800, fall: 4200, swing: 2800, creak: 4400, flicker: 1400, bob: 1800, orbit: 3200 };
 
-/** A chapter's vignette in its banner, standing on the banner's foot, with its one moving part laid over it, moving while `live`. */
-export function ChapterArt({ chapter, ground, height, live: shown = true }: { chapter: number; ground: string; height: number; live?: boolean }): React.JSX.Element {
+/**
+ * A chapter's vignette in its banner, set against the banner's foot and far end so their edges crop it, a window onto
+ * the scene, standing on a quiet hill of the banner's colour a step darker, its one moving part laid over it and moving
+ * while `live`.
+ */
+export function ChapterArt({ chapter, fill, lip, height, live: shown = true }: { chapter: number; fill: string; lip: string; height: number; live?: boolean }): React.JSX.Element {
   const id = chapterArtOf(chapter);
   const loop = CHAPTER_ART_LOOP[id];
+  const box = chapterLoopBox(id);
   const s = height / CHAPTER_ART.h;
-  const still = useMemo(() => chapterArtSvg({ chapter: id, ground, height }), [id, ground, height]);
-  const moving = useMemo(() => chapterArtSvg({ chapter: id, part: 'loop', height: loop.h * s }), [id, loop, s]);
+  const still = useMemo(() => chapterArtSvg({ chapter: id, ground: mixColour(fill, lip, 0.5), shade: lip, height }), [id, fill, lip, height]);
+  const moving = useMemo(() => chapterArtSvg({ chapter: id, part: 'loop', height: box.h * s }), [id, box, s]);
   const live = useMotionAlive() && shown;
   const t = useLoop(live, LOOP_MS[loop.kind]);
-  const origin = `${(((loop.px - loop.x) / loop.w) * 100).toFixed(1)}% ${(((loop.py - loop.y) / loop.h) * 100).toFixed(1)}%`;
+  const origin = `${(((box.px - box.x) / box.w) * 100).toFixed(1)}% ${(((box.py - box.y) / box.h) * 100).toFixed(1)}%`;
   return (
     <View style={{ width: CHAPTER_ART.w * s, height }} pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID={`lp-chapter-art-${id}`}>
       <SvgXml xml={still} width={CHAPTER_ART.w * s} height={height} />
-      <Animated.View style={[styles.abs, { left: loop.x * s, top: loop.y * s, width: loop.w * s, height: loop.h * s }, live ? loopStyle(loop.kind, t, origin) : null]}>
-        <SvgXml xml={moving} width={loop.w * s} height={loop.h * s} />
+      <Animated.View style={[styles.abs, { left: box.x * s, top: box.y * s, width: box.w * s, height: box.h * s }, live ? loopStyle(loop.kind, t, origin) : null]}>
+        <SvgXml xml={moving} width={box.w * s} height={box.h * s} />
       </Animated.View>
     </View>
   );
+}
+
+/** Two #rrggbb colours blended, `t` of the way from `a` to `b`. */
+function mixColour(a: string, b: string, t: number): string {
+  const ch = (hex: string, i: number): number => parseInt(hex.slice(1 + 2 * i, 3 + 2 * i), 16);
+  return `#${[0, 1, 2].map((i) => Math.round(ch(a, i) + (ch(b, i) - ch(a, i)) * t).toString(16).padStart(2, '0')).join('')}`;
 }
 
 /** A box in scene points as a style. */
@@ -158,17 +173,19 @@ function track(t: Animated.Value, keys: readonly (readonly [number, number])[], 
   const values = inputRange.map((x) => sampleKeys(keys, x));
   return t.interpolate({ inputRange, outputRange: unit ? values.map((v) => `${v}${unit}`) : values });
 }
-/** How finely the pigeon's flight is sampled. */
+/** How finely a shared track is sampled. */
 const SAMPLES = 48;
 
-/** The pigeon trying to land on its post, its letter in its beak (shared `PATH_PIGEON_FLIGHT`), and hopping when tapped. */
-function Pigeon({ moving, hop }: { moving: boolean; hop: number }): React.JSX.Element {
+/**
+ * The pigeon trying to land on the twig's tip with its letter in its beak (shared `PATH_PIGEON_FLIGHT`, on `t`), and
+ * hopping when tapped; a member's pigeon from the letters, in its own colours by day and night alike.
+ */
+function Pigeon({ moving, hop, t }: { moving: boolean; hop: number; t: Animated.Value }): React.JSX.Element {
   const { actor } = PATH_SCENES.letter;
-  const size = 64;
-  const up = useMemo(() => letterBirdSvg({ bird: 0, pose: 'wings-up', letter: true, size, shadow: false }), []);
-  const down = useMemo(() => letterBirdSvg({ bird: 0, pose: 'wings-down', letter: true, size, shadow: false }), []);
-  const perched = useMemo(() => letterBirdSvg({ bird: 0, pose: 'perched', letter: true, size }), []);
-  const t = useLoop(moving, PATH_PIGEON_FLIGHT.ms);
+  const size = actor.h;
+  const up = useMemo(() => letterBirdSvg({ bird: 0, pose: 'wings-up', letter: true, size, shadow: false }), [size]);
+  const down = useMemo(() => letterBirdSvg({ bird: 0, pose: 'wings-down', letter: true, size, shadow: false }), [size]);
+  const perched = useMemo(() => letterBirdSvg({ bird: 0, pose: 'perched', letter: true, size, shadow: false }), [size]);
   const flap = useLoop(moving, PATH_SCENE_MOTION.flapMs * 2);
   const jump = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -190,7 +207,7 @@ function Pigeon({ moving, hop }: { moving: boolean; hop: number }): React.JSX.El
     : null;
   return (
     <Animated.View
-      style={[styles.abs, { left: actor.x - size / 2, top: actor.y + actor.h - (size * 100) / 120, width: size, height: size }, { transform: [{ translateY: jump.interpolate({ inputRange: [0, 1], outputRange: [0, -12] }) }] }]}
+      style={[styles.abs, { left: actor.ax - size / 2, top: actor.ay - (size * 100) / 120, width: size, height: size }, { transform: [{ translateY: jump.interpolate({ inputRange: [0, 1], outputRange: [0, -12] }) }] }]}
       testID="lp-scene-pigeon"
     >
       <Animated.View style={[StyleSheet.absoluteFill, flight]}>
@@ -212,16 +229,19 @@ function Pigeon({ moving, hop }: { moving: boolean; hop: number }): React.JSX.El
   );
 }
 
-/** Crumbs falling from a bite. */
+/** Crumbs falling from a bite, as his teeth close on the apple. */
 function Crumbs({ x, y, dark }: { x: number; y: number; dark: boolean }): React.JSX.Element {
-  const t = useOnce(true, PATH_SCENE_MOTION.crumbMs, 0, Easing.in(Easing.quad));
+  const t = useOnce(true, PATH_SCENE_MOTION.crumbMs, PATH_APPLE_REACH.ms * PATH_APPLE_REACH.biteAt, Easing.in(Easing.quad));
   return (
     <Sprite
       sprite="crumbs"
       x={x}
       y={y}
       dark={dark}
-      style={{ opacity: t.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }), transform: [{ translateX: t.interpolate({ inputRange: [0, 1], outputRange: [0, 2] }) }, { translateY: t.interpolate({ inputRange: [0, 1], outputRange: [0, 24] }) }] }}
+      style={{
+        opacity: t.interpolate({ inputRange: [0, 0.01, 1], outputRange: [0, 1, 0] }),
+        transform: [{ translateX: t.interpolate({ inputRange: [0, 1], outputRange: [0, 2] }) }, { translateY: t.interpolate({ inputRange: [0, 1], outputRange: [0, 24] }) }],
+      }}
     />
   );
 }
@@ -248,26 +268,28 @@ function Regrow({ x, y, dark }: { x: number; y: number; dark: boolean }): React.
   );
 }
 
-/** A sugar cube tossed from the bowl into the glass, and its splash. */
+/** A sugar cube hopping from the bowl into the glass (shared `PATH_TEA_AT`), and its splash. */
 function Cube({ dark }: { dark: boolean }): React.JSX.Element {
   const t = useOnce(true, PATH_SCENE_MOTION.cubeMs, 0, Easing.inOut(Easing.quad));
   const splash = useOnce(true, 520, PATH_SCENE_MOTION.cubeMs - 40);
+  const { bowl, glass } = PATH_TEA_AT;
+  const [dx, dy] = [glass.x - bowl.x, glass.y - bowl.y + 4];
   return (
     <>
       <Sprite
         sprite="cube"
-        x={84}
-        y={58}
+        x={bowl.x - 4}
+        y={bowl.y - 16}
         dark={dark}
         style={{
           opacity: t.interpolate({ inputRange: [0, 0.9, 1], outputRange: [1, 1, 0] }),
-          transform: [{ translateX: t.interpolate({ inputRange: [0, 1], outputRange: [0, -48] }) }, { translateY: t.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -24, 2] }) }],
+          transform: [{ translateX: t.interpolate({ inputRange: [0, 1], outputRange: [0, dx] }) }, { translateY: t.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, dy / 2 - 22, dy] }) }],
         }}
       />
       <Sprite
         sprite="splash"
-        x={32}
-        y={52}
+        x={glass.x - 8}
+        y={glass.y - 6}
         dark={dark}
         style={{ opacity: splash.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 0] }), transform: [{ scale: splash.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1.2] }) }] }}
       />
@@ -275,14 +297,14 @@ function Cube({ dark }: { dark: boolean }): React.JSX.Element {
   );
 }
 
-/** Steam rising from the glass, over and over while the scene moves. */
+/** Steam curling up off the glass, over and over while the scene moves. */
 function Steam({ moving, dark }: { moving: boolean; dark: boolean }): React.JSX.Element {
   const t = useLoop(moving, 2800);
   return (
     <Sprite
       sprite="steam"
-      x={33}
-      y={30}
+      x={PATH_TEA_AT.glass.x - 7}
+      y={PATH_TEA_AT.glass.y - 26}
       dark={dark}
       style={moving ? { opacity: t.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 1, 0] }), transform: [{ translateY: t.interpolate({ inputRange: [0, 1], outputRange: [4, -10] }) }] } : null}
     />
@@ -333,16 +355,18 @@ function tapAct(scene: PathSceneId, taps: number): ActName | null {
 }
 
 /**
- * A unit's little scene beside its road (shared `pathScene`, `sceneBeat`): Hevalo eating his apple bite by bite over the
- * orchard wall, Hamo sugaring his tea, Xezo chalking ê, ç and ş, or the pigeon trying to land with a letter, with the
- * chapter's rounds as stars strung under it. `flip` mirrors it for the road's other side, all but the slate's letters.
- * A tap gets a little moment of its own.
+ * A unit's little scene leaning in from the screen's edge beside its road (shared `pathScene`, `sceneBeat`), as on the
+ * website: Hevalo's head in under an apple bough, reaching up to bite its apple, chewing, the bough giving as he tugs,
+ * and a new apple growing once he is down to the core; Hamo leaning in with his tea on a tray and too much sugar; Xezo
+ * peeking in with her slate to chalk ê, ç and ş; or the pigeon landing on a twig with a letter. Beats come a little
+ * sooner or later each time (`sceneBeatMs`). Drawn for the left edge; `flip` mirrors it for the right, all but the
+ * slate's letters. It is cut off at the edge and its foot, or where the character runs on, a little below. A tap gets a
+ * little moment of its own.
  */
 export function PathScene({
   scene,
   flip,
   dark,
-  rounds,
   live,
   left,
   top,
@@ -350,7 +374,6 @@ export function PathScene({
   scene: PathSceneId;
   flip: boolean;
   dark: boolean;
-  rounds: number;
   /** Its unit is in view and the app in front. */
   live: boolean;
   left: number;
@@ -363,53 +386,82 @@ export function PathScene({
   const [tap, setTap] = useState({ count: 0, beat: -1 });
   useEffect(() => {
     if (!moving || scene === 'letter') return;
-    const id = setInterval(() => setBeat((b) => b + 1), PATH_SCENE_MOTION.beatMs[scene]);
-    return () => clearInterval(id);
-  }, [moving, scene]);
+    const id = setTimeout(() => setBeat((b) => b + 1), sceneBeatMs(scene, beat));
+    return () => clearTimeout(id);
+  }, [moving, scene, beat]);
   const now = sceneBeat(scene, beat);
+  // The bite shows as his teeth close on it, partway through his reach.
+  const [bitten, setBitten] = useState(now.bites);
+  useEffect(() => {
+    if (!moving || !now.crumbs) {
+      setBitten(now.bites);
+      return;
+    }
+    const id = setTimeout(() => setBitten(now.bites), PATH_APPLE_REACH.ms * PATH_APPLE_REACH.biteAt);
+    return () => clearTimeout(id);
+  }, [moving, now.bites, now.crumbs]);
+  // Each bite: he draws back, stretches in to the apple and bites, and the bough gives as he tugs.
+  const reach = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!moving || scene !== 'apple' || !now.crumbs) return;
+    reach.setValue(0);
+    const run = Animated.timing(reach, { toValue: 1, duration: PATH_APPLE_REACH.ms, easing: Easing.linear, useNativeDriver: true, isInteraction: false });
+    run.start();
+    return () => run.stop();
+  }, [moving, scene, beat, now.crumbs, reach]);
+  // The pigeon's flight, and the twig dipping under it.
+  const flight = useLoop(moving && scene === 'letter', PATH_PIGEON_FLIGHT.ms);
   // A tap's moment lasts until the next beat, whose act then follows.
   const tapped = tap.count > 0 && tap.beat === beat ? tapAct(scene, tap.count) : null;
   const cue = tapped ? { act: tapped, at: -tap.count } : now.act ? { act: now.act, at: beat } : null;
-  const garland = useMemo(() => pathGarlandSvg({ lit: rounds, dark }), [rounds, dark]);
   const actorArt = layout.who === 'pigeon' ? null : characterArt(layout.who);
   const frame = actorArt ? cropBox(actorArt, layout.actor.crop) : null;
   const width = frame ? (layout.actor.h * frame.w) / frame.h : 0;
-  const apple = PATH_SCENES.apple.front.apple!;
-  const hit = { left: Math.max(0, layout.actor.x - 34), top: Math.max(0, layout.actor.y), width: 68, height: Math.min(PATH_SCENE_BOX.h - layout.actor.y, scene === 'letter' ? 100 : layout.actor.h) };
+  const { ax, ay, h, lean } = layout.actor;
+  const leaning =
+    scene === 'apple' && moving
+      ? [{ rotate: track(reach, PATH_APPLE_REACH.turn.map(([at, v]) => [at, v + lean] as const), 'deg') }, { scaleY: track(reach, PATH_APPLE_REACH.stretch) }]
+      : [{ rotate: `${lean}deg` }];
+  const root = layout.gives.bough ?? layout.gives.twig;
+  const giving = !moving || !root ? null : scene === 'apple' ? track(reach, PATH_APPLE_REACH.tug, 'deg') : track(flight, PATH_PIGEON_FLIGHT.twig, 'deg');
+  const appleBox = PATH_SCENE_SPRITE_BOX['apple-0'];
+  const apple = { x: PATH_APPLE_AT.x - appleBox.w / 2, y: PATH_APPLE_AT.y };
+  const hit = scene === 'letter' ? { left: 70, top: 20, width: 70, height: 70 } : { left: 0, top: 30, width: 90, height: PATH_SCENE_BOX.h - 30 };
+  const prop = (p: string): React.JSX.Element => <Prop key={p} scene={scene} prop={p} dark={dark} />;
   return (
     <View
-      style={[styles.scene, { left, top }, flip ? styles.flipped : null]}
+      style={[styles.scene, { left, top, height: PATH_SCENE_BOX.h + layout.below }, flip ? styles.flipped : null]}
       aria-hidden
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       testID={`lp-scene-${scene}`}
     >
-      {Object.keys(layout.back).map((p) => (
-        <Prop key={p} scene={scene} prop={p} dark={dark} />
-      ))}
+      {Object.keys(layout.back).map(prop)}
       {actorArt ? (
-        <View style={[styles.abs, { left: layout.actor.x - width / 2, top: layout.actor.y, width, height: layout.actor.h }]}>
-          <SpeakingCharacter speaker={layout.who as 'hevalo' | 'hamo' | 'xezo'} player={null} playing={false} crop={layout.actor.crop} height={layout.actor.h} cue={cue} />
-        </View>
-      ) : (
-        <Pigeon moving={moving} hop={tap.count} />
-      )}
-      {Object.keys(layout.front)
-        .filter((p) => !(scene === 'apple' && p === 'apple'))
-        .map((p) => (
-          <Prop key={p} scene={scene} prop={p} dark={dark} />
-        ))}
-      {scene === 'apple' ? (
-        <>
-          {now.growing && moving ? (
+        <Animated.View style={[styles.abs, { left: ax - width / 2, top: ay - h, width, height: h, transformOrigin: '50% 100%', transform: leaning }]}>
+          <SpeakingCharacter speaker={layout.who as 'hevalo' | 'hamo' | 'xezo'} player={null} playing={false} crop={layout.actor.crop} height={h} cue={cue} />
+        </Animated.View>
+      ) : null}
+      {/* What gives when tugged or landed on turns about its root at the edge, carrying what hangs from it. */}
+      <Animated.View style={[styles.stage, root ? { transformOrigin: `${root.x}px ${root.y}px` } : null, giving ? { transform: [{ rotate: giving }] } : null]} pointerEvents="none">
+        {Object.keys(layout.front).filter((p) => p === 'bough' || p === 'twig').map(prop)}
+        {scene === 'apple' ? (
+          now.growing && moving ? (
             <Regrow key={`grow${beat}`} x={apple.x} y={apple.y} dark={dark} />
           ) : tapped === 'offer' && moving ? (
-            <Moment key={`offer${tap.count}`} kind="offer" sprite={now.bites >= 5 ? 'core' : (`apple-${now.bites}` as PathSceneSprite)} x={apple.x} y={apple.y} dark={dark} />
+            <Moment key={`offer${tap.count}`} kind="offer" sprite={bitten >= 5 ? 'core' : (`apple-${bitten}` as PathSceneSprite)} x={apple.x} y={apple.y} dark={dark} />
           ) : (
-            <Sprite key={`apple${now.bites}`} sprite={now.bites >= 5 ? 'core' : (`apple-${now.bites}` as PathSceneSprite)} x={apple.x} y={apple.y} dark={dark} />
-          )}
-          {now.crumbs && moving ? <Crumbs key={`crumbs${beat}`} x={apple.x + 12} y={apple.y + 26} dark={dark} /> : null}
-          {tapped === 'hiccup' && moving ? <Moment key={`hic${tap.count}`} kind="hic" sprite="hic" x={layout.actor.x - 6} y={34} dark={dark} /> : null}
+            <Sprite key={`apple${bitten}`} sprite={bitten >= 5 ? 'core' : (`apple-${bitten}` as PathSceneSprite)} x={apple.x} y={apple.y} dark={dark} />
+          )
+        ) : null}
+      </Animated.View>
+      {/* The pigeon lands on its twig, so it is drawn over it. */}
+      {layout.who === 'pigeon' ? <Pigeon moving={moving} hop={tap.count} t={flight} /> : null}
+      {Object.keys(layout.front).filter((p) => p !== 'bough' && p !== 'twig').map(prop)}
+      {scene === 'apple' ? (
+        <>
+          {now.crumbs && moving ? <Crumbs key={`crumbs${beat}`} x={PATH_APPLE_AT.x - 10} y={PATH_APPLE_AT.y + 30} dark={dark} /> : null}
+          {tapped === 'hiccup' && moving ? <Moment key={`hic${tap.count}`} kind="hic" sprite="hic" x={30} y={40} dark={dark} /> : null}
         </>
       ) : null}
       {scene === 'tea' ? (
@@ -419,22 +471,12 @@ export function PathScene({
         </>
       ) : null}
       {scene === 'slate'
-        ? PATH_SLATE_LETTERS.map((l, i) => (
-            <Chalk
-              key={l.sprite}
-              sprite={l.sprite}
-              // Mirrored, the slate's places run the other way, so the letters still read ê, ç, ş.
-              x={flip ? PATH_SLATE_LETTERS[PATH_SLATE_LETTERS.length - 1 - i]!.x : l.x}
-              y={l.y}
-              shown={!moving || (i < now.letters && !now.wiping)}
-              moving={moving}
-              flip={flip}
-            />
-          ))
+        ? PATH_SLATE_LETTERS.map((l, i) => {
+            // Mirrored, the slate's places run the other way, so the letters still read ê, ç, ş.
+            const place = flip ? PATH_SLATE_LETTERS[PATH_SLATE_LETTERS.length - 1 - i]! : l;
+            return <Chalk key={l.sprite} sprite={l.sprite} x={place.x} y={place.y} shown={!moving || (i < now.letters && !now.wiping)} moving={moving} flip={flip} />;
+          })
         : null}
-      <View style={[styles.abs, at(layout.garland)]}>
-        <SvgXml xml={garland} width={layout.garland.w} height={layout.garland.h} />
-      </View>
       <Pressable style={[styles.abs, hit]} onPress={() => setTap((t) => ({ count: t.count + 1, beat }))} aria-hidden testID={`lp-scene-${scene}-tap`} />
     </View>
   );
@@ -548,6 +590,8 @@ export function PathChest({ open, dark, size, live, left, top }: { open: boolean
 
 const styles = StyleSheet.create({
   abs: { position: 'absolute' },
-  scene: { position: 'absolute', width: PATH_SCENE_BOX.w, height: PATH_SCENE_BOX.h },
+  // Cut off at the screen's edge and its foot.
+  scene: { position: 'absolute', width: PATH_SCENE_BOX.w, height: PATH_SCENE_BOX.h, overflow: 'hidden' },
+  stage: { position: 'absolute', left: 0, top: 0, width: PATH_SCENE_BOX.w, height: PATH_SCENE_BOX.h },
   flipped: { transform: [{ scaleX: -1 }] },
 });

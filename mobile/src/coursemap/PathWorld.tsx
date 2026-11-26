@@ -14,7 +14,6 @@ import {
   pathScene,
   pathSignpostSvg,
   pathStopSvg,
-  unitRounds,
   unitScenery,
   type PathBox,
   type PathGround,
@@ -77,9 +76,9 @@ export const UnitLandmark = memo(function UnitLandmark({
 
 /**
  * A unit's playful touches beside its road (shared `unitScenery`): its little scene, chosen from the chapter (shared
- * `pathScene`, PathScene.tsx), with the chapter's rounds strung under it, and the unit's painted sandûq, shut until the
- * unit is done and then open on its gold. Decorative, so screen readers skip them; a tap plays a moment of their own.
- * They move only while their unit is in view (`live`), never under Reduce Motion.
+ * `pathScene`, PathScene.tsx), leaning in from the screen's edge on its side, and the unit's painted sandûq, shut until
+ * the unit is done and then open on its gold. Decorative, so screen readers skip them; a tap plays a moment of their
+ * own. They move only while their unit is in view (`live`), never under Reduce Motion.
  */
 export const UnitScenery = memo(function UnitScenery({
   unit,
@@ -87,33 +86,35 @@ export const UnitScenery = memo(function UnitScenery({
   sign,
   near,
   live,
-  mascot,
+  here,
 }: {
   unit: Unit;
+  /** The road's width: the screen's, edge to edge. */
   width: number;
   sign: number;
   near: boolean;
   live: boolean;
-  /** Where Hevalo stands in this unit, if he is here, so nothing stands on him. */
-  mascot: { x: number; y: number } | null;
+  /** The stop to do now, if it is in this unit: Hevalo stands beside it, under its bubble. */
+  here: { x: number; y: number } | null;
 }): React.JSX.Element | null {
   const { scheme } = useTheme();
   const scene = pathScene(unit.number - 1);
-  const spots = useMemo(() => unitScenery(unit.stops, mascot, scene), [unit.stops, mascot, scene]);
+  const spots = useMemo(() => unitScenery(unit.stops, here, scene, width > 0 ? width : null), [unit.stops, here, scene, width]);
   if (!near || width <= 0) return null;
   const dark = scheme === 'dark';
   const won = unit.total > 0 && unit.done === unit.total;
+  // The side of the screen it leans in from: the line's start or end, mirrored with the path.
+  const right = spots.scene ? sign * spots.scene.side > 0 : false;
   return (
     <>
       {spots.scene ? (
         <PathScene
           scene={scene}
-          // Drawn for the road's start side; on the other it is mirrored, so it always faces the road.
-          flip={sign * spots.scene.x > 0}
+          // Drawn for the left edge; at the right one it is mirrored, so it always leans in toward the road.
+          flip={right}
           dark={dark}
-          rounds={unitRounds(unit.stops)}
           live={live}
-          left={width / 2 + sign * spots.scene.x - PATH_SCENE_BOX.w / 2}
+          left={right ? width - PATH_SCENE_BOX.w : 0}
           top={spots.scene.y - PATH_SCENE_BOX.h / 2}
         />
       ) : null}
@@ -203,10 +204,10 @@ export const StopArt = memo(function StopArt({ look, tone, part, near }: { look:
   );
 });
 
-/** A unit's milestone, its last stop, from the shared drawing: the seal, or the drum it stands on with its stars. */
-export const MilestoneArt = memo(function MilestoneArt({ won, rounds, part, near }: { won: boolean; rounds: number; part: 'base' | 'face'; near: boolean }): React.JSX.Element | null {
+/** A unit's milestone, its last stop, from the shared drawing: the seal, or the drum it stands on. */
+export const MilestoneArt = memo(function MilestoneArt({ won, part, near }: { won: boolean; part: 'base' | 'face'; near: boolean }): React.JSX.Element | null {
   const { scheme } = useTheme();
-  const xml = useMemo(() => (near ? pathMilestoneSvg({ won, rounds, part, dark: scheme === 'dark' }) : null), [near, won, rounds, part, scheme]);
+  const xml = useMemo(() => (near ? pathMilestoneSvg({ won, part, dark: scheme === 'dark' }) : null), [near, won, part, scheme]);
   if (!xml) return null;
   const { x, y, w, h } = PATH_MILESTONE_ART;
   return (

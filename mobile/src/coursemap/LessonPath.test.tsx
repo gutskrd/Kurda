@@ -440,7 +440,7 @@ describe('the path’s sections', () => {
     replayed.units[0]!.skills[0] = { ...replayed.units[0]!.skills[0]!, lessons: [lesson('a1', 'Lesson a1', true, 2), lesson('a2', 'Lesson a2', true, 1)] };
     view.rerender(<LessonPath map={replayed} due={0} onFocus={() => undefined} />);
     expect(button('Topic a, done, and strong, round 2 of 3, 1 of 2 lessons')).toBeTruthy();
-    expect(screen.getByTestId('lp-ring-gold')).toBeTruthy();
+    expect(screen.getByTestId('lp-bar')).toBeTruthy();
     // The learner's own section stays folded, to go back to.
     expect(screen.getByTestId('lp-section-2')).toBeTruthy();
     cleanup();
@@ -461,33 +461,37 @@ describe('the path’s sections', () => {
   });
 });
 
-describe('a topic’s ring and stars', () => {
-  it('rings the topic to do now with a piece for each lesson, and stands a star on a finished one’s coin for each round', () => {
+describe('a topic’s bar and stamp', () => {
+  it('puts a bar over the topic to do now with a piece for each lesson, and stamps a finished one', async () => {
     client();
     renderWithProviders(<LessonPath map={levelled()} due={0} onFocus={() => undefined} />);
-    // Only d, the topic to do now, wears its ring; c has three rounds on its coin instead.
-    expect(screen.getAllByTestId('lp-ring')).toHaveLength(1);
-    expect(screen.getByTestId('lp-stars-3')).toBeTruthy();
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    // Only d, the topic to do now, wears its bar, its first piece filled; c, finished, is stamped instead.
+    expect(screen.getAllByTestId('lp-bar')).toHaveLength(1);
+    expect(screen.getAllByTestId('lp-bar-filled')).toHaveLength(1);
+    expect(screen.getAllByTestId('lp-stamp').length).toBeGreaterThan(0);
     expect(button('Topic c, done, and strong, all 3 rounds done')).toBeTruthy();
-    // Its card shows its stars and that all three rounds are played.
+    // Its card shows its rounds as Hevalo's prints, and that all three are played.
     fireEvent.click(button('Topic c, done, and strong, all 3 rounds done'));
-    expect(screen.getByTestId('lp-card-stars-3')).toBeTruthy();
+    expect(screen.getByTestId('lp-card-rounds-3')).toBeTruthy();
     expect(screen.getByText('All 3 rounds done')).toBeTruthy();
   });
 
-  it('says the round a gold topic is in, and plays it again from the lesson finished fewest times', () => {
+  it('says the round a finished topic is in, and plays it again from the lesson finished fewest times', async () => {
     client();
     renderWithProviders(<LessonPath map={levelled()} due={0} onFocus={() => undefined} />);
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
     fireEvent.click(button('Section 1, Starter, First words and short sentences, Section complete, One chapter'));
-    // Both its topics have their first star.
-    expect(screen.getAllByTestId('lp-stars-1')).toHaveLength(2);
+    // Both its topics are stamped, and neither wears a bar.
+    expect(screen.getAllByTestId('lp-stamp')).toHaveLength(2);
+    expect(screen.queryByTestId('lp-bar')).toBeNull();
     fireEvent.click(button('Topic b, done, and strong, round 2 of 3, 1 of 2 lessons'));
     expect(screen.getByText('Round 2 of 3 · 1 of 2 lessons')).toBeTruthy();
     fireEvent.click(button('Practise again, +3–5 XP, played again'));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'b2', courseId: 'c2' });
   });
 
-  it('fills the ring and drops the star in on coming back from a lesson that made a round whole', async () => {
+  it('fills the bar and stamps the stop on coming back from a lesson that made a round whole', async () => {
     client();
     patchReactNativeWeb({ reduceMotion: false });
     const before = levelled('c-return');
@@ -497,10 +501,13 @@ describe('a topic’s ring and stars', () => {
     after.units[2]!.skills[0] = { ...after.units[2]!.skills[0]!, state: 'unlocked' };
     const view = renderWithProviders(<LessonPath map={before} due={0} onFocus={() => undefined} />);
     await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
-    expect(screen.queryByTestId('lp-ring-gold')).toBeNull();
+    expect(screen.queryByTestId('lp-stamp-pressing')).toBeNull();
     view.rerender(<LessonPath map={after} due={0} onFocus={() => undefined} />);
-    expect(screen.getByTestId('lp-ring-gold')).toBeTruthy();
-    expect(screen.getByTestId('lp-star-earned')).toBeTruthy();
+    // Its bar fills and goes gold, and it is stamped, once, kept on the phone for next time.
+    expect(screen.getAllByTestId('lp-bar-gold').length).toBeGreaterThan(0);
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    expect(within(screen.getByRole('button', { name: /^Topic d, (?!you)/ })).getByTestId('lp-stamp')).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem('hevalo_stamped_v1:c-return') ?? '[]')).toContain('s:d');
     // The chapter's story is won with it.
     expect(button('Hamo’s story: Malbat')).toBeTruthy();
     cleanup();
