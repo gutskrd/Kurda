@@ -27,7 +27,16 @@ export const PAIRING_CODE_TTL_MINUTES = 10;
 export const PIN_MIN_LENGTH = 4;
 export const PIN_MAX_LENGTH = 6;
 export const PIN_TRIES = 5;
-export const PIN_LOCK_MINUTES = 15;
+/**
+ * How long each run of PIN_TRIES wrong PINs locks it, in minutes: the first for a quarter of an hour, the next for an
+ * hour, and every one after that for a day, until the right PIN is entered.
+ */
+export const PIN_LOCK_STEPS: readonly number[] = [15, 60, 24 * 60];
+
+/** How long the `lock`th lock in a row lasts, in minutes (`lock` from 1). */
+export function pinLockMinutes(lock: number): number {
+  return PIN_LOCK_STEPS[Math.min(Math.max(1, lock), PIN_LOCK_STEPS.length) - 1]!;
+}
 
 /** A child's name or nickname, as short as a name on a badge. */
 export const CHILD_NAME_MAX = 24;

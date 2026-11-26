@@ -74,6 +74,19 @@ export function thirteenNotice(child: Named): Notification {
   };
 }
 
+/** To a parent, when wrong PINs on a phone switched to their child have locked the family PIN for an hour or more. */
+export function pinLockedNotice(minutes: number, until: Date): Notification {
+  const hours = Math.round(minutes / 60);
+  return {
+    category: 'friends',
+    title: 'Your family PIN is locked',
+    body:
+      `Someone entered a wrong family PIN many times on a phone switched to your child, so it is locked for ${hours === 1 ? 'an hour' : `${hours} hours`}. ` +
+      'You can choose a new PIN in Settings, then Family.',
+    data: { kind: 'family_pin_locked', minutes: String(minutes), until: until.toISOString() },
+  };
+}
+
 /** What a signed link in a parent's email does. */
 export type ChildLinkAction = 'remove' | 'keep';
 

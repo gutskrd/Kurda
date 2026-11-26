@@ -9,6 +9,7 @@ import {
   normalizeFamilyCode,
   normalizePairingCode,
   PAIRING_CODE_LENGTH,
+  pinLockMinutes,
 } from './family.js';
 
 const NOW = new Date(Date.UTC(2026, 10, 25));
@@ -65,6 +66,10 @@ describe('family and pairing codes', () => {
     expect(formatPairingCode('1234')).toBe('1234');
     expect(formatPairingCode('12345')).toBe('1234 5');
     expect(formatPairingCode('')).toBe('');
+  });
+
+  it('locks a PIN for a quarter of an hour, then an hour, then a day for every run of wrong tries after that', () => {
+    expect([1, 2, 3, 4, 9].map(pinLockMinutes)).toEqual([15, 60, 1440, 1440, 1440]);
   });
 
   it('takes a PIN of four to six digits', () => {

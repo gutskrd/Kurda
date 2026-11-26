@@ -8,7 +8,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { CHILD_CONSENT_VERSION, MAX_CHILDREN_PER_PARENT, MAX_FAMILY_SIZE, PIN_TRIES, formatFamilyCode } from '@kurda/shared';
+import { CHILD_CONSENT_VERSION, MAX_CHILDREN_PER_PARENT, MAX_FAMILY_SIZE, PIN_LOCK_STEPS, PIN_TRIES, formatFamilyCode } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { issueAccessToken } from '../auth/tokens.js';
@@ -17,6 +17,7 @@ import { SEND_EMAIL_JOB_NAME } from '../jobs/email.js';
 import { GdprService } from '../gdpr/service.js';
 import { pushMutedByParent } from '../parental/supervision.js';
 import { ChildService } from './children.js';
+import { ChildSessions } from './sessions.js';
 import { childLinkToken } from './notices.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -293,6 +294,51 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('families and child profiles (integ
       expect((await call({ token: back.json().tokens.accessToken }, 'GET', '/me')).json().user.id).toBe(parent.id);
       // and the child's session on it has ended
       expect((await call(kid, 'GET', '/me')).statusCode).toBe(401);
+    });
+
+    it('locks the PIN longer for each run of wrong tries, tells the parent once a long lock starts, and forgets it all on the right PIN', async () => {
+      const parent = await adult();
+      const child = await addChild(parent);
+      await setPin(parent);
+      // the service itself, since the route holds anyone to a few tries a quarter-hour before the PIN's own lock
+      const sessions = new ChildSessions(pool, config);
+      const switched = async () => {
+        await switchTo(await parentPhone(parent), child.userId);
+        const r = await pool.query<{ family_id: string }>(
+          `SELECT family_id::text FROM refresh_tokens WHERE user_id = $1 AND return_to IS NOT NULL AND revoked_at IS NULL ORDER BY created_at DESC LIMIT 1`,
+          [child.userId],
+        );
+        return r.rows[0]!.family_id;
+      };
+      const giveBack = (family: string, pin: string) => sessions.returnToParent(child.userId, family, pin, 'parent-phone', undefined);
+      const wrongRun = async (family: string) => {
+        let last: unknown = null;
+        for (let i = 0; i < PIN_TRIES; i++) last = await giveBack(family, '0000').catch((err: unknown) => err);
+        return last as { code: string; details: { retryAfterSec: number } };
+      };
+      const unlock = () => pool.query(`UPDATE family_pins SET locked_until = now() - interval '1 second' WHERE parent_id = $1`, [parent.id]);
+      const minutes = (r: { details: { retryAfterSec: number } }) => Math.round(r.details.retryAfterSec / 60);
+      const told = () => notices(parent.id, 'family_pin_locked');
+
+      const family = await switched();
+      const first = await wrongRun(family);
+      expect(first.code).toBe('FAMILY_PIN_LOCKED');
+      expect(minutes(first)).toBe(PIN_LOCK_STEPS[0]);
+      expect(await told()).toHaveLength(0);
+      await unlock();
+      expect(minutes(await wrongRun(family))).toBe(PIN_LOCK_STEPS[1]);
+      expect(await told()).toHaveLength(1);
+      await unlock();
+      expect(minutes(await wrongRun(family))).toBe(PIN_LOCK_STEPS[2]);
+      await unlock();
+      expect(minutes(await wrongRun(family))).toBe(PIN_LOCK_STEPS[2]);
+      // told once, when the first long lock began
+      expect(await told()).toHaveLength(1);
+
+      // the right PIN forgets the run, so the next five wrong ones lock for the shortest time again
+      await unlock();
+      expect((await giveBack(family, '2468')).user.id).toBe(parent.id);
+      expect(minutes(await wrongRun(await switched()))).toBe(PIN_LOCK_STEPS[0]);
     });
 
     it('gives the parent’s phone back with the PIN after the child’s session on it has renewed', async () => {

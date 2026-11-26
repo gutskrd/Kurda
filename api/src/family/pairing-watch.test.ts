@@ -1,6 +1,7 @@
 /** Failed child pairings counted across every network, and the warning when there are many (family/pairing-watch.ts). */
 import { describe, expect, it, vi } from 'vitest';
 import { Registry } from 'prom-client';
+import type { CounterRedis } from '../limits/counters.js';
 import { PAIRING_FAILURES_WARN, PAIRING_WATCH_MINUTES, PairingWatch } from './pairing-watch.js';
 
 const at = (minutes: number): Date => new Date(Date.UTC(2026, 10, 26, 10, 0) + minutes * 60_000);
@@ -34,8 +35,9 @@ describe('the watch on failed pairings', () => {
       }),
     };
     const warn = vi.fn();
-    const one = new PairingWatch({ redis, log: { warn }, threshold: 4, now: () => at(2) });
-    const two = new PairingWatch({ redis, log: { warn }, threshold: 4, now: () => at(2) });
+    const shared = redis as unknown as CounterRedis;
+    const one = new PairingWatch({ redis: shared, log: { warn }, threshold: 4, now: () => at(2) });
+    const two = new PairingWatch({ redis: shared, log: { warn }, threshold: 4, now: () => at(2) });
     await one.failed();
     await two.failed();
     await one.failed();
