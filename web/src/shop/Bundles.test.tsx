@@ -119,7 +119,7 @@ describe('bundles in the shop', () => {
     vi.stubGlobal('fetch', shopFetch([], { bundles: [owned], nudges: true }));
     renderApp(<Shop />, ['/app/shop']);
     const tea = await screen.findByRole('article', { name: 'Çayxane' });
-    expect(within(tea).getByText('1 of 4 are already yours, so you only pay for the rest.')).toBeInTheDocument();
+    expect(within(tea).getByText('You already own 1 of the 4, so you only pay for the rest.')).toBeInTheDocument();
     expect(within(tea).getByText(/320 Zêr/)).toBeInTheDocument();
   });
 

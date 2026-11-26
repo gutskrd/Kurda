@@ -5416,7 +5416,7 @@ const en: Catalog = {
   'bundle.worthSpoken': '{zer} Zêr when bought one by one',
   'bundle.save': 'You save {zer} Zêr ({value})',
   'bundle.bestValue': 'Best value',
-  'bundle.ownedSome': '{owned} of {total} are already yours, so you only pay for the rest.',
+  'bundle.ownedSome': 'You already own {owned} of the {total}, so you only pay for the rest.',
   'bundle.complete': 'All yours',
   'bundle.open': 'See what’s inside',
   'bundle.openNamed': 'See what’s inside {name}',
