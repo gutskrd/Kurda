@@ -971,6 +971,8 @@ export {
   GIFT_ART_IDS,
   giftArtKey,
   giftArtSvg,
+  giftLoopParts,
+  type GiftLoopParts,
   isGiftArtId,
   type GiftArtId,
   type GiftArtOptions,
@@ -1049,6 +1051,9 @@ export { mapMarkup, mapPath, type PlaneMap } from './art/warp.js';
 /** The wrapped gift box, and how it waits, opens and gives way, drawn and played the same by both apps. */
 export * from './art/gift-box.js';
 export * from './art/gift-box-motion.js';
+/** How each gift's picture lives: its round of layered parts and where the apps find their pictures. */
+export * from './art/gift-loop.js';
+export * from './art/gift-loops.js';
 /** How big the fire burns: its stages from cold logs to the Newroz fire, by the streak's days or a run of right answers. */
 export {
   COLD_FIRE,

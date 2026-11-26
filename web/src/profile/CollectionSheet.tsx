@@ -29,6 +29,7 @@ import { Skeleton } from '../components/Skeleton';
 import { CheckIcon, ChevronIcon, GiftIcon, SparkleIcon } from '../components/icons';
 import { SegmentedChoice } from '../shop/ItemBrowser';
 import { ItemPicture } from '../shop/ItemPicture';
+import { GiftLoopArt } from '../gifts/GiftLoop';
 import { ItemGlyph } from '../shop/ItemGlyph';
 import { Medal, TierPips, formatRarity, progressText } from '../badges/parts';
 import { ShowcaseChoices } from '../badges/ShowcasePicker';
@@ -609,7 +610,7 @@ function GiftStep({ gift, side, onPerson }: { gift: CollectionGift; side: 'recei
   const left = gift.count - gift.people.length;
   return (
     <div className="coll-detail">
-      <span className="coll-tile is-item coll-gift-art">{gift.assetUrl ? <ItemPicture src={gift.assetUrl} lazy={false} /> : <ItemGlyph category={gift.category} size={40} />}</span>
+      <span className="coll-tile is-item coll-gift-art">{gift.assetUrl ? <GiftLoopArt src={gift.assetUrl} lazy={false} /> : <ItemGlyph category={gift.category} size={40} />}</span>
       <h3 className="coll-detail-name">{gift.name}</h3>
       <p className="coll-muted">{t('collection.times', { count: gift.count.toLocaleString(locale) })}</p>
       <ul className="coll-people-list">

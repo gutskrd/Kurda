@@ -7,6 +7,9 @@
  */
 import { Drawing, checkSize, prefixFor, seeded } from './svg.js';
 import { type Rnd } from './gift-paint.js';
+import { GiftCanvas } from './gift-canvas.js';
+import { GIFT_LOOP_SCALE } from './gift-loop.js';
+import { giftLoopOf } from './gift-loops.js';
 import { ask, hesp, kevok, kew, pezkovi, pisik } from './gift-art-animals.js';
 import { beybun, desteGul, gul, lale, nergiz, sosin } from './gift-art-flowers.js';
 import { belem, gemi, keleh, kelek, kon, kosk, mal } from './gift-art-homes.js';
@@ -75,14 +78,40 @@ export interface GiftArtOptions {
   idPrefix?: string;
 }
 
-/** A gift's picture on its own transparent square. */
+/** A gift's picture on its own transparent square: the first frame of its round, when it has one. */
 export function giftArtSvg(opts: GiftArtOptions): string {
   const id = opts.id;
   if (!isGiftArtId(id)) throw new RangeError(`art: no gift picture ${String(id)}`);
   const size = checkSize(opts.size, 120);
-  const dr = new Drawing(prefixFor(opts.idPrefix, 'gift', id));
+  return painted(id, prefixFor(opts.idPrefix, 'gift', id)).svg(size, opts.title ?? LABELS[id]);
+}
+
+function painted(id: GiftArtId, prefix: string): Drawing {
+  const loop = giftLoopOf(id);
+  const dr = loop ? new GiftCanvas(prefix, loop) : new Drawing(prefix);
   PAINTERS[id](dr, seeded(`gift|${id}`));
-  return dr.svg(size, opts.title ?? LABELS[id]);
+  return dr;
+}
+
+/** A gift's round cut into its parts as the files hold them: the base (null when it has none of its own) and each layer. */
+export interface GiftLoopParts {
+  base: string | null;
+  layers: ReadonlyArray<{ name: string; svg: string }>;
+  /** The layers the drawing painted, in its order, and whether it painted anything under them. */
+  painted: readonly string[];
+  hasBase: boolean;
+}
+
+export function giftLoopParts(id: GiftArtId, scale = GIFT_LOOP_SCALE): GiftLoopParts {
+  const loop = giftLoopOf(id);
+  if (!loop) throw new RangeError(`art: gift ${id} has no round`);
+  const dr = painted(id, prefixFor(undefined, 'gift', id)) as GiftCanvas;
+  return {
+    base: loop.base === 'own' ? dr.partSvg('base', scale) : null,
+    layers: loop.layers.map((l) => ({ name: l.name, svg: dr.partSvg(l.name, scale) })),
+    painted: dr.layers(),
+    hasBase: dr.hasBase(),
+  };
 }
 
 const PAINTERS: Readonly<Record<GiftArtId, (dr: Drawing, rnd: Rnd) => void>> = {

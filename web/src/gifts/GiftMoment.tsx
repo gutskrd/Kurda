@@ -250,7 +250,7 @@ export function GiftMoment({
           {revealed ? (
             <div className="celebrate is-playing gift-moment-art">
               <CelebrationArt flecks={look.burst} seed={giftSeed(card.sku)} reach={art} still={still}>
-                <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={art} />
+                <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={art} loop />
               </CelebrationArt>
             </div>
           ) : null}
@@ -386,7 +386,7 @@ export function GiftSentMoment({
       <GiftLight sku={item.sku} look={GIFT_SENT_LOOK} art={96} lit still={still}>
         <span className="gift-sent-art">
           <span className="gift-sent-item" ref={art}>
-            <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={96} />
+            <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={96} loop />
           </span>
         </span>
         {wrapped && item.tier ? <GiftBox tier={item.tier} size={120} motion="send" /> : null}

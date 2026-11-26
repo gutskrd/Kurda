@@ -1,0 +1,71 @@
+/*
+ * A gift's picture alive (GiftLoop.tsx): the still, and over it its parts, each a picture placed on the same square
+ * frame and moved by keyframes on transform and opacity only. The frame sits where the still would, so the parts are
+ * shown in its place once they have all loaded.
+ */
+.gift-loop {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  line-height: 0;
+}
+.gift-item-art:not(.gift-item-background) .gift-loop {
+  padding: 10%;
+}
+.gift-moment .gift-item-art .gift-loop,
+.gift-sent .gift-item-art .gift-loop {
+  padding: 0;
+}
+.gift-loop-frame,
+.gift-loop-parts {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.gift-loop-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.gift-loop .gift-loop-frame img.gift-loop-still,
+.gift-loop .gift-loop-frame img.gift-loop-part {
+  position: absolute;
+  display: block;
+  max-width: none;
+  padding: 0;
+  object-fit: fill;
+}
+.gift-loop .gift-loop-frame img.gift-loop-still {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.gift-loop .gift-loop-frame img.gift-loop-base {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* the parts stay unseen until every one has loaded, then take the still's place */
+.gift-loop-parts {
+  opacity: 0;
+}
+.gift-loop[data-ready='true'] .gift-loop-parts {
+  opacity: 1;
+}
+.gift-loop[data-ready='true'] .gift-loop-still {
+  visibility: hidden;
+}
+.gift-loop[data-playing='false'] .gift-loop-part {
+  animation-play-state: paused;
+}
+/* asked for less motion after the parts came in: back to the still */
+@media (prefers-reduced-motion: reduce) {
+  .gift-loop .gift-loop-parts {
+    display: none;
+  }
+  .gift-loop[data-ready='true'] .gift-loop-still {
+    visibility: visible;
+  }
+}

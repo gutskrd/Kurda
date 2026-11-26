@@ -387,7 +387,7 @@ function PickerFlow({
           {picked && (
             <div className="gift-confirm">
               {/* The chosen gift beside the send button, as it will go. */}
-              <GiftItemArt assetUrl={picked.item.assetUrl} category={picked.item.category} size={44} className="gift-confirm-art" />
+              <GiftItemArt assetUrl={picked.item.assetUrl} category={picked.item.category} size={44} className="gift-confirm-art" loop />
               <span className="gift-confirm-text">
                 {t('gift.picker.confirm', { item: picked.item.name, names: getting(picked.item).map((id) => nameOf.get(id) ?? '').join(', ') })}
                 {picked.fromBag ? (
@@ -499,7 +499,7 @@ function GiftTile({
         disabled={blocked}
         onClick={() => onChoose(!selected)}
       >
-        <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={72} />
+        <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={72} loop={selected} />
         <span className="gift-tile-name" lang="ku">
           {item.name}
         </span>
@@ -548,7 +548,7 @@ function BigGiftConfirm({
   useEffect(() => heading.current?.focus(), []);
   return (
     <section className="gift-big-confirm" aria-labelledby="gift-big-confirm-title">
-      <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={120} className="gift-big-confirm-art" />
+      <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={120} className="gift-big-confirm-art" loop />
       <h3 className="gift-big-confirm-title" id="gift-big-confirm-title" ref={heading} tabIndex={-1}>
         {t('gift.confirm.title')}
       </h3>

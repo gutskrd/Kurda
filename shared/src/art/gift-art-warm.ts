@@ -3,6 +3,7 @@
  * apple, a samovar on its tray, a frame drum and a saz.
  */
 import { type Drawing, type Pt } from './svg.js';
+import { layer } from './gift-canvas.js';
 import { along, band, brush, CHINA, ellipse, FLOOR, floor, form, GOLD, INK, leaf, lerp, outline, paint, polygon, rest, roundish, runs, scaleAbout, shift, side, slab, streaks, sugar, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
 
 // ───────────────────────────────────────────────────────────────────── çay
@@ -175,15 +176,28 @@ export function cay(dr: Drawing, rnd: Rnd): void {
   light(0.82, 300, 392, 0.7, 0.5);
   paint(dr, brush([[X + 11, row(330)], [X + 11.6, row(340)], [X + 11, row(350)]], 0.8, rnd), '#f6b83a', 0.9);
 
-  // steam rising off the tea, curling as it goes: a pale wisp with its shaded side
-  const wisps: Array<[Pt[], number]> = [
-    [[[51.5, 34.5], [48.6, 27], [53, 19.4], [48.4, 11], [51, 3.2]], 2.6],
-    [[[61, 35.4], [64.6, 28.6], [61.2, 22], [65.4, 15.6], [64, 11]], 2],
-    [[[70, 33.4], [72.6, 29], [70.2, 24.6]], 1.4],
-  ];
-  for (const [pts, w] of wisps) {
-    paint(dr, brush(shift(pts, 0.6, 0.2), w, rnd, { start: 0.5, end: 0.05, peak: 0.3 }), '#b9aca3', 0.8);
-    paint(dr, brush(pts, w, rnd, { start: 0.5, end: 0.05, peak: 0.3 }), '#e2d9d1', 0.95);
+  // steam rising off the tea in wisps, each its own layer of the round (gift-loop-warm.ts)
+  steam(dr, rnd, TEA_STEAM);
+}
+
+/** Where each wisp of a gift's steam is laid, as its layer, its line from the surface up, and its width. */
+type Steam = ReadonlyArray<readonly [name: string, line: readonly Pt[], width: number]>;
+
+export const TEA_STEAM: Steam = [
+  ['steam1', [[51.6, 35], [48.8, 27.4], [52.8, 19.8], [49, 12.6], [51, 7.4]], 2.5],
+  ['steam2', [[61, 35.6], [64.4, 28.8], [61.2, 22.2], [64.8, 16], [63.4, 11]], 2.1],
+  ['steam3', [[69.6, 34], [72.2, 29], [69.8, 24.2], [72, 19.4]], 1.6],
+  ['steam4', [[56.2, 35.2], [58.8, 28.2], [55.6, 21.4], [58.4, 14.6], [56.8, 9.6]], 1.8],
+  ['steam5', [[65.6, 35], [62.8, 28.6], [66.2, 22.4], [63.2, 16.4]], 1.7],
+];
+
+/** Steam: each wisp a pale brush mark with its shaded side, in a layer of its own so it can rise and curl. */
+export function steam(dr: Drawing, rnd: Rnd, wisps: Steam): void {
+  for (const [name, line, w] of wisps) {
+    layer(dr, name, () => {
+      paint(dr, brush(shift(line, 0.6, 0.2), w, rnd, { start: 0.5, end: 0.05, peak: 0.3, count: 7 }), '#b9aca3', 0.8);
+      paint(dr, brush(line, w, rnd, { start: 0.5, end: 0.05, peak: 0.3, count: 8 }), '#e2d9d1', 0.95);
+    });
   }
 }
 

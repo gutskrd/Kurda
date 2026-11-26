@@ -18,6 +18,7 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { assetUrl } from '../api/env';
+import { GiftArt } from '../gifts/GiftLoop';
 import { useIntents } from '../api/optimistic';
 import { ShowcaseChoices } from '../badges/BadgesScreen';
 import { NewChip } from '../badges/NewChip';
@@ -752,7 +753,7 @@ function GiftStep({ gift, side, onClose }: { gift: CollectionGift; side: 'receiv
   return (
     <View style={styles.detail}>
       <View style={[styles.tile, { width: 96, height: 96, backgroundColor: colors.controlTrack }]}>
-        <ItemArt url={gift.assetUrl} size={96} />
+        {gift.assetUrl ? <GiftArt path={gift.assetUrl} size={Math.round(96 * 0.66)} imageStyle={{ borderRadius: radii.sm }} /> : <ItemArt url={null} size={96} />}
       </View>
       <Text style={[styles.detailName, { color: colors.textPrimary }]} accessibilityRole="header">
         {gift.name}

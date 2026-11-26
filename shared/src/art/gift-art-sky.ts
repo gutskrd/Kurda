@@ -3,6 +3,7 @@
  * the Newroz fire and the sun. Night skies are cut out as a patch of their own so they hold on a light page.
  */
 import { type Drawing, type Pt } from './svg.js';
+import { layer } from './gift-canvas.js';
 import { band, blade, brush, ellipse, lerp, outline, paint, polygon, rest, roundish, shift, side, streaks, touch, tremble, turn, within, type Rnd, type Tone } from './gift-paint.js';
 
 // ──────────────────────────────────────────────────────────────────── heyv
@@ -382,7 +383,7 @@ const SUN: Tone = { base: '#f3bd45', light: '#fbdc86', shade: '#d98f2a' };
 
 export function roj(dr: Drawing, rnd: Rnd): void {
   // twenty-one rays, as the sun of Kurdistan has: long gold ones with shorter red-orange ones between, each brushed
-  // on with a wavering hand
+  // on with a wavering hand, and kept short enough that they can breathe out without touching the edge
   const ray = (deg: number, from: number, to: number, w: number): string => {
     const a = (deg * Math.PI) / 180;
     const pts: Pt[] = [];
@@ -398,39 +399,50 @@ export function roj(dr: Drawing, rnd: Rnd): void {
   let lit = '';
   for (let i = 0; i < 21; i++) {
     const deg = -90 + (i / 21) * 360;
-    back += ray(deg + 360 / 42, 26, 46 + (i % 2) * 3, 7.4);
-    long += ray(deg, 26, 55 + (i % 3) * 1.4, 8.6);
-    lit += ray(deg - 2.2, 30, 48, 2);
+    back += ray(deg + 360 / 42, 26, 45 + (i % 2) * 3, 7.4);
+    long += ray(deg, 26, 51.6 + (i % 3) * 1.4, 8.6);
+    lit += ray(deg - 2.2, 30, 46, 2);
   }
-  paint(dr, back, '#d65a2e');
-  paint(dr, long, '#e98b2e');
-  paint(dr, lit, '#f6c55a', 0.85);
-  // a ring of warm dabs round the disc, then the disc itself, brushed round and round
-  let halo = '';
-  for (let i = 0; i < 42; i++) {
-    const a = (i / 42) * Math.PI * 2;
-    halo += touch(60 + Math.cos(a) * 31.6, 60 + Math.sin(a) * 31.6, 5, 2.2, (a * 180) / Math.PI + 90);
-  }
-  paint(dr, halo, '#f8cf6a');
-  const disc = roundish(60, 60, 29, 29, rnd, { wobble: 0.012, tremor: 0.3, count: 36 });
-  paint(dr, outline(disc), SUN.base);
-  within(dr, outline(disc), () => {
-    let swirl = '';
-    for (let i = 0; i < 26; i++) {
-      const r = 6 + rnd() * 20;
-      const a = rnd() * Math.PI * 2;
-      const pts: Pt[] = [0, 0.5, 1].map((t): Pt => [60 + Math.cos(a + t * 0.7) * r, 60 + Math.sin(a + t * 0.7) * r]);
-      swirl += brush(pts, 1.4 + rnd(), rnd, { start: 0.3, end: 0.1, peak: 0.5, count: 6 });
-    }
-    paint(dr, swirl, SUN.light, 0.5);
-    let dots = '';
-    for (let i = 0; i < 21; i++) {
-      const a = (i / 21) * Math.PI * 2 - Math.PI / 2;
-      dots += ellipse(60 + Math.cos(a) * 23.4, 60 + Math.sin(a) * 23.4, 1.3, 1.3);
-    }
-    paint(dr, dots, '#e98b2e');
-    band(dr, roundish(60, 60, 20, 20, rnd, { count: 24, tremor: 0.2 }), roundish(60, 60, 18.4, 18.4, rnd, { count: 24, tremor: 0.2 }), '#fbe1a0');
+  layer(dr, 'back', () => paint(dr, back, '#d65a2e'));
+  layer(dr, 'long', () => {
+    paint(dr, long, '#e98b2e');
+    paint(dr, lit, '#f6c55a', 0.85);
   });
-  side(dr, disc, -2.8, -2.8, SUN.shade, { grow: 0.99 });
-  side(dr, disc, 2.4, 2.4, SUN.light, { grow: 0.98 });
+  // a ring of warm dabs round the disc, then the disc itself, brushed round and round
+  const disc = roundish(60, 60, 29, 29, rnd, { wobble: 0.012, tremor: 0.3, count: 36 });
+  layer(dr, 'disc', () => {
+    let halo = '';
+    for (let i = 0; i < 42; i++) {
+      const a = (i / 42) * Math.PI * 2;
+      halo += touch(60 + Math.cos(a) * 31.6, 60 + Math.sin(a) * 31.6, 5, 2.2, (a * 180) / Math.PI + 90);
+    }
+    paint(dr, halo, '#f8cf6a');
+    paint(dr, outline(disc), SUN.base);
+  });
+  // the brushwork on its face is cut to a round inside the disc, so it can churn slowly about the middle
+  layer(dr, 'swirl', () => {
+    within(dr, ellipse(60, 60, 27, 27), () => {
+      let swirl = '';
+      for (let i = 0; i < 26; i++) {
+        const r = 6 + rnd() * 20;
+        const a = rnd() * Math.PI * 2;
+        const pts: Pt[] = [0, 0.5, 1].map((t): Pt => [60 + Math.cos(a + t * 0.7) * r, 60 + Math.sin(a + t * 0.7) * r]);
+        swirl += brush(pts, 1.4 + rnd(), rnd, { start: 0.3, end: 0.1, peak: 0.5, count: 6 });
+      }
+      paint(dr, swirl, SUN.light, 0.5);
+    });
+  });
+  layer(dr, 'face', () => {
+    within(dr, outline(disc), () => {
+      let dots = '';
+      for (let i = 0; i < 21; i++) {
+        const a = (i / 21) * Math.PI * 2 - Math.PI / 2;
+        dots += ellipse(60 + Math.cos(a) * 23.4, 60 + Math.sin(a) * 23.4, 1.3, 1.3);
+      }
+      paint(dr, dots, '#e98b2e');
+      band(dr, roundish(60, 60, 20, 20, rnd, { count: 24, tremor: 0.2 }), roundish(60, 60, 18.4, 18.4, rnd, { count: 24, tremor: 0.2 }), '#fbe1a0');
+    });
+    side(dr, disc, -2.8, -2.8, SUN.shade, { grow: 0.99 });
+    side(dr, disc, 2.4, 2.4, SUN.light, { grow: 0.98 });
+  });
 }
