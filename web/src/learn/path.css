@@ -114,6 +114,9 @@
   --lp-gold-ink: #3a2a00;
   /* The bar's unfilled track over the stop to do now, and the round still to play in a card (as the phone's coursemap/path.ts). */
   --lp-track: #2e3c43;
+  /* A sealed stop's red wax, its face and its shade (@kurda/shared PATH_WAX), for a seal far off drawn plain. */
+  --lp-wax: #8a2b24;
+  --lp-wax-lip: #55140d;
   --node: 72px;
 }
 :root[data-theme='light'] .lp {
@@ -123,6 +126,8 @@
   --lp-line: rgba(23, 36, 43, 0.16);
   --lp-gold-lip: #b07f00;
   --lp-track: #d6dfe3;
+  --lp-wax: #8c2c25;
+  --lp-wax-lip: #5a160f;
 }
 
 /* ---- the top of the page ---------------------------------------------------- */
@@ -837,6 +842,10 @@ button.lp-scard:focus-visible {
   background: var(--u-fill);
   box-shadow: 0 6px 0 var(--u-lip);
 }
+.lp-node.is-stamped:not(.is-drawn) .lp-node-face {
+  background: var(--lp-wax);
+  box-shadow: 0 3px 0 var(--lp-wax-lip);
+}
 .lp-node-glyph {
   position: absolute;
   inset-inline: 0;
@@ -865,9 +874,8 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * The glyph in the unit's ink on its own colour. A finished stop is sealed under its wax, the glyph with it; in the
- * sealing moment it goes as the stamp comes down, under the wax already poured over it (shared PATH_STAMP_MOMENT:
- * pressed halfway through 1300ms).
+ * The glyph in the unit's ink on its own colour. A finished stop is a wax seal, its tile and glyph gone; in the sealing
+ * moment the glyph goes as its tile melts under the wax (shared PATH_STAMP_MOMENT `melt`, timed by CoursePath.tsx).
  */
 .lp-node.is-current .lp-node-glyph,
 .lp-node.is-available .lp-node-glyph,
@@ -879,7 +887,14 @@ button.lp-scard:focus-visible {
   opacity: 0;
 }
 .lp-node.is-stamping .lp-node-glyph > :not(.lp-node-badge) {
-  animation: lp-glyph-out 120ms linear var(--stamp-press, 650ms) both;
+  animation: lp-glyph-out var(--stamp-melt-ms, 200ms) linear var(--stamp-melt, 180ms) both;
+}
+/* A sealed stop shows its seal in its tile's place, and a refresh's sign over it. */
+.lp-node.is-stamped .lp-art {
+  visibility: hidden;
+}
+.lp-node.is-stamped .lp-node-glyph {
+  z-index: 1;
 }
 @keyframes lp-glyph-out {
   to {
@@ -957,12 +972,11 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * A finished tile sealed in wax (PathScene.tsx `TileWax`, shared `pathWaxSvg`), on the tile's own 112-point canvas laid
- * as its drawing is. In its moment the drop, the poured wax, the pressed seal and the brass stamp move apart: the drop
- * landing on the tile's middle (56, 72 of the canvas, shared PATH_WAX_DROP) and its droplets thrown out from there, the
- * pour spreading from the face's (56, 58); the stamp on its 78 by 87 canvas (shared PATH_STAMP_TOOL) from -3, -44 of the
- * stop. A gold tile's glint and the stamp's shadow are cut to its face, a rounded square 72 by 60 from 20, 28 of the
- * canvas.
+ * A finished stop's round wax seal (PathScene.tsx `WaxSeal`, shared `pathWaxSvg`), on its tile's 112-point canvas laid as
+ * the tile's drawing is. In its moment the drop, the poured disc, the pressed face and the brass stamp move apart: the
+ * drop landing on the seal's middle (56, 61 of the canvas, shared PATH_SEAL) with its droplets thrown out from there, and
+ * the disc spreading from it; the stamp, body and die, on its 78 by 87 canvas (shared PATH_STAMP_TOOL) from -3, -44 of
+ * the stop. A gold seal's glint and the stamp's shadow are cut to its face, a circle 72 across from 20, 25 of the canvas.
  */
 .lp-wax {
   position: absolute;
@@ -978,12 +992,11 @@ button.lp-scard:focus-visible {
   display: block;
   line-height: 0;
 }
-.lp-wax-pour {
-  transform-origin: 56px 58px;
-}
+.lp-wax-pour,
 .lp-wax-blob {
-  transform-origin: 56px 72px;
+  transform-origin: 56px 61px;
 }
+/* The stamp leans about its die's foot; its die opens out from where it hangs (shared PATH_STAMP_TOOL `die`). */
 .lp-wax-tool {
   position: absolute;
   z-index: 1;
@@ -992,22 +1005,31 @@ button.lp-scard:focus-visible {
   width: 78px;
   height: 87px;
   line-height: 0;
+  transform-origin: 50% 92%;
 }
-/* The tile's face, which a gold tile's glint crosses and the stamp's shadow falls on, cut to it. */
+.lp-wax-tool-part {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.lp-wax-die {
+  transform-origin: 50% 85.34%;
+}
+/* The seal's face, which a gold seal's glint crosses and the stamp's shadow falls on, cut to it. */
 .lp-wax-face {
   position: absolute;
   left: 20px;
-  top: 28px;
+  top: 25px;
   width: 72px;
-  height: 60px;
-  border-radius: 18px;
+  height: 72px;
+  border-radius: 50%;
   overflow: hidden;
 }
-/* Dark, flat and soft at its edge for being faint; under the stamp's pad, a little below the face's middle. */
+/* Dark, flat and soft at its edge for being faint; under the stamp's pad, a little below the seal's middle. */
 .lp-wax-shadow {
   position: absolute;
   left: 4px;
-  top: 34px;
+  top: 37px;
   width: 64px;
   height: 12px;
   border-radius: 50%;
@@ -1030,19 +1052,16 @@ button.lp-scard:focus-visible {
   z-index: 6;
 }
 
-/* A topic card's three stars: gold for each round played, the bar's quiet track for the rest. */
-.lp-star-row {
+/* A topic card's three suns: gold for each round played, the bar's quiet track for the rest. */
+.lp-sun-row {
   display: inline-flex;
   gap: 4px;
 }
-.lp-star-row path {
+.lp-sun-row path {
   fill: var(--lp-track);
-  stroke-linejoin: round;
 }
-.lp-star-row path.is-won {
+.lp-sun-row path.is-won {
   fill: var(--gold);
-  stroke: rgb(58 35 6 / 0.35);
-  stroke-width: 1.2;
 }
 
 /*
@@ -1926,21 +1945,21 @@ button.lp-scard:focus-visible {
   font-size: var(--text);
   color: var(--ink-3);
 }
-/* A finished topic's card: its waxed tile with one, two and three stars pressed in, the last gold. */
+/* A finished topic's card: its seal with one, two and three suns pressed in, the last gold. */
 .lp-wax-legend {
   display: flex;
   gap: var(--space-2);
 }
-/* The tile is about 26 points across in the middle of its 40-point drawing; only the tile shows. */
+/* The seal is about 26 points across round 20, 22 of its 40-point drawing; only the seal and its shadow show. */
 .lp-wax-icon {
   display: block;
   width: 30px;
-  height: 32px;
+  height: 31px;
   overflow: hidden;
   line-height: 0;
 }
 .lp-wax-icon svg {
-  margin: -7px 0 0 -5px;
+  margin: -8px 0 0 -6px;
 }
 .lp-pop-progress {
   display: grid;

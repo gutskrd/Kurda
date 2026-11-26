@@ -120,7 +120,7 @@ interface Return {
  * drawn and nothing waits.
  *
  * Returning from a lesson, the path animates the changes before moving on (shared `PATH_RETURN`): rings fill,
- * topics turn gold and earn stars, padlocks open and prizes burst, then the bubble, page and Hevalo move to the
+ * topics become their wax seals and earn suns, padlocks open and prizes burst, then the bubble, page and Hevalo move to the
  * new current skill. Until then the focus stays where the learner was. Under Reduce Motion the path is drawn
  * as it now is.
  */

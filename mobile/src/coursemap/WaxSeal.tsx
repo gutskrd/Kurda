@@ -7,32 +7,31 @@ import {
   PATH_STAMP_REPRESS,
   PATH_STAMP_SHADOW,
   PATH_STAMP_TOOL,
+  PATH_SEAL,
   PATH_STOP_ART,
-  PATH_WAX_DROP,
   PATH_WAX_GOLD,
   pathStampToolSvg,
   pathWaxSvg,
   sampleKeys,
   waxGlintAt,
-  type UnitTone,
 } from '@kurda/shared';
 import { radii } from '../theme/tokens';
 import { STOP_FACE } from './PathWorld';
 
 /**
- * A finished stop's tile sealed in wax (shared `pathWaxSvg`) with a star pressed in it for each full round, as on the
- * website: a deeper tone of its unit's colour, gold once it has all three stars, and dulled where a refresh would help.
- * With `moment` running from 0 to 1 (SkillNodeView times it), the first sealing plays (shared `PATH_STAMP_MOMENT`): a big
- * drop of wax falls onto the tile and splashes, the wax flows out over it, and the brass stamp presses the whole tile and
- * lifts away, its stars pressed in. With `again`, a round later, the stamp presses again (shared `PATH_STAMP_REPRESS`),
- * the `from` stars giving way to `stars`. `warmAt` turns the wax gold, that long from now and once the stamp has lifted,
- * with one glint (shared `PATH_WAX_GOLD`); a gold tile glints again now and then while `live`. Decorative.
+ * A finished stop's round wax seal (shared `pathWaxSvg`) in its tile's place, a sun pressed in it for each full round, as
+ * on the website: deep red, gold once it has all three suns, and matte and dulled where a refresh would help. With
+ * `moment` running from 0 to 1 (SkillNodeView times it and melts the tile), the first sealing plays (shared
+ * `PATH_STAMP_MOMENT`): a big drop of red wax falls onto the tile and splashes, the wax flows out round as the tile melts
+ * under it, and the brass stamp presses the seal and lifts away, its sun pressed in. With `again`, a round later, the
+ * stamp presses again (shared `PATH_STAMP_REPRESS`), the `from` suns giving way to `suns`. `warmAt` turns the wax gold,
+ * that long from now and once the stamp has lifted, with one glint (shared `PATH_WAX_GOLD`); a gold seal glints again
+ * now and then while `live`. Decorative.
  */
-export function TileWax({
+export function WaxSeal({
   stopKey,
-  tone,
   dark,
-  stars,
+  suns,
   gold,
   warmAt,
   worn,
@@ -41,18 +40,17 @@ export function TileWax({
   again = null,
 }: {
   stopKey: string;
-  tone: UnitTone;
   dark: boolean;
-  /** The stars pressed in it, one for each full round. */
-  stars: number;
+  /** The suns pressed in it, one for each full round. */
+  suns: number;
   gold: boolean;
-  /** Its third star is being pressed in: the stamp lifts and the wax warms into gold this many ms from now. */
+  /** Its third sun is being pressed in: the stamp lifts and the wax warms into gold this many ms from now. */
   warmAt: number | null;
   worn: boolean;
   /** Its unit is in view, the app in front, and motion welcome. */
   live: boolean;
   moment: Animated.Value | null;
-  /** A round later: the stamp pressing again, and the stars it had before. */
+  /** A round later: the stamp pressing again, and the suns it had before. */
   again?: { t: Animated.Value; from: number } | null;
 }): React.JSX.Element {
   const pressing = !!moment;
@@ -60,19 +58,20 @@ export function TileWax({
   const moving = pressing || pressed;
   const xml = useMemo(() => {
     const wax = (part: 'whole' | 'pour' | 'seal', count: number, golden = false): string =>
-      pathWaxSvg({ tone, seed: stopKey, gold: golden, worn, stars: count, part, dark });
+      pathWaxSvg({ seed: stopKey, gold: golden, worn, suns: count, part, dark });
     return {
-      coat: moving ? null : wax('whole', stars),
-      gold: gold ? wax('whole', stars, true) : null,
-      pour: moving ? wax('pour', stars) : null,
-      seal: moving ? wax('seal', stars) : null,
+      coat: moving ? null : wax('whole', suns),
+      gold: gold ? wax('whole', suns, true) : null,
+      pour: moving ? wax('pour', suns) : null,
+      seal: moving ? wax('seal', suns) : null,
       was: again ? wax('seal', again.from) : null,
-      blob: pressing ? pathWaxSvg({ tone, part: 'blob', dark }) : null,
-      splash: pressing ? pathWaxSvg({ tone, part: 'splash', dark }) : null,
-      tool: moving ? pathStampToolSvg({ dark, stars }) : null,
+      blob: pressing ? pathWaxSvg({ part: 'blob', dark }) : null,
+      splash: pressing ? pathWaxSvg({ part: 'splash', dark }) : null,
+      tool: moving ? pathStampToolSvg({ dark, suns, part: 'body' }) : null,
+      die: moving ? pathStampToolSvg({ dark, suns, part: 'die' }) : null,
     };
-  }, [tone, stopKey, worn, dark, gold, stars, moving, pressing, again]);
-  // The wax warming into gold, once the stamp has lifted from its third star.
+  }, [stopKey, worn, dark, gold, suns, moving, pressing, again]);
+  // The wax warming into gold, once the stamp has lifted from its third sun.
   const warm = useRef(new Animated.Value(warmAt === null ? 1 : 0)).current;
   useEffect(() => {
     if (warmAt === null) {
@@ -90,12 +89,12 @@ export function TileWax({
   const t = moment ?? again?.t ?? null;
   const m = pressing ? PATH_STAMP_MOMENT : PATH_STAMP_REPRESS;
   const shadow = pressing ? PATH_STAMP_SHADOW : PATH_REPRESS_SHADOW;
-  // The stars pressed in show from the press, under the stamp; a round later the ones before give way then.
+  // The suns pressed in show from the press, under the stamp; a round later the ones before give way then.
   const shownFrom = [[0, 0], [m.pressAt, 0], [m.pressAt + 0.01, 1], [1, 1]] as const;
   const { blobY, blobShown, splat, splash, splashShown, flow, poured } = PATH_STAMP_MOMENT;
   return (
-    <View style={styles.wax} pointerEvents="none" aria-hidden testID={moving ? 'lp-wax-pressing' : `lp-wax-${stars}${gold ? '-gold' : ''}`}>
-      {t && xml.pour && xml.seal && xml.tool ? (
+    <View style={styles.wax} pointerEvents="none" aria-hidden testID={moving ? 'lp-wax-pressing' : `lp-wax-${suns}${gold ? '-gold' : ''}`}>
+      {t && xml.pour && xml.seal && xml.tool && xml.die ? (
         <>
           {pressing ? (
             <Animated.View
@@ -143,12 +142,21 @@ export function TileWax({
               </Animated.View>
             </>
           ) : null}
-          {/* The stamp's shadow on the tile's face, under the stamp. */}
+          {/* The stamp's shadow on the seal's face, under the stamp. */}
           <View style={styles.face}>
             <Animated.View style={[styles.shadow, { opacity: stampTrack(t, shadow.shown), transform: [{ scale: stampTrack(t, shadow.size) }] }]} />
           </View>
-          <Animated.View style={[styles.tool, { opacity: stampTrack(t, m.toolShown), transform: [{ translateY: stampTrack(t, m.toolY) }] }]}>
+          {/* The stamp leans about its die's foot, and its die opens out from where it hangs as it lifts. */}
+          <Animated.View
+            style={[
+              styles.tool,
+              { opacity: stampTrack(t, m.toolShown), transform: [{ translateY: stampTrack(t, m.toolY) }, { rotate: stampTrack(t, m.tilt).interpolate(DEGREES) }] },
+            ]}
+          >
             <SvgXml xml={xml.tool} width={PATH_STAMP_TOOL.w} height={PATH_STAMP_TOOL.h} />
+            <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: DIE_ORIGIN, transform: [{ scaleY: stampTrack(t, m.dieOpen) }] }]}>
+              <SvgXml xml={xml.die} width={PATH_STAMP_TOOL.w} height={PATH_STAMP_TOOL.h} />
+            </Animated.View>
           </Animated.View>
         </>
       ) : xml.coat ? (
@@ -161,8 +169,8 @@ export function TileWax({
 }
 
 /**
- * A pale band crossing a gold tile now and then (shared `PATH_WAX_GOLD`), each stop at its own time; just after it has
- * warmed into gold, the first one follows at once. Clipped to the tile's face.
+ * A pale band crossing a gold seal now and then (shared `PATH_WAX_GOLD`), each stop at its own time; just after it has
+ * warmed into gold, the first one follows at once. Clipped to the seal's face.
  */
 function WaxGlint({ stopKey, warmAt }: { stopKey: string; warmAt: number | null }): React.JSX.Element {
   const across = useRef(new Animated.Value(0)).current;
@@ -204,10 +212,13 @@ export function stampTrack(t: Animated.Value, keys: readonly (readonly [number, 
 }
 const SAMPLES = 40;
 
-/** Where the pour spreads from (the face's middle) and the drop lands and splashes (shared PATH_WAX_DROP), on the tile's canvas. */
-const POUR_ORIGIN = `${(PATH_STOP_ART.cx / PATH_STOP_ART.box) * 100}% ${(PATH_STOP_ART.cy / PATH_STOP_ART.box) * 100}%`;
-const BLOB_ORIGIN = `${(PATH_STOP_ART.cx / PATH_STOP_ART.box) * 100}% ${((PATH_STOP_ART.cy + PATH_WAX_DROP.foot) / PATH_STOP_ART.box) * 100}%`;
-/** How far a glint's band travels either side of the tile's middle, past its wax. */
+/** Where the drop lands and splashes and the poured disc spreads from: the seal's middle (shared PATH_SEAL), on the tile's canvas. */
+const POUR_ORIGIN = `${(PATH_SEAL.cx / PATH_STOP_ART.box) * 100}% ${(PATH_SEAL.cy / PATH_STOP_ART.box) * 100}%`;
+const BLOB_ORIGIN = POUR_ORIGIN;
+/** Where the die hangs from on the stamp's canvas, which it opens out from; and a lean in degrees as a rotation. */
+const DIE_ORIGIN = `50% ${PATH_STAMP_TOOL.die * 100}%`;
+const DEGREES = { inputRange: [-90, 90], outputRange: ['-90deg', '90deg'] };
+/** How far a glint's band travels either side of the seal's middle, past its wax. */
 const GLINT_REACH = 52;
 
 const styles = StyleSheet.create({
@@ -220,24 +231,25 @@ const styles = StyleSheet.create({
     top: PATH_STAMP_TOOL.y - (STOP_FACE.y - PATH_STOP_ART.cy),
     width: PATH_STAMP_TOOL.w,
     height: PATH_STAMP_TOOL.h,
+    transformOrigin: '50% 92%',
   },
-  // The tile's face, a rounded square 72 by 60 on its canvas, which a glint crosses and the stamp's shadow falls on.
+  // The seal's face, a circle on the tile's canvas, which a glint crosses and the stamp's shadow falls on.
   face: {
     position: 'absolute',
-    left: PATH_STOP_ART.cx - PATH_STOP_ART.rx,
-    top: PATH_STOP_ART.cy - PATH_STOP_ART.ry,
-    width: 2 * PATH_STOP_ART.rx,
-    height: 2 * PATH_STOP_ART.ry,
-    borderRadius: radii.lg,
+    left: PATH_SEAL.cx - PATH_SEAL.r,
+    top: PATH_SEAL.cy - PATH_SEAL.r,
+    width: 2 * PATH_SEAL.r,
+    height: 2 * PATH_SEAL.r,
+    borderRadius: radii.pill,
     overflow: 'hidden',
   },
-  // Under the stamp's pad, a little below the face's middle.
-  shadow: { position: 'absolute', left: 4, top: 34, width: 64, height: 12, borderRadius: radii.pill, backgroundColor: '#05080a', opacity: 0 },
+  // Under the stamp's pad, a little below the seal's middle.
+  shadow: { position: 'absolute', left: 4, top: 37, width: 64, height: 12, borderRadius: radii.pill, backgroundColor: '#05080a', opacity: 0 },
   band: {
     position: 'absolute',
     top: -14,
     bottom: -14,
-    left: PATH_STOP_ART.rx - PATH_WAX_GOLD.band / 2,
+    left: PATH_SEAL.r - PATH_WAX_GOLD.band / 2,
     width: PATH_WAX_GOLD.band,
     backgroundColor: 'rgba(255, 255, 255, 0.42)',
   },

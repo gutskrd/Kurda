@@ -306,14 +306,16 @@ export const PATH_PIGEON_FLIGHT = {
 };
 
 /**
- * The moment a finished stop is sealed in wax, the first time the learner comes back to the road after finishing it: a
- * big drop of wax falls onto the tile and lands with a splash, the wax flows out over the tile to its poured lip, the
- * brass stamp comes in over it, draws up, presses the whole tile so it squashes and the wax spreads, and lifts away,
- * overshooting a little, to show the star pressed in it. Each track runs from 0 to 1 of `ms`: `blob` the falling
- * drop's height over the tile in points, its opacity and `splat` its height as it lands (its width the other way);
- * `splash` the droplets it throws out, their spread and opacity; `flow` the poured wax's size (with its opacity,
- * `poured`); `tool` the stamp's height and opacity; `squash` the tile's height (1 as drawn); `seal` the pressed
- * stars' opacity. A phone taps at `pressAt`.
+ * The moment a finished stop becomes its wax seal, the first time the learner comes back to the road after finishing it:
+ * a big drop of red wax falls onto the tile and lands with a splash, the tile melts under it as the wax flows out round
+ * into the seal's poured disc, and the brass stamp comes in over it, draws up, presses the seal so it squashes and the wax
+ * spreads, and lifts away, overshooting a little, to show the sun pressed in it. Each track runs from 0 to 1 of `ms`:
+ * `blob` the falling drop's height over the tile in points, its opacity and `splat` its height as it lands (its width
+ * the other way); `splash` the droplets it throws out, their spread and opacity; `melt` the tile melting away (0 as it
+ * stands, 1 gone); `flow` the poured disc's size (with its opacity, `poured`); `tool` the stamp's height and opacity,
+ * `tilt` its lean in degrees (it comes in leaning, presses straight and rocks a little as it lifts), and `dieOpen` how
+ * far its die opens out to show its face (1 as drawn, edge on as it presses, open for a beat as it rises); `squash` the
+ * stop's height (1 as drawn). The suns show from `pressAt`, under the stamp, and a phone taps then.
  */
 export const PATH_STAMP_MOMENT = {
   ms: PATH_RETURN.stampMs,
@@ -326,31 +328,36 @@ export const PATH_STAMP_MOMENT = {
   splashShown: [[0, 0], [0.13, 0], [0.14, 1], [0.2, 0.8], [0.26, 0], [1, 0]],
   flow: [[0, 0.3], [0.14, 0.3], [0.27, 0.97], [0.31, 1.02], [0.36, 1], [0.5, 1], [0.53, 1.035], [0.64, 1], [1, 1]],
   poured: [[0, 0], [0.14, 0], [0.16, 1], [1, 1]],
+  // The tile slumps and goes as the wax spreads over it, gone well before the stamp comes.
+  melt: [[0, 0], [0.14, 0], [0.3, 1], [1, 1]],
   // In and down, up a little to gather itself, then down hard, held, and off with a little too much spring.
   toolY: [[0, -50], [0.26, -50], [0.36, -30], [0.44, -40], [0.465, -34], [0.485, -20], [0.5, 0], [0.58, 0], [0.7, -52], [0.78, -46], [1, -46]],
   toolShown: [[0, 0], [0.26, 0], [0.32, 1], [0.82, 1], [0.9, 0], [1, 0]],
+  tilt: [[0, -8], [0.26, -8], [0.38, -1.5], [0.44, 0], [0.6, 0], [0.68, 2.2], [0.76, -0.8], [0.84, 0], [1, 0]],
+  dieOpen: [[0, 1.6], [0.3, 1.6], [0.44, 1.15], [0.5, 1], [0.58, 1], [0.66, 2.6], [0.8, 2.6], [0.9, 1.6], [1, 1.6]],
   squash: [[0, 1], [0.5, 1], [0.525, 0.86], [0.6, 1.05], [0.68, 0.98], [0.75, 1]],
-  sealShown: [[0, 0], [0.5, 0], [0.51, 1], [1, 1]],
 } as const satisfies Record<MomentTrack, readonly (readonly [number, number])[]> & { ms: number; pressAt: number };
 
 /** The tracks of the sealing moment. */
-type MomentTrack = 'blobY' | 'blobShown' | 'splat' | 'splash' | 'splashShown' | 'flow' | 'poured' | 'toolY' | 'toolShown' | 'squash' | 'sealShown';
+type MomentTrack = 'blobY' | 'blobShown' | 'splat' | 'splash' | 'splashShown' | 'melt' | 'flow' | 'poured' | 'toolY' | 'toolShown' | 'tilt' | 'dieOpen' | 'squash';
 
 /**
- * A round later, the stamp pressing a sealed tile's wax again, so the new star is pressed in beside the others: it comes
- * in over the tile, draws up, presses down hard as the tile squashes a little, and lifts away; at `pressAt` the stars
- * pressed in are the new count. The tracks are as `PATH_STAMP_MOMENT`'s, over `ms`.
+ * A round later, the stamp pressing a seal again, so the new sun is pressed in beside the others: it comes in over the
+ * seal, draws up, presses down hard as the seal squashes a little, and lifts away; at `pressAt` the suns pressed in are
+ * the new count. The tracks are as `PATH_STAMP_MOMENT`'s, over `ms`.
  */
 export const PATH_STAMP_REPRESS = {
   ms: 900,
   pressAt: 0.42,
   toolY: [[0, -50], [0.2, -30], [0.32, -40], [0.36, -34], [0.39, -20], [0.42, 0], [0.52, 0], [0.68, -52], [0.78, -46], [1, -46]],
   toolShown: [[0, 0], [0.12, 1], [0.8, 1], [0.92, 0], [1, 0]],
+  tilt: [[0, -8], [0.2, -1.5], [0.3, 0], [0.52, 0], [0.6, 2.2], [0.68, -0.8], [0.76, 0], [1, 0]],
+  dieOpen: [[0, 1.6], [0.3, 1.15], [0.42, 1], [0.52, 1], [0.6, 2.6], [0.74, 2.6], [0.84, 1.6], [1, 1.6]],
   squash: [[0, 1], [0.42, 1], [0.45, 0.92], [0.53, 1.03], [0.62, 1]],
-} as const satisfies Record<'toolY' | 'toolShown' | 'squash', readonly (readonly [number, number])[]> & { ms: number; pressAt: number };
+} as const satisfies Record<'toolY' | 'toolShown' | 'tilt' | 'dieOpen' | 'squash', readonly (readonly [number, number])[]> & { ms: number; pressAt: number };
 
 /**
- * The stamp's shadow on the tile through a moment, from how high the stamp is: faint and wide while it hovers, darker
+ * The stamp's shadow on the seal through a moment, from how high the stamp is: faint and wide while it hovers, darker
  * and smaller as it comes down, `shown` its opacity and `size` its scale.
  */
 export function stampShadow(moment: { toolY: Keys; toolShown: Keys }): { shown: Array<[number, number]>; size: Array<[number, number]> } {
@@ -369,14 +376,14 @@ export const PATH_STAMP_SHADOW = stampShadow(PATH_STAMP_MOMENT);
 export const PATH_REPRESS_SHADOW = stampShadow(PATH_STAMP_REPRESS);
 
 /**
- * A topic's waxed tile turning gold as its third star is pressed in: once the stamp has lifted away, `afterMs` after its
- * press ends, the wax warms from its colour into gold over `warmMs`, and one glint crosses it over `glintMs`. A gold tile in view glints again
- * every `everyMs`, each stop at its own time (`waxGlintAt`): a pale band `band` points wide, leaning `tilt` degrees.
- * Under Reduce Motion it is simply gold, and still.
+ * A topic's seal turning gold as its third sun is pressed in: once the stamp has lifted away, `afterMs` after its press
+ * ends, the wax warms from red into gold over `warmMs`, and one glint crosses it over `glintMs`. A gold seal in view
+ * glints again every `everyMs`, each stop at its own time (`waxGlintAt`): a pale band `band` points wide, leaning `tilt`
+ * degrees. Under Reduce Motion it is simply gold, and still.
  */
 export const PATH_WAX_GOLD = { afterMs: 120, warmMs: 650, glintMs: 1400, everyMs: 9000, band: 9, tilt: 24 } as const;
 
-/** How far into its round of glints a stop's gold tile starts, in ms, so the gold tiles down a road glint at their own times. */
+/** How far into its round of glints a stop's gold seal starts, in ms, so the gold seals down a road glint at their own times. */
 export function waxGlintAt(stopKey: string): number {
   return Math.floor(seeded(`glint|${stopKey}`)() * PATH_WAX_GOLD.everyMs);
 }

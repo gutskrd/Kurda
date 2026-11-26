@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PATH_BAR, TOPIC_STARS, barPieces, nextInRound, starPath, topicRounds, waxStars } from './lesson-rounds.js';
+import { PATH_BAR, SUN_RAYS, TOPIC_STARS, barPieces, nextInRound, sealSuns, sunPath, topicRounds } from './lesson-rounds.js';
 
 describe('a topic’s rounds', () => {
   it('fills a piece of the first round for each lesson finished once', () => {
@@ -71,41 +71,41 @@ describe('the bar over a topic’s stop', () => {
   });
 });
 
-describe('a topic’s stars', () => {
-  it('presses one star into the wax for each full round, at least one and no more than three', () => {
-    expect([0, 1, 2, 3, 7].map((r) => waxStars(r).length)).toEqual([1, 1, 2, 3, 3]);
+describe('a topic’s suns', () => {
+  it('presses one sun into the seal for each full round, at least one and no more than three', () => {
+    expect([0, 1, 2, 3, 7].map((r) => sealSuns(r).length)).toEqual([1, 1, 2, 3, 3]);
     expect(TOPIC_STARS).toBe(3);
   });
 
-  it('lays them across the tile’s face: one large in the middle, two side by side, three with the middle one higher', () => {
-    // on the tile's face, a rounded square 72 by 60 round its middle at 36, 30 (its corners about a cubic's curve), with a
-    // point to spare
-    const onFace = (x: number, y: number): boolean => Math.abs((x - 36) / 35) ** 3 + Math.abs((y - 30) / 29) ** 3 < 1;
-    // a star's corners: its five points, and how far its arms reach across and its feet down
-    const corners = (s: { x: number; y: number; r: number }): Array<[number, number]> =>
-      [0, 1, 2, 3, 4].map((k): [number, number] => [s.x + s.r * Math.sin((k * 2 * Math.PI) / 5), s.y - s.r * Math.cos((k * 2 * Math.PI) / 5)]);
+  it('lays them in the seal’s field: one large in the middle, two side by side, three with the middle one higher', () => {
+    // inside the fine line ringing the field, at six tenths of the seal's radius
     for (const rounds of [1, 2, 3]) {
-      const stars = waxStars(rounds);
-      for (const s of stars) for (const [x, y] of corners(s)) expect(onFace(x, y), `${rounds}`).toBe(true);
-      // side by side, apart, the outer ones level and the same size, the one star largest
-      for (let i = 1; i < stars.length; i++) expect(stars[i]!.x - stars[i - 1]!.x).toBeGreaterThan(stars[i]!.r + stars[i - 1]!.r - 6);
-      expect(stars[0]!.y).toBe(stars[stars.length - 1]!.y);
-      expect(stars[0]!.r).toBe(stars[stars.length - 1]!.r);
+      const suns = sealSuns(rounds);
+      for (const s of suns) expect(Math.hypot(s.x, s.y) + s.r, `${rounds}`).toBeLessThan(0.6);
+      // side by side and apart, the outer ones level and the same size
+      const apart = (i: number): number => Math.hypot(suns[i]!.x - suns[i - 1]!.x, suns[i]!.y - suns[i - 1]!.y);
+      for (let i = 1; i < suns.length; i++) expect(apart(i)).toBeGreaterThan(suns[i]!.r + suns[i - 1]!.r - 0.02);
+      expect(suns[0]!.y).toBe(suns[suns.length - 1]!.y);
+      expect(suns[0]!.r).toBe(suns[suns.length - 1]!.r);
     }
-    expect(waxStars(1)[0]!.r).toBeGreaterThan(waxStars(2)[0]!.r);
-    expect(waxStars(2)[0]!.r).toBeGreaterThan(waxStars(3)[0]!.r);
+    expect(sealSuns(1)[0]!.r).toBeGreaterThan(sealSuns(2)[0]!.r);
+    expect(sealSuns(2)[0]!.r).toBeGreaterThan(sealSuns(3)[0]!.r);
     // the crown: the middle of three a little higher than the others, and centred
-    const [l, m, r] = waxStars(3);
+    const [l, m, r] = sealSuns(3);
     expect(m!.y).toBeLessThan(l!.y);
-    expect(m!.x).toBe(36);
-    expect(l!.x + r!.x).toBe(72);
+    expect(m!.x).toBe(0);
+    expect(l!.x + r!.x).toBe(0);
   });
 
-  it('draws a star as ten corners, point up', () => {
-    const d = starPath(36, 30, 10);
-    expect(d.match(/[ML]/g)).toHaveLength(10);
-    expect(d.startsWith('M36 20')).toBe(true);
-    expect(d.endsWith('Z')).toBe(true);
+  it('draws the Kurdish sun: a round middle and twenty-one pointed rays, the first straight up, or fewer when asked', () => {
+    expect(SUN_RAYS).toBe(21);
+    const d = sunPath(36, 30, 10);
+    // its middle, two arcs, then a three-cornered ray for each
+    expect(d.match(/A/g)).toHaveLength(2);
+    expect(d.match(/M/g)).toHaveLength(1 + SUN_RAYS);
+    expect(d.match(/L/g)).toHaveLength(2 * SUN_RAYS);
+    expect(d).toContain('L36 20L');
+    expect(sunPath(36, 30, 10, 11).match(/M/g)).toHaveLength(12);
   });
 });
 

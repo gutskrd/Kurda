@@ -104,7 +104,7 @@ export interface SkillStop<S extends PathSkill> {
   finish: Finish | null;
   lessonsDone: number;
   lessonsTotal: number;
-  /** Full rounds of its lessons played, 0 to `TOPIC_STARS`: the stars it wears. Done once it has one. */
+  /** Full rounds of its lessons played, 0 to `TOPIC_STARS`: the suns its seal wears. Done once it has one. */
   rounds: number;
   /** Ring pieces filled of `lessonsTotal`: the finished lessons of the round in play, or all of them once every round is played. */
   pieces: number;
@@ -553,7 +553,7 @@ export interface RingAt {
   pieces: number;
 }
 
-/** A skill's ring moving on, `of` pieces round. When `to` has more rounds than `from`, the ring filled and earned a star first. */
+/** A skill's ring moving on, `of` pieces round. When `to` has more rounds than `from`, the ring filled and earned a sun first. */
 export interface RingChange {
   key: string;
   of: number;
@@ -563,7 +563,7 @@ export interface RingChange {
 
 /** What moved on the path since the snapshot, in the order it is shown (`PATH_RETURN`). */
 export interface PathChanges {
-  /** skills whose ring moved on: a piece filled, a round completed (a star), or both */
+  /** skills whose ring moved on: a piece filled, a round completed (a sun), or both */
   ring: RingChange[];
   /** skills finished since, their first round whole, so they turn gold */
   finished: string[];
@@ -607,10 +607,10 @@ export function pathChanges<S extends PathSkill>(prev: PathSnapshot | null, path
 
 /**
  * Returning to the path after a lesson, in ms from when it is drawn, alike on the phone and the website: the page settles
- * (`settleMs`); the bar over the stop fills (`ringMs`); a finished stop is sealed in wax (`finishAtMs`, over `stampMs`,
+ * (`settleMs`); the bar over the stop fills (`ringMs`); a finished stop becomes its wax seal (`finishAtMs`, over `stampMs`,
  * the stamp pressing halfway); a full bar starts its next round once it has pressed (`nextAtMs`); an opened stop pops as
  * its lock turns into its glyph (`openAtMs`, `popMs`, `glyphMs`); the bubble reaches the new current stop as the page
- * scrolls there (`bubbleAtMs`, `bubbleMs`). A round made whole on a stop already sealed is pressed in as a new star
+ * scrolls there (`bubbleAtMs`, `bubbleMs`). A round made whole on a stop already sealed is pressed in as a new sun
  * from `finishAtMs` (path-world.ts `PATH_STAMP_REPRESS`). Under Reduce Motion nothing plays.
  */
 export const PATH_RETURN = {

@@ -12,6 +12,7 @@ import {
   PATH_STAMP_REPRESS,
   PATH_STOP_ART,
   TOPIC_STARS,
+  pathWaxColours,
   type LessonKind,
   type PathStop,
   type PathStopLook,
@@ -29,7 +30,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { FACE_INK, REST, barAt, barOf, stopLook, type ToneColors } from './path';
 import { MilestoneArt, STOP_FACE, StopArt } from './PathWorld';
-import { TileWax, stampTrack } from './TileWax';
+import { WaxSeal, stampTrack } from './WaxSeal';
 import { TopicBar } from './TopicBar';
 import type { SkillNode } from './types';
 
@@ -41,7 +42,7 @@ type Stop = PathStop<SkillNode>;
 
 /**
  * What a return from a lesson changed about this stop (shared `pathChanges`, timed by `PATH_RETURN`): its bar moved
- * on (`ring`), it finished (and is sealed in wax, `TileWax`) from `wasLook`, it opened, the bubble moved here, or a unit's
+ * on (`ring`), it finished (and became its wax seal, `WaxSeal`) from `wasLook`, it opened, the bubble moved here, or a unit's
  * prize was won.
  */
 export interface StopChange {
@@ -60,8 +61,8 @@ const PULSE = 1.08;
 const PULSE_AT_MS = 700;
 
 /**
- * How a finished topic's wax shows: `pressing` plays its sealing once after `delay` (shared `PATH_STAMP_MOMENT`), a
- * light tap felt as the stamp presses, then `onStamped`; otherwise it is simply there.
+ * How a finished topic's wax seal shows: `pressing` plays its sealing once after `delay` (shared `PATH_STAMP_MOMENT`), a
+ * light tap felt as the stamp presses, then `onStamped`; otherwise it is simply there, in its tile's place.
  */
 export interface StopStamp {
   pressing: boolean;
@@ -71,7 +72,7 @@ export interface StopStamp {
 
 /**
  * One stop on the lesson path: a thick tile in its unit's colour (shared drawing) whose glyph says what its next lesson
- * is (or its number), the same tile sealed in wax once done, a slate stone with a padlock when locked, arrows for
+ * is (or its number), a round wax seal in its place once done, a slate stone with a padlock when locked, arrows for
  * review. The topic in hand wears a slim bar over its tile with one piece per lesson (TopicBar). A chapter ends at its
  * milestone, a seal on a stone drum with the chapter's number, and a jumpable unit's first stop is drawn as a gate.
  * Pressed, the face sinks into its base.
@@ -80,9 +81,9 @@ export interface StopStamp {
  * bubble of the course's own words floats above them; now and then a glint sweeps it. It bobs while the path is in
  * view, and every stop squishes under a finger. None of it moves under Reduce Motion.
  *
- * After a lesson, `change` animates what it did to the stop: the bar fills, the stop is sealed in wax (`stamp`), a
+ * After a lesson, `change` animates what it did to the stop: the bar fills, the stop becomes its wax seal (`stamp`), a
  * padlock gives way to a glyph, a prize bursts open, and the flag arrives last. Under Reduce Motion there is no
- * `change`, and the wax is simply there.
+ * `change`, and the seal is simply there.
  */
 export function SkillNodeView({
   stop,
@@ -208,7 +209,7 @@ export function SkillNodeView({
   const stamped = useRef(stamp?.onStamped);
   stamped.current = stamp?.onStamped;
   const pressDelay = stamp?.delay ?? 0;
-  // Sealed in its moment just now: with three stars, its wax warms into gold.
+  // Sealed in its moment just now: with three suns, its wax warms into gold.
   const [fresh, setFresh] = useState(false);
   useEffect(() => {
     if (!pressing) return;
@@ -242,8 +243,8 @@ export function SkillNodeView({
   const bar = near ? barOf(stop) : null;
   const moved = change?.ring && stop.kind === 'skill' ? change.ring : null;
   const roundDone = !!moved && moved.to.rounds > moved.from.rounds;
-  // A round made whole on a stop already sealed: the stamp comes back as the stop finishes and presses the new star in,
-  // felt as a light tap; until then it shows the stars it had.
+  // A round made whole on a stop already sealed: the stamp comes back as the stop finishes and presses the new sun in,
+  // felt as a light tap; until then it shows the suns it had.
   const again = useRef(new Animated.Value(0)).current;
   const three = (n: number): number => Math.min(TOPIC_STARS, Math.max(1, n));
   const pressFrom = roundDone && moved && moved.from.rounds >= 1 && !!stamp && !pressing && !reduce ? three(moved.from.rounds) : null;
@@ -262,19 +263,33 @@ export function SkillNodeView({
       clearTimeout(knock);
     };
   }, [pressFrom, again]);
-  const stars = stop.kind === 'skill' ? three(stop.rounds) : 1;
+  const suns = stop.kind === 'skill' ? three(stop.rounds) : 1;
   // Squashed under the stamp in its moment, or a little as it presses again.
   const squashOf = (t: Animated.Value, squash: readonly (readonly [number, number])[]) => ({
     transformOrigin: '50% 85%',
     transform: [{ scaleX: stampTrack(t, squash.map(([at, v]) => [at, 2 - v] as const)) }, { scaleY: stampTrack(t, squash) }],
   });
   const squashed = pressing ? squashOf(moment, PATH_STAMP_MOMENT.squash) : pressFrom !== null && pressingAgain ? squashOf(again, PATH_STAMP_REPRESS.squash) : null;
-  // Its third star pressed in now: once the stamp has lifted, the wax warms into gold. Under Reduce Motion it is simply gold.
+  // Its third sun pressed in now: once the stamp has lifted, the wax warms into gold. Under Reduce Motion it is simply gold.
   const warmAt =
-    stars < TOPIC_STARS || reduce ? null : fresh ? 0 : pressFrom !== null && pressFrom < TOPIC_STARS ? PATH_RETURN.finishAtMs + PATH_STAMP_REPRESS.ms : null;
-  // Once sealed the glyph is under the wax; in the moment it goes as the stamp presses, under the wax poured over it.
-  const { pressAt } = PATH_STAMP_MOMENT;
-  const glyphShown = pressing ? moment.interpolate({ inputRange: [0, pressAt, pressAt + 0.04, 1], outputRange: [1, 1, 0, 0] }) : stamp ? 0 : 1;
+    suns < TOPIC_STARS || reduce ? null : fresh ? 0 : pressFrom !== null && pressFrom < TOPIC_STARS ? PATH_RETURN.finishAtMs + PATH_STAMP_REPRESS.ms : null;
+  // Once sealed its tile and glyph are gone, the seal in their place; in the moment they melt under the spreading wax.
+  const sealed = !!stamp && !pressing;
+  const melt = PATH_STAMP_MOMENT.melt.map(([at, v]) => [at, 1 - v] as const);
+  const glyphShown = pressing ? stampTrack(moment, melt) : stamp ? 0 : 1;
+  const slump = (k: number): Array<readonly [number, number]> => PATH_STAMP_MOMENT.melt.map(([at, v]) => [at, 1 + k * v] as const);
+  const melting = pressing
+    ? {
+        transformOrigin: '50% 90%',
+        opacity: stampTrack(moment, melt),
+        transform: [{ scaleX: stampTrack(moment, slump(0.12)) }, { scaleY: stampTrack(moment, slump(-0.45)) }],
+      }
+    : null;
+  const tile = (drawing: React.JSX.Element): React.JSX.Element | null =>
+    sealed ? null : melting ? <Animated.View style={[StyleSheet.absoluteFill, melting]}>{drawing}</Animated.View> : drawing;
+  // Drawn plain far off: a seal in its wax, else its tile's colours.
+  const wax = pathWaxColours(scheme === 'dark', suns >= TOPIC_STARS);
+  const plain = stamp ? { face: wax.face, lip: wax.shade } : plainColour(look, tone, rest);
 
   return (
     <Animated.View style={[styles.stop, { left, top }, lifted]} pointerEvents="box-none">
@@ -297,18 +312,20 @@ export function SkillNodeView({
           />
         ) : null}
         <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: pop }, { rotate: tilt }] }, squashed]} pointerEvents="none">
-          {near ? art(look, 'base') : <View style={[styles.plainLip, { backgroundColor: plainColour(look, tone, rest).lip }]} />}
+          {near ? tile(art(look, 'base')) : <View style={[styles.plainLip, { backgroundColor: plain.lip }]} />}
           {opening && near ? (
             // The locked stone it was, over it until it opens.
             <Animated.View style={[StyleSheet.absoluteFill, { opacity: lock }]}>
               <StopArt look="locked" tone={unitTone} part="base" near />
             </Animated.View>
           ) : null}
-          {was && near ? (
-            <Animated.View style={[StyleSheet.absoluteFill, { opacity: before }]}>
-              <StopArt look={was} tone={unitTone} part="base" near />
-            </Animated.View>
-          ) : null}
+          {was && near
+            ? tile(
+                <Animated.View style={[StyleSheet.absoluteFill, { opacity: before }]}>
+                  <StopArt look={was} tone={unitTone} part="base" near />
+                </Animated.View>,
+              )
+            : null}
           {unlocking && near ? <Animated.View style={[StyleSheet.absoluteFill, { opacity: shut }]}>{art(shutLook, 'base')}</Animated.View> : null}
         </Animated.View>
         <Animated.View style={[styles.popped, { transform: [{ scale: pop }, { rotate: tilt }] }, squashed]} pointerEvents="box-none">
@@ -338,17 +355,19 @@ export function SkillNodeView({
                   </Animated.View>
                 </>
               ) : was ? (
-                <>
-                  <StopArt look={look} tone={unitTone} part="face" near />
-                  <Animated.View style={[StyleSheet.absoluteFill, { opacity: before }]}>
-                    <StopArt look={was} tone={unitTone} part="face" near />
-                  </Animated.View>
-                </>
+                tile(
+                  <>
+                    <StopArt look={look} tone={unitTone} part="face" near />
+                    <Animated.View style={[StyleSheet.absoluteFill, { opacity: before }]}>
+                      <StopArt look={was} tone={unitTone} part="face" near />
+                    </Animated.View>
+                  </>,
+                )
               ) : (
-                art(look, 'face')
+                tile(art(look, 'face'))
               )
             ) : (
-              <View style={[styles.plainFace, { backgroundColor: plainColour(look, tone, rest).face }]} />
+              <View style={[styles.plainFace, { backgroundColor: plain.face }]} />
             )}
             {opening && !glyph ? (
               // The current stop: its padlock goes and the learner arrives on it.
@@ -389,12 +408,11 @@ export function SkillNodeView({
               </Animated.View>
             ) : null}
             {stamp && near && stop.kind === 'skill' ? (
-              <TileWax
+              <WaxSeal
                 stopKey={stop.key}
-                tone={unitTone}
                 dark={scheme === 'dark'}
-                stars={stars}
-                gold={!pressing && stars >= TOPIC_STARS}
+                suns={suns}
+                gold={!pressing && suns >= TOPIC_STARS}
                 warmAt={warmAt}
                 worn={stop.finish === 'refresh'}
                 live={live && !reduce}
@@ -418,7 +436,7 @@ export function SkillNodeView({
 /**
  * The glyph on a stop's face, in its unit's ink: what a topic's next lesson is (letters for new words, a conversation,
  * practice), or from a server too old to say, its number (a star on the stop to do now); a padlock on a shut stone, and
- * review's arrows. A finished tile's glyph steps back under its stamp; the drawn stops carry their own.
+ * review's arrows. A finished tile's glyph melts away with it into its seal; the drawn stops carry their own.
  */
 function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_INK)['dark'], onNow: string): { icon?: IconName; number?: number; colour: string } | null {
   if (stop.kind === 'review') return { icon: 'review', colour: ink.paper(tone) };

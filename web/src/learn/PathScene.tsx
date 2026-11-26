@@ -37,7 +37,6 @@ import {
   type PathSceneId,
   type PathSceneSprite,
   type SceneBox,
-  type UnitTone,
 } from '@kurda/shared';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { useInFront } from '../lib/motion';
@@ -365,19 +364,19 @@ export function PathChest({ open, dark, size, played }: { open: boolean; dark: b
 }
 
 /**
- * A finished stop's tile sealed in wax (shared `pathWaxSvg`) with a star pressed in it for each full round: a deeper tone
- * of its unit's colour, gold once it has all three stars, and dulled where a refresh would help. `pressing` plays its
- * first sealing once (shared `PATH_STAMP_MOMENT`) after `delay`: a big drop of wax falls onto the tile and splashes, the
- * wax flows out over it, and the brass stamp presses the whole tile as it squashes and lifts away, its stars pressed in;
- * then `onStamped` is told. With `from`, a round later, the stamp comes back after `delay` and presses again (shared
- * `PATH_STAMP_REPRESS`), the `from` stars giving way to `stars`. `warming` turns the wax gold once the stamp has lifted,
- * with one glint (shared `PATH_WAX_GOLD`); a gold tile glints again now and then while `live` and on screen. Decorative.
+ * A finished stop's round wax seal (shared `pathWaxSvg`) in its tile's place, a sun pressed in it for each full round:
+ * deep red, gold once it has all three suns, and matte and dulled where a refresh would help. `pressing` plays its first
+ * sealing once (shared `PATH_STAMP_MOMENT`) after `delay`: a big drop of red wax falls onto the tile and splashes, the
+ * tile melts under it as the wax flows out round, and the brass stamp presses the seal as it squashes and lifts away, its
+ * sun pressed in; then `onStamped` is told. With `from`, a round later, the stamp comes back after `delay` and presses
+ * again (shared `PATH_STAMP_REPRESS`), the `from` suns giving way to `suns`. `warming` turns the wax gold once the stamp
+ * has lifted, with one glint (shared `PATH_WAX_GOLD`); a gold seal glints again now and then while `live` and on screen.
+ * Decorative.
  */
-export function TileWax({
+export function WaxSeal({
   stopKey,
-  tone,
   dark,
-  stars,
+  suns,
   from = null,
   gold,
   warming,
@@ -388,14 +387,13 @@ export function TileWax({
   onStamped,
 }: {
   stopKey: string;
-  tone: UnitTone;
   dark: boolean;
-  /** The stars pressed in it, one for each full round. */
-  stars: number;
-  /** A round later: the stars it had, until the stamp presses the new one in. */
+  /** The suns pressed in it, one for each full round. */
+  suns: number;
+  /** A round later: the suns it had, until the stamp presses the new one in. */
   from?: number | null;
   gold: boolean;
-  /** Its third star has just been pressed in: the wax warms into gold. */
+  /** Its third sun has just been pressed in: the wax warms into gold. */
   warming: boolean;
   worn: boolean;
   /** Its unit is near the screen and motion is welcome. */
@@ -408,15 +406,16 @@ export function TileWax({
   const pressed = from !== null;
   const moving = pressing || pressed;
   const wax = (part: 'whole' | 'pour' | 'seal', count: number, golden = false): string =>
-    pathWaxSvg({ tone, seed: stopKey, gold: golden, worn, stars: count, part, dark, idPrefix: `${prefix}${part}${count}${golden ? 'g' : ''}` });
-  const coat = useMarkup(() => (moving ? '' : wax('whole', stars)), [moving, tone, stopKey, worn, stars, dark, prefix]);
-  const goldCoat = useMarkup(() => (gold ? wax('whole', stars, true) : ''), [gold, tone, stopKey, worn, stars, dark, prefix]);
-  const pour = useMarkup(() => (moving ? wax('pour', stars) : ''), [moving, tone, stopKey, worn, stars, dark, prefix]);
-  const seal = useMarkup(() => (moving ? wax('seal', stars) : ''), [moving, tone, stopKey, worn, stars, dark, prefix]);
-  const was = useMarkup(() => (pressed ? wax('seal', from) : ''), [pressed, from, tone, stopKey, worn, dark, prefix]);
-  const blob = useMarkup(() => (pressing ? pathWaxSvg({ tone, part: 'blob', dark, idPrefix: `${prefix}b` }) : ''), [pressing, tone, dark, prefix]);
-  const splash = useMarkup(() => (pressing ? pathWaxSvg({ tone, part: 'splash', dark, idPrefix: `${prefix}s` }) : ''), [pressing, tone, dark, prefix]);
-  const tool = useMarkup(() => (moving ? pathStampToolSvg({ dark, stars, idPrefix: `${prefix}t` }) : ''), [moving, dark, stars, prefix]);
+    pathWaxSvg({ seed: stopKey, gold: golden, worn, suns: count, part, dark, idPrefix: `${prefix}${part}${count}${golden ? 'g' : ''}` });
+  const coat = useMarkup(() => (moving ? '' : wax('whole', suns)), [moving, stopKey, worn, suns, dark, prefix]);
+  const goldCoat = useMarkup(() => (gold ? wax('whole', suns, true) : ''), [gold, stopKey, worn, suns, dark, prefix]);
+  const pour = useMarkup(() => (moving ? wax('pour', suns) : ''), [moving, stopKey, worn, suns, dark, prefix]);
+  const seal = useMarkup(() => (moving ? wax('seal', suns) : ''), [moving, stopKey, worn, suns, dark, prefix]);
+  const was = useMarkup(() => (pressed ? wax('seal', from) : ''), [pressed, from, stopKey, worn, dark, prefix]);
+  const blob = useMarkup(() => (pressing ? pathWaxSvg({ part: 'blob', dark, idPrefix: `${prefix}b` }) : ''), [pressing, dark, prefix]);
+  const splash = useMarkup(() => (pressing ? pathWaxSvg({ part: 'splash', dark, idPrefix: `${prefix}s` }) : ''), [pressing, dark, prefix]);
+  const tool = useMarkup(() => (moving ? pathStampToolSvg({ dark, suns, part: 'body', idPrefix: `${prefix}t` }) : ''), [moving, dark, suns, prefix]);
+  const die = useMarkup(() => (moving ? pathStampToolSvg({ dark, suns, part: 'die', idPrefix: `${prefix}d` }) : ''), [moving, dark, suns, prefix]);
   const refs = {
     pour: useRef<HTMLSpanElement>(null),
     seal: useRef<HTMLSpanElement>(null),
@@ -425,6 +424,7 @@ export function TileWax({
     splash: useRef<HTMLSpanElement>(null),
     shadow: useRef<HTMLSpanElement>(null),
     tool: useRef<HTMLSpanElement>(null),
+    die: useRef<HTMLSpanElement>(null),
     gold: useRef<HTMLSpanElement>(null),
   };
   const done = useRef(onStamped);
@@ -449,21 +449,26 @@ export function TileWax({
       return STAMP_FRAMES.map((offset, i) => ({ offset, ...each(values.map((v) => v[i]!)) }));
     };
     const timing = { duration: m.ms, delay, fill: 'both' as const };
-    // The stars pressed in show from the press, under the stamp; a round later the ones before give way then.
+    // The suns pressed in show from the press, under the stamp; a round later the ones before give way then.
     const shownFrom: Array<readonly [number, number]> = [[0, 0], [m.pressAt, 0], [m.pressAt + 0.01, 1], [1, 1]];
     const runs = [
-      el(refs.tool)!.animate(frames([m.toolY, m.toolShown], ([y, o]) => ({ transform: `translateY(${y}px)`, opacity: o })), timing),
+      el(refs.tool)!.animate(frames([m.toolY, m.tilt, m.toolShown], ([y, r, o]) => ({ transform: `translateY(${y}px) rotate(${r}deg)`, opacity: o })), timing),
+      el(refs.die)?.animate(frames([m.dieOpen], ([k]) => ({ transform: `scaleY(${k})` })), timing),
       el(refs.shadow)!.animate(frames([shadow.size, shadow.shown], ([k, o]) => ({ transform: `scale(${k})`, opacity: o })), timing),
       el(refs.seal)!.animate(frames([shownFrom], ([o]) => ({ opacity: o })), timing),
       el(refs.was)?.animate(frames([shownFrom], ([o]) => ({ opacity: 1 - o! })), timing),
       face?.animate(frames([m.squash], ([q]) => ({ transform: `scale(${2 - q!}, ${q})` })), { duration: m.ms, delay }),
     ];
     if (pressing) {
-      const { blobY, blobShown, splat, splash: spread, splashShown, flow, poured } = PATH_STAMP_MOMENT;
+      const { blobY, blobShown, splat, splash: spread, splashShown, melt, flow, poured } = PATH_STAMP_MOMENT;
       runs.push(
         el(refs.blob)?.animate(frames([blobY, splat, blobShown], ([y, q, o]) => ({ transform: `translateY(${y}px) scale(${2 - q!}, ${q})`, opacity: o })), timing),
         el(refs.splash)?.animate(frames([spread, splashShown], ([k, o]) => ({ transform: `scale(${k})`, opacity: o })), timing),
         el(refs.pour)?.animate(frames([flow, poured], ([k, o]) => ({ transform: `scale(${k})`, opacity: o })), timing),
+        // The tile slumps and goes under the spreading wax; the seal takes its place.
+        ...[...(face?.querySelectorAll<HTMLElement>('.lp-art') ?? [])].map((art) =>
+          art.animate(frames([melt], ([k]) => ({ transform: `scale(${1 + 0.12 * k!}, ${1 - 0.45 * k!})`, opacity: 1 - k! })), timing),
+        ),
       );
     }
     const timer = window.setTimeout(end, delay + m.ms);
@@ -472,7 +477,7 @@ export function TileWax({
       runs.forEach((r) => r?.cancel());
     };
   }, [moving, pressing, delay, stopKey]);
-  // The wax warming into gold once the stamp has lifted from its third star.
+  // The wax warming into gold once the stamp has lifted from its third sun.
   const warmAt = (pressed ? delay + PATH_STAMP_REPRESS.ms : 0) + PATH_WAX_GOLD.afterMs;
   useLayoutEffect(() => {
     const el = refs.gold.current;
@@ -481,7 +486,7 @@ export function TileWax({
     return () => run.cancel();
   }, [warming, warmAt]);
   return (
-    <span className="lp-wax" aria-hidden="true" data-stars={stars}>
+    <span className="lp-wax" aria-hidden="true" data-suns={suns}>
       {moving ? (
         <>
           <span ref={refs.pour} className="lp-wax-coat lp-wax-pour" dangerouslySetInnerHTML={pour} />
@@ -489,11 +494,15 @@ export function TileWax({
           <span ref={refs.seal} className="lp-wax-coat" dangerouslySetInnerHTML={seal} />
           {pressing && <span ref={refs.blob} className="lp-wax-coat lp-wax-blob" dangerouslySetInnerHTML={blob} />}
           {pressing && <span ref={refs.splash} className="lp-wax-coat lp-wax-blob" dangerouslySetInnerHTML={splash} />}
-          {/* The stamp's shadow on the tile's face, under the stamp. */}
+          {/* The stamp's shadow on the seal's face, under the stamp. */}
           <span className="lp-wax-face">
             <span ref={refs.shadow} className="lp-wax-shadow" />
           </span>
-          <span ref={refs.tool} className="lp-wax-tool" dangerouslySetInnerHTML={tool} />
+          {/* The stamp, its die apart so that it opens out as it lifts. */}
+          <span ref={refs.tool} className="lp-wax-tool">
+            <span className="lp-wax-tool-part" dangerouslySetInnerHTML={tool} />
+            <span ref={refs.die} className="lp-wax-tool-part lp-wax-die" dangerouslySetInnerHTML={die} />
+          </span>
         </>
       ) : (
         <span className="lp-wax-coat" dangerouslySetInnerHTML={coat} />
@@ -505,7 +514,7 @@ export function TileWax({
 }
 
 /**
- * A pale band crossing a gold tile now and then (shared `PATH_WAX_GOLD`), each stop at its own time; just after it has
+ * A pale band crossing a gold seal now and then (shared `PATH_WAX_GOLD`), each stop at its own time; just after it has
  * warmed into gold, the first one at `firstAt`. Only while on screen and the tab is in front.
  */
 function WaxGlint({ stopKey, firstAt }: { stopKey: string; firstAt: number | null }): React.JSX.Element {
@@ -534,15 +543,12 @@ function WaxGlint({ stopKey, firstAt }: { stopKey: string; firstAt: number | nul
   );
 }
 
-/** What a topic's wax becomes, for its card: a star pressed in for each full round, and gold with all three. Decorative. */
-export function WaxLegend({ tone, dark }: { tone: UnitTone; dark: boolean }): React.JSX.Element {
-  const tiles = useMarkup(
-    () => [1, 2, 3].map((stars) => pathWaxSvg({ tone, seed: 'legend', stars, gold: stars === 3, dark, size: WAX_KEY })).join('|'),
-    [tone, dark],
-  );
+/** What a topic's seal becomes, for its card: a sun pressed in for each full round, and gold with all three. Decorative. */
+export function WaxLegend({ dark }: { dark: boolean }): React.JSX.Element {
+  const seals = useMarkup(() => [1, 2, 3].map((suns) => pathWaxSvg({ seed: 'legend', suns, gold: suns === 3, dark, size: WAX_KEY })).join('|'), [dark]);
   return (
     <span className="lp-wax-legend" aria-hidden="true" data-testid="lp-wax-legend">
-      {tiles.__html.split('|').map((svg, i) => (
+      {seals.__html.split('|').map((svg, i) => (
         <span key={i} className="lp-wax-icon" dangerouslySetInnerHTML={{ __html: svg }} />
       ))}
     </span>
@@ -551,7 +557,7 @@ export function WaxLegend({ tone, dark }: { tone: UnitTone; dark: boolean }): Re
 
 /** The moments a stamping moment is sampled at. */
 const STAMP_FRAMES = Array.from({ length: 41 }, (_, i) => i / 40);
-/** How far a glint's band travels either side of the tile's middle, past its wax. */
+/** How far a glint's band travels either side of the seal's middle, past its wax. */
 const GLINT_REACH = 52;
-/** A waxed tile's drawing in a card's legend: its 112-point canvas at this size, the tile itself about 26 points across. */
+/** A seal's drawing in a card's legend: its 112-point canvas at this size, the seal itself about 26 points across. */
 const WAX_KEY = 40;

@@ -1,10 +1,10 @@
-import { PATH_BAR, TOPIC_STARS, barPieces, starPath } from '@kurda/shared';
+import { PATH_BAR, TOPIC_STARS, barPieces, sunPath, sunRays } from '@kurda/shared';
 
 /**
  * A topic's progress over its stop and its rounds in its card, by the same rule and shapes as the phone (@kurda/shared
  * lesson-rounds.ts): a slim bar just above the tile with one piece per lesson, in its unit's colour once finished in the
- * current round, and gold once full; and in its card a gold star for each full round, up to three, which are pressed
- * into its wax on the road (PathScene.tsx `TileWax`). During a return (learn/CoursePath.tsx, `PATH_RETURN`) the new
+ * current round, and gold once full; and in its card a gold sun for each full round, up to three, which are pressed
+ * into its wax seal on the road (PathScene.tsx `WaxSeal`). During a return (learn/CoursePath.tsx, `PATH_RETURN`) the new
  * pieces fill one after another from `from`; path.css runs the fill and holds it still under reduced motion. Decorative;
  * the stop's words say it all.
  */
@@ -44,15 +44,18 @@ export function TopicBar({
   );
 }
 
-/** A topic's three stars in its card: gold for each round played, the bar's quiet track for the rest. */
-export function StarRow({ rounds }: { rounds: number }): React.JSX.Element {
+/** A topic's three suns in its card: gold for each round played, the bar's quiet track for the rest. */
+export function SunRow({ rounds }: { rounds: number }): React.JSX.Element {
   return (
-    <span className="lp-star-row" aria-hidden="true" data-testid={`lp-card-stars-${rounds}`}>
+    <span className="lp-sun-row" aria-hidden="true" data-testid={`lp-card-suns-${rounds}`}>
       {Array.from({ length: TOPIC_STARS }, (_, i) => (
         <svg key={i} width={24} height={24} viewBox="0 0 24 24" focusable="false">
-          <path className={i < rounds ? 'is-won' : undefined} d={starPath(12, 12.6, 10.6)} />
+          <path className={i < rounds ? 'is-won' : undefined} d={CARD_SUN} />
         </svg>
       ))}
     </span>
   );
 }
+
+/** A card's sun, as many rays as stay crisp at its size. */
+const CARD_SUN = sunPath(12, 12, 11, sunRays(11));

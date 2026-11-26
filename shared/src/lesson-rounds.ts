@@ -1,15 +1,15 @@
 /**
- * A topic's rounds: how many times over its lessons were played, shown as the bar over its stop and the stars pressed
- * into its wax. The bar has one piece per lesson; a piece fills as each lesson is first finished, and once the bar is
- * full the stop is sealed in wax with its first star. Replaying fills the next round piece by piece, and each full round
- * is pressed into the wax as another star, up to three.
+ * A topic's rounds: how many times over its lessons were played, shown as the bar over its stop and the suns pressed
+ * into its wax seal. The bar has one piece per lesson; a piece fills as each lesson is first finished, and once the bar
+ * is full the stop becomes a wax seal with its first sun. Replaying fills the next round piece by piece, and each full
+ * round is pressed into the seal as another sun, up to three.
  *
  * So rounds are the fewest finishes of any one lesson (at most `TOPIC_STARS`) and pieces are the lessons finished more
  * often than that. The server computes them per topic (api/src/coursemap) and both apps draw from its numbers and from the
  * shapes here (`barPieces`), so a bar is the same everywhere.
  */
 
-/** The most rounds a topic counts, and the most stars it can wear. */
+/** The most rounds a topic counts, and the most suns its seal can wear. */
 export const TOPIC_STARS = 3;
 
 export interface TopicRounds {
@@ -52,26 +52,37 @@ export function barPieces(of: number): Array<{ x: number; w: number }> {
 }
 
 /**
- * The stars pressed into a finished topic's wax, in the stop's points, one for each full round: one large in the middle
- * of the tile's face, two side by side a little smaller, or three with the middle one higher, a small crown. A topic
- * finished before its rounds were counted shows one. `r` is a star's outer radius.
+ * The suns pressed into a finished topic's seal, one for each full round, in the seal's own terms (its middle at 0, 0 and
+ * its radius 1): one large in the middle, two side by side a little smaller, or three with the middle one higher, like a
+ * crown. A topic finished before its rounds were counted shows one. `r` is how far a sun's rays reach.
  */
-export function waxStars(rounds: number): Array<{ x: number; y: number; r: number }> {
-  const stars = Math.max(1, Math.min(TOPIC_STARS, Math.floor(rounds) || 1));
-  if (stars === 1) return [{ x: 36, y: 31, r: 18 }];
-  if (stars === 2) return [{ x: 22.5, y: 31, r: 13 }, { x: 49.5, y: 31, r: 13 }];
-  return [{ x: 15, y: 34.5, r: 10.5 }, { x: 36, y: 26, r: 11 }, { x: 57, y: 34.5, r: 10.5 }];
+export function sealSuns(rounds: number): Array<{ x: number; y: number; r: number }> {
+  const suns = Math.max(1, Math.min(TOPIC_STARS, Math.floor(rounds) || 1));
+  if (suns === 1) return [{ x: 0, y: 0, r: 0.53 }];
+  if (suns === 2) return [{ x: -0.3, y: 0, r: 0.285 }, { x: 0.3, y: 0, r: 0.285 }];
+  return [{ x: -0.355, y: 0.085, r: 0.2 }, { x: 0, y: -0.14, r: 0.225 }, { x: 0.355, y: 0.085, r: 0.2 }];
 }
 
-/** A five-pointed star as SVG path data, point up, inner corners at two fifths of `r`, for drawing with round joins. */
-export function starPath(x: number, y: number, r: number): string {
+/** The Kurdish sun's rays: twenty-one, as on the flag. */
+export const SUN_RAYS = 21;
+
+/**
+ * A sun as SVG path data: a round middle half as wide as its reach, and `rays` pointed rays round it, evenly spaced, the
+ * first pointing straight up, reaching `r` from its middle. Fewer, broader rays keep a small sun crisp.
+ */
+export function sunPath(x: number, y: number, r: number, rays = SUN_RAYS): string {
   const round = (v: number): string => String(Math.round(v * 100) / 100);
-  const points = Array.from({ length: 10 }, (_, i) => {
-    const radius = i % 2 === 0 ? r : r * 0.42;
-    const a = (i * Math.PI) / 5;
-    return `${round(x + radius * Math.sin(a))} ${round(y - radius * Math.cos(a))}`;
+  const at = (radius: number, a: number): string => `${round(x + radius * Math.sin(a))} ${round(y - radius * Math.cos(a))}`;
+  const disc = r * 0.5;
+  // Slender rays with clear gaps between, as pressed suns have; fewer rays are a little broader at the foot.
+  const half = (Math.PI / rays) * (rays >= SUN_RAYS ? 0.45 : rays >= 15 ? 0.52 : 0.6);
+  const arc = `A${round(disc)} ${round(disc)} 0 1 0`;
+  const middle = `M${round(x - disc)} ${round(y)}${arc} ${round(x + disc)} ${round(y)}${arc} ${round(x - disc)} ${round(y)}Z`;
+  const spikes = Array.from({ length: rays }, (_, i) => {
+    const a = (i * 2 * Math.PI) / rays;
+    return `M${at(r * 0.57, a - half)}L${at(r, a)}L${at(r * 0.57, a + half)}Z`;
   });
-  return `M${points.join('L')}Z`;
+  return middle + spikes.join('');
 }
 
 /**

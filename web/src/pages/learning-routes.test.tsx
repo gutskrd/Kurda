@@ -399,12 +399,12 @@ describe('a course map', () => {
     expect(scene).toHaveAttribute('data-scene', 'apple');
     expect(scene).toHaveAttribute('aria-hidden', 'true');
     expect(scene!.className).toMatch(/\bis-(start|end)\b/);
-    // Its finished topics, seen here for the first time, are simply sealed in wax, with no moment for each, their two
-    // stars pressed in.
+    // Its finished topics, seen here for the first time, are simply wax seals, with no moment for each, their two suns
+    // pressed in.
     const hello = within(first).getByRole('button', { name: /^Hello, Done/ });
     expect(hello).toHaveClass('is-stamped');
     expect(hello).not.toHaveClass('is-stamping');
-    expect(hello.querySelector('.lp-wax')).toHaveAttribute('data-stars', '2');
+    expect(hello.querySelector('.lp-wax')).toHaveAttribute('data-suns', '2');
     expect(hello.querySelector('.lp-wax-gold')).toBeNull();
     // The milestone ending the chapter bears its number, and its trophy is won.
     expect(within(first).getByRole('button', { name: 'Chapter 1 trophy, earned' })).toHaveClass('is-milestone');
@@ -648,15 +648,15 @@ describe('a course map', () => {
     expect(within(screen.getByRole('dialog', { name: 'Jump to Chapter 4?' })).getByRole('link', { name: 'Start the test' })).toHaveAttribute('href', '/app/learn/jump/c1/r4');
   });
 
-  it('puts a bar over the topic to do now with a piece for each lesson, seals a finished one in wax with a star for each round, and says the round in its card', async () => {
+  it('puts a bar over the topic to do now with a piece for each lesson, makes a finished one a wax seal with a sun for each round, and says the round in its card', async () => {
     serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
     routes('/app/learn/course/c1');
 
-    // Topic c has all three rounds: sealed in gold wax, three stars on its tile, and no bar, which is for the topic to do now.
+    // Topic c has all three rounds: a gold seal with three suns, and no bar, which is for the topic to do now.
     const c = await screen.findByRole('button', { name: 'Topic c, Done — strong, all 3 rounds done' });
     expect(within(c).queryByTestId('lp-bar')).not.toBeInTheDocument();
     expect(c).toHaveClass('is-stamped');
-    expect(c.querySelector('.lp-wax')).toHaveAttribute('data-stars', '3');
+    expect(c.querySelector('.lp-wax')).toHaveAttribute('data-suns', '3');
     expect(c.querySelector('.lp-wax-gold')).not.toBeNull();
     // Topic d, the one to do now: a piece filled of two, and no wax yet.
     const d = screen.getByRole('button', { name: /^Topic d/ });
@@ -666,9 +666,9 @@ describe('a course map', () => {
 
     await userEvent.click(c);
     const card = screen.getByRole('group', { name: 'Topic c' });
-    expect(within(card).getByTestId('lp-card-stars-3')).toBeInTheDocument();
+    expect(within(card).getByTestId('lp-card-suns-3')).toBeInTheDocument();
     expect(within(card).getByText('All 3 rounds done')).toBeInTheDocument();
-    // Its card shows its wax with one, two and three stars pressed in.
+    // Its card shows its seal with one, two and three suns pressed in.
     expect(within(card).getByTestId('lp-wax-legend').querySelectorAll('.lp-wax-icon')).toHaveLength(3);
   });
 
@@ -695,7 +695,7 @@ describe('a course map', () => {
     expect(screen.queryByRole('button', { name: /trophy/ })).not.toBeInTheDocument();
   });
 
-  it('fills the bar, stamps the stop once, starts its next round and lights its star on coming back from the lesson that finished its round', async () => {
+  it('fills the bar, seals the stop once, starts its next round and presses its first sun on coming back from the lesson that finished its round', async () => {
     // As the path was drawn before the lesson: Topic d current, one lesson of two done.
     sessionStorage.setItem(
       'hevalo:path:c1',
@@ -721,12 +721,12 @@ describe('a course map', () => {
     await waitFor(() => expect(within(d).getByTestId('lp-bar')).not.toHaveClass('is-whole'), { timeout: 3000 });
     expect(d.querySelectorAll('.lp-bar-ink.is-filled')).toHaveLength(0);
     expect(JSON.parse(localStorage.getItem('hevalo:stamped:c1')!)).toContain('s:d');
-    // Its first star pressed into the wax.
-    expect(d.querySelector('.lp-wax')).toHaveAttribute('data-stars', '1');
+    // Its first sun pressed into the seal, in its tile's place.
+    expect(d.querySelector('.lp-wax')).toHaveAttribute('data-suns', '1');
   });
 
-  it('presses a sealed topic’s new star into its wax on coming back from the lesson that made its next round whole', async () => {
-    // As the path was drawn before the lesson: Topic c sealed with two stars, a lesson into its third round.
+  it('presses a sealed topic’s new sun into its seal on coming back from the lesson that made its next round whole', async () => {
+    // As the path was drawn before the lesson: Topic c sealed with two suns, a lesson into its third round.
     sessionStorage.setItem(
       'hevalo:path:c1',
       JSON.stringify({ 's:a': { state: 'done', done: 2, rounds: 1, pieces: 0 }, 's:b': { state: 'done', done: 2, rounds: 1, pieces: 1 }, 's:c': { state: 'done', done: 2, rounds: 2, pieces: 1 }, 's:d': { state: 'current', done: 1, rounds: 0, pieces: 1 }, 's:e': { state: 'locked', done: 0, rounds: 0, pieces: 0 }, 's:f': { state: 'locked', done: 0, rounds: 0, pieces: 0 } }),
@@ -741,11 +741,11 @@ describe('a course map', () => {
       const stop = c.closest('[data-stop]') ?? c.querySelector('[data-stop]');
       // The page opens at the topic played, though another is current.
       expect(scroll.mock.contexts[0]).toBe(stop);
-      // First with the two stars it had; then the stamp comes back and presses the third in, and its wax turns gold.
-      expect(c.querySelector('.lp-wax')).toHaveAttribute('data-stars', '2');
+      // First with the two suns it had; then the stamp comes back and presses the third in, and its wax turns gold.
+      expect(c.querySelector('.lp-wax')).toHaveAttribute('data-suns', '2');
       expect(c.querySelector('.lp-wax-gold')).toBeNull();
       await waitFor(() => expect(c.querySelector('.lp-wax-tool')).not.toBeNull(), { timeout: 3000 });
-      expect(c.querySelector('.lp-wax')).toHaveAttribute('data-stars', '3');
+      expect(c.querySelector('.lp-wax')).toHaveAttribute('data-suns', '3');
       expect(c.querySelector('.lp-wax-gold')).not.toBeNull();
       // It was sealed before, so it is not sealed again: no drop of wax this time.
       expect(c).not.toHaveClass('is-stamping');

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { PATH_BAR, PATH_RETURN, TOPIC_STARS, barPieces, starPath } from '@kurda/shared';
+import { PATH_BAR, PATH_RETURN, TOPIC_STARS, barPieces, sunPath, sunRays } from '@kurda/shared';
 import { useDirection } from '../reports/direction';
 import { timing } from '../theme/animate';
 import { useTheme } from '../theme/ThemeProvider';
@@ -107,18 +107,18 @@ export function TopicBar({
   );
 }
 
-/** A star's edge, darker than the gold, so it reads on any unit's wax (as the website's path.css). */
-const STAR_EDGE = 'rgba(40, 22, 4, 0.6)';
+/** A card's sun, as many rays as stay crisp at its size (as the website's PathRing.tsx). */
+const CARD_SUN = sunPath(12, 12, 11, sunRays(11));
 
-/** A topic's three stars in its card: gold for each round played, the bar's quiet track for the rest. */
-export function StarRow({ rounds }: { rounds: number }): React.JSX.Element {
+/** A topic's three suns in its card: gold for each round played, the bar's quiet track for the rest. */
+export function SunRow({ rounds }: { rounds: number }): React.JSX.Element {
   const { scheme, colors } = useTheme();
   const dir = useDirection();
   return (
-    <View style={[styles.row, { flexDirection: dir.row }]} aria-hidden testID={`lp-card-stars-${rounds}`}>
+    <View style={[styles.row, { flexDirection: dir.row }]} aria-hidden testID={`lp-card-suns-${rounds}`}>
       {Array.from({ length: TOPIC_STARS }, (_, i) => (
         <Svg key={i} width={26} height={26} viewBox="0 0 24 24">
-          <Path d={starPath(12, 12.6, 10.6)} fill={i < rounds ? colors.gold : TRACK[scheme]} stroke={i < rounds ? STAR_EDGE : 'transparent'} strokeWidth={1.2} strokeLinejoin="round" />
+          <Path d={CARD_SUN} fill={i < rounds ? colors.gold : TRACK[scheme]} />
         </Svg>
       ))}
     </View>
