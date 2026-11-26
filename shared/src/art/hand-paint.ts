@@ -44,6 +44,8 @@ export const flat = (d: string, fill: string, extra = ''): string => `<path d="$
  * `turn` swings the arm (degrees, 0 straight down, positive toward the lower left), so each hand wears the same sleeve.
  */
 export function knitSleeve(dr: Drawing, at: Pt, turn: number, scale = 1): string {
+  // Past the cuff the sleeve widens as the arm comes toward us, so it runs out of any frame by its sides as well as
+  // its foot and never shows an end of its own.
   const cuff = smooth([
     [-60, 17],
     [-15, 0],
@@ -51,11 +53,12 @@ export function knitSleeve(dr: Drawing, at: Pt, turn: number, scale = 1): string
     [46, -21],
     [59, -15],
     [68, 0],
-    [104, 72],
-    [144, 158],
-    [178, 238],
-    [-12, 258],
-    [-38, 148],
+    [90, 24],
+    [140, 58],
+    [240, 118],
+    [420, 300],
+    [-30, 360],
+    [-44, 160],
     [-68, 39],
   ]);
   const clip = dr.clip(cuff);
