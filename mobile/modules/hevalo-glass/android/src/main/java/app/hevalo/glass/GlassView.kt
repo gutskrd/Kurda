@@ -7,6 +7,7 @@ import android.graphics.RecordingCanvas
 import android.graphics.RenderEffect
 import android.graphics.RenderNode
 import android.graphics.RuntimeShader
+import android.graphics.Shader
 import android.os.Build
 import android.view.View
 import android.view.ViewGroup
@@ -95,14 +96,22 @@ class GlassView(context: Context) : View(context) {
       shader.setFloatUniform("bezel", min(22f * density, min(w, h) / 2f))
       shader.setFloatUniform("thickness", 24f * density)
       shader.setFloatUniform("density", density)
+      // A neutral grey, cool rather than warm, as on the website (web/src/styles/tokens.css `--glass-fill`).
       if (dark) {
-        shader.setFloatUniform("tint", 30f / 255f, 27f / 255f, 46f / 255f)
-        shader.setFloatUniform("optics", 1.7f, 0.92f)
+        shader.setFloatUniform("tint", 42f / 255f, 45f / 255f, 49f / 255f)
+        shader.setFloatUniform("optics", 1.6f, 1f)
       } else {
-        shader.setFloatUniform("tint", 1f, 1f, 1f)
-        shader.setFloatUniform("optics", 1.8f, 1.08f)
+        shader.setFloatUniform("tint", 250f / 255f, 251f / 255f, 252f / 255f)
+        shader.setFloatUniform("optics", 1.8f, 1f)
       }
-      node.setRenderEffect(RenderEffect.createRuntimeShaderEffect(shader, "content"))
+      // The page behind is blurred first, then bent, tinted and lit by the shader.
+      val blur = 24f * density
+      node.setRenderEffect(
+        RenderEffect.createChainEffect(
+          RenderEffect.createRuntimeShaderEffect(shader, "content"),
+          RenderEffect.createBlurEffect(blur, blur, Shader.TileMode.CLAMP),
+        ),
+      )
       shaped = true
     }
 

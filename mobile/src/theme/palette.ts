@@ -120,15 +120,19 @@ export interface Palette {
   bubbleTheirsInk: string;
 
   /**
-   * The fill of what floats over the page (the tab bar, the back button, the pill of top actions) where the system has
-   * no Liquid Glass to draw: solid, since nothing blurs behind it and translucency would show the page beneath as a ghost.
+   * The fill of what floats over the page (the tab bar, the back button, the pill of top actions) where no glass can be
+   * drawn: a solid neutral grey, cool rather than warm, since nothing blurs behind it and translucency would show the
+   * page beneath as a ghost.
    */
   barFill: string;
   /** The line of light round that floating shape's edge, on its upper side and on the rest (LiquidGlass.tsx). */
   glassRim: string;
   glassRimFar: string;
-  /** The breath of tint on clear glass that bends the page, so the words on it stay readable. */
+  /** The neutral grey of the glass that blurs the page behind it, where it is drawn by the app rather than the system. */
   glassTint: string;
+  /** The chosen tab's glyph and name, and the darker capsule of glass inset behind it, drawn at `TAB_CAPSULE_FILL`. */
+  tabChosen: string;
+  tabCapsule: string;
   /** A control's disc where it stands on a drawing (a chapter's banner): the page's colour, mostly opaque. */
   onArt: string;
 
@@ -216,9 +220,11 @@ export const LIGHT: Palette = {
   bubbleTheirs: PAGE.light.raised,
   bubbleTheirsInk: PAGE.light.ink,
   barFill: '#FDFEFE',
-  glassRim: 'rgba(253,254,254,0.9)',
-  glassRimFar: 'rgba(23,36,43,0.07)',
-  glassTint: 'rgba(253,254,254,0.22)',
+  glassRim: 'rgba(255,255,255,0.9)',
+  glassRimFar: 'rgba(23,36,43,0.09)',
+  glassTint: 'rgba(250,251,252,0.74)',
+  tabChosen: DAY.text,
+  tabCapsule: PAGE.light.ink,
   onArt: 'rgba(253,254,254,0.78)',
   goldText: REWARD_GOLD.light.goldText,
   notice: '#FF3B30',
@@ -285,10 +291,12 @@ export const DARK: Palette = {
   bubbleMineInk: NIGHT.ink,
   bubbleTheirs: '#253238',
   bubbleTheirsInk: PAGE.dark.ink,
-  barFill: PAGE.dark.raised,
-  glassRim: 'rgba(238,243,245,0.26)',
-  glassRimFar: 'rgba(238,243,245,0.1)',
-  glassTint: 'rgba(26,38,43,0.3)',
+  barFill: '#24272B',
+  glassRim: 'rgba(255,255,255,0.14)',
+  glassRimFar: 'rgba(255,255,255,0.1)',
+  glassTint: 'rgba(42,45,49,0.62)',
+  tabChosen: NIGHT.text,
+  tabCapsule: '#000000',
   onArt: 'rgba(19,28,32,0.6)',
   goldText: REWARD_GOLD.dark.goldText,
   notice: '#FF453A',
