@@ -230,11 +230,13 @@ function PlusSection({ user, canAdjust, onChanged }: { user: EconomyUser; canAdj
     setBusy(true);
     try {
       // One key per confirmed grant: a double click or a retry adds the days once.
-      const res = await api<{ premiumUntil: string }>(`/admin/users/${user.id}/plus`, {
+      const res = await api<{ premiumUntil?: string; status?: 'pending' }>(`/admin/users/${user.id}/plus`, {
         method: 'POST',
         body: { days: value, reason: reason.trim(), idempotencyKey: crypto.randomUUID() },
       });
-      toast.success(`Hevalo+ until ${new Date(res.premiumUntil).toLocaleDateString(undefined, { dateStyle: 'long' })}.`);
+      // an admin's own account is given it only once a second admin approves (202)
+      if (res.status === 'pending' || !res.premiumUntil) toast.success('Waiting in Approvals: another admin gives your own account Hevalo+.');
+      else toast.success(`Hevalo+ until ${new Date(res.premiumUntil).toLocaleDateString(undefined, { dateStyle: 'long' })}.`);
       setDays('');
       setReason('');
       setTouched(false);

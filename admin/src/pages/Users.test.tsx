@@ -472,6 +472,22 @@ describe('a person', () => {
     expect(await screen.findByText(/^Hevalo\+ until /)).toBeInTheDocument();
   });
 
+  it('sends Hevalo+ for an admin’s own account to Approvals, and says a second admin gives it', async () => {
+    const user = userEvent.setup();
+    show(
+      `${at}/wallet`,
+      OWNER,
+      detailRoute(person({ premiumUntil: null })),
+      on('POST', `/admin/users/${SUBJECT_ID}/plus`, json({ status: 'pending', id: 'c-plus' }, 202)),
+    );
+    expect(await screen.findByText('Not a member.')).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/^Days of Hevalo\+/), '30');
+    await user.type(screen.getByLabelText(/^Why/), 'To see what members see');
+    await user.click(screen.getByRole('button', { name: 'Give Hevalo+' }));
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Give 30 days' }));
+    expect(await screen.findByText('Waiting in Approvals: another admin gives your own account Hevalo+.')).toBeInTheDocument();
+  });
+
   it('says when a member’s Hevalo+ ends and adds days to it', async () => {
     const user = userEvent.setup();
     const { calls } = show(

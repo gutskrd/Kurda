@@ -50,6 +50,34 @@ describe('Approvals', () => {
     return api;
   }
 
+  it('says what an earn rule’s raise and an admin’s own Hevalo+ would do', async () => {
+    setToken('tok');
+    fakeApi(
+      on('GET', '/me', json({ user: { id: 'me-1', username: 'rojda', roles: ['admin'] } })),
+      on(
+        'GET',
+        '/admin/config/changes',
+        json({
+          pending: [
+            { id: 'c-rule', target: 'earn_rule', payload: { key: 'league_promotion', amount: 80, dailyCap: null, cooldownSeconds: 0, active: true }, sensitive: true, proposerId: 'other-2', createdAt: '2026-10-12T10:00:00.000Z' },
+            { id: 'c-plus', target: 'plus_grant', payload: { userId: 'other-2', days: 30, reason: 'To see what members see' }, sensitive: true, proposerId: 'other-2', createdAt: '2026-10-12T11:00:00.000Z' },
+          ],
+        }),
+      ),
+    );
+    renderUi(
+      <AuthProvider>
+        <Approvals />
+      </AuthProvider>,
+    );
+    const rule = (await screen.findByText('league_promotion')).closest('tr') as HTMLElement;
+    expect(rule).toHaveTextContent('80 Zêr each time, no daily limit, no wait');
+    expect(within(rule).getByText('Earn rule')).toBeInTheDocument();
+    const plus = screen.getByText('Hevalo+ for 30 days, for their own account').closest('tr') as HTMLElement;
+    expect(plus).toHaveTextContent('To see what members see');
+    expect(within(plus).getByText('Own Hevalo+')).toBeInTheDocument();
+  });
+
   it('will not offer to approve your own change, and asks before approving another admin’s', async () => {
     const user = userEvent.setup();
     const { calls } = show();
