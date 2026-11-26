@@ -607,21 +607,21 @@ export function pathChanges<S extends PathSkill>(prev: PathSnapshot | null, path
 
 /**
  * Returning to the path after a lesson, in ms from when it is drawn, alike on the phone and the website: the page settles
- * (`settleMs`); the ring fills (`ringMs`) up to a finished stop's gold pop (`finishAtMs`, `popMs`); an earned star drops
- * onto its coin (`starAtMs`, `starMs`) as a whole ring starts its next round; an opened stop's lock turns into its number
- * (`openAtMs`, `glyphMs`); and the bubble reaches the new current stop as the page scrolls there (`bubbleAtMs`,
- * `bubbleMs`). Under Reduce Motion nothing plays.
+ * (`settleMs`); the bar over the stop fills (`ringMs`); a finished stop is stamped (`finishAtMs`, over `stampMs`, the
+ * print landing halfway); a full bar starts its next round once the print is down (`nextAtMs`); an opened stop pops as its
+ * lock turns into its glyph (`openAtMs`, `popMs`, `glyphMs`); and the bubble reaches the new current stop as the page
+ * scrolls there (`bubbleAtMs`, `bubbleMs`). Under Reduce Motion nothing plays.
  */
 export const PATH_RETURN = {
   settleMs: 300,
   ringMs: 400,
   finishAtMs: 700,
+  stampMs: 1300,
   popMs: 320,
-  starAtMs: 800,
-  starMs: 280,
-  openAtMs: 900,
+  nextAtMs: 1450,
+  openAtMs: 1750,
   glyphMs: 120,
-  bubbleAtMs: 1100,
+  bubbleAtMs: 1950,
   bubbleMs: 200,
 } as const;
 

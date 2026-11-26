@@ -67,19 +67,23 @@ import {
   PATH_GOLD,
   PATH_MILESTONE_ART,
   PATH_REST,
+  PATH_STAMP_ART,
   PATH_STOP_ART,
   PATH_STOP_LOOKS,
   PATH_STOP_TONES,
+  hoofprintPath,
   pathChestSvg,
   pathCoinSvg,
   pathKilimSvg,
   pathMilestoneSvg,
   pathSignpostSvg,
+  pathStampSvg,
+  pathStampToolSvg,
   pathStopSvg,
   type PathStopLook,
 } from './path-land.js';
 import { CHAPTER_ART, CHAPTER_ART_IDS, CHAPTER_ART_LOOP, CHAPTER_LOOP_KINDS, chapterArtOf, chapterArtSvg } from './chapter-art.js';
-import { PATH_SCENES, PATH_SCENE_BOX, PATH_SCENE_IDS, PATH_SCENE_SPRITES, PATH_SCENE_SPRITE_BOX, PATH_SLATE_LETTERS, pathGarlandSvg, pathScenePropSvg, pathSceneSpriteSvg } from './path-scenes.js';
+import { PATH_SCENES, PATH_SCENE_BOX, PATH_SCENE_IDS, PATH_SCENE_SPRITES, PATH_SCENE_SPRITE_BOX, PATH_SLATE_LETTERS, pathScenePropSvg, pathSceneSpriteSvg } from './path-scenes.js';
 import { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg } from './path-landmark.js';
 import { PATH_LANDMARKS } from '../path-world.js';
 import { WORD_SET_IDS } from '../word-sets/words.js';
@@ -1597,10 +1601,10 @@ describe('the lesson path’s world', () => {
         }
       }
     }
-    // every look its own: the stop to do now in its unit's own colour, a finished one in gold, a shut one in slate
+    // every look its own: the stop to do now in its unit's own colour, a shut one in slate
     const looks = PATH_STOP_LOOKS.map((look) => (['base', 'face'] as const).map((part) => pathStopSvg({ look, tone: 'clay', part, idPrefix: 's' })).join(''));
-    // review is drawn as an open stop; its glyph, set by the app, tells them apart
-    expect(new Set(looks.filter((_, i) => PATH_STOP_LOOKS[i] !== 'review')).size).toBe(PATH_STOP_LOOKS.length - 1);
+    // review and a finished topic are drawn as the stop to do now; the glyph and the stamp, set by the app, tell them apart
+    expect(new Set(looks.filter((_, i) => PATH_STOP_LOOKS[i] !== 'review' && PATH_STOP_LOOKS[i] !== 'done')).size).toBe(PATH_STOP_LOOKS.length - 2);
     for (const dark of [false, true]) {
       const scheme = dark ? 'dark' : 'light';
       for (const tone of TONES) {
@@ -1612,8 +1616,8 @@ describe('the lesson path’s world', () => {
       expect(pathStopSvg({ look: 'locked', tone: 'clay', part: 'face', dark })).not.toContain(PATH_STOP_TONES[scheme].clay.fill);
     }
     expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', idPrefix: 's' })).not.toBe(pathStopSvg({ look: 'current', tone: 'river', part: 'face', idPrefix: 's' }));
-    // gold is gold in every chapter: what was earned looks the same wherever it was earned
-    expect(pathStopSvg({ look: 'done', tone: 'river', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'done', tone: 'clay', part: 'face', idPrefix: 's' }));
+    // a finished topic keeps its chapter's own colour under its stamp
+    expect(pathStopSvg({ look: 'done', tone: 'river', part: 'face', idPrefix: 's' })).not.toBe(pathStopSvg({ look: 'done', tone: 'clay', part: 'face', idPrefix: 's' }));
     expect(() => pathStopSvg({ look: 'gold' as PathStopLook, tone: 'clay', part: 'face' })).toThrow(RangeError);
   });
 
@@ -1642,11 +1646,12 @@ describe('the lesson path’s world', () => {
     expect(() => pathChestSvg({ size: -1 })).toThrow(RangeError);
   });
 
-  it('presses Hevalo’s hoofprint into a finished tile, and lays a shut stop low as a stone rather than a tile', () => {
+  it('keeps a finished topic’s tile in its unit’s colour for its stamp, and lays a shut stop low as a stone rather than a tile', () => {
     const face = (look: PathStopLook): string => pathStopSvg({ look, tone: 'clay', part: 'face', idPrefix: 's' });
-    // the print is drawn in the gold's own shade, which an open tile in its unit's colour never uses
-    expect(face('done')).toContain(PATH_GOLD.light.side);
-    expect(face('current')).not.toContain(PATH_GOLD.light.side);
+    // the same tile as the stop to do now; the stamp over it says it is done, and the tile is never gold
+    expect(face('done')).toBe(face('current'));
+    expect(face('done')).not.toContain(PATH_GOLD.light.face);
+    expect(face('refresh')).not.toBe(face('done'));
     // a shut stone stands lower than a tile on its side, and has no light along its edge
     const side = (look: PathStopLook): number => Math.max(...[...pathStopSvg({ look, tone: 'clay', part: 'base' }).matchAll(/V(\d+(?:\.\d+)?)/g)].map((m) => Number(m[1])));
     expect(side('done')).toBeGreaterThan(PATH_STOP_ART.cy);
@@ -1654,21 +1659,35 @@ describe('the lesson path’s world', () => {
     expect(face('available')).toContain('clip-path');
   });
 
-  it('stands each unit’s milestone on its drum, slate until its chapter is won, then gold with a star for each round', () => {
+  it('stands each unit’s milestone on its drum, slate until its chapter is won, then gold', () => {
     const view = `0 0 ${PATH_MILESTONE_ART.w} ${PATH_MILESTONE_ART.h}`;
     for (const dark of [false, true]) {
       for (const won of [false, true]) {
-        for (const part of ['base', 'face'] as const) sound(pathMilestoneSvg({ won, rounds: 2, part, dark }), view);
+        for (const part of ['base', 'face'] as const) sound(pathMilestoneSvg({ won, part, dark }), view);
       }
       const scheme = dark ? 'dark' : 'light';
       expect(pathMilestoneSvg({ won: true, part: 'face', dark })).toContain(PATH_GOLD[scheme].face);
       expect(pathMilestoneSvg({ won: false, part: 'face', dark })).toContain(PATH_REST[scheme].fill);
       expect(pathMilestoneSvg({ won: false, part: 'face', dark })).not.toContain(PATH_GOLD[scheme].face);
     }
-    // three stars set in the drum: gold for the rounds played, empty settings for the rest
-    const lit = (rounds: number): number => (pathMilestoneSvg({ won: true, rounds, part: 'base' }).match(/stroke-linejoin="round"/g) ?? []).length;
-    expect([0, 1, 2, 3, 7].map(lit)).toEqual([0, 1, 2, 3, 3]);
     expect(() => pathMilestoneSvg({ won: true, part: 'face', size: 0 })).toThrow(RangeError);
+  });
+
+  it('strikes Hevalo’s stamp in gold foil, its rim pressed by hand a little differently on every stop', () => {
+    const view = `0 0 ${PATH_STAMP_ART.box} ${PATH_STAMP_ART.box}`;
+    for (const dark of [false, true]) {
+      for (const worn of [false, true]) sound(pathStampSvg({ seed: 's:a', worn, dark, idPrefix: 'm' }), view);
+      expect(pathStampSvg({ seed: 's:a', dark })).toContain(PATH_GOLD[dark ? 'dark' : 'light'].face);
+    }
+    // the same stop's stamp is the same every time, another's rim wavers its own way, and a worn one is rubbed
+    expect(pathStampSvg({ seed: 's:a' })).toBe(pathStampSvg({ seed: 's:a' }));
+    expect(pathStampSvg({ seed: 's:a' })).not.toBe(pathStampSvg({ seed: 's:b' }));
+    expect(pathStampSvg({ seed: 's:a', worn: true })).not.toContain(PATH_GOLD.light.face);
+    // Hevalo's print in the middle, and the rim's little marks only when asked for
+    expect(pathStampSvg({ seed: 's:a' })).toContain(hoofprintPath(PATH_STAMP_ART.box / 2, PATH_STAMP_ART.box / 2 - 1.2, 0.88));
+    for (const motif of ['words', 'talk', 'practice'] as const) expect(pathStampSvg({ seed: 's:a', motif }).length).toBeGreaterThan(pathStampSvg({ seed: 's:a' }).length);
+    sound(pathStampToolSvg({ dark: true, size: 72 }), '0 0 40 56');
+    expect(() => pathStampSvg({ size: 0 })).toThrow(RangeError);
   });
 
   it('builds the sandûq in parts that open: its body, its shut lid, and the open lid over its gold', () => {
@@ -1744,7 +1763,7 @@ describe('the chapters’ vignettes', () => {
   });
 });
 
-/** The little scenes beside the road (path-scenes.ts): their props and moving pieces, and the chapter's garland of stars. */
+/** The little scenes beside the road (path-scenes.ts): their props and moving pieces. */
 describe('the scenes beside the road', () => {
   it('draws every prop and sprite of every scene by day and by evening, inside its scene', () => {
     for (const scene of PATH_SCENE_IDS) {
@@ -1755,7 +1774,10 @@ describe('the scenes beside the road', () => {
         if (scene === 'apple' && prop === 'apple') continue;
         for (const dark of [false, true]) checkSvgLike(pathScenePropSvg({ scene, prop, dark, idPrefix: 'q' }));
       }
-      expect(layout.garland.y + layout.garland.h, scene).toBeLessThanOrEqual(PATH_SCENE_BOX.h);
+      // what gives turns about a root on the screen's edge, and a character runs on below only a little way
+      for (const root of Object.values(layout.gives)) expect(root.x, scene).toBe(0);
+      expect(layout.below, scene).toBeGreaterThanOrEqual(0);
+      expect(layout.below, scene).toBeLessThanOrEqual(PATH_SCENE_BOX.h / 2);
     }
     for (const sprite of PATH_SCENE_SPRITES) {
       const box = PATH_SCENE_SPRITE_BOX[sprite];
@@ -1765,22 +1787,23 @@ describe('the scenes beside the road', () => {
         expect(parse(svg).attrs.viewBox).toBe(`0 0 ${box.w} ${box.h}`);
       }
     }
-    for (const l of PATH_SLATE_LETTERS) expect(l.x + PATH_SCENE_SPRITE_BOX[l.sprite].w).toBeLessThanOrEqual(PATH_SCENES.slate.back.easel!.w);
+    // the letters are chalked on the slate
+    const slate = PATH_SCENES.slate.front.slate!;
+    for (const l of PATH_SLATE_LETTERS) {
+      expect(l.x).toBeGreaterThanOrEqual(slate.x);
+      expect(l.x + PATH_SCENE_SPRITE_BOX[l.sprite].w).toBeLessThanOrEqual(slate.x + slate.w);
+      expect(l.y).toBeGreaterThanOrEqual(slate.y);
+      expect(l.y + PATH_SCENE_SPRITE_BOX[l.sprite].h).toBeLessThanOrEqual(slate.y + slate.h);
+    }
     expect(() => pathScenePropSvg({ scene: 'apple', prop: 'moon' })).toThrow(RangeError);
   });
 
   it('takes the apple bite by bite: each bite its own drawing, until only the core is left', () => {
     const stages = (['apple-0', 'apple-1', 'apple-2', 'apple-3', 'apple-4', 'core'] as const).map((sprite) => pathSceneSpriteSvg({ sprite, idPrefix: 'b' }));
     expect(new Set(stages).size).toBe(6);
-    // a bitten apple shows its white flesh where the bites went in, clipped to what is left of it
-    expect(stages[0]).not.toContain('clip-path');
-    for (const bitten of stages.slice(1, 5)) expect(bitten).toContain('clip-path');
-  });
-
-  it('strings the chapter’s three stars, lighting gold one for each round', () => {
-    const gold = (lit: number): number => (pathGarlandSvg({ lit }).match(/fill="#f2b632"/g) ?? []).length;
-    expect([0, 1, 2, 3, 5, -1].map(gold)).toEqual([0, 1, 2, 3, 3, 0]);
-    checkSvgLike(pathGarlandSvg({ lit: 2, dark: true }));
+    // a bitten apple shows its cream flesh where the bites went in; a whole one shows none
+    expect(stages[0]).not.toContain('#fbf0d6');
+    for (const bitten of stages.slice(1, 5)) expect(bitten).toContain('#fbf0d6');
   });
 
   /** The structural rules, for a decorative piece of a scene. */

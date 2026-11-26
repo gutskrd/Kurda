@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PATH_GEOMETRY, PATH_MASCOT, lessonPath, mascotSpot, type PathSkill } from './lesson-path.js';
-import { PATH_SCENE_BOX, PATH_SCENE_IDS } from './art/path-scenes.js';
+import { PATH_SCENE_IDS } from './art/path-scenes.js';
 import {
   PATH_LANDMARKS,
   PATH_LANDS,
@@ -9,12 +9,16 @@ import {
   PATH_SCENE_ORDER,
   PATH_SCENERY,
   PATH_SCENERY_SPOT,
+  PATH_SCENE_REACH,
+  PATH_STAMP_MOMENT,
+  PATH_APPLE_REACH,
   PATH_START_WORDS,
   landmarkBox,
   pathLand,
   pathScene,
   sceneBeat,
-  unitRounds,
+  sceneBeatMs,
+  stampTilt,
   unitScenery,
   type PathBox,
 } from './path-world.js';
@@ -101,34 +105,41 @@ describe('the road’s playful touches', () => {
     expect(pathScene(-1)).toBe(pathScene(11));
   });
 
-  it('stands the scene and the chest on the open side of a leaning stop, never on the line', () => {
+  it('leans the scene in from the edge across from a leaning stop, and stands the chest on the open side, never on the line', () => {
     const { scene, chest } = unitScenery(stops);
-    // the fourth stop leans to the end, so the scene is on the start side; the second leans to the start, the chest the other way
-    expect(scene).toEqual({ x: -PATH_SCENERY_SPOT.sceneAcross, y: stops[3]!.y });
+    // the fourth stop leans to the end, so the scene leans in from the start; the second leans to the start, the chest the other way
+    expect(scene).toEqual({ side: -1, y: stops[3]!.y });
     expect(chest).toEqual({ x: PATH_SCENERY_SPOT.chestAcross, y: stops[1]!.y });
-    for (const spot of [scene!, chest!]) {
-      for (const stop of stops) expect(Math.abs(spot.x - stop.x) >= PATH_GEOMETRY.node || Math.abs(spot.y - stop.y) >= PATH_GEOMETRY.node).toBe(true);
+    for (const stop of stops) expect(Math.abs(chest!.x - stop.x) >= PATH_GEOMETRY.node || Math.abs(chest!.y - stop.y) >= PATH_GEOMETRY.node).toBe(true);
+  });
+
+  it('keeps a scene off every stop beside it, from a phone’s narrow screen to a wide page', () => {
+    const { scene } = unitScenery(stops);
+    for (const width of [360, 390, 430, 720]) {
+      const { across, up, down } = PATH_SCENE_REACH;
+      const box: PathBox = { x: scene!.side * (width / 2 - across / 2), y: scene!.y - up, w: across, h: up + down };
+      for (const stop of stops) expect(overlap(box, stopBox(stop)), `${width}`).toBe(false);
     }
   });
 
-  it('keeps a scene inside a phone’s page and off every stop beside it', () => {
-    const { scene } = unitScenery(stops);
-    const box: PathBox = { x: scene!.x, y: scene!.y - PATH_SCENE_BOX.h / 2, w: PATH_SCENE_BOX.w, h: PATH_SCENE_BOX.h };
-    expect(Math.abs(box.x) + box.w / 2).toBeLessThanOrEqual(390 / 2);
-    for (const stop of stops) expect(overlap(box, stopBox(stop))).toBe(false);
-  });
-
   it('leaves out whatever would stand on Hevalo beside the stop to do now, and his apple where he is already', () => {
-    expect(unitScenery(stops, mascotSpot(stops[1]!)).chest).toBeNull();
-    expect(unitScenery(stops, mascotSpot(stops[3]!)).scene).toBeNull();
-    expect(unitScenery(stops, mascotSpot(stops[3]!)).chest).not.toBeNull();
-    expect(unitScenery(stops, mascotSpot(stops[1]!), 'apple').scene).toBeNull();
-    expect(unitScenery(stops, mascotSpot(stops[1]!), 'tea').scene).not.toBeNull();
+    expect(unitScenery(stops, stops[1]!).chest).toBeNull();
+    expect(unitScenery(stops, stops[3]!).scene).toBeNull();
+    expect(unitScenery(stops, stops[3]!).chest).not.toBeNull();
+    expect(unitScenery(stops, stops[1]!, 'apple').scene).toBeNull();
+    expect(unitScenery(stops, stops[1]!, 'tea').scene).not.toBeNull();
     expect(unitScenery(stops, null, 'apple').scene).not.toBeNull();
     // a short unit has room for its scene but not a chest; a unit of three keeps them on opposite sides
-    expect(unitScenery(stops.slice(0, 2))).toEqual({ scene: { x: PATH_SCENERY_SPOT.sceneAcross, y: stops[1]!.y }, chest: null });
+    expect(unitScenery(stops.slice(0, 2))).toEqual({ scene: { side: 1, y: stops[1]!.y }, chest: null });
     const three = unitScenery(stops.slice(0, 3));
-    expect(Math.sign(three.scene!.x)).toBe(-Math.sign(three.chest!.x));
+    expect(three.scene!.side).toBe(-Math.sign(three.chest!.x));
+  });
+
+  it('leaves the scene out where the bubble over the stop to do now would reach it on a narrow screen, and keeps it on a wide one', () => {
+    expect(unitScenery(stops, stops[4]!, 'tea', 360).scene).toBeNull();
+    expect(unitScenery(stops, stops[4]!, 'tea', 720).scene).toEqual({ side: -1, y: stops[3]!.y });
+    // with no width known, only Hevalo is kept clear of
+    expect(unitScenery(stops, stops[4]!, 'tea').scene).not.toBeNull();
   });
 });
 
@@ -172,11 +183,54 @@ describe('the scenes beside the road', () => {
     expect(sceneBeat('letter', 3)).toEqual(sceneBeat('letter', 0));
   });
 
-  it('counts a chapter’s rounds as the fewest any of its topics has played', () => {
-    const skillAt = (rounds: number) => ({ stop: { kind: 'skill', rounds } });
-    expect(unitRounds([skillAt(3), skillAt(2), { stop: { kind: 'story' } }])).toBe(2);
-    expect(unitRounds([skillAt(3), skillAt(3)])).toBe(3);
-    expect(unitRounds([skillAt(1), skillAt(0)])).toBe(0);
-    expect(unitRounds([{ stop: { kind: 'trophy' } }])).toBe(0);
+  it('times each beat a little differently, never far from the scene’s own beat', () => {
+    const lengths = Array.from({ length: 9 }, (_, i) => sceneBeatMs('apple', i));
+    expect(new Set(lengths).size).toBeGreaterThan(4);
+    for (const ms of lengths) {
+      expect(ms).toBeGreaterThanOrEqual(PATH_SCENE_MOTION.beatMs.apple * 0.75);
+      expect(ms).toBeLessThanOrEqual(PATH_SCENE_MOTION.beatMs.apple * 1.5);
+    }
+    expect(sceneBeatMs('tea', 0)).not.toBe((sceneBeatMs('apple', 0) * PATH_SCENE_MOTION.beatMs.tea) / PATH_SCENE_MOTION.beatMs.apple);
+    expect(sceneBeatMs('slate', -1)).toBeGreaterThan(0);
+  });
+
+  it('has Hevalo reach for his apple and bite it as the bough gives, all back where they started', () => {
+    for (const track of [PATH_APPLE_REACH.turn, PATH_APPLE_REACH.tug]) {
+      expect(track[0]).toEqual([0, 0]);
+      expect(track[track.length - 1]).toEqual([1, 0]);
+    }
+    const { stretch } = PATH_APPLE_REACH;
+    expect(stretch[0]).toEqual([0, 1]);
+    expect(stretch[stretch.length - 1]).toEqual([1, 1]);
+    // he draws back before he stretches in, and the bough is still until his teeth close on the apple
+    expect(stretch[1]![1]).toBeLessThan(1);
+    expect(Math.max(...stretch.map(([, v]) => v))).toBeGreaterThan(1);
+    const tugs = PATH_APPLE_REACH.tug.filter(([, v]) => v !== 0);
+    expect(tugs[0]![0]).toBeGreaterThan(PATH_APPLE_REACH.biteAt);
+  });
+});
+
+describe('a finished stop’s stamp', () => {
+  it('turns each stamp a few degrees its own way, the same every time for the same stop', () => {
+    const tilts = ['s:a', 's:b', 's:c', 's:d', 's:e', 's:f'].map(stampTilt);
+    expect(stampTilt('s:a')).toBe(tilts[0]);
+    for (const t of tilts) {
+      expect(Math.abs(t)).toBeGreaterThanOrEqual(3);
+      expect(Math.abs(t)).toBeLessThanOrEqual(13);
+    }
+    expect(new Set(tilts.map(Math.sign)).size).toBe(2);
+  });
+
+  it('presses halfway through its moment: the print appears and the tile squashes as it lands, and all ends as it was drawn', () => {
+    const { pressAt, toolY, squash, printShown, toolShown } = PATH_STAMP_MOMENT;
+    const at = (track: readonly (readonly [number, number])[], t: number): number | undefined => track.find(([k]) => k === t)?.[1];
+    expect(at(toolY, pressAt)).toBe(0);
+    expect(at(printShown, pressAt)).toBe(0);
+    expect(printShown[printShown.length - 1]![1]).toBe(1);
+    expect(Math.min(...squash.map(([, v]) => v))).toBeLessThan(1);
+    expect(squash[squash.length - 1]![1]).toBe(1);
+    // the stamp is out of sight before it starts and after it lifts away
+    expect(toolShown[0]![1]).toBe(0);
+    expect(toolShown[toolShown.length - 1]![1]).toBe(0);
   });
 });

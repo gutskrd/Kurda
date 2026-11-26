@@ -10,8 +10,13 @@ import { n, n2, prefixFor, type Pt } from './svg.js';
 import { kilimAlong } from './paint.js';
 import { VALLEY, ellipsePath, fill, stroke } from './valley.js';
 
-/** The vignette's canvas: it stands on its foot at `ground`, and the apps size it by its height. */
-export const CHAPTER_ART = { w: 120, h: 100, ground: 92 } as const;
+/**
+ * The vignette's canvas in the banner, `w` × `h`, which the apps set against the banner's foot and far end so the
+ * banner's edges crop it, a window onto the scene; they size it by its height. The scene is drawn on its own 120 × 100
+ * ground (its foot at `ground`) and set into the canvas at `place` (scaled `s`, moved by `dx`, `dy`), or its own, its
+ * foot a little below the banner's so the edge cuts it, on a quiet hill a step darker than the banner's colour.
+ */
+export const CHAPTER_ART = { w: 132, h: 116, ground: 92, place: { s: 1.1, dx: 1, dy: 20.8 } } as const;
 
 /** How a chapter's moving part moves: rising and fading, falling and fading, swinging or swaying about its pivot, a flame's flicker, a bob, or a circle round its pivot. */
 export const CHAPTER_LOOP_KINDS = ['rise', 'fall', 'swing', 'creak', 'flicker', 'bob', 'orbit'] as const;
@@ -42,7 +47,7 @@ export function chapterArtOf(index: number): ChapterArtId {
 /** What moves in each vignette, and where. */
 export const CHAPTER_ART_LOOP: Readonly<Record<ChapterArtId, ChapterLoop>> = {
   door: { kind: 'creak', x: 24, y: 38, w: 22, h: 58, px: 44, py: 66 },
-  samovar: { kind: 'rise', x: 58, y: 4, w: 16, h: 26, px: 66, py: 30 },
+  samovar: { kind: 'rise', x: 60, y: 8, w: 14, h: 20, px: 67, py: 28 },
   house: { kind: 'rise', x: 86, y: 4, w: 14, h: 24, px: 93, py: 28 },
   market: { kind: 'swing', x: 70, y: 36, w: 30, h: 30, px: 85, py: 36 },
   clock: { kind: 'swing', x: 36, y: 52, w: 16, h: 34, px: 44, py: 52 },
@@ -59,9 +64,10 @@ export interface ChapterArtOptions {
   chapter: ChapterArtId;
   /** The still picture, or its moving part alone at rest, on its own box (`CHAPTER_ART_LOOP`). */
   part?: 'still' | 'loop';
-  /** The colour of the shadow it stands on: the banner's own darker colour. */
+  /** The hill it stands on, a step darker than the banner's colour, and the shade its things cast on it. */
   ground?: string;
-  /** Display height in points; the width follows the canvas (or the loop's box). */
+  shade?: string;
+  /** Display height in points; the width follows the canvas (or the loop's box, scaled as the scene is). */
   height?: number;
   idPrefix?: string;
 }
@@ -72,16 +78,34 @@ export function chapterArtSvg(opts: ChapterArtOptions): string {
   const draw = DRAW[chapter];
   if (!draw) throw new RangeError(`art: no chapter vignette ${String(chapter)}`);
   const part = opts.part ?? 'still';
-  const ground = opts.ground ?? '#17242b';
-  if (!/^#[0-9a-f]{6}$/i.test(ground)) throw new RangeError(`art: a vignette's ground is a six-digit colour, not ${String(ground)}`);
-  const prefix = prefixFor(opts.idPrefix, 'chapter-art', chapter, part, ground);
+  const ground = opts.ground ?? '#5f717a';
+  const shade = opts.shade ?? '#17242b';
+  for (const colour of [ground, shade]) if (!/^#[0-9a-f]{6}$/i.test(colour)) throw new RangeError(`art: a vignette's ground is a six-digit colour, not ${String(colour)}`);
+  const prefix = prefixFor(opts.idPrefix, 'chapter-art', chapter, part, ground, shade);
   const loop = CHAPTER_ART_LOOP[chapter];
-  const view = part === 'loop' ? { x: loop.x, y: loop.y, w: loop.w, h: loop.h } : { x: 0, y: 0, w: CHAPTER_ART.w, h: CHAPTER_ART.h };
-  const height = opts.height ?? view.h;
+  const { s, dx, dy } = draw.place ?? CHAPTER_ART.place;
+  if (part === 'loop') {
+    const height = opts.height ?? loop.h * s;
+    if (!(height > 0) || !Number.isFinite(height)) throw new RangeError(`art: height must be a positive number, got ${String(height)}`);
+    const width = (height * loop.w) / loop.h;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(width)}" height="${n2(height)}" viewBox="${n(loop.x)} ${n(loop.y)} ${n(loop.w)} ${n(loop.h)}" aria-hidden="true" focusable="false" id="${prefix}">${draw.loop(prefix)}</svg>`;
+  }
+  const { w: W, h: H } = CHAPTER_ART;
+  const height = opts.height ?? H;
   if (!(height > 0) || !Number.isFinite(height)) throw new RangeError(`art: height must be a positive number, got ${String(height)}`);
-  const body = part === 'loop' ? draw.loop(prefix) : fill(ellipsePath(CHAPTER_ART.w / 2 + 4, CHAPTER_ART.ground + 1, draw.shadow, 5), ground) + draw.still(prefix);
-  const width = (height * view.w) / view.h;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(width)}" height="${n2(height)}" viewBox="${n(view.x)} ${n(view.y)} ${n(view.w)} ${n(view.h)}" aria-hidden="true" focusable="false" id="${prefix}">${body}</svg>`;
+  // The hill, rising toward the banner's far end and running off its foot.
+  const hill = fill(`M0 ${n(H)}C${n(W * 0.2)} ${n(H - 3)} ${n(W * 0.42)} ${n(H - 12)} ${n(W)} ${n(H - 19)}V${n(H)}Z`, ground);
+  const scene = `<g transform="translate(${n(dx)} ${n(dy)}) scale(${n(s)})">${fill(ellipsePath(64, CHAPTER_ART.ground + 1, draw.shadow, 4.5), shade)}${draw.still(prefix)}</g>`;
+  const width = (height * W) / H;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(width)}" height="${n2(height)}" viewBox="0 0 ${W} ${H}" aria-hidden="true" focusable="false" id="${prefix}">${hill}${scene}</svg>`;
+}
+
+/** Where a chapter's moving part lies on the banner's canvas, scaled as the scene is: the box its picture fills, and its pivot. */
+export function chapterLoopBox(chapter: ChapterArtId): { x: number; y: number; w: number; h: number; px: number; py: number } {
+  const loop = CHAPTER_ART_LOOP[chapter];
+  if (!loop) throw new RangeError(`art: no chapter vignette ${String(chapter)}`);
+  const { s, dx, dy } = DRAW[chapter].place ?? CHAPTER_ART.place;
+  return { x: dx + loop.x * s, y: dy + loop.y * s, w: loop.w * s, h: loop.h * s, px: dx + loop.px * s, py: dy + loop.py * s };
 }
 
 // ───────────────────────────────────────────────────────────── the drawings
@@ -97,6 +121,8 @@ const GLASS = '#fff7ea';
 interface Vignette {
   /** The half-width of the shadow it stands on. */
   shadow: number;
+  /** Where it is set into the banner's canvas, where it needs its own. */
+  place?: { s: number; dx: number; dy: number };
   still: (prefix: string) => string;
   loop: (prefix: string) => string;
 }
@@ -142,6 +168,7 @@ const DRAW: Readonly<Record<ChapterArtId, Vignette>> = {
   // Hello: Hamo's blue gate in its mud wall, thrown open, and Hevalo's head peeking out round the jamb.
   door: {
     shadow: 50,
+    place: { s: 1.12, dx: 10, dy: 21 },
     still: (prefix) => {
       const gap = { l: 44, r: 80, t: 40, b: 92 };
       let out = fill('M12 92V34Q12 26 20 26H100Q108 26 108 34V92Z', V.wall);
@@ -192,12 +219,13 @@ const DRAW: Readonly<Record<ChapterArtId, Vignette>> = {
       out += teaGlass(24, 84) + teaGlass(96, 84) + teaGlass(83, 92) + teaGlass(37, 92);
       return out;
     },
-    loop: () => puffs(66, 28, '#ffffff', 0.9),
+    loop: () => `<g transform="translate(67 28) scale(0.8) translate(-66 -28)">${puffs(66, 28, '#ffffff', 0.9)}</g>`,
   },
 
   // House and village: a flat-roofed mud-brick house, a ladder up to the roof, a clay jar at its door and its stove's smoke.
   house: {
     shadow: 50,
+    place: { s: 1.1, dx: 12, dy: 20.8 },
     still: () => {
       let out = fill('M96 92L106 86V44L96 50Z', V.wallSide);
       out += fill('M22 50H96V92H22Z', V.wall);
@@ -221,6 +249,7 @@ const DRAW: Readonly<Record<ChapterArtId, Vignette>> = {
   // The market: a striped awning on two poles over a crate of pomegranates, and the trader's scale hanging from it.
   market: {
     shadow: 52,
+    place: { s: 1.1, dx: 8, dy: 20.8 },
     still: () => {
       let out = stroke('M16 34V92M104 34V92', WOOD.shade, 3);
       // The awning, stripes of madder and cream with a scalloped edge.
@@ -272,6 +301,7 @@ const DRAW: Readonly<Record<ChapterArtId, Vignette>> = {
   // The city: the minibus to town, its luggage tied on the roof under a kilim.
   minibus: {
     shadow: 54,
+    place: { s: 1.08, dx: 6, dy: 20 },
     still: () => {
       let out = '';
       for (const x of [32, 88]) out += fill(ellipsePath(x, 84, 8, 8), '#2b2b30') + fill(ellipsePath(x, 84, 3.6, 3.6), '#a3a8ae');

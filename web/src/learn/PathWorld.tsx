@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import {
   PATH_LANDMARK_LOOP,
+  PATH_SCENES,
   landmarkBox,
   pathLandmarkSvg,
   pathLoopSvg,
@@ -8,7 +9,6 @@ import {
   pathScene,
   pathSignpostSvg,
   pathStopSvg,
-  unitRounds,
   unitScenery,
   type PathBox,
   type PathLand,
@@ -131,13 +131,10 @@ export function StopArt({ look, tone, dark, near }: { look: PathStopLook; tone: 
 }
 
 /** A unit's milestone, its last stop, from the shared drawing: the seal and the drum it stands on; a press pushes the seal down. */
-export function MilestoneArt({ won, rounds, dark, near }: { won: boolean; rounds: number; dark: boolean; near: boolean }): React.JSX.Element | null {
+export function MilestoneArt({ won, dark, near }: { won: boolean; dark: boolean; near: boolean }): React.JSX.Element | null {
   const art = useMemo(
-    () =>
-      near
-        ? { base: { __html: pathMilestoneSvg({ won, rounds, part: 'base', dark }) }, face: { __html: pathMilestoneSvg({ won, rounds, part: 'face', dark }) } }
-        : null,
-    [near, won, rounds, dark],
+    () => (near ? { base: { __html: pathMilestoneSvg({ won, part: 'base', dark }) }, face: { __html: pathMilestoneSvg({ won, part: 'face', dark }) } } : null),
+    [near, won, dark],
   );
   if (!art) return null;
   // Laid from the button's corner as path.css places it (shared PATH_MILESTONE_ART).
@@ -151,37 +148,47 @@ export function MilestoneArt({ won, rounds, dark, near }: { won: boolean; rounds
 
 /**
  * A unit's playful touches beside its road (shared `unitScenery`): its little scene, chosen from the chapter (shared
- * `pathScene`, PathScene.tsx), with the chapter's rounds strung under it, and the unit's painted sandûq, shut until the
- * unit is done and then open on its gold. Both are for the eye and out of the reading order; a tap plays a moment of its
- * own (path.css), and nothing moves under reduced motion.
+ * `pathScene`, PathScene.tsx), leaning in from the edge, and the unit's painted sandûq, shut until the unit is done and
+ * then open on its gold. The scene is cut off at the road's column edge, which on a phone's width is the screen's own
+ * (path.css). Both are for the eye and out of the reading order; a tap plays a moment of its own, and nothing moves under
+ * reduced motion.
  */
 export function UnitScenery({
   unit,
   dark,
   near,
-  mascot,
+  here,
+  width,
   rtl,
   reduce,
 }: {
   unit: Unit;
   dark: boolean;
   near: boolean;
-  /** Where Hevalo stands beside the stop to do now in this unit, if he is here. */
-  mascot: { x: number; y: number } | null;
+  /** The stop to do now, if it is in this unit: Hevalo stands beside it, under its bubble. */
+  here: { x: number; y: number } | null;
+  /** The road's width, so the scene keeps clear of the bubble over the stop to do now. */
+  width: number;
   rtl: boolean;
   reduce: boolean;
 }): React.JSX.Element | null {
   const scene = pathScene(unit.number - 1);
-  const spots = useMemo(() => unitScenery(unit.stops, mascot, scene), [unit.stops, mascot, scene]);
+  const spots = useMemo(() => unitScenery(unit.stops, here, scene, width > 0 ? width : null), [unit.stops, here, scene, width]);
   const [opened, setOpened] = useState(0);
   if (!near) return null;
   const won = unit.total > 0 && unit.done === unit.total;
   return (
     <>
       {spots.scene && (
-        <li className={`lp-scene is-${scene}`} aria-hidden="true" data-scene={scene} style={{ top: spots.scene.y, '--sx': `${spots.scene.x}px` } as React.CSSProperties}>
-          {/* Drawn for the road's start side; on the other it is mirrored, so it always faces the road. */}
-          <PathScene scene={scene} flip={spots.scene.x > 0 !== rtl} dark={dark} rounds={unitRounds(unit.stops)} reduce={reduce} />
+        <li
+          className={`lp-scene is-${scene} ${spots.scene.side < 0 ? 'is-start' : 'is-end'}`}
+          aria-hidden="true"
+          data-scene={scene}
+          // Cut off at the edge and at its foot, or a little below it where the character runs on to leave by the edge.
+          style={{ top: spots.scene.y, clipPath: `inset(0 0 -${PATH_SCENES[scene].below}px 0)` }}
+        >
+          {/* Drawn for the left edge; at the right one it is mirrored, so it always leans in toward the road. */}
+          <PathScene scene={scene} flip={spots.scene.side > 0 !== rtl} dark={dark} reduce={reduce} />
         </li>
       )}
       {spots.chest && (

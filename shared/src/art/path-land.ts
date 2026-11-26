@@ -6,10 +6,9 @@
  * are in path-landmark.ts.
  */
 import type { UnitTone } from '../lesson-path.js';
-import { starPath } from '../lesson-rounds.js';
 import type { PathGround } from '../path-world.js';
 import { roadLight } from './light.js';
-import { CANVAS, mix, n, n2, prefixFor, type Pt } from './svg.js';
+import { CANVAS, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
 import { kilimAlong } from './paint.js';
 import { VALLEY, dusk, ellipsePath, fill, smoothPath, stroke, warm } from './valley.js';
 
@@ -158,14 +157,16 @@ function tokenOf(look: PathStopLook, t: UnitColours, dark: boolean): Token {
   const g = PATH_GOLD[dark ? 'dark' : 'light'];
   const gold: Token = { face: g.face, side: g.side, light: g.light };
   switch (look) {
-    case 'done':
+    // A chapter's story, open once every topic is done, is the chapter's prize, so it is gold.
     case 'story':
-      // A chapter's story, open once every topic is done, is the chapter's prize, so it is gold.
       return gold;
     case 'strong':
       return { face: warm('#f2b632', dark), side: warm('#a8691a', dark), light: warm('#ffe39a', dark) };
+    // A finished topic keeps its unit's tile; Hevalo's stamp on it (`pathStampSvg`) says it is done, a little worn
+    // when a refresh would help.
     case 'refresh':
-      return { face: mix(gold.face, slate.face, 0.3), side: mix(gold.side, slate.side, 0.3), light: mix(g.light, slate.face, 0.3) };
+      return { face: mix(t.fill, slate.face, 0.35), side: mix(t.lip, slate.side, 0.35), light: mix(unit.light!, slate.face, 0.35) };
+    case 'done':
     case 'current':
     case 'available':
     case 'review':
@@ -217,9 +218,9 @@ export interface PathStopOptions {
 
 /**
  * One stop, base or face. An open stop is a thick tile in its unit's colour, a rounded square seen from above the road on
- * its darker side, with one line of light along its upper edge; the app sets its glyph. A finished one is gold with
- * Hevalo's hoofprint pressed into it, since he walked that stretch of road with the learner. A shut one is a quiet slate
- * stone lying low, not yet laid as a tile. The guide's book, story scroll and jump gate are part of the face; a unit's
+ * its darker side, with one line of light along its upper edge; the app sets its glyph. A finished one is the same tile,
+ * which the app stamps with Hevalo's hoofprint (`pathStampSvg`). A shut one is a quiet slate stone lying low, not yet
+ * laid as a tile. The guide's book, story scroll and jump gate are part of the face; a unit's
  * chest (`chest`, `chestOpen`) is its painted sandûq standing on the road instead.
  */
 export function pathStopSvg(opts: PathStopOptions): string {
@@ -266,7 +267,6 @@ export function pathStopSvg(opts: PathStopOptions): string {
   } else {
     body += fill(face, k.face);
   }
-  if (look === 'done' || look === 'refresh' || look === 'strong') body += hoofprint(cx, cy - 9, 0.92, k.side, k.light ?? k.face);
   if (look === 'guide' || look === 'guideLocked') body += book(cx, cy - 2, look === 'guide' ? t : { fill: PATH_REST[scheme].ink, lip: PATH_REST[scheme].lip }, dark);
   if (look === 'story') body += scroll(cx, cy - 2, dark, false);
   if (look === 'storyLocked') body += scroll(cx, cy - 2, dark, true);
@@ -275,17 +275,118 @@ export function pathStopSvg(opts: PathStopOptions): string {
 }
 
 /**
- * Hevalo's hoofprint pressed into a finished tile, toes forward up the road: two halves of a deer's slot with the
- * dewclaws behind, in the tile's shade, the light catching its far edge so it reads as pressed in rather than painted on.
+ * Hevalo's hoofprint as path data, toes forward up the road: the two halves of a deer's slot with the dewclaws behind,
+ * about 32 points tall at `s` 1, centred on (`x`, `y`). The apps draw it small for a topic's rounds in its card.
  */
-function hoofprint(x: number, y: number, s: number, deep: string, lit: string): string {
-  const half = (m: 1 | -1, dx: number, dy: number): string => {
-    const p = (u: number, v: number): string => `${n(x + dx + m * u * s)} ${n(y + dy + v * s)}`;
-    return `M${p(1.7, -11.5)}C${p(6.8, -8.6)} ${p(9.6, 0.6)} ${p(9, 6.6)}C${p(8.6, 10.8)} ${p(3.8, 11.8)} ${p(1.9, 8.8)}C${p(0.6, 3.2)} ${p(0.5, -5.2)} ${p(1.7, -11.5)}Z`;
+export function hoofprintPath(x: number, y: number, s = 1): string {
+  const half = (m: 1 | -1): string => {
+    const p = (u: number, v: number): string => `${n(x + m * u * s)} ${n(y + v * s)}`;
+    return `M${p(1.5, -13.5)}C${p(7.4, -10.6)} ${p(10.6, -1.4)} ${p(10.2, 5.6)}C${p(9.9, 10.4)} ${p(4.9, 12.2)} ${p(2.2, 9.4)}C${p(0.5, 3.6)} ${p(0.2, -5.6)} ${p(1.5, -13.5)}Z`;
   };
-  const claws = (dx: number, dy: number): string => ellipsePath(x + dx - 5.2 * s, y + dy + 15.6 * s, 1.9 * s, 1.4 * s) + ellipsePath(x + dx + 5.2 * s, y + dy + 15.6 * s, 1.9 * s, 1.4 * s);
-  const print = (dx: number, dy: number): string => half(1, dx, dy) + half(-1, dx, dy) + claws(dx, dy);
-  return fill(print(0.9, 1.2), lit) + fill(print(0, 0), deep);
+  const claw = (m: 1 | -1): string => `M${n(x + m * 4.4 * s)} ${n(y + 15 * s)}c${n(m * 1.6 * s)} ${n(-0.6 * s)} ${n(m * 3 * s)} ${n(0.4 * s)} ${n(m * 2.6 * s)} ${n(1.8 * s)}c${n(m * -0.5 * s)} ${n(1.2 * s)} ${n(m * -2.4 * s)} ${n(1 * s)} ${n(m * -2.6 * s)} ${n(-1.8 * s)}Z`;
+  return half(1) + half(-1) + claw(1) + claw(-1);
+}
+
+/** The stamp's canvas, and how far round its rim the press wavers, so no two stamps are cut alike. */
+export const PATH_STAMP_ART = { box: 56, r: 22, rim: 3.4 } as const;
+
+export interface PathStampOptions {
+  /** Each stamp's own press: the rim's unevenness, from the stop it is on. */
+  seed?: string;
+  /** A tiny mark round the rim, the stamp's own for a kind of lesson; plain by default. */
+  motif?: 'words' | 'talk' | 'practice' | null;
+  /** Worn, where a refresh would help: the foil a little rubbed. */
+  worn?: boolean;
+  dark?: boolean;
+  size?: number;
+  idPrefix?: string;
+}
+
+/**
+ * Hevalo's stamp on a finished tile: his hoofprint in a round seal, struck in gold foil and pressed into the tile, so a
+ * shadow lies along the inside of its upper left edges. The rim is pressed by hand: a little thicker here, thinner
+ * there, never quite round. The apps lay it over the tile's face, turned a little each its own way (`stampTilt`).
+ */
+export function pathStampSvg(opts: PathStampOptions = {}): string {
+  const { dark = false } = opts;
+  const { box: B, r, rim } = PATH_STAMP_ART;
+  const size = opts.size ?? B;
+  if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
+  const prefix = prefixFor(opts.idPrefix, 'stamp', opts.seed, opts.motif ?? '', opts.worn, dark);
+  const g = PATH_GOLD[dark ? 'dark' : 'light'];
+  const foil = opts.worn ? mix(g.face, '#9aa6ac', 0.35) : g.face;
+  const shade = opts.worn ? mix(g.side, '#6f7a80', 0.35) : g.side;
+  const rand = seeded(`stamp|${opts.seed ?? ''}`);
+  const c = B / 2;
+  // The rim: an outer and an inner edge, each wavering a little round the circle, as a hand presses unevenly.
+  const ring = (radius: number, wobble: number): string => {
+    const pts: Pt[] = [];
+    for (let i = 0; i < 28; i++) {
+      const a = (i / 28) * Math.PI * 2;
+      const k = radius + (rand() - 0.5) * wobble;
+      pts.push([c + Math.cos(a) * k, c + Math.sin(a) * k]);
+    }
+    return smoothPath(pts, true);
+  };
+  let marks = ring(r, 0.9) + reverse(ring(r - rim, 1.4));
+  marks += hoofprintPath(c, c - 1.2, 0.88);
+  if (opts.motif) marks += rimMotif(opts.motif, c, r - rim - 3.6);
+  const clip = `${prefix}m`;
+  // Pressed in: the foil's own shade along the inside of its upper left edges, a faint dark edge round it for any tile.
+  const body =
+    `<defs><clipPath id="${clip}"><path d="${marks}" clip-rule="evenodd"/></clipPath></defs>` +
+    `<path d="${marks}" fill="none" stroke="#3a2306" stroke-opacity="${dark ? 0.45 : 0.3}" stroke-width="1.6" stroke-linejoin="round"/>` +
+    `<g clip-path="url(#${clip})"><path d="M0 0H${B}V${B}H0Z" fill="${shade}"/><path d="${marks}" transform="translate(1.1 1.3)" fill="${foil}" fill-rule="evenodd"/></g>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(size)}" viewBox="0 0 ${B} ${B}" aria-hidden="true" focusable="false" id="${prefix}">${body}</svg>`;
+}
+
+/** A closed path drawn the other way round, so it cuts a hole in a shape drawn with it under the non-zero rule. */
+function reverse(d: string): string {
+  // Only our own smooth paths: an M, then C segments, closed. Rebuilt end to start, each curve's handles swapped.
+  const nums = d.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+  const start: Pt = [nums[0]!, nums[1]!];
+  const segs: Array<[Pt, Pt, Pt]> = [];
+  for (let i = 2; i + 5 < nums.length; i += 6) segs.push([[nums[i]!, nums[i + 1]!], [nums[i + 2]!, nums[i + 3]!], [nums[i + 4]!, nums[i + 5]!]]);
+  const points = [start, ...segs.map((sg) => sg[2])];
+  let out = `M${n(points[points.length - 1]![0])} ${n(points[points.length - 1]![1])}`;
+  for (let i = segs.length - 1; i >= 0; i--) {
+    const [c1, c2] = segs[i]!;
+    const to = points[i]!;
+    out += `C${n(c2[0])} ${n(c2[1])} ${n(c1[0])} ${n(c1[1])} ${n(to[0])} ${n(to[1])}`;
+  }
+  return `${out}Z`;
+}
+
+/** Six tiny marks round the inside of a stamp's rim, one kind of lesson's own: little lines for words, bubbles for a talk, bars for practice. */
+function rimMotif(kind: 'words' | 'talk' | 'practice', c: number, r: number): string {
+  let out = '';
+  for (let i = 0; i < 6; i++) {
+    const a = ((i + 0.5) / 6) * Math.PI * 2 + Math.PI / 2;
+    const [x, y] = [c + Math.cos(a) * r, c + Math.sin(a) * r];
+    if (kind === 'talk') out += ellipsePath(x, y, 1.3, 1.1);
+    else if (kind === 'words') out += `M${n(x - 1.6)} ${n(y - 0.6)}h3.2v1.2h-3.2Z`;
+    else out += `M${n(x - 0.6)} ${n(y - 1.6)}h1.2v3.2h-1.2Z`;
+  }
+  return out;
+}
+
+/**
+ * The stamp itself, for the moment a finished tile is stamped: a brass seal on a turned wooden handle, seen from the
+ * side, its face down. On its own 40 by 56 canvas, its face at the bottom middle.
+ */
+export function pathStampToolSvg(opts: { dark?: boolean; size?: number; idPrefix?: string } = {}): string {
+  const { dark = false } = opts;
+  const size = opts.size ?? 40;
+  if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
+  const c = (hex: string): string => dusk(hex, dark, 0.12);
+  const g = PATH_GOLD[dark ? 'dark' : 'light'];
+  let body = fill('M14 26C14 22 16 20 20 20C24 20 26 22 26 26V34H14Z', c('#8a5428'));
+  body += fill('M20 20C24 20 26 22 26 26V34H22V26C22 23 21 21 20 20Z', c('#5e3518'));
+  body += fill(ellipsePath(20, 12, 9, 9.5), c('#b8773e')) + fill('M20 2.5C25 2.5 29 6.5 29 12C29 16 27 19 24 20.6C26 17 26.4 9 20 2.5Z', c('#8a5428'));
+  body += fill(ellipsePath(16.6, 9, 2.6, 3.2), c('#d39457'));
+  body += fill('M11 34H29L31 38H9Z', g.side) + fill('M9 38H31V46Q31 48 29 48H11Q9 48 9 46Z', g.face) + fill('M26 38H31V46Q31 48 29 48H26Z', g.side);
+  body += fill('M8 48H32V51H8Z', g.side);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2((size * 56) / 40)}" viewBox="0 0 40 56" aria-hidden="true" focusable="false" id="${prefixFor(opts.idPrefix, 'stamp-tool', dark)}">${body}</svg>`;
 }
 
 // ───────────────────────────────────────────────────────────── the milestone
@@ -300,9 +401,7 @@ export const PATH_MILESTONE_ART = { w: 112, h: 136, x: -20, y: -16, cx: 56, cy: 
 export interface PathMilestoneOptions {
   /** Won: its chapter is done, and the seal is gold; otherwise it is slate, waiting. */
   won: boolean;
-  /** The chapter's rounds, 0 to 3: the stars set in the drum, gold for each round every topic has played. */
-  rounds?: number;
-  /** The base (its shade, the drum and the stars), or the seal a press pushes down. */
+  /** The base (its shade and the drum it stands on), or the seal a press pushes down. */
   part: 'base' | 'face';
   dark?: boolean;
   /** Display width in points; the drawing is `PATH_MILESTONE_ART.w` wide and keeps its shape. */
@@ -311,17 +410,15 @@ export interface PathMilestoneOptions {
 }
 
 /**
- * The milestone: a round seal with a pomegranate's crown, thick enough to stand, on a short drum of carved stone with
- * three stars set into its front. Slate until its chapter is done, then gold, with a star lit gold for each round every
- * topic of the chapter has played. The app writes the chapter's number on the seal.
+ * The milestone: a round seal with a pomegranate's crown, thick enough to stand, on a short drum of cut stone, the
+ * chapter's own great stamp. Slate until its chapter is done, then gold. The app writes the chapter's number on it.
  */
 export function pathMilestoneSvg(opts: PathMilestoneOptions): string {
   const { won, part, dark = false } = opts;
-  const rounds = Math.max(0, Math.min(3, Math.floor(opts.rounds ?? 0)));
   const { w: W, h: H, cx, cy, r } = PATH_MILESTONE_ART;
   const size = opts.size ?? W;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
-  const prefix = prefixFor(opts.idPrefix, 'milestone', won, rounds, part, dark);
+  const prefix = prefixFor(opts.idPrefix, 'milestone', won, part, dark);
   const shade = dark ? '#05080a' : '#17242b';
   const rest = PATH_REST[dark ? 'dark' : 'light'];
   const g = PATH_GOLD[dark ? 'dark' : 'light'];
@@ -341,14 +438,8 @@ export function pathMilestoneSvg(opts: PathMilestoneOptions): string {
     body += fill(`M${n(cx - drum.rx)} ${n(drum.top)}V${n(drum.top + drum.h)}A${drum.rx} ${drum.ry} 0 0 0 ${n(cx + drum.rx)} ${n(drum.top + drum.h)}V${n(drum.top)}Z`, stoneC.face);
     body += fill(`M${n(cx - drum.rx)} ${n(drum.top + drum.h - 5)}V${n(drum.top + drum.h)}A${drum.rx} ${drum.ry} 0 0 0 ${n(cx + drum.rx)} ${n(drum.top + drum.h)}V${n(drum.top + drum.h - 5)}A${drum.rx} ${drum.ry} 0 0 1 ${n(cx - drum.rx)} ${n(drum.top + drum.h - 5)}Z`, stoneC.side);
     body += fill(ellipsePath(cx, drum.top, drum.rx, drum.ry), stoneC.top);
-    // Three stars set into its front, gold for each round played, the rest their empty settings.
-    const at = [cx - 15, cx, cx + 15];
-    const y = drum.top + drum.ry + 6.5;
-    at.forEach((x, i) => {
-      const lift = i === 1 ? 1.2 : 0;
-      if (i < rounds) body += `<path d="${starPath(x, y + lift, 6.4)}" fill="${warm('#f2b632', dark)}" stroke="${g.side}" stroke-width="1.4" stroke-linejoin="round"/>`;
-      else body += fill(starPath(x, y + lift, 5.2), stoneC.side);
-    });
+    // A cut line round the drum's shoulder, where the light leaves its top.
+    body += stroke(`M${n(cx - drum.rx + 1)} ${n(drum.top + 3.5)}A${drum.rx - 1} ${drum.ry} 0 0 0 ${n(cx + drum.rx - 1)} ${n(drum.top + 3.5)}`, stoneC.side, 1.2);
     // The seal's thickness, standing on the drum: the same round a little down and right, in its side colour.
     body += fill(seal(3.5, 4.5), k.side);
     return wrapBox(prefix, size, W, H, body);

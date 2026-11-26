@@ -112,9 +112,8 @@
   /* The gold rim and trophy: the sun, as everywhere it marks something earned. */
   --lp-gold-lip: #b88d1f;
   --lp-gold-ink: #3a2a00;
-  /* A ring's unfilled track and the edge under every piece (as the phone's coursemap/path.ts RING). */
-  --lp-ring-track: #2e3c43;
-  --lp-ring-edge: rgba(5, 8, 10, 0.6);
+  /* The bar's unfilled track over the stop to do now, and the round still to play in a card (as the phone's coursemap/path.ts). */
+  --lp-track: #2e3c43;
   --node: 72px;
 }
 :root[data-theme='light'] .lp {
@@ -123,8 +122,7 @@
   --lp-rest-ink: #5f717a;
   --lp-line: rgba(23, 36, 43, 0.16);
   --lp-gold-lip: #b07f00;
-  --lp-ring-track: #d6dfe3;
-  --lp-ring-edge: rgba(23, 36, 43, 0.28);
+  --lp-track: #d6dfe3;
 }
 
 /* ---- the top of the page ---------------------------------------------------- */
@@ -190,7 +188,7 @@
   gap: var(--space-2);
   min-height: 116px;
   margin-bottom: 6px;
-  padding: var(--space-3) 0 calc(var(--space-3) + 14px) var(--space-5);
+  padding: var(--space-4) 0 var(--space-4) var(--space-5);
   border-radius: var(--r-lg);
   color: var(--u-ink);
   box-shadow: 0 6px 0 var(--u-lip);
@@ -215,19 +213,10 @@
     clip-path: inset(0 0 0 0 round var(--r-lg));
   }
 }
-.lp-pin-kilim {
-  position: absolute;
-  inset-inline: 14px;
-  bottom: 8px;
-  height: 12px;
-  line-height: 0;
-  opacity: 0.32;
-  pointer-events: none;
-}
-.lp-pin-kilim > svg {
-  display: block;
-}
-/* The words at the top and, at their far end standing on the kilim, the chapter's vignette; the name keeps clear of it. */
+/*
+ * The words at the top and, at their far end, the chapter's vignette set against the seam and the banner's foot, which
+ * crop it; the name keeps clear of it.
+ */
 .lp-pin-body {
   position: relative;
   flex: 1;
@@ -235,6 +224,9 @@
   align-self: stretch;
   display: flex;
   align-items: flex-start;
+  margin-block: calc(-1 * var(--space-4));
+  padding-block: var(--space-4);
+  overflow: hidden;
 }
 .lp-pin-words {
   flex: 1;
@@ -244,8 +236,8 @@
 }
 .lp-pin-scene {
   position: absolute;
-  inset-inline-end: var(--space-1);
-  bottom: calc(-1 * (var(--space-3) + 14px) + 2px);
+  inset-inline-end: 0;
+  bottom: 0;
   line-height: 0;
   pointer-events: none;
 }
@@ -277,17 +269,19 @@
   }
 }
 .lp-pin-eyebrow {
+  position: relative;
   margin: 0;
   font-size: var(--text);
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.86;
+  opacity: 0.8;
 }
 .lp-pin-title {
   margin: 0;
-  /* Clear of the vignette (PathSections.tsx PIN_ART_H, the art's canvas 120 by 100). */
-  padding-inline-end: 94px;
+  /* Clear of the vignette's things (shared CHAPTER_ART); its quiet hill may run on under the words. */
+  position: relative;
+  padding-inline-end: 100px;
   font-family: var(--font-sans);
   font-size: var(--text-title);
   font-weight: 800;
@@ -302,9 +296,9 @@
   justify-content: center;
   align-items: center;
   gap: 2px;
-  margin-block: calc(-1 * var(--space-3)) calc(-1 * (var(--space-3) + 14px));
+  margin-block: calc(-1 * var(--space-4));
   padding-inline: var(--space-2);
-  border-inline-start: 2px solid var(--u-lip);
+  border-inline-start: 1.5px solid color-mix(in srgb, var(--u-lip) 70%, transparent);
 }
 .lp-pin-button {
   flex: none;
@@ -771,7 +765,7 @@ button.lp-scard:focus-visible {
 }
 .lp-art-face,
 .lp-node-glyph,
-.lp-stars {
+.lp-stamp {
   transform-origin: 50% 90%;
   transition:
     translate var(--dur-slow) var(--ease-spring),
@@ -812,7 +806,7 @@ button.lp-scard:focus-visible {
 /* A press squishes the stop down into its base, and it springs back up when let go. */
 .lp-node:active .lp-art-face,
 .lp-node:active .lp-node-glyph,
-.lp-node:active .lp-stars {
+.lp-node:active .lp-stamp {
   translate: 0 7px;
   scale: 1.06 0.92;
   transition-duration: 60ms;
@@ -824,11 +818,7 @@ button.lp-scard:focus-visible {
   background: var(--lp-rest);
   box-shadow: 0 6px 0 var(--lp-rest-lip);
 }
-.lp-node.is-done:not(.is-drawn) .lp-node-face {
-  background: #e9a93b;
-  box-shadow: 0 6px 0 #b8781f;
-}
-.lp-node:is(.is-current, .is-available, .is-review):not(.is-drawn) .lp-node-face {
+.lp-node:is(.is-current, .is-available, .is-review, .is-done):not(.is-drawn) .lp-node-face {
   background: var(--u-fill);
   box-shadow: 0 6px 0 var(--u-lip);
 }
@@ -859,14 +849,26 @@ button.lp-scard:focus-visible {
   line-height: 1;
 }
 
-/* The glyph in the colour the face needs: cream on a finished stop's gold, the unit's ink on its own colour. */
-.lp-node.is-done .lp-node-glyph {
-  color: #fffaf0;
-}
+/*
+ * The glyph in the unit's ink on its own colour. Once a finished stop is stamped it steps back and leaves the print alone
+ * on the tile, a faint trace of it reading as a smudge; in the stamping moment it goes as the stamp comes down (shared
+ * PATH_STAMP_MOMENT: pressed halfway through 1300ms).
+ */
 .lp-node.is-current .lp-node-glyph,
 .lp-node.is-available .lp-node-glyph,
-.lp-node.is-review .lp-node-glyph {
+.lp-node.is-review .lp-node-glyph,
+.lp-node.is-done .lp-node-glyph {
   color: var(--u-ink);
+}
+.lp-node.is-done .lp-node-glyph > :not(.lp-node-badge) {
+  transition: opacity 120ms linear;
+}
+.lp-node.is-stamped .lp-node-glyph > :not(.lp-node-badge) {
+  opacity: 0;
+}
+.lp-node.is-stamping .lp-node-glyph > :not(.lp-node-badge) {
+  opacity: 0;
+  transition-delay: var(--stamp-press, 650ms);
 }
 /* On a closed stop's flat slate. */
 .lp-node.is-locked .lp-node-glyph {
@@ -887,89 +889,93 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * A topic's ring (learn/PathRing.tsx): a piece per lesson, the track until finished in the current round, the unit's colour then,
- * and gold all round after three rounds, each piece edged a step darker. Returning from a lesson the new pieces fill in
- * turn (`--d`); right-to-left pages fill the other way.
+ * A topic's bar just above its tile (learn/PathRing.tsx, shared PATH_BAR: 60 by 8 from 6, -20 of the stop): a rounded
+ * piece per lesson on a quiet track, filled in its unit's colour once finished in the current round, and gold once full.
+ * Returning from a lesson the new pieces fill in turn (`--d`, `--t`) from the line's start.
  */
-.lp-ring {
+.lp-bar-over {
   position: absolute;
-  left: -12px;
-  top: -12px;
-  width: 96px;
-  height: 96px;
-  overflow: visible;
+  inset-inline-start: 0;
+  top: -20px;
+  width: var(--node);
+  height: 8px;
   pointer-events: none;
 }
-[dir='rtl'] .lp-ring {
-  scale: -1 1;
+.lp-bar-piece {
+  position: absolute;
+  top: 0;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--lp-track);
+  overflow: hidden;
 }
-.lp-ring-edge,
-.lp-ring-piece {
-  fill: none;
-  stroke-linecap: round;
+.lp-bar-ink {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--u-fill);
 }
-.lp-ring-edge {
-  stroke: var(--lp-ring-edge);
+.lp-bar-ink.is-filled {
+  width: 100%;
 }
-.lp-ring-piece {
-  stroke: var(--lp-ring-track);
-}
-.lp-ring-piece.is-filled {
-  stroke: var(--u-fill);
-}
-.lp-ring.is-whole .lp-ring-piece {
-  stroke: var(--gold);
+.lp-bar-over.is-whole .lp-bar-ink {
+  background: var(--gold);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .lp-map.is-returning .lp-ring-piece {
-    transition: stroke 160ms linear;
-    transition-delay: var(--d, 0ms);
+  .lp-map.is-returning .lp-bar-ink {
+    transition:
+      width var(--t, 160ms) var(--ease-out) var(--d, 0ms),
+      background-color 200ms linear;
   }
 }
 
-/* A finished topic's stars on its coin: cream edged in deep gold. */
-.lp-stars {
+/*
+ * Hevalo's stamp on a finished tile (PathScene.tsx `TileStamp`, shared PATH_STAMP_ART: a 56-point print centred on the
+ * tile's face at 36, 30 of the stop), turned its own way; the brass stamp over it only in its moment, its face as wide
+ * as the print and landing level with the print's middle.
+ */
+.lp-stamp {
   position: absolute;
-  inset: 0;
-  overflow: visible;
+  left: 8px;
+  top: 2px;
+  width: 56px;
+  height: 56px;
   pointer-events: none;
 }
-.lp-star {
-  fill: #fffaf0;
-  stroke: #a8691a;
-  stroke-width: 1.6;
-  stroke-linejoin: round;
+.lp-stamp-turn,
+.lp-stamp-print {
+  position: absolute;
+  inset: 0;
+  display: block;
+  line-height: 0;
 }
-@media (prefers-reduced-motion: no-preference) {
-  .lp-star.is-earned {
-    animation: lp-star-in 280ms var(--ease-out) both;
-  }
+.lp-stamp-tool {
+  position: absolute;
+  z-index: 1;
+  left: -8px;
+  top: -59px;
+  width: 72px;
+  height: 101px;
+  line-height: 0;
 }
-@keyframes lp-star-in {
-  from {
-    opacity: 0;
-    translate: 0 -14px;
-    scale: 1.8;
-  }
-  70% {
-    opacity: 1;
-    scale: 0.92;
-  }
+.lp-node.is-stamping .lp-node-face {
+  transform-origin: 50% 85%;
 }
-/* A topic card's three stars: gold for each round played. */
-.lp-star-row {
+.lp-stop:has(.lp-node.is-stamping) {
+  z-index: 6;
+}
+
+/* A topic card's rounds: Hevalo's print in gold for each round played, the track's colour for the rest. */
+.lp-print-row {
   display: inline-flex;
-  gap: 4px;
+  gap: 6px;
 }
-.lp-star-row path {
-  fill: var(--lp-ring-track);
-  stroke: var(--lp-ring-edge);
-  stroke-width: 1.4;
-  stroke-linejoin: round;
+.lp-print-row path {
+  fill: var(--lp-track);
 }
-.lp-star-row path.is-won {
+.lp-print-row path.is-won {
   fill: var(--gold);
-  stroke: #a8691a;
 }
 
 /*
@@ -979,8 +985,8 @@ button.lp-scard:focus-visible {
  */
 .lp-callout {
   position: absolute;
-  /* clear of the stop's ring */
-  bottom: calc(var(--node) + 22px);
+  /* its tail clear of the bar over the stop */
+  bottom: calc(var(--node) + 38px);
   inset-inline-start: calc(50% + var(--x, 0px));
   translate: -50% 0;
   z-index: 4;
@@ -1130,17 +1136,33 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * A unit's playful touches (PathWorld.tsx `UnitScenery`, PathScene.tsx), placed from the logical start like the stops:
- * its little scene on a 120-point stage, mirrored on the road's far side so it faces the road, and its sandûq.
+ * A unit's playful touches (PathWorld.tsx `UnitScenery`, PathScene.tsx). Its little scene leans in from the edge on its
+ * side (shared PATH_SCENE_BOX: 150 by 164 points, its middle level with the stop it sits by), cut off at that edge and at
+ * its foot: the road's column edge on a wide screen, and on a phone's width the screen's own, past the page's gutter.
+ * Drawn for the left edge, it is mirrored at the right. The sandûq stands beside the road like a stop.
  */
 .lp-scene {
   position: absolute;
   z-index: 1;
-  inset-inline-start: calc(50% + var(--sx, 0px) - 60px);
-  width: 120px;
-  height: 120px;
-  margin-top: -60px;
+  width: 150px;
+  height: 164px;
+  margin-top: -82px;
   list-style: none;
+  pointer-events: none;
+}
+.lp-scene.is-start {
+  inset-inline-start: 0;
+}
+.lp-scene.is-end {
+  inset-inline-end: 0;
+}
+@media (max-width: 640px) {
+  .lp-scene.is-start {
+    inset-inline-start: -16px;
+  }
+  .lp-scene.is-end {
+    inset-inline-end: -16px;
+  }
 }
 .lp-scene-stage {
   position: relative;
@@ -1162,11 +1184,21 @@ button.lp-scard:focus-visible {
   border: 0;
   background: transparent;
   cursor: pointer;
+  pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
 }
+/* The character leans in about the middle of its foot, past the edge; what gives turns about its root there. */
 .lp-actor {
   display: flex;
   justify-content: center;
+  transform-origin: 50% 100%;
+}
+.lp-gives {
+  inset: 0;
+}
+.lp-gives > span {
+  position: absolute;
+  line-height: 0;
 }
 /* The slate's letters read the right way round on either side of the road. */
 .lp-scene-stage.is-flipped .lp-chalk > svg {
@@ -1243,19 +1275,6 @@ button.lp-scard:focus-visible {
 @media (prefers-reduced-motion: no-preference) {
   .lp-unit.is-seen .lp-stop.is-here:not(.is-open) {
     animation: lp-bob 1.2s ease-in-out infinite alternate;
-  }
-  /* The stop to do now breathes out a ring of its colour, over and over. */
-  .lp-unit.is-seen .lp-node.is-current.is-drawn::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: -1px;
-    width: var(--node);
-    height: 62px;
-    border: 4px solid var(--u-fill);
-    border-radius: 50%;
-    pointer-events: none;
-    animation: lp-pulse 2.2s var(--ease-out) infinite;
   }
   /* A shut chest gives a little shiver now and then; tapped, it rattles on its lock, and open it tosses out its gold. */
   .lp-unit.is-seen .lp-chest-art {
@@ -1376,16 +1395,6 @@ button.lp-scard:focus-visible {
     animation: lp-node-pop var(--dur-slow) var(--ease-spring);
   }
 }
-@keyframes lp-pulse {
-  from {
-    opacity: 0.6;
-    scale: 1;
-  }
-  to {
-    opacity: 0;
-    scale: 1.6;
-  }
-}
 @keyframes lp-crumb {
   0% {
     opacity: 1;
@@ -1434,19 +1443,20 @@ button.lp-scard:focus-visible {
     translate: 0 -18px;
   }
 }
+/* A sugar cube's hop from the bowl into the glass (`--tx`, `--ty`, from PathScene.tsx), up over the rim and in. */
 @keyframes lp-toss {
   0% {
     translate: 0 0;
   }
   50% {
-    translate: -24px -24px;
+    translate: calc(var(--tx, -24px) / 2) calc(var(--ty, 0px) / 2 - 22px);
   }
   90% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    translate: -48px 2px;
+    translate: var(--tx, -24px) var(--ty, 0px);
   }
 }
 @keyframes lp-splash {
@@ -1710,7 +1720,6 @@ button.lp-scard:focus-visible {
     transform: translateY(6px);
   }
 }
-.lp-node.is-finishing .lp-node-face,
 .lp-node.is-opening .lp-node-face {
   animation: lp-node-pop var(--dur-slow) var(--ease-spring);
 }
@@ -1721,7 +1730,6 @@ button.lp-scard:focus-visible {
   animation: lp-arrive var(--dur) var(--ease-out) both;
 }
 @media (prefers-reduced-motion: reduce) {
-  .lp-node.is-finishing .lp-node-face,
   .lp-node.is-opening .lp-node-face,
   .lp-callout.is-arriving,
   .lp-land-stones.is-fresh {
@@ -1729,22 +1737,20 @@ button.lp-scard:focus-visible {
   }
   .lp-art-face,
   .lp-node-glyph,
-  .lp-stars {
+  .lp-stamp {
     transition: none;
   }
 }
 
 /* ---- the stop to do now ------------------------------------------------------ */
 
-/* The road's main button: its ring fills in its unit's colour, as its face is drawn. */
-.lp-node.is-current .lp-ring-piece.is-filled {
-  stroke: var(--u-fill);
-}
-/* Now and then a glint sweeps its face (shared PATH_STOP_ART: centre 56,58 and radii 36 by 31 in a 112 box) and a few
-   sparks wink on it after. */
+/* Now and then a glint sweeps its face (shared PATH_STOP_ART: centre 56,58 and radii 36 by 31 in a 112 box). */
 .lp-shine {
   position: absolute;
-  inset: 0;
+  inset-inline-start: -20px;
+  top: -28px;
+  width: 112px;
+  height: 112px;
   overflow: hidden;
   clip-path: ellipse(32.1% 27.7% at 50% 51.8%);
   pointer-events: none;
@@ -1757,34 +1763,6 @@ button.lp-scard:focus-visible {
   translate: -70% 0;
   animation: lp-glint 3.6s ease-in-out 1s infinite;
 }
-.lp-spark {
-  position: absolute;
-  width: 11px;
-  height: 11px;
-  background: #ffffff;
-  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
-  scale: 0;
-  animation: lp-twinkle 3.6s ease-out 1s infinite;
-}
-.lp-spark:nth-child(1) {
-  inset-inline-start: 31%;
-  top: 33%;
-  animation-delay: 1.5s;
-}
-.lp-spark:nth-child(2) {
-  inset-inline-start: 63%;
-  top: 41%;
-  width: 8px;
-  height: 8px;
-  animation-delay: 1.7s;
-}
-.lp-spark:nth-child(3) {
-  inset-inline-start: 50%;
-  top: 63%;
-  width: 7px;
-  height: 7px;
-  animation-delay: 1.9s;
-}
 @keyframes lp-glint {
   0% {
     translate: -70% 0;
@@ -1792,20 +1770,6 @@ button.lp-scard:focus-visible {
   38%,
   100% {
     translate: 70% 0;
-  }
-}
-@keyframes lp-twinkle {
-  0%,
-  100% {
-    scale: 0;
-  }
-  7% {
-    scale: 1;
-    rotate: 45deg;
-  }
-  16% {
-    scale: 0;
-    rotate: 90deg;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { PATH_STOP_TONES, levelHintKey, levelNameKey, levelOfCefr, pathKilimSvg, type PathSection, type PathUnit } from '@kurda/shared';
+import { useEffect, useRef, useState } from 'react';
+import { PATH_STOP_TONES, levelHintKey, levelNameKey, levelOfCefr, type PathSection, type PathUnit } from '@kurda/shared';
 import { Button } from '../components/Button';
 import { BookIcon, CheckIcon, FlagIcon, LockIcon, NextIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -62,8 +62,8 @@ export function useUnitAtTop(root: React.RefObject<HTMLElement | null>, units: r
 
 /**
  * The open section's heading, pinned under the bar: "Section 1 · Chapter 2" over the top unit's name, on the unit's own
- * colour standing on its darker lip, with a kilim trim woven along its foot, the chapter's painted vignette standing on
- * it beside the name, and its guide as a book on the far side over the rail's flag where there is no room for the rail. As the next unit comes up its colour slides in over the last one's,
+ * colour standing on its darker lip, the chapter's painted vignette beside the name, cropped by the banner's edges, and
+ * its guide as a book on the far side over the rail's flag where there is no room for the rail. As the next unit comes up its colour slides in over the last one's,
  * or simply changes under reduced motion (path.css). A one-section course is not named. It is for the eye; each unit's
  * own heading is in the page order for screen readers.
  */
@@ -83,15 +83,6 @@ export function UnitPin({
   const locale = useLocale();
   const n = (v: number): string => new Intl.NumberFormat(locale).format(v);
   const dark = useDarkPage();
-  const pin = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
-  useEffect(() => {
-    const el = pin.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
-    const watch = new ResizeObserver(() => setWidth(el.offsetWidth));
-    watch.observe(el);
-    return () => watch.disconnect();
-  }, []);
   // The unit the banner showed before, kept under the new one while the new colour slides in over it.
   const [was, setWas] = useState<Unit | null>(null);
   const last = useRef(unit);
@@ -104,24 +95,18 @@ export function UnitPin({
     return () => window.clearTimeout(done);
   }, [unit]);
   const colours = PATH_STOP_TONES[dark ? 'dark' : 'light'][unit.tone];
-  const trim = useMemo(
-    // A hidden view measures at no size at all; the trim waits for a real one.
-    () => (width > 0 ? { __html: pathKilimSvg({ width: width - 2 * PIN_TRIM_INSET, height: PIN_TRIM_H, ink: colours.ink, eye: colours.fill, idPrefix: `lppin${unit.number}` }) } : null),
-    [width, colours, unit.number],
-  );
   return (
-    <div ref={pin} className={`lp-pin lp-tone-${unit.tone}`} data-testid="lp-pin" data-tone={unit.tone}>
+    <div className={`lp-pin lp-tone-${unit.tone}`} data-testid="lp-pin" data-tone={unit.tone}>
       {was && <span className={`lp-pin-colour lp-tone-${was.tone}`} aria-hidden="true" />}
       <span key={unit.unitId} className={`lp-pin-colour${was ? ' is-arriving' : ''}`} aria-hidden="true" />
-      {trim && <span className="lp-pin-kilim" aria-hidden="true" dangerouslySetInnerHTML={trim} />}
       <div className="lp-pin-body">
         <div key={`w${unit.unitId}`} className={`lp-pin-words${was ? ' is-arriving' : ''}`}>
           <p className="lp-pin-eyebrow">{section !== null ? t('coursemap.sectionUnit', { section: n(section), unit: n(unit.number) }) : t('coursemap.unit', { n: n(unit.number) })}</p>
           <p className="lp-pin-title">{unit.title}</p>
         </div>
-        {/* The chapter's own vignette, standing on the kilim beside its name. */}
+        {/* The chapter's own vignette beside its name, a window onto its scene that the banner's edges crop. */}
         <span key={`a${unit.unitId}`} className={`lp-pin-scene${was ? ' is-arriving' : ''}`}>
-          <ChapterArt chapter={unit.number - 1} ground={colours.lip} height={PIN_ART_H} />
+          <ChapterArt chapter={unit.number - 1} fill={colours.fill} lip={colours.lip} height={PIN_ART_H} />
         </span>
       </div>
       {/* At the far end, past a seam in the lip's colour, as a book of the unit's guide and the rail's flag. */}
@@ -140,13 +125,10 @@ export function UnitPin({
   );
 }
 
-/** The vignette's height in the banner; path.css keeps the title clear of its width. */
-const PIN_ART_H = 76;
+/** The vignette's height in the banner, the banner's own; path.css keeps the title clear of its width. */
+const PIN_ART_H = 116;
 /** How long a new unit's colour takes to slide in over the last one's (path.css `lp-pin-slide`). */
 const PIN_SLIDE_MS = 260;
-/** The kilim trim's height, and how far in from the banner's sides it runs. */
-const PIN_TRIM_H = 12;
-const PIN_TRIM_INSET = 14;
 
 /** Between two units, a quiet line with the next unit's number and name: its heading, wrapping rather than cut. */
 export function UnitDivider({ unit, id }: { unit: Unit; id: string }): React.JSX.Element {
