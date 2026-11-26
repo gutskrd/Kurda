@@ -490,6 +490,75 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('families and child profiles (integ
       }
     });
 
+    it('rests at bedtime and once the day’s limit is used: no lesson, practice, game or story begins, while a lesson under way finishes', async () => {
+      const parent = await adult();
+      const child = await addChild(parent);
+      const kid = await pair(parent, child.userId);
+      const none = '00000000-0000-4000-8000-000000000000';
+      const learning: Array<[Method, string, Record<string, unknown>?]> = [
+        ['GET', `/lessons/${none}/session`],
+        ['POST', `/courses/${none}/jump`, {}],
+        ['POST', `/courses/${none}/placement`, {}],
+        ['POST', '/practice/session', {}],
+        ['PUT', `/stories/${none}/progress`, { paragraph: 1 }],
+        ['POST', '/riddles/test/guess', { guess: 'x' }],
+        ['POST', '/proverbs/rounds', {}],
+        ['POST', '/games/solo/sessions', {}],
+        ['POST', `/games/solo/sessions/${none}/answers`, {}],
+        ['POST', '/games/who-am-i/couch/deal', {}],
+        ['POST', '/wordle/daily', {}],
+        ['POST', `/wordle/games/${none}/guesses`, { guess: 'xxxxx' }],
+        ['POST', '/rhyme/training', {}],
+        ['POST', '/race', {}],
+      ];
+      const paused = async () => {
+        for (const [method, url, payload] of learning) {
+          const res = await call(kid, method, url, payload);
+          expect(res.json()?.code, `${method} ${url}`).toBe('PARENTAL_PAUSED');
+          expect(res.statusCode).toBe(403);
+          expect(res.json().details?.paused, `${method} ${url}`).toMatch(/^(bedtime|limit)$/);
+        }
+      };
+      // before any limit the same requests reach their routes
+      for (const [method, url, payload] of learning) {
+        expect((await call(kid, method, url, payload)).json()?.code, `${method} ${url}`).not.toBe('PARENTAL_PAUSED');
+      }
+
+      // the day's fifteen minutes used up
+      await pool.query(`UPDATE parental_controls SET daily_limit_minutes = 15, time_zone = 'UTC' WHERE teen_id = $1`, [child.userId]);
+      await pool.query(
+        `INSERT INTO parental_usage (teen_id, day, minutes) VALUES ($1, (now() AT TIME ZONE 'UTC')::date, 15)
+         ON CONFLICT (teen_id, day) DO UPDATE SET minutes = 15`,
+        [child.userId],
+      );
+      await paused();
+      // what the resting screen needs, and finishing a lesson already under way, still work
+      for (const [method, url, payload] of [
+        ['GET', '/me'],
+        ['GET', '/me/today'],
+        ['GET', '/me/family'],
+        ['POST', '/me/usage', { timeZone: 'UTC' }],
+        ['POST', `/sessions/${none}/answers`, { exerciseId: none, answer: 'x' }],
+        ['POST', `/sessions/${none}/complete`],
+        ['POST', `/practice/sessions/${none}/answers`, { exerciseId: none, answer: 'x' }],
+      ] as Array<[Method, string, Record<string, unknown>?]>) {
+        const res = await call(kid, method, url, payload);
+        expect(res.json()?.code, `${method} ${url}`).not.toBe('PARENTAL_PAUSED');
+        expect(res.statusCode, `${method} ${url} ${res.body.slice(0, 200)}`).toBeLessThan(500);
+      }
+      expect((await call(kid, 'GET', '/me')).json().user.supervision).toMatchObject({ paused: 'limit' });
+
+      // and at bedtime, the limit lifted
+      const hour = new Date().getUTCHours();
+      const at = (h: number) => `${String((h + 24) % 24).padStart(2, '0')}:00`;
+      await pool.query(`UPDATE parental_controls SET daily_limit_minutes = NULL, bedtime_from = $2, bedtime_to = $3 WHERE teen_id = $1`, [
+        child.userId,
+        at(hour - 1),
+        at(hour + 2),
+      ]);
+      await paused();
+    });
+
     it('keeps a child out of everyone else’s sight: no profile, no search, no letters', async () => {
       const parent = await adult();
       const child = await addChild(parent, { name: 'Zilanzilan' });

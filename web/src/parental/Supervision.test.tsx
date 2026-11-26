@@ -186,6 +186,23 @@ describe('the pause screen', () => {
     expect(await screen.findByRole('heading', { name: en['parental.pause.bedtimeTitle'] })).toBeInTheDocument();
   });
 
+  it('comes as the limit’s screen when a lesson, a game or a story is refused for the day’s minutes', async () => {
+    const fetchMock = teenServer(supervision());
+    const answer = fetchMock.getMockImplementation() as (url: string, init?: RequestInit) => Promise<Response>;
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) =>
+      init?.method === 'POST' && url.endsWith('/practice/session')
+        ? jsonResponse(403, { code: 'PARENTAL_PAUSED', message: 'resting', details: { paused: 'limit', resumesAt: '2099-01-02T00:00:00.000Z' } })
+        : answer(url, init),
+    );
+    const { client } = await import('../lib/api').then((m) => m.createApiClient(() => undefined));
+    renderApp(<App />, ['/app']);
+    expect(await screen.findByText('The app')).toBeInTheDocument();
+    await act(async () => {
+      await client.post('/practice/session', {});
+    });
+    expect(await screen.findByRole('heading', { name: en['parental.pause.limitTitle'] })).toBeInTheDocument();
+  });
+
   it('does not let a lesson be opened once the pause has begun', async () => {
     teenServer(BEDTIME);
     renderApp(<App />, ['/app/learn/lesson/l1']);
