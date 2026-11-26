@@ -130,7 +130,7 @@ const line = (pts: readonly Pt[]): string => `M${pts.map(p).join('L')}`;
 /** A rectangle of a plane, from (u0, v0) to (u1, v1). */
 const rect = (plane: Plane, u0: number, v0: number, u1: number, v1: number): string => poly([plane(u0, v0), plane(u1, v0), plane(u1, v1), plane(u0, v1)]);
 
-/** The knot sits where the ribbons cross on the lid's top; `KNOT_AT` is that crossing as (x, z). */
+/** How far the knot stands above the lid's top where the ribbons cross. */
 const KNOT_LIFT = 3;
 
 // ─────────────────────────────────────────────────────────────── colours
@@ -248,7 +248,10 @@ const mid = (a: Pt, b: Pt, t = 0.5): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + (b[
 
 // ─────────────────────────────────────────────────────────────── where things are
 
-/** The ribbons' middle lines: across the box at `RIBBON_X` (front to back) and `RIBBON_Z` (side to side). */
+/**
+ * Where the ribbons run: one front to back at `x`, one side to side at `z`, each `half` wide either way. A satin ribbon
+ * is centred; twine is tied a little off the middle, as a hand ties it.
+ */
 interface Lines {
   x: number;
   z: number;
@@ -681,11 +684,8 @@ function stars(l: Layer, b: Brush, where: 'body' | 'lid'): void {
 
 // ─────────────────────────────────────────────────────────────── the bow
 
-/** The bow's shapes about its knot `k`, in the canvas's units: drawn facing us, a little larger for a richer tier. */
-interface BowShape {
-  scale: number;
-}
-const bowOf = (tier: GiftTier): BowShape => ({ scale: tier === 'grand' ? 1.08 : tier === 'legendary' ? 1.06 : tier === 'rare' ? 1 : 0.92 });
+/** The bow is drawn facing us about its knot, a little larger for a richer tier. */
+const bowScale = (tier: GiftTier): number => (tier === 'grand' ? 1.08 : tier === 'legendary' ? 1.06 : tier === 'rare' ? 1 : 0.92);
 
 /** A point about the knot, mirrored for the right side. */
 const around = (k: Pt, s: number, mirror: boolean) => (dx: number, dy: number): Pt => [k[0] + (mirror ? -dx : dx) * s, k[1] + dy * s];
@@ -693,7 +693,7 @@ const around = (k: Pt, s: number, mirror: boolean) => (dx: number, dy: number): 
 /** One satin loop: the ribbon's outside, the inside seen through the loop, and the light along its upper curve. */
 function satinLoop(l: Layer, b: Brush, k: Pt, right: boolean, tier: GiftTier): GiftBoxBox {
   const { ribbon } = b.wrap;
-  const s = bowOf(tier).scale;
+  const s = bowScale(tier);
   const q = around(k, s, right);
   // the right loop stands a touch higher, as a hand-tied bow never sits even
   const up = right ? 1.08 : 1;
@@ -715,7 +715,7 @@ function satinLoop(l: Layer, b: Brush, k: Pt, right: boolean, tier: GiftTier): G
 /** One satin tail: out from under the knot, turned over once so its back shows, ending in a swallowtail. */
 function satinTail(l: Layer, b: Brush, k: Pt, right: boolean, tier: GiftTier): GiftBoxBox {
   const { ribbon } = b.wrap;
-  const s = bowOf(tier).scale;
+  const s = bowScale(tier);
   const q = around(k, s, right);
   // the left tail falls toward the front corner on the left; the right one, a little longer, toward the near corner
   const reach = right ? 1.1 : 1;
@@ -736,7 +736,7 @@ function satinTail(l: Layer, b: Brush, k: Pt, right: boolean, tier: GiftTier): G
 /** The knot: a short wrap of ribbon over the middle, lit on its upper half. */
 function satinKnot(l: Layer, b: Brush, k: Pt, tier: GiftTier): GiftBoxBox {
   const { ribbon } = b.wrap;
-  const s = bowOf(tier).scale;
+  const s = bowScale(tier);
   const q = around(k, s, false);
   const knot = `M${p(q(-4.2, -3.5))}C${p(q(-1.5, -5))} ${p(q(1.5, -5))} ${p(q(4.2, -3.5))}C${p(q(5.4, -0.5))} ${p(q(5, 2.5))} ${p(q(3.8, 4.4))}C${p(q(1.2, 5.6))} ${p(q(-1.2, 5.6))} ${p(q(-3.8, 4.4))}C${p(q(-5, 2.5))} ${p(q(-5.4, -0.5))} ${p(q(-4.2, -3.5))}Z`;
   l.add(fill(knot, ribbon.face));
