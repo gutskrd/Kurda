@@ -975,7 +975,7 @@ html:has(.lesson-bar) {
   }
 }
 .lesson-slow-chip.is-on {
-  border-color: var(--accent-text);
+  border-color: var(--ink);
   background: var(--primary-soft);
   color: var(--ink);
 }
@@ -1027,7 +1027,7 @@ html:has(.lesson-bar) {
 }
 .lesson-gap.is-filled {
   min-width: 2em;
-  border-bottom-color: var(--accent-text);
+  border-bottom-color: var(--ink);
 }
 .lesson-gap.is-right {
   border-bottom-color: var(--success);

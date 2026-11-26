@@ -35,10 +35,10 @@ describe('the stories’ colours', () => {
     expect(level).toMatch(/color:\s*var\(--ink-3\)/);
   });
 
-  it('draw a saved word’s button in the accent, in the reader and the dictionary, and a read chapter’s tick in the ink', () => {
-    expect(declared(stories, '.story-save.is-on')).toMatch(/color:\s*var\(--accent-text\)/);
+  it('draw a saved word’s button in the ink, never a colour, in the reader and the dictionary, and a read chapter’s tick too', () => {
+    expect(declared(stories, '.story-save.is-on')).toMatch(/color:\s*var\(--ink\)/);
     expect(declared(stories, '.story-contents-mark')).toMatch(/color:\s*var\(--primary\)/);
-    expect(declared(pages, '.dict-save.is-on')).toMatch(/color:\s*var\(--accent-text\)/);
+    expect(declared(pages, '.dict-save.is-on')).toMatch(/color:\s*var\(--ink\)/);
   });
 
   it('fill every bookmark that is on in the saved yellow, as a saved post’s is', () => {

@@ -1,8 +1,8 @@
 /*
  * Hevalo's design tokens in two schemes, matching the phone (mobile/src/theme/palette.ts) and the slate page and one
  * accent in @kurda/shared (themes.ts). Three rules hold everywhere: one face, two text sizes (`--text`,
- * `--text-title`), and one colour on the page: the accent (`--accent*`), worn by the main buttons, progress bars, the
- * chosen tab and chip, a switch that is on, links, focus rings and the stop to do now. Gold is what is earned, and
+ * `--text-title`), and one colour on the page: the accent (`--accent*`), worn by the main buttons, progress bars, a
+ * switch that is on, links, focus rings and the stop to do now; what is chosen is shown in the ink. Gold is earned, and
  * Hevalo+'s own button has its own gold (`--plus-*`). Green and red say right and wrong, never alone.
  *
  * Dark is the default on :root; light redefines the same names under `data-theme="light"`, set by theme/theme.ts. A
@@ -310,23 +310,23 @@
 }
 
 /*
- * What follows the accent, in both schemes: the chosen tab's capsule, a chosen chip or the one picked among small pills
- * (a tint of the accent with its word and edge in the accent), a switch that is on, and your own chat bubble. Cards are
- * flat: no rim of light, only the step of their surface.
+ * What is chosen is shown in the ink, never a colour: the chosen tab's capsule and a chosen chip are faint grounds of
+ * the ink with its words, and the one picked among small pills is the ink filled. A switch that is on and your own chat
+ * bubble follow the accent. Cards are flat: no rim of light, only the step of their surface.
  */
 :root,
 .scheme-night {
-  --capsule: color-mix(in srgb, var(--accent) 16%, transparent);
-  --chosen-fill: var(--accent-soft);
-  --chosen-ink: var(--accent-text);
-  --chosen-edge: var(--accent-text);
+  --capsule: color-mix(in srgb, var(--ink) 14%, transparent);
+  --chosen-fill: var(--primary-soft);
+  --chosen-ink: var(--ink);
+  --chosen-edge: var(--ink);
   --switch-on: var(--accent);
   --switch-on-thumb: var(--accent-ink);
   --bubble-mine: var(--accent);
   --bubble-mine-ink: var(--accent-ink);
   --card-rim: 0 0 0 transparent;
-  --picked-fill: var(--accent-soft);
-  --picked-ink: var(--accent-text);
+  --picked-fill: var(--ink);
+  --picked-ink: var(--app-bg);
 }
 
 /*

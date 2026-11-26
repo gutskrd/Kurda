@@ -267,8 +267,8 @@ const SEG_LINE = 18;
 /**
  * A segmented control: a track and a capsule that slides to the chosen option. The chosen word is the same size as
  * the others, only heavier, and the slide is the only motion: instant under Reduce Motion, mirrored in right-to-left
- * languages. The capsule is a tint of the accent with its word and edge in the accent, as on the website, so the choice
- * reads at a glance in both themes.
+ * languages. The capsule is a faint ground of the ink with its word and edge in the ink, as on the website, so the
+ * choice reads at a glance in both themes without a colour of its own.
  */
 export function Segmented<T extends string>({
   options,

@@ -1,8 +1,8 @@
 /**
  * The light and dark palettes: the slate page and the one accent from `@kurda/shared` (themes.ts), so both apps wear
- * the same. Most of a screen is the page; the accent fills the main buttons and progress bars and marks the chosen tab
- * and chip, a switch that is on, links and the stop to do now. Gold is what is earned, and words and glyphs are the
- * page's slate ink (`primary`). Green and red mean right and wrong but are never the only signal.
+ * the same. Most of a screen is the page; the accent fills the main buttons and progress bars and marks a switch that
+ * is on, links and the stop to do now. What is chosen (a tab, a chip, a segment) is shown in the ink, never a colour.
+ * Gold is what is earned, and words and glyphs are the page's slate ink (`primary`). Green and red mean right and wrong but are never the only signal.
  *
  * Components read the active `Palette` from ThemeProvider, and `palette.contrast.test.ts` holds every text-on-surface
  * pair to WCAG AA.
@@ -25,11 +25,11 @@ export interface Palette {
   accentLip: string;
   accentText: string;
   accentSoft: string;
-  /** A chosen chip or segment: a tint of the accent with its word and edge in the accent, in both schemes. */
+  /** A chosen chip or segment: a faint ground of the ink with its word and edge in the ink, in both schemes. */
   chosenFill: string;
   chosenInk: string;
   chosenEdge: string;
-  /** The one picked among a row of small choices drawn as pills of their own (a year, a month, a filter), as a chosen chip. */
+  /** The one picked among a row of small choices drawn as pills of their own (a year, a month, a filter): the ink filled, the page's colour on it. */
   pickedFill: string;
   pickedInk: string;
   /** A line of light along a card's top edge; none, since cards are flat steps of the slate. */
@@ -83,7 +83,7 @@ export interface Palette {
 
   controlTrack: string; // Inactive segmented control track.
   /**
-   * A switch's track and knob, on and off. On is the accent, like everything chosen; a right answer has its own green. Each track clears 3:1 on every surface and each knob 3:1 on its track (WCAG 1.4.11), and the knob's side
+   * A switch's track and knob, on and off. On is the accent; a right answer has its own green. Each track clears 3:1 on every surface and each knob 3:1 on its track (WCAG 1.4.11), and the knob's side
    * also shows the state. The knob has its own colour on every platform, since iOS's white knob vanished on a white
    * dark-mode track.
    */
@@ -161,11 +161,11 @@ export const LIGHT: Palette = {
   accentLip: DAY.lip,
   accentText: DAY.text,
   accentSoft: 'rgba(0,134,59,0.08)',
-  chosenFill: 'rgba(0,134,59,0.08)',
-  chosenInk: DAY.text,
-  chosenEdge: DAY.text,
-  pickedFill: 'rgba(0,134,59,0.08)',
-  pickedInk: DAY.text,
+  chosenFill: 'rgba(23,36,43,0.06)',
+  chosenInk: PAGE.light.ink,
+  chosenEdge: PAGE.light.ink,
+  pickedFill: PAGE.light.ink,
+  pickedInk: PAGE.light.page,
   cardRim: 'transparent',
   gold: REWARD_GOLD.light.gold,
   danger: ANSWER.light.wrong.text,
@@ -232,11 +232,11 @@ export const DARK: Palette = {
   accentLip: NIGHT.lip,
   accentText: NIGHT.text,
   accentSoft: 'rgba(50,212,107,0.14)',
-  chosenFill: 'rgba(50,212,107,0.14)',
-  chosenInk: NIGHT.text,
-  chosenEdge: NIGHT.text,
-  pickedFill: 'rgba(50,212,107,0.14)',
-  pickedInk: NIGHT.text,
+  chosenFill: 'rgba(238,243,245,0.1)',
+  chosenInk: PAGE.dark.ink,
+  chosenEdge: PAGE.dark.ink,
+  pickedFill: PAGE.dark.ink,
+  pickedInk: PAGE.dark.page,
   cardRim: 'transparent',
   gold: REWARD_GOLD.dark.gold,
   danger: ANSWER.dark.wrong.text,

@@ -2017,9 +2017,9 @@
 .places-link:hover {
   color: var(--ink);
 }
-/* the one you are on: drawn in the accent, its glyph solid, over the capsule of the same */
+/* the one you are on: drawn in the ink, its glyph solid, over the capsule of the same */
 .places-link.active {
-  color: var(--accent-text);
+  color: var(--ink);
 }
 .places-link:focus-visible {
   outline: 2px solid var(--focus);

@@ -772,7 +772,7 @@ button.feature {
   opacity: 0.7;
 }
 .avatar-tile.is-selected {
-  border-color: var(--accent-text);
+  border-color: var(--ink);
   box-shadow: 0 0 0 2px var(--primary-soft);
 }
 .avatar-tile-none {
@@ -4410,7 +4410,7 @@ button.mkp-fact {
 }
 /* a saved word is on, and on is the ink of everything chosen, as a bookmarked story is */
 .dict-save.is-on {
-  color: var(--accent-text);
+  color: var(--ink);
 }
 /* a pronunciation with a character: the speaker beside its button (dictionary/EntryView.tsx) */
 .dict-voice {

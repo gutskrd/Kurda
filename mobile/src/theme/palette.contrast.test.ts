@@ -58,7 +58,7 @@ for (const p of [LIGHT, DARK]) {
     });
 
     // A chosen chip, tab or segment stands out from the track the others sit on as a control must (WCAG 1.4.11) by its
-    // edge in the accent, and its word reads at AA on whatever it sits on.
+    // edge in the ink, and its word reads at AA on whatever it sits on.
     it('a chosen chip stands 3:1 off the track, on the page and on a card, with its word at AA', () => {
       for (const surface of [p.background, p.surface]) {
         expect(contrastRatio(p.chosenEdge, over(p.controlTrack, surface)), surface).toBeGreaterThanOrEqual(AA_LARGE);
@@ -66,16 +66,16 @@ for (const p of [LIGHT, DARK]) {
       }
     });
 
-    // A pick among small pills (a year, a filter) is a tint of the accent, its word at AA.
+    // A pick among small pills (a year, a filter) is the ink filled, its word in the page's colour at AA.
     it('a picked pill’s word meets AA on its fill, on the page and on a card', () => {
       for (const surface of [p.background, p.surface]) {
         expect(contrastRatio(p.pickedInk, over(p.pickedFill, surface)), surface).toBeGreaterThanOrEqual(AA_NORMAL);
       }
     });
 
-    // The chosen tab's glyph and label are drawn in the accent on the bar, over its own faint capsule.
-    it('the chosen tab, in the accent, meets AA on the bar', () => {
-      expect(contrastRatio(p.accentText, over(p.barFill, p.background))).toBeGreaterThanOrEqual(AA_NORMAL);
+    // The chosen tab's glyph and label are drawn in the ink on the bar, over its own faint capsule.
+    it('the chosen tab, in the ink, meets AA on the bar', () => {
+      expect(contrastRatio(p.primary, over(p.barFill, p.background))).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
     // A link or a chosen word is the accent as text, read at AA on the page and its surfaces.
@@ -153,11 +153,12 @@ function isPurple(colour: string): boolean {
 }
 
 describe('palette — the values the design settled on', () => {
-  it('tints a chosen chip with the accent, its word and edge in the accent, in both schemes', () => {
+  it('shows what is chosen in the ink, never the accent, in both schemes', () => {
     for (const p of [LIGHT, DARK]) {
-      expect(p.chosenFill, p.scheme).toBe(p.accentSoft);
-      expect(p.chosenInk, p.scheme).toBe(p.accentText);
-      expect(p.pickedFill, p.scheme).toBe(p.accentSoft);
+      expect(p.chosenInk, p.scheme).toBe(p.primary);
+      expect(p.chosenEdge, p.scheme).toBe(p.primary);
+      expect(p.pickedFill, p.scheme).toBe(p.primary);
+      for (const v of [p.chosenFill, p.chosenInk, p.chosenEdge, p.pickedFill, p.pickedInk]) expect(v, p.scheme).not.toBe(p.accentSoft);
       expect(p.cardRim, p.scheme).toBe('transparent');
     }
   });

@@ -31,8 +31,8 @@ export const PAGE: Readonly<Record<ThemeScheme, ThemePage>> = {
 
 /**
  * The one accent: the green of the Kurdistan flag and the Zagros in spring, bright by night, deep by day, kept clear of
- * the yellow-green lime of other learning apps. It fills the main buttons and progress bars and marks the chosen tab
- * and chip, a switch that is on, links, focus rings and the stop to do now.
+ * the yellow-green lime of other learning apps. It fills the main buttons and progress bars and marks a switch that is
+ * on, links, focus rings and the stop to do now. What is chosen (a tab, a chip) is shown in the ink, never a colour.
  */
 export interface AccentColors {
   /** The fill of a main button, a progress bar, a switch that is on. */
@@ -41,7 +41,7 @@ export interface AccentColors {
   lip: string;
   /** Words and glyphs on the fill. */
   ink: string;
-  /** The accent as words and marks on the page and its surfaces: a link, a chosen tab, a focus ring. */
+  /** The accent as words and marks on the page and its surfaces: a link, a focus ring. */
   text: string;
 }
 
