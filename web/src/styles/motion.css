@@ -769,6 +769,57 @@
   }
 }
 
+/* ---- a count ticking ---------------------------------------------------------------- */
+/*
+ * A count that changes under a tap (components/TickCount.tsx): the old number leaves through the top of its line and
+ * the new one rises in from the bottom, the other way round for fewer, as on the phone. Both share one grid cell, and
+ * the line clips them, so nothing beside the number moves.
+ */
+.tick {
+  display: inline-grid;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+.tick > * {
+  grid-area: 1 / 1;
+}
+@keyframes tick-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+@keyframes tick-out-up {
+  to {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+@keyframes tick-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+@keyframes tick-out-down {
+  to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+.tick.is-up > .tick-now {
+  animation: tick-in-up var(--dur) var(--ease-out) both;
+}
+.tick.is-up > .tick-was {
+  animation: tick-out-up var(--dur) var(--ease-out) both;
+}
+.tick.is-down > .tick-now {
+  animation: tick-in-down var(--dur) var(--ease-out) both;
+}
+.tick.is-down > .tick-was {
+  animation: tick-out-down var(--dur) var(--ease-out) both;
+}
+
 /* ---- the day's reward, claimed -------------------------------------------------- */
 /*
  * The claimed reward's coin pops once and throws a like's six sparks in gold (components/DailyReward.tsx, which also
