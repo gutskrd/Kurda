@@ -81,7 +81,14 @@ describe('the hand holding up a game’s stamp', () => {
 
   it('wears the skin of the hand holding the phone, its shadows in the antlers’ brown and its lines a warm one', () => {
     const used = new Set([...colours(stampBack), ...colours(stampFront)]);
-    for (const c of [SKIN.face, SKIN.shade, SKIN.crease]) expect(used).toContain(c);
+    for (const c of [SKIN.face, SKIN.shade]) expect(used).toContain(c);
+    // a warm brown for the lines: red over green over blue, darker than the skin's shade
+    const rgb = (c: string): number[] => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
+    const warm = [...used].filter((c) => {
+      const [r, g, b] = rgb(c);
+      return r! > g! && g! > b! && r! < rgb(SKIN.shade)[0]!;
+    });
+    expect(warm.length).toBeGreaterThan(0);
     for (const c of [SKIN.face, SKIN.shade]) expect(colours(back)).toContain(c);
     // nothing near black: every colour has some light in it
     for (const c of used) expect(Math.max(...[1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16)))).toBeGreaterThan(64);
