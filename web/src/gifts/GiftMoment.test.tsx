@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { useState } from 'react';
 import { act, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { GIFT_BOX_EXIT_MS, GIFT_BOX_UNWRAPS, GIFT_SENT_FADE_MS, GIFT_SENT_LOOK, GIFT_SENT_MS, type GiftCard } from '@kurda/shared';
+import { GIFT_BOX_EXIT_MS, GIFT_BOX_SEND_MS, GIFT_BOX_UNWRAPS, GIFT_SENT_FADE_MS, GIFT_SENT_LOOK, GIFT_SENT_MS, type GiftCard } from '@kurda/shared';
 import { jsonResponse, renderApp } from '../test/utils';
 import { GiftMoment, GiftSentMoment, PostGiftOpen } from './GiftMoment';
 
@@ -34,10 +34,20 @@ describe('the sender’s moment', () => {
   });
 
   it('wraps the gift in its tier’s box, ties it and sends it off, and simply shows the gift under Reduce Motion', () => {
+    vi.useFakeTimers();
     const { unmount } = renderApp(<GiftSentMoment item={{ ...tea, tier: 'rare' }} line="Sent to rojda." onDone={() => undefined} />);
     expect(document.querySelector('.gift-sent .gift-box')).toHaveAttribute('data-motion', 'send');
     expect(document.querySelector('.gift-sent .gift-box')).toHaveClass('gift-box-rare');
     expect(document.querySelector('.gift-sent .gift-item-art')).not.toBeNull();
+    // it stays until its box has flown, then fades
+    act(() => {
+      vi.advanceTimersByTime(GIFT_SENT_MS);
+    });
+    expect(document.querySelector('.gift-sent')).not.toHaveClass('is-leaving');
+    act(() => {
+      vi.advanceTimersByTime(GIFT_BOX_SEND_MS - GIFT_SENT_MS);
+    });
+    expect(document.querySelector('.gift-sent')).toHaveClass('is-leaving');
     unmount();
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener() {}, removeEventListener() {} }));
     renderApp(<GiftSentMoment item={{ ...tea, tier: 'rare' }} line="Sent to rojda." onDone={() => undefined} />);

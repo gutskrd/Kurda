@@ -363,13 +363,15 @@ export function GiftSentMoment({
   }, [wrapped]);
 
   useEffect(() => {
-    const leave = window.setTimeout(() => setLeaving(true), GIFT_SENT_MS);
-    const gone = window.setTimeout(() => done.current(), GIFT_SENT_MS + (still ? 0 : GIFT_SENT_FADE_MS));
+    // A wrapped gift stays until its box has flown, as on the phone, which fades in first.
+    const stay = wrapped ? GIFT_BOX_SEND_MS : GIFT_SENT_MS;
+    const leave = window.setTimeout(() => setLeaving(true), stay);
+    const gone = window.setTimeout(() => done.current(), stay + (still ? 0 : GIFT_SENT_FADE_MS));
     return () => {
       window.clearTimeout(leave);
       window.clearTimeout(gone);
     };
-  }, [still]);
+  }, [still, wrapped]);
 
   return createPortal(
     <div
