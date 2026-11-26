@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEER_BREATH_LOW,
+  DEER_CURL_STEPS,
   DEER_LOOP_MS,
   DEER_MARK_VIEW,
   deerBreathAt,
   deerCurlKeyframes,
+  deerCurlOutline,
   deerCurlPath,
+  deerEyesOpen,
   deerLoopAt,
   deerLoopTrack,
   deerMarkPath,
@@ -45,6 +48,13 @@ function sample(segs: Pt[][], per = 12): Pt[] {
     }
   }
   return out;
+}
+
+/** The farthest any point moves between two matched lists of control points. */
+function farthest(a: Float64Array, b: Float64Array): number {
+  let most = 0;
+  for (let i = 0; i < a.length; i += 2) most = Math.max(most, Math.hypot((b[i] as number) - (a[i] as number), (b[i + 1] as number) - (a[i + 1] as number)));
+  return most;
 }
 
 function area(points: Pt[]): number {
@@ -121,7 +131,8 @@ describe('the curl', () => {
     for (let c = 0.02; c <= 1; c += 0.02) {
       const subpaths = parse(deerCurlPath(c));
       expect(subpaths[0]).toHaveLength(96);
-      expect(subpaths.length).toBe(c < 0.15 ? 3 : 1);
+      expect(subpaths.length).toBe(deerEyesOpen(c) > 0 ? 3 : 1);
+      if (c >= 0.15) expect(subpaths).toHaveLength(1);
     }
     expect(parse(deerCurlPath(0.5, { eyes: false }))).toHaveLength(1);
   });
@@ -133,7 +144,7 @@ describe('the curl', () => {
 });
 
 describe('the loop', () => {
-  it('lasts about a second and a half', () => {
+  it('lasts between a second and a half and nearly two', () => {
     expect(DEER_LOOP_MS).toBeGreaterThanOrEqual(1400);
     expect(DEER_LOOP_MS).toBeLessThanOrEqual(1800);
   });
@@ -175,8 +186,67 @@ describe('the loop', () => {
       if (pose.scaleY < 1) expect(pose.curl).toBeGreaterThan(0.95);
       expect(pose.scaleY).toBeGreaterThan(0.94);
     }
-    expect(deerLoopAt(0.5).curl).toBe(1);
+    // At its deepest squash he is wholly the ball.
+    const deepest = Array.from({ length: 1000 }, (_, i) => deerLoopAt(i / 1000)).reduce((a, b) => (b.scaleY < a.scaleY ? b : a));
+    expect(deepest.scaleY).toBeLessThan(1);
+    expect(deepest.curl).toBe(1);
     expect(deerLoopAt(0.999).turn).toBeCloseTo(360, 6);
+  });
+
+  it('is one clockwise motion: the turn never stops from his first curl to his last unfurl, then he rests upright', () => {
+    const frames = Math.round((DEER_LOOP_MS / 1000) * 60);
+    const poses = Array.from({ length: frames + 1 }, (_, f) => deerLoopAt(f / frames));
+    const first = poses.findIndex((p) => p.curl > 0);
+    const last = poses.length - 1 - [...poses].reverse().findIndex((p) => p.curl > 0);
+    for (let f = first + 1; f <= last; f++) expect((poses[f] as DeerLoopPose).turn).toBeGreaterThan((poses[f - 1] as DeerLoopPose).turn);
+    // Upright as the last of him grows back, then a beat exactly as the first frame before the next loop.
+    expect((poses[last + 1] as DeerLoopPose).turn).toBeCloseTo(360, 1);
+    const rest = poses.slice(last + 1).length + poses.slice(0, first).length;
+    expect((rest / frames) * DEER_LOOP_MS).toBeGreaterThanOrEqual(100);
+  });
+
+  it('spins back out of the ball: a good part of the turn is still to come as he starts to unfurl', () => {
+    const frames = Math.round((DEER_LOOP_MS / 1000) * 60);
+    let ball = false;
+    for (let f = 0; f <= frames; f++) {
+      const pose = deerLoopAt(f / frames);
+      if (pose.curl === 1) ball = true;
+      else if (ball) {
+        expect(pose.turn).toBeLessThan(240);
+        return;
+      }
+    }
+    throw new Error('he never unfurled');
+  });
+
+  it('never pops on the way back: every point and his eyes move a little at a time', () => {
+    const frames = Math.round((DEER_LOOP_MS / 1000) * 60);
+    let prev = deerLoopAt(0);
+    let unfurled = 0;
+    for (let f = 1; f <= frames; f++) {
+      const pose = deerLoopAt(f / frames);
+      if (pose.curl < prev.curl) {
+        unfurled++;
+        const a = deerCurlOutline(prev.curl);
+        const b = deerCurlOutline(pose.curl);
+        const moved = farthest(a, b);
+        // Under two and a half units of the square a frame (three pixels at 120); the antlers and ears, last, under one.
+        expect(moved).toBeLessThan(2.5);
+        if (pose.curl < 0.2) expect(moved).toBeLessThan(1);
+        // His eyes take several frames to open.
+        expect(deerEyesOpen(pose.curl) - deerEyesOpen(prev.curl)).toBeLessThan(0.2);
+      }
+      prev = pose;
+    }
+    // The way back takes at least as long as the way in.
+    expect(unfurled / frames).toBeGreaterThanOrEqual(0.4);
+    // Where an app draws the curl in steps, neighbouring steps differ by less than half a unit anywhere.
+    let step = deerCurlOutline(0);
+    for (let k = 1; k <= DEER_CURL_STEPS; k++) {
+      const next = deerCurlOutline(k / DEER_CURL_STEPS);
+      expect(farthest(step, next)).toBeLessThan(0.5);
+      step = next;
+    }
   });
 
   it('stays inside its square in every frame', () => {

@@ -1,14 +1,15 @@
 /**
  * Hevalo's mark: the owner's deer, his back to us and looking back over his shoulder, traced as one shape in a
  * 100-unit square (his head, antlers and ears and the curl of his body, with his eyes and the crescent between chin and
- * body cut out), so it is drawn in a single colour. It is also the apps' loader: he curls into a ball, the ball rolls
- * one turn, and he unfurls to exactly where he started.
+ * body cut out), so it is drawn in a single colour. It is also the apps' loader: in one clockwise turn he curls into a
+ * ball, rolls, and spins back out into exactly where he started.
  *
  * The curl is a morph between shapes of matched points: the trace cut into 96 segments by length, and a ball whose rim
  * and seam (his crescent, wound into a spiral) are cut at the same shares. In between, detail leaves first: the
  * difference between deer and ball is blurred along the outline more and more as he curls, so the antlers and ears
- * melt in before the body rounds and nothing in between is lumpy. Turning and squashing are transforms about the
- * ball's centre, the middle of the square, so each app can run them on its compositor.
+ * shrink into his head before the body rounds and nothing in between is lumpy. The curl is paced by its fastest point,
+ * so no part of him appears or goes all at once. Turning and squashing are transforms about the ball's centre, the
+ * middle of the square, so each app can run them on its compositor.
  */
 import { n } from './svg.js';
 
@@ -148,6 +149,13 @@ function startShares(run: readonly Seg[]): number[] {
     at += l;
     return s;
   });
+}
+
+/** The farthest any point moves between two matched lists of control points. */
+function farthest(a: ArrayLike<number>, b: ArrayLike<number>): number {
+  let most = 0;
+  for (let i = 0; i < a.length; i += 2) most = Math.max(most, Math.hypot((b[i] as number) - (a[i] as number), (b[i + 1] as number) - (a[i + 1] as number)));
+  return most;
 }
 
 /** A closed loop of segments as flat control points: each segment's start and two handles, its end being the next start. */
@@ -330,19 +338,23 @@ const SEGMENTS = { chin: 10, body: 8, rim: 78 } as const;
 /** The eyes' segments each, so they close as a matched pair of shapes. */
 const EYE_SEGMENTS = 8;
 
-/** Keyframes along the curl, evenly spaced from the deer (0) to the ball (1). */
-const CURL_KEYS = 8;
+/**
+ * Where the keyframes fall along the blur, from the deer (0) to the ball (1). The first after the deer has no antlers
+ * or ears left, so between the two they shrink into his head (and grow back out of it) whole, never through the
+ * half-blurred shapes where antler and ear merge.
+ */
+const CURL_AT = [0, 1 / 8, 2 / 8, 3 / 8, 4 / 8, 5 / 8, 6 / 8, 7 / 8, 1] as const;
 
 /** How far the deer-to-ball difference is blurred at the end of the curl (in segments), and how that grows and fades. */
 const CURL_BLUR = { segments: 14, grow: 0.4, fade: 0.9 } as const;
 
-/** By this much of the curl his eyes have closed. */
-const EYES_SHUT_AT = 0.15;
+/** By this much of the curl his eyes have closed; on the way back they open over the same last stretch. */
+const EYES_SHUT_AT = 0.1;
 
 interface Shapes {
   /** The outline at each keyframe, matched point for point. */
   keys: Float64Array[];
-  /** How far the outline has moved by each keyframe, as a share of the whole curl. */
+  /** How far the outline's fastest point has moved by each keyframe, as a share of the whole curl. */
   reach: number[];
   /** His eyes, open. */
   eyes: Float64Array[];
@@ -371,8 +383,7 @@ function curlShapes(): Shapes {
     dy[i] = (deer[i * 2 + 1] as number) - (ball[i * 2 + 1] as number);
   }
   const keys = [deer];
-  for (let k = 1; k < CURL_KEYS; k++) {
-    const p = k / CURL_KEYS;
+  for (const p of CURL_AT.slice(1, -1)) {
     // In control points, three to a segment; the blur wraps round the closed outline.
     const sigma = CURL_BLUR.segments * Math.pow(p, CURL_BLUR.grow) * 3;
     const keep = 1 - Math.pow(p, CURL_BLUR.fade);
@@ -400,13 +411,12 @@ function curlShapes(): Shapes {
   }
   keys.push(ball);
   const eyes = [TRACE.eyeLeft, TRACE.eyeRight].map((run) => flatten(subdivide(runSegments(run), EYE_SEGMENTS)));
+  // The curl is measured by its fastest point, so a small part moving far (an antler) is given its time.
   const reach = [0];
   for (let k = 1; k < keys.length; k++) {
     const a = keys[k - 1] as Float64Array;
     const b = keys[k] as Float64Array;
-    let moved = 0;
-    for (let i = 0; i < count; i++) moved += Math.hypot((b[i * 2] as number) - (a[i * 2] as number), (b[i * 2 + 1] as number) - (a[i * 2 + 1] as number));
-    reach.push((reach[k - 1] as number) + moved / count);
+    reach.push((reach[k - 1] as number) + farthest(a, b));
   }
   const total = reach[reach.length - 1] as number;
   shapes = { keys, reach: reach.map((r) => r / total), eyes };
@@ -415,10 +425,12 @@ function curlShapes(): Shapes {
 
 /** The outline's control points at `curl` (0 the deer, 1 the ball), between the two keyframes either side. */
 function outlineAt(curl: number): Float64Array {
-  const { keys } = curlShapes();
-  const at = Math.min(1, Math.max(0, curl)) * CURL_KEYS;
-  const k = Math.min(CURL_KEYS - 1, Math.floor(at));
-  const f = at - k;
+  const { keys, reach } = curlShapes();
+  const c = Math.min(1, Math.max(0, curl));
+  let k = 0;
+  while (k < keys.length - 2 && (reach[k + 1] as number) < c) k++;
+  const span = (reach[k + 1] as number) - (reach[k] as number);
+  const f = span > 0 ? (c - (reach[k] as number)) / span : 0;
   const a = keys[k] as Float64Array;
   const b = keys[k + 1] as Float64Array;
   const out = new Float64Array(a.length);
@@ -446,18 +458,29 @@ export function deerMarkPath({ eyes = true }: { eyes?: boolean } = {}): string {
 
 /**
  * The mark curled `curl` of the way into the ball (0 is exactly `deerMarkPath`, 1 the ball with his crescent wound into
- * a seam). His eyes close over the first sixth or so and are gone after it.
+ * a seam), measured by how far its fastest point has gone, so even steps of `curl` are even steps to the eye. His eyes
+ * close over the first tenth, as a line, and are gone after it.
  */
 export function deerCurlPath(curl: number, { eyes = true }: { eyes?: boolean } = {}): string {
   if (curl <= 0) return deerMarkPath({ eyes });
   const parts = [loopPath(outlineAt(curl))];
-  const shut = smooth(Math.min(1, curl / EYES_SHUT_AT));
+  const shut = 1 - deerEyesOpen(curl);
   if (eyes && shut < 1) for (const eye of curlShapes().eyes) parts.push(loopPath(eyeAt(eye, shut)));
   return parts.join('');
 }
 
-/** How finely the curl is stepped where redrawing costs something (the phone redraws only when the step changes). */
-export const DEER_CURL_STEPS = 48;
+/** How finely the curl is stepped where redrawing costs something (each app redraws only when the step changes). */
+export const DEER_CURL_STEPS = 96;
+
+/** The outline at `curl` as a flat list of control points, three points to a segment, for checks. */
+export function deerCurlOutline(curl: number): Float64Array {
+  return outlineAt(curl);
+}
+
+/** How open his eyes are at `curl`: 1 open, 0 shut. */
+export function deerEyesOpen(curl: number): number {
+  return 1 - smooth(Math.min(1, Math.max(0, curl) / EYES_SHUT_AT));
+}
 
 /** The keyframes and eyes, for checks: each a flat list of control points, three points to a segment. */
 export function deerCurlKeyframes(): { outline: readonly Float64Array[]; eyes: readonly Float64Array[] } {
@@ -467,8 +490,8 @@ export function deerCurlKeyframes(): { outline: readonly Float64Array[]; eyes: r
 
 /* ---- the loop ------------------------------------------------------------------------------------------------- */
 
-/** One loop: curl in, one turn, unfurl, and a beat as the deer before the next. */
-export const DEER_LOOP_MS = 1500;
+/** One loop: curl in, roll, spin out, and a beat as the deer before the next. */
+export const DEER_LOOP_MS = 1700;
 
 /** The Reduce Motion version's breath, in and out, slower than the loop. */
 export const DEER_BREATH_MS = 2000;
@@ -476,12 +499,16 @@ export const DEER_BREATH_MS = 2000;
 /** How faint the breath goes at its lowest. */
 export const DEER_BREATH_LOW = 0.45;
 
-/** Where in the loop (shares of it) each movement starts and ends. */
+/**
+ * Where in the loop (shares of it) each movement starts and ends. One clockwise turn runs from his first curl to his
+ * last unfurl, so he spins out of the ball and settles upright as the last of him grows back; the way out is longer
+ * than the way in.
+ */
 const BEATS = {
-  curl: [0.03, 0.38],
-  turn: [0.16, 0.82],
-  squash: [0.37, 0.57],
-  unfurl: [0.58, 0.93],
+  curl: [0.02, 0.32],
+  squash: [0.3, 0.46],
+  unfurl: [0.42, 0.91],
+  turn: [0.02, 0.91],
 } as const;
 
 /** How far the ball gives as it lands in the turn: wider, and lower by as much as it is shorter. */
@@ -506,32 +533,44 @@ function smooth(x: number): number {
   return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
-/**
- * The curl at `x` of its time: smoothstep in how far the outline has moved rather than in the curl itself, since the
- * antlers and ears change the shape most early on, so it winds in at an even pace.
- */
-function curlPace(x: number): number {
-  const t = Math.min(1, Math.max(0, x));
-  const moved = t * t * (3 - 2 * t);
-  const { reach } = curlShapes();
-  let k = 0;
-  while (k < CURL_KEYS - 1 && (reach[k + 1] as number) < moved) k++;
-  const span = (reach[k + 1] as number) - (reach[k] as number);
-  return (k + (span > 0 ? (moved - (reach[k] as number)) / span : 0)) / CURL_KEYS;
+/** A CSS-style cubic-bezier easing from (0, 0) to (1, 1) through handles (x1, y1) and (x2, y2). */
+function bezierEase(x1: number, y1: number, x2: number, y2: number): (x: number) => number {
+  const at = (a: number, b: number, t: number): number => 3 * (1 - t) * (1 - t) * t * a + 3 * (1 - t) * t * t * b + t * t * t;
+  return (x) => {
+    // Exactly still at either end, so the loop's first and last frames are the mark itself.
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    const target = x;
+    let lo = 0;
+    let hi = 1;
+    for (let i = 0; i < 40; i++) {
+      const mid = (lo + hi) / 2;
+      if (at(x1, x2, mid) < target) lo = mid;
+      else hi = mid;
+    }
+    return at(y1, y2, (lo + hi) / 2);
+  };
 }
+
+/** Into the ball: even in and out. */
+const CURL_IN = bezierEase(0.45, 0, 0.55, 1);
+/** Out of it: starting softly from the ball, then a long, gentle settle with nothing past the deer. */
+const CURL_OUT = bezierEase(0.35, 0, 0.15, 1);
+/** The turn: gathering as he curls, quickest as the ball, slowing all the way into upright. */
+const TURN = bezierEase(0.45, 0, 0.35, 1);
 
 const within = (t: number, [a, b]: readonly [number, number]): number => (t - a) / (b - a);
 
 /** The pose `t` of the way through a loop (any number: it wraps), the same at 0 and 1. */
 export function deerLoopAt(t: number): DeerLoopPose {
   const x = ((t % 1) + 1) % 1;
-  const curl = x < 0.5 ? curlPace(within(x, BEATS.curl)) : curlPace(1 - within(x, BEATS.unfurl));
+  const curl = x < BEATS.unfurl[0] ? CURL_IN(within(x, BEATS.curl)) : 1 - CURL_OUT(within(x, BEATS.unfurl));
   const s = within(x, BEATS.squash);
   const give = s > 0 && s < 1 ? Math.sin(Math.PI * s) ** 2 : 0;
   const scaleY = 1 - SQUASH.y * give;
   return {
     curl,
-    turn: 360 * (0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, within(x, BEATS.turn))))),
+    turn: 360 * TURN(within(x, BEATS.turn)),
     scaleX: 1 + SQUASH.x * give,
     scaleY,
     drop: BALL.r * (1 - scaleY),

@@ -20,7 +20,7 @@ import { useTheme } from './ThemeProvider';
 const TRACK = deerLoopTrack(60);
 
 /**
- * Hevalo's mark as the loader (shared deer-mark.ts): he curls into a ball, rolls one turn and unfurls, in the ink. The
+ * Hevalo's mark as the loader (shared deer-mark.ts): he curls into a ball and spins back out, in the ink. The
  * turn and squash run on the native driver; the curl is redrawn from the same clock as it passes each step, so a busy
  * JavaScript thread may hold the shape a moment but never stops the roll. Under Reduce Motion it only breathes in
  * opacity, and nothing moves while its screen is behind another or the app is in the background. To assistive

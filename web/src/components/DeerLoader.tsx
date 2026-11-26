@@ -25,7 +25,7 @@ function rollKeyframes(size: number): Keyframe[] {
 const BREATH: Keyframe[] = [{ opacity: 1 }, { opacity: DEER_BREATH_LOW }, { opacity: 1 }];
 
 /**
- * Hevalo's mark as the loader (shared deer-mark.ts): he curls into a ball, rolls one turn and unfurls, in the ink. The
+ * Hevalo's mark as the loader (shared deer-mark.ts): he curls into a ball and spins back out, in the ink. The
  * turn and squash are a Web Animation on the compositor and the curl follows that animation's clock, so on a busy page
  * the shape may pause a moment but the roll keeps going. Under Reduce Motion the mark only breathes in opacity. The
  * caller says what is loading; to assistive technology this is only a picture.

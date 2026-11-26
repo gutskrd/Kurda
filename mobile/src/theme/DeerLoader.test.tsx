@@ -2,7 +2,7 @@
 import { act, cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Animated } from 'react-native';
-import { DEER_BREATH_LOW, DEER_BREATH_MS, DEER_LOOP_MS, deerCurlPath, deerMarkPath } from '@kurda/shared';
+import { DEER_BREATH_LOW, DEER_BREATH_MS, DEER_LOOP_MS, deerCurlPath, deerLoopAt, deerMarkPath } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { DeerLoader } from './DeerLoader';
@@ -10,6 +10,9 @@ import { DeerLoader } from './DeerLoader';
 vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
+
+/** A moment of the loop when he is wholly the ball. */
+const BALL_AT = Array.from({ length: 200 }, (_, i) => i / 200).find((t) => deerLoopAt(t).curl === 1) as number;
 
 /** Every timing asked for, with the value it drives, and how many loops were started; none actually runs. */
 function recordMotion(): { timings: { value: Animated.Value; config: Animated.TimingAnimationConfig }[]; loops: number } {
@@ -55,8 +58,8 @@ describe('DeerLoader', () => {
     expect(clock?.config).toMatchObject({ toValue: 1, useNativeDriver: true });
     const path = container.querySelector('path') as SVGPathElement;
     expect(path.getAttribute('d')).toBe(deerMarkPath());
-    // Halfway round he is the ball, and back at the start the deer again.
-    act(() => clock?.value.setValue(0.5));
+    // As the ball he is the ball, and back at the start the deer again.
+    act(() => clock?.value.setValue(BALL_AT));
     expect(path.getAttribute('d')).toBe(deerCurlPath(1));
     act(() => clock?.value.setValue(1));
     expect(path.getAttribute('d')).toBe(deerMarkPath());

@@ -1,9 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEER_BREATH_LOW, DEER_BREATH_MS, DEER_LOOP_MS, deerCurlPath, deerMarkPath } from '@kurda/shared';
+import { DEER_BREATH_LOW, DEER_BREATH_MS, DEER_LOOP_MS, deerCurlPath, deerLoopAt, deerMarkPath } from '@kurda/shared';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { DeerLoader } from './DeerLoader';
 import { Loading } from './states';
+
+/** A moment of the loop when he is wholly the ball. */
+const BALL_AT = Array.from({ length: 200 }, (_, i) => i / 200).find((t) => deerLoopAt(t).curl === 1) as number;
 
 /** What `animate` was asked to play, and a clock the test can set. */
 interface Played {
@@ -97,8 +100,8 @@ describe('DeerLoader', () => {
     const { container } = render(<DeerLoader size={120} />);
     const path = container.querySelector('path') as SVGPathElement;
     expect(path.getAttribute('d')).toBe(deerMarkPath());
-    // Halfway round the loop he is a ball.
-    (played[0] as Played).animation.currentTime = DEER_LOOP_MS / 2;
+    // As the ball, wherever in the loop that is.
+    (played[0] as Played).animation.currentTime = BALL_AT * DEER_LOOP_MS;
     step();
     expect(path.getAttribute('d')).toBe(deerCurlPath(1));
     (played[0] as Played).animation.currentTime = DEER_LOOP_MS;
