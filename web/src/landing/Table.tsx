@@ -48,30 +48,30 @@ export function Table(): React.JSX.Element {
 
   const phrase = TABLE[said]!;
   return (
-    <section id="family" className="lp-section lp-table" aria-labelledby="lp-table-title">
-      <div className="lp-wrap">
-        <header className="lp-head lp-reveal">
-          <h2 id="lp-table-title" className="lp-h2 lp-contrast">
-            <span className="lp-contrast-them">{t('landing.table.them')}</span> <span>{t(head.us)}</span>
+    <section id="family" className="fp-section fp-table" aria-labelledby="fp-table-title">
+      <div className="fp-wrap">
+        <header className="fp-head fp-reveal">
+          <h2 id="fp-table-title" className="fp-h2 fp-contrast">
+            <span className="fp-contrast-them">{t('landing.table.them')}</span> <span>{t(head.us)}</span>
           </h2>
-          <p className="lp-lead">{t(head.lead)}</p>
+          <p className="fp-lead">{t(head.lead)}</p>
         </header>
-        <div className="lp-table-scene lp-reveal" ref={scene}>
-          <div className="lp-table-host" aria-hidden="true">
+        <div className="fp-table-scene fp-reveal" ref={scene}>
+          <div className="fp-table-host" aria-hidden="true">
             <SpeakingCharacter speaker="hamo" audio={null} crop="bust" decorative reaction={turn > 0 ? REACTIONS[turn % REACTIONS.length]! : null} />
           </div>
-          <p className="lp-table-bubble" aria-live="polite">
-            <span className="lp-table-said" key={said}>
-              <Ku className="lp-table-ku">{phrase.ku}</Ku>
-              <span className="lp-table-gloss">{t(phrase.gloss)}</span>
+          <p className="fp-table-bubble" aria-live="polite">
+            <span className="fp-table-said" key={said}>
+              <Ku className="fp-table-ku">{phrase.ku}</Ku>
+              <span className="fp-table-gloss">{t(phrase.gloss)}</span>
             </span>
           </p>
-          <div className="lp-table-phrases" role="group" aria-label={t('landing.table.pick')}>
+          <div className="fp-table-phrases" role="group" aria-label={t('landing.table.pick')}>
             {TABLE.map((p, i) => (
               <button
                 key={p.ku}
                 type="button"
-                className={`lp-chip-button${i === said ? ' is-on' : ''}`}
+                className={`fp-chip-button${i === said ? ' is-on' : ''}`}
                 aria-pressed={i === said}
                 onClick={() => {
                   setChosen(true);

@@ -28,15 +28,15 @@ export function Closing(): React.JSX.Element {
   const title =
     known === 0 ? t('landing.final.title') : known === 1 ? t('landing.final.knowOne') : t('landing.final.knowMany', { count: known });
   return (
-    <section id="join" className="lp-section lp-final" aria-labelledby="lp-final-title">
-      <div className="lp-final-in">
-        <div className="lp-final-hevalo" ref={figure} aria-hidden="true">
+    <section id="join" className="fp-section fp-final" aria-labelledby="fp-final-title">
+      <div className="fp-final-in">
+        <div className="fp-final-hevalo" ref={figure} aria-hidden="true">
           <SpeakingCharacter speaker="hevalo" audio={null} crop="full" decorative reaction={seen ? 'cheer' : null} />
         </div>
-        <h2 id="lp-final-title" className="lp-title">
+        <h2 id="fp-final-title" className="fp-title">
           {title}
         </h2>
-        <p className="lp-lead">{t(LEADS[learningFor ?? 'anyone'])}</p>
+        <p className="fp-lead">{t(LEADS[learningFor ?? 'anyone'])}</p>
         <JoinButtons />
       </div>
     </section>

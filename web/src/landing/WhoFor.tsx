@@ -18,16 +18,16 @@ export function WhoFor(): React.JSX.Element {
   const t = useT();
   const { learningFor } = useVisitor();
   return (
-    <section className="lp-who lp-reveal" aria-labelledby="lp-who-title">
-      <h2 id="lp-who-title" className="lp-who-title">
+    <section className="fp-who fp-reveal" aria-labelledby="fp-who-title">
+      <h2 id="fp-who-title" className="fp-who-title">
         {t('landing.who.title')}
       </h2>
-      <div className="lp-who-answers" role="group" aria-labelledby="lp-who-title">
+      <div className="fp-who-answers" role="group" aria-labelledby="fp-who-title">
         {LEARNING_FOR.map((k) => (
           <button
             key={k}
             type="button"
-            className={`lp-chip-button${learningFor === k ? ' is-on' : ''}`}
+            className={`fp-chip-button${learningFor === k ? ' is-on' : ''}`}
             aria-pressed={learningFor === k}
             onClick={() => chooseLearningFor(learningFor === k ? null : k)}
           >
@@ -36,7 +36,7 @@ export function WhoFor(): React.JSX.Element {
         ))}
       </div>
       {/* The reply's place is kept whether or not there is one, so choosing moves nothing below it. */}
-      <p className="lp-who-reply" aria-live="polite">
+      <p className="fp-who-reply" aria-live="polite">
         {learningFor ? t(ANSWERS[learningFor].reply) : t('landing.who.note')}
       </p>
     </section>

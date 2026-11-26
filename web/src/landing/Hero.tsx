@@ -41,25 +41,25 @@ export function Hero(): React.JSX.Element {
 
   const said = taps > 0 ? GREETINGS[(taps - 1) % GREETINGS.length]! : null;
   return (
-    <section className="lp-hero" aria-labelledby="lp-hero-title">
-      <div className="lp-hero-in">
-        <a className="lp-pill" href={NEWS[news]!.to}>
-          <span className="lp-pill-new">{t('landing.news.new')}</span>
+    <section className="fp-hero" aria-labelledby="fp-hero-title">
+      <div className="fp-hero-in">
+        <a className="fp-pill" href={NEWS[news]!.to}>
+          <span className="fp-pill-new">{t('landing.news.new')}</span>
           {/* All three stacked in one place, so the pill keeps the width of the longest and never jumps. */}
-          <span className="lp-pill-texts">
+          <span className="fp-pill-texts">
             {NEWS.map((n, i) => (
-              <span key={n.text} className={`lp-pill-text${i === news ? ' is-on' : ''}`} aria-hidden={i === news ? undefined : true}>
+              <span key={n.text} className={`fp-pill-text${i === news ? ' is-on' : ''}`} aria-hidden={i === news ? undefined : true}>
                 {t(n.text)}
               </span>
             ))}
           </span>
-          <ArrowIcon size={16} className="lp-pill-arrow" />
+          <ArrowIcon size={16} className="fp-pill-arrow" />
         </a>
 
-        <div className="lp-hevalo" ref={figure}>
+        <div className="fp-hevalo" ref={figure}>
           <button
             type="button"
-            className="lp-hevalo-hit"
+            className="fp-hevalo-hit"
             aria-label={t('landing.hero.tapHevalo')}
             onClick={() => setTaps((n) => n + 1)}
           >
@@ -69,24 +69,24 @@ export function Hero(): React.JSX.Element {
               crop="full"
               decorative
               reaction={taps > 0 ? TAPS[(taps - 1) % TAPS.length]! : null}
-              className="lp-hevalo-art"
+              className="fp-hevalo-art"
             />
           </button>
           {/* What he says when tapped, with what it means; read out as it changes. */}
-          <p className="lp-say" aria-live="polite">
+          <p className="fp-say" aria-live="polite">
             {said && (
-              <span className="lp-say-bubble" key={taps}>
-                <Ku className="lp-say-ku">{said.ku}</Ku>
-                <span className="lp-say-gloss">{t(said.gloss)}</span>
+              <span className="fp-say-bubble" key={taps}>
+                <Ku className="fp-say-ku">{said.ku}</Ku>
+                <span className="fp-say-gloss">{t(said.gloss)}</span>
               </span>
             )}
           </p>
         </div>
 
-        <h1 id="lp-hero-title" className="lp-title">
+        <h1 id="fp-hero-title" className="fp-title">
           {t('landing.hero.title')}
         </h1>
-        <p className="lp-lead lp-hero-lead">{t('landing.hero.lead')}</p>
+        <p className="fp-lead fp-hero-lead">{t('landing.hero.lead')}</p>
         <JoinButtons />
       </div>
     </section>

@@ -26,7 +26,7 @@ export function FirstWords(): React.JSX.Element {
   useEffect(() => {
     if (!moved.current) return;
     moved.current = false;
-    card.current?.querySelector<HTMLElement>('.lp-option, .lp-quiz-count')?.focus({ preventScroll: true });
+    card.current?.querySelector<HTMLElement>('.fp-answer, .fp-quiz-count')?.focus({ preventScroll: true });
   }, [step]);
 
   const pick = (key: MessageKey): void => {
@@ -53,47 +53,47 @@ export function FirstWords(): React.JSX.Element {
   };
 
   return (
-    <div className="lp-words-scene lp-reveal">
-      <div className="lp-words-teacher" aria-hidden="true">
+    <div className="fp-words-scene fp-reveal">
+      <div className="fp-words-teacher" aria-hidden="true">
         <SpeakingCharacter speaker="xezo" audio={null} crop="bust" decorative reaction={reaction} />
       </div>
-      <div className="lp-quiz" ref={card}>
+      <div className="fp-quiz" ref={card}>
         {done ? (
-          <div className="lp-quiz-done">
-            <p className="lp-quiz-count" tabIndex={-1}>{t(right === FIRST_WORDS.length ? 'landing.words.allRight' : 'landing.words.done')}</p>
-            <ul className="lp-quiz-learned">
+          <div className="fp-quiz-done">
+            <p className="fp-quiz-count" tabIndex={-1}>{t(right === FIRST_WORDS.length ? 'landing.words.allRight' : 'landing.words.done')}</p>
+            <ul className="fp-quiz-learned">
               {FIRST_WORDS.map((w) => (
                 <li key={w.ku}>
-                  <Ku className="lp-quiz-learned-ku">{w.ku}</Ku>
+                  <Ku className="fp-quiz-learned-ku">{w.ku}</Ku>
                   <span>{t(w.right)}</span>
                 </li>
               ))}
             </ul>
-            <button type="button" className="btn btn-secondary lp-quiz-next" onClick={again}>
+            <button type="button" className="btn btn-secondary fp-quiz-next" onClick={again}>
               {t('landing.words.again')}
             </button>
           </div>
         ) : (
           <>
-            <div className="lp-quiz-top">
-              <span className="lp-quiz-steps" aria-hidden="true">
+            <div className="fp-quiz-top">
+              <span className="fp-quiz-steps" aria-hidden="true">
                 {FIRST_WORDS.map((w, i) => (
-                  <span key={w.ku} className={`lp-quiz-step${i < step ? ' is-done' : i === step ? ' is-on' : ''}`} />
+                  <span key={w.ku} className={`fp-quiz-step${i < step ? ' is-done' : i === step ? ' is-on' : ''}`} />
                 ))}
               </span>
-              <span className="lp-quiz-of">{t('landing.words.of', { n: step + 1, total: FIRST_WORDS.length })}</span>
+              <span className="fp-quiz-of">{t('landing.words.of', { n: step + 1, total: FIRST_WORDS.length })}</span>
             </div>
-            <p className="lp-quiz-word" key={word.ku}>
+            <p className="fp-quiz-word" key={word.ku}>
               <Ku>{word.ku}</Ku>
             </p>
-            <p className="lp-quiz-ask" id="lp-quiz-ask">
+            <p className="fp-quiz-ask" id="fp-quiz-ask">
               {t('landing.words.ask')}
             </p>
-            <div className="lp-quiz-options" role="group" aria-labelledby="lp-quiz-ask">
+            <div className="fp-quiz-options" role="group" aria-labelledby="fp-quiz-ask">
               {word.options.map((o) => {
                 const state = !picked ? '' : o === word.right ? ' is-right' : o === picked ? ' is-wrong' : ' is-out';
                 return (
-                  <button key={o} type="button" className={`lp-option${state}`} onClick={() => pick(o)} aria-disabled={picked ? true : undefined}>
+                  <button key={o} type="button" className={`fp-answer${state}`} onClick={() => pick(o)} aria-disabled={picked ? true : undefined}>
                     <span>{t(o)}</span>
                     {picked && o === word.right && <CheckIcon size={18} weight="bold" />}
                     {picked && o === picked && o !== word.right && <CloseIcon size={18} />}
@@ -102,14 +102,14 @@ export function FirstWords(): React.JSX.Element {
               })}
             </div>
             {/* Its place is kept before an answer, so the answer moves nothing. */}
-            <div className="lp-quiz-after" aria-live="polite">
+            <div className="fp-quiz-after" aria-live="polite">
               {picked && (
                 <>
-                  <p className="lp-quiz-say">
+                  <p className="fp-quiz-say">
                     <strong>{t(picked === word.right ? 'landing.words.right' : 'landing.words.notQuite', { meaning: t(word.right) })}</strong>{' '}
                     {t(word.note)}
                   </p>
-                  <button type="button" className="btn btn-primary lp-quiz-next" onClick={next}>
+                  <button type="button" className="btn btn-primary fp-quiz-next" onClick={next}>
                     {t(step + 1 < FIRST_WORDS.length ? 'landing.words.next' : 'landing.words.finish')}
                   </button>
                 </>

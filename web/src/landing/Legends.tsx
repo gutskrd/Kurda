@@ -16,23 +16,23 @@ export function Legends(): React.JSX.Element {
   const row = useRef<HTMLUListElement>(null);
   useDrift(row);
   return (
-    <section id="legends" className="lp-section lp-legends" aria-labelledby="lp-legends-title">
-      <div className="lp-wrap">
-        <header className="lp-head lp-head--center lp-reveal">
-          <h2 id="lp-legends-title" className="lp-h2">
+    <section id="legends" className="fp-section fp-legends" aria-labelledby="fp-legends-title">
+      <div className="fp-wrap">
+        <header className="fp-head fp-head--center fp-reveal">
+          <h2 id="fp-legends-title" className="fp-h2">
             {t('landing.legends.title')}
           </h2>
-          <p className="lp-lead">{t('landing.legends.lead')}</p>
+          <p className="fp-lead">{t('landing.legends.lead')}</p>
         </header>
       </div>
-      <div className="lp-legend-rail lp-reveal">
-        <ul className="lp-legend-row" ref={row}>
+      <div className="fp-legend-rail fp-reveal">
+        <ul className="fp-legend-row" ref={row}>
           {LEGENDS.map((l) => {
             const name = t(l.name);
             return (
-              <li className="lp-legend" key={l.cover}>
+              <li className="fp-legend" key={l.cover}>
                 <img
-                  className="lp-legend-art"
+                  className="fp-legend-art"
                   src={storyCoverPath(l.cover) ?? undefined}
                   alt={t('landing.legends.painting', { name })}
                   width={1280}
@@ -41,17 +41,17 @@ export function Legends(): React.JSX.Element {
                   decoding="async"
                   draggable={false}
                 />
-                <span className="lp-legend-text">
-                  <Ku className="lp-legend-ku">{l.ku}</Ku>
+                <span className="fp-legend-text">
+                  <Ku className="fp-legend-ku">{l.ku}</Ku>
                   {/* For a Kurmancî reader the name is the title, so it is not said twice. */}
-                  {name.toLocaleLowerCase('ku') !== l.ku.toLocaleLowerCase('ku') && <span className="lp-legend-name">{name}</span>}
+                  {name.toLocaleLowerCase('ku') !== l.ku.toLocaleLowerCase('ku') && <span className="fp-legend-name">{name}</span>}
                 </span>
               </li>
             );
           })}
         </ul>
       </div>
-      <div className="lp-wrap lp-center lp-reveal">
+      <div className="fp-wrap fp-center fp-reveal">
         <Link to="/app/learn/stories" className="btn btn-secondary btn-lg">
           {t('landing.legends.cta')}
         </Link>

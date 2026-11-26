@@ -25,7 +25,7 @@ const StoryPlayer = lazy(() => import('../landing/Stories').then((m) => ({ defau
 const TreeGrowth = lazy(() => import('../landing/TreeGrowth').then((m) => ({ default: m.TreeGrowth })));
 
 /**
- * Sections rise into view once as they arrive. The page arms itself (`lp-armed`, which hides unarrived sections) only
+ * Sections rise into view once as they arrive. The page arms itself (`fp-armed`, which hides unarrived sections) only
  * with an IntersectionObserver and motion allowed, so crawlers, previews and full-page screenshots always see everything.
  */
 function useReveal(): React.RefObject<HTMLDivElement | null> {
@@ -44,11 +44,11 @@ function useReveal(): React.RefObject<HTMLDivElement | null> {
       },
       { rootMargin: '0px 0px -8% 0px' },
     );
-    root.querySelectorAll('.lp-reveal').forEach((el) => io.observe(el));
-    root.classList.add('lp-armed');
+    root.querySelectorAll('.fp-reveal').forEach((el) => io.observe(el));
+    root.classList.add('fp-armed');
     return () => {
       io.disconnect();
-      root.classList.remove('lp-armed');
+      root.classList.remove('fp-armed');
     };
   }, []);
   return ref;
@@ -103,31 +103,31 @@ export function Landing(): React.JSX.Element {
   }, []);
 
   return (
-    <div className="lp" ref={root}>
+    <div className="fp" ref={root}>
       <Hero />
       <WhoFor />
 
-      <section id="first-words" className="lp-section lp-words" aria-labelledby="lp-words-title">
-        <div className="lp-wrap">
-          <header className="lp-head lp-head--center lp-reveal">
-            <h2 id="lp-words-title" className="lp-h2">
+      <section id="first-words" className="fp-section fp-words" aria-labelledby="fp-words-title">
+        <div className="fp-wrap">
+          <header className="fp-head fp-head--center fp-reveal">
+            <h2 id="fp-words-title" className="fp-h2">
               {t('landing.words.title')}
             </h2>
-            <p className="lp-lead">{t('landing.words.lead')}</p>
+            <p className="fp-lead">{t('landing.words.lead')}</p>
           </header>
           <FirstWords />
         </div>
       </section>
 
-      <section id="learn" className="lp-section lp-stories" aria-labelledby="lp-stories-title">
-        <div className="lp-wrap lp-stories-grid">
-          <header className="lp-head lp-reveal">
-            <h2 id="lp-stories-title" className="lp-h2 lp-contrast">
-              <span className="lp-contrast-them">{t('landing.stories.them')}</span> <span>{t('landing.stories.us')}</span>
+      <section id="learn" className="fp-section fp-stories" aria-labelledby="fp-stories-title">
+        <div className="fp-wrap fp-stories-grid">
+          <header className="fp-head fp-reveal">
+            <h2 id="fp-stories-title" className="fp-h2 fp-contrast">
+              <span className="fp-contrast-them">{t('landing.stories.them')}</span> <span>{t('landing.stories.us')}</span>
             </h2>
-            <p className="lp-lead">{t('landing.stories.lead')}</p>
+            <p className="fp-lead">{t('landing.stories.lead')}</p>
           </header>
-          <Later settled={settled} className="lp-player-place lp-reveal">
+          <Later settled={settled} className="fp-player-place fp-reveal">
             <StoryPlayer />
           </Later>
         </div>
@@ -135,16 +135,16 @@ export function Landing(): React.JSX.Element {
 
       <Table />
 
-      <section id="tree" className="lp-tree" aria-labelledby="lp-tree-title">
-        <div className="lp-tree-hold">
-          <div className="lp-wrap lp-tree-grid">
-            <header className="lp-head">
-              <h2 id="lp-tree-title" className="lp-h2">
+      <section id="tree" className="fp-tree" aria-labelledby="fp-tree-title">
+        <div className="fp-tree-hold">
+          <div className="fp-wrap fp-tree-grid">
+            <header className="fp-head">
+              <h2 id="fp-tree-title" className="fp-h2">
                 {t('landing.tree.title')}
               </h2>
-              <p className="lp-lead">{t('landing.tree.lead')}</p>
+              <p className="fp-lead">{t('landing.tree.lead')}</p>
             </header>
-            <Later settled={settled} className="lp-tree-place">
+            <Later settled={settled} className="fp-tree-place">
               <TreeGrowth />
             </Later>
           </div>
@@ -153,19 +153,19 @@ export function Landing(): React.JSX.Element {
 
       <Legends />
 
-      <section id="faq" className="lp-section lp-faq" aria-labelledby="lp-faq-title">
-        <div className="lp-wrap lp-faq-wrap">
-          <header className="lp-head lp-head--center lp-reveal">
-            <h2 id="lp-faq-title" className="lp-h2">
+      <section id="faq" className="fp-section fp-faq" aria-labelledby="fp-faq-title">
+        <div className="fp-wrap fp-faq-wrap">
+          <header className="fp-head fp-head--center fp-reveal">
+            <h2 id="fp-faq-title" className="fp-h2">
               {t('faq.title')}
             </h2>
-            <p className="lp-lead">{t('faq.lead')}</p>
+            <p className="fp-lead">{t('faq.lead')}</p>
           </header>
-          <div className="lp-reveal">
+          <div className="fp-reveal">
             <FaqList entries={HOME_FAQ} />
           </div>
           {/* On a line of its own, so its touch reach extends above and below its words (styles/reach.css). */}
-          <Link to="/faq" className="doc-link reach-line lp-faq-all">
+          <Link to="/faq" className="doc-link reach-line fp-faq-all">
             {t('faq.all')}
           </Link>
         </div>

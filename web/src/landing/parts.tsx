@@ -11,7 +11,7 @@ import { AppSoonButton } from './AppSoon';
 /** A Kurdish word or phrase: marked as Kurdish for screen readers and spell checkers, and always left to right. */
 export function Ku({ children, className }: { children: ReactNode; className?: string }): React.JSX.Element {
   return (
-    <span className={`lp-ku${className ? ` ${className}` : ''}`} lang="ku" dir="ltr">
+    <span className={`fp-ku${className ? ` ${className}` : ''}`} lang="ku" dir="ltr">
       {children}
     </span>
   );
@@ -24,24 +24,24 @@ export function Ku({ children, className }: { children: ReactNode; className?: s
 export function JoinButtons(): React.JSX.Element {
   const t = useT();
   return (
-    <div className="lp-join-buttons">
-      <Link to="/register" className="btn btn-primary btn-lg btn-block lp-start">
+    <div className="fp-join-buttons">
+      <Link to="/register" className="btn btn-primary btn-lg btn-block fp-start">
         {t('landing.hero.start')}
       </Link>
-      <p className="lp-or">
+      <p className="fp-or">
         <span>{t('landing.hero.or')}</span>
       </p>
-      <AppSoonButton platform="ios" className="lp-store">
+      <AppSoonButton platform="ios" className="fp-store">
         <IosIcon size={20} />
         {t('landing.hero.ios')}
       </AppSoonButton>
-      <AppSoonButton platform="android" className="lp-store">
+      <AppSoonButton platform="android" className="fp-store">
         <AndroidIcon size={20} />
         {t('landing.hero.android')}
       </AppSoonButton>
-      <p className="lp-login">
+      <p className="fp-login">
         {t('landing.hero.haveAccount')}{' '}
-        <Link to="/login" className="lp-login-link">
+        <Link to="/login" className="fp-login-link">
           {t('landing.hero.login')}
         </Link>
       </p>
@@ -88,7 +88,7 @@ export function useOnScreen(ref: RefObject<Element | null>, threshold = 0.25): b
 
 /**
  * Leans `ref` with a phone's tilt, as Hevalo leans in the app (shared peek-lean.ts): the browser's orientation events,
- * the shared spring, and `--lp-lean` for the stylesheet. It never asks for motion access, so where a browser would ask
+ * the shared spring, and `--fp-lean` for the stylesheet. It never asks for motion access, so where a browser would ask
  * first, or has no sensor, he stands as he is; off under Reduce Motion, and each frame runs only while he is moving.
  */
 export function useTiltLean(ref: RefObject<HTMLElement | null>): void {
@@ -103,7 +103,7 @@ export function useTiltLean(ref: RefObject<HTMLElement | null>): void {
       const seconds = last ? (now - last) / 1000 : 1 / 60;
       last = now;
       state = stepLean(state, target, seconds);
-      el.style.setProperty('--lp-lean', `${state.angle.toFixed(2)}deg`);
+      el.style.setProperty('--fp-lean', `${state.angle.toFixed(2)}deg`);
       frame = state.settled ? null : requestAnimationFrame(tick);
     };
     const onTilt = (event: DeviceOrientationEvent): void => {

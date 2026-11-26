@@ -75,19 +75,19 @@ export function TreeGrowth(): React.JSX.Element {
 
   const lessons = lessonsFor(stage);
   return (
-    <div className="lp-tree-scene" ref={box}>
-      <div className="lp-tree-art" role="img" aria-label={t('landing.tree.label', { stage: stageName(t, stage) })}>
+    <div className="fp-tree-scene" ref={box}>
+      <div className="fp-tree-art" role="img" aria-label={t('landing.tree.label', { stage: stageName(t, stage) })}>
         {layers.map((l, i) => (
-          <span key={i} className={`lp-tree-layer${i === stage ? ' is-on' : i < stage ? ' is-past' : ''}`} dangerouslySetInnerHTML={l} />
+          <span key={i} className={`fp-tree-layer${i === stage ? ' is-on' : i < stage ? ' is-past' : ''}`} dangerouslySetInnerHTML={l} />
         ))}
       </div>
-      <p className="lp-tree-caption" aria-live="polite">
+      <p className="fp-tree-caption" aria-live="polite">
         <strong>{stageName(t, stage)}</strong>
         <span>{lessons === 0 ? t('landing.tree.firstDay') : t('landing.tree.after', { count: lessons })}</span>
       </p>
-      <div className="lp-tree-dots" role="group" aria-label={t('tree.stages')}>
+      <div className="fp-tree-dots" role="group" aria-label={t('tree.stages')}>
         {STAGES.map((s) => (
-          <button key={s} type="button" className={`lp-tree-dot${s === stage ? ' is-on' : s < stage ? ' is-past' : ''}`} aria-pressed={s === stage} aria-label={stageName(t, s)} onClick={() => show(s)} />
+          <button key={s} type="button" className={`fp-tree-dot${s === stage ? ' is-on' : s < stage ? ' is-past' : ''}`} aria-pressed={s === stage} aria-label={stageName(t, s)} onClick={() => show(s)} />
         ))}
       </div>
     </div>
