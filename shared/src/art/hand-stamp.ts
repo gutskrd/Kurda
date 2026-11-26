@@ -5,23 +5,26 @@
  * colour in the same skin as the hand holding the phone (hand-paint.ts), with its one shade step, the gaps between the
  * digits and the stamp in the antlers' dark brown, and a few warm brown lines.
  *
- * Two layers on one frame: `back` (the palm and the fingers behind the stamp) and `front` (the thumb), so an app can lay
- * the stamp itself (`HAND_STAMP_CARD`) between them and turn it over. Each digit is a group marked `data-part`, turning
- * about its own knuckle (its `transform-origin`, in the frame's units), so an app can move the hand through a turn: the
- * thumb and its tip (`thumb`, `thumb-tip`), the index finger (`index`), the reaching finger (`reaching`) and the curled
- * ones (`curled`).
+ * Two layers on one frame: `back` (the palm, the fingers behind the stamp and the cuff) and `front` (the thumb), so an
+ * app can lay the stamp itself (`HAND_STAMP_CARD`) between them and turn it over. Each digit is a group marked
+ * `data-part`, turning about its own knuckle (its `transform-origin`, in the frame's units), so an app can move the hand
+ * through a turn: the thumb and its tip (`thumb`, `thumb-tip`), the index finger (`index`), the reaching finger
+ * (`reaching`) and the curled ones (`curled`).
  */
 import { Drawing, n, prefixFor, type Pt } from './svg.js';
-import { SKIN, flat, line, smooth } from './hand-paint.js';
+import { SKIN, flat, knitSleeve, line, smooth } from './hand-paint.js';
 
-/** The frame in drawing units, which the front page draws one to one in pixels; the hand leaves it at its foot. */
-export const HAND_STAMP_VIEW = { w: 260, h: 280 } as const;
+/**
+ * The frame in drawing units, which the front page draws one to one in pixels: room all round for the whole hand as it
+ * turns the stamp and swings, so only its wrist, in the sleeve, leaves the frame, at its foot.
+ */
+export const HAND_STAMP_VIEW = { w: 300, h: 344 } as const;
 
 /**
  * Where the stamp is held: a box `w` by `h` centred on (`cx`, `cy`), turned `turn` degrees. The thumb covers only its
  * foot: the top `clear` units of it, where its picture goes, are never covered.
  */
-export const HAND_STAMP_CARD = { cx: 91, cy: 90, w: 128, h: 152, turn: 3, clear: 116 } as const;
+export const HAND_STAMP_CARD = { cx: 101, cy: 110, w: 128, h: 152, turn: 3, clear: 116 } as const;
 
 /** The shadow in the gaps between the digits and the stamp: the dark brown of Hevalo's antlers. */
 const GAP = '#4f3029';
@@ -30,7 +33,7 @@ const NAIL = '#ecc3a3';
 
 /** The hand is laid out on a larger grid, the stamp's foot at 506 on it; this places that grid on the frame. */
 const K = 0.438;
-const at = ([x, y]: Pt): Pt => [(x - 465) * K + 10, (y - 506) * K + (HAND_STAMP_CARD.cy + HAND_STAMP_CARD.h / 2)];
+const at = ([x, y]: Pt): Pt => [(x - 465) * K + 20, (y - 506) * K + (HAND_STAMP_CARD.cy + HAND_STAMP_CARD.h / 2)];
 const shape = (points: readonly Pt[]): string => smooth(points.map(at));
 const stroke = (points: readonly Pt[], width = 1.1, opacity = 0.75): string =>
   `<path d="${line(points.map(at))}" fill="none" stroke="${SKIN.crease}" stroke-width="${n(width)}" stroke-linecap="round" opacity="${n(opacity)}"/>`;
@@ -41,17 +44,22 @@ const digit = (part: string, knuckle: Pt, inner: string): string => {
 };
 const moved = (points: readonly Pt[], dx: number, dy: number): Pt[] => points.map(([x, y]) => [x + dx, y + dy] as Pt);
 
-/** The palm behind everything, under the fingers and out of the frame at its foot, as wide as the hand is there. */
+/** The palm behind everything, under the fingers, narrowing to the wrist that leaves the frame at its foot. */
 const PALM: readonly Pt[] = [
   [600, 690],
   [700, 630],
   [800, 600],
   [920, 640],
-  [1005, 690],
-  [1020, 780],
-  [1024, 900],
-  [600, 900],
-  [588, 760],
+  [1000, 690],
+  [1008, 760],
+  [988, 820],
+  [952, 868],
+  [940, 960],
+  [690, 960],
+  [686, 880],
+  [640, 832],
+  [598, 792],
+  [588, 740],
 ];
 
 /** The finger reaching out to the left under the stamp: short and low, its tip round. */
@@ -110,11 +118,12 @@ const INDEX: readonly Pt[] = [
   [978, 581],
   [1000, 626],
   [1008, 682],
-  [1012, 760],
-  [1014, 840],
-  [920, 840],
-  [904, 772],
-  [888, 724],
+  [1004, 740],
+  [988, 792],
+  [956, 828],
+  [915, 822],
+  [900, 772],
+  [886, 724],
   [866, 678],
   [838, 634],
   [806, 600],
@@ -135,17 +144,18 @@ const INDEX_GAP: readonly Pt[] = [
   [782, 610],
 ];
 
-/** The thumb's foot, slim and long, widening into the palm, and its tip above the joint, which bends as it pinches. */
+/** The thumb's foot, slim and long, meeting the palm above the cuff, and its tip above the joint, which bends as it pinches. */
 const THUMB: readonly Pt[] = [
   [640, 600],
   [762, 600],
   [770, 652],
   [781, 704],
-  [792, 760],
-  [800, 840],
-  [624, 840],
-  [630, 760],
-  [634, 704],
+  [788, 760],
+  [784, 812],
+  [698, 812],
+  [678, 770],
+  [650, 740],
+  [636, 704],
   [638, 652],
 ];
 const THUMB_TIP: readonly Pt[] = [
@@ -196,6 +206,8 @@ export function handStampSvg(opts: HandStampOptions): string {
     // Each shadow goes down before the finger beside it, so the finger's edge stays clean against it; a finger tucked
     // behind another shows its side a shade step down.
     dr.add(flat(shape(PALM), SKIN.face));
+    // The red sleeve's cuff on the wrist, just showing at the frame's foot, as on the hand holding the phone.
+    dr.add(knitSleeve(dr, at([815, 834]), 0, 0.9));
     dr.add(
       digit(
         'curled',

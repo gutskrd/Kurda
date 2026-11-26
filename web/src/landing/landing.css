@@ -595,15 +595,15 @@
 /* Its place keeps its size before it draws: the stamp's frame is the tallest thing in it. */
 .fp-flip-place {
   grid-area: games;
-  min-height: calc(280px * var(--fp-flip-scale));
+  min-height: calc(344px * var(--fp-flip-scale));
   margin-top: 36px;
-  --fp-flip-scale: 0.72;
+  --fp-flip-scale: 0.64;
 }
 @media (min-width: 1000px) {
   .fp-flip-place {
     align-self: start;
     margin-top: 0;
-    --fp-flip-scale: 0.8;
+    --fp-flip-scale: 0.72;
   }
 }
 .fp-flip {
@@ -615,8 +615,8 @@
 .fp-flip-frame {
   position: relative;
   flex: none;
-  width: calc(260px * var(--fp-flip-scale));
-  height: calc(280px * var(--fp-flip-scale));
+  width: calc(300px * var(--fp-flip-scale));
+  height: calc(344px * var(--fp-flip-scale));
   overflow: hidden;
   border-radius: var(--r-xl);
   background: var(--surface-2);
@@ -626,8 +626,8 @@
   top: 0;
   left: 0;
   /* the hand's frame, shared HAND_STAMP_VIEW, drawn one to one and scaled */
-  width: 260px;
-  height: 280px;
+  width: 300px;
+  height: 344px;
   transform: scale(var(--fp-flip-scale));
   transform-origin: 0 0;
 }
