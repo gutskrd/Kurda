@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HAND_PHONE_SCREEN, HAND_PHONE_VIEW, handPhoneSvg } from './hand-phone.js';
-import { HAND_STAMP_CARD, HAND_STAMP_VIEW, handStampSvg } from './hand-stamp.js';
+import { HAND_STAMP_CARD, HAND_STAMP_FLIP, HAND_STAMP_PARTS, HAND_STAMP_VIEW, handStampFlip, handStampSvg } from './hand-stamp.js';
 import { SKIN } from './hand-paint.js';
 
 const back = handPhoneSvg({ part: 'back' });
@@ -76,7 +76,7 @@ describe('the hand holding up a game’s stamp', () => {
   it('marks each digit, turning about its own knuckle, so the hand can move through a turn', () => {
     const marked = (svg: string, part: string): boolean => new RegExp(`data-part="${part}" style="transform-origin:[\\d.]+px [\\d.]+px"`).test(svg);
     for (const part of ['thumb', 'thumb-tip']) expect(marked(stampFront, part)).toBe(true);
-    for (const part of ['index', 'reaching', 'curled']) expect(marked(stampBack, part)).toBe(true);
+    for (const part of ['index', 'index-tip', 'reaching', 'curled']) expect(marked(stampBack, part)).toBe(true);
   });
 
   it('wears the skin of the hand holding the phone, its shadows in the antlers’ brown and its lines a warm one', () => {
@@ -96,5 +96,42 @@ describe('the hand holding up a game’s stamp', () => {
 
   it('refuses a part it does not draw', () => {
     expect(() => handStampSvg({ part: 'side' as 'front' })).toThrow(RangeError);
+  });
+});
+
+describe('the turn of the stamp in the hand', () => {
+  const flip = handStampFlip();
+  const turnOf = (transform: string): number => Number(/rotateY\((-?[\d.]+)deg\)/.exec(transform)![1]);
+
+  it('moves every part on the same clock, a frame every 40 ms through the whole turn', () => {
+    const frames = HAND_STAMP_FLIP.ms / 40 + 1;
+    for (const part of HAND_STAMP_PARTS) expect(flip[part]).toHaveLength(frames);
+    expect(HAND_STAMP_FLIP.ms).toBe(1360);
+  });
+
+  it('starts and ends every finger at rest, and the stamp at rest but for showing its other face', () => {
+    for (const part of HAND_STAMP_PARTS) {
+      if (part === 'card') continue;
+      expect(flip[part][0]).toBe('translate(0px, 0px) rotate(0deg)');
+      expect(flip[part].at(-1)).toBe('translate(0px, 0px) rotate(0deg)');
+    }
+    expect(flip.card[0]).toBe(`translate(0px, 0px) rotate(${HAND_STAMP_CARD.turn}deg) rotateY(0deg)`);
+    expect(flip.card.at(-1)).toBe(`translate(0px, 0px) rotate(${HAND_STAMP_CARD.turn}deg) rotateY(180deg)`);
+  });
+
+  it('holds the stamp a third turned, then turns it over fast, edge-on where its words change, and lands it softly', () => {
+    const at = (share: number): number => turnOf(flip.card[Math.round(share * (flip.card.length - 1))]!);
+    expect(at(5 / 17)).toBeGreaterThan(25);
+    expect(at(5 / 17)).toBeLessThan(40);
+    expect(Math.abs(at(HAND_STAMP_FLIP.edgeOn) - 90)).toBeLessThan(8);
+    // it never turns back on itself once it is over, and slows as it lands
+    const turns = flip.card.map(turnOf);
+    const over = turns.findIndex((v) => v > 90);
+    for (let i = over + 1; i < turns.length; i++) expect(turns[i]!).toBeGreaterThanOrEqual(turns[i - 1]! - 0.5);
+    expect(turns.at(-1)! - turns.at(-3)!).toBeLessThan(turns[over + 2]! - turns[over]!);
+  });
+
+  it('refuses a step that is not a positive time', () => {
+    expect(() => handStampFlip(0)).toThrow(RangeError);
   });
 });

@@ -595,15 +595,15 @@
 /* Its place keeps its size before it draws: the stamp's frame is the tallest thing in it. */
 .fp-flip-place {
   grid-area: games;
-  min-height: calc(344px * var(--fp-flip-scale));
+  min-height: calc(236px * var(--fp-flip-scale));
   margin-top: 36px;
-  --fp-flip-scale: 0.64;
+  --fp-flip-scale: 0.66;
 }
 @media (min-width: 1000px) {
   .fp-flip-place {
     align-self: start;
     margin-top: 0;
-    --fp-flip-scale: 0.72;
+    --fp-flip-scale: 0.84;
   }
 }
 .fp-flip {
@@ -615,8 +615,8 @@
 .fp-flip-frame {
   position: relative;
   flex: none;
-  width: calc(300px * var(--fp-flip-scale));
-  height: calc(344px * var(--fp-flip-scale));
+  width: calc(312px * var(--fp-flip-scale));
+  height: calc(236px * var(--fp-flip-scale));
   overflow: hidden;
   border-radius: var(--r-xl);
   background: var(--surface-2);
@@ -626,8 +626,8 @@
   top: 0;
   left: 0;
   /* the hand's frame, shared HAND_STAMP_VIEW, drawn one to one and scaled */
-  width: 300px;
-  height: 344px;
+  width: 312px;
+  height: 236px;
   transform: scale(var(--fp-flip-scale));
   transform-origin: 0 0;
 }
@@ -640,7 +640,11 @@
   height: 100%;
   overflow: visible;
 }
-/* The stamp turns about its upright middle, seen a little from the front, and swaps its face at the quarter turn. */
+/*
+ * The stamp, between the hand's layers, seen a little from the front: two faces back to back, so the next game's comes
+ * round as it passes edge-on. The turn itself, the stamp's and every finger's, is played by GameFlip.tsx from the
+ * shared frames, each finger about its own knuckle (shared hand-stamp.ts) and the whole hand about its wrist.
+ */
 .fp-flip-card {
   position: absolute;
   perspective: 640px;
@@ -649,66 +653,18 @@
   position: absolute;
   inset: 0;
   display: block;
+  transform-style: preserve-3d;
 }
-.fp-flip.is-ready .fp-flip-turn {
-  animation: fp-flip-ready 160ms cubic-bezier(0.3, 0, 0.6, 1) both;
-}
-.fp-flip.is-out .fp-flip-turn {
-  animation: fp-flip-out 300ms cubic-bezier(0.5, 0, 0.85, 0.6) both;
-}
-.fp-flip.is-in .fp-flip-turn {
-  animation: fp-flip-in 460ms cubic-bezier(0.15, 0.6, 0.3, 1) both;
-}
-/*
- * The hand turns it: through the same three parts, each finger goes from rest to its set (--fp-r), on to its push as the
- * stamp turns edge-on (--fp-p), and back past rest (--fp-o) to rest, each about its own knuckle (shared hand-stamp.ts).
- * The thumb rolls and slides and its tip bends with the stamp; the index finger behind presses, then lifts and pushes;
- * the curled fingers open and close; and the whole hand swings a few degrees with the stamp and back.
- */
-.fp-flip-sway {
+.fp-flip-face {
   position: absolute;
   inset: 0;
-  transform-origin: 58% 100%;
-  --fp-r: translate(0px, 1px) rotate(-3deg);
-  --fp-p: translate(2px, -3px) rotate(11deg);
-  --fp-o: translate(0px, 0px) rotate(-3.5deg);
+  backface-visibility: hidden;
+}
+.fp-flip-face.is-back {
+  transform: rotateY(180deg);
 }
 .fp-flip-art [data-part] {
   transform-box: view-box;
-}
-.fp-flip-art [data-part='thumb'] {
-  --fp-r: translate(1px, 0px) rotate(2deg);
-  --fp-p: translate(-4px, 3px) rotate(-7deg);
-  --fp-o: translate(1px, -1px) rotate(2deg);
-}
-.fp-flip-art [data-part='thumb-tip'] {
-  --fp-r: translate(0px, 0px) rotate(-4deg);
-  --fp-p: translate(0px, 1px) rotate(13deg);
-  --fp-o: translate(0px, 0px) rotate(-3deg);
-}
-.fp-flip-art [data-part='index'] {
-  --fp-r: translate(0px, 2px) rotate(-5deg);
-  --fp-p: translate(4px, -6px) rotate(16deg);
-  --fp-o: translate(0px, 0px) rotate(-4deg);
-}
-.fp-flip-art [data-part='reaching'] {
-  --fp-r: translate(0px, -1px) rotate(3deg);
-  --fp-p: translate(-2px, 3px) rotate(-12deg);
-  --fp-o: translate(0px, 0px) rotate(2.5deg);
-}
-.fp-flip-art [data-part='curled'] {
-  --fp-r: translate(0px, 0px) rotate(2deg);
-  --fp-p: translate(-2px, 2px) rotate(-9deg);
-  --fp-o: translate(0px, 0px) rotate(2deg);
-}
-.fp-flip.is-ready :is(.fp-flip-sway, .fp-flip-art [data-part]) {
-  animation: fp-flip-pose-ready 160ms cubic-bezier(0.3, 0, 0.6, 1) both;
-}
-.fp-flip.is-out :is(.fp-flip-sway, .fp-flip-art [data-part]) {
-  animation: fp-flip-pose-out 300ms cubic-bezier(0.5, 0, 0.85, 0.6) both;
-}
-.fp-flip.is-in :is(.fp-flip-sway, .fp-flip-art [data-part]) {
-  animation: fp-flip-pose-in 460ms cubic-bezier(0.2, 0.6, 0.35, 1) both;
 }
 .fp-flip-paper {
   position: absolute;
@@ -1993,57 +1949,6 @@
     rotate: -0.4deg;
   }
 }
-@keyframes fp-flip-ready {
-  to {
-    transform: rotateY(-10deg);
-  }
-}
-@keyframes fp-flip-out {
-  from {
-    transform: rotateY(-10deg);
-  }
-  to {
-    transform: rotateY(90deg);
-  }
-}
-@keyframes fp-flip-in {
-  from {
-    transform: rotateY(-90deg);
-  }
-  70% {
-    transform: rotateY(8deg);
-  }
-  to {
-    transform: rotateY(0deg);
-  }
-}
-@keyframes fp-flip-pose-ready {
-  from {
-    transform: translate(0px, 0px) rotate(0deg);
-  }
-  to {
-    transform: var(--fp-r);
-  }
-}
-@keyframes fp-flip-pose-out {
-  from {
-    transform: var(--fp-r);
-  }
-  to {
-    transform: var(--fp-p);
-  }
-}
-@keyframes fp-flip-pose-in {
-  from {
-    transform: var(--fp-p);
-  }
-  60% {
-    transform: var(--fp-o);
-  }
-  to {
-    transform: translate(0px, 0px) rotate(0deg);
-  }
-}
 @keyframes fp-phone-float {
   to {
     transform: translateY(-6px) rotate(-0.8deg);
@@ -2056,10 +1961,7 @@
   .fp-tree-layer {
     transition: none;
   }
-  .fp-phone-hold,
-  .fp-flip-turn,
-  .fp-flip-sway,
-  .fp-flip-art [data-part] {
+  .fp-phone-hold {
     animation: none;
   }
 }

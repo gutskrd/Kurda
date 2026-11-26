@@ -144,17 +144,12 @@ describe('the front page', () => {
     const learn = document.getElementById('learn')!;
     const stamp = await within(learn).findByRole('button', { name: 'Peyvok. Show the next game' });
     expect(within(learn).getByRole('link', { name: 'See all the games' })).toHaveAttribute('href', '/app/games');
+    // Each stamp has the next game on its back, to come round as it turns.
+    expect(learn.querySelectorAll('.fp-flip-face')).toHaveLength(2);
+    // Where nothing can be animated, a tap moves straight on to the next game.
     fireEvent.click(stamp);
-    // The hand gathers itself, the stamp turns out to its edge, shows the next game's face there, and turns back in.
-    const turn = learn.querySelector('.fp-flip-turn')!;
-    expect(learn.querySelector('.fp-flip')).toHaveClass('is-ready');
-    fireEvent.animationEnd(turn);
-    expect(learn.querySelector('.fp-flip')).toHaveClass('is-out');
-    expect(learn.querySelector('.fp-flip-name')).toHaveTextContent('Peyvok');
-    fireEvent.animationEnd(turn);
+    expect(await within(learn).findByRole('button', { name: 'Peyvên Hevserwa. Show the next game' })).toBeInTheDocument();
     expect(learn.querySelector('.fp-flip-name')).toHaveTextContent('Peyvên HevserwaRhyming words');
-    fireEvent.animationEnd(turn);
-    expect(within(learn).getByRole('button', { name: 'Peyvên Hevserwa. Show the next game' })).toBeInTheDocument();
     expect(within(learn).queryByRole('button', { name: 'Show the previous game' })).toBeNull();
   });
 
