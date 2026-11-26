@@ -1220,7 +1220,7 @@ button.feature {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* how many are unread: in the colour of a message, which is what is waiting */
+/* how many are unread: in the ink, as on the phone, since a count is not one of the accent's places */
 .chat-unread {
   flex: none;
   min-width: 21px;
@@ -1229,8 +1229,8 @@ button.feature {
   display: inline-grid;
   place-items: center;
   border-radius: var(--r-pill);
-  background: var(--bubble-mine);
-  color: var(--bubble-mine-ink);
+  background: var(--primary);
+  color: var(--primary-ink);
   font-size: var(--text);
   font-weight: 800;
   font-variant-numeric: tabular-nums;

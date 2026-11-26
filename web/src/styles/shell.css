@@ -1655,21 +1655,24 @@
   border-radius: var(--r-pill);
 }
 /* the friend requests waiting on you, above the conversations */
+/* a door on the raised surface, as on the phone: what waits is said in heavier words and the count, never in a colour */
 .chat-requests {
   display: flex;
   align-items: center;
   gap: 11px;
   padding: 10px 12px;
-  border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--border));
+  border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  background: var(--gold-soft);
+  background: var(--surface);
   color: var(--ink);
   text-decoration: none;
 }
-/* letters: a door like the requests row, quiet until a letter waits to be answered */
-.chat-letters:not(.is-waiting) {
-  border-color: var(--border);
-  background: var(--surface);
+.chat-requests .chat-convo-name {
+  font-weight: 700;
+}
+/* letters: a door like the requests row, its name heavier only while a letter waits to be answered */
+.chat-letters:not(.is-waiting) .chat-convo-name {
+  font-weight: 600;
 }
 .chat-letters + .chat-convo,
 .chat-requests + .chat-letters {
@@ -1684,7 +1687,7 @@
   height: 48px;
   border-radius: 50%;
   background: var(--surface-2);
-  color: var(--gold-ink);
+  color: var(--ink);
 }
 .chat-convo-when {
   flex: none;
