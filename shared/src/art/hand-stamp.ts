@@ -1,19 +1,21 @@
 /**
- * A hand holding up a game's stamp to show it, for the front page's games moment, posed after the owner's reference: seen
- * from the front and a little below, the thumb in front and upright pressing the stamp's lower strip, the index finger
- * behind it on the right curving up and over, and the other fingers curled behind to the left, the nearest reaching out
- * with a rounded tip. Flat colour in the same skin as the hand holding the phone (hand-paint.ts), the gaps between the
- * digits and the stamp a dark shadow, and thin dark lines only for the thumbnail, a few creases and the thumb's edge.
+ * A hand holding up a game's stamp to show it, for the front page's games moment: seen from the front and a little
+ * below, the thumb in front and upright pinching the stamp's lower strip, the index finger behind it on the right
+ * curving up and over, and the other fingers curled behind to the left, the nearest reaching a little way out. Flat
+ * colour in the same skin as the hand holding the phone (hand-paint.ts), with its one shade step, the gaps between the
+ * digits and the stamp in the antlers' dark brown, and a few warm brown lines.
  *
  * Two layers on one frame: `back` (the palm and the fingers behind the stamp) and `front` (the thumb), so an app can lay
- * the stamp itself (`HAND_STAMP_CARD`) between them and turn it over. The thumb and the fingers are groups marked
- * `data-part`, so an app can shift them a little as the stamp turns.
+ * the stamp itself (`HAND_STAMP_CARD`) between them and turn it over. Each digit is a group marked `data-part`, turning
+ * about its own knuckle (its `transform-origin`, in the frame's units), so an app can move the hand through a turn: the
+ * thumb and its tip (`thumb`, `thumb-tip`), the index finger (`index`), the reaching finger (`reaching`) and the curled
+ * ones (`curled`).
  */
 import { Drawing, n, prefixFor, type Pt } from './svg.js';
 import { SKIN, flat, line, smooth } from './hand-paint.js';
 
 /** The frame in drawing units, which the front page draws one to one in pixels; the hand leaves it at its foot. */
-export const HAND_STAMP_VIEW = { w: 260, h: 262 } as const;
+export const HAND_STAMP_VIEW = { w: 260, h: 280 } as const;
 
 /**
  * Where the stamp is held: a box `w` by `h` centred on (`cx`, `cy`), turned `turn` degrees. The thumb covers only its
@@ -21,18 +23,23 @@ export const HAND_STAMP_VIEW = { w: 260, h: 262 } as const;
  */
 export const HAND_STAMP_CARD = { cx: 91, cy: 90, w: 128, h: 152, turn: 3, clear: 116 } as const;
 
-/** The shadow in the gaps between the digits and behind the stamp, and the thin lines, a dark aubergine. */
-const GAP = '#3d2f36';
+/** The shadow in the gaps between the digits and the stamp: the dark brown of Hevalo's antlers. */
+const GAP = '#4f3029';
+/** The nail, a step paler than the skin. */
+const NAIL = '#ecc3a3';
 
-/**
- * The hand is modelled in the reference's own pixels, where the card it holds spans 492 to 808 across and ends at 506;
- * this places those on the frame, the card's foot on the stamp's.
- */
+/** The hand is laid out on a larger grid, the stamp's foot at 506 on it; this places that grid on the frame. */
 const K = 0.438;
 const at = ([x, y]: Pt): Pt => [(x - 465) * K + 10, (y - 506) * K + (HAND_STAMP_CARD.cy + HAND_STAMP_CARD.h / 2)];
 const shape = (points: readonly Pt[]): string => smooth(points.map(at));
-const stroke = (points: readonly Pt[], width = 1.1): string =>
-  `<path d="${line(points.map(at))}" fill="none" stroke="${GAP}" stroke-width="${n(width)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+const stroke = (points: readonly Pt[], width = 1.1, opacity = 0.75): string =>
+  `<path d="${line(points.map(at))}" fill="none" stroke="${SKIN.crease}" stroke-width="${n(width)}" stroke-linecap="round" opacity="${n(opacity)}"/>`;
+/** A digit's group, turning about its knuckle. */
+const digit = (part: string, knuckle: Pt, inner: string): string => {
+  const [x, y] = at(knuckle);
+  return `<g data-part="${part}" style="transform-origin:${n(x)}px ${n(y)}px">${inner}</g>`;
+};
+const moved = (points: readonly Pt[], dx: number, dy: number): Pt[] => points.map(([x, y]) => [x + dx, y + dy] as Pt);
 
 /** The palm behind everything, under the fingers and out of the frame at its foot, as wide as the hand is there. */
 const PALM: readonly Pt[] = [
@@ -41,125 +48,139 @@ const PALM: readonly Pt[] = [
   [800, 600],
   [920, 640],
   [1005, 690],
-  [1022, 780],
-  [1026, 900],
+  [1020, 780],
+  [1024, 900],
   [600, 900],
-  [590, 760],
+  [588, 760],
 ];
 
-/** The other fingers, curled behind to the left: the nearest reaching out with a rounded tip, the next tucked lower. */
+/** The finger reaching out to the left under the stamp: short and low, its tip round. */
 const REACHING: readonly Pt[] = [
-  [652, 600],
-  [626, 570],
-  [601, 537],
-  [577, 514],
-  [556, 532],
-  [521, 551],
-  [491, 566],
-  [471, 583],
-  [467, 601],
-  [477, 616],
-  [501, 624],
-  [536, 622],
-  [571, 614],
-  [606, 604],
-  [650, 610],
+  [652, 655],
+  [628, 612],
+  [600, 581],
+  [572, 570],
+  [545, 577],
+  [521, 593],
+  [505, 613],
+  [502, 636],
+  [513, 654],
+  [538, 664],
+  [576, 661],
+  [614, 652],
+  [652, 662],
 ];
-const TUCKED: readonly Pt[] = [
-  [650, 668],
-  [604, 671],
-  [562, 684],
-  [522, 699],
-  [484, 715],
-  [452, 742],
-  [470, 800],
-  [650, 800],
+/** Its shadow, where it lifts off the stamp beside the thumb. */
+const REACHING_GAP: readonly Pt[] = [
+  [604, 566],
+  [637, 558],
+  [642, 612],
+  [624, 592],
+];
+
+/** The other two fingers, curled under it toward the palm, each a rounded knuckle, the lower one smaller and steeper. */
+const CURLED: readonly (readonly Pt[])[] = [
+  [
+    [652, 668],
+    [616, 668],
+    [588, 678],
+    [572, 695],
+    [574, 714],
+    [592, 726],
+    [624, 728],
+    [652, 722],
+  ],
+  [
+    [650, 728],
+    [622, 730],
+    [600, 742],
+    [594, 758],
+    [606, 772],
+    [650, 774],
+  ],
 ];
 
 /** The index finger, behind the stamp on the right: from the palm up and over, its tip out of sight behind the stamp. */
 const INDEX: readonly Pt[] = [
-  [772, 470],
-  [792, 458],
-  [836, 480],
-  [893, 512],
-  [942, 549],
-  [982, 592],
-  [1006, 638],
-  [1016, 700],
-  [1022, 780],
-  [1026, 900],
-  [920, 900],
-  [905, 790],
-  [890, 728],
-  [868, 680],
-  [838, 630],
-  [806, 594],
-  [782, 578],
-  [772, 520],
+  [774, 470],
+  [798, 456],
+  [842, 474],
+  [895, 505],
+  [940, 540],
+  [978, 581],
+  [1000, 626],
+  [1008, 682],
+  [1012, 760],
+  [1014, 840],
+  [920, 840],
+  [904, 772],
+  [888, 724],
+  [866, 678],
+  [838, 634],
+  [806, 600],
+  [782, 582],
+  [772, 525],
+];
+/** The shadow between the index finger and the thumb, running down to the palm. */
+const INDEX_GAP: readonly Pt[] = [
+  [770, 578],
+  [806, 590],
+  [840, 626],
+  [868, 676],
+  [886, 726],
+  [892, 800],
+  [842, 800],
+  [814, 724],
+  [798, 652],
+  [782, 610],
 ];
 
-/** The gaps in shadow: under the reaching finger, between the thumb and the index finger, and above the tucked one. */
-const GAPS: readonly (readonly Pt[])[] = [
-  [
-    [572, 512],
-    [627, 505],
-    [632, 575],
-    [612, 550],
-    [590, 528],
-  ],
-  [
-    [778, 576],
-    [806, 590],
-    [840, 626],
-    [870, 678],
-    [890, 730],
-    [876, 764],
-    [836, 750],
-    [814, 704],
-    [800, 652],
-    [786, 610],
-  ],
-  [
-    [602, 672],
-    [630, 666],
-    [644, 722],
-    [620, 716],
-  ],
-];
-
-/** The thumb, upright in front, a long even digit with a rounded tip, widening at its foot into the palm. */
+/** The thumb's foot, slim and long, widening into the palm, and its tip above the joint, which bends as it pinches. */
 const THUMB: readonly Pt[] = [
-  [697, 431],
-  [719, 433],
-  [737, 445],
-  [752, 466],
-  [762, 495],
-  [770, 530],
-  [778, 570],
-  [786, 610],
-  [795, 650],
-  [806, 700],
-  [814, 760],
-  [818, 830],
-  [622, 830],
-  [628, 760],
-  [634, 700],
-  [632, 640],
-  [629, 580],
-  [626, 530],
-  [627, 498],
-  [635, 470],
-  [650, 449],
-  [672, 435],
+  [640, 600],
+  [762, 600],
+  [770, 652],
+  [781, 704],
+  [792, 760],
+  [800, 840],
+  [624, 840],
+  [630, 760],
+  [634, 704],
+  [638, 652],
 ];
-
-/** The shadow beside the thumb's tip, where it presses the stamp and the index finger meets it from behind. */
+const THUMB_TIP: readonly Pt[] = [
+  [699, 429],
+  [722, 432],
+  [741, 447],
+  [752, 471],
+  [757, 506],
+  [760, 548],
+  [762, 594],
+  [764, 640],
+  [638, 640],
+  [638, 594],
+  [639, 548],
+  [642, 504],
+  [650, 468],
+  [665, 443],
+  [681, 432],
+];
+/** The nail, a soft rounded square near the tip, and the shadow beside the tip where it presses the stamp. */
+const NAIL_SHAPE: readonly Pt[] = [
+  [672, 452],
+  [726, 452],
+  [742, 470],
+  [744, 512],
+  [728, 528],
+  [670, 528],
+  [654, 512],
+  [656, 470],
+];
 const TIP_GAP: readonly Pt[] = [
-  [746, 462],
-  [771, 470],
-  [776, 514],
-  [762, 502],
-  [753, 482],
+  [752, 470],
+  [774, 474],
+  [777, 522],
+  [764, 510],
 ];
 
 export interface HandStampOptions {
@@ -172,27 +193,45 @@ export interface HandStampOptions {
 export function handStampSvg(opts: HandStampOptions): string {
   const dr = new Drawing(prefixFor(opts.idPrefix, 'hand-stamp', opts.part));
   if (opts.part === 'back') {
-    // Each gap goes down before the finger beside it, so the finger's edge stays clean against the shadow.
+    // Each shadow goes down before the finger beside it, so the finger's edge stays clean against it; a finger tucked
+    // behind another shows its side a shade step down.
     dr.add(flat(shape(PALM), SKIN.face));
     dr.add(
-      `<g data-part="fingers">${flat(shape(GAPS[2]!), GAP)}${flat(shape(TUCKED), SKIN.face)}${flat(shape(GAPS[0]!), GAP)}` +
-        `${flat(shape(REACHING), SKIN.face)}${flat(shape(GAPS[1]!), GAP)}${flat(shape(INDEX), SKIN.face)}` +
-        // The crease at the index finger's middle joint, and the one at its knuckle beside the thumb.
-        stroke([[890, 665], [910, 652], [930, 642]]) +
-        stroke([[810, 585], [824, 572], [837, 560]]) +
-        `</g>`,
+      digit(
+        'curled',
+        [650, 760],
+        CURLED.map((f) => flat(shape(moved(f, 4, -6)), SKIN.shade) + flat(shape(f), SKIN.face)).join(''),
+      ),
+    );
+    dr.add(digit('reaching', [652, 640], flat(shape(REACHING_GAP), GAP) + flat(shape(moved(REACHING, 3, -5)), SKIN.shade) + flat(shape(REACHING), SKIN.face)));
+    dr.add(
+      digit(
+        'index',
+        [930, 800],
+        flat(shape(INDEX_GAP), GAP) +
+          flat(shape(INDEX), SKIN.face) +
+          // The one crease at its middle joint.
+          stroke([[892, 664], [912, 651], [933, 643]]),
+      ),
     );
   } else if (opts.part === 'front') {
     dr.add(
-      `<g data-part="thumb">${flat(shape(TIP_GAP), GAP)}${flat(shape(THUMB), SKIN.face)}` +
-        // The thumbnail and its moon, two short creases at the knuckle, and the line of its foot either side.
-        stroke([[636, 472], [642, 510], [660, 540], [690, 556], [720, 552], [742, 534], [752, 505], [750, 478], [742, 458]]) +
-        stroke([[672, 542], [700, 532], [730, 537]], 0.9) +
-        stroke([[700, 667], [728, 662], [757, 660]], 0.9) +
-        stroke([[703, 681], [733, 676], [763, 673]], 0.9) +
-        stroke([[633, 660], [642, 685], [650, 702]], 0.9) +
-        stroke([[790, 600], [800, 660], [812, 720]], 0.9) +
-        `</g>`,
+      digit(
+        'thumb',
+        [712, 800],
+        flat(shape(THUMB), SKIN.face) +
+          // The line where the thumb's foot meets the palm beside the index finger.
+          stroke([[786, 640], [796, 700], [806, 760]], 1, 0.55) +
+          digit(
+            'thumb-tip',
+            [700, 620],
+            flat(shape(TIP_GAP), GAP) +
+              flat(shape(THUMB_TIP), SKIN.face) +
+              flat(shape(NAIL_SHAPE), NAIL) +
+              // The one crease where it bends.
+              stroke([[668, 600], [700, 594], [734, 598]]),
+          ),
+      ),
     );
   } else {
     throw new RangeError(`art: no hand-stamp part called ${String(opts.part)}`);

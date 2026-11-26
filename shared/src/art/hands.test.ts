@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { HAND_PHONE_SCREEN, HAND_PHONE_VIEW, handPhoneSvg } from './hand-phone.js';
 import { HAND_STAMP_CARD, HAND_STAMP_VIEW, handStampSvg } from './hand-stamp.js';
-import { KNIT, SKIN } from './hand-paint.js';
+import { SKIN } from './hand-paint.js';
 
 const back = handPhoneSvg({ part: 'back' });
 const front = handPhoneSvg({ part: 'front' });
@@ -73,17 +73,18 @@ describe('the hand holding up a game’s stamp', () => {
     expect(ids(stampBack).filter((id) => ids(stampFront).includes(id))).toEqual([]);
   });
 
-  it('marks the thumb and the fingers, so they can give a little as the stamp turns', () => {
-    expect(stampFront).toContain('data-part="thumb"');
-    expect(stampBack).toContain('data-part="fingers"');
+  it('marks each digit, turning about its own knuckle, so the hand can move through a turn', () => {
+    const marked = (svg: string, part: string): boolean => new RegExp(`data-part="${part}" style="transform-origin:[\\d.]+px [\\d.]+px"`).test(svg);
+    for (const part of ['thumb', 'thumb-tip']) expect(marked(stampFront, part)).toBe(true);
+    for (const part of ['index', 'reaching', 'curled']) expect(marked(stampBack, part)).toBe(true);
   });
 
-  it('wears the same skin and sleeve as the hand holding the phone, and paints its gaps and lines in one dark shadow', () => {
-    for (const c of [SKIN.face, SKIN.shade, KNIT.face, KNIT.rib]) expect(colours(back)).toContain(c);
-    expect(colours(stampBack)).toContain(SKIN.face);
-    expect(colours(stampFront)).toContain(SKIN.face);
-    // the skin, and one shadow for the gaps between the digits and for the thumbnail and creases
-    expect(new Set([...colours(stampBack), ...colours(stampFront)]).size).toBe(2);
+  it('wears the skin of the hand holding the phone, its shadows in the antlers’ brown and its lines a warm one', () => {
+    const used = new Set([...colours(stampBack), ...colours(stampFront)]);
+    for (const c of [SKIN.face, SKIN.shade, SKIN.crease]) expect(used).toContain(c);
+    for (const c of [SKIN.face, SKIN.shade]) expect(colours(back)).toContain(c);
+    // nothing near black: every colour has some light in it
+    for (const c of used) expect(Math.max(...[1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16)))).toBeGreaterThan(64);
   });
 
   it('covers only the stamp’s foot with the thumb, never its picture', () => {

@@ -145,8 +145,12 @@ describe('the front page', () => {
     const stamp = await within(learn).findByRole('button', { name: 'Peyvok. Show the next game' });
     expect(within(learn).getByRole('link', { name: 'See all the games' })).toHaveAttribute('href', '/app/games');
     fireEvent.click(stamp);
-    // The stamp turns out to its edge, shows the next game's face there, and turns back in.
+    // The hand gathers itself, the stamp turns out to its edge, shows the next game's face there, and turns back in.
     const turn = learn.querySelector('.fp-flip-turn')!;
+    expect(learn.querySelector('.fp-flip')).toHaveClass('is-ready');
+    fireEvent.animationEnd(turn);
+    expect(learn.querySelector('.fp-flip')).toHaveClass('is-out');
+    expect(learn.querySelector('.fp-flip-name')).toHaveTextContent('Peyvok');
     fireEvent.animationEnd(turn);
     expect(learn.querySelector('.fp-flip-name')).toHaveTextContent('Peyvên HevserwaRhyming words');
     fireEvent.animationEnd(turn);

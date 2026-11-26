@@ -58,8 +58,9 @@ export function GameFlip(): React.JSX.Element {
   const t = useT();
   const [still] = useState(prefersReducedMotion);
   const [index, setIndex] = useState(0);
-  // A turn goes out to the stamp's edge, swaps the face there, and comes back in.
-  const [phase, setPhase] = useState<'rest' | 'out' | 'in'>('rest');
+  // A turn gathers itself (the fingers set, the stamp winds back a touch), goes out to the stamp's edge, swaps the
+  // face there, and comes back in past rest and settles; the stylesheet moves each finger through each part.
+  const [phase, setPhase] = useState<'rest' | 'ready' | 'out' | 'in'>('rest');
   const [held, setHeld] = useState(false);
   // Counts the moments it waited in a hidden tab, so it waits again rather than turning unseen.
   const [waited, setWaited] = useState(0);
@@ -69,18 +70,19 @@ export function GameFlip(): React.JSX.Element {
   // Held up for a moment, then turned, while it is seen and nobody is pointing at it.
   useEffect(() => {
     if (still || !on || held || phase !== 'rest') return;
-    const timer = window.setTimeout(() => (document.hidden ? setWaited((n) => n + 1) : setPhase('out')), HOLD_MS);
+    const timer = window.setTimeout(() => (document.hidden ? setWaited((n) => n + 1) : setPhase('ready')), HOLD_MS);
     return () => window.clearTimeout(timer);
   }, [still, on, held, phase, index, waited]);
 
   const step = (by: number): void => setIndex((i) => (i + by + GAMES.length) % GAMES.length);
   const turn = (): void => {
     if (still) step(1);
-    else if (phase === 'rest') setPhase('out');
+    else if (phase === 'rest') setPhase('ready');
   };
   const turned = (e: React.AnimationEvent): void => {
     if (e.target !== e.currentTarget) return;
-    if (phase === 'out') {
+    if (phase === 'ready') setPhase('out');
+    else if (phase === 'out') {
       step(1);
       setPhase('in');
     } else if (phase === 'in') setPhase('rest');
@@ -102,13 +104,16 @@ export function GameFlip(): React.JSX.Element {
     >
       <div className="fp-flip-frame">
         <div className="fp-flip-art" aria-hidden="true">
-          <span className="fp-flip-layer" dangerouslySetInnerHTML={BACK} />
-          <span className="fp-flip-card" style={card}>
-            <span className="fp-flip-turn" onAnimationEnd={turned}>
-              <StampFace game={game.id} />
+          {/* the whole hand, with what it holds, swings a little with the turn and back */}
+          <span className="fp-flip-sway">
+            <span className="fp-flip-layer" dangerouslySetInnerHTML={BACK} />
+            <span className="fp-flip-card" style={card}>
+              <span className="fp-flip-turn" onAnimationEnd={turned}>
+                <StampFace game={game.id} />
+              </span>
             </span>
+            <span className="fp-flip-layer" dangerouslySetInnerHTML={FRONT} />
           </span>
-          <span className="fp-flip-layer" dangerouslySetInnerHTML={FRONT} />
         </div>
         <button type="button" className="fp-flip-hit" aria-label={`${name}. ${t('landing.games.next')}`} onClick={turn} />
       </div>
