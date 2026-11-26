@@ -1,15 +1,15 @@
 /**
  * The learner's tree as it grows and moves: every stage, state and season is a valid picture in every layer, only great
- * trees have the swing, each stage is taller than the last, and no app motion (breeze, touch, drink, growth) takes any
- * of it outside its picture. The general art rules are in `art.test.ts`.
+ * trees have the swing, each stage is taller than the last, and no app motion (breeze, rustle, touch, drink, growth)
+ * takes any of it outside its picture. The general art rules are in `art.test.ts`.
  */
 import { describe, expect, it } from 'vitest';
 import { TREE_HEALTHS, TREE_SEASONS, TREE_SPECIES, TREE_STAGES, type TreeHealth, type TreeSeason, type TreeSpecies, type TreeStage } from '../tree.js';
-import { TREE_DRINK, TREE_GROW, TREE_SHAKE, TREE_SWAY, TREE_SWING, TREE_WAVE, TREE_WAVE_AT, treeGrowFrom, treeHeft, treePhase, treeSwayDeg, treeWave } from './tree-motion.js';
+import { TREE_DRINK, TREE_GROW, TREE_RUSTLE, TREE_RUSTLE_WAVE, TREE_SHAKE, TREE_SWAY, TREE_SWING, TREE_WAVE, TREE_WAVE_AT, treeGrowFrom, treeHeft, treePhase, treeSwayDeg, treeWave } from './tree-motion.js';
 import { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, treeRig, treeSvg } from './trees.js';
 
 const STAGES = Array.from({ length: TREE_STAGES }, (_, i) => i as TreeStage);
-const PARTS = ['whole', 'ground', 'plant', 'swing', 'front'] as const;
+const PARTS = ['whole', 'ground', 'plant', 'crown', 'swing', 'front'] as const;
 /** The kinds whose great tree has a long low bough to hang a swing from. */
 const SWINGERS: readonly TreeSpecies[] = ['beru', 'behiv', 'tu', 'payiz', 'miraz', 'sev'];
 const DRAWN = new Set(['svg', 'title', 'defs', 'g', 'path', 'circle', 'ellipse', 'rect', 'linearGradient', 'radialGradient', 'stop', 'clipPath']);
@@ -47,7 +47,7 @@ function extent(svg: string): { top: number; bottom: number; left: number; right
     xs.push(x);
     ys.push(y);
   };
-  const body = svg.replace(/<defs>.*?<\/defs>/s, '');
+  const body = svg.replace(/<defs>.*?<\/defs>/gs, '');
   for (const [, tag, attrs] of body.matchAll(/<(path|ellipse|circle)([^>]*)\/>/g)) {
     if (/fill="url\(/.test(attrs!) || /fill-rule="evenodd"/.test(attrs!)) continue;
     const at = (name: string): number => Number(new RegExp(`\\s${name}="([^"]+)"`).exec(attrs!)?.[1] ?? 0);
@@ -88,8 +88,9 @@ function extent(svg: string): { top: number; bottom: number; left: number; right
   return { top: Math.min(...ys), bottom: Math.max(...ys), left: Math.min(...xs), right: Math.max(...xs) };
 }
 
+/** All that grows: the plant and the crown over it, which move together. */
 const plantOf = (species: TreeSpecies, stage: TreeStage, health: TreeHealth = 'fresh', season?: TreeSeason): string =>
-  treeSvg({ species, stage, health, ...(season ? { season } : {}), part: 'plant', title: 'A tree' });
+  (['plant', 'crown'] as const).map((part) => treeSvg({ species, stage, health, ...(season ? { season } : {}), part, title: 'A tree' })).join('');
 
 describe('the tree in every stage, state and season', () => {
   it('draws every kind at every stage, in every state and season, as a valid picture of a reasonable size', () => {
@@ -126,6 +127,23 @@ describe('the tree in every stage, state and season', () => {
       for (const stage of STAGES) {
         expect(treeRig({ species, stage }).front, `${species} ${stage}`).toBe(stage !== 2);
         expect(drawn(treeSvg({ species, stage, season: 'autumn', part: 'front', title: 'x' })), `${species} ${stage}`).toBe(stage !== 2);
+      }
+    }
+  });
+
+  it('has a crown of its own once grown, while it has leaves left, and draws one only where it says so', () => {
+    for (const species of TREE_SPECIES) {
+      for (const stage of STAGES) {
+        for (const health of TREE_HEALTHS) {
+          const rig = treeRig({ species, stage, health });
+          const crown = treeSvg({ species, stage, health, season: 'summer', part: 'crown', title: 'x' });
+          expect(drawn(crown), `${species} ${stage} ${health}`).toBe(rig.crown !== null);
+          if (stage >= 3 && health !== 'withered') expect(rig.crown, `${species} ${stage} ${health}`).not.toBeNull();
+          if (!rig.crown) continue;
+          // It stirs about a point in the crown, above the foot and inside the picture.
+          expect(rig.crown.y, `${species} ${stage}`).toBeLessThan(TREE_FOOT.y);
+          expect(rig.crown.y, `${species} ${stage}`).toBeGreaterThan(0);
+        }
       }
     }
   });
@@ -249,10 +267,12 @@ describe('the tree as it moves', () => {
           const heft = treeHeft(stage);
           const sway = treeSwayDeg(stage);
           // A touch comes only while still, and a drink or growth only while untouched; the breeze runs under all of them.
+          // The crown's own stir is added as if about the foot, which moves it further than about its own foot does.
+          const stir = TREE_RUSTLE.deg;
           const moves: readonly (readonly [turn: number, sx: number, sy: number])[] = [
-            [sway + Math.max(...TREE_SHAKE.turns.map(Math.abs)) * heft, 1, 1],
-            [sway, 1 + (Math.max(...TREE_DRINK.sx) - 1) * heft, 1 + (Math.max(...TREE_DRINK.sy) - 1) * heft],
-            [sway, TREE_GROW.past, TREE_GROW.past],
+            [sway + stir + Math.max(...TREE_SHAKE.turns.map(Math.abs)) * heft, 1, 1],
+            [sway + stir, 1 + (Math.max(...TREE_DRINK.sx) - 1) * heft, 1 + (Math.max(...TREE_DRINK.sy) - 1) * heft],
+            [sway + stir, TREE_GROW.past, TREE_GROW.past],
           ];
           for (const [deg, sx, sy] of moves) {
             for (const [x, y] of [
@@ -301,6 +321,12 @@ describe('the tree as it moves', () => {
     expect(swing[0]).toBe(swing[16]);
     expect(swing.indexOf(Math.max(...swing))).toBeGreaterThan(8);
     expect(TREE_SWING.ms).toBe(TREE_SWAY.ms);
+    // The crown stirs twice to each breeze, a little late, and its loop has no seam either.
+    expect(TREE_SWAY.ms / TREE_RUSTLE.ms).toBe(2);
+    expect(TREE_RUSTLE_WAVE).toHaveLength(TREE_WAVE_AT.length);
+    expect(TREE_RUSTLE_WAVE[0]).toBe(TREE_RUSTLE_WAVE[16]);
+    expect(TREE_RUSTLE_WAVE.slice(0, 9).indexOf(Math.max(...TREE_RUSTLE_WAVE.slice(0, 9)))).toBeGreaterThan(4);
+    expect(TREE_RUSTLE.deg).toBeLessThan(TREE_SWAY.deg);
   });
 
   it('starts as it is watered and is still again before the pour is over', () => {

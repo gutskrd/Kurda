@@ -10,6 +10,7 @@ import {
   TREE_POUR_MOST,
   TREE_SPECIES,
   TREE_STAGES,
+  TREE_WATER_PER_LESSON,
   canPlant,
   isTreeSpecies,
   plantTree,
@@ -22,7 +23,7 @@ import {
   type TreeRecord,
 } from './tree.js';
 
-const tree = (over: Partial<TreeRecord> = {}): TreeRecord => ({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: '2026-11-10', waterings: 5, water: 3, harvests: 0, ...over });
+const tree = (over: Partial<TreeRecord> = {}): TreeRecord => ({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: '2026-11-10', waterings: 10, water: 6, harvests: 0, ...over });
 
 describe('the kinds of tree', () => {
   it('has a kind for every key, a few of them free to start from and the rest at a price', () => {
@@ -56,24 +57,37 @@ describe('a tree growing', () => {
     expect(treeStage(10_000)).toBe(TREE_FULL);
   });
 
-  it('comes up at the first water it is given', () => {
+  it('comes up on the water it is planted with', () => {
     const planted = plantTree('hinar', '2026-11-13');
     expect(planted).toEqual({ species: 'hinar', plantedOn: '2026-11-13', lastWateredOn: '2026-11-13', waterings: 0, water: TREE_FIRST_WATER, harvests: 0 });
     expect(treeView(planted, '2026-11-13').stage).toBe(0);
-    const watered = waterTree(planted, 1, '2026-11-13');
+    expect(waterTree(planted, 1, '2026-11-13').grew).toBeNull();
+    const watered = waterTree(planted, TREE_FIRST_WATER, '2026-11-13');
     expect(watered.grew).toBe(1);
     expect(watered.tree.water).toBe(0);
   });
 
+  it('takes some two months of daily lessons to grow great, while the first days bring a win and every lesson shows', () => {
+    // Lessons from planting to each stage, the planting water poured first.
+    const lessons = TREE_GROWTH.map((drops) => Math.max(0, Math.ceil((drops - TREE_FIRST_WATER) / TREE_WATER_PER_LESSON)));
+    expect(lessons.slice(0, 3)).toEqual([0, 0, 2]);
+    expect(lessons[TREE_FULL]).toBeGreaterThanOrEqual(60);
+    expect(lessons[TREE_FULL]).toBeLessThanOrEqual(75);
+    // No stage is so long that a lesson fails to move its bar by a few per cent.
+    for (let i = 1; i < TREE_STAGES; i++) expect(TREE_WATER_PER_LESSON / (TREE_GROWTH[i]! - TREE_GROWTH[i - 1]!)).toBeGreaterThanOrEqual(0.03);
+    // A grown tree still bears every ten lessons.
+    expect(TREE_HARVEST_EVERY / TREE_WATER_PER_LESSON).toBe(10);
+  });
+
   it('keeps water already held when another tree is planted, and never makes more of it', () => {
-    expect(plantTree('bi', '2026-11-13', 4).water).toBe(4);
+    expect(plantTree('bi', '2026-11-13', 9).water).toBe(9);
     expect(plantTree('bi', '2026-11-13', 0).water).toBe(TREE_FIRST_WATER);
   });
 
   it('says how far it is to the next stage, and full grown to the next harvest', () => {
-    expect(treeView(tree({ waterings: 9 }), '2026-11-10').toward).toEqual({ done: 2, of: 7, next: 'stage' });
+    expect(treeView(tree({ waterings: 24 }), '2026-11-10').toward).toEqual({ done: 6, of: 22, next: 'stage' });
     const full = TREE_GROWTH[TREE_FULL];
-    expect(treeView(tree({ waterings: full + 13 }), '2026-11-10').toward).toEqual({ done: 3, of: TREE_HARVEST_EVERY, next: 'harvest' });
+    expect(treeView(tree({ waterings: full + TREE_HARVEST_EVERY + 3 }), '2026-11-10').toward).toEqual({ done: 3, of: TREE_HARVEST_EVERY, next: 'harvest' });
   });
 });
 
@@ -83,30 +97,30 @@ describe('watering', () => {
     expect(waterTree(dry, 1, '2026-11-12')).toEqual({ tree: dry, poured: 0, grew: null, harvests: 0, zer: 0, revived: false });
     const some = waterTree(tree({ water: 2 }), 5, '2026-11-12');
     expect(some.poured).toBe(2);
-    expect(some.tree).toMatchObject({ waterings: 7, water: 0, lastWateredOn: '2026-11-12' });
+    expect(some.tree).toMatchObject({ waterings: 12, water: 0, lastWateredOn: '2026-11-12' });
     expect(waterTree(tree({ water: 3 }), -4, '2026-11-12').poured).toBe(0);
     expect(waterTree(tree({ water: 3 }), 1.9, '2026-11-12').poured).toBe(1);
     expect(waterTree(tree({ water: 900 }), 900, '2026-11-12').poured).toBe(TREE_POUR_MOST);
   });
 
   it('says the stage it grew into, the last one when it passed more than one', () => {
-    expect(waterTree(tree({ waterings: 6, water: 1 }), 1, '2026-11-12').grew).toBe(3);
-    expect(waterTree(tree({ waterings: 5, water: 1 }), 1, '2026-11-12').grew).toBeNull();
-    expect(waterTree(tree({ waterings: 0, water: 20 }), 20, '2026-11-12').grew).toBe(4);
+    expect(waterTree(tree({ waterings: 17, water: 1 }), 1, '2026-11-12').grew).toBe(3);
+    expect(waterTree(tree({ waterings: 16, water: 1 }), 1, '2026-11-12').grew).toBeNull();
+    expect(waterTree(tree({ waterings: 0, water: 50 }), 50, '2026-11-12').grew).toBe(4);
   });
 
   it('bears each time a full-grown tree has had its fill again, and pays for each', () => {
     const full = TREE_GROWTH[TREE_FULL];
-    const one = waterTree(tree({ waterings: full + 9, water: 1 }), 1, '2026-11-12');
+    const one = waterTree(tree({ waterings: full + TREE_HARVEST_EVERY - 1, water: 1 }), 1, '2026-11-12');
     expect(one).toMatchObject({ harvests: 1, zer: TREE_HARVEST_ZER });
     expect(one.tree.harvests).toBe(1);
-    expect(waterTree(tree({ waterings: full + 5, water: 30, harvests: 2 }), 30, '2026-11-12')).toMatchObject({ harvests: 3, zer: 3 * TREE_HARVEST_ZER });
+    expect(waterTree(tree({ waterings: full + 5, water: 60, harvests: 2 }), 3 * TREE_HARVEST_EVERY, '2026-11-12')).toMatchObject({ harvests: 3, zer: 3 * TREE_HARVEST_ZER });
     // growing into the great tree is not yet a harvest
     expect(waterTree(tree({ waterings: full - 1, water: 1 }), 1, '2026-11-12')).toMatchObject({ grew: TREE_FULL, harvests: 0, zer: 0 });
   });
 
   it('brings a wilting or withered tree back, with all it had grown', () => {
-    const left = tree({ waterings: 30, lastWateredOn: '2026-10-01' });
+    const left = tree({ waterings: 80, lastWateredOn: '2026-10-01' });
     expect(treeView(left, '2026-11-12')).toMatchObject({ health: 'withered', stage: 5 });
     const back = waterTree(left, 1, '2026-11-12');
     expect(back.revived).toBe(true);
@@ -140,7 +154,7 @@ describe('going without water', () => {
   });
 
   it('shows on a profile what it is and how it stands, and nothing of what its owner holds', () => {
-    const view = treeView(tree({ waterings: 15, water: 9, harvests: 0 }), '2026-11-13');
+    const view = treeView(tree({ waterings: 40, water: 9, harvests: 0 }), '2026-11-13');
     expect(treeGlimpse(view)).toEqual({ species: 'beru', stage: 4, health: 'thirsty', age: 12, harvests: 0 });
   });
 });

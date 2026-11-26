@@ -1,8 +1,9 @@
 /**
  * The learner's tree: every kind (`tree.ts`) at each of seven stages from seed to great tree, and as it fares without
- * water. The seed, sprout and swing are traced from the owner's references. Each stage stands taller and wider than the
- * last (`tree-motion.ts` grows one out of the other) and the great tree stays clear of the picture's edges however it
- * moves. Drawn in layers an app can move apart (ground, plant, swing, front), with variation seeded by the kind.
+ * water. The seed, sprout and swing are traced from the owner's references, and a grown crown is painted as the owner's
+ * reference paints foliage: pads of leaves laid one by one. Each stage stands taller and wider than the last
+ * (`tree-motion.ts` grows one out of the other) and the great tree stays clear of the picture's edges however it moves.
+ * Drawn in layers an app can move apart (ground, plant, crown, swing, front), with variation seeded by the kind.
  */
 import type { TreeHealth, TreeSeason, TreeSpecies, TreeStage } from '../tree.js';
 import { leaf } from './paint.js';
@@ -39,7 +40,7 @@ interface Kind {
   sprig?: string;
   /** What its crown turns to as it dries and dies, where that is not a green leaf's yellow and brown. */
   turns?: readonly [string, string];
-  /** How the edge of a crown mass is cut: in round lobes, or in leaf points. */
+  /** Its leaves' shape: round and plump, or narrow and pointed. */
   edge: 'round' | 'point';
   /** Its build relative to others of its habit: crown spread, crown height, and trunk girth. */
   build?: { spread?: number; lift?: number; girth?: number };
@@ -57,40 +58,40 @@ const KINDS: Record<TreeSpecies, Kind> = {
   beru: {
     edge: 'round',
     build: { girth: 1.16 },
-    hues: [['#1c5a2e', '#2c7c3a', '#48a044', '#72bd47', '#a8da55', '#def28e']],
+    hues: [['#26492a', '#365f31', '#4e7a3c', '#6f954a', '#9cb66a', '#cddb9e']],
     habit: 'dome',
-    leaves: ['#125038', '#1b7340', '#2f9648', '#4fb24f', '#8bd457', '#cdf08e'],
+    leaves: ['#1b4232', '#28583c', '#3a7246', '#568d52', '#86ae6c', '#c0d8a2'],
     wood: ['#4a2618', '#6f3a22', '#96532c', '#c47a3d'],
     bears: 'acorns',
     fruit: ['#b9803a', '#7c4f22', '#e6b563'],
     seed: 'acorn',
     seedColour: '#b9803a',
-    grass: ['#3d9c4c', '#74c95a'],
+    grass: ['#4f9258', '#93c47a'],
   },
   // The pomegranate: a round bush of a tree, hung with red fruit.
   hinar: {
     edge: 'point',
     habit: 'shrub',
-    leaves: ['#1b5d33', '#27803c', '#3ea447', '#6cc24c', '#a3dd58', '#d6f28c'],
+    leaves: ['#163d2c', '#215436', '#326d40', '#4d894c', '#7aaa62', '#b8d496'],
     wood: ['#4b2a20', '#74432d', '#9c6038', '#c98a4c'],
     bears: 'pomegranates',
     fruit: ['#e23a36', '#a81f2c', '#ff8a6b'],
     seed: 'drop',
     seedColour: '#d6303a',
-    grass: ['#3f9f4a', '#7fcf58'],
+    grass: ['#4e955a', '#99c97e'],
   },
   // The almond: a cloud of blossom before its leaves.
   behiv: {
     edge: 'round',
-    hues: [['#cf6b97', '#e98bb0', '#f8adc6', '#ffcbdb', '#ffe3ec', '#ffffff'], ['#b9457a', '#d75f90', '#ec80a8', '#f8a3c0', '#ffc6d8', '#ffe6ee']],
+    hues: [['#c06e90', '#d98aa7', '#eaa7bd', '#f5c4d3', '#fbdde6', '#fff6f8'], ['#a8577a', '#c46e91', '#dc8ba9', '#eda9c0', '#f8c9d7', '#fde8ee']],
     habit: 'cloud',
-    leaves: ['#c2527f', '#dd6f98', '#f08fb0', '#f9b2c8', '#ffd3df', '#fff0f4'],
+    leaves: ['#b4607f', '#ce7c99', '#e29ab2', '#efb9ca', '#f8d6e0', '#fdf0f3'],
     wood: ['#3a2428', '#573238', '#77454a', '#a26764'],
     bears: 'blossom',
     fruit: ['#fff4f7', '#f6a9c2', '#ffd76a'],
     seed: 'almond',
     seedColour: '#c79a63',
-    grass: ['#4aa457', '#86d06a'],
+    grass: ['#5a9d66', '#a3cf8a'],
     sprig: '#6cc24c',
     turns: ['#d8c2b4', '#a58a72'],
   },
@@ -98,50 +99,50 @@ const KINDS: Record<TreeSpecies, Kind> = {
   bi: {
     edge: 'point',
     habit: 'weeping',
-    leaves: ['#2c5a26', '#3d7a2f', '#5a9a39', '#80ba45', '#b0d85f', '#e0f29a'],
+    leaves: ['#304e2a', '#436a33', '#5c873f', '#7ca24e', '#a8c272', '#d8e4a6'],
     wood: ['#3a2d22', '#57432f', '#77603f', '#a48958'],
     bears: 'catkins',
     fruit: ['#e9f7b0', '#b7d877', '#ffffff'],
     seed: 'round',
     seedColour: '#b9a36a',
-    grass: ['#3a9a5c', '#70c97a'],
+    grass: ['#4a9168', '#93c78c'],
   },
   // The mulberry: wide and low, with dark, red and white berries.
   tu: {
     edge: 'point',
     build: { spread: 0.95, lift: 0.9 },
     habit: 'dome',
-    leaves: ['#1c5a2a', '#2a7a30', '#449c38', '#72bb3e', '#a7d84c', '#dcf183'],
+    leaves: ['#1f4a2b', '#2d6434', '#447f3f', '#649b4d', '#93bb68', '#c9dd9c'],
     wood: ['#3d2a1c', '#5f4229', '#856037', '#b3874d'],
     bears: 'berries',
     fruit: ['#5a2470', '#33123f', '#c84b6e'],
     seed: 'round',
     seedColour: '#7a4a86',
-    grass: ['#3f9c46', '#7ccc55'],
+    grass: ['#4f9254', '#97c679'],
   },
   // The valley poplar: tall and narrow.
   spindar: {
     edge: 'point',
     habit: 'column',
-    leaves: ['#225f38', '#2f8040', '#49a34a', '#78c152', '#addc62', '#e0f39a'],
+    leaves: ['#2b5238', '#3c6b44', '#56874f', '#7aa45e', '#a9c47e', '#dae6b6'],
     wood: ['#6f6a5e', '#928c7c', '#b9b39f', '#dedac8'],
     bears: 'none',
     fruit: ['#ffffff', '#dddddd', '#ffffff'],
     seed: 'round',
     seedColour: '#c9bf9d',
-    grass: ['#3f9c4c', '#78ca5a'],
+    grass: ['#4f9259', '#98c67d'],
   },
   // The mountain pine: tiers of dark needles.
   kaj: {
     edge: 'point',
     habit: 'tiers',
-    leaves: ['#0b3d32', '#10553f', '#176d49', '#238753', '#4aa868', '#93d89c'],
+    leaves: ['#173f3d', '#20554f', '#2c6b60', '#3f8574', '#6aa792', '#a9cfb7'],
     wood: ['#42261a', '#653a24', '#8a5330', '#b47841'],
     bears: 'cones',
     fruit: ['#9a6238', '#6b3f22', '#c88f55'],
     seed: 'cone',
     seedColour: '#8a5330',
-    grass: ['#358f4e', '#66bf62'],
+    grass: ['#468a63', '#8cc49a'],
   },
   // A tree in autumn: gold, amber and red.
   payiz: {
@@ -155,7 +156,7 @@ const KINDS: Record<TreeSpecies, Kind> = {
     fruit: ['#f9a424', '#cb4f1e', '#ffe98a'],
     seed: 'round',
     seedColour: '#b56a2c',
-    grass: ['#8a9a3c', '#c2c558'],
+    grass: ['#8f9a4a', '#c2c26a'],
     turns: ['#c39a55', '#8f6a42'],
   },
   // The wish tree: an old tree tied with ribbons, a wish to each.
@@ -163,13 +164,13 @@ const KINDS: Record<TreeSpecies, Kind> = {
     edge: 'round',
     build: { spread: 1.04, lift: 0.94, girth: 1.3 },
     habit: 'dome',
-    leaves: ['#2a5e4b', '#3b7d5c', '#56a070', '#7fbf86', '#aedba0', '#dcf2c4'],
+    leaves: ['#284f44', '#386853', '#518467', '#73a283', '#a2c4a4', '#d3e5cd'],
     wood: ['#4a3a30', '#6c5645', '#917560', '#bd9d83'],
     bears: 'ribbons',
     fruit: ['#e8443a', '#f7c531', '#3aa3e8'],
     seed: 'round',
     seedColour: '#a8876a',
-    grass: ['#4aa05a', '#84cf6e'],
+    grass: ['#58976a', '#a0cc8e'],
   },
   // The night tree: dark as the sky, hung with small lights.
   sev: {
@@ -225,14 +226,14 @@ function seasonal(kind: Kind, species: TreeSpecies, season: TreeSeason): Kind {
   const studio = { litter: [] as readonly string[], flowers: true, snow: false };
   if (season === 'summer') return { ...kind, studio };
   if (season === 'spring') {
-    if (evergreen) return { ...kind, grass: [mix(kind.grass[0], '#5fbf5a', 0.3), mix(kind.grass[1], '#9be07a', 0.3)], studio };
+    if (evergreen) return { ...kind, grass: [mix(kind.grass[0], '#6cbf72', 0.3), mix(kind.grass[1], '#a8dc95', 0.3)], studio };
     const t = kind.bears === 'blossom' ? 0.5 : 0.88;
     return {
       ...kind,
       leaves: toward(kind.leaves, SPRING, t),
       ...(kind.hues ? { hues: kind.hues.map((h) => toward(h, SPRING, t)) } : {}),
       bears: kind.bears === 'blossom' || keeps(kind.bears) ? kind.bears : 'none',
-      grass: [mix(kind.grass[0], '#5fbf5a', 0.3), mix(kind.grass[1], '#9be07a', 0.3)],
+      grass: [mix(kind.grass[0], '#6cbf72', 0.3), mix(kind.grass[1], '#a8dc95', 0.3)],
       studio: { ...studio, litter: [SPRING[3], SPRING[4], SPRING[5]] },
     };
   }
@@ -246,7 +247,7 @@ function seasonal(kind: Kind, species: TreeSpecies, season: TreeSeason): Kind {
       leaves: toward(kind.leaves, AUTUMN, t),
       ...(kind.hues ? { hues: kind.hues.map((h) => toward(h, AUTUMN, t)) } : {}),
       bears: kind.bears === 'blossom' || kind.bears === 'catkins' ? 'none' : kind.bears,
-      grass: ['#d77a2e', '#f2a34a'],
+      grass: ['#c9873e', '#e8b061'],
       studio: { ...studio, litter, flowers: false },
     };
   }
@@ -356,7 +357,7 @@ const turned = (deg: number, cx: number, cy: number): string => ` transform="rot
 
 // ────────────────────────────────────────────────────────────────── crown
 
-/** One leafy mass of a crown: position, size, and depth (0 far, 1 middle, 2 near). */
+/** One pad of a crown: position, size, and depth (0 far, 1 middle, 2 near). */
 interface Puff {
   x: number;
   y: number;
@@ -364,32 +365,18 @@ interface Puff {
   near: 0 | 1 | 2;
   /** Flatter or taller than round. */
   squash?: number;
-  /** The outward direction from the crown at this mass, in degrees, where its leaves stand out past its edge. */
-  out: number;
 }
 
 /** The marks a kind's leaves leave on its crown. */
 type Mark = 'leaf' | 'petal' | 'needle';
 
-/** How a kind's crown is drawn: how mass edges are cut, what stands on them, and the flowers of a tree in blossom. */
+/** How a kind's crown is drawn: the marks its leaves make, green standing out of a blossom, and the flowers of a tree in blossom. */
 interface Foliage {
-  edge: 'round' | 'point';
   mark: Mark;
   /** Green leaves standing out of a crown of another colour. */
   sprig?: string;
   /** A flower's throat and heart, for a tree whose crown is its blossom. */
   flower?: readonly [throat: string, heart: string];
-}
-
-/** A mass's outline: a few big uneven lobes, round like a cloud's or pointed like leaves. */
-function massPath(p: Puff, rand: Rand, edge: 'round' | 'point' = 'round'): string {
-  const pointed = edge === 'point';
-  return puffPath(p.x, p.y, p.r, p.r * (p.squash ?? 0.9), rand, Math.max(7, Math.round(p.r * (pointed ? 0.36 : 0.28)) + 5), 0.8, pointed ? 0.56 : 0);
-}
-
-/** The dark under a crown's masses: each again, a little lower and darker, drawn first so every lit mass sits on a lip of shade. */
-function drawUnderside(puffs: readonly Puff[], dark: string, rand: Rand, edge: 'round' | 'point'): string {
-  return puffs.map((p) => path(massPath({ ...p, y: p.y + p.r * 0.17, r: p.r * 1.02 }, rand, edge), dark)).join('');
 }
 
 /** A blossom's five round petals as path data; a crown of flowers is many of them in one path. */
@@ -404,109 +391,181 @@ function petalsAt(x: number, y: number, r: number, turn: number): string {
 }
 
 /**
- * One crown mass lit from the upper left: its face, a cap of light over its upper side, a sliver of shade along its
- * lower right, and rows of leaves let down from the light into the shade (or flowers, on a tree in blossom). Each step
- * nearer is a step lighter.
+ * One painted leaf: a short almond centred on `at` along `deg`, fuller toward its stalk, its two sides a little unequal
+ * (`lean`) as a brush leaves them. Written compactly, since a crown is hundreds of them.
  */
-function drawPuff(dr: Drawing, p: Puff, ramp: Ramp, rand: Rand, fol: Foliage, droop: number): string {
-  const [shade, base, light, glint] = [ramp[p.near], ramp[p.near + 1], ramp[p.near + 2], ramp[p.near + 3]] as [string, string, string, string];
-  const far = p.near === 0;
-  const rx = p.r;
-  const ry = p.r * (p.squash ?? 0.9);
-  const d = massPath(p, rand, fol.edge);
-  let out = '';
-  // A pair of leaves standing out of the crown; they hang as it wilts.
-  if (p.near !== 1) {
-    const [ux, uy] = dir(p.out);
-    const at: Pt = [p.x + ux * rx * 0.88, p.y + uy * ry * 0.88];
-    const len = Math.min(6.4, p.r * 0.36);
-    const hang = droop * 34;
-    out += path(leafAt(at, p.out - 30 + hang, len, len * 0.44), fol.sprig ?? base) + path(leafAt(at, p.out + 34 + hang, len * 0.82, len * 0.42), fol.sprig ? tint(fol.sprig, 0.25) : far ? base : light);
+function dab(at: Pt, deg: number, len: number, plump: number, lean: number): string {
+  const [ux, uy] = dir(deg);
+  const [vx, vy] = [-uy, ux];
+  const h = len / 2;
+  const k = len * plump;
+  const b: Pt = [at[0] - ux * h, at[1] - uy * h];
+  const [mx, my] = [at[0] - ux * len * 0.1, at[1] - uy * len * 0.1];
+  return `M${pt(b)}Q${pt([mx + vx * k * (1 + lean), my + vy * k * (1 + lean)])} ${pt([at[0] + ux * h, at[1] + uy * h])}Q${pt([mx - vx * k * (1 - lean), my - vy * k * (1 - lean)])} ${pt(b)}Z`;
+}
+
+/** A painted leaf measured from its stalk at `base`, about `w` to either side of its middle. */
+function dabFrom(base: Pt, deg: number, len: number, w: number): string {
+  const [ux, uy] = dir(deg);
+  return dab([base[0] + (ux * len) / 2, base[1] + (uy * len) / 2], deg, len, (1.5 * w) / len, 0);
+}
+
+/** `deg` turned toward hanging straight down by `share` of the way, the shorter way round. */
+function hung(deg: number, share: number): number {
+  const off = ((((90 - deg) % 360) + 540) % 360) - 180;
+  return deg + off * share;
+}
+
+/** How a crown's pads are painted: its leaves' length and plumpness, which way they lie, and how the tree is faring. */
+interface Brush {
+  len: number;
+  plump: number;
+  /** Fanning out from the pad's foot, lying level like a pine's, or reaching up like a poplar's. */
+  lie: 'fan' | 'level' | 'rise';
+  /** The share of its leaves a pad keeps, and how far they hang, 0 to 1. */
+  keep: number;
+  droop: number;
+  /** A dry tree's leaves have lost their light. */
+  dull: boolean;
+  snow: boolean;
+}
+
+/** The tones of a pad's leaves, deep to pale: shade, face, light and the tips the light catches. */
+type Tone = 0 | 1 | 2 | 3;
+
+/**
+ * One pad of a crown, painted as the owner's reference paints foliage: a dark body, then leaves laid over it one by one,
+ * each at its own angle and size and seeded with the pad, so the tree is the same each time it is drawn. Leaves to the
+ * lower right are in shade, those in the middle are its face and those to the upper left are lit, with a few pale tips
+ * along its top; its rim is all leaves, some standing out. Without water the leaves hang and fewer are left; in winter
+ * snow lies along its top.
+ */
+function drawPad(pad: Puff, ramp: Ramp, rand: Rand, fol: Foliage, brush: Brush): string {
+  const near = pad.near;
+  const colours = [ramp[near], ramp[near + 1], ramp[near + 2], ramp[near + 3]] as [string, string, string, string];
+  const rx = pad.r;
+  // Pads that fan out lie flatter than round, in layers as the reference's do, their tops where a round one's would be.
+  const round = pad.r * (pad.squash ?? 0.9);
+  const ry = round * (brush.lie === 'fan' ? 0.86 : 1);
+  const p = { ...pad, y: pad.y - round + ry };
+  const len = brush.len * (near === 0 ? 1.1 : 1);
+  // A leaf covers about this much of the pad.
+  const leaf = 0.67 * len * len * brush.plump;
+  const tones: [string, string, string, string] = ['', '', '', ''];
+  // Where its leaves fan out from: low in the pad, where its twig comes in.
+  const [ox, oy] = [p.x, p.y + ry * 0.9];
+  const lie = (x: number, y: number, out: number): number => {
+    if (brush.lie === 'level') return (x < p.x ? 180 : 0) + (x < p.x ? -1 : 1) * (12 + (y - p.y) * 0.8) + out * 0.3;
+    if (brush.lie === 'rise') return -90 + (x - p.x) * 3.2 + out * 0.4;
+    return (Math.atan2(y - oy, x - ox) * 180) / Math.PI;
+  };
+  // Lit from the upper left; `noise` keeps the light from falling in bands.
+  const toneAt = (ux: number, uy: number, noise: number): Tone => {
+    const lit = -(0.6 * ux + 0.8 * uy) + noise;
+    if (lit > (near === 0 ? 0.4 : 0.2)) return brush.dull ? 1 : 2;
+    if (lit > -0.34) return 1;
+    return 0;
+  };
+  const lay = (x: number, y: number, deg: number, size: number, lean: number, tone: Tone, keep: number): void => {
+    if (keep > brush.keep) return;
+    tones[tone] += dab([x, y], hung(deg, brush.droop), size, brush.plump, lean);
+  };
+  // The body the leaves lie on, a step deeper than the deepest of them, inside the rim so the rim is all leaves.
+  const body = path(puffPath(p.x, p.y + ry * 0.08, rx * 0.78, ry * 0.74, rand, 9, 0.8), tint(colours[0], near === 0 ? -0.06 : -0.14));
+  // The rim: leaves round the edge pointing outward, a few standing out past it.
+  const rim = Math.max(8, Math.round((Math.PI * (rx + ry)) / (len * (near === 0 ? 1.15 : 0.85))));
+  for (let i = 0; i < rim; i++) {
+    const a = ((i + rand() * 0.7) / rim) * Math.PI * 2;
+    const [ux, uy] = [Math.cos(a), Math.sin(a)];
+    const reach = 0.8 + rand() * 0.24;
+    const [x, y] = [p.x + ux * rx * reach, p.y + uy * ry * reach];
+    const out = (Math.atan2(uy * rx, ux * ry) * 180) / Math.PI;
+    const turn = (rand() - 0.5) * 56;
+    const size = len * (0.8 + rand() * 0.45);
+    const lean = (rand() - 0.5) * 0.6;
+    const tone = toneAt(ux, uy, (rand() - 0.5) * 0.5);
+    lay(x, y, brush.lie === 'fan' ? out + turn : lie(x, y, out) + turn * 0.6, size, lean, tone, rand());
   }
-  // The mass in shade, with its face over it clipped and shifted up-left; the sliver left along the lower right is its shade.
-  out += path(d, shade);
-  const clip = dr.clip(d);
-  let inside = path(massPath({ ...p, x: p.x - rx * 0.1, y: p.y - ry * 0.15 }, rand, fol.edge), base);
-  // The cap of light over its upper left.
-  const capR = p.r * 0.7;
-  const cx = p.x - rx * 0.14;
-  const cy = p.y - ry * 0.44;
-  let lit = massPath({ ...p, x: cx, y: cy, r: capR }, rand, fol.edge);
-  if (fol.mark === 'petal') {
-    inside += path(lit, light);
-    // Its flowers: pale in the light, a step deeper below it, each with throat and heart.
-    const count = Math.max(2, Math.min(6, Math.round(p.r / 3.4)));
+  // The face: leaves scattered over it by the golden angle, so they cover it evenly without lying in rows.
+  // In its shade only some, so the body shows between them as the dark inside of the pad.
+  const face = Math.round((Math.PI * rx * ry * 0.64 * (near === 0 ? 0.36 : 0.74)) / leaf);
+  for (let i = 0; i < face; i++) {
+    const t = Math.sqrt((i + 0.5) / face) * 0.8;
+    const a = i * 2.39996 + (rand() - 0.5) * 0.6;
+    const [ux, uy] = [Math.cos(a) * t, Math.sin(a) * t];
+    const [x, y] = [p.x + ux * rx + (rand() - 0.5) * len * 0.5, p.y + uy * ry + (rand() - 0.5) * len * 0.5];
+    const turn = (rand() - 0.5) * 70;
+    const size = len * (0.75 + rand() * 0.45);
+    const lean = (rand() - 0.5) * 0.6;
+    const tone = toneAt(ux, uy, (rand() - 0.5) * 0.6);
+    const sparse = rand();
+    if (tone === 0 && sparse < 0.45) continue;
+    lay(x, y, lie(x, y, 0) + turn, size, lean, tone, rand());
+  }
+  // The pale tips the light catches along its top.
+  if (near !== 0 && !brush.dull) {
+    const tips = Math.max(2, Math.round(rx / 4));
+    for (let i = 0; i < tips; i++) {
+      const a = Math.PI * (1.08 + (i / tips) * 0.62 + rand() * 0.1);
+      const [ux, uy] = [Math.cos(a), Math.sin(a)];
+      const [x, y] = [p.x + ux * rx * (0.66 + rand() * 0.2), p.y + uy * ry * (0.66 + rand() * 0.2)];
+      lay(x, y, lie(x, y, (Math.atan2(uy, ux) * 180) / Math.PI) + (rand() - 0.5) * 40, len * (0.7 + rand() * 0.3), (rand() - 0.5) * 0.5, 3, rand());
+    }
+  }
+  let out = body + tones.map((d, i) => (d ? path(d, colours[i] as string) : '')).join('');
+  if (fol.sprig && near !== 0) {
+    // Green leaves standing out of a crown of blossom, at its rim.
+    let green = '';
+    for (let i = 0; i < 3; i++) {
+      const a = Math.PI * (0.1 + i * 0.62 + rand() * 0.2);
+      green += dab([p.x + Math.cos(a) * rx * 0.96, p.y + Math.sin(a) * ry * 0.96], hung((a * 180) / Math.PI, brush.droop), len * 1.1, 0.5, 0.2);
+    }
+    out += path(green, fol.sprig);
+  }
+  if (fol.flower && near !== 0 && brush.keep > 0.8) {
+    // A tree in blossom: a few open flowers over its petals, pale in the light, each with its throat and heart.
+    const count = Math.max(1, Math.round(rx / 5.5));
     let pale = '';
-    let deep = '';
     let hearts = '';
     for (let i = 0; i < count; i++) {
-      const a = i * 137.5 + rand() * 50;
-      const k = i === 0 ? 0.12 : 0.36 + rand() * 0.36;
-      const [ux, uy] = dir(a);
-      const [fx, fy] = [p.x + ux * rx * k, p.y + uy * ry * k];
-      const fr = Math.max(2.3, Math.min(5.2, p.r * 0.31)) * (0.84 + rand() * 0.32);
-      const turn = rand() * 72;
-      if (ux * LIGHT[0] + uy * LIGHT[1] > -0.2) pale += petalsAt(fx, fy, fr, turn);
-      else deep += petalsAt(fx, fy, fr, turn);
-      if (fol.flower) hearts += ellipse(fx, fy, fr * 0.3, fr * 0.3, far ? mix(fol.flower[0], shade, 0.4) : fol.flower[0]) + ellipse(fx, fy, fr * 0.15, fr * 0.15, far ? mix(fol.flower[1], shade, 0.3) : fol.flower[1]);
+      const a = i * 2.39996 + rand();
+      const k = 0.2 + rand() * 0.5;
+      const [fx, fy] = [p.x + Math.cos(a) * rx * k, p.y + Math.sin(a) * ry * k - ry * 0.12];
+      const fr = Math.max(2, Math.min(3.6, rx * 0.2)) * (0.85 + rand() * 0.3);
+      pale += petalsAt(fx, fy, fr, rand() * 72);
+      hearts += ellipse(fx, fy, fr * 0.3, fr * 0.3, fol.flower[0]) + ellipse(fx, fy, fr * 0.15, fr * 0.15, fol.flower[1]);
     }
-    inside += path(deep, mix(base, light, 0.6)) + path(pale, glint) + hearts;
-    return `${out}<g clip-path="url(#${clip})">${inside}</g>`;
+    out += path(pale, colours[3]) + hearts;
   }
-  // A row of leaves let down along the cap's lower edge.
-  const row = Math.max(3, Math.round(p.r / 3.2));
-  for (let i = 0; i < row; i++) {
-    const a = 18 + (144 / (row - 1)) * i + (rand() - 0.5) * 12;
-    const [ux, uy] = dir(a);
-    const at: Pt = [cx + ux * capR * 0.8, cy + uy * capR * 0.74];
-    const len = p.r * (0.3 + rand() * 0.1);
-    lit += leafAt(at, a + (rand() - 0.5) * 24, len, len * 0.5);
-  }
-  inside += path(lit, light);
-  // A second, thinner row lower down, halfway to the face's colour.
-  const lower = Math.max(2, Math.round(p.r / 5.4));
-  let half = '';
-  for (let i = 0; i < lower; i++) {
-    const a = 34 + (112 / Math.max(1, lower - 1)) * i + (rand() - 0.5) * 16;
-    const [ux, uy] = dir(a);
-    const at: Pt = [cx + ux * capR * 1.2, cy + uy * capR * 1.12];
-    const len = p.r * (0.26 + rand() * 0.08);
-    half += leafAt(at, a + (rand() - 0.5) * 30, len, len * 0.5);
-  }
-  inside += path(half, mix(base, light, 0.5));
-  // And a leaf or two in shade near its foot.
-  let dark = '';
-  for (let i = 0; i < (p.r > 12 ? 3 : 2); i++) {
-    const at: Pt = [p.x + rx * (-0.1 + i * 0.34 + rand() * 0.1), p.y + ry * (0.66 - Math.abs(i - 1) * 0.14)];
-    const len = p.r * (0.22 + rand() * 0.08);
-    dark += leafAt(at, 56 + rand() * 40, len, len * 0.5);
-  }
-  inside += path(dark, shade);
-  if (p.near === 2) {
-    // The glint: a small spray of leaves where the light is strongest.
-    const gx = cx - capR * 0.2;
-    const gy = cy - capR * 0.16;
-    let bright = '';
-    for (let i = 0; i < 3; i++) {
-      const len = p.r * 0.34;
-      bright += leafAt([gx, gy], -150 + i * 44 + (rand() - 0.5) * 10, len, len * 0.42);
+  if (brush.snow) {
+    // Snow along its top: soft clumps lying level, as it settles on a branch of leaves.
+    const clumps = Math.max(3, Math.round(rx / 2.6));
+    let snow = '';
+    for (let i = 0; i < clumps; i++) {
+      const u = (i + 0.5) / clumps;
+      const a = Math.PI * (1.12 + u * 0.76);
+      const [x, y] = [p.x + Math.cos(a) * rx * 0.86, p.y + Math.sin(a) * ry * 0.82 + ry * 0.08];
+      snow += dab([x, y], (rand() - 0.5) * 16, len * (1.3 + rand() * 0.5) * (1 - Math.abs(u - 0.5) * 0.6), 0.5, (rand() - 0.5) * 0.4);
     }
-    inside += path(bright, glint);
+    out += path(snow, '#ffffff');
   }
-  return `${out}<g clip-path="url(#${clip})">${inside}</g>`;
+  return out;
 }
 
 // ────────────────────────────────────────────────────────────────── wood
 
 /**
- * A tree's wood: its limbs, each with its line and role (trunk, bough, twig ending in the air, or the arm a swing hangs
- * from); its roots, which lie on the ground and do not sway; and, on a tree with a swing, where the ropes are tied.
+ * A tree's wood: its limbs, each with its line and role (the trunk, a limb, the arm a swing hangs from, or a stub where
+ * a branch broke off); its root buttresses, which lie on the ground and do not sway; where each branch ends inside a
+ * pad of the crown, so where that pad is gone the twigs show instead; a hollow where a limb once grew; and, on a tree
+ * with a swing, where the ropes are tied.
  */
 interface Timber {
-  limbs: { line: Pt[]; widths: number[]; part: 'trunk' | 'bough' | 'twig' | 'arm' }[];
+  limbs: { line: Pt[]; widths: number[]; part: 'trunk' | 'bough' | 'arm' | 'stub' }[];
   roots: { line: Pt[]; widths: number[] }[];
-  /** Where the crown's shade falls across the wood: its middle and reach. */
-  under: { y: number; reach: number };
+  /** Each branch's end: where, which way it was growing, how thick, and the pad it ends in (its index in the stand). */
+  tips: { at: Pt; deg: number; w: number; pad: number }[];
+  hollow?: { at: Pt; r: number };
   /** The swing's ropes: where each is tied on the arm, and how low the seat hangs. */
   swing?: { ties: readonly [Pt, Pt]; seat: number };
 }
@@ -515,68 +574,115 @@ interface Timber {
 const moved = (line: readonly Pt[], dx: readonly number[], dy: readonly number[]): Pt[] => line.map(([x, y], i) => [x + (dx[i] ?? 0), y + (dy[i] ?? 0)]);
 
 /**
- * The wood as one piece lit from the upper left: light down the trunk's left and broad shade down its right, bands of
- * twist and a knot on an old trunk (the carved swirl from the owner's reference on a great tree), boughs shaded below
- * and lit above, and the crown's shade over the top.
+ * A branch as straight runs between elbows, `widths` thick at each point, with a round end: what `limb` is for wood that
+ * bends at elbows rather than in one smooth curve. Wound the same way as `limb`, so the two make one piece in one path.
  */
-function drawWood(dr: Drawing, timber: Timber, wood: Wood, rand: Rand, stage: Grown): string {
-  const knots = stage >= 4;
+function stick(line: readonly Pt[], widths: readonly number[]): string {
+  const side = (s: number): Pt[] =>
+    line.map(([x, y], i) => {
+      const [px, py] = line[Math.max(0, i - 1)] as Pt;
+      const [qx, qy] = line[Math.min(line.length - 1, i + 1)] as Pt;
+      const len = Math.hypot(qx - px, qy - py) || 1;
+      const w = ((widths[i] ?? 1) / 2) * s;
+      return [x + ((qy - py) / len) * w, y - ((qx - px) / len) * w];
+    });
+  const left = side(1);
+  const right = side(-1).reverse();
+  const tip = (widths[widths.length - 1] ?? 1) / 2;
+  const run = (points: readonly Pt[]): string => points.map((p) => `L${pt(p)}`).join('');
+  return `M${pt(left[0] as Pt)}${run(left.slice(1))}A${n(tip)} ${n(tip)} 0 0 1 ${pt(right[0] as Pt)}${run(right.slice(1))}Z`;
+}
+
+/** Which way a limb's line runs, from its first point to its last, in degrees. */
+const heading = (line: readonly Pt[]): number => {
+  const [a, b] = [line[0] as Pt, line[line.length - 1] as Pt];
+  return (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI;
+};
+
+/** A point `u` of the way along a line, counting its points as evenly spaced. */
+function along(line: readonly Pt[], u: number): Pt {
+  const t = Math.max(0, Math.min(0.999, u)) * (line.length - 1);
+  const i = Math.min(line.length - 2, Math.floor(t));
+  const [a, b] = [line[i] as Pt, line[i + 1] as Pt];
+  return [a[0] + (b[0] - a[0]) * (t - i), a[1] + (b[1] - a[1]) * (t - i)];
+}
+
+/**
+ * The wood as one piece lit from the upper left, every limb in two flat planes: a warm light along the side facing the
+ * light and a broad shade along the other. Long bark strokes follow the grain of the trunk and the main limbs, a stub
+ * shows its pale cut end, an old trunk has a knot and a great one the dark hollow where a limb once grew.
+ */
+function drawWood(timber: Timber, wood: Wood, rand: Rand, stage: Grown): string {
   const [deep, shade, base, light] = wood;
-  const whole = timber.limbs.map((l) => limb(l.line, l.widths)).join('');
-  const clip = dr.clip(whole);
-  const face = mix(base, light, 0.62);
-  let inside = '';
+  // Heavy limbs bend at elbows; slender ones curve.
+  const outline = (l: Timber['limbs'][number]): typeof limb => (l.part === 'trunk' || (l.widths[0] ?? 0) < 3.2 ? limb : stick);
+  const shape = (l: Timber['limbs'][number]): string => outline(l)(l.line, l.widths);
+  const whole = timber.limbs.map(shape).join('');
+  const face = mix(base, light, 0.55);
+  let dark = '';
+  let lit = '';
   for (const l of timber.limbs) {
     if (l.part === 'trunk') {
-      inside += path(limb(moved(l.line, l.widths.map((w) => w * 0.36), []), l.widths.map((w) => w * 0.34)), shade);
-      inside += path(limb(moved(l.line, l.widths.map((w) => -w * 0.2), []), l.widths.map((w, i) => w * (i === l.widths.length - 1 ? 0.14 : 0.3))), face);
-    } else {
-      inside += path(limb(moved(l.line, l.widths.map((w) => w * 0.2), l.widths.map((w) => w * 0.28)), l.widths.map((w) => w * 0.4)), shade);
-      inside += path(limb(moved(l.line, l.widths.map((w) => -w * 0.18), l.widths.map((w) => -w * 0.2)), l.widths.map((w) => w * 0.26)), face);
+      dark += limb(beside(l.line, l.widths.map((w) => -w * 0.24)), l.widths.map((w) => w * 0.46));
+      lit += limb(beside(l.line, l.widths.map((w) => w * 0.22)), l.widths.map((w, i) => w * (i === l.widths.length - 1 ? 0.14 : 0.26)));
+      continue;
     }
+    // The side of the limb's line that faces the light is lit; the other is in shade.
+    const [ux, uy] = dir(heading(l.line));
+    const toward = uy * LIGHT[0] - ux * LIGHT[1] >= 0 ? 1 : -1;
+    dark += outline(l)(beside(l.line, l.widths.map((w) => -toward * w * 0.22)), l.widths.map((w) => w * 0.5));
+    lit += outline(l)(beside(l.line, l.widths.map((w) => toward * w * 0.26)), l.widths.map((w) => w * 0.24));
+  }
+  let inside = path(dark, shade) + path(lit, face);
+  // Bark: long strokes along the grain, dark in the shade and a few pale in the light, on the trunk and the main limbs.
+  let grain = '';
+  let gleam = '';
+  for (const l of timber.limbs) {
+    const w = l.widths[0] ?? 1;
+    if (l.part === 'stub' || w < 2.4) continue;
+    const strokes = l.part === 'trunk' ? stage + 2 : 1;
+    for (let i = 0; i < strokes; i++) {
+      const u = 0.24 + ((i + rand() * 0.5) / strokes) * 0.56;
+      const [x, y] = along(l.line, u);
+      const [x2, y2] = along(l.line, u + 0.05);
+      const deg = (Math.atan2(y2 - y, x2 - x) * 180) / Math.PI + (rand() - 0.5) * 8;
+      const wide = (l.widths[Math.min(l.widths.length - 1, Math.round(u * (l.widths.length - 1)))] ?? w) / 2;
+      const pale = l.part === 'trunk' && i % 3 === 1;
+      const [ox, oy] = dir(deg + 90);
+      const off = (pale ? -0.45 : 0.1 + rand() * 0.45) * wide;
+      const stroke = dab([x + ox * off, y + oy * off], deg, wide * (l.part === 'trunk' ? 0.9 + rand() * 0.6 : 1.4 + rand() * 0.8), 0.1, (rand() - 0.5) * 0.4);
+      if (pale) gleam += stroke;
+      else grain += stroke;
+    }
+  }
+  inside += (grain ? path(grain, deep, ' opacity="0.5"') : '') + (gleam ? path(gleam, light, ' opacity="0.55"') : '');
+  // Where a branch broke off: its cut end, pale wood in a ring of bark.
+  for (const l of timber.limbs) {
+    if (l.part !== 'stub') continue;
+    const end = l.line[l.line.length - 1] as Pt;
+    const r = (l.widths[l.widths.length - 1] ?? 1) / 2;
+    inside += ellipse(end[0], end[1], r * 0.8, r * 0.5, mix(face, '#e9cfa4', 0.25), turned(heading(l.line) + 90, end[0], end[1])) + ellipse(end[0], end[1], r * 0.28, r * 0.16, mix(shade, face, 0.4));
   }
   const trunk = timber.limbs[0];
-  if (trunk && knots) {
-    // An old trunk's twist: shade bands winding up from left to right, a line of light over each, and a knot.
-    const at = (u: number): Pt => {
-      const t = u * (trunk.line.length - 1);
-      const i = Math.min(trunk.line.length - 2, Math.floor(t));
-      const [a, b] = [trunk.line[i] as Pt, trunk.line[i + 1] as Pt];
-      return [a[0] + (b[0] - a[0]) * (t - i), a[1] + (b[1] - a[1]) * (t - i)];
-    };
-    const w = trunk.widths[trunk.widths.length - 2] ?? 6;
-    for (let i = 0; i < 3; i++) {
-      const [x, y] = at(0.16 + i * 0.25 + rand() * 0.03);
-      inside += path(limb([[x - w * 0.8, y + w * 0.38], [x - w * 0.24, y + w * 0.22], [x + w * 0.3, y - w * 0.14], [x + w * 0.8, y - w * 0.7]], [w * 0.05, w * 0.15, w * 0.15, w * 0.07]), shade, ' opacity="0.7"');
-      inside += path(limb([[x - w * 0.62, y + w * 0.12], [x - w * 0.26, y - w * 0.02], [x + w * 0.06, y - w * 0.26]], [w * 0.02, w * 0.07, w * 0.02]), light, ' opacity="0.5"');
-    }
-    const [kx, ky] = at(0.46);
-    if (stage >= 5) {
-      // The carved swirl: a curl winding in from the trunk's lit side, cut dark, its outer lip catching the light.
-      const r = w * (stage === 6 ? 0.34 : 0.28);
-      const curl: Pt[] = Array.from({ length: 15 }, (_, i) => {
-        const t = i / 14;
-        const a = ((-210 + t * 600) * Math.PI) / 180;
-        return [kx - w * 0.06 + Math.cos(a) * r * (1 - t * 0.8) * 0.84, ky + Math.sin(a) * r * (1 - t * 0.8)] as Pt;
-      });
-      const taper = curl.map((_, i) => r * (0.3 - (i / 14) * 0.2));
-      inside += path(limb(curl, taper), deep, ' opacity="0.8"') + path(limb(beside(curl, taper.map((t) => t * 0.6)), taper.map((t) => t * 0.32)), light, ' opacity="0.55"');
-    } else {
-      inside += ellipse(kx + w * 0.12, ky, w * 0.15, w * 0.2, deep, ' opacity="0.75"') + ellipse(kx + w * 0.09, ky - w * 0.03, w * 0.07, w * 0.1, shade);
-    }
+  if (trunk && stage >= 4) {
+    // A knot on the trunk's shaded side.
+    const [kx, ky] = along(trunk.line, 0.34);
+    const w = trunk.widths[2] ?? 6;
+    inside += ellipse(kx + w * 0.16, ky, w * 0.1, w * 0.14, deep, ' opacity="0.7"') + ellipse(kx + w * 0.14, ky - w * 0.03, w * 0.05, w * 0.07, shade);
   }
-  // The crown's shade over the top of the wood, fading down it.
-  const under = dr.id('u');
-  dr.def(linearAt(under, [[0, deep, 0.62], [1, deep, 0]], 0, timber.under.y - timber.under.reach * 0.2, 0, timber.under.y + timber.under.reach * 0.34));
-  inside += `<rect x="0" y="${n(timber.under.y - timber.under.reach)}" width="120" height="${n(timber.under.reach * 1.4)}" fill="url(#${under})"/>`;
-  return `${path(whole, base)}<g clip-path="url(#${clip})">${inside}</g>`;
+  if (timber.hollow) {
+    // The hollow where a limb once grew: dark inside, its lower lip catching the light.
+    const { at, r } = timber.hollow;
+    inside += ellipse(at[0], at[1], r * 0.78, r, tint(deep, -0.3)) + path(`M${n(at[0] - r * 0.8)} ${n(at[1] + r * 0.2)}Q${n(at[0])} ${n(at[1] + r * 1.5)} ${n(at[0] + r * 0.8)} ${n(at[1] + r * 0.2)}Q${n(at[0])} ${n(at[1] + r * 1.05)} ${n(at[0] - r * 0.8)} ${n(at[1] + r * 0.2)}Z`, face);
+  }
+  return path(whole, base) + inside;
 }
 
 // ───────────────────────────────────────────────────────────────── ground
 
 /** A tuft of grass: three blades from one foot. */
 function tuft(x: number, y: number, h: number, lean: number, g0: string, g1: string): string {
-  return path(leafAt([x, y], -90 + lean, h, h * 0.3), g1) + path(leafAt([x, y], -122 + lean, h * 0.76, h * 0.28), g0) + path(leafAt([x, y], -58 + lean, h * 0.8, h * 0.28), g1);
+  return path(dabFrom([x, y], -122 + lean, h * 0.76, h * 0.28), g0) + path(dabFrom([x, y], -90 + lean, h, h * 0.3) + dabFrom([x, y], -58 + lean, h * 0.8, h * 0.28), g1);
 }
 
 /** Earth in a state: dark and moist while watered, paler as it dries. */
@@ -679,20 +785,34 @@ function drawRound(dr: Drawing, kind: Kind, health: TreeHealth, half: number, tu
   out += ellipse(MID, top + ry * 0.32, half, ry, tint(g0, -0.18));
   out += ellipse(MID, top, half, ry, g0);
   out += path(puffPath(MID - half * 0.06, top - ry * 0.12, half * 0.84, ry * 0.66, rand, Math.round(half * 0.3) + 5, 0.4), g1, ' opacity="0.7"');
-  // Flecks over it, as the reference's round is made of many small leaves: one path per colour.
-  const flecks = ['', ''];
-  for (let i = 0; i < Math.round(half * 1.4); i++) {
-    const a = rand() * Math.PI * 2;
-    const d = Math.sqrt(rand()) * 0.92;
-    const [fx, fy, rx] = [MID + Math.cos(a) * half * d, top + Math.sin(a) * ry * d, 0.7 + rand() * 0.5];
-    flecks[i % 2] += `M${n(fx - rx)} ${n(fy)}a${n(rx)} 0.4 0 1 0 ${n(rx * 2)} 0a${n(rx)} 0.4 0 1 0 ${n(-rx * 2)} 0Z`;
+  // The dappled shade of a crown above, laid by hand in a few soft patches toward the back of the round.
+  if (tall > 40 && !studio.snow) {
+    let dapple = '';
+    for (let i = 0; i < 4; i++) {
+      const [dx, dy, k] = [MID + half * (-0.5 + i * 0.3 + (rand() - 0.5) * 0.14), top - ry * (0.2 + rand() * 0.4), half * (0.12 + rand() * 0.08)];
+      dapple += closed(Array.from({ length: 7 }, (_, j) => {
+        const a = (j / 7) * Math.PI * 2;
+        const r = k * (0.7 + rand() * 0.5);
+        return [dx + Math.cos(a) * r * 1.6, dy + Math.sin(a) * r * 0.5] as Pt;
+      }));
+    }
+    out += path(dapple, tint(g0, -0.3), ' opacity="0.32"');
   }
-  out += path(flecks[0]!, tint(g0, -0.1), ' opacity="0.85"') + path(flecks[1]!, tint(g1, 0.18), ' opacity="0.85"');
-  out += ellipse(MID + half * 0.05, top, half * 0.42, ry * 0.42, tint(g0, -0.3), ' opacity="0.28"');
+  // The grass of it, as the reference's round is made: many small blades seen from above, deep, mid and pale, laid by hand.
+  const blades = ['', '', ''];
+  for (let i = 0; i < Math.round(half * 1.7); i++) {
+    const a = rand() * Math.PI * 2;
+    const d = Math.sqrt(rand()) * 0.94;
+    const [bx, by] = [MID + Math.cos(a) * half * d, top + Math.sin(a) * ry * d];
+    const lit = -(Math.cos(a) * 0.6 + Math.sin(a) * 0.8) * d + (rand() - 0.5) * 0.8;
+    blades[lit > 0.3 ? 2 : lit > -0.35 ? 1 : 0] += dab([bx, by], -90 + (rand() - 0.5) * 120, 1.6 + rand() * 1.2, 0.5, (rand() - 0.5) * 0.5);
+  }
+  out += path(blades[0]!, tint(g0, -0.14)) + path(blades[1]!, mix(g0, g1, 0.55)) + path(blades[2]!, tint(g1, 0.22));
+  out += ellipse(MID + half * 0.05, top, half * 0.36, ry * 0.36, tint(g0, -0.3), ' opacity="0.26"');
   if (!studio.snow) {
-    for (let i = 0; i < tufts; i++) {
+    for (let i = 0; i < Math.ceil(tufts / 2); i++) {
       const side = i % 2 === 0 ? -1 : 1;
-      out += tuft(MID + side * half * (0.4 + rand() * 0.46), top + ry * (rand() - 0.3) * 0.8, 2.2 + rand() * 2, s.droop * 5 * side, g0, g1);
+      out += tuft(MID + side * half * (0.4 + rand() * 0.46), top + ry * (rand() - 0.3) * 0.8, 1.8 + rand() * 1.6, s.droop * 5 * side, g0, g1);
     }
   }
   if (studio.flowers && health === 'fresh') {
@@ -710,7 +830,7 @@ function drawRound(dr: Drawing, kind: Kind, health: TreeHealth, half: number, tu
     for (let k = 0; k < 3; k++) {
       const a = rand() * Math.PI * 2;
       const d = 0.2 + rand() * 0.7;
-      out += path(leafAt([MID + Math.cos(a) * half * d, top + Math.sin(a) * ry * d], rand() * 360, 2.4 + rand(), 1.1), c);
+      out += path(dabFrom([MID + Math.cos(a) * half * d, top + Math.sin(a) * ry * d], rand() * 360, 2.4 + rand(), 1.1), c);
     }
   });
   // The two pale stones: one at the round's left edge and one on the floor to its right, both kept inside the picture.
@@ -721,15 +841,15 @@ function drawRound(dr: Drawing, kind: Kind, health: TreeHealth, half: number, tu
 
 /** Fallen leaves: lying on the grass, with one or two still in the air. */
 function drawFallen(colours: readonly string[], count: number, half: number, top: number, rand: Rand): string {
-  let out = '';
+  const each = colours.map(() => '');
   for (let i = 0; i < count; i++) {
     const air = i % 4 === 3;
     const x = MID + (rand() - 0.5) * half * (air ? 1.9 : 1.7);
     const y = air ? top + (GROUND - top) * (0.4 + rand() * 0.4) : GROUND - 0.4 + rand() * half * 0.1;
     const len = 2.6 + rand() * 1.6;
-    out += path(leafAt([x, y], rand() * 360, len, len * 0.44), colours[i % colours.length] as string);
+    each[i % colours.length] += dabFrom([x, y], rand() * 360, len, len * 0.44);
   }
-  return out;
+  return each.map((d, i) => (d ? path(d, colours[i] as string) : '')).join('');
 }
 
 /** A stone on the grass: its body, its lit top, and the dark where it meets the ground. */
@@ -1078,7 +1198,7 @@ function drawSeed(drs: Drawings, kind: Kind, health: TreeHealth, rand: Rand): La
     ground += ellipse(SEED_AT.x + 3, SEED_AT.y - 5, 24, 20, `url(#${glow})`);
   }
   const plant = drawSeedBody(drs.plant, kind, seedFrame(), SEED_AT.k, alive ? 'cracked' : 'shut');
-  return { ground, plant, front: seedLipOfEarth(soil), swing: '' };
+  return { ground, plant, crown: '', front: seedLipOfEarth(soil), swing: '' };
 }
 
 /** A young shoot's green, the same for every kind; the kind's own colour arrives with its first real leaves. */
@@ -1130,7 +1250,7 @@ function drawSprout(drs: Drawings, kind: Kind, health: TreeHealth, rand: Rand): 
   plant += seedLip(kind, f, k);
   if (alive) ground += drawFlecks([[MID - 19, GROUND - 9, -150, 3.6], [MID + 17, GROUND - 13, -24, 3.2], [MID - 13, GROUND - 19, -112, 2.4], [MID + 21, GROUND - 5, 18, 2.6]], [green[4], green[3], green[5]]);
   if (s.fallen > 0) ground += drawFallen([green[3], green[4]], Math.round(s.fallen * 0.3), YOUNG_GROUND[1], GROUND - 30, rand);
-  return { ground, plant, front: seedLipOfEarth(soil), swing: '' };
+  return { ground, plant, crown: '', front: seedLipOfEarth(soil), swing: '' };
 }
 
 /** How a kind's sapling carries its leaves: where up the stem, which way, their size, and how far they hang. */
@@ -1238,7 +1358,7 @@ function drawSapling(drs: Drawings, kind: Kind, health: TreeHealth, ramp: Ramp, 
   }
   if (alive) ground += drawFlecks([[MID - 20, GROUND - 10, -150, 3.8], [MID + 19, GROUND - 16, -30, 3.2], [MID + 22, GROUND - 5, 24, 2.8]], own ? [ramp[4], ramp[3]] : [ramp[3], ramp[4]]);
   if (s.fallen > 0) ground += drawFallen([green[3], green[4]], Math.round(s.fallen * 0.4), YOUNG_GROUND[2], GROUND - tall, rand);
-  return { ground, plant, front: '', swing: '' };
+  return { ground, plant, crown: '', front: '', swing: '' };
 }
 
 /** One crown mass as a stand lists it: x and y from the crown's middle in half-widths, size, depth and flatness. */
@@ -1262,13 +1382,16 @@ interface Stand {
 
 type Grown = 3 | 4 | 5 | 6;
 
+/** A leaf's length in a grown tree's crown at each stage: a little larger as the tree is, so a great tree is not a blur of specks. */
+const LEAF_LEN: Record<Grown, number> = { 3: 3.3, 4: 3.7, 5: 4, 6: 4.3 };
+
 /**
  * A broad dome as it grows: a few masses on a young trunk, then a full crown wider than tall. Masses vary in size and
  * are unevenly laid, the far ones high and at the sides, and its middle is open below so the fork and boughs show
  * against the dark inside.
  */
 const DOME: Record<Grown, Stand> = {
-  3: { trunk: 25, girth: 5.8, crownY: 46.5, half: 23, ground: 26, depth: 14, tufts: 6, flowers: 0, puffs: [[0.36, -0.34, 0.5, 0], [-0.52, 0.06, 0.5, 1], [0.5, 0.1, 0.44, 2], [-0.06, -0.3, 0.6, 2]] },
+  3: { trunk: 27, girth: 5.8, crownY: 49.5, half: 23, ground: 26, depth: 14, tufts: 6, flowers: 0, puffs: [[0.36, -0.34, 0.5, 0], [-0.52, 0.06, 0.5, 1], [0.5, 0.1, 0.44, 2], [-0.06, -0.3, 0.6, 2]] },
   4: {
     trunk: 27,
     girth: 8.6,
@@ -1337,7 +1460,8 @@ const CLOUD: Record<Grown, Stand> = { 3: cloudOf(DOME[3]), 4: cloudOf(DOME[4]), 
 
 /** A bush-like tree: a dome's crown, rounder and lower, on a trunk forking near the ground into stems that lean apart. */
 const shrubOf = (d: Stand): Stand => ({ ...d, trunk: d.trunk * 0.5, girth: d.girth * 0.82, crownY: d.crownY - d.trunk * 0.16, half: d.half * 0.9, puffs: d.puffs.map(([x, y, r, near]) => [x * 0.96, y * 1.06, r * 1.03, near] as Mass) });
-const SHRUB: Record<Grown, Stand> = { 3: shrubOf(DOME[3]), 4: shrubOf(DOME[4]), 5: shrubOf(DOME[5]), 6: shrubOf(DOME[6]) };
+// Its first crown is lifted a little, so even this low tree stands clear above the sapling it grew from.
+const SHRUB: Record<Grown, Stand> = { 3: { ...shrubOf(DOME[3]), crownY: shrubOf(DOME[3]).crownY + 4 }, 4: shrubOf(DOME[4]), 5: shrubOf(DOME[5]), 6: shrubOf(DOME[6]) };
 
 /** A tall, narrow tree: masses stacked one over another, narrowing to a point. */
 const COLUMN: Record<Grown, Stand> = {
@@ -1367,11 +1491,43 @@ const COLUMN: Record<Grown, Stand> = {
   },
 };
 
-/** A conifer: tiers of needles, each a flattened mass over the dark of the one above, narrowing to its tip. */
+/**
+ * A mountain pine, as the owner's reference paints one: a trunk rising through flat pads of needles held out on its
+ * boughs, to one side and then the other, a crown pad on top and darker pads behind, with air between them.
+ */
 const TIERS: Record<Grown, Stand> = {
-  3: { trunk: 14, girth: 3.6, crownY: 42, half: 22, ground: 23, depth: 14, tufts: 6, flowers: 0, puffs: [[0, -0.7, 0.42, 2, 0.8], [0, -0.16, 0.7, 2, 0.5], [0, 0.42, 0.96, 2, 0.42]] },
-  4: { trunk: 15, girth: 5, crownY: 45, half: 25, ground: 28, depth: 14, tufts: 7, flowers: 1, puffs: [[0, -0.86, 0.36, 2, 0.84], [0, -0.38, 0.58, 2, 0.5], [0, 0.14, 0.8, 2, 0.42], [0, 0.68, 0.98, 2, 0.38]] },
-  5: { trunk: 16, girth: 6.6, crownY: 47, half: 27, ground: 33, depth: 15, tufts: 8, flowers: 2, puffs: [[0, -0.98, 0.32, 2, 0.86], [0, -0.56, 0.5, 2, 0.52], [0, -0.1, 0.68, 2, 0.44], [0, 0.38, 0.84, 2, 0.4], [0, 0.86, 0.98, 2, 0.36]] },
+  3: { trunk: 14, girth: 3.6, crownY: 42, half: 22, ground: 23, depth: 14, tufts: 6, flowers: 0, puffs: [[0.06, 0.12, 0.44, 0, 0.55], [0.02, -0.66, 0.46, 2, 0.62], [-0.36, -0.08, 0.58, 1, 0.5], [0.38, 0.4, 0.62, 2, 0.46]] },
+  4: {
+    trunk: 15,
+    girth: 5,
+    crownY: 45,
+    half: 25,
+    ground: 28,
+    depth: 14,
+    tufts: 7,
+    flowers: 1,
+    puffs: [[0.1, -0.24, 0.38, 0, 0.55], [-0.06, 0.42, 0.44, 0, 0.5], [0.02, -0.84, 0.38, 2, 0.62], [-0.36, -0.4, 0.5, 1, 0.5], [0.4, 0.06, 0.56, 2, 0.46], [-0.44, 0.56, 0.62, 1, 0.44]],
+  },
+  5: {
+    trunk: 16,
+    girth: 6.6,
+    crownY: 47,
+    half: 27,
+    ground: 33,
+    depth: 15,
+    tufts: 8,
+    flowers: 2,
+    puffs: [
+      [0.12, -0.52, 0.34, 0, 0.55],
+      [-0.08, 0.18, 0.42, 0, 0.5],
+      [0.14, 0.7, 0.44, 0, 0.45],
+      [0.02, -1.0, 0.34, 2, 0.62],
+      [-0.38, -0.6, 0.46, 1, 0.5],
+      [0.38, -0.22, 0.52, 2, 0.46],
+      [-0.46, 0.22, 0.58, 1, 0.44],
+      [0.48, 0.64, 0.6, 2, 0.42],
+    ],
+  },
   6: {
     trunk: 17,
     girth: 8,
@@ -1381,7 +1537,17 @@ const TIERS: Record<Grown, Stand> = {
     depth: 15,
     tufts: 10,
     flowers: 3,
-    puffs: [[0, -1.1, 0.28, 2, 0.9], [0, -0.74, 0.44, 2, 0.54], [0, -0.34, 0.6, 2, 0.46], [0, 0.08, 0.74, 2, 0.42], [0, 0.52, 0.88, 2, 0.38], [0, 0.96, 1.0, 2, 0.36]],
+    puffs: [
+      [0.1, -0.78, 0.3, 0, 0.58],
+      [-0.06, -0.06, 0.4, 0, 0.5],
+      [0.16, 0.62, 0.44, 0, 0.45],
+      [0.02, -1.14, 0.3, 2, 0.64],
+      [-0.36, -0.78, 0.42, 1, 0.5],
+      [0.36, -0.44, 0.48, 2, 0.46],
+      [-0.44, -0.02, 0.54, 1, 0.44],
+      [0.46, 0.36, 0.56, 2, 0.42],
+      [-0.5, 0.74, 0.6, 1, 0.4],
+    ],
   },
 };
 
@@ -1408,82 +1574,239 @@ const WEEPING: Record<Grown, Stand> = {
 
 const STANDS: Record<Habit, Record<Grown, Stand>> = { dome: DOME, shrub: SHRUB, cloud: CLOUD, column: COLUMN, tiers: TIERS, weeping: WEEPING };
 
+/** Whether the `i`th of a crown's `count` pads is left in a state: a wilting crown has thinned, a withered one is gone but for scraps on a single stem. */
+function padKept(habit: Habit, health: TreeHealth, count: number, i: number): boolean {
+  const stem = habit === 'tiers' || habit === 'column';
+  if (health === 'withered') return stem && i % 3 === 0;
+  if (health === 'wilting' && !stem) return i % 3 !== 1 || count < 5;
+  return true;
+}
+
 /** Whether a kind has the swing at a stage: a full-grown broad-crowned tree with a bough long and low enough. */
 function swingsAt(habit: Habit, stage: TreeStage): boolean {
   return stage === 6 && (habit === 'dome' || habit === 'cloud');
 }
 
+/** How a kind's branches grow: how far a limb kinks off the straight, and whether its main limbs leave level or arch. */
+interface Growth {
+  bend: number;
+  /** Main limbs that leave nearly level and rise at their ends, as an oak's heavy limbs do. */
+  out: boolean;
+  /** Limbs that arch up and over, as a willow's do. */
+  arch: boolean;
+}
+
+const GROWTH: Record<'dome' | 'shrub' | 'cloud' | 'weeping', Growth> = {
+  dome: { bend: 0.13, out: true, arch: false },
+  shrub: { bend: 0.2, out: false, arch: false },
+  cloud: { bend: 0.15, out: false, arch: false },
+  weeping: { bend: 0.1, out: false, arch: true },
+};
+
 /**
- * A grown tree's wood by habit: a trunk rising out of the mound at its foot, roots spreading from under the mound, and
- * boughs up to the crown masses; on a great broad-crowned tree, the long low swing arm reaching past the crown's edge,
- * as in the owner's reference.
+ * A line from `a` to `b` with an elbow or two, each turned off the straight by up to `bend` of its length and to
+ * alternate sides; `out` keeps the elbows low so the limb leaves nearly level, and `arch` lifts them.
+ */
+function kinked(a: Pt, b: Pt, rand: Rand, bend: number, elbows: number, style: 'straight' | 'out' | 'arch'): Pt[] {
+  const [dx, dy] = [b[0] - a[0], b[1] - a[1]];
+  const len = Math.hypot(dx, dy) || 1;
+  const [nx, ny] = [-dy / len, dx / len];
+  const side = rand() > 0.5 ? 1 : -1;
+  const points: Pt[] = [a];
+  for (let k = 1; k <= elbows; k++) {
+    const t = k / (elbows + 1) + (rand() - 0.5) * 0.16;
+    // The second elbow turns back only a little, so a limb kinks and carries on rather than snaking.
+    const off = (k % 2 === 1 ? side : -side * 0.35) * len * bend * (0.5 + rand() * 0.5);
+    const x = a[0] + dx * t + nx * off;
+    let y = a[1] + dy * t + ny * off;
+    if (style === 'out') y = a[1] + dy * t * 0.45 + ny * off * 0.4;
+    if (style === 'arch') y -= len * 0.16;
+    points.push([x, y]);
+  }
+  points.push(b);
+  return points;
+}
+
+/** A pad a branch grows to: its middle, its size, and its index in the stand (-1 for a place in a willow's crown that is no pad, -2 for the swing arm's end). */
+interface Target {
+  x: number;
+  y: number;
+  r: number;
+  pad: number;
+}
+
+/** A limb along `line` tapering evenly from `from` to `to`. */
+const tapered = (line: Pt[], from: number, to: number): { line: Pt[]; widths: number[] } => ({ line, widths: line.map((_, i) => from + (to - from) * (i / (line.length - 1))) });
+
+/**
+ * Wood grown from `from`, `w` thick, out to every pad in `targets`. One pad is reached by a limb ending inside it; more
+ * are split in two by the direction they lie in, unevenly, and a limb goes part of the way toward them all to fork
+ * there. So every fork is at its own height and turns the wood a new way, and the two branches leaving it are together
+ * about as thick as the limb they leave, each thinner than it.
+ */
+function branchOut(timber: Timber, from: Pt, w: number, targets: readonly Target[], rand: Rand, growth: Growth, depth: number): void {
+  const weight = (t: Target): number => t.r * t.r;
+  if (targets.length === 1) {
+    const t = targets[0] as Target;
+    const d = Math.hypot(t.x - from[0], t.y - from[1]) || 1;
+    // It ends past the pad's middle, well inside it.
+    const end: Pt = [t.x - ((from[0] - t.x) / d) * t.r * 0.25, t.y - ((from[1] - t.y) / d) * t.r * 0.25];
+    const line = kinked(from, end, rand, growth.bend, d > 16 ? 2 : 1, growth.arch ? 'arch' : growth.out && depth === 0 ? 'out' : 'straight');
+    const thin = Math.max(0.5, w * 0.3);
+    timber.limbs.push({ part: 'bough', ...tapered(line, w, thin) });
+    const p = line[line.length - 2] as Pt;
+    timber.tips.push({ at: end, deg: (Math.atan2(end[1] - p[1], end[0] - p[0]) * 180) / Math.PI, w: thin, pad: t.pad });
+    return;
+  }
+  const angle = (t: Target): number => Math.atan2(t.y - from[1], t.x - from[0]);
+  const sorted = [...targets].sort((a, b) => angle(a) - angle(b));
+  const k = Math.max(1, Math.min(sorted.length - 1, Math.round(sorted.length * (0.3 + rand() * 0.4))));
+  const total = targets.reduce((a, t) => a + weight(t), 0);
+  const [cx, cy] = [targets.reduce((a, t) => a + t.x * weight(t), 0) / total, targets.reduce((a, t) => a + t.y * weight(t), 0) / total];
+  const f = 0.3 + rand() * 0.24;
+  const fork: Pt = [from[0] + (cx - from[0]) * f, from[1] + (cy - from[1]) * f];
+  const at = w * 0.9;
+  timber.limbs.push({ part: 'bough', ...tapered(kinked(from, fork, rand, growth.bend * 0.7, 1, growth.out && depth === 0 ? 'out' : 'straight'), w, at) });
+  for (const group of [sorted.slice(0, k), sorted.slice(k)]) {
+    const share = group.reduce((a, t) => a + weight(t), 0) / total;
+    branchOut(timber, fork, Math.min(at * 0.86, at * Math.sqrt(share)), group, rand, growth, depth + 1);
+  }
+}
+
+/**
+ * A grown tree's wood by habit, seeded by its kind and stage so it is the same each time. A broad tree's trunk winds up
+ * out of its root buttresses and forks, and forks again, out to every pad of its crown; the pomegranate rises in
+ * twisting stems from the ground; the willow's limbs arch; the poplar is one upright stem and the pine one leaning
+ * trunk, with a bough to each pad. An old tree has a stub or two where a branch broke off, a great one a hollow, and a
+ * great broad-crowned tree the long, thick, nearly level arm a swing hangs from, as in the owner's reference.
  */
 function timberFor(habit: Habit, stand: Stand, stage: Grown, rand: Rand): Timber {
   const g = stand.girth;
+  const h = stand.half;
   const cy = GROUND - stand.crownY;
-  const limbs: Timber['limbs'] = [];
-  const roots: Timber['roots'] = [];
-  // Its roots: one out along the ground to each side, and on an old tree two more behind them, going back into the ground.
-  const spread = (far: number, back: boolean): void => {
-    if (back) {
-      roots.push({ line: [[MID - g * 0.3, GROUND - g * 0.3], [MID - far * 0.6, GROUND - 1.6 - g * 0.06], [MID - far * 0.92, GROUND - 0.2]], widths: [g * 0.36, g * 0.22, g * 0.1] });
-      roots.push({ line: [[MID + g * 0.3, GROUND - g * 0.3], [MID + far * 0.62, GROUND - 1.4 - g * 0.06], [MID + far * 0.96, GROUND]], widths: [g * 0.36, g * 0.22, g * 0.1] });
-    }
-    roots.push({ line: [[MID - g * 0.45, GROUND - g * 0.14], [MID - far * 0.76, GROUND + 1.8], [MID - far * 1.12, GROUND + 4.4]], widths: [g * 0.5, g * 0.3, g * 0.12] });
-    roots.push({ line: [[MID + g * 0.45, GROUND - g * 0.14], [MID + far * 0.8, GROUND + 2], [MID + far * 1.18, GROUND + 4.6]], widths: [g * 0.5, g * 0.3, g * 0.12] });
+  const timber: Timber = { limbs: [], roots: [], tips: [] };
+  const { limbs, roots } = timber;
+  // Root buttresses: short flares gripping the ground to either side, and on an old tree one more toward the front.
+  const flare = (side: number, reach: number, k: number): void => {
+    roots.push({ line: [[MID + side * g * 0.22, GROUND - g * 0.6 * k], [MID + side * g * (0.42 + reach * 0.4), GROUND - g * 0.16 * k], [MID + side * g * (0.5 + reach), GROUND + 1.8]], widths: [g * 0.6 * k, g * 0.32 * k, g * 0.08] });
   };
-  if (habit === 'tiers' || habit === 'column') {
-    // One straight stem up through the whole crown.
-    const top: Pt = [MID, cy - stand.half * (habit === 'tiers' ? 0.7 : 1.9)];
+  if (stage >= 4) {
+    flare(-1, 0.7 + rand() * 0.2, 1);
+    flare(1, 0.85 + rand() * 0.25, 0.9);
+    if (stage >= 5) flare(0.35, 0.3, 0.8);
+  }
+  const pads: Target[] = stand.puffs.map(([x, y, r], pad) => ({ x: MID + x * h, y: cy + y * h * 0.94, r: r * h, pad }));
+  if (habit === 'column') {
+    // One straight stem up through the whole crown, and a branch to each side at every mass, shorter toward the tip.
+    const top: Pt = [MID, cy - h * 1.9];
     limbs.push({ part: 'trunk', line: [[MID, GROUND + 1.6], [MID + 0.3, GROUND - stand.trunk * 0.5], [MID, GROUND - stand.trunk], top], widths: [g * 1.4, g * 0.96, g * 0.84, g * 0.3] });
-    if (stage >= 4) spread(g * 1.3, stage >= 5);
-    // A twig to each side at every crown mass, shorter toward the tip.
     stand.puffs.forEach(([, y, r, , squash], i) => {
-      const at = cy + y * stand.half * 0.94;
+      const at = cy + y * h * 0.94;
       if (at > GROUND - stand.trunk * 0.7) return;
-      const reach = r * stand.half * 0.74;
+      const reach = r * h * 0.74;
       const rise = reach * (squash === undefined ? 0.5 : 0.16);
       for (const side of i % 2 === 0 ? [-1, 1] : [1, -1]) {
-        limbs.push({ part: 'bough', line: [[MID, at + 1], [MID + side * reach * 0.5, at - rise * 0.4], [MID + side * reach, at - rise]], widths: [g * 0.3, g * 0.2, g * 0.1] });
+        const line: Pt[] = [[MID, at + 1], [MID + side * reach * 0.5, at - rise * 0.4 + (rand() - 0.5)], [MID + side * reach, at - rise]];
+        limbs.push({ part: 'bough', line, widths: [g * 0.3, g * 0.2, g * 0.1] });
+        timber.tips.push({ at: line[2] as Pt, deg: side < 0 ? 200 : -20, w: g * 0.1, pad: i });
       }
     });
-    return { limbs, roots, under: { y: GROUND - stand.trunk + g * 0.2, reach: stand.half * 1.2 } };
+    return timber;
   }
-  // A trunk that winds as it rises (more on a blossom tree), flaring at its foot and forking under its crown.
-  const sway = (rand() > 0.5 ? 1 : -1) * g * (habit === 'cloud' ? 0.5 : 0.22);
-  const fork: Pt = [MID + sway * 0.1, GROUND - stand.trunk];
-  // It leaves the ground straight up, so its foot is level under the grass in front, and only then winds.
-  limbs.push({
-    part: 'trunk',
-    line: [[MID, GROUND + 1.6], [MID, GROUND - stand.trunk * 0.1], [MID + sway, GROUND - stand.trunk * 0.32], [MID - sway * 0.5, GROUND - stand.trunk * 0.7], fork],
-    widths: [g * 1.5, g * 1.22, g * 0.98, g * 0.84, g * 1.0],
-  });
-  if (stage >= 4) spread(g * (stage === 6 ? 1.5 : stage === 5 ? 1.38 : 1.22), stage >= 5);
-  // Its boughs: out from the fork, then up to the crown's masses.
-  const arms: readonly (readonly [number, number, number])[] =
-    stage === 3 ? [[-0.36, 0.1, 0.5], [0.34, 0.06, 0.5], [0.02, -0.22, 0.44]] : stage === 4 ? [[-0.52, 0.02, 0.58], [0.5, -0.02, 0.58], [0.02, -0.3, 0.5]] : [[-0.58, -0.02, 0.64], [0.58, -0.06, 0.62], [0.04, -0.34, 0.54], [-0.24, -0.3, 0.4], [0.3, -0.26, 0.4]];
-  arms.forEach(([ax, ay, k], i) => {
-    const end: Pt = [MID + ax * stand.half, cy + ay * stand.half];
-    const from: Pt = [fork[0] + ax * g * 0.5, fork[1] + g * 0.56];
-    const mid: Pt = [from[0] + (end[0] - from[0]) * 0.56, from[1] + (end[1] - from[1]) * 0.3];
-    const w = g * k;
-    limbs.push({ part: 'bough', line: [from, mid, end], widths: [w, w * 0.68, w * 0.34] });
-    if (stage >= 4 && i < 2) {
-      // A twig off each main bough, out under the crown's edge, ending in the air.
-      const out: Pt = [MID + ax * stand.half * 1.46, cy + stand.half * (0.34 + i * 0.04)];
-      limbs.push({ part: 'twig', line: [mid, [(mid[0] + out[0]) / 2, (mid[1] + out[1]) / 2 + stand.half * 0.06], out], widths: [w * 0.34, w * 0.24, w * 0.12] });
+  if (habit === 'tiers') {
+    // A trunk leaning one way and back as it rises to the crown pad, tapering all the way.
+    const lean = g * 0.55;
+    // The first near pad is the crown pad on top.
+    const crown = stand.puffs.find((m) => m[3] === 2) ?? [0, -1, 0.3, 2];
+    const top: Pt = [MID + crown[0] * h, cy + crown[1] * h * 0.94];
+    const line: Pt[] = [[MID, GROUND + 1.6], [MID, GROUND - stand.trunk * 0.3], [MID + lean, GROUND - stand.trunk * 1.1], [MID - lean * 0.6, (GROUND - stand.trunk + top[1]) / 2 + 2], top];
+    limbs.push({ part: 'trunk', line, widths: [g * 1.36, g * 1.06, g * 0.84, g * 0.56, g * 0.22] });
+    // A bough out to each pad on its own side, leaving the trunk a little below it, with an elbow, rising into it.
+    const on = (y: number): number => {
+      for (let i = 0; i < line.length - 1; i++) {
+        const [a, b] = [line[i] as Pt, line[i + 1] as Pt];
+        if (y <= a[1] && y >= b[1]) return a[0] + ((b[0] - a[0]) * (y - a[1])) / (b[1] - a[1] || 1);
+      }
+      return MID;
+    };
+    stand.puffs.forEach(([x, y, r, near], i) => {
+      if (near === 0 || Math.abs(x) < 0.1) return;
+      const end: Pt = [MID + x * h * 0.8, cy + y * h * 0.94 + 1];
+      const from: Pt = [on(end[1] + 4), end[1] + 4];
+      const bough = kinked(from, end, rand, 0.1, 1, 'out');
+      limbs.push({ part: 'bough', ...tapered(bough, g * 0.42, g * 0.14) });
+      timber.tips.push({ at: end, deg: x < 0 ? 190 - r * 10 : -10 + r * 10, w: g * 0.14, pad: i });
+    });
+    return timber;
+  }
+  const growth = GROWTH[habit];
+  if (habit === 'shrub') {
+    // A few stems from the ground, each twisting up toward its own share of the crown before it branches.
+    const stems = stage === 3 ? 2 : 3;
+    const sorted = [...pads].sort((a, b) => a.x - b.x);
+    let from = 0;
+    for (let j = 0; j < stems; j++) {
+      const to = j === stems - 1 ? sorted.length : Math.max(from + 1, Math.round((sorted.length * (j + 1 + (rand() - 0.5) * 0.6)) / stems));
+      const group = sorted.slice(from, to);
+      from = to;
+      if (group.length === 0) continue;
+      // The stems leave one clump at the ground and lean apart, the middle one tallest, twisting as they go.
+      const side = j - (stems - 1) / 2;
+      const foot: Pt = [MID + side * g * 0.22, GROUND + 1.6];
+      const [gx, gy] = [group.reduce((a, t) => a + t.x, 0) / group.length, group.reduce((a, t) => a + t.y, 0) / group.length];
+      const rise = side === 0 ? 0.62 : 0.36 + rand() * 0.14;
+      const fork: Pt = [foot[0] + (gx - foot[0]) * (rise + 0.12), foot[1] + (gy - foot[1]) * rise];
+      const w = g * (side === 0 ? 0.56 : 0.46);
+      limbs.push({ part: j === 0 ? 'trunk' : 'bough', ...tapered(kinked(foot, fork, rand, growth.bend * 0.7, 2, 'straight'), w, w * 0.86) });
+      branchOut(timber, fork, w * 0.86, group, rand, growth, 1);
     }
-  });
-  if (!swingsAt(habit, stage)) return { limbs, roots, under: { y: fork[1] - g * 0.1, reach: stand.half * 0.62 } };
-  // The swing arm: out of the trunk's right side low under the crown, level past the crown's edge, rising a little at its end.
-  const h = stand.half;
+    // The trunk drawn first is the one the knot and grain are on.
+    limbs.sort((a, b) => (a.part === 'trunk' ? -1 : b.part === 'trunk' ? 1 : 0));
+  } else {
+    // A trunk that winds as it rises (more on a blossom tree), flaring at its foot, up to where it first forks.
+    const lean = (rand() > 0.5 ? 1 : -1) * g * (habit === 'cloud' ? 0.55 : 0.3);
+    const t = stand.trunk;
+    const top: Pt = [MID + lean * 0.35, GROUND - t];
+    limbs.push({ part: 'trunk', line: [[MID, GROUND + 1.6], [MID, GROUND - t * 0.12], [MID + lean, GROUND - t * 0.42], [MID - lean * 0.4, GROUND - t * 0.76], top], widths: [g * 1.08, g * 0.86, g * 0.76, g * 0.7, g * 0.66] });
+    // A willow's limbs go to the places under its cap where its sprays leave, as well as to its cap.
+    const targets: Target[] =
+      habit === 'weeping'
+        ? [
+            ...stand.puffs.map(([x, y, r], pad) => ({ x: MID + x * h, y: cy + y * h * 0.94, r: r * h, pad })),
+            ...[-0.85, -0.5, 0.45, 0.82].map((u) => ({ x: MID + u * h * 0.44, y: cy - h * 0.3 * (1 - u * u) + h * 0.06, r: h * 0.08, pad: -1 })),
+          ]
+        : pads;
+    branchOut(timber, top, g * 0.66, targets, rand, growth, 0);
+    if (stage >= 5) {
+      // The hollow where a limb once grew, on the trunk's shaded side.
+      const [x, y] = along(limbs[0]!.line, 0.5);
+      timber.hollow = { at: [x + g * 0.16, y], r: g * 0.16 };
+    }
+  }
+  // A stub or two where a branch broke off a main limb, pointing away from the middle.
+  const main = limbs.filter((l) => l.part === 'bough' && (l.widths[0] ?? 0) > 2.2);
+  for (let i = 0; i < (stage >= 6 ? 2 : stage >= 4 ? 1 : 0) && i < main.length; i++) {
+    const l = main[i * 2] ?? main[i];
+    if (!l) break;
+    const [x, y] = along(l.line, 0.5);
+    const w = (l.widths[1] ?? 2) * 0.5;
+    const away = x < MID ? -1 : 1;
+    const base = heading(l.line);
+    const deg = [base - 58, base + 58].find((d) => Math.sign(Math.cos((d * Math.PI) / 180)) === away) ?? base - 58;
+    const [ux, uy] = dir(deg);
+    const len = w * 0.8 + 0.6;
+    limbs.push({ part: 'stub', line: [[x, y], [x + ux * len, y + uy * len]], widths: [w, w * 0.86] });
+  }
+  if (!swingsAt(habit, stage)) return timber;
+  // The swing arm: thick, out of the trunk's right side low under the crown, nearly level past the crown's edge.
   const y0 = GROUND - stand.trunk * 0.6;
-  const arm: Pt[] = [[MID - sway * 0.3 + g * 0.2, y0 + g * 0.1], [MID + h * 0.3, y0 - 4.2], [MID + h * 0.62, y0 - 6], [MID + h * 0.86, y0 - 6.6], [MID + h * 0.98, y0 - 8.6]];
-  limbs.push({ part: 'arm', line: arm, widths: [g * 0.5, g * 0.3, g * 0.2, g * 0.15, g * 0.08] });
   // Its ropes are tied where it runs level, a seat's width apart.
   const level = (x: number): Pt => [x, y0 - 6 - ((x - (MID + h * 0.62)) / (h * 0.24)) * 0.6 + 0.2];
-  const ties: readonly [Pt, Pt] = [level(MID + h * 0.5), level(MID + h * 0.74)];
-  return { limbs, roots, under: { y: fork[1] - g * 0.1, reach: h * 0.62 }, swing: { ties, seat: GROUND - 11.5 } };
+  const arm: Pt[] = [[MID + g * 0.2, y0 + g * 0.1], [MID + h * 0.3, level(MID + h * 0.3)[1] + 1.4], [MID + h * 0.62, level(MID + h * 0.62)[1] + 0.2], [MID + h * 0.86, level(MID + h * 0.86)[1] + 0.2], [MID + h * 0.98, level(MID + h * 0.98)[1] - 1.6]];
+  limbs.push({ part: 'arm', line: arm, widths: [g * 0.46, g * 0.36, g * 0.3, g * 0.24, g * 0.14] });
+  timber.tips.push({ at: arm[4] as Pt, deg: -20, w: g * 0.14, pad: -2 });
+  timber.swing = { ties: [level(MID + h * 0.5), level(MID + h * 0.74)], seat: GROUND - 11.5 };
+  return timber;
 }
 
 /**
@@ -1530,8 +1853,8 @@ function footHill(kind: Kind, health: TreeHealth, girth: number, rand: Rand): { 
     const u = i / (count - 1) - 0.5;
     const lean = s.droop * 5 * (u < 0 ? -1 : 1) + u * 30;
     const [bx, by, bh] = [x + u * v * 2, g + 2.2 + u * u * 2.4 + (i % 2) * 0.5, 2.4 + rand() * 1.6];
-    blades[i % 2] += leafAt([bx, by], -122 + lean, bh * 0.76, bh * 0.28);
-    blades[2] += leafAt([bx, by], -90 + lean, bh, bh * 0.3) + leafAt([bx, by], -58 + lean, bh * 0.8, bh * 0.28);
+    blades[i % 2] += dabFrom([bx, by], -122 + lean, bh * 0.76, bh * 0.28);
+    blades[2] += dabFrom([bx, by], -90 + lean, bh, bh * 0.3) + dabFrom([bx, by], -58 + lean, bh * 0.8, bh * 0.28);
   }
   near += path(blades[0], body) + path(blades[1], g0) + path(blades[2], g1);
   return { back, near };
@@ -1574,9 +1897,36 @@ function swingKnots(swing: NonNullable<Timber['swing']>, girth: number): string 
   return out;
 }
 
-/** The ends of a tree's boughs, where its last leaves hang once it has withered. */
-function boughEnds(timber: Timber): Pt[] {
-  return timber.limbs.map((l) => l.line[l.line.length - 1] as Pt);
+/**
+ * The twigs at a branch's end where its pad is gone (`shown` holds the pads still drawn), so a wilting or withered tree
+ * shows a real tree's fine ends and not cut-off sticks: two or three from each end, splaying and hanging as it dries,
+ * and on a withered tree a last leaf here and there. Each end has its own seed, so the twigs stay put.
+ */
+function drawTwigs(timber: Timber, shown: ReadonlySet<number>, bare: boolean, wood: Wood, ramp: Ramp, droop: number, species: TreeSpecies, stage: Grown): string {
+  let twigs = '';
+  let leaves = '';
+  const hang = Math.min(0.6, droop * 0.12);
+  timber.tips.forEach((tip, i) => {
+    // A place with no pad of its own (-1, a willow's) is covered by its sprays, and the swing arm's end (-2) by its leaves.
+    if (!(bare || (tip.pad >= 0 && !shown.has(tip.pad)))) return;
+    const rand = seeded(`twig:${species}:${stage}:${i}`);
+    const count = 2 + (rand() > 0.6 ? 1 : 0);
+    for (let k = 0; k < count; k++) {
+      const deg = hung(tip.deg + (k - (count - 1) / 2) * 34 + (rand() - 0.5) * 20, hang);
+      const len = (3 + stage * 0.7) * (0.7 + rand() * 0.5);
+      const [ux, uy] = dir(deg);
+      const bend = hung(deg + (rand() - 0.5) * 30, hang);
+      const [vx, vy] = dir(bend);
+      const mid: Pt = [tip.at[0] + ux * len * 0.5, tip.at[1] + uy * len * 0.5];
+      const end: Pt = [mid[0] + vx * len * 0.55, mid[1] + vy * len * 0.55];
+      twigs += stick([tip.at, mid, end], [Math.max(0.5, tip.w * 0.8), 0.5, 0.26]);
+      // A finer one leaves it halfway, to the other side.
+      const [sx, sy] = dir(hung(bend + (k % 2 === 0 ? -1 : 1) * (30 + rand() * 16), hang));
+      twigs += stick([mid, [mid[0] + sx * len * 0.42, mid[1] + sy * len * 0.42]], [0.4, 0.22]);
+      if (bare && k === 0 && i % 3 === 0) leaves += dabFrom(end, 70 + rand() * 50, 2.6 + rand(), 1.1);
+    }
+  });
+  return (twigs ? path(twigs, wood[2]) : '') + (leaves ? path(leaves, ramp[2]) : '');
 }
 
 // ──────────────────────────────────────────────────────── what a tree bears
@@ -1625,8 +1975,8 @@ function drawBears(dr: Drawing, kind: Kind, stage: Grown, puffs: readonly Puff[]
       for (const [x, y] of spots(6, false)) out += blossomAt(x, y, 2.6, '#f2542d', '#ffc94a', rand() * 72);
       return { on: out, down };
     }
-    for (const [x, y] of spots(9, true)) {
-      const r = 3.4 + rand() * 1;
+    for (const [x, y] of spots(8, true)) {
+      const r = 2.3 + rand() * 0.6;
       // Its crown, underneath as it hangs.
       for (const k of [-1, 0, 1]) out += path(leafAt([x + k * r * 0.26, y + r * 0.8], 90 + k * 26, r * 0.6, r * 0.2), kind.fruit[1]);
       out += fruitAt(x, y, r, kind.fruit);
@@ -1646,10 +1996,10 @@ function drawBears(dr: Drawing, kind: Kind, stage: Grown, puffs: readonly Puff[]
     }
   } else if (kind.bears === 'cones') {
     if (!more) return { on: '', down: '' };
-    for (const p of puffs.slice(0, 4)) {
-      const x = p.x + (rand() - 0.5) * p.r * 1.1;
-      const y = p.y + p.r * (p.squash ?? 0.9) * 0.5;
-      out += ellipse(x, y + 1.6, 1.5, 2.4, kind.fruit[1]) + ellipse(x - 0.3, y + 1.3, 1.1, 2, kind.fruit[0]) + ellipse(x - 0.5, y + 0.6, 0.4, 0.7, kind.fruit[2]);
+    for (const p of puffs.filter((m) => m.near !== 0).slice(1, 3)) {
+      const x = p.x + (rand() - 0.5) * p.r * 0.9;
+      const y = p.y + p.r * (p.squash ?? 0.9) * 0.62;
+      out += ellipse(x, y + 1.4, 1.1, 1.8, kind.fruit[1]) + ellipse(x - 0.25, y + 1.15, 0.8, 1.5, kind.fruit[0]) + ellipse(x - 0.4, y + 0.6, 0.3, 0.5, kind.fruit[2]);
     }
   } else if (kind.bears === 'leaves') {
     // An autumn tree is always letting its leaves go.
@@ -1723,11 +2073,11 @@ function spray(from: Pt, tip: Pt, width: number, body: string, lit: string, rand
     const [ax, ay] = nx < 0 ? [nx, ny] : [-nx, -ny];
     // Standing off the twig where it is full and lying closer toward its tip, so it ends in a tuft, not a tail.
     const off = 28 - (i / steps) * 16 + rand() * 8;
-    left += leafAt([x + ax * w, y + ay * w], along + (nx < 0 ? -1 : 1) * off, len, len * 0.2);
-    right += leafAt([x - ax * w, y - ay * w], along + (nx < 0 ? 1 : -1) * off, len, len * 0.2);
+    left += dabFrom([x + ax * w, y + ay * w], along + (nx < 0 ? -1 : 1) * off, len, len * 0.2);
+    right += dabFrom([x - ax * w, y - ay * w], along + (nx < 0 ? 1 : -1) * off, len, len * 0.2);
   }
   const end = spine[steps - 1] as Pt;
-  right += leafAt(end, 90 + (rand() - 0.5) * 16, width * 1.25, width * 0.22);
+  right += dabFrom(end, 90 + (rand() - 0.5) * 16, width * 1.25, width * 0.22);
   // The twig and its shaded-side leaves share a colour, so one path.
   return path(limb(spine, widths) + right, body) + path(left, lit);
 }
@@ -1805,13 +2155,15 @@ function drawSprays(stand: Stand, cy: number, ramp: Ramp, rand: Rand, layer: 'fa
 }
 
 /**
- * A drawing's layers: the ground, which stays still; the plant, which moves (sway, the start when watered); the swing
- * on a great tree, which moves with the plant and on its own; and the front, which stays still with the ground but lies
- * over the plant's foot (earth over a seed, the mound a tree rises from) so what moves is seen to be in the ground.
+ * A drawing's layers: the ground, which stays still; the plant, which moves (sway, the start when watered); a grown
+ * tree's crown, its nearer leaves, which moves with the plant and stirs on its own; the swing on a great tree, which
+ * moves with the plant and on its own; and the front, which stays still with the ground but lies over the plant's foot
+ * (earth over a seed, the mound a tree rises from) so what moves is seen to be in the ground.
  */
 interface Layers {
   ground: string;
   plant: string;
+  crown: string;
   swing: string;
   front: string;
 }
@@ -1820,6 +2172,7 @@ interface Layers {
 interface Drawings {
   ground: Drawing;
   plant: Drawing;
+  crown: Drawing;
   swing: Drawing;
   front: Drawing;
 }
@@ -1831,11 +2184,11 @@ function built(stand: Stand, build: Kind['build']): Stand {
 }
 
 /**
- * A grown tree: its island, wood and crown in its current state. The crown is layered: its far masses and dark inside
- * behind the wood, so the fork and boughs show against them, and its nearer masses over the bough ends.
+ * A grown tree: its island, wood and crown in its current state. The crown is layered: its far pads and dark inside
+ * behind the wood, so the fork and boughs show against them, and its nearer pads over the bough ends, in a layer of
+ * their own.
  */
 function drawGrown(drs: Drawings, kind: Kind, species: TreeSpecies, stage: Grown, health: TreeHealth, ramp: Ramp, rand: Rand): Layers {
-  const dr = drs.plant;
   const stand = built(STANDS[kind.habit][stage], kind.build);
   const s = STATE[health];
   const cy = GROUND - stand.crownY + s.droop;
@@ -1843,57 +2196,65 @@ function drawGrown(drs: Drawings, kind: Kind, species: TreeSpecies, stage: Grown
   ground += drawDressing(drs.ground, kind, species, stage, health, stand.ground, rand);
   let plant = '';
   const wood = kind.wood.map((c) => mix(c, '#8a8078', s.dead * 0.45)) as unknown as Wood;
-  const timber = timberFor(kind.habit, stand, stage, rand);
+  const timber = timberFor(kind.habit, stand, stage, seeded(`wood:${species}:${stage}`));
   const hill = footHill(kind, health, stand.girth, rand);
   ground += hill.back + drawRoots(timber.roots, wood);
   const blossom = kind.bears === 'blossom';
   const fol: Foliage = {
-    edge: kind.edge,
     mark: blossom ? 'petal' : kind.habit === 'tiers' ? 'needle' : 'leaf',
     ...(kind.sprig === undefined ? {} : { sprig: kind.sprig }),
     ...(blossom ? { flower: [mix(kind.leaves[1], kind.fruit[2], 0.25), kind.fruit[2]] as const } : {}),
   };
   const stem = kind.habit === 'tiers' || kind.habit === 'column';
-  // A wilting crown has thinned and sunk; a withered tree has lost it, except scraps on a single-stemmed tree.
-  const left = health === 'withered' ? (stem ? stand.puffs.filter((_, i) => i % 2 === 0) : []) : health === 'wilting' && !stem ? stand.puffs.filter((_, i) => i % 3 !== 1 || stand.puffs.length < 5) : stand.puffs;
-  // The colours a mass comes in: the kind's own or one of its others, in turn.
+  const kept = (i: number): boolean => padKept(kind.habit, health, stand.puffs.length, i);
+  // The colours a pad comes in: the kind's own or one of its others, in turn.
   const ramps: Ramp[] = [ramp, ...(kind.hues ?? []).map((h) => fared(h, health, kind.turns))];
-  const puffs: (Puff & { ramp: Ramp })[] = left.map(([x, y, r, near, squash], i) => ({
-    x: MID + x * stand.half,
-    y: cy + y * stand.half * 0.94,
-    r: r * stand.half * (health === 'withered' ? 0.56 : s.full),
-    near,
-    ...(squash === undefined ? {} : { squash }),
-    out: kind.habit === 'tiers' ? (x >= 0 ? -20 : 200) : (Math.atan2(y - 0.2, x || 0.01) * 180) / Math.PI,
-    ramp: ramps[(i * 2 + (i % 3 === 0 ? 1 : 0)) % ramps.length] as Ramp,
-  }));
+  const puffs: (Puff & { ramp: Ramp; seed: number })[] = stand.puffs.flatMap(([x, y, r, near, squash], i) =>
+    kept(i)
+      ? [
+          {
+            x: MID + x * stand.half,
+            y: cy + y * stand.half * 0.94,
+            r: r * stand.half * (health === 'withered' ? 0.56 : s.full),
+            near,
+            ...(squash === undefined ? {} : { squash }),
+            ramp: ramps[(i * 2 + (i % 3 === 0 ? 1 : 0)) % ramps.length] as Ramp,
+            seed: i,
+          },
+        ]
+      : [],
+  );
+  // How its leaves are painted: each pad from its own seed, so a pad keeps its leaves whatever the tree's state or season.
+  const brush: Brush = {
+    len: LEAF_LEN[stage] * (kind.habit === 'column' ? 0.84 : 1),
+    plump: fol.mark === 'petal' ? 0.78 : fol.mark === 'needle' ? 0.42 : kind.edge === 'round' ? 0.6 : 0.48,
+    lie: kind.habit === 'tiers' ? 'level' : kind.habit === 'column' ? 'rise' : 'fan',
+    keep: health === 'fresh' ? 1 : health === 'thirsty' ? 0.93 : health === 'wilting' ? 0.72 : 0.5,
+    droop: s.droop / 9,
+    dull: health === 'wilting' || health === 'withered',
+    snow: kind.studio?.snow === true,
+  };
+  const pad = (p: Puff & { ramp: Ramp; seed: number }): string => drawPad(p, p.ramp, seeded(`pad:${species}:${stage}:${p.seed}`), fol, brush);
   const weeping = kind.habit === 'weeping';
   const forked = !stem && !weeping;
   const bare = health === 'withered';
-  const dark = tint(ramp[0], -0.2);
-  const back = forked ? puffs.filter((p) => p.near === 0) : [];
-  const near = forked ? puffs.filter((p) => p.near !== 0) : puffs;
+  const dark = tint(ramp[0], -0.08);
+  // The crown's nearer pads, and what hangs in them, are a layer of their own over the wood, to stir in the breeze.
+  let crown = '';
+  // Far pads lie behind the wood, so trunk and boughs show against them; the rest over it.
+  const back = weeping ? [] : puffs.filter((p) => p.near === 0);
+  const near = weeping ? puffs : puffs.filter((p) => p.near !== 0);
   if (weeping) plant += drawSprays(stand, cy, ramp, rand, 'far', health, stage);
-  if (forked && !bare) {
-    plant += drawUnderside(back, dark, rand, kind.edge);
-    for (const p of back) plant += drawPuff(dr, p, p.ramp, rand, fol, s.droop / 4.5);
-    // The crown's dark inside, which the fork shows against.
+  if (!bare || stem) for (const p of back) plant += pad(p);
+  if (forked && (health === 'fresh' || health === 'thirsty')) {
+    // The crown's dark inside, which the fork shows against; a thinned crown has none left to show.
     const h = stand.half * s.full;
     plant += path(puffPath(MID, cy + h * 0.08, h * 0.76, h * 0.4, rand, 13, 0.7, kind.edge === 'point' ? 0.5 : 0), dark);
   }
-  plant += drawWood(dr, timber, wood, rand, stage);
+  plant += drawWood(timber, wood, rand, stage);
   if (timber.swing) plant += swingKnots(timber.swing, stand.girth);
+  plant += drawTwigs(timber, new Set(puffs.map((p) => p.seed)), bare, wood, ramp, s.droop, species, stage);
   if (bare && !stem) {
-    // Bare except for a last leaf or two at the bough ends.
-    boughEnds(timber).forEach(([x, y], i) => {
-      // The twigs its leaves grew on, so a bough does not end like a post.
-      const out = x < MID ? -1 : 1;
-      const t = 2.6 + stage * 0.5;
-      plant += path(limb([[x, y + 0.4], [x + out * t * 0.5, y - t * 0.7], [x + out * t * 0.7, y - t * 1.5]], [1.1, 0.8, 0.4]) + limb([[x, y + 0.4], [x - out * t * 0.5, y - t * 0.8], [x - out * t * 0.3, y - t * 1.4]], [1, 0.7, 0.4]), wood[2]);
-      if (i % 2 === 1) return;
-      const len = 3 + rand() * 1.6;
-      plant += path(leafAt([x, y], 70 + rand() * 50, len, len * 0.42), ramp[2]) + (i % 4 === 0 ? path(leafAt([x, y], 120 + rand() * 30, len * 0.8, len * 0.4), ramp[3]) : '');
-    });
     // A weeping tree keeps the twigs its sprays hung on.
     if (weeping) plant += drawSprays(stand, cy, [wood[1], wood[1], wood[1], wood[2], wood[2], wood[2]], rand, 'middle', health, stage);
   } else {
@@ -1902,30 +2263,28 @@ function drawGrown(drs: Drawings, kind: Kind, species: TreeSpecies, stage: Grown
       const h = stand.half * s.full;
       plant += path(puffPath(MID, cy - h * 0.12, h * 0.62, h * 0.3, rand, 11, 0.6), ramp[1]);
       plant += drawSprays(stand, cy, ramp, rand, 'middle', health, stage);
-      plant += path(puffPath(MID, cy - h * 0.3, h * 0.46, h * 0.2, rand, 9, 0.66), ramp[2]);
-      plant += path(puffPath(MID - h * 0.06, cy - h * 0.36, h * 0.3, h * 0.12, rand, 7, 0.7), ramp[3]);
+      for (const p of near) crown += pad(p);
     } else {
-      // The leaves at the ends of the twigs reaching out under the crown.
+      // The leaves at the end of the swing's arm, out past the crown.
       if (!bare) {
         for (const l of timber.limbs) {
-          if (l.part !== 'twig' && l.part !== 'arm') continue;
+          if (l.part !== 'arm') continue;
           const [x, y] = l.line[l.line.length - 1] as Pt;
           const away = x < MID ? 180 : 0;
           const len = 3.4 + stage * 0.36;
           const hang = s.droop * 9 * (x < MID ? -1 : 1);
-          plant += path(leafAt([x, y], away - 34 + hang, len, len * 0.44), fol.sprig ?? ramp[3]) + path(leafAt([x, y], away + 30 + hang, len * 0.9, len * 0.44), fol.sprig ? tint(fol.sprig, 0.25) : ramp[4]) + path(leafAt([x, y], away + (x < MID ? 62 : -62) + hang, len * 0.7, len * 0.4), fol.sprig ?? ramp[2]);
+          plant += path(dabFrom([x, y], away - 34 + hang, len, len * 0.44), fol.sprig ?? ramp[3]) + path(dabFrom([x, y], away + 30 + hang, len * 0.9, len * 0.44), fol.sprig ? tint(fol.sprig, 0.25) : ramp[4]) + path(dabFrom([x, y], away + (x < MID ? 62 : -62) + hang, len * 0.7, len * 0.4), fol.sprig ?? ramp[2]);
         }
       }
-      if (!bare) plant += drawUnderside(near, forked ? dark : ramp[0], rand, kind.edge);
-      for (const p of near) plant += drawPuff(dr, p, p.ramp, rand, fol, s.droop / 4.5);
+      for (const p of near) crown += pad(p);
     }
     if (health === 'fresh' || health === 'thirsty') {
-      const bears = drawBears(dr, kind, stage, puffs, stand, cy, rand);
-      plant += bears.on;
+      const bears = drawBears(drs.crown, kind, stage, puffs, stand, cy, rand);
+      crown += bears.on;
       ground += bears.down;
     }
   }
-  if (weeping && !bare) plant += drawSprays(stand, cy, ramp, rand, 'near', health, stage);
+  if (weeping && !bare) crown += drawSprays(stand, cy, ramp, rand, 'near', health, stage);
   if (s.fallen > 0) ground += drawFallen([ramp[2], ramp[3], ramp[4]], Math.round(s.fallen * (0.5 + stage * 0.12)), stand.ground, cy, rand);
   // The swing, while the tree is well enough to be played under, and its shadow on the grass under the seat.
   let swing = '';
@@ -1943,7 +2302,7 @@ function drawGrown(drs: Drawings, kind: Kind, species: TreeSpecies, stage: Grown
     const side = species === 'bi' || species === 'payiz' || species === 'miraz' ? 1 : -1;
     front += mushroom(MID + side * g * 1.2, GROUND + 4.2, 2.5, '#e0443a', '#fff4e4') + mushroom(MID + side * g * 1.2 - side * 3.6, GROUND + 4.8, 1.5, '#e8584c', '#fff4e4');
   }
-  return { ground, plant, swing, front };
+  return { ground, plant, crown, swing, front };
 }
 
 // ─────────────────────────────────────────────────────────────── the tree
@@ -1954,11 +2313,11 @@ export interface TreeOptions {
   health?: TreeHealth;
   /**
    * Which part to draw: the whole picture, or one layer: `ground` (still), `plant` (laid over the ground and moved: a sway,
-   * the start when watered), `swing` (hangs from the plant and moves with it and on its own) or `front` (still, over the
-   * plant's foot). All layers share the canvas, so stacked they make the whole. `treeRig` says whether a tree has the last
-   * two.
+   * the start when watered), `crown` (a grown tree's nearer leaves, over the plant, moved with it and stirring on their
+   * own), `swing` (hangs from the plant and moves with it and on its own) or `front` (still, over the plant's foot). All
+   * layers share the canvas, so stacked in that order they make the whole. `treeRig` says whether a tree has the last three.
    */
-  part?: 'whole' | 'ground' | 'plant' | 'swing' | 'front';
+  part?: 'whole' | 'ground' | 'plant' | 'crown' | 'swing' | 'front';
   /**
    * The season to draw it in (`treeSeasonAt` gives today's): crown and ground as the season has them, standing on its
    * scene's floor (`treeStudioSvg`). Without one it stands on its floating island.
@@ -1977,7 +2336,7 @@ export interface TreeOptions {
  * every kind). Apps drop water to it, float a thirsty tree's thought bubble beside it, and grow each stage from one top
  * to the next (`treeGrowFrom`).
  */
-export const TREE_TOP: readonly [number, number, number, number, number, number, number] = [0.64, 0.37, 0.33, 0.28, 0.2, 0.12, 0.05];
+export const TREE_TOP: readonly [number, number, number, number, number, number, number] = [0.64, 0.37, 0.33, 0.27, 0.21, 0.13, 0.07];
 export const TREE_WATER_LANDS: readonly [number, number, number, number, number, number, number] = [0.73, 0.56, 0.5, 0.45, 0.4, 0.34, 0.3];
 
 /** Where a plant stands, as shares of the canvas's width and height: the point a sway turns about. */
@@ -1993,7 +2352,7 @@ export function treeSvg(opts: TreeOptions): string {
   // Layers are drawn alongside the whole picture so each comes out exactly as it is in the whole.
   const whole = new Drawing(prefix);
   const own = (key: string): Drawing => (part === 'whole' ? whole : new Drawing(`${prefix}${key}`));
-  const drs: Drawings = { ground: own('g'), plant: own('p'), swing: own('s'), front: own('f') };
+  const drs: Drawings = { ground: own('g'), plant: own('p'), crown: own('c'), swing: own('s'), front: own('f') };
   const rand = seeded(`tree:${opts.species}:${opts.stage}`);
   const ramp = fared(kind.leaves, health, kind.turns);
   const layers =
@@ -2006,34 +2365,47 @@ export function treeSvg(opts: TreeOptions): string {
           : drawGrown(drs, kind, opts.species, opts.stage as Grown, health, ramp, rand);
   drs.ground.add(layers.ground);
   drs.plant.add(layers.plant);
+  drs.crown.add(layers.crown);
   drs.swing.add(layers.swing);
   drs.front.add(layers.front);
   return (part === 'whole' ? whole : drs[part]).svg(size, opts.title ?? '');
 }
 
-/** What a tree has besides ground and plant: whether a front lies over its foot, and where its swing hangs from. */
+/** What a tree has besides ground and plant: whether a front lies over its foot, and where its crown and swing move about. */
 export interface TreeRig {
   /** Earth or a mound drawn over the plant's foot, which stays still with the ground. */
   front: boolean;
+  /** The foot of a grown tree's crown, as shares of the picture's width and height: what its leaves stir about. */
+  crown: { x: number; y: number } | null;
   /** The line the swing's ropes are tied on, as shares of the picture's width and height: what the ropes lean about. */
   swing: { x: number; y: number } | null;
 }
 
 /**
  * Which layers beyond ground and plant a tree has (`TreeOptions.part`), so an app lays only those: every tree but a
- * sapling has a front, and a great broad-crowned tree has its swing while it is well.
+ * sapling has a front, a grown tree has a crown while it has leaves left, and a great broad-crowned tree has its swing
+ * while it is well.
  */
 export function treeRig(opts: { species: TreeSpecies; stage: TreeStage; health?: TreeHealth }): TreeRig {
   const health = opts.health ?? 'fresh';
   const habit = KINDS[opts.species].habit;
+  const share = (v: number): number => Math.round((v / CANVAS) * 1000) / 1000;
+  let crown: TreeRig['crown'] = null;
+  if (opts.stage >= 3) {
+    const stand = built(STANDS[habit][opts.stage as Grown], KINDS[opts.species].build);
+    // A weeping crown is all its own until it withers; any other is its nearer pads, while some are left.
+    const leaves = habit === 'weeping' ? health !== 'withered' : stand.puffs.some((m, i) => m[3] !== 0 && padKept(habit, health, stand.puffs.length, i));
+    const cy = GROUND - stand.crownY;
+    if (leaves) crown = { x: share(MID), y: share(habit === 'weeping' ? cy : cy + stand.half * 0.5) };
+  }
   let swing: TreeRig['swing'] = null;
   if (swingsAt(habit, opts.stage) && (health === 'fresh' || health === 'thirsty')) {
     const stand = built(STANDS[habit][opts.stage as Grown], KINDS[opts.species].build);
-    const timber = timberFor(habit, stand, opts.stage as Grown, seeded(`tree:${opts.species}:${opts.stage}`));
+    const timber = timberFor(habit, stand, opts.stage as Grown, seeded(`wood:${opts.species}:${opts.stage}`));
     const [a, b] = timber.swing!.ties;
     swing = { x: Math.round(((a[0] + b[0]) / 2 / CANVAS) * 1000) / 1000, y: Math.round(((a[1] + b[1]) / 2 / CANVAS) * 1000) / 1000 };
   }
-  return { front: opts.stage !== 2, swing };
+  return { front: opts.stage !== 2, crown, swing };
 }
 
 /** Whether this build has art for a kind; a kind the server knows but this build does not is simply not drawn. */

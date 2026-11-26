@@ -19,8 +19,9 @@
 }
 /*
  * The plant sways about its foot; the ground and the front stay still. The breeze (shared `TREE_SWAY`) is set on the
- * element, so every tree sways in step. It uses `rotate`, so the page's own `transform` animations layer over it. The
- * swing hangs from it and lags slightly, skewing like a parallelogram with its seat level.
+ * element, so every tree sways in step. It uses `rotate`, so the page's own `transform` animations layer over it. A
+ * grown tree's crown stirs on it, twice to each breeze and a little late (`TREE_RUSTLE`). The swing hangs from it and
+ * lags slightly, skewing like a parallelogram with its seat level.
  */
 .tree-art-sway.is-swaying {
   animation: tree-sway 6400ms cubic-bezier(0.37, 0, 0.63, 1) infinite;
@@ -32,6 +33,18 @@
   }
   50% {
     rotate: var(--sway, 0.9deg);
+  }
+}
+.tree-art-sway.is-swaying > .tree-art-crown {
+  animation: tree-rustle 3200ms cubic-bezier(0.37, 0, 0.63, 1) infinite;
+}
+@keyframes tree-rustle {
+  0%,
+  100% {
+    rotate: calc(var(--rustle, 0.6deg) * -1);
+  }
+  50% {
+    rotate: var(--rustle, 0.6deg);
   }
 }
 .tree-art-sway.is-swaying > .tree-art-swing {
@@ -1123,6 +1136,7 @@
 /* Under Reduce Motion the scene is a still picture. */
 @media (prefers-reduced-motion: reduce) {
   .tree-art-sway.is-swaying,
+  .tree-art-sway.is-swaying > .tree-art-crown,
   .tree-art-sway.is-swaying > .tree-art-swing,
   .tree-stage-bob,
   .tree-stage-art,
