@@ -3084,6 +3084,14 @@ button.mkp-fact {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: none; }
 }
+/* dismissed or timed out, it sinks back the way it came while it fades (chat/MessagesProvider.tsx) */
+.msg-toast.is-leaving {
+  pointer-events: none;
+  animation: msg-toast-out var(--dur) var(--ease-out) forwards;
+}
+@keyframes msg-toast-out {
+  to { opacity: 0; transform: translateY(6px); }
+}
 @media (prefers-reduced-motion: reduce) {
   .msg-toast { animation: none; }
 }
@@ -3146,6 +3154,12 @@ button.mkp-fact {
   }
   .msg-toast {
     animation: msg-toast-in-top var(--dur) var(--ease-out);
+  }
+  .msg-toast.is-leaving {
+    animation: msg-toast-out-top var(--dur) var(--ease-out) forwards;
+  }
+  @keyframes msg-toast-out-top {
+    to { opacity: 0; transform: translateY(-6px); }
   }
   @keyframes msg-toast-in-top {
     from { opacity: 0; transform: translateY(-6px); }
