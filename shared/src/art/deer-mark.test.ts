@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEER_BREATH_LOW,
-  DEER_CURL_STEPS,
   DEER_LOOP_MS,
   DEER_LOOP_TURNS,
   DEER_MARK_VIEW,
   deerBreathAt,
   deerCurlKeyframes,
-  deerCurlOutline,
   deerCurlPath,
   deerEyesOpen,
   deerFormKey,
@@ -127,7 +125,7 @@ describe('the deer mark', () => {
   it('is one compound path: his outline and his two eyes, each closed, all inside the square', () => {
     const subpaths = parse(deerMarkPath());
     expect(subpaths).toHaveLength(3);
-    expect(subpaths.slice(1).map((s) => s.length)).toEqual([4, 4]);
+    expect(subpaths.slice(1).map((s) => s.length)).toEqual([8, 8]);
     for (const segs of subpaths) {
       for (const p of segs.flat()) {
         expect(Number.isFinite(p[0]) && Number.isFinite(p[1])).toBe(true);
@@ -157,10 +155,11 @@ describe('the deer mark', () => {
       }
       return best;
     };
-    // Every point of either outline away from the other is at an antler, and most of him is untouched.
-    const moved = a.map((p) => gap(p, fineB) > 0.03);
+    // Every point of either outline further from the other than drawing precision (paths are written in tenths of a
+    // unit) is at an antler.
+    const moved = a.map((p) => gap(p, fineB) > 0.08);
     a.forEach((p, i) => moved[i] && expect(inZone(p), `${p}`).toBe(true));
-    for (const p of b.filter((q) => gap(q, fineA) > 0.03)) expect(inZone(p), `${p}`).toBe(true);
+    for (const p of b.filter((q) => gap(q, fineA) > 0.08)) expect(inZone(p), `${p}`).toBe(true);
     // By length, what changed is under half his outline: the antlers, three tines a side, and nothing more.
     let changed = 0;
     let whole = 0;
@@ -171,7 +170,12 @@ describe('the deer mark', () => {
       if (moved[i]) changed += step;
     });
     expect(changed / whole).toBeLessThan(0.5);
-    expect(now.slice(1)).toEqual(traced.slice(1));
+    // His eyes are the traced eyes, cut finer.
+    [1, 2].forEach((k) => {
+      const eye = sample(now[k] as Pt[][], 20);
+      const tracedEye = sample(traced[k] as Pt[][], 50);
+      for (const p of eye) expect(gap(p, tracedEye)).toBeLessThan(0.08);
+    });
   });
 
   it('has antlers after Hevalo’s, mirrored about his middle and well inside the square, three tines whole and one small', () => {
@@ -246,19 +250,33 @@ describe('the curl', () => {
 });
 
 describe('the loop', () => {
-  it('lasts about two seconds', () => {
-    expect(DEER_LOOP_MS).toBeGreaterThanOrEqual(1800);
-    expect(DEER_LOOP_MS).toBeLessThanOrEqual(2400);
+  /** Differences of a list, frame to frame. */
+  const steps = (a: number[]): number[] => a.slice(1).map((v, i) => v - (a[i] as number));
+  const most = (a: number[]): number => Math.max(...a.map(Math.abs));
+  /** Two loops back to back at 60 frames a second, the turn running on, so the seam between them is measured too. */
+  const twice = (): DeerLoopPose[] => {
+    const count = Math.round((DEER_LOOP_MS / 1000) * 60);
+    return Array.from({ length: 2 * count + 1 }, (_, f) => {
+      const pose = deerLoopAt(f / count);
+      return { ...pose, turn: pose.turn + 360 * DEER_LOOP_TURNS * Math.floor(f / count) };
+    });
+  };
+
+  it('lasts about three seconds and turns once', () => {
+    expect(DEER_LOOP_MS).toBeGreaterThanOrEqual(2600);
+    expect(DEER_LOOP_MS).toBeLessThanOrEqual(3000);
+    expect(DEER_LOOP_TURNS).toBe(1);
   });
 
   it('closes on its first frame: the deer, upright', () => {
     const first = deerLoopAt(0);
     expect(first).toMatchObject({ curl: 0, open: 0, turn: 0 });
     const last = deerLoopAt(1 - 1e-9);
-    expect([last.curl, last.open]).toEqual([0, 0]);
+    expect(last.curl).toBeCloseTo(0, 12);
+    expect(last.open).toBe(0);
     expect(last.turn).toBeCloseTo(360 * DEER_LOOP_TURNS, 6);
     expect(deerFormPath(first)).toBe(deerMarkPath());
-    expect(deerFormPath(last)).toBe(deerMarkPath());
+    expect(deerFormPath(deerLoopAt(1))).toBe(deerMarkPath());
     const { at, poses } = deerLoopTrack(30);
     expect([at[0], at[at.length - 1]]).toEqual([0, 1]);
     // A table of it ends where it began, whole turns on, and never turns back between two of its moments.
@@ -266,102 +284,144 @@ describe('the loop', () => {
     poses.slice(1).forEach((pose, i) => expect(pose.turn).toBeGreaterThanOrEqual((poses[i] as DeerLoopPose).turn));
   });
 
-  it('moves without a jump anywhere, the seam between loops included', () => {
-    let prev = deerLoopAt(0);
-    for (let ms = 1; ms <= 2 * DEER_LOOP_MS; ms++) {
-      const pose = deerLoopAt(ms / DEER_LOOP_MS);
-      expect(Math.abs(pose.curl - prev.curl)).toBeLessThan(0.02);
-      expect(Math.abs(pose.open - prev.open)).toBeLessThan(0.02);
-      expect(Math.abs(pose.arc - prev.arc)).toBeLessThan(1);
-      const turned = (((pose.turn - prev.turn) % 360) + 540) % 360 - 180;
-      expect(turned).toBeGreaterThanOrEqual(0);
-      expect(turned).toBeLessThan(1);
-      prev = pose;
-    }
+  it('restarts invisibly: just before and just after the seam, position, speed and acceleration agree', () => {
+    // Samples a hundred-thousandth of a loop apart either side of the seam, the turn counted on through it.
+    const h = 1e-5;
+    const seconds = (h * DEER_LOOP_MS) / 1000;
+    const at = (k: number): DeerLoopPose => {
+      const pose = deerLoopAt(k * h);
+      return { ...pose, turn: pose.turn - (k < 0 ? 360 * DEER_LOOP_TURNS : 0) };
+    };
+    const poses = [-2, -1, 0, 1, 2].map(at);
+    /** Value, speed and acceleration (per second) from just before, against the same from just after. */
+    const agree = (q: number[], speed: number, accel: number): void => {
+      const [b2, b1, now, a1, a2] = q as [number, number, number, number, number];
+      expect(Math.abs(b1 - a1)).toBeLessThan(speed * seconds * 2 + 1e-9);
+      expect(Math.abs((now - b1) / seconds - (a1 - now) / seconds)).toBeLessThan(speed);
+      expect(Math.abs((now - 2 * b1 + b2) / seconds ** 2 - (a2 - 2 * a1 + now) / seconds ** 2)).toBeLessThan(accel);
+    };
+    agree(poses.map((p) => p.turn), 0.01, 1);
+    agree(poses.map((p) => p.curl), 1e-4, 0.01);
+    agree(poses.map((p) => p.open), 1e-4, 0.01);
+    agree(poses.map((p) => p.arc), 0.01, 1);
+    // Every point of his outline, too.
+    const shapes = poses.map((p) => deerFormOutline(p));
+    for (let i = 0; i < (shapes[2] as Float64Array).length; i++) agree(shapes.map((o) => o[i] as number), 0.01, 1);
+    // And it never holds still there: the turn carries on through the seam, only slowing, like a breath.
+    const still = frames().filter((p, f, all) => f > 0 && p.turn === (all[f - 1] as DeerLoopPose).turn);
+    expect(still.length).toBeLessThanOrEqual(1);
   });
 
-  it('turns smoothly: never back, never stalling while he moves, and its speed never jumps from one frame to the next', () => {
-    const poses = frames();
-    const steps = poses.slice(1).map((p, i) => p.turn - (poses[i] as DeerLoopPose).turn);
+  it('turns calmly and smoothly: never back, never stalling while he moves, with no jolt in its speed or its jerk', () => {
+    const poses = twice();
+    const turn = poses.map((p) => p.turn);
+    const speed = steps(turn);
+    for (const step of speed) expect(step).toBeGreaterThanOrEqual(0);
+    // About 200 degrees a second at most, and turning the whole time he is moving.
+    expect(most(speed)).toBeLessThan(3.5);
+    const count = Math.round((DEER_LOOP_MS / 1000) * 60);
     const first = poses.findIndex((p) => p.curl > 0);
-    const last = poses.length - 1 - [...poses].reverse().findIndex((p) => p.curl > 0);
-    steps.forEach((step, f) => {
-      expect(step).toBeGreaterThanOrEqual(0);
-      expect(step).toBeLessThan(10);
-      // Turning the whole time he is moving, from his first curl to the last of the way out.
-      if (f >= first && f < last - 1) expect(step).toBeGreaterThan(0);
-    });
-    // The speed changes by under half a degree a frame, about a twentieth of its cruise.
-    steps.slice(1).forEach((step, f) => expect(Math.abs(step - (steps[f] as number))).toBeLessThan(0.5));
-    expect(poses[poses.length - 1]?.turn).toBe(360 * DEER_LOOP_TURNS);
+    const last = count - [...poses.slice(0, count + 1)].reverse().findIndex((p) => p.curl > 0);
+    for (let f = first; f < last - 1; f++) expect(speed[f]).toBeGreaterThan(0);
+    // Its speed, the change in that and the change in that again are all small from frame to frame, across the seam too.
+    const accel = steps(speed);
+    const jerk = steps(accel);
+    expect(most(accel)).toBeLessThan(0.15);
+    expect(most(jerk)).toBeLessThan(0.01);
+    expect(most(steps(jerk))).toBeLessThan(0.002);
   });
 
-  it('opens into a thick round-capped ring that sweeps like a spinner, both ends always moving on clockwise', () => {
-    const poses = frames();
-    const sweep = poses.filter((p) => p.open === 1);
-    expect(sweep.length).toBeGreaterThan(20);
-    const arcs = sweep.map((p) => p.arc);
-    // From nearly whole, its trailing end catches up and its leading end runs on again.
-    expect(Math.max(...arcs)).toBeCloseTo(300, 0);
-    expect(Math.min(...arcs)).toBeLessThan(180);
-    const ring = deerFormOutline(sweep[Math.floor(sweep.length / 2)] as DeerLoopPose);
-    for (let i = 0; i < ring.length; i += 6) {
-      const r = Math.hypot((ring[i] as number) - 50, (ring[i + 1] as number) - 50);
-      expect(r).toBeGreaterThan(18.5);
-      expect(r).toBeLessThan(32.5);
+  it('moves every part of its shape without a jolt, across the seam too', () => {
+    const poses = twice();
+    const limits = { curl: 0.002, open: 0.006, arc: 0.1 } as const;
+    for (const key of ['curl', 'open', 'arc'] as const) {
+      const a = poses.map((p) => p[key]);
+      // The third difference frame to frame, which jumps wherever a movement starts or stops with a jolt.
+      expect(most(steps(steps(steps(a))))).toBeLessThan(limits[key]);
     }
-    // Each end's angle on the page is the turn plus where it sits on the ring: it never stops or slips back.
-    const gap = 25;
-    for (let f = 1; f < sweep.length; f++) {
-      const [a, b] = [sweep[f - 1] as DeerLoopPose, sweep[f] as DeerLoopPose];
+    // And every point of the outline accelerates gently: no bend in its path where keyframes or movements meet.
+    const count = Math.round((DEER_LOOP_MS / 1000) * 60);
+    const shapes = poses.slice(0, count + 2).map((p) => deerFormOutline(p));
+    for (let f = 1; f <= count; f++) {
+      const [a, b, c] = [shapes[f - 1] as Float64Array, shapes[f] as Float64Array, shapes[f + 1] as Float64Array];
+      for (let i = 0; i < b.length; i += 2) {
+        const ax = (c[i] as number) - 2 * (b[i] as number) + (a[i] as number);
+        const ay = (c[i + 1] as number) - 2 * (b[i + 1] as number) + (a[i + 1] as number);
+        expect(Math.hypot(ax, ay)).toBeLessThan(0.6);
+      }
+    }
+  });
+
+  it('opens into a thick round-capped ring that breathes like a spinner, both ends always moving on clockwise', () => {
+    const poses = frames();
+    const ring = poses.filter((p) => p.open === 1);
+    expect(ring.length).toBeGreaterThan(20);
+    const arcs = poses.map((p) => p.arc);
+    expect(Math.max(...arcs)).toBe(290);
+    expect(Math.min(...arcs)).toBeGreaterThan(205);
+    expect(Math.min(...arcs)).toBeLessThan(215);
+    for (let f = 1; f < ring.length; f++) {
+      const [a, b] = [ring[f - 1] as DeerLoopPose, ring[f] as DeerLoopPose];
       expect(b.turn + b.arc / 2 - (a.turn + a.arc / 2)).toBeGreaterThan(1);
       expect(b.turn - b.arc / 2 - (a.turn - a.arc / 2)).toBeGreaterThan(1);
-      expect(gap).toBe(25);
     }
   });
 
-  it('opens and closes without the outline ever crossing itself, whole and small', () => {
-    for (const small of [false, true]) {
-      for (const open of [0.125, 0.25, 0.5, 0.75, 1]) expect(simple(deerFormOutline({ curl: 1, open, arc: 300, turn: 0 }, { small }))).toBe(true);
-      for (const arc of [165, 230, 300]) expect(simple(deerFormOutline({ curl: 1, open: 1, arc, turn: 0 }, { small }))).toBe(true);
+  it('draws the ring exactly as a ring, so its edge never shimmers as it breathes', () => {
+    for (const pose of frames().filter((p) => p.open === 1)) {
+      const outline = deerFormOutline(pose);
+      const tail = 25 + (360 - pose.arc) / 2;
+      const ends = [tail, tail + pose.arc].map((deg) => [50 + Math.cos((deg * Math.PI) / 180) * 25.5, 50 + Math.sin((deg * Math.PI) / 180) * 25.5]);
+      for (let i = 0; i < outline.length; i += 6) {
+        const j = (i + 6) % outline.length;
+        const seg: [Pt, Pt, Pt, Pt] = [
+          [outline[i] as number, outline[i + 1] as number],
+          [outline[i + 2] as number, outline[i + 3] as number],
+          [outline[i + 4] as number, outline[i + 5] as number],
+          [outline[j] as number, outline[j + 1] as number],
+        ];
+        for (const [x, y] of sample([seg], 8)) {
+          const r = Math.hypot(x - 50, y - 50);
+          const fromEnds = ends.map(([ex, ey]) => Math.abs(Math.hypot(x - (ex as number), y - (ey as number)) - 6.5));
+          const stray = Math.min(Math.abs(r - 32), Math.abs(r - 19), ...fromEnds);
+          expect(stray).toBeLessThan(0.01);
+        }
+      }
     }
+  });
+
+  it('never crosses itself while the ball opens and closes, his curl and the opening overlapping, whole and small', () => {
+    const poses = frames().filter((p) => p.open > 0 && p.open < 1);
+    expect(poses.length).toBeGreaterThan(10);
+    for (const small of [false, true]) for (const pose of poses.filter((_, f) => f % 2 === 0)) expect(simple(deerFormOutline(pose, { small }))).toBe(true);
   });
 
   it('spins back out of the ring: a good part of the turn is still to come as he starts to unfurl', () => {
     const poses = frames();
-    const swept = poses.findIndex((p) => p.open === 1);
-    const unfurling = poses.findIndex((p, f) => f > swept && p.curl < 1);
-    expect(unfurling).toBeGreaterThan(swept);
-    expect(360 * DEER_LOOP_TURNS - (poses[unfurling] as DeerLoopPose).turn).toBeGreaterThan(120);
+    const ring = poses.findIndex((p) => p.open === 1);
+    const unfurling = poses.findIndex((p, f) => f > ring && p.curl < 1);
+    expect(unfurling).toBeGreaterThan(ring);
+    expect(360 * DEER_LOOP_TURNS - (poses[unfurling] as DeerLoopPose).turn).toBeGreaterThan(90);
   });
 
   it('never pops on the way back: every point and his eyes move a little at a time', () => {
     const poses = frames();
-    const swept = poses.length - 1 - [...poses].reverse().findIndex((p) => p.open === 1);
+    const ringEnds = poses.length - 1 - [...poses].reverse().findIndex((p) => p.open === 1);
     let back = 0;
-    for (let f = swept + 1; f < poses.length; f++) {
+    for (let f = ringEnds + 1; f < poses.length; f++) {
       const [prev, pose] = [poses[f - 1] as DeerLoopPose, poses[f] as DeerLoopPose];
       if (deerFormKey(prev) === deerFormKey(pose)) continue;
       back++;
       for (const small of [false, true]) {
         const moved = farthest(deerFormOutline(prev, { small }), deerFormOutline(pose, { small }));
-        // Under three units of the square a frame (three and a half pixels at 120); the antlers and ears, last, under one.
-        expect(moved).toBeLessThan(3);
+        // Under two and a half units of the square a frame (three pixels at 120); the antlers and ears, last, under one.
+        expect(moved).toBeLessThan(2.5);
         if (pose.curl < 0.2) expect(moved).toBeLessThan(1);
       }
       // His eyes take several frames to open.
       expect(deerEyesOpen(pose.curl) - deerEyesOpen(prev.curl)).toBeLessThan(0.2);
     }
-    expect(back).toBeGreaterThan(30);
-    // Where an app draws the curl in steps, neighbouring steps differ by less than half a unit anywhere.
-    for (const small of [false, true]) {
-      let step = deerCurlOutline(0, { small });
-      for (let k = 1; k <= DEER_CURL_STEPS; k++) {
-        const next = deerCurlOutline(k / DEER_CURL_STEPS, { small });
-        expect(farthest(step, next)).toBeLessThan(0.5);
-        step = next;
-      }
-    }
+    expect(back).toBeGreaterThan(40);
   });
 
   it('stays inside its square in every frame', () => {

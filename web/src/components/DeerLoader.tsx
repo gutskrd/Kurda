@@ -23,8 +23,8 @@ const BREATH: Keyframe[] = [{ opacity: 1 }, { opacity: DEER_BREATH_LOW }, { opac
 
 /**
  * Hevalo's mark as the loader (shared deer-mark.ts): he curls into a ball, spins as a ring and spins back out, in the
- * ink. The turn is a Web Animation on the compositor and the shape follows that animation's clock, so on a busy page
- * the shape may pause a moment but the turn keeps going. Under Reduce Motion the mark only breathes in opacity. The
+ * ink. The turn is a Web Animation on the compositor, and every frame the shape is drawn exactly for that animation's
+ * moment, never in steps, so on a busy page the shape may pause a moment but the turn keeps going. Under Reduce Motion the mark only breathes in opacity. The
  * caller says what is loading; to assistive technology this is only a picture.
  */
 export function DeerLoader({ size = 48 }: { size?: number }): React.JSX.Element {

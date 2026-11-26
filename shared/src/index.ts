@@ -957,7 +957,6 @@ export * from './art/fire.js';
 export {
   DEER_BREATH_LOW,
   DEER_BREATH_MS,
-  DEER_CURL_STEPS,
   DEER_LOOP_MS,
   DEER_LOOP_TURNS,
   DEER_MARK_FULL_FROM,

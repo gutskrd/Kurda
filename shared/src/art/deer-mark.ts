@@ -438,6 +438,8 @@ interface Shapes {
   reach: number[];
   /** That whole distance, in units of the square. */
   length: number;
+  /** Each keyframe's second derivative along the curl, so the outline passes through them on a natural cubic spline. */
+  bends: Float64Array[];
   /** Where each segment starts along its run (the crescent's chin edge, its body edge, the rest), as shares. */
   shares: { chin: number[]; body: number[]; rim: number[] };
   /** His eyes, open. */
@@ -539,23 +541,64 @@ function curlShapes(small = false): Shapes {
   }
   const total = reach[reach.length - 1] as number;
   const shares = { chin: startShares(chin), body: startShares(body), rim: startShares(rim) };
-  const shapes = { keys, reach: reach.map((r) => r / total), length: total, shares, eyes };
+  const along = reach.map((r) => r / total);
+  const shapes = { keys, reach: along, length: total, bends: splineBends(along, keys), shares, eyes };
   built[small ? 'small' : 'full'] = shapes;
   return shapes;
 }
 
-/** The outline's control points at `curl` (0 the deer, 1 the ball), between the two keyframes either side. */
+/**
+ * The second derivatives of a cubic spline through `ys` at `xs`, for every coordinate at once: a straight line between
+ * keyframes would bend each point's path at every one of them, which the eye reads as judder. At either end the spline
+ * leaves along the straight line to the next keyframe, so the antlers grow back at the pace they shrank.
+ */
+function splineBends(xs: readonly number[], ys: readonly Float64Array[]): Float64Array[] {
+  const n = xs.length - 1;
+  const size = (ys[0] as Float64Array).length;
+  const h = (i: number): number => (xs[i + 1] as number) - (xs[i] as number);
+  // One row per keyframe: below, on and above the diagonal, and the right-hand side for every coordinate.
+  const rows = xs.map((_, i) => {
+    const d = new Float64Array(size);
+    if (i === 0) return { a: 0, b: 2 * h(0), c: h(0), d };
+    if (i === n) return { a: h(n - 1), b: 2 * h(n - 1), c: 0, d };
+    const [y0, y1, y2] = [ys[i - 1] as Float64Array, ys[i] as Float64Array, ys[i + 1] as Float64Array];
+    for (let j = 0; j < size; j++) d[j] = 6 * (((y2[j] as number) - (y1[j] as number)) / h(i) - ((y1[j] as number) - (y0[j] as number)) / h(i - 1));
+    return { a: h(i - 1), b: 2 * (h(i - 1) + h(i)), c: h(i), d };
+  });
+  const sup: number[] = [];
+  for (let i = 0; i <= n; i++) {
+    const row = rows[i] as (typeof rows)[number];
+    const m = i === 0 ? row.b : row.b - row.a * (sup[i - 1] as number);
+    sup.push(row.c / m);
+    const prev = i > 0 ? (rows[i - 1] as (typeof rows)[number]).d : null;
+    for (let j = 0; j < size; j++) row.d[j] = ((row.d[j] as number) - (prev ? row.a * (prev[j] as number) : 0)) / m;
+  }
+  const bends = xs.map(() => new Float64Array(size));
+  for (let i = n; i >= 0; i--) {
+    const own = bends[i] as Float64Array;
+    const d = (rows[i] as (typeof rows)[number]).d;
+    const next = i < n ? (bends[i + 1] as Float64Array) : null;
+    for (let j = 0; j < size; j++) own[j] = (d[j] as number) - (next ? (sup[i] as number) * (next[j] as number) : 0);
+  }
+  return bends;
+}
+
+/** The outline's control points at `curl` (0 the deer, 1 the ball), on the spline through the keyframes. */
 function outlineAt(curl: number, small: boolean): Float64Array {
-  const { keys, reach } = curlShapes(small);
+  const { keys, reach, bends } = curlShapes(small);
   const c = Math.min(1, Math.max(0, curl));
   let k = 0;
   while (k < keys.length - 2 && (reach[k + 1] as number) < c) k++;
   const span = (reach[k + 1] as number) - (reach[k] as number);
-  const f = span > 0 ? (c - (reach[k] as number)) / span : 0;
-  const a = keys[k] as Float64Array;
-  const b = keys[k + 1] as Float64Array;
-  const out = new Float64Array(a.length);
-  for (let i = 0; i < a.length; i++) out[i] = (a[i] as number) + ((b[i] as number) - (a[i] as number)) * f;
+  const b = span > 0 ? (c - (reach[k] as number)) / span : 0;
+  const a = 1 - b;
+  const [ya, yb, ma, mb] = [keys[k], keys[k + 1], bends[k], bends[k + 1]] as [Float64Array, Float64Array, Float64Array, Float64Array];
+  const wa = ((a * a * a - a) * span * span) / 6;
+  const wb = ((b * b * b - b) * span * span) / 6;
+  const out = new Float64Array(ya.length);
+  for (let i = 0; i < out.length; i++) {
+    out[i] = a * (ya[i] as number) + b * (yb[i] as number) + wa * (ma[i] as number) + wb * (mb[i] as number);
+  }
   return out;
 }
 
@@ -569,11 +612,15 @@ function eyeAt(eye: Float64Array, shut: number): Float64Array {
   return out;
 }
 
-/** The mark, whole, or `small` below `DEER_MARK_FULL_FROM` pixels: no eyes, one tine to each antler. */
+/**
+ * The mark, whole, or `small` below `DEER_MARK_FULL_FROM` pixels: no eyes, one tine to each antler. It is written as
+ * the first keyframe of the curl, the same curves cut finer, so the loop's first frame and the frames either side of it
+ * are drawn alike and nothing flickers at the seam.
+ */
 export function deerMarkPath({ small = false }: { small?: boolean } = {}): string {
-  const { chin, body, rim } = markRuns(small);
-  const parts = [loopPath(flatten([...chin, ...body, ...rim]))];
-  if (!small) for (const run of [TRACE.eyeLeft, TRACE.eyeRight]) parts.push(loopPath(flatten(runSegments(run))));
+  const { keys, eyes } = curlShapes(small);
+  const parts = [loopPath(keys[0] as Float64Array)];
+  if (!small) for (const eye of eyes) parts.push(loopPath(eye));
   return parts.join('');
 }
 
@@ -596,9 +643,6 @@ export function deerCurlPath(curl: number, { small = false }: { small?: boolean 
   if (!small && shut < 1) for (const eye of curlShapes().eyes) parts.push(loopPath(eyeAt(eye, shut)));
   return parts.join('');
 }
-
-/** How finely the curl is stepped where redrawing costs something (each app redraws only when the step changes). */
-export const DEER_CURL_STEPS = 96;
 
 /** The outline at `curl` as a flat list of control points, three points to a segment, for checks. */
 export function deerCurlOutline(curl: number, { small = false }: { small?: boolean } = {}): Float64Array {
@@ -624,46 +668,51 @@ export function deerCurlKeyframes({ small = false }: { small?: boolean } = {}): 
  * ends: `open` as it forms, `tight` at its shortest. The inner edge splits `split` degrees past the leading end: the
  * crescent's chin edge (the curl's core) shrinks into that end as the hole opens, and its body edge becomes the inside.
  */
-const RING = { width: 13, gap: 25, split: 20, open: 300, tight: 175 } as const;
+const RING = { width: 13, gap: 25, split: 20, open: 290, tight: 210 } as const;
 
-/** A run of circular arcs: centre, radius, and start and end angles in degrees. */
-type Arcs = readonly { x: number; y: number; r: number; from: number; to: number }[];
+/** A circular arc: centre, radius, and start and end angles in degrees. */
+interface Arc {
+  x: number;
+  y: number;
+  r: number;
+  from: number;
+  to: number;
+}
 
-/** Cubic segments along a run of arcs, starting at the given shares of its length, their handles along it. */
-function alongArcs(arcs: Arcs, shares: readonly number[]): Seg[] {
-  const lengths = arcs.map((a) => (Math.abs(a.to - a.from) * Math.PI * a.r) / 180);
-  const total = lengths.reduce((x, y) => x + y, 0);
-  const at = (share: number): [Pt, Pt] => {
-    let left = Math.min(1, Math.max(0, share)) * total;
-    let i = 0;
-    while (i < arcs.length - 1 && left > (lengths[i] as number)) left -= lengths[i++] as number;
-    const a = arcs[i] as Arcs[number];
-    const f = (lengths[i] as number) > 0 ? left / (lengths[i] as number) : 0;
-    const deg = a.from + (a.to - a.from) * f;
+/**
+ * Cubic segments along one circular arc, between the given shares of it, each with the handles that fit a circle
+ * exactly. Every segment lies on a single arc, so nothing slides across a join as the ring breathes.
+ */
+function arcSegments(a: Arc, shares: readonly number[]): Seg[] {
+  const stops = [...shares, 1];
+  const at = (deg: number): [Pt, Pt] => {
     const rad = (deg * Math.PI) / 180;
-    const turn = Math.sign(a.to - a.from) || 1;
     return [
       [a.x + Math.cos(rad) * a.r, a.y + Math.sin(rad) * a.r],
-      [-Math.sin(rad) * turn, Math.cos(rad) * turn],
+      [-Math.sin(rad), Math.cos(rad)],
     ];
   };
-  const stops = [...shares, 1];
   const out: Seg[] = [];
   for (let i = 0; i < shares.length; i++) {
-    const [p, tp] = at(stops[i] as number);
-    const [q, tq] = at(stops[i + 1] as number);
-    const h = (((stops[i + 1] as number) - (stops[i] as number)) * total) / 3;
+    const d0 = a.from + (a.to - a.from) * (stops[i] as number);
+    const d1 = a.from + (a.to - a.from) * (stops[i + 1] as number);
+    const h = (4 / 3) * Math.tan(((d1 - d0) * Math.PI) / 720) * a.r;
+    const [p, tp] = at(d0);
+    const [q, tq] = at(d1);
     out.push([p, [p[0] + tp[0] * h, p[1] + tp[1] * h], [q[0] - tq[0] * h, q[1] - tq[1] * h], q]);
   }
   return out;
 }
 
-const rings = new Map<string, Float64Array>();
+/** `count` even shares of a run, from its start. */
+const evenly = (count: number): number[] => Array.from({ length: count }, (_, i) => i / count);
+
+/** The ring at its fullest, for each size of mark: what the ball opens into and closes from. */
+const fullRings = new Map<boolean, Float64Array>();
 
 /** The ring reaching `arc` degrees round, matched point for point to the ball it opens from. */
 function ringOutline(arc: number, small: boolean): Float64Array {
-  const key = `${small ? 's' : 'f'}${arc}`;
-  const cached = rings.get(key);
+  const cached = arc === RING.open ? fullRings.get(small) : undefined;
   if (cached) return cached;
   const { shares } = curlShapes(small);
   const outer = BALL.r;
@@ -676,33 +725,32 @@ function ringOutline(arc: number, small: boolean): Float64Array {
   const end = (deg: number): Pt => [BALL.x + Math.cos((deg * Math.PI) / 180) * middle, BALL.y + Math.sin((deg * Math.PI) / 180) * middle];
   const [lx, ly] = end(lead);
   const [tx, ty] = end(tail);
-  const chin: Arcs = [
-    { x: lx, y: ly, r: cap, from: lead, to: lead + 180 },
-    { x: BALL.x, y: BALL.y, r: inner, from: lead, to: lead - RING.split },
+  // Each run keeps its segment count, split where its round end meets the inner edge.
+  const chin = [
+    ...arcSegments({ x: lx, y: ly, r: cap, from: lead, to: lead + 180 }, evenly(SEGMENTS.chin - 3)),
+    ...arcSegments({ x: BALL.x, y: BALL.y, r: inner, from: lead, to: lead - RING.split }, evenly(3)),
   ];
-  const body: Arcs = [
-    { x: BALL.x, y: BALL.y, r: inner, from: lead - RING.split, to: tail },
-    { x: tx, y: ty, r: cap, from: tail + 180, to: tail + 360 },
+  const body = [
+    ...arcSegments({ x: BALL.x, y: BALL.y, r: inner, from: lead - RING.split, to: tail }, evenly(SEGMENTS.body - 3)),
+    ...arcSegments({ x: tx, y: ty, r: cap, from: tail + 180, to: tail + 360 }, evenly(3)),
   ];
-  const rim: Arcs = [{ x: BALL.x, y: BALL.y, r: outer, from: tail, to: lead }];
-  const out = flatten([...alongArcs(chin, shares.chin), ...alongArcs(body, shares.body), ...alongArcs(rim, shares.rim)]);
-  rings.set(key, out);
+  const rim = arcSegments({ x: BALL.x, y: BALL.y, r: outer, from: tail, to: lead }, shares.rim);
+  const out = flatten([...chin, ...body, ...rim]);
+  if (arc === RING.open) fullRings.set(small, out);
   return out;
-}
-
-/** How far the fastest point moves as the ball opens into the ring, in units of the square. */
-function openLength(small: boolean): number {
-  const keys = curlShapes(small).keys;
-  return farthest(keys[keys.length - 1] as Float64Array, ringOutline(RING.open, small));
 }
 
 /* ---- the loop ------------------------------------------------------------------------------------------------- */
 
-/** One loop: curl in, open into the spinner, sweep round, close and spin back out, and a beat as the deer. */
-export const DEER_LOOP_MS = 2300;
+/**
+ * One loop: curl in, open into the spinner, sweep round, close and spin back out. There is no hold: everything slows
+ * into the upright deer at the loop's end and gathers again from him, so he passes through the first frame like a
+ * breath and the seam cannot be seen.
+ */
+export const DEER_LOOP_MS = 3000;
 
 /** Whole clockwise turns in a loop. */
-export const DEER_LOOP_TURNS = 2;
+export const DEER_LOOP_TURNS = 1;
 
 /** The Reduce Motion version's breath, in and out, slower than the loop. */
 export const DEER_BREATH_MS = 2000;
@@ -711,18 +759,22 @@ export const DEER_BREATH_MS = 2000;
 export const DEER_BREATH_LOW = 0.45;
 
 /**
- * Where in the loop (shares of it) each movement starts and ends: into the ring (curling, then opening), the spinner's
- * sweep, and out again (closing, then unfurling), which is the longest. The turn gathers over the way in, holds its
- * speed through the sweep and the closing, and eases away as he unfurls, so he settles upright as the last of him
- * grows back.
+ * When each movement runs, as shares of the loop. Neighbouring movements overlap, so the shape never stands still
+ * between them: he is still curling as the ball opens, and the ring is still closing as he starts to unfurl. The ring's
+ * reach breathes over its whole life. The turn gathers as he curls, holds, and eases away as he unfurls. He starts to
+ * curl at the seam and finishes unfurling at it, so nothing ever stands still.
  */
 const BEATS = {
-  in: [0.02, 0.3],
-  sweep: [0.3, 0.52],
-  out: [0.52, 0.93],
+  curl: [0, 0.26],
+  open: [0.19, 0.34],
+  close: [0.52, 0.66],
+  unfurl: [0.58, 1],
+  reach: [0.19, 0.66],
+  gather: [0, 0.29],
+  ease: [0.58, 1],
 } as const;
 
-/** The mark's pose at a moment of the loop. Its shape is `curl`, then `open`, then `arc`; it turns about its middle. */
+/** The mark's pose at a moment of the loop. Its shape is `curl`, `open` and `arc`; it turns about its middle. */
 export interface DeerLoopPose {
   /** How far into the ball he is curled, 0 to 1 (`deerCurlPath`). */
   curl: number;
@@ -734,137 +786,91 @@ export interface DeerLoopPose {
   turn: number;
 }
 
-/** Smootherstep: no speed at either end, so every movement starts and lands softly. */
+/**
+ * Smootherstep: its speed and acceleration are nothing at either end, so whatever it moves starts and stops without a
+ * jolt, and every movement here is built on it.
+ */
 function smooth(x: number): number {
   const t = Math.min(1, Math.max(0, x));
   return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
-/** A CSS-style cubic-bezier easing from (0, 0) to (1, 1) through handles (x1, y1) and (x2, y2). */
-function bezierEase(x1: number, y1: number, x2: number, y2: number): (x: number) => number {
-  const at = (a: number, b: number, t: number): number => 3 * (1 - t) * (1 - t) * t * a + 3 * (1 - t) * t * t * b + t * t * t;
-  return (x) => {
-    // Exactly still at either end, so the loop's first and last frames are the mark itself.
-    if (x <= 0) return 0;
-    if (x >= 1) return 1;
-    const target = x;
-    let lo = 0;
-    let hi = 1;
-    for (let i = 0; i < 40; i++) {
-      const mid = (lo + hi) / 2;
-      if (at(x1, x2, mid) < target) lo = mid;
-      else hi = mid;
-    }
-    return at(y1, y2, (lo + hi) / 2);
-  };
+/** Smootherstep on a time that runs slower toward its end: as gentle at both ends, with a longer settle. */
+function settle(x: number): number {
+  const t = Math.min(1, Math.max(0, x));
+  return smooth(1 - (1 - t) ** 1.4);
 }
 
-/** Into the ring: even in and out. */
-const WAY_IN = bezierEase(0.45, 0, 0.55, 1);
-/** Out of it: starting softly from the ring, then a long, gentle settle with nothing past the deer. */
-const WAY_OUT = bezierEase(0.25, 0, 0.3, 1);
+/** A swell from nothing to one and back, as flat as smootherstep at both ends. */
+function swell(x: number): number {
+  return x <= 0 || x >= 1 ? 0 : Math.sin(Math.PI * x) ** 4;
+}
 
 const within = (t: number, [a, b]: readonly [number, number]): number => (t - a) / (b - a);
 
-/** Where the way out leaves the ring and starts to unfurl, as a share of the loop. */
-let unfurlFrom: number | null = null;
-
-function unfurlStart(): number {
-  if (unfurlFrom !== null) return unfurlFrom;
-  const curl = curlShapes().length;
-  const left = curl / (curl + openLength(false));
-  let lo = 0;
-  let hi = 1;
-  for (let i = 0; i < 40; i++) {
-    const mid = (lo + hi) / 2;
-    if (1 - WAY_OUT(mid) > left) lo = mid;
-    else hi = mid;
-  }
-  unfurlFrom = BEATS.out[0] + ((lo + hi) / 2) * (BEATS.out[1] - BEATS.out[0]);
-  return unfurlFrom;
-}
+/** The area under smootherstep from 0 to `u`, for the turn while its speed changes. */
+const underSmooth = (u: number): number => u ** 6 - 3 * u ** 5 + 2.5 * u ** 4;
 
 /**
- * The turn at `x` of the loop, in degrees: its speed rises as a smoothstep over the way in, holds through the sweep
- * and the closing, and falls as one while he unfurls, so neither the speed nor its change ever jumps. The integrals of
- * those ramps are written out.
+ * The turn at `x` of the loop, in degrees: its speed rises along smootherstep as he curls, holds, and falls along it as
+ * he unfurls, so the speed, its change and the change in that are all continuous, through the loop's seam too.
  */
 function turnAt(x: number): number {
-  const [a, b] = BEATS.in;
-  const [c, d] = [unfurlStart(), BEATS.out[1]];
-  const up = b - a;
-  const hold = c - b;
-  const down = d - c;
-  const speed = (360 * DEER_LOOP_TURNS) / (up / 2 + hold + down / 2);
+  const [a, b] = BEATS.gather;
+  const [c, d] = BEATS.ease;
+  const speed = (360 * DEER_LOOP_TURNS) / ((b - a) / 2 + (c - b) + (d - c) / 2);
   if (x <= a) return 0;
-  if (x < b) {
-    const u = (x - a) / up;
-    return speed * up * (u ** 3 - u ** 4 / 2);
-  }
-  if (x < c) return speed * (up / 2 + (x - b));
+  if (x < b) return speed * (b - a) * underSmooth((x - a) / (b - a));
+  if (x < c) return speed * ((b - a) / 2 + (x - b));
   if (x < d) {
-    const u = (x - c) / down;
-    return speed * (up / 2 + hold + down * (u - u ** 3 + u ** 4 / 2));
+    const u = (x - c) / (d - c);
+    return speed * ((b - a) / 2 + (c - b) + (d - c) * (u - underSmooth(u)));
   }
   return 360 * DEER_LOOP_TURNS;
-}
-
-/** The shape along the way between deer and ring, `m` 0 to 1, paced by the fastest point over both legs. */
-function wayAt(m: number): { curl: number; open: number } {
-  const curl = curlShapes().length;
-  const split = curl / (curl + openLength(false));
-  return m <= split ? { curl: m / split, open: 0 } : { curl: 1, open: (m - split) / (1 - split) };
 }
 
 /** The pose `t` of the way through a loop (any number: it wraps), the same at 0 and 1. */
 export function deerLoopAt(t: number): DeerLoopPose {
   const x = ((t % 1) + 1) % 1;
-  const turn = turnAt(x);
-  if (x >= BEATS.sweep[0] && x < BEATS.sweep[1]) {
-    // The sweep: the trailing end catches up and the leading end runs on again, while the whole turns.
-    const give = Math.sin(Math.PI * within(x, BEATS.sweep)) ** 2;
-    return { curl: 1, open: 1, arc: RING.open - (RING.open - RING.tight) * give, turn };
-  }
-  const m = x < BEATS.sweep[0] ? WAY_IN(within(x, BEATS.in)) : 1 - WAY_OUT(within(x, BEATS.out));
-  return { ...wayAt(m), arc: RING.open, turn };
+  return {
+    curl: x < BEATS.unfurl[0] ? smooth(within(x, BEATS.curl)) : 1 - settle(within(x, BEATS.unfurl)),
+    open: x < BEATS.close[0] ? smooth(within(x, BEATS.open)) : 1 - smooth(within(x, BEATS.close)),
+    arc: RING.open - (RING.open - RING.tight) * swell(within(x, BEATS.reach)),
+    turn: turnAt(x),
+  };
 }
 
-/** How finely the opening and the ring's reach are stepped where redrawing costs something. */
-const OPEN_STEPS = 192;
-const ARC_STEP = 1;
-
-/** The shape of a pose in the steps each app redraws at: two poses with the same key draw the same. */
+/** Two poses with the same key have the same shape, so a redraw can be skipped while the shape stands still. */
 export function deerFormKey(pose: DeerLoopPose): string {
-  const curl = Math.round(pose.curl * DEER_CURL_STEPS);
-  const open = Math.round(pose.open * OPEN_STEPS);
-  const arc = open > 0 ? Math.round(pose.arc / ARC_STEP) : 0;
-  return `${curl}:${open}:${arc}`;
+  return pose.open > 0 ? `${pose.curl}:${pose.open}:${pose.arc}` : `${pose.curl}`;
 }
 
-/** The outline of a pose's shape, as stepped by `deerFormKey`, as a flat list of control points, for checks. */
+/**
+ * The outline of a pose's shape, as a flat list of control points: the curl, with the ring's opening laid over it, so
+ * the two can overlap without either standing still.
+ */
 export function deerFormOutline(pose: DeerLoopPose, { small = false }: { small?: boolean } = {}): Float64Array {
-  const open = Math.round(pose.open * OPEN_STEPS) / OPEN_STEPS;
-  if (open <= 0) return outlineAt(Math.round(pose.curl * DEER_CURL_STEPS) / DEER_CURL_STEPS, small);
+  const outline = outlineAt(pose.curl, small);
+  if (pose.open <= 0) return outline;
   const keys = curlShapes(small).keys;
   const ball = keys[keys.length - 1] as Float64Array;
-  if (open >= 1) return ringOutline(Math.round(pose.arc / ARC_STEP) * ARC_STEP, small);
-  const ring = ringOutline(RING.open, small);
-  const out = new Float64Array(ball.length);
-  for (let i = 0; i < ball.length; i++) out[i] = (ball[i] as number) + ((ring[i] as number) - (ball[i] as number)) * open;
-  return out;
+  const ring = ringOutline(pose.arc, small);
+  for (let i = 0; i < outline.length; i++) outline[i] = (outline[i] as number) + ((ring[i] as number) - (ball[i] as number)) * pose.open;
+  return outline;
 }
 
-/** A pose's shape as a path: the deer curling (`deerCurlPath`), the ball opening, or the ring, all in one colour. */
+/** A pose's shape as a path, exactly at that moment: the deer curling (`deerCurlPath`), the ball opening, or the ring. */
 export function deerFormPath(pose: DeerLoopPose, { small = false }: { small?: boolean } = {}): string {
-  if (Math.round(pose.open * OPEN_STEPS) <= 0) return deerCurlPath(Math.round(pose.curl * DEER_CURL_STEPS) / DEER_CURL_STEPS, { small });
+  if (pose.open <= 0) return deerCurlPath(pose.curl, { small });
   return loopPath(deerFormOutline(pose, { small }));
 }
 
 /**
- * The loop sampled at `steps` + 1 evenly spaced moments, for keyframe and interpolation tables. The last is the first
- * whole turns on, so a table that repeats meets itself without turning back.
+ * The loop sampled at `steps` + 1 evenly spaced moments, for keyframe and interpolation tables; by default 120 a
+ * second, finer than any screen draws. The last is the first whole turns on, so a table that repeats meets itself
+ * without turning back.
  */
-export function deerLoopTrack(steps = 240): { at: number[]; poses: DeerLoopPose[] } {
+export function deerLoopTrack(steps = Math.round((DEER_LOOP_MS / 1000) * 120)): { at: number[]; poses: DeerLoopPose[] } {
   const at = Array.from({ length: steps + 1 }, (_, i) => i / steps);
   return { at, poses: at.map((t) => (t === 1 ? { ...deerLoopAt(0), turn: 360 * DEER_LOOP_TURNS } : deerLoopAt(t))) };
 }
