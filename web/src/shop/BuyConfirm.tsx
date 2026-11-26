@@ -1,22 +1,23 @@
 import type { ReactNode } from 'react';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
-import { CoinIcon, GemIcon } from '../components/icons';
+import { CoinIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
+import { ZerValue } from './ZerValue';
 import './buyConfirm.css';
 
 /** What the dialog needs of the item being bought. */
 interface BuyConfirmItem {
   name: string;
   price: number;
-  currency: 'zer' | 'gems';
+  currency: 'zer';
 }
 
 /**
- * The confirmation before a purchase: the item, its price, and that purchases are final, since nothing can be
- * refunded. Free items skip it. The bird and tree sections use it too, adding a picture, the balance beside the price
- * and any shortfall, which disables the confirm. Planting a tree is free and shows what it replaces instead of the
- * note; a zero price is not shown.
+ * The confirmation before a purchase: the item, its price with what it is worth, and that purchases are final, since
+ * nothing can be refunded. Free items skip it. The bird and tree sections use it too, adding a picture, the balance
+ * beside the price and any shortfall, which disables the confirm. Planting a tree is free and shows what it replaces
+ * instead of the note; a zero price is not shown.
  */
 export function BuyConfirm({
   item,
@@ -66,9 +67,10 @@ export function BuyConfirm({
           <h2 className="buy-confirm-title">{heading}</h2>
           {item.price > 0 && (
             <p className="buy-confirm-price">
-              {item.currency === 'gems' ? <GemIcon size={16} /> : <CoinIcon size={16} />}
+              <CoinIcon size={16} />
               {/* Zêr keeps its Kurmancî name in every language, as a currency does. */}
-              {`${item.price.toLocaleString(locale)} ${item.currency === 'gems' ? t('shop.gems') : 'Zêr'}`}
+              {`${item.price.toLocaleString(locale)} Zêr`}
+              <ZerValue zer={item.price} />
             </p>
           )}
           {item.price > 0 && balance !== null && <p className="buy-confirm-balance">{t('shop.balance', { zer: balance.toLocaleString(locale) })}</p>}

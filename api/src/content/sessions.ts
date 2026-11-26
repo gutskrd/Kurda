@@ -134,20 +134,19 @@ interface LessonSlot {
   position: number;
 }
 
-/** Grants Gems for a rule/refId; injected so content stays decoupled. */
-export interface GemGranter {
+/** Grants earned Zêr for a rule/refId; injected so content stays decoupled. */
+export interface EarnGranter {
   grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
 }
 
 /**
- * The Gem rule a perfect first completion pays under. Switched off since migration 1751000312000 (free gems are rare
- * now that they restore a streak), so the grant is requested and answers with nothing; the request stays for an admin
- * who switches it back on.
+ * The earning rule a perfect first completion pays under. Switched off since migration 1751000312000, since anybody could
+ * farm it, so the grant is requested and answers with nothing; the request stays for an admin who switches it back on.
  */
-export const PERFECT_LESSON_GEM_RULE = 'perfect_lesson';
+export const PERFECT_LESSON_RULE = 'perfect_lesson';
 
 /**
- * The idempotency reference for perfect-lesson Gems: the learner and the lesson's place, so they are paid at most once
+ * The idempotency reference for a perfect lesson's Zêr: the learner and the lesson's place, so it is paid at most once
  * per learner per lesson, whatever version or path reached the completion.
  */
 function perfectLessonRef(slot: LessonSlot, userId: string): string {
@@ -163,7 +162,7 @@ export class LessonSessionService {
   private readonly streaks: StreakService;
   private readonly goals: DailyGoalService;
   private readonly reviews: ReviewService;
-  private readonly gems?: GemGranter;
+  private readonly earn?: EarnGranter;
   private readonly milestones?: MilestoneRecorder;
 
   constructor(
@@ -173,7 +172,7 @@ export class LessonSessionService {
       streaks?: StreakService;
       goals?: DailyGoalService;
       reviews?: ReviewService;
-      gems?: GemGranter;
+      earn?: EarnGranter;
       milestones?: MilestoneRecorder;
     } = {},
   ) {
@@ -181,7 +180,7 @@ export class LessonSessionService {
     this.streaks = deps.streaks ?? new StreakService(pool);
     this.goals = deps.goals ?? new DailyGoalService(pool);
     this.reviews = deps.reviews ?? new ReviewService(pool);
-    this.gems = deps.gems;
+    this.earn = deps.earn;
     this.milestones = deps.milestones;
   }
 
@@ -398,7 +397,7 @@ export class LessonSessionService {
   }
 
   /**
-   * Grade a second try at an item and record nothing (no answer row, accuracy, XP, review or Gems). This is the re-ask
+   * Grade a second try at an item and record nothing (no answer row, accuracy, XP, review or Zêr). This is the re-ask
    * a client makes a few exercises after a miss: practice with the answer fresh, which must not count as a first
    * attempt. Graded with the same seed, so a multiple-choice position means the same option.
    *
@@ -425,14 +424,14 @@ export class LessonSessionService {
    * Finalize a session and return the results summary. Idempotent: XP is awarded exactly once, on the transition to
    * completed, keyed on the session id in the ledger; re-calling returns the same summary with no further XP.
    *
-   * A perfect first completion pays perfect-lesson Gems while that rule is on (it is off; see
-   * `PERFECT_LESSON_GEM_RULE`), keyed on the learner and the lesson's place (`perfectLessonRef`), so replays and
+   * A perfect first completion pays perfect-lesson Zêr while that rule is on (it is off; see
+   * `PERFECT_LESSON_RULE`), keyed on the learner and the lesson's place (`perfectLessonRef`), so replays and
    * corrected versions are never paid again. Like XP, they are paid only on the transition, because sessions completed
    * earlier were paid under their session id.
    *
    * A listening or speaking item put off and never answered (`SKIPPABLE_TYPES`) is left out of the score, so putting
    * one off costs no accuracy or XP. It earns nothing either: a lesson with anything put off is not perfect for the
-   * Gems or the first-perfect milestone, or putting off risky items would be the way to a perfect lesson.
+   * Zêr or the first-perfect milestone, or putting off risky items would be the way to a perfect lesson.
    */
   async complete(sessionId: string, userId: string): Promise<SessionResults> {
     // the session, where its lesson sits, the learner's time zone, and how
@@ -562,8 +561,8 @@ export class LessonSessionService {
     // Best-effort rewards after the commit, for the call that completed the
     // session only: a failure here never fails the completion, and each is
     // idempotent besides.
-    if (this.gems && claimedNow && firstCompletion && perfect) {
-      await this.gems.grant(userId, PERFECT_LESSON_GEM_RULE, perfectLessonRef(slot, userId)).catch(() => undefined);
+    if (this.earn && claimedNow && firstCompletion && perfect) {
+      await this.earn.grant(userId, PERFECT_LESSON_RULE, perfectLessonRef(slot, userId)).catch(() => undefined);
     }
     if (this.milestones && claimedNow) {
       // out of the whole lesson, so a lesson with something put off is never "perfect"

@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import { ToggleRow } from '../theme/Toggle';
-import { countByCategory, itemCategory, matchesQuery, type ItemCategory } from '@kurda/shared';
+import { countByCategory, isWordTag, itemCategory, matchesQuery, type ItemCategory } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { useIntents } from '../api/optimistic';
@@ -11,7 +11,7 @@ import type { ApiError } from '../api/types';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
-import { ClayButton } from '../theme/glass';
+import { ClayButton, ErrorRetry } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { SearchField } from '../theme/SearchField';
 import { useTheme } from '../theme/ThemeProvider';
@@ -26,6 +26,7 @@ import { KIND_LABEL, kindWithCount } from '../shop/format';
 import { ItemArt, KindChips, SEARCH_MAX } from '../shop/ItemFilters';
 import { equip, inventory, setIconVisibility, type CosmeticSlot, type InventoryItem } from './cosmetics';
 import { Avatar, ownAvatarUrl } from './Avatar';
+import { TagPill } from './TagPill';
 import { Loading } from '../theme/Loading';
 
 type Kind = ItemCategory;
@@ -52,16 +53,19 @@ const EMPTY: Partial<Record<Kind, { text: TranslationKey; ways: readonly Way[] }
 /**
  * The things you own, and putting them on. Sorted by kind as the shop is (Backgrounds, Icons, Frames, and Tags and More
  * when you own any), each with its count; every tile is named under it, and past eight of a kind there is a search
- * field. Buying stays in the Shop. Tapping what you are wearing takes it off.
+ * field. A word tag is worn by the name like the rest; the Kurdish tag is managed with the profile's other tags. Buying
+ * stays in the Shop. Tapping what you are wearing takes it off.
  */
 export function CosmeticPicker({
   equippedBackground,
   equippedIcon,
+  equippedTag = null,
   iconVisible,
   onChanged,
 }: {
   equippedBackground: string | null;
   equippedIcon: string | null;
+  equippedTag?: string | null;
   iconVisible: boolean;
   /** Told after anything lands, so the screen above can re-read /me. */
   onChanged: () => void;
@@ -73,6 +77,9 @@ export function CosmeticPicker({
   const dir = useDirection();
 
   const [items, setItems] = useState<InventoryItem[] | null>(null);
+  // Why what you own could not be read: said with Try again, never as owning nothing.
+  const [unread, setUnread] = useState<string | null>(null);
+  const [round, setRound] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [showIcon, setShowIcon] = useState(iconVisible);
   // Null until chosen; then the first kind you own any of.
@@ -86,7 +93,11 @@ export function CosmeticPicker({
     let alive = true;
     void inventory(client).then((res) => {
       if (!alive) return;
-      const owned = res.ok ? res.data.items : [];
+      if (!res.ok) {
+        setUnread(describeError(res.error, t));
+        return;
+      }
+      const owned = res.data.items;
       setItems(owned);
       if (user && owned.some((i) => itemCategory(i.category) === 'frame')) {
         void client.get<{ frameSku?: string | null }>(`/users/${user.id}`).then((me) => {
@@ -97,11 +108,11 @@ export function CosmeticPicker({
     return () => {
       alive = false;
     };
-  }, [client, user]);
+  }, [client, user, t, round]);
 
   // What /me has you wearing, or a fresher answer to a tap here, so a tile does not flicker back while /me is re-read.
-  const [worn, setWorn] = useState<Record<CosmeticSlot, string | null>>({ background: equippedBackground, icon: equippedIcon });
-  useEffect(() => setWorn({ background: equippedBackground, icon: equippedIcon }), [equippedBackground, equippedIcon]);
+  const [worn, setWorn] = useState<Record<CosmeticSlot, string | null>>({ background: equippedBackground, icon: equippedIcon, tag: equippedTag });
+  useEffect(() => setWorn({ background: equippedBackground, icon: equippedIcon, tag: equippedTag }), [equippedBackground, equippedIcon, equippedTag]);
   const said = (failure: ApiError) => setError(describeError(failure, t));
 
   // A tap puts it on or takes it off at once; the server is told after, and a refusal puts it back with the reason.
@@ -165,10 +176,17 @@ export function CosmeticPicker({
 
   const ofKind = owned.filter((i) => itemCategory(i.category) === current);
   const searchable = ofKind.length > SEARCH_FROM;
-  const shown = searchable ? ofKind.filter((i) => matchesQuery({ name: nameOf(i) }, query)) : ofKind;
+  const matched = searchable ? ofKind.filter((i) => matchesQuery({ name: nameOf(i) }, query)) : ofKind;
+  // Under Tags, the word tags are tiles to wear and the Kurdish tag a row pointing to where it is managed.
+  const shown = current === 'tag' ? matched.filter(isWordTag) : matched;
+  const managed = current === 'tag' ? matched.filter((i) => !isWordTag(i)) : [];
 
   const equippedSku =
-    current === 'frame' ? dressing.shown('frame', wearing) : current === 'background' || current === 'icon' ? dressing.shown(current, worn[current]) : null;
+    current === 'frame'
+      ? dressing.shown('frame', wearing)
+      : current === 'background' || current === 'icon' || current === 'tag'
+        ? dressing.shown(current, worn[current])
+        : null;
   const wide = current === 'background';
   const room = width || 327; // Before the first layout, the width of a small phone.
   const columns = Math.max(2, Math.floor((room + GAP) / (MIN_TILE[wide ? 'wide' : 'square'] + GAP)));
@@ -196,7 +214,7 @@ export function CosmeticPicker({
         accessibilityHint={on ? t('edit.hint.takeOff') : t('edit.hint.wear')}
         style={[styles.tile, { width: tile }]}
       >
-        {/* What you are wearing is ringed and ticked in the violet every chosen option wears. */}
+        {/* What you are wearing is ringed and ticked in the ink every chosen option wears. */}
         <View style={[styles.ring, wide ? styles.ringWide : styles.ringSquare, { borderColor: on ? colors.primary : 'transparent' }]}>
           {tier ? (
             <View style={[styles.frameTile, { width: art, height: art, backgroundColor: colors.controlTrack }]}>
@@ -210,6 +228,10 @@ export function CosmeticPicker({
               <PictureFramed url={item.assetUrl} size={Math.round(art * 0.86)}>
                 <Avatar name={user?.displayName ?? user?.username ?? ''} size={framedAvatarSize(Math.round(art * 0.86))} photoUrl={ownAvatarUrl(user)} />
               </PictureFramed>
+            </View>
+          ) : current === 'tag' ? (
+            <View style={[styles.frameTile, { width: art, height: Math.round(art * 0.62), backgroundColor: colors.controlTrack }]}>
+              <TagPill tag={{ label: item.name, meaning: null }} style={styles.tagInTile} />
             </View>
           ) : (
             <ItemArt category={item.category} path={item.assetUrl} width={art} />
@@ -241,7 +263,15 @@ export function CosmeticPicker({
         {t('edit.cosmetics')}
       </Text>
 
-      {items === null ? (
+      {unread && items === null ? (
+        <ErrorRetry
+          message={unread}
+          onRetry={() => {
+            setUnread(null);
+            setRound((r) => r + 1);
+          }}
+        />
+      ) : items === null ? (
         <Loading style={{ marginVertical: spacing.md }} />
       ) : (
         <>
@@ -267,7 +297,8 @@ export function CosmeticPicker({
               </View>
             ) : current === 'tag' || current === 'other' ? (
               <View style={styles.list}>
-                {shown.map((item) => (
+                {current === 'tag' && tiles.length > 0 ? <View style={[styles.grid, { flexDirection: dir.row }]}>{tiles}</View> : null}
+                {(current === 'tag' ? managed : shown).map((item) => (
                   <View key={item.sku} style={[styles.infoRow, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}>
                     <ItemArt category={item.category} path={item.assetUrl} width={48} />
                     <View style={styles.infoMain}>
@@ -281,7 +312,7 @@ export function CosmeticPicker({
                     </View>
                   </View>
                 ))}
-                {current === 'tag' ? (
+                {current === 'tag' && managed.length > 0 ? (
                   <ClayButton label={t('edit.openTags')} icon="tag" onPress={() => navigation.navigate('Tags')} style={dir.row === 'row-reverse' ? styles.end : styles.start} />
                 ) : null}
               </View>
@@ -312,6 +343,7 @@ export function CosmeticPicker({
 }
 
 const styles = StyleSheet.create({
+  tagInTile: { alignSelf: 'center' },
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.sm },
   heading: { ...sectionLabel },
   grid: { flexWrap: 'wrap', gap: GAP },

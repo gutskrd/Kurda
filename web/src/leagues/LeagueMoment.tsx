@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ART_LEAGUE_METAL, BURST, isLeagueTier, leagueWin, reactionDelayMs, type LeagueWeekResult } from '@kurda/shared';
 import { sayReactionLater } from '../characters/reactions';
 import { prefersReducedMotion } from '../lib/motion';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import { LeagueEmblem } from '../ranks/art';
 import { Celebration, useCelebrationHold } from '../ranks/Celebration';
 import { leagueName, leagueNamed, withMeaning } from '../ranks/names';
@@ -31,6 +31,7 @@ function seenWeek(): string | null {
  */
 export function LeagueMoment({ week }: { week: LeagueWeekResult | null | undefined }): React.JSX.Element | null {
   const t = useT();
+  const locale = useLocale();
   const promoted = isPromotion(week);
   const [open, setOpen] = useState(() => promoted && seenWeek() !== week.weekKey);
   useCelebrationHold(open);
@@ -62,7 +63,7 @@ export function LeagueMoment({ week }: { week: LeagueWeekResult | null | undefin
       flecks={BURST.league}
       seed={week.weekKey.length * 53 + tier.length}
       action={t('lesson.continue')}
-      below={win ? <ShareWin text={leagueShare(t, win, leagueNamed(t, win.tier).name)} /> : null}
+      below={win ? <ShareWin text={leagueShare(t, locale, win, leagueNamed(t, win.tier).name)} /> : null}
       onClose={close}
     />
   );

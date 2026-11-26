@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, type Ref } from 'react';
+import { useEffect, useMemo, useRef, useState, type Ref } from 'react';
 import { AccessibilityInfo, Animated, Easing, Platform, StyleSheet, Text, View, findNodeHandle, type LayoutChangeEvent } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import { Pressable } from '../theme/Pressable';
-import { TOPIC_STARS, lessonStates, lessonXpRange, starPath, type PathStop, type PathUnit } from '@kurda/shared';
+import { SvgXml } from 'react-native-svg';
+import { TOPIC_STARS, lessonStates, lessonXpRange, pathWaxSvg, type PathStop, type PathUnit } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -18,7 +18,8 @@ import { duration, pressedDim } from '../theme/motion';
 import { heldRow } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { RING, STAR, type ToneColors } from './path';
+import { type ToneColors } from './path';
+import { SunRow } from './TopicBar';
 import type { SkillNode } from './types';
 
 type Stop = PathStop<SkillNode>;
@@ -26,8 +27,8 @@ type Unit = PathUnit<SkillNode>;
 
 /**
  * The card a tapped stop opens, under it with an arrow up to it, as on the website. A topic to play now is the road's
- * main button: the card in its violet, its name, which lesson is next, and one light button that says what the lesson
- * pays, which a glint crosses now and then. Any other stop's card is a plain panel: what it is, its progress and one
+ * main button: the card in its unit's colour on its lip, its name, which lesson is next, and one button on the page's
+ * own ground that says what the lesson pays, which a glint crosses now and then. Any other stop's card is a plain panel: what it is, its progress and one
  * action, or what opens it; a skill there lists its lessons.
  *
  * A chapter's story says what opens it while shut; once open, it opens the reader and offers the chapter's review
@@ -83,7 +84,7 @@ export function StopCard({
   const cardLeft = left + (width - cardWidth) / 2;
   const arrowLeft = Math.max(ARROW_INSET, Math.min(cardWidth - ARROW_INSET - ARROW, pointAt - (cardLeft - left) - ARROW / 2));
   const go = goesNow(stop);
-  const face = go ? colors.accent : colors.surfaceRaised;
+  const face = go ? tone.fill : colors.surfaceRaised;
   const edge = go ? 'transparent' : colors.separator;
   return (
     <Animated.View
@@ -95,9 +96,9 @@ export function StopCard({
       onLayout={(e: LayoutChangeEvent) => onSize?.(e.nativeEvent.layout.height)}
       testID={go ? 'lp-card-go' : 'lp-card'}
     >
-      <View style={[styles.card, { backgroundColor: face, borderColor: edge, shadowColor: colors.softShadow }]}>
+      <View style={[styles.card, { backgroundColor: face, borderColor: edge, shadowColor: colors.softShadow }, go ? { borderBottomWidth: 6, borderBottomColor: tone.lip } : null]}>
         {go ? (
-          <GoCard stop={go} titleRef={title} actions={actions} />
+          <GoCard stop={go} tone={tone} titleRef={title} actions={actions} />
         ) : (
           <PanelCard stop={stop} unit={unit} tone={tone} titleRef={title} actions={actions} />
         )}
@@ -108,7 +109,7 @@ export function StopCard({
   );
 }
 
-/** A skill whose card offers a lesson to play now, and so is the road's main button, in its violet; else null. */
+/** A skill whose card offers a lesson to play now, and so is the road's main button, in its unit's colour; else null. */
 function goesNow(stop: Stop): Extract<Stop, { kind: 'skill' }> | null {
   return stop.kind === 'skill' && stop.state !== 'locked' && stop.launch ? stop : null;
 }
@@ -144,16 +145,25 @@ function xpOf(stop: Extract<Stop, { kind: 'skill' }>, t: ReturnType<typeof useI1
   return t(again ? 'coursemap.xp.again' : 'coursemap.xp.first', { min: formatNumber(xp.min, locale), max: formatNumber(xp.max, locale) });
 }
 
-/** A topic to play now: its name, which lesson or round is next, its stars, and the one button. */
-function GoCard({ stop, titleRef, actions }: { stop: Extract<Stop, { kind: 'skill' }>; titleRef: Ref<Text>; actions: StopActions }): React.JSX.Element {
-  const { colors } = useTheme();
+/** A topic to play now: its name, which lesson or round is next, its suns, and the one button. */
+function GoCard({
+  stop,
+  tone,
+  titleRef,
+  actions,
+}: {
+  stop: Extract<Stop, { kind: 'skill' }>;
+  tone: ToneColors;
+  titleRef: Ref<Text>;
+  actions: StopActions;
+}): React.JSX.Element {
   const { t, locale } = useI18n();
   const dir = useDirection();
   const { skill } = stop;
   const lessons = skill.lessons ?? [];
   const at = lessons.findIndex((l) => l.lessonId === stop.launch);
   const action = actionOf(stop, t, actions);
-  const ink = colors.textOnPrimary;
+  const ink = tone.ink;
   // A finished topic is played again in rounds, so it says which round; any other says which lesson is next.
   const where =
     stop.state === 'done' && stop.rounds > 0
@@ -169,22 +179,23 @@ function GoCard({ stop, titleRef, actions }: { stop: Extract<Stop, { kind: 'skil
         {skill.title}
       </Text>
       {where ? <Text style={[styles.goLine, dir.text, { color: ink }]}>{where}</Text> : null}
-      {stop.rounds > 0 ? <Stars rounds={stop.rounds} /> : null}
-      {action ? <StartButton label={action.label} xp={xpOf(stop, t, locale)} onPress={action.go} /> : null}
+      {stop.rounds > 0 ? <Suns rounds={stop.rounds} /> : null}
+      {stop.state === 'done' ? <WaxLegend /> : null}
+      {action ? <StartButton label={action.label} xp={xpOf(stop, t, locale)} tone={tone} onPress={action.go} /> : null}
       {skill.hasGrammar ? <Tips skill={skill} colour={ink} onTips={actions.onTips} /> : null}
     </>
   );
 }
 
 /**
- * The card's one light button: the lesson's word and what it pays, raised on a lip it sinks into when pressed. A glint
- * crosses it now and then while the road is alive; under Reduce Motion it holds still.
+ * The card's one button: the lesson's word and what it pays, in the unit's colour on the page's own ground, raised on a
+ * lip of the unit's colour it sinks into when pressed. A glint crosses it now and then while the road is alive; under
+ * Reduce Motion it holds still.
  */
-function StartButton({ label, xp, onPress }: { label: string; xp: string | null; onPress: () => void }): React.JSX.Element {
-  const { colors, scheme } = useTheme();
+function StartButton({ label, xp, tone, onPress }: { label: string; xp: string | null; tone: ToneColors; onPress: () => void }): React.JSX.Element {
+  const { colors } = useTheme();
   const live = useMotionAlive();
-  // The violet by day; by night the violet is pale, so the day's ink is written on the white instead.
-  const words = scheme === 'dark' ? colors.textOnPrimary : colors.accent;
+  const words = tone.text;
   const [width, setWidth] = useState(0);
   const glint = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -210,14 +221,19 @@ function StartButton({ label, xp, onPress }: { label: string; xp: string | null;
       testID="lp-card-start"
       onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
       // The label and what the lesson pays stack, so the longest pair fits a narrow phone.
-      style={({ pressed }) => [styles.start, pressed ? styles.startPressed : null, xp ? styles.startStacked : { flexDirection: 'row' }]}
+      style={({ pressed }) => [
+        styles.start,
+        { backgroundColor: colors.background, borderBottomColor: tone.lip },
+        pressed ? styles.startPressed : null,
+        xp ? styles.startStacked : { flexDirection: 'row' },
+      ]}
     >
       {live && width > 0 ? (
         <Animated.View
           pointerEvents="none"
           style={[
             styles.glint,
-            { width: width * 0.22, backgroundColor: `${colors.accent}38` },
+            { width: width * 0.22, backgroundColor: `${tone.fill}38` },
             // Seen only while it crosses, so it never rests at the button's edge.
             { opacity: glint.interpolate({ inputRange: [0, 0.04, 0.96, 1], outputRange: [0, 1, 1, 0] }) },
             { transform: [{ translateX: glint.interpolate({ inputRange: [0, 1], outputRange: [-width * 0.3, width * 1.1] }) }, { skewX: '-20deg' }] },
@@ -232,6 +248,27 @@ function StartButton({ label, xp, onPress }: { label: string; xp: string | null;
 
 /** The glint's pause between crossings and its crossing, close to the website's 2.8 s round. */
 const GLINT = { restMs: 1500, crossMs: 1300 } as const;
+
+/** What a topic's seal becomes: a sun pressed in for each full round, and gold with all three. Decorative. */
+function WaxLegend(): React.JSX.Element {
+  const { scheme } = useTheme();
+  const dir = useDirection();
+  const tiles = useMemo(() => [1, 2, 3].map((suns) => pathWaxSvg({ seed: 'legend', suns, gold: suns === 3, dark: scheme === 'dark', size: WAX_KEY })), [scheme]);
+  return (
+    <View style={[styles.waxLegend, { flexDirection: dir.row }]} aria-hidden testID="lp-wax-legend">
+      {tiles.map((svg, i) => (
+        <View key={i} style={styles.waxIcon}>
+          <View style={styles.waxDrawing}>
+            <SvgXml xml={svg} width={WAX_KEY} height={WAX_KEY} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** A seal's drawing in the legend: its 112-point canvas at this size, the seal itself about 26 points across. */
+const WAX_KEY = 40;
 
 function Tips({ skill, colour, onTips }: { skill: SkillNode; colour: string; onTips: (skill: SkillNode) => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -335,7 +372,7 @@ function PanelCard({
   const { skill } = stop;
   const lessons = skill.lessons ?? [];
   const states = lessonStates(skill);
-  // Progress through the current round, or through all lessons before the first star.
+  // Progress through the current round, or through all lessons before the first sun.
   const share = stop.lessonsTotal > 0 ? (stop.rounds > 0 ? stop.pieces / stop.lessonsTotal : stop.lessonsDone / stop.lessonsTotal) : 0;
   const action = actionOf(stop, t, actions);
   const xp = xpOf(stop, t, locale);
@@ -391,7 +428,7 @@ function PanelCard({
       ) : null}
       {stop.lessonsTotal > 0 && stop.state !== 'locked' ? (
         <View style={styles.progress}>
-          {stop.rounds > 0 ? <Stars rounds={stop.rounds} /> : null}
+          {stop.rounds > 0 ? <Suns rounds={stop.rounds} /> : null}
           {stop.rounds < TOPIC_STARS ? (
             // Progress, not a reward, so the ink like the ring's pieces.
             <View style={[styles.bar, { backgroundColor: colors.controlTrack }]}>
@@ -408,6 +445,7 @@ function PanelCard({
         </View>
       ) : null}
       {stop.state === 'done' && stop.rounds > 0 ? line(t(stop.rounds < TOPIC_STARS ? 'coursemap.path.roundsWhy' : 'coursemap.path.roundsAll')) : null}
+      {stop.state === 'done' ? <WaxLegend /> : null}
       {stop.state === 'done' ? line(stop.finish === 'refresh' ? t('coursemap.path.refreshWhy') : t('coursemap.strength', { percent: skill.strength })) : null}
       {stop.state === 'locked' ? line(stop.after ? t('coursemap.path.lockedAfter', { title: stop.after.title }) : t('coursemap.lockedBadge')) : null}
       {stop.state !== 'locked' && !stop.launch ? line(t('coursemap.path.notYet')) : null}
@@ -423,28 +461,14 @@ function PanelCard({
   );
 }
 
-/** A topic's three stars: gold for each round played, the rest the ring's track. Hidden from screen readers, as the line below says it. */
-function Stars({ rounds }: { rounds: number }): React.JSX.Element {
-  const { colors, scheme } = useTheme();
-  const dir = useDirection();
+/** A topic's three suns, gold for each round played. Hidden from screen readers, as the line below says it. */
+function Suns({ rounds }: { rounds: number }): React.JSX.Element {
   return (
-    <View style={[styles.stars, { flexDirection: dir.row }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID={`lp-card-stars-${rounds}`}>
-      {Array.from({ length: TOPIC_STARS }, (_, i) => (
-        <Svg key={i} width={STAR_SIZE} height={STAR_SIZE} viewBox="0 0 24 24">
-          <Path
-            d={starPath(12, 12.6, 10.6)}
-            fill={i < rounds ? colors.gold : RING[scheme].track}
-            stroke={i < rounds ? STAR.edge : RING[scheme].edge}
-            strokeWidth={1.4}
-            strokeLinejoin="round"
-          />
-        </Svg>
-      ))}
+    <View style={styles.suns} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <SunRow rounds={rounds} />
     </View>
   );
 }
-
-const STAR_SIZE = 26;
 
 const styles = StyleSheet.create({
   // Over the road and the closing layer under it; Android orders raised views by elevation, so both carry it.
@@ -481,10 +505,8 @@ const styles = StyleSheet.create({
     minHeight: 50,
     marginTop: spacing.xs,
     paddingHorizontal: spacing.md,
-    borderRadius: radii.pill,
+    borderRadius: radii.md + 2,
     borderBottomWidth: 4,
-    borderBottomColor: 'rgba(0,0,0,0.18)',
-    backgroundColor: '#FFFFFF',
   },
   startPressed: { marginTop: spacing.xs + 3, borderBottomWidth: 1 },
   startText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 0.6 },
@@ -497,6 +519,10 @@ const styles = StyleSheet.create({
   // The tale's Kurdish title, under "Hamo's story".
   tale: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontStyle: 'italic' },
   small: { fontSize: typography.sizes.text },
+  waxLegend: { gap: spacing.sm },
+  // Only the seal and its shadow show, from the middle of its drawing.
+  waxIcon: { width: 30, height: 31, overflow: 'hidden' },
+  waxDrawing: { position: 'absolute', left: -6, top: -8 },
   lessons: { gap: 2 },
   lessonRow: { alignItems: 'center', gap: spacing.sm + 4, minHeight: MIN_TOUCH_TARGET },
   lessonTitle: { flex: 1, fontSize: typography.sizes.text },
@@ -508,7 +534,7 @@ const styles = StyleSheet.create({
   barFill: { height: 8, borderRadius: radii.pill },
   barEnd: { alignSelf: 'flex-end' },
   action: { marginTop: spacing.xs },
-  stars: { gap: 4 },
+  suns: { gap: 4 },
   won: { alignItems: 'center', gap: 4, paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radii.pill },
   wonText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   xp: { alignItems: 'center', gap: 4, paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radii.pill },

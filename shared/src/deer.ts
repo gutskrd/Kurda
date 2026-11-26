@@ -1,6 +1,6 @@
 /**
  * Hevalo the deer holding up a wooden board. The deer is the app icon's mascot picture (`mascot-deer.png` in each app), so
- * it is the same deer everywhere; drawn here are the lilac disc it stands on and the board with the forelegs holding it,
+ * it is the same deer everywhere; drawn here are the warm disc it stands on and the board with the forelegs holding it,
  * over the picture in one 200 × 220 frame. The board tips about its top edge with the stars, so it is its own layer (a
  * group on the web, its own SvgXml in an animated view on the phone). Gradient ids carry the caller's prefix. The board's
  * words need the platform's text for Kurdish letters, so each app sets them in `DEER_BOARD_TEXT`.
@@ -27,7 +27,7 @@ const C = {
   fur: '#bf7a43',
   furDeep: '#8c4f26',
   hoof: '#4a2a1c',
-  card: '#b874f0',
+  card: '#e0a24a',
   wood: '#e2ad6c',
   woodHi: '#f2c98f',
   woodLo: '#c98c4c',
@@ -67,7 +67,7 @@ function starPath(cx: number, cy: number, r: number): string {
   return `M${pts.join(' L')} Z`;
 }
 
-/** The soft lilac disc behind, from the logo's card; it stays put while the deer bobs. */
+/** A soft disc of warm honey behind, the room's lamplight; it stays put while the deer bobs. */
 export function deerCard(): string {
   return (
     `<circle cx="100" cy="112" r="92" fill="${C.card}" opacity="0.18"/>` +

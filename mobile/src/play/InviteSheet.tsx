@@ -166,7 +166,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const [partySettings, setPartySettings] = useState<Record<string, unknown> | null>(null);
   const [stories, setStories] = useState<StoryListItem[]>([]);
   const [story, setStory] = useState<SetupState>(() => initialSetup({ mode: 'duo', dialect, length: 'short' }));
-  const { friends, recentIds } = useFriendsToAsk();
+  const { friends, recentIds, failed: friendsFailed, retry: retryFriends } = useFriendsToAsk();
   const preselected = target.kind === 'dm' ? target.friendId : target.kind === 'new' ? target.friendId : undefined;
   // From a DM the server invites that friend via `chat` regardless of picks, so they stay picked rather than offer a
   // choice that would not be honoured.
@@ -377,11 +377,11 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
                       accessibilityLabel={t(GAME_NAME_KEY[g])}
                       style={({ pressed }) => [
                         styles.gameTile,
-                        { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+                        { backgroundColor: on ? colors.pickedFill : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
                       ]}
                     >
-                      <Icon name={GAME_ICON[g]} size={22} color={on ? colors.textOnPrimary : colors.primary} />
-                      <Text style={[styles.gameName, { color: on ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={2}>
+                      <Icon name={GAME_ICON[g]} size={22} color={on ? colors.pickedInk : colors.primary} />
+                      <Text style={[styles.gameName, { color: on ? colors.pickedInk : colors.textPrimary }]} numberOfLines={2}>
                         {t(GAME_NAME_KEY[g])}
                       </Text>
                     </Pressable>
@@ -508,6 +508,8 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
         ) : null}
         <FriendPicker
           friends={friends}
+          failed={friendsFailed}
+          onRetry={retryFriends}
           recentIds={recentIds}
           picked={picked}
           onToggle={toggle}

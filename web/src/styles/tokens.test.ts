@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HUE_NAMES, hueSteps, type HueScheme, type HueSteps } from '@kurda/shared';
+import { ACCENT, ANSWER, HUE_NAMES, PAGE, PLUS_STYLE, REWARD_GOLD, hueSteps, type HueScheme, type HueSteps } from '@kurda/shared';
 
 /*
  * The shared hues exist in shared/src/hues.ts and as tokens.css `.hue-*` classes, so every class is checked against
@@ -14,6 +14,7 @@ const { readFileSync } = (await import(/* @vite-ignore */ fileSystem)) as FileSy
 // beside this file, wherever the suite is run from
 const here = import.meta.url;
 const tokens = readFileSync(new URL('tokens.css', here), 'utf8');
+const page = readFileSync(new URL('../../index.html', here), 'utf8');
 
 const STEPS = ['tint', 'wash', 'base', 'deep'] as const satisfies readonly (keyof HueSteps)[];
 
@@ -72,5 +73,90 @@ describe('the shared hues in the website’s tokens', () => {
       { scheme: 'dark', name: 'green', values: { '--hue-tint': '#112d1a', '--hue-deep': '#b4ebc1' } },
       { scheme: 'light', name: 'green', values: { '--hue-tint': '#e2f8e7' } },
     ]);
+  });
+});
+
+/** Every top-level rule's declarations, by each selector it names as written, comments taken out. */
+function rules(css: string): Map<string, Record<string, string>> {
+  const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const out = new Map<string, Record<string, string>>();
+  for (const m of bare.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    for (const part of m[1]!.split(',')) {
+      const selector = part.trim();
+      out.set(selector, { ...out.get(selector), ...declared(m[2]!) });
+    }
+  }
+  return out;
+}
+
+/** Violet to magenta, in `#rrggbb` or `rgba(r, g, b, a)`: the colours the interface no longer wears. */
+function isPurple(colour: string): boolean {
+  const rgba = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(colour);
+  const [r, g, b] = rgba ? [1, 2, 3].map((i) => Number(rgba[i])) : [1, 3, 5].map((at) => parseInt(colour.slice(at, at + 2), 16));
+  const max = Math.max(r!, g!, b!);
+  const chroma = max - Math.min(r!, g!, b!);
+  if (chroma < 8) return false;
+  const hue = 60 * (max === r ? ((g! - b!) / chroma + 6) % 6 : max === g ? (b! - r!) / chroma + 2 : (r! - g!) / chroma + 4);
+  return hue >= 250 && hue <= 330;
+}
+
+describe('the slate page and the one accent in the website’s tokens', () => {
+  const sheet = rules(tokens);
+  const dark = sheet.get(':root')!;
+  const light = sheet.get(":root[data-theme='light']")!;
+
+  it('sits on the shared slate page, never pure white by day or pure black by night', () => {
+    expect(dark['--app-bg']).toBe(PAGE.dark.page.toLowerCase());
+    expect(light['--app-bg']).toBe(PAGE.light.page.toLowerCase());
+    expect(light['--app-bg']).not.toBe('#ffffff');
+    expect(dark['--app-bg']).not.toBe('#000000');
+    for (const [block, scheme] of [[dark, 'dark'], [light, 'light']] as const) {
+      expect(block['--surface'], scheme).toBe(PAGE[scheme].surface.toLowerCase());
+      expect(block['--ink'], scheme).toBe(PAGE[scheme].ink.toLowerCase());
+      expect(block['--ink-3'], scheme).toBe(PAGE[scheme].inkSoft.toLowerCase());
+    }
+    expect(dark['--surface-solid']).toBe(PAGE.dark.raised.toLowerCase());
+  });
+
+  it('gives the accent its shared colours, by night and by day', () => {
+    for (const [block, scheme] of [[dark, 'dark'], [light, 'light']] as const) {
+      const a = ACCENT[scheme];
+      expect(block['--accent'], scheme).toBe(a.fill.toLowerCase());
+      expect(block['--accent-lip'], scheme).toBe(a.lip.toLowerCase());
+      expect(block['--accent-ink'], scheme).toBe(a.ink.toLowerCase());
+      expect(block['--accent-text'], scheme).toBe(a.text.toLowerCase());
+      expect(block['--focus'], scheme).toBe(a.text.toLowerCase());
+      expect(block['--success'], scheme).toBe(ANSWER[scheme].right.text.toLowerCase());
+      expect(block['--danger'], scheme).toBe(ANSWER[scheme].wrong.text.toLowerCase());
+    }
+  });
+
+  it('has no second colour and no colour theme to switch', () => {
+    const bare = tokens.replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(bare).not.toMatch(/--secondary/);
+    expect(bare).not.toMatch(/data-palette/);
+  });
+
+  it('gives gold and Hevalo+’s button the shared colours in both schemes', () => {
+    for (const [block, scheme] of [[dark, 'dark'], [light, 'light']] as const) {
+      expect(block['--gold']).toBe(REWARD_GOLD[scheme].gold.toLowerCase());
+      expect(block['--gold-ink']).toBe(REWARD_GOLD[scheme].goldText.toLowerCase());
+      expect(block['--on-gold']).toBe(REWARD_GOLD[scheme].onGold.toLowerCase());
+      const plus = PLUS_STYLE[scheme];
+      expect(block['--plus-fill']).toBe(`linear-gradient(180deg, ${plus.fill[0]}, ${plus.fill[1]})`.toLowerCase());
+      expect(block['--plus-edge']).toBe(plus.edge.toLowerCase());
+      expect(block['--plus-ink']).toBe(plus.ink.toLowerCase());
+    }
+  });
+
+  // The browser's bar is coloured before any script runs, so the page's first frame matches the dark default.
+  it('colours the browser’s bar with the dark page before the theme is applied', () => {
+    expect(/<meta name="theme-color" content="(#[0-9a-f]{6})"/i.exec(page)?.[1]).toBe(PAGE.dark.page.toLowerCase());
+  });
+
+  it('has no violet anywhere in the tokens', () => {
+    const colours = tokens.replace(/\/\*[\s\S]*?\*\//g, '').match(/#[0-9a-f]{6}\b|rgba?\([^)]*\)/gi) ?? [];
+    expect(colours.length).toBeGreaterThan(50);
+    expect(colours.filter(isPurple)).toEqual([]);
   });
 });

@@ -1,17 +1,17 @@
 import type pg from 'pg';
-import type { Currency } from './service.js';
 
 /**
  * Whether every balance still equals its ledger sum. WalletService writes both in one statement, so they part only if
  * something wrote one another way (a hand edit, a script, a migration bug). One read-only pass over the ledger compares
  * every (person, currency) with a balance or ledger rows, cheap enough to run daily (jobs/wallet-jobs.ts) and on demand
  * (`GET /admin/economy/reconcile`). A balance with no ledger must be zero, and ledger rows with no balance must sum to
- * zero.
+ * zero, as the retired Gewher's rows do since migration 1751000830000 moved every Gewher balance into Zêr.
  */
 
 export interface WalletMismatch {
   userId: string;
-  currency: Currency;
+  /** 'zer', or 'gems' for the retired Gewher's history */
+  currency: string;
   /** what `wallet_balances` says they hold (0 when there is no row) */
   balance: number;
   /** what their ledger rows add up to */
@@ -42,7 +42,7 @@ export class WalletReconciler {
     }
     const res = await this.pool.query<{
       user_id: string;
-      currency: Currency;
+      currency: string;
       balance: string;
       ledger_sum: string;
       checked: string;

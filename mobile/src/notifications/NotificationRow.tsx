@@ -63,7 +63,7 @@ const WASH_FADE_MS = 420;
  * A notification: who it is from at its start (their face, or Hevalo's mark, with a badge for the kind), what happened
  * with the time after it, and at its end a picture of what it is about where there is one.
  *
- * New is shown three ways, never by colour alone: a violet dot, a faint violet wash across the row, and "Unread" for a
+ * New is shown three ways, never by colour alone: an ink dot, a faint ink wash across the row, and "Unread" for a
  * screen reader; both fade once read. Pulled toward its start it slides open on the settings and Delete, and pulled
  * most of the way across it goes at once. A long press opens it too, and a screen reader is offered Delete as an action
  * beside the inline one (Join, Open), which it could not otherwise reach.
@@ -105,7 +105,7 @@ export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
     return () => run.stop();
   }, [unread, reduce, fresh]);
 
-  // The app's violet at a tenth, as the website mixes it; the face's ring is the same colour made solid.
+  // The app's ink at a tenth, as the website mixes it; the face's ring is the same colour made solid.
   const wash = `${colors.primary}1A`;
   const ring = unread ? blend(colors.primary, colors.background, 0.1) : colors.background;
   const deleteWhat = t('notifications.deleteWhat', { what: title });
@@ -281,7 +281,7 @@ function Face({ actor, kind, ring, mirrored }: { actor: NoticeActor | null; kind
  * What it is about, drawn small at the row's end: the website's shared art (drawn at twice the size and fitted, so
  * detail holds), the gift's wrapping, or the streak's still fire. Decoration: the row's words already say it.
  */
-function NoticeArt({ picture }: { picture: NoticePicture }): React.JSX.Element {
+export function NoticeArt({ picture }: { picture: NoticePicture }): React.JSX.Element {
   const { colors } = useTheme();
   const id = `np${useId().replace(/[^A-Za-z0-9]/g, '')}`;
   const xml = useMemo(() => {
@@ -310,7 +310,7 @@ function NoticeArt({ picture }: { picture: NoticePicture }): React.JSX.Element {
       {xml ? (
         <SvgXml xml={xml} width={NOTICE.picture} height={NOTICE.picture} />
       ) : picture.kind === 'gift' ? (
-        <GiftBox size={34} tier="rare" gold={colors.gold} />
+        <GiftBox size={42} tier="rare" />
       ) : (
         <Fire size={32} level={{ stage: 'campfire', growth: 0.5 }} still />
       )}

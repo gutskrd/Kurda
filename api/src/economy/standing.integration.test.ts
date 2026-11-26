@@ -1,12 +1,12 @@
 /**
- * Who the economy pays, against real Postgres: automatic Gem grants skip a closed, banned, confirmed-bot,
+ * Who the economy pays, against real Postgres: automatic earned Zêr skips a closed, banned, confirmed-bot,
  * shadow-flagged or fraud-held account silently, a confirmed bot or fraud-held account claiming a reward is told
  * it is paused, and everyone else is paid.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { WalletService } from '../wallet/service.js';
-import { GemService } from '../gems/service.js';
+import { EarnService } from '../earn/service.js';
 import { DailyRewardService } from '../rewards/service.js';
 import { StreakService } from '../streaks/service.js';
 import { DailyQuestService } from '../quests/service.js';
@@ -24,7 +24,7 @@ describe.skipIf(!DATABASE_URL)('who the economy pays (integration)', () => {
   let wallet: WalletService;
   const suffix = Date.now().toString(36);
   const p: Record<string, TestLearner> = {};
-  const gemRule = `standing_${suffix}`;
+  const earnRule = `standing_${suffix}`;
 
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL });
@@ -32,6 +32,8 @@ describe.skipIf(!DATABASE_URL)('who the economy pays (integration)', () => {
     for (const tag of ['fine', 'cheat', 'bot', 'suspect', 'held', 'banned', 'lapsed', 'closed']) {
       p[tag] = await makeLearner(pool, `est${tag}${suffix}`);
     }
+    // members, so the daily Zêr is theirs to claim when the economy pays them
+    await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = ANY($1)`, [Object.values(p).map((who) => who.id)]);
     await pool.query(
       `INSERT INTO cheat_reviews (user_id, room_id, flags, evidence, confidence, shadow_flagged)
        VALUES ($1, 'test', '[]'::jsonb, '{}'::jsonb, 1.0, true)`,
@@ -54,7 +56,7 @@ describe.skipIf(!DATABASE_URL)('who the economy pays (integration)', () => {
   });
 
   afterAll(async () => {
-    await pool.query(`DELETE FROM gem_rules WHERE key = $1`, [gemRule]);
+    await pool.query(`DELETE FROM earn_rules WHERE key = $1`, [earnRule]);
     await removeLearners(pool, `est%${suffix}@it.kurda.app`);
     await pool.end();
   });
@@ -73,20 +75,20 @@ describe.skipIf(!DATABASE_URL)('who the economy pays (integration)', () => {
     expect(await isEconomyBlocked(pool, '00000000-0000-0000-0000-000000000000')).toBe(true);
   });
 
-  it('grants no automatic Gems to a blocked account, silently, and pays everyone else', async () => {
-    const gems = new GemService(pool, wallet);
+  it('grants no automatic Zêr to a blocked account, silently, and pays everyone else', async () => {
+    const earn = new EarnService(pool, wallet);
     // A rule of this suite's own: standing is checked only once a rule would pay.
-    await gems.upsertRule({ key: gemRule, amount: 15, dailyCap: null, cooldownSeconds: 0, active: true });
+    await earn.upsertRule({ key: earnRule, amount: 15, dailyCap: null, cooldownSeconds: 0, active: true });
     for (const tag of ['cheat', 'bot', 'held', 'banned', 'closed']) {
       const who = p[tag]!;
-      expect(await gems.grant(who.id, gemRule, `standing:${who.id}`), tag).toEqual({ granted: 0, cappedBy: 'restricted' });
-      expect((await wallet.balances(who.id)).gems, tag).toBe(0);
+      expect(await earn.grant(who.id, earnRule, `standing:${who.id}`), tag).toEqual({ granted: 0, cappedBy: 'restricted' });
+      expect((await wallet.balances(who.id)).zer, tag).toBe(0);
     }
     for (const tag of ['fine', 'suspect', 'lapsed']) {
       const who = p[tag]!;
-      const result = await gems.grant(who.id, gemRule, `standing:${who.id}`);
+      const result = await earn.grant(who.id, earnRule, `standing:${who.id}`);
       expect(result, tag).toEqual({ granted: 15, cappedBy: 'none' });
-      expect((await wallet.balances(who.id)).gems, tag).toBe(15);
+      expect((await wallet.balances(who.id)).zer, tag).toBe(15);
     }
   });
 

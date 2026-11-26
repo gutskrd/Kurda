@@ -36,7 +36,7 @@ import { pressedDim } from '../theme/motion';
 import { layout, radii, spacing, typography, wash } from '../theme/tokens';
 import { DailyZer } from './DailyZer';
 import { Insights } from './Insights';
-import { RepairOffer, Restored } from './Repair';
+import { RepairOffer, Restored, takeWonBack } from './Repair';
 import type { Today, TodayView } from './today';
 import { WeekRow, thisWeek } from './WeekRow';
 
@@ -111,7 +111,12 @@ function DailyBody({
   const { colors } = useTheme();
   const { t } = useI18n();
   const [restored, setRestored] = useState<Streak | null>(null);
+  // A streak won back by today's learning arrives with the day's view; its moment plays once (`takeWonBack`).
+  const [wonBack, setWonBack] = useState(false);
   const view = today.view;
+  useEffect(() => {
+    if (view && !wonBack && takeWonBack(view.streak, view.today)) setWonBack(true);
+  }, [view, wonBack]);
   if (!view) {
     return today.failed ? (
       <View style={styles.body}>
@@ -135,18 +140,21 @@ function DailyBody({
   const offer = restored ? null : (view.streak.repair ?? null);
   return (
     <SheetScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false} testID="daily-scroll">
-      {restored ? <Restored streak={restored} /> : <DailyHead days={streak.current} />}
+      {restored ? <Restored streak={restored} /> : wonBack ? <Restored streak={streak} wonBack /> : <DailyHead days={streak.current} />}
       <WeekRow week={thisWeek(view.days, view.today, view.weekStart)} />
       {offer ? (
         <RepairOffer
           offer={offer}
           onRestored={(next) => {
+            // greeted here, so a later look today does not greet it again as won back
+            takeWonBack(next, view.today);
             setRestored(next);
             today.change({ streak: next });
             onStreak?.(next);
           }}
         />
       ) : null}
+      {/* everyone claims the day: a member for Zêr and a gift for the bag, anyone else for the gift */}
       <DailyZer daily={view.daily} onClaimed={(daily) => today.change({ daily })} onLearn={onLearn} />
       <WeekStatsCard view={view} />
       {insights.length > 0 ? (

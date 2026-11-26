@@ -333,10 +333,10 @@ export function LessonsView({
                       onPress={() => setChosen(c.course.id)}
                       accessibilityRole="button"
                       accessibilityState={{ selected: on }}
-                      // The current course in solid violet, as every chosen chip is.
-                      style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+                      // The current course in solid ink, as every chosen chip is.
+                      style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.pickedFill : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
                     >
-                      <Text style={[styles.chipText, dir.free, { color: on ? colors.textOnPrimary : colors.textSecondary }]} numberOfLines={1}>
+                      <Text style={[styles.chipText, dir.free, { color: on ? colors.pickedInk : colors.textSecondary }]} numberOfLines={1}>
                         {courseName(t, { slug: c.course.slug, title: c.map?.course.title ?? c.course.title })}
                       </Text>
                     </Pressable>
@@ -349,6 +349,7 @@ export function LessonsView({
                 <LessonPath
                   key={entry.course.id}
                   map={entry.map}
+                  dialect={entry.course.dialect}
                   due={due ?? 0}
                   openReview={openReview}
                   onFocus={onFocus}
@@ -425,10 +426,10 @@ function openStep(navigation: RootNavigation, step: NextStep): void {
 /** The pinned unit gives way this far before the path ends, so it is gone before what follows the path. */
 const PIN_CLEAR = 72;
 /**
- * The pinned unit's height: it takes over once no more of the banner than this is on screen, covering the rest
- * rather than half a banner.
+ * The pinned unit's height, its colour on its lip: it takes over once no more of the banner than this is on screen,
+ * covering the rest rather than half a banner, and the next unit's divider turns it as it goes under its foot.
  */
-const PIN_HEIGHT = 68;
+const PIN_HEIGHT = 126;
 
 /** How long after the path is first centred a card arriving above it may still move the scroll to follow. */
 const FOLLOW_MS = 4000;

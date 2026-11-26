@@ -324,7 +324,9 @@ export function BottomSheet({
             style={[
               styles.sheet,
               {
-                backgroundColor: colors.background,
+                // The floating chrome's neutral grey, with its line of light along the top, as the website's sheets.
+                backgroundColor: colors.panel,
+                borderTopColor: colors.glassRim,
                 ...(tallest !== undefined ? { height: tallest } : { maxHeight: cap }),
                 paddingBottom: insets.bottom + spacing.md + hidden,
                 transform: [{ translateY: y }],
@@ -416,6 +418,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,
+    borderTopWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
   // A fingertip of room round the grabber, so it can be caught.

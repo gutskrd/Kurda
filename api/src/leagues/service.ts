@@ -77,8 +77,8 @@ function inWeekSql(alias: string, week: string): string {
           AND ${alias}.created_at < ((${week}::date + 7)::timestamp AT TIME ZONE 'UTC')`;
 }
 
-/** Grants Gems for a rule and reference id. */
-export interface GemGranter {
+/** Grants earned Zêr for a rule and reference id. */
+export interface EarnGranter {
   grant(userId: string, ruleKey: string, refId: string): Promise<{ granted: number }>;
 }
 
@@ -103,7 +103,7 @@ interface Log {
 }
 
 export interface LeagueDeps {
-  gems?: GemGranter;
+  earn?: EarnGranter;
   activity?: ActivityPublisher;
   notices?: LeagueNotices;
   badges?: LeagueWeekListener;
@@ -534,7 +534,7 @@ export class LeagueService {
       goal_xp: number;
       goal_met: boolean;
       trophy: boolean;
-      gems: number;
+      zer: number;
     }>(`SELECT * FROM league_weeks WHERE user_id = $1 AND week_key = $2`, [userId, previousWeek(weekKey)]);
     const w = r.rows[0];
     if (!w) return null;
@@ -550,7 +550,7 @@ export class LeagueService {
       goalXp: w.goal_xp,
       goalMet: w.goal_met,
       trophy: w.trophy,
-      gems: w.gems,
+      zer: w.zer,
     };
   }
 
@@ -579,7 +579,7 @@ export class LeagueService {
 
   /**
    * Settles one group idempotently: the group's row is locked and claimed, and a settled group is left alone. Each
-   * member's next tier and week are written; after the commit, promotion Gems are paid (once per tier per season, by
+   * member's next tier and week are written; after the commit, promotion Zêr is paid (once per tier per season, by
    * the grant's key) and the badges are told. Returns the standings settled, empty if already done.
    */
   async settleCohort(cohortId: string): Promise<LeagueStanding[]> {
@@ -644,17 +644,17 @@ export class LeagueService {
     });
     if (!settled) return [];
 
-    // promotion Gems + feed events, after the tier writes commit
+    // promotion Zêr + feed events, after the tier writes commit
     const season = weekSeason(settled.weekKey);
     for (const s of settled.standings) {
       if (s.outcome !== 'promoted') continue;
-      if (this.deps.gems) {
-        const result = await this.deps.gems
+      if (this.deps.earn) {
+        const result = await this.deps.earn
           .grant(s.userId, 'league_promotion', `${season}:${s.tierAfter}:${s.userId}`)
           .catch(() => null);
         const granted = result?.granted ?? 0;
         if (granted > 0) {
-          await this.pool.query(`UPDATE league_weeks SET gems = $3 WHERE user_id = $1 AND week_key = $2`, [
+          await this.pool.query(`UPDATE league_weeks SET zer = $3 WHERE user_id = $1 AND week_key = $2`, [
             s.userId,
             settled.weekKey,
             granted,

@@ -330,6 +330,13 @@ export interface ShowcaseBadge {
   tierKey: BadgeTierKey | null;
 }
 
+/** An earned badge on a profile, newest first: what to draw, when its tier was reached, and how rare that tier is. */
+export interface ProfileBadge extends ShowcaseBadge {
+  earnedAt: string | null;
+  /** the share of active learners holding this tier, 0–100; null while fewer than 500 are active */
+  rarity: number | null;
+}
+
 /** The realtime event (`badge_unlocked`) that starts the celebration. */
 export interface BadgeUnlockedEvent {
   type: 'badge_unlocked';

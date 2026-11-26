@@ -27,7 +27,7 @@ function serve() {
     vi.fn(async (url: string) => {
       if (url.includes('/me/social')) {
         asked.social += 1;
-        return jsonResponse(200, { you: { balances: { zer: 120, gems: 3 }, level: { level: 2, progress: 0.4 } }, unread: { notifications: 0, groups: 0, requests: 0, challenges: 0 } });
+        return jsonResponse(200, { you: { balances: { zer: 120 }, level: { level: 2, progress: 0.4 } }, unread: { notifications: 0, groups: 0, requests: 0, challenges: 0 } });
       }
       if (url.includes('/play/invites')) {
         asked.invites += 1;

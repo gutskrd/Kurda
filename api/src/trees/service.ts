@@ -2,6 +2,7 @@ import type pg from 'pg';
 import {
   TREE_KINDS,
   TREE_SPECIES,
+  TREE_WATER_PER_LESSON,
   canPlant,
   isTreeSpecies,
   plantTree,
@@ -15,7 +16,8 @@ import {
   type TreeView,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import { isEconomyBlocked } from '../economy/standing.js';
+import { earnWithin } from '../earn/service.js';
+import { grantBagGiftWithin } from '../gifts/bag.js';
 import { localDate, safeTimeZone } from '../streaks/streak-logic.js';
 import type { WalletService } from '../wallet/service.js';
 
@@ -26,7 +28,7 @@ type Executor = Pick<pg.Pool, 'query'>;
 export const TREE_HARVEST_REASON = 'tree_harvest';
 export const TREE_PURCHASE_REASON = 'tree_purchase';
 
-/** The most water anybody holds: far more than learning earns, and what the column allows. */
+/** The most drops anybody holds: far more than learning earns, and what the column allows. */
 const WATER_MOST = 9999;
 
 /** A kind as the nursery shows it: its cost, and whether it is the learner's to plant. */
@@ -57,6 +59,8 @@ export interface Watered {
   /** Zêr the harvests paid */
   zer: number;
   revived: boolean;
+  /** the small gift a harvest put in the gift bag, for everyone but a child */
+  bagGift: { sku: string; name: string } | null;
 }
 
 /** What a finished lesson reports about the tree: the water earned, and what is held now. */
@@ -88,11 +92,11 @@ function recordOf(row: TreeRow): TreeRecord | null {
 }
 
 /**
- * Water for a completed lesson or practice session: one more held by the learner's tree, if planted. Called inside the
- * completion's transaction once per completion, so a session never earns twice. Nothing is earned before planting;
- * the first tree comes with the water to raise its seed.
+ * Water for a completed lesson or practice session: a lesson's drops more held by the learner's tree, if planted. Called
+ * inside the completion's transaction once per completion, so a session never earns twice. Nothing is earned before
+ * planting; the first tree comes with the water to raise its seed.
  */
-export async function earnWater(db: Executor, userId: string, amount = 1): Promise<WaterEarned | null> {
+export async function earnWater(db: Executor, userId: string, amount = TREE_WATER_PER_LESSON): Promise<WaterEarned | null> {
   const res = await db.query<{ water: number; was: number }>(
     `UPDATE user_trees t SET water = LEAST($3::int, t.water + $2::int), updated_at = now()
        FROM (SELECT water FROM user_trees WHERE user_id = $1 FOR UPDATE) old
@@ -218,20 +222,30 @@ export class TreeService {
         today,
       ]);
       let zer = 0;
-      if (watering.zer > 0 && !(await isEconomyBlocked(client, userId))) {
-        // one ledger row for this pour's harvests, named by the last of them
-        await this.wallet.creditWithin(client, {
+      if (watering.zer > 0) {
+        // one ledger row for this pour's harvests, named by the last of them, as earned Zêr under the daily cap
+        const paid = await earnWithin(client, this.wallet, {
           userId,
-          currency: 'zer',
           amount: watering.zer,
           reason: TREE_HARVEST_REASON,
           refId: row.id,
           idempotencyKey: `tree-harvest:${row.id}:${watering.tree.harvests}`,
+          now,
         });
-        zer = watering.zer;
+        zer = paid.granted;
       }
+      // and a gift for the bag, for members and everyone else alike, keyed like the harvest's Zêr
+      const bag = watering.harvests > 0 ? await grantBagGiftWithin(client, { userId, source: 'harvest', ref: `${row.id}:${watering.tree.harvests}` }) : null;
       await client.query('COMMIT');
-      return { tree: treeView(watering.tree, today), poured: watering.poured, grew: watering.grew, harvests: watering.harvests, zer, revived: watering.revived };
+      return {
+        tree: treeView(watering.tree, today),
+        poured: watering.poured,
+        grew: watering.grew,
+        harvests: watering.harvests,
+        zer,
+        revived: watering.revived,
+        bagGift: bag ? { sku: bag.sku, name: bag.name } : null,
+      };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;

@@ -94,6 +94,8 @@ export interface TeenState {
   failed: string | null;
   reload: () => void;
   change: <K extends ControlKey>(key: K, value: ParentalControls[K]) => void;
+  /** Takes a change the server confirmed (a corrected birth month) into what every page of this teen shows. */
+  amend: (change: Partial<TeenDetail>) => void;
 }
 
 export function useTeen(teenId: string): TeenState {
@@ -144,6 +146,16 @@ export function useTeen(teenId: string): TeenState {
     [teenId, wishes],
   );
 
+  const amend = useCallback(
+    (update: Partial<TeenDetail>) => {
+      const now = details.get(teenId);
+      if (!now) return;
+      details.set(teenId, { ...now, ...update });
+      changed();
+    },
+    [teenId],
+  );
+
   const reload = useCallback(() => setRound((r) => r + 1), []);
-  return { detail, controls, failed, reload, change };
+  return { detail, controls, failed, reload, change, amend };
 }

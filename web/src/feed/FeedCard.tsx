@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { failureText, useOptimistic, useOptimisticSend } from '../lib/optimistic';
 import { Avatar } from '../components/Avatar';
+import { TickCount } from '../components/TickCount';
 import { BookmarkIcon, CommentIcon, HeartIcon, RepostIcon } from '../components/icons';
 import { useProfileModal } from '../profile/ProfileModal';
 import { SharePost } from './SharePost';
+import { PostGiftButton, PostGiftsRow } from './PostGifts';
 import { PostMenu } from './PostMenu';
 import { dayLabel } from '../chat/messageGroups';
 import { useI18n, useT } from '../i18n/I18nProvider';
@@ -277,7 +279,7 @@ export function PostActions({
   const commentInner = (
     <>
       <CommentIcon size={20} />
-      {item.commentCount > 0 && <span className="fcard-count">{count(item.commentCount)}</span>}
+      {item.commentCount > 0 && <TickCount value={item.commentCount} format={count} className="fcard-count" />}
     </>
   );
 
@@ -295,7 +297,7 @@ export function PostActions({
         <HeartIcon size={20} weight={e.liked ? 'fill' : 'regular'} />
         {/* A fresh element per like, so the sparks play once per press, only around a filled heart (styles/motion.css). */}
         {justOn?.kind === 'like' && e.liked && <span key={justOn.n} className="fcard-burst" aria-hidden="true" />}
-        {e.likes > 0 && <span className="fcard-count">{count(e.likes)}</span>}
+        {e.likes > 0 && <TickCount value={e.likes} format={count} className="fcard-count" />}
       </button>
 
       {onComment ? (
@@ -320,11 +322,13 @@ export function PostActions({
           onClick={() => toggle('repost')}
         >
           <RepostIcon size={20} weight={e.reposted ? 'bold' : 'regular'} />
-          {e.reposts > 0 && <span className="fcard-count">{count(e.reposts)}</span>}
+          {e.reposts > 0 && <TickCount value={e.reposts} format={count} className="fcard-count" />}
         </button>
       )}
 
       {!unshared && <SharePost item={item} />}
+
+      {signedIn && !unshared && <PostGiftButton item={item} />}
 
       <button
         type="button"
@@ -342,6 +346,7 @@ export function PostActions({
 
   return (
     <>
+      <PostGiftsRow item={item} />
       {row}
       {/* An undone press and why, shown beside it and cleared by itself. */}
       {refused && (

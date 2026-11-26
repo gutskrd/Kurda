@@ -121,7 +121,7 @@ export function LeagueCeremony({
         : kind === 'trophy'
           ? t('leagues.ceremony.trophy')
           : t('leagues.lastWeek.title');
-  const detail = [t('leagues.xpCount', { xp: formatNumber(week.weeklyXp, locale) }), week.gems > 0 ? t('leagues.gems', { count: week.gems }) : null]
+  const detail = [t('leagues.xpCount', { xp: formatNumber(week.weeklyXp, locale) }), week.zer > 0 ? t('leagues.zer', { count: week.zer }) : null]
     .filter(Boolean)
     .join(' · ');
 
@@ -210,7 +210,7 @@ export function LeagueCeremony({
                 )}
                 <View style={styles.actions}>
                   <ClayButton label={t('common.continue')} tone="primary" size="large" onPress={beat === 1 ? () => setBeat(2) : onClose} />
-                  {beat === 1 && win ? <ShareWin text={leagueShare(t, win, leagueName(t, win.tier))} testID="league-share" /> : null}
+                  {beat === 1 && win ? <ShareWin text={leagueShare(t, locale, win, leagueName(t, win.tier))} testID="league-share" /> : null}
                 </View>
               </Animated.View>
             </View>

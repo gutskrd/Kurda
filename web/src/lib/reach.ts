@@ -63,6 +63,17 @@ export const REACH_CONTROLS = [
   '.learn-strip-goal',
   // Learn's letters and dictionary, the two halves of one 44px pill under the bell's (styles/shell.css).
   '.learn-tools-btn',
+  // A post's line of gifts, which opens who gave them (styles/feed.css).
+  '.fcard-gifts',
+  // The Hevalo+ page's fine-print links, restore and the terms, side by side under its button (plus/plus.css).
+  '.plus-link',
+  // The front page's news pill (38px tall), its answer chips and Hamo's phrases (40 to 44px), the scenes' pause (40px),
+  // the tree's stage dots (28px) and the games' stamps' steps (40px), each row setting its own room (landing/landing.css).
+  '.fp-pill',
+  '.fp-chip-button',
+  '.fp-player-hold',
+  '.fp-tree-dot',
+  '.fp-flip-step',
 ] as const;
 
 /** Links on a line of their own, enlarged only under a coarse pointer. */
@@ -81,8 +92,6 @@ export const HAND_TUNED = [
   // A lesson's words and its slow chip, in running text (styles/learn.css).
   '.lesson-word',
   '.lesson-slow-chip',
-  // Seen-by, under a message (styles/pages.css).
-  '.mkp-seen',
   // A memory game's gaps, whose ::before is their glow (games/memory-thief.css).
   '.mt-gap',
   // A story's replay and glossed words, in running text where every word is a target.
@@ -105,6 +114,18 @@ export const LARGE_ENOUGH = [
   '.post-plus',
   '.ffilter-btn',
   '.shop-gift-btn',
+  // A gift on the gift sheet, at least 150px tall in a grid of 118px columns, and the gift limit's fields, each 44px
+  // tall (styles/social.css).
+  '.gift-tile',
+  '.gift-limit-field',
+  // The gift's moment and the sender's, each the whole screen, which a tap anywhere skips or closes, and the moment's
+  // Skip, a 48px pill (styles/social.css).
+  '.gift-moment',
+  '.gift-sent',
+  '.gift-skip',
+  // The road's scene and sandûq: a 68px-wide character or post a tap plays with, and a 96px chest (learn/path.css).
+  '.lp-scene-hit',
+  '.lp-chest-hit',
   '.user-actions-btn',
   '.editor-history-btn',
   '.framer-zoom-btn',
@@ -128,20 +149,37 @@ export const LARGE_ENOUGH = [
   '.daily-row',
   '.daily-back',
   '.mkp-fact--link',
-  // A full profile's highlights, its icon tabs and its grid's tiles, and the line of who they know (styles/profile.css):
-  // each at least 48px tall and wider still.
-  '.hl',
+  // A Hevalo+ plan, a card the column wide and over 90px tall (plus/plus.css).
+  '.plus-plan',
+  // A full profile's icon tabs and its grid's tiles, and the line of who they know (styles/profile.css): each at least
+  // 48px tall and wider still.
+  // The front page's Hevalo (a figure 180px tall or more), its quiz answers, scene tabs and store buttons (each 48px
+  // tall or more and wider still), the games' stamp in its hand (172px wide or more), and the dim behind the
+  // apps-coming-soon card, the whole screen (landing/*.css).
+  '.fp-hevalo-hit',
+  '.fp-flip-hit',
+  '.fp-answer',
+  '.fp-seg',
+  '.fp-store',
+  '.soon-overlay',
   '.pg-tab',
   '.pg-tile',
   '.mkp-friends-line',
   // Your progress, a row across the column at least 52px tall.
   '.mkp-yours-row',
+  // The collection's square tiles, a quarter of the sheet across a phone; its league and tree cards, at least 64px
+  // tall; its way back, 48px tall; and a giver's row, 52px tall across the sheet (profile/collection.css).
+  '.coll-tile',
+  '.coll-card',
+  '.coll-back',
+  '.coll-person',
+  // A badge to choose for the profile, its 60px medal and name in a tile (styles/ranks.css).
+  '.showcase-pick',
 ] as const;
 
 /** Sideways-scrolling rows of controls, padded above and below for their reach. */
 export const SCROLLERS = [
   '.note-filters',
-  '.hl-row',
   '.story-shelf-row',
   '.league-ladder',
   '.imp-cat-strip',

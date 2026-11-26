@@ -1,6 +1,6 @@
 /**
  * Learning Leagues against real Postgres: joining, grouping, the Wednesday merge, the Monday settle, promotion and
- * demotion with the weekly goal, Gems, the season reset, personal mode and the table. Most tests run in closed 2025
+ * demotion with the weekly goal, promotion Zêr, the season reset, personal mode and the table. Most tests run in closed 2025
  * weeks of their own with the clock passed in, so nothing reaches another suite's weeks.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -8,7 +8,7 @@ import pg from 'pg';
 import { nextWeek, weekSeason, type LeagueTier } from '@kurda/shared';
 import { LeagueService, type LeagueNotices } from './service.js';
 import { weekStart } from './league-logic.js';
-import { GemService } from '../gems/service.js';
+import { EarnService } from '../earn/service.js';
 import { WalletService } from '../wallet/service.js';
 import { addXp, learningAward, makeLearner, removeLearners, type LearnerOptions } from '../test/progress.js';
 import type { Notification } from '../push/service.js';
@@ -22,7 +22,7 @@ const at = (week: string, days = 0, hours = 12): Date => new Date(Date.parse(`${
 describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
   let pool: pg.Pool;
   let leagues: LeagueService;
-  let gems: GemService;
+  let earn: EarnService;
   const sent: Array<{ userId: string; n: Notification; push: boolean }> = [];
   const notices: LeagueNotices = {
     record: async (userId, n) => void sent.push({ userId, n, push: false }),
@@ -54,13 +54,17 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
         week,
       ])
     ).rows[0]?.cohort_id;
-  const gemsOf = async (userId: string): Promise<number> => (await new WalletService(pool).balances(userId)).gems;
+  const zerOf = async (userId: string): Promise<number> => (await new WalletService(pool).balances(userId)).zer;
+
+  /** Only Hevalo+ members earn Zêr, so the learners whose promotions pay are members. */
+  const member = (userId: string) => pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [userId]);
 
   /** `count` learners of `tier`, all in one group of `week`, with the given weekly XP. */
   const group = async (week: string, tier: LeagueTier, xps: number[], opts: LearnerOptions = {}) => {
     const people = [];
     for (const xp of xps) {
       const p = await learner(opts);
+      await member(p.id);
       await setTier(p.id, tier, week);
       await leagues.ensureMembership(p.id, at(week));
       if (xp > 0) await addXp(pool, p.id, xp, at(week, 1));
@@ -78,8 +82,8 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL, max: 20 });
     await clearOldWeeks();
-    gems = new GemService(pool, new WalletService(pool));
-    leagues = new LeagueService(pool, { gems, notices, weeklyGoalXp: 150 });
+    earn = new EarnService(pool, new WalletService(pool));
+    leagues = new LeagueService(pool, { earn, notices, weeklyGoalXp: 150 });
   });
 
   afterAll(async () => {
@@ -136,9 +140,9 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       }
     });
 
-    it('pays 10 Gems for a promotion now, not 25', async () => {
-      const r = await pool.query<{ amount: number }>(`SELECT amount FROM gem_rules WHERE key = 'league_promotion'`);
-      expect(r.rows[0]!.amount).toBe(10);
+    it('pays 25 Zêr for a promotion, what 10 Gewher became at 100 Zêr to the euro', async () => {
+      const r = await pool.query<{ amount: number }>(`SELECT amount FROM earn_rules WHERE key = 'league_promotion'`);
+      expect(r.rows[0]!.amount).toBe(25);
     });
   });
 
@@ -264,7 +268,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
   });
 
   describe('the weekly settle', () => {
-    it('promotes the top quarter with the goal met, demotes only those at the bottom without it, and pays 10 Gems', async () => {
+    it('promotes the top quarter with the goal met, demotes only those at the bottom without it, and pays 25 Zêr', async () => {
       const week = '2025-02-17';
       // twenty in Gol: places 1–5 move up (but #5 is short of the goal), 18–20 move down
       const xps = [900, 800, 700, 600, 140, 130, 120, 110, 100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 20, 10];
@@ -272,18 +276,18 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       const run = await leagues.settleDue(at(nextWeek(week), 0, 0.1), { force: true });
       expect(run.finishedAt).not.toBeNull();
 
-      const byXp = await pool.query<{ user_id: string; outcome: string; tier_after: string; gems: number; goal_met: boolean }>(
-        `SELECT user_id, outcome, tier_after, gems, goal_met FROM league_weeks WHERE week_key = $1 AND user_id = ANY($2)`,
+      const byXp = await pool.query<{ user_id: string; outcome: string; tier_after: string; zer: number; goal_met: boolean }>(
+        `SELECT user_id, outcome, tier_after, zer, goal_met FROM league_weeks WHERE week_key = $1 AND user_id = ANY($2)`,
         [week, people.map((p) => p.id)],
       );
       const row = (i: number) => byXp.rows.find((r) => r.user_id === people[i]!.id)!;
       for (const i of [0, 1, 2, 3]) {
-        expect(row(i)).toMatchObject({ outcome: 'promoted', tier_after: 'derya', gems: 10 });
+        expect(row(i)).toMatchObject({ outcome: 'promoted', tier_after: 'derya', zer: 25 });
         expect(await tierOf(people[i]!.id)).toBe('derya');
-        expect(await gemsOf(people[i]!.id)).toBe(10);
+        expect(await zerOf(people[i]!.id)).toBe(25);
       }
       expect(row(4)).toMatchObject({ outcome: 'stayed', goal_met: false });
-      expect(await gemsOf(people[4]!.id)).toBe(0);
+      expect(await zerOf(people[4]!.id)).toBe(0);
       expect(row(16)).toMatchObject({ outcome: 'stayed' });
       for (const i of [17, 18, 19]) expect(row(i)).toMatchObject({ outcome: 'demoted', tier_after: 'cem' });
       expect(await tierOf(people[19]!.id)).toBe('cem');
@@ -306,7 +310,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       expect(await tierOf(people[0]!.id)).toBe('gol');
       expect(await tierOf(people[1]!.id)).toBe('gol');
       expect(await tierOf(people[2]!.id)).toBe('cem');
-      expect(await gemsOf(people[0]!.id)).toBe(10);
+      expect(await zerOf(people[0]!.id)).toBe(25);
       const rows = await pool.query(`SELECT 1 FROM league_weeks WHERE week_key = $1 AND user_id = ANY($2)`, [
         week,
         people.map((p) => p.id),
@@ -331,7 +335,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       // the late settle then changes nothing it has already done
       await leagues.settleDue(at(nextWeek(week), 0, 2), { force: true });
       expect(await tierOf(winner.id)).toBe('gol');
-      expect(await gemsOf(winner.id)).toBe(10);
+      expect(await zerOf(winner.id)).toBe(25);
     });
 
     it('in a group under eight: nobody is demoted, and nobody with no XP moves up', async () => {
@@ -352,10 +356,11 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       expect(await tierOf(people[0]!.id)).toBe('okyanus');
     });
 
-    it('pays promotion Gems once per tier per season: up, down and up again pays nothing more', async () => {
+    it('pays promotion Zêr once per tier per season: up, down and up again pays nothing more', async () => {
       // The third week far enough on that the first week's XP no longer sets the climber's band.
       const weeks = ['2025-05-05', '2025-05-12', '2025-06-16'];
       const climber = await learner();
+      await member(climber.id);
       const others = async (week: string, tier: LeagueTier, xps: number[]) => group(week, tier, xps);
       // week 1: up from Kanî to Çem
       await setTier(climber.id, 'kani', weeks[0]!);
@@ -364,21 +369,21 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       await others(weeks[0]!, 'kani', [100, 90, 80, 70, 60, 50, 40]);
       await leagues.settleCohort((await groupOf(climber.id, weeks[0]!))!);
       expect(await tierOf(climber.id)).toBe('cem');
-      expect(await gemsOf(climber.id)).toBe(10);
+      expect(await zerOf(climber.id)).toBe(25);
       // week 2: down to Kanî (last, no goal) — set straight, as the settle would
       await setTier(climber.id, 'kani', weeks[1]!);
-      // week 3: up to Çem again — no Gems this season
+      // week 3: up to Çem again — no Zêr this season
       await leagues.ensureMembership(climber.id, at(weeks[2]!));
       await addXp(pool, climber.id, 900, at(weeks[2]!, 1));
       await others(weeks[2]!, 'kani', [100, 90, 80, 70, 60, 50, 40]);
       await leagues.settleCohort((await groupOf(climber.id, weeks[2]!))!);
       expect(await tierOf(climber.id)).toBe('cem');
-      expect(await gemsOf(climber.id)).toBe(10);
-      const last = await pool.query<{ gems: number }>(`SELECT gems FROM league_weeks WHERE user_id = $1 AND week_key = $2`, [
+      expect(await zerOf(climber.id)).toBe(25);
+      const last = await pool.query<{ zer: number }>(`SELECT zer FROM league_weeks WHERE user_id = $1 AND week_key = $2`, [
         climber.id,
         weeks[2],
       ]);
-      expect(last.rows[0]!.gems).toBe(0);
+      expect(last.rows[0]!.zer).toBe(0);
     });
 
     it('records the week of everyone in personal mode too', async () => {
@@ -493,7 +498,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
         groupSize: 8,
         weeklyXp: 800,
         goalMet: true,
-        gems: 10,
+        zer: 25,
       });
       expect(view.tier).toBe('gol');
     });

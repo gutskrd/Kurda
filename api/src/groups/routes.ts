@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import {
   GROUP_BAN_DURATIONS,
   GROUP_BAN_REASON_MAX,
@@ -23,8 +24,8 @@ import { groupRoom } from './chat-service.js';
 import type { TrustService } from '../trust/service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 
-const idParam = z.object({ id: z.uuid() });
-const memberParam = z.object({ id: z.uuid(), userId: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
+const memberParam = z.object({ id: lowerUuid(), userId: lowerUuid() });
 
 /**
  * Group routes. Every group is private: these list a person's own groups only, show a group to its members (and to
@@ -198,7 +199,7 @@ export function registerGroupRoutes(
   /** Add one of the caller's own friends, as the group's owner or an admin: the only way in. */
   app.post(
     '/groups/:id/invite',
-    { schema: { params: idParam, body: z.object({ userId: z.uuid() }) }, preHandler: [requireAccount, requireBirthMonth] },
+    { schema: { params: idParam, body: z.object({ userId: lowerUuid() }) }, preHandler: [requireAccount, requireBirthMonth] },
     async (req) => {
       await groups.invite(req.user!.id, (req.params as { id: string }).id, (req.body as { userId: string }).userId);
       return ok;
@@ -206,7 +207,7 @@ export function registerGroupRoutes(
   );
   app.post(
     '/groups/:id/transfer',
-    { schema: { params: idParam, body: z.object({ userId: z.uuid() }) }, preHandler: requireAccount },
+    { schema: { params: idParam, body: z.object({ userId: lowerUuid() }) }, preHandler: requireAccount },
     async (req) => {
       await groups.transferOwnership(req.user!.id, (req.params as { id: string }).id, (req.body as { userId: string }).userId);
       return ok;
@@ -243,7 +244,7 @@ export function registerGroupRoutes(
       schema: {
         params: idParam,
         body: z.object({
-          userId: z.uuid(),
+          userId: lowerUuid(),
           duration: z.enum(GROUP_BAN_DURATIONS),
           reason: z.string().max(GROUP_BAN_REASON_MAX).nullable().optional(),
           deleteMessages: z.boolean().optional(),

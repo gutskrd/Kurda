@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import type { GiftUserEvent } from '@kurda/shared';
+import type { GiftTier, GiftUserEvent } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { CloseButton } from '../components/CloseButton';
@@ -13,6 +13,8 @@ import { GiftBox } from './GiftArt';
 
 interface Arrival {
   giftId: string;
+  /** how the box is wrapped, as in the chat it opens in */
+  tier: GiftTier;
   from: string;
   avatarUrl: string | null;
   to: string;
@@ -46,7 +48,7 @@ export function GiftArrivals(): React.JSX.Element | null {
       const chat = ev.chat.kind === 'dm' ? `dm:${ev.chat.userId}` : `group:${ev.chat.groupId}`;
       const to = giftChatPath(chat, ev.giftId, ev.chat.kind === 'dm' ? ev.from.name : undefined);
       if (!to) return;
-      const arrival: Arrival = { giftId: ev.giftId, from: ev.from.name, avatarUrl: ev.from.avatarUrl, to };
+      const arrival: Arrival = { giftId: ev.giftId, tier: ev.card?.tier ?? 'common', from: ev.from.name, avatarUrl: ev.from.avatarUrl, to };
       setArrivals((list) => [...list.filter((a) => a.giftId !== arrival.giftId), arrival].slice(-MAX));
     },
     [location.pathname, location.search],
@@ -62,7 +64,7 @@ export function GiftArrivals(): React.JSX.Element | null {
       {arrivals.map((a) => (
         <div key={a.giftId} className="gift-arrival" role="status">
           <span className="gift-arrival-art" aria-hidden>
-            <GiftBox tier="common" size={40} />
+            <GiftBox tier={a.tier} size={44} motion="idle" seed={a.giftId} />
           </span>
           <span className="gift-arrival-who">
             <Avatar url={a.avatarUrl} glyphSize={14} />

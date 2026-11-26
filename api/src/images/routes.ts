@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
@@ -33,7 +34,7 @@ const createBody = z.object({
   language: z.string().max(16).optional(),
 });
 const editBody = z.object({ caption: z.string().max(2_000).nullable() });
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 
 /**
  * Community image posts. Reads are public; upload, create, edit and remove need an account and an ownership or staff

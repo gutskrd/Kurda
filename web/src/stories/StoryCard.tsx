@@ -78,7 +78,7 @@ export function StoryCard({
         </span>
         {share > 0 && (
           <span className="story-card-progress" aria-hidden="true">
-            <span style={{ width: `${Math.round(share * 100)}%` }} />
+            <span style={{ '--p': share } as React.CSSProperties} />
           </span>
         )}
       </Link>

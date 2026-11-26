@@ -1,16 +1,20 @@
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import { SvgXml } from 'react-native-svg';
 import {
   PATH_LANDMARK_LOOP,
+  PATH_MILESTONE_ART,
   PATH_MOTION,
+  PATH_SCENE_BOX,
   PATH_STOP_ART,
   landmarkBox,
   pathLandmarkSvg,
   pathLoopSvg,
+  pathMilestoneSvg,
+  pathScene,
   pathSignpostSvg,
   pathStopSvg,
+  unitScenery,
   type PathBox,
   type PathGround,
   type PathLand,
@@ -28,6 +32,8 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { SvgXml } from 'react-native-svg';
+import { PathChest, PathScene } from './PathScene';
 import type { TranslationKey } from '../i18n/translations';
 import type { ToneColors } from './path';
 import type { UpcomingUnit } from './types';
@@ -67,6 +73,58 @@ export const UnitLandmark = memo(function UnitLandmark({
     </View>
   );
 });
+
+/**
+ * A unit's playful touches beside its road (shared `unitScenery`): its little scene, chosen from the chapter (shared
+ * `pathScene`, PathScene.tsx), leaning in from the screen's edge on its side, and the unit's painted sandûq, shut until
+ * the unit is done and then open on its gold. Decorative, so screen readers skip them; a tap plays a moment of their
+ * own. They move only while their unit is in view (`live`), never under Reduce Motion.
+ */
+export const UnitScenery = memo(function UnitScenery({
+  unit,
+  width,
+  sign,
+  near,
+  live,
+  here,
+}: {
+  unit: Unit;
+  /** The road's width: the screen's, edge to edge. */
+  width: number;
+  sign: number;
+  near: boolean;
+  live: boolean;
+  /** The stop to do now, if it is in this unit: Hevalo stands beside it, under its bubble. */
+  here: { x: number; y: number } | null;
+}): React.JSX.Element | null {
+  const { scheme } = useTheme();
+  const scene = pathScene(unit.number - 1);
+  const spots = useMemo(() => unitScenery(unit.stops, here, scene, width > 0 ? width : null), [unit.stops, here, scene, width]);
+  if (!near || width <= 0) return null;
+  const dark = scheme === 'dark';
+  const won = unit.total > 0 && unit.done === unit.total;
+  // The side of the screen it leans in from: the line's start or end, mirrored with the path.
+  const right = spots.scene ? sign * spots.scene.side > 0 : false;
+  return (
+    <>
+      {spots.scene ? (
+        <PathScene
+          scene={scene}
+          // Drawn for the left edge; at the right one it is mirrored, so it always leans in toward the road.
+          flip={right}
+          dark={dark}
+          live={live}
+          left={right ? width - PATH_SCENE_BOX.w : 0}
+          top={spots.scene.y - PATH_SCENE_BOX.h / 2}
+        />
+      ) : null}
+      {spots.chest ? <PathChest open={won} dark={dark} size={CHEST} live={live} left={width / 2 + sign * spots.chest.x - CHEST / 2} top={spots.chest.y - CHEST / 2 - 4} /> : null}
+    </>
+  );
+});
+
+/** The sandûq's size beside the road: a stop's. */
+const CHEST = 96;
 
 /** A unit's landmark, with its looping part on top: a flag, steam or smoke, water, fire, a bee or a sign. */
 function Landmark({
@@ -142,6 +200,19 @@ export const StopArt = memo(function StopArt({ look, tone, part, near }: { look:
   return (
     <View style={[styles.art, { left: STOP_FACE.x - cx, top: STOP_FACE.y - cy, width: box, height: box }]} pointerEvents="none">
       <SvgXml xml={xml} width={box} height={box} />
+    </View>
+  );
+});
+
+/** A unit's milestone, its last stop, from the shared drawing: the seal, or the drum it stands on. */
+export const MilestoneArt = memo(function MilestoneArt({ won, part, near }: { won: boolean; part: 'base' | 'face'; near: boolean }): React.JSX.Element | null {
+  const { scheme } = useTheme();
+  const xml = useMemo(() => (near ? pathMilestoneSvg({ won, part, dark: scheme === 'dark' }) : null), [near, won, part, scheme]);
+  if (!xml) return null;
+  const { x, y, w, h } = PATH_MILESTONE_ART;
+  return (
+    <View style={[styles.art, { left: x, top: y, width: w, height: h }]} pointerEvents="none">
+      <SvgXml xml={xml} width={w} height={h} />
     </View>
   );
 });

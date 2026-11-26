@@ -42,6 +42,7 @@ const card = (over: Partial<GiftCard> = {}): GiftCard => ({
   assetUrl: null,
   tier: 'common',
   recipients: [{ name: 'rojda', avatarUrl: null, isMe: false, opened: false }],
+  from: { userId: 'u-rojda', username: 'rojda', displayName: null, avatarUrl: null },
   myGiftId: null,
   myOpened: false,
   equippable: null,
@@ -227,7 +228,7 @@ describe('gifts in a group thread', () => {
       if (url.includes('/groups/g1/chat')) return jsonResponse(200, { messages: [] });
       if (url.includes('/gifts/catalog')) {
         return jsonResponse(200, {
-          items: [{ sku: 'bg-sunset', name: 'Sunset over Amed', category: 'background', assetUrl: null, currency: 'zer', price: 100, tier: 'common', alreadyOwnedBy: [] }],
+          items: [{ sku: 'gift-gul', name: 'Gul', category: 'gift', assetUrl: null, currency: 'zer', price: 25, tier: 'common', alreadyOwnedBy: [] }],
           balance: { zer: 1000, gems: 0 },
         });
       }
@@ -239,7 +240,7 @@ describe('gifts in a group thread', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Send a gift' }));
     await userEvent.click(await screen.findByLabelText('Select all'));
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-    await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
 
     const note = 'Sent to rojda. You’ve reached today’s gift limit for dilan.';
@@ -291,12 +292,12 @@ describe('gifts in a group thread', () => {
     const rt = mount(<GroupThread groupId="g1" />, '/app/messages?group=g1', groupFetch);
     await waitFor(() => {
       rt.emit({ room: 'group:g1', event: { type: 'group_msg', groupId: 'g1', message: roomMessage } });
-      expect(screen.getByText(/rojda sent a gift/)).toBeInTheDocument();
+      expect(screen.getByText('Gift from rojda')).toBeInTheDocument();
     });
-    expect(screen.queryByText('A gift for you')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tap to open')).not.toBeInTheDocument();
 
     rt.emit(received);
-    expect(await screen.findByText('A gift for you')).toBeInTheDocument();
+    expect(await screen.findByText('Tap to open')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Open the gift from rojda' }));
     await waitFor(() => expect(opens).toHaveLength(1));
   });
@@ -307,7 +308,7 @@ describe('gifts in a group thread', () => {
     await waitFor(() => {
       rt.emit(received);
       rt.emit({ room: 'group:g1', event: { type: 'group_msg', groupId: 'g1', message: roomMessage } });
-      expect(screen.getByText('A gift for you')).toBeInTheDocument();
+      expect(screen.getByText('Tap to open')).toBeInTheDocument();
     });
   });
 });

@@ -10,9 +10,7 @@ import {
   type EventQuest,
   type EventQuestReward,
   type EventQuests,
-  type EventQuestState,
   type EventQuestType,
-  type EventRewardCurrency,
 } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 import type { Translate } from '../api/errors';
@@ -21,8 +19,6 @@ export type QuestType = EventQuestType;
 export type QuestReward = EventQuestReward;
 export type QuestView = EventQuest;
 export type EventQuestsView = EventQuests;
-export type ClaimState = EventQuestState;
-export type RewardCurrency = EventRewardCurrency;
 
 export const progressPct = eventQuestShare;
 export const claimState = eventQuestState;
@@ -41,9 +37,9 @@ export function questTitle(q: QuestView, t: Translate): string {
   return q.titleEn ?? t(DEFAULT_TITLE[q.type]);
 }
 
-/** The reward in words for screen readers ("+200 Zêr, +30 Gems"); `count` formats each amount for the locale. */
+/** The reward in words for screen readers ("+200 Zêr"); `count` formats the amount for the locale. */
 export function rewardSpoken(reward: QuestReward, t: Translate, count: (n: number) => string = String): string {
   return rewardParts(reward)
-    .map((p) => (p.currency === 'zer' ? t('quests.chest.reward', { amount: count(p.amount) }) : t('leagues.gems', { count: count(p.amount) })))
+    .map((p) => t('quests.chest.reward', { amount: count(p.amount) }))
     .join(', ');
 }

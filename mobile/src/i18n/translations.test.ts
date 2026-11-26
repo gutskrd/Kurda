@@ -83,15 +83,16 @@ describe('translation catalogs', () => {
     }
   });
 
-  it('names the currencies on the leaderboards as the shop does, so a board never reads as a third currency', () => {
+  it('names the one currency the same on the leaderboards, the shop and the gift sheet', () => {
     for (const locale of LOCALES) {
       const c = TRANSLATIONS[locale];
       expect(c['rankings.board.zer'], locale).toBe('Zêr');
-      // The shop says where gems come from in the same word the board ranks them by.
-      expect(c['shop.earnMoreGems'].toLocaleLowerCase(locale), locale).toContain(c['rankings.board.gewher'].toLocaleLowerCase(locale));
+      for (const key of ['shop.earnMoreZer', 'gift.picker.balance', 'leagues.zer', 'learn.rankingsSub'] as const) {
+        expect(c[key], `${locale} ${key}`).toContain('Zêr');
+      }
+      // A second currency must not come back under another name.
+      for (const text of Object.values(c)) expect(text, locale).not.toMatch(/gewher|گەوهەر|\bgems\b|edelstein|\bgemas\b|mücevher|جوهرة|gemmes|edelstenen/i);
     }
-    expect(TRANSLATIONS.ku['rankings.board.gewher']).toBe('Gewher');
-    expect(TRANSLATIONS.ckb['rankings.board.gewher']).toBe('گەوهەر');
   });
 
   /**

@@ -10,11 +10,10 @@ import { useI18n } from '../i18n/I18nContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useDirection } from '../reports/direction';
 import { haptic } from '../feedback/haptics';
-import { springTo, usePressScale } from './animate';
+import { springTo, usePressSink } from './animate';
 import { pressedDim } from './motion';
 import { heldRow, heldDim } from './MotionParts';
 import { EmptyState } from './EmptyState';
-import { tileTone } from './tileTones';
 
 /** A screen's full-bleed gradient background. */
 export function GradientBackground({ children, style }: { children?: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
@@ -26,7 +25,7 @@ export function GradientBackground({ children, style }: { children?: ReactNode; 
   );
 }
 
-/** A card: a fill light enough to read text off, with no blur, stroke, sheen or rim. */
+/** A card: a fill light enough to read text off, with no blur or stroke; by night a faint warm light along its top edge lifts it off the page. */
 export function GlassCard({
   children,
   style,
@@ -48,6 +47,7 @@ export function GlassCard({
         <View style={[styles.glassFace, padding === 'tight' && styles.glassFaceTight, { backgroundColor: colors.glassFill }, contentStyle]}>
           {children}
         </View>
+        {colors.scheme === 'dark' ? <View pointerEvents="none" style={[styles.rim, { backgroundColor: colors.cardRim }]} /> : null}
       </View>
     </View>
   );
@@ -113,6 +113,20 @@ type ClayTone = 'neutral' | 'primary' | 'success' | 'danger';
  */
 const CLAY_SIZE = { regular: { height: MIN_TOUCH_TARGET }, large: { height: 50 } } as const;
 
+/** How far a button stands above its lip, and so how far a press pushes it down. */
+export const CLAY_LIP = 4;
+
+/** Two #rrggbb colours blended, `t` of the way from `a` to `b`. */
+function blend(a: string, b: string, t: number): string {
+  const channel = (hex: string, i: number): number => parseInt(hex.slice(1 + 2 * i, 3 + 2 * i), 16);
+  return `#${[0, 1, 2].map((i) => Math.round(channel(a, i) + (channel(b, i) - channel(a, i)) * t).toString(16).padStart(2, '0')).join('')}`;
+}
+
+/**
+ * A chunky button standing on a darker lip: solid in its tone, or outlined in the slate's third step for the quieter
+ * of two actions. A press pushes it down into the lip and it springs back up with a little bounce; under Reduce Motion
+ * it dims instead.
+ */
 export function ClayButton({
   label,
   onPress,
@@ -134,7 +148,7 @@ export function ClayButton({
   accessibilityLabel?: string;
   /** Neutral unless the button means something: `primary` for a screen's main action (solid, it wears the one accent), success and danger for a lesson's two answers. */
   tone?: ClayTone;
-  /** Outlined for the quieter of two side-by-side actions: the tone in the edge and label, no fill. */
+  /** Outlined for the quieter of two side-by-side actions: a slate edge and lip, no fill. */
   variant?: 'solid' | 'outline';
   /** 44 is a fingertip's minimum and right among other controls; a full-width action at a screen's foot gets iOS's 50. */
   size?: 'regular' | 'large';
@@ -157,29 +171,24 @@ export function ClayButton({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const outline = variant === 'outline';
-  // The accent is the main button's alone: filled, `primary` wears it; outlined, it is drawn in the ink.
-  const TONE: Record<ClayTone, string | null> = {
-    neutral: null,
-    primary: outline ? colors.primary : colors.accent,
-    success: colors.success,
-    danger: colors.danger,
+  // Filled, `primary` wears the accent on its lip; outlined, every tone is drawn in the ink on the slate's edge.
+  const SOLID: Record<ClayTone, { fill: string; lip: string; ink: string }> = {
+    neutral: { fill: colors.neutralFill, lip: colors.neutralLip, ink: colors.textPrimary },
+    primary: { fill: colors.accent, lip: colors.accentLip, ink: colors.textOnAccent },
+    success: { fill: colors.success, lip: blend(colors.success, '#000000', 0.38), ink: colors.textOnPrimary },
+    danger: { fill: colors.danger, lip: blend(colors.danger, '#000000', 0.38), ink: colors.textOnPrimary },
   };
-  const toneColor = TONE[tone];
-  const fill = outline ? 'transparent' : (toneColor ?? colors.controlTrack);
-  const textColor = outline
-    ? (toneColor ?? colors.textPrimary)
-    : toneColor
-      ? colors.textOnPrimary
-      : colors.textPrimary;
-  // An outline button's rim is the whole button; a filled one needs none. A neutral rim is a lesson tile's quiet edge,
-  // a step off the surface in both themes, so the button keeps its shape by day.
-  const edge = outline ? (toneColor ?? tileTone(colors, 'idle').edge) : 'transparent';
+  const solid = SOLID[tone];
+  const fill = outline ? colors.background : solid.fill;
+  const lip = outline ? colors.btnEdge : solid.lip;
+  const textColor = outline ? (tone === 'success' || tone === 'danger' ? solid.fill : colors.textPrimary) : solid.ink;
+  const edge = outline ? colors.btnEdge : solid.fill;
   const off = busy || disabled;
-  // Shrinks under the finger and springs back (animate.ts); under Reduce Motion it fades instead.
-  const press = usePressScale(!off);
+  const press = usePressSink(CLAY_LIP, !off);
   const reduce = useReducedMotion();
   // The icon leads on the reading side, and the badge closes on the far one.
   const dir = useDirection();
+  const radius = size === 'large' ? radii.lg : radii.md + 2;
   return (
     <Pressable
       onPress={onPress}
@@ -192,29 +201,32 @@ export function ClayButton({
       testID={testID}
       reach={reach}
       reachSize={CLAY_SIZE[size]}
-      style={({ pressed }) => [{ opacity: off ? 0.5 : pressed && reduce ? pressedDim : 1 }, style]}
+      style={({ pressed }) => [{ opacity: off ? 0.5 : pressed && reduce ? pressedDim : 1 }, size === 'large' && styles.clayLarge, style]}
     >
-      <Animated.View
-        style={[
-          styles.clay,
-          size === 'large' && styles.clayLarge,
-          { flexDirection: dir.row, backgroundColor: fill, borderColor: edge, transform: [{ scale: press.scale }] },
-        ]}
-      >
-        {busy ? (
-          <ActivityIndicator color={textColor} />
-        ) : (
-          <>
-            {icon ? <Icon name={icon} size={20} color={textColor} /> : null}
-            <Text style={[styles.clayText, { color: textColor }]}>{label}</Text>
-          </>
-        )}
-        {badge ? (
-          <View style={[styles.clayBadge, { backgroundColor: colors.gold }]}>
-            <Text style={[styles.clayBadgeText, { color: colors.textOnGold }]}>{badge}</Text>
-          </View>
-        ) : null}
-      </Animated.View>
+      <View style={styles.clayStand}>
+        <View style={[styles.clayLip, { backgroundColor: lip, borderRadius: radius }]} />
+        <Animated.View
+          style={[
+            styles.clay,
+            size === 'large' && styles.clayLargeFace,
+            { flexDirection: dir.row, backgroundColor: fill, borderColor: edge, borderRadius: radius, transform: [{ translateY: press.sink }] },
+          ]}
+        >
+          {busy ? (
+            <ActivityIndicator color={textColor} />
+          ) : (
+            <>
+              {icon ? <Icon name={icon} size={20} color={textColor} /> : null}
+              <Text style={[styles.clayText, tone === 'primary' && !outline && styles.clayTextMain, { color: textColor }]}>{label}</Text>
+            </>
+          )}
+          {badge ? (
+            <View style={[styles.clayBadge, { backgroundColor: colors.gold }]}>
+              <Text style={[styles.clayBadgeText, { color: colors.textOnGold }]}>{badge}</Text>
+            </View>
+          ) : null}
+        </Animated.View>
+      </View>
     </Pressable>
   );
 }
@@ -255,8 +267,8 @@ const SEG_LINE = 18;
 /**
  * A segmented control: a track and a capsule that slides to the chosen option. The chosen word is the same size as
  * the others, only heavier, and the slide is the only motion: instant under Reduce Motion, mirrored in right-to-left
- * languages. The capsule is solid violet with the button label's colour, as on the website, so the choice reads at a
- * glance in both themes.
+ * languages. The capsule is a faint ground of the ink with its word and edge in the ink, as on the website, so the
+ * choice reads at a glance in both themes without a colour of its own.
  */
 export function Segmented<T extends string>({
   options,
@@ -325,7 +337,7 @@ export function Segmented<T extends string>({
           pointerEvents="none"
           style={[
             styles.segCapsule,
-            { width: seg, backgroundColor: colors.primary, transform: [{ translateX: x }] },
+            { width: seg, backgroundColor: colors.chosenFill, borderColor: colors.chosenEdge, transform: [{ translateX: x }] },
           ]}
         />
       ) : null}
@@ -354,7 +366,7 @@ export function Segmented<T extends string>({
             <Text
               style={[
                 styles.segText,
-                { color: active ? colors.textOnPrimary : colors.textSecondary },
+                { color: active ? colors.chosenInk : colors.textSecondary },
                 active && styles.segTextActive,
                 wrap && styles.segTextWrap,
               ]}
@@ -387,6 +399,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   clip: { borderRadius: radii.lg, overflow: 'hidden' },
+  rim: { position: 'absolute', top: 0, left: 0, right: 0, height: 1 },
   glassFace: { borderRadius: radii.lg, padding: spacing.lg, overflow: 'hidden' },
   glassFaceTight: { paddingVertical: spacing.xs },
 
@@ -397,10 +410,12 @@ const styles = StyleSheet.create({
   rowTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.regular },
   rowSubtitle: { fontSize: typography.sizes.text },
   rowValue: { fontSize: typography.sizes.text },
-  // A flat capsule, like every button and chip, so a button reads as one on any screen.
+  // The button stands on its lip: room under the face for it, and the lip the face's shape, set that far down.
+  clayStand: { paddingBottom: CLAY_LIP },
+  clayLip: { position: 'absolute', left: 0, right: 0, top: CLAY_LIP, bottom: 0 },
+  // A flat, round-cornered face in one colour, so a button reads as one on any screen.
   clay: {
-    borderRadius: radii.pill,
-    borderWidth: 1,
+    borderWidth: 2,
     // At least a fingertip; taller when the reader's text size wraps the label.
     minHeight: MIN_TOUCH_TARGET,
     paddingVertical: spacing.xs,
@@ -411,9 +426,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   // 50, which iOS gives a screen's full-width main button.
-  clayLarge: { minHeight: CLAY_SIZE.large.height, alignSelf: 'stretch' },
+  clayLarge: { alignSelf: 'stretch' },
+  clayLargeFace: { minHeight: CLAY_SIZE.large.height },
   // A label longer than the button wraps inside it, centred.
   clayText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
+  // The main button's word is as chunky as the button.
+  clayTextMain: { fontWeight: typography.weights.bold },
   clayBadge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   clayBadgeText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   segTrack: { borderRadius: radii.pill, padding: SEG_PAD },
@@ -421,6 +439,7 @@ const styles = StyleSheet.create({
   // translucent fill shows through as a smudge.
   segCapsule: {
     position: 'absolute',
+    borderWidth: 1,
     left: 0,
     top: SEG_PAD,
     bottom: SEG_PAD,

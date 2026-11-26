@@ -39,6 +39,7 @@
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { APP_LOCALE_CODES, STORY_DIALECTS, STORY_LEVELS, STORY_REVIEW_NOTE_MAX, STORY_TRANSLATION_REVIEW_STATUSES, type AppLocale } from '@kurda/shared';
 import { pageQuery } from '../http/query.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
@@ -59,8 +60,8 @@ export { STORY_EDITOR_ROLES };
 const STATUSES = ['draft', 'in_review', 'published', 'archived'] as const;
 const absentIfEmpty = (v: unknown): unknown => (v === '' ? undefined : v);
 
-const idParam = z.object({ id: z.uuid() });
-const localeParams = z.object({ id: z.uuid(), locale: z.enum(APP_LOCALE_CODES) });
+const idParam = z.object({ id: lowerUuid() });
+const localeParams = z.object({ id: lowerUuid(), locale: z.enum(APP_LOCALE_CODES) });
 const slugParam = z.object({ slug: categorySlugSchema });
 const listQuery = z.object({
   q: z.preprocess(absentIfEmpty, z.string().max(80).optional()),
@@ -72,7 +73,7 @@ const listQuery = z.object({
   featured: z.preprocess(absentIfEmpty, z.enum(['1', '0', 'true', 'false']).optional()),
   ...pageQuery,
 });
-const sameStoryAs = z.string().uuid().nullish();
+const sameStoryAs = lowerUuid().nullish();
 // who reviewed which translation is recorded by the server, never sent with a save
 const editorContent = storyContentSchema.omit({ translationReview: true });
 const createBody = editorContent.extend({ slug: storySlugSchema.nullish(), sameStoryAs });

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import { PressableScale, heldDim } from '../theme/MotionParts';
+import { PressableScale, Rise, heldDim } from '../theme/MotionParts';
+import { useListEntrance } from '../theme/animate';
 import { useAuth } from '../auth/AuthContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
@@ -75,6 +76,8 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   const [failed, setFailed] = useState(false);
   // The list's place is held until the first answer, rather than "search to start" showing to somebody with friends.
   const [settled, setSettled] = useState(false);
+  // Your friends rise in once as the list first arrives, as the website's do (theme/animate.ts).
+  const enter = useListEntrance(settled && friends.length > 0);
   const reduce = useReducedMotion();
   const { announce, region } = useAnnouncer();
   /** Requests answered here: stamped "Friends" or folding away, until the lists come back without them. */
@@ -350,7 +353,9 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
               </View>
             }
             // A friend's row has a Play button: any game, with that friend picked (play/InviteSheet).
-            renderItem={({ item }) => row(item, <PlayWithButton friendId={item.userId} name={item.displayName ?? item.username} compact />)}
+            renderItem={({ item, index }) => (
+              <Rise delay={enter(index)}>{row(item, <PlayWithButton friendId={item.userId} name={item.displayName ?? item.username} compact />)}</Rise>
+            )}
             ListEmptyComponent={
               settled ? <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.searchToStart')}</Text> : <PeopleSkeleton play />
             }

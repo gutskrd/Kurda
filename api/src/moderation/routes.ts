@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount, requireAuth } from '../plugins/auth.js';
 import { requireCapability } from '../admin/routes.js';
 
@@ -7,7 +8,7 @@ import { requireCapability } from '../admin/routes.js';
 const moderators = [requireAuth, requireCapability('moderation.act')];
 import type { ModerationService } from './service.js';
 
-/** Message reporting + admin moderation queue. */
+/** Message reporting, and resolving the old table's reports; their feed is gone, since new reports are cases. */
 export function registerModerationRoutes(app: FastifyInstance, moderation: ModerationService): void {
   /** Report a message; captures ~10 surrounding messages as context. */
   app.post(
@@ -16,7 +17,7 @@ export function registerModerationRoutes(app: FastifyInstance, moderation: Moder
       schema: {
         body: z.object({
           messageType: z.enum(['dm', 'group']),
-          messageId: z.uuid(),
+          messageId: lowerUuid(),
           reason: z.string().max(300).optional(),
         }),
       },
@@ -29,16 +30,11 @@ export function registerModerationRoutes(app: FastifyInstance, moderation: Moder
     },
   );
 
-  /** Admin: open moderation queue with context. */
-  app.get('/admin/moderation/reports', { preHandler: moderators }, async (req) => ({
-    reports: await moderation.pendingReports(req.user!.id),
-  }));
-
   /** Admin: resolve a report ('actioned' records an offense against the author). */
   app.post(
     '/admin/moderation/reports/:id/resolve',
     {
-      schema: { params: z.object({ id: z.uuid() }), body: z.object({ action: z.enum(['actioned', 'dismissed']) }) },
+      schema: { params: z.object({ id: lowerUuid() }), body: z.object({ action: z.enum(['actioned', 'dismissed']) }) },
       preHandler: moderators,
     },
     async (req) => {

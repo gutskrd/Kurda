@@ -194,6 +194,59 @@
   gap: 8px;
   padding-top: 2px;
 }
+/* the post's gifts, a quiet line above its buttons */
+.fcard-gifts {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: var(--text);
+  cursor: pointer;
+}
+.fcard-gifts-art {
+  display: inline-flex;
+  gap: 2px;
+}
+.fcard-gifts-count {
+  color: var(--ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.fcard-gifts-words {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.post-gifts-title {
+  margin: 0 0 12px;
+  font-size: var(--text);
+}
+.post-gifts-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.post-gifts-sender {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.post-gifts-words {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  color: var(--ink-3);
+}
+.post-gifts-words strong {
+  color: var(--ink);
+}
 /* a narrow phone keeps the five on one line by drawing them closer */
 @media (max-width: 400px) {
   .fcard-actions {
@@ -303,23 +356,6 @@
 @keyframes fcard-heart-still {
   0%, 100% { opacity: 0; }
   20%, 50% { opacity: 1; }
-}
-
-/* an empty reading list should say how to fill it, not just that it is empty */
-.saved-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 48px 20px;
-  border: 1px dashed var(--border);
-  border-radius: var(--r-lg);
-  color: var(--ink-4);
-  text-align: center;
-}
-.saved-empty p {
-  margin: 0;
-  max-width: 34ch;
 }
 
 /* The row above the posts: the current narrowing at the start, the filter and + at the end. */

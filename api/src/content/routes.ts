@@ -1,32 +1,33 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { ContentRepository } from './repository.js';
-import { LessonSessionService, type GemGranter } from './sessions.js';
+import { LessonSessionService, type EarnGranter } from './sessions.js';
 import type { XpService } from '../xp/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 
 const answerBodySchema = z.object({
-  exerciseId: z.uuid(),
+  exerciseId: lowerUuid(),
   /** Shape depends on the exercise type; graded server-side. */
   answer: z.unknown(),
 });
 
 export function registerLessonRoutes(
   app: FastifyInstance,
-  gems?: GemGranter,
+  earn?: EarnGranter,
   xp?: XpService,
   milestones?: MilestoneRecorder,
 ): void {
-  // perfect first completions ask for their Gems inside `complete`; the rule is switched off, so none are paid unless an admin switches it on
-  const sessions = new LessonSessionService(app.db, { xp, gems, milestones });
+  // perfect first completions ask for their Zêr inside `complete`; the rule is switched off, so none is paid unless an admin switches it on
+  const sessions = new LessonSessionService(app.db, { xp, earn, milestones });
   const content = new ContentRepository(app.db);
 
   /** A skill's markdown grammar note for the "Tips" tab, and the words its lessons bring in, for its guide. */
   app.get(
     '/skills/:id/grammar',
-    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: z.object({ id: lowerUuid() }) }, preHandler: requireAuth },
     async (req) => {
       const { id } = req.params as { id: string };
       const grammarMd = await content.grammarForSkill(id);
@@ -38,14 +39,14 @@ export function registerLessonRoutes(
   /** Start (or resume) a session for a published lesson. */
   app.get(
     '/lessons/:id/session',
-    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: z.object({ id: lowerUuid() }) }, preHandler: requireAuth },
     async (req) => sessions.startOrResume(req.user!.id, (req.params as { id: string }).id),
   );
 
   /** Reconnect / refresh a session (resume). */
   app.get(
     '/sessions/:id',
-    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: z.object({ id: lowerUuid() }) }, preHandler: requireAuth },
     async (req) => sessions.view((req.params as { id: string }).id, req.user!.id),
   );
 
@@ -53,7 +54,7 @@ export function registerLessonRoutes(
   app.post(
     '/sessions/:id/answers',
     {
-      schema: { params: z.object({ id: z.uuid() }), body: answerBodySchema },
+      schema: { params: z.object({ id: lowerUuid() }), body: answerBodySchema },
       preHandler: requireAuth,
     },
     async (req) => {
@@ -65,12 +66,12 @@ export function registerLessonRoutes(
 
   /**
    * A second try at an item already answered in this session (the re-ask a client makes a few exercises after a miss).
-   * Graded like an answer but records nothing, so no score, XP, review or Gems move (see `retry`).
+   * Graded like an answer but records nothing, so no score, XP, review or Zêr move (see `retry`).
    */
   app.post(
     '/sessions/:id/retry',
     {
-      schema: { params: z.object({ id: z.uuid() }), body: answerBodySchema },
+      schema: { params: z.object({ id: lowerUuid() }), body: answerBodySchema },
       preHandler: requireAuth,
     },
     async (req) => {
@@ -81,13 +82,13 @@ export function registerLessonRoutes(
   );
 
   /**
-   * Finish the session and get the results summary. A perfect first completion pays Gems; a replay never does (see
+   * Finish the session and get the results summary. A perfect first completion pays Zêr while its rule is on; a replay never does (see
    * `complete`).
    */
   app.post(
     '/sessions/:id/complete',
     {
-      schema: { params: z.object({ id: z.uuid() }) },
+      schema: { params: z.object({ id: lowerUuid() }) },
       config: { skipValidation: true },
       preHandler: requireAuth,
     },

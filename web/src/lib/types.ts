@@ -1,7 +1,7 @@
 /** API contract types for the web client, matching the phone's (mobile/src/api/types.ts). */
-import type { AccountHold, FeedImage, SupervisionState, LeagueTier, PendingPicture, PictureRejection, PictureReviewState, ProfileLeague, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
+import type { AccountHold, FeedImage, SupervisionState, LeagueTier, PendingPicture, PictureRejection, PictureReviewState, ProfileBadge, ProfileLeague, ProfileWordTag, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
 
-import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding } from '@kurda/shared';
+import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding, PostGifts } from '@kurda/shared';
 
 /** Every API call returns a result; callers never try/catch fetch. */
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError };
@@ -49,6 +49,10 @@ export interface SessionUser {
   accountHold?: AccountHold | null;
   /** A supervised teen's limits and where they stand today (/me only); null or absent for everyone else. */
   supervision?: SupervisionState | null;
+  /** 'child' for a child's profile made by a parent, which the website never opens; absent or 'person' for everyone else. */
+  kind?: 'person' | 'child';
+  /** Known to be 18 or over (/me only): not a guest or a child's profile, with a birth month that says so. Absent means no. */
+  knownAdult?: boolean;
 }
 
 export interface AuthPayload {
@@ -69,19 +73,18 @@ export interface StreakSummary {
   sessionsPerFreeze?: number;
   /** The most freezes held at once: one, or two for a Hevalo+ member. */
   maxFreezes?: number;
-  /** The ended streak that can still be restored, with its price and deadline; null when none, absent on older responses. */
+  /** The ended streak that can still be won back, with today's sessions toward it and its deadline; null when none. */
   repair?: StreakRepairOffer | null;
+  /** The ended run won back, and on which day; null or absent otherwise. */
+  restored?: { days: number; on: string } | null;
 }
 
-/** What POST /me/streak/repair answers with. */
+/** What POST /me/streak/repair answers with: a Hevalo+ member's free restore. */
 export interface StreakRepairResult {
   restored: boolean;
   duplicate: boolean;
   days: number;
-  costGems: number;
   free: boolean;
-  /** The gem balance afterwards. */
-  gems: number;
   streak: StreakSummary;
 }
 
@@ -137,6 +140,8 @@ export interface ProfileCosmetics {
   favoriteStory?: FavoriteRef | null;
   /** ISO 3166 alpha-2 code (e.g. "DE"), shown as a flag and name. */
   country?: string | null;
+  /** The word tag worn by the name, while it is owned; absent on an older server. */
+  tag?: ProfileWordTag | null;
 }
 
 /** The signed-in user's full profile (GET /me). */
@@ -155,6 +160,7 @@ export interface MeProfile extends SessionUser, ProfileCosmetics {
   selectedAvatarKey?: string | null;
   equippedBackgroundSku?: string | null;
   equippedIconSku?: string | null;
+  equippedTagSku?: string | null;
   premiumIconEnabled?: boolean;
   premiumUntil?: string | null;
   /** The birth month on record, shown in Settings; null until answered, absent from older servers. */
@@ -194,6 +200,8 @@ export interface PublicProfile extends ProfileCosmetics {
   frameUrl?: string | null;
   /** The three badges they show (a minor's only to friends). */
   badges?: ShowcaseBadge[];
+  /** Every badge they earned, newest first, under the same rule; absent on an older server. */
+  earnedBadges?: ProfileBadge[];
   achievements?: number;
   /** Which activity sections this profile shows; null when private. */
   sections?: ProfileSections | null;
@@ -259,6 +267,8 @@ export interface FeedItem {
   viewCount: number;
   commentCount: number;
   engagement: PostEngagement;
+  /** The gifts given onto it, as this reader may see who gave them; absent from an older API. */
+  gifts?: PostGifts;
   at: string;
   /** Only on the author's own copy, while a picture on it waits for a person to check it; nobody else is sent it. */
   review?: PictureReviewState;
@@ -449,10 +459,9 @@ export interface GroupMessage extends ChatExtras {
   deleted: boolean;
 }
 
-/** Wallet balances (GET /me/wallet). */
+/** Wallet balances (GET /me/wallet): Zêr, the one currency. */
 export interface WalletBalances {
   zer: number;
-  gems: number;
 }
 
 /** A buyable catalogue item (GET /shop); owned unique items are left out. */
@@ -461,7 +470,7 @@ export interface ShopItem {
   name: string;
   description: string | null;
   category: string;
-  currency: 'zer' | 'gems';
+  currency: 'zer';
   price: number;
   isUnique: boolean;
   premiumOnly: boolean;
@@ -497,8 +506,8 @@ export interface DailyRewardStatus {
   cycleDay: number;
   /** A lesson or practice was finished today, which a claim needs; absent on older responses, where `canClaim` decides. */
   learnedToday?: boolean;
-  /** Extra gems a claim today gives a Hevalo+ member; 0 or absent for everyone else. */
-  plusGems?: number;
+  /** The daily Zêr is a Hevalo+ member's: false for anyone else, absent on older responses. */
+  member?: boolean;
 }
 
 /** Result of POST /rewards/daily/claim. */
@@ -507,8 +516,11 @@ export interface ClaimResult {
   cycleDay: number;
   reward: number;
   balance: number;
-  /** Gems a Hevalo+ member received with the claim; 0 or absent for everyone else. */
-  plusGems?: number;
+  /** The small gift the day put in the gift bag, for everyone; null when the bag was full, absent from an older server. */
+  bagGift?: { sku: string; name: string; assetUrl: string | null } | null;
+  member?: boolean;
+  /** Whether this account may be told what Hevalo+ adds: a known adult only. Absent means no. */
+  nudges?: boolean;
 }
 
 /** A community library post (story or poem), from the public browse endpoint. */

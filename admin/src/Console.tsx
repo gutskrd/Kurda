@@ -24,10 +24,12 @@ import { AiModeration } from './pages/AiModeration';
 import { Lessons } from './pages/Lessons';
 import { Experiments } from './pages/Experiments';
 import { Events } from './pages/Events';
-import { GemRules } from './pages/GemRules';
+import { EarnRules } from './pages/EarnRules';
 import { System } from './pages/System';
 import { Audit } from './pages/Audit';
 import { SecurityLog } from './pages/SecurityLog';
+import { SafetyReviews } from './pages/SafetyReviews';
+import { AccessLog } from './pages/AccessLog';
 import { Offline } from './pages/Offline';
 import { Pictures } from './pages/Pictures';
 import { Security } from './pages/Security';
@@ -58,6 +60,7 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   'trusted-networks': () => <TrustedNetworks />,
   feedback: () => <Feedback />,
   playbook: () => <Playbook />,
+  'safety-reviews': (route) => <SafetyReviews route={route} />,
   aimod: () => <AiModeration />,
   antibot: () => <Antibot />,
   lessons: () => <Lessons />,
@@ -74,11 +77,12 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   economy: () => <Economy />,
   shop: () => <Shop />,
   pictures: () => <Pictures />,
-  'gem-rules': () => <GemRules />,
+  'earn-rules': () => <EarnRules />,
   fraud: () => <Fraud />,
   approvals: () => <Approvals />,
   flags: () => <Experiments />,
   audit: () => <Audit />,
+  'access-log': () => <AccessLog />,
   offline: () => <Offline />,
   'security-log': (route) => <SecurityLog route={route} />,
   security: () => <Security />,

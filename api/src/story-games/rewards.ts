@@ -34,7 +34,7 @@ interface Log {
  * half the questions (`countsAsLearning`), so a game left open overnight does not buy tomorrow's streak. XP is as for a
  * lesson, a quarter for a story finished before (`story_completions`, kept beyond the games), and none once the same
  * story has paid PAID_STORY_REPEATS_PER_DAY times that local day. The day learned, the streak (which unlocks the daily
- * reward) and the daily goal are still recorded. No Gems, no rating, and placing never changes the XP.
+ * reward) and the daily goal are still recorded. No Zêr, no rating, and placing never changes the XP.
  *
  * Players are paid in user-id order, each in a savepoint: concurrent games with the same people lock users in the same
  * order (no deadlock), and a failure leaves that player unpaid and logged without rolling back the game or the others.
@@ -112,7 +112,7 @@ async function payOne(
         { userId, source: STORY_XP_SOURCE, amount: lessonCompletionXp(accuracy, isRepeat), refId: `${game.id}:${userId}` },
         client,
       );
-  const streak = await deps.streaks.recordActivity(userId, tz, now, client);
+  const streak = await deps.streaks.recordActivity(userId, tz, now, client, 'game');
   await deps.goals.evaluate(client, userId, tz, now);
   await client.query(
     `UPDATE story_game_players SET learning_counted = true, xp_awarded = $3 WHERE game_id = $1 AND user_id = $2`,

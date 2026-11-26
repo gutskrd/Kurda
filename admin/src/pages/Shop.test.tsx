@@ -92,7 +92,7 @@ describe('the shop', () => {
 
   it('saves the rest of a dear item at once when its price stays', async () => {
     const user = userEvent.setup();
-    const dear = item({ price: 2000, currency: 'gems' });
+    const dear = item({ price: 2000 });
     const { calls } = fakeApi(...shop([dear]), on('POST', '/shop/items', json(dear)));
     renderUi(<Shop />);
     await openOthers(user);
@@ -220,6 +220,42 @@ describe('the shop', () => {
 
 describe('an item’s sale state', () => {
   const now = Date.parse('2030-06-01T12:00:00Z');
+  it('shows the gifts on a tab of their own, with their pictures, meanings and worth, and says which are not drawn yet', async () => {
+    const user = userEvent.setup();
+    const moon = item({ sku: 'gift-heyv', name: 'Heyv', category: 'gift', price: 20_000, assetKey: null, assetUrl: '/cosmetics/gifts/made-07-heyv.png', isUnique: false, premiumOnly: false, description: null } as Partial<ShopItem>);
+    const tulip = item({ sku: 'gift-lale', name: 'Lale', category: 'gift', price: 10, assetKey: null, assetUrl: null, isUnique: false, premiumOnly: false, description: null } as Partial<ShopItem>);
+    fakeApi(...shop([item(), moon, tulip]));
+    renderUi(<Shop />);
+    await user.click(await screen.findByRole('tab', { name: /gifts/i }));
+    const gifts = await screen.findByRole('list', { name: 'Gifts' });
+    const cards = within(gifts).getAllByRole('listitem');
+    // cheapest first, and only the gifts
+    expect(cards.map((c) => within(c).getByRole('heading').textContent)).toEqual(['Lale', 'Heyv']);
+    expect(within(cards[0]!).getByText('Not drawn yet')).toBeTruthy();
+    expect(within(cards[0]!).getByText('Not offered')).toBeTruthy();
+    expect(within(cards[1]!).getByText(/The full moon/)).toBeTruthy();
+    expect(within(cards[1]!).getByText('≈ €200')).toBeTruthy();
+    expect(within(cards[1]!).queryByRole('button', { name: /Delete/ })).toBeNull();
+    // and the table of other items leaves them out
+    await openOthers(user);
+    expect(screen.queryByText('Heyv')).toBeNull();
+  });
+
+  it('sends a gift’s new price of 500 or more to Approvals, as for any item', async () => {
+    const user = userEvent.setup();
+    const kitten = item({ sku: 'gift-pisik', name: 'Pisîk', category: 'gift', price: 150, assetKey: null, assetUrl: '/cosmetics/gifts/made-04-pisik.png', isUnique: false, premiumOnly: false, description: null } as Partial<ShopItem>);
+    const { calls } = fakeApi(...shop([kitten]), on('POST', '/admin/config/changes', json({ status: 'pending' })));
+    renderUi(<Shop />);
+    await user.click(await screen.findByRole('tab', { name: /gifts/i }));
+    await user.click(await screen.findByRole('button', { name: 'Edit “Pisîk”' }));
+    const price = screen.getByLabelText(/^price/i);
+    await user.clear(price);
+    await user.type(price, '600');
+    await user.click(screen.getByRole('button', { name: 'Send for approval' }));
+    await waitFor(() => expect(posts(calls, '/admin/config/changes')).toHaveLength(1));
+    expect(posts(calls, '/admin/config/changes')[0]!.body).toMatchObject({ target: 'shop_item', payload: { sku: 'gift-pisik', category: 'gift', price: 600 } });
+  });
+
   it('tells retired, hidden, off sale, not yet and ended apart', () => {
     expect(saleState(item({ active: false, inStock: false, retiredAt: '2030-01-01T00:00:00Z' }), now)).toBe('retired');
     expect(saleState(item({ active: false, inStock: false }), now)).toBe('hidden');
@@ -229,11 +265,10 @@ describe('an item’s sale state', () => {
     expect(saleState(item({ availableFrom: new Date(now - DAY).toISOString(), availableTo: new Date(now + DAY).toISOString() }), now)).toBe('on');
   });
 
-  it('needs a second admin only for a new price at or over 1,000', () => {
-    expect(needsApproval(null, 999, 'zer')).toBe(false);
-    expect(needsApproval(null, 1000, 'zer')).toBe(true);
-    expect(needsApproval({ price: 1500, currency: 'gems' }, 1500, 'gems')).toBe(false);
-    expect(needsApproval({ price: 1500, currency: 'gems' }, 1500, 'zer')).toBe(true);
-    expect(needsApproval({ price: 500, currency: 'zer' }, 1200, 'zer')).toBe(true);
+  it('needs a second admin only for a new price at or over 500', () => {
+    expect(needsApproval(null, 499, 'zer')).toBe(false);
+    expect(needsApproval(null, 500, 'zer')).toBe(true);
+    expect(needsApproval({ price: 750, currency: 'zer' }, 750, 'zer')).toBe(false);
+    expect(needsApproval({ price: 250, currency: 'zer' }, 600, 'zer')).toBe(true);
   });
 });

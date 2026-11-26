@@ -89,7 +89,7 @@
   stroke: var(--separator);
 }
 .ll-ring-time {
-  stroke: var(--primary);
+  stroke: var(--accent);
   stroke-linecap: round;
   transition: stroke-dashoffset 1s linear, stroke var(--dur) var(--ease-out);
 }

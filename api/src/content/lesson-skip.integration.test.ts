@@ -1,9 +1,9 @@
 /**
  * Putting an exercise off ("Can't listen now", "Can't speak now") against real Postgres: an unanswered listening or
- * speaking item is out of the score, costing no accuracy or XP, and earning no perfect-lesson Gems or Bêkêmasî perfect
+ * speaking item is out of the score, costing no accuracy or XP, and earning no perfect-lesson Zêr or Bêkêmasî perfect
  * lesson either. Anything else unanswered still counts as missed. Reviews treat their listening items the same.
  *
- * The perfect-lesson gem rule is off for everyone; this suite enables it because the Gems are one way it tells a fully
+ * The perfect-lesson earning rule is off for everyone; this suite enables it because the Zêr are one way it tells a fully
  * answered lesson from one with something put off.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -14,7 +14,7 @@ import { loadConfig } from '../config/env.js';
 import { ContentRepository } from './repository.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
-import { switchOnGemRule } from '../test/gem-rules.js';
+import { switchOnEarnRule } from '../test/earn-rules.js';
 import { lessonCompletionXp } from '../xp/service.js';
 import { PRACTICE_XP_FACTOR } from '../practice/service.js';
 
@@ -63,6 +63,8 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
     });
     await activate(app, pool, reg);
     const player = { id: reg.json().user.id as string, token: reg.json().tokens.accessToken as string };
+    // the perfect-lesson rule pays Zêr, which only members earn, so a lesson paying none says something only for them
+    await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [player.id]);
     players.push(player);
     return player;
   }
@@ -87,12 +89,12 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
     return (await authed(player, 'POST', `/sessions/${sid}/complete`)).json();
   }
 
-  const gemsEarned = async (userId: string) =>
+  const zerEarned = async (userId: string) =>
     Number(
       (
         await pool.query<{ n: string }>(
           `SELECT COALESCE(SUM(amount), 0)::text n FROM wallet_ledger
-           WHERE user_id = $1 AND currency = 'gems' AND reason = 'gem_earn:perfect_lesson'`,
+           WHERE user_id = $1 AND currency = 'zer' AND reason = 'earn:perfect_lesson'`,
           [userId],
         )
       ).rows[0]!.n,
@@ -110,7 +112,7 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     repo = new ContentRepository(pool);
-    perfectRuleOff = await switchOnGemRule(pool, 'perfect_lesson');
+    perfectRuleOff = await switchOnEarnRule(pool, 'perfect_lesson');
 
     courseId = await repo.createCourse({ slug: `skip-${suffix}`, titleKu: 'K', titleEn: 'Skip' });
     const unitId = await repo.createUnit(courseId, 1, 'Y', 'Unit');
@@ -160,7 +162,7 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
       firstCompletion: true,
     });
     // …and earns nothing a perfect lesson does
-    expect(await gemsEarned(learner.id)).toBe(0);
+    expect(await zerEarned(learner.id)).toBe(0);
     expect(await perfectLessons(learner)).toBe(0);
   });
 
@@ -168,7 +170,7 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
     const learner = await register('sksp');
     const results = await play(learner, [ex.mc, ex.tr, ex.li]);
     expect(results).toMatchObject({ correct: 3, total: 3, accuracy: 1, xpAwarded: lessonCompletionXp(1, false) });
-    expect(await gemsEarned(learner.id)).toBe(0);
+    expect(await zerEarned(learner.id)).toBe(0);
   });
 
   it('a lesson answered in full and right is still the perfect one', async () => {
@@ -176,7 +178,7 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
     const results = await play(learner, [ex.mc, ex.tr, ex.li, ex.sp]);
     expect(results).toMatchObject({ correct: 4, total: 4, accuracy: 1, xpAwarded: lessonCompletionXp(1, false) });
     // paid because this suite switched the rule on; switched off, as it is for everyone, nobody is
-    expect(await gemsEarned(learner.id)).toBe(5);
+    expect(await zerEarned(learner.id)).toBe(15);
     expect(await perfectLessons(learner)).toBe(1);
   });
 

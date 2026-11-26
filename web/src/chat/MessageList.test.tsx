@@ -315,4 +315,26 @@ describe('MessageList', () => {
     expect(writeText).toHaveBeenCalledWith('my words');
     expect(await screen.findByText('Copied')).toBeInTheDocument();
   });
+
+  it('lets only messages that arrive while the thread is open rise in', () => {
+    const opened = [msg('a', 'u2', 'Silav', at(9, 0)), msg('b', 'me', 'Silav!', at(9, 1))];
+    const { container, rerender } = show(<MessageList messages={opened} myId="me" />);
+    expect(container.querySelectorAll('.bubble.is-arriving')).toHaveLength(0);
+
+    // older history above, a reply from her, and one of mine still on its way
+    const later = [
+      msg('z', 'u2', 'Older', at(8, 0)),
+      ...opened,
+      msg('c', 'u2', 'Çawa yî?', at(9, 2)),
+      msg('local:1', 'me', 'Baş im', at(9, 3), { pending: 'sending' }),
+    ];
+    rerender(<MemoryRouter><MessageList messages={later} myId="me" /></MemoryRouter>);
+    const arriving = [...container.querySelectorAll('.bubble.is-arriving')].map((b) => b.textContent);
+    expect(arriving).toEqual(['Çawa yî?', 'Baş im']);
+
+    // mine comes back confirmed under the server’s id: it is already on screen, so it does not rise again
+    const confirmed = [...later.slice(0, 4), msg('d', 'me', 'Baş im', at(9, 3))];
+    rerender(<MemoryRouter><MessageList messages={confirmed} myId="me" /></MemoryRouter>);
+    expect([...container.querySelectorAll('.bubble.is-arriving')].map((b) => b.textContent)).toEqual(['Çawa yî?']);
+  });
 });

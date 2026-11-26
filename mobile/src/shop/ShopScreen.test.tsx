@@ -43,22 +43,22 @@ const item = (over: Partial<ShopItem> & Pick<ShopItem, 'sku' | 'name' | 'categor
 });
 
 /**
- * A slice of the real catalogue (api/content/cosmetics.json) in the order GET /shop sends it, plus a gem-priced item
- * and one filed under an admin's own category.
+ * A slice of the real catalogue (api/content/cosmetics.json) in the order GET /shop sends it, with items that were
+ * once priced in another currency and now cost Zêr like the rest.
  */
 const CATALOGUE: ShopItem[] = [
   item({ sku: 'bg-made-hevalo', name: 'Hevalo', description: 'Hevalo violet', category: 'background', price: 0, premiumOnly: false, assetUrl: '/cosmetics/backgrounds/made-01-hevalo.webp' }),
   item({ sku: 'bg-made-seva-zozanan', name: 'Şeva Zozanan', description: 'Night on the high pastures', category: 'background', assetUrl: '/cosmetics/backgrounds/made-02-seva-zozanan.webp' }),
   item({ sku: 'bg-made-gola-sin', name: 'Gola Şîn', description: 'Blue lake', category: 'background', price: 400, assetUrl: '/cosmetics/backgrounds/made-06-gola-sin.webp' }),
-  item({ sku: 'bg-gem-dawn', name: 'Berbang', description: 'Daybreak', category: 'background', currency: 'gems', price: 10, assetUrl: '/cosmetics/backgrounds/made-09-berbang.webp' }),
+  item({ sku: 'bg-gem-dawn', name: 'Berbang', description: 'Daybreak', category: 'background', price: 50, assetUrl: '/cosmetics/backgrounds/made-09-berbang.webp' }),
   item({ sku: 'icon-made-roj', name: 'Roj', description: 'Sun', category: 'icon', price: 600, assetUrl: '/cosmetics/icons/made-02-roj.png' }),
   item({ sku: 'icon-made-caydan', name: 'Îstîkan', description: 'Tea glass', category: 'icon', price: 900, assetUrl: '/cosmetics/icons/made-08-caydan.png' }),
-  item({ sku: 'icon-gem-sterk', name: 'Mohra Rojê', description: 'Sun seal', category: 'icon', currency: 'gems', price: 20, assetUrl: '/cosmetics/icons/made-07-sterk.png' }),
+  item({ sku: 'icon-gem-sterk', name: 'Mohra Rojê', description: 'Sun seal', category: 'icon', price: 100, assetUrl: '/cosmetics/icons/made-07-sterk.png' }),
   item({ sku: 'tag_kurdish', name: 'Kurdish Tag', description: 'A Kurdish identity tag for your profile.', category: 'tag', premiumOnly: false }),
   item({ sku: 'streak_freeze', name: 'Streak freeze', category: 'freeze', price: 50, premiumOnly: false }),
 ];
 
-function open(items: ShopItem[] = CATALOGUE, balances = { zer: 550, gems: 12 }) {
+function open(items: ShopItem[] = CATALOGUE, balances = { zer: 550 }) {
   // The purse after a purchase: what the purchase says is left, and what the wallet then says too.
   let spent = false;
   const client = fakeClient({
@@ -111,7 +111,7 @@ describe('the Shop, by kind', () => {
 
   it('shows each item’s picture, shaped by its kind, and a glyph for the tag that has none', async () => {
     open();
-    const glass = await screen.findByRole('button', { name: /^Îstîkan, Tea glass, 900 Zêr$/ });
+    const glass = await screen.findByRole('button', { name: /^Îstîkan, Tea glass, 900 Zêr · ≈ €9$/ });
     // The picture is drawn once it starts loading, an effect after the row.
     await waitFor(() => expect(glass.querySelector('img')?.getAttribute('src')).toBe('https://hevalo.app/cosmetics/icons/made-08-caydan.png'));
     const lake = screen.getByRole('button', { name: /^Gola Şîn/ });
@@ -127,10 +127,10 @@ describe('the Shop, by kind', () => {
    * Green is for a right answer, so "Free" is a price like any other, and a card's name and meaning may take a second
    * line.
    */
-  it('names both currencies in the purse, and lays the items out as cards two to a row', async () => {
+  it('shows the one currency in the purse, and lays the items out as cards two to a row', async () => {
     open();
     expect(await screen.findByLabelText('550 Zêr')).toBeTruthy();
-    expect(screen.getByLabelText('12 gems')).toBeTruthy();
+    expect(screen.queryByLabelText(/gems/i)).toBeNull();
     const card = await screen.findByRole('button', { name: 'Hevalo, Hevalo violet, Free' });
     expect(getComputedStyle(card.parentElement!).flexWrap).toBe('wrap');
     expect(card.style.width || getComputedStyle(card).width).toBe('48.5%');
@@ -148,8 +148,8 @@ describe('the Shop, by kind', () => {
   });
 
   it('shows a frame the way it will be worn: round your own picture, in its row and in its sheet', async () => {
-    open([...CATALOGUE, item({ sku: 'frame-made-lale', name: 'Xeleka Laleyan', description: 'Tulip wreath', category: 'frame', price: 1400, premiumOnly: false, assetUrl: '/cosmetics/frames/made-01-lale.png' })], { zer: 2000, gems: 0 });
-    const row = await screen.findByRole('button', { name: /^Xeleka Laleyan, Tulip wreath, 1.?400 Zêr$/ });
+    open([...CATALOGUE, item({ sku: 'frame-made-lale', name: 'Xeleka Laleyan', description: 'Tulip wreath', category: 'frame', price: 1400, premiumOnly: false, assetUrl: '/cosmetics/frames/made-01-lale.png' })], { zer: 2000 });
+    const row = await screen.findByRole('button', { name: /^Xeleka Laleyan, Tulip wreath, 1.?400 Zêr · ≈ €14$/ });
     await waitFor(() => expect([...row.querySelectorAll('img')].map((img) => img.getAttribute('src'))).toContain('https://hevalo.app/cosmetics/frames/made-01-lale.png'));
     // Your own picture inside it (here with no photo, the default avatar).
     expect(row.querySelector('[role="img"][aria-label*="rojda"]')).not.toBeNull();
@@ -199,40 +199,37 @@ describe('the Shop, by kind', () => {
     expect(rowNames()).toEqual(['Roj', 'Mohra Rojê']);
   });
 
-  it('puts each kind in price order (low to high: Zêr, then gems), either way, or by name', async () => {
+  it('puts each kind in price order, either way, or by name', async () => {
     open();
     await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });
     fireEvent.click(screen.getByRole('button', { name: 'Sort: Featured' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Price: low to high' }));
     expect(screen.getByRole('button', { name: 'Sort: Price: low to high' })).toBeTruthy();
-    expect(rowNames()).toEqual(['Hevalo', 'Gola Şîn', 'Şeva Zozanan', 'Berbang', 'Roj', 'Îstîkan', 'Mohra Rojê', 'Kurdish Tag', 'Streak freeze']);
+    expect(rowNames()).toEqual(['Hevalo', 'Berbang', 'Gola Şîn', 'Şeva Zozanan', 'Mohra Rojê', 'Roj', 'Îstîkan', 'Kurdish Tag', 'Streak freeze']);
 
     fireEvent.click(screen.getByRole('button', { name: 'Sort: Price: low to high' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Price: high to low' }));
-    expect(rowNames().slice(0, 4)).toEqual(['Berbang', 'Şeva Zozanan', 'Gola Şîn', 'Hevalo']);
+    expect(rowNames().slice(0, 4)).toEqual(['Şeva Zozanan', 'Gola Şîn', 'Berbang', 'Hevalo']);
 
     fireEvent.click(screen.getByRole('button', { name: 'Sort: Price: high to low' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Name A–Z' }));
     expect(rowNames().slice(0, 4)).toEqual(['Berbang', 'Gola Şîn', 'Hevalo', 'Şeva Zozanan']);
   });
 
-  it('keeps what the balance covers, each item against its own currency', async () => {
-    open(CATALOGUE, { zer: 550, gems: 12 });
+  it('keeps what the Zêr covers', async () => {
+    open(CATALOGUE, { zer: 550 });
     await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });
-    // Gems are on sale here, so it is the balance, not only the Zêr.
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Within my balance' }));
-    expect(screen.getByRole('checkbox', { name: 'Within my balance' }).getAttribute('aria-checked')).toBe('true');
-    const names = rowNames();
-    // 10 gems is within 12 gems, though nothing compares it with the 550 Zêr.
-    expect(names).toContain('Berbang');
-    // 20 gems is not, however much Zêr there is.
-    expect(names).not.toContain('Mohra Rojê');
-    expect(names).toEqual(['Hevalo', 'Şeva Zozanan', 'Gola Şîn', 'Berbang', 'Kurdish Tag', 'Streak freeze']);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Within my Zêr' }));
+    expect(screen.getByRole('checkbox', { name: 'Within my Zêr' }).getAttribute('aria-checked')).toBe('true');
+    // Roj at 600 and Îstîkan at 900 are beyond 550.
+    expect(rowNames()).toEqual(['Hevalo', 'Şeva Zozanan', 'Gola Şîn', 'Berbang', 'Mohra Rojê', 'Kurdish Tag', 'Streak freeze']);
   });
 
-  it('says "Within my Zêr" while everything is priced in Zêr', async () => {
-    open(CATALOGUE.filter((i) => i.currency === 'zer'));
-    expect(await screen.findByRole('checkbox', { name: 'Within my Zêr' })).toBeTruthy();
+  it('says what each price is worth in money, on the card and in its sheet', async () => {
+    open();
+    expect(await screen.findByRole('button', { name: /^Gola Şîn, Blue lake, 400 Zêr · ≈ €4\b/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /^Gola Şîn,/ }));
+    expect(screen.getByText('400 Zêr · ≈ €4')).toBeTruthy();
   });
 
   it('offers no gift for something free, and keeps Buy and the gift for the rest', async () => {
@@ -245,7 +242,7 @@ describe('the Shop, by kind', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /^Gola Şîn,/ }));
     expect(screen.getByText('Send as a gift')).toBeTruthy();
-    expect(screen.getByText('400 Zêr')).toBeTruthy();
+    expect(screen.getByText('400 Zêr · ≈ €4')).toBeTruthy();
     // Beside Buy, before anything is spent: a purchase is final.
     expect(screen.getByText('Every purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.')).toBeTruthy();
     const felt: HapticEvent[] = [];
@@ -282,22 +279,14 @@ describe('the Shop, by kind', () => {
   });
 
   it('still asks first before a dear purchase', async () => {
-    const client = open(CATALOGUE, { zer: 2000, gems: 0 });
+    const client = open(CATALOGUE, { zer: 2000 });
     fireEvent.click(await screen.findByRole('button', { name: /^Îstîkan,/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     expect(Alert.alert).toHaveBeenCalledWith(
       'Confirm purchase',
-      'Spend 900 Zêr on Îstîkan?\n\nEvery purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
+      'Spend 900 Zêr on Îstîkan? ≈ €9\n\nEvery purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
       expect.any(Array),
     );
-    expect(client.calls.some((c) => c.path === '/shop/purchase')).toBe(false);
-  });
-
-  it('asks first before spending gems, however few', async () => {
-    const client = open();
-    fireEvent.click(await screen.findByRole('button', { name: /^Berbang,/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
-    expect(Alert.alert).toHaveBeenCalledWith('Confirm purchase', expect.stringContaining('Every purchase is final'), expect.any(Array));
     expect(client.calls.some((c) => c.path === '/shop/purchase')).toBe(false);
   });
 
@@ -311,7 +300,7 @@ describe('the Shop, by kind', () => {
   it('has no Return control: not for refreshed items, not for anything', async () => {
     const client = fakeClient({
       'GET /shop': ok({ items: CATALOGUE }),
-      'GET /me/wallet': ok({ balances: { zer: 550, gems: 12 } }),
+      'GET /me/wallet': ok({ balances: { zer: 550 } }),
       'GET /me/inventory': ok({
         items: [{ sku: 'bg-background-01', name: 'Şev', category: 'background', quantity: 1, premiumOnly: false, assetUrl: null }],
         refreshedItems: ['bg-background-01'],
@@ -381,7 +370,7 @@ describe('your bird and your tree, in the Shop', () => {
   });
   const TODAY = '2026-11-13';
   const growing = (over: Partial<TreeRecord> = {}): TreeView =>
-    treeView({ species: 'hinar', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 9, water: 2, harvests: 0, ...over }, TODAY);
+    treeView({ species: 'hinar', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 24, water: 2, harvests: 0, ...over }, TODAY);
   /** GET /me/tree: this tree (or none), every kind, these bought, this much Zêr. */
   const mine = (tree: TreeView | null, over: { owned?: string[]; zer?: number } = {}): MyTree => ({
     tree,
@@ -397,7 +386,7 @@ describe('your bird and your tree, in the Shop', () => {
   };
 
   /** The Shop, with these answers for the bird and the tree (a server without either, unless given). */
-  function openOwn(routes: Parameters<typeof fakeClient>[0], balances = { zer: 550, gems: 12 }) {
+  function openOwn(routes: Parameters<typeof fakeClient>[0], balances = { zer: 550 }) {
     const client = fakeClient({
       'GET /shop': ok({ items: CATALOGUE }),
       'GET /me/wallet': ok({ balances }),
@@ -421,7 +410,7 @@ describe('your bird and your tree, in the Shop', () => {
       expect(within(group).getAllByRole('radio')).toHaveLength(8);
       expect(within(group).getByRole('radio', { name: 'Pink bird, your bird now' }).getAttribute('aria-checked')).toBe('true');
       expect(within(group).getByRole('radio', { name: 'Brown bird' }).getAttribute('aria-checked')).toBe('false');
-      expect(screen.getByText('A new bird costs 500 Zêr. You have 550 Zêr.')).toBeTruthy();
+      expect(screen.getByText('A new bird costs 250 Zêr. You have 550 Zêr.')).toBeTruthy();
       // The bird that is yours already cannot be bought again.
       expect(disabled('shop-bird-get')).toBe(true);
     });
@@ -429,7 +418,7 @@ describe('your bird and your tree, in the Shop', () => {
     it('takes the first bird for free, with no question, and posts the bird picked', async () => {
       const client = openOwn({ 'GET /letters?landings=1': ok(letters({ birdChosen: false, bird: 1 })), 'POST /letters/bird': ok(letters({ bird: 4 })) });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Choose your bird' }));
-      expect(screen.getByText('Your bird carries your letters. Your first one is free; a new one later costs 500 Zêr.')).toBeTruthy();
+      expect(screen.getByText('Your bird carries your letters. Your first one is free; a new one later costs 250 Zêr.')).toBeTruthy();
       fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
       fireEvent.click(screen.getByRole('button', { name: 'This is my bird' }));
       await waitFor(() => expect(client.calls.find((c) => c.method === 'POST' && c.path === '/letters/bird')?.body).toEqual({ bird: 4 }));
@@ -445,10 +434,10 @@ describe('your bird and your tree, in the Shop', () => {
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
       fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
       expect(disabled('shop-bird-get')).toBe(false);
-      fireEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Get this bird · 250 Zêr' }));
       expect(Alert.alert).toHaveBeenCalledWith(
         'Confirm purchase',
-        'Spend 500 Zêr on Brown bird?\nYou have 550 Zêr.\n\nEvery purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
+        'Spend 250 Zêr on Brown bird? ≈ €2.50\nYou have 550 Zêr.\n\nEvery purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
         expect.any(Array),
       );
       expect(client.calls.some((c) => c.path === '/letters/bird')).toBe(false);
@@ -462,10 +451,10 @@ describe('your bird and your tree, in the Shop', () => {
     });
 
     it('says how many Zêr are missing when the balance is short, and does not offer the buy', async () => {
-      const client = openOwn({ 'GET /letters?landings=1': ok(letters({ zer: 300 })) }, { zer: 300, gems: 0 });
+      const client = openOwn({ 'GET /letters?landings=1': ok(letters({ zer: 100 })) }, { zer: 100 });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
       fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
-      expect(screen.getByText('You need 200 more Zêr.')).toBeTruthy();
+      expect(screen.getByText('You need 150 more Zêr.')).toBeTruthy();
       expect(disabled('shop-bird-get')).toBe(true);
       fireEvent.click(screen.getByTestId('shop-bird-get'));
       expect(Alert.alert).not.toHaveBeenCalled();
@@ -484,9 +473,9 @@ describe('your bird and your tree, in the Shop', () => {
       });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
       fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
-      fireEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Get this bird · 250 Zêr' }));
       (vi.mocked(Alert.alert).mock.calls[0]![2] as Array<{ onPress?: () => void }>)[1]!.onPress!();
-      expect(await screen.findByText('You need 400 more Zêr.')).toBeTruthy();
+      expect(await screen.findByText('You need 150 more Zêr.')).toBeTruthy();
       expect(disabled('shop-bird-get')).toBe(true);
     });
   });
@@ -507,20 +496,20 @@ describe('your bird and your tree, in the Shop', () => {
       expect(within(kind('beru')).getByText('Free')).toBeTruthy();
       expect(within(kind('beru')).getByRole('button', { name: 'Plant: Berû (Oak)' })).toBeTruthy();
       expect(within(kind('tu')).getByText('Yours')).toBeTruthy();
-      expect(within(kind('kaj')).getByText('1,000')).toBeTruthy();
+      expect(within(kind('kaj')).getByText('500')).toBeTruthy();
       expect(within(kind('kaj')).getByRole('button', { name: 'Buy: Kaj (Pine)' })).toBeTruthy();
-      expect(within(kind('sev')).getByText('You need 1,650 more Zêr.')).toBeTruthy();
+      expect(within(kind('sev')).getByText('You need 550 more Zêr.')).toBeTruthy();
     });
 
     it('buys a kind once it has said what it costs, which plants nothing', async () => {
       const client = openOwn(
-        { 'GET /me/tree': ok(mine(growing(), { zer: 2000 })), 'POST /me/tree/kinds/kaj/buy': ok(mine(growing(), { owned: ['kaj'], zer: 1000 })) },
-        { zer: 2000, gems: 0 },
+        { 'GET /me/tree': ok(mine(growing(), { zer: 2000 })), 'POST /me/tree/kinds/kaj/buy': ok(mine(growing(), { owned: ['kaj'], zer: 1500 })) },
+        { zer: 2000 },
       );
       fireEvent.click(await screen.findByRole('button', { name: 'Your tree, Hinar · Growing now' }));
       fireEvent.click(await screen.findByRole('button', { name: 'Buy: Kaj (Pine)' }));
       expect(await screen.findByText('Buy Kaj?')).toBeTruthy();
-      expect(screen.getByText('It costs 1,000 Zêr, once. After that you can plant it whenever you like.')).toBeTruthy();
+      expect(screen.getByText('It costs 500 Zêr, once. After that you can plant it whenever you like.')).toBeTruthy();
       expect(screen.getByText('You have 2,000 Zêr.')).toBeTruthy();
       expect(client.calls.some((c) => c.path === '/me/tree/kinds/kaj/buy')).toBe(false);
       fireEvent.click(screen.getByTestId('shop-tree-confirm'));
@@ -564,5 +553,39 @@ describe('your bird and your tree, in the Shop', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Try again' }));
     expect(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' })).toBeTruthy();
     expect(client.calls.filter((c) => c.path === '/letters?landings=1')).toHaveLength(2);
+  });
+});
+
+describe('a member’s box in the Shop', () => {
+  const shop = (box: unknown) => {
+    const client = fakeClient({
+      'GET /shop': ok({ items: CATALOGUE }),
+      'GET /me/wallet': ok({ balances: { zer: 550 } }),
+      'GET /me/inventory': ok({ items: [], refreshedItems: [] }),
+      'GET /me/gifts': ok({ gifts: [], unseen: 0 }),
+      'GET /me/members-box': ok(box),
+      'POST /me/members-box/seen': ok({ ok: true }),
+    });
+    testAuth.client = client;
+    renderWithProviders(<ShopScreen onExit={() => undefined} onEarnMore={() => undefined} />);
+    return client;
+  };
+
+  it('shows this month’s box with what its Zêr are worth, its free gifts and its item, and marks it seen', async () => {
+    const item = { sku: 'icon-made-lale', name: 'Lale', category: 'icon', assetUrl: '/cosmetics/icons/made-05-lale.png' };
+    const client = shop({ box: { month: '2026-11', zer: 250, freeGifts: 3, item, grantedAt: '2026-11-01T08:00:00Z', seen: false }, freeGifts: 3 });
+    expect(await screen.findByText('Your members’ box')).toBeTruthy();
+    const box = within(screen.getByTestId('members-box'));
+    expect(box.getByText('250 Zêr')).toBeTruthy();
+    expect(box.getByText('≈ €2.50')).toBeTruthy();
+    expect(box.getByText('Free gifts: 3 · Lale to wear')).toBeTruthy();
+    await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/me/members-box/seen')).toBe(true));
+  });
+
+  it('shows nothing about a box to anyone who is not a member', async () => {
+    shop({ box: null, freeGifts: 0 });
+    await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });
+    expect(screen.queryByTestId('members-box')).toBeNull();
+    expect(screen.queryByText(/Hevalo\+/)).toBeNull();
   });
 });

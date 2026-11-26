@@ -1,6 +1,6 @@
 import { MODERATED_MESSAGE_BODY, type ReportTargetType } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import { parseTargetRef, type CaseSourceRow } from './sources.js';
+import { flagTarget, parseTargetRef, type CaseSourceRow } from './sources.js';
 import { releasePicture } from './picture-release.js';
 import { claimFromTakedown } from './takedown.js';
 import type { Executor } from './tx.js';
@@ -138,10 +138,8 @@ export async function removableTarget(
       );
       const f = r.rows[0];
       if (!f?.content_ref) return null;
-      if (f.surface === 'library' && f.content_type === 'post') return { type: 'library_post', id: f.content_ref };
-      if (f.surface === 'library' && f.content_type === 'comment') return { type: 'library_comment', id: f.content_ref };
-      if (f.surface === 'caption' && f.content_type === 'comment') return { type: 'image_comment', id: f.content_ref };
-      return null;
+      const type = flagTarget(f.surface, f.content_type);
+      return type ? { type, id: f.content_ref } : null;
     }
     case 'image_flag': {
       const r = await db.query<{ media_key: string }>(`SELECT media_key FROM image_scans WHERE id = $1::uuid`, [c.source_ref]);

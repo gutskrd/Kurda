@@ -22,6 +22,7 @@ import { minorSql } from '../users/age.js';
 import { CASE_PERSON_JOIN, CASE_PERSON_SELECT, CasesService, DEFAULT_STATEMENTS, toQueueItem, type CasePersonColumns, type CaseRow } from './cases-service.js';
 import { resolveTarget, type ResolvedTarget } from './evidence.js';
 import { OPEN_CASE_PREDICATE } from './reports-service.js';
+import { flagTarget, WORDLIST_MODEL } from './sources.js';
 import { decodeCursor, encodeCursor } from './rules.js';
 import { SanctionsService } from './sanctions-service.js';
 import type { Executor } from './tx.js';
@@ -64,7 +65,22 @@ export interface QueueFilters extends CaseQueueQuery {
 
 export const QUEUE_PAGE_SIZE = 50;
 
+/** Letters and private messages: what a flag shows of them is the flagged one alone. */
+const PRIVATE_TARGETS: ReadonlySet<ReportTargetType> = new Set(['letter', 'dm_message', 'group_message']);
+
+/** What a word-filter case says it is about. */
+const FLAGGED_WHAT: Readonly<Record<string, string>> = {
+  letter: 'a letter',
+  dm_message: 'a direct message',
+  group_message: 'a group message',
+  library_post: 'a post',
+  library_comment: 'a comment',
+  image_comment: 'a comment',
+};
+
 const TEXT_CATEGORY: Readonly<Record<string, ReportCategory>> = {
+  // the word filter's listed words: swearing and slurs aimed at someone
+  profanity: 'harassment',
   self_harm: 'self_harm',
   sexual: 'sexual',
   hate: 'hate',
@@ -182,14 +198,19 @@ export class ModerationQueueService {
 
   // ---- the feeds ---------------------------------------------------------------
 
-  /** AI text flags, now with the flagged text itself where it can still be read. */
+  /**
+   * Text flags from the classifier and the word filter, with the flagged text itself where it can still be read. A
+   * flagged letter or private message is shown alone: nobody in the conversation asked for it to be looked at, so the
+   * messages around it stay unread.
+   */
   private async textFlags(): Promise<IngestRow[]> {
     const r = await this.pool.query<{
       id: string; author_id: string | null; action: string; top_category: string | null; top_score: string;
       model_version: string; surface: string; content_type: string; content_ref: string | null; created_at: Date; minor: boolean | null;
+      matched: string[] | null; minor_target: boolean;
     }>(
       `SELECT f.id, f.author_id, f.action, f.top_category, f.top_score, f.model_version, f.surface, f.content_type,
-              f.content_ref, f.created_at, ${minorSql('u')} AS minor
+              f.content_ref, f.created_at, f.matched, f.minor_target, ${minorSql('u')} AS minor
          FROM moderation_flags f LEFT JOIN users u ON u.id = f.author_id
         WHERE f.status = 'pending'
           AND NOT EXISTS (SELECT 1 FROM moderation_cases c WHERE c.source = 'text_flag' AND c.source_ref = f.id::text)
@@ -198,26 +219,23 @@ export class ModerationQueueService {
     const out: IngestRow[] = [];
     for (const f of r.rows) {
       const category = (f.top_category && TEXT_CATEGORY[f.top_category]) || 'spam';
-      const target: ReportTargetType | null =
-        f.surface === 'library' && f.content_type === 'post' ? 'library_post'
-        : f.surface === 'library' && f.content_type === 'comment' ? 'library_comment'
-        : f.surface === 'caption' && f.content_type === 'comment' ? 'image_comment'
-        : null;
+      const target: ReportTargetType | null = flagTarget(f.surface, f.content_type);
       let snapshot: unknown = null;
       if (target && f.content_ref) {
         const res = await resolveTarget(this.pool, target, f.content_ref, { reporterId: null, now: new Date() }).catch(() => null);
-        if (res && !('refused' in res)) snapshot = res.evidence;
+        if (res && !('refused' in res)) snapshot = PRIVATE_TARGETS.has(target) ? { ...res.evidence, context: [] } : res.evidence;
       }
+      const words = f.model_version === WORDLIST_MODEL;
       out.push({
         ref: f.id,
         subject: f.author_id,
         severity: f.action === 'auto_block' ? 85 : f.action === 'auto_hide' ? 70 : 50,
         priority: PRIORITY_OF[category],
         category,
-        summary: `Automatic text flag: ${f.top_category ?? 'spam'} (${f.surface})`,
+        summary: words ? `Word filter: ${FLAGGED_WHAT[target ?? ''] ?? 'a message'}` : `Automatic text flag: ${f.top_category ?? 'spam'} (${f.surface})`,
         evidence: {
           action: f.action, score: Number(f.top_score), model: f.model_version, surface: f.surface,
-          contentType: f.content_type, contentRef: f.content_ref, snapshot,
+          contentType: f.content_type, contentRef: f.content_ref, ...(f.matched ? { words: f.matched.join(', ') } : {}), snapshot,
         },
         createdAt: f.created_at,
         lastAt: f.created_at,
@@ -225,7 +243,8 @@ export class ModerationQueueService {
         reporterCount: 0,
         targetType: target,
         targetId: target ? f.content_ref : null,
-        minor: f.minor === true,
+        // written by a minor, or sent to one
+        minor: f.minor === true || f.minor_target,
       });
     }
     return out;
@@ -677,7 +696,7 @@ export class ModerationQueueService {
    * After that the snapshot becomes a stub that still says what was reported, and its media (report snapshots, the
    * case's own, files a CSAM action took down) lose cleanup protection unless another live snapshot holds them. A
    * released file that was quarantined (public copy gone) or is unused becomes an orphan, which the orphan sweep
-   * deletes with its private copy; one still in use stays.
+   * deletes with its private copy; one still in use stays. Decided text flags go after the same year.
    */
   async pruneEvidence(): Promise<number> {
     const pruned = await this.pool.query<{ k: string }>(
@@ -721,7 +740,13 @@ export class ModerationQueueService {
     );
     const keys = [...new Set([...reportKeys, ...cases.rows.flatMap((c) => c.keys)])];
     if (keys.length > 0) await releaseEvidenceMedia(this.pool, keys);
-    return reportKeys.length + cases.rows.length;
+    // and the text flags behind decided cases, kept as long as the evidence they led to
+    const flags = await this.pool.query(
+      `DELETE FROM moderation_flags WHERE id IN (
+         SELECT id FROM moderation_flags WHERE status <> 'pending' AND resolved_at < now() - make_interval(days => $1::int) LIMIT 5000)`,
+      [EVIDENCE_RETENTION_DAYS],
+    );
+    return reportKeys.length + cases.rows.length + (flags.rowCount ?? 0);
   }
 }
 

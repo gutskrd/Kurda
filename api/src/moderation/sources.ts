@@ -22,6 +22,27 @@ export interface CaseSourceRow {
   evidence: Record<string, unknown>;
 }
 
+/** What the word filter writes as a flag's model, so its cases say "word filter" rather than a classifier's name. */
+export const WORDLIST_MODEL = 'wordlist';
+
+/** The `content_type` a text flag on a private message or letter is stored under (surface 'chat'). */
+export const CHAT_FLAG_CONTENT: Readonly<Record<'dm_message' | 'group_message' | 'letter', string>> = {
+  dm_message: 'dm',
+  group_message: 'group',
+  letter: 'letter',
+};
+
+/** What a text flag is about, from its surface and content type; null when nothing stored can be shown or removed. */
+export function flagTarget(surface: string, contentType: string): ReportTargetType | null {
+  if (surface === 'library' && contentType === 'post') return 'library_post';
+  if (surface === 'library' && contentType === 'comment') return 'library_comment';
+  if (surface === 'caption' && contentType === 'comment') return 'image_comment';
+  if (surface === 'chat') {
+    for (const [target, type] of Object.entries(CHAT_FLAG_CONTENT)) if (type === contentType) return target as ReportTargetType;
+  }
+  return null;
+}
+
 /** 'library_post:<id>' and friends — the old report tables' case keys. */
 export function parseTargetRef(ref: string): { type: string; id: string } | null {
   const i = ref.indexOf(':');

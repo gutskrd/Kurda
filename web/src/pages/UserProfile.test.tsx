@@ -67,16 +67,32 @@ describe('UserProfile (other user, full page)', () => {
 
   // Their numbers sit in the card with their name, as plain numbers.
   it('shows their numbers with their name, as numbers and not as ways into your own pages', async () => {
-    render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'friends', private: false, bio: null, xp: 410, streak: 3, achievements: 5, online: true });
+    const earned = (key: string) => ({ key, family: 'learning', tier: 1, tierKey: 'sifir', earnedAt: null, rarity: null });
+    render({
+      userId: 'u2',
+      username: 'zana',
+      displayName: 'Zana K',
+      friendStatus: 'friends',
+      private: false,
+      bio: null,
+      xp: 410,
+      streak: 3,
+      achievements: 5,
+      earnedBadges: ['ders', 'agir', 'roj', 'dubare', 'rewi'].map(earned),
+      league: { tier: 'cem' },
+      online: true,
+    });
     expect(await screen.findByRole('heading', { level: 1, name: 'Zana K' })).toBeInTheDocument();
 
     const card = document.querySelector<HTMLElement>('.ph')!;
     const figure = (label: string) => within(card).getByText(label, { selector: '.mkp-fact-label' }).parentElement?.querySelector('.mkp-fact-value')?.textContent;
     expect(figure('Streak')).toBe('3');
     expect(figure('XP')).toBe('410');
-    // How many badges is on the badge case in the highlights, not a fourth figure.
+    // Badges are in the row beside the handle, not a fourth figure: the top three of five badges and the league, the rest counted.
     expect(within(card).queryByText('Badges', { selector: '.mkp-fact-label' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Badges: 5' }).querySelector('.hl-count')).toHaveTextContent('5');
+    const row = within(card.querySelector<HTMLElement>('.ph-handle')!).getByRole('button', { name: 'Zana K’s collection, Badges: 5' });
+    expect(row.querySelectorAll('.bdg-pill-icon')).toHaveLength(3);
+    expect(row.querySelector('.bdg-pill-more')).toHaveTextContent('+3');
     // How many friends they have was not sent, so it is not guessed at.
     expect(within(card).queryByText('Friends', { selector: '.mkp-fact-label' })).toBeNull();
     expect(within(card).getByRole('list').querySelectorAll('a')).toHaveLength(0);

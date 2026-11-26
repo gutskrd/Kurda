@@ -812,6 +812,8 @@ function ProfileHeadSkeleton({ own }: { own: boolean }): React.JSX.Element {
         </div>
         <div className="ph-handle">
           <Skeleton line w={64} />
+          {/* the badge row beside the handle: a box of a few pictures, as most profiles show */}
+          <Skeleton w={136} h={44} radius="var(--r-md)" />
         </div>
       </div>
       <ul className="mkp-about">
@@ -819,14 +821,9 @@ function ProfileHeadSkeleton({ own }: { own: boolean }): React.JSX.Element {
           <Skeleton line w={own ? 96 : 112} />
         </li>
         {own && (
-          <>
-            <li>
-              <Skeleton line w={104} />
-            </li>
-            <li>
-              <Skeleton line w={240} />
-            </li>
-          </>
+          <li>
+            <Skeleton line w={104} />
+          </li>
         )}
       </ul>
       {own ? (
@@ -874,24 +871,6 @@ function ProfileHeadSkeleton({ own }: { own: boolean }): React.JSX.Element {
   );
 }
 
-/** The highlights row (ProfileHighlights) with the two most profiles show, badges and the tree. */
-function ProfileHighlightsSkeleton(): React.JSX.Element {
-  return (
-    <ul className="hl-row">
-      {times(2, (i) => (
-        <li key={i}>
-          <span className="hl">
-            <Skeleton className="hl-ring" circle />
-            <span className="hl-label">
-              <Skeleton line w={[48, 32][i]} />
-            </span>
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 /** Two rows of a profile tab's grid (ProfileActivity): post tiles, or game covers with their captions. */
 export function ProfileGridSkeleton({ games = false }: { games?: boolean }): React.JSX.Element {
   return (
@@ -926,7 +905,6 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
     <SkeletonRegion label={t(label ?? 'profile.loading')} className="mkp-page">
       <div className="mkp-wrap">
         <ProfileHeadSkeleton own={own} />
-        <ProfileHighlightsSkeleton />
         <div className="pg">
           <div className="pg-tabs" style={{ '--n': 5, '--at': 0 } as React.CSSProperties}>
             {times(5, (i) => (
@@ -943,7 +921,10 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
   );
 }
 
-/** Editing your profile (pages/ProfileEdit) while it loads: the picture card, then the details form and its Save. */
+/**
+ * Editing your profile (pages/ProfileEdit) while it loads: who can open it, the picture card, then the details form
+ * and its Save.
+ */
 export function ProfileEditSkeleton({ label }: { label: MessageKey }): React.JSX.Element {
   const t = useT();
   // A field's box at its own height and corner (ui.css `.input`); the bio's is taller, as the form sets it.
@@ -960,6 +941,15 @@ export function ProfileEditSkeleton({ label }: { label: MessageKey }): React.JSX
   );
   return (
     <SkeletonRegion label={t(label)}>
+      <section className="card edit-visibility">
+        <span className="settings-row is-held">
+          <Skeleton w={22} h={22} radius="var(--r-sm)" />
+          <span className="settings-row-text">
+            <Skeleton line w={136} />
+          </span>
+          <Skeleton line w={96} />
+        </span>
+      </section>
       <section className="card">
         <h2 className="friend-heading" style={{ marginTop: 0 }}>
           <Skeleton line w={124} />

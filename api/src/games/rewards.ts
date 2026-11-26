@@ -14,7 +14,7 @@
  *   (`roundCountsAsLearning`), since a second try follows a hint that rules out an option;
  * - the XP goes to the game's own source, one of GAME_XP_SOURCES, so the league's daily game-XP cap applies; its ref
  *   `${sessionId}:${userId}` makes XpService pay it once;
- * - never Zêr or Gewher.
+ * - never Zêr.
  *
  * Runs inside the caller's round-closing transaction, so a round finished at 23:59 counts for that day.
  */
@@ -105,7 +105,7 @@ export async function payRound(client: pg.PoolClient, deps: RewardDeps, round: R
     if (earned > 0 && source !== null) xp = await deps.xp.award({ userId, source, amount: earned, refId: `${sessionId}:${userId}` }, client);
     const user = await client.query<{ timezone: string | null }>(`SELECT timezone FROM users WHERE id = $1`, [userId]);
     const tz = safeTimeZone(user.rows[0]?.timezone);
-    streak = (await deps.streaks.recordActivity(userId, tz, now, client)).current;
+    streak = (await deps.streaks.recordActivity(userId, tz, now, client, 'game')).current;
     await deps.goals.evaluate(client, userId, tz, now);
   }
 

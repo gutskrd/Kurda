@@ -102,19 +102,25 @@ function Slot({
    * The list is fetched the first time it is opened and kept, since published posts change far more slowly than this is
    * opened and closed.
    */
+  // A list that could not be read stays unread, so opening again or Try again asks once more.
+  const [listFailed, setListFailed] = useState(false);
+  const load = useCallback(() => {
+    setListFailed(false);
+    setError(null);
+    void listPosts(client, { type: kind, limit: BROWSE }).then((res) => {
+      if (res.ok) setPosts(res.data.posts ?? []);
+      else {
+        setListFailed(true);
+        setError(describeError(res.error, t));
+      }
+    });
+  }, [client, kind, t]);
   const toggle = useCallback(() => {
     const next = !open;
     setOpen(next);
     setError(null);
-    if (!next || posts !== null) return;
-    void listPosts(client, { type: kind, limit: BROWSE }).then((res) => {
-      if (res.ok) setPosts(res.data.posts ?? []);
-      else {
-        setPosts([]);
-        setError(describeError(res.error, t));
-      }
-    });
-  }, [client, kind, open, posts, t]);
+    if (next && posts === null) load();
+  }, [load, open, posts]);
 
   const choose = (post: LibraryPost): void => {
     setError(null);
@@ -165,7 +171,13 @@ function Slot({
 
       {open ? (
         posts === null ? (
-          <Loading style={styles.spinner} />
+          listFailed ? (
+            <Pressable onPress={load} accessibilityRole="button" style={styles.retry} testID="favorites-retry">
+              <Text style={[styles.action, { color: colors.primary }]}>{t('common.tryAgain')}</Text>
+            </Pressable>
+          ) : (
+            <Loading style={styles.spinner} />
+          )
         ) : posts.length === 0 ? (
           <Text style={[styles.empty, dir.text, { color: colors.textSecondary }]}>{t(copy.empty)}</Text>
         ) : (
@@ -180,17 +192,17 @@ function Slot({
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
                   accessibilityLabel={postName(p)}
-                  // The one already chosen in the solid violet every chosen option wears.
+                  // The one already chosen in the solid ink every chosen option wears.
                   style={[
                     styles.option,
                     {
-                      backgroundColor: on ? colors.primary : colors.controlTrack,
+                      backgroundColor: on ? colors.pickedFill : colors.controlTrack,
                       borderWidth: 1,
                       borderColor: on ? colors.primary : colors.glassBorder,
                     },
                   ]}
                 >
-                  <Text style={[styles.optionText, dir.free, { color: on ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
+                  <Text style={[styles.optionText, dir.free, { color: on ? colors.pickedInk : colors.textPrimary }]} numberOfLines={1}>
                     {postName(p)}
                   </Text>
                 </PressableScale>
@@ -210,6 +222,7 @@ function Slot({
 }
 
 const styles = StyleSheet.create({
+  retry: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.sm },
   heading: { ...sectionLabel },
   slot: { gap: spacing.xs },

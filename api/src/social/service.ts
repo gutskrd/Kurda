@@ -1,15 +1,27 @@
 import type pg from 'pg';
-import { foldDiacritics, handleName, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague, type ShowcaseBadge } from '@kurda/shared';
+import {
+  KURDISH_TAG_SKU,
+  foldDiacritics,
+  handleName,
+  normalizeKurdish,
+  toLeagueTier,
+  type LeagueTier,
+  type ProfileBadge,
+  type ProfileLeague,
+  type ProfileWordTag,
+  type ShowcaseBadge,
+} from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { FriendService } from '../friends/service.js';
-import { resolveAvatarUrl } from '../cosmetics/access.js';
+import { premiumUntilSql, resolveAvatarUrl } from '../cosmetics/access.js';
 import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from './presence.js';
 import { escapeLike } from '../db/like.js';
 import { inLeaguesSql } from '../leagues/service.js';
-import { profileShowcase } from '../badges/service.js';
+import { profileBadges } from '../badges/service.js';
 import { birthDateRequired, isKnownAdultRow, isMinorRow, notKnownAdultSql, shownToSql, writtenForSql } from '../users/age.js';
 import { notBlockedSql } from '../friends/blocked.js';
+import { unseenByOthersSql } from '../users/kind.js';
 import { availableSql, accountUnavailable } from '../moderation/availability.js';
 import { resolveSections, type SectionVisibility } from './profile-activity.js';
 
@@ -67,10 +79,14 @@ export interface PublicProfile {
   frameSku?: string | null;
   /** That frame's picture when it is a shop frame; season frames are drawn by the apps. */
   frameAssetKey?: string | null;
+  /** The word tag they wear by their name, while they own it (shared shop-tags.ts). */
+  tag?: ProfileWordTag | null;
   /** badges earned (and the legacy tournament win) */
   achievements?: number;
   /** the three badges they chose to show; a minor's only to themselves and friends */
   badges?: ShowcaseBadge[];
+  /** every badge they earned, newest first, under the same rule as the three */
+  earnedBadges?: ProfileBadge[];
   /** presence — only populated for the user themselves or their friends */
   online?: boolean;
 }
@@ -141,8 +157,8 @@ export class SocialService {
             -- strangers cannot look a minor up (they reach friends another way),
             -- nor anyone whose age is not on record yet
             AND NOT ${notKnownAdultSql('u')}
-            -- a guest (auth/guest.ts) is nobody's to find until the account is claimed
-            AND NOT u.guest
+            -- a guest (auth/guest.ts) is nobody's to find until the account is claimed, and a child's profile never is
+            AND NOT ${unseenByOthersSql('u')}
             AND NOT EXISTS (
               SELECT 1 FROM blocks b
                WHERE (b.blocker_id = $1 AND b.blocked_id = u.id) OR (b.blocker_id = u.id AND b.blocked_id = $1)
@@ -233,6 +249,7 @@ export class SocialService {
       tier: string | null;
       frame_sku: string | null;
       frame_asset: string | null;
+      tag: ProfileWordTag | null;
       achievements: number;
       equipped_background_sku: string | null;
       bg_asset: string | null;
@@ -265,8 +282,9 @@ export class SocialService {
       // favourite's author are named to the viewer only as allowed for minors (users/age.ts), and favourites across a
       // block are not shown.
       `SELECT u.username, u.display_name, u.bio, u.profile_photo_key, u.selected_avatar_key,
-              u.last_seen_at, u.premium_until, u.xp, u.profile_visibility, u.country,
-              u.birth_year, u.birth_month, u.guest, NOT ${availableSql('u')} AS unavailable,
+              u.last_seen_at, ${premiumUntilSql('u')} AS premium_until, u.xp, u.profile_visibility, u.country,
+              -- a child's profile is answered as a guest's is: nobody's but its own
+              u.birth_year, u.birth_month, ${unseenByOthersSql('u')} AS guest, NOT ${availableSql('u')} AS unavailable,
               u.equipped_background_sku, u.equipped_icon_sku, u.premium_icon_enabled,
               u.favorite_poem_id, u.favorite_story_id,
               COALESCE(s.current_streak, 0) AS streak,
@@ -280,6 +298,11 @@ export class SocialService {
               CASE WHEN EXISTS (SELECT 1 FROM user_entitlements ef
                                  WHERE ef.user_id = u.id AND ef.sku = u.equipped_frame_sku)
                    THEN (SELECT fr.asset_key FROM shop_items fr WHERE fr.sku = u.equipped_frame_sku AND fr.category = 'frame') END AS frame_asset,
+              -- the word tag by the name, as a frame: worn only while owned, and never the Kurdish tag, a main tag of its own
+              CASE WHEN EXISTS (SELECT 1 FROM user_entitlements et
+                                 WHERE et.user_id = u.id AND et.sku = u.equipped_tag_sku)
+                   THEN (SELECT jsonb_build_object('sku', tg.sku, 'label', tg.name, 'meaning', tg.description) FROM shop_items tg
+                          WHERE tg.sku = u.equipped_tag_sku AND tg.category = 'tag' AND tg.sku <> '${KURDISH_TAG_SKU}') END AS tag,
               -- badges earned, and the one old award no badge replaced (the tournament win)
               ((SELECT count(*)::int FROM user_badges ub WHERE ub.user_id = u.id AND ub.tier > 0)
                + (SELECT count(*)::int FROM user_achievements ua
@@ -371,8 +394,8 @@ export class SocialService {
       u.favorite_story_id && u.fs_title != null
         ? { id: u.favorite_story_id, title: u.fs_title, type: u.fs_type ?? '', status: u.fs_status ?? '' }
         : null;
-    // a minor's showcase only to themselves and their friends
-    const badges = opts.badges === false ? undefined : await profileShowcase(this.pool, targetId, viewerId);
+    // a minor's badges only to themselves and their friends
+    const shown = opts.badges === false ? undefined : await profileBadges(this.pool, targetId, viewerId);
     return {
       ...base,
       bio: u.bio,
@@ -391,8 +414,10 @@ export class SocialService {
       league: toLeagueTier(u.tier) ? { tier: toLeagueTier(u.tier)! } : null,
       frameSku: u.frame_sku,
       frameAssetKey: u.frame_asset,
+      tag: u.tag,
       achievements: u.achievements,
-      badges,
+      badges: shown?.showcase,
+      earnedBadges: shown?.earned,
       // presence is private: only the user themselves and their friends see it
       online: isSelf || friendStatus === 'friends' ? isOnline(u.last_seen_at) : undefined,
     };
@@ -404,7 +429,7 @@ export class SocialService {
    */
   async access(viewerId: string | null, targetId: string): Promise<{ private: boolean; sections: SectionVisibility }> {
     const row = await this.pool.query<GateRow & { profile_sections: unknown }>(
-      `SELECT profile_visibility, birth_year, birth_month, guest, NOT ${availableSql('users')} AS unavailable, profile_sections
+      `SELECT profile_visibility, birth_year, birth_month, ${unseenByOthersSql('users')} AS guest, NOT ${availableSql('users')} AS unavailable, profile_sections
          FROM users WHERE id = $1 AND deleted_at IS NULL`,
       [targetId],
     );

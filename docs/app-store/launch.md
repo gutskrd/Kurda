@@ -6,7 +6,8 @@ repository's tests and audits; this page is the part that lives outside the
 code: App Store Connect, the server's settings, and the content. What goes into
 the listing itself, word for word in every language, is in
 [`listing.md`](listing.md); the App Privacy answers are in
-[`privacy.md`](privacy.md).
+[`privacy.md`](privacy.md). What changes for the version with child profiles and Hevalo+ is in
+[`children-and-selling.md`](children-and-selling.md).
 
 Tick each line before pressing Submit. A line marked **owner** can only be done
 by the account holder.
@@ -90,7 +91,7 @@ by the account holder.
   | Realistic violence | Infrequent/Mild | the legends and the history behind them tell of killings and a massacre (Halabja), in words, never shown |
   | Profanity, horror, alcohol, medical, wellness, sexuality, cartoon or fantasy violence | None | the app's own content; what members post is moderated |
   | Gambling, simulated gambling | No | |
-  | Contests | None | leagues pay Zêr and gems, which are not money |
+  | Contests | None | leagues pay Zêr, which is not money |
   | Loot boxes | No | a quest's chest is earned, never bought, and holds Zêr |
   | Shared location | No | a member's country is chosen by them, never read from the phone |
   | Dating and relationships | No | |
@@ -151,7 +152,7 @@ already through it.
   > never lead to the App Store, and the store's rating prompt is the system's.
   >
   > Sign in with Apple is offered wherever Google is.
-  > Nothing is sold: Zêr and gems are earned by learning and cannot be bought.
+  > Nothing is sold: Zêr cannot be bought, and only Hevalo+ members earn it by learning.
   > The app has no advertising and no third-party analytics.
 
   Do not say that pictures are scanned automatically unless a scanner has been
@@ -303,7 +304,7 @@ npx eas-cli build --platform android --profile production
 npx eas-cli submit --platform android --profile production
 ```
 
-## Selling (Hevalo+ and Gewher), when it is turned on
+## Selling (Hevalo+ and Zêr), when it is turned on
 
 Nothing is sold in 1.0.0, and the privacy page says so. The phone shows no
 avatar, crown or line that only Hevalo+ unlocks to anybody who is not a
@@ -315,9 +316,20 @@ created in App Store Connect first:
 |---|---|---|---|
 | Hevalo+ monthly | auto-renewing subscription | `app.hevalo.plus.monthly` | €3.99 a month, with an introductory offer: first month €0.99 (pay as you go, 1 month) |
 | Hevalo+ yearly | auto-renewing subscription, same group | `app.hevalo.plus.yearly` | €29.99 a year |
-| Gewher, small | consumable | `app.hevalo.gems.60` | €0.99 |
-| Gewher, medium | consumable | `app.hevalo.gems.350` | €4.99 |
-| Gewher, large | consumable | `app.hevalo.gems.800` | €9.99 |
+| 100 Zêr | consumable | `app.hevalo.zer.100` | €0.99 |
+| 500 Zêr | consumable | `app.hevalo.zer.500` | €4.99 |
+| 1,000 Zêr + 100 bonus | consumable | `app.hevalo.zer.1100` | €9.99 |
+| 2,000 Zêr + 400 bonus | consumable | `app.hevalo.zer.2400` | €19.99 |
+| 5,000 Zêr + 1,500 bonus | consumable | `app.hevalo.zer.6500` | €49.99 |
+
+The packs are shared `ZER_PACKS`; each product grants the Zêr its id names,
+bonus included, and the same price points serve the US store in dollars.
+Zêr is the one currency: Gewher was folded into it at five Zêr to one, and
+100 Zêr is one euro (or dollar). Every Zêr price in the apps and on the
+website already shows what it is worth, "≈ €3" for 300 Zêr and "≈ €2.50" for
+250 (shared `zerValue`); once the store's own price for the smallest pack is
+known on the phone it is said in the reader's store currency instead. Only
+Hevalo+ members earn Zêr; anyone can buy it.
 
 The paywall must show the price, the period, that it renews until cancelled,
 the introductory price and what follows it, and links to the Terms and the

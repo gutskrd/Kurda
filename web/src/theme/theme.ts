@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { PAGE } from '@kurda/shared';
 
 /**
  * Light or dark, chosen per browser rather than per account, since it is about the screen in use. Dark is the
@@ -43,7 +44,7 @@ export function applyTheme(preference: ThemePreference = readThemePreference()):
   root.dataset.theme = scheme;
   root.style.colorScheme = scheme;
   const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-  if (meta) meta.content = scheme === 'light' ? '#f6f4fd' : '#100e1d';
+  if (meta) meta.content = PAGE[scheme].page;
   return scheme;
 }
 

@@ -142,18 +142,18 @@ const ZER = {
   depth: 4,
 };
 
-/** A whole page of Gewher and one more after it. */
-const GEWHER_FIRST = {
-  type: 'gewher',
+/** A whole page of Zêr and one more after it. */
+const ZER_FIRST = {
+  type: 'zer',
   scope: 'global',
-  top: Array.from({ length: 25 }, (_, i) => row(i + 1, `gem${i + 1}`, 1000 - i)),
+  top: Array.from({ length: 25 }, (_, i) => row(i + 1, `zer${i + 1}`, 1000 - i)),
   total: 26,
   me: null,
   depth: 1000,
 };
-const GEWHER_REST = { ...GEWHER_FIRST, top: [row(26, 'gem26', 10)] };
+const ZER_REST = { ...ZER_FIRST, top: [row(26, 'zer26', 10)] };
 
-describe('Rankings, by Zêr and Gewher', () => {
+describe('Rankings, by Zêr', () => {
   /** Each row as it reads, without the words drawn inside the coin's own picture, which is hidden from a screen reader. */
   const rows = (name: string): string[] =>
     within(screen.getByRole('list', { name }))
@@ -190,21 +190,21 @@ describe('Rankings, by Zêr and Gewher', () => {
   it('opens on the board the address names, and shows it a page at a time', async () => {
     const fetch = vi.fn(
       routedFetch({
-        '/leaderboards/gewher?scope=global&limit=25&offset=25': GEWHER_REST,
-        '/leaderboards/gewher': GEWHER_FIRST,
+        '/leaderboards/zer?scope=global&limit=25&offset=25': ZER_REST,
+        '/leaderboards/zer': ZER_FIRST,
         '/me/league': RESTING,
       }),
     );
     vi.stubGlobal('fetch', fetch);
-    renderApp(<Rankings />, ['/app/rankings?board=gewher']);
-    expect(screen.getByRole('radio', { name: en['rankings.board.gewher'] })).toBeChecked();
-    expect(await screen.findByText('gem1')).toBeInTheDocument();
-    expect(rows(en['rankings.board.gewher'])).toHaveLength(25);
-    expect(screen.queryByText('gem26')).toBeNull();
+    renderApp(<Rankings />, ['/app/rankings?board=zer']);
+    expect(screen.getByRole('radio', { name: en['rankings.board.zer'] })).toBeChecked();
+    expect(await screen.findByText('zer1')).toBeInTheDocument();
+    expect(rows(en['rankings.board.zer'])).toHaveLength(25);
+    expect(screen.queryByText('zer26')).toBeNull();
 
     await userEvent.click(screen.getByRole('button', { name: en['rankings.showMore'].replace('{count}', '1') }));
-    expect(await screen.findByText('gem26')).toBeInTheDocument();
-    expect(rows(en['rankings.board.gewher'])).toHaveLength(26);
+    expect(await screen.findByText('zer26')).toBeInTheDocument();
+    expect(rows(en['rankings.board.zer'])).toHaveLength(26);
     expect(screen.getByText(en['rankings.thatsEveryone'].replace('{total}', '26'))).toBeInTheDocument();
     expect(fetch.mock.calls.some(([url]) => String(url).includes('/leaderboards/weekly_xp'))).toBe(false);
   });

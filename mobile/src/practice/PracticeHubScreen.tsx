@@ -10,7 +10,7 @@ import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import type { RootNavigation } from '../navigation/rootStack';
-import { REST, UNIT_INK } from '../coursemap/path';
+import { REST, TONES } from '../coursemap/path';
 import { haptic, refreshFelt } from '../feedback/haptics';
 import { micRefused } from '../recording/useMicRecorder';
 import { useI18n } from '../i18n/I18nContext';
@@ -157,8 +157,8 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
 }
 
 /**
- * The top card on the pale violet wash: what it offers and how much, Hamo at its end, and one button saying what
- * a session pays. One ground and one violet button every day, so the eye goes to the button. Hamo cheers on
+ * The top card on the page’s warm wash: what it offers and how much, Hamo at its end, and one button saying what
+ * a session pays. One ground and one main button every day, so the eye goes to the button. Hamo cheers on
  * arrival and greets a tap; the text says everything he would, so screen readers skip him. The button pops once
  * the card settles.
  */
@@ -294,7 +294,7 @@ function UnitPicker({
     <BottomSheet visible={visible} onClose={onClose} title={t('practice.hub.unit')}>
       <ScrollView contentContainerStyle={styles.picker}>
         {units.map((unit) => {
-          const tone = UNIT_INK[scheme];
+          const tone = TONES[scheme][unit.tone];
           const name = t('coursemap.path.unit', { n: formatNumber(unit.number, locale) });
           return (
             <PressableScale

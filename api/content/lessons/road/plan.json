@@ -382,6 +382,9 @@
                 {"ku": "mêr", "en": "man; husband", "pos": "noun", "gender": "m", "forms": ["mêr", "mêrên", "mêran", "mêrek", "mêrê", "mêrekî", "mêrî"]},
                 {"ku": "jin", "en": "woman; wife", "pos": "noun", "gender": "f", "forms": ["jin", "jinên", "jinan", "jinek", "jina", "jinê", "jineke"]},
                 {"ku": "ajel", "en": "animal", "pos": "noun", "gender": "m", "forms": ["ajel", "ajelên", "ajelan", "ajelek", "ajelê", "ajelekî"]}
+              ],
+              "sayings": [
+                {"ku": "Şêr şêr e, çi jin e, çi mêr e.", "en": "A lion is a lion, whether woman or man.", "words": [{"ku": "şêr", "en": "lion"}]}
               ]
             },
             {

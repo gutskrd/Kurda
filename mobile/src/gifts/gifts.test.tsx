@@ -27,7 +27,7 @@ vi.mock('../realtime/useUserEvents', () => ({
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { AccessibilityInfo, Animated } from 'react-native';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
-import type { GiftCard, GiftCatalogItem, GiftChatRef, GiftUserEvent } from '@kurda/shared';
+import { GIFT_BOX_COLOURS, GIFT_BOX_EXIT_MS, GIFT_BOX_SHUT, GIFT_UNWRAP_MS, type GiftCard, type GiftCatalogItem, type GiftChatRef, type GiftUserEvent } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -35,6 +35,7 @@ import { GiftBubble } from './GiftBubble';
 import { GiftPickerSheet } from './GiftPickerSheet';
 import { GiftUnwrap } from './GiftUnwrap';
 import { GiftArrivals } from './GiftArrivals';
+import { GiftBox } from './art';
 import { useOpenChat } from './events';
 
 patchReactNativeWeb();
@@ -54,31 +55,22 @@ const card = (over: Partial<GiftCard> = {}): GiftCard => ({
   assetUrl: null,
   tier: 'common',
   recipients: [{ name: 'Rojda', avatarUrl: null, isMe: false, opened: false }],
+  from: null,
   myGiftId: null,
   myOpened: false,
   equippable: 'background',
   ...over,
 });
 
-const item = (over: Partial<GiftCatalogItem> = {}): GiftCatalogItem => ({
-  sku: 'bg_mountain',
-  name: 'Mountain dawn',
-  category: 'background',
-  assetUrl: null,
-  currency: 'zer',
-  price: 300,
-  tier: 'common',
-  alreadyOwnedBy: [],
-  ...over,
-});
+const AZAD = { userId: 'u-azad', username: 'azad', displayName: 'Azad', avatarUrl: null };
+const POST = { type: 'library' as const, id: 'p1' };
+const forMe = [{ name: null, avatarUrl: null, isMe: true, opened: false }];
 
 describe('GiftBubble', () => {
-  it('is a wrapped present to its recipient, and opens on a tap', () => {
+  it('is a wrapped present to its recipient that says who it is from, and opens on a tap', () => {
     const onOpen = vi.fn();
-    renderWithProviders(
-      <GiftBubble card={card({ myGiftId: 'g1', recipients: [{ name: null, avatarUrl: null, isMe: true, opened: false }] })} mine={false} senderName="Azad" onOpen={onOpen} />,
-    );
-    expect(screen.getByText('A gift for you')).toBeTruthy();
+    renderWithProviders(<GiftBubble card={card({ myGiftId: 'g1', from: AZAD, recipients: forMe })} mine={false} senderName="azad" onOpen={onOpen} />);
+    expect(screen.getByText('Gift from Azad')).toBeTruthy();
     expect(screen.getByText('Tap to open')).toBeTruthy();
     // What is inside stays a surprise until it is opened.
     expect(screen.queryByText('Newroz fire')).toBeNull();
@@ -88,11 +80,30 @@ describe('GiftBubble', () => {
 
   it('shows its recipient what it was, and from whom, once opened', () => {
     renderWithProviders(
-      <GiftBubble card={card({ myGiftId: 'g1', myOpened: true, recipients: [{ name: null, avatarUrl: null, isMe: true, opened: true }] })} mine={false} senderName="Azad" onOpen={() => undefined} />,
+      <GiftBubble
+        card={card({ myGiftId: 'g1', myOpened: true, from: AZAD, recipients: [{ name: null, avatarUrl: null, isMe: true, opened: true }] })}
+        mine={false}
+        senderName="azad"
+        onOpen={() => undefined}
+      />,
     );
     expect(screen.getByText('Newroz fire')).toBeTruthy();
-    expect(screen.getByText('From Azad')).toBeTruthy();
+    expect(screen.getByText('Gift from Azad')).toBeTruthy();
     expect(screen.queryByText('Tap to open')).toBeNull();
+  });
+
+  it('says a Hevalo member sent it when the server does not name the sender to this reader', () => {
+    renderWithProviders(<GiftBubble card={card({ myGiftId: 'g1', from: null, recipients: forMe })} mine={false} senderName="azad" onOpen={() => undefined} />);
+    expect(screen.getByText('Gift from a Hevalo member')).toBeTruthy();
+    expect(screen.queryByText(/azad/i)).toBeNull();
+    expect(screen.getByRole('button', { name: 'A gift from a Hevalo member. Tap to open.' })).toBeTruthy();
+  });
+
+  it('names the giver to the rest of a group too', () => {
+    const recipients = [{ name: 'Rojda', avatarUrl: null, isMe: false, opened: false }];
+    renderWithProviders(<GiftBubble card={card({ from: AZAD, recipients })} mine={false} senderName="azad" onOpen={() => undefined} />);
+    expect(screen.getByText('For Rojda')).toBeTruthy();
+    expect(screen.getByText('Gift from Azad')).toBeTruthy();
   });
 
   it('tells the sender whether it has been opened, and never the price', () => {
@@ -117,61 +128,224 @@ describe('GiftBubble', () => {
   });
 });
 
+/** A gift as the catalogue lists it. */
+const gift = (id: string, name: string, price: number, over: Partial<GiftCatalogItem> = {}): GiftCatalogItem => ({
+  sku: `gift-${id}`,
+  name,
+  category: 'gift',
+  assetUrl: `/cosmetics/gifts/${id}.png`,
+  price,
+  tier: price >= 20_000 ? 'grand' : 'common',
+  alreadyOwnedBy: [],
+  freeGiftEligible: price <= 150,
+  ...over,
+});
+const CAY = gift('cay', 'Çay', 1);
+const GUL = gift('gul', 'Gul', 25);
+const PISIK = gift('pisik', 'Pisîk', 150);
+const BELEM = gift('belem', 'Belem', 2_000);
+const HEYV = gift('heyv', 'Heyv', 20_000);
+const SHELF = [CAY, GUL, PISIK, BELEM, HEYV];
+
+/** The catalogue as GET /gifts/catalog answers it, with the bag and what the send may cost. */
+const shelfOf = (
+  items: GiftCatalogItem[] = SHELF,
+  zer = 30_000,
+  more: { bag?: Array<{ sku: string; name: string; assetUrl: string | null; count: number }>; freeGifts?: number; hold?: 'new_friend' | 'friends_only' | null; limits?: { maxPrice: number | null; left: number | null; confirmFrom: number }; nudges?: boolean } = {},
+) =>
+  ok({
+    items,
+    bag: more.bag ?? [],
+    balance: { zer },
+    freeGifts: more.freeGifts ?? 0,
+    hold: more.hold ?? null,
+    limits: more.limits ?? { maxPrice: null, left: null, confirmFrom: 2_000 },
+    nudges: more.nudges ?? true,
+  });
+
+const SENT = ok({ batchId: 'b9', sent: ['u2'], skipped: [], balance: { zer: 700 }, freeGifts: 0, message: null });
+const dmSheet = (onSent = vi.fn(), onClose = vi.fn()) =>
+  renderWithProviders(<GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={onClose} onSent={onSent} />);
+
+describe('GiftBox', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('draws the shut box in its parts, the same drawing as the website, each tier in its own wrapping', () => {
+    renderWithProviders(
+      <>
+        <GiftBox size={64} tier="common" testID="kraft" />
+        <GiftBox size={64} tier="rare" testID="teal" />
+      </>,
+    );
+    for (const part of GIFT_BOX_SHUT) expect(screen.getByTestId(`teal-${part}`)).toBeTruthy();
+    // the open box's light and the sparks are not drawn on a box standing still
+    expect(screen.queryByTestId('teal-light')).toBeNull();
+    expect(screen.queryByTestId('teal-sparks')).toBeNull();
+    const body = (id: string): string => screen.getByTestId(`${id}-body`).querySelector('svg')!.getAttribute('data-markup')!;
+    expect(body('teal')).toContain(GIFT_BOX_COLOURS.teal.face);
+    expect(body('kraft')).toContain(GIFT_BOX_COLOURS.kraft.face);
+  });
+
+  it('hops while it waits and plays the unwrap, and stands still under Reduce Motion', async () => {
+    const { unmount } = renderWithProviders(
+      <>
+        <GiftBox size={64} tier="grand" motion="idle" seed="b1" testID="waiting" />
+        <GiftBox size={140} tier="grand" motion="unwrap" testID="opening" />
+      </>,
+    );
+    expect(screen.getByTestId('waiting-idle')).toBeTruthy();
+    expect(screen.getByTestId('opening-unwrap')).toBeTruthy();
+    expect(screen.getByTestId('opening-light')).toBeTruthy();
+    unmount();
+    vi.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    renderWithProviders(<GiftBox size={140} tier="grand" motion="unwrap" testID="still" />);
+    await waitFor(() => expect(screen.queryByTestId('still-unwrap')).toBeNull());
+    expect(screen.getByTestId('still-body')).toBeTruthy();
+  });
+});
+
 describe('GiftPickerSheet', () => {
-  it('gives a friend in a DM something, showing price, balance and what they own', async () => {
-    const client = fakeClient({
-      'GET /gifts/catalog?to=u2': ok({
-        items: [item(), item({ sku: 'icon_star', name: 'Star', alreadyOwnedBy: ['u2'] }), item({ sku: 'bg_gold', name: 'Gold', price: 5000 })],
-        balance: { zer: 1000, gems: 2 },
-      }),
-      'POST /gifts': ok({ batchId: 'b9', sent: ['u2'], skipped: [], balance: { zer: 700, gems: 2 }, message: null }),
-    });
+  it('opens on the bag with its counts, then the gifts by shelf, each named in Kurmancî with its meaning and its worth', async () => {
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 30_000, { bag: [{ sku: CAY.sku, name: 'Çay', assetUrl: null, count: 3 }] }) });
+    dmSheet();
+    expect(screen.getByText('A gift for Rojda')).toBeTruthy();
+    expect(await screen.findByText('30,000')).toBeTruthy();
+    const headings = screen.getAllByRole('heading').map((h) => h.textContent);
+    expect(headings.slice(headings.indexOf('Your bag'))).toEqual(['Your bag', 'Tea and treats', 'Flowers', 'Animals', 'The sky', 'Boats']);
+    expect(within(screen.getByTestId('gift-bag')).getByRole('radio', { name: 'Çay, A glass of tea, 3 in your bag, From your bag, free' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Gul, A red rose, 25 Zêr, ≈ €0.25' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /^Heyv, The full moon, 20,000 Zêr, ≈ €200/ })).toBeTruthy();
+    expect(screen.getByText('Grand')).toBeTruthy();
+  });
+
+  it('says what fills an empty bag', async () => {
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf() });
+    dmSheet();
+    expect(await screen.findByText(/Your bag is empty\. Daily lessons, streaks, wins/)).toBeTruthy();
+  });
+
+  it('gives from the bag for free', async () => {
+    const client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 0, { bag: [{ sku: CAY.sku, name: 'Çay', assetUrl: null, count: 2 }] }), 'POST /gifts': SENT });
     testAuth.client = client;
     const onSent = vi.fn();
-    renderWithProviders(
-      <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={onSent} />,
-    );
-    expect(screen.getByText('A gift for Rojda')).toBeTruthy();
-    expect(await screen.findByText('1,000')).toBeTruthy();
-    expect(screen.getByText('Already has it')).toBeTruthy();
-    expect(screen.getByText('Not enough to give this')).toBeTruthy();
-    expect(screen.getByRole('radio', { name: /^Star/ }).getAttribute('aria-disabled')).toBe('true');
+    dmSheet(onSent);
+    fireEvent.click(await screen.findByRole('radio', { name: /^Çay, A glass of tea, 2 in your bag/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send from your bag' }));
+    await waitFor(() => expect(onSent).toHaveBeenCalled());
+    expect(client.calls.find((c) => c.path === '/gifts')?.body).toMatchObject({ sku: CAY.sku, fromBag: true, toUserIds: ['u2'] });
+  });
 
-    fireEvent.click(screen.getByRole('radio', { name: /^Mountain dawn/ }));
+  it('sends a paid gift with its price and a key a retry reuses', async () => {
+    const client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(), 'POST /gifts': SENT });
+    testAuth.client = client;
+    const onSent = vi.fn();
+    dmSheet(onSent);
+    fireEvent.click(await screen.findByRole('radio', { name: /^Gul/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
     await waitFor(() => expect(onSent).toHaveBeenCalled());
     const body = client.calls.find((c) => c.path === '/gifts')?.body as Record<string, unknown>;
-    expect(body).toMatchObject({ sku: 'bg_mountain', toUserIds: ['u2'], chat: { kind: 'dm', userId: 'u2' }, expectedPrice: 300 });
+    expect(body).toMatchObject({ sku: GUL.sku, toUserIds: ['u2'], chat: { kind: 'dm', userId: 'u2' }, expectedPrice: 25 });
+    expect(body.fromBag).toBeUndefined();
     expect(String(body.idempotencyKey)).toMatch(/^gift-/);
+  });
+
+  it('locks what the Zêr cannot cover, and offers no Zêr to buy while none is on sale', async () => {
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 100) });
+    dmSheet();
+    fireEvent.click(await screen.findByRole('radio', { name: /^Pisîk, A kitten curled up, 150 Zêr, ≈ €1.50, Not enough Zêr/ }));
+    expect(screen.getByRole('button', { name: 'Send gift' }).getAttribute('aria-disabled')).toBe('true');
+    expect(screen.queryByRole('button', { name: 'Get Zêr' })).toBeNull();
+  });
+
+  it('locks what the safeguards rule out for these recipients, and says how far is left to spend', async () => {
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 30_000, { limits: { maxPrice: 500, left: 120, confirmFrom: 2_000 }, nudges: false }) });
+    dmSheet();
+    const boat = await screen.findByRole('radio', { name: /^Belem, A rowing boat, 2,000 Zêr, ≈ €20, Up to 500 Zêr here/ });
+    expect(boat.getAttribute('aria-disabled')).toBe('true');
+    expect(screen.getByRole('radio', { name: /^Pisîk.*Over your gift limit/ }).getAttribute('aria-disabled')).toBe('true');
+    expect(screen.getByText('You can spend 120 more Zêr on gifts for now.')).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /^Gul/ }).getAttribute('aria-disabled')).not.toBe('true');
+  });
+
+  it('asks a second time for a big gift, with the money amount, and sends it with the server’s token', async () => {
+    let sends = 0;
+    const client = fakeClient({
+      'GET /gifts/catalog?to=u2': shelfOf(),
+      'POST /gifts': () => {
+        sends += 1;
+        return sends === 1
+          ? fail({ code: 'GIFT_NEEDS_CONFIRM', status: 409, message: 'confirm', details: { confirmToken: 'tok-1', total: 20_000, recipients: 1, expiresAt: '2030-01-01T00:00:00Z' } })
+          : SENT;
+      },
+    });
+    testAuth.client = client;
+    const onSent = vi.fn();
+    dmSheet(onSent);
+    fireEvent.click(await screen.findByRole('radio', { name: /^Heyv/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    const check = await screen.findByTestId('gift-confirm');
+    expect(within(check).getByText('One more look before it goes')).toBeTruthy();
+    expect(within(check).getByText('≈ €200')).toBeTruthy();
+    expect(within(check).getByText('20,000 Zêr')).toBeTruthy();
+    expect(onSent).not.toHaveBeenCalled();
+    fireEvent.click(within(check).getByRole('button', { name: 'Send it' }));
+    await waitFor(() => expect(onSent).toHaveBeenCalled());
+    const [first, second] = client.calls.filter((c) => c.path === '/gifts').map((c) => c.body as Record<string, unknown>);
+    expect(first!.confirmToken).toBeUndefined();
+    expect(second).toMatchObject({ sku: HEYV.sku, confirmToken: 'tok-1', idempotencyKey: first!.idempotencyKey });
+  });
+
+  it('goes back from the second look without sending', async () => {
+    const client = fakeClient({
+      'GET /gifts/catalog?to=u2': shelfOf(),
+      'POST /gifts': fail({ code: 'GIFT_NEEDS_CONFIRM', status: 409, message: 'confirm', details: { confirmToken: 'tok-2', total: 2_000, recipients: 1, expiresAt: '2030-01-01T00:00:00Z' } }),
+    });
+    testAuth.client = client;
+    dmSheet();
+    fireEvent.click(await screen.findByRole('radio', { name: /^Belem/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    fireEvent.click(within(await screen.findByTestId('gift-confirm')).getByRole('button', { name: 'Go back' }));
+    expect(screen.queryByTestId('gift-confirm')).toBeNull();
+    expect(client.calls.filter((c) => c.path === '/gifts')).toHaveLength(1);
+  });
+
+  it('says calmly what a safeguard refused', async () => {
+    testAuth.client = fakeClient({
+      'GET /gifts/catalog?to=u2': shelfOf(),
+      'POST /gifts': fail({ code: 'GIFT_SPEND_LIMIT', status: 409, message: 'no', details: { left: 40, by: 'own_limit' } }),
+    });
+    dmSheet();
+    fireEvent.click(await screen.findByRole('radio', { name: /^Gul/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    expect(await screen.findByText('That’s more than your gift spending limit leaves: 40 Zêr.')).toBeTruthy();
   });
 
   it('chooses friends in a group first, all at once if you like', async () => {
     const client = fakeClient({
-      'GET /gifts/catalog?to=u2,u3': ok({ items: [item()], balance: { zer: 1000, gems: 0 } }),
-      'POST /gifts': ok({ batchId: 'b9', sent: [], skipped: [{ userId: 'u3', reason: 'daily_limit' }, { userId: 'u2', reason: 'not_allowed' }], balance: { zer: 1000, gems: 0 }, message: null }),
+      'GET /gifts/catalog?to=u2,u3': shelfOf(),
+      'POST /gifts': ok({ batchId: 'b9', sent: [], skipped: [{ userId: 'u3', reason: 'daily_limit' }, { userId: 'u2', reason: 'not_allowed' }], balance: { zer: 1000 }, freeGifts: 0, message: null }),
     });
     testAuth.client = client;
     const onSent = vi.fn();
     renderWithProviders(
-      <GiftPickerSheet
-        visible
-        chat={{ kind: 'group', groupId: 'g1' }}
-        friends={[{ userId: 'u2', name: 'Rojda' }, { userId: 'u3', name: 'Azad' }]}
-        onClose={() => undefined}
-        onSent={onSent}
-      />,
+      <GiftPickerSheet visible chat={{ kind: 'group', groupId: 'g1' }} friends={[{ userId: 'u2', name: 'Rojda' }, { userId: 'u3', name: 'Azad' }]} onClose={() => undefined} onSent={onSent} />,
     );
     expect(screen.getByText('Who is it for?')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Next' }).getAttribute('aria-disabled')).toBe('true');
     fireEvent.click(screen.getByRole('checkbox', { name: 'All my friends here' }));
-    expect(screen.getByRole('checkbox', { name: 'Rojda' }).getAttribute('aria-checked')).toBe('true');
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-
-    fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Send · 600 Zêr' }));
-    // Nobody could be given it: the sheet says why, by name, and nothing flies.
+    fireEvent.click(await screen.findByRole('radio', { name: /^Gul/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send · 50 Zêr · ≈ €0.50' }));
     expect(await screen.findByText(/That’s today’s limit for Azad\.\s+A gift to Rojda isn’t possible yet\./)).toBeTruthy();
     expect(onSent).not.toHaveBeenCalled();
+  });
+
+  it('opens on what to give when sending one back to a friend in a group', async () => {
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?to=u3': shelfOf() });
+    renderWithProviders(
+      <GiftPickerSheet visible chat={{ kind: 'group', groupId: 'g1' }} friends={[{ userId: 'u2', name: 'Rojda' }, { userId: 'u3', name: 'Azad' }]} initialChosen={['u3']} onClose={() => undefined} onSent={() => undefined} />,
+    );
+    expect(await screen.findByRole('radio', { name: /^Gul/ })).toBeTruthy();
+    expect(screen.queryByText('Who is it for?')).toBeNull();
   });
 
   it('says so when friends cannot be given anything here', () => {
@@ -181,196 +355,104 @@ describe('GiftPickerSheet', () => {
   });
 
   it('says what a chat mute stops, with the way to Account standing — closing itself first', async () => {
-    testAuth.client = fakeClient({
-      'GET /gifts/catalog?to=u2': ok({ items: [item()], balance: { zer: 1000, gems: 0 } }),
-      'POST /gifts': fail({ code: 'MUTED', details: { scope: 'chat', until: null } }),
-    });
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(), 'POST /gifts': fail({ code: 'MUTED', details: { scope: 'chat', until: null } }) });
     const onClose = vi.fn();
-    renderWithProviders(
-      <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={onClose} onSent={() => undefined} />,
-    );
-    fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
+    dmSheet(vi.fn(), onClose);
+    fireEvent.click(await screen.findByRole('radio', { name: /^Gul/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
     expect(await screen.findByText('You can’t send messages right now.')).toBeTruthy();
-    // Account standing would open under the sheet: the sheet goes first.
     fireEvent.click(screen.getByRole('link', { name: 'See your account standing' }));
     expect(onClose).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith('AccountStanding');
   });
 
   it('asks for the catalog once, however often the chat behind it redraws', async () => {
-    const client = fakeClient({ 'GET /gifts/catalog?to=u2': ok({ items: [item()], balance: { zer: 1000, gems: 0 } }) });
+    const client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf() });
     testAuth.client = client;
-    const sheet = () => (
-      <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={() => undefined} />
-    );
+    const sheet = () => <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={() => undefined} />;
     const { rerender } = renderWithProviders(sheet());
-    await screen.findByRole('radio', { name: /^Mountain dawn/ });
-    // A friend typing redraws the chat, with a fresh friends array each time.
+    await screen.findByRole('radio', { name: /^Gul/ });
     rerender(sheet());
     rerender(sheet());
-    await waitFor(() => expect(screen.getByRole('radio', { name: /^Mountain dawn/ })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole('radio', { name: /^Gul/ })).toBeTruthy());
     expect(client.calls.filter((c) => c.path.startsWith('/gifts/catalog'))).toHaveLength(1);
   });
 
   it('says in the reader’s words why the catalog or a gift was refused, never the server’s English', async () => {
-    testAuth.client = fakeClient({
-      'GET /gifts/catalog?to=u2': fail({ code: 'NOT_FRIENDS', message: 'you can only send gifts to friends' }),
-    });
-    const first = renderWithProviders(
-      <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={() => undefined} />,
-    );
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?to=u2': fail({ code: 'NOT_FRIENDS', message: 'you can only send gifts to friends' }) });
+    const first = dmSheet();
     expect(await screen.findByText('Gifts go to friends only.')).toBeTruthy();
     expect(screen.queryByText('you can only send gifts to friends')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
     first.unmount();
 
-    // A Newroz item that ended while the sheet was open: said so, and the catalogue asked for again.
     let catalogs = 0;
-    let sends = 0;
-    const client = fakeClient({
+    testAuth.client = fakeClient({
       'GET /gifts/catalog?to=u2': () => {
         catalogs += 1;
-        return ok({ items: [item()], balance: { zer: 1000, gems: 0 } });
+        return shelfOf();
       },
-      'POST /gifts': () => {
-        sends += 1;
-        return sends === 1
-          ? fail({ code: 'ITEM_UNAVAILABLE', status: 409, message: 'item is not available' })
-          : fail({ code: 'BAD_RECIPIENTS', status: 400, message: 'a gift goes to 1–20 friends' });
-      },
+      'POST /gifts': fail({ code: 'ITEM_UNAVAILABLE', status: 409, message: 'item is not available' }),
     });
-    testAuth.client = client;
-    renderWithProviders(
-      <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={() => undefined} />,
-    );
-    fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
+    dmSheet();
+    fireEvent.click(await screen.findByRole('radio', { name: /^Gul/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
     expect(await screen.findByText('That gift isn’t available any more. Pick another one.')).toBeTruthy();
     await waitFor(() => expect(catalogs).toBe(2));
     expect(screen.queryByText('item is not available')).toBeNull();
-
-    fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
-    expect(await screen.findByText('The gift didn’t go. Please try again.')).toBeTruthy();
-    expect(screen.queryByText('a gift goes to 1–20 friends')).toBeNull();
   });
-});
 
-describe('GiftPickerSheet, finding the gift', () => {
-  // The catalogue as GET /gifts/catalog sends it: every kind with a price, and who owns what already.
-  const CATALOG = [
-    item({ sku: 'bg_mountain', name: 'Mountain dawn', price: 300 }),
-    item({ sku: 'bg-made-gola-sin', name: 'Gola Şîn', price: 400, alreadyOwnedBy: ['u2'] }),
-    item({ sku: 'bg_gold', name: 'Gold', price: 5000 }),
-    item({ sku: 'icon-made-caydan', name: 'Îstîkan', category: 'icon', price: 900, assetUrl: '/cosmetics/icons/made-08-caydan.png' }),
-    item({ sku: 'icon_star', name: 'Star', category: 'icon', currency: 'gems', price: 5, alreadyOwnedBy: ['u2'] }),
-    item({ sku: 'tag_kurdish', name: 'Kurdish Tag', category: 'tag', price: 500 }),
-  ];
+  it('says in one calm line when a new friendship is too young for a gift, with nothing to pick', async () => {
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 1000, { hold: 'new_friend' }) });
+    dmSheet();
+    expect(await screen.findByText('You can give Rojda a gift once you’ve been friends for a day.')).toBeTruthy();
+    expect(screen.queryByRole('radio', { name: /^Gul/ })).toBeNull();
+  });
 
-  const sheet = (balance = { zer: 1000, gems: 2 }) => {
-    const client = fakeClient({
-      'GET /gifts/catalog?to=u2': ok({ items: CATALOG, balance }),
-      'POST /gifts': ok({ batchId: 'b9', sent: ['u2'], skipped: [], balance, message: null }),
-    });
+  it('lets a member pay for a small gift with a free one from their box', async () => {
+    const client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 100, { freeGifts: 2 }), 'POST /gifts': SENT });
     testAuth.client = client;
     const onSent = vi.fn();
-    renderWithProviders(
-      <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={onSent} />,
-    );
-    return { client, onSent };
-  };
-
-  /** The gifts on show, by name, in order. */
-  const gifts = (): string[] =>
-    screen
-      .getAllByRole('radio')
-      .map((r) => r.getAttribute('aria-label') ?? '')
-      .filter((label) => CATALOG.some((i) => label.startsWith(`${i.name},`)))
-      .map((label) => label.split(',')[0]!);
-
-  it('files the gifts under their kinds, each with a heading and a count', async () => {
-    sheet();
-    expect(await screen.findByRole('heading', { name: 'Backgrounds, 3 items' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Icons, 2 items' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Tags, 1 item' })).toBeTruthy();
-    const kinds = screen.getByRole('radiogroup', { name: 'Kinds of item' });
-    expect(within(kinds).getAllByRole('radio').map((r) => r.getAttribute('aria-label'))).toEqual([
-      'All, 6 items',
-      'Backgrounds, 3 items',
-      'Icons, 2 items',
-      'Tags, 1 item',
-    ]);
-
-    // One kind: only its gifts, and no heading to say what the chip already says.
-    fireEvent.click(within(kinds).getByRole('radio', { name: 'Icons, 2 items' }));
-    expect(gifts()).toEqual(['Îstîkan', 'Star']);
-    expect(screen.queryByRole('heading', { name: /^Icons/ })).toBeNull();
+    dmSheet(onSent);
+    expect(await screen.findByText('2 free')).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: /^Pisîk/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Use a free gift' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send as a free gift' }));
+    await waitFor(() => expect(onSent).toHaveBeenCalled());
+    expect(client.calls.find((c) => c.path === '/gifts')?.body).toMatchObject({ sku: PISIK.sku, useFreeGift: true });
   });
 
-  it('finds a gift by its name with the Kurdish letters left out, and puts them in price order', async () => {
-    sheet();
-    const field = await screen.findByLabelText('Search gifts');
-    fireEvent.change(field, { target: { value: 'istikan' } });
-    expect(gifts()).toEqual(['Îstîkan']);
-    expect(screen.getByText('1 item')).toBeTruthy();
-    fireEvent.change(field, { target: { value: '' } });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Sort: Featured' }));
-    fireEvent.click(screen.getByRole('radio', { name: 'Price: high to low' }));
-    // Within each kind the dearest first, and gems, the dearer currency, before Zêr.
-    expect(gifts()).toEqual(['Gold', 'Gola Şîn', 'Mountain dawn', 'Star', 'Îstîkan', 'Kurdish Tag']);
-  });
-
-  it('hides what they already have, and what the balance cannot cover', async () => {
-    sheet({ zer: 1000, gems: 2 });
-    await screen.findByRole('heading', { name: 'Backgrounds, 3 items' });
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Hide ones they already have' }));
-    expect(gifts()).toEqual(['Mountain dawn', 'Gold', 'Îstîkan', 'Kurdish Tag']);
-    expect(screen.getByRole('radio', { name: 'Icons, 1 item' })).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Within my balance' }));
-    // Gold is 5000 Zêr against 1000.
-    expect(gifts()).toEqual(['Mountain dawn', 'Îstîkan', 'Kurdish Tag']);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
-    expect(gifts()).toHaveLength(CATALOG.length);
-  });
-
-  it('keeps a choice the filters hide, says what it is by Send, and sends it', async () => {
-    const { client, onSent } = sheet();
-    fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
-    expect(screen.queryByText('Selected: Mountain dawn')).toBeNull();
-
-    fireEvent.change(screen.getByLabelText('Search gifts'), { target: { value: 'kurdish' } });
-    expect(gifts()).toEqual(['Kurdish Tag']);
-    expect(screen.getByText('Selected: Mountain dawn')).toBeTruthy();
-
+  it('gives onto a post, asking for its catalogue by the post and sending to it', async () => {
+    const client = fakeClient({ 'GET /gifts/catalog?post=library%3Ap1': shelfOf(), 'POST /gifts': SENT });
+    testAuth.client = client;
+    const onSent = vi.fn();
+    renderWithProviders(<GiftPickerSheet visible post={POST} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={onSent} />);
+    expect(screen.getByText('A gift on Rojda’s post')).toBeTruthy();
+    fireEvent.click(await screen.findByRole('radio', { name: /^Gul/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
     await waitFor(() => expect(onSent).toHaveBeenCalled());
-    expect(client.calls.find((c) => c.path === '/gifts')?.body).toMatchObject({ sku: 'bg_mountain', expectedPrice: 300 });
+    const body = client.calls.find((c) => c.path === '/gifts')?.body as Record<string, unknown>;
+    expect(body).toMatchObject({ sku: GUL.sku, post: { type: 'library', id: 'p1' } });
+    expect(body.toUserIds).toBeUndefined();
   });
 
-  it('says so when nothing matches, with the way back', async () => {
-    sheet();
-    fireEvent.change(await screen.findByLabelText('Search gifts'), { target: { value: 'xyzzy' } });
-    expect(screen.getByText('Nothing matches that')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
-    expect(gifts()).toHaveLength(CATALOG.length);
+  it('says calmly that friends only may give onto this post', async () => {
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?post=library%3Ap1': shelfOf(SHELF, 1000, { hold: 'friends_only' }) });
+    renderWithProviders(<GiftPickerSheet visible post={POST} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={() => undefined} />);
+    expect(await screen.findByText('Gifts on this post come from Rojda’s friends.')).toBeTruthy();
   });
 });
 
 describe('GiftUnwrap', () => {
   /*
-   * React-native-web has no native driver, so a native-driven animation ends as it starts; the unwrap's timings are
-   * held open instead, so the test can see it playing, skip it, or let it finish.
+   * React-native-web has no native driver, so a native-driven animation ends as it starts; the moment's timings are held
+   * open instead, so the light's loops and the words' fade never run here.
    */
-  const finish: Array<(r: { finished: boolean }) => void> = [];
   beforeEach(() => {
-    finish.length = 0;
     vi.spyOn(Animated, 'timing').mockImplementation(
       () =>
         ({
-          start: (cb?: (r: { finished: boolean }) => void) => cb && finish.push(cb),
+          start: () => undefined,
           stop: () => undefined,
           reset: () => undefined,
         }) as unknown as Animated.CompositeAnimation,
@@ -393,7 +475,7 @@ describe('GiftUnwrap', () => {
     await waitFor(() => expect(onOpened).toHaveBeenCalledWith(opened));
     // Skip the moment.
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
-    expect(await screen.findByText('From Azad')).toBeTruthy();
+    expect(await screen.findByText('Gift from Azad')).toBeTruthy();
     expect(screen.getByText('Newroz fire')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
 
@@ -429,50 +511,94 @@ describe('GiftUnwrap', () => {
     expect(screen.getByText('Can’t reach Hevalo right now. Check your connection and try again.')).toBeTruthy();
   });
 
-  it('is felt once, as the lid comes off — or at the tap that skips to it', async () => {
+  it('is felt once, as the gift lands, whether the box waited its time or was skipped', async () => {
     vi.useFakeTimers();
     resetHaptics();
     const felt: string[] = [];
     const off = onHaptic((e) => felt.push(e));
-    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
-    const first = renderWithProviders(
-      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
-    );
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    expect(felt).toEqual(['celebrate']);
-    act(() => {
-      vi.advanceTimersByTime(3000);
-    });
-    // Once for the gift, not again as it finishes.
-    expect(felt).toEqual(['celebrate']);
-    first.unmount();
+    try {
+      testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
+      const first = renderWithProviders(
+        <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
+      );
+      // still in its box
+      act(() => {
+        vi.advanceTimersByTime(GIFT_UNWRAP_MS.common - 100);
+      });
+      expect(felt).toEqual([]);
+      // out of the box, then landing
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
+      expect(felt).toEqual(['celebrate']);
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      // Once for the gift, not again as it finishes.
+      expect(felt).toEqual(['celebrate']);
+      first.unmount();
 
-    felt.length = 0;
-    resetHaptics();
-    renderWithProviders(
-      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
-    expect(felt).toEqual(['celebrate']);
-    act(() => {
-      vi.advanceTimersByTime(3000);
-    });
-    expect(felt).toEqual(['celebrate']);
-    off();
-    vi.useRealTimers();
+      felt.length = 0;
+      resetHaptics();
+      renderWithProviders(
+        <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
+      expect(felt).toEqual(['celebrate']);
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(felt).toEqual(['celebrate']);
+    } finally {
+      off();
+      vi.useRealTimers();
+    }
   });
 
-  it('reveals the item by itself when the moment has played out', async () => {
-    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
-    renderWithProviders(
-      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
-    );
-    expect(screen.getByRole('button', { name: 'Skip' })).toBeTruthy();
-    act(() => finish[0]?.({ finished: true }));
-    expect(await screen.findByText('From Azad')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
+  it('shows the gift by itself once the box has waited its time', () => {
+    vi.useFakeTimers();
+    try {
+      testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
+      renderWithProviders(
+        <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
+      );
+      expect(screen.getByRole('button', { name: 'Skip' })).toBeTruthy();
+      act(() => {
+        vi.advanceTimersByTime(GIFT_UNWRAP_MS.common);
+      });
+      expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
+      expect(screen.getByText('Newroz fire')).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('unwraps the box in its tier’s time, and lets the open box give way as the gift springs out', () => {
+    vi.useFakeTimers();
+    try {
+      testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true, tier: 'grand' }), equippable: null }) });
+      renderWithProviders(
+        <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1', tier: 'grand' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
+      );
+      expect(screen.getByTestId('gift-box-unwrap')).toBeTruthy();
+      act(() => {
+        vi.advanceTimersByTime(GIFT_UNWRAP_MS.grand);
+      });
+      expect(screen.getByText('Newroz fire')).toBeTruthy();
+      expect(screen.getByTestId('gift-box-exit')).toBeTruthy();
+      act(() => {
+        vi.advanceTimersByTime(GIFT_BOX_EXIT_MS);
+      });
+      expect(screen.queryByTestId('gift-box')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shows no Wear it for something that is not worn, and says when opening failed', async () => {
@@ -517,14 +643,14 @@ describe('GiftUnwrap', () => {
     }
   });
 
-  it('leaves out "From" when the sender is not known here, rather than "From " and nothing', async () => {
+  it('says a Hevalo member sent it when the sender may not be named here, rather than a blank name', async () => {
     testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
     renderWithProviders(
       <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: '' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
     expect(await screen.findByText('Newroz fire')).toBeTruthy();
-    expect(screen.queryByText(/^From/)).toBeNull();
+    expect(screen.getByText('Gift from a Hevalo member')).toBeTruthy();
   });
 });
 

@@ -511,14 +511,8 @@ function BadgeSheet({
 
 /** Choosing the profile's three, in order: tap to add, tap again to take out. */
 function ShowcasePicker({ data, onClose, onSaved }: { data: BadgesResponse; onClose: () => void; onSaved: (keys: string[]) => void }): React.JSX.Element {
-  const dir = useDirection();
-  const { colors } = useTheme();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [keys, setKeys] = useState<string[]>(data.showcase);
-  const earned = data.badges.filter((b) => b.tier > 0 && !b.hidden);
-
-  const toggle = (key: string): void =>
-    setKeys((k) => (k.includes(key) ? k.filter((x) => x !== key) : k.length >= SHOWCASE_SIZE ? k : [...k, key]));
 
   // Shown on the page at once; the page puts it back and says why if the server refuses.
   const save = (): void => {
@@ -527,15 +521,27 @@ function ShowcasePicker({ data, onClose, onSaved }: { data: BadgesResponse; onCl
   };
 
   return (
-    <Sheet
-      title={t('badges.showcaseTitle')}
-      onClose={onClose}
-      footer={
-        <>
-          <ClayButton label={t('badges.showcaseSave')} tone="primary" size="large" onPress={save} />
-        </>
-      }
-    >
+    <Sheet title={t('badges.showcaseTitle')} onClose={onClose} footer={<ClayButton label={t('badges.showcaseSave')} tone="primary" size="large" onPress={save} />}>
+      <ShowcaseChoices badges={data.badges} keys={keys} onChange={setKeys} />
+    </Sheet>
+  );
+}
+
+/**
+ * The earned badges to choose the profile's three from, in the order tapped; a fourth waits until one is taken out.
+ * In the picker sheet here and in a profile's collection.
+ */
+export function ShowcaseChoices({ badges, keys, onChange }: { badges: readonly BadgeView[]; keys: readonly string[]; onChange: (keys: string[]) => void }): React.JSX.Element {
+  const dir = useDirection();
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const earned = badges.filter((b) => b.tier > 0 && !b.hidden);
+  const full = keys.length >= SHOWCASE_SIZE;
+
+  const toggle = (key: string): void => onChange(keys.includes(key) ? keys.filter((x) => x !== key) : full ? [...keys] : [...keys, key]);
+
+  return (
+    <>
       <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('badges.showcaseHint', { count: formatNumber(SHOWCASE_SIZE, locale) })}</Text>
       <View style={[styles.pickGrid, { flexDirection: dir.row }]}>
         {earned.map((b) => {
@@ -546,12 +552,12 @@ function ShowcasePicker({ data, onClose, onSaved }: { data: BadgesResponse; onCl
               key={b.key}
               onPress={() => toggle(b.key)}
               accessibilityRole="checkbox"
-              accessibilityState={{ checked: on, disabled: !on && keys.length >= SHOWCASE_SIZE }}
+              accessibilityState={{ checked: on, disabled: !on && full }}
               accessibilityLabel={badgeLabel(t, b)}
               style={({ pressed }) => [
                 styles.pick,
-                // A chosen badge is ringed in violet like every selected choice, with its place number in violet beside it.
-                { backgroundColor: colors.controlTrack, borderColor: on ? colors.primary : 'transparent', opacity: pressed ? pressedDim : !on && keys.length >= SHOWCASE_SIZE ? 0.5 : 1 },
+                // A chosen badge is ringed in the ink like every selected choice, with its place number in the ink beside it.
+                { backgroundColor: colors.controlTrack, borderColor: on ? colors.primary : 'transparent', opacity: pressed ? pressedDim : !on && full ? 0.5 : 1 },
               ]}
             >
               <BadgeMedal badgeKey={b.key} tier={b.tier} tierCount={b.tierCount} size={56} label={badgeLabel(t, b)} />
@@ -567,7 +573,7 @@ function ShowcasePicker({ data, onClose, onSaved }: { data: BadgesResponse; onCl
           );
         })}
       </View>
-    </Sheet>
+    </>
   );
 }
 

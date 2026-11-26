@@ -15,8 +15,23 @@ import { nameOf, type PersonRef } from './api';
 
 /** The pieces the parental pages share: a person's row, the page's opening, and the moment two accounts connect. */
 
-/** A parent or teen in a list: their face, their name and a line under it; a button when there is somewhere to go. */
-export function PersonRow({ person, detail, onPress, testID }: { person: PersonRef; detail?: string; onPress?: () => void; testID?: string }): React.JSX.Element {
+/**
+ * A parent or teen in a list: their face, their name and a line under it; a button when there is somewhere to go, or
+ * one action of its own (`action`) under the line, never both, so the line is never cut short to make room for it.
+ */
+export function PersonRow({
+  person,
+  detail,
+  onPress,
+  action,
+  testID,
+}: {
+  person: PersonRef;
+  detail?: string;
+  onPress?: () => void;
+  action?: ReactNode;
+  testID?: string;
+}): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   const name = nameOf(person);
@@ -32,11 +47,12 @@ export function PersonRow({ person, detail, onPress, testID }: { person: PersonR
             {detail}
           </Text>
         ) : null}
+        {!onPress && action ? <View style={[styles.action, { alignSelf: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' }]}>{action}</View> : null}
       </View>
       {onPress ? <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip ?? undefined} /> : null}
     </View>
   );
-  if (!onPress) return body;
+  if (!onPress) return testID ? <View testID={testID}>{body}</View> : body;
   return (
     <Pressable
       onPress={onPress}
@@ -142,6 +158,7 @@ const styles = StyleSheet.create({
   words: { flex: 1, gap: 2 },
   name: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   detail: { fontSize: typography.sizes.text, lineHeight: 20 },
+  action: { marginTop: spacing.sm },
   hero: { alignItems: 'center', gap: spacing.md, paddingHorizontal: layout.gutter + spacing.sm, paddingTop: spacing.lg, paddingBottom: spacing.sm },
   glyph: { width: 88, height: 88, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   heroTitle: { ...display(typography.sizes.title) },

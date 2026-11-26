@@ -38,7 +38,7 @@ function person(over: Partial<UserDetail> = {}): UserDetail {
     ban: 'active',
     bannedUntil: null,
     mutedUntil: null,
-    balances: { zer: 1200, gems: 15 },
+    balances: { zer: 1200 },
     ledger: [
       { currency: 'zer', amount: -300, reason: 'shop_purchase', createdAt: ago(30) },
       { currency: 'zer', amount: 500, reason: 'admin_adjustment', createdAt: ago(48) },
@@ -368,6 +368,24 @@ describe('a person', () => {
     expect(await screen.findByText('Signed out of 1 session.')).toBeInTheDocument();
   });
 
+  it('offers a superadmin a safety review of the account, and nobody else', async () => {
+    show(at, OWNER, detailRoute(person()));
+    expect(await screen.findByRole('link', { name: 'Open a safety review…' })).toHaveAttribute('href', `#/safety-reviews?user=${SUBJECT_ID}`);
+    expect(screen.getByText(/@baran is not told/)).toBeInTheDocument();
+  });
+
+  it('offers no safety review to a moderator', async () => {
+    show(at, MODERATOR, detailRoute(person()));
+    expect(await screen.findByRole('heading', { name: 'Profile' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Open a safety review…' })).not.toBeInTheDocument();
+  });
+
+  it('offers no safety review of a child’s profile, which writes to nobody', async () => {
+    show(at, OWNER, detailRoute(person({ kind: 'child' })));
+    expect(await screen.findByRole('heading', { name: 'Profile' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Open a safety review…' })).not.toBeInTheDocument();
+  });
+
   it('shows the wallet and ledger, and lets only a superadmin change a balance', async () => {
     const user = userEvent.setup();
     const { calls } = show(`${at}/wallet`, OWNER, detailRoute(person()), on('POST', `/admin/users/${SUBJECT_ID}/wallet`, json({ ok: true, balance: 700 })));
@@ -452,6 +470,22 @@ describe('a person', () => {
     await waitFor(() => expect(posts(calls, `/admin/users/${SUBJECT_ID}/plus`)).toHaveLength(1));
     expect(posts(calls, `/admin/users/${SUBJECT_ID}/plus`)[0]!.body).toEqual({ days: 30, reason: 'Reviewer for the store listing', idempotencyKey: expect.any(String) });
     expect(await screen.findByText(/^Hevalo\+ until /)).toBeInTheDocument();
+  });
+
+  it('sends Hevalo+ for an admin’s own account to Approvals, and says a second admin gives it', async () => {
+    const user = userEvent.setup();
+    show(
+      `${at}/wallet`,
+      OWNER,
+      detailRoute(person({ premiumUntil: null })),
+      on('POST', `/admin/users/${SUBJECT_ID}/plus`, json({ status: 'pending', id: 'c-plus' }, 202)),
+    );
+    expect(await screen.findByText('Not a member.')).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/^Days of Hevalo\+/), '30');
+    await user.type(screen.getByLabelText(/^Why/), 'To see what members see');
+    await user.click(screen.getByRole('button', { name: 'Give Hevalo+' }));
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Give 30 days' }));
+    expect(await screen.findByText('Waiting in Approvals: another admin gives your own account Hevalo+.')).toBeInTheDocument();
   });
 
   it('says when a member’s Hevalo+ ends and adds days to it', async () => {

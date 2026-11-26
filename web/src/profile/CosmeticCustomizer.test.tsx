@@ -84,7 +84,7 @@ function inventoryFetch(
         ],
       });
     }
-    if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 1000, gems: 5 } });
+    if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 1000 } });
     if (url.includes('/shop')) {
       return jsonResponse(200, {
         items: [
@@ -291,7 +291,7 @@ describe('CosmeticCustomizer', () => {
             items: [{ sku: 'frame-made-genim', name: 'Xeleka Genim', category: 'frame', quantity: 1, premiumOnly: false, assetUrl: '/cosmetics/frames/made-02-genim.png' }],
           });
         }
-        if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 3000, gems: 0 } });
+        if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 3000 } });
         if (url.includes('/shop')) {
           return jsonResponse(200, {
             items: [{ sku: 'frame-made-lale', name: 'Xeleka Laleyan', description: 'Tulip wreath', category: 'frame', currency: 'zer', price: 1400, isUnique: true, premiumOnly: false, assetUrl: '/cosmetics/frames/made-01-lale.png' }],
@@ -339,6 +339,44 @@ describe('CosmeticCustomizer', () => {
     expect(within(tag).queryByRole('button', { name: 'Equip' })).not.toBeInTheDocument();
     expect(within(tag).getByRole('link', { name: 'Manage tags' })).toHaveAttribute('href', '#tags');
     expect(tag.querySelector('.item-glyph svg')).not.toBeNull();
+  });
+
+  it('wears a word tag by the name, one at a time, beside the Kurdish tag that is managed further down', async () => {
+    const calls: Array<{ url: string; method: string; body: unknown }> = [];
+    const fetch = vi.fn(async (url: string, init?: RequestInit): Promise<Response> => {
+      const body = init?.body ? JSON.parse(init.body as string) : null;
+      calls.push({ url, method: init?.method ?? 'GET', body });
+      if (url.includes('/me/cosmetics/')) return jsonResponse(200, {});
+      if (url.includes('/me/inventory')) {
+        return jsonResponse(200, {
+          items: [
+            { sku: 'tag-heval', name: 'Heval', category: 'tag', quantity: 1, premiumOnly: false, assetUrl: null },
+            { sku: 'tag_kurdish', name: 'Kurdish Tag', category: 'tag', quantity: 1, premiumOnly: false, assetUrl: null },
+          ],
+        });
+      }
+      if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 1000 } });
+      if (url.includes('/shop')) {
+        return jsonResponse(200, {
+          items: [{ sku: 'tag-dengbej', name: 'Dengbêj', description: 'Singer of tales', category: 'tag', currency: 'zer', price: 200, isUnique: true, premiumOnly: false, assetUrl: null }],
+        });
+      }
+      return jsonResponse(200, {});
+    });
+    vi.stubGlobal('fetch', fetch);
+    renderApp(<CosmeticCustomizer me={me} frameSku={null} onChanged={() => {}} />, ['/app/profile/edit']);
+    await userEvent.click(await screen.findByRole('tab', { name: /Tags/ }));
+
+    const heval = screen.getByText('Heval', { selector: '.cosmetic-name' }).closest('figure')!;
+    expect(heval.querySelector('.tag-pill')).not.toBeNull();
+    await userEvent.click(within(heval).getByRole('button', { name: 'Equip' }));
+    expect(await within(heval).findByText('Equipped')).toBeInTheDocument();
+    expect(calls.find((c) => c.url.includes('/me/cosmetics/tag'))?.body).toEqual({ sku: 'tag-heval' });
+    // one on sale is offered at its price, and the Kurdish tag still points to where it is managed
+    const dengbej = screen.getByText('Dengbêj', { selector: '.cosmetic-name' }).closest('figure')!;
+    expect(within(dengbej).getByRole('button', { name: /Buy · 200 Zêr/ })).toBeInTheDocument();
+    const kurdish = screen.getByText('Kurdish Tag').closest('figure')!;
+    expect(within(kurdish).getByRole('link', { name: 'Manage tags' })).toBeInTheDocument();
   });
 
   it('narrows to owned or not owned, searches without the Kurdish letters, sorts, and clears', async () => {

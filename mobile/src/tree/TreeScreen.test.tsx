@@ -25,7 +25,7 @@ afterEach(cleanup);
 
 const TODAY = '2026-11-13';
 const view = (over: Partial<TreeRecord> = {}): TreeView =>
-  treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 5, water: 2, harvests: 0, ...over }, TODAY);
+  treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 10, water: 2, harvests: 0, ...over }, TODAY);
 
 /** GET /me/tree: this tree (or none), every kind, these bought, this much Zêr. */
 const mine = (tree: TreeView | null, over: { owned?: string[]; zer?: number } = {}): MyTree => ({
@@ -65,13 +65,13 @@ describe('the tree’s screen', () => {
   });
 
   it('shows the tree with how far it is to its next stage and the water held', async () => {
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 9, water: 3 }))) });
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 24, water: 3 }))) });
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByRole('heading', { name: 'Berû' })).toBeTruthy();
     expect(screen.getByText('Oak · Sapling · Day 13')).toBeTruthy();
     expect(screen.getByRole('img', { name: 'Berû, Sapling' })).toBeTruthy();
     const bar = screen.getByRole('progressbar', { name: 'Next: Young tree' });
-    expect(within(bar).getByText('2 / 7')).toBeTruthy();
+    expect(within(bar).getByText('6 / 22')).toBeTruthy();
     expect(screen.getByText('Water: 3')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Water the tree' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Pour all 3' })).toBeTruthy();
@@ -80,8 +80,8 @@ describe('the tree’s screen', () => {
   });
 
   it('pours one water, and celebrates when that grew the tree', async () => {
-    const watered: Watered = { tree: view({ waterings: 7, water: 1 }), poured: 1, grew: 3, harvests: 0, zer: 0, revived: false };
-    const client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 6, water: 2 }))), 'POST /me/tree/water': ok(watered) });
+    const watered: Watered = { tree: view({ waterings: 18, water: 1 }), poured: 1, grew: 3, harvests: 0, zer: 0, revived: false };
+    const client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 17, water: 2 }))), 'POST /me/tree/water': ok(watered) });
     testAuth.client = client;
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Water the tree' }));
@@ -95,21 +95,21 @@ describe('the tree’s screen', () => {
   });
 
   it('pours all that is held at once, and celebrates a harvest with what it paid', async () => {
-    const after = view({ waterings: 49, water: 0, harvests: 1 });
-    const client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 45, water: 4 }))), 'POST /me/tree/water': ok({ tree: after, poured: 4, grew: null, harvests: 1, zer: 25, revived: false } satisfies Watered) });
+    const after = view({ waterings: 148, water: 0, harvests: 1 });
+    const client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 144, water: 4 }))), 'POST /me/tree/water': ok({ tree: after, poured: 4, grew: null, harvests: 1, zer: 15, revived: false } satisfies Watered) });
     testAuth.client = client;
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByRole('progressbar', { name: 'Next harvest' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Pour all 4' }));
     await waitFor(() => expect(client.calls.find((c) => c.path === '/me/tree/water')?.body).toEqual({ count: 4 }));
     expect(await screen.findByRole('heading', { name: 'Harvest!' })).toBeTruthy();
-    expect(screen.getByText('+25 Zêr')).toBeTruthy();
+    expect(screen.getByText('+15 Zêr')).toBeTruthy();
     expect(screen.getByText('Harvests: 1')).toBeTruthy();
   });
 
   it('says plainly how a tree left dry is faring, and that water brought it back', async () => {
-    const dry = treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: '2026-11-08', waterings: 15, water: 1, harvests: 0 }, TODAY);
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(dry)), 'POST /me/tree/water': ok({ tree: view({ waterings: 16, water: 0 }), poured: 1, grew: null, harvests: 0, zer: 0, revived: true } satisfies Watered) });
+    const dry = treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: '2026-11-08', waterings: 45, water: 1, harvests: 0 }, TODAY);
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(dry)), 'POST /me/tree/water': ok({ tree: view({ waterings: 46, water: 0 }), poured: 1, grew: null, harvests: 0, zer: 0, revived: true } satisfies Watered) });
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     const health = await screen.findByTestId('tree-health');
     expect(within(health).getByText('Wilting')).toBeTruthy();
@@ -137,7 +137,7 @@ describe('the tree’s screen', () => {
   });
 
   it('floats a thought of water by a tree that wants some, and not by one that is well', async () => {
-    const dry = treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: '2026-11-08', waterings: 15, water: 1, harvests: 0 }, TODAY);
+    const dry = treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: '2026-11-08', waterings: 45, water: 1, harvests: 0 }, TODAY);
     testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(dry)) });
     const { unmount } = renderWithProviders(<TreeScreen onExit={() => undefined} />);
     await screen.findByTestId('tree-health');
@@ -150,12 +150,12 @@ describe('the tree’s screen', () => {
   });
 
   it('shows what is being grown toward: the next stage in a ring closed by how far it has come', async () => {
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 9, water: 3 }))) });
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 24, water: 3 }))) });
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     await screen.findByRole('progressbar', { name: 'Next: Young tree' });
-    // Two of the seven waterings to the next stage.
+    // Six of the twenty-two drops to the next stage.
     const fill = screen.getByTestId('tree-goal-fill');
-    expect(Number(fill.getAttribute('stroke-dashoffset')) / Number(fill.getAttribute('stroke-dasharray'))).toBeCloseTo(1 - 2 / 7, 4);
+    expect(Number(fill.getAttribute('stroke-dashoffset')) / Number(fill.getAttribute('stroke-dasharray'))).toBeCloseTo(1 - 6 / 22, 4);
     // The tree itself, and the stage after it in the ring.
     expect(screen.getAllByTestId('tree-art')).toHaveLength(2);
   });
@@ -189,7 +189,7 @@ describe('the tree’s screen', () => {
       expect(screen.queryByRole('button', { name: 'Plant: Berû (Oak)' })).toBeNull();
       expect(screen.getByRole('button', { name: 'Plant: Hinar (Pomegranate)' })).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Buy: Tû (Mulberry)' })).toBeTruthy();
-      expect(within(screen.getByTestId('tree-kind-sev')).getByText('2,200')).toBeTruthy();
+      expect(within(screen.getByTestId('tree-kind-sev')).getByText('1,100')).toBeTruthy();
     });
 
     it('asks before planting another, saying what is lost and what stays, and keeps the tree when told to', async () => {
@@ -208,19 +208,37 @@ describe('the tree’s screen', () => {
       expect(await screen.findByText('Willow · Seed · Day 1')).toBeTruthy();
     });
 
+    it('shows a child’s profile only the kinds it may plant, with no Zêr and nothing to buy', async () => {
+      const was = testAuth.user;
+      testAuth.user = { ...was, kind: 'child' };
+      try {
+        testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view(), { zer: 900, owned: ['tu'] })) });
+        renderWithProviders(<TreeScreen onExit={() => undefined} />);
+        fireEvent.click(await screen.findByRole('button', { name: 'Other trees' }));
+        expect(await screen.findByText('The nursery')).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Plant: Hinar (Pomegranate)' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Plant: Tû (Mulberry)' })).toBeTruthy();
+        expect(screen.queryByTestId('tree-kind-sev')).toBeNull();
+        expect(screen.queryByRole('button', { name: /^Buy: / })).toBeNull();
+        expect(screen.queryByText('900 Zêr')).toBeNull();
+      } finally {
+        testAuth.user = was;
+      }
+    });
+
     it('buys a kind with Zêr, which plants nothing, and says how much is missing when it cannot be afforded', async () => {
-      const client = fakeClient({ 'GET /me/tree': ok(mine(view(), { zer: 900 })), 'POST /me/tree/kinds/tu/buy': ok(mine(view(), { zer: 100, owned: ['tu'] })) });
+      const client = fakeClient({ 'GET /me/tree': ok(mine(view(), { zer: 600 })), 'POST /me/tree/kinds/tu/buy': ok(mine(view(), { zer: 200, owned: ['tu'] })) });
       testAuth.client = client;
       renderWithProviders(<TreeScreen onExit={() => undefined} />);
       fireEvent.click(await screen.findByRole('button', { name: 'Other trees' }));
       // Too dear: no press is offered that would be refused.
       fireEvent.click(await screen.findByRole('button', { name: 'Buy: Dara Şevê (Night tree)' }));
-      expect(await screen.findByText('You need 1,300 more Zêr.')).toBeTruthy();
+      expect(await screen.findByText('You need 500 more Zêr.')).toBeTruthy();
       expect(screen.getByTestId('tree-ask-confirm').getAttribute('aria-disabled')).toBe('true');
       fireEvent.click(screen.getByTestId('tree-ask-back'));
       // within reach
       fireEvent.click(await screen.findByRole('button', { name: 'Buy: Tû (Mulberry)' }));
-      expect(await screen.findByText('It costs 800 Zêr, once. After that you can plant it whenever you like.')).toBeTruthy();
+      expect(await screen.findByText('It costs 400 Zêr, once. After that you can plant it whenever you like.')).toBeTruthy();
       fireEvent.click(screen.getByTestId('tree-ask-confirm'));
       await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/me/tree/kinds/tu/buy')).toBe(true));
       // Theirs to plant now; the oak still stands.

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount, requireRoles } from '../plugins/auth.js';
 import { requireParental } from '../parental/supervision.js';
 import type { TournamentService } from './service.js';
@@ -10,11 +11,10 @@ const createBody = z.object({
   capacity: z.number().int().min(MIN_CAPACITY).max(MAX_CAPACITY),
   startsAt: z.coerce.date(),
   rewardZer: z.number().int().min(0).max(1_000_000).optional(),
-  rewardGems: z.number().int().min(0).max(1_000_000).optional(),
 });
 
-const idParam = z.object({ id: z.uuid() });
-const matchParam = z.object({ id: z.uuid(), matchId: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
+const matchParam = z.object({ id: lowerUuid(), matchId: lowerUuid() });
 
 /** Tournaments: admin scheduling, player registration and the bracket view. */
 export function registerTournamentRoutes(app: FastifyInstance, tournaments: TournamentService): void {
@@ -80,7 +80,7 @@ export function registerTournamentRoutes(app: FastifyInstance, tournaments: Tour
   app.post(
     '/tournaments/:id/matches/:matchId/result',
     {
-      schema: { params: matchParam, body: z.object({ winnerId: z.uuid() }) },
+      schema: { params: matchParam, body: z.object({ winnerId: lowerUuid() }) },
       preHandler: requireRoles('admin'),
     },
     async (req) => {

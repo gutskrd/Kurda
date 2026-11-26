@@ -1,4 +1,4 @@
-import type { FeedImage } from '@kurda/shared';
+import type { FeedImage, PostGifts } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 
 /**
@@ -120,6 +120,8 @@ export interface FeedItem {
   viewCount: number;
   commentCount: number;
   engagement: PostEngagement;
+  /** The gifts given onto it, as this reader may see who gave them; older APIs leave it out. */
+  gifts?: PostGifts;
   at: string;
   /** Your own post while its pictures wait for a person: nobody else sees it until then. */
   review?: 'held';

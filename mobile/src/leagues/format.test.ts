@@ -132,7 +132,7 @@ describe('lastWeekLine', () => {
     goalXp: 150,
     goalMet: true,
     trophy: false,
-    gems: 10,
+    zer: 50,
   };
 
   it('is one kind sentence for each outcome — a move down is a fresh start', () => {
@@ -160,7 +160,7 @@ describe('the ceremony', () => {
     goalXp: 150,
     goalMet: true,
     trophy: false,
-    gems: 10,
+    zer: 50,
   };
 
   it('stages every week that was raced, and knows which way it went', () => {

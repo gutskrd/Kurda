@@ -13,14 +13,14 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { useOptimistic } from '../lib/optimistic';
 import { Button } from '../components/Button';
-import { Modal } from '../components/Modal';
 import { Sheet } from '../components/Sheet';
 import { ErrorState } from '../components/states';
 import { BadgesSkeleton } from '../components/skeletons';
 import { CheckIcon, LockIcon, SparkleIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { FAMILY_KEY, badgeDesc, badgeHint, badgeNamed, badgeTierNamed, unitWord } from '../ranks/names';
-import { Medal, TierPips, badgeWash, progressFraction, progressText, tierClass } from './parts';
+import { Medal, TierPips, badgeWash, formatRarity, progressFraction, progressText, tierClass } from './parts';
+import { ShowcasePicker } from './ShowcasePicker';
 
 /**
  * The badges page: every badge by family with each tier's requirement and the reader's progress, secrets as "???"
@@ -316,70 +316,5 @@ function BadgeDetail({ view, onClose }: { view: BadgeView; onClose: () => void }
         </div>
       </div>
     </Sheet>
-  );
-}
-
-function formatRarity(percent: number): string {
-  return percent < 1 ? '<1' : String(Math.round(percent));
-}
-
-/** Picks the profile's three badges in the order tapped; a fourth is refused with a message rather than replacing one. */
-function ShowcasePicker({
-  badges,
-  initial,
-  onClose,
-  onSaved,
-}: {
-  badges: BadgeView[];
-  initial: string[];
-  onClose: () => void;
-  onSaved: (keys: string[]) => void;
-}): React.JSX.Element {
-  const t = useT();
-  const [keys, setKeys] = useState<string[]>(initial.filter((k) => badges.some((b) => b.key === k)));
-  const full = keys.length >= SHOWCASE_SIZE;
-
-  function toggle(key: string): void {
-    setKeys((k) => (k.includes(key) ? k.filter((x) => x !== key) : k.length >= SHOWCASE_SIZE ? k : [...k, key]));
-  }
-
-
-  return (
-    <Modal open onClose={onClose} label={t('badges.showcase.title')}>
-      <div className="showcase-picker">
-        <h2 className="story-setup-title">{t('badges.showcase.title')}</h2>
-        <p className="muted">{t('badges.showcase.help')}</p>
-        <p className="showcase-picker-count" aria-live="polite">
-          {t('badges.showcase.chosen', { count: keys.length, max: SHOWCASE_SIZE })}
-        </p>
-        <ul className="showcase-picker-grid">
-          {badges.map((b) => {
-            const on = keys.includes(b.key);
-            const name = badgeNamed(t, b.key).name;
-            return (
-              <li key={b.key}>
-                <button
-                  type="button"
-                  className={`showcase-pick${on ? ' is-on' : ''}`}
-                  aria-pressed={on}
-                  disabled={!on && full}
-                  onClick={() => toggle(b.key)}
-                >
-                  <Medal view={b} size={60} shine={false} />
-                  <span className="showcase-pick-name">{name}</span>
-                  {on && <span className="showcase-pick-order">{keys.indexOf(b.key) + 1}</span>}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-        {full && <p className="story-setup-note">{t('badges.showcase.full')}</p>}
-        <div className="story-setup-submit">
-          <Button size="lg" block onClick={() => onSaved(keys)}>
-            {t('badges.showcase.save')}
-          </Button>
-        </div>
-      </div>
-    </Modal>
   );
 }

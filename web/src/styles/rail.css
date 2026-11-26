@@ -575,13 +575,19 @@
   position: absolute;
   inset-inline-start: 0;
   bottom: 0;
+  width: 100%;
   height: 2px;
   background: var(--gold-ink);
+  /* it drains toward its start by shrinking, not by being laid out narrower on every frame */
+  transform-origin: left center;
   animation: rail-drain 8s linear forwards;
 }
+[dir='rtl'] .rail-toast-timer {
+  transform-origin: right center;
+}
 @keyframes rail-drain {
-  from { width: 100%; }
-  to { width: 0%; }
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
 }
 
 .rail-scrim {

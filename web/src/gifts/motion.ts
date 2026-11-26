@@ -36,11 +36,13 @@ export function setGiftSound(on: boolean): void {
   }
 }
 
-/** The notes of each tier's chime, in Hz, rising: a small one, an arpeggio, a fanfare. */
+/** The notes of each tier's chime, in Hz, rising: a small one, an arpeggio, a fanfare, and the long climb of a grand gift. */
 export const CHIME_NOTES: Readonly<Record<GiftTier, readonly number[]>> = {
   common: [1318.5, 1975.5],
   rare: [1046.5, 1318.5, 1568, 2093],
   legendary: [784, 1046.5, 1318.5, 1568, 2093, 2637],
+  // the night sky's: slower and lower, up through the stars
+  grand: [523.25, 659.25, 784, 1046.5, 1318.5, 1568, 2093],
 };
 
 type AudioCtor = typeof AudioContext;
@@ -61,10 +63,10 @@ export function playChime(tier: GiftTier): void {
     ctx ??= new Ctor();
     if (ctx.state === 'suspended') void ctx.resume();
     const start = ctx.currentTime + 0.02;
-    const step = tier === 'legendary' ? 0.11 : 0.09;
+    const step = tier === 'grand' ? 0.14 : tier === 'legendary' ? 0.11 : 0.09;
     CHIME_NOTES[tier].forEach((freq, i) => {
       const at = start + i * step;
-      const tail = tier === 'legendary' ? 1.4 : 0.9;
+      const tail = tier === 'grand' ? 1.8 : tier === 'legendary' ? 1.4 : 0.9;
       for (const [mult, level] of [
         [1, 0.12],
         [2, 0.035],

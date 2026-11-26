@@ -1,15 +1,19 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import type pg from 'pg';
 import {
+  BIG_GIFT_CONFIRM_ZER,
+  FREE_GIFT_MAX_PRICE,
+  GIFT_CATEGORY,
   GIFT_MIN_FRIENDSHIP_HOURS,
   GIFTS_PER_DAY,
   GIFTS_PER_FRIEND_PER_DAY,
   GIFTS_RECEIVED_PER_DAY,
   MAX_GIFT_RECIPIENTS,
   giftTierFor,
+  isLimitedItem,
   type EquippableCategory,
   type GiftCard,
-  type GiftCatalogItem,
+  type GiftCatalog,
   type GiftChatRef,
   type GiftUserEvent,
   type SendGiftResult,
@@ -20,33 +24,48 @@ import { assertParentalAllowed, parentalAllows } from '../parental/supervision.j
 import { assertEconomyNotHeld } from '../economy/standing.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { FriendService } from '../friends/service.js';
-import { cosmeticAssetUrl, resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
+import { cosmeticAssetUrl, giftOnOffer, resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 import { isPurchasable, lockEntitlement, type ItemRow, type ShopService } from '../shop/service.js';
-import type { Currency, WalletService } from '../wallet/service.js';
+import { InsufficientFundsError, type WalletService } from '../wallet/service.js';
 import type { DmMessage } from '../chat/service.js';
 import { groupRoom, type GroupChatService, type GroupMessage } from '../groups/chat-service.js';
 import type { Notification } from '../push/service.js';
-import { notKnownAdultSql } from '../users/age.js';
+import { isKnownAdultAccount, notKnownAdultSql } from '../users/age.js';
+import { childrenAmong } from '../users/kind.js';
+import { childRefused } from '../family/child-gate.js';
 import { batchChat, giftCards, giftCardsForEach, type BatchChat, type CardViewer } from './cards.js';
+import { giftHold, postGiftBlocked, visiblePostAuthor, type PostRef } from './posts.js';
+import { freeGiftsLeft, spendFreeGifts } from '../plus/members-box.js';
+import { bagEntries, lockZerRow, takeFromBagWithin } from './bag.js';
+import { assertWithinBounds, confirmToken, confirmTokenValid, sendBounds, type ConfirmSubject } from './safety.js';
 
 export type SkipReason = SendGiftResult['skipped'][number]['reason'];
 
 export interface SendGiftInput {
   fromId: string;
+  /** the friends it goes to; for a gift onto a post, its author (found by `send`) */
   toIds: readonly string[];
   sku: string;
   /** Where the gift is posted: a direct message or a group's channel. Null from the shop, which posts to the direct message. */
   chat: GiftChatRef | null;
+  /** A post the gift is given onto instead of a chat; its author is the one recipient, and no chat message is posted. */
+  post?: PostRef | null;
   /** the request's retry key; each recipient's gift is keyed `${key}:${recipient}` */
   idempotencyKey: string;
   /** The price the sender was shown; refused if it has changed. */
   expectedPrice?: number;
+  /** Pay with free gifts from the sender's members' boxes, one a recipient, instead of Zêr. */
+  useFreeGift?: boolean;
+  /** Give it from the sender's gift bag, one a recipient, instead of paying. */
+  fromBag?: boolean;
+  /** The second confirmation of a big gift, as a GIFT_NEEDS_CONFIRM refusal handed it out for this very send. */
+  confirmToken?: string;
 }
 
 export interface SendGiftOutcome extends SendGiftResult {
   /** nothing happened this time: every recipient already had this request's gift */
   duplicate: boolean;
-  item: { sku: string; name: string; price: number; currency: Currency };
+  item: { sku: string; name: string; price: number };
   /** the gift message as the sender sees it, when this call posted one */
   message: DmMessage | GroupMessage | null;
 }
@@ -69,6 +88,8 @@ export interface GiftDeps {
   /** The badges, told a gift was given (Diyarî). */
   badges?: { onGiftSent(fromUserId: string): Promise<void> };
   log?: { warn: (obj: unknown, msg: string) => void };
+  /** The key big gifts' confirmations are signed with (safety.ts `confirmSecretFrom`); a fresh one each start without it. */
+  confirmSecret?: Buffer;
 }
 
 /** The per-recipient key a gift row is stored under: one request, one gift each. */
@@ -76,6 +97,8 @@ export const recipientKey = (key: string, toId: string): string => `${key}:${toI
 
 interface Sender {
   username: string;
+  /** the name to say: their display name, or the username */
+  name: string;
   avatarUrl: string;
 }
 
@@ -105,30 +128,47 @@ interface GiftViews {
 }
 
 /**
- * Gifts: a shop item bought for friends that arrives in a chat as a wrapped present. Every entry point (the shop's
- * gift button, a direct message, a group) goes through one set of rules:
+ * Gifts: a shop item or gift sticker bought for friends that arrives in a chat as a wrapped present, or given onto a post.
+ * Every entry point (the shop's gift button, a direct message, a group, a post) goes through one set of rules:
  *
- * - Friends only, refused outright otherwise, as a direct message is.
- * - A day of friendship first when either side is not a known adult, against the "add, gift, groom" pattern.
+ * - In a chat, friends only, refused outright otherwise, as a direct message is.
+ * - A day of friendship first when either side is not a known adult, against the "add, gift, groom" pattern. Onto a
+ *   post the same holds without the chat's friendship: the author's friends of a day or more, or anyone when both are
+ *   known adults.
  * - Daily caps per sender and per pair over the last 24 hours, and per recipient from everyone together
  *   (`GIFTS_RECEIVED_PER_DAY`), so throwaway accounts cannot pour items into one account.
  * - Not from an account paused from moving value (economy/standing.ts): 403 GIFTS_PAUSED.
  * - Never currency: a gift is an item, and purchases are final, so it cannot move currency between accounts.
  * - Not a unique item the recipient owns, decided under `lockEntitlement` so two friends gifting it cannot both win.
- * - Never free, or it would be an unlimited free way to put a notification in front of someone.
+ * - Never free of cost, or it would be an unlimited free way to put a notification in front of someone; a member's free
+ *   gifts from their monthly box are counted out, three a month.
  * - Not while muted from chat, with the same answers as a message (403 MUTED, then CHAT_MUTED).
+ * - Within the safeguards (safety.ts): at most 500 Zêr a gift from or to anyone under 18, 2,000 Zêr a month spent by
+ *   them (gifts from their bag counted at their price), an adult's own limit, and a second confirmation for a send of 2,000 Zêr or more, all decided under the
+ *   sender's lock with their Zêr row locked, so two quick sends cannot both pass.
+ * - From the gift bag as from Zêr, under every rule above; the bag is the only thing a bag's gifts can leave by.
  *
  * A friend a rule turns away is skipped and the answer says why; the rest still get it. The debits, items, gift
  * rows and chat message are one transaction. Notifying happens after the commit, and its failure never undoes a gift.
  */
 export class GiftService {
+  private readonly confirmSecret: Buffer;
+
   constructor(
     private readonly pool: pg.Pool,
     private readonly deps: GiftDeps,
     private readonly publicUrl: PublicUrl = () => null,
-  ) {}
+  ) {
+    this.confirmSecret = deps.confirmSecret ?? randomBytes(32);
+  }
 
-  async send(input: SendGiftInput, now: Date = new Date()): Promise<SendGiftOutcome> {
+  async send(asked: SendGiftInput, now: Date = new Date()): Promise<SendGiftOutcome> {
+    // Every id in its one lower-case spelling before anything compares them, as the routes read them too (http/ids.ts).
+    const input = canonicalSend(asked);
+    // A child's profile never gives a gift, however it is asked for; the child gate keeps them from the routes as well.
+    if ((await childrenAmong(this.pool, [input.fromId])).size > 0) throw childRefused();
+    if (input.fromBag && input.useFreeGift) throw new AppError('BAD_PAYMENT', 400, 'a gift is paid one way');
+    if (input.post) return this.sendToPost({ ...input, post: input.post }, now);
     const { fromId, chat } = input;
     const toIds = [...new Set(input.toIds)];
     if (toIds.includes(fromId)) throw new AppError('GIFT_TO_SELF', 400, 'you cannot gift to yourself');
@@ -164,8 +204,28 @@ export class GiftService {
       });
     }
 
-    const settled = await this.settle(input, toIds, outsideGroup, now);
+    return this.finish(input, await this.settle(input, toIds, outsideGroup, now));
+  }
 
+  /**
+   * A gift onto a post: to its author, from anyone who can read it, under the post rule (`postGiftBlocked`) and the same
+   * daily caps. Like a comment it is refused while muted from posting or switched off by a parent.
+   */
+  private async sendToPost(input: SendGiftInput & { post: PostRef }, now: Date): Promise<SendGiftOutcome> {
+    const { fromId, post } = input;
+    const author = await visiblePostAuthor(this.pool, post, fromId);
+    if (!author) throw new AppError('POST_NOT_FOUND', 404, 'no such post');
+    if (author === fromId) throw new AppError('GIFT_TO_SELF', 400, 'you cannot gift to yourself');
+    await assertUnrestricted(this.pool, fromId, 'post');
+    await assertParentalAllowed(this.pool, fromId, 'posts');
+    await assertEconomyNotHeld(this.pool, fromId, 'gifts');
+    const sending = { ...input, toIds: [author], chat: null };
+    return this.finish(sending, await this.settle(sending, [author], new Set(), now));
+  }
+
+  /** After the transaction: tell people, then answer with the balance and what was posted. */
+  private async finish(input: SendGiftInput, settled: Settled): Promise<SendGiftOutcome> {
+    const { fromId } = input;
     // Notify straight after the commit, before anything else can fail: a retry replays the gift without notifying, so a
     // failure first would leave friends never told of a present that is theirs. What they are told is read once and
     // serves the sender's own message too.
@@ -178,7 +238,11 @@ export class GiftService {
       await this.deps.badges?.onGiftSent(fromId).catch(() => undefined);
     }
 
-    const balance = await this.deps.wallet.balances(fromId);
+    const [balance, freeGifts, bag] = await Promise.all([
+      this.deps.wallet.balances(fromId),
+      freeGiftsLeft(this.pool, fromId),
+      bagEntries(this.pool, fromId, this.publicUrl),
+    ]);
     const message = settled.posted ? this.senderView(settled, input, views ?? (await this.views(settled, input))) : null;
 
     return {
@@ -186,6 +250,8 @@ export class GiftService {
       sent: settled.sent,
       skipped: settled.skipped,
       balance,
+      freeGifts,
+      bag,
       duplicate: settled.replay,
       item: settled.item,
       message,
@@ -200,6 +266,7 @@ export class GiftService {
     now: Date,
   ): Promise<Settled> {
     const { fromId, sku, chat, idempotencyKey, expectedPrice } = input;
+    const post = input.post ?? null;
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -218,7 +285,7 @@ export class GiftService {
       const reused = () => new AppError('IDEMPOTENCY_REUSED', 409, 'that request key was already used');
       if (prior.rows.some((r) => r.sku !== sku)) throw reused();
       if (new Set(prior.rows.map((r) => r.batch_id)).size > 1) throw reused();
-      if (prior.rows.length > 0 && !postedIn(await batchChat(client, prior.rows[0]!.batch_id), chat, fromId, toIds[0]!)) {
+      if (prior.rows.length > 0 && !(await sameTarget(client, prior.rows[0]!.batch_id, chat, post, fromId, toIds[0]!))) {
         throw reused();
       }
       const had = new Set(prior.rows.map((r) => r.to_user_id));
@@ -226,7 +293,7 @@ export class GiftService {
 
       const item = (await client.query<ItemRow>(`SELECT * FROM shop_items WHERE sku = $1`, [sku])).rows[0];
       if (!item) throw new AppError('ITEM_NOT_FOUND', 404, 'no such item');
-      const summary = { sku: item.sku, name: item.name, price: item.price, currency: item.currency };
+      const summary = { sku: item.sku, name: item.name, price: item.price };
 
       // A full replay: the stored result, whatever the catalogue says now.
       if (toIds.every((to) => had.has(to))) {
@@ -235,6 +302,10 @@ export class GiftService {
       }
 
       if (!isPurchasable(item, now)) throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
+      // a gift the sheet does not offer (not drawn yet, or out of its season) cannot be sent around it either
+      if (!giftOnOffer({ sku: item.sku, category: item.category, assetKey: item.asset_key }, now)) {
+        throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
+      }
       if (item.price <= 0) throw new AppError('NOT_GIFTABLE', 409, 'this item cannot be given as a gift');
       if (expectedPrice != null && item.price !== expectedPrice) {
         throw new AppError('PRICE_CHANGED', 409, 'the price changed; please review and try again');
@@ -244,10 +315,20 @@ export class GiftService {
       const skip = (userId: string, reason: SkipReason) => skipped.push({ userId, reason });
       let candidates = toIds.filter((to) => !had.has(to));
 
-      // a member of the group the gift is posted in, and a friendship old enough
-      const notYet = await this.notYetAllowed(client, fromId, candidates);
+      if (input.useFreeGift && item.price > FREE_GIFT_MAX_PRICE) {
+        throw new AppError('NOT_A_FREE_GIFT', 409, 'a free gift pays only for a smaller gift');
+      }
+      // A bag only ever holds gifts.
+      if (input.fromBag && item.category !== GIFT_CATEGORY) throw bagEmpty();
+
+      // a member of the group the gift is posted in, a friendship old enough (onto a post, the post's own rule), and never
+      // a child's profile, which is given nothing
+      const notYet = post
+        ? await postGiftBlocked(client, fromId, candidates, GIFT_MIN_FRIENDSHIP_HOURS)
+        : await this.notYetAllowed(client, fromId, candidates);
+      const children = await childrenAmong(client, candidates);
       candidates = candidates.filter((to) => {
-        const allowed = !outsideGroup.has(to) && !notYet.has(to);
+        const allowed = !outsideGroup.has(to) && !notYet.has(to) && !children.has(to);
         if (!allowed) skip(to, 'not_allowed');
         return allowed;
       });
@@ -309,19 +390,52 @@ export class GiftService {
         return true;
       });
 
+      // The safeguards, with the sender's Zêr row held: what these recipients may be given, what is left to spend, and
+      // for a big send, that its money amount was seen and confirmed for exactly this send.
+      const paying = !input.useFreeGift && !input.fromBag;
+      const total = paying ? item.price * candidates.length : 0;
+      if (candidates.length > 0) {
+        // the Zêr row before the bag, the one order every path takes (bag.ts)
+        await lockZerRow(client, fromId);
+        await assertWithinBounds(client, fromId, candidates, item.price, total, input.fromBag ? item.price * candidates.length : 0);
+        if (paying && total >= BIG_GIFT_CONFIRM_ZER) {
+          // never ask someone to confirm what they cannot pay for
+          if ((await zerHeld(client, fromId)) < total) throw new InsufficientFundsError();
+          const subject: ConfirmSubject = { fromId, sku, price: item.price, recipients: candidates, target: targetOf(chat, post, toIds), idempotencyKey };
+          if (!confirmTokenValid(this.confirmSecret, input.confirmToken, subject)) {
+            const confirm = confirmToken(this.confirmSecret, subject);
+            throw new AppError('GIFT_NEEDS_CONFIRM', 409, 'a big gift is confirmed once more before it goes', {
+              confirmToken: confirm.token,
+              total,
+              recipients: candidates.length,
+              expiresAt: confirm.expiresAt.toISOString(),
+            });
+          }
+        }
+      }
+
+      // Free gifts cover every recipient or none, so a send never ends up half paid one way and half the other.
+      if (input.useFreeGift && candidates.length > 0 && !(await spendFreeGifts(client, fromId, candidates.length))) {
+        throw new AppError('NO_FREE_GIFTS', 409, 'there are not enough free gifts left for that');
+      }
+      // and the bag likewise, one from it a recipient
+      if (input.fromBag && candidates.length > 0 && !(await takeFromBagWithin(client, fromId, sku, candidates.length))) throw bagEmpty();
+
       const given: Settled['given'] = [];
       for (const to of candidates) {
         const giftId = randomUUID();
-        // Ledger reason 'gift' tells gifts from purchases; one debit per recipient with its own key, so a retry pays nothing.
-        const debit = await this.deps.wallet.debitWithin(client, {
-          userId: fromId,
-          currency: item.currency,
-          amount: item.price,
-          reason: 'gift',
-          refId: giftId,
-          idempotencyKey: `gift:${fromId}:${recipientKey(idempotencyKey, to)}`,
-        });
-        if (debit.duplicate) throw reused();
+        if (paying) {
+          // Ledger reason 'gift' tells gifts from purchases; one debit per recipient with its own key, so a retry pays nothing.
+          const debit = await this.deps.wallet.debitWithin(client, {
+            userId: fromId,
+            currency: 'zer',
+            amount: item.price,
+            reason: 'gift',
+            refId: giftId,
+            idempotencyKey: `gift:${fromId}:${recipientKey(idempotencyKey, to)}`,
+          });
+          if (debit.duplicate) throw reused();
+        }
         await client.query(
           `INSERT INTO user_entitlements (user_id, sku, source)
            VALUES ($1, $2, 'gift')
@@ -330,9 +444,20 @@ export class GiftService {
         );
         // clock_timestamp, not now(), keeps recipients in the order given, which is the order the card lists them.
         await client.query(
-          `INSERT INTO gifts (id, from_user_id, to_user_id, sku, price, currency, idempotency_key, batch_id, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, clock_timestamp())`,
-          [giftId, fromId, to, sku, item.price, item.currency, recipientKey(idempotencyKey, to), batchId],
+          `INSERT INTO gifts (id, from_user_id, to_user_id, sku, price, currency, idempotency_key, batch_id, post_type, post_id, paid_with, created_at)
+           VALUES ($1, $2, $3, $4, $5, 'zer', $6, $7, $8, $9, $10, clock_timestamp())`,
+          [
+            giftId,
+            fromId,
+            to,
+            sku,
+            item.price,
+            recipientKey(idempotencyKey, to),
+            batchId,
+            post?.type ?? null,
+            post?.id ?? null,
+            input.fromBag ? 'bag' : input.useFreeGift ? 'free_gift' : 'zer',
+          ],
         );
         given.push({ toId: to, giftId });
       }
@@ -340,7 +465,7 @@ export class GiftService {
       // One message per send, posted by the call that made the batch; a retry reaching a skipped friend joins the batch
       // and the existing message shows them.
       let posted: Posted | null = null;
-      if (given.length > 0 && prior.rows.length === 0) posted = await this.post(client, fromId, given[0]!.toId, chat, batchId);
+      if (given.length > 0 && prior.rows.length === 0 && !post) posted = await this.post(client, fromId, given[0]!.toId, chat, batchId);
 
       await client.query('COMMIT');
       const sentSet = new Set([...had, ...given.map((g) => g.toId)]);
@@ -410,13 +535,14 @@ export class GiftService {
   }
 
   private async sender(userId: string): Promise<Sender> {
-    const r = await this.pool.query<{ username: string; profile_photo_key: string | null; selected_avatar_key: string | null }>(
-      `SELECT username, profile_photo_key, selected_avatar_key FROM users WHERE id = $1`,
+    const r = await this.pool.query<{ username: string; display_name: string | null; profile_photo_key: string | null; selected_avatar_key: string | null }>(
+      `SELECT username, display_name, profile_photo_key, selected_avatar_key FROM users WHERE id = $1`,
       [userId],
     );
     const u = r.rows[0];
     return {
       username: u?.username ?? '',
+      name: u?.display_name?.trim() || u?.username || '',
       avatarUrl: resolveAvatarUrl(u?.profile_photo_key ?? null, u?.selected_avatar_key ?? null, this.publicUrl),
     };
   }
@@ -473,6 +599,7 @@ export class GiftService {
     const { realtime, inbox } = this.deps;
     const warn = (what: string) => (err: unknown) => this.deps.log?.warn({ err, batchId: settled.batchId }, what);
     const inGroup = chat?.kind === 'group';
+    if (input.post) return this.deliverToPost(settled, input.post, fromId, sender);
 
     if (settled.posted && chat?.kind === 'group') {
       const message = this.message(settled.posted, fromId, sender, cards.get(null) ?? null, 'group');
@@ -509,7 +636,7 @@ export class GiftService {
           type: 'gift_received',
           giftId,
           batchId: settled.batchId,
-          from: { name: sender.username, avatarUrl: sender.avatarUrl },
+          from: { name: sender.name, avatarUrl: sender.avatarUrl },
           card,
           chat: where,
         };
@@ -524,7 +651,7 @@ export class GiftService {
           notification: {
             category: 'friends' as const,
             title: 'You have a gift',
-            body: `${sender.username || 'Someone'} sent you ${settled.item.name}.`,
+            body: `${sender.name || 'Someone'} sent you ${settled.item.name}.`,
             data: {
               kind: 'gift',
               giftId,
@@ -532,11 +659,52 @@ export class GiftService {
               chat: where.kind === 'group' ? `group:${where.groupId}` : `dm:${fromId}`,
               sku: settled.item.sku,
               fromUserId: fromId,
+              // a friend or a member of the same group, whose name the recipient sees already
+              fromName: sender.name,
             },
           },
         })),
       )
       .catch(warn('gift notification not recorded'));
+  }
+
+  /**
+   * After the commit, a gift onto a post: its author hears live (`post_gift`) and in the notification list, which the apps
+   * word from `data`. There is no chat message; the notice names the author's own gift (`giftId`), so following it opens
+   * the gift in its light on the post (`POST /gifts/:id/open`), and the post shows its gifts.
+   */
+  private async deliverToPost(settled: Settled, post: PostRef, fromId: string, sender: Sender): Promise<void> {
+    const warn = (what: string) => (err: unknown) => this.deps.log?.warn({ err, batchId: settled.batchId }, what);
+    const authorId = settled.given[0]?.toId;
+    const giftId = settled.given[0]?.giftId;
+    if (!authorId || !giftId) return;
+    // The author can see whoever could give onto their post (the post's own rule), so the sender is named.
+    const from = { name: sender.name, avatarUrl: sender.avatarUrl };
+    await this.deps.realtime
+      .notifyUser(authorId, { type: 'post_gift', postType: post.type, postId: post.id, batchId: settled.batchId, giftId, sku: settled.item.sku, from })
+      .catch(warn('post_gift not pushed'));
+    await this.deps.inbox
+      ?.recordAll([
+        {
+          userId: authorId,
+          notification: {
+            category: 'friends' as const,
+            title: 'A gift on your post',
+            body: `${sender.name || 'Someone'} gave your post ${settled.item.name}.`,
+            data: {
+              kind: 'post_gift',
+              postType: post.type,
+              postId: post.id,
+              batchId: settled.batchId,
+              giftId,
+              sku: settled.item.sku,
+              fromUserId: fromId,
+              fromName: sender.name,
+            },
+          },
+        },
+      ])
+      .catch(warn('post gift notification not recorded'));
   }
 
   /**
@@ -630,25 +798,35 @@ export class GiftService {
   }
 
   /**
-   * What the sender can give these friends: everything on sale with a price, and for unique items which friends own
-   * them already, so the picker can say so. Friends only, with the sender's balance.
+   * What the sender can give these friends, or a post's author: the gifts on sale that have their picture, cheapest
+   * first, with the sender's gift bag, Zêr and free gifts from their members' boxes, and what this send may cost
+   * (safety.ts), so the sheet can lock what the safeguards would refuse. `nudges` is false for anyone not known to be an
+   * adult, who is never shown a suggestion to buy.
    */
-  async catalog(
-    fromId: string,
-    toIds: readonly string[],
-    now: Date = new Date(),
-  ): Promise<{ items: GiftCatalogItem[]; balance: { zer: number; gems: number } }> {
-    const ids = [...new Set(toIds)];
-    if (ids.includes(fromId)) throw new AppError('GIFT_TO_SELF', 400, 'you cannot gift to yourself');
-    if (ids.length === 0 || ids.length > MAX_GIFT_RECIPIENTS) {
-      throw new AppError('BAD_RECIPIENTS', 400, `a gift goes to 1–${MAX_GIFT_RECIPIENTS} friends`);
-    }
-    const statuses = await this.deps.friends.statusesBetween(fromId, ids);
-    if (ids.some((to) => statuses.get(to) !== 'friends')) {
-      throw new AppError('NOT_FRIENDS', 403, 'you can only send gifts to friends');
+  async catalog(fromId: string, target: { toIds: readonly string[] } | { post: PostRef }, now: Date = new Date()): Promise<GiftCatalog> {
+    let ids: string[];
+    const onPost = 'post' in target;
+    if (onPost) {
+      const author = await visiblePostAuthor(this.pool, target.post, fromId);
+      if (!author) throw new AppError('POST_NOT_FOUND', 404, 'no such post');
+      if (author === fromId) throw new AppError('GIFT_TO_SELF', 400, 'you cannot gift to yourself');
+      ids = [author];
+    } else {
+      ids = [...new Set(target.toIds.map(lowerId))];
+      if (ids.includes(lowerId(fromId))) throw new AppError('GIFT_TO_SELF', 400, 'you cannot gift to yourself');
+      if (ids.length === 0 || ids.length > MAX_GIFT_RECIPIENTS) {
+        throw new AppError('BAD_RECIPIENTS', 400, `a gift goes to 1–${MAX_GIFT_RECIPIENTS} friends`);
+      }
+      const statuses = await this.deps.friends.statusesBetween(fromId, ids);
+      if (ids.some((to) => statuses.get(to) !== 'friends')) {
+        throw new AppError('NOT_FRIENDS', 403, 'you can only send gifts to friends');
+      }
     }
 
-    const items = (await this.deps.shop.liveItems(now)).filter((i) => i.price > 0);
+    const live = (await this.deps.shop.liveItems(now)).filter((i) => i.price > 0 && i.category === GIFT_CATEGORY && giftOnOffer(i, now));
+    const items = live
+      .map((i) => ({ ...i, assetUrl: cosmeticAssetUrl(i.category, i.assetKey, this.publicUrl, i.sku) }))
+      .sort((a, b) => a.price - b.price || a.displayOrder - b.displayOrder);
     const unique = items.filter((i) => i.isUnique).map((i) => i.sku);
     const owned = await this.pool.query<{ user_id: string; sku: string }>(
       `SELECT user_id, sku FROM user_entitlements WHERE user_id = ANY($1::uuid[]) AND sku = ANY($2::text[])`,
@@ -656,20 +834,30 @@ export class GiftService {
     );
     const owners = new Map<string, string[]>();
     for (const r of owned.rows) owners.set(r.sku, [...(owners.get(r.sku) ?? []), r.user_id]);
+    // One recipient: whether the rules let a gift go yet, so the picker can say so before anything is chosen. When they
+    // do not, the limits are the sender's own, so nobody learns from them how old someone they cannot give to is.
+    const hold = ids.length === 1 ? await giftHold(this.pool, fromId, ids[0]!, onPost, GIFT_MIN_FRIENDSHIP_HOURS) : null;
+    const bounds = await sendBounds(this.pool, fromId, hold ? [] : ids, now);
 
     return {
       items: items.map((i) => ({
         sku: i.sku,
         name: i.name,
         category: i.category,
-        assetUrl: cosmeticAssetUrl(i.category, i.assetKey, this.publicUrl),
-        currency: i.currency,
+        assetUrl: i.assetUrl,
         price: i.price,
-        tier: giftTierFor({ currency: i.currency, price: i.price, limited: i.availableTo !== null }),
+        tier: giftTierFor({ price: i.price, limited: isLimitedItem(i.sku, i.availableTo) }),
         // in the order asked, so the picker can line it up with its chips
         alreadyOwnedBy: ids.filter((id) => owners.get(i.sku)?.includes(id)),
+        freeGiftEligible: i.price <= FREE_GIFT_MAX_PRICE,
       })),
+      bag: (await bagEntries(this.pool, fromId, this.publicUrl)).filter((b) => items.some((i) => i.sku === b.sku)),
       balance: await this.deps.wallet.balances(fromId),
+      freeGifts: await freeGiftsLeft(this.pool, fromId),
+      hold,
+      limits: { maxPrice: bounds.maxPrice, left: bounds.left, confirmFrom: bounds.confirmFrom },
+      // only a known adult, never a guest or anyone of unknown age, is ever shown a suggestion to buy
+      nudges: await isKnownAdultAccount(this.pool, fromId),
     };
   }
 
@@ -679,8 +867,57 @@ export class GiftService {
   }
 }
 
+const lowerId = (id: string): string => id.toLowerCase();
+
+/** A send with every id lower-cased and the recipients counted once each. */
+function canonicalSend(input: SendGiftInput): SendGiftInput {
+  const chat: GiftChatRef | null =
+    input.chat?.kind === 'group' ? { kind: 'group', groupId: lowerId(input.chat.groupId) } : input.chat ? { kind: 'dm', userId: lowerId(input.chat.userId) } : null;
+  return {
+    ...input,
+    fromId: lowerId(input.fromId),
+    toIds: [...new Set(input.toIds.map(lowerId))],
+    chat,
+    post: input.post ? { type: input.post.type, id: lowerId(input.post.id) } : input.post,
+  };
+}
+
 function giftNotFound(): AppError {
   return new AppError('GIFT_NOT_FOUND', 404, 'no such gift');
+}
+
+function bagEmpty(): AppError {
+  return new AppError('BAG_EMPTY', 409, 'your gift bag does not hold enough of that gift');
+}
+
+async function zerHeld(client: pg.PoolClient, userId: string): Promise<number> {
+  const res = await client.query<{ balance: number }>(`SELECT balance FROM wallet_balances WHERE user_id = $1 AND currency = 'zer'`, [userId]);
+  return res.rows[0]?.balance ?? 0;
+}
+
+/** Where a send goes, as its confirmation names it. */
+function targetOf(chat: GiftChatRef | null, post: PostRef | null, toIds: readonly string[]): string {
+  if (post) return `post:${post.type}:${post.id}`;
+  if (chat?.kind === 'group') return `group:${chat.groupId}`;
+  return `${chat ? 'dm' : 'shop'}:${toIds[0] ?? ''}`;
+}
+
+/** Whether a retry's earlier gift went where this one goes: onto the same post, or posted in the same chat. */
+async function sameTarget(
+  client: pg.PoolClient,
+  batchId: string,
+  chat: GiftChatRef | null,
+  post: PostRef | null,
+  fromId: string,
+  toId: string,
+): Promise<boolean> {
+  const on = await client.query<{ post_type: string | null; post_id: string | null }>(
+    `SELECT post_type, post_id FROM gifts WHERE batch_id = $1 LIMIT 1`,
+    [batchId],
+  );
+  const was = on.rows[0];
+  if (post || was?.post_id) return !!post && was?.post_type === post.type && was?.post_id === post.id;
+  return postedIn(await batchChat(client, batchId), chat, fromId, toId);
 }
 
 /**

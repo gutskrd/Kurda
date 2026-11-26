@@ -1,21 +1,33 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { applyItemFilter, categoriesIn, countByCategory, groupByCategory, itemCategory, shopItemDescription } from '@kurda/shared';
+import {
+  applyItemFilter,
+  categoriesIn,
+  countByCategory,
+  groupByCategory,
+  isWordTag,
+  itemCategory,
+  shopItemDescription,
+  type BundlePurchaseResult,
+  type BundleView,
+  type BundlesView,
+} from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
-import { requestId } from '../lib/api';
+import { describeError, requestId } from '../lib/api';
 import type { ApiError, PurchaseResult, ShopItem } from '../lib/types';
 import { ErrorState } from '../components/states';
 import { PickFriendSkeleton, ShopSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
-import { CoinIcon, GemIcon, GiftIcon } from '../components/icons';
+import { CoinIcon, EyeIcon, GiftIcon } from '../components/icons';
 import { giftsWereOpened } from '../shop/useUnseenGifts';
 import { RefreshedNotice, type InventoryWithNotice } from '../shop/RefreshedItems';
 import { BuyConfirm } from '../shop/BuyConfirm';
 import { YourBird, useLettersHome } from '../shop/YourBird';
 import { YourTree } from '../shop/YourTree';
+import { ZerValue } from '../shop/ZerValue';
 import { useTree } from '../tree/useTree';
 import {
   FilterToggle,
@@ -32,6 +44,12 @@ import {
 } from '../shop/ItemBrowser';
 import { ItemGlyph } from '../shop/ItemGlyph';
 import { ItemPicture } from '../shop/ItemPicture';
+import { BundleRow, partOf } from '../shop/Bundles';
+import { BundleSheet } from '../shop/BundleSheet';
+import { BundleMoment } from '../shop/BundleMoment';
+import { ProfilePreview, canPreview, lookOf, type PreviewLook } from '../shop/ProfilePreview';
+import { RarityLabel } from '../shop/Rarity';
+import { TagPill } from '../profile/TagPill';
 import { PictureFrame } from '../ranks/art';
 import { useAvatarSrc } from '../art/overrides';
 import { DEFAULT_SHOP_VIEW, shopViewFiltered, useShopView } from '../shop/useShopView';
@@ -70,12 +88,9 @@ interface Tile {
   description: string | null;
   category: string;
   price: number;
-  currency: 'zer' | 'gems';
   assetUrl: string | null;
   owned: boolean;
 }
-
-type Currency = Tile['currency'];
 
 /** A friend as `GET /friends` sends one (`FriendSummary`); it has `userId`, not `id`. */
 interface Friend {
@@ -90,21 +105,17 @@ interface ReceivedGift {
   name: string;
   category: string;
   assetUrl: string | null;
-  from: { id: string; username: string } | null;
+  /** Null when the sender's account is gone or a block stands between you, so they are not named. */
+  from: { id: string; username: string; displayName?: string | null } | null;
   createdAt: string;
   seenAt: string | null;
 }
 
-/** Items are priced in either currency, so never hardcode one. Zêr keeps its Kurmancî name everywhere; gems are translated. */
-function currencyName(currency: Currency, t: (key: MessageKey) => string): string {
-  return currency === 'gems' ? t('shop.gems') : 'Zêr';
-}
-
-/** What a purchase says once it is yours: where a thing of its kind is used. */
-function boughtMessage(category: string): MessageKey {
+/** What a purchase says once it is yours: where a thing of its kind is used. A word tag is worn like a frame. */
+function boughtMessage(sku: string, category: string): MessageKey {
   switch (itemCategory(category)) {
     case 'tag':
-      return 'shop.isYoursTag';
+      return isWordTag({ sku, category }) ? 'shop.isYours' : 'shop.isYoursTag';
     case 'background':
     case 'icon':
     case 'frame':
@@ -117,9 +128,10 @@ function boughtMessage(category: string): MessageKey {
 /**
  * The Shop: browse, buy and gift by kind (backgrounds, icons, tags, and "More"), with counts on the tabs and a section
  * per kind under All. Search (with or without Kurdish letters), sort and filters (affordable, free) live in the address,
- * so they survive a reload and Back. Anything priced asks first and says purchases are final. Above the catalogue are
- * your bird and tree (shop/YourBird.tsx, shop/YourTree.tsx), bought or swapped here. Buying grants ownership; equipping
- * is in Edit Profile. The server owns prices, ownership and payment (POST /shop/purchase, /shop/gift).
+ * so they survive a reload and Back. Anything priced asks first and says purchases are final, and anything worn can be
+ * tried on your own profile first. The bundles lead the page (shop/Bundles.tsx); above the catalogue are your bird and
+ * tree (shop/YourBird.tsx, shop/YourTree.tsx), bought or swapped here. Buying grants ownership; equipping is in Edit
+ * Profile. The server owns prices, ownership and payment (POST /shop/purchase, /shop/bundles/purchase, /shop/gift).
  */
 export function Shop(): React.JSX.Element {
   const { client } = useAuth();
@@ -128,15 +140,17 @@ export function Shop(): React.JSX.Element {
   // Stock, ownership and balance are fetched fresh: a remembered shelf would offer again what was just bought.
   const shop = useApiGet<{ items: ShopItem[] }>('/shop', { fresh: true });
   const inventory = useApiGet<InventoryWithNotice>('/me/inventory', { fresh: true });
-  const wallet = useApiGet<{ balances: { zer: number; gems?: number } }>('/me/wallet', { fresh: true });
+  const wallet = useApiGet<{ balances: { zer: number } }>('/me/wallet', { fresh: true });
+  // Bundles are priced for you (less what you own of them), so they are read fresh too.
+  const bundles = useApiGet<BundlesView>('/shop/bundles', { fresh: true });
   const [view, setView] = useShopView();
   const ids = useIdPrefix('shop');
   // Your bird and tree are fetched with the catalogue, so they arrive together.
   const letters = useLettersHome();
   const tree = useTree();
 
-  /** Balances learned since the wallet was read: a purchase or gift answers with the new one. */
-  const [known, setKnown] = useState<Partial<Record<Currency, number>>>({});
+  /** The Zêr learned since the wallet was read: a purchase or gift answers with the new balance. */
+  const [known, setKnown] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok'; text: string } | { kind: 'err'; error: ApiError | string } | null>(null);
   /** The chat a gift just went to, where it waits wrapped. */
@@ -147,23 +161,20 @@ export function Shop(): React.JSX.Element {
   const [gifting, setGifting] = useState<Tile | null>(null);
   /** The item whose purchase is being confirmed. */
   const [asking, setAsking] = useState<Tile | null>(null);
+  /** The bundle opened from its card, and why its last purchase did not go through. */
+  const [openBundle, setOpenBundle] = useState<BundleView | null>(null);
+  const [bundleError, setBundleError] = useState<string | null>(null);
+  /** The bundle just bought, whose moment is playing. */
+  const [unwrapped, setUnwrapped] = useState<BundleView | null>(null);
+  /** A look being tried on, and what its preview offers beside Close. */
+  const [preview, setPreview] = useState<{ look: PreviewLook; footer?: React.ReactNode } | null>(null);
 
-  const balanceOf = useCallback(
-    (currency: Currency): number | null => known[currency] ?? wallet.data?.balances?.[currency] ?? null,
-    [known, wallet.data],
-  );
-  /** Whether this can be paid for now, in its own currency. */
-  const canAfford = useCallback(
-    (tile: Tile): boolean => {
-      if (tile.price === 0) return true;
-      const held = balanceOf(tile.currency);
-      return held !== null && held >= tile.price;
-    },
-    [balanceOf],
-  );
+  const zer = known ?? wallet.data?.balances?.zer ?? null;
+  /** Whether this can be paid for now. */
+  const canAfford = useCallback((tile: Tile): boolean => tile.price === 0 || (zer !== null && zer >= tile.price), [zer]);
 
   /** The Zêr left after a bird or tree purchase, which the balance and prices then use. */
-  const learnZer = useCallback((zer: number) => setKnown((k) => ({ ...k, zer })), []);
+  const learnZer = useCallback((left: number) => setKnown(left), []);
 
   const ownedSkus = useMemo(() => {
     const s = new Set((inventory.data?.items ?? []).map((i) => i.sku));
@@ -180,12 +191,58 @@ export function Shop(): React.JSX.Element {
         description: shopItemDescription(i, locale),
         category: i.category,
         price: i.price,
-        currency: i.currency,
         assetUrl: i.assetUrl,
         owned: ownedSkus.has(i.sku),
       })),
     [shop.data, ownedSkus, locale],
   );
+
+  // A bundle open while the list is read again (after a price changed) shows its fresh price.
+  useEffect(() => {
+    setOpenBundle((open) => (open ? (bundles.data?.bundles?.find((b) => b.id === open.id) ?? open) : open));
+  }, [bundles.data]);
+
+  /** Buys the open bundle at the price shown; the server works the price out again and refuses one that changed. */
+  async function buyBundle(bundle: BundleView): Promise<void> {
+    if (busy) return;
+    setBusy(bundle.id);
+    setBundleError(null);
+    const res = await client.post<BundlePurchaseResult>('/shop/bundles/purchase', {
+      bundle: bundle.id,
+      idempotencyKey: requestId(),
+      expectedPrice: bundle.quote.price,
+    });
+    setBusy(null);
+    if (res.ok) {
+      setKnown(res.data.balance);
+      setBought((prev) => new Set([...prev, ...res.data.granted]));
+      setOpenBundle(null);
+      setUnwrapped(bundle);
+      bundles.reload();
+      return;
+    }
+    const why: Record<string, MessageKey> = {
+      PRICE_CHANGED: 'bundle.priceChanged',
+      BAG_FULL: 'bundle.bagFull',
+      BUNDLE_UNAVAILABLE: 'bundle.unavailable',
+      ALREADY_OWNED: 'bundle.complete',
+    };
+    const key = why[res.error.code ?? ''];
+    setBundleError(key ? t(key) : describeError(res.error, t, locale));
+    if (res.error.code === 'PRICE_CHANGED' || res.error.code === 'ALREADY_OWNED') bundles.reload();
+  }
+
+  /** Puts a bought bundle's whole set on at once; true when every part went on. */
+  async function wearSet(bundle: BundleView): Promise<boolean> {
+    const kinds = ['background', 'icon', 'frame', 'tag'] as const;
+    const results = await Promise.all(
+      kinds.map((kind) => {
+        const part = partOf(bundle, kind);
+        return part ? client.put(`/me/cosmetics/${kind}`, { sku: part.sku }) : Promise.resolve({ ok: true as const });
+      }),
+    );
+    return results.every((r) => r.ok);
+  }
 
   /** Plays the celebration once, then clears it so it can play again. */
   const celebrate = useCallback((sku: string) => {
@@ -204,11 +261,10 @@ export function Shop(): React.JSX.Element {
     });
     setBusy(null);
     if (res.ok) {
-      // The answer is the balance of the item's own currency.
-      setKnown((k) => ({ ...k, [tile.currency]: res.data.balance }));
+      setKnown(res.data.balance);
       setBought((prev) => new Set(prev).add(tile.sku));
       celebrate(tile.sku);
-      setMsg({ kind: 'ok', text: t(boughtMessage(tile.category), { name: tile.name }) });
+      setMsg({ kind: 'ok', text: t(boughtMessage(tile.sku, tile.category), { name: tile.name }) });
     } else {
       setMsg({ kind: 'err', error: res.error });
     }
@@ -245,8 +301,7 @@ export function Shop(): React.JSX.Element {
     setBusy(null);
     setGifting(null);
     if (res.ok) {
-      // The answer is the balance of the item's own currency, so a gem gift does not overwrite the Zêr shown.
-      setKnown((k) => ({ ...k, [tile.currency]: res.data.balance }));
+      setKnown(res.data.balance);
       celebrate(tile.sku);
       setMsg({ kind: 'ok', text: t('shop.onItsWay', { name: tile.name, to: to.username }) });
       // Every gift arrives wrapped in the chat between the two of you.
@@ -256,9 +311,6 @@ export function Shop(): React.JSX.Element {
     }
   }
 
-  const gemPriced = tiles.some((tile) => tile.currency === 'gems');
-  const zer = balanceOf('zer');
-  const gems = balanceOf('gems');
   // The heading shows from the first frame; only the catalogue waits.
   const header = (
     <div className="page-header">
@@ -267,14 +319,6 @@ export function Shop(): React.JSX.Element {
       <p className="page-sub">
         {t('shop.subtitle')}{' '}
         {zer !== null && <strong>{zer.toLocaleString(locale)} Zêr</strong>}
-        {gemPriced && gems !== null && (
-          <>
-            {' · '}
-            <strong>
-              {gems.toLocaleString(locale)} {t('shop.gems')}
-            </strong>
-          </>
-        )}
       </p>
     </div>
   );
@@ -313,11 +357,12 @@ export function Shop(): React.JSX.Element {
     <ShopGrid
       tiles={list}
       canAfford={canAfford}
-      balanceOf={balanceOf}
+      zer={zer}
       busy={busy}
       celebrating={celebrating}
       onBuy={askToBuy}
       onGift={setGifting}
+      onPreview={(tile) => setPreview({ look: lookOf(tile) })}
     />
   );
 
@@ -348,6 +393,15 @@ export function Shop(): React.JSX.Element {
       <RefreshedNotice inventory={inventory.data} />
 
       <GiftsReceived onEquipHint={() => setMsg(null)} />
+
+      {/* Bundles lead the shop: a set that belongs together, priced for you. */}
+      <BundleRow
+        view={bundles.data}
+        onOpen={(b) => {
+          setBundleError(null);
+          setOpenBundle(b);
+        }}
+      />
 
       <YourBird key="bird" home={letters} zer={zer} onZer={learnZer} />
       <YourTree key="tree" tree={tree} zer={zer} onZer={learnZer} />
@@ -401,7 +455,24 @@ export function Shop(): React.JSX.Element {
         </>
       )}
 
-      <BuyConfirm item={asking} busy={busy !== null} onConfirm={() => void confirmBuy()} onCancel={() => setAsking(null)} />
+      <BuyConfirm item={asking && { ...asking, currency: 'zer' }} busy={busy !== null} onConfirm={() => void confirmBuy()} onCancel={() => setAsking(null)} />
+
+      <BundleSheet
+        bundle={preview ? null : openBundle}
+        nudges={bundles.data?.nudges === true}
+        zer={zer}
+        busy={busy !== null}
+        error={bundleError}
+        onBuy={(b) => void buyBundle(b)}
+        onPreview={(b) => {
+          const look: PreviewLook = {};
+          for (const part of b.parts) Object.assign(look, lookOf(part));
+          setPreview({ look });
+        }}
+        onClose={() => setOpenBundle(null)}
+      />
+      <ProfilePreview look={preview?.look ?? null} footer={preview?.footer} onClose={() => setPreview(null)} />
+      {unwrapped && <BundleMoment bundle={unwrapped} onWear={() => wearSet(unwrapped)} onClose={() => setUnwrapped(null)} />}
 
       <Modal open={gifting !== null} onClose={() => setGifting(null)} label={t('shop.sendGift')}>
         {gifting && <GiftPicker tile={gifting} busy={busy !== null} onPick={(f) => void gift(gifting, f)} />}
@@ -411,9 +482,16 @@ export function Shop(): React.JSX.Element {
 }
 
 /** An item's picture, or its kind's glyph without one. A frame is shown round the shopper's own face. */
-function TileArt({ assetUrl, category }: { assetUrl: string | null; category: string }): React.JSX.Element {
+function TileArt({ assetUrl, category, tag }: { assetUrl: string | null; category: string; tag?: { label: string; meaning: string | null } }): React.JSX.Element {
   const { user } = useAuth();
   const face = useAvatarSrc(user?.avatarUrl);
+  if (tag) {
+    return (
+      <span className="shop-tag-art" aria-hidden="true">
+        <TagPill tag={tag} />
+      </span>
+    );
+  }
   if (assetUrl && itemCategory(category) === 'frame') {
     return (
       <span className="cosmetic-frame" aria-hidden="true">
@@ -478,7 +556,7 @@ function GiftsReceived({ onEquipHint }: { onEquipHint: () => void }): React.JSX.
                 </span>
               </figcaption>
               <span className="gift-from" onClick={onEquipHint}>
-                {g.from ? t('shop.giftFrom', { name: g.from.username }) : t('shop.giftFromFormer')}
+                {g.from ? t('gift.from', { name: g.from.displayName || g.from.username }) : t('gift.fromMember')}
               </span>
             </figure>
           );
@@ -518,10 +596,7 @@ function GiftPicker({
         {t('shop.sendItem', { name: tile.name })}
       </h2>
       <p className="muted">
-        {t('shop.giftPaidByYou', {
-          price: tile.price.toLocaleString(),
-          currency: currencyName(tile.currency, t),
-        })}
+        {t('shop.giftPaidByYou', { price: tile.price.toLocaleString(), currency: 'Zêr' })} <ZerValue zer={tile.price} />
       </p>
       {/* A gift is bought like anything else, and as final. */}
       <p className="muted">{t('shop.giftFinal')}</p>
@@ -563,19 +638,22 @@ function GiftPicker({
 function ShopGrid({
   tiles,
   canAfford,
-  balanceOf,
+  zer,
   busy,
   celebrating,
   onBuy,
   onGift,
+  onPreview,
 }: {
   tiles: Tile[];
   canAfford: (tile: Tile) => boolean;
-  balanceOf: (currency: Currency) => number | null;
+  zer: number | null;
   busy: string | null;
   celebrating: string | null;
   onBuy: (tile: Tile) => void;
   onGift: (tile: Tile) => void;
+  /** tries a worn item on your own profile */
+  onPreview: (tile: Tile) => void;
 }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -584,11 +662,15 @@ function ShopGrid({
       {tiles.map((tile) => {
         const kind = itemCategory(tile.category);
         const affordable = canAfford(tile);
-        const held = balanceOf(tile.currency);
+        const held = zer;
         return (
           <figure className={`shop-tile shop-tile-${kind}${celebrating === tile.sku ? ' shop-tile-won' : ''}`} key={tile.sku}>
             <div className={`shop-thumb shop-thumb-${kind}`}>
-              <TileArt assetUrl={tile.assetUrl} category={tile.category} />
+              <TileArt
+                assetUrl={tile.assetUrl}
+                category={tile.category}
+                tag={isWordTag(tile) ? { label: tile.name, meaning: tile.description } : undefined}
+              />
               {celebrating === tile.sku && <span className="shop-shine" aria-hidden />}
             </div>
             {/* The name is Kurdish and the line under it says what it is, as on the phone. */}
@@ -601,6 +683,7 @@ function ShopGrid({
                   {tile.description}
                 </span>
               )}
+              <RarityLabel item={tile} />
             </figcaption>
             {tile.owned ? (
               <span className="shop-owned">{t('shop.owned')}</span>
@@ -613,8 +696,9 @@ function ShopGrid({
                     t('items.free')
                   ) : (
                     <>
-                      {tile.currency === 'gems' ? <GemIcon size={14} /> : <CoinIcon size={14} />}
-                      {`${tile.price.toLocaleString(locale)} ${currencyName(tile.currency, t)}`}
+                      <CoinIcon size={14} />
+                      {`${tile.price.toLocaleString(locale)} Zêr`}
+                      <ZerValue zer={tile.price} />
                     </>
                   )}
                   {!affordable && held !== null && (
@@ -626,6 +710,18 @@ function ShopGrid({
                 <Button size="sm" disabled={busy !== null || !affordable} onClick={() => onBuy(tile)}>
                   {tile.price === 0 ? t('edit.getFree') : t('shop.buy')}
                 </Button>
+                {/* Anything worn can be tried on your own profile first. */}
+                {canPreview(tile) && (
+                  <button
+                    type="button"
+                    className="shop-gift-btn"
+                    onClick={() => onPreview(tile)}
+                    title={t('shop.previewNamed', { name: tile.name })}
+                    aria-label={t('shop.previewNamed', { name: tile.name })}
+                  >
+                    <EyeIcon size={17} />
+                  </button>
+                )}
                 {/* Free items cannot be gifted (the API refuses: a notification at no cost). */}
                 {tile.price > 0 && (
                   <button

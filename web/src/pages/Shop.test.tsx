@@ -25,7 +25,7 @@ const CATALOGUE: ShopItem[] = [
 function makeFetch(
   calls: Array<{ url: string; body: unknown }>,
   owned: string[] = [],
-  { items = CATALOGUE, balances = { zer: 1000 } }: { items?: ShopItem[]; balances?: { zer: number; gems?: number } } = {},
+  { items = CATALOGUE, balances = { zer: 1000 } }: { items?: ShopItem[]; balances?: { zer: number } } = {},
 ) {
   return vi.fn(async (url: string, init?: RequestInit) => {
     if (url.includes('/shop/purchase')) {
@@ -312,20 +312,15 @@ describe('Shop', () => {
     expect(screen.queryByText('Pricey')).not.toBeInTheDocument(); // 5000
   });
 
-  it('holds a gem-priced item against the gems, not the Zêr', async () => {
-    // Plenty of Zêr, few gems: a 40-gem item must not pass on 1,000 Zêr.
-    const night: ShopItem = { sku: 'bg-gem', name: 'Night sky', description: null, category: 'background', currency: 'gems', price: 40, isUnique: true, premiumOnly: false, assetUrl: null };
-    vi.stubGlobal('fetch', makeFetch([], [], { items: [...CATALOGUE, night], balances: { zer: 1000, gems: 10 } }));
+  it('says what each price is worth in money, beside it', async () => {
+    vi.stubGlobal('fetch', makeFetch([]));
     renderApp(<Shop />, ['/app/shop']);
-
-    const tile = (await screen.findByText('Night sky')).closest('figure')!;
-    expect(within(tile).getByText(/40 Gems/)).toBeInTheDocument();
-    expect(within(tile).getByRole('button', { name: 'Buy' })).toBeDisabled();
-    expect(within(tile).getByText(/30 more/)).toBeInTheDocument();
-
-    await userEvent.click(screen.getByLabelText('Within my balance'));
-    expect(screen.queryByText('Night sky')).not.toBeInTheDocument();
-    expect(screen.getByText('Sunset')).toBeInTheDocument();
+    const tile = (await screen.findByText('Îstîkan')).closest('figure')!;
+    expect(within(tile).getByText(/900 Zêr/)).toBeInTheDocument();
+    expect(within(tile).getByText('≈ €9')).toBeInTheDocument();
+    const pricey = screen.getByText('Pricey').closest('figure')!;
+    expect(within(pricey).getByText('≈ €50')).toBeInTheDocument();
+    expect(within(pricey).getByText(/4,000 more/)).toBeInTheDocument();
   });
 
   it('keeps something you already own, however dear it was', async () => {
@@ -521,7 +516,7 @@ describe('Shop: your bird and your tree', () => {
   });
   const TODAY = '2026-11-13';
   const growing = (over: Partial<TreeRecord> = {}) =>
-    treeView({ species: 'hinar', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 9, water: 2, harvests: 0, ...over }, TODAY);
+    treeView({ species: 'hinar', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 24, water: 2, harvests: 0, ...over }, TODAY);
   /** GET /me/tree: this tree (or none), every kind, these bought, this much Zêr. */
   const mine = (tree: ReturnType<typeof growing> | null, over: { owned?: string[]; zer?: number } = {}): MyTree => ({
     tree,
@@ -582,7 +577,7 @@ describe('Shop: your bird and your tree', () => {
       expect(within(group).getByRole('radio', { name: 'Pink bird, your bird now' })).toBeChecked();
       expect(within(group).getByRole('radio', { name: 'Brown bird' })).not.toBeChecked();
       // What a new one costs, against what there is, before anything is picked.
-      expect(screen.getByText('A new bird costs 500 Zêr. You have 1,200 Zêr.')).toBeInTheDocument();
+      expect(screen.getByText('A new bird costs 250 Zêr. You have 1,200 Zêr.')).toBeInTheDocument();
       expect(screen.getByText('Pink bird, your bird now', { selector: '.yours-picked span' })).toBeInTheDocument();
       // Nothing to buy until another bird is picked.
       expect(screen.queryByRole('button', { name: /Get this bird/ })).toBeNull();
@@ -597,7 +592,7 @@ describe('Shop: your bird and your tree', () => {
       });
       renderApp(<Shop />, ['/app/shop']);
       const group = await screen.findByRole('radiogroup', { name: 'Choose your bird' });
-      expect(screen.getByText('Your bird carries your letters. Your first one is free; a new one later costs 500 Zêr.')).toBeInTheDocument();
+      expect(screen.getByText('Your bird carries your letters. Your first one is free; a new one later costs 250 Zêr.')).toBeInTheDocument();
       await userEvent.click(within(group).getByRole('radio', { name: 'Brown bird' }));
       await userEvent.click(screen.getByRole('button', { name: 'This is my bird' }));
       // Free, so simply taken: no dialog, nothing spent.
@@ -610,14 +605,14 @@ describe('Shop: your bird and your tree', () => {
     it('asks before a new bird, saying its price and the balance, and buys it only when told to', async () => {
       const calls = signedInShop({
         'GET /letters': ok(letters()),
-        'POST /letters/bird': ok(letters({ bird: 4, zer: 700 })),
+        'POST /letters/bird': ok(letters({ bird: 4, zer: 950 })),
       });
       renderApp(<Shop />, ['/app/shop']);
       await userEvent.click(await screen.findByRole('radio', { name: 'Brown bird' }));
-      await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 250 Zêr' }));
 
       const ask = await screen.findByRole('dialog', { name: 'Buy Brown bird?' });
-      expect(within(ask).getByText('500 Zêr')).toBeInTheDocument();
+      expect(within(ask).getByText('250 Zêr')).toBeInTheDocument();
       expect(within(ask).getByText('You have 1,200 Zêr.')).toBeInTheDocument();
       expect(within(ask).getByText(/Every purchase is final/)).toBeInTheDocument();
       expect(calls.some((c) => c.path === '/letters/bird')).toBe(false);
@@ -629,22 +624,22 @@ describe('Shop: your bird and your tree', () => {
       expect(screen.getByRole('radio', { name: 'Pink bird, your bird now' })).toBeChecked();
 
       await userEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
-      await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
-      await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Get this bird · 500 Zêr' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 250 Zêr' }));
+      await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Get this bird · 250 Zêr' }));
       await waitFor(() => expect(calls.find((c) => c.method === 'POST' && c.path === '/letters/bird')?.body).toEqual({ bird: 4 }));
       expect(await screen.findByRole('radio', { name: 'Brown bird, your bird now' })).toBeChecked();
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
       // What is left, at the top of the Shop and under the birds.
-      expect(balance()).toBe('700 Zêr');
-      expect(screen.getByText('A new bird costs 500 Zêr. You have 700 Zêr.')).toBeInTheDocument();
+      expect(balance()).toBe('950 Zêr');
+      expect(screen.getByText('A new bird costs 250 Zêr. You have 950 Zêr.')).toBeInTheDocument();
     });
 
     it('says how many Zêr are missing when the balance is short, and does not offer the buy', async () => {
-      const calls = signedInShop({ 'GET /letters': ok(letters({ zer: 300 })) }, { zer: 300 });
+      const calls = signedInShop({ 'GET /letters': ok(letters({ zer: 100 })) }, { zer: 100 });
       renderApp(<Shop />, ['/app/shop']);
       await userEvent.click(await screen.findByRole('radio', { name: 'Brown bird' }));
-      expect(screen.getByText('You need 200 more Zêr.')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' })).toBeDisabled();
+      expect(screen.getByText('You need 150 more Zêr.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Get this bird · 250 Zêr' })).toBeDisabled();
       expect(calls.some((c) => c.path === '/letters/bird')).toBe(false);
     });
 
@@ -655,13 +650,13 @@ describe('Shop: your bird and your tree', () => {
       });
       renderApp(<Shop />, ['/app/shop']);
       await userEvent.click(await screen.findByRole('radio', { name: 'Brown bird' }));
-      await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 250 Zêr' }));
       const ask = await screen.findByRole('dialog', { name: 'Buy Brown bird?' });
-      await userEvent.click(within(ask).getByRole('button', { name: 'Get this bird · 500 Zêr' }));
+      await userEvent.click(within(ask).getByRole('button', { name: 'Get this bird · 250 Zêr' }));
       // The dialog stays, with the balance as it now is and the gap to close.
-      expect(await within(ask).findByText('You need 400 more Zêr.')).toBeInTheDocument();
+      expect(await within(ask).findByText('You need 150 more Zêr.')).toBeInTheDocument();
       expect(within(ask).getByText('You have 100 Zêr.')).toBeInTheDocument();
-      expect(within(ask).getByRole('button', { name: 'Get this bird · 500 Zêr' })).toBeDisabled();
+      expect(within(ask).getByRole('button', { name: 'Get this bird · 250 Zêr' })).toBeDisabled();
       expect(balance()).toBe('100 Zêr');
     });
 
@@ -672,8 +667,8 @@ describe('Shop: your bird and your tree', () => {
       });
       renderApp(<Shop />, ['/app/shop']);
       await userEvent.click(await screen.findByRole('radio', { name: 'Brown bird' }));
-      await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
-      await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Get this bird · 500 Zêr' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 250 Zêr' }));
+      await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Get this bird · 250 Zêr' }));
       // No error to read: the dialog goes, and the bird is the one the server says is yours.
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
       expect(screen.queryByRole('alert')).toBeNull();
@@ -686,7 +681,7 @@ describe('Shop: your bird and your tree', () => {
     const tile = (name: string): HTMLElement => screen.getByRole('article', { name });
 
     it('shows every kind: the one growing, the free ones, the ones bought, and the price of the rest', async () => {
-      signedInShop({ 'GET /me/tree': ok(mine(growing(), { owned: ['tu'] })) });
+      signedInShop({ 'GET /me/tree': ok(mine(growing(), { owned: ['tu'], zer: 600 })) }, { zer: 600 });
       renderApp(<Shop />, ['/app/shop']);
       expect(await screen.findByRole('heading', { name: 'Your tree' })).toBeInTheDocument();
       expect(screen.getByText('Planting another tree replaces the one you have. It starts again from a seed.')).toBeInTheDocument();
@@ -698,10 +693,10 @@ describe('Shop: your bird and your tree', () => {
       expect(within(tile('Berû (Oak)')).getByRole('button', { name: 'Plant: Berû (Oak)' })).toBeEnabled();
       expect(within(tile('Tû (Mulberry)')).getByText('Yours')).toBeInTheDocument();
       expect(within(tile('Tû (Mulberry)')).getByRole('button', { name: 'Plant: Tû (Mulberry)' })).toBeEnabled();
-      expect(within(tile('Kaj (Pine)')).getByText(/1,000 Zêr/)).toBeInTheDocument();
+      expect(within(tile('Kaj (Pine)')).getByText(/500 Zêr/)).toBeInTheDocument();
       expect(within(tile('Kaj (Pine)')).getByRole('button', { name: 'Buy: Kaj (Pine)' })).toBeEnabled();
       // Too dear: its price, the gap, and no buy.
-      expect(within(tile('Dara Şevê (Night tree)')).getByText('1,000 more')).toBeInTheDocument();
+      expect(within(tile('Dara Şevê (Night tree)')).getByText('500 more')).toBeInTheDocument();
       expect(within(tile('Dara Şevê (Night tree)')).getByRole('button', { name: 'Buy: Dara Şevê (Night tree)' })).toBeDisabled();
       expect(screen.getByRole('link', { name: 'My tree' })).toHaveAttribute('href', '/app/tree');
     });
@@ -709,14 +704,14 @@ describe('Shop: your bird and your tree', () => {
     it('buys a kind once it has said what it costs, which plants nothing', async () => {
       const calls = signedInShop({
         'GET /me/tree': ok(mine(growing())),
-        'POST /me/tree/kinds/kaj/buy': ok(mine(growing(), { owned: ['kaj'], zer: 200 })),
+        'POST /me/tree/kinds/kaj/buy': ok(mine(growing(), { owned: ['kaj'], zer: 700 })),
       });
       renderApp(<Shop />, ['/app/shop']);
       await userEvent.click(await screen.findByRole('button', { name: 'Buy: Kaj (Pine)' }));
       const ask = await screen.findByRole('dialog', { name: 'Buy Kaj?' });
-      expect(within(ask).getByText('1,000 Zêr')).toBeInTheDocument();
+      expect(within(ask).getByText('500 Zêr')).toBeInTheDocument();
       expect(within(ask).getByText('You have 1,200 Zêr.')).toBeInTheDocument();
-      expect(within(ask).getByText('It costs 1,000 Zêr, once. After that you can plant it whenever you like.')).toBeInTheDocument();
+      expect(within(ask).getByText('It costs 500 Zêr, once. After that you can plant it whenever you like.')).toBeInTheDocument();
       expect(calls.some((c) => c.path === '/me/tree/kinds/kaj/buy')).toBe(false);
       await userEvent.click(within(ask).getByRole('button', { name: 'Buy' }));
 
@@ -726,7 +721,7 @@ describe('Shop: your bird and your tree', () => {
       expect(await within(tile('Kaj (Pine)')).findByRole('button', { name: 'Plant: Kaj (Pine)' })).toBeInTheDocument();
       expect(within(tile('Kaj (Pine)')).getByText('Yours')).toBeInTheDocument();
       expect(within(tile('Hinar (Pomegranate)')).getByText('Growing now')).toBeInTheDocument();
-      expect(balance()).toBe('200 Zêr');
+      expect(balance()).toBe('700 Zêr');
     });
 
     it('asks before planting another kind, saying the tree that stands will be gone, and keeps it when told to', async () => {

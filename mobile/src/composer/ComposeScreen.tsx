@@ -587,9 +587,9 @@ export function ComposeScreen({
                         accessibilityRole="radio"
                         accessibilityState={{ checked: on }}
                         accessibilityLabel={t(k.label)}
-                        style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack }, pressed && heldDim]}
+                        style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.pickedFill : colors.controlTrack }, pressed && heldDim]}
                       >
-                        <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>{t(k.label)}</Text>
+                        <Text style={[styles.chipText, { color: on ? colors.pickedInk : colors.textPrimary }]}>{t(k.label)}</Text>
                       </Pressable>
                     );
                   })}

@@ -168,7 +168,7 @@ describe('after the results', () => {
   const kept: LessonMoments = { ...NO_LESSON_MOMENTS, streakKept: true };
 
   it('goes on to the streak’s card and the quests of the day one tap at a time, and opens the chest there', async () => {
-    serve({ 'GET /me/quests': day, 'POST /me/quests/q1/claim': { questId: 'q1', tier: 'common', currency: 'zer', amount: 12, balance: 1252 } });
+    serve({ 'GET /me/quests': day, 'POST /me/quests/q1/claim': { questId: 'q1', tier: 'common', currency: 'zer', amount: 12, balance: 1252, earnsZer: true } });
     show({ quests: steps }, { moments: kept });
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
@@ -331,7 +331,7 @@ describe('sharing', () => {
     open();
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
     expect(share).toHaveBeenCalledTimes(1);
-    expect(said()).toBe(`I finished “Hello!” in Kurdish on Hevalo. 🍎\n${SITE}/win/lesson`);
+    expect(said()).toBe(`Look, I just finished “Hello!” in Kurdish! Come learn with me on Hevalo 🍎\n${SITE}/win/lesson?l=en`);
   });
 
   it('shares nothing that says whose lesson it was', async () => {
@@ -343,7 +343,7 @@ describe('sharing', () => {
     expect(text.length).toBeGreaterThan(0);
     for (const theirs of [WHO.id, WHO.username, WHO.displayName, WHO.country, '/users/', '/profile', '@']) expect(text, theirs).not.toContain(theirs);
     // One address, and it is the page of a lesson finished, which is about nobody.
-    expect(text.match(/https?:\/\/\S+/g)).toEqual([`${SITE}/win/lesson`]);
+    expect(text.match(/https?:\/\/\S+/g)).toEqual([`${SITE}/win/lesson?l=en`]);
   });
 
   it('says nothing of how the lesson went: no score, and no row of squares', async () => {
@@ -358,7 +358,7 @@ describe('sharing', () => {
     const { said } = sheet();
     open({}, { lessonName: null });
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect(said().split('\n')[0]).toBe('I finished a Kurdish lesson on Hevalo. 🍎');
+    expect(said().split('\n')[0]).toBe('Look, I just finished a Kurdish lesson! Come learn with me on Hevalo 🍎');
   });
 
   it('copies the message where the device has no sheet, and says so', async () => {
@@ -366,7 +366,7 @@ describe('sharing', () => {
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
     open();
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect(writeText).toHaveBeenCalledWith(`I finished “Hello!” in Kurdish on Hevalo. 🍎\n${SITE}/win/lesson`);
+    expect(writeText).toHaveBeenCalledWith(`Look, I just finished “Hello!” in Kurdish! Come learn with me on Hevalo 🍎\n${SITE}/win/lesson?l=en`);
     expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
   });
 
@@ -399,7 +399,7 @@ describe('sharing', () => {
     const bar = document.querySelector('.lesson-bar') as HTMLElement;
     await userEvent.click(within(bar).getByRole('button', { name: 'Share' }));
     expect(share).toHaveBeenCalledTimes(1);
-    expect(said()).toBe(`7 days of Kurdish in a row. 🔥\n${SITE}/win/streak/7`);
+    expect(said()).toBe(`7 days of Kurdish in a row, and I’m not stopping! Join me on Hevalo 🔥\n${SITE}/win/streak/7?l=en`);
     for (const theirs of [WHO.id, WHO.username, WHO.displayName, '/users/']) expect(said()).not.toContain(theirs);
     // The way on is still the bar’s one button.
     expect(bar.querySelector('.lesson-bar-row')!.lastElementChild).toHaveClass('lesson-bar-go');

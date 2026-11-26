@@ -121,9 +121,6 @@
   /* the glyph carries the colour; the number stays readable ink */
   color: var(--gold-ink);
 }
-.purse-gems {
-  color: var(--gems);
-}
 .purse-amount {
   color: var(--ink-2);
   font-weight: 600;
@@ -200,11 +197,16 @@ button.nav-link {
 }
 .brand-mark {
   flex: none;
+  box-sizing: border-box;
   width: 30px;
   height: 30px;
+  /* the deer on a small warm tile of the page's own, so the mark sits in the page rather than on a card of its own */
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--brand-tile);
   object-fit: contain;
-  /* the logo art is light — a soft shadow keeps it crisp on bright photo areas */
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  /* a soft shadow keeps the tile crisp on bright photo areas */
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
   transition:
     transform var(--dur) var(--ease-out),
     filter var(--dur) var(--ease-out);
@@ -216,8 +218,8 @@ button.nav-link {
 .brand:hover .brand-mark {
   /* it used to turn, because it used to be a sun; the antlers lift instead */
   transform: translateY(-1px) scale(1.06);
-  /* the deer's own card colour, so the glow belongs to the drawing */
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 7px rgba(184, 116, 240, 0.6));
+  /* a glow in the sun's gold, the deer's own light */
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25)) drop-shadow(0 0 7px color-mix(in srgb, var(--gold) 55%, transparent));
 }
 .brand span {
   transition: color var(--dur) var(--ease-out);
@@ -423,7 +425,7 @@ button.nav-link {
   }
 }
 
-/* your Zêr and gems at the end of the menu's Shop row */
+/* your Zêr at the end of the menu's Shop row */
 .nav-menu-purse {
   display: inline-flex;
   align-items: center;
@@ -687,7 +689,7 @@ button.nav-link {
   stroke-linecap: round;
   /* a soft cast off the filled arc, so the ring has depth rather than looking
      like a flat stroke pasted on the avatar */
-  filter: drop-shadow(0 0 3px rgba(240, 194, 74, 0.55));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--gold) 55%, transparent));
   transition: stroke-dasharray var(--dur-progress) var(--ease-out);
 }
 @media (prefers-reduced-motion: reduce) {

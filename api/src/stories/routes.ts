@@ -25,6 +25,7 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { STORY_DIALECTS, STORY_LANGUAGES, STORY_LENGTHS, STORY_LEVELS, type StoryLevel } from '@kurda/shared';
 import { pageQuery } from '../http/query.js';
 import { requireAuth } from '../plugins/auth.js';
@@ -53,7 +54,7 @@ const libraryQuery = z.object({
 });
 
 const storyParams = z.object({ idOrSlug: z.string().min(1).max(80) });
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 const progressBody = z.object({
   paragraph: z.number().int().min(0).max(1000),
   share: z.number().min(0).max(1),

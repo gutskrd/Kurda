@@ -53,8 +53,19 @@ export function isGroupNotice(data: Record<string, unknown>): boolean {
   return (GROUP_NOTICES as readonly unknown[]).includes(data.kind);
 }
 
-/** What parental controls tell a parent or a teen: connected, ended, changed, another parent added, a new time zone. */
-const PARENTAL_NOTICES = ['parental_connected', 'parental_ended', 'parental_changed', 'parental_parent_added', 'parental_zone'] as const;
+/**
+ * What parental controls tell a parent or a teen: connected, ended, changed, another parent added, a new time zone, a
+ * teen asking to stop or staying after all, and a birth month corrected.
+ */
+const PARENTAL_NOTICES = [
+  'parental_connected',
+  'parental_ended',
+  'parental_changed',
+  'parental_parent_added',
+  'parental_zone',
+  'parental_leave',
+  'parental_birth',
+] as const;
 
 export function isParentalNotice(data: Record<string, unknown>): boolean {
   return (PARENTAL_NOTICES as readonly unknown[]).includes(data.kind);
@@ -97,7 +108,7 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
   // Parental controls: news to a parent about a teen opens that teen's page; the teen's own news, and an ending, open
   // the parental page as it stands now.
   if (isParentalNotice(data)) {
-    const toParent = data.kind === 'parental_changed' ? data.to === 'parent' : data.kind !== 'parental_ended';
+    const toParent = data.kind === 'parental_changed' || data.kind === 'parental_birth' ? data.to === 'parent' : data.kind !== 'parental_ended';
     const teenId = toParent ? str(data.teenId) : null;
     return { screen: 'SettingsPage', params: teenId ? { page: 'parentalTeen', teenId } : { page: 'parental' } };
   }
@@ -215,6 +226,7 @@ export function noticeKind(item: Pick<InboxItem, 'category' | 'data'>): NoticeKi
     case 'play_invite':
       return isPlayGame(item.data.game) ? { icon: 'ticket', reward: false, game: item.data.game } : { icon: 'ticket', reward: false };
     case 'gift':
+    case 'post_gift':
       return { icon: 'gift', reward: true };
     case 'letter':
       return { icon: 'mail', reward: false };
@@ -300,9 +312,11 @@ export function noticeActor(item: Pick<InboxItem, 'data'>, invites: readonly Inc
     const invite = invites.find((i) => i.id === data.inviteId);
     return invite ? { name: invite.from.name, photoUrl: invite.from.avatarUrl } : null;
   }
-  if ((data.kind === 'gift' || data.kind === 'letter') && typeof data.fromUserId === 'string') {
+  if ((data.kind === 'gift' || data.kind === 'post_gift' || data.kind === 'letter') && typeof data.fromUserId === 'string') {
     const who = friends.find((f) => f.userId === data.fromUserId);
-    return who ? { name: who.displayName || who.username, photoUrl: who.avatarUrl ?? null } : null;
+    if (who) return { name: who.displayName || who.username, photoUrl: who.avatarUrl ?? null };
+    // A gift names its sender in its data, as the server lets the recipient see them.
+    return data.kind !== 'letter' && typeof data.fromName === 'string' && data.fromName ? { name: data.fromName, photoUrl: null } : null;
   }
   if (data.screen === 'Chat' && typeof data.username === 'string' && data.username && typeof data.userId === 'string') {
     return { name: data.username, photoUrl: null };

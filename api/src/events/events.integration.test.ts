@@ -32,12 +32,12 @@ describe.skipIf(!DATABASE_URL)('events (integration)', () => {
       priority: 5,
       theme: 'newroz',
       quests: [{ id: 'q1' }],
-      rewards: { gems: 100 },
+      rewards: { zer: 500 },
     };
     const first = await svc.upsert(input);
     expect(first.priority).toBe(5);
     expect(first.quests).toEqual([{ id: 'q1' }]);
-    expect(first.rewards).toEqual({ gems: 100 });
+    expect(first.rewards).toEqual({ zer: 500 });
 
     // same key updates in place (no duplicate row)
     const second = await svc.upsert({ ...input, name: 'Newroz 2026', priority: 8 });

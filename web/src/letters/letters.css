@@ -130,7 +130,7 @@
     transform: translateX(7%);
   }
 }
-/* the casements stir in the breeze, each about its hinge, one a little after the other */
+/* the shutters stir in the breeze, each about its hinge, one a little after the other */
 .lw-layer--left .lw-layer-art,
 .lw-layer--right .lw-layer-art {
   animation: lw-stir 7s ease-in-out infinite alternate;

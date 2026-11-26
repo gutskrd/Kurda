@@ -261,7 +261,7 @@ describe('the sizes the reach is measured in', () => {
   const tokens = parsed.get('styles/tokens.css')!;
   const rootValue = (prop: string, media: string): string | undefined =>
     rulesOf(tokens)
-      .filter(({ rule, media: m }) => rule.selector === ':root' && m.join(' ') === media)
+      .filter(({ rule, media: m }) => rule.selectors.includes(':root') && m.join(' ') === media)
       .flatMap(({ rule }) => declarations(rule))
       .find((d) => d.prop === prop)?.value;
 
@@ -333,7 +333,7 @@ function afterReaches(roots: Iterable<[string, Root]>): Array<{ entry: string; a
 /** The `:root` tokens (styles/tokens.css) as written, to resolve lengths that name one. */
 const TOKENS = new Map(
   rulesOf(parsed.get('styles/tokens.css')!)
-    .filter(({ rule, media }) => rule.selector === ':root' && media.length === 0)
+    .filter(({ rule, media }) => rule.selectors.includes(':root') && media.length === 0)
     .flatMap(({ rule }) => declarations(rule))
     .filter((d) => d.prop.startsWith('--'))
     .map((d) => [d.prop, d.value] as const),

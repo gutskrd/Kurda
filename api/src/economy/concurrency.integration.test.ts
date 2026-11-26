@@ -16,7 +16,7 @@ import { localDate } from '../streaks/streak-logic.js';
 import { ShopService } from '../shop/service.js';
 import { QuestService } from '../events/quest-service.js';
 import type { EventDef } from '../events/window.js';
-import { GemService } from '../gems/service.js';
+import { EarnService } from '../earn/service.js';
 import { IapService } from '../iap/service.js';
 import { StubReceiptVerifier } from '../iap/verifier.js';
 import { FraudService } from '../fraud/service.js';
@@ -48,6 +48,8 @@ describe.skipIf(!DATABASE_URL)('the economy under concurrent requests (integrati
   const people: TestLearner[] = [];
   const learner = async (tag: string) => {
     const who = await makeLearner(pool, `ecc${tag}${suffix}`);
+    // only members earn Zêr, and what is under test is that they are paid once
+    await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [who.id]);
     people.push(who);
     return who;
   };
@@ -63,8 +65,8 @@ describe.skipIf(!DATABASE_URL)('the economy under concurrent requests (integrati
     return sku;
   };
   const balances = async (who: TestLearner) => wallet.balances(who.id);
-  const product = `gems_burst_${suffix}`;
-  const gemRule = `burst_${suffix}`;
+  const product = `zer_burst_${suffix}`;
+  const earnRule = `burst_${suffix}`;
 
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL, max: 30 });
@@ -73,14 +75,15 @@ describe.skipIf(!DATABASE_URL)('the economy under concurrent requests (integrati
 
   afterAll(async () => {
     await pool.query(`DELETE FROM shop_items WHERE sku = ANY($1)`, [skus]).catch(() => undefined);
-    await pool.query(`DELETE FROM gem_packs WHERE product_id = $1`, [product]).catch(() => undefined);
-    await pool.query(`DELETE FROM gem_rules WHERE key = $1`, [gemRule]).catch(() => undefined);
+    await pool.query(`DELETE FROM zer_packs WHERE product_id = $1`, [product]).catch(() => undefined);
+    await pool.query(`DELETE FROM earn_rules WHERE key = $1`, [earnRule]).catch(() => undefined);
     await removeLearners(pool, `ecc%${suffix}@it.kurda.app`);
     await pool.end();
   });
 
   it('pays a day’s reward once, however many claims arrive together', async () => {
     const ann = await learner('daily');
+    await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [ann.id]);
     const now = new Date();
     await new StreakService(pool).recordActivity(ann.id, 'UTC', now);
     const rewards = new DailyRewardService(pool, wallet);
@@ -153,7 +156,7 @@ describe.skipIf(!DATABASE_URL)('the economy under concurrent requests (integrati
       endsAt: new Date(Date.now() + 3_600_000).toISOString(),
       priority: 1,
       theme: 'newroz',
-      quests: [{ id: 'xp', type: 'earn_xp', count: 10, reward: { zer: 70, gems: 7 } }],
+      quests: [{ id: 'xp', type: 'earn_xp', count: 10, reward: { zer: 70 } }],
       rewards: {},
       enabled: true,
     } as EventDef;
@@ -162,30 +165,30 @@ describe.skipIf(!DATABASE_URL)('the economy under concurrent requests (integrati
     const { ok, refused } = await burst(() => quests.claim(fa.id, event.key, 'xp'));
     expect(refused).toEqual([]);
     expect(ok.filter((r) => r.ok && r.claimed)).toHaveLength(1);
-    expect(await balances(fa)).toEqual({ zer: 70, gems: 7 });
+    expect(await balances(fa)).toEqual({ zer: 70 });
     await pool.query(`DELETE FROM event_quest_claims WHERE event_key = $1`, [event.key]).catch(() => undefined);
   });
 
-  it('grants a rule’s Gems once for one event', async () => {
-    const gi = await learner('gems');
-    const gems = new GemService(pool, wallet);
+  it('grants a rule’s Zêr once for one event', async () => {
+    const gi = await learner('earn');
+    const earn = new EarnService(pool, wallet);
     // a rule of this suite's own: which seeded rules are switched on is not what is under test
-    await gems.upsertRule({ key: gemRule, amount: 15, dailyCap: null, cooldownSeconds: 0, active: true });
-    const results = await Promise.all(Array.from({ length: BURST }, () => gems.grant(gi.id, gemRule, `burst:${gi.id}`)));
+    await earn.upsertRule({ key: earnRule, amount: 15, dailyCap: null, cooldownSeconds: 0, active: true });
+    const results = await Promise.all(Array.from({ length: BURST }, () => earn.grant(gi.id, earnRule, `burst:${gi.id}`)));
     expect(results.filter((r) => r.granted > 0)).toHaveLength(1);
     expect(results.filter((r) => r.granted === 0).every((r) => r.cappedBy === 'duplicate')).toBe(true);
-    expect((await balances(gi)).gems).toBe(results.find((r) => r.granted > 0)!.granted);
+    expect((await balances(gi)).zer).toBe(results.find((r) => r.granted > 0)!.granted);
   });
 
   it('redeems one store receipt once', async () => {
     const ha = await learner('iap');
     const iap = new IapService(pool, wallet, new StubReceiptVerifier(), config, new FraudService(pool, wallet));
-    await iap.createPack({ platform: 'apple', productId: product, gems: 100 });
+    await iap.createPack({ platform: 'apple', productId: product, zer: 400 });
     const receipt = JSON.stringify({ transactionId: `ecc_txn_${suffix}`, environment: 'production' });
     const { ok, refused } = await burst(() => iap.redeem(ha.id, 'apple', receipt, product));
     expect(refused).toEqual([]);
     expect(ok.filter((r) => r.granted && !r.duplicate)).toHaveLength(1);
-    expect((await balances(ha)).gems).toBe(100);
+    expect((await balances(ha)).zer).toBe(400);
   });
 
   it('moves an admin’s change once per request key', async () => {

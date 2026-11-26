@@ -138,7 +138,6 @@ export function UserProfile(): React.JSX.Element {
     // Their friend count is theirs to show: where the list did not come neither does the number, and "0 friends" is worse
     // than silence (profile/ProfileFriends).
     friends: friends && friends.total > 0 ? friends.total : null,
-    badges: profile.achievements ?? null,
     bio: profile.bio,
     favPoem: profile.favoritePoem ?? null,
     favStory: profile.favoriteStory ?? null,
@@ -146,6 +145,7 @@ export function UserProfile(): React.JSX.Element {
     country: profile.country ? { code: profile.country, name: countryName(profile.country, locale) ?? profile.country } : null,
     frameSku: profile.frameSku ?? null,
     frameUrl: profile.frameUrl ?? null,
+    tag: profile.tag ?? null,
   };
 
   return (
@@ -153,7 +153,12 @@ export function UserProfile(): React.JSX.Element {
       view={view}
       corner={corner}
       headerAction={actions}
-      showcase={{ tree: profile.tree, badges: profile.badges, league: profile.league ?? (profile.tier ? { tier: profile.tier } : null) }}
+      showcase={{
+        tree: profile.tree,
+        badges: profile.badges,
+        earned: profile.earnedBadges,
+        league: profile.league ?? (profile.tier ? { tier: profile.tier } : null),
+      }}
       people={<ProfileFriends userId={profile.userId} initial={friends} />}
       activity={<ProfileActivity userId={profile.userId} sections={profile.sections} />}
     />

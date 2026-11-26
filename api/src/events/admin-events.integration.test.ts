@@ -83,25 +83,25 @@ describe.skipIf(!DATABASE_URL)('admin events (integration)', () => {
       type: 'holiday',
       ...window,
       quests: [{ id: 'q1', kind: 'lessons', target: 3 }],
-      rewards: { gems: 100 },
+      rewards: { zer: 500 },
     });
     const res = await post('/admin/events', { key: key('newroz'), name: 'Newroz 2027', type: 'holiday', ...window, priority: 4 });
     expect(res.statusCode).toBe(201);
     const stored = (await events.byKey(key('newroz')))!;
     expect(stored.name).toBe('Newroz 2027');
     expect(stored.quests).toEqual([{ id: 'q1', kind: 'lessons', target: 3 }]);
-    expect(stored.rewards).toEqual({ gems: 100 });
+    expect(stored.rewards).toEqual({ zer: 500 });
 
     // sending the same rewards back (in any key order) is not a change
-    const same = await post('/admin/events', { key: key('newroz'), name: 'Newroz', type: 'holiday', ...window, rewards: { gems: 100 } });
+    const same = await post('/admin/events', { key: key('newroz'), name: 'Newroz', type: 'holiday', ...window, rewards: { zer: 500 } });
     expect(same.statusCode).toBe(201);
   });
 
   it('changes rewards only through Approvals, where a second admin signs off', async () => {
-    const raised = await post('/admin/events', { key: key('newroz'), name: 'Newroz', type: 'holiday', ...window, rewards: { gems: 5000 } });
+    const raised = await post('/admin/events', { key: key('newroz'), name: 'Newroz', type: 'holiday', ...window, rewards: { zer: 25000 } });
     expect(raised.statusCode).toBe(409);
     expect(raised.json().code).toBe('REWARDS_NEED_APPROVAL');
-    expect((await events.byKey(key('newroz')))!.rewards).toEqual({ gems: 100 });
+    expect((await events.byKey(key('newroz')))!.rewards).toEqual({ zer: 500 });
 
     // nor can a new event start out granting anything
     const fresh = await post('/admin/events', { key: key('fresh'), name: 'Fresh', type: 'seasonal', ...window, rewards: { zer: 10 } });

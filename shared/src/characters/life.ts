@@ -65,7 +65,10 @@ export type ActName =
   | 'pout'
   | 'tongue'
   | 'preen'
-  | 'tuck';
+  | 'tuck'
+  | 'chew'
+  | 'hiccup'
+  | 'offer';
 
 /**
  * What a screen can ask a character to do about what it saw: a cheer for a right answer, a curious `hmm` for a miss, and
@@ -422,6 +425,70 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
     ],
     look: { x: 0.6, y: -0.2 },
     eyes: [[0.4, 0.8, 'happy']],
+  },
+  /** A bite and a chew: the head dips to the side for the bite, the mouth working, the eyes shut in bliss, then a blink. */
+  chew: {
+    ms: 1600,
+    tilt: [
+      [0, 0],
+      [0.1, -7],
+      [0.22, -2],
+      [0.5, -1],
+      [1, 0],
+    ],
+    earLeft: [
+      [0, 0],
+      [0.1, -6],
+      [0.3, 2],
+      [0.5, 0],
+      [1, 0],
+    ],
+    mouth: [
+      [0.02, 0.12, 'a'],
+      [0.12, 0.24, 'mbp'],
+      [0.24, 0.34, 'etc'],
+      [0.34, 0.46, 'mbp'],
+      [0.46, 0.56, 'etc'],
+      [0.56, 0.68, 'mbp'],
+    ],
+    eyes: [[0.2, 0.7, 'happy'], ...blinkAt(0.84, 1600)],
+  },
+  /** A hiccup: a little jump the whole body makes, ears and eyes startled, the mouth an O. */
+  hiccup: {
+    ms: 900,
+    rise: [
+      [0, 0],
+      [0.1, 0.045],
+      [0.28, 0],
+      [1, 0],
+    ],
+    stretch: [
+      [0, 1],
+      [0.08, 1.05],
+      [0.26, 0.98],
+      [0.4, 1],
+      [1, 1],
+    ],
+    earLeft: EARS_UP,
+    earRight: EARS_UP,
+    eyes: [[0.06, 0.62, 'wide']],
+    brows: [[0.06, 0.62, 'raised']],
+    mouth: [[0.06, 0.4, 'o']],
+  },
+  /** Holding something out to you: the head leaning to it, ears up, eyes smiling, a grin. */
+  offer: {
+    ms: 1300,
+    tilt: [
+      [0, 0],
+      [0.25, -8],
+      [0.75, -8],
+      [1, 0],
+    ],
+    earLeft: EARS_UP,
+    earRight: EARS_UP,
+    look: { x: 0, y: 0.2 },
+    eyes: [[0.15, 0.85, 'happy']],
+    mouth: [[0.2, 0.8, 'grin']],
   },
 };
 

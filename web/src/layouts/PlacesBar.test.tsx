@@ -23,7 +23,7 @@ const you = {
   displayName: 'Ada',
   avatarUrl: null,
   level: { level: 3, progress: 0.4, xp: 120, currentLevelXp: 100, nextLevelXp: 200 },
-  balances: { zer: 40, gems: 2 },
+  balances: { zer: 40 },
 };
 
 /** The API as the bar's list reads it: who is signed in, and what is waiting for them. */
@@ -95,18 +95,20 @@ const bar = () => screen.getByRole('navigation', { name: 'Primary' });
 const places = () => within(bar()).getAllByRole('link');
 
 describe('the bar of places', () => {
-  it('has the four places in order, each a glyph alone named for a screen reader, in a navigation of its own', async () => {
+  it('has the four places in order, each a glyph over its name, named once for a screen reader, in a navigation of its own', async () => {
     signIn();
     serve();
     showReal();
     await waitFor(() => expect(places().map((link) => link.getAttribute('aria-label'))).toEqual(['Home', 'Learn', 'Messages', 'Profile']));
     expect(places().map((link) => link.getAttribute('href'))).toEqual(['/app', '/app/learn', '/app/messages', '/app/profile']);
     for (const link of places()) {
+      const name = link.getAttribute('aria-label') ?? '';
       const glyphBox = link.querySelector('.places-glyph')!;
-      // drawn, not said, and no word under it
+      // drawn, and the name under it is shown but not said twice
       expect(glyphBox).toHaveAttribute('aria-hidden', 'true');
-      expect(glyphBox.firstElementChild, link.getAttribute('aria-label') ?? '').not.toBeNull();
-      expect(link.textContent).toBe('');
+      expect(glyphBox.firstElementChild, name).not.toBeNull();
+      expect(link.querySelector('.places-name')).toHaveAttribute('aria-hidden', 'true');
+      expect(link.textContent).toBe(name);
     }
   });
 
@@ -121,13 +123,12 @@ describe('the bar of places', () => {
     for (const link of places()) expect(isPlaceRoot(link.getAttribute('href')!), link.getAttribute('aria-label') ?? '').toBe(true);
   });
 
-  it('tells the place you are on two ways: a filled glyph and a capsule behind it', async () => {
+  it('tells the place you are on by its colour and a capsule behind it, every glyph filled', async () => {
     const { container } = show('/app/learn');
     const learn = await screen.findByRole('link', { name: 'Learn' });
     expect(learn).toHaveAttribute('aria-current', 'page');
     expect(learn).toHaveClass('active');
     expect(within(learn).getByTestId('learn-filled')).toBeInTheDocument();
-    expect(within(learn).queryByTestId('learn-outline')).toBeNull();
     // one capsule, a place wide, under the second of four
     const row = container.querySelector<HTMLElement>('.places-row')!;
     expect(container.querySelectorAll('.places-capsule')).toHaveLength(1);
@@ -138,7 +139,8 @@ describe('the bar of places', () => {
       const other = screen.getByRole('link', { name });
       expect(other, name).not.toHaveAttribute('aria-current');
       expect(other, name).not.toHaveClass('active');
-      expect(within(other).getByTestId(`${name.toLowerCase()}-outline`)).toBeInTheDocument();
+      // Your picture is your place's glyph, ringed only when it is the place you are on.
+      expect(within(other).getByTestId(`${name.toLowerCase()}-${name === 'Profile' ? 'outline' : 'filled'}`)).toBeInTheDocument();
     }
   });
 
@@ -167,7 +169,7 @@ describe('the bar of places', () => {
     show('/app', [LINKS[0]!, LINKS[1]!, { ...LINKS[2]!, badge: 3 }, LINKS[3]!]);
     const messages = await screen.findByRole('link', { name: 'Messages, 3 unread' });
     expect(messages.querySelector('.places-glyph .nav-dot')).not.toBeNull();
-    expect(messages.textContent).toBe('');
+    expect(messages.textContent).toBe('Messages');
   });
 
   it('says the whole count however many there are', async () => {

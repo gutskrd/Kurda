@@ -1,6 +1,7 @@
 import type pg from 'pg';
+import { KURDISH_TAG_SKU } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import { isPremiumActive } from './access.js';
+import { isPremiumActive, premiumUntilSql } from './access.js';
 import { avatarRequiresPremium, isValidAvatarKey } from './avatars.js';
 
 interface AccessRow {
@@ -30,7 +31,7 @@ export class CosmeticsService {
       }
       if (avatarRequiresPremium(key)) {
         const res = await this.pool.query<{ premium_until: Date | null }>(
-          `SELECT premium_until FROM users WHERE id = $1`,
+          `SELECT ${premiumUntilSql('users')} AS premium_until FROM users WHERE id = $1`,
           [userId],
         );
         if (!isPremiumActive(res.rows[0]?.premium_until ?? null, now)) {
@@ -47,7 +48,7 @@ export class CosmeticsService {
               (e.user_id IS NOT NULL) AS owned,
               u.premium_until
          FROM shop_items i
-         CROSS JOIN (SELECT premium_until FROM users WHERE id = $1) u
+         CROSS JOIN (SELECT ${premiumUntilSql('users')} AS premium_until FROM users WHERE id = $1) u
          LEFT JOIN user_entitlements e ON e.user_id = $1 AND e.sku = i.sku
         WHERE i.sku = $2`,
       [userId, sku],
@@ -55,11 +56,11 @@ export class CosmeticsService {
     return res.rows[0] ?? null;
   }
 
-  /** Equips a background or icon, or clears it: checks the category, then ownership or premium access to an item on sale. */
+  /** Equips a background, icon, frame or tag, or clears it: checks the category, then ownership or premium access to an item on sale. */
   private async equipCosmetic(
     userId: string,
-    column: 'equipped_background_sku' | 'equipped_icon_sku' | 'equipped_frame_sku',
-    expectedCategory: 'background' | 'icon' | 'frame',
+    column: 'equipped_background_sku' | 'equipped_icon_sku' | 'equipped_frame_sku' | 'equipped_tag_sku',
+    expectedCategory: 'background' | 'icon' | 'frame' | 'tag',
     sku: string | null,
     now: Date,
   ): Promise<void> {
@@ -70,6 +71,8 @@ export class CosmeticsService {
     const info = await this.accessInfo(userId, sku);
     if (!info) throw new AppError('ITEM_NOT_FOUND', 404, 'no such item');
     if (info.category !== expectedCategory) throw new AppError('WRONG_CATEGORY', 400, `not a ${expectedCategory}`);
+    // the Kurdish tag is a main tag, shown by its own rules (tags/service.ts), not a word worn by the name
+    if (sku === KURDISH_TAG_SKU) throw new AppError('WRONG_CATEGORY', 400, 'not a word tag');
     // out of the shop is out of reach — unless it is already yours (see hasAccess)
     if (!info.active && !info.owned) throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
     const access = info.owned || (info.premium_only && isPremiumActive(info.premium_until, now));
@@ -90,6 +93,11 @@ export class CosmeticsService {
    */
   equipFrame(userId: string, sku: string | null, now: Date = new Date()): Promise<void> {
     return this.equipCosmetic(userId, 'equipped_frame_sku', 'frame', sku, now);
+  }
+
+  /** A word tag worn by the name (shared shop-tags.ts): only an owned one, as with a frame, and one at a time. */
+  equipTag(userId: string, sku: string | null, now: Date = new Date()): Promise<void> {
+    return this.equipCosmetic(userId, 'equipped_tag_sku', 'tag', sku, now);
   }
 
   /** Shows or hides the equipped premium icon; it still renders only when the viewer has access. */

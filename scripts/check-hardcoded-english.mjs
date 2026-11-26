@@ -94,15 +94,13 @@ const NOT_COPY = new Set([
   // own line, not a sentence to be turned into nine. It only becomes visible
   // to this gate now that a glyph no longer hides the strings around it.
   'Jiyan bi kurdî xweştire',
-  // Kurmancî again — "it is raining" — the first line of the poem on the front
-  // page's picture of the community wall. It is the Kurdish the picture shows,
-  // like the words in its game tiles, and it reads as English to this gate only
-  // because it happens to need no letter outside a–z. See web/src/landing/samples.ts.
-  'Baran dibare.',
-  // the header on a shared Peyvok grid. A share text is pasted into somebody
-  // else's chat, where the sharer's language is not the reader's, so it stays
-  // one recognisable name — the grid underneath is the content.
-  'Hevalo Peyvok',
+  // Kurmancî again — "hello!", "hello, friend!" and "here you are!" — said by
+  // Hevalo, written in a pen pal's letter and offered at Hamo's table on the
+  // front page. They read as English to this gate only because they happen to
+  // need no letter outside a–z. See web/src/landing/samples.ts.
+  'Silav!',
+  'Silav heval!',
+  'Fermo!',
   // The licence the imported dictionary arrives under, named beside the source
   // on every screen that shows a definition. A licence identifier is the same
   // string in every language — translating it would misname the licence, and

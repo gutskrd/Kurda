@@ -307,10 +307,11 @@ describe('the letters screen', () => {
     testAuth.client = client;
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByTestId('letters-bird-change'));
-    expect(screen.getByText('A new bird costs 500 Zêr. You have 120 Zêr.')).toBeTruthy();
+    expect(screen.getByText('A new bird costs 250 Zêr. You have 120 Zêr.')).toBeTruthy();
+    expect(screen.getByText('250 Zêr · ≈ €2.50')).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Sky-blue bird, your bird now' })).toBeTruthy();
     fireEvent.click(screen.getByRole('radio', { name: 'Green bird' }));
-    expect(screen.getByText('You need 380 more Zêr.')).toBeTruthy();
+    expect(screen.getByText('You need 130 more Zêr.')).toBeTruthy();
     fireEvent.click(screen.getByTestId('letters-bird-confirm'));
     fireEvent.click(screen.getByTestId('letters-bird-keep'));
     expect(await screen.findByTestId('letters-write')).toBeTruthy();
@@ -343,7 +344,7 @@ describe('the letters screen', () => {
     fireEvent.click(screen.getByTestId('letters-bird-confirm'));
     await waitFor(() => expect(client.calls.find((c) => c.path === '/letters/bird')?.body).toEqual({ bird: 3 }));
     // Spent on another phone meanwhile: the screen re-reads and says what is missing.
-    expect(await screen.findByText('You need 380 more Zêr.')).toBeTruthy();
+    expect(await screen.findByText('You need 130 more Zêr.')).toBeTruthy();
   });
 
   it('opens a first letter on the paper you last wrote on, sends it on that paper, and keeps drawing for pen pals', async () => {

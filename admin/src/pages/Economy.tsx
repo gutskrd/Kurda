@@ -3,9 +3,8 @@ import { ratioLabel } from '../format';
 import { api } from '../api';
 import { Bars } from './Analytics';
 import { LedgerCheck } from './LedgerCheck';
-import { Badge, Button, EmptyState, ErrorState, Loading, PageHeader, Section, Stat, Table, Tabs, errorLine, useLoad, useToast, type Column } from '../ui';
+import { Badge, Button, EmptyState, ErrorState, Loading, PageHeader, Section, Stat, Table, errorLine, useLoad, useToast, type Column } from '../ui';
 
-type Currency = 'zer' | 'gems';
 
 interface DailyPoint {
   day: string;
@@ -25,23 +24,20 @@ interface DriftReport {
   drifting: boolean;
 }
 
-const CURRENCY_LABEL: Record<Currency, string> = { zer: 'Zêr', gems: 'Gems' };
-
 /**
- * The economy: each currency in circulation, daily faucets and sinks, drift from the target, and whether every balance
- * still equals its ledger.
+ * The economy: the Zêr in circulation, daily faucets and sinks, drift from the target, and whether every balance still
+ * equals its ledger.
  */
 export function Economy(): React.JSX.Element {
   const toast = useToast();
-  const [currency, setCurrency] = useState<Currency>('zer');
   const [aggregating, setAggregating] = useState(false);
   const data = useLoad(async () => {
     const [s, d] = await Promise.all([
-      api<{ currency: Currency; points: DailyPoint[] }>(`/admin/economy/supply?currency=${currency}&days=30`),
-      api<DriftReport>(`/admin/economy/drift?currency=${currency}`),
+      api<{ currency: string; points: DailyPoint[] }>('/admin/economy/supply?currency=zer&days=30'),
+      api<DriftReport>('/admin/economy/drift?currency=zer'),
     ]);
     return { points: s.points, drift: d };
-  }, [currency]);
+  }, []);
 
   async function aggregateToday(): Promise<void> {
     setAggregating(true);
@@ -59,7 +55,7 @@ export function Economy(): React.JSX.Element {
   const points = data.data?.points ?? [];
   const drift = data.data?.drift ?? null;
   const latest = points[points.length - 1];
-  const name = CURRENCY_LABEL[currency];
+  const name = 'Zêr';
 
   const columns: Column<DailyPoint>[] = [
     { key: 'day', header: 'Day', card: 'title', sort: (a, b) => a.day.localeCompare(b.day), cell: (p) => p.day },
@@ -73,23 +69,13 @@ export function Economy(): React.JSX.Element {
     <div>
       <PageHeader
         title="Economy"
-        subtitle="How much of each currency is out there, what came in and went out each day, over the last 30 days."
+        subtitle="How much Zêr is out there, what came in and went out each day, over the last 30 days."
         actions={
           <Button icon="refresh" onClick={() => void aggregateToday()} busy={aggregating}>
             {aggregating ? 'Counting…' : 'Count today again'}
           </Button>
         }
       />
-      <Tabs
-        label="Currency"
-        value={currency}
-        onChange={setCurrency}
-        items={[
-          { key: 'zer', label: 'Zêr' },
-          { key: 'gems', label: 'Gems' },
-        ]}
-      />
-
       {data.error != null ? (
         <ErrorState error={data.error} onRetry={() => void data.reload()} what="the economy" />
       ) : !data.data ? (

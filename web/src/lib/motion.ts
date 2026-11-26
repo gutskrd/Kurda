@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { celebrationEndMs, celebrationPlan } from '@kurda/shared';
 import { haptic } from './haptics';
 
@@ -179,4 +179,41 @@ export function useInFront(ref: RefObject<Element | null>): boolean {
     };
   }, [ref]);
   return visible && onScreen;
+}
+
+/**
+ * Keeps a segmented control's chosen ground (`capsule`) under its chosen option (`chosen`, a selector within the
+ * control) and slides it there when the choice changes, as the phone's capsule does: transform only, in `--dur` on
+ * `--ease-out`, the motion of Learn's switch. It is placed before the first paint and again when the control is
+ * resized, without moving; under Reduce Motion it is simply placed.
+ */
+export function useSlidingCapsule(control: RefObject<HTMLElement | null>, capsule: RefObject<HTMLElement | null>, chosen: string, value: string): void {
+  const last = useRef<{ x: number; y: number; w: number } | null>(null);
+  const place = useCallback(
+    (slide: boolean): void => {
+      const box = control.current;
+      const cap = capsule.current;
+      const on = box?.querySelector<HTMLElement>(chosen);
+      if (!box || !cap || !on) return;
+      const to = { x: on.offsetLeft, y: on.offsetTop, w: on.offsetWidth };
+      Object.assign(cap.style, { left: `${to.x}px`, top: `${to.y}px`, width: `${to.w}px`, height: `${on.offsetHeight}px` });
+      const from = last.current;
+      last.current = to;
+      if (!slide || !from || !playsMotion() || typeof cap.animate !== 'function') return;
+      if (from.x === to.x && from.y === to.y && from.w === to.w) return;
+      const tokens = getComputedStyle(document.documentElement);
+      const ms = parseFloat(tokens.getPropertyValue('--dur')) || LEAVE_MS;
+      const easing = tokens.getPropertyValue('--ease-out').trim() || 'ease-out';
+      cap.animate([{ transform: `translate(${from.x - to.x}px, ${from.y - to.y}px) scaleX(${from.w / to.w})` }, { transform: 'none' }], { duration: ms, easing });
+    },
+    [control, capsule, chosen],
+  );
+  useLayoutEffect(() => place(true), [place, value]);
+  useEffect(() => {
+    const box = control.current;
+    if (!box || typeof ResizeObserver !== 'function') return;
+    const watch = new ResizeObserver(() => place(false));
+    watch.observe(box);
+    return () => watch.disconnect();
+  }, [control, place]);
 }

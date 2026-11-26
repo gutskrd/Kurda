@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronIcon } from '../components/icons';
 import type { NavItem } from '../components/TopNav';
-import { useGlass } from '../glass/useGlass';
 import { useT } from '../i18n/I18nProvider';
 import { rootAbove } from './roots';
 import { stepsBack } from './trail';
@@ -44,7 +43,6 @@ export function BackButton({ links }: { links: readonly NavItem[] }): React.JSX.
   const t = useT();
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
-  const glass = useGlass<HTMLButtonElement>();
 
   const back = (): void => {
     if (asksFirst) {
@@ -57,7 +55,7 @@ export function BackButton({ links }: { links: readonly NavItem[] }): React.JSX.
   };
 
   return (
-    <button ref={glass} type="button" className="nav-back glass" aria-label={t('report.back')} onClick={back}>
+    <button type="button" className="nav-back glass" aria-label={t('report.back')} onClick={back}>
       <ChevronIcon size={22} className="back-chevron" />
     </button>
   );

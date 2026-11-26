@@ -28,7 +28,8 @@ export interface Take {
 export interface BuiltScript {
   lines: ScriptLine[];
   people: Person[];
-  byId: ReadonlyMap<string, ScriptLine>;
+  /** each line by every key it is filed under (`store|key`): its own first, then its others (`ScriptLine.also`) */
+  byKey: ReadonlyMap<string, ScriptLine>;
 }
 
 interface ExerciseRow {
@@ -172,7 +173,9 @@ export class RecordingPeopleService {
       plan,
       reactions: REACTION_LINES,
     });
-    return { lines, people: peopleOf(lines, plan), byId: new Map(lines.map((l) => [l.id, l])) };
+    const byKey = new Map(lines.map((l) => [l.id, l]));
+    for (const l of lines) for (const f of l.also) if (!byKey.has(`${f.store}|${f.key}`)) byKey.set(`${f.store}|${f.key}`, l);
+    return { lines, people: peopleOf(lines, plan), byKey };
   }
 
   /**
@@ -222,9 +225,10 @@ export class RecordingPeopleService {
     return { lesson: new Map(lesson.rows.map((r) => [r.key, r.speaker])), alphabet: new Map(alphabet.rows.map((r) => [r.key, r.speaker])) };
   }
 
-  /** The takes of these lines, by line id, with who recorded each. */
+  /** The takes of these lines, by line id, with who recorded each: a line's own, else one filed under another of its keys. */
   async takes(lines: readonly ScriptLine[]): Promise<Map<string, Take>> {
-    const keys = (store: LineStore): string[] => [...new Set(lines.filter((l) => l.store === store).map((l) => l.key))];
+    const filed = lines.flatMap((l) => [{ store: l.store, key: l.key }, ...l.also]);
+    const keys = (store: LineStore): string[] => [...new Set(filed.filter((f) => f.store === store).map((f) => f.key))];
     type Row = { key: string; url: string; duration_ms: number | null; updated_at: Date; speaker: SpeakerId | null; username: string | null };
     const read = (sql: string, list: string[]) => (list.length === 0 ? Promise.resolve({ rows: [] as Row[] }) : this.pool.query<Row>(sql, [list]));
     const [lesson, alphabet] = await Promise.all([
@@ -239,17 +243,25 @@ export class RecordingPeopleService {
         keys('alphabet'),
       ),
     ]);
-    const out = new Map<string, Take>();
+    const found = new Map<string, Take>();
     const take = (r: Row): Take => ({ url: r.url, durationMs: r.duration_ms, updatedAt: r.updated_at.toISOString(), speaker: r.speaker, by: r.username });
-    for (const r of lesson.rows) out.set(`lesson|${r.key}`, take(r));
-    for (const r of alphabet.rows) out.set(`alphabet|${r.key}`, take(r));
+    for (const r of lesson.rows) found.set(`lesson|${r.key}`, take(r));
+    for (const r of alphabet.rows) found.set(`alphabet|${r.key}`, take(r));
+    const out = new Map<string, Take>();
+    for (const l of lines) {
+      const t = [{ store: l.store, key: l.key }, ...l.also].map((f) => found.get(`${f.store}|${f.key}`)).find((x) => x !== undefined);
+      if (t) out.set(l.id, t);
+    }
     return out;
   }
 
-  /** Whether a take of `key` in `store` is one of the lines of the voices linked to this account. */
+  /**
+   * Whether a take of `key` in `store` is one of the lines of the voices linked to this account, under any key the line
+   * is filed under, so a page opened before a line moved to its words' key still saves it.
+   */
   async mayRecord(userId: string, store: LineStore, key: string): Promise<boolean> {
     const [voices, built] = await Promise.all([voicesOf(this.pool, userId), this.script()]);
-    const line = built.byId.get(`${store}|${key}`);
+    const line = built.byKey.get(`${store}|${key}`);
     return line !== undefined && voices.includes(line.voice);
   }
 

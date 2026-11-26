@@ -22,6 +22,8 @@ import { springTo, timing } from '../theme/animate';
 import { useDirection } from '../reports/direction';
 import { setEngagement } from './api';
 import { SharePostSheet } from './SharePostSheet';
+import { PostGiftsRow, usePostGifts } from './PostGifts';
+import { canGiveGifts } from '../gifts/access';
 import { CARD_LABEL_KEY, feedImages, type EngagementKind, type FeedItem, type PostEngagement } from './types';
 import { PostPictures } from '../composer/PostPictures';
 import { usePostMenu } from '../composer/PostExtras';
@@ -115,9 +117,11 @@ export function usePostEngagement(item: FeedItem, onChanged?: (next: FeedItem) =
 }
 
 /**
- * The row of pills under a post: like, comments, repost, then share and save at the far end. Share opens a sheet that
- * passes the post on, out of the app or to a friend in chat (SharePostSheet), as the website's does. A post still being
- * checked cannot be passed on yet, so it has neither repost nor share.
+ * The row of pills under a post: like, comments, repost, then gift, share and save at the far end, with the post's gifts
+ * in a small row above them (PostGifts). Share opens a sheet that passes the post on, out of the app or to a friend in
+ * chat (SharePostSheet), as the website's does; gift opens the gift sheet for this post, which says in one line when the
+ * rules do not let a gift go yet. A post still being checked cannot be passed on or given to yet, so it has neither
+ * repost, gift nor share; nor is there a gift for one's own post, or for a child's profile.
  */
 export function PostActions({
   item,
@@ -131,11 +135,16 @@ export function PostActions({
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
+  const { user } = useAuth();
   const [sharing, setSharing] = useState(false);
+  const gifts = usePostGifts(item);
   const e = engage.shown;
   const count = (n: number): number | undefined => (n > 0 ? n : undefined);
   const held = item.review === 'held';
+  const giftable = !held && canGiveGifts(user) && user?.id !== item.author.id && !item.author.unavailable;
   return (
+    <>
+    <PostGiftsRow item={item} gifts={gifts.gifts} />
     <View style={[styles.actions, { flexDirection: dir.row }]}>
       {/* The pills share the row's gap between them, and the 12 above them with what they are under. */}
       <ReachGroup gap={spacing.sm} rowGap={ACTIONS_ABOVE}>
@@ -161,6 +170,7 @@ export function PostActions({
           />
         )}
         <View style={styles.spacer} />
+        {giftable ? <Action icon="gift" label={t('post.gift')} onPress={gifts.give} /> : null}
         {/* Sharing has its own glyph: the paper plane means Messages and Send. */}
         {held ? null : <Action icon="share" label={t('share.post')} onPress={() => setSharing(true)} />}
         <Action
@@ -173,7 +183,9 @@ export function PostActions({
         />
       </ReachGroup>
       {sharing && !held ? <SharePostSheet item={item} onClose={() => setSharing(false)} /> : null}
+      {giftable ? gifts.sheet : null}
     </View>
+    </>
   );
 }
 

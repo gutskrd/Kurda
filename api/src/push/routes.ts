@@ -1,11 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { makePushSendJob } from '../jobs/push-jobs.js';
 import { NOTIFICATION_CATEGORIES } from '../notifications/prefs.js';
 import type { PushService } from './service.js';
 import { isExpoPushToken, type DeviceTokenService } from './tokens-service.js';
 import type { InboxService } from '../notifications/inbox-service.js';
+import { childRemindersAllowed } from '../family/reminders.js';
 
 // An Expo push token is the only kind phones register; junk is a 400 here rather than a row refused on every send.
 const pushToken = z.string().min(1).max(4096).refine(isExpoPushToken, 'must be an Expo push token');
@@ -16,7 +18,7 @@ const registerBody = z.object({
 const tokenBody = z.object({ token: pushToken });
 
 const testBody = z.object({
-  userId: z.uuid().optional(),
+  userId: lowerUuid().optional(),
   category: z.enum(NOTIFICATION_CATEGORIES).default('events'),
   title: z.string().min(1).max(120),
   body: z.string().min(1).max(500),
@@ -37,10 +39,15 @@ export function registerPushRoutes(
     { schema: { body: registerBody }, preHandler: requireAuth },
     async (req, reply) => {
       const { platform, token } = req.body as z.infer<typeof registerBody>;
+      // A child's phone keeps a token only while their parent allows learning reminders, and is checked against nobody.
+      const child = req.user!.child === true;
+      if (child && !(await childRemindersAllowed(app.db, req.user!.id))) {
+        return reply.code(403).send({ code: 'CHILD_REMINDERS_OFF', message: 'reminders are off for this profile', requestId: req.id });
+      }
       // Under the session it was registered from, so it ends when that session does.
       await tokens.register(req.user!.id, platform, token, req.user!.familyId ?? null);
       // a phone a banned person's account had is a strong sign it is theirs again (moderation/returns.ts)
-      if (app.hasDecorator('returns')) await app.returns.assess({ userId: req.user!.id, event: 'push', pushToken: token });
+      if (!child && app.hasDecorator('returns')) await app.returns.assess({ userId: req.user!.id, event: 'push', pushToken: token });
       return reply.code(201).send({ ok: true });
     },
   );

@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { BAN_CONTENT_CHOICES, MAX_STATEMENT_LEN, REPORT_CATEGORY_KEYS } from '@kurda/shared';
 import { parseContentChoice } from '../moderation/takedown.js';
 import { requireAuth } from '../plugins/auth.js';
@@ -9,10 +10,11 @@ import type { AdminTotpService } from './totp-service.js';
 import { expiryFrom, normalizeReason } from './moderation.js';
 import { CONTENT_EDITOR, PLUS_GRANT_MAX_DAYS, USER_FILTERS, USERS_PAGE_MAX, VOICE_ACTOR, type UserFilter } from './user-admin-service.js';
 import type { RoleResult, UserAdminService } from './user-admin-service.js';
+import type { ConfigService } from './config-service.js';
 import { VOICES_PER_ACCOUNT_MAX, setVoices, voicesOf } from '../recording/links.js';
 import { VOICE_ID } from '../recording/script.js';
 
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 const reasonBody = z.object({ reason: z.string() });
 const muteBody = z.object({ reason: z.string(), hours: z.number().int().min(1) });
 /**
@@ -34,7 +36,7 @@ const banBody = z.object({
 export const WALLET_ADJUST_MAX = 1_000_000;
 const walletBody = z.object({
   reason: z.string(),
-  currency: z.enum(['zer', 'gems']),
+  currency: z.literal('zer'),
   amount: z.number().int().min(-WALLET_ADJUST_MAX).max(WALLET_ADJUST_MAX),
   /** the console's key for this one change, so a double click or a retry moves the money once */
   idempotencyKey: z.string().min(8).max(120).optional(),
@@ -46,7 +48,7 @@ const plusBody = z.object({
   idempotencyKey: z.string().min(8).max(120).optional(),
 });
 const itemBody = z.object({ reason: z.string(), sku: z.string().min(1).max(80) });
-const itemParams = z.object({ id: z.uuid(), sku: z.string().min(1).max(80) });
+const itemParams = z.object({ id: lowerUuid(), sku: z.string().min(1).max(80) });
 const editorBody = z.object({ on: z.boolean(), reason: z.string() });
 const voicesBody = z.object({ voices: z.array(z.string().regex(VOICE_ID)).max(VOICES_PER_ACCOUNT_MAX), reason: z.string() });
 
@@ -72,7 +74,12 @@ function sendResult(reply: FastifyReply, res: ActionResult) {
 }
 
 /** Admin user management: search, detail, moderation actions. */
-export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminService, totp: AdminTotpService): void {
+export function registerUserAdminRoutes(
+  app: FastifyInstance,
+  users: UserAdminService,
+  totp: AdminTotpService,
+  approvals: Pick<ConfigService, 'proposePlusGrant'>,
+): void {
   const canView = [requireAuth, requireAdmin(totp, 'superadmin', 'moderator', 'support')];
   // moderators, superadmins and the legacy admin role, like every moderation route
   const canModerate = [requireAuth, requireCapability('moderation.act')];
@@ -260,7 +267,8 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
 
   /**
    * Give Hevalo+ for a number of days, or extend it, for testers and reviewers while membership cannot be bought.
-   * Superadmin only, rate-limited like a balance change, with a reason in the person's history.
+   * Superadmin only, rate-limited like a balance change, with a reason in the person's history. For the admin's own
+   * account it waits in Approvals for a second admin (202), since membership pays Zêr.
    */
   app.post(
     '/admin/users/:id/plus',
@@ -270,6 +278,10 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
       const reason = normalizeReason(b.reason);
       if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
       const userId = (req.params as z.infer<typeof idParam>).id;
+      if (userId === req.user!.id) {
+        const change = await approvals.proposePlusGrant(req.user!.id, { userId, days: b.days, reason });
+        return reply.code(202).send({ status: 'pending', id: change.id });
+      }
       const res = await users.grantPlus(req.user!.id, userId, b.days, reason, b.idempotencyKey);
       if (!res.ok) return reply.code(404).send({ code: res.code, message: 'no such user' });
       return { ok: true, premiumUntil: res.premiumUntil.toISOString(), ...(res.duplicate ? { duplicate: true } : {}) };

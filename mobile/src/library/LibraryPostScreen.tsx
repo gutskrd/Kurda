@@ -19,6 +19,7 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { AudioPlayer } from './AudioPlayer';
 import { addComment, getPost } from './api';
 import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
+import { PostGiftOpen } from '../gifts/GiftUnwrap';
 import { uploadVoiceNote } from './voiceUpload';
 import { VoiceRecorder } from './VoiceRecorder';
 import type { LibraryPost } from './types';
@@ -47,9 +48,10 @@ const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, like
 /**
  * Read a written post: how often it was read, its title and body, an inline audio player when it has a narration, the
  * wall's row of like, comments, repost, share and save (counts from GET /posts/library/:id/engagement, as the website's
- * page reads them), and a comment thread with a composer.
+ * page reads them), and a comment thread with a composer. Arriving from a gift's notice (`openGift`), its author sees
+ * that gift open over the post.
  */
-export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: () => void }): React.JSX.Element {
+export function LibraryPostScreen({ postId, openGift, onExit }: { postId: string; openGift?: string; onExit: () => void }): React.JSX.Element {
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -61,6 +63,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
   const [reporting, setReporting] = useState<{ target: ReportTarget; authorId: string | null; name?: string } | null>(null);
 
   const [post, setPost] = useState<LibraryPost | null>(null);
+  const [giftOpen, setGiftOpen] = useState(true);
   const [engagement, setEngagement] = useState<PostEngagement | null>(null);
   const [failed, setFailed] = useState(false);
   const { require } = useAccountGate();
@@ -259,6 +262,8 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
           </CommentComposer>
         </View>
       </KeyboardAvoidingView>
+      {/* the author's own gift on this post, from its notice: it opens in its light over the post */}
+      {openGift && giftOpen ? <PostGiftOpen giftId={openGift} onDone={() => setGiftOpen(false)} /> : null}
       {reporting ? (
         <ReportSheet
           visible

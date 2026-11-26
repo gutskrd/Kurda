@@ -134,7 +134,7 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
         accessibilityState={{ selected: lit }}
         style={[styles.seat, { opacity: s.left ? 0.5 : 1 }]}
       >
-        {/* The speaker is lit in the violet that marks where you are; gold is kept for what is earned. */}
+        {/* The speaker is lit in the ink that marks where you are; gold is kept for what is earned. */}
         {lit ? <Animated.View style={[styles.light, { backgroundColor: colors.primary, opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.22] }) }]} /> : null}
         <View style={[styles.disc, { borderColor: lit || p?.isMe ? colors.primary : colors.clayBorder, backgroundColor: lit ? colors.primary : colors.glassFill }]}>
           <Text style={[styles.discText, { color: lit ? colors.textOnPrimary : colors.textPrimary }]}>{name(s.seat).slice(0, 1).toUpperCase()}</Text>
@@ -325,7 +325,7 @@ function Guess({ board, move }: { board: ImpostorBoard; move: Move }): React.JSX
             setBusy(false);
             if (res.ok) haptic(res.data.outcome.kind === 'guess' && res.data.outcome.right ? 'correct' : 'wrong');
           }}
-          // Edged in the violet of what can be pressed, as on one phone; gold is kept for what is earned.
+          // Edged in the ink of what can be pressed, as on one phone; gold is kept for what is earned.
           style={({ pressed }) => [styles.option, { borderColor: colors.primary, backgroundColor: colors.glassFill, opacity: !board.yourGuess ? 0.6 : pressed ? pressedDim : 1 }]}
         >
           <Text style={[styles.guessText, script, { color: colors.textPrimary }]}>{o}</Text>

@@ -3,16 +3,20 @@
  * so a background is always under Backgrounds and "caydan" finds Çaydan. Only the labels belong to each app.
  */
 
-/** The kinds of item in display order: what is worn on a profile (background, icon, frame), then tags, then an admin's own categories ('other'). */
-export const ITEM_CATEGORIES = ['background', 'icon', 'frame', 'tag', 'other'] as const;
+/**
+ * The kinds of item in display order: what is worn on a profile (background, icon, frame), then tags, gift stickers,
+ * then an admin's own categories ('other').
+ */
+export const ITEM_CATEGORIES = ['background', 'icon', 'frame', 'tag', 'sticker', 'other'] as const;
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 
-/** The kind a shop category belongs to; anything not a named kind is 'other'. */
+/** The kind a shop category belongs to; the gifts sit with the gift stickers they replaced, and anything not a named kind is 'other'. */
 export function itemCategory(raw: string): ItemCategory {
+  if (raw === 'gift') return 'sticker';
   return (ITEM_CATEGORIES as readonly string[]).includes(raw) && raw !== 'other' ? (raw as ItemCategory) : 'other';
 }
 
-/** How a list can be ordered. 'featured' is the shop's own order from the API; price sorts within a currency, Zêr before gems. */
+/** How a list can be ordered. 'featured' is the shop's own order from the API. */
 export const ITEM_SORTS = ['featured', 'price-asc', 'price-desc', 'name'] as const;
 export type ItemSort = (typeof ITEM_SORTS)[number];
 
@@ -22,7 +26,6 @@ export interface FilterableItem {
   description?: string | null;
   category: string;
   price?: number;
-  currency?: 'zer' | 'gems';
 }
 
 /** A filter: one kind or all of them, words to look for, and an order. */
@@ -52,13 +55,11 @@ export function matchesQuery(item: Pick<FilterableItem, 'name' | 'description'>,
   return words.every((w) => hay.includes(w));
 }
 
-const currencyRank = (item: FilterableItem): number => (item.currency === 'gems' ? 1 : 0);
-
 /** The items in `sort`'s order, as a new array. Ties keep their incoming order, so items of one price stay in the shop's order. */
 export function sortItems<T extends FilterableItem>(items: readonly T[], sort: ItemSort, locale?: string): T[] {
   const out = [...items];
-  if (sort === 'price-asc') out.sort((a, b) => currencyRank(a) - currencyRank(b) || (a.price ?? 0) - (b.price ?? 0));
-  else if (sort === 'price-desc') out.sort((a, b) => currencyRank(b) - currencyRank(a) || (b.price ?? 0) - (a.price ?? 0));
+  if (sort === 'price-asc') out.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+  else if (sort === 'price-desc') out.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
   else if (sort === 'name') out.sort((a, b) => a.name.localeCompare(b.name, locale, { sensitivity: 'base' }));
   return out;
 }

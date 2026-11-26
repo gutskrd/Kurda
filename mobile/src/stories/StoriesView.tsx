@@ -548,7 +548,7 @@ function ProgressCard({ me }: { me: NonNullable<StoryLibrary['me']> }): React.JS
       accessibilityLabel={`${t('stories.library.progressTitle')}. ${read}. ${t('stories.library.averageScore')}: ${score}`}
     >
       <View style={styles.ring}>
-        {/* Progress in violet, like the course's bar; gold is for what is earned. */}
+        {/* Progress in the ink, like the course's bar; gold is for what is earned. */}
         <Ring fraction={fraction} size={64} color={colors.primary} />
         <View style={styles.ringCenter} pointerEvents="none">
           <Text style={[styles.ringText, { color: colors.textPrimary }]} numberOfLines={1}>

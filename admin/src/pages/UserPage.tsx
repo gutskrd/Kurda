@@ -48,12 +48,14 @@ import { banSummary, takesContent } from '../bans';
 import { ItemsPanel, WalletPanel } from './UserEconomy';
 import { BadgesTab } from './UserProgress';
 import { holdsProgressTools } from '../progress';
-import { usersListHref, type BanState } from './Users';
+import { usersListHref, type AccountKind, type BanState } from './Users';
 
 /** `GET /admin/users/:id`: the moderation fields only for a reader who can moderate. */
 export interface UserDetail extends Partial<AdminUserModeration> {
   id: string;
   username: string;
+  /** A person's own account, a guest's, or a child's profile made by a parent; absent from an older API. */
+  kind?: AccountKind;
   email: string;
   displayName: string | null;
   roles: string[];
@@ -63,7 +65,7 @@ export interface UserDetail extends Partial<AdminUserModeration> {
   ban: BanState;
   bannedUntil: string | null;
   mutedUntil: string | null;
-  balances: { zer: number; gems: number };
+  balances: { zer: number };
   /** When their Hevalo+ membership ends, past or to come; null if they never had it (absent from an older API). */
   premiumUntil?: string | null;
   ledger: Array<{ currency: string; amount: number; reason: string; createdAt: string }>;
@@ -134,6 +136,7 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
         meta={
           <>
             {standingBadge(u)}
+            {u.kind && u.kind !== 'person' && <KindTag kind={u.kind} />}
             {u.age && <AgeTag age={u.age} />}
             {u.roles
               .filter((r) => Object.hasOwn(ROLE_NAME, r))
@@ -157,6 +160,7 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
         {current === 'profile' && <ProfileTab user={u} />}
         {current === 'profile' && moderation && canModerate && <SamePersonPanel user={u} />}
         {current === 'profile' && canAdjust && <TeamRole user={u} onChanged={reload} />}
+        {current === 'profile' && canAdjust && (u.kind ?? 'person') === 'person' && <SafetyReviewPanel user={u} />}
         {current === 'profile' && canAdjust && <VoiceRole user={u} onChanged={reload} />}
         {current === 'standing' && moderation && <StandingTab user={u} canModerate={canModerate} onChanged={reload} />}
         {current === 'reports' && moderation && <ReportsTab user={u} />}
@@ -168,6 +172,18 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
       </div>
     </div>
   );
+}
+
+/** What each kind of account is, as the profile's facts say it. */
+const KIND_TEXT: Record<AccountKind, string> = {
+  person: 'Their own account',
+  guest: 'A guest, trying Hevalo without an account',
+  child: 'A child’s profile, made and looked after by their parent; never shown to anyone outside their family',
+};
+
+/** A guest or a child's profile, said beside the name, since what may be done to and shown about them differs. */
+export function KindTag({ kind }: { kind: Exclude<AccountKind, 'person'> }): React.JSX.Element {
+  return <Badge tone="info">{kind === 'child' ? 'Child profile' : 'Guest'}</Badge>;
 }
 
 /**
@@ -196,9 +212,15 @@ function ProfileTab({ user: u }: { user: UserDetail }): React.JSX.Element {
             <dt>Display name</dt>
             <dd>{u.displayName ?? <span className="subtle">None</span>}</dd>
           </div>
+          {u.kind && (
+            <div>
+              <dt>Account</dt>
+              <dd>{KIND_TEXT[u.kind]}</dd>
+            </div>
+          )}
           <div>
             <dt>Email</dt>
-            <dd>{u.email}</dd>
+            <dd>{u.email ?? <span className="subtle">None</span>}</dd>
           </div>
           {u.age && (
             <div>
@@ -223,6 +245,29 @@ function ProfileTab({ user: u }: { user: UserDetail }): React.JSX.Element {
         </dl>
       </Section>
     </>
+  );
+}
+
+/**
+ * Where a superadmin opens a safety review of this account's letters and private chats (SafetyReviews.tsx). Nothing
+ * of them is read here: the review page asks for the reason first.
+ */
+function SafetyReviewPanel({ user: u }: { user: UserDetail }): React.JSX.Element {
+  return (
+    <Section
+      title="Letters and private chats"
+      description="Read only in their cases, when someone in the conversation reports one or an automatic check flags it."
+      actions={
+        <a className="button-link" href={`#/safety-reviews?user=${encodeURIComponent(u.id)}`}>
+          Open a safety review…
+        </a>
+      }
+    >
+      <p className="section-text">
+        For a child’s safety, a threat to someone, a legal request or a report that needs more context, a superadmin can open a safety review:
+        read-only, for 24 hours, on the Access log every admin can see. @{u.username} is not told.
+      </p>
+    </Section>
   );
 }
 

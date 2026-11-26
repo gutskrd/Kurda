@@ -1,10 +1,13 @@
 import { LinkButton } from '../components/Button';
 import { useT } from '../i18n/I18nProvider';
+import { StateArt } from '../components/states';
 
 export function NotFound(): React.JSX.Element {
   const t = useT();
   return (
-    <div className="container" style={{ padding: '96px 24px', textAlign: 'center' }}>
+    <div className="container" style={{ padding: '72px 24px 96px', textAlign: 'center' }}>
+      {/* Hevalo puzzled at the page that is not there, as over any page that could not be shown. */}
+      <StateArt puzzled />
       <span className="eyebrow">404</span>
       <h1 className="display" style={{ marginTop: 12, fontSize: 'var(--text-title)' }}>
         {t('notFound.title')}

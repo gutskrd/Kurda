@@ -1,17 +1,18 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireRoles } from '../plugins/auth.js';
 import type { ConfigService } from './config-service.js';
 
 const proposeBody = z.object({
-  target: z.enum(['shop_item', 'event']),
+  target: z.enum(['shop_item', 'event', 'shop_bundle']),
   payload: z.record(z.string(), z.unknown()),
 });
 const rejectBody = z.object({ reason: z.string().max(500).optional() });
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 
 /**
- * Shop and event configuration with dual-admin approval. Admin-only. A low-impact change applies immediately; a
+ * Shop, bundle and event configuration with dual-admin approval. Admin-only. A low-impact change applies immediately; a
  * sensitive one waits for a different admin. Applied changes bust caches through the Shop/Event services.
  */
 export function registerConfigRoutes(app: FastifyInstance, config: ConfigService): void {

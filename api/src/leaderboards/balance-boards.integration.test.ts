@@ -1,5 +1,5 @@
 /**
- * The Zêr and Gewher boards against real Postgres, and Redis when present: current holdings highest first, ties
+ * The Zêr board against real Postgres, and Redis when present: current holdings highest first, ties
  * sharing a place, paged to the board's depth, the weekly board's listing rules plus staff and empty wallets left
  * out, and the caller's own balance and place always live. Balances are written near the database's ceiling, so
  * these people lead the shared board and the asserted places are places on the whole board.
@@ -24,7 +24,7 @@ const BASE = 999_000_000;
 const COUNTRY = 'NR';
 const PHOTO_URL = (key: string) => `https://media.test/${key}`;
 
-describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
+describe.skipIf(!DATABASE_URL)('the Zêr board (integration)', () => {
   let pool: pg.Pool;
   let redis: Redis | undefined;
   let app: FastifyInstance;
@@ -33,7 +33,7 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
   const people: Record<string, TestLearner> = {};
   const learner = (opts: LearnerOptions = {}) => makeLearner(pool, `lbz${suffix}${++n}`, { country: COUNTRY, ...opts });
   const boards = () => new LeaderboardService(pool, redis, { publicUrl: PHOTO_URL });
-  const hold = async (who: TestLearner, currency: 'zer' | 'gems', balance: number) => {
+  const hold = async (who: TestLearner, currency: 'zer', balance: number) => {
     await pool.query(
       `INSERT INTO wallet_balances (user_id, currency, balance) VALUES ($1, $2, $3)
        ON CONFLICT (user_id, currency) DO UPDATE SET balance = EXCLUDED.balance`,
@@ -85,12 +85,6 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     await hold(people.held!, 'zer', BASE + 950);
     await hold(people.bot!, 'zer', BASE + 940);
     await hold(people.banned!, 'zer', BASE + 930);
-    await hold(people.held!, 'gems', BASE + 950);
-    // Gewher is its own board: led by the fourth for Zêr, and without the Zêr leader, who holds none.
-    await hold(people.next!, 'gems', BASE + 20);
-    await hold(people.tieA!, 'gems', BASE + 10);
-    await hold(people.me!, 'gems', BASE + 10);
-    await hold(people.staff!, 'gems', BASE + 30);
 
     await pool.query(`UPDATE users SET profile_photo_key = 'avatars/top.jpg' WHERE id = $1`, [people.top!.id]);
     await pool.query(`UPDATE users SET guest = true WHERE id = $1`, [people.guest!.id]);
@@ -111,9 +105,8 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     }
 
     // a run a minute ago may have left its country board behind; this one starts from the people above
-    await redis?.del(`lb:zer:country:${COUNTRY}`, `lb:gewher:country:${COUNTRY}`);
+    await redis?.del(`lb:zer:country:${COUNTRY}`);
     await boards().rebuild('zer');
-    await boards().rebuild('gewher');
   });
 
   afterAll(async () => {
@@ -156,20 +149,6 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     expect(first.total).toBeGreaterThanOrEqual(5);
   });
 
-  it('keeps Gewher a board of its own, ranked by the gems in the wallet', async () => {
-    const board = await boards().board('gewher', people.me!.id);
-    expect(board.type).toBe('gewher');
-    expect(ours(board).map((e) => [e.userId, e.rank, e.score])).toEqual([
-      [people.next!.id, 1, BASE + 20],
-      [ours(board)[1]!.userId, 2, BASE + 10],
-      [ours(board)[2]!.userId, 2, BASE + 10],
-    ]);
-    // nobody who holds no Gewher, and no staff
-    expect(listed(board, people.top!)).toBe(false);
-    expect(listed(board, people.staff!)).toBe(false);
-    expect(board.me).toEqual({ rank: 2, score: BASE + 10 });
-  });
-
   it('lists nobody the public boards may not name, on the global board or the country one', async () => {
     for (const scope of ['global', 'country'] as const) {
       const board = await boards().board('zer', people.me!.id, { scope, limit: 100 });
@@ -206,8 +185,6 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     expect(flagged.me).toEqual({ rank: 1, score: BASE + 990 });
     const held = await boards().board('zer', people.held!.id);
     expect(held.me).toEqual({ rank: 1, score: BASE + 950 });
-    // and the Gewher board leaves them off in the same way
-    expect(listed(await boards().board('gewher', people.me!.id, { limit: 100 }), people.held!)).toBe(false);
     const minor = await boards().board('zer', people.minor!.id);
     expect(minor.me).toEqual({ rank: 1, score: BASE + 900 });
     const optedOut = await boards().board('zer', people.optedOut!.id);
@@ -280,25 +257,25 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
       },
     } as unknown as pg.Pool;
     const lazy = new LeaderboardService(counting, redis);
-    const built = builtKeyFor('gewher', new Date());
-    expect(built).toBe('lb:balance:gewher:built');
+    const built = builtKeyFor('zer', new Date());
+    expect(built).toBe('lb:balance:zer:built');
 
     await redis!.del(built);
-    const first = await lazy.board('gewher', people.me!.id);
+    const first = await lazy.board('zer', people.me!.id);
     expect(builds).toBe(1);
-    expect(first.top[0]!.userId).toBe(people.next!.id);
+    expect(first.top[0]!.userId).toBe(people.top!.id);
     const ttl = await redis!.ttl(built);
     expect(ttl).toBeGreaterThan(0);
     expect(ttl).toBeLessThanOrEqual(GLOBAL_BOARD_REBUILD_SECONDS);
     // the board itself outlives the marker, and expires on its own when nobody reads it
-    expect(await redis!.ttl('lb:balance:gewher')).toBeGreaterThan(GLOBAL_BOARD_REBUILD_SECONDS);
+    expect(await redis!.ttl('lb:balance:zer')).toBeGreaterThan(GLOBAL_BOARD_REBUILD_SECONDS);
 
-    await lazy.board('gewher', people.tieA!.id);
-    await lazy.board('gewher', null);
+    await lazy.board('zer', people.tieA!.id);
+    await lazy.board('zer', null);
     expect(builds).toBe(1);
 
     await redis!.del(built);
-    await lazy.board('gewher', people.me!.id);
+    await lazy.board('zer', people.me!.id);
     expect(builds).toBe(2);
   });
 
@@ -310,6 +287,8 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
       // read in order.
       await client.query('SET LOCAL enable_seqscan = off');
       await client.query('SET LOCAL enable_bitmapscan = off');
+      // with every balance in one currency the primary key and a sort can cost less on so few rows
+      await client.query('SET LOCAL enable_sort = off');
       const plan = await client.query<{ 'QUERY PLAN': string }>(
         `EXPLAIN SELECT user_id, balance FROM wallet_balances b
           WHERE b.currency = 'zer' AND b.balance > 0 ORDER BY b.balance DESC, b.user_id DESC LIMIT 1000`,
@@ -323,15 +302,15 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     }
   });
 
-  it('serves both boards over HTTP to anyone, and refuses the wallet’s own word for a board', async () => {
-    for (const type of ['zer', 'gewher']) {
-      const res = await app.inject({ method: 'GET', url: `/leaderboards/${type}?limit=5`, remoteAddress: '10.64.1.1' });
-      expect(res.statusCode).toBe(200);
-      expect(res.json()).toMatchObject({ type, scope: 'global', me: null, depth: BOARD_DEPTH });
-      expect(res.json().top.length).toBeLessThanOrEqual(5);
+  it('serves the board over HTTP to anyone, and has no board for the retired Gewher', async () => {
+    const res = await app.inject({ method: 'GET', url: '/leaderboards/zer?limit=5', remoteAddress: '10.64.1.1' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ type: 'zer', scope: 'global', me: null, depth: BOARD_DEPTH });
+    expect(res.json().top.length).toBeLessThanOrEqual(5);
+    for (const retired of ['gewher', 'gems']) {
+      const gone = await app.inject({ method: 'GET', url: `/leaderboards/${retired}`, remoteAddress: '10.64.1.1' });
+      expect(gone.statusCode).toBe(400);
+      expect(gone.json().code).toBe('BAD_BOARD');
     }
-    const gems = await app.inject({ method: 'GET', url: '/leaderboards/gems', remoteAddress: '10.64.1.1' });
-    expect(gems.statusCode).toBe(400);
-    expect(gems.json().code).toBe('BAD_BOARD');
   });
 });

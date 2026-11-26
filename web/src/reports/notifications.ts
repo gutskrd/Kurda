@@ -97,6 +97,15 @@ export function socialNotification(note: InboxNote, t: Translate, locale?: strin
       const to = giftChatPath(str(data.chat), str(data.giftId));
       return { title: t('notify.gift.title'), body: t('notify.gift.body'), ...(to ? { to } : {}) };
     }
+    case 'post_gift': {
+      // Named as the server lets the post's author see the giver, or not at all.
+      const name = str(data.fromName);
+      const id = str(data.postId);
+      // to the post, where the author's own gift opens in its light
+      const gift = str(data.giftId);
+      const to = data.postType === 'library' && id ? `/app/library/${encodeURIComponent(id)}${gift ? `?gift=${encodeURIComponent(gift)}` : ''}` : undefined;
+      return { title: name ? t('post.gifts.notice', { name }) : t('post.gifts.noticeSomeone'), body: null, ...(to ? { to } : {}) };
+    }
     default:
       return null;
   }

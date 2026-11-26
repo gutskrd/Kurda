@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
-import { seasonFrameSku } from '@kurda/shared';
+import { PRICE_LADDER, seasonFrameSku } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { WalletService } from '../wallet/service.js';
@@ -18,7 +18,7 @@ import { canonicalPair } from '../friends/pair.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 /** The frames the catalogue sells (api/content/cosmetics.json), which the migration put in the shop. */
-const CATALOGUE = (JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'content', 'cosmetics.json'), 'utf8')) as { frames: Array<{ sku: string; assetKey: string }> }).frames;
+const CATALOGUE = (JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'content', 'cosmetics.json'), 'utf8')) as { frames: Array<{ sku: string; assetKey: string; price: number }> }).frames;
 const FRAME = 'frame-made-lale';
 const FRAME_ART = '/cosmetics/frames/made-01-lale.png';
 
@@ -71,7 +71,9 @@ describe.skipIf(!DATABASE_URL)('frames bought in the shop (integration)', () => 
     expect(frames.length).toBeGreaterThanOrEqual(30);
     for (const f of frames) {
       expect(f.currency).toBe('zer');
-      expect(f.price).toBeGreaterThanOrEqual(1200);
+      // its price on the frames' steps of the ladder, as the catalogue ships it
+      expect(f.price).toBe(CATALOGUE.find((c) => c.sku === f.sku)!.price);
+      expect(Object.values(PRICE_LADDER.frame)).toContain(f.price);
       expect(f.premiumOnly).toBe(false);
       expect(f.assetUrl).toBe(`/cosmetics/${CATALOGUE.find((c) => c.sku === f.sku)!.assetKey}`);
       expect(f.assetUrl).toMatch(/^\/cosmetics\/frames\/made-\d\d-[a-z-]+\.png$/);
@@ -88,7 +90,7 @@ describe.skipIf(!DATABASE_URL)('frames bought in the shop (integration)', () => 
     const before = (await wallet.balances(ids.buyer!)).zer;
     const bought = await call('POST', '/shop/purchase', 'buyer', { sku: FRAME, idempotencyKey: `frm-${s}` });
     expect(bought.statusCode).toBe(200);
-    expect((await wallet.balances(ids.buyer!)).zer).toBe(before - 1400);
+    expect((await wallet.balances(ids.buyer!)).zer).toBe(before - CATALOGUE.find((c) => c.sku === FRAME)!.price);
     // in what they own, with its picture, for the tile
     const owned = ((await call('GET', '/me/inventory', 'buyer')).json().items as Array<{ sku: string; category: string; assetUrl: string | null }>).find((i) => i.sku === FRAME);
     expect(owned).toMatchObject({ category: 'frame', assetUrl: FRAME_ART });
@@ -129,7 +131,7 @@ describe.skipIf(!DATABASE_URL)('frames bought in the shop (integration)', () => 
     const before = (await wallet.balances(ids.buyer!)).zer;
     const gifted = await call('POST', '/shop/gift', 'buyer', { sku: 'frame-made-genim', toUserId: ids.other, idempotencyKey: `frm-gift-${s}` });
     expect(gifted.statusCode).toBe(200);
-    expect((await wallet.balances(ids.buyer!)).zer).toBe(before - 1200);
+    expect((await wallet.balances(ids.buyer!)).zer).toBe(before - CATALOGUE.find((c) => c.sku === 'frame-made-genim')!.price);
     // the giver paid for it and does not own it
     expect((await call('PUT', '/me/cosmetics/frame', 'buyer', { sku: 'frame-made-genim' })).statusCode).toBe(403);
     expect((await call('PUT', '/me/cosmetics/frame', 'other', { sku: 'frame-made-genim' })).statusCode).toBe(200);

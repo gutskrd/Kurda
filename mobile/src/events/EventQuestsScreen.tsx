@@ -43,7 +43,7 @@ interface ActiveEvent {
 }
 
 /**
- * Event quest progress with explicit claim buttons. Rewards use the app's coin and gem art, and a successful
+ * Event quest progress with explicit claim buttons. Rewards use the app's coin art, and a successful
  * claim gets the usual reward feedback (`haptic('celebrate')`, the reward chime) and a few sparks off the quest.
  */
 export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
@@ -151,6 +151,7 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
                     <Text style={[styles.eventName, { color: colors.textSecondary }]}>{event.name}</Text>
                     {countdown ? <Text style={[styles.countdown, { color: colors.textSecondary }]}>{t('events.endsIn', { time: countdown })}</Text> : null}
                   </View>
+                  {event.zerForMembers ? <Text style={[styles.members, { color: colors.textSecondary }]}>{t('events.membersZer')}</Text> : null}
                   {sortQuests(event.quests).map((q) => (
                     <QuestRow
                       key={q.id}
@@ -218,11 +219,11 @@ function QuestRow({ quest, busy, fresh, onClaim }: { quest: QuestView; busy: boo
       <View style={styles.rowTop}>
         <Text style={[styles.questTitle, { color: colors.textPrimary }]}>{questTitle(quest, t)}</Text>
         {parts.length > 0 ? (
-          // The shop's coin and gem, read out as what the quest pays.
+          // The shop's coin, read out as what the quest pays.
           <View style={styles.reward} accessible accessibilityLabel={rewardSpoken(quest.reward, t, (n) => formatNumber(n, locale))}>
             {parts.map((p) => (
               <View key={p.currency} style={styles.rewardPart}>
-                <Icon name={p.currency === 'zer' ? 'coin' : 'gem'} size={16} color={p.currency === 'zer' ? colors.gold : colors.primary} />
+                <Icon name="coin" size={16} color={colors.gold} />
                 <Text style={[styles.rewardText, { color: colors.textSecondary }]}>{formatNumber(p.amount, locale)}</Text>
               </View>
             ))}
@@ -237,7 +238,7 @@ function QuestRow({ quest, busy, fresh, onClaim }: { quest: QuestView; busy: boo
           {quest.current} / {quest.target}
         </Text>
         {state === 'claimed' ? (
-          <ClaimedMark fresh={fresh} seed={quest.target * 13 + (quest.reward.zer ?? 0) + (quest.reward.gems ?? 0)} />
+          <ClaimedMark fresh={fresh} seed={quest.target * 13 + (quest.reward.zer ?? 0)} />
         ) : state === 'claimable' ? (
           // The app's own button, a fingertip tall; a spinner in place of the word while the claim is out.
           <ClayButton label={t('events.claim')} tone="primary" busy={busy} onPress={onClaim} style={styles.claimBtn} />
@@ -283,6 +284,7 @@ const styles = StyleSheet.create({
   noticeTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   noticeText: { fontSize: typography.sizes.text, lineHeight: 20 },
   eventBlock: { gap: spacing.sm },
+  members: { fontSize: typography.sizes.text },
   eventHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   eventName: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textTransform: 'uppercase' },
   countdown: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },

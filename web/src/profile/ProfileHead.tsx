@@ -8,6 +8,8 @@ import { FrameOverlay } from '../ranks/art';
 import { rankTierNamed } from '../ranks/names';
 import { useAvatarSrc } from '../art/overrides';
 import { Horizon } from '../ui/Horizon';
+import type { ProfileWordTag } from '@kurda/shared';
+import { TagPill } from './TagPill';
 
 /** The face's size on a full profile, and the frame drawn round it. */
 const FACE = 96;
@@ -33,7 +35,7 @@ export function LevelBadge({ level }: { level: Pick<LevelInfo, 'level' | 'xp' | 
 
 /**
  * The top of a full profile, laid out as a social app's: the banner, the face with the figures beside it, the name with
- * the level, the handle, what is known about them and the bio, then whatever the page adds under it (who they know, what
+ * the level, the handle with the badge row, what is known about them and the bio, then whatever the page adds under it (who they know, what
  * only the owner sees) and the actions. It sits on the page itself rather than in a card.
  */
 export function ProfileHead({
@@ -48,8 +50,10 @@ export function ProfileHead({
   level,
   frameSku,
   frameUrl,
+  tag,
   corner,
   stats,
+  handleAside,
   meta,
   actions,
   children,
@@ -66,10 +70,14 @@ export function ProfileHead({
   level?: Pick<LevelInfo, 'level' | 'xp' | 'nextLevelXp' | 'progress'>;
   frameSku?: string | null;
   frameUrl?: string | null;
+  /** the word tag worn by the name */
+  tag?: ProfileWordTag | null;
   /** the menu in the banner's far corner */
   corner?: ReactNode;
   /** the figures beside the face */
   stats?: ReactNode;
+  /** after the handle on its line, wrapping under it where the line is short: the badge row */
+  handleAside?: ReactNode;
   /** where they are from, since when, who can see the page, and the bio */
   meta?: ReactNode;
   /** edit and share on your own profile, the friend buttons on somebody else's */
@@ -104,11 +112,13 @@ export function ProfileHead({
             {name}
           </h1>
           {level && <LevelBadge level={level} />}
+          {tag && <TagPill tag={tag} />}
           {premium && <PremiumPill />}
         </div>
         <div className="ph-handle">
           <span dir="ltr">@{username}</span>
           {online && <span className="ph-online">{t('profile.online')}</span>}
+          {handleAside}
         </div>
       </div>
       {meta}

@@ -95,9 +95,12 @@ export {
   type TodayWeeks,
   type WeekStats,
 } from './daily-view.js';
-/** Restoring a streak that ended: what it costs, how long it is offered, and what a Hevalo+ member is given. */
+/** Restoring a streak that ended: how it is won back, how long it is offered, and what a Hevalo+ member is given. */
 export * from './streak-repair.js';
 export * from './plus.js';
+/** One currency: what Zêr is worth in money, and how it is earned. */
+export * from './zer.js';
+export * from './earning.js';
 /** Today's three quests, and the chests they pay: learning only, never anything paid. */
 export {
   QUEST_KINDS,
@@ -198,6 +201,8 @@ export {
 export * from './win-share.js';
 /** A win's own address, and the picture a link to it is drawn with. */
 export * from './win-link.js';
+/** What a win's card says, in the sender's language. */
+export * from './win-words.js';
 export * from './tab-bar-scroll.js';
 /** The lesson path a course map is drawn as: the current skill, milestones, unit colours and stop places. */
 export {
@@ -211,6 +216,8 @@ export {
   jumpPassed,
   jumpPlan,
   lean,
+  LESSON_KINDS,
+  lessonKind,
   lessonPath,
   openingStops,
   lessonStates,
@@ -219,6 +226,7 @@ export {
   pathChanges,
   pathSnapshot,
   type Finish,
+  type LessonKind,
   type LessonPath,
   type LessonState,
   type PathChanges,
@@ -244,17 +252,38 @@ export {
   unitTone,
 } from './lesson-path.js';
 /** A topic's rounds: the ring round its stop and the stars under it, from how often each lesson was finished. */
-export { PATH_RING, TOPIC_STARS, nextInRound, ringPieces, roundStars, starPath, topicRounds, type TopicRounds } from './lesson-rounds.js';
+export { PATH_BAR, SUN_RAYS, TOPIC_STARS, barPieces, nextInRound, sealSuns, sunPath, topicRounds, type TopicRounds } from './lesson-rounds.js';
 /** The land the lesson path runs through: each unit's landscape, its landmark and the person who belongs to it. */
 export {
   PATH_GROUNDS,
   PATH_LANDMARKS,
   PATH_LANDS,
   PATH_MOTION,
+  PATH_APPLE_REACH,
+  PATH_PIGEON_FLIGHT,
+  PATH_SCENE_MOTION,
+  PATH_SCENE_REACH,
+  PATH_STAMP_MOMENT,
+  PATH_STAMP_SHADOW,
+  PATH_STAMP_REPRESS,
+  PATH_REPRESS_SHADOW,
+  stampShadow,
+  PATH_WAX_GOLD,
+  PATH_WAX_FIRE,
+  waxGlintAt,
+  PATH_SCENE_ORDER,
   PATH_SCENERY,
+  PATH_SCENERY_SPOT,
+  PATH_START_WORDS,
   landmarkBox,
   pathLand,
+  pathScene,
+  sceneBeat,
+  sceneBeatMs,
+  unitScenery,
   type PathBox,
+  type SceneAct,
+  type SceneBeat,
   type PathGround,
   type PathHost,
   type PathLand,
@@ -355,9 +384,13 @@ export {
   ALPHABET_CLIP_GROUPS,
   ALPHABET_CLIP_MAX_SECONDS,
   LETTER_CLIPS,
+  alphabetClipWord,
+  borrowedAlphabetTake,
   isAlphabetClipKey,
+  sameWordClips,
   type AlphabetClip,
   type AlphabetClipGroup,
+  type BorrowedTake,
 } from './alphabet-audio.js';
 /**
  * Words to know (colours, numbers, days and months), taught as the alphabet is: each word in both dialects with its
@@ -477,6 +510,7 @@ export {
   ADULT_AGE,
   DIGITAL_CONSENT_AGE,
   EARLIEST_BIRTH_YEAR,
+  MIN_CHILD_PROFILE_AGE,
   MIN_SIGNUP_AGE,
   ageInYears,
   birthYearChoices,
@@ -572,6 +606,11 @@ export * from './lore.js';
 /** Inviting friends to online games and playing again (play), gifts in the chat (gifts) and the chat messages that carry them (chat-cards). */
 export * from './play.js';
 export * from './gifts.js';
+/** The gifts themselves, their meanings, and the gift bag; the safeguards on spending Zêr on them. */
+export * from './gift-catalogue.js';
+/** The moment a gift is opened (and the sender's, as it goes): its glow, rays, sparkles and timing. */
+export * from './gift-moment.js';
+export * from './gift-safety.js';
 
 /** The learning games: the registry, the two varieties as 'kmr' | 'ckb' with their script rules, content schemas and round shapes. */
 export * from './games/index.js';
@@ -579,6 +618,10 @@ export * from './games/index.js';
 /** Shop items by kind: the categories, search, filters and orders the shop, the inventory and the gift picker share. */
 export * from './shop-items.js';
 export * from './shop-descriptions.js';
+/** The price ladder and the rarity each step is shown as, word tags worn by the name, and bundles sold for less than their parts. */
+export * from './shop-prices.js';
+export * from './shop-tags.js';
+export * from './shop-bundles.js';
 export * from './chat-cards.js';
 /** Unread chat counts for the badges, a group's capped, and how a badge writes one. */
 export * from './chat-unread.js';
@@ -613,6 +656,8 @@ export { PROVIDER, isProviderPlaceholder, type ProviderIdentity } from './provid
 /** Learning Leagues (the weekly table that rewards effort) and badges. */
 export * from './leagues.js';
 export * from './badges.js';
+/** What a profile owns and was given besides its badges. */
+export * from './collection.js';
 
 /**
  * Badge medallions, rank and league emblems and season frames as SVG strings: inlined on the web, `SvgXml` on the phone.
@@ -646,7 +691,6 @@ export {
   SMALL_LEAGUE,
   SMALL_FRAME,
   coinSvg,
-  gemSvg,
   CURRENCY_CANVAS,
   type CurrencyOptions,
   wordSetSvg,
@@ -725,7 +769,56 @@ export {
   PATH_LANDMARK_LOOP,
   PATH_STOP_ART,
   PATH_STOP_LOOKS,
+  PATH_REST,
   PATH_STOP_TONES,
+  PATH_GOLD,
+  PATH_MILESTONE_ART,
+  PATH_CHEST_PARTS,
+  PATH_CHEST_HINGE,
+  pathChestSvg,
+  pathCoinSvg,
+  pathMilestoneSvg,
+  pathKilimSvg,
+  pathWaxSvg,
+  pathWaxColours,
+  pathStampToolSvg,
+  PATH_SEAL,
+  PATH_WAX,
+  sunRays,
+  PATH_STAMP_TOOL,
+  type PathWaxOptions,
+  type PathWaxColours,
+  tilePath,
+  type PathChestOptions,
+  type PathChestPart,
+  type PathMilestoneOptions,
+  CHAPTER_ART,
+  CHAPTER_ART_IDS,
+  CHAPTER_ART_LOOP,
+  CHAPTER_LOOP_KINDS,
+  chapterArtOf,
+  chapterArtSvg,
+  chapterLoopBox,
+  type ChapterArtId,
+  type ChapterArtOptions,
+  type ChapterLoop,
+  type ChapterLoopKind,
+  PATH_SCENE_IDS,
+  PATH_SCENE_BOX,
+  PATH_SCENES,
+  PATH_SCENE_SPRITES,
+  PATH_SCENE_SPRITE_BOX,
+  PATH_SLATE_LETTERS,
+  PATH_APPLE_AT,
+  PATH_TEA_AT,
+  pathScenePropSvg,
+  pathSceneSpriteSvg,
+  type PathSceneId,
+  type PathSceneSprite,
+  type SceneBox,
+  type SceneLayout,
+  type PathKilimOptions,
+  type UnitColours,
   pathLandmarkSvg,
   chapterBannerSvg,
   type ChapterBannerOptions,
@@ -792,6 +885,8 @@ export {
   TREE_GROW,
   TREE_PLANT_DROP,
   TREE_REVIVE,
+  TREE_RUSTLE,
+  TREE_RUSTLE_WAVE,
   TREE_SHAKE,
   TREE_SWAY,
   TREE_SWING,
@@ -873,6 +968,12 @@ export {
   dictionaryTiles,
   type DictionaryArtOptions,
   type DictionaryTile,
+  GIFT_ART_IDS,
+  giftArtKey,
+  giftArtSvg,
+  isGiftArtId,
+  type GiftArtId,
+  type GiftArtOptions,
   type WordPictureId,
   type WordPictureOptions,
   BOOK_APPLE_BITES,
@@ -909,12 +1010,45 @@ export {
   TIER_METAL as ART_TIER_METAL,
   type Metal as ArtMetal,
 } from './art/palette.js';
-/** The nine hues things are coloured in beside the app's own violet, each in the same four steps, light and dark. */
+/** The slate page, the one accent, right and wrong, the reward gold and Hevalo+'s own button, for both apps. */
+export * from './themes.js';
+/** The Hevalo+ page's picture: the sky, the deer with his crown, and gold sparkles, as three layers. */
+export { PLUS_HERO_VIEW, plusHeroFigure, plusHeroSky, plusHeroSparkles } from './art/plus-hero.js';
+/** A hand holding a phone, for the front page's word about the phone apps: the hand, sleeve and phone, and the finger pads over its edge. */
+export { HAND_PHONE_SCREEN, HAND_PHONE_VIEW, handPhoneSvg, type HandPhoneOptions } from './art/hand-phone.js';
+/** A hand holding up a game's stamp and turning it over, for the front page's games moment: its layers and the turn's frames. */
+export { HAND_STAMP_CARD, HAND_STAMP_FLIP, HAND_STAMP_VIEW, handStampCardAt, handStampFlip, handStampPointsAt, handStampShapesAt, handStampSvg, type HandStampOptions } from './art/hand-stamp.js';
+/** The nine hues drawings are coloured in, each in the same four steps, light and dark. */
 export { HUES, HUE_NAMES, hueSteps, isHueName, type HueName, type HueScheme, type HueSteps } from './hues.js';
 /** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
 export * from './art/fire.js';
+/** Hevalo's mark, the owner's deer looking back, and its loop as the apps' loader: he curls into a ball and spins back out. */
+export {
+  DEER_BREATH_LOW,
+  DEER_BREATH_MS,
+  DEER_LOOP_MS,
+  DEER_LOOP_TURNS,
+  DEER_MARK_FULL_FROM,
+  DEER_MARK_VIEW,
+  deerBreathAt,
+  deerCurlKeyframes,
+  deerCurlOutline,
+  deerCurlPath,
+  deerEyesOpen,
+  deerFormKey,
+  deerFormOutline,
+  deerFormPath,
+  deerLoopAt,
+  deerLoopTrack,
+  deerMarkPath,
+  deerMarkTracedPath,
+  type DeerLoopPose,
+} from './art/deer-mark.js';
 /** A drawing bent through a map of the plane, as his head turned in the round is drawn. */
 export { mapMarkup, mapPath, type PlaneMap } from './art/warp.js';
+/** The wrapped gift box, and how it waits, opens and gives way, drawn and played the same by both apps. */
+export * from './art/gift-box.js';
+export * from './art/gift-box-motion.js';
 /** How big the fire burns: its stages from cold logs to the Newroz fire, by the streak's days or a run of right answers. */
 export {
   COLD_FIRE,
@@ -987,5 +1121,9 @@ export * from './counts.js';
 
 /** Parental controls: the options a parent has, the pause they make, and the codes that connect a parent and a teen. */
 export * from './parental.js';
+/** Families and child profiles: who may be in a family, a child's ages, and the codes and PIN that sign a child in. */
+export * from './family.js';
 /** Icons Hevalo draws itself in the icon family's weight, where the family has none for the job. */
 export * from './glyphs.js';
+/** When staff may read letters and private chats: reports, automatic flags, and safety reviews, each on the Access log. */
+export * from './message-access.js';

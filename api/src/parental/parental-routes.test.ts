@@ -86,6 +86,7 @@ const NEEDS_NO_GUARD: Record<string, string> = {
   'DELETE /letters/widget/tokens/current': 'the home screen widget’s own sign-in',
   'PUT /letters/widget/prefs': 'the home screen widget’s settings',
   'POST /gifts/:id/open': 'opening a gift one was given',
+  'POST /gifts/bag/seen': 'marking what landed in one’s own gift bag as told, which nobody else sees',
   // running a group one is already in is neither joining it nor writing in its chat
   'PATCH /groups/:id': 'running a group',
   'POST /groups/:id/photo': 'running a group',

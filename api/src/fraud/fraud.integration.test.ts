@@ -21,7 +21,7 @@ describe.skipIf(!DATABASE_URL)('payment fraud (integration)', () => {
   let fraud: FraudService;
   let wallet: WalletService;
   const suffix = Date.now().toString(36);
-  const product = `gems_fraud_${suffix}`;
+  const product = `zer_fraud_${suffix}`;
   const ids: string[] = [];
 
   const register = async (tag: string): Promise<string> => {
@@ -51,7 +51,7 @@ describe.skipIf(!DATABASE_URL)('payment fraud (integration)', () => {
     wallet = new WalletService(pool);
     fraud = new FraudService(pool, wallet);
     iap = new IapService(pool, wallet, new StubReceiptVerifier(), config, fraud);
-    await iap.createPack({ platform: 'apple', productId: product, gems: 100 });
+    await iap.createPack({ platform: 'apple', productId: product, zer: 400 });
     ids.push(await register('v'), await register('a'), await register('b'), await register('fam'));
   });
 
@@ -65,7 +65,7 @@ describe.skipIf(!DATABASE_URL)('payment fraud (integration)', () => {
     } finally {
       client.release();
     }
-    await pool.query(`DELETE FROM gem_packs WHERE product_id = $1`, [product]);
+    await pool.query(`DELETE FROM zer_packs WHERE product_id = $1`, [product]);
     await pool.end();
     await app.close();
   });
@@ -77,12 +77,12 @@ describe.skipIf(!DATABASE_URL)('payment fraud (integration)', () => {
       const r = await iap.redeem(user, 'apple', receipt(`v${i}`), product);
       expect(r.granted).toBe(true);
     }
-    expect((await wallet.balances(user)).gems).toBe(100 * VELOCITY_MAX_PER_HOUR);
+    expect((await wallet.balances(user)).zer).toBe(400 * VELOCITY_MAX_PER_HOUR);
 
     // the next one trips VELOCITY → held, not granted
     const held = await iap.redeem(user, 'apple', receipt('vX'), product);
     expect(held).toMatchObject({ granted: false, held: true });
-    expect((await wallet.balances(user)).gems).toBe(100 * VELOCITY_MAX_PER_HOUR);
+    expect((await wallet.balances(user)).zer).toBe(400 * VELOCITY_MAX_PER_HOUR);
 
     const queue = await fraud.pendingReviews();
     const review = queue.find((r) => r.userId === user)!;
@@ -91,11 +91,11 @@ describe.skipIf(!DATABASE_URL)('payment fraud (integration)', () => {
     // named, so the admin's list says who it is rather than an id
     expect(review.username).toBe(`fraud_v_${suffix}`.slice(0, 30));
 
-    // admin clears → the held Gems are granted and the hold is released
+    // admin clears → the held Zêr is granted and the hold is released
     const admin = ids[1]!;
     const res = await fraud.resolve(review.id, 'clear', admin);
-    expect(res).toEqual({ status: 'cleared', grantedGems: 100 });
-    expect((await wallet.balances(user)).gems).toBe(100 * (VELOCITY_MAX_PER_HOUR + 1));
+    expect(res).toEqual({ status: 'cleared', grantedZer: 400 });
+    expect((await wallet.balances(user)).zer).toBe(400 * (VELOCITY_MAX_PER_HOUR + 1));
     expect(await fraud.pendingReviews()).toHaveLength(0);
   });
 

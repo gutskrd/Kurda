@@ -44,7 +44,7 @@ const closed = (over: Partial<LeagueWeekResult> = {}): LeagueWeekResult => ({
   goalXp: 150,
   goalMet: true,
   trophy: false,
-  gems: 10,
+  zer: 50,
   ...over,
 });
 
@@ -81,7 +81,7 @@ describe('the league week’s ceremony', () => {
     renderWithProviders(<LeagueMoment league={view(closed())} store={store} />);
     expect(await screen.findByRole('heading', { name: 'You finished #3 last week and moved up to Çem.' })).toBeTruthy();
     expect(screen.getByText('Moved up')).toBeTruthy();
-    expect(screen.getByText('410 XP · +10 Gems')).toBeTruthy();
+    expect(screen.getByText('410 XP · +50 Zêr')).toBeTruthy();
     // The current league stands in the middle, named; the ones beside it are decorative.
     expect(screen.getByRole('img', { name: 'Çem League (River)' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
@@ -101,14 +101,14 @@ describe('the league week’s ceremony', () => {
 
   it('says a week that stayed as it was, and a week that moved down as a fresh start', async () => {
     patchReactNativeWeb({ reduceMotion: true });
-    renderWithProviders(<LeagueMoment league={view(closed({ tier: 'cem', tierAfter: 'cem', outcome: 'stayed', rank: 9, gems: 0 }))} store={memoryStore()} />);
+    renderWithProviders(<LeagueMoment league={view(closed({ tier: 'cem', tierAfter: 'cem', outcome: 'stayed', rank: 9, zer: 0 }))} store={memoryStore()} />);
     expect(await screen.findByRole('heading', { name: 'You finished #9 last week and stay in Çem.' })).toBeTruthy();
     expect(screen.getByText('Last week')).toBeTruthy();
     expect(screen.getByText('410 XP')).toBeTruthy();
     cleanup();
 
     renderWithProviders(
-      <LeagueMoment league={view(closed({ tier: 'gol', tierAfter: 'cem', outcome: 'demoted', rank: 17, goalMet: false, gems: 0 }))} store={memoryStore()} />,
+      <LeagueMoment league={view(closed({ tier: 'gol', tierAfter: 'cem', outcome: 'demoted', rank: 17, goalMet: false, zer: 0 }))} store={memoryStore()} />,
     );
     expect(await screen.findByRole('heading', { name: 'You finished #17 last week. This week is a fresh start in Çem.' })).toBeTruthy();
     expect(screen.getByText('A fresh start')).toBeTruthy();
@@ -117,7 +117,7 @@ describe('the league week’s ceremony', () => {
 
   it('names the trophy at the top, where the rule is the trophy’s', async () => {
     patchReactNativeWeb({ reduceMotion: true });
-    const league = view(closed({ tier: 'okyanus', tierAfter: 'okyanus', outcome: 'stayed', trophy: true, rank: 2, gems: 0 }), { promoteCount: 0 });
+    const league = view(closed({ tier: 'okyanus', tierAfter: 'okyanus', outcome: 'stayed', trophy: true, rank: 2, zer: 0 }), { promoteCount: 0 });
     renderWithProviders(<LeagueMoment league={league} store={memoryStore()} />);
     expect(await screen.findByRole('heading', { name: 'You finished #2 last week: top three in Okyanûs, a Pêla week.' })).toBeTruthy();
     expect(screen.getByText('Pêla week')).toBeTruthy();
@@ -186,7 +186,7 @@ describe('sharing a league week', () => {
 
     fireEvent.click(button);
     expect(share).toHaveBeenCalledTimes(1);
-    expect(share.mock.calls[0]?.[0]).toEqual({ message: 'I moved up to the Çem League on Hevalo. 🏆\nhttps://hevalo.app/win/league/cem' });
+    expect(share.mock.calls[0]?.[0]).toEqual({ message: 'I just moved up to the Çem League on Hevalo! 🏆\nhttps://hevalo.app/win/league/cem?l=en' });
     // Not the size of the group, not the XP, not the account ("rojda").
     for (const theirs of ['18', '410', 'rojda', '/users/', '@']) expect(said(share)).not.toContain(theirs);
     // Sharing is not the way on: the first beat is still there, and the week not yet put away.
@@ -202,27 +202,27 @@ describe('sharing a league week', () => {
   it('shares a place in the first three for a week that stayed, and for the top league’s trophy', async () => {
     patchReactNativeWeb({ reduceMotion: true });
     const share = sheet();
-    renderWithProviders(<LeagueMoment league={view(closed({ tier: 'cem', tierAfter: 'cem', outcome: 'stayed', rank: 2, gems: 0 }))} store={memoryStore()} />);
+    renderWithProviders(<LeagueMoment league={view(closed({ tier: 'cem', tierAfter: 'cem', outcome: 'stayed', rank: 2, zer: 0 }))} store={memoryStore()} />);
     await screen.findByRole('heading', { name: 'You finished #2 last week and stay in Çem.' });
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect(said(share)).toBe('I finished #2 in the Çem League on Hevalo. 🏆\nhttps://hevalo.app/win/league/cem');
+    expect(said(share)).toBe('I finished #2 in the Çem League this week! 🏆\nhttps://hevalo.app/win/league/cem?l=en');
     cleanup();
     share.mockClear();
 
-    const top = view(closed({ tier: 'okyanus', tierAfter: 'okyanus', outcome: 'stayed', trophy: true, rank: 3, gems: 0 }), { promoteCount: 0 });
+    const top = view(closed({ tier: 'okyanus', tierAfter: 'okyanus', outcome: 'stayed', trophy: true, rank: 3, zer: 0 }), { promoteCount: 0 });
     renderWithProviders(<LeagueMoment league={top} store={memoryStore()} />);
     await screen.findByRole('heading', { name: 'You finished #3 last week: top three in Okyanûs, a Pêla week.' });
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect(said(share)).toBe('I finished #3 in the Okyanûs League on Hevalo. 🏆\nhttps://hevalo.app/win/league/okyanus');
+    expect(said(share)).toBe('I finished #3 in the Okyanûs League this week! 🏆\nhttps://hevalo.app/win/league/okyanus?l=en');
   });
 
   it('offers no Share on bad news: a week that moved down, whatever its place, or one that simply stayed', async () => {
     patchReactNativeWeb({ reduceMotion: true });
     const weeks: Array<[Partial<LeagueWeekResult>, string]> = [
-      [{ tier: 'gol', tierAfter: 'cem', outcome: 'demoted', rank: 17, goalMet: false, gems: 0 }, 'You finished #17 last week. This week is a fresh start in Çem.'],
-      [{ tier: 'gol', tierAfter: 'cem', outcome: 'demoted', rank: 2, goalMet: false, gems: 0 }, 'You finished #2 last week. This week is a fresh start in Çem.'],
-      [{ tier: 'cem', tierAfter: 'cem', outcome: 'stayed', rank: 9, gems: 0 }, 'You finished #9 last week and stay in Çem.'],
-      [{ tier: 'cem', tierAfter: 'cem', outcome: 'stayed', rank: 4, gems: 0 }, 'You finished #4 last week and stay in Çem.'],
+      [{ tier: 'gol', tierAfter: 'cem', outcome: 'demoted', rank: 17, goalMet: false, zer: 0 }, 'You finished #17 last week. This week is a fresh start in Çem.'],
+      [{ tier: 'gol', tierAfter: 'cem', outcome: 'demoted', rank: 2, goalMet: false, zer: 0 }, 'You finished #2 last week. This week is a fresh start in Çem.'],
+      [{ tier: 'cem', tierAfter: 'cem', outcome: 'stayed', rank: 9, zer: 0 }, 'You finished #9 last week and stay in Çem.'],
+      [{ tier: 'cem', tierAfter: 'cem', outcome: 'stayed', rank: 4, zer: 0 }, 'You finished #4 last week and stay in Çem.'],
     ];
     for (const [week, line] of weeks) {
       renderWithProviders(<LeagueMoment league={view(closed(week))} store={memoryStore()} />);

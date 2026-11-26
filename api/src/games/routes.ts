@@ -45,6 +45,7 @@
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import {
   APP_LOCALE_CODES,
   GAME_CONTENT_KINDS,
@@ -92,7 +93,7 @@ const dialectQuery = z.object({ dialect: z.enum(GAME_DIALECTS) });
 // without a dialect, both varieties' answers (shared `readEveryDialect`)
 const anyDialectQuery = z.object({ dialect: z.enum(GAME_DIALECTS).optional() });
 const openQuery = z.object({ game: z.enum(LEARN_GAME_IDS), dialect: z.enum(GAME_DIALECTS) });
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 const createBody = z.object({ game: z.enum(LEARN_GAME_IDS), dialect: z.enum(GAME_DIALECTS), difficulty: z.enum(GAME_DIFFICULTIES) });
 const answerBody = z.object({
   index: z.number().int().min(0).max(SOLO_ROUND_ITEMS * 4),
@@ -139,7 +140,7 @@ const beginBody = z.object({ index: z.number().int().min(0).max(SOLO_ROUND_ITEMS
  */
 const ROUNDS_PER_MINUTE = 20;
 const linesQuery = z.object({ dialect: z.enum(GAME_DIALECTS), q: z.preprocess(absentIfEmpty, z.string().max(80).optional()) });
-const translationParams = z.object({ id: z.uuid(), locale: z.enum(APP_LOCALE_CODES) });
+const translationParams = z.object({ id: lowerUuid(), locale: z.enum(APP_LOCALE_CODES) });
 const translationBody = z.object({ payload: z.unknown() });
 const translationReviewBody = z.object({ status: z.enum(TRANSLATION_REVIEW), note: z.string().max(GAME_CONTENT_REVIEW_NOTE_MAX).nullish() });
 

@@ -6,6 +6,7 @@ import { CheckIcon, ChevronIcon, CoinIcon } from '../components/icons';
 import { Skeleton } from '../components/Skeleton';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { DailySheet } from './DailySheet';
+import { hasDailyZer } from './DailyZer';
 import { dailyAction, useToday } from './today';
 import { WeekRow, thisWeek } from './WeekRow';
 import './daily.css';
@@ -14,9 +15,9 @@ import './daily.css';
 const CARD_FIRE = 44;
 
 /**
- * The daily view's card at the top of Home: the small fire with the streak, this week as seven dots, and today's Zêr in
- * one mark (to claim, after a lesson, or taken). One press opens the whole view (`DailySheet`). Nothing for a visitor,
- * and nothing in place of a view that failed to load, since the wall is the page.
+ * The daily view's card at the top of Home: the small fire with the streak, this week as seven dots, and for a Hevalo+
+ * member today's Zêr in one mark (to claim, after a lesson, or taken). One press opens the whole view (`DailySheet`).
+ * Nothing for a visitor, and nothing in place of a view that failed to load, since the wall is the page.
  */
 export function DailyCard(): React.JSX.Element | null {
   const { status } = useAuth();
@@ -32,15 +33,23 @@ export function DailyCard(): React.JSX.Element | null {
   const action = dailyAction(view.daily);
   const level = fireLevel(days);
   const streakWords = days > 0 ? t('learn.today.streak', { count: number(days) }) : t('learn.today.noStreak');
-  const zerWords =
-    action === 'claim'
+  const zer = hasDailyZer(view.daily);
+  const zerWords = !zer
+    ? null
+    : action === 'claim'
       ? t('daily.card.claim', { amount: number(view.daily.reward) })
       : action === 'learnFirst'
         ? t('daily.card.learn', { amount: number(view.daily.reward) })
         : t('daily.card.taken');
   return (
     <>
-      <button type="button" className="daily-home" aria-haspopup="dialog" aria-label={`${streakWords}. ${zerWords}`} onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        className="daily-home"
+        aria-haspopup="dialog"
+        aria-label={zerWords ? `${streakWords}. ${zerWords}` : streakWords}
+        onClick={() => setOpen(true)}
+      >
         <span className="daily-home-fire" aria-hidden="true">
           <Fire size={fireSizeToFit(level.stage, CARD_FIRE, CARD_FIRE)} level={level} framed />
         </span>
@@ -49,10 +58,12 @@ export function DailyCard(): React.JSX.Element | null {
           <span className="daily-home-unit">{days === 1 ? t('daily.view.unitOne') : t('daily.view.unit')}</span>
         </span>
         <WeekRow week={thisWeek(view.days, view.today, view.weekStart)} mini />
-        <span className={`daily-home-zer is-${action}`} aria-hidden="true" title={zerWords}>
-          <CoinIcon size={18} />
-          {action === 'claimed' ? <CheckIcon size={14} /> : `+${number(view.daily.reward)}`}
-        </span>
+        {zerWords && (
+          <span className={`daily-home-zer is-${action}`} aria-hidden="true" title={zerWords}>
+            <CoinIcon size={18} />
+            {action === 'claimed' ? <CheckIcon size={14} /> : `+${number(view.daily.reward)}`}
+          </span>
+        )}
         <ChevronIcon size={18} className="daily-home-go" />
       </button>
       <DailySheet open={open} onClose={() => setOpen(false)} today={today} />

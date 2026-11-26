@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { APP_LOCALE_CODES, normalizeKurdish } from '@kurda/shared';
 import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
 import { DELETION_GRACE_DAYS, GdprService, exportJobId } from '../gdpr/service.js';
@@ -26,6 +27,10 @@ import { leaveThisWeek, returnThisWeek } from '../leagues/service.js';
 import { TIME_ZONE_MESSAGE, storableTimeZone } from '../streaks/time-zones.js';
 import { RequestValidationError } from '../plugins/validation.js';
 import { knownUnsupervised, supervisionOf } from '../parental/supervision.js';
+import { premiumUntilSql } from '../cosmetics/access.js';
+import { childSessionOf } from '../family/children.js';
+import { childRefused } from '../family/child-gate.js';
+import { currentRequest } from '../security/context.js';
 
 export { USERNAME_CHANGE_COOLDOWN_DAYS };
 /** The time zone can change at most once a week, so a streak cannot be farmed by hopping zones. */
@@ -115,6 +120,7 @@ interface MeRow {
   selected_avatar_key: string | null;
   equipped_background_sku: string | null;
   equipped_icon_sku: string | null;
+  equipped_tag_sku: string | null;
   premium_icon_enabled: boolean;
   premium_until: Date | null;
   country: string | null;
@@ -124,6 +130,10 @@ interface MeRow {
   /** held while a person checks whether it belongs to someone banned (moderation/returns.ts) */
   held_at: Date | null;
   hold_reason: string | null;
+  /** 'child' for a child's profile made by their parent (family/) */
+  kind: string;
+  /** the later of the account's own membership and its family plan's (cosmetics/access.ts `premiumUntilSql`), on GET /me */
+  plus_until?: Date | null;
 }
 
 function toMe(row: MeRow) {
@@ -138,8 +148,8 @@ function toMe(row: MeRow) {
     roles: row.roles,
     emailVerified: row.email_verified_at !== null,
     consentVersion: row.consent_version,
-    /** A guest has consented to nothing and is asked only on the claim form, which records it. */
-    needsReconsent: !row.guest && row.consent_version !== CURRENT_POLICY_VERSION,
+    /** A guest has consented to nothing and is asked only on the claim form, which records it; a child's parent consented for them. */
+    needsReconsent: !row.guest && row.kind !== 'child' && row.consent_version !== CURRENT_POLICY_VERSION,
     analyticsConsent: row.analytics_consent,
     /** No birth month on record yet, so the clients ask once first; never for a guest, whom the claim form asks. */
     birthDateRequired: row.birth_year == null && !row.guest,
@@ -147,8 +157,15 @@ function toMe(row: MeRow) {
     birthYear: row.birth_year,
     birthMonth: row.birth_month,
     guest: row.guest,
+    /** 'child' for a child's profile made by their parent (family/), which the phone opens in child mode; 'person' otherwise. */
+    kind: row.kind === 'child' ? 'child' : 'person',
     /** 13–17 today, worked out now rather than stored (users/age.ts). */
     minor: isMinorRow(row),
+    /**
+     * Known to be 18 or over, and neither a guest nor a child's profile: the one flag the apps read before suggesting a
+     * purchase, Hevalo+ or giving a gift back. An unknown age is never an adult's.
+     */
+    knownAdult: !row.guest && row.kind !== 'child' && isKnownAdultRow(row),
     /** Under the age of digital consent (16) today, so consent choices such as analytics need a parent; the name is historical. */
     restrictedMode: isBelowConsentAgeRow(row),
     /** Never chosen means in for adults and out for minors and unknown ages, read from age each time. */
@@ -185,7 +202,8 @@ export function createMeReader(app: FastifyInstance): (userId: string) => Promis
     // Reuse the enriched profile query and resolver for cosmetics, level and favourites (self view: details always
     // visible); ranks and badges are not part of the account.
     const [row, profile, supervision] = await Promise.all([
-      app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [userId]).then((r) => r.rows[0] as MeRow),
+      // the membership the apps show is the account's own or its family's plan, whichever lasts longer
+      app.db.query<MeRow>(`SELECT *, ${premiumUntilSql('users')} AS plus_until FROM users WHERE id = $1`, [userId]).then((r) => r.rows[0] as MeRow),
       social.profile(userId, userId, { badges: false }),
       // null for everyone but a supervised teen; read only when the session found a live parent link (parental/supervision.ts)
       knownUnsupervised(userId) ? null : supervisionOf(app.db, userId),
@@ -213,8 +231,13 @@ export function createMeReader(app: FastifyInstance): (userId: string) => Promis
       selectedAvatarKey: row.selected_avatar_key,
       equippedBackgroundSku: row.equipped_background_sku,
       equippedIconSku: row.equipped_icon_sku,
-      premiumUntil: row.premium_until,
+      equippedTagSku: row.equipped_tag_sku,
+      // the word tag as others see it, worn only while owned
+      tag: publicDto.tag ?? null,
+      premiumUntil: row.plus_until ?? null,
       supervision,
+      // a child's parent, and whether this session is the one opened on the parent's phone, which the PIN gives back
+      ...(row.kind === 'child' ? { child: await childSessionOf(app.db, userId, currentRequest()?.user?.familyId ?? null) } : {}),
     };
   };
 }
@@ -347,7 +370,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   app.delete(
     '/me/sessions/:id',
     {
-      schema: { params: z.object({ id: z.uuid() }) },
+      schema: { params: z.object({ id: lowerUuid() }) },
       preHandler: requireAuth,
     },
     async (req) => {
@@ -552,6 +575,8 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
       // nor may a guest join the leagues. Language, time zone, country and the speaking setting stay open to a guest.
       const published = body.displayName !== undefined || body.bio !== undefined || body.username !== undefined;
       if (req.user!.guest === true && (published || body.leaguesEnabled !== undefined)) throw guestAccountError();
+      // A child's name is their parent's to set, and a child takes no part in leagues; the language, zone and speaking stay theirs.
+      if (req.user!.child === true && (published || body.leaguesEnabled !== undefined || body.country !== undefined)) throw childRefused();
       if (published) await assertUnrestricted(app.db, userId, 'post');
 
       const sets: string[] = [];

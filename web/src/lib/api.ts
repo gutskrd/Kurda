@@ -15,6 +15,7 @@ import {
 import { restrictionOf, restrictionText, suspensionOf } from '../reports/restriction';
 import { limitErrorText } from './limits';
 import { deviceId } from './deviceId';
+import { takeEarlyAnswer } from './earlyAnswers';
 import { durationInWords } from './timeWords';
 import { usernameRefusalText } from './usernameText';
 import { rejectionText } from '../pictures/words';
@@ -198,15 +199,20 @@ export class ApiClient {
       const withAuth = tokens && !headers.authorization ? { ...headers, authorization: `Bearer ${tokens.accessToken}` } : headers;
       let res: Response;
       try {
-        res = await this.timedFetch(
-          `${this.baseUrl}${path}`,
-          {
-            method,
-            headers: withAuth,
-            body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-          },
-          options.signal,
-        );
+        // A plain GET may already have been asked while the session was being checked (lib/earlyAnswers.ts).
+        const early = method === 'GET' && !options.headers && !options.signal ? takeEarlyAnswer(path, tokens?.accessToken) : null;
+        // Awaited only when there is one, so a request with none starts in the same turn, as it always has.
+        res =
+          (early && (await early)) ??
+          (await this.timedFetch(
+            `${this.baseUrl}${path}`,
+            {
+              method,
+              headers: withAuth,
+              body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+            },
+            options.signal,
+          ));
       } catch {
         return { ok: false, error: { kind: 'network', message: 'network request failed' } satisfies ApiError };
       }
@@ -214,6 +220,12 @@ export class ApiClient {
     };
 
     const first = await attempt();
+    // A child's profile is the phone app's alone: the website never keeps one signed in, and says why.
+    if (!first.ok && first.error.code === 'CHILD_PROFILE_PHONE_ONLY' && this.storage.get()) {
+      this.storage.clear();
+      this.onLogout();
+      return first;
+    }
     if (!first.ok && first.error.code === 'ACCOUNT_DISABLED' && this.storage.get()) {
       // Suspended mid-session: the refresh answers ACCOUNT_SUSPENDED with the reasons for onSuspended, or a fresh token
       // when the suspension has just ended.
@@ -363,6 +375,8 @@ export const CODE_COPY: Record<string, MessageKey> = {
   ACCOUNT_NOT_ACTIVATED: 'error.notActivated',
   VERIFICATION_EMAIL_LIMIT: 'error.code.verificationEmailLimit',
   ACCOUNT_DISABLED: 'error.code.accountDisabled',
+  CHILD_PROFILE_PHONE_ONLY: 'error.code.childPhoneOnly',
+  FAMILY_LINK_INVALID: 'family.link.invalid',
   CODE_EXPIRED: 'error.code.codeExpired',
   INVALID_CODE: 'error.code.invalidCode',
   INVALID_CREDENTIALS: 'error.code.invalidCredentials',
@@ -508,6 +522,17 @@ export function describeError(error: ApiError, t: Translate, locale?: string): s
     default:
       return error.message || t('error.generic');
   }
+}
+
+const NO_SESSION: TokenStorage = { get: () => null, set: () => undefined, clear: () => undefined };
+let anonymous: ApiClient | null = null;
+
+/**
+ * A client that never sends the session, for reads that are the same for everyone, so the browser may keep the answer
+ * (http/cache-policy.ts on the server) and no token refresh can start beside the session's own.
+ */
+export function publicClient(): ApiClient {
+  return (anonymous ??= new ApiClient(API_URL, NO_SESSION, () => undefined));
 }
 
 /** Build a client bound to browser storage. `onLogout` re-renders the app. */

@@ -139,7 +139,7 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
   });
 
   it('never lets an admin change their own balance', async () => {
-    const own = await svc.adjustWallet(adminId, adminId, 'gems', 1000, 'for me');
+    const own = await svc.adjustWallet(adminId, adminId, 'zer', 1000, 'for me');
     expect(own).toEqual({ ok: false, code: 'SELF_ADJUST' });
     const ledger = await pool.query(`SELECT 1 FROM wallet_ledger WHERE user_id = $1 AND reason = 'admin_adjustment'`, [adminId]);
     expect(ledger.rowCount).toBe(0);

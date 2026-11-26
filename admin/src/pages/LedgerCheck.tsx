@@ -10,7 +10,8 @@ import { Badge, Button, Section, Table, UserLink, errorLine, useToast, type Colu
 
 interface Mismatch {
   userId: string;
-  currency: 'zer' | 'gems';
+  /** 'zer', the one currency; a retired one would still be named here as the server sends it. */
+  currency: string;
   balance: number;
   ledgerSum: number;
 }
@@ -22,7 +23,7 @@ interface ReconcileReport {
   mismatches: Mismatch[];
 }
 
-const CURRENCY_LABEL: Record<Mismatch['currency'], string> = { zer: 'Zêr', gems: 'Gems' };
+const CURRENCY_LABEL: Readonly<Record<string, string>> = { zer: 'Zêr' };
 
 const COLUMNS: ReadonlyArray<Column<Mismatch>> = [
   { key: 'who', header: 'Person', card: 'title', cell: (m) => <UserLink user={{ id: m.userId }} /> },

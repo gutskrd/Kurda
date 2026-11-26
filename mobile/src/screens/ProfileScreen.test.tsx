@@ -46,11 +46,18 @@ function open({ league = null as { tier: string } | null, bio = 'Fêrî Kurmanc�
         ...me,
       },
     }),
-    'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
+    'GET /me/wallet': ok({ balances: { zer: 1240 } }),
     'GET /friends?limit=1': ok({ friends: [], total: 23 }),
     'GET /me/inventory': ok({ items: [] }),
-    // The badge count comes from the public profile; `/me` does not send one.
-    'GET /users/u1': ok({ ranks: [], league, badges: [], frameSku: null, achievements: 4 }),
+    // The badges come from the public profile; `/me` does not send them.
+    'GET /users/u1': ok({
+      ranks: [],
+      league,
+      badges: [{ key: 'agir', family: 'habit', tier: 1, tierKey: 'sifir' }],
+      earnedBadges: ['ders', 'agir', 'roj', 'dubare'].map((key) => ({ key, family: 'learning', tier: 1, tierKey: 'sifir', earnedAt: null, rarity: null })),
+      frameSku: null,
+      achievements: 4,
+    }),
     'GET /users/u1/activity': ok({ items: [] }),
     [TODAY_PATH]: ok(todayView({ streak: { current: 6, longest: 14, freezes: 1, daysLearned: 31 } })),
   });
@@ -62,7 +69,7 @@ function open({ league = null as { tier: string } | null, bio = 'Fêrî Kurmanc�
 }
 
 describe('your profile', () => {
-  it('shows the face with the name, the handle, the year and who can see it, then the level and three figures', async () => {
+  it('shows the face with the name, the handle and the year, then the level and three figures', async () => {
     open();
     expect(await screen.findByText('23')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Profile' })).toBeTruthy();
@@ -71,7 +78,7 @@ describe('your profile', () => {
     expect(screen.getByText('Joined 2026')).toBeTruthy();
     expect(screen.getByText('Fêrî Kurmancî dibim.')).toBeTruthy();
     expect(screen.getByRole('progressbar', { name: 'Level 5, 160 XP to level 6' })).toBeTruthy();
-    // Streak, XP and friends, in one row; how many badges is on the badge case in the highlights.
+    // Streak, XP and friends, in one row; badges are in the row beside the handle.
     const row = screen.getByTestId('profile-facts');
     // XP shortened beside the face, and said whole to a screen reader
     expect(row.textContent).toMatch(/6.*Streak.*1\.3K.*XP.*23.*Friends/);
@@ -79,17 +86,29 @@ describe('your profile', () => {
     expect(screen.getByLabelText('1,340 XP')).toBeTruthy();
     expect(screen.getByRole('button', { name: '23 Friends' })).toBeTruthy();
     expect(row.textContent).not.toMatch(/Badges/);
-    expect(await screen.findByRole('button', { name: 'Badges: 4' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Your collection, Badges: 4' })).toBeTruthy();
     // No Zêr line left on its own under the figures: it is in the card only you see.
     expect(screen.queryByText('1,240 Zêr')).toBeNull();
   });
 
-  it('says who can see it and opens where that is changed, and offers to write a bio where there is none', async () => {
+  it('offers to write a bio where there is none', async () => {
     open({ bio: null });
-    fireEvent.click(await screen.findByRole('link', { name: 'Who can see this: Hevalo members' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('SettingsPage', { page: 'visibility' });
-    fireEvent.click(screen.getByRole('link', { name: 'Add a few words about yourself' }));
+    fireEvent.click(await screen.findByRole('link', { name: 'Add a few words about yourself' }));
     expect(navigation.navigate).toHaveBeenCalledWith('EditProfile');
+  });
+
+  // Who can open it is set from Edit profile, and who gave what you wear is told in your collection, not here.
+  it('says neither who can see it nor who gave what you wear', async () => {
+    const gifter = { id: 'u9', username: 'zana' };
+    open({
+      me: {
+        icon: { sku: 'icon-star', assetKey: 'icons/star.png', url: '/cosmetics/icons/star.png', giftedBy: gifter },
+        background: { sku: 'bg-sky', assetKey: 'backgrounds/sky.webp', type: 'image', url: '/cosmetics/backgrounds/sky.webp', giftedBy: gifter },
+      },
+    });
+    expect(await screen.findByText('Joined 2026')).toBeTruthy();
+    expect(screen.queryByText(/Hevalo members/)).toBeNull();
+    expect(screen.queryByText(/zana/)).toBeNull();
   });
 
   it('keeps the numbers only you see behind a row that says so, Zêr leading to the shop', async () => {
@@ -103,12 +122,13 @@ describe('your profile', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Shop');
   });
 
-  it('opens the friends from their count, the badges from their case, and the daily view from the streak', async () => {
+  it('opens the friends from their count, your collection from the badge row, and the daily view from the streak', async () => {
     open();
     fireEvent.click(await screen.findByRole('button', { name: '23 Friends' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Friends');
-    fireEvent.click(await screen.findByRole('button', { name: 'Badges: 4' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Badges');
+    fireEvent.click(await screen.findByRole('button', { name: 'Your collection, Badges: 4' }));
+    expect(await screen.findByRole('button', { name: 'Customise your badges' })).toBeTruthy();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Close' })[0]!);
     fireEvent.click(await screen.findByRole('button', { name: 'Streak, 6 days' }));
     // The daily view, with the streak by its fire and the longest one.
     expect(await screen.findByLabelText('6 day streak')).toBeTruthy();
@@ -162,7 +182,7 @@ describe('your profile', () => {
       </UnreadProvider>,
     );
     expect(await screen.findByRole('button', { name: '0 Friends' })).toBeTruthy();
-    await waitFor(() => expect(screen.queryByTestId('profile-highlights')).toBeNull());
+    await waitFor(() => expect(screen.queryByTestId('profile-badge-row')).toBeNull());
     expect(screen.queryByText(/Badges/)).toBeNull();
   });
 

@@ -1,16 +1,20 @@
 /**
- * Three rules for every screen, on the website and the phone alike:
+ * The rules for every screen, on the website and the phone alike:
  *
  * - One face: a font family is the one token (`var(--font-sans)` on the website, `typography.fontFamily` on the phone).
  * - Two sizes: a text size is `var(--text)` or `var(--text-title)` on the website, `typography.sizes.text` or
  *   `typography.sizes.title` on the phone. A size handed down as a name (a component's `size`) is allowed; a number or
  *   sum written at the call is not. Either size may shrink, never grow, to fit a box that cannot grow with it.
- * - One accent, on the main button alone: only the main button's styles may name it (`--accent` in ui.css's
- *   `.btn-primary`, `colors.accent` in the phone's button and lesson-button tones), the road's own main button (the
- *   stop to do now and the card that starts its lesson), and the lesson's own (Check, at the foot of every exercise).
+ * - The base, one accent, gold for rewards and Hevalo+: the page and its surfaces and ink, one accent (`--accent*`,
+ *   `colors.accent*`) and no second colour beside it (no `--secondary*`, `colors.secondary*`, nor a colour theme to
+ *   switch); the chrome (the website's shell stylesheets, the phone's theme and navigation) takes every colour from
+ *   the tokens rather than writing one with a hue of its own; and Hevalo+'s gold only on its button (`--plus-*` only in
+ *   ui.css's `.btn-plus` rules and `.btn-plus` only in components/PlusButton.tsx, `PLUS_STYLE` only in
+ *   theme/PlusButton.tsx). The reward gold (`--gold`, `colors.gold`) stays free for whatever is earned.
  *
- * Drawings keep their own type and colour: a letter's paper scales its writing with the sheet. Those files are listed
- * below with why. Runs inside `npm run lint` for the website (`web`) and the phone (`mobile`).
+ * Drawings keep their own type and colour: a letter's paper scales its writing with the sheet, and the road's units
+ * wear their own colours. Those files are listed below with why. Runs inside `npm run lint` for the website (`web`)
+ * and the phone (`mobile`).
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
@@ -36,9 +40,25 @@ const code = (src) => src.replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g
 
 const wrong = [];
 
+/** A literal colour with a hue of its own (its channels spread by `MIN_CHROMA` or more), not a grey or a shadow. */
+const MIN_CHROMA = 24;
+function huedColours(src) {
+  const out = [];
+  for (const m of src.matchAll(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b|rgba?\((\d+),\s*(\d+),\s*(\d+)/g)) {
+    const hex = m[1] && m[1].length === 3 ? [...m[1]].map((c) => c + c).join('') : m[1];
+    const [r, g, b] = hex ? [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)) : [m[2], m[3], m[4]].map(Number);
+    if (Math.max(r, g, b) - Math.min(r, g, b) >= MIN_CHROMA) out.push({ index: m.index, text: m[0] });
+  }
+  return out;
+}
+/** A second colour beside the accent, or a colour theme to switch, in either app. */
+const SECOND = /--secondary\b|--secondary-[a-z]+|data-palette|dataset\.palette|\bsecondaryText\b|\btextOnSecondary\b|\bcolors\.secondary\b/g;
+
 if (app === 'web') {
   /** A letter's paper is a drawn sheet: its writing and notes scale with the sheet, as a picture does. */
   const SIZE_EXEMPT = new Set(['letters/paper.css']);
+  /** The shell's stylesheets: every colour in them comes from the tokens. */
+  const CHROME = new Set(['styles/ui.css', 'styles/shell.css', 'styles/layout.css', 'styles/base.css', 'styles/settings.css', 'styles/filter.css', 'styles/reach.css', 'styles/glass.css', 'styles/motion.css']);
   for (const f of files(SRC, (n) => n.endsWith('.css'))) {
     const src = code(readFileSync(f, 'utf8'));
     const name = rel(f);
@@ -55,16 +75,16 @@ if (app === 'web') {
       if (v === 'var(--font-sans)' || v === 'inherit') continue;
       wrong.push(`${name}:${lineOf(src, m.index)} a second face: font-family: ${v}`);
     }
+    for (const m of src.matchAll(SECOND)) wrong.push(`${name}:${lineOf(src, m.index)} a second colour beside the accent: ${m[0]}`);
+    if (CHROME.has(name)) {
+      for (const c of huedColours(src)) wrong.push(`${name}:${lineOf(src, c.index)} a colour of the chrome's own, not from the tokens: ${c.text}`);
+    }
     if (name !== 'styles/tokens.css') {
-      for (const m of src.matchAll(/var\(--accent(?:-[a-z]+)?\)/g)) {
+      for (const m of src.matchAll(/var\(--plus-[a-z-]+\)/g)) {
         const before = src.slice(0, m.index);
         const selector = before.slice(before.lastIndexOf('}') + 1, before.lastIndexOf('{')).trim();
-        if (name === 'styles/ui.css' && /^\.btn-primary\b/.test(selector)) continue;
-        // The road's main button: the stop to do now and the card it opens, where the lesson is started.
-        if (name === 'learn/path.css' && /^(:root\[data-theme='light'\] )?\.lp-(pop\.is-go|node\.is-current)\b/.test(selector)) continue;
-        // The lesson's main button: Check, the colours its bar hands to the one button it holds.
-        if (name === 'styles/learn.css' && selector === '.lesson-bar') continue;
-        wrong.push(`${name}:${lineOf(src, m.index)} the accent off the main button: ${selector}`);
+        if (name === 'styles/ui.css' && /^\.btn-plus\b/.test(selector)) continue;
+        wrong.push(`${name}:${lineOf(src, m.index)} Hevalo+'s gold off its button: ${selector}`);
       }
     }
   }
@@ -77,8 +97,13 @@ if (app === 'web') {
       if (/^[^'"]*('var\(--text(-title)?\)'[^'"]*)+$/.test(v) && !/\d(px|rem|em)\b/.test(v)) continue;
       wrong.push(`${rel(f)}:${lineOf(src, m.index)} a third text size: fontSize: ${v}`);
     }
-    for (const m of src.matchAll(/var\(--(?:accent|font-display|text-(?:body|secondary|caption|section|tab|title-lg))\b[^)]*\)/g)) {
+    for (const m of src.matchAll(/var\(--(?:plus|font-display|text-(?:body|secondary|caption|section|tab|title-lg))\b[^)]*\)/g)) {
       wrong.push(`${rel(f)}:${lineOf(src, m.index)} off the rules: ${m[0]}`);
+    }
+    for (const m of src.matchAll(SECOND)) wrong.push(`${rel(f)}:${lineOf(src, m.index)} a second colour beside the accent: ${m[0]}`);
+    for (const m of src.matchAll(/\bbtn-plus\b/g)) {
+      if (rel(f) === 'components/PlusButton.tsx') continue;
+      wrong.push(`${rel(f)}:${lineOf(src, m.index)} Hevalo+'s button outside PlusButton`);
     }
   }
 } else {
@@ -88,10 +113,12 @@ if (app === 'web') {
    */
   const SIZE_EXEMPT = new Set(['letters/PaperSheet.tsx', 'letters/LetterComposer.tsx']);
   /**
-   * The main button (ClayButton), the lesson's Check (tileButtonTone) and an empty screen's way out: the only places the
-   * accent is worn, with the road's own main button, the stop to do now and the card that starts its lesson.
+   * The chrome: the theme's parts and the navigation take every colour from the palette. The palette is where those
+   * colours are written; an event's theme is its own art; the sign-in buttons draw the providers' marks in their own
+   * colours, as their rules require; and the press outline is a development aid that is never shipped on.
    */
-  const ACCENT_ALLOWED = new Set(['theme/glass.tsx', 'theme/tileTones.ts', 'theme/palette.ts', 'theme/EmptyState.tsx', 'coursemap/SkillNodeView.tsx', 'coursemap/StopCard.tsx']);
+  const CHROME = (name) => /^(theme|navigation)\//.test(name);
+  const CHROME_EXEMPT = new Set(['theme/palette.ts', 'theme/eventThemes.ts', 'theme/BrandMark.tsx', 'theme/Pressable.tsx']);
   for (const f of files(SRC, (n) => /\.tsx?$/.test(n) && !/\.test\.tsx?$/.test(n))) {
     const src = code(readFileSync(f, 'utf8'));
     const name = rel(f);
@@ -112,9 +139,13 @@ if (app === 'web') {
       if (m[1].trim() === 'typography.fontFamily' || name === 'theme/tokens.ts') continue;
       wrong.push(`${name}:${lineOf(src, m.index)} a second face: fontFamily: ${m[1].trim()}`);
     }
-    for (const m of src.matchAll(/\bcolors\.accent\b/g)) {
-      if (ACCENT_ALLOWED.has(name)) continue;
-      wrong.push(`${name}:${lineOf(src, m.index)} the accent off the main button`);
+    for (const m of src.matchAll(SECOND)) wrong.push(`${name}:${lineOf(src, m.index)} a second colour beside the accent: ${m[0]}`);
+    if (CHROME(name) && !CHROME_EXEMPT.has(name)) {
+      for (const c of huedColours(src)) wrong.push(`${name}:${lineOf(src, c.index)} a colour of the chrome's own, not from the palette: ${c.text}`);
+    }
+    for (const m of src.matchAll(/\bPLUS_STYLE\b/g)) {
+      if (name === 'theme/PlusButton.tsx') continue;
+      wrong.push(`${name}:${lineOf(src, m.index)} Hevalo+'s gold off its button`);
     }
     for (const m of src.matchAll(/const [A-Z_]+ = (\d+(?:\.\d+)?);/g)) {
       // A size constant read as a text size elsewhere in the file is a third size under a name.
@@ -127,7 +158,7 @@ if (app === 'web') {
 }
 
 if (wrong.length) {
-  console.error(`design rules: ${wrong.length} place(s) break one face, two sizes or one accent:\n  ${wrong.join('\n  ')}`);
+  console.error(`design rules: ${wrong.length} place(s) break one face, two sizes, or the base, one accent, gold for rewards and Hevalo+:\n  ${wrong.join('\n  ')}`);
   process.exit(1);
 }
-console.log('design rules: one face, two sizes, and the accent on the main button alone.');
+console.log('design rules: one face, two sizes, and the base, one accent, gold for rewards and Hevalo+.');

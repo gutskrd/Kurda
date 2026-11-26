@@ -52,4 +52,4 @@ flagged  tier  → GET /admin/antibot/flagged  (human review)
   distributions, session-length patterns.
 - Wire `requiresChallenge` into the lesson/practice session-start response so the
   client always knows without a separate call.
-- Currency (Zêr/gems) reversal alongside XP for confirmed bots (wallet ledger).
+- Currency (Zêr) reversal alongside XP for confirmed bots (wallet ledger).

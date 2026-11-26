@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth } from '../plugins/auth.js';
 import { requireAdmin } from './routes.js';
 import type { AdminTotpService } from './totp-service.js';
@@ -8,10 +9,10 @@ import { auditActionName, auditTargetId, auditTargetType, isAuditableAdminMutati
 import { isStaffRoute } from './admin-gate.js';
 
 const searchQuery = z.object({
-  adminId: z.uuid().optional(),
+  adminId: lowerUuid().optional(),
   action: z.string().max(120).optional(),
   targetId: z.string().max(200).optional(),
-  beforeId: z.uuid().optional(),
+  beforeId: lowerUuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
 });
 

@@ -1,80 +1,101 @@
 /*
- * Hevalo's design tokens in two schemes, matching the phone (mobile/src/theme/palette.ts). Three rules hold everywhere:
- * one face, two text sizes (`--text`, `--text-title`), and one accent, the icon's violet, on the main button alone
- * (`--accent`, worn only by `.btn-primary`). Everything else is the page, its ink and the greys between; what is chosen
- * or earned is shown in ink, weight and shape. Green and red only ever say right and wrong, never alone.
+ * Hevalo's design tokens in two schemes, matching the phone (mobile/src/theme/palette.ts) and the slate page and one
+ * accent in @kurda/shared (themes.ts). Three rules hold everywhere: one face, two text sizes (`--text`,
+ * `--text-title`), and one colour on the page: the accent (`--accent*`), worn by the main buttons, progress bars, a
+ * switch that is on, links, focus rings and the stop to do now; what is chosen is shown in the ink. Gold is earned, and
+ * Hevalo+'s own button has its own gold (`--plus-*`). Green and red say right and wrong, never alone.
  *
- * Dark is the default on :root; light redefines the same names under `data-theme="light"`, set by theme/theme.ts.
- * Colours that differ by scheme belong here. Text colours meet WCAG AA (4.5:1, or 3:1 for large text and control
- * edges), with close ones noted.
+ * Dark is the default on :root; light redefines the same names under `data-theme="light"`, set by theme/theme.ts. A
+ * stage that is night in either scheme (a gift's moment) takes the dark names with `.scheme-night`, as the phone's
+ * DarkScheme does. Text colours meet WCAG AA (4.5:1, or 3:1 for large text and control edges).
  */
-:root {
-  /* the single, consistent page background behind every surface */
-  --app-bg: #100e1d;
+:root,
+.scheme-night {
+  /* the cool slate every surface sits on: never pure black, which reads as a screen switched off */
+  --app-bg: #131c20;
 
-  /* ink (light text on the base color): white with the page's violet in it */
-  --ink: #f3f1fb;
-  --ink-2: rgba(243, 241, 251, 0.86);
-  /* secondary text: ≈ #A6A4B0, 7.8:1 on the page, 6.8:1 on a card */
-  --ink-3: rgba(243, 241, 251, 0.66);
-  /* the quietest text a reader still has to read (placeholders, counts): 5.8:1 on the page, 5.1:1 on a card */
-  --ink-4: rgba(243, 241, 251, 0.56);
+  /* ink: a cool near-white, and its greys from the same slate */
+  --ink: #eef3f5;
+  --ink-2: #d3dde1;
+  /* secondary text: 7.9:1 on the page, 6.6:1 on a raised surface */
+  --ink-3: #a3b2b9;
+  /* the quietest text a reader still has to read (placeholders, counts): 6.2:1 on the page, 5.2:1 raised */
+  --ink-4: #8b9da6;
 
-  /* raised surfaces, lightest last: white laid thinly over the page's indigo, so each step keeps its colour */
-  --bg: rgba(255, 255, 255, 0.06); /* card/input fill */
-  --surface: rgba(255, 255, 255, 0.05);
-  --surface-2: rgba(255, 255, 255, 0.1);
-  --surface-3: rgba(255, 255, 255, 0.16);
+  /*
+   * Raised surfaces, flat and solid, each a step off the page: a card (#1a262b), what sits in it (#1f2b30) and the third
+   * step (#2e3c43). The translucent steps are the same slate laid over whatever is beneath, for hovers and chips.
+   */
+  --bg: #1a262b; /* card/input fill */
+  --surface: #1a262b;
+  --surface-2: rgba(156, 190, 204, 0.1);
+  --surface-3: rgba(156, 190, 204, 0.2);
   /* an opaque raised surface, for things that float over the page (menus, sheets) */
-  --surface-solid: #27243a;
-  /* a panel that floats over the page — a menu, a toast, a dialog — near-opaque, and frosted where it is glass */
-  --panel-bg: #1e1b2e;
-  --panel-glass: rgba(20, 17, 33, 0.86);
+  --surface-solid: #1f2b30;
+  /*
+   * a panel that floats over the page — a menu, a toast, a dialog — near-opaque, and frosted where it is glass: the
+   * floating chrome's neutral grey rather than the page's slate, so everything that floats is one material
+   */
+  --panel-bg: #23272b;
+  --panel-glass: rgba(35, 39, 43, 0.92);
   /* the ray of light that crosses a placeholder while it waits (ui.css): its middle, and its edges */
-  --skeleton-ray: rgba(255, 255, 255, 0.14);
-  --skeleton-ray-soft: rgba(255, 255, 255, 0.05);
-  --separator: rgba(255, 255, 255, 0.08);
-  --border: rgba(255, 255, 255, 0.12);
-  --border-strong: rgba(255, 255, 255, 0.26);
+  --skeleton-ray: rgba(156, 190, 204, 0.16);
+  --skeleton-ray-soft: rgba(156, 190, 204, 0.06);
+  --separator: rgba(238, 243, 245, 0.08);
+  --border: rgba(238, 243, 245, 0.12);
+  --border-strong: rgba(238, 243, 245, 0.24);
   /* the edge of a field you type into: 3:1 against the page, as a control's edge must be */
-  --input-border: rgba(255, 255, 255, 0.36);
-  --input-bg: rgba(255, 255, 255, 0.07);
+  --input-border: rgba(238, 243, 245, 0.36);
+  --input-bg: #1a262b;
+  /* an outlined button's edge and the lip it stands on: the third surface step */
+  --btn-edge: #2e3c43;
 
   /* The top bar and floating panels are solid so no words show through; only the footer stays frosted (`--chrome-bg`). */
-  --nav-bg: #100e1d;
-  --chrome-bg: rgba(16, 14, 29, 0.78);
-  --scrim: rgba(4, 2, 12, 0.6);
+  --nav-bg: #131c20;
+  --chrome-bg: rgba(19, 28, 32, 0.86);
+  --scrim: rgba(5, 9, 11, 0.62);
 
-  /* the one accent, on the main button alone: the violet lifted for the night, the day's ink on it (8.1:1) */
-  --accent: #bf9bfe;
-  --accent-hover: #ccb0ff;
-  --accent-ink: #14112e;
-  /* what is pressable or chosen elsewhere: the ink itself, with the page written on it */
-  --primary: #f3f1fb;
+  /* what is pressable elsewhere: the ink itself, with the page written on it */
+  --primary: #eef3f5;
   --primary-hover: #ffffff;
-  --primary-ink: #14112e;
-  /* the ink as a faint ground: a chosen row, a chip that is on */
-  --primary-soft: rgba(243, 241, 251, 0.1);
-  /* the capsule behind the chosen tab: the ink as a ground strong enough to read as the place you are on */
-  --capsule: rgba(243, 241, 251, 0.14);
+  --primary-ink: #131c20;
+  /* the ink as a faint ground: a chosen row */
+  --primary-soft: rgba(238, 243, 245, 0.1);
 
-  /* what is earned (XP, Zêr, the streak, medals): the ink, set apart by shape and weight */
-  --gold: #f3f1fb;
-  --gold-ink: #f3f1fb;
-  --gold-soft: rgba(243, 241, 251, 0.1);
+  /*
+   * The one accent (@kurda/shared ACCENT): bright Kurdish green by night. `--accent-lip` is the darker edge a main button
+   * stands on and presses into, `--accent-text` the accent as words and marks on the page.
+   */
+  --accent: #32d46b;
+  --accent-hover: #4be07f;
+  --accent-lip: #019a46;
+  --accent-ink: #0a2a17;
+  --accent-text: #32d46b;
+  --accent-soft: rgba(50, 212, 107, 0.14);
+
+  /* what is earned (XP, Zêr, the streak, medals): gold */
+  --gold: #f2b632;
+  --gold-ink: #f5c85a;
+  --gold-soft: rgba(242, 182, 50, 0.16);
+  /* words on a gold fill */
+  --on-gold: #2a1d05;
+  /* Hevalo+'s own button (ui.css `.btn-plus`): a rich gold with a gold edge, set apart from the accent */
+  --plus-fill: linear-gradient(180deg, #f8d374, #e8a928);
+  --plus-edge: #f8d98a;
+  --plus-ink: #2a1d05;
+  --plus-glow: rgba(242, 182, 50, 0.3);
   /* The game stage's lamp gold (games/game-stage.css), the same in both schemes, so it is not `--gold`. */
   --stage-gold: #f2b632;
   --stage-gold-lip: #a8791a;
   --stage-gold-ink: #2a1d05;
-  /*
-   * Chat bubbles: the reader's in the ink with the page written on it, the other person's a step off the page, each
-   * with its ink, so the thread, typing bubble and send button agree.
-   */
-  --bubble-mine: #f3f1fb;
-  --bubble-mine-ink: #14112e;
-  --bubble-theirs: #302c46;
-  --bubble-theirs-ink: #f3f1fb;
-  --gems: #f3f1fb;
+  /* the screen dimmed to the night behind a gift as it is opened, the same in both schemes */
+  --stage-dim: rgba(8, 13, 15, 0.92);
+  /* Chat bubbles: the reader's in the accent, the other person's a step off the page, each with its ink. */
+  --bubble-theirs: #253238;
+  --bubble-theirs-ink: #eef3f5;
+  --gems: #eef3f5;
+  /* the small tile behind the deer in the header's mark */
+  --brand-tile: #1f2b30;
   /*
    * A heart given is red and a post saved is yellow, as everywhere people like and keep things; only the glyph wears
    * them, never the count beside it. A saved bookmark has a deeper edge by day, where yellow alone is faint on white.
@@ -82,6 +103,7 @@
   --like: #ff5a6a;
   --saved: #ffc83d;
   --saved-edge: #ffc83d;
+  /* wrong, and right: their own colours (@kurda/shared ANSWER), never the accent's */
   --danger: #ff9c90;
   --danger-soft: rgba(255, 120, 105, 0.16);
   /* a filled destructive button, and the words on it (5.9:1) */
@@ -89,27 +111,23 @@
   /* something new waiting (an unread message, a gift): the small dot on a place, in the red every phone uses for it */
   --notice: #ff453a;
   --on-danger: #ffffff;
-  --success: #86e2a4;
-  --success-soft: rgba(87, 185, 107, 0.18);
-  /*
-   * A switch in the ink rather than green, which means right: on is the ink's track with the page's knob, off a mid grey
-   * with a white one. Tracks are 3:1 or more on every surface, knobs 3.3:1 or more on their track.
-   */
-  --switch-on: #f3f1fb;
-  --switch-on-thumb: #14112e;
-  --switch-off: #716e85;
-  --switch-off-thumb: #ffffff;
-  /* Something not reached yet, such as a higher league: a quiet grey shape with a lighter keyhole; not a control, so not held to 3:1. */
-  --locked: #2d2b3e;
-  --locked-mark: #55526a;
+  --success: #a0df8a;
+  --success-soft: rgba(160, 223, 138, 0.14);
+  /* A switch: on in the accent (below), off a slate grey with a light knob; tracks 3:1 or more on every surface. */
+  --switch-off: #6b7e87;
+  --switch-off-thumb: #eef3f5;
+  /* Something not reached yet, such as a higher league: a flat slate shape with a lighter keyhole; not a control. */
+  --locked: #2e3c43;
+  --locked-mark: #52656e;
   /* someone online: a dot in the ink, never the only sign of it */
-  --online: #f3f1fb;
+  --online: #eef3f5;
 
-  --focus: rgba(243, 241, 251, 0.7);
+  /* the ring round whatever the keyboard is on, in the accent */
+  --focus: #32d46b;
 
   /* glass mechanics */
   --glass-blur: 20px;
-  --glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --glass-rim: inset 0 1px 0 rgba(200, 225, 235, 0.08);
 
   /* type: the device's own face, for every script and every line */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -169,15 +187,22 @@
    */
   --shadow-control: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-raised: 0 6px 16px rgba(0, 0, 0, 0.12);
-  /* liquid glass on the floating chrome (glass.css; its graded tint is drawn by glass/lens.ts): any tint under that,
-     how it lifts the colours behind it, and its lift off the page; where a browser cannot bend the page, the tint is
-     deeper so words behind never fight the chrome's */
-  --glass-tint: transparent;
-  --glass-tint-still: rgba(30, 27, 46, 0.5);
+  /*
+   * The floating chrome's glass (glass.css): a neutral grey, cool rather than warm, that the page passes under blurred,
+   * with a hairline edge, a faint line of light along its top and a soft lift; deeper where a browser cannot blur. The
+   * chosen tab sits in a darker capsule inset in it, its glyph and name in `--tab-chosen`.
+   */
+  --glass-fill: rgba(42, 45, 49, 0.62);
+  --glass-fill-still: rgba(34, 37, 41, 0.94);
+  --glass-edge: rgba(255, 255, 255, 0.12);
+  --glass-shine: rgba(255, 255, 255, 0.09);
+  --tab-capsule: #000000;
+  --tab-capsule-fill: 0.34;
+  --tab-chosen: var(--accent-text);
   /* a control's disc where it stands on a drawing (a chapter's banner) */
-  --on-art: rgba(16, 14, 29, 0.6);
-  --glass-optics: saturate(1.7) brightness(0.92);
-  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+  --on-art: rgba(19, 28, 32, 0.6);
+  --glass-optics: blur(24px) saturate(1.6);
+  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
 
   /* layout */
   --container: 1120px;
@@ -191,62 +216,73 @@
 
 /* a finger is broader than the tip of a mouse pointer, and is aimed less exactly */
 @media (any-pointer: coarse) {
-  :root {
+  :root,
+  .scheme-night {
     --reach-min: 48px;
   }
 }
 
 /*
- * Light: a white page with a breath of violet, white cards and deep indigo ink; the violet, deep enough for white
- * button text (6.1:1), is the main button's alone. Green and red are deep enough to read as text.
+ * Light: a soft clean white page, light grey surfaces stepped down from it with a slate hairline, and dark slate ink.
+ * Green and red are deep enough to read as text.
  */
 :root[data-theme='light'] {
-  --app-bg: #f6f4fd;
+  --app-bg: #f7f9fa;
 
-  --ink: #14112e;
-  --ink-2: #2c2a46;
-  /* secondary: 6.3:1 on the page, 6.9:1 on a card */
-  --ink-3: #595870;
-  /* 4.7:1 on the page */
-  --ink-4: #6d6b85;
+  --ink: #17242b;
+  --ink-2: #2f3e46;
+  /* secondary: 5.7:1 on a surface */
+  --ink-3: #4f616a;
+  /* 4.8:1 on the page */
+  --ink-4: #5f717a;
 
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --surface-2: rgba(20, 17, 46, 0.06);
-  --surface-3: rgba(20, 17, 46, 0.1);
-  --surface-solid: #ffffff;
-  --panel-bg: #ffffff;
-  --panel-glass: rgba(255, 255, 255, 0.94);
-  /* on a light grey box the ray has to be nearly white to be seen crossing it */
-  --skeleton-ray: rgba(255, 255, 255, 0.85);
-  --skeleton-ray-soft: rgba(255, 255, 255, 0.4);
-  --separator: rgba(20, 17, 46, 0.08);
-  --border: rgba(20, 17, 46, 0.1);
-  --border-strong: rgba(20, 17, 46, 0.22);
-  --input-border: rgba(20, 17, 46, 0.42);
-  --input-bg: #ffffff;
+  --bg: #eef2f4;
+  --surface: #eef2f4;
+  --surface-2: rgba(23, 36, 43, 0.05);
+  --surface-3: rgba(23, 36, 43, 0.09);
+  --surface-solid: #fdfefe;
+  --panel-bg: #fdfefe;
+  --panel-glass: rgba(253, 254, 254, 0.94);
+  /* on a light box the ray has to be nearly white to be seen crossing it */
+  --skeleton-ray: rgba(253, 254, 254, 0.85);
+  --skeleton-ray-soft: rgba(253, 254, 254, 0.4);
+  --separator: rgba(23, 36, 43, 0.08);
+  --border: rgba(23, 36, 43, 0.1);
+  --border-strong: rgba(23, 36, 43, 0.22);
+  --input-border: rgba(23, 36, 43, 0.42);
+  --input-bg: #fdfefe;
+  --btn-edge: #d6dfe3;
 
-  --nav-bg: #ffffff;
-  --chrome-bg: rgba(246, 244, 253, 0.86);
-  --scrim: rgba(16, 12, 36, 0.42);
+  --nav-bg: #f7f9fa;
+  --chrome-bg: rgba(247, 249, 250, 0.88);
+  --scrim: rgba(10, 18, 22, 0.42);
 
-  --accent: #862be2;
-  --accent-hover: #780dd1;
+  --primary: #17242b;
+  --primary-hover: #2f3e46;
+  --primary-ink: #f7f9fa;
+  --primary-soft: rgba(23, 36, 43, 0.06);
+
+  /* the accent by day: the flag's deep green, with white words on it (4.7:1) */
+  --accent: #00863b;
+  --accent-hover: #007a36;
+  --accent-lip: #006129;
   --accent-ink: #ffffff;
-  --primary: #14112e;
-  --primary-hover: #2c2a46;
-  --primary-ink: #ffffff;
-  --primary-soft: rgba(20, 17, 46, 0.06);
-  --capsule: rgba(20, 17, 46, 0.15);
+  --accent-text: #007433;
+  --accent-soft: rgba(0, 134, 59, 0.1);
 
-  --gold: #14112e;
-  --gold-ink: #14112e;
-  --gold-soft: rgba(20, 17, 46, 0.06);
-  --bubble-mine: #14112e;
-  --bubble-mine-ink: #ffffff;
-  --bubble-theirs: #e7e4f1;
-  --bubble-theirs-ink: #14112e;
-  --gems: #14112e;
+  /* the sun's gold for fills and marks, a deeper ochre for words in gold (5.8:1 on the page) */
+  --gold: #e3a21a;
+  --gold-ink: #845a0f;
+  --gold-soft: rgba(227, 162, 26, 0.14);
+  --on-gold: #3a2604;
+  --plus-fill: linear-gradient(180deg, #f7cb5e, #e3a21a);
+  --plus-edge: #b97f12;
+  --plus-ink: #3a2604;
+  --plus-glow: rgba(227, 162, 26, 0.35);
+  --bubble-theirs: #e4eaed;
+  --bubble-theirs-ink: #17242b;
+  --gems: #17242b;
+  --brand-tile: #e4eaed;
   --like: #e0263f;
   --saved: #f5b400;
   --saved-edge: #a87600;
@@ -255,55 +291,77 @@
   --danger-fill: #b42318;
   --notice: #ff3b30;
   --on-danger: #ffffff;
-  /* 5.9:1 on a card, 4.8:1 on its own soft tint over a grey panel */
-  --success: #17723a;
-  --success-soft: rgba(26, 122, 58, 0.1);
-  --switch-on: #14112e;
-  --switch-on-thumb: #ffffff;
-  --switch-off: #7f7e91;
-  --switch-off-thumb: #ffffff;
-  --locked: #dfdeea;
-  --locked-mark: #a4a2b2;
-  --online: #14112e;
+  /* 5.1:1 on a surface */
+  --success: #3e731d;
+  --success-soft: rgba(62, 115, 29, 0.1);
+  --switch-off: #71838b;
+  --switch-off-thumb: #fdfefe;
+  --locked: #dce3e7;
+  --locked-mark: #9aabb3;
+  --online: #17242b;
 
-  --focus: rgba(20, 17, 46, 0.6);
+  --focus: #007433;
 
-  --glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --glass-rim: inset 0 1px 0 rgba(253, 254, 254, 0.7);
 
-  /* a shadow leans toward the ink rather than toward grey, so a raised thing stays clean */
-  --shadow-sm: 0 1px 3px rgba(46, 40, 74, 0.08);
-  --shadow: 0 8px 28px rgba(46, 40, 74, 0.1);
-  --shadow-lg: 0 24px 64px rgba(46, 40, 74, 0.16);
-  --shadow-control: 0 2px 8px rgba(46, 40, 74, 0.1);
-  --shadow-raised: 0 6px 16px rgba(46, 40, 74, 0.12);
-  --glass-tint: transparent;
-  --glass-tint-still: rgba(255, 255, 255, 0.55);
-  --on-art: rgba(255, 255, 255, 0.78);
-  --glass-optics: saturate(1.8) brightness(1.08);
-  --glass-shadow: 0 10px 30px rgba(46, 40, 74, 0.12), 0 0 0 0.5px rgba(46, 40, 74, 0.08), inset 0 0 0 0.5px rgba(255, 255, 255, 0.5);
+  /* a shadow in the slate's own blue-grey */
+  --shadow-sm: 0 1px 3px rgba(23, 36, 43, 0.08);
+  --shadow: 0 8px 28px rgba(23, 36, 43, 0.1);
+  --shadow-lg: 0 24px 64px rgba(23, 36, 43, 0.16);
+  --shadow-control: 0 2px 8px rgba(23, 36, 43, 0.1);
+  --shadow-raised: 0 6px 16px rgba(23, 36, 43, 0.12);
+  --glass-fill: rgba(250, 251, 252, 0.74);
+  --glass-fill-still: rgba(250, 251, 252, 0.96);
+  --glass-edge: rgba(23, 36, 43, 0.09);
+  --glass-shine: rgba(255, 255, 255, 0.9);
+  --tab-capsule: #17242b;
+  --tab-capsule-fill: 0.07;
+  --on-art: rgba(253, 254, 254, 0.78);
+  --glass-optics: blur(24px) saturate(1.8);
+  --glass-shadow: 0 6px 20px rgba(23, 36, 43, 0.1);
 
   color-scheme: light;
 }
 
 /*
- * The shared hues' classes, kept so a ground or a mark has its steps, now the page's greys: colour is the main
- * button's alone. `--hue-deep` on `--hue-tint` or `--hue-wash` still clears 7:1. Dark first, then light.
+ * What is chosen is shown in the ink, never a colour: the chosen tab's capsule and a chosen chip are faint grounds of
+ * the ink with its words, and the one picked among small pills is the ink filled. A switch that is on and your own chat
+ * bubble follow the accent. Cards are flat: no rim of light, only the step of their surface.
  */
-.hue-violet { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-indigo { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-blue { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-teal { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-green { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-gold { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-orange { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-red { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-.hue-pink { --hue-tint: #1d1b2c; --hue-wash: #282539; --hue-base: #8f8ca3; --hue-deep: #ebe9f5; }
-:root[data-theme='light'] .hue-violet { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-indigo { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-blue { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-teal { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-green { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-gold { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-orange { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-red { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
-:root[data-theme='light'] .hue-pink { --hue-tint: #f3f2f8; --hue-wash: #e8e6f0; --hue-base: #8a879e; --hue-deep: #1f1c38; }
+:root,
+.scheme-night {
+  --capsule: color-mix(in srgb, var(--ink) 14%, transparent);
+  --chosen-fill: var(--primary-soft);
+  --chosen-ink: var(--ink);
+  --chosen-edge: var(--ink);
+  --switch-on: var(--accent);
+  --switch-on-thumb: var(--accent-ink);
+  --bubble-mine: var(--accent);
+  --bubble-mine-ink: var(--accent-ink);
+  --card-rim: 0 0 0 transparent;
+  --picked-fill: var(--ink);
+  --picked-ink: var(--app-bg);
+}
+
+/*
+ * The shared hues' classes, kept so a ground or a mark has its steps, now the slate page's own: colour belongs to the
+ * accent. `--hue-deep` on `--hue-tint` or `--hue-wash` still clears 7:1. Dark first, then light.
+ */
+.hue-violet { --hue-tint: #1f2b30; --hue-wash: #2e3c43; --hue-base: #7d8e96; --hue-deep: #eef3f5; }
+.hue-indigo { --hue-tint: #1f2b30; --hue-wash: #2e3c43; --hue-base: #7d8e96; --hue-deep: #eef3f5; }
+.hue-blue { --hue-tint: #1f2b30; --hue-wash: #2e3c43; --hue-base: #7d8e96; --hue-deep: #eef3f5; }
+.hue-teal { --hue-tint: #1f2b30; --hue-wash: #2e3c43; --hue-base: #7d8e96; --hue-deep: #eef3f5; }
+.hue-green { --hue-tint: #1f2b30; --hue-wash: #2e3c43; --hue-base: #7d8e96; --hue-deep: #eef3f5; }
+.hue-gold { --hue-tint: #1f2b30; --hue-wash: #2e3c43; --hue-base: #7d8e96; --hue-deep: #eef3f5; }
+.hue-orange { --hue-tint: #1f2b30; --hue-wash: #2e3c43; --hue-base: #7d8e96; --hue-deep: #eef3f5; }
+.hue-red { --hue-tint: #1f2b30; --hue-wash: #2e3c43; --hue-base: #7d8e96; --hue-deep: #eef3f5; }
+.hue-pink { --hue-tint: #1f2b30; --hue-wash: #2e3c43; --hue-base: #7d8e96; --hue-deep: #eef3f5; }
+:root[data-theme='light'] .hue-violet { --hue-tint: #eef2f4; --hue-wash: #e4eaed; --hue-base: #7d8e96; --hue-deep: #17242b; }
+:root[data-theme='light'] .hue-indigo { --hue-tint: #eef2f4; --hue-wash: #e4eaed; --hue-base: #7d8e96; --hue-deep: #17242b; }
+:root[data-theme='light'] .hue-blue { --hue-tint: #eef2f4; --hue-wash: #e4eaed; --hue-base: #7d8e96; --hue-deep: #17242b; }
+:root[data-theme='light'] .hue-teal { --hue-tint: #eef2f4; --hue-wash: #e4eaed; --hue-base: #7d8e96; --hue-deep: #17242b; }
+:root[data-theme='light'] .hue-green { --hue-tint: #eef2f4; --hue-wash: #e4eaed; --hue-base: #7d8e96; --hue-deep: #17242b; }
+:root[data-theme='light'] .hue-gold { --hue-tint: #eef2f4; --hue-wash: #e4eaed; --hue-base: #7d8e96; --hue-deep: #17242b; }
+:root[data-theme='light'] .hue-orange { --hue-tint: #eef2f4; --hue-wash: #e4eaed; --hue-base: #7d8e96; --hue-deep: #17242b; }
+:root[data-theme='light'] .hue-red { --hue-tint: #eef2f4; --hue-wash: #e4eaed; --hue-base: #7d8e96; --hue-deep: #17242b; }
+:root[data-theme='light'] .hue-pink { --hue-tint: #eef2f4; --hue-wash: #e4eaed; --hue-base: #7d8e96; --hue-deep: #17242b; }

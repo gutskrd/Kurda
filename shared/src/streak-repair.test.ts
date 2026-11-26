@@ -1,28 +1,27 @@
 import { describe, expect, it } from 'vitest';
 import {
   PLUS_FREE_REPAIRS_PER_MONTH,
-  STREAK_REPAIR_COST_GEMS,
   STREAK_REPAIR_MIN_DAYS,
   STREAK_REPAIR_WINDOW_DAYS,
+  STREAK_WIN_BACK_SESSIONS,
+  freeRestoreAvailable,
   monthStart,
   repairLastDay,
   repairOpen,
-  repairPrice,
   repairStanding,
   streakEndedOn,
+  winsBack,
   type EndedStreak,
 } from './streak-repair.js';
-import { PLUS_DAILY_GEMS } from './plus.js';
 
 const ended = (over: Partial<EndedStreak> = {}): EndedStreak => ({ days: 12, lastActiveOn: '2026-11-03', restoredOn: null, ...over });
 
 describe('the rules for restoring a streak', () => {
   it('are the numbers the product was given', () => {
-    expect(STREAK_REPAIR_COST_GEMS).toBe(50);
+    expect(STREAK_WIN_BACK_SESSIONS).toBe(3);
     expect(STREAK_REPAIR_MIN_DAYS).toBe(3);
     expect(STREAK_REPAIR_WINDOW_DAYS).toBe(3);
     expect(PLUS_FREE_REPAIRS_PER_MONTH).toBe(1);
-    expect(PLUS_DAILY_GEMS).toBe(5);
   });
 
   it('ends a streak on the day after its last, and keeps the offer through the third day after that', () => {
@@ -49,15 +48,18 @@ describe('the rules for restoring a streak', () => {
     expect(repairStanding(ended(), '2026-11-08')).toBe('expired');
   });
 
-  it('costs the same whatever the length', () => {
-    expect(repairPrice({ plus: false, freeRepairsThisMonth: 0 })).toEqual({ costGems: 50, free: false });
+  it('wins a streak back with the third session of a day, whatever its length', () => {
+    expect(winsBack(0)).toBe(false);
+    expect(winsBack(2)).toBe(false);
+    expect(winsBack(3)).toBe(true);
+    expect(winsBack(5)).toBe(true);
   });
 
-  it('gives a Hevalo+ member the month’s first restore, and prices the next', () => {
-    expect(repairPrice({ plus: true, freeRepairsThisMonth: 0 })).toEqual({ costGems: 0, free: true });
-    expect(repairPrice({ plus: true, freeRepairsThisMonth: 1 })).toEqual({ costGems: 50, free: false });
-    // a free one used while a member does not make a later one free for somebody who no longer is
-    expect(repairPrice({ plus: false, freeRepairsThisMonth: 1 })).toEqual({ costGems: 50, free: false });
+  it('gives a Hevalo+ member the month’s first restore and no second', () => {
+    expect(freeRestoreAvailable({ plus: true, freeRepairsThisMonth: 0 })).toBe(true);
+    expect(freeRestoreAvailable({ plus: true, freeRepairsThisMonth: 1 })).toBe(false);
+    // a free one is never for somebody who is not a member now
+    expect(freeRestoreAvailable({ plus: false, freeRepairsThisMonth: 0 })).toBe(false);
   });
 
   it('counts free restores from the first of the calendar month', () => {

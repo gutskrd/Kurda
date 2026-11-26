@@ -4,6 +4,7 @@
  * still on sale, and their premium is active. Premium is checked against server time on every read, so access
  * ends on expiry with no revocation job and the equipped SKU is kept.
  */
+import { drawnGiftArtKey, giftInSeason } from '@kurda/shared';
 import { levelForXp, xpForLevel } from '../tags/level.js';
 import { avatarAssetUrl, effectiveAvatarKey } from './avatars.js';
 
@@ -94,10 +95,13 @@ export function uploadedArtKind(key: string): ArtKind | null {
   return m ? (m[1] as ArtKind) : null;
 }
 
-/** A built-in background or icon by its path under /cosmetics; plain file names only, so a key cannot leave the folder. */
+/**
+ * A built-in background or square picture by its path under /cosmetics: an icon's or a gift's drawn picture. Plain file
+ * names only, so a key cannot leave its folder.
+ */
 const BUILT_IN_ART: Record<ArtKind, RegExp> = {
   background: /^backgrounds\/[a-z0-9][a-z0-9._-]*\.(webp|png|jpg|jpeg|gif|mp4|webm)$/,
-  icon: /^icons\/[a-z0-9][a-z0-9._-]*\.(png|webp)$/,
+  icon: /^(icons|gifts)\/[a-z0-9][a-z0-9._-]*\.(png|webp)$/,
 };
 
 export function isBuiltInArtKey(kind: ArtKind, key: string): boolean {
@@ -112,18 +116,39 @@ export function cosmeticArtUrl(assetKey: string, publicUrl: PublicUrl): string |
   return isUploadedArtKey(assetKey) ? publicUrl(assetKey) : `${STATIC_BASE}/${assetKey}`;
 }
 
+/** The art key an item is shown with: its own, or for a gift with none, its drawn picture (null until it is drawn). */
+export function itemArtKey(category: string, assetKey: string | null, sku?: string): string | null {
+  if (assetKey) return assetKey;
+  return category === 'gift' && sku ? drawnGiftArtKey(sku) : null;
+}
+
 /**
  * Resolves a catalogue item's asset key to a public URL for browsing (shop, inventory, gifts, admin catalogue), the
  * same way `resolveCosmetics` does. Other items use an uploaded square picture when they have one; null otherwise.
- * Presentation only: access is enforced at equip.
+ * A gift passes its sku, which finds its drawn picture. Presentation only: access is enforced at equip.
  */
-export function cosmeticAssetUrl(category: string, assetKey: string | null, publicUrl: PublicUrl): string | null {
+export function cosmeticAssetUrl(category: string, storedKey: string | null, publicUrl: PublicUrl, sku?: string): string | null {
+  const assetKey = itemArtKey(category, storedKey, sku);
   if (!assetKey) return null;
-  // A shop frame is a file the site ships too; a season frame has none and is drawn by the apps.
-  if (category === 'background' || category === 'icon' || category === 'frame') return cosmeticArtUrl(assetKey, publicUrl);
+  // A shop frame is a file the site ships too, a gift is drawn and shipped, and a gift sticker is an app icon's picture;
+  // a season frame has none and is drawn by the apps.
+  if (category === 'gift') return isUploadedArtKey(assetKey) ? publicUrl(assetKey) : isBuiltInArtKey('icon', assetKey) ? cosmeticArtUrl(assetKey, publicUrl) : null;
+  if (category === 'background' || category === 'icon' || category === 'frame' || category === 'sticker') return cosmeticArtUrl(assetKey, publicUrl);
   // Any other item may have a square picture uploaded in the admin; without one the apps draw its glyph.
   if (uploadedArtKind(assetKey) === 'icon') return publicUrl(assetKey);
   return null;
+}
+
+/**
+ * Whether an item of the gifts' category can be given now: it has a picture to be seen by (drawn for it, or a square
+ * one an admin uploaded) and it is in its season. The one check the gift sheet and every send share, so nothing the
+ * sheet leaves out can be bought through the API. True for any other item, which this does not decide.
+ */
+export function giftOnOffer(item: { sku: string; category: string; assetKey: string | null }, now: Date = new Date()): boolean {
+  if (item.category !== 'gift') return true;
+  const key = itemArtKey(item.category, item.assetKey, item.sku);
+  const pictured = key !== null && (isUploadedArtKey(key) ? uploadedArtKind(key) === 'icon' : isBuiltInArtKey('icon', key));
+  return pictured && giftInSeason(item.sku, now);
 }
 
 /** The kind of uploaded art an item of a category is drawn with: a background's own, a square picture for everything else. */
@@ -133,6 +158,24 @@ export function artKindFor(category: string): ArtKind {
 
 export function isPremiumActive(premiumUntil: Date | null, now: Date = new Date()): boolean {
   return premiumUntil != null && premiumUntil.getTime() > now.getTime();
+}
+
+/**
+ * SQL: when the user behind `alias` stops being a Hevalo+ member, their own membership or their family's plan
+ * (family/), whichever lasts longer; read in place of `premium_until`, so `isPremiumActive` decides for both. NULL when
+ * neither was ever had. `alias` is always a literal from this codebase.
+ */
+export function premiumUntilSql(alias: string): string {
+  return `GREATEST(${alias}.premium_until, (
+    SELECT f.plus_until FROM family_members fm JOIN families f ON f.id = fm.family_id WHERE fm.user_id = ${alias}.id))`;
+}
+
+/**
+ * SQL: when the user behind `alias` stops having a member's Zêr (the daily Zêr, the members' box, every earned Zêr),
+ * read like `premiumUntilSql`. NULL for a child's profile, which a family plan covers for everything but money.
+ */
+export function memberZerUntilSql(alias: string): string {
+  return `CASE WHEN ${alias}.kind = 'child' THEN NULL ELSE ${premiumUntilSql(alias)} END`;
 }
 
 /**

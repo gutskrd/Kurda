@@ -1,5 +1,6 @@
 import type { WordSetId } from './word-sets/words.js';
 import { WORD_SET_CLIPS } from './word-sets/sounds.js';
+import { lessonAudioKey } from './lesson-audio.js';
 
 /**
  * Every sound on the alphabet page and every word in the word sets, by key: the apps play them, the admin records them,
@@ -155,3 +156,54 @@ export function isAlphabetClipKey(key: string): boolean {
 
 /** The longest recording worth keeping: a letter or a word with a breath either side. */
 export const ALPHABET_CLIP_MAX_SECONDS = 4;
+
+/**
+ * The word a clip says, keyed as a lesson recording is (`lessonAudioKey`), or null for a letter's sound: "ba" for b is
+ * said the way primers say it, so it is never another clip's word.
+ */
+export function alphabetClipWord(clip: AlphabetClip): string | null {
+  if (clip.group === 'kmr-sound' || clip.group === 'ckb-sound') return null;
+  const word = lessonAudioKey(clip.say);
+  return word === '' ? null : word;
+}
+
+const SAME_WORD = new Map<string, AlphabetClip[]>();
+for (const clip of ALPHABET_CLIPS) {
+  const word = alphabetClipWord(clip);
+  if (word === null) continue;
+  const at = `${clip.script}|${word}`;
+  SAME_WORD.set(at, [...(SAME_WORD.get(at) ?? []), clip]);
+}
+
+/** The other clips on these pages that say the same word in the same script, in page order: one take serves them all. */
+export function sameWordClips(clip: AlphabetClip): AlphabetClip[] {
+  const word = alphabetClipWord(clip);
+  if (word === null) return [];
+  return (SAME_WORD.get(`${clip.script}|${word}`) ?? []).filter((c) => c.key !== clip.key);
+}
+
+/** Where a clip's borrowed take is filed: another clip's key, or a lesson recording's. */
+export interface BorrowedTake<T> {
+  take: T;
+  store: 'alphabet' | 'lesson';
+  key: string;
+}
+
+/**
+ * The take a word plays when it has none of its own, so nobody records the same word twice: the same word under another
+ * key on these pages first, then the lessons' recording of it. A letter's sound never borrows, and a minimal pair borrows
+ * only from these pages, so both halves of a pair keep one voice. `own` holds takes by clip key, `lessons` by
+ * `lessonAudioKey`.
+ */
+export function borrowedAlphabetTake<T>(clip: AlphabetClip, own: ReadonlyMap<string, T>, lessons: ReadonlyMap<string, T>): BorrowedTake<T> | null {
+  if (own.has(clip.key)) return null;
+  const word = alphabetClipWord(clip);
+  if (word === null) return null;
+  for (const other of sameWordClips(clip)) {
+    const take = own.get(other.key);
+    if (take !== undefined) return { take, store: 'alphabet', key: other.key };
+  }
+  if (clip.group === 'pair') return null;
+  const take = lessons.get(word);
+  return take === undefined ? null : { take, store: 'lesson', key: word };
+}

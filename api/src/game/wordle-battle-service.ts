@@ -1,6 +1,8 @@
 import type pg from 'pg';
 import { type GameAccess, type InviteSummary, type LobbyCard } from '@kurda/shared';
 import { XpService } from '../xp/service.js';
+import { WalletService } from '../wallet/service.js';
+import { payOnlineWinSafely } from '../earn/wins.js';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { canJoin, mayHostOpen } from '../play/access.js';
 import {
@@ -793,6 +795,11 @@ export class WordleBattleService {
         WHERE p.battle_id = $1 AND p.user_id = v.user_id`,
       [battleId, placed.map((x) => x.userId), placed.map((x) => x.xp)],
     );
+    // a battle two people raced pays its winner Zêr too (earn/wins.ts)
+    if (raced) {
+      const players = ranked.filter((r) => guessed.has(r.userId)).map((r) => ({ userId: r.userId, place: r.rank }));
+      await payOnlineWinSafely(client, new WalletService(this.pool), { ref: `wordle-battle:${battleId}`, players }, undefined, now);
+    }
     await client.query(`UPDATE wordle_battles SET status = 'finished', finished_at = $2, updated_at = $2 WHERE id = $1`, [battleId, now]);
   }
 

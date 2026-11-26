@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { REACTION_CAPTION_AFTER_MS, REACTION_NAMES, reactionMeaning } from '@kurda/shared';
-import { useAuth } from '../auth/AuthProvider';
+import { publicClient } from '../lib/api';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { soundPlayer } from '../lib/sound';
 import { loadReactions, onReaction, type Speaking } from './reactions';
@@ -19,10 +19,10 @@ const READ_MS = 4000;
  * where it also reads the recorded takes.
  */
 export function ReactionVoices(): React.JSX.Element | null {
-  const { client } = useAuth();
+  // The takes are the same for everyone, so they are read without the session and the browser keeps them a while.
   useEffect(() => {
-    void loadReactions(client);
-  }, [client]);
+    void loadReactions(publicClient());
+  }, []);
   return <ReactionCaption />;
 }
 

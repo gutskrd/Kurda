@@ -13,6 +13,7 @@ import type { PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from '../social/presence.js';
 import { notBlockedSql } from '../friends/blocked.js';
 import { accountUnavailable, availableSql } from '../moderation/availability.js';
+import type { FlaggedMessage } from '../moderation/service.js';
 
 export const MAX_MESSAGE_LEN = 2000;
 
@@ -24,8 +25,8 @@ export interface Notifier {
 /** Moderation hook: masks profanity, tracks offences and enforces escalation mutes. */
 export interface ChatModeration {
   isChatMuted(userId: string): Promise<boolean>;
-  filter(text: string): { masked: string; flagged: boolean };
-  recordOffense(userId: string): Promise<unknown>;
+  filter(text: string): { masked: string; flagged: boolean; hits?: string[] };
+  recordOffense(userId: string, flagged?: FlaggedMessage): Promise<unknown>;
 }
 
 /** Badges hook: a message written to a friend moves the Name badge (badges/service.ts). */
@@ -136,7 +137,11 @@ export class ChatService {
       [lo, hi, from, body, to],
     );
     if (!row.rows[0]) throw accountUnavailable();
-    if (filtered.flagged && this.moderation) void this.moderation.recordOffense(from).catch(() => undefined);
+    // a flagged message is counted against its writer, and goes to a moderator with the words that matched
+    if (filtered.flagged && this.moderation) {
+      const flagged: FlaggedMessage = { targetType: 'dm_message', id: row.rows[0].id, words: filtered.hits ?? [] };
+      void this.moderation.recordOffense(from, flagged).catch(() => undefined);
+    }
     if (this.badges) void this.badges.onLetterSent(from, to).catch(() => undefined);
     const message: DmMessage = {
       id: row.rows[0]!.id,

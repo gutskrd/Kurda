@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import {
   APPEAL_STATUSES,
   BAN_CONTENT_CHOICES,
@@ -14,6 +15,7 @@ import {
 import { requireCapability } from '../admin/routes.js';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
+import type { MessageAccessService } from '../message-access/service.js';
 import type { AppealsService } from './appeals-service.js';
 import type { CasesService, DecideInput } from './cases-service.js';
 import { RETURNS_PAGE_MAX, type PossibleReturnsService } from './returns.js';
@@ -22,7 +24,7 @@ import type { ModerationQueueService, QueueFilters } from './queue-service.js';
 import { logAdminAction, type SanctionsService } from './sanctions-service.js';
 import { inTransaction } from './tx.js';
 
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 // an empty POST arrives with no body at all
 const noBody = z.object({}).nullish();
 const reasonBody = z.object({ reason: z.string().trim().min(1).max(2000) });
@@ -110,9 +112,16 @@ const appealDecideBody = z.object({
  */
 export function registerModerationQueueRoutes(
   app: FastifyInstance,
-  deps: { queue: ModerationQueueService; cases: CasesService; sanctions: SanctionsService; appeals: AppealsService; returns: PossibleReturnsService },
+  deps: {
+    queue: ModerationQueueService;
+    cases: CasesService;
+    sanctions: SanctionsService;
+    appeals: AppealsService;
+    returns: PossibleReturnsService;
+    access: MessageAccessService;
+  },
 ): void {
-  const { queue, cases, sanctions, appeals, returns } = deps;
+  const { queue, cases, sanctions, appeals, returns, access } = deps;
   const guard = [requireAuth, requireCapability('moderation.act')];
 
   // ---- the queue ---------------------------------------------------------------
@@ -144,9 +153,16 @@ export function registerModerationQueueRoutes(
 
   // ---- one case ----------------------------------------------------------------
 
+  /** One case; a case about a letter or a private message is recorded on the Access log before it is shown. */
   app.get('/admin/moderation/cases/:id', { schema: { params: idParam }, preHandler: guard }, async (req) => {
     const detail = await cases.detail((req.params as { id: string }).id, req.user!.id);
     if (!detail) throw new AppError('NOT_FOUND', 404, 'no such case');
+    const c = detail.case;
+    await access.caseRead(
+      req.user!.id,
+      { id: c.id, source: c.source, target_type: c.targetType, evidence: c.evidence, subject_user_id: c.subject?.id ?? null },
+      String(req.id),
+    );
     return detail;
   });
 

@@ -87,7 +87,7 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
   const { t } = useI18n();
   const dir = useDirection();
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  const { friends, recentIds } = useFriendsToAsk();
+  const { friends, recentIds, failed: friendsFailed, retry: retryFriends } = useFriendsToAsk();
   const [asked, setAsked] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -128,6 +128,8 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
             </Text>
             <FriendPicker
               friends={friends}
+              failed={friendsFailed}
+              onRetry={retryFriends}
               recentIds={recentIds}
               picked={asked}
               onToggle={(friend) => setAsked((list) => togglePick(list, friend, false, MAX_INVITEES_PER_REQUEST))}

@@ -11,6 +11,7 @@ import { LeagueCard } from '../leagues/LeagueCard';
 import { RankList, RankRow } from '../ui/RankRow';
 import { BOARD_NAME, BoardAmount, BoardSwitch, SpanSwitch, boardFor, isRankKind, type BoardType, type RankKind, type XpSpan } from '../ui/BoardSwitch';
 import type { MessageKey } from '../i18n/en';
+import { useArrival } from '../lib/motion';
 
 interface Entry {
   userId: string;
@@ -46,7 +47,7 @@ const SCOPES: { key: Scope; labelKey: MessageKey }[] = [
 ];
 
 /**
- * Where you stand: by XP, Zêr or Gewher. XP is this week's by default, with your league first as a card that opens the
+ * Where you stand: by XP or Zêr. XP is this week's by default, with your league first as a card that opens the
  * whole league, or all time's. What is ranked (`?board=zer`) and the span (`?span=all`) are in the address, so either
  * can be linked to; who you are compared with is a choice of the moment, starting at everyone.
  */
@@ -169,6 +170,7 @@ function Leaderboard({ type, scope }: { type: BoardType; scope: Scope }): React.
   }, [meInList, entries]);
 
   const shown = entries.length;
+  const arriving = useArrival(shown > 0, 'rankings');
   const hasMore = board !== null && shown < board.total;
   const pinned = board?.me != null && (meAt === 'absent' || meAt === 'below');
 
@@ -199,7 +201,7 @@ function Leaderboard({ type, scope }: { type: BoardType; scope: Scope }): React.
             </p>
           )}
 
-          <RankList label={t(BOARD_NAME[type])}>
+          <RankList label={t(BOARD_NAME[type])} arriving={arriving}>
             {entries.map((e) => (
               <RankRow
                 key={e.userId}
@@ -268,5 +270,5 @@ function emptyTitleKey(scope: Scope): MessageKey {
 function emptyMessageKey(scope: Scope, type: BoardType): MessageKey {
   if (scope === 'friends') return 'rankings.empty.friendsBody';
   if (scope === 'country') return type === 'weekly_xp' ? 'rankings.empty.countryBody' : 'rankings.empty.balanceCountryBody';
-  return type === 'zer' || type === 'gewher' ? 'rankings.empty.balanceGlobalBody' : 'rankings.empty.globalBody';
+  return type === 'zer' ? 'rankings.empty.balanceGlobalBody' : 'rankings.empty.globalBody';
 }

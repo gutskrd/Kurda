@@ -30,7 +30,7 @@
   gap: 6px;
   margin-top: var(--space-1);
 }
-/* A saved word is on: the violet of everything chosen, as in the dictionary. */
+/* A saved word is on: the ink of everything chosen, as in the dictionary. */
 .wg-answer-save.is-on,
 .wg-answer-save.is-on:disabled {
   color: var(--primary);

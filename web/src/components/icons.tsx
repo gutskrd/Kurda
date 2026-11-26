@@ -124,28 +124,36 @@ import { PaintBrushBroad } from '@phosphor-icons/react/dist/icons/PaintBrushBroa
 import { Pen } from '@phosphor-icons/react/dist/icons/Pen';
 import { Highlighter } from '@phosphor-icons/react/dist/icons/Highlighter';
 import { Swatches } from '@phosphor-icons/react/dist/icons/Swatches';
-import type { Icon, IconWeight } from '@phosphor-icons/react';
+// The phone platforms, on the front page's download buttons.
+import { AppleLogo } from '@phosphor-icons/react/dist/icons/AppleLogo';
+import { AndroidLogo } from '@phosphor-icons/react/dist/icons/AndroidLogo';
+// What a lesson on the road is: new words, a conversation, or practice.
+import { ChatsCircle } from '@phosphor-icons/react/dist/icons/ChatsCircle';
+import { Barbell } from '@phosphor-icons/react/dist/icons/Barbell';
+import type { Icon } from '@phosphor-icons/react';
 import { useMemo } from 'react';
-import { HEVALO_GLYPHS, coinSvg, gemSvg, type CurrencyOptions, type HevaloGlyph } from '@kurda/shared';
+import { HEVALO_GLYPHS, coinSvg, type CurrencyOptions, type HevaloGlyph } from '@kurda/shared';
+import type { IconWeightUsed } from '../lib/iconWeights';
 
 /** `regular` is closest to the 1.7px strokes of the earlier hand-drawn set. */
-export const ICON_WEIGHT: IconWeight = 'regular';
+export const ICON_WEIGHT: IconWeightUsed = 'regular';
 
 interface P {
   size?: number;
   className?: string;
-  weight?: IconWeight;
+  /** Only the weights the build keeps (lib/iconWeights.ts). */
+  weight?: IconWeightUsed;
 }
 
 /** Name an icon for what it means here, so the glyph can change in one place. */
-function named(Glyph: Icon, fallbackSize: number, defaultWeight: IconWeight = ICON_WEIGHT) {
+function named(Glyph: Icon, fallbackSize: number, defaultWeight: IconWeightUsed = ICON_WEIGHT) {
   return function NamedIcon({ size = fallbackSize, className, weight = defaultWeight }: P): React.JSX.Element {
     return <Glyph size={size} className={className} weight={weight} aria-hidden />;
   };
 }
 
 /**
- * A currency drawn in colour (shared `coinSvg`, `gemSvg`), so it looks the same on every surface and on the phone.
+ * The currency drawn in colour (shared `coinSvg`), so it looks the same on every surface and on the phone.
  * Decorative, since the amount beside it says what it is.
  */
 function currency(draw: (opts: CurrencyOptions) => string, fallbackSize: number) {
@@ -257,8 +265,6 @@ export const HomeIcon = named(House, 22);
 /** The community wall: a page of what everyone wrote. */
 export const WallIcon = named(Newspaper, 22);
 export const ShopIcon = named(Storefront, 22);
-/** Gems, the harder currency, a faceted green stone; Zêr is the CoinIcon above. */
-export const GemIcon = currency(gemSvg, 22);
 export const SignOutIcon = named(SignOut, 22);
 /* The quiet menu on somebody else's profile: block, report. */
 export const MoreIcon = named(DotsThree, 22);
@@ -278,6 +284,8 @@ export const PreviousIcon = named(SkipBack, 20, 'fill');
 export const NextIcon = named(SkipForward, 20, 'fill');
 export const TimerIcon = named(Timer, 20);
 export const HostIcon = named(Crown, 16, 'fill');
+/** Hevalo+, on its own button. */
+export const MembersIcon = named(Crown, 22, 'fill');
 export const InviteIcon = named(UserPlus, 22);
 // Taking someone out of a group.
 export const RemovePersonIcon = named(UserMinus, 22);
@@ -351,6 +359,14 @@ export const PenIcon = named(Pen, 18);
 export const BrushIcon = named(PaintBrushBroad, 18);
 export const MarkerIcon = named(Highlighter, 18);
 export const PaperIcon = named(Swatches, 18);
+
+/* The two phone platforms, solid as their own marks are, for the buttons that say the apps are coming (landing/AppSoon). */
+export const IosIcon = named(AppleLogo, 20, 'fill');
+export const AndroidIcon = named(AndroidLogo, 20, 'fill');
+/* What the lesson the road's stop to do now opens is, on its face: letters for new words, a conversation, a workout. */
+export const WordsIcon = named(TextAa, 34, 'fill');
+export const TalkIcon = named(ChatsCircle, 34, 'fill');
+export const PracticeIcon = named(Barbell, 34, 'fill');
 
 /** Show or hide a password: one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

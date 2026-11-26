@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import type { WalletService } from '../wallet/service.js';
 import { assertEconomyNotHeld } from '../economy/standing.js';
+import { earnWithin, earnsZer } from '../earn/service.js';
 import type { EventDef } from './window.js';
 import {
   claimBlock,
@@ -35,10 +36,12 @@ export interface EventQuestsView {
   endsAt: string;
   claimDeadline: string;
   quests: QuestView[];
+  /** the quests pay Zêr, which only members earn, so for this viewer their Zêr is left out */
+  zerForMembers: boolean;
 }
 
 export type ClaimResult =
-  | { ok: true; claimed: boolean; reward: { zer?: number; gems?: number } }
+  | { ok: true; claimed: boolean; reward: { zer?: number } }
   | { ok: false; code: 'NO_EVENT' | 'NO_QUEST' | ClaimBlock };
 
 /** Reads XP, games and lessons from their ledgers over the event window, so there is no per-action counter to drift. */
@@ -76,9 +79,9 @@ export class DbQuestMetrics implements QuestMetrics {
 }
 
 /**
- * Event quests and reward claims. Progress is derived; only the claim is stored. A claim pays Zêr or Gems in the
- * same transaction as its row, and the (user, event, quest) unique constraint makes paying twice impossible even
- * on a double tap. Rewards stay claimable for 72 hours after the event ends.
+ * Event quests and reward claims. Progress is derived; only the claim is stored. A claim pays earned Zêr, under the daily
+ * cap, in the same transaction as its row, and the (user, event, quest) unique constraint makes paying twice impossible
+ * even on a double tap. Rewards stay claimable for 72 hours after the event ends.
  */
 export class QuestService {
   constructor(
@@ -127,13 +130,19 @@ export class QuestService {
       }
       return m;
     };
+    const member = await earnsZer(this.pool, userId, this.now());
+    let zerForMembers = false;
     const quests: QuestView[] = [];
     for (const def of defs) {
       const metric = await metricOf(def.type);
       const prog = evaluateQuest(def, metric);
       const isClaimed = claimed.has(def.id);
+      // a reward nobody but a member can have is not shown to anyone else as theirs to win
+      const zer = (prog.reward.zer ?? 0) > 0;
+      if (zer && !member) zerForMembers = true;
       quests.push({
         ...prog,
+        reward: zer && !member ? {} : prog.reward,
         claimed: isClaimed,
         claimable: !isClaimed && claimBlock(prog.complete, endsMs, nowMs) === null,
       });
@@ -145,6 +154,7 @@ export class QuestService {
       endsAt: event.endsAt,
       claimDeadline: new Date(claimDeadline(endsMs)).toISOString(),
       quests,
+      zerForMembers,
     };
   }
 
@@ -165,7 +175,7 @@ export class QuestService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      const inserted = await client.query(
+      const inserted = await client.query<{ id: string }>(
         `INSERT INTO event_quest_claims (user_id, event_key, quest_id, reward)
          VALUES ($1, $2, $3, $4::jsonb)
          ON CONFLICT (user_id, event_key, quest_id) DO NOTHING
@@ -177,21 +187,24 @@ export class QuestService {
         await client.query('ROLLBACK');
         return { ok: true, claimed: false, reward: def.reward };
       }
-      for (const currency of ['zer', 'gems'] as const) {
-        const amount = def.reward[currency];
-        if (amount && amount > 0) {
-          await this.wallet.creditWithin(client, {
-            userId,
-            currency,
-            amount,
-            reason: 'event_quest',
-            refId: `${eventKey}:${questId}`,
-            idempotencyKey: `quest:${eventKey}:${questId}:${userId}:${currency}`,
-          });
+      let reward = def.reward;
+      if (def.reward.zer && def.reward.zer > 0) {
+        const paid = await earnWithin(client, this.wallet, {
+          userId,
+          amount: def.reward.zer,
+          reason: 'event_quest',
+          refId: `${eventKey}:${questId}`,
+          idempotencyKey: `quest:${eventKey}:${questId}:${userId}:zer`,
+          now: this.now(),
+        });
+        // the claim records what was paid, which the daily cap can make less than the quest offers
+        if (paid.granted !== def.reward.zer) {
+          reward = paid.granted > 0 ? { zer: paid.granted } : {};
+          await client.query(`UPDATE event_quest_claims SET reward = $2::jsonb WHERE id = $1`, [inserted.rows[0]!.id, JSON.stringify(reward)]);
         }
       }
       await client.query('COMMIT');
-      return { ok: true, claimed: true, reward: def.reward };
+      return { ok: true, claimed: true, reward };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;

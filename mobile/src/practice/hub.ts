@@ -42,7 +42,7 @@ export interface HubRow {
   icon: IconName;
   title: TranslationKey;
   detail: Line;
-  /** Something is waiting in it (mistakes to fix), shown in violet as well as in words. */
+  /** Something is waiting in it (mistakes to fix), shown in the ink as well as in words. */
   waiting: boolean;
   action: RowAction;
 }

@@ -116,4 +116,24 @@ describe('a reported letter in the case', () => {
     expect(within(lines[0]!).getByText('Drawn on')).toBeTruthy();
     expect(within(lines[1]!).queryByText('Drawn on')).toBeNull();
   });
+
+  it('marks the reported letter, and the others as context kept to judge it', () => {
+    const context = [
+      { id: 'a', senderId: 'x', username: 'rojda', kind: 'letter', body: 'Silav!', createdAt: new Date().toISOString(), reported: false },
+      { id: 'b', senderId: 'y', username: 'baran', kind: 'letter', body: 'Spas', createdAt: new Date().toISOString(), reported: true },
+    ];
+    renderUi(<Snapshot snapshot={snapshot({ context })} media={[]} sensitive={false} />);
+    expect(screen.getByRole('heading', { name: 'The letters around it' })).toBeTruthy();
+    expect(screen.getByText(/One other from the same correspondence, kept with the report so it can be judged/)).toBeTruthy();
+    const lines = screen.getAllByRole('listitem').filter((li) => li.classList.contains('chat-line'));
+    expect(within(lines[0]!).getByText('Context')).toBeTruthy();
+    expect(within(lines[1]!).getByText('Reported letter')).toBeTruthy();
+    expect(lines[1]!.getAttribute('aria-current')).toBe('true');
+  });
+
+  it('says a flagged letter is shown alone, without the letters around it', () => {
+    renderUi(<Snapshot snapshot={snapshot({ context: [] })} media={[]} sensitive={false} flagged />);
+    expect(screen.getByText(/An automatic check flagged this one alone/)).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'The letters around it' })).toBeNull();
+  });
 });

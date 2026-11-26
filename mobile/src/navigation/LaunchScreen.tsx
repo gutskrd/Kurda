@@ -7,6 +7,7 @@ import { characterLayers } from '../characters/layers';
 import { HevaloPeek } from '../characters/HevaloPeek';
 import { springTo, timing } from '../theme/animate';
 import { GradientBackground } from '../theme/glass';
+import { Loading } from '../theme/Loading';
 import { duration } from '../theme/motion';
 import { useTheme } from '../theme/ThemeProvider';
 import { display } from '../theme/fonts';
@@ -39,8 +40,9 @@ function peekPlace(box: number): { width: number; height: number; left: number; 
 /**
  * What you see while the app finds out who you are. It opens on exactly what the native splash showed
  * (launch/splash.ts), so nothing moves when the app takes over; then the gradient comes in, the splash deer gives way
- * to Hevalo arriving on a spring, the words rise beneath him and a soft light drifts while he waits. Under Reduce
- * Motion nothing travels: he fades in and the words appear.
+ * to Hevalo arriving on a spring, the words rise beneath him and a soft light drifts while he waits. A launch that
+ * takes longer than a moment shows the loader under the words. Under Reduce Motion nothing travels: he fades in, the
+ * words appear and the loader only breathes.
  */
 export function LaunchScreen(): React.JSX.Element {
   const { colors } = useTheme();
@@ -51,6 +53,7 @@ export function LaunchScreen(): React.JSX.Element {
   const picture = useRef(new Animated.Value(1)).current;
   const hero = useRef(new Animated.Value(0)).current;
   const words = useRef(new Animated.Value(0)).current;
+  const waiting = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // The Reduce Motion answer may arrive a moment in: the arrival then goes on from where it is, as a fade.
@@ -59,10 +62,11 @@ export function LaunchScreen(): React.JSX.Element {
       timing(picture, 0, LAUNCH.pictureMs, { delay: LAUNCH.heroMs }),
       reduce ? timing(hero, 1, duration.slow, { delay: LAUNCH.heroMs }) : springTo(hero, 1, 'bouncy', LAUNCH.heroMs),
       reduce ? timing(words, 1, duration.slow, { delay: LAUNCH.wordsMs }) : springTo(words, 1, 'standard', LAUNCH.wordsMs),
+      timing(waiting, 1, duration.slow, { delay: LAUNCH.loaderMs }),
     ]);
     run.start();
     return () => run.stop();
-  }, [reduce, ground, picture, hero, words]);
+  }, [reduce, ground, picture, hero, words, waiting]);
 
   const place = useMemo(() => peekPlace(SPLASH_IMAGE_WIDTH), []);
   const arrival = reduce
@@ -93,6 +97,9 @@ export function LaunchScreen(): React.JSX.Element {
           <Animated.View style={[styles.words, { top: place.top + place.height + spacing.md }, rising]}>
             <Text style={[styles.brand, { color: colors.primary }]}>Hevalo</Text>
             <Text style={[styles.slogan, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
+            <Animated.View style={[styles.loader, { opacity: waiting }]} testID="launch-loader">
+              <Loading size="large" />
+            </Animated.View>
           </Animated.View>
         </View>
       </View>
@@ -151,4 +158,5 @@ const styles = StyleSheet.create({
   words: { position: 'absolute', left: -WORDS_REACH, right: -WORDS_REACH, alignItems: 'center', gap: spacing.xs },
   brand: { ...display(typography.sizes.title), textAlign: 'center' },
   slogan: { fontSize: typography.sizes.text, textAlign: 'center', fontStyle: 'italic' },
+  loader: { marginTop: spacing.xl },
 });

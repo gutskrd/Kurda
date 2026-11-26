@@ -137,4 +137,8 @@ describe('Android permissions', () => {
   it('keeps out physical-activity access, which the motion sensor’s package asks for and the tilt never needs', () => {
     expect(appJson.expo.android.blockedPermissions).toContain('android.permission.ACTIVITY_RECOGNITION');
   });
+
+  it('keeps out the advertising id, which a library may add and an app with child profiles must never send', () => {
+    expect(appJson.expo.android.blockedPermissions).toContain('com.google.android.gms.permission.AD_ID');
+  });
 });

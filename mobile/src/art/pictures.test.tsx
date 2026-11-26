@@ -18,7 +18,7 @@ import { act, cleanup, screen, waitFor } from '@testing-library/react';
 import { Text } from 'react-native';
 import { EventBanner } from '../events/EventBanner';
 import { Avatar } from '../profile/Avatar';
-import { BadgeMedal, Framed, LeagueEmblem, PlacementEmblem, RankEmblem, SeasonFramed } from '../ranks/art';
+import { BadgeMedal, Framed, LeagueEmblem, SeasonFramed } from '../ranks/art';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -109,25 +109,7 @@ describe('a badge', () => {
   });
 });
 
-describe('rank and league emblems', () => {
-  it('draws a rank by code without a picture, and the picture once the list arrives', async () => {
-    const { container } = renderWithProviders(<RankEmblem tier="gir" division={2} size={44} label="Gir II" />);
-    expect(drawings(container)).toBe(1);
-    await act(async () => {
-      await overrides({ 'rank:gir': `${CDN}/gir.png` });
-    });
-    expect(await picture(container)).toBe(`${CDN}/gir.png`);
-    expect(drawings(container)).toBe(0);
-    expect(screen.getByRole('img', { name: 'Gir II' })).toBeTruthy();
-  });
-
-  it('keeps the placement emblem drawn by code', async () => {
-    await overrides({ 'rank:gir': `${CDN}/gir.png`, 'rank:dest': `${CDN}/dest.png` });
-    const { container } = renderWithProviders(<PlacementEmblem done={3} size={44} label="Placing 3/5" />);
-    expect(drawings(container)).toBe(1);
-    expect(container.querySelector('img')).toBeNull();
-  });
-
+describe('league emblems', () => {
   it('draws a league from its picture, greyed while not reached', async () => {
     await overrides({ 'league:kani': `${CDN}/kani.png` });
     const reached = renderWithProviders(<LeagueEmblem tier="kani" size={44} label="Kanî" />);

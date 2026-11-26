@@ -1,11 +1,15 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import {
   PATH_LANDMARK_LOOP,
+  PATH_SCENES,
   landmarkBox,
   pathLandmarkSvg,
   pathLoopSvg,
+  pathMilestoneSvg,
+  pathScene,
   pathSignpostSvg,
   pathStopSvg,
+  unitScenery,
   type PathBox,
   type PathLand,
   type PathStopLook,
@@ -15,6 +19,7 @@ import {
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { PathChest, PathScene } from './PathScene';
 import type { SkillNode } from './types';
 
 /**
@@ -124,6 +129,81 @@ export function StopArt({ look, tone, dark, near }: { look: PathStopLook; tone: 
     </>
   );
 }
+
+/** A unit's milestone, its last stop, from the shared drawing: the seal and the drum it stands on; a press pushes the seal down. */
+export function MilestoneArt({ won, dark, near }: { won: boolean; dark: boolean; near: boolean }): React.JSX.Element | null {
+  const art = useMemo(
+    () => (near ? { base: { __html: pathMilestoneSvg({ won, part: 'base', dark }) }, face: { __html: pathMilestoneSvg({ won, part: 'face', dark }) } } : null),
+    [near, won, dark],
+  );
+  if (!art) return null;
+  // Laid from the button's corner as path.css places it (shared PATH_MILESTONE_ART).
+  return (
+    <>
+      <span className="lp-art lp-art-base is-milestone" aria-hidden="true" dangerouslySetInnerHTML={art.base} />
+      <span className="lp-art lp-art-face is-milestone" aria-hidden="true" dangerouslySetInnerHTML={art.face} />
+    </>
+  );
+}
+
+/**
+ * A unit's playful touches beside its road (shared `unitScenery`): its little scene, chosen from the chapter (shared
+ * `pathScene`, PathScene.tsx), leaning in from the edge, and the unit's painted sandûq, shut until the unit is done and
+ * then open on its gold. The scene is cut off at the road's column edge, which on a phone's width is the screen's own
+ * (path.css). Both are for the eye and out of the reading order; a tap plays a moment of its own, and nothing moves under
+ * reduced motion.
+ */
+export function UnitScenery({
+  unit,
+  dark,
+  near,
+  here,
+  width,
+  rtl,
+  reduce,
+}: {
+  unit: Unit;
+  dark: boolean;
+  near: boolean;
+  /** The stop to do now, if it is in this unit: Hevalo stands beside it, under its bubble. */
+  here: { x: number; y: number } | null;
+  /** The road's width, so the scene keeps clear of the bubble over the stop to do now. */
+  width: number;
+  rtl: boolean;
+  reduce: boolean;
+}): React.JSX.Element | null {
+  const scene = pathScene(unit.number - 1);
+  const spots = useMemo(() => unitScenery(unit.stops, here, scene, width > 0 ? width : null), [unit.stops, here, scene, width]);
+  const [opened, setOpened] = useState(0);
+  if (!near) return null;
+  const won = unit.total > 0 && unit.done === unit.total;
+  return (
+    <>
+      {spots.scene && (
+        <li
+          className={`lp-scene is-${scene} ${spots.scene.side < 0 ? 'is-start' : 'is-end'}`}
+          aria-hidden="true"
+          data-scene={scene}
+          // Cut off at the edge and at its foot, or a little below it where the character runs on to leave by the edge.
+          style={{ top: spots.scene.y, clipPath: `inset(0 0 -${PATH_SCENES[scene].below}px 0)` }}
+        >
+          {/* Drawn for the left edge; at the right one it is mirrored, so it always leans in toward the road. */}
+          <PathScene scene={scene} flip={spots.scene.side > 0 !== rtl} dark={dark} reduce={reduce} />
+        </li>
+      )}
+      {spots.chest && (
+        <li className="lp-chest" aria-hidden="true" style={{ top: spots.chest.y, '--cx': `${spots.chest.x}px` } as React.CSSProperties}>
+          <button type="button" className="lp-chest-hit" tabIndex={-1} aria-hidden="true" onClick={() => setOpened((n) => n + 1)}>
+            <PathChest open={won} dark={dark} size={CHEST_SIZE} played={opened} />
+          </button>
+        </li>
+      )}
+    </>
+  );
+}
+
+/** The sandûq's size beside the road: a stop's, so it reads as one of the road's own things. */
+const CHEST_SIZE = 96;
 
 /** A unit as the rail lists it. */
 export interface RailUnit {

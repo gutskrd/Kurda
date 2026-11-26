@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { MAX_FRIENDS } from '@kurda/shared';
 import { StyleSheet, Text } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
@@ -17,6 +18,8 @@ import { useI18n } from '../i18n/I18nContext';
 import { giftItem } from './gifts';
 import { SearchField } from '../theme/SearchField';
 import { Loading } from '../theme/Loading';
+import { ErrorRetry } from '../theme/glass';
+import { describeError } from '../api/errors';
 import { heldDim, heldRow } from '../theme/MotionParts';
 import { useDirection } from '../reports/direction';
 
@@ -49,6 +52,9 @@ export function GiftSheet({
   const dir = useDirection();
 
   const [friends, setFriends] = useState<Friend[] | null>(null);
+  // Why the friends could not be read, until Try again; never shown as having none.
+  const [loadError, setLoadError] = useState<ApiError | null>(null);
+  const [round, setRound] = useState(0);
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   // The refusal, and the friend it was about (some answers name them).
@@ -59,13 +65,16 @@ export function GiftSheet({
 
   useEffect(() => {
     let alive = true;
-    void client.get<{ friends: Friend[] }>('/friends?limit=50').then((res) => {
-      if (alive) setFriends(res.ok ? (res.data.friends ?? []) : []);
+    // Every friend, so the search below can find anyone; the server keeps at most MAX_FRIENDS.
+    void client.get<{ friends: Friend[] }>(`/friends?limit=${MAX_FRIENDS}`).then((res) => {
+      if (!alive) return;
+      if (res.ok) setFriends(res.data.friends ?? []);
+      else setLoadError(res.error);
     });
     return () => {
       alive = false;
     };
-  }, [client]);
+  }, [client, round]);
 
   const send = useCallback(
     (to: Friend) => {
@@ -103,7 +112,15 @@ export function GiftSheet({
         {t('shop.giftPaidByYou', { price: item.price, currency: item.currency })} {t('shop.giftFinal')}
       </Text>
 
-      {friends === null ? (
+      {loadError ? (
+        <ErrorRetry
+          message={describeError(loadError, t)}
+          onRetry={() => {
+            setLoadError(null);
+            setRound((r) => r + 1);
+          }}
+        />
+      ) : friends === null ? (
         <Loading style={{ marginVertical: spacing.lg }} />
       ) : friends.length === 0 ? (
         <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{t('shop.noFriendsToGift')}</Text>

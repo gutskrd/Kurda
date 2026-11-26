@@ -38,7 +38,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 450, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 450 }, history: [] },
           '/friends': { friends: [{ userId: 'a', username: 'x' }, { userId: 'b', username: 'y' }], total: 2 },
           '/me': { user: meUser },
         }),
@@ -47,7 +47,7 @@ describe('Profile view (full, read-only)', () => {
     renderApp(<Profile />, ['/app/profile']);
 
     expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
-    expect(document.querySelector('.ph-handle')?.textContent).toBe('@ada');
+    expect(document.querySelector('.ph-handle [dir="ltr"]')?.textContent).toBe('@ada');
     expect(screen.getByText('Learning Kurdish.', { selector: 'p.mkp-bio' })).toBeInTheDocument();
     // shortened beside the face so four figures always fit, and said whole to a screen reader
     expect(fact('XP')).toBe('3.2K');
@@ -70,7 +70,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 0 }, history: [] },
           '/friends': { friends: [], total: 0 },
           '/me': {
             user: {
@@ -99,7 +99,7 @@ describe('Profile view (full, read-only)', () => {
       vi.fn(
         routedFetch({
           '/me/today': todayView({ streak: { current: 5, longest: 9 } }),
-          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 0 }, history: [] },
           '/friends': { friends: [], total: 0 },
           '/me': { user: meUser },
         }),
@@ -121,9 +121,17 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 0 }, history: [] },
           '/friends': { friends: [{ userId: 'a', username: 'x' }], total: 7 },
-          '/users/1': { userId: '1', username: 'ada', friendStatus: 'self', private: false, achievements: 4, sections: { posts: true, games: true, likes: true, reposts: true, saved: true } },
+          '/users/1': {
+            userId: '1',
+            username: 'ada',
+            friendStatus: 'self',
+            private: false,
+            achievements: 4,
+            earnedBadges: [{ key: 'ders', family: 'learning', tier: 1, tierKey: 'sifir', earnedAt: null, rarity: null }],
+            sections: { posts: true, games: true, likes: true, reposts: true, saved: true },
+          },
           '/me': { user: meUser },
         }),
       ),
@@ -133,14 +141,14 @@ describe('Profile view (full, read-only)', () => {
 
     const card = document.querySelector<HTMLElement>('.ph')!;
     const strip = card.querySelector<HTMLElement>('.ph-stats .mkp-facts')!;
-    // Three figures beside the face; how many badges is on the badge case, which opens your badges.
+    // Three figures beside the face; badges are in the row beside your handle, which opens your collection.
     expect(within(strip).getAllByRole('listitem').map((li) => li.querySelector('.mkp-fact-label')?.textContent)).toEqual(['Streak', 'XP', 'Friends']);
     // A number with a page of its own is the way into it; the others are only numbers.
     expect(within(strip).getByRole('link', { name: /Friends/ })).toHaveAttribute('href', '/app/friends');
     expect(within(strip).queryByRole('link', { name: /XP/ })).toBeNull();
-    const badgeCase = await screen.findByRole('link', { name: 'Badges: 4' });
-    expect(badgeCase).toHaveAttribute('href', '/app/badges');
-    expect(badgeCase.querySelector('.hl-count')).toHaveTextContent('4');
+    const row = await screen.findByRole('button', { name: 'Your collection, Badges: 1' });
+    expect(row).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(row.closest('.ph-handle')).not.toBeNull();
     // Read aloud, a streak is days.
     expect(within(strip).getByText('5 days')).toHaveClass('sr-only');
 
@@ -155,7 +163,7 @@ describe('Profile view (full, read-only)', () => {
   it('says which part only you are shown, and does not say you are online on your own profile', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(routedFetch({ '/me/wallet': { balances: { zer: 450, gems: 0 }, history: [] }, '/friends': { friends: [], total: 0 }, '/me': { user: meUser } })),
+      vi.fn(routedFetch({ '/me/wallet': { balances: { zer: 450 }, history: [] }, '/friends': { friends: [], total: 0 }, '/me': { user: meUser } })),
     );
     renderApp(<Profile />, ['/app/profile']);
     await screen.findByText('Ada Lovelace');
@@ -174,7 +182,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 0 }, history: [] },
           '/friends': { friends: [], total: 0 },
           '/me': { user: { ...meUser, profilePhotoUrl: 'https://cdn.test/old.webp', profilePhotoPending: { url: 'https://private.test/new.webp' } } },
         }),
@@ -188,7 +196,7 @@ describe('Profile view (full, read-only)', () => {
   it('offers to write a bio where there is none, instead of saying there is none', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(routedFetch({ '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] }, '/friends': { friends: [], total: 0 }, '/me': { user: { ...meUser, bio: null } } })),
+      vi.fn(routedFetch({ '/me/wallet': { balances: { zer: 0 }, history: [] }, '/friends': { friends: [], total: 0 }, '/me': { user: { ...meUser, bio: null } } })),
     );
     renderApp(<Profile />, ['/app/profile']);
     await screen.findByText('Ada Lovelace');
@@ -209,7 +217,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 0, gems: 0 } },
+          '/me/wallet': { balances: { zer: 0 } },
           '/friends': { friends: [], total: 0 },
           '/me': { user: enriched },
         }),
@@ -234,7 +242,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 450, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 450 }, history: [] },
           '/friends': { friends: [], total: 0 },
           '/me': { user: meUser },
         }),
@@ -271,23 +279,33 @@ describe('Profile view (full, read-only)', () => {
     expect(menu).toHaveFocus();
   });
 
-  // Who can open your profile is said on it, in Settings' words, one press from changing it.
-  it('says who can see your profile, with the way to change it, and the year you joined', async () => {
+  // Who can open it is set from Edit profile, and who gave what you wear is told in your collection, not here.
+  it('says the year you joined, and neither who can see it nor who gave what you wear', async () => {
+    const gifter = { id: 'u9', username: 'zana' };
     vi.stubGlobal(
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 0 }, history: [] },
           '/friends': { friends: [], total: 0 },
-          '/me': { user: { ...meUser, profileVisibility: 'friends' } },
+          '/me': {
+            user: {
+              ...meUser,
+              profileVisibility: 'friends',
+              icon: { sku: 'icon-star', assetKey: 'icons/star.png', url: '/cosmetics/icons/star.png', giftedBy: gifter },
+              background: { sku: 'bg-sky', assetKey: 'backgrounds/sky.webp', type: 'image', url: '/cosmetics/backgrounds/sky.webp', giftedBy: gifter },
+            },
+          },
         }),
       ),
     );
     renderApp(<Profile />, ['/app/profile']);
     await screen.findByText('Ada Lovelace');
 
-    expect(screen.getByRole('link', { name: 'Who can see this: Friends only' })).toHaveAttribute('href', '/app/settings/visibility');
     expect(screen.getByText('Joined 2026')).toBeInTheDocument();
+    expect(screen.queryByText('Friends only')).toBeNull();
+    expect(screen.queryByRole('link', { name: /Friends only|Profile visibility/ })).toBeNull();
+    expect(screen.queryByText(/zana/)).toBeNull();
   });
 
   it('draws your own horizon in the banner while you wear no background', async () => {
@@ -295,7 +313,7 @@ describe('Profile view (full, read-only)', () => {
       'fetch',
       vi.fn(
         routedFetch({
-          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/me/wallet': { balances: { zer: 0 }, history: [] },
           '/friends': { friends: [], total: 0 },
           '/me': { user: meUser },
         }),

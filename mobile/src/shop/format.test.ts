@@ -58,16 +58,15 @@ describe('counting', () => {
 });
 
 describe('canAfford', () => {
-  it('checks the item currency against the matching balance', () => {
-    expect(canAfford(item({ price: 100, currency: 'zer' }), { zer: 150, gems: 0 })).toBe(true);
-    expect(canAfford(item({ price: 100, currency: 'zer' }), { zer: 50, gems: 999 })).toBe(false);
-    expect(canAfford(item({ price: 10, currency: 'gems' }), { zer: 0, gems: 10 })).toBe(true);
-    expect(canAfford(item({ price: 10, currency: 'gems' }), { zer: 5000, gems: 9 })).toBe(false);
+  it('checks the price against the Zêr', () => {
+    expect(canAfford(item({ price: 100 }), { zer: 150 })).toBe(true);
+    expect(canAfford(item({ price: 100 }), { zer: 100 })).toBe(true);
+    expect(canAfford(item({ price: 100 }), { zer: 50 })).toBe(false);
   });
 
   it('counts each friend a gift goes to', () => {
-    expect(withinBalance({ price: 300, currency: 'zer' }, { zer: 600, gems: 0 }, 2)).toBe(true);
-    expect(withinBalance({ price: 300, currency: 'zer' }, { zer: 600, gems: 0 }, 3)).toBe(false);
+    expect(withinBalance({ price: 300 }, { zer: 600 }, 2)).toBe(true);
+    expect(withinBalance({ price: 300 }, { zer: 600 }, 3)).toBe(false);
   });
 });
 
@@ -79,12 +78,10 @@ describe('canGift', () => {
 });
 
 describe('needsConfirmation', () => {
-  it('asks for Zêr purchases above the threshold, and for anything priced in gems', () => {
-    expect(needsConfirmation(item({ currency: 'zer', price: CONFIRM_THRESHOLD_ZER + 1 }))).toBe(true);
-    expect(needsConfirmation(item({ currency: 'zer', price: CONFIRM_THRESHOLD_ZER }))).toBe(false);
-    expect(needsConfirmation(item({ currency: 'gems', price: 100_000 }))).toBe(true);
-    expect(needsConfirmation(item({ currency: 'gems', price: 1 }))).toBe(true);
+  it('asks for purchases above the threshold only', () => {
+    expect(needsConfirmation(item({ price: CONFIRM_THRESHOLD_ZER + 1 }))).toBe(true);
+    expect(needsConfirmation(item({ price: CONFIRM_THRESHOLD_ZER }))).toBe(false);
     // Nothing is spent on a free item, so there is nothing to be sure about.
-    expect(needsConfirmation(item({ currency: 'gems', price: 0 }))).toBe(false);
+    expect(needsConfirmation(item({ price: 0 }))).toBe(false);
   });
 });

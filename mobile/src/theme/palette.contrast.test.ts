@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DARK, LIGHT } from './palette';
+import { ACCENT, ANSWER, PAGE, REWARD_GOLD } from '@kurda/shared';
+import { DARK, LIGHT, type Palette } from './palette';
 import { AA_LARGE, AA_NORMAL, contrastRatio, hexToRgb, type Rgb } from '../a11y/contrast';
 
 /** A translucent fill as it appears over what is behind it, since contrast is between opaque colours. */
@@ -48,16 +49,44 @@ for (const p of [LIGHT, DARK]) {
     });
 
     it('button label on the main button, in the accent, meets AA (4.5:1)', () => {
-      expect(contrastRatio(p.textOnPrimary, p.accent)).toBeGreaterThanOrEqual(AA_NORMAL);
+      expect(contrastRatio(p.textOnAccent, p.accent)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
-    // A chosen chip, tab or segment is solid ink on the grey track the others sit on: its word reads as a button's
-    // does, and the chip itself stands out from the track as a control must (WCAG 1.4.11).
+    // The main button is the one strong thing on a screen, so it stands off the page and a card as a control must.
+    it('the main button stands 3:1 off the page and a card', () => {
+      for (const ground of [p.background, p.surface]) expect(contrastRatio(p.accent, ground), ground).toBeGreaterThanOrEqual(AA_LARGE);
+    });
+
+    // A chosen chip, tab or segment stands out from the track the others sit on as a control must (WCAG 1.4.11) by its
+    // edge in the ink, and its word reads at AA on whatever it sits on.
     it('a chosen chip stands 3:1 off the track, on the page and on a card, with its word at AA', () => {
       for (const surface of [p.background, p.surface]) {
-        expect(contrastRatio(p.primary, over(p.controlTrack, surface)), surface).toBeGreaterThanOrEqual(AA_LARGE);
+        expect(contrastRatio(p.chosenEdge, over(p.controlTrack, surface)), surface).toBeGreaterThanOrEqual(AA_LARGE);
+        expect(contrastRatio(p.chosenInk, over(p.chosenFill, surface)), surface).toBeGreaterThanOrEqual(AA_NORMAL);
       }
-      expect(contrastRatio(p.textOnPrimary, p.primary)).toBeGreaterThanOrEqual(AA_NORMAL);
+    });
+
+    // A pick among small pills (a year, a filter) is the ink filled, its word in the page's colour at AA.
+    it('a picked pill’s word meets AA on its fill, on the page and on a card', () => {
+      for (const surface of [p.background, p.surface]) {
+        expect(contrastRatio(p.pickedInk, over(p.pickedFill, surface)), surface).toBeGreaterThanOrEqual(AA_NORMAL);
+      }
+    });
+
+    // The chosen tab's glyph and label are drawn in the ink on the bar, over its own faint capsule.
+    it('the chosen tab, in the ink, meets AA on the bar', () => {
+      expect(contrastRatio(p.primary, over(p.barFill, p.background))).toBeGreaterThanOrEqual(AA_NORMAL);
+    });
+
+    // A link or a chosen word is the accent as text, read at AA on the page and its surfaces.
+    it('the accent as words meets AA on the page and its surfaces', () => {
+      for (const surface of [p.background, p.surface, p.surfaceRaised]) expect(contrastRatio(p.accentText, surface), surface).toBeGreaterThanOrEqual(AA_NORMAL);
+    });
+
+    // The main button stands on its darker lip, which its words still read on as it is pressed through.
+    it('a main button’s lip sits darker than its fill', () => {
+      expect(contrastRatio(p.textOnAccent, p.accentLip)).toBeGreaterThanOrEqual(AA_LARGE);
+      expect(contrastRatio(p.accentLip, '#FFFFFF')).toBeGreaterThan(contrastRatio(p.accent, '#FFFFFF'));
     });
 
     // Secondary text is body text too (previews, captions, times), so it is held to the full 4.5:1.
@@ -103,7 +132,7 @@ for (const p of [LIGHT, DARK]) {
       expect(contrastRatio(p.danger, p.background)).toBeGreaterThanOrEqual(AA_LARGE);
     });
 
-    // The unread dot and tab count are in the app's violet, with the number in the primary button label's colour.
+    // The unread dot and tab count are in the ink, with the number in the primary button label's colour.
     it('the unread badge stands out from the page (3:1) and its count is legible (4.5:1)', () => {
       expect(contrastRatio(p.primary, p.background)).toBeGreaterThanOrEqual(AA_LARGE);
       expect(contrastRatio(p.primary, over(p.barFill, p.background))).toBeGreaterThanOrEqual(AA_LARGE);
@@ -112,27 +141,62 @@ for (const p of [LIGHT, DARK]) {
   });
 }
 
+/** Violet to magenta, from `#rrggbb` or `rgba(r,g,b,a)`: the colours the interface no longer wears. */
+function isPurple(colour: string): boolean {
+  const rgba = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(colour);
+  const { r, g, b } = rgba ? { r: Number(rgba[1]), g: Number(rgba[2]), b: Number(rgba[3]) } : hexToRgb(colour);
+  const max = Math.max(r, g, b);
+  const chroma = max - Math.min(r, g, b);
+  if (chroma < 8) return false;
+  const hue = 60 * (max === r ? ((g - b) / chroma + 6) % 6 : max === g ? (b - r) / chroma + 2 : (r - g) / chroma + 4);
+  return hue >= 250 && hue <= 330;
+}
+
 describe('palette — the values the design settled on', () => {
-  it('keeps the dark page and its raised surfaces the ink taken almost to black', () => {
-    expect(DARK.background).toBe('#100E1D');
-    expect(DARK.surface).toBe('#1B192B');
-    expect(DARK.surfaceRaised).toBe('#27243A');
-    expect(DARK.gold).toBe(DARK.textPrimary);
+  it('shows what is chosen in the ink, never the accent, in both schemes', () => {
+    for (const p of [LIGHT, DARK]) {
+      expect(p.chosenInk, p.scheme).toBe(p.primary);
+      expect(p.chosenEdge, p.scheme).toBe(p.primary);
+      expect(p.pickedFill, p.scheme).toBe(p.primary);
+      for (const v of [p.chosenFill, p.chosenInk, p.chosenEdge, p.pickedFill, p.pickedInk]) expect(v, p.scheme).not.toBe(p.accentSoft);
+      expect(p.cardRim, p.scheme).toBe('transparent');
+    }
   });
 
-  it('keeps the light page a white with a breath of violet, with white surfaces, and what is earned in the ink', () => {
-    expect(LIGHT.background).toBe('#F6F4FD');
-    expect(LIGHT.surface).toBe('#FFFFFF');
-    expect(LIGHT.goldText).toBe(LIGHT.textPrimary);
-    expect(LIGHT.gold).toBe(LIGHT.textPrimary);
+  it('sits on the slate page from @kurda/shared, never pure white by day or pure black by night', () => {
+    expect(LIGHT.background).toBe(PAGE.light.page);
+    expect(DARK.background).toBe(PAGE.dark.page);
+    expect(DARK.background).toBe('#131C20');
+    expect(LIGHT.background).not.toBe('#FFFFFF');
+    expect(LIGHT.surface).toBe(PAGE.light.surface);
+    expect(DARK.surface).toBe(PAGE.dark.surface);
+    expect(DARK.surfaceRaised).toBe(PAGE.dark.raised);
   });
 
-  it('keeps one accent, the icon’s violet, deep by day and lifted by night, and draws everything else pressable in indigo ink', () => {
-    expect(LIGHT.accent).toBe('#862BE2');
-    expect(DARK.accent).toBe('#BF9BFE');
-    expect(LIGHT.textPrimary).toBe('#14112E');
-    expect(LIGHT.primary).toBe(LIGHT.textPrimary);
-    expect(DARK.primary).toBe(DARK.textPrimary);
-    expect(DARK.textOnPrimary).toBe(LIGHT.textPrimary);
+  it('wears one accent on what you press and where you are, gold for what is earned, and its own colours for right and wrong', () => {
+    for (const [p, scheme] of [[LIGHT, 'light'], [DARK, 'dark']] as const) {
+      expect(p.accent).toBe(ACCENT[scheme].fill);
+      expect(p.accentLip).toBe(ACCENT[scheme].lip);
+      expect(p.accentText).toBe(ACCENT[scheme].text);
+      expect(p.bubbleMine).toBe(p.accent);
+      expect(p.switchOn).toBe(p.accent);
+      expect(p.gold).toBe(REWARD_GOLD[scheme].gold);
+      expect(p.primary).toBe(p.textPrimary);
+      expect(p.success).toBe(ANSWER[scheme].right.text);
+      expect(p.danger).toBe(ANSWER[scheme].wrong.text);
+      expect(p.success).not.toBe(p.accent);
+      // no second colour beside the accent
+      expect(Object.keys(p).filter((k) => /secondary/i.test(k) && k !== 'textSecondary')).toEqual([]);
+    }
+  });
+
+  it('has no violet anywhere in either palette', () => {
+    for (const p of [LIGHT, DARK] as Palette[]) {
+      for (const [key, value] of Object.entries(p)) {
+        for (const colour of Array.isArray(value) ? value : [value]) {
+          if (typeof colour === 'string' && /^(#|rgb)/.test(colour)) expect(isPurple(colour), `${p.scheme}.${key} ${colour}`).toBe(false);
+        }
+      }
+    }
   });
 });

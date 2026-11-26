@@ -14,22 +14,13 @@ import { FullProfileSkeleton } from '../components/skeletons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { DailySheet } from '../daily/DailySheet';
 import { useToday } from '../daily/today';
-import type { MessageKey } from '../i18n/en';
 import { PendingPhoto } from '../pictures/PictureCheck';
-
-/** Who can open a profile, in the words Settings says it in. */
-const SEEN_BY: Record<MeProfile['profileVisibility'], MessageKey> = {
-  everyone: 'settings.visibility.everyone',
-  members: 'settings.visibility.members',
-  friends: 'settings.visibility.friends',
-  nobody: 'settings.visibility.nobody',
-};
 
 /**
  * Your own profile: the page everyone else sees (profile/FullProfile) with your actions instead of the friend ones (edit
  * and share, and a corner menu of shop, friends, badges and settings), plus a section only you see: streak numbers,
- * freezes and Zêr. It also says who can open it, with the way to change that. Editing is on /app/profile/edit. A new
- * photo still being checked shows small under the card, since everyone else still sees the old one.
+ * freezes and Zêr. Editing, and who can open it, are on /app/profile/edit. A new photo still being checked shows small
+ * under the card, since everyone else still sees the old one.
  */
 export function Profile(): React.JSX.Element {
   const { client, user } = useAuth();
@@ -51,7 +42,7 @@ export function Profile(): React.JSX.Element {
 
   const [sections, setSections] = useState<ProfileSections | null>(null);
   // Badges, league and frame come from your public profile, not /me.
-  const [shown, setShown] = useState<Pick<PublicProfile, 'badges' | 'league' | 'frameSku' | 'frameUrl' | 'achievements' | 'tree'> | null>(null);
+  const [shown, setShown] = useState<Pick<PublicProfile, 'badges' | 'earnedBadges' | 'league' | 'frameSku' | 'frameUrl' | 'tree'> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,7 +71,7 @@ export function Profile(): React.JSX.Element {
       if (cancelled) return;
       if (p?.ok) {
         setSections(p.data.sections ?? null);
-        setShown({ badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku, frameUrl: p.data.frameUrl, achievements: p.data.achievements, tree: p.data.tree });
+        setShown({ badges: p.data.badges, earnedBadges: p.data.earnedBadges, league: p.data.league, frameSku: p.data.frameSku, frameUrl: p.data.frameUrl, tree: p.data.tree });
       }
       setLoading(false);
     })();
@@ -105,7 +96,6 @@ export function Profile(): React.JSX.Element {
     xp: me.level?.xp ?? me.xp,
     streakDays: me.streak.current,
     friends: friendCount,
-    badges: shown?.achievements ?? null,
     bio: me.bio,
     favPoem: me.favoritePoem ?? null,
     favStory: me.favoriteStory ?? null,
@@ -113,7 +103,7 @@ export function Profile(): React.JSX.Element {
     frameSku: shown?.frameSku ?? null,
     frameUrl: shown?.frameUrl ?? null,
     joinedYear: Number.isNaN(joined.getTime()) ? null : joined.getFullYear(),
-    seenBy: SEEN_BY[me.profileVisibility] ? { who: t(SEEN_BY[me.profileVisibility]), to: '/app/settings/visibility' } : null,
+    tag: me.tag ?? null,
   };
   const number = (n: number): string => n.toLocaleString(locale);
   const maxFreezes = me.streak.maxFreezes ?? 1;
@@ -137,7 +127,17 @@ export function Profile(): React.JSX.Element {
             <ShareProfile userId={me.id} name={view.name} />
           </div>
         }
-        showcase={shown ? { tree: shown.tree, badges: shown.badges, league: shown.league } : undefined}
+        showcase={shown ? { tree: shown.tree, badges: shown.badges, earned: shown.earnedBadges, league: shown.league } : undefined}
+        // The three chosen again in your collection lead the row beside your handle from now on.
+        onShowcase={(keys) =>
+          setShown((s) => s && { ...s, badges: keys.flatMap((k) => (s.earnedBadges ?? s.badges ?? []).filter((b) => b.key === k)) })
+        }
+        // An icon worn from your collection is read back, so your face shows it.
+        onWorn={() =>
+          void client.get<{ user: MeProfile }>('/me').then((r) => {
+            if (r.ok && r.data?.user?.username) setMe(r.data.user);
+          })
+        }
         notice={me.profilePhotoPending && <PendingPhoto pending={me.profilePhotoPending} words="pictureCheck.held.profile" round />}
         yours={
           <OnlyYou title={t('profile.yourProgress')}>

@@ -1,13 +1,13 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Animated, BackHandler, Easing, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
-import { SvgXml } from 'react-native-svg';
 import { Pressable } from '../theme/Pressable';
 import {
   PATH_GEOMETRY,
   PATH_MOTION,
   PATH_RETURN,
-  chapterBannerSvg,
+  PATH_START_WORDS,
+  isSoraniDialect,
   lessonPath,
   mascotSpot,
   openingStops,
@@ -26,6 +26,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
+import { deviceStore } from '../keyboard/deviceStore';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useDirection } from '../reports/direction';
 import { timing, useEnter } from '../theme/animate';
@@ -36,10 +37,11 @@ import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography, wash } from '../theme/tokens';
 import { JumpSheet } from './JumpSheet';
-import { REST, UNIT_INK, levelWords, stopLabel, type ToneColors } from './path';
+import { REST, TONES, levelWords, stopLabel, type ToneColors } from './path';
 import { MASCOT_MIN_WIDTH, PathMascot } from './PathMascot';
-import { UnitLandmark, UpcomingSign, type RailSection } from './PathWorld';
-import { SkillNodeView, type StopChange } from './SkillNodeView';
+import { UnitLandmark, UnitScenery, UpcomingSign, type RailSection } from './PathWorld';
+import { ChapterArt } from './PathScene';
+import { SkillNodeView, type StopChange, type StopStamp } from './SkillNodeView';
 import { StopCard, type StopActions } from './StopCard';
 import { UnitGuide } from './UnitGuide';
 import type { CourseMap, SkillNode } from './types';
@@ -61,6 +63,38 @@ const LAST_DRAWN = new Map<string, PathSnapshot>();
 
 /** Units whose stops have already risen into place, by course; each rises once per app run. */
 const RISEN = new Set<string>();
+
+/*
+ * The finished stops already stamped on this phone, per course, kept across visits so each is stamped once, the first
+ * time the learner is back on the road after finishing it; held here too once read, for the rest of the run. The first
+ * visit counts everything finished so far as stamped.
+ */
+const STAMPED = new Map<string, ReadonlySet<string>>();
+const stampsKey = (courseId: string): string => `hevalo_stamped_v1:${courseId}`;
+
+function readStamps(raw: string | null): Set<string> | null {
+  try {
+    const value: unknown = raw ? JSON.parse(raw) : null;
+    return Array.isArray(value) ? new Set(value.filter((k): k is string => typeof k === 'string')) : null;
+  } catch {
+    return null;
+  }
+}
+
+function keepStamps(courseId: string, keys: ReadonlySet<string>): void {
+  STAMPED.set(courseId, keys);
+  void deviceStore.set(stampsKey(courseId), JSON.stringify([...keys]));
+}
+
+/** Every finished topic on the road, by key. */
+function finishedKeys(path: Path<SkillNode>): string[] {
+  return path.units.flatMap((u) => u.stops.filter((p) => p.stop.kind === 'skill' && p.stop.state === 'done').map((p) => p.stop.key));
+}
+
+/** A stamp simply there. */
+const STAMP_SHOWN: StopStamp = { pressing: false, delay: 0, onStamped: () => undefined };
+/** A stamp waits this long on a plain visit, so the tile is seen as it was before it is stamped. */
+const STAMP_SETTLE_MS = 450;
 
 /** What a return from a lesson changed, and where the learner was before it. */
 interface Return {
@@ -86,7 +120,7 @@ interface Return {
  * drawn and nothing waits.
  *
  * Returning from a lesson, the path animates the changes before moving on (shared `PATH_RETURN`): rings fill,
- * topics turn gold and earn stars, padlocks open and prizes burst, then the bubble, page and Hevalo move to the
+ * topics become their wax seals and earn suns, padlocks open and prizes burst, then the bubble, page and Hevalo move to the
  * new current skill. Until then the focus stays where the learner was. Under Reduce Motion the path is drawn
  * as it now is.
  */
@@ -120,6 +154,7 @@ export interface UnitPlace {
 
 export const LessonPath = memo(function LessonPath({
   map,
+  dialect,
   due,
   openReview = null,
   onFocus,
@@ -134,6 +169,8 @@ export const LessonPath = memo(function LessonPath({
   onCard,
 }: {
   map: CourseMap;
+  /** The course's dialect, whose own words the bubble over the stop to do now speaks. */
+  dialect?: string;
   due: number;
   /** A review left part-way through, which the review stop picks up rather than starting another beside it. */
   openReview?: string | null;
@@ -199,6 +236,47 @@ export const LessonPath = memo(function LessonPath({
   useEffect(() => {
     LAST_DRAWN.set(courseId, pathSnapshot(path));
   }, [path, courseId]);
+  // The stops stamped on this phone: read once per course, and on a first visit every finished stop so far.
+  const [stamped, setStamped] = useState<ReadonlySet<string> | null>(() => STAMPED.get(courseId) ?? null);
+  const firstPath = useRef(path);
+  firstPath.current = path;
+  useEffect(() => {
+    const known = STAMPED.get(courseId);
+    if (known) {
+      setStamped(known);
+      return;
+    }
+    let alive = true;
+    void deviceStore.get(stampsKey(courseId)).then((raw) => {
+      if (!alive) return;
+      const kept = readStamps(raw);
+      const next = kept ?? new Set(finishedKeys(firstPath.current));
+      if (kept) STAMPED.set(courseId, next);
+      else keepStamps(courseId, next);
+      setStamped(next);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [courseId]);
+  // Under Reduce Motion there is no moment to wait for: what is finished is stamped as it is drawn.
+  useEffect(() => {
+    if (!reduce || !stamped) return;
+    const next = new Set([...stamped, ...finishedKeys(path)]);
+    if (next.size === stamped.size) return;
+    keepStamps(courseId, next);
+    setStamped(next);
+  }, [reduce, stamped, path, courseId]);
+  const stampDone = useCallback(
+    (key: string) =>
+      setStamped((had) => {
+        if (!had || had.has(key)) return had;
+        const next = new Set([...had, key]);
+        keepStamps(courseId, next);
+        return next;
+      }),
+    [courseId],
+  );
   // The bubble, page and Hevalo move to the new current skill once the rest has moved.
   const [moved, setMoved] = useState<Return | null>(null);
   useEffect(() => {
@@ -306,7 +384,7 @@ export const LessonPath = memo(function LessonPath({
         bottom: s + top + height,
         number: unit.number,
         title: unit.title,
-        tone: UNIT_INK[scheme],
+        tone: TONES[scheme][unit.tone],
         section: named ? unit.section : null,
         done: unit.done,
         total: unit.total,
@@ -327,7 +405,7 @@ export const LessonPath = memo(function LessonPath({
           unitId: u.unitId,
           number: u.number,
           title: u.title,
-          tone: UNIT_INK[scheme],
+          tone: TONES[scheme][u.tone],
           done: u.done,
           total: u.total,
           here: u.stops.some((p) => p.stop.key === path.current),
@@ -350,6 +428,10 @@ export const LessonPath = memo(function LessonPath({
   const stopChanges = useMemo(() => (back ? changesByStop(back, path.units) : {}), [back, path.units]);
   // Hevalo stands by the previous skill until the path moves on, and only when there is room for him.
   const mascotAt = path.current && width >= MASCOT_MIN_WIDTH ? (waiting ? back.was : path.current) : null;
+  // The stop to do now in a unit, so its playful touches keep off Hevalo beside it and the bubble over it.
+  const hereIn = (unit: Unit): PlacedStop<SkillNode> | null => unit.stops.find((p) => p.stop.key === mascotAt) ?? null;
+  // The bubble over the stop to do now speaks the course's own dialect, whatever the reader's language.
+  const startWords = PATH_START_WORDS[isSoraniDialect(dialect) ? 'sorani' : 'kurmanji'];
   const cheer = moved !== null && moved === back && (back.changes.finished.length > 0 || back.changes.opened.length > 0);
   // The stop that bobs: the one to do now, or the previous one until the path moves on.
   const bobAt = path.current ? (waiting ? back.was : path.current) : null;
@@ -365,6 +447,26 @@ export const LessonPath = memo(function LessonPath({
     [near, openUnits, focusIndex],
   );
   const moving = (unitId: string): boolean => live && (inView === undefined || inView === unitId);
+
+  // The next finished stop to stamp, one at a time down the road, once its unit is in view.
+  const stampNext = (() => {
+    if (reduce || !stamped) return null;
+    for (const unit of openUnits) {
+      if (!moving(unit.unitId) || !drawn.has(unit.unitId)) continue;
+      for (const { stop } of unit.stops) if (stop.kind === 'skill' && stop.state === 'done' && !stamped.has(stop.key)) return stop.key;
+    }
+    return null;
+  })();
+  /** A finished topic’s stamp: there already, being pressed now, or waiting its turn; a return's own waits for its moment. */
+  const stampOf = (stop: Unit['stops'][number]['stop']): StopStamp | null => {
+    if (stop.kind !== 'skill' || stop.state !== 'done') return null;
+    const finishing = !!stopChanges[stop.key]?.finishing;
+    if (reduce) return STAMP_SHOWN;
+    if (!stamped) return finishing ? null : STAMP_SHOWN;
+    if (stamped.has(stop.key)) return STAMP_SHOWN;
+    if (stop.key !== stampNext) return null;
+    return { pressing: true, delay: finishing ? PATH_RETURN.finishAtMs : STAMP_SETTLE_MS, onStamped: () => stampDone(stop.key) };
+  };
 
   // The current stop bobs while its unit is in view.
   const bob = useRef(new Animated.Value(0)).current;
@@ -484,7 +586,7 @@ export const LessonPath = memo(function LessonPath({
             }}
           >
             {section.units.map((unit, i) => {
-              const tone = UNIT_INK[scheme];
+              const tone = TONES[scheme][unit.tone];
               const land = pathLand(unit.number - 1);
               const full = drawn.has(unit.unitId);
               const rise = riseOf(unit);
@@ -507,9 +609,11 @@ export const LessonPath = memo(function LessonPath({
                       number={unit.number}
                       title={unit.title}
                       section={named ? unit.section : null}
+                      tone={tone}
                       openGuide={guideOf(unit)}
                       onRail={onOpenRail}
                       testID="lp-unit-head"
+                      live={moving(unit.unitId)}
                     />
                   ) : (
                     <UnitDivider number={unit.number} title={unit.title} />
@@ -538,11 +642,14 @@ export const LessonPath = memo(function LessonPath({
                                 key={placed.stop.key}
                                 placed={placed}
                                 unit={unit}
+                                words={startWords}
                                 tone={tone}
                                 left={cx(placed.x) - NODE / 2}
                                 change={stopChanges[placed.stop.key] ?? null}
+                                stamp={stampOf(placed.stop)}
                                 jump={jumpHere}
                                 near={full}
+                                live={moving(unit.unitId)}
                                 bob={placed.stop.key === bobAt && !waiting ? bob : null}
                                 bobbing={bobbing && placed.stop.key === path.current}
                                 rise={rise ? rise.interpolate({ inputRange: [0, from, to, 1], outputRange: [0, 0, 1, 1] }) : null}
@@ -569,6 +676,14 @@ export const LessonPath = memo(function LessonPath({
                                 />
                               );
                             })}
+                          <UnitScenery
+                            unit={unit}
+                            width={width}
+                            sign={sign}
+                            near={full && width >= MASCOT_MIN_WIDTH}
+                            live={moving(unit.unitId)}
+                            here={hereIn(unit)}
+                          />
                         </>
                       ) : null}
                     </View>
@@ -588,7 +703,7 @@ export const LessonPath = memo(function LessonPath({
             key={opened.stop.key}
             stop={opened.stop}
             unit={opened.unit}
-            tone={UNIT_INK[scheme]}
+            tone={TONES[scheme][opened.unit.tone]}
             top={opened.top}
             left={-layout.gutter}
             width={width}
@@ -609,7 +724,7 @@ export const LessonPath = memo(function LessonPath({
       <UnitGuide guide={guide} onClose={() => setGuide(null)} />
       <JumpSheet
         unit={jumpTo}
-        tone={jumpTo ? UNIT_INK[scheme] : null}
+        tone={jumpTo ? TONES[scheme][jumpTo.tone] : null}
         onClose={() => setJumpTo(null)}
         onStart={() => {
           if (!jumpTo) return;
@@ -658,11 +773,14 @@ function changesByStop({ changes, was }: Return, units: readonly Unit[]): Record
 function PathStopView({
   placed,
   unit,
+  words: startWords,
   tone,
   left,
   change,
+  stamp,
   jump,
   near,
+  live,
   bob,
   bobbing,
   rise,
@@ -672,11 +790,16 @@ function PathStopView({
 }: {
   placed: PlacedStop<SkillNode>;
   unit: Unit;
+  /** The course's own words for the bubble over the stop to do now. */
+  words: { start: string; going: string };
   tone: ToneColors;
   left: number;
   change: StopChange | null;
+  stamp: StopStamp | null;
   jump: boolean;
   near: boolean;
+  /** Its unit is in view and the app in front. */
+  live: boolean;
   bob: Animated.Value | null;
   bobbing: boolean;
   rise: Animated.AnimatedInterpolation<number> | null;
@@ -691,7 +814,8 @@ function PathStopView({
     ? t('coursemap.jump.label', { n: formatNumber(unit.number, locale) })
     : t(words.key, { ...words.params, ...(state ? { state: t(state) } : {}) });
   const current = stop.kind === 'skill' && stop.state === 'current' && stop.launch ? stop : null;
-  const word = current ? (current.lessonsDone > 0 ? t('learn.continue.button') : t('coursemap.path.start')) : '';
+  const word = current ? (current.lessonsDone > 0 ? startWords.going : startWords.start) : '';
+  const said = current ? (current.lessonsDone > 0 ? t('learn.continue.button') : t('coursemap.path.start')) : '';
   return (
     <SkillNodeView
       stop={stop}
@@ -700,10 +824,13 @@ function PathStopView({
       tone={tone}
       unitTone={unit.tone}
       label={label}
-      callout={current ? { text: word, label: `${word}: ${current.skill.title}` } : undefined}
+      callout={current ? { text: word, label: `${said}: ${current.skill.title}` } : undefined}
       change={change}
       jump={jump ? { text: t('coursemap.jump.bubble') } : undefined}
+      milestone={stop.kind === 'story' || stop.kind === 'trophy' ? { number: formatNumber(unit.number, locale) } : null}
+      stamp={stamp}
       near={near}
+      live={live}
       bob={bob}
       bobbing={bobbing}
       rise={rise}
@@ -739,101 +866,90 @@ function unitHeading(number: string, title: string, section?: string | null): st
 }
 
 /**
- * A unit's heading on its own painted horizon (@kurda/shared's chapterBannerSvg): the chapter's hills and ground under a
- * day sky, or a starry night in dark mode, with "Section 1 · Chapter 2" over its name on the open sky (no section in a
- * single-section course). Where the guide's book and the unit map stand at the far end the landmark is left out, since
- * the road below shows it; Learn's next-step card shows it. PinnedUnit wears the same face.
+ * A unit's heading on its own colour, standing on its darker lip: "Section 1 · Chapter 2" over its name (no section in
+ * a single-section course), the chapter's vignette beside it as a window the banner's foot and seam crop, and past the
+ * seam in the lip's colour at the far end the guide's book and the unit map. PinnedUnit wears the same face.
  */
 export function UnitFace({
   number,
   title,
   section,
+  tone,
   openGuide,
   onRail,
   testID,
+  live = true,
 }: {
   number: number;
   title: string;
   section: number | null;
+  /** The unit's own colours. */
+  tone: ToneColors;
   openGuide?: () => void;
   onRail?: () => void;
   testID?: string;
+  /** On screen, so its vignette may move; the pinned one always is. */
+  live?: boolean;
 }): React.JSX.Element {
   const { t, locale } = useI18n();
-  const { colors, scheme } = useTheme();
   const dir = useDirection();
-  const [box, setBox] = useState<{ width: number; height: number } | null>(null);
   const chapter = t('coursemap.path.unit', { n: formatNumber(number, locale) });
   const eyebrow = section !== null ? t('coursemap.path.sectionUnit', { section: formatNumber(section, locale), unit: formatNumber(number, locale) }) : chapter;
   const sectionWords = section !== null ? t('coursemap.path.section', { n: formatNumber(section, locale) }) : null;
-  const land = pathLand(number - 1);
   const buttons = Boolean(openGuide || onRail);
-  const art = useMemo(
-    () =>
-      // A hidden screen can be laid out at no size at all; the art waits for a real one.
-      box && box.width > 0 && box.height > 0
-        ? chapterBannerSvg({
-            ground: land.ground,
-            landmark: buttons ? undefined : land.landmark,
-            width: box.width,
-            height: box.height,
-            dark: scheme === 'dark',
-            rtl: dir.rtl,
-            idPrefix: `unitface${number}${scheme}${buttons ? 'b' : 'l'}`,
-          })
-        : null,
-    [box, land, buttons, scheme, dir.rtl, number],
-  );
+  // The app mirrors its own rows for a right-to-left language; the far end is then on the left.
+  const mirrored = dir.row === 'row-reverse';
   return (
-    <View
-      style={styles.banner}
-      testID={testID}
-      onLayout={(e: LayoutChangeEvent) => {
-        const { width, height } = e.nativeEvent.layout;
-        setBox((was) => (was && Math.round(was.width) === Math.round(width) && Math.round(was.height) === Math.round(height) ? was : { width, height }));
-      }}
-    >
-      {art && box ? <SvgXml xml={art} width={box.width} height={box.height} style={StyleSheet.absoluteFill} /> : null}
-      <View style={styles.pin}>
-        <View
-          style={styles.pinWords}
-          accessible
-          accessibilityRole="header"
-          accessibilityLabel={unitHeading(chapter, title, sectionWords)}
-        >
-          {/* Both may wrap, though with the buttons below on the hills "Abschnitt 1 · Kapitel 2" has the whole width. */}
-          <Text style={[styles.eyebrow, dir.text, { color: colors.textPrimary }]}>{eyebrow}</Text>
-          <Text style={[styles.pinTitle, dir.free, buttons ? null : styles.pinTitleBesideLandmark, { color: colors.textPrimary }]}>{title}</Text>
+    <View style={styles.bannerStand} testID={testID}>
+      <View style={[styles.bannerLip, { backgroundColor: tone.lip }]} />
+      <View style={[styles.banner, { flexDirection: dir.row, backgroundColor: tone.fill }]}>
+        <View style={styles.pin}>
+          <View style={styles.pinWords} accessible accessibilityRole="header" accessibilityLabel={unitHeading(chapter, title, sectionWords)}>
+            <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]}>{eyebrow}</Text>
+            {/* Course text keeps its own direction on a right-to-left page, clear of the vignette. */}
+            <Text style={[styles.pinTitle, dir.free, mirrored ? styles.pinTitleBesideLeft : styles.pinTitleBeside, { color: tone.ink }]}>{title}</Text>
+          </View>
+          {/* The chapter's own vignette beside its name, against the seam and the banner's foot, which crop it. */}
+          <View style={[styles.pinArt, mirrored ? styles.pinArtLeft : styles.pinArtEnd]} pointerEvents="none">
+            <ChapterArt chapter={number - 1} fill={tone.fill} lip={tone.lip} height={PIN_ART_H} live={live} />
+          </View>
         </View>
-      </View>
-      {/* On the hills in the far corner, so the words have the whole width of the sky. */}
-      <View style={[styles.pinActions, { flexDirection: dir.row }, dir.rtl ? { left: spacing.sm } : { right: spacing.sm }]}>
-        {openGuide ? (
-          <Pressable
-            onPress={openGuide}
-            accessibilityRole="button"
-            accessibilityLabel={t('coursemap.path.guideFor', { unit: title })}
-            testID="lp-unit-guide"
-            style={({ pressed }) => [styles.pinButton, { backgroundColor: colors.onArt, opacity: pressed ? pressedDim : 1 }]}
-          >
-            <Icon name="book" size={20} color={colors.textPrimary} />
-          </Pressable>
-        ) : null}
-        {onRail ? (
-          <Pressable
-            onPress={onRail}
-            accessibilityRole="button"
-            accessibilityLabel={t('learn.map.title')}
-            testID="lp-unit-rail"
-            style={({ pressed }) => [styles.pinButton, { backgroundColor: colors.onArt, opacity: pressed ? pressedDim : 1 }]}
-          >
-            <Icon name="flag" size={20} color={colors.textPrimary} />
-          </Pressable>
+        {buttons ? (
+          <View style={[styles.pinActions, { borderColor: tone.lip }, dir.rtl ? styles.seamEnd : styles.seamStart]}>
+            {openGuide ? (
+              <Pressable
+                onPress={openGuide}
+                accessibilityRole="button"
+                accessibilityLabel={t('coursemap.path.guideFor', { unit: title })}
+                testID="lp-unit-guide"
+                style={({ pressed }) => [styles.pinButton, { opacity: pressed ? pressedDim : 1 }]}
+              >
+                <Icon name="book" size={24} color={tone.ink} />
+              </Pressable>
+            ) : null}
+            {onRail ? (
+              <Pressable
+                onPress={onRail}
+                accessibilityRole="button"
+                accessibilityLabel={t('learn.map.title')}
+                testID="lp-unit-rail"
+                style={({ pressed }) => [styles.pinButton, { opacity: pressed ? pressedDim : 1 }]}
+              >
+                <Icon name="flag" size={24} color={tone.ink} />
+              </Pressable>
+            ) : null}
+          </View>
         ) : null}
       </View>
     </View>
   );
 }
+
+/** The vignette's height in the banner, a size down from the banner's own so a long name keeps whole words beside it, and the room the name leaves it. */
+const PIN_ART_H = 90;
+const PIN_ART_ROOM = 90;
+/** How far a banner stands above its lip. */
+const BANNER_LIP = 6;
 
 /**
  * A section that is not open, as a card: its number, level name and description, and progress, or for a shut
@@ -927,15 +1043,16 @@ function SectionCard({ section, here, onOpen, onJump }: { section: Section; here
 
 /**
  * The unit being scrolled through, pinned to the top once its own heading has scrolled away, with the heading's
- * face. It fades in as the heading leaves and cross-fades to the next unit (`duration.base`, opacity only, native
- * driver). Under Reduce Motion it appears and changes without animating.
+ * face. It drops in as the heading leaves, and as the next unit comes up its colour slides up over the last one's
+ * (`duration.base`, transform only, native driver). Under Reduce Motion it appears and changes without moving.
  */
 export function PinnedUnit({ unit, onRail }: { unit: UnitPlace; onRail?: () => void }): React.JSX.Element {
   const reduce = useReducedMotion();
   const arrive = useEnter(!reduce, 0, duration.base);
   const dropIn = { opacity: arrive, transform: [{ translateY: arrive.interpolate({ inputRange: [0, 1], outputRange: [-PIN_DROP, 0] }) }] };
-  const fade = useRef(new Animated.Value(1)).current;
-  // The previous unit, drawn under the new one while it fades in.
+  const slide = useRef(new Animated.Value(1)).current;
+  const [height, setHeight] = useState(0);
+  // The previous unit, drawn under the new one while it slides in.
   const [from, setFrom] = useState<UnitPlace | null>(null);
   const last = useRef(unit);
   useEffect(() => {
@@ -944,12 +1061,12 @@ export function PinnedUnit({ unit, onRail }: { unit: UnitPlace; onRail?: () => v
     if (before.unitId === unit.unitId) return;
     if (reduce) {
       setFrom(null);
-      fade.setValue(1);
+      slide.setValue(1);
       return;
     }
     setFrom(before);
-    fade.setValue(0);
-    const run = timing(fade, 1, duration.base);
+    slide.setValue(0);
+    const run = timing(slide, 1, duration.base);
     run.start(({ finished }) => {
       if (finished) setFrom(null);
     });
@@ -957,16 +1074,18 @@ export function PinnedUnit({ unit, onRail }: { unit: UnitPlace; onRail?: () => v
     // Only a new unit turns it, not a new object for the same one.
   }, [unit.unitId, reduce]);
   const face = (u: UnitPlace, rail?: () => void) => (
-    <UnitFace number={u.number} title={u.title} section={u.section} openGuide={u.openGuide} onRail={rail} />
+    <UnitFace number={u.number} title={u.title} section={u.section} tone={u.tone} openGuide={u.openGuide} onRail={rail} />
   );
   return (
     <Animated.View testID="lp-pinned-unit" style={dropIn}>
-      {from ? (
-        <View style={StyleSheet.absoluteFill} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          {face(from)}
-        </View>
-      ) : null}
-      <Animated.View style={{ opacity: fade }}>{face(unit, onRail)}</Animated.View>
+      <View style={styles.pinnedClip} onLayout={(e: LayoutChangeEvent) => setHeight(e.nativeEvent.layout.height)}>
+        {from ? (
+          <View style={StyleSheet.absoluteFill} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            {face(from)}
+          </View>
+        ) : null}
+        <Animated.View style={{ transform: [{ translateY: slide.interpolate({ inputRange: [0, 1], outputRange: [height || 120, 0] }) }] }}>{face(unit, onRail)}</Animated.View>
+      </View>
     </Animated.View>
   );
 }
@@ -1028,19 +1147,30 @@ const styles = StyleSheet.create({
   pathUnderHead: { marginTop: -spacing.md },
   eyebrow: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },
   pinLip: { borderRadius: radii.lg, paddingBottom: 4, zIndex: 2 },
-  // The painted horizon: tall enough for its hills under the words, clipped to the card's corner.
-  banner: { borderRadius: radii.lg, overflow: 'hidden', zIndex: 2, minHeight: 112 },
-  pin: { borderRadius: radii.lg, paddingTop: spacing.md, paddingBottom: 60, paddingHorizontal: spacing.md },
-  pinActions: { position: 'absolute', bottom: spacing.sm, gap: spacing.xs },
+  // The banner stands on its lip: room under the face for it, and the lip the face's shape, set that far down.
+  bannerStand: { paddingBottom: BANNER_LIP, zIndex: 2 },
+  bannerLip: { position: 'absolute', left: 0, right: 0, top: BANNER_LIP, bottom: 0, borderRadius: radii.lg },
+  banner: { borderRadius: radii.lg, overflow: 'hidden', minHeight: 116, alignItems: 'stretch' },
+  // The words at the top, the vignette below them at the far end.
+  pin: { flex: 1, justifyContent: 'flex-start', paddingVertical: spacing.md, paddingHorizontal: spacing.md },
+  // Against the seam and the banner's foot; the name keeps clear of it.
+  pinArt: { position: 'absolute', bottom: 0 },
+  pinArtEnd: { end: 0 },
+  pinArtLeft: { left: 0 },
+  pinTitleBeside: { paddingEnd: PIN_ART_ROOM },
+  pinTitleBesideLeft: { paddingLeft: PIN_ART_ROOM },
+  // The guide over the unit map, past the seam.
+  pinActions: { flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2, paddingHorizontal: spacing.xs },
+  seamStart: { borderLeftWidth: 2 },
+  seamEnd: { borderRightWidth: 2 },
+  pinnedClip: { overflow: 'hidden', borderRadius: radii.lg },
   // Over the whole road, gutters too, under the open card (StopCard's zIndex and elevation are one higher).
   // Takes back the gap before it, so the road ends where it did.
   roadEnd: { marginTop: -spacing.sm },
   cardShade: { position: 'absolute', top: 0, bottom: 0, left: -layout.gutter, right: -layout.gutter, zIndex: 10, elevation: 7 },
   pinWords: { flex: 1, gap: 2 },
   pinTitle: { ...display(typography.sizes.title) },
-  // The name keeps clear of the landmark at the far end, which stands below the line above it.
-  pinTitleBesideLandmark: { paddingEnd: 96 },
-  pinButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  pinButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
   card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm + 4 },
   cardRow: { alignItems: 'center', gap: spacing.sm + 4 },
   cardBadge: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },

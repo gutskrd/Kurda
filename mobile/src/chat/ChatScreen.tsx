@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, FlatList, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import type { GiftCard, GiftTier } from '@kurda/shared';
+import { giftSenderName, type GiftCard, type GiftTier } from '@kurda/shared';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -26,6 +26,7 @@ import { useChatSocket } from './useChatSocket';
 import { useI18n } from '../i18n/I18nContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { DmWelcome } from './DmWelcome';
+import { useArrivals } from './arrivals';
 import { MessageRow, type RowMessage } from './MessageRow';
 import { JumpToLatest, useAwayFromLatest, useUnseenBelow } from './ThreadParts';
 import { TypingBubble } from './TypingBubble';
@@ -34,6 +35,8 @@ import { placeMessages } from './thread';
 import { giftBatchCard, openGift as openGiftApi, withCard, type ChatMessage } from '../gifts/api';
 import { useGiftEvents, useOpenChat } from '../gifts/events';
 import { GiftPickerSheet } from '../gifts/GiftPickerSheet';
+import { canGiveGifts } from '../gifts/access';
+import { isKnownAdult } from '../gifts/nudges';
 import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftUnwrap, type UnwrapTarget } from '../gifts/GiftUnwrap';
 import { ReportSheet } from '../reports/ReportSheet';
@@ -92,7 +95,7 @@ export function ChatScreen({
   const [attempt, setAttempt] = useState(0);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [picking, setPicking] = useState(false);
-  const [flying, setFlying] = useState<{ tier: GiftTier; key: number } | null>(null);
+  const [flying, setFlying] = useState<{ tier: GiftTier; item: { sku: string; assetUrl: string | null }; key: number } | null>(null);
   const [unwrapping, setUnwrapping] = useState<UnwrapTarget | null>(null);
   const [reporting, setReporting] = useState<string | null>(null);
   // The header's report: about the person, not one message.
@@ -124,6 +127,8 @@ export function ChatScreen({
   );
   // Newest first, for the inverted list below — once per change to the thread, not per keystroke.
   const newestFirst = useMemo<ShownMessage[]>(() => [...thread].reverse(), [thread]);
+  // Messages sent or received while the thread is open rise in (chat/arrivals.ts).
+  const isArriving = useArrivals(newestFirst, me, keyOf);
   // Where each message sits: its day, its place in its run, whether it says the time.
   const places = useMemo(
     () => placeMessages(thread, new Date(), { locale, today: t('chat.day.today'), yesterday: t('chat.day.yesterday'), earlier: t('chat.day.earlier') }),
@@ -207,12 +212,12 @@ export function ChatScreen({
     (giftId: string) => {
       const message = messages.find((m) => m.gift?.myGiftId === giftId);
       if (message?.gift) {
-        setUnwrapping({ giftId, card: message.gift, fromName: message.username || name });
+        setUnwrapping({ giftId, card: message.gift, fromName: giftSenderName(message.gift.from) ?? '' });
         return;
       }
       // Older than the page the thread loaded: the server has its card.
       void openGiftApi(client, giftId).then((res) => {
-        if (res.ok) setUnwrapping({ giftId, card: res.data.card, fromName: name });
+        if (res.ok) setUnwrapping({ giftId, card: res.data.card, fromName: giftSenderName(res.data.card.from) ?? '' });
         // A gift that cannot be opened now says so, rather than the tap doing nothing.
         else if (!isMaintenance(res.error)) Alert.alert(t('error.generic'), describeError(res.error, t));
       });
@@ -402,6 +407,7 @@ export function ChatScreen({
                     onReport={mine ? undefined : () => setReporting(item.id)}
                     onRetry={() => void retry(item.id)}
                     onDiscard={() => cancel(item.id)}
+                    arriving={isArriving(keyOf(item.id))}
                   />
                 );
               }}
@@ -418,21 +424,23 @@ export function ChatScreen({
           </View>
         ) : (
           <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
-            <Pressable
-              onPress={() => setPicking(true)}
-              accessibilityRole="button"
-              accessibilityLabel={t('gift.button')}
-              style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
-            >
-              <Icon name="gift" size={22} color={colors.goldText} />
-            </Pressable>
+            {canGiveGifts(user) ? (
+              <Pressable
+                onPress={() => setPicking(true)}
+                accessibilityRole="button"
+                accessibilityLabel={t('gift.button')}
+                style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
+              >
+                <Icon name="gift" size={22} color={colors.goldText} />
+              </Pressable>
+            ) : null}
             <ChatGameButton target={{ kind: 'dm', friendId: userId }} />
             <MessageField value={draft} onChangeText={onType} onSend={() => void send()} maxLength={MAX_LEN} />
           </View>
         )}
       </KeyboardAvoidingView>
 
-      {flying ? <GiftSendAnimation key={flying.key} tier={flying.tier} announce={t('gift.sent', { name })} onDone={() => setFlying(null)} /> : null}
+      {flying ? <GiftSendAnimation key={flying.key} tier={flying.tier} item={flying.item} announce={t('gift.sent', { name })} onDone={() => setFlying(null)} /> : null}
 
       <GiftPickerSheet
         visible={picking}
@@ -443,7 +451,7 @@ export function ChatScreen({
           setPicking(false);
           const sent = result.message;
           if (sent) setMessages((prev) => (prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]));
-          setFlying({ tier: item.tier, key: Date.now() });
+          setFlying({ tier: item.tier, item, key: Date.now() });
         }}
       />
 
@@ -453,6 +461,8 @@ export function ChatScreen({
           onClose={() => setUnwrapping(null)}
           onOpened={(card: GiftCard) => setMessages((prev) => withCard(prev, card))}
           onThanks={() => post(t('gift.thanksMessage'))}
+          // back to the friend this chat is with, the bag first; offered to a known adult only, as a prompt to spend
+          onSendBack={canGiveGifts(user) && isKnownAdult(user) ? () => setPicking(true) : undefined}
         />
       ) : null}
 

@@ -47,7 +47,16 @@ describe.skipIf(!DATABASE_URL)('learning streak (integration)', () => {
   });
 
   afterAll(async () => {
-    await pool.query(`DELETE FROM users WHERE email LIKE '%_${suffix}@it.kurda.app'`);
+    // a week of learning pays a streak milestone, whose ledger row only the ledger's own escape lets go
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SET LOCAL kurda.ledger_admin = 'on'`);
+      await client.query(`DELETE FROM users WHERE email LIKE '%_${suffix}@it.kurda.app'`);
+      await client.query('COMMIT');
+    } finally {
+      client.release();
+    }
     await pool.end();
     await app.close();
   });

@@ -8,8 +8,8 @@ export interface ReceivedGift {
   name: string;
   category: string;
   assetUrl: string | null;
-  /** Null when they have since left; the item is still yours. */
-  from: { id: string; username: string } | null;
+  /** null for "a Hevalo member": a closed account, or one with a block either way */
+  from: { id: string; username: string; displayName?: string | null } | null;
   seenAt: string | null;
   createdAt: string;
 }

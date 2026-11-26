@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import type { GroupChatService } from './chat-service.js';
@@ -9,7 +10,7 @@ import { AppError } from '../plugins/errors.js';
 import { secondsToUtcMidnight, takeDaily } from '../limits/counters.js';
 import { parentalAllows, requireSwitchOn } from '../parental/supervision.js';
 
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 
 /** Group messages one account may send a day (UTC), over every group: a very talkative day, never a flood. */
 export const GROUP_MESSAGES_PER_DAY = 2_000;
@@ -111,7 +112,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
   /** Delete a message (staff any, author own). */
   app.delete(
     '/groups/:id/chat/:messageId',
-    { schema: { params: z.object({ id: z.uuid(), messageId: z.uuid() }) }, preHandler: requireAccount },
+    { schema: { params: z.object({ id: lowerUuid(), messageId: lowerUuid() }) }, preHandler: requireAccount },
     async (req) => {
       const { id, messageId } = req.params as { id: string; messageId: string };
       await chat.deleteMessage(req.user!.id, id, messageId);
@@ -123,7 +124,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
   app.post(
     '/groups/:id/mutes',
     {
-      schema: { params: idParam, body: z.object({ userId: z.uuid(), duration: z.enum(['1h', '24h', 'perm']) }) },
+      schema: { params: idParam, body: z.object({ userId: lowerUuid(), duration: z.enum(['1h', '24h', 'perm']) }) },
       preHandler: requireAccount,
     },
     async (req) => {
@@ -135,7 +136,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
   );
   app.delete(
     '/groups/:id/mutes/:userId',
-    { schema: { params: z.object({ id: z.uuid(), userId: z.uuid() }) }, preHandler: requireAccount },
+    { schema: { params: z.object({ id: lowerUuid(), userId: lowerUuid() }) }, preHandler: requireAccount },
     async (req) => {
       const { id, userId } = req.params as { id: string; userId: string };
       await chat.unmute(req.user!.id, id, userId);

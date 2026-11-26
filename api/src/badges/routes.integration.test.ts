@@ -119,8 +119,37 @@ describe.skipIf(!DATABASE_URL)('badges and progress over HTTP (integration)', ()
     const seen = (await call(friend, 'GET', `/users/${teen.id}`)).json();
     expect(seen.badges).toEqual([{ key: 'agir', family: 'habit', tier: 1, tierKey: 'sifir' }]);
     expect(seen.achievements).toBe(1);
+    // Every earned badge for the profile's row, under the same rule, with when its tier was reached.
+    expect(seen.earnedBadges).toEqual([{ key: 'agir', family: 'habit', tier: 1, tierKey: 'sifir', earnedAt: expect.any(String), rarity: null }]);
     const strangers = (await call(stranger, 'GET', `/users/${teen.id}`)).json();
     expect(strangers.badges ?? []).toEqual([]);
+    expect(strangers.earnedBadges ?? []).toEqual([]);
+  });
+
+  it('a profile lists every earned badge newest first, with the rarity of its tier once enough people are active', async () => {
+    const me = await signUp('row');
+    const viewer = await signUp('rowview');
+    await pool.query(
+      `INSERT INTO user_badges (user_id, badge_key, tier, progress, earned_at, tier_earned_at)
+       VALUES ($1, 'ders', 2, 80, now() - interval '9 days', ARRAY[now() - interval '9 days', now() - interval '1 day']),
+              ($1, 'agir', 1, 7, now() - interval '3 days', ARRAY[now() - interval '3 days'])`,
+      [me.id],
+    );
+    // The nightly figure for that tier, put back as it was afterwards.
+    const before = (await pool.query(`SELECT holders, active_users FROM badge_rarity WHERE badge_key = 'ders' AND tier = 2`)).rows[0];
+    await pool.query(
+      `INSERT INTO badge_rarity (badge_key, tier, holders, active_users, computed_at) VALUES ('ders', 2, 125, 1000, now())
+       ON CONFLICT (badge_key, tier) DO UPDATE SET holders = 125, active_users = 1000`,
+    );
+    try {
+      const profile = (await call(viewer, 'GET', `/users/${me.id}`)).json();
+      expect(profile.earnedBadges.map((b: { key: string }) => b.key)).toEqual(['ders', 'agir']);
+      expect(profile.earnedBadges[0]).toMatchObject({ tier: 2, tierKey: 'ziv', rarity: 12.5 });
+      expect(Date.now() - new Date(profile.earnedBadges[0].earnedAt).getTime()).toBeLessThan(2 * 86_400_000);
+    } finally {
+      if (before) await pool.query(`UPDATE badge_rarity SET holders = $1, active_users = $2 WHERE badge_key = 'ders' AND tier = 2`, [before.holders, before.active_users]);
+      else await pool.query(`DELETE FROM badge_rarity WHERE badge_key = 'ders' AND tier = 2`);
+    }
   });
 
   it('the data export holds the learner’s XP, league weeks, streak, badges and ranks', async () => {

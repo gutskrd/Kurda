@@ -32,6 +32,8 @@ export type RootStackParamList = {
   Lesson: { lessonId: string; courseId?: string };
   /** Finds the lesson Learn would start and opens it in its place (learn/NextLessonScreen): a new account's first. */
   NextLesson: undefined;
+  /** Hevalo+: what members get and the plans (plus/PlusScreen), only while it is on sale or in development. */
+  Plus: undefined;
   /**
    * A practice session, started at once. `exerciseIds`: practise these rather than what is due; `mode`: another kind of
    * practice from the hub, with `unitId` for a unit's review; `sessionId`: a review left part-way through, resumed.
@@ -42,8 +44,8 @@ export type RootStackParamList = {
   /** The short test that jumps ahead on the path to `unitId` (coursemap/JumpTestScreen). */
   JumpTest: { courseId: string; unitId: string };
   Shop: undefined;
-  /** By XP (this week or all time), Zêr or Gewher; XP this week opens with your league (leagues/RankingsScreen). */
-  Rankings: { board?: 'xp' | 'zer' | 'gewher'; span?: 'week' | 'all' } | undefined;
+  /** By XP (this week or all time) or Zêr; XP this week opens with your league (leagues/RankingsScreen). */
+  Rankings: { board?: 'xp' | 'zer'; span?: 'week' | 'all' } | undefined;
   /** The whole league this week: the ladder, the goal ring and the group's table (leagues/LeagueScreen). */
   LeagueTable: undefined;
   /** Older names, opened as Rankings (navigation/returnTo.ts `RENAMED`): the league on XP this week, ranks and season as is. */
@@ -92,6 +94,8 @@ export type RootStackParamList = {
    * (settings/SettingsPageScreen). `teenId` names the teen on a parent's pages about one.
    */
   SettingsPage: { page: SettingsPageKey; teenId?: string };
+  /** A child's own page in child mode (family/ChildProfile): who made the profile and who sees it, and their settings. */
+  ChildProfile: undefined;
   BlockedUsers: undefined;
   /** Your reports and what became of them (reports/MyReportsScreen). */
   MyReports: undefined;
@@ -165,7 +169,8 @@ export type RootStackParamList = {
   WordSet: { set: string; script?: AlphabetScript };
   Saved: undefined;
   EditProfile: undefined;
-  LibraryPost: { postId: string };
+  /** `openGift`: the reader's own gift given onto it, opened as the post shows (from its notice). */
+  LibraryPost: { postId: string; openGift?: string };
   /**
    * The post composer: a new post, or `postId` to edit one of yours. `pickPictures` opens the photo library at once,
    * and `meme` makes the pictures a meme.

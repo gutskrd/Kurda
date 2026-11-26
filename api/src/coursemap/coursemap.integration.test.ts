@@ -34,7 +34,7 @@ describe.skipIf(!DATABASE_URL)('course map (integration)', () => {
           { position: 1, titleKu: 'A', titleEn: 'Skill A', lessons: [
             { position: 1, titleKu: 'L', titleEn: 'A1', exercises: [{ position: 1, type: 'translate', payload: { prompt: 'apple', accepted: ['sêv'] } }] } ] },
           { position: 2, titleKu: 'B', titleEn: 'Skill B', lessons: [
-            { position: 1, titleKu: 'L', titleEn: 'B1', exercises: [{ position: 1, type: 'translate', payload: { prompt: 'water', accepted: ['av'] } }] } ] },
+            { position: 1, titleKu: 'L', titleEn: 'B1', exercises: [{ position: 1, type: 'translate', payload: { prompt: 'water', accepted: ['av'], new: [{ ku: 'av', en: 'water' }] } }] } ] },
         ],
       },
     ],
@@ -97,8 +97,10 @@ describe.skipIf(!DATABASE_URL)('course map (integration)', () => {
 
   it('lists each skill’s lessons, none finished yet', async () => {
     const res = await authed('GET', `/courses/${courseId}/map`);
-    const skillA = res.json().units[0].skills[0];
-    expect(skillA.lessons).toEqual([{ lessonId: skillA.firstLessonId, position: 1, title: 'A1', completed: false, times: 0 }]);
+    const [skillA, skillB] = res.json().units[0].skills;
+    expect(skillA.lessons).toEqual([{ lessonId: skillA.firstLessonId, position: 1, title: 'A1', completed: false, times: 0, kind: 'practice' }]);
+    // a lesson bringing in a word for the first time is one of new words
+    expect(skillB.lessons[0].kind).toBe('words');
   });
 
   it('completing skill A marks it completed and unlocks skill B', async () => {
@@ -127,7 +129,7 @@ describe.skipIf(!DATABASE_URL)('course map (integration)', () => {
 
     const after = (await authed('GET', `/courses/${courseId}/map`)).json();
     const [skillA, skillB] = after.units[0].skills;
-    expect(skillA.lessons).toEqual([{ lessonId: corrected, position: 1, title: 'A1', completed: true, times: 1 }]);
+    expect(skillA.lessons).toEqual([{ lessonId: corrected, position: 1, title: 'A1', completed: true, times: 1, kind: 'practice' }]);
     expect(['completed', 'gold', 'decayed']).toContain(skillA.state);
     expect(skillB.state).toBe('unlocked');
   });

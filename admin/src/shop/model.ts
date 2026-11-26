@@ -1,7 +1,8 @@
 /** The shop's catalogue as the console sees it: an item, its state and the price rule, for pages/Shop.tsx and this folder. */
 import type { Tone } from '../ui';
 
-export type Currency = 'zer' | 'gems';
+/** Zêr, the one currency everything is priced in. */
+export type Currency = 'zer';
 
 export interface ShopItem {
   sku: string;
@@ -38,16 +39,17 @@ export const CATEGORIES: ReadonlyArray<{ value: string; label: string }> = [
   { value: 'tag', label: 'Tag' },
   { value: 'powerup', label: 'Power-up' },
   { value: 'freeze', label: 'Streak freeze' },
+  { value: 'gift', label: 'Gift' },
   { value: 'misc', label: 'Other' },
 ];
 
 export const categoryName = (c: string): string => CATEGORIES.find((x) => x.value === c)?.label ?? c;
 
 /** The price at which a change waits for a second admin (SENSITIVE_PRICE on the server). */
-export const APPROVAL_PRICE = 1000;
+export const APPROVAL_PRICE = 500;
 
 export function priceText(price: number, currency: Currency): string {
-  return price === 0 ? 'Free' : `${price.toLocaleString()} ${currency === 'gems' ? 'Gems' : 'Zêr'}`;
+  return price === 0 ? 'Free' : `${price.toLocaleString()} ${currency === 'zer' ? 'Zêr' : currency}`;
 }
 
 export type SaleState = 'on' | 'off' | 'scheduled' | 'ended' | 'hidden' | 'retired';

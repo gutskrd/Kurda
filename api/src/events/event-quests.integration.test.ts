@@ -47,6 +47,8 @@ describe.skipIf(!DATABASE_URL)('event quests (integration)', () => {
       remoteAddress: '10.91.0.1',
     });
     userId = res.json().user.id;
+    // only members earn Zêr; the claims under test are a member's
+    await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [userId]);
 
     await events.upsert({
       key: eventKey,
@@ -56,7 +58,7 @@ describe.skipIf(!DATABASE_URL)('event quests (integration)', () => {
       endsAt: '2026-06-08T00:00:00.000Z',
       quests: [
         { id: 'xp', type: 'earn_xp', count: 100, reward: { zer: 50 } },
-        { id: 'wins', type: 'story_quizzes', count: 1, reward: { gems: 10 } },
+        { id: 'wins', type: 'story_quizzes', count: 1, reward: { zer: 10 } },
       ],
     });
 
@@ -113,13 +115,12 @@ describe.skipIf(!DATABASE_URL)('event quests (integration)', () => {
     await quests.claim(userId, eventKey, 'wins');
 
     const balances = await wallet.balances(userId);
-    expect(balances.zer).toBe(50);
-    expect(balances.gems).toBe(10);
+    expect(balances.zer).toBe(60);
 
     // re-claim pays nothing more
     const again = await quests.claim(userId, eventKey, 'xp');
     expect(again).toMatchObject({ ok: true, claimed: false });
-    expect((await wallet.balances(userId)).zer).toBe(50);
+    expect((await wallet.balances(userId)).zer).toBe(60);
 
     // Once claimed it is no longer claimable in the progress view.
     const view = (await quests.progress(userId, eventKey))!;
@@ -140,22 +141,22 @@ describe.skipIf(!DATABASE_URL)('event quests (integration)', () => {
       startsAt: '2027-03-21T00:00:00.000Z',
       endsAt: '2027-03-24T00:00:00.000Z',
       quests: [
-        { id: 'newroz-xp', type: 'earn_xp', count: 300, reward: { gems: 30 } },
-        { id: 'newroz-play-3', type: 'win_games', count: 3, titleEn: 'Win 3 quiz games', reward: { gems: 40 } },
+        { id: 'newroz-xp', type: 'earn_xp', count: 300, reward: { zer: 150 } },
+        { id: 'newroz-play-3', type: 'win_games', count: 3, titleEn: 'Win 3 quiz games', reward: { zer: 200 } },
       ],
     });
     try {
       for (const sql of statements) await pool.query(sql);
       const row = await pool.query<{ quests: unknown[] }>(`SELECT quests FROM events WHERE key = $1`, [key]);
       expect(row.rows[0]!.quests).toEqual([
-        { id: 'newroz-xp', type: 'earn_xp', count: 300, reward: { gems: 30 } },
+        { id: 'newroz-xp', type: 'earn_xp', count: 300, reward: { zer: 150 } },
         {
           id: 'newroz-play-3',
           type: 'story_quizzes',
           count: 3,
           titleEn: 'Finish 3 story quizzes during Newroz',
           titleKu: 'Di rojên Newrozê de pirsên 3 çîrokan bibersivîne',
-          reward: { gems: 40 },
+          reward: { zer: 200 },
         },
       ]);
     } finally {

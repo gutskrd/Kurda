@@ -12,6 +12,19 @@ import { TOPIC_STARS, nextInRound, topicRounds, type TopicRounds } from './lesso
 /** A skill's state as the server sends it (api/src/coursemap/node-state.ts). */
 export type PathSkillState = 'locked' | 'unlocked' | 'completed' | 'gold' | 'decayed';
 
+/**
+ * What a lesson is, as the map tells it from its exercises (`lessonKind`): `words`, it brings new words; `talk`, it holds
+ * a conversation to take part in; `practice`, it goes over words already met.
+ */
+export const LESSON_KINDS = ['words', 'talk', 'practice'] as const;
+export type LessonKind = (typeof LESSON_KINDS)[number];
+
+/** A lesson's kind from its exercises: a conversation makes it a talk, new words make it words, and the rest is practice. */
+export function lessonKind({ talk, fresh }: { talk: boolean; fresh: number }): LessonKind {
+  if (talk) return 'talk';
+  return fresh > 0 ? 'words' : 'practice';
+}
+
 /** One lesson of a skill, as the map lists it. */
 export interface PathLesson {
   lessonId: string;
@@ -19,6 +32,8 @@ export interface PathLesson {
   completed: boolean;
   /** how many times this learner finished it; older responses omit it, and a completed lesson then reads as once */
   times?: number;
+  /** what the lesson is; older responses omit it */
+  kind?: LessonKind;
 }
 
 /** What the path needs of a skill; each app passes its own, richer type through. */
@@ -89,7 +104,7 @@ export interface SkillStop<S extends PathSkill> {
   finish: Finish | null;
   lessonsDone: number;
   lessonsTotal: number;
-  /** Full rounds of its lessons played, 0 to `TOPIC_STARS`: the stars it wears. Done once it has one. */
+  /** Full rounds of its lessons played, 0 to `TOPIC_STARS`: the suns its seal wears. Done once it has one. */
   rounds: number;
   /** Ring pieces filled of `lessonsTotal`: the finished lessons of the round in play, or all of them once every round is played. */
   pieces: number;
@@ -98,6 +113,8 @@ export interface SkillStop<S extends PathSkill> {
    * the next round. Null for a locked skill or one with nothing published.
    */
   launch: string | null;
+  /** What the lesson it opens is, shown on the stop to do now; null without one, or from a server too old to say. */
+  launchKind: LessonKind | null;
   /** the skill whose finishing opens this one; named on a locked stop */
   after: S | null;
 }
@@ -148,15 +165,16 @@ export interface PlacedStop<S extends PathSkill> {
   trail: 'walked' | 'ahead' | null;
 }
 
-/** The unit colours the apps know; the apps hold the colour values. */
-export const UNIT_TONES = ['meadow', 'river', 'clay', 'dusk', 'pine', 'rose', 'saffron'] as const;
+/** The unit colours the apps know; the values are art/path-land.ts's `PATH_STOP_TONES`. */
+export const UNIT_TONES = ['meadow', 'river', 'clay', 'dusk', 'pine', 'rose', 'saffron', 'pomegranate'] as const;
 export type UnitTone = (typeof UNIT_TONES)[number];
 
 /**
- * The order units take their colours in: only the warm ones, so a path reads as the land it teaches. The blue and the
- * violet stay named for what still uses them (a streak's ice) and are never dealt to units.
+ * The order units take their colours in, so each chapter the road enters turns a new colour: meadow green, iris, teal,
+ * sky, rose, Newroz orange and pomegranate. Saffron is never dealt to a unit, since a yellow stop would be taken for a
+ * finished one's gold.
  */
-export const UNIT_TONE_ORDER: readonly UnitTone[] = ['clay', 'saffron', 'meadow', 'rose', 'pine'];
+export const UNIT_TONE_ORDER: readonly UnitTone[] = ['meadow', 'dusk', 'pine', 'river', 'rose', 'clay', 'pomegranate'];
 
 /** The colour of a course's unit, by its place in the course from 0. */
 export function unitTone(index: number): UnitTone {
@@ -314,6 +332,7 @@ export function lessonPath<S extends PathSkill>(map: PathMapInput<S>, { due = 0,
       const finished = FINISHED.has(skill.state);
       const state: StopState = finished ? 'done' : skill.state === 'locked' ? 'locked' : skill === currentSkill ? 'current' : 'available';
       const { rounds, pieces } = roundsOf(skill);
+      const launch = launchOf(skill);
       stops.push({
         kind: 'skill',
         key: `s:${skill.skillId}`,
@@ -325,7 +344,8 @@ export function lessonPath<S extends PathSkill>(map: PathMapInput<S>, { due = 0,
         lessonsTotal: lessons.length,
         rounds,
         pieces,
-        launch: launchOf(skill),
+        launch,
+        launchKind: lessons.find((l) => l.lessonId === launch)?.kind ?? null,
         after: previous,
       });
       if (reviewAfter === skill) stops.push({ kind: 'review', key: 'review', due });
@@ -533,7 +553,7 @@ export interface RingAt {
   pieces: number;
 }
 
-/** A skill's ring moving on, `of` pieces round. When `to` has more rounds than `from`, the ring filled and earned a star first. */
+/** A skill's ring moving on, `of` pieces round. When `to` has more rounds than `from`, the ring filled and earned a sun first. */
 export interface RingChange {
   key: string;
   of: number;
@@ -543,7 +563,7 @@ export interface RingChange {
 
 /** What moved on the path since the snapshot, in the order it is shown (`PATH_RETURN`). */
 export interface PathChanges {
-  /** skills whose ring moved on: a piece filled, a round completed (a star), or both */
+  /** skills whose ring moved on: a piece filled, a round completed (a sun), or both */
   ring: RingChange[];
   /** skills finished since, their first round whole, so they turn gold */
   finished: string[];
@@ -587,21 +607,22 @@ export function pathChanges<S extends PathSkill>(prev: PathSnapshot | null, path
 
 /**
  * Returning to the path after a lesson, in ms from when it is drawn, alike on the phone and the website: the page settles
- * (`settleMs`); the ring fills (`ringMs`) up to a finished stop's gold pop (`finishAtMs`, `popMs`); an earned star drops
- * onto its coin (`starAtMs`, `starMs`) as a whole ring starts its next round; an opened stop's lock turns into its number
- * (`openAtMs`, `glyphMs`); and the bubble reaches the new current stop as the page scrolls there (`bubbleAtMs`,
- * `bubbleMs`). Under Reduce Motion nothing plays.
+ * (`settleMs`); the bar over the stop fills (`ringMs`); a finished stop becomes its wax seal (`finishAtMs`, over `stampMs`,
+ * the stamp pressing halfway); a full bar starts its next round once it has pressed (`nextAtMs`); an opened stop pops as
+ * its lock turns into its glyph (`openAtMs`, `popMs`, `glyphMs`); the bubble reaches the new current stop as the page
+ * scrolls there (`bubbleAtMs`, `bubbleMs`). A round made whole on a stop already sealed is pressed in as a new sun
+ * from `finishAtMs` (path-world.ts `PATH_STAMP_REPRESS`). Under Reduce Motion nothing plays.
  */
 export const PATH_RETURN = {
   settleMs: 300,
   ringMs: 400,
   finishAtMs: 700,
+  stampMs: 1300,
   popMs: 320,
-  starAtMs: 800,
-  starMs: 280,
-  openAtMs: 900,
+  nextAtMs: 1450,
+  openAtMs: 1750,
   glyphMs: 120,
-  bubbleAtMs: 1100,
+  bubbleAtMs: 1950,
   bubbleMs: 200,
 } as const;
 

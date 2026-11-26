@@ -24,13 +24,13 @@ afterEach(cleanup);
 
 const TODAY = '2026-11-13';
 const view = (over: Partial<TreeRecord> = {}): TreeView =>
-  treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 5, water: 2, harvests: 0, ...over }, TODAY);
+  treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 10, water: 2, harvests: 0, ...over }, TODAY);
 const mine = (tree: TreeView | null): MyTree => ({ tree, planted: tree ? 1 : 0, kinds: TREE_SPECIES.map((species) => ({ ...TREE_KINDS[species], owned: TREE_KINDS[species].starter })), zer: 0 });
 
 describe('the tree’s screen, moving', () => {
   it('plays the pour in the scene, lets the tree be seen to grow where it stands, and only then says that it grew', async () => {
-    const watered: Watered = { tree: view({ waterings: 7, water: 1 }), poured: 1, grew: 3, harvests: 0, zer: 0, revived: false };
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 6, water: 2 }))), 'POST /me/tree/water': ok(watered) });
+    const watered: Watered = { tree: view({ waterings: 18, water: 1 }), poured: 1, grew: 3, harvests: 0, zer: 0, revived: false };
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 17, water: 2 }))), 'POST /me/tree/water': ok(watered) });
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Water the tree' }));
     // The can is over the tree, with the water falling from it, and there is no pouring twice.
@@ -52,19 +52,21 @@ describe('the tree’s screen, moving', () => {
   });
 
   it('hangs a swing from a great tree that is well, and none from one left to wilt', async () => {
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 40 }))) });
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 130 }))) });
     const well = renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByTestId('tree-art-swing')).toBeTruthy();
+    // and its crown stirs on the plant, under the swing
+    expect(screen.getByTestId('tree-art-crown')).toBeTruthy();
     well.unmount();
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 40, lastWateredOn: '2026-11-08' }))) });
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 130, lastWateredOn: '2026-11-08' }))) });
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     await screen.findByTestId('tree-health');
     expect(screen.queryByTestId('tree-art-swing')).toBeNull();
   });
 
   it('stands sparks round a tree that has drunk without growing', async () => {
-    const watered: Watered = { tree: view({ waterings: 5, water: 1 }), poured: 1, grew: null, harvests: 0, zer: 0, revived: false };
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 4, water: 2 }))), 'POST /me/tree/water': ok(watered) });
+    const watered: Watered = { tree: view({ waterings: 11, water: 1 }), poured: 1, grew: null, harvests: 0, zer: 0, revived: false };
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 10, water: 2 }))), 'POST /me/tree/water': ok(watered) });
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Water the tree' }));
     expect(await screen.findByTestId('tree-pour')).toBeTruthy();
@@ -75,16 +77,16 @@ describe('the tree’s screen, moving', () => {
 
   it('blows the season past the tree, and stills it round one left to wilt but for the snow', async () => {
     const month = vi.spyOn(Date.prototype, 'getMonth').mockReturnValue(3);
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ species: 'behiv', waterings: 30 }))) });
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ species: 'behiv', waterings: 80 }))) });
     const spring = renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByTestId('tree-air-petals')).toBeTruthy();
     spring.unmount();
     month.mockReturnValue(9);
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 30 }))) });
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 80 }))) });
     const autumn = renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByTestId('tree-air-leaves')).toBeTruthy();
     autumn.unmount();
-    const dry = treeView({ species: 'behiv', plantedOn: '2026-11-01', lastWateredOn: '2026-11-08', waterings: 30, water: 1, harvests: 0 }, TODAY);
+    const dry = treeView({ species: 'behiv', plantedOn: '2026-11-01', lastWateredOn: '2026-11-08', waterings: 80, water: 1, harvests: 0 }, TODAY);
     testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(dry)) });
     const wilting = renderWithProviders(<TreeScreen onExit={() => undefined} />);
     await screen.findByTestId('tree-health');

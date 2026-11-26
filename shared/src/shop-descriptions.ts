@@ -233,6 +233,36 @@ const DESCRIPTIONS: Record<string, Record<Exclude<AppLocale, 'en'>, string>> = {
     ku: 'Rojgirtin', ckb: 'خۆرگیران', de: 'Sonnenfinsternis', es: 'Eclipse',
     fr: 'Éclipse', nl: 'Zonsverduistering', tr: 'Güneş tutulması', ar: 'كسوف',
   },
+  'Friend': { ku: 'Heval', ckb: 'هاوڕێ', de: 'Freund/Freundin', es: 'Amigo/amiga', fr: 'Ami/amie', nl: 'Vriend', tr: 'Arkadaş', ar: 'صديق' },
+  'Learner': { ku: 'Xwendekar', ckb: 'فێرخواز', de: 'Lernende', es: 'Aprendiz', fr: 'Élève', nl: 'Leerling', tr: 'Öğrenci', ar: 'متعلّم' },
+  'Traveller': { ku: 'Rêwî', ckb: 'ڕێبوار', de: 'Reisende', es: 'Trotamundos', fr: 'Voyageur/voyageuse', nl: 'Reiziger', tr: 'Yolcu', ar: 'مسافر' },
+  'Villager': { ku: 'Gundî', ckb: 'گوندنشین', de: 'Dorfkind', es: 'De pueblo', fr: 'Enfant du village', nl: 'Dorpeling', tr: 'Köylü', ar: 'قروي' },
+  'Gardener': {
+    ku: 'Baxçevan', ckb: 'باخەوان', de: 'Gärtner/Gärtnerin', es: 'Jardinero/jardinera',
+    fr: 'Jardinier/jardinière', nl: 'Tuinier', tr: 'Bahçıvan', ar: 'بستاني',
+  },
+  'Kind-hearted': {
+    ku: 'Dilovan', ckb: 'میهرەبان', de: 'Gutherzig', es: 'De buen corazón',
+    fr: 'Au grand cœur', nl: 'Goedhartig', tr: 'İyi kalpli', ar: 'طيّب القلب',
+  },
+  'Hospitable': {
+    ku: 'Mêvanperwer', ckb: 'میواندۆست', de: 'Gastfreundlich', es: 'Hospitalario/hospitalaria',
+    fr: 'Accueillant/accueillante', nl: 'Gastvrij', tr: 'Misafirperver', ar: 'كريم الضيافة',
+  },
+  'Highlander': {
+    ku: 'Çiyayî', ckb: 'شاخاوی', de: 'Bergkind', es: 'De la montaña',
+    fr: 'Enfant des montagnes', nl: 'Bergbewoner', tr: 'Dağlı', ar: 'جبلي',
+  },
+  'A new day': {
+    ku: 'Wateya Newrozê', ckb: 'ڕۆژی نوێ', de: 'Ein neuer Tag', es: 'Un nuevo día',
+    fr: 'Un jour nouveau', nl: 'Een nieuwe dag', tr: 'Yeni bir gün', ar: 'يوم جديد',
+  },
+  'Stargazer': {
+    ku: 'Stêrknas', ckb: 'ئەستێرەناس', de: 'Astronom/Astronomin', es: 'Astrónomo/astrónoma',
+    fr: 'Astronome', nl: 'Sterrenkijker', tr: 'Gökbilimci', ar: 'فلكي',
+  },
+  'Singer of tales': { ku: 'Dengbêj', ckb: 'دەنگبێژ', de: 'Barde', es: 'Bardo', fr: 'Barde', nl: 'Bard', tr: 'Ozan', ar: 'منشد الحكايات' },
+  'Poet': { ku: 'Helbestvan', ckb: 'شاعیر', de: 'Dichter/Dichterin', es: 'Poeta', fr: 'Poète', nl: 'Dichter', tr: 'Şair', ar: 'شاعر' },
 };
 
 /** Whether a shipped description has its words in every language. */

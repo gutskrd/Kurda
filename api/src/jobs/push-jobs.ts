@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import type { Notification, PushService } from '../push/service.js';
 import type { InboxService } from '../notifications/inbox-service.js';
 import { NOTIFICATION_CATEGORIES } from '../notifications/prefs.js';
@@ -8,7 +9,7 @@ import { defineJob, type JobDefinition } from './registry.js';
 export const PUSH_SEND_JOB_NAME = 'push-send';
 
 const payloadSchema = z.object({
-  userId: z.uuid(),
+  userId: lowerUuid(),
   notification: z.object({
     category: z.enum(NOTIFICATION_CATEGORIES),
     title: z.string().min(1).max(120),

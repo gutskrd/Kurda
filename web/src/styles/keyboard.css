@@ -82,8 +82,7 @@
 }
 .race-progress-fill {
   height: 100%;
-  background: var(--primary);
-  transition: width 0.1s linear;
+  background: var(--accent);
 }
 .race-title {
   max-width: 40%;
@@ -494,7 +493,7 @@
   height: 44px;
 }
 .kb-guide-select option {
-  color: #14112e;
+  color: #17242b;
 }
 .kb-guide-steps {
   margin: 0;
@@ -630,7 +629,7 @@
   animation-delay: calc(var(--i) * 40ms);
 }
 .kb-confetti i:nth-child(3n) {
-  background: #b874f0;
+  background: var(--accent);
 }
 .kb-confetti i:nth-child(3n + 1) {
   background: var(--success);

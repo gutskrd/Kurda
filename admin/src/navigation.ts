@@ -49,6 +49,7 @@ const SHOP_EDITORS = { roles: ['admin', 'superadmin'] } as const; // /admin/shop
 const APPROVERS = { roles: ['admin', 'superadmin'] } as const; // /admin/config/changes
 const TAG_EDITORS = { roles: ['admin', 'superadmin', 'founder'] } as const; // /admin/tags
 const SUPERADMINS = { roles: ['superadmin'] } as const; // /admin/audit, /admin/security, /admin/maintenance
+const ADMINS = { roles: ['superadmin', 'content_editor', 'moderator', 'support', 'admin'] } as const; // /admin/message-access/log: ADMIN_ROLES and the legacy role
 const FEEDBACK_READERS = { roles: ['moderator', 'superadmin', 'admin', 'support'] } as const; // feedback/routes.ts FEEDBACK_READERS
 const SUPPORT_READERS = { roles: ['superadmin', 'admin', 'support'] } as const; // email/admin-routes.ts SUPPORT_READERS (the settings half: EMAIL_ADMINS)
 /** PROGRESS_TOOL_ROLES in api/src/admin/roles.ts: leagues/routes.ts, badges/routes.ts. */
@@ -111,6 +112,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'antibot', label: 'Bot flags', group: 'moderation', icon: 'bot', page: 'antibot', access: LEGACY_ADMIN, keywords: 'antibot spam bots' },
   { id: 'feedback', label: 'Feedback', group: 'moderation', icon: 'star', page: 'feedback', access: FEEDBACK_READERS, keywords: 'ratings stars reviews inbox' },
   { id: 'playbook', label: 'Playbook', group: 'moderation', icon: 'book', page: 'playbook', access: MODERATORS, keywords: 'csam self-harm child safety how to help' },
+  { id: 'safety-reviews', label: 'Safety reviews', group: 'moderation', icon: 'lock', page: 'safety-reviews', access: MODERATORS, keywords: 'read letters private messages chats dm review grant police legal request child safety' },
 
   { id: 'lessons', label: 'Lessons', group: 'content', icon: 'book', page: 'lessons', access: LESSON_EDITORS, keywords: 'content exercises courses' },
   { id: 'stories', label: 'Stories', group: 'content', icon: 'story', page: 'stories', access: STORY_EDITORS, keywords: 'reading quiz' },
@@ -127,10 +129,10 @@ export const NAV: readonly NavEntry[] = [
   { id: 'leagues', label: 'Leagues', group: 'progress', icon: 'waves', page: 'leagues', access: PROGRESS_TOOLS, keywords: 'weekly groups settle merge promotion xp rankings' },
   { id: 'badges', label: 'Badges', group: 'progress', icon: 'award', page: 'badges', access: PROGRESS_TOOLS, keywords: 'achievements rarity catalogue award revoke' },
 
-  { id: 'economy', label: 'Overview', title: 'Economy', group: 'economy', icon: 'coins', page: 'economy', access: LEGACY_ADMIN, keywords: 'economy supply drift zer gems' },
+  { id: 'economy', label: 'Overview', title: 'Economy', group: 'economy', icon: 'coins', page: 'economy', access: LEGACY_ADMIN, keywords: 'economy supply drift zer' },
   { id: 'shop', label: 'Shop', group: 'economy', icon: 'store', page: 'shop', access: SHOP_EDITORS, keywords: 'items prices catalogue' },
   { id: 'pictures', label: 'Pictures', group: 'economy', icon: 'upload', page: 'pictures', access: SHOP_EDITORS, keywords: 'art images badges emblems frames avatars icons replace upload customise events' },
-  { id: 'gem-rules', label: 'Gem rules', group: 'economy', icon: 'gem', page: 'gem-rules', access: LEGACY_ADMIN, keywords: 'earning' },
+  { id: 'earn-rules', label: 'Earn rules', group: 'economy', icon: 'coins', page: 'earn-rules', access: LEGACY_ADMIN, keywords: 'earning zer promotion tournament' },
   { id: 'fraud', label: 'Fraud', group: 'economy', icon: 'alert', page: 'fraud', access: LEGACY_ADMIN, keywords: 'purchases holds iap' },
   { id: 'approvals', label: 'Approvals', group: 'economy', icon: 'approve', page: 'approvals', access: APPROVERS, keywords: 'config second admin pending' },
 
@@ -138,6 +140,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'offline', label: 'Offline mode', group: 'settings', icon: 'pause', page: 'offline', access: SUPERADMINS, keywords: 'maintenance downtime take down closed outage pause message' },
   { id: 'security-log', label: 'Security log', group: 'settings', icon: 'shield', page: 'security-log', access: SUPERADMINS, keywords: 'hacks attacks sign-ins failed logins lockouts alerts intruders suspicious' },
   { id: 'audit', label: 'Audit log', group: 'settings', icon: 'list', page: 'audit', access: SUPERADMINS, keywords: 'history trail admin changes' },
+  { id: 'access-log', label: 'Access log', group: 'settings', icon: 'eye', page: 'access-log', access: ADMINS, keywords: 'who read letters private messages chats safety reviews transparency' },
   { id: 'trusted-networks', label: 'Trusted networks', group: 'settings', icon: 'server', page: 'trusted-networks', access: SUPERADMINS, keywords: 'school class shared address sign-up limit allow list' },
   { id: 'security', label: 'My security', group: 'settings', icon: 'lock', page: 'security', access: { anyone: true }, keywords: '2fa two-factor authenticator' },
   { id: 'system', label: 'System', group: 'settings', icon: 'server', page: 'system', access: LEGACY_ADMIN, keywords: 'jobs leaderboards push media storage' },

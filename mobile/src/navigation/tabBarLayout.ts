@@ -6,8 +6,8 @@ import { spacing } from '../theme/tokens';
 /**
  * Tab bar geometry, in one place so the bar and the scrollable tab screens agree on how much bottom space to reserve.
  */
-/** The bar's own height: an icon alone, with room round it for the capsule behind the tab you are on. */
-export const TAB_BAR_HEIGHT = 60;
+/** The bar's own height: a glyph over its name, with room round them for the capsule behind the tab you are on. */
+export const TAB_BAR_HEIGHT = 62;
 
 /** How far in from the screen's sides the bar floats: the page's own gutter, so it lines up with the cards above it. */
 export const TAB_BAR_SIDE = 16;

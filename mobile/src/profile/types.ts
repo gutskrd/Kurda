@@ -3,6 +3,7 @@
  * `web/src/lib/types.ts`. Everything is optional, since an older response, or one hidden by privacy settings, is still
  * valid.
  */
+import type { ProfileWordTag } from '@kurda/shared';
 
 /** Whoever gave you what you are wearing. */
 export interface Gifter {
@@ -53,4 +54,6 @@ export interface ProfileCosmetics {
   favoriteStory?: FavoriteRef | null;
   /** ISO-3166 alpha-2, or `KU`, which is ours rather than ISO's. */
   country?: string | null;
+  /** The word tag worn by the name, while it is owned; absent on an older server. */
+  tag?: ProfileWordTag | null;
 }

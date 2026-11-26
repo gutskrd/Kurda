@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { SEASON_FRAME_INNER } from '@kurda/shared';
+import { SEASON_FRAME_INNER, type ProfileWordTag } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { useDirection } from '../reports/direction';
@@ -10,6 +10,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { CosmeticBackground, PremiumPill } from './cosmetic-parts';
 import { Horizon } from './Horizon';
+import { TagPill } from './TagPill';
 import type { LevelInfo, ProfileBackground } from './types';
 
 /** The face on a full profile; a frame is drawn round it, so the face keeps its size inside one. */
@@ -65,9 +66,9 @@ export function LevelBadge({ level }: { level: Pick<LevelInfo, 'level' | 'xp' | 
 
 /**
  * The top of a full profile, laid out as a social app's and the website's (web/src/profile/ProfileHead.tsx): the
- * banner, the face over its lower edge with the figures beside it, the name with the level, the handle, then what the
- * screen adds under it (where they are from, the bio, who they know, what only the owner sees) and the actions. It sits
- * on the page, not in a card; nothing is written over the banner.
+ * banner, the face over its lower edge with the figures beside it, the name with the level, the handle with the badge
+ * row, then what the screen adds under it (where they are from, the bio, who they know, what only the owner sees) and
+ * the actions. It sits on the page, not in a card; nothing is written over the banner.
  */
 export function ProfileHead({
   seed,
@@ -79,7 +80,9 @@ export function ProfileHead({
   name,
   level,
   premium,
+  tag,
   handle,
+  handleAside,
   children,
   actions,
 }: {
@@ -97,8 +100,12 @@ export function ProfileHead({
   name: string;
   level?: Pick<LevelInfo, 'level' | 'xp' | 'nextLevelXp' | 'progress'> | null;
   premium?: boolean;
+  /** The word tag worn by the name. */
+  tag?: ProfileWordTag | null;
   /** The handle, and the year joined where it is known. */
   handle: string;
+  /** After the handle on its line, wrapping under it where the line is short: the badge row. */
+  handleAside?: ReactNode;
   /** Under the handle: where they are from, who can see the page, the bio, who they know. */
   children?: ReactNode;
   /** Edit and share on your own profile, the friend buttons on somebody else's. */
@@ -127,11 +134,15 @@ export function ProfileHead({
             {name}
           </Text>
           {level ? <LevelBadge level={level} /> : null}
+          {tag ? <TagPill tag={tag} /> : null}
           {premium ? <PremiumPill /> : null}
         </View>
-        <Text style={[styles.handle, dir.text, { color: colors.textSecondary }]} numberOfLines={2}>
-          {handle}
-        </Text>
+        <View style={[styles.handleRow, { flexDirection: dir.row }]}>
+          <Text style={[styles.handle, dir.text, { color: colors.textSecondary }]} numberOfLines={2}>
+            {handle}
+          </Text>
+          {handleAside}
+        </View>
       </View>
 
       {children}
@@ -144,11 +155,14 @@ export function ProfileHead({
 export function ProfileHeadSkeleton({
   width,
   stats,
+  handleAside,
   children,
   actions,
 }: {
   width: number;
   stats?: ReactNode;
+  /** The badge row's place beside the handle. */
+  handleAside?: ReactNode;
   children?: ReactNode;
   actions?: ReactNode;
 }): React.JSX.Element {
@@ -168,7 +182,10 @@ export function ProfileHeadSkeleton({
           <SkeletonText size={typography.sizes.title} width={160} />
           <Skeleton width={LEVEL} height={LEVEL} radius={radii.pill} />
         </View>
-        <SkeletonText size={typography.sizes.text} width={72} />
+        <View style={[styles.handleRow, { flexDirection: dir.row }]}>
+          <SkeletonText size={typography.sizes.text} width={72} />
+          {handleAside}
+        </View>
       </View>
       {children}
       {actions ? <View style={styles.actions}>{actions}</View> : null}
@@ -186,7 +203,10 @@ const styles = StyleSheet.create({
   top: { alignItems: 'flex-start', gap: spacing.sm },
   face: { borderRadius: radii.pill, borderWidth: RING },
   stats: { flex: 1, minWidth: 0 },
-  names: { gap: 2 },
+  // Room between the name with its level ring and the handle with its badge row, so neither crowds the other.
+  names: { gap: spacing.sm },
+  // The handle and the badge row on one line that wraps, the row under the handle where the line is short.
+  handleRow: { alignItems: 'center', flexWrap: 'wrap', columnGap: spacing.sm + 2, rowGap: spacing.xs },
   nameRow: { alignItems: 'center', flexWrap: 'wrap', columnGap: spacing.sm + 2, rowGap: spacing.xs },
   name: { flexShrink: 1, fontSize: typography.sizes.title, fontWeight: typography.weights.bold },
   handle: { fontSize: typography.sizes.text },

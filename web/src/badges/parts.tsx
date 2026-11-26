@@ -73,6 +73,11 @@ export function progressText(t: Translate, view: BadgeView): string | null {
   });
 }
 
+/** A tier's share of active learners as the rarity line says it: whole percents, and "<1" below one. */
+export function formatRarity(percent: number): string {
+  return percent < 1 ? '<1' : String(Math.round(percent));
+}
+
 /** 0–1 along the way to the next tier, from the last one reached. */
 export const progressFraction = badgeViewFraction;
 

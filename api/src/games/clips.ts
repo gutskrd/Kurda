@@ -16,6 +16,7 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { AppError } from '../plugins/errors.js';
 import { takeCount } from '../limits/counters.js';
 import { readAudio, type RecordingFiles } from '../speakers/recording-file.js';
@@ -30,7 +31,7 @@ export const CLIP_RATE = { max: 240, windowMs: 60_000, per: 'ip' as const };
  */
 export const CLIP_FETCHES_PER_ROUND = 300;
 
-const params = z.object({ id: z.uuid(), clip: z.string().regex(/^[A-Za-z0-9_-]{16,64}$/) });
+const params = z.object({ id: lowerUuid(), clip: z.string().regex(/^[A-Za-z0-9_-]{16,64}$/) });
 
 /** A single byte range a reply can answer, or why it cannot (pure, for the tests). */
 export function byteRange(header: string | undefined, size: number): { start: number; end: number } | 'unsatisfiable' | null {

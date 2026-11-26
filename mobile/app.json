@@ -11,16 +11,16 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FAF9FE"
+      "backgroundColor": "#F9FBFB"
     },
     "ios": {
       "splash": {
         "image": "./assets/splash-icon.png",
         "resizeMode": "contain",
-        "backgroundColor": "#FAF9FE",
+        "backgroundColor": "#F9FBFB",
         "dark": {
           "image": "./assets/splash-icon.png",
-          "backgroundColor": "#141121"
+          "backgroundColor": "#152024"
         }
       },
       "supportsTablet": false,
@@ -204,16 +204,17 @@
       "splash": {
         "image": "./assets/splash-icon.png",
         "resizeMode": "contain",
-        "backgroundColor": "#FAF9FE",
+        "backgroundColor": "#F9FBFB",
         "dark": {
           "image": "./assets/splash-icon.png",
-          "backgroundColor": "#141121"
+          "backgroundColor": "#152024"
         }
       },
       "package": "app.hevalo.mobile",
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
-        "android.permission.ACTIVITY_RECOGNITION"
+        "android.permission.ACTIVITY_RECOGNITION",
+        "com.google.android.gms.permission.AD_ID"
       ],
       "playStoreUrl": "",
       "adaptiveIcon": {
@@ -260,7 +261,7 @@
         "expo-notifications",
         {
           "icon": "./assets/android-icon-monochrome.png",
-          "color": "#b874f0",
+          "color": "#00863B",
           "defaultChannel": "default"
         }
       ],
@@ -270,10 +271,10 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 280,
           "resizeMode": "contain",
-          "backgroundColor": "#FAF9FE",
+          "backgroundColor": "#F9FBFB",
           "dark": {
             "image": "./assets/splash-icon.png",
-            "backgroundColor": "#141121"
+            "backgroundColor": "#152024"
           }
         }
       ],

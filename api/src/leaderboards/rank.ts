@@ -4,10 +4,10 @@
  */
 
 /**
- * What a board ranks: this week's XP, starting afresh every Monday; all the XP ever earned; or the Zêr or Gewher each
- * person holds now, which says something different and so has a board of its own.
+ * What a board ranks: this week's XP, starting afresh every Monday; all the XP ever earned; or the Zêr each person holds
+ * now, which says something different and so has a board of its own.
  */
-export const BOARD_TYPES = ['weekly_xp', 'all_time_xp', 'zer', 'gewher'] as const;
+export const BOARD_TYPES = ['weekly_xp', 'all_time_xp', 'zer'] as const;
 export type BoardType = (typeof BOARD_TYPES)[number];
 
 export function isBoardType(value: string): value is BoardType {
@@ -19,12 +19,12 @@ export function isWeeklyBoard(type: BoardType): type is 'weekly_xp' {
   return type === 'weekly_xp';
 }
 
-/** The balance boards and the wallet currency behind each; the app's Gewher is 'gems' in the wallet. */
-export const BALANCE_BOARDS = { zer: 'zer', gewher: 'gems' } as const;
+/** The balance boards and the wallet currency behind each. */
+export const BALANCE_BOARDS = { zer: 'zer' } as const;
 export type BalanceBoardType = keyof typeof BALANCE_BOARDS;
 
 export function isBalanceBoard(type: BoardType): type is BalanceBoardType {
-  return type === 'zer' || type === 'gewher';
+  return type === 'zer';
 }
 
 /** Who a board covers: everyone, your friends, or people in your country. */

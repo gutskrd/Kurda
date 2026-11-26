@@ -87,7 +87,7 @@ describe('truncate', () => {
 /** A gift or game card has no body, so the preview names it rather than printing an empty line. */
 describe('messagePreview for every kind of message', () => {
   it('names a gift — by its item only once the reader has unwrapped it, so a banner never spoils it', () => {
-    const gift = { batchId: 'b', sku: 's', name: 'Newroz fire', category: 'background', assetUrl: null, tier: 'legendary' as const, recipients: [], myGiftId: 'g1', myOpened: false, equippable: null };
+    const gift = { batchId: 'b', sku: 's', name: 'Newroz fire', category: 'background', assetUrl: null, tier: 'legendary' as const, recipients: [], from: null, myGiftId: 'g1', myOpened: false, equippable: null };
     // in words alone: the row draws the gift's icon beside them (chat/PreviewIcon.tsx)
     expect(messagePreview({ body: null, kind: 'gift' }, t)).toBe('Gift');
     expect(messagePreview({ body: null, kind: 'gift', gift }, t)).toBe('Gift');

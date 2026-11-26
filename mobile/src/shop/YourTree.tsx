@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
+import { ZerValue } from './value';
 import { useDirection } from '../reports/direction';
 import { Sheet } from '../stories/ui';
 import { ClayButton } from '../theme/glass';
@@ -190,6 +191,7 @@ function Nursery({ tree, data, zer, onZer, onClose }: { tree: ShopTreeState; dat
             <View style={[styles.price, { flexDirection: dir.row }]}>
               <Icon name="coin" size={18} color={colors.gold} />
               <Text style={[styles.priceText, { color: colors.textPrimary }]}>{`${number(asking.kind.price)} Zêr`}</Text>
+              <ZerValue zer={asking.kind.price} />
             </View>
           ) : null}
           {buying ? <Text style={[styles.balance, { color: colors.textSecondary }]}>{t('shop.balance', { zer: number(zer) })}</Text> : null}
@@ -280,6 +282,7 @@ function KindRow({
           <View style={[styles.kindPrice, { flexDirection: dir.row }]}>
             <Icon name="coin" size={15} color={colors.gold} />
             <Text style={[styles.kindNote, { color: missing > 0 ? colors.textSecondary : colors.textPrimary }]}>{formatNumber(kind.price, locale)}</Text>
+            <ZerValue zer={kind.price} />
           </View>
         )}
         {!note && missing > 0 ? <Text style={[styles.kindShort, dir.text, { color: colors.textSecondary }]}>{t('tree.buy.short', { count: formatNumber(missing, locale) })}</Text> : null}

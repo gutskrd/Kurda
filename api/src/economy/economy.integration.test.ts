@@ -64,8 +64,6 @@ describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
     // D5: +200 faucet, −400 sink
     await ledger(D5, 200, 'quest_reward');
     await ledger(D5, -400, 'shop_purchase');
-    // gems: earned, never spent — a currency with no sink at all
-    await ledger(D3, 40, 'achievement', 'gems');
 
     await economy.aggregateDay(new Date(`${D3}T12:00:00Z`));
     await economy.aggregateDay(new Date(`${D5}T12:00:00Z`));
@@ -126,13 +124,13 @@ describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
     expect(skewed.drifting).toBe(true);
   });
 
-  it('reports an unspendable currency as a null ratio, not Infinity', async () => {
-    // Gems were only earned here, so faucet/sink is infinite; JSON cannot carry that, so the API sends null and still
-    // flags the currency as drifting. The table is shared, so the window's gems rows are limited to the ones above.
-    await pool.query(`DELETE FROM economy_daily WHERE currency = 'gems' AND day > (CURRENT_DATE - 7)`);
-    await economy.aggregateDay(new Date(`${D3}T12:00:00Z`));
+  it('reports a currency with nothing spent as a null ratio, not Infinity', async () => {
+    // Zêr only earned in the window makes faucet/sink infinite; JSON cannot carry that, so the API sends null and still
+    // flags the currency as drifting. The table is shared, so the window's rows are this file's day alone.
+    await pool.query(`DELETE FROM economy_daily WHERE currency = 'zer' AND day > (CURRENT_DATE - 7)`);
+    await pool.query(`INSERT INTO economy_daily (day, currency, faucet, sink, net) VALUES (CURRENT_DATE, 'zer', 40, 0, 40)`);
 
-    const d = await economy.drift('gems', 1);
+    const d = await economy.drift('zer', 1);
     expect(d.sink).toBe(0);
     expect(d.faucet).toBeGreaterThan(0);
     expect(d.ratio).toBeNull();
@@ -140,6 +138,16 @@ describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
 
     // and it survives the round trip the browser actually makes
     expect(JSON.parse(JSON.stringify(d)).ratio).toBeNull();
+    await pool.query(`DELETE FROM economy_daily WHERE currency = 'zer' AND day = CURRENT_DATE`);
+    await economy.aggregateDay(new Date(`${D3}T12:00:00Z`));
+    await economy.aggregateDay(new Date(`${D5}T12:00:00Z`));
+  });
+
+  it('does not count the move from Gewher into Zêr as Zêr created', async () => {
+    await ledger(D10, 350, 'gewher_converted');
+    await economy.aggregateDay(new Date(`${D10}T12:00:00Z`));
+    const row = await pool.query<{ faucet: string }>(`SELECT faucet FROM economy_daily WHERE day = $1::date AND currency = 'zer'`, [D10]);
+    expect(row.rows[0]?.faucet ?? '0').toBe('0');
   });
 
   it('counts a refund as spending undone, not as currency created', async () => {

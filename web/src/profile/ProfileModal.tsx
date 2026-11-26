@@ -15,7 +15,6 @@ import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { EmptyState, ErrorState } from '../components/states';
 import { ProfileCardSkeleton } from '../components/skeletons';
-import { GiftedNote } from './cosmetic-parts';
 import { ProfileCard } from '../ui/ProfileCard';
 import { UserActions } from './UserActions';
 import { ProfileFacts, type ProfileFact } from './FullProfile';
@@ -288,6 +287,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         corner={corner}
         frameSku={target.kind === 'me' ? null : (other?.frameSku ?? null)}
         frameUrl={target.kind === 'me' ? null : (other?.frameUrl ?? null)}
+        tag={target.kind === 'me' ? (me?.tag ?? null) : (other?.tag ?? null)}
         meta={
           <>
             {(level || place) && (
@@ -304,8 +304,6 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
           </>
         }
       >
-        <GiftedNote background={background} icon={icon} />
-
         {bio && (
           <p className="pc-bio" dir="auto">
             {bio}

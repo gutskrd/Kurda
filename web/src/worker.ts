@@ -14,8 +14,9 @@ import { SOURCES, SOURCE_ORDER, type Source } from './teaching/sources';
 import { isScannerProbe } from '@kurda/shared/src/scanner-paths';
 import { parseJoinLink, type JoinLink, type JoinLinkGame } from '@kurda/shared/src/join-link';
 import { GAME_NAMES } from '@kurda/shared/src/games/names';
-import { LEAGUE_TIER_META } from '@kurda/shared/src/leagues';
-import { parseWinLink, winCardPath, winLinkPath, type WinLink } from '@kurda/shared/src/win-link';
+import { parseWinLink, winCardPath, winLinkLocale, winLinkUrl, type WinLink } from '@kurda/shared/src/win-link';
+import { winWords } from '@kurda/shared/src/win-words';
+import type { AppLocale } from '@kurda/shared/src/locales';
 
 /*
  * The two Workers runtime types this file uses, declared here because @cloudflare/workers-types replaces the DOM lib
@@ -229,34 +230,13 @@ function inviteHead(invite: JoinLink, url: string): Array<string | ''> {
 }
 
 /**
- * What a shared win's card says under its picture, in English like the rest of this file (share/WinPage.tsx). The word
- * game's card names the game, not the result, since the same link goes under a lost game.
+ * A shared win as a head: what was done, cheerfully, in the sender's language (shared/src/win-words.ts), and its
+ * postcard (shared art/share-card.ts, drawn by api/scripts/generate-share-art.ts). The link's kind, single detail and
+ * language are read by strict patterns (shared/src/win-link.ts) and never say whose, so nothing is looked up and only a
+ * count, a league name or a score reaches the markup.
  */
-function winWords(win: WinLink): { title: string; description: string } {
-  const hevalo = 'A postcard from Hevalo, where Kurdish is learned a few minutes at a time.';
-  switch (win.kind) {
-    case 'lesson':
-      return { title: 'One more Kurdish lesson done', description: hevalo };
-    case 'streak':
-      // One day is not yet a row of them.
-      return { title: win.days !== null && win.days > 1 ? `${win.days} days of Kurdish in a row` : 'A Kurdish streak, kept alive', description: hevalo };
-    case 'badge':
-      return { title: 'A new badge on Hevalo', description: hevalo };
-    case 'league':
-      return { title: win.tier ? `A good week in the ${LEAGUE_TIER_META[win.tier].nameKu} League` : 'A good week in the league', description: hevalo };
-    case 'peyvok':
-      return { title: `${GAME_NAMES.peyvok}: the day’s Kurdish word`, description: 'Six tries to find it. Play today’s on Hevalo.' };
-  }
-}
-
-/**
- * A shared win as a head: what was done and its postcard (shared art/share-card.ts, drawn by
- * api/scripts/generate-share-art.ts). The link's kind and single detail are read by a strict pattern
- * (shared/src/win-link.ts) and never say whose, so nothing is looked up and only a day count or a league name reaches the
- * markup.
- */
-function winHead(win: WinLink, url: string): Array<string | ''> {
-  const { title, description } = winWords(win);
+function winHead(win: WinLink, url: string, locale: AppLocale | null = null): Array<string | ''> {
+  const { title, description } = winWords(win, locale ?? undefined);
   const image = new URL(winCardPath(win), url).toString();
   return [
     `<title>${attr(title)}</title>`,
@@ -445,7 +425,7 @@ const STATIC_PAGES: ReadonlyArray<StaticPage> = [
     path: '/terms',
     title: 'Terms · Hevalo',
     description:
-      'The rules for using Hevalo, in plain words: your account, how to treat other people, what you post, and how Zêr and gems work.',
+      'The rules for using Hevalo, in plain words: your account, how to treat other people, what you post, and how Zêr works.',
   },
   /* Where a rights holder without an account sends a copyright notice. */
   {
@@ -624,10 +604,11 @@ async function respond(request: Request, env: Env): Promise<Response> {
     return invited;
   }
 
-  /* A shared win: its kind's postcard from the link alone, kept out of search results, its canonical as read. */
+  /* A shared win: its kind's postcard from the link alone, in the language it names, kept out of search results, its canonical as read. */
   const win = parseWinLink(url.pathname);
   if (win) {
-    const shared = withHead(assets, winHead(win, new URL(winLinkPath(win), url.origin).toString()));
+    const locale = winLinkLocale(url.search);
+    const shared = withHead(assets, winHead(win, winLinkUrl(url.origin, win, locale), locale));
     shared.headers.set('x-robots-tag', 'noindex');
     return shared;
   }

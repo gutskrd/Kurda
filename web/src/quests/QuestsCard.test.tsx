@@ -30,7 +30,7 @@ function serve(answer: () => Response | Promise<Response>): void {
         return answer();
       }
       const claim = path.match(/^\/me\/quests\/([^/]+)\/claim$/);
-      if (claim && init?.method === 'POST') return jsonResponse(200, { questId: claim[1], tier: 'common', currency: 'zer', amount: 10, balance: 90 });
+      if (claim && init?.method === 'POST') return jsonResponse(200, { questId: claim[1], tier: 'common', currency: 'zer', amount: 10, balance: 90, earnsZer: true });
       return jsonResponse(404, { code: 'NOT_FOUND', message: 'no route' });
     }),
   );

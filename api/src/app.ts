@@ -32,11 +32,14 @@ import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
 import { registerShopRoutes } from './shop/routes.js';
 import { registerShopAdminRoutes } from './shop/admin-routes.js';
+import { BundleService } from './shop/bundles.js';
+import { registerBundleRoutes } from './shop/bundle-routes.js';
 import { ArtOverrideService } from './art/overrides.js';
 import { registerArtRoutes } from './art/routes.js';
 import { RefreshedNotices } from './shop/refreshed.js';
 import { GiftService } from './gifts/service.js';
 import { registerGiftRoutes } from './gifts/routes.js';
+import { confirmSecretFrom } from './gifts/safety.js';
 import { CosmeticsService } from './cosmetics/service.js';
 import { registerCosmeticsRoutes } from './cosmetics/routes.js';
 import { IapService } from './iap/service.js';
@@ -66,8 +69,9 @@ import { DailyQuestService } from './quests/service.js';
 import { registerTreeRoutes } from './trees/routes.js';
 import { TreeService } from './trees/service.js';
 import { registerDailyQuestRoutes } from './quests/routes.js';
-import { GemService } from './gems/service.js';
-import { registerGemRoutes } from './gems/routes.js';
+import { EarnService } from './earn/service.js';
+import { registerEarnRoutes } from './earn/routes.js';
+import { registerMembersBoxRoutes } from './plus/routes.js';
 import { createProgression } from './badges/progression.js';
 import { registerBadgeRoutes } from './badges/routes.js';
 import { badgeNotices, scheduleBadgeJobs } from './jobs/badge-jobs.js';
@@ -82,6 +86,7 @@ import { registerFriendRoutes } from './friends/routes.js';
 import { SocialService } from './social/service.js';
 import { registerSocialRoutes } from './social/routes.js';
 import { registerSocialRailRoutes } from './social/rail-routes.js';
+import { registerCollectionRoutes } from './social/collection-routes.js';
 import { registerFeedRoutes } from './feed/routes.js';
 import { ActivityService } from './activity/service.js';
 import { registerActivityRoutes } from './activity/routes.js';
@@ -185,6 +190,7 @@ import { installRequestContext } from './security/context.js';
 import { setupSecurityLog, type SecurityLogOptions } from './security/wire.js';
 import { registerSecurityLogRoutes } from './security/routes.js';
 import { SecurityLogReader } from './security/search.js';
+import { registerMessageAccessRoutes } from './message-access/routes.js';
 import { installScannerShield } from './security/shield.js';
 import { installRawBodyGate } from './plugins/raw-body-gate.js';
 import { MaintenanceService } from './maintenance/service.js';
@@ -218,6 +224,13 @@ import { pruneParental } from './parental/gdpr.js';
 import { setParentalMail, setParentalPush } from './parental/notices.js';
 import { pushMutedByParent } from './parental/supervision.js';
 import { registerParentalRoutes } from './parental/routes.js';
+import { installChildGate } from './family/child-gate.js';
+import { FamilyService } from './family/service.js';
+import { ChildService } from './family/children.js';
+import { ChildSessions } from './family/sessions.js';
+import { registerFamilyRoutes } from './family/routes.js';
+import { PairingWatch } from './family/pairing-watch.js';
+import { GdprService } from './gdpr/service.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -285,7 +298,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
   const health = new HealthRegistry();
   if (config.DATABASE_URL) {
-    const pool = createPool(config);
+    // Four kept open: enough for a page's first requests to skip the handshake, few enough for a small database.
+    const pool = createPool(config, { warm: 4, onIdleError: (err) => app.log.warn({ err }, 'an idle database connection was dropped') });
     app.decorate('db', pool);
     // Reconcile the configured admin allowlist once the server is up (idempotent; grants only to confirmed addresses).
     app.addHook('onReady', async () => {
@@ -363,6 +377,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // An unverified account cannot write anything. Installed before every route, since a preHandler hook applies only to
     // routes added after it.
     installActivationGate(app);
+    // A child's profile reaches only what a child may use, and only from the phone (family/child-gate.ts); before every
+    // route for the same reason.
+    installChildGate(app, config);
 
     // Mandatory 2FA on every staff-only route, as one hook so new routes are covered. It reads the route table, so it must
     // be installed here, before any route: a fastify hook only applies to routes added after it.
@@ -415,9 +432,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
   // auth + user endpoints need the database
   if (config.DATABASE_URL) {
-    // Config-driven Gem grants, shared by achievements, lessons and tournaments.
-    const gemService = new GemService(app.db, new WalletService(app.db));
-    registerGemRoutes(app, gemService);
+    // Earned Zêr under the daily cap, and the staff-tunable rules shared by leagues, achievements, lessons and tournaments.
+    const earnService = new EarnService(app.db, new WalletService(app.db));
 
     // Friends and friend milestones, needed by the services below.
     const friends = new FriendService(app.db);
@@ -436,7 +452,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // through the list, a realtime `badge_unlocked` (the gateway is looked up later, since it is set up further down) and
     // one push a day.
     const { xp: xpService, leagues, badges } = createProgression(app.db, {
-      gems: gemService,
+      earn: earnService,
       activity,
       notices,
       badgeNotices: (badgeService) =>
@@ -506,10 +522,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // The shared raw-image body parser for every through-server upload.
     registerImageUploadParser(app, mediaLimits(config).maxUploadBytes);
     registerUserRoutes(app, config);
-    registerAchievementRoutes(app, gemService, activity);
+    registerAchievementRoutes(app, earnService, activity);
     // The old achievements: only the tournament win still awards one; lessons, practice, Peyvok and Stories report to the
     // badges above.
-    const achievements = new AchievementsService(app.db, gemService, activity);
+    const achievements = new AchievementsService(app.db, earnService, activity);
     registerWalletRoutes(app);
 
     // friend + social + activity-feed routes
@@ -518,7 +534,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const moderationKit = registerModeration(app, config, { ...options.moderation, registry: metricsRegistry });
     // Copyright notices from the public /copyright page land in the same queue.
     registerCopyright(app, config, options.copyright);
-    registerSocialRoutes(app, new SocialService(app.db, friends), { reports: moderationKit.reports, trees: new TreeService(app.db, new WalletService(app.db)) });
+    const social = new SocialService(app.db, friends);
+    registerSocialRoutes(app, social, { reports: moderationKit.reports, trees: new TreeService(app.db, new WalletService(app.db)) });
+    // A profile's icons and gifts, behind the same gate as the profile.
+    registerCollectionRoutes(app, social);
     registerActivityRoutes(app, activity);
     // one wall for stories, poems and pictures — public, like the pages it replaces
     registerFeedRoutes(app);
@@ -597,10 +616,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       const economyRollup = setInterval(rollupDay, 6 * 60 * 60 * 1000);
       app.addHook('onClose', async () => clearInterval(economyRollup));
     }
-    registerLessonRoutes(app, gemService, xpService, badges);
+    registerLessonRoutes(app, earnService, xpService, badges);
     registerDailyGoalRoutes(app);
-    registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
-    // a streak that ended, restored for gems (or a Hevalo+ member's free one of the month)
+    registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db), (k) => (app.storage ? app.storage.publicUrl(k) : null)));
+    // a Hevalo+ member's monthly box: Zêr, free gifts and that month's members-only item
+    registerMembersBoxRoutes(app);
+    // a streak that ended, won back by a day's learning (or a Hevalo+ member's free restore of the month)
     registerStreakRoutes(app, new StreakService(app.db, new WalletService(app.db)));
     // today's three quests, moved by finished lessons and practice, each paying a chest of Zêr
     registerDailyQuestRoutes(app, new DailyQuestService(app.db, new WalletService(app.db)));
@@ -719,6 +740,27 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       }),
     );
 
+    // Families and child profiles: a family's members and board, the profiles parents make for children, and the ways a
+    // child is signed in; the daily upkeep tells a parent of a 13th birthday and lets an unused profile go.
+    const families = new FamilyService(app.db, { publicUrl: (k) => (app.storage ? app.storage.publicUrl(k) : null) });
+    const familyGdpr = new GdprService(app.db, { storage: app.storage, jobs: app.jobs, log: app.log });
+    const childProfiles = new ChildService(app.db, {
+      jobs: app.jobs ?? null,
+      gdpr: familyGdpr,
+      config,
+      publicUrl: (k) => (app.storage ? app.storage.publicUrl(k) : null),
+      log: app.log,
+    });
+    families.useChildren(childProfiles);
+    const pairingWatch = new PairingWatch({ redis: app.hasDecorator('redis') ? app.redis : null, log: app.log, registry: metricsRegistry });
+    registerFamilyRoutes(app, config, { families, children: childProfiles, sessions: new ChildSessions(app.db, config), gdpr: familyGdpr, pairingWatch });
+    if (config.NODE_ENV !== 'test') {
+      const familyUpkeep = () => void childProfiles.upkeep().catch((err) => app.log.warn({ err }, 'family upkeep failed'));
+      familyUpkeep();
+      const familySweep = setInterval(familyUpkeep, 24 * 60 * 60 * 1000);
+      app.addHook('onClose', async () => clearInterval(familySweep));
+    }
+
     // Personalized streak reminders, hourly, by local time.
     const streakReminders = new StreakReminderService(app.db, {
       enqueue: async (reminders) => {
@@ -740,15 +782,26 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const events = new EventService(app.db, app.cache);
     registerEventRoutes(app, events);
     // Shop and event config with dual-admin approval.
-    registerConfigRoutes(
-      app,
-      new ConfigService(app.db, {
-        shop: new ShopService(app.db, new WalletService(app.db), app.cache),
-        events,
-      }),
-    );
-    // Event quests and reward claims: progress from the ledgers over the event window, claims paying Zêr or Gems with a
-    // 72-hour grace period.
+    // and the earn rules and an admin's own Hevalo+, which pay Zêr, and a bundle's price of 500 or more, through the
+    // same Approvals
+    const userAdmin = new UserAdminService(app.db, new WalletService(app.db), moderationKit);
+    const bundleService = new BundleService(app.db, new WalletService(app.db), (k) => (app.storage ? app.storage.publicUrl(k) : null));
+    const bundleAudit = new AuditService(app.db);
+    const approvals = new ConfigService(app.db, {
+      shop: new ShopService(app.db, new WalletService(app.db), app.cache),
+      events,
+      earn: earnService,
+      plus: async (adminId, change, approvedBy) =>
+        (await userAdmin.grantPlus(adminId, change.userId, change.days, change.reason, undefined, new Date(), approvedBy)).ok,
+      bundles: {
+        priceProblem: (id, price) => bundleService.priceProblem(id, price),
+        setPrice: async (id, price, adminId) => void (await bundleService.editBundle(bundleAudit, adminId, 'approvals', id, { price }, { approved: true })),
+      },
+    });
+    registerConfigRoutes(app, approvals);
+    registerEarnRoutes(app, earnService, approvals);
+    // Event quests and reward claims: progress from the ledgers over the event window, claims paying Zêr with a 72-hour
+    // grace period.
     registerQuestRoutes(
       app,
       new QuestService(app.db, events, new WalletService(app.db), new DbQuestMetrics(app.db)),
@@ -756,11 +809,13 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     app.addHook('onClose', async () => clearInterval(reminderSweep));
     // Admin user management: search, detail, moderation and ledger adjustments, sharing the moderation services so the
     // second-approval count matches.
-    registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db), moderationKit), adminTotp!);
+    registerUserAdminRoutes(app, userAdmin, adminTotp!, approvals);
     // Immutable audit trail logging every admin change and search.
     registerAuditLog(app, new AuditService(app.db), adminTotp!);
     // the security log: sign-ins, lockouts, attacks and staff access, for superadmins
     registerSecurityLogRoutes(app, new SecurityLogReader(app.db, config.JWT_SECRET, app.securityLog), adminTotp!);
+    // safety reviews of one account's letters and chats, and the Access log every admin can read
+    registerMessageAccessRoutes(app, moderationKit.access, adminTotp!);
     // Behavioural event tracking: schema-validated, deduplicated, day-partitioned.
     const droppedEvents = new Counter({
       name: 'analytics_events_dropped_total',
@@ -881,6 +936,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
         moderation,
         badges,
         log: app.log,
+        // big gifts' confirmations, signed apart from the access tokens the same secret signs
+        confirmSecret: confirmSecretFrom(config.JWT_SECRET),
       },
       (k) => (app.storage ? app.storage.publicUrl(k) : null),
     );
@@ -891,6 +948,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     });
     // the admin's art uploads, partial edits, and delete-or-retire
     registerShopAdminRoutes(app, shop, config);
+    // themed sets sold for less than their parts, gifts for the bag included
+    registerBundleRoutes(app, bundleService);
     // Pictures put in place of the built-in art: badges, emblems, frames, default avatars, event banners.
     registerArtRoutes(app, new ArtOverrideService(app.db, (key) => (app.storage ? app.storage.publicUrl(key) : null)));
     // taking Hevalo offline for a while, and the status the apps ask while it is
@@ -914,7 +973,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerSocialRailRoutes(app, { friends, groups, groupChat, inbox });
 
     // Tournaments: admin brackets with admin-entered results, shown by no client until there is a game to play.
-    const tournaments = new TournamentService(app.db, new WalletService(app.db), gemService, achievements);
+    const tournaments = new TournamentService(app.db, new WalletService(app.db), earnService, achievements);
     registerTournamentRoutes(app, tournaments);
   }
 
@@ -965,6 +1024,8 @@ declare module 'fastify' {
       held?: boolean;
       /** a live parent link, as the session read found it; false lets the parental guards skip their read */
       supervised?: boolean;
+      /** a child's profile (family/), held to what a child may use by the child gate */
+      child?: boolean;
     };
     /** Why authentication failed, when a credential was presented. */
     authFailure?: import('./plugins/auth.js').AuthFailure;

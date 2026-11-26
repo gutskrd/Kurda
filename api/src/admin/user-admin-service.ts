@@ -17,9 +17,16 @@ import { IN_FORCE_SQL, SanctionsService, toAppealView, type AppealRow } from '..
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** What an account is: a person's own, a guest's (auth/guest.ts), or a child's profile made by a parent (family/). */
+export type AccountKind = 'person' | 'guest' | 'child';
+
+/** SQL: the account kind of the user behind `alias`. `alias` is always a literal from this module. */
+const kindSql = (alias: string): string => `CASE WHEN ${alias}.kind = 'child' THEN 'child' WHEN ${alias}.guest THEN 'guest' ELSE 'person' END`;
+
 export interface UserSearchResult {
   id: string;
   username: string;
+  kind: AccountKind;
   /** null for a guest account, which has none until claimed (auth/guest.ts) */
   email: string | null;
   ban: BanState;
@@ -55,6 +62,7 @@ export const USERS_PAGE_MAX = 100;
 export interface UserDetail extends Partial<AdminUserModeration> {
   id: string;
   username: string;
+  kind: AccountKind;
   /** null for a guest account, which has none until claimed (auth/guest.ts) */
   email: string | null;
   displayName: string | null;
@@ -65,7 +73,7 @@ export interface UserDetail extends Partial<AdminUserModeration> {
   ban: BanState;
   bannedUntil: Date | null;
   mutedUntil: Date | null;
-  balances: { zer: number; gems: number };
+  balances: { zer: number };
   /** when their Hevalo+ membership ends; null if they have never had it, and in the past once it is over */
   premiumUntil: Date | null;
   ledger: Array<{ currency: string; amount: number; reason: string; createdAt: Date }>;
@@ -172,8 +180,9 @@ export class UserAdminService {
       roles: string[];
       created_at: Date;
       total: number;
+      kind: AccountKind;
     }>(
-      `SELECT id, username, email, banned_at, banned_until, COALESCE(muted_until > now(), false) AS muted, roles, created_at,
+      `SELECT id, username, email, banned_at, banned_until, COALESCE(muted_until > now(), false) AS muted, roles, created_at, ${kindSql('users')} AS kind,
               EXISTS (SELECT 1 FROM sanctions s WHERE s.user_id = users.id AND s.kind IN ('post_mute', 'feature_limit')
                          AND ${IN_FORCE_SQL}) AS limited,
               count(*) OVER ()::int AS total
@@ -192,6 +201,7 @@ export class UserAdminService {
       users: res.rows.map((r) => ({
         id: r.id,
         username: r.username,
+        kind: r.kind,
         email: r.email,
         ban: banState(now, r.banned_at, r.banned_until),
         muted: r.muted,
@@ -206,9 +216,9 @@ export class UserAdminService {
     const u = await this.pool.query<{
       id: string; username: string; email: string | null; display_name: string | null; roles: string[];
       created_at: Date; banned_at: Date | null; banned_until: Date | null; muted_until: Date | null;
-      age_known: boolean; minor: boolean; premium_until: Date | null;
+      age_known: boolean; minor: boolean; premium_until: Date | null; kind: AccountKind;
     }>(
-      `SELECT id, username, email, display_name, roles, created_at, banned_at, banned_until, premium_until,
+      `SELECT id, username, email, display_name, roles, created_at, banned_at, banned_until, premium_until, ${kindSql('users')} AS kind,
               birth_year IS NOT NULL AS age_known, ${minorSql('users')} AS minor,
               CASE WHEN muted_until = 'infinity' THEN NULL ELSE muted_until END AS muted_until
        FROM users WHERE id = $1`,
@@ -240,6 +250,7 @@ export class UserAdminService {
     return {
       id: user.id,
       username: user.username,
+      kind: user.kind,
       email: user.email,
       displayName: user.display_name,
       roles: user.roles,
@@ -430,10 +441,18 @@ export class UserAdminService {
    * bought.
    *
    * The change and its history entry (`plus_grant`, with reason and end before and after) are one transaction under the
-   * account's lock. Once per `requestKey` per admin; the repeat answers `duplicate`. Admins may grant their own account
-   * (the owner is often the only one and needs to see what members see), and that is recorded too.
+   * account's lock. Once per `requestKey` per admin; the repeat answers `duplicate`. An admin's own account is given it
+   * only from Approvals, once a second admin approves (admin/config-service.ts), who is named in the history.
    */
-  async grantPlus(adminId: string, userId: string, days: number, reason: string, requestKey?: string, now: Date = new Date()): Promise<PlusGrantResult> {
+  async grantPlus(
+    adminId: string,
+    userId: string,
+    days: number,
+    reason: string,
+    requestKey?: string,
+    now: Date = new Date(),
+    approvedBy?: string,
+  ): Promise<PlusGrantResult> {
     if (!Number.isInteger(days) || days < 1 || days > PLUS_GRANT_MAX_DAYS) {
       throw new Error(`a Hevalo+ grant is 1 to ${PLUS_GRANT_MAX_DAYS} whole days, got ${days}`);
     }
@@ -467,7 +486,7 @@ export class UserAdminService {
         userId,
         adminId,
         reason,
-        JSON.stringify({ days, before: user.premium_until, after: until, ...(requestKey ? { requestKey } : {}) }),
+        JSON.stringify({ days, before: user.premium_until, after: until, ...(requestKey ? { requestKey } : {}), ...(approvedBy ? { approvedBy } : {}) }),
       ]);
       await client.query('COMMIT');
       return { ok: true, premiumUntil: until };

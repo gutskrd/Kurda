@@ -33,6 +33,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { characterLayers } from '../characters/layers';
 import { duration } from '../theme/motion';
 import { DARK, LIGHT } from '../theme/palette';
+import { ACCENT } from '@kurda/shared';
 import config from '../../app.json';
 import { Entrance, LaunchScreen } from './LaunchScreen';
 import { LAUNCH, SPLASH_BACKGROUND, SPLASH_DEER, SPLASH_IMAGE_WIDTH, heroPlace } from './launch/splash';
@@ -65,7 +66,7 @@ async function device({ reduceMotion }: { reduceMotion: boolean }): Promise<void
   asked.timings = [];
 }
 
-/** How many loops were started: the drifting light is the only thing on the page that loops. */
+/** How many loops were started: the drifting light and the waiting deer. */
 function loops(): { started: number } {
   const seen = { started: 0 };
   const real = Animated.loop;
@@ -131,22 +132,28 @@ describe('LaunchScreen', () => {
     expect(within(hero).getByTestId('hevalo-peek')).toBeTruthy();
   });
 
-  it('has a light drifting across the page, which is the one thing that loops', async () => {
+  it('has a light drifting across the page while he waits, and the loader under the words for a launch that takes a while', async () => {
     await device({ reduceMotion: false });
     const seen = loops();
     renderWithProviders(<LaunchScreen />);
     await settle();
     expect(screen.getByTestId('launch-wash')).toBeTruthy();
-    expect(seen.started).toBeGreaterThanOrEqual(1);
+    expect(seen.started).toBeGreaterThanOrEqual(2);
+    // Not there at first, so a quick launch never shows it.
+    expect(shown(screen.getByTestId('launch-loader'))).toBe(0);
+    expect(asked.timings).toContainEqual({ to: 1, ms: duration.slow, delay: LAUNCH.loaderMs });
+    expect(within(screen.getByTestId('launch-loader')).getByTestId('deer-loader')).toBeTruthy();
   });
 
-  it('is still under Reduce Motion: no light, no loop, no spring, and Hevalo and the words simply fading in', async () => {
+  it('is still under Reduce Motion: no light, no spring, Hevalo and the words simply fading in, the loader only breathing', async () => {
     await device({ reduceMotion: true });
     const seen = loops();
     renderWithProviders(<LaunchScreen />);
     await settle();
     expect(screen.queryByTestId('launch-wash')).toBeNull();
-    expect(seen.started).toBe(0);
+    // The one loop left is the waiting deer's breath, in opacity alone.
+    expect(seen.started).toBe(1);
+    expect(screen.getByTestId('deer-loader').style.transform).not.toContain('rotate(');
     expect(asked.springs).toEqual([]);
     expect(asked.timings).toContainEqual({ to: 1, ms: duration.slow, delay: LAUNCH.heroMs });
     expect(asked.timings).toContainEqual({ to: 1, ms: duration.slow, delay: LAUNCH.wordsMs });
@@ -202,5 +209,11 @@ describe('the native splash', () => {
     for (const light of [splash, ios.splash, android.splash]) expect(light.backgroundColor).toBe(SPLASH_BACKGROUND.light);
     for (const dark of [ios.splash.dark, android.splash.dark]) expect(dark.backgroundColor).toBe(SPLASH_BACKGROUND.dark);
     for (const each of [splash, ios.splash, android.splash, ios.splash.dark, android.splash.dark]) expect(each.image).toBe(splash.image);
+  });
+
+  // The notification's small icon is tinted by the system, outside the app's palette, so app.json names the colour.
+  it('tints a notification in the accent', () => {
+    const notifications = config.expo.plugins.find((p) => Array.isArray(p) && p[0] === 'expo-notifications') as [string, { color: string }] | undefined;
+    expect(notifications?.[1].color).toBe(ACCENT.light.fill);
   });
 });

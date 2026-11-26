@@ -12,7 +12,7 @@ const state = (cycleDay: number, lastClaimOn: string | null): DailyRewardState =
 describe('rewardForDay', () => {
   it('escalates and pays the day-7 bonus', () => {
     expect(rewardForDay(1)).toBe(CYCLE_REWARDS[0]);
-    expect(rewardForDay(7)).toBe(100);
+    expect(rewardForDay(7)).toBe(50);
     expect(rewardForDay(7)).toBeGreaterThan(rewardForDay(6));
   });
   it('clamps out-of-range days', () => {

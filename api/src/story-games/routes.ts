@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import {
   GAME_ACCESS,
   QUESTION_COUNTS,
@@ -27,12 +28,12 @@ declare module 'fastify' {
   }
 }
 
-const idParam = z.object({ id: z.uuid() });
+const idParam = z.object({ id: lowerUuid() });
 const STATUSES = ['lobby', 'reading', 'question', 'reveal', 'finished', 'cancelled'] as const;
 
 const createBody = z.object({
   mode: z.enum(STORY_GAME_MODES),
-  storyId: z.uuid().optional(),
+  storyId: lowerUuid().optional(),
   dialect: z.enum(STORY_DIALECTS).optional(),
   length: z.enum(STORY_LENGTHS).optional(),
   level: z.literal(STORY_LEVELS).optional(),
@@ -46,11 +47,11 @@ const createBody = z.object({
 
 const joinBody = z.union([
   z.object({ code: z.string().min(1).max(40), extraTime: z.boolean().optional() }),
-  z.object({ id: z.uuid(), extraTime: z.boolean().optional() }),
+  z.object({ id: lowerUuid(), extraTime: z.boolean().optional() }),
 ]);
 
 const settingsBody = z.object({
-  storyId: z.uuid().optional(),
+  storyId: lowerUuid().optional(),
   questionCount: z.literal(QUESTION_COUNTS).optional(),
   timerSeconds: z.literal(TIMER_PRESETS).optional(),
   textDuring: z.enum(TEXT_DURING_OPTIONS).optional(),

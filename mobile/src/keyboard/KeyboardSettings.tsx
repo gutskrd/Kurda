@@ -49,7 +49,7 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
       <Text style={[styles.label, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
         {t('keyboard.accent.title')}
       </Text>
-      {/* The active mode is washed, edged and ticked in violet, as every active choice is. */}
+      {/* The active mode is washed, edged and ticked in the ink, as every active choice is. */}
       <View accessibilityRole="radiogroup" accessibilityLabel={t('keyboard.accent.title')} style={styles.modes}>
         {ACCENT_MODES.map((mode) => {
           const on = prefs.accentMode === mode;

@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useI18n } from '../i18n/I18nContext';
 import { useIsOnline } from '../net/useNetworkStatus';
+import { ArrivalCard, useArrivals } from '../notifications/ArrivalToasts';
 import { useDirection } from '../reports/direction';
 import { timing } from './animate';
 import { Icon } from './Icon';
@@ -21,20 +22,37 @@ const MAX_NOTICES = 3;
 const OFFLINE_PILL = 36;
 
 /**
- * The app's short notices (theme/notice.ts) as quiet cards at the top, over every screen. A notice already showing is
- * not stacked again, so a burst of failures while offline says it once. Each is read out as it comes, leaves by itself
- * after `NOTICE_MS`, and can be closed sooner. Mounted once at the root.
+ * The app's short notices (theme/notice.ts) as quiet cards at the top, over every screen, under any notification that
+ * arrived while the app is open (notifications/ArrivalToasts.tsx), so the two never cover each other. A notice already
+ * showing is not stacked again, so a burst of failures while offline says it once. Each is read out as it comes, leaves
+ * by itself after `NOTICE_MS`, and can be closed sooner. Mounted once at the root.
  */
 export function NoticeToasts(): React.JSX.Element | null {
   const insets = useSafeAreaInsets();
   const online = useIsOnline();
   const [notices, setNotices] = useState<string[]>([]);
+  // Notices on their way out: still drawn while they fade back up, then removed.
+  const [leaving, setLeaving] = useState<ReadonlySet<string>>(() => new Set());
+  const { arrivals, dismiss: dismissArrival } = useArrivals();
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  const reduce = useReducedMotion();
+  const reduceRef = useRef(reduce);
+  reduceRef.current = reduce;
 
   const dismiss = useCallback((text: string) => {
     clearTimeout(timers.current.get(text));
     timers.current.delete(text);
-    setNotices((list) => list.filter((n) => n !== text));
+    const drop = (): void => {
+      setNotices((list) => list.filter((n) => n !== text));
+      setLeaving((set) => {
+        const next = new Set(set);
+        next.delete(text);
+        return next;
+      });
+    };
+    if (reduceRef.current) return drop();
+    setLeaving((set) => new Set(set).add(text));
+    setTimeout(drop, duration.base);
   }, []);
 
   useEffect(() => {
@@ -53,31 +71,38 @@ export function NoticeToasts(): React.JSX.Element | null {
     };
   }, [dismiss]);
 
-  if (notices.length === 0) return null;
+  if (notices.length === 0 && arrivals.length === 0) return null;
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { top: insets.top + spacing.sm + (online ? 0 : OFFLINE_PILL) }]}>
+      {arrivals.map((arrival) => (
+        <ArrivalCard key={arrival.id} arrival={arrival} onClose={() => dismissArrival(arrival.id)} />
+      ))}
       {notices.map((text) => (
-        <NoticeCard key={text} text={text} onClose={() => dismiss(text)} />
+        <NoticeCard key={text} text={text} leaving={leaving.has(text)} onClose={() => dismiss(text)} />
       ))}
     </View>
   );
 }
 
-function NoticeCard({ text, onClose }: { text: string; onClose: () => void }): React.JSX.Element {
+function NoticeCard({ text, leaving = false, onClose }: { text: string; leaving?: boolean; onClose: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
   const reduce = useReducedMotion();
   const arrive = useRef(new Animated.Value(0)).current;
+  // In as it comes and, closed or timed out, back up the way it came as it fades, rather than gone in a frame.
   useEffect(() => {
-    const run = timing(arrive, 1, duration.base);
+    const run = timing(arrive, leaving ? 0 : 1, duration.base);
     run.start();
     return () => run.stop();
-  }, [arrive]);
+  }, [arrive, leaving]);
   const translateY = reduce ? 0 : arrive.interpolate({ inputRange: [0, 1], outputRange: [-6, 0] });
   return (
     <Animated.View
       accessibilityLiveRegion="polite"
+      pointerEvents={leaving ? 'none' : 'auto'}
+      accessibilityElementsHidden={leaving}
+      importantForAccessibility={leaving ? 'no-hide-descendants' : 'auto'}
       style={[
         styles.card,
         { flexDirection: dir.row, backgroundColor: colors.surfaceRaised, borderColor: colors.separator, shadowColor: colors.softShadow },

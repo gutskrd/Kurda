@@ -18,7 +18,7 @@ interface FraudReview {
 
 const FLAG: Record<FraudFlag, { label: string; meaning: string }> = {
   VELOCITY: { label: 'Many purchases fast', meaning: 'More than 6 purchases on this account in the last hour.' },
-  REFUND_ABUSE: { label: 'Refunds after spending', meaning: 'At least 2 earlier purchases were refunded after their Gems were spent.' },
+  REFUND_ABUSE: { label: 'Refunds after spending', meaning: 'At least 2 earlier purchases were refunded after their Zêr was spent.' },
   RECEIPT_REUSE: { label: 'Receipt used by another account', meaning: 'The store receipt was already used on a different account, and not through family sharing.' },
 };
 
@@ -28,7 +28,7 @@ function words(key: string): string {
   return w.charAt(0).toUpperCase() + w.slice(1);
 }
 
-/** Purchases held for a fraud check before their Gems are given; both decisions are asked first, as Gems cannot be taken back here. */
+/** Purchases held for a fraud check before their Zêr is given; both decisions are asked first, as Zêr cannot be taken back here. */
 export function Fraud(): React.JSX.Element {
   const toast = useToast();
   const dialogs = useDialogs();
@@ -41,12 +41,12 @@ export function Fraud(): React.JSX.Element {
       decision === 'clear'
         ? {
             title: 'Clear this purchase?',
-            body: 'The held Gems are given to the account, and its hold is lifted once nothing else on it is waiting. That cannot be undone from here.',
-            confirmLabel: 'Clear and give the Gems',
+            body: 'The held Zêr is given to the account, and its hold is lifted once nothing else on it is waiting. That cannot be undone from here.',
+            confirmLabel: 'Clear and give the Zêr',
           }
         : {
             title: 'Confirm this is fraud?',
-            body: 'The account stays on hold and the held Gems are not given.',
+            body: 'The account stays on hold and the held Zêr is not given.',
             confirmLabel: 'Confirm fraud',
             tone: 'danger',
           },
@@ -54,8 +54,8 @@ export function Fraud(): React.JSX.Element {
     if (!yes) return;
     setBusy(r.id);
     try {
-      const res = await api<{ status: string; grantedGems: number }>(`/admin/fraud/reviews/${r.id}/resolve`, { method: 'POST', body: { decision } });
-      toast.success(decision === 'clear' ? `Cleared: ${res.grantedGems} Gems given.` : 'Confirmed as fraud: the hold stays.');
+      const res = await api<{ status: string; grantedZer: number }>(`/admin/fraud/reviews/${r.id}/resolve`, { method: 'POST', body: { decision } });
+      toast.success(decision === 'clear' ? `Cleared: ${res.grantedZer.toLocaleString()} Zêr given.` : 'Confirmed as fraud: the hold stays.');
       setLooking(null);
       await list.reload();
     } catch (err) {
@@ -96,7 +96,7 @@ export function Fraud(): React.JSX.Element {
 
   return (
     <div>
-      <PageHeader title="Fraud" subtitle="Purchases held for a check before their Gems are given. Look at why, then clear the purchase or confirm the fraud." />
+      <PageHeader title="Fraud" subtitle="Purchases held for a check before their Zêr is given. Look at why, then clear the purchase or confirm the fraud." />
       <Section flush>
         <Table
           caption="Purchases on hold"

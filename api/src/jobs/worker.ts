@@ -34,7 +34,7 @@ import { makeLeagueMergeJob, makeLeagueSettleJob } from './league-jobs.js';
 import { createProgression } from '../badges/progression.js';
 import { badgeNotices, makeBadgePushJob, makeBadgeRarityJob } from './badge-jobs.js';
 import { RedisRoomPublisher } from '../realtime/bus.js';
-import { GemService } from '../gems/service.js';
+import { EarnService } from '../earn/service.js';
 import { WalletService } from '../wallet/service.js';
 import { ActivityService } from '../activity/service.js';
 import { FriendService } from '../friends/service.js';
@@ -90,7 +90,7 @@ export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistr
     const inbox = new InboxService(pool);
     const bus = redis ? new RedisRoomPublisher(redis) : null;
     const { leagues, badges } = createProgression(pool, {
-      gems: new GemService(pool, new WalletService(pool)),
+      earn: new EarnService(pool, new WalletService(pool)),
       activity: new ActivityService(pool, new FriendService(pool)),
       notices: progressNotices({ inbox, push, jobs: queue }),
       badgeNotices: (badgeService) =>

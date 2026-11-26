@@ -7,6 +7,7 @@ import { SUPPORT_EMAIL, contactSupport, openLegal } from '../legal/links';
 import type { RootNavigation } from '../navigation/rootStack';
 import { nameOf } from '../parental/api';
 import { useParentalOverview } from '../parental/overview';
+import { useFamily } from '../family/overview';
 import type { IconName } from '../theme/Icon';
 import { useSettingsAttention } from './attention';
 import type { SettingsPageKey } from './SettingsPageScreen';
@@ -17,7 +18,7 @@ import type { SettingsPageKey } from './SettingsPageScreen';
  * follows its link where it is one, and otherwise opens the category page it sits on, so search never flips a switch
  * or deletes anything by itself.
  */
-export type CategoryKey = 'account' | 'parental' | 'display' | 'privacy' | 'sounds' | 'notifications' | 'safety' | 'storage' | 'help' | 'about';
+export type CategoryKey = 'account' | 'family' | 'parental' | 'display' | 'privacy' | 'sounds' | 'notifications' | 'safety' | 'storage' | 'help' | 'about';
 
 export interface Category {
   key: CategoryKey;
@@ -43,6 +44,7 @@ export interface Leaf {
 /** The categories in the order the home lists them, each with its icon and the words for it. */
 const CATEGORIES: ReadonlyArray<{ key: CategoryKey; icon: IconName; title: TranslationKey; items: TranslationKey }> = [
   { key: 'account', icon: 'person', title: 'settings.group.account', items: 'settings.cat.account.items' },
+  { key: 'family', icon: 'people', title: 'family.title', items: 'settings.cat.family.items' },
   { key: 'parental', icon: 'parental', title: 'parental.title', items: 'settings.cat.parental.items' },
   { key: 'display', icon: 'palette', title: 'settings.cat.display', items: 'settings.cat.display.items' },
   { key: 'privacy', icon: 'eye', title: 'settings.cat.privacy', items: 'settings.cat.privacy.items' },
@@ -55,11 +57,12 @@ const CATEGORIES: ReadonlyArray<{ key: CategoryKey; icon: IconName; title: Trans
 ];
 
 /** What a guest has none of: no account to change, no teen or parent, no profile, no reports or standing. */
-const NOT_FOR_GUESTS: ReadonlySet<CategoryKey> = new Set(['parental', 'privacy', 'safety']);
+const NOT_FOR_GUESTS: ReadonlySet<CategoryKey> = new Set(['family', 'parental', 'privacy', 'safety']);
 
 /** Where each category lives: a Settings page, or a screen of its own. */
 const PAGE_OF: Partial<Record<CategoryKey, SettingsPageKey>> = {
   account: 'account',
+  family: 'family',
   parental: 'parental',
   display: 'display',
   privacy: 'privacy',
@@ -76,6 +79,7 @@ export function useSettingsCatalog(): { categories: Category[]; leaves: Leaf[] }
   const { isGuest } = useAuth();
   const attention = useSettingsAttention();
   const { overview } = useParentalOverview(!isGuest);
+  const { overview: family } = useFamily(!isGuest);
   const limited = attention.standing !== null && attention.standing !== 'good';
 
   const page = (key: SettingsPageKey) => () => navigation.navigate('SettingsPage', { page: key });
@@ -107,6 +111,9 @@ export function useSettingsCatalog(): { categories: Category[]; leaves: Leaf[] }
         return isGuest ? { ...base, icon: 'user-plus', subtitle: t('guest.settings.create'), open: () => navigation.navigate('ClaimAccount') } : base;
       case 'parental':
         return { ...base, subtitle: parentalSubtitle() };
+      case 'family':
+        // Who is in it, once it is known; before a family, what one holds.
+        return family?.family ? { ...base, subtitle: t('settings.cat.family.people', { count: family.family.size }) } : base;
       case 'notifications':
         // Notifications blocked by the phone is the one thing here to act on.
         return attention.pushOff ? { ...base, subtitle: t('settings.cat.notifications.off'), attention: true } : base;
@@ -151,6 +158,15 @@ export function useSettingsCatalog(): { categories: Category[]; leaves: Leaf[] }
           { key: 'everywhere', icon: 'devices', title: t('settings.sessions.signOutEverywhere'), terms: [t('settings.sessions.help')], open: at('account') },
           { key: 'delete', icon: 'trash', title: t('settings.delete.title'), terms: [], open: at('account') },
         ])),
+    ...on('family', [
+      {
+        key: 'family',
+        icon: 'people',
+        title: t('family.title'),
+        terms: [t('family.addChild'), t('family.invite'), t('family.board'), t('family.pin.label'), t('settings.cat.family.items')],
+        open: at('family'),
+      },
+    ]),
     ...on('parental', [
       {
         key: 'parental',
@@ -181,6 +197,7 @@ export function useSettingsCatalog(): { categories: Category[]; leaves: Leaf[] }
       { key: 'visibility', icon: 'eye', title: t('settings.privacy.title'), terms: [], open: page('visibility') },
       // The only way to undo a block: a blocked person is a 404 to you, so no other screen can offer it.
       { key: 'blocked', icon: 'block', title: t('settings.blocked.title'), terms: [], open: () => navigation.navigate('BlockedUsers') },
+      { key: 'giftLimit', icon: 'gift', title: t('settings.giftLimit.title'), terms: [t('settings.giftLimit.lead')], open: page('giftLimit') },
       { key: 'leagues', icon: 'trophy', title: t('settings.leagues.title'), terms: [], open: page('leagues') },
     ]),
     ...on('sounds', [

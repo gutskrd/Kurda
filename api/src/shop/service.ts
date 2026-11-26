@@ -1,9 +1,11 @@
 import type pg from 'pg';
+import { isGiftOnly } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { WalletService, type Currency } from '../wallet/service.js';
 import type { Cache } from '../cache/cache.js';
 import { isBuiltInArtKey, isUploadedArtKey } from '../cosmetics/access.js';
 import { claimArt, releaseArt } from './art.js';
+import { notBlockedSql } from '../friends/blocked.js';
 
 export interface ShopItem {
   sku: string;
@@ -57,7 +59,8 @@ export interface ReceivedGift {
   name: string;
   category: string;
   assetKey: string | null;
-  from: { id: string; username: string } | null;
+  /** null for "a Hevalo member": a closed account, or one with a block either way */
+  from: { id: string; username: string; displayName: string | null } | null;
   createdAt: Date;
   seenAt: Date | null;
 }
@@ -170,14 +173,14 @@ export class ShopService {
   }
 
   /**
-   * Hold the art an item is being saved with (shop/art.ts), or refuse the save. New art for a background or an icon
-   * must be uploaded art or a file the site ships, as an edit requires (shop/catalogue.ts); a key kept from before is
-   * left as it is.
+   * Hold the art an item is being saved with (shop/art.ts), or refuse the save. New art for a background, an icon or a
+   * gift must be uploaded art or a file the site ships, as an edit requires (shop/catalogue.ts); a key kept from before
+   * is left as it is.
    */
   private async claim(client: pg.PoolClient, assetKey: string | null, category: string, before: string | null = null): Promise<void> {
-    if (assetKey && assetKey !== before && (category === 'background' || category === 'icon')) {
-      if (!isUploadedArtKey(assetKey) && !isBuiltInArtKey(category, assetKey)) {
-        throw new AppError('BAD_ART_KEY', 400, `that is not ${category === 'icon' ? 'an icon' : 'a background'}'s picture`);
+    if (assetKey && assetKey !== before && (category === 'background' || category === 'icon' || category === 'gift')) {
+      if (!isUploadedArtKey(assetKey) && !isBuiltInArtKey(category === 'background' ? 'background' : 'icon', assetKey)) {
+        throw new AppError('BAD_ART_KEY', 400, `that is not ${category === 'background' ? 'a background' : 'a square'} picture`);
       }
     }
     const claimed = await claimArt(client, assetKey, category);
@@ -342,7 +345,7 @@ export class ShopService {
       }));
   }
 
-  /** The catalogue this user can see and buy: in window, in stock, without unique items they own. */
+  /** The catalogue this user can see and buy: in window, in stock, without unique items they own or gifts, which are only given. */
   async catalog(userId: string, now: Date = new Date()): Promise<ShopItem[]> {
     const live = await this.liveItems(now);
     const ownedRes = await this.pool.query<{ sku: string }>(
@@ -350,7 +353,7 @@ export class ShopService {
       [userId],
     );
     const owned = new Set(ownedRes.rows.map((r) => r.sku));
-    return live.filter((i) => !(i.isUnique && owned.has(i.sku)));
+    return live.filter((i) => !(i.isUnique && owned.has(i.sku)) && !isGiftOnly(i.category));
   }
 
   /**
@@ -372,6 +375,7 @@ export class ShopService {
       const item = itemRes.rows[0];
       if (!item) throw new AppError('ITEM_NOT_FOUND', 404, 'no such item');
       if (!isPurchasable(item, now)) throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
+      if (isGiftOnly(item.category)) throw new AppError('GIFT_ONLY', 409, 'a gift is given to someone, not bought for yourself');
       // The price the client saw must still hold, so the UI can reconfirm rather than charge a changed price.
       if (expectedPrice != null && item.price !== expectedPrice) {
         throw new AppError('PRICE_CHANGED', 409, 'the price changed; please review and try again');
@@ -433,15 +437,15 @@ export class ShopService {
   async giftsReceived(userId: string, limit = 50): Promise<ReceivedGift[]> {
     const rows = await this.pool.query<{
       id: string; sku: string; name: string; category: string; asset_key: string | null;
-      from_id: string | null; from_username: string | null; created_at: Date; seen_at: Date | null;
+      from_id: string | null; from_username: string | null; from_display_name: string | null; created_at: Date; seen_at: Date | null;
     }>(
       `SELECT g.id, g.sku, i.name, i.category, i.asset_key,
-              u.id AS from_id, u.username AS from_username, g.created_at, g.seen_at
+              u.id AS from_id, u.username AS from_username, u.display_name AS from_display_name, g.created_at, g.seen_at
          FROM gifts g
          JOIN shop_items i ON i.sku = g.sku
-         -- a deleted account's name is "deleted_…", which is no one's name: a
-         -- gift from one is from a former member (shop.giftFromFormer)
-         LEFT JOIN users u ON u.id = g.from_user_id AND u.deleted_at IS NULL
+         -- a deleted account's name is "deleted_…", which is no one's name, and a block hides who either is: such a
+         -- gift is from "a Hevalo member"
+         LEFT JOIN users u ON u.id = g.from_user_id AND u.deleted_at IS NULL AND ${notBlockedSql('u.id', '$1::uuid')}
         WHERE g.to_user_id = $1
         ORDER BY g.created_at DESC
         LIMIT $2`,
@@ -454,7 +458,7 @@ export class ShopService {
       category: r.category,
       assetKey: r.asset_key,
       // the sender's row can be gone; the gift is still theirs
-      from: r.from_id && r.from_username ? { id: r.from_id, username: r.from_username } : null,
+      from: r.from_id && r.from_username ? { id: r.from_id, username: r.from_username, displayName: r.from_display_name } : null,
       createdAt: r.created_at,
       seenAt: r.seen_at,
     }));

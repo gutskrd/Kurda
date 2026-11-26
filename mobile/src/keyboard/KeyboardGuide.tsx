@@ -136,11 +136,11 @@ export function KeyboardGuide({
                       accessibilityState={{ checked: on }}
                       style={({ pressed }) => [
                         styles.platform,
-                        { backgroundColor: on ? colors.primary : colors.controlTrack },
+                        { backgroundColor: on ? colors.pickedFill : colors.controlTrack },
                         pressed && heldDim,
                       ]}
                     >
-                      <Text style={[styles.platformText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>
+                      <Text style={[styles.platformText, { color: on ? colors.pickedInk : colors.textPrimary }]}>
                         {t(PHONE_LABEL[p]!)}
                       </Text>
                     </Pressable>

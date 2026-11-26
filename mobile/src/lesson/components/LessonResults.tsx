@@ -31,7 +31,7 @@ import { BURST } from '../../theme/celebration';
 import { timing, useCountUp } from '../../theme/animate';
 import { duration, pressedDim } from '../../theme/motion';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
-import { UNIT_INK, type ToneColors } from '../../coursemap/path';
+import type { ToneColors } from '../../coursemap/path';
 import { NO_MOMENTS, lessonMoments, type LessonMoments } from '../moments';
 import { useDirection } from '../../reports/direction';
 import { ReminderOffer, useReminderOffer } from '../../push/ReminderOffer';
@@ -128,7 +128,7 @@ export function LessonResults({
   onPractise,
   onPath,
 }: Props) {
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const { t, locale } = useI18n();
   // In right-to-left languages the cards and the lines under them start from the right.
   const dir = useDirection();
@@ -212,7 +212,7 @@ export function LessonResults({
     : isSoraniDialect(dialect)
       ? 'lesson.results.strongerSorani'
       : 'lesson.results.strongerKurmanci';
-  const ink = UNIT_INK[scheme];
+  const ink: ToneColors = { fill: colors.accent, lip: colors.accentLip, ink: colors.textOnAccent, text: colors.accentText };
   const gold: ToneColors = { fill: colors.gold, lip: colors.gold, ink: colors.textOnGold, text: colors.goldText };
   const clock = sitting ? sittingClock(sitting.ms) : null;
 
@@ -342,7 +342,7 @@ export function LessonResults({
                 <Text style={[styles.backText, { color: colors.textSecondary }]}>{t('lesson.results.backToPath')}</Text>
               </Pressable>
             ) : null}
-            {lesson ? <ShareWin text={lessonShare(t, lesson.title)} testID="lesson-share" /> : null}
+            {lesson ? <ShareWin text={lessonShare(t, locale, lesson.title)} testID="lesson-share" /> : null}
           </View>
         ) : null}
         {actions.secondary ? <ClayButton label={t(ACTION_WORDS[actions.secondary])} tone="primary" variant="outline" size="large" onPress={run(actions.secondary)} /> : null}

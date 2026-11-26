@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAccount } from '../plugins/auth.js';
 import { assertParentalAllowed } from '../parental/supervision.js';
 import { VISIBILITIES, type SocialService, type Visibility } from './service.js';
@@ -73,7 +74,7 @@ export function registerSocialRoutes(
     '/users/:id/friends',
     {
       schema: {
-        params: z.object({ id: z.uuid() }),
+        params: z.object({ id: lowerUuid() }),
         querystring: z.object({
           limit: z.coerce.number().int().min(1).max(FRIENDS_PAGE_MAX).optional(),
           offset: z.coerce.number().int().min(0).max(FRIENDS_PAGE_MAX).optional(),
@@ -92,7 +93,7 @@ export function registerSocialRoutes(
     '/users/:id/activity',
     {
       schema: {
-        params: z.object({ id: z.uuid() }),
+        params: z.object({ id: lowerUuid() }),
         querystring: z.object({
           kind: z.string().max(20),
           limit: z.coerce.number().int().min(1).max(50).optional(),
@@ -145,7 +146,7 @@ export function registerSocialRoutes(
     '/users/:id/report',
     {
       schema: {
-        params: z.object({ id: z.uuid() }),
+        params: z.object({ id: lowerUuid() }),
         body: z.object({
           category: z.enum(REPORT_CATEGORIES),
           reason: z.string().min(MIN_REASON_LEN).max(MAX_REASON_LEN),
@@ -200,7 +201,7 @@ export function registerSocialRoutes(
     '/posts/:type/:id/:kind',
     {
       schema: {
-        params: z.object({ type: z.string().max(16), id: z.uuid(), kind: z.string().max(16) }),
+        params: z.object({ type: z.string().max(16), id: lowerUuid(), kind: z.string().max(16) }),
         body: z.object({ on: z.boolean().optional() }).nullish(),
       },
       config: { rateLimit: { max: 120, windowMs: 60_000, per: 'user-or-ip' as const } },
@@ -230,7 +231,7 @@ export function registerSocialRoutes(
   app.get(
     '/posts/:type/:id/engagement',
     {
-      schema: { params: z.object({ type: z.string().max(16), id: z.uuid() }) },
+      schema: { params: z.object({ type: z.string().max(16), id: lowerUuid() }) },
       config: { rateLimit: { max: 240, windowMs: 60_000, per: 'user-or-ip' as const }, skipValidation: true },
     },
     async (req) => {
@@ -247,7 +248,7 @@ export function registerSocialRoutes(
    */
   app.get(
     '/users/:id',
-    { schema: { params: z.object({ id: z.uuid() }) } },
+    { schema: { params: z.object({ id: lowerUuid() }) } },
     async (req) => {
       const id = (req.params as { id: string }).id;
       const profile = await social.profile(req.user?.id ?? null, id);

@@ -222,7 +222,6 @@ function Group({ groupId, className, onClose, openInfo = false, addFriends = fal
       },
       [client, groupId, refusedOut],
     ),
-    threadRef: scrollRef,
     onSentScroll: () => scrollToBottom('smooth'),
   });
 

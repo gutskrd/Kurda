@@ -22,7 +22,7 @@ import { friendActionLabel, isActionable, isUndo, undoAction, type FriendStatus 
 import { knownTier, leagueName } from '../leagues/format';
 import { Framed, frameTierOf } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
-import { countryName, fireLevel, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
+import { badgesInOrder, countryName, fireLevel, type ProfileBadge, type ProfileLeague, type ProfileWordTag, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import { Flag } from '../profile/cosmetic-parts';
 import { Avatar } from '../profile/Avatar';
 import { ActivityGrid, ActivityTabs, ProfileActivitySkeleton, nearEnd, useProfileActivity } from '../profile/ProfileActivity';
@@ -30,7 +30,9 @@ import type { FavoriteRef } from '../profile/types';
 import { ProfileFriends, ProfileFriendsSkeleton } from '../profile/ProfileFriends';
 import { ProfileFacts, type ProfileFact } from '../profile/ProfileFacts';
 import { FACE, FRAMED, ProfileHead, ProfileHeadSkeleton } from '../profile/ProfileHead';
-import { ProfileHighlights, ProfileHighlightsSkeleton } from '../profile/ProfileHighlights';
+import { BadgePill, BadgePillSkeleton } from '../profile/BadgeRow';
+import { CollectionSheet } from '../profile/CollectionSheet';
+import { Favourites } from '../profile/Favourites';
 import type { LevelInfo } from '../profile/types';
 import type { ProfileSections } from '../profile/sections';
 import { ReportSheet } from '../reports/ReportSheet';
@@ -69,10 +71,14 @@ interface Profile {
   frameSku?: string | null;
   /** The picture of a frame from the shop; a season frame is drawn from its SKU. */
   frameUrl?: string | null;
+  /** The word tag worn by the name, while it is owned. */
+  tag?: ProfileWordTag | null;
   /** Badges earned (and the legacy tournament win). */
   achievements?: number;
   /** The three badges they chose to show. */
   badges?: ShowcaseBadge[];
+  /** Every badge they earned, newest first; absent on an older server. */
+  earnedBadges?: ProfileBadge[];
   /** Which activity sections they let people see; null when private. */
   sections?: ProfileSections | null;
   /** Their tree as it stands today; null before they plant one or when private, absent on a server without trees. */
@@ -108,6 +114,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   // Gone or hidden from you, or an account that is suspended or banned, which is said as that.
   const [notFound, setNotFound] = useState<false | 'profile' | 'account'>(false);
   const [reporting, setReporting] = useState(false);
+  // Their collection: badges, icons and gifts, opened from the row beside the handle.
+  const [collecting, setCollecting] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const { announce, region } = useAnnouncer();
   const { report } = useUnread();
@@ -283,6 +291,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                 const labelKey = shown === 'friends' ? null : friendActionLabel(shown);
                 const shownName = profile.displayName ?? profile.username;
                 const level = profile.level && typeof profile.level.progress === 'number' && typeof profile.level.nextLevelXp === 'number' ? profile.level : null;
+                const league = profile.league ?? (knownTier(profile.tier) ? { tier: knownTier(profile.tier)! } : null);
                 return (
                   <>
                     <ProfileHead
@@ -298,7 +307,20 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                       stats={profile.private ? undefined : <ProfileFacts facts={facts(profile)} head />}
                       name={shownName}
                       level={profile.private ? null : level}
+                      tag={profile.private ? null : profile.tag}
                       handle={`@${profile.username}`}
+                      handleAside={
+                        profile.private ? null : (
+                          <BadgePill
+                            league={knownTier(league?.tier)}
+                            tree={profile.tree}
+                            badges={badgesInOrder(profile.badges, profile.earnedBadges)}
+                            own={profile.friendStatus === 'self'}
+                            title={profile.friendStatus === 'self' ? t('collection.title.own') : t('collection.title.other', { name: shownName })}
+                            onOpen={() => setCollecting(true)}
+                          />
+                        )
+                      }
                       actions={
                         profile.friendStatus !== 'self' ? (
                           <View style={[styles.actions, { flexDirection: dir.row }]}>
@@ -352,6 +374,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                       ) : null}
                       {/* Their own words: the one part of a profile that is not a number. */}
                       {!profile.private && profile.bio ? <Text style={[styles.bio, dir.text, { color: colors.textPrimary }]}>{profile.bio}</Text> : null}
+                      {profile.private ? null : <Favourites poem={profile.favoritePoem} story={profile.favoriteStory} />}
                       {profile.private ? (
                         <View style={[styles.private, { flexDirection: dir.row }]}>
                           <Icon name="lock" size={15} tone="secondary" />
@@ -362,13 +385,18 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                     </ProfileHead>
 
                     {profile.private ? null : (
-                      <ProfileHighlights
-                        tree={profile.tree}
-                        badges={profile.badges ?? []}
-                        earned={profile.achievements ?? null}
-                        league={profile.league ?? (knownTier(profile.tier) ? { tier: knownTier(profile.tier)! } : null)}
-                        favPoem={profile.favoritePoem}
-                        favStory={profile.favoriteStory}
+                      <CollectionSheet
+                        visible={collecting}
+                        onClose={() => setCollecting(false)}
+                        owner={{
+                          userId: profile.userId,
+                          name: shownName,
+                          own: profile.friendStatus === 'self',
+                          league,
+                          tree: profile.tree,
+                          showcase: profile.badges,
+                          earned: profile.earnedBadges,
+                        }}
                       />
                     )}
 
@@ -416,6 +444,7 @@ function PublicProfileSkeleton({ width }: { width: number }): React.JSX.Element 
       <ProfileHeadSkeleton
         width={width}
         stats={<ProfileFacts facts={figures} head />}
+        handleAside={<BadgePillSkeleton />}
         actions={
           <View style={[styles.actions, { flexDirection: dir.row }]}>
             <Skeleton height={LARGE_BUTTON} radius={radii.pill} style={styles.action} />
@@ -430,7 +459,6 @@ function PublicProfileSkeleton({ width }: { width: number }): React.JSX.Element 
         </View>
         <ProfileFriendsSkeleton />
       </ProfileHeadSkeleton>
-      <ProfileHighlightsSkeleton />
     </View>
   );
 }
@@ -442,7 +470,7 @@ const LARGE_BUTTON = 50;
 function Header({ onExit, right }: { onExit: () => void; right?: React.ReactNode }) {
   return <ScreenHeader onBack={onExit} right={right} />;
 }
-/** Their streak, XP, and league while they take part (nothing for somebody never in one); badges are in the highlights. */
+/** Their streak, XP, and league while they take part (nothing for somebody never in one); badges are in the row by the handle. */
 function useFacts(): (profile: Profile) => ProfileFact[] {
   const { t, locale } = useI18n();
   return (profile) => {

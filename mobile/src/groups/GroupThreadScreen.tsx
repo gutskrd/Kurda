@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import { canModerateGroup, type GiftCard, type GiftTier, type GroupChatCleared } from '@kurda/shared';
+import { canModerateGroup, giftSenderName, type GiftCard, type GiftTier, type GroupChatCleared } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError, isMaintenance, notReached } from '../api/errors';
@@ -23,6 +23,7 @@ import { MessageField } from '../chat/SendButton';
 import { useI18n } from '../i18n/I18nContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { RUN_FACE } from '../chat/Bubble';
+import { useArrivals } from '../chat/arrivals';
 import { MessageRow } from '../chat/MessageRow';
 import { JumpToLatest, useAwayFromLatest, useUnseenBelow } from '../chat/ThreadParts';
 import { TypingBubble } from '../chat/TypingBubble';
@@ -33,6 +34,8 @@ import { useTypingSignal, useTypingWatch } from '../chat/typing';
 import { giftBatchCard, openGift as openGiftApi, withCard, type ChatMessage } from '../gifts/api';
 import { useGiftEvents, useOpenChat } from '../gifts/events';
 import { GiftPickerSheet, skippedText, type GiftFriend } from '../gifts/GiftPickerSheet';
+import { canGiveGifts } from '../gifts/access';
+import { isKnownAdult } from '../gifts/nudges';
 import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftUnwrap, type UnwrapTarget } from '../gifts/GiftUnwrap';
 import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
@@ -138,6 +141,8 @@ export function GroupThreadScreen({
   );
   // Newest first, for the inverted list; once per change to the thread, not per keystroke.
   const newestFirst = useMemo<Message[]>(() => [...thread].reverse(), [thread]);
+  // Messages sent or received while the thread is open rise in (chat/arrivals.ts).
+  const isArriving = useArrivals(newestFirst, me, keyOf);
   // Where each message sits: its day, its place in its run, whether it shows the time.
   const places = useMemo(
     () => placeMessages(thread, new Date(), { locale, today: t('chat.day.today'), yesterday: t('chat.day.yesterday'), earlier: t('chat.day.earlier') }),
@@ -174,7 +179,7 @@ export function GroupThreadScreen({
   const readOnce = useRef(false);
   const [friends, setFriends] = useState<GiftFriend[] | null>(null);
   const [picking, setPicking] = useState(false);
-  const [flying, setFlying] = useState<{ tier: GiftTier; count: number; key: number } | null>(null);
+  const [flying, setFlying] = useState<{ tier: GiftTier; item: { sku: string; assetUrl: string | null }; count: number; key: number } | null>(null);
   // A group gift that reached only some of them: who it did not reach, and why.
   const [giftNote, setGiftNote] = useState<string | null>(null);
   const [unwrapping, setUnwrapping] = useState<UnwrapTarget | null>(null);
@@ -383,11 +388,11 @@ export function GroupThreadScreen({
     (giftId: string) => {
       const message = messages.find((m) => m.gift?.myGiftId === giftId);
       if (message?.gift) {
-        setUnwrapping({ giftId, card: message.gift, fromName: message.username });
+        setUnwrapping({ giftId, card: message.gift, fromName: giftSenderName(message.gift.from) ?? '' });
         return;
       }
       void openGiftApi(client, giftId).then((res) => {
-        if (res.ok) setUnwrapping({ giftId, card: res.data.card, fromName: '' });
+        if (res.ok) setUnwrapping({ giftId, card: res.data.card, fromName: giftSenderName(res.data.card.from) ?? '' });
         // A gift that cannot be opened now says so, rather than the tap doing nothing.
         else if (!isMaintenance(res.error)) Alert.alert(t('error.generic'), describeError(res.error, t));
       });
@@ -502,7 +507,10 @@ export function GroupThreadScreen({
     [post, refusedSend],
   );
 
-  const openPicker = (): void => {
+  /** The friend a gift is being sent back to, chosen already when the sheet opens. */
+  const [backTo, setBackTo] = useState<string[] | undefined>(undefined);
+  const openPicker = (to?: string): void => {
+    setBackTo(to ? [to] : undefined);
     setPicking(true);
     if (friends === null) void loadFriends();
   };
@@ -632,6 +640,7 @@ export function GroupThreadScreen({
                   onReport={() => setReporting({ target: { type: 'group_message', messageId: item.id }, senderId: item.senderId, sender: item.username })}
                   onRetry={() => void retry(item.id)}
                   onDiscard={() => cancel(item.id)}
+                  arriving={isArriving(keyOf(item.id))}
                 />
               )}
             />
@@ -654,14 +663,16 @@ export function GroupThreadScreen({
           </View>
         ) : (
           <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
-            <Pressable
-              onPress={openPicker}
-              accessibilityRole="button"
-              accessibilityLabel={t('gift.button')}
-              style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
-            >
-              <Icon name="gift" size={22} color={colors.goldText} />
-            </Pressable>
+            {canGiveGifts(user) ? (
+              <Pressable
+                onPress={() => openPicker()}
+                accessibilityRole="button"
+                accessibilityLabel={t('gift.button')}
+                style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
+              >
+                <Icon name="gift" size={22} color={colors.goldText} />
+              </Pressable>
+            ) : null}
             <ChatGameButton target={{ kind: 'group', groupId }} />
             <MessageField
               value={draft}
@@ -682,6 +693,7 @@ export function GroupThreadScreen({
         <GiftSendAnimation
           key={flying.key}
           tier={flying.tier}
+          item={flying.item}
           announce={t('gift.sentMany', { count: flying.count })}
           onDone={() => setFlying(null)}
         />
@@ -691,12 +703,13 @@ export function GroupThreadScreen({
         visible={picking && friends !== null}
         chat={{ kind: 'group', groupId }}
         friends={friends ?? []}
+        initialChosen={backTo}
         onClose={() => setPicking(false)}
         onSent={(result, item, to) => {
           setPicking(false);
           const sent = result.message as Message | null;
           if (sent) setMessages((prev) => (prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]));
-          setFlying({ tier: item.tier, count: to.length, key: Date.now() });
+          setFlying({ tier: item.tier, item, count: to.length, key: Date.now() });
           setGiftNote(result.skipped.length > 0 ? skippedText(result.skipped, friends ?? [], t) : null);
         }}
       />
@@ -712,6 +725,8 @@ export function GroupThreadScreen({
           onClose={() => setUnwrapping(null)}
           onOpened={(card) => setMessages((prev) => withCard(prev, card))}
           onThanks={() => post(t('gift.thanksMessage'))}
+          // to whoever sent it, if they are a friend here (the sheet checks), the bag first; a known adult only, as a prompt to spend
+          onSendBack={canGiveGifts(user) && isKnownAdult(user) && unwrapping.card.from ? () => openPicker(unwrapping.card.from!.userId) : undefined}
         />
       ) : null}
 

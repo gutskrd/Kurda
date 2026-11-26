@@ -157,7 +157,7 @@ describe('sharing a badge', () => {
 
     expect(share).toHaveBeenCalledTimes(1);
     const text = (share.mock.calls[0]![0] as ShareData).text!;
-    expect(text).toBe(`I earned the “Agir” badge on Hevalo. 🏅\n${window.location.origin}/win/badge`);
+    expect(text).toBe(`I just earned the “Agir” badge on Hevalo! 🏅\n${window.location.origin}/win/badge?l=en`);
     // The account is "rojda" (id "me"); neither appears, nor a link to them.
     for (const theirs of ['rojda', '/users/', '/profile', '@']) expect(text).not.toContain(theirs);
 
@@ -172,6 +172,6 @@ describe('sharing a badge', () => {
     vi.stubGlobal('navigator', { ...navigator, share, clipboard: navigator.clipboard });
     const dialog = await screen.findByRole('dialog', { name: 'Kewê çiyê (Mountain partridge)' });
     await userEvent.click(within(dialog).getByRole('button', { name: 'Share' }));
-    expect((share.mock.calls[0]![0] as ShareData).text).toBe(`I earned the “Kewê çiyê” badge on Hevalo. 🏅\n${window.location.origin}/win/badge`);
+    expect((share.mock.calls[0]![0] as ShareData).text).toBe(`I just earned the “Kewê çiyê” badge on Hevalo! 🏅\n${window.location.origin}/win/badge?l=en`);
   });
 });

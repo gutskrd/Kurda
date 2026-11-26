@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { MAX_APPEAL_LEN, PLAY_GAMES, REPORT_TARGET_TYPES, reportCategoryFrom } from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 import { requireAuth } from '../plugins/auth.js';
@@ -21,11 +22,11 @@ const fileBody = z.object({
   seat: z.number().int().min(1).max(64).optional(),
 });
 
-const ackBody = z.object({ ids: z.array(z.uuid()).max(200).optional() }).nullish();
+const ackBody = z.object({ ids: z.array(lowerUuid()).max(200).optional() }).nullish();
 
 const appealBody = z.object({
-  sanctionId: z.uuid().optional(),
-  caseId: z.uuid().optional(),
+  sanctionId: lowerUuid().optional(),
+  caseId: lowerUuid().optional(),
   text: z.string().min(1).max(MAX_APPEAL_LEN * 2),
 });
 

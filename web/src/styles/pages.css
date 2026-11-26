@@ -321,9 +321,9 @@
   color: var(--ink);
 }
 .chip.active {
-  background: var(--primary);
-  color: var(--primary-ink);
-  border-color: var(--primary);
+  background: var(--chosen-fill);
+  color: var(--chosen-ink);
+  border-color: var(--chosen-edge);
 }
 /* a filter is still a target for a thumb: a full 44px where the pointer is a finger */
 @media (pointer: coarse) {
@@ -390,11 +390,11 @@
   overscroll-behavior: contain;
   padding: 32px 30px 28px;
   border-radius: var(--r-xl);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--glass-edge);
   background: var(--panel-glass);
   -webkit-backdrop-filter: blur(30px) saturate(1.3);
   backdrop-filter: blur(30px) saturate(1.3);
-  box-shadow: var(--glass-rim), var(--shadow-lg);
+  box-shadow: inset 0 1px 0 var(--glass-shine), var(--shadow);
   outline: none;
 }
 /* Less side padding on a phone, since it comes straight out of the photo editor's picture and controls. */
@@ -772,7 +772,7 @@ button.feature {
   opacity: 0.7;
 }
 .avatar-tile.is-selected {
-  border-color: var(--primary);
+  border-color: var(--ink);
   box-shadow: 0 0 0 2px var(--primary-soft);
 }
 .avatar-tile-none {
@@ -1007,6 +1007,21 @@ button.feature {
 .shop-thumb-frame {
   max-width: 112px;
 }
+/* a word tag is shown as the pill it is worn as, on the tile's own ground */
+.shop-thumb-tag {
+  max-width: none;
+  aspect-ratio: auto;
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+}
+.shop-tag-art {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
 .shop-thumb img,
 .shop-thumb video {
   width: 100%;
@@ -1220,7 +1235,7 @@ button.feature {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* how many are unread: in the colour of a message, which is what is waiting */
+/* how many are unread: in the ink, as on the phone, since a count is not one of the accent's places */
 .chat-unread {
   flex: none;
   min-width: 21px;
@@ -1229,8 +1244,8 @@ button.feature {
   display: inline-grid;
   place-items: center;
   border-radius: var(--r-pill);
-  background: var(--bubble-mine);
-  color: var(--bubble-mine-ink);
+  background: var(--primary);
+  color: var(--primary-ink);
   font-size: var(--text);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -1857,7 +1872,7 @@ button.chat-run-avatar:hover {
   padding: 0 16px 80px;
 }
 
-/* The profile's about line, wrapping: origin, join date, and on one's own profile who can open it, linking to that setting. */
+/* The profile's about line, wrapping: where they are from, and the year they joined. */
 .mkp-about {
   display: flex;
   flex-wrap: wrap;
@@ -1869,8 +1884,7 @@ button.chat-run-avatar:hover {
   color: var(--ink-2);
   font-size: var(--text);
 }
-.mkp-about > li,
-.mkp-seen {
+.mkp-about > li {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1879,23 +1893,6 @@ button.chat-run-avatar:hover {
 .mkp-about svg {
   flex: none;
   color: var(--ink-3);
-}
-.mkp-seen {
-  /* a fingertip tall where it is pressed, without making the line taller than its neighbours */
-  position: relative;
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: var(--border-strong);
-  text-underline-offset: 3px;
-}
-.mkp-seen::before {
-  content: '';
-  position: absolute;
-  inset: -12px -6px;
-}
-.mkp-seen:hover {
-  color: var(--ink);
-  text-decoration-color: currentColor;
 }
 /* a level, said as a word on the popup, where there is no bar for it */
 .pc-level-chip {
@@ -2409,6 +2406,17 @@ button.mkp-fact {
   font-size: var(--text);
 }
 
+/* who can open your profile, Settings' own row as a card at the top of Edit profile, pressed edge to edge */
+.edit-visibility {
+  --bleed: var(--space-5);
+  margin-bottom: var(--space-6);
+  padding-block: 0;
+  overflow: hidden;
+}
+.edit-visibility a.settings-row:hover {
+  background: var(--surface-2);
+}
+
 /* edit-profile page photo controls */
 .edit-photo-row {
   display: flex;
@@ -2425,9 +2433,9 @@ button.mkp-fact {
   width: 88px;
   height: 88px;
 }
-/* a link in running words: the app's violet, as everything that can be pressed is */
+/* a link in running words: the app's ink, as everything that can be pressed is */
 .link {
-  color: var(--primary);
+  color: var(--accent-text);
 }
 
 
@@ -3091,6 +3099,14 @@ button.mkp-fact {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: none; }
 }
+/* dismissed or timed out, it sinks back the way it came while it fades (chat/MessagesProvider.tsx) */
+.msg-toast.is-leaving {
+  pointer-events: none;
+  animation: msg-toast-out var(--dur) var(--ease-out) forwards;
+}
+@keyframes msg-toast-out {
+  to { opacity: 0; transform: translateY(6px); }
+}
 @media (prefers-reduced-motion: reduce) {
   .msg-toast { animation: none; }
 }
@@ -3153,6 +3169,12 @@ button.mkp-fact {
   }
   .msg-toast {
     animation: msg-toast-in-top var(--dur) var(--ease-out);
+  }
+  .msg-toast.is-leaving {
+    animation: msg-toast-out-top var(--dur) var(--ease-out) forwards;
+  }
+  @keyframes msg-toast-out-top {
+    to { opacity: 0; transform: translateY(-6px); }
   }
   @keyframes msg-toast-in-top {
     from { opacity: 0; transform: translateY(-6px); }
@@ -3394,6 +3416,12 @@ button.mkp-fact {
   color: var(--ink-3);
   font-size: var(--text);
   font-weight: 500;
+}
+/* what a price is worth in money, quiet beside it wherever a price is shown */
+.zer-value {
+  color: var(--ink-3);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
 }
 
 /* narrowing the shop — tabs, search, sort and the toggles — is shop/items.css,
@@ -4155,34 +4183,6 @@ button.mkp-fact {
   color: var(--ink-2);
 }
 
-/* ---- who gave them what they are wearing --------------------------------- */
-
-/* A quiet attribution for gifted cosmetics. */
-.gifted-notes {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.gifted-note {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--ink-3);
-  font-size: var(--text);
-  line-height: 1.35;
-}
-.gifted-note svg {
-  flex: none;
-  color: var(--gold-ink);
-}
-.gifted-note strong {
-  color: var(--ink-2);
-  font-weight: 600;
-}
-
 /* ---- the community, on the home page ------------------------------------- */
 
 /* Home shows the wall's own cards, in a narrow column so it still reads as a home page. */
@@ -4437,9 +4437,9 @@ button.mkp-fact {
   align-items: center;
   gap: 8px;
 }
-/* a saved word is on, and on is the violet of everything chosen, as a bookmarked story is */
+/* a saved word is on, and on is the ink of everything chosen, as a bookmarked story is */
 .dict-save.is-on {
-  color: var(--primary);
+  color: var(--ink);
 }
 /* a pronunciation with a character: the speaker beside its button (dictionary/EntryView.tsx) */
 .dict-voice {

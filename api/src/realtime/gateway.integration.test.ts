@@ -403,6 +403,30 @@ describe.skipIf(!DATABASE_URL)('realtime gateway (integration)', () => {
     expect(await twoClosed).toBe(CLOSE_BAD_TICKET);
   });
 
+  it('closes the parent’s socket on a phone the moment it is switched to a child, before any sweep', async () => {
+    const parent = await makeUser('switcher');
+    const made = await app.inject({
+      method: 'POST',
+      url: '/me/family/children',
+      headers: { authorization: `Bearer ${parent.token}` },
+      payload: { name: 'Rojîn', birthYear: new Date().getUTCFullYear() - 9, birthMonth: 1, avatar: 'default-03', consent: true },
+      remoteAddress: '10.20.3.1',
+    });
+    expect(made.statusCode, made.body).toBe(201);
+    const pin = await app.inject({ method: 'PUT', url: '/me/family/pin', headers: { authorization: `Bearer ${parent.token}` }, payload: { pin: '2468' }, remoteAddress: '10.20.3.1' });
+    expect(pin.statusCode).toBe(200);
+    const { ws } = await connect(parent.token);
+    const closed = waitForClose(ws);
+    const switched = await app.inject({
+      method: 'POST',
+      url: `/me/family/children/${made.json().child.userId as string}/switch`,
+      headers: { authorization: `Bearer ${parent.token}`, 'x-device-id': `switch-phone-${suffix}` },
+      remoteAddress: '10.20.3.1',
+    });
+    expect(switched.statusCode, switched.body).toBe(200);
+    expect(await closed).toBe(CLOSE_BAD_TICKET);
+  });
+
   it('heartbeat sweep reaps silent connections (unit-level)', async () => {
     const user = await makeUser('sweep');
     const { ws } = await connect(user.token);

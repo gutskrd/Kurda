@@ -277,6 +277,33 @@ describe('MessagesProvider', () => {
     expect(screen.queryByText('dismiss me')).not.toBeInTheDocument();
   });
 
+  it('lets a dismissed banner leave the way it came, closed at once to everything but the eye', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query, addEventListener: () => undefined, removeEventListener: () => undefined }));
+    try {
+      const rt = setup('/app/games');
+      await ready();
+      rt.emit({
+        room: 'user:me',
+        event: {
+          type: 'dm',
+          from: 'u2',
+          fromUsername: 'zana',
+          message: { id: 'm1', senderId: 'u2', body: 'see you soon', createdAt: '2026-09-04T10:00:00Z' },
+        },
+      });
+      expect(await screen.findByText('see you soon')).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: /dismiss message from zana/i }));
+
+      const leaving = document.querySelector('.msg-toast.is-leaving');
+      expect(leaving).not.toBeNull();
+      expect(leaving?.getAttribute('aria-hidden')).toBe('true');
+      expect(screen.queryByRole('button', { name: /dismiss message from zana/i })).not.toBeInTheDocument();
+      await waitFor(() => expect(document.querySelector('.msg-toast')).toBeNull());
+    } finally {
+      vi.stubGlobal('matchMedia', undefined);
+    }
+  });
+
   it('shows a notice once, however often it is raised, and lets it be closed', async () => {
     setup('/app/games');
     await ready();

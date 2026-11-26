@@ -1,8 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
-import type { GiftCard } from '@kurda/shared';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { giftSenderName, type GiftCard } from '@kurda/shared';
 import { assetUrl } from '../api/env';
-import { useMotionAlive } from '../a11y/useMotionAlive';
 import type { Translate } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
@@ -14,10 +12,10 @@ import { useReportAction } from '../reports/reportAction';
 import { GiftBox } from './art';
 
 /**
- * A gift in the chat. To you, unopened: a wrapped present that breathes a little (still under Reduce Motion) and "Tap
+ * A gift in the chat. To you, unopened: a wrapped present that hops now and then (still under Reduce Motion) and "Tap
  * to open"; opened: what it was and from whom. To the sender: what they gave and whether it was opened ("Opened ✓", or
  * how many recipients have in a group). To everyone else in a group: the wrapped present and whom it is for. The price
- * is never shown.
+ * is never shown. A grand gift, once opened, stays on show for everyone in the chat, its picture large.
  */
 export function GiftBubble({
   card,
@@ -40,8 +38,9 @@ export function GiftBubble({
   const dir = useDirection();
   const report = useReportAction(onReport);
   const forMe = card.myGiftId !== null;
-  const wrapped = forMe ? !card.myOpened : !mine;
   const opened = card.recipients.filter((r) => r.opened).length;
+  const showpiece = card.tier === 'grand' && (forMe ? card.myOpened : opened > 0);
+  const wrapped = showpiece ? false : forMe ? !card.myOpened : !mine;
   const status = mine
     ? card.recipients.length > 1
       ? t('gift.bubble.openedCount', { opened, total: card.recipients.length })
@@ -50,28 +49,26 @@ export function GiftBubble({
         : t('gift.bubble.notOpened')
     : null;
 
-  const title = forMe ? (card.myOpened ? card.name : t('gift.bubble.forYou')) : mine ? card.name : recipientsLine(card, t);
-  const hint = forMe
-    ? card.myOpened
-      ? senderName
-        ? t('gift.unwrap.from', { name: senderName })
-        : null
-      : t('gift.bubble.tapToOpen')
-    : mine
-      ? recipientsLine(card, t)
-      : null;
-  const label = forMe && !card.myOpened ? t('gift.bubble.openA11y', { name: senderName }) : [title, hint, status].filter(Boolean).join('. ');
+  // Who it is from, as the server lets this viewer see them; "a Hevalo member" when it may not (`GiftCard.from`). An
+  // older server sends no sender, and the message's own sender stands in.
+  const sender = (card as { from?: GiftCard['from'] }).from;
+  const fromName = sender === undefined ? senderName || null : giftSenderName(sender);
+  const fromLine = fromName ? t('gift.from', { name: fromName }) : t('gift.fromMember');
+  const title = forMe ? (card.myOpened ? card.name : fromLine) : mine || showpiece ? card.name : recipientsLine(card, t);
+  const hint = forMe ? (card.myOpened ? fromLine : t('gift.bubble.tapToOpen')) : mine ? recipientsLine(card, t) : fromLine;
+  const label = forMe && !card.myOpened ? t('gift.bubble.openA11y', { name: fromName ?? t('gift.someone') }) : [title, hint, status].filter(Boolean).join('. ');
 
   const body = (
     <View
       style={[
         styles.bubble,
-        // The art leads on the reading side, and the roomier edge is the text's.
-        { flexDirection: dir.row, backgroundColor: colors.glassFill, borderColor: colors.gold },
-        dir.row === 'row-reverse' ? styles.textLeft : styles.textRight,
+        // The art leads on the reading side, and the roomier edge is the text's; a grand gift stands above its words.
+        { flexDirection: showpiece ? 'column' : dir.row, backgroundColor: colors.glassFill, borderColor: colors.gold },
+        showpiece ? styles.showpiece : dir.row === 'row-reverse' ? styles.textLeft : styles.textRight,
       ]}
+      testID={showpiece ? 'gift-showpiece' : undefined}
     >
-      <View style={styles.art}>{wrapped ? <Breathing card={card} /> : <ItemThumb card={card} />}</View>
+      <View style={showpiece ? styles.artLarge : styles.art}>{wrapped ? <WrappedBox card={card} /> : <ItemThumb card={card} large={showpiece} />}</View>
       <View style={styles.text}>
         <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
           {title}
@@ -128,38 +125,18 @@ function recipientsLine(card: GiftCard, t: Translate): string {
     : t('gift.bubble.for', { names: shown });
 }
 
-/** The wrapped present, rising and settling slowly: a waiting gift is the one moving thing in a thread. */
-function Breathing({ card }: { card: GiftCard }): React.JSX.Element {
-  const { colors } = useTheme();
-  const alive = useMotionAlive();
-  const lift = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (!alive || card.myGiftId === null) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(lift, { toValue: 1, duration: 1100, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(lift, { toValue: 0, duration: 1100, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [alive, lift, card.myGiftId]);
-  const translateY = lift.interpolate({ inputRange: [0, 1], outputRange: [0, -3] });
-  const rotate = lift.interpolate({ inputRange: [0, 1], outputRange: ['-2deg', '2deg'] });
-  return (
-    <Animated.View style={{ transform: [{ translateY }, { rotate }] }}>
-      <GiftBox size={64} tier={card.tier} gold={colors.gold} />
-    </Animated.View>
-  );
+/** The wrapped present: to its recipient it hops now and then, a waiting gift being the one moving thing in a thread. */
+function WrappedBox({ card }: { card: GiftCard }): React.JSX.Element {
+  return <GiftBox size={64} tier={card.tier} motion={card.myGiftId !== null ? 'idle' : 'still'} seed={card.batchId} testID="gift-box" />;
 }
 
-function ItemThumb({ card }: { card: GiftCard }): React.JSX.Element {
+function ItemThumb({ card, large = false }: { card: GiftCard; large?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const uri = assetUrl(card.assetUrl);
   return uri ? (
     <Image
       source={{ uri }}
-      style={[styles.thumb, { borderRadius: card.category === 'icon' ? radii.pill : radii.md }]}
+      style={[large ? styles.thumbLarge : styles.thumb, { borderRadius: card.category === 'icon' ? radii.pill : radii.md }]}
       accessibilityIgnoresInvertColors
     />
   ) : (
@@ -188,5 +165,8 @@ const styles = StyleSheet.create({
   statusRow: { alignItems: 'center', gap: 4, marginTop: 2 },
   status: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   thumb: { width: 56, height: 56 },
+  thumbLarge: { width: 132, height: 132 },
+  artLarge: { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
+  showpiece: { alignItems: 'center', paddingHorizontal: spacing.md, paddingBottom: spacing.md },
   thumbFallback: { alignItems: 'center', justifyContent: 'center', borderRadius: radii.md },
 });

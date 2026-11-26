@@ -56,9 +56,9 @@
   color: var(--ink);
 }
 .item-tab.is-active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--primary-ink);
+  background: var(--picked-fill);
+  border-color: var(--picked-fill);
+  color: var(--picked-ink);
 }
 /* The app's focus ring has a small radius; a pill keeps its own shape. */
 .item-tab:focus-visible {

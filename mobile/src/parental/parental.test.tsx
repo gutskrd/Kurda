@@ -205,21 +205,58 @@ describe('a supervised teen', () => {
     expect(screen.queryByRole('button', { name: 'Add another parent' })).toBeNull();
   });
 
-  it('disconnects a parent only once asked, saying they will be told', async () => {
+  it('asks to stop a parent’s supervision, which ends a week later, and can stay connected after all', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-25T10:00:00Z'));
+    const ENDS = '2026-12-02T10:00:00.000Z';
+    let asked = false;
     const client = fakeClient({
-      'GET /me/parental': ok({ role: 'teen', parents: [{ ...person('p1', 'Rojîn'), since: SINCE }], supervision: SUPERVISED }),
-      'DELETE /me/parental/parents/p1': ok({ ended: true }),
+      'GET /me/parental': () => ok({ role: 'teen', parents: [{ ...person('p1', 'Rojîn'), since: SINCE, leaveEndsAt: asked ? ENDS : null }], supervision: SUPERVISED }),
+      'POST /me/parental/parents/p1/leave': () => {
+        asked = true;
+        return ok({ endsAt: ENDS });
+      },
+      'DELETE /me/parental/parents/p1/leave': () => {
+        asked = false;
+        return ok({ kept: true });
+      },
     });
     testAuth.client = client;
     page('parental');
-    fireEvent.click(await screen.findByTestId('parental-disconnect'));
-    const sheet = await screen.findByTestId('parental-disconnect-sheet');
-    expect(within(sheet).getByText('Disconnect Rojîn?')).toBeTruthy();
-    expect(within(sheet).getByText('Rojîn will be told.')).toBeTruthy();
+    fireEvent.click(await screen.findByTestId('parental-leave'));
+    const sheet = await screen.findByTestId('parental-leave-sheet');
+    expect(within(sheet).getByText('Stop supervision by Rojîn?')).toBeTruthy();
+    // Said before anything is sent: the parent is told now, and when it would end.
+    expect(within(sheet).getByText(t('parental.leave.body', { name: 'Rojîn', date: 'December 2, 2026' }))).toBeTruthy();
+    expect(client.calls.some((c) => c.method === 'POST')).toBe(false);
     await act(async () => {
-      fireEvent.click(within(sheet).getByRole('button', { name: 'Disconnect' }));
+      fireEvent.click(within(sheet).getByTestId('parental-leave-confirm'));
     });
-    expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/me/parental/parents/p1')).toBe(true);
+    expect(client.calls.some((c) => c.method === 'POST' && c.path === '/me/parental/parents/p1/leave')).toBe(true);
+    const row = await screen.findByTestId('parental-parent-p1');
+    await waitFor(() => expect(within(row).getByText('Ends on December 2, 2026')).toBeTruthy());
+    // Nobody is left to ask about, so the row to ask goes.
+    expect(screen.queryByTestId('parental-leave')).toBeNull();
+    await act(async () => {
+      fireEvent.click(within(row).getByTestId('parental-stay-p1'));
+    });
+    expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/me/parental/parents/p1/leave')).toBe(true);
+    await waitFor(() => expect(within(screen.getByTestId('parental-parent-p1')).getByText('Since September 1, 2026')).toBeTruthy());
+    expect(screen.getByTestId('parental-leave')).toBeTruthy();
+  });
+
+  it('puts a parent back as staying when taking the request back fails, and says so', async () => {
+    const client = fakeClient({
+      'GET /me/parental': ok({ role: 'teen', parents: [{ ...person('p1', 'Rojîn'), since: SINCE, leaveEndsAt: '2026-12-02T10:00:00.000Z' }], supervision: SUPERVISED }),
+      'DELETE /me/parental/parents/p1/leave': fail({ status: 500, message: 'no' }),
+    });
+    testAuth.client = client;
+    page('parental');
+    const stay = await screen.findByTestId('parental-stay-p1');
+    await act(async () => {
+      fireEvent.click(stay);
+    });
+    expect(within(screen.getByTestId('parental-parent-p1')).getByText('Ends on December 2, 2026')).toBeTruthy();
   });
 
   it('sees a calm note, with the parental icon, in place of what a parent switched off', () => {
@@ -323,6 +360,27 @@ describe('the pause', () => {
     expect(client.calls.filter((c) => c.path === '/me/usage')).toHaveLength(1);
   });
 
+  it('shows a child’s profile the resting screen when the server says Hevalo is resting, though the phone’s numbers said not yet', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-24T16:00:00Z'));
+    const nearly: SupervisionState = { controls: { ...OPEN_CONTROLS, dailyLimitMinutes: 30 }, minutesToday: 28, timeZone: 'UTC', paused: null, resumesAt: null };
+    const used: SupervisionState = { ...nearly, minutesToday: 30, paused: 'limit', resumesAt: '2026-11-25T00:00:00.000Z' };
+    let beats = 0;
+    testAuth.client = fakeClient({ 'POST /me/usage': () => ok(++beats === 1 ? nearly : used) });
+    testAuth.user = { ...ME, kind: 'child', supervision: nearly } as typeof ME;
+    renderWithProviders(
+      <SupervisionProvider>
+        <PauseHost onOpenControls={() => undefined} />
+      </SupervisionProvider>,
+    );
+    await waitFor(() => expect(beats).toBe(1));
+    expect(screen.queryByTestId('parental-pause')).toBeNull();
+    // what the API client does on 403 PARENTAL_PAUSED from a lesson, a game or a story (api/client.ts `onParental`)
+    await act(async () => noteParentalRefusal());
+    const pause = await screen.findByTestId('parental-pause');
+    expect(within(pause).getByText('Time for a break')).toBeTruthy();
+  });
+
   it('says how much of the day was used, and when Hevalo opens again', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-11-24T16:00:00Z'));
@@ -362,6 +420,12 @@ describe('a parent', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'parentalTeen', teenId: 't1' });
     fireEvent.click(screen.getByTestId('parental-add-teen'));
     expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'parentalCode' });
+  });
+
+  it('says first, for a teen who asked to stop, the day it ends', async () => {
+    testAuth.client = fakeClient({ 'GET /me/parental': ok({ role: 'parent', teens: [{ ...TEENS[0], leaveEndsAt: '2026-12-02T10:00:00.000Z' }] }) });
+    page('parental');
+    expect((await screen.findByTestId('parental-teen-t1')).getAttribute('aria-label')).toBe('Berfîn, Leaving on December 2, 2026\nToday: 12 min · 2 lessons');
   });
 
   it('with no teen yet, says what it is for and offers to add one', async () => {
@@ -506,7 +570,8 @@ describe('a teen’s page, for their parent', () => {
     testAuth.client = fakeClient({ 'GET /me/parental/teens/t1': ok(DETAIL) });
     page('parentalTeen', 't1');
     expect((await screen.findByTestId('teen-week-summary')).textContent).toBe('1 h 25 min · 9 lessons · 280 XP');
-    expect(screen.getByText('6-day streak')).toBeTruthy();
+    // The streak as the teen's own card says it, with no hyphen.
+    expect(screen.getByTestId('teen-streak').getAttribute('aria-label')).toBe('6 day streak');
     // Each day is read out with its numbers; the bars themselves are only drawn.
     expect(screen.getByLabelText('Sunday: 25 minutes, 1 lesson')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Daily limit, 45 minutes' })).toBeTruthy();
@@ -556,6 +621,81 @@ describe('a teen’s page, for their parent', () => {
     expect(within(group).getByRole('radio', { name: '30 minutes' }).getAttribute('aria-checked')).toBe('true');
   });
 
+  it('says at the top that the teen asked to stop, and lets them go now', async () => {
+    const client = fakeClient({
+      'GET /me/parental/teens/t1': ok({ ...DETAIL, leaveEndsAt: '2026-12-02T10:00:00.000Z' }),
+      'DELETE /me/parental/teens/t1': ok({ ended: true }),
+    });
+    testAuth.client = client;
+    page('parentalTeen', 't1');
+    const note = await screen.findByTestId('teen-leaving');
+    expect(within(note).getByText('Berfîn asked to stop supervision. It ends on December 2, 2026.')).toBeTruthy();
+    fireEvent.click(within(note).getByTestId('teen-let-go'));
+    const sheet = await screen.findByTestId('teen-stop-sheet');
+    expect(within(sheet).getByText(t('parental.stop.body', { name: 'Berfîn' }))).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(within(sheet).getByTestId('teen-stop-confirm'));
+    });
+    expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/me/parental/teens/t1')).toBe(true);
+  });
+
+  it('lets the first parent correct the birth month once, to one that keeps the teen 13 to 17', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-25T10:00:00Z'));
+    const client = fakeClient({
+      'GET /me/parental/teens/t1': ok({ ...DETAIL, birthMonth: { year: 2011, month: 3 }, birthCorrectable: true }),
+      'PUT /me/parental/teens/t1/birth-month': ok({ birthMonth: { year: 2011, month: 4 }, birthCorrectable: false }),
+    });
+    testAuth.client = client;
+    page('parentalTeen', 't1');
+    fireEvent.click(await screen.findByRole('button', { name: 'Birth month, March 2011' }));
+    const sheet = await screen.findByTestId('teen-birth-sheet');
+    // The years on offer are the ones that keep the teen 13 to 17.
+    expect(within(within(sheet).getByTestId('teen-birth-years')).getAllByRole('radio').map((r) => r.getAttribute('aria-label'))).toEqual([
+      '2013',
+      '2012',
+      '2011',
+      '2010',
+      '2009',
+      '2008',
+    ]);
+    const save = within(sheet).getByTestId('teen-birth-save');
+    expect(save.getAttribute('aria-disabled')).toBe('true');
+    // A month and year that would make them an adult is said at once, and never sent.
+    fireEvent.click(within(sheet).getByRole('radio', { name: 'January' }));
+    fireEvent.click(within(sheet).getByRole('radio', { name: '2008' }));
+    await act(async () => {
+      fireEvent.click(save);
+    });
+    expect(within(sheet).getByText(t('parental.birth.adult', { name: 'Berfîn' }))).toBeTruthy();
+    expect(client.calls.some((c) => c.method === 'PUT')).toBe(false);
+    fireEvent.click(within(sheet).getByRole('radio', { name: 'April' }));
+    fireEvent.click(within(sheet).getByRole('radio', { name: '2011' }));
+    await act(async () => {
+      fireEvent.click(save);
+    });
+    expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ birthYear: 2011, birthMonth: 4 });
+    const row = await screen.findByTestId('teen-birth');
+    expect(within(row).getByText('April 2011')).toBeTruthy();
+    expect(within(row).getByText('Already corrected')).toBeTruthy();
+  });
+
+  it('shows another parent the birth month, and who alone can correct it', async () => {
+    testAuth.client = fakeClient({
+      'GET /me/parental/teens/t1': ok({
+        ...DETAIL,
+        parents: [{ ...person('p0', 'Rojîn'), first: true }, person('me', 'Rojda')],
+        canLoosen: false,
+        birthMonth: { year: 2011, month: 3 },
+        birthCorrectable: false,
+      }),
+    });
+    page('parentalTeen', 't1');
+    const row = await screen.findByTestId('teen-birth');
+    expect(within(row).getByText('Only Rojîn can correct this')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Birth month, March 2011' })).toBeNull();
+  });
+
   it('stops supervising only once asked, and goes back to the list', async () => {
     const client = fakeClient({ 'GET /me/parental/teens/t1': ok(DETAIL), 'DELETE /me/parental/teens/t1': ok({ ended: true }) });
     testAuth.client = client;
@@ -581,6 +721,33 @@ describe('parental news in the notifications', () => {
     // The teen's own news names them too, but opens their own page, never a parent's view of them.
     expect(resolveDeepLink({ kind: 'parental_changed', to: 'teen', teenId: 't1' })).toEqual({ screen: 'SettingsPage', params: { page: 'parental' } });
     expect(resolveDeepLink({ kind: 'parental_ended', teenId: 't1' })).toEqual({ screen: 'SettingsPage', params: { page: 'parental' } });
+    // A teen asking to stop, or staying, is news to their parent; a corrected birth month to whoever it went to.
+    expect(resolveDeepLink({ kind: 'parental_leave', state: 'asked', teenId: 't1' })).toEqual(teenPage);
+    expect(resolveDeepLink({ kind: 'parental_leave', state: 'kept', teenId: 't1' })).toEqual(teenPage);
+    expect(resolveDeepLink({ kind: 'parental_birth', to: 'parent', teenId: 't1' })).toEqual(teenPage);
+    expect(resolveDeepLink({ kind: 'parental_birth', to: 'teen', teenId: 't1' })).toEqual({ screen: 'SettingsPage', params: { page: 'parental' } });
+  });
+
+  it('says in the reader’s language that a teen asked to stop, stayed, or had their birth month corrected', () => {
+    const de = (key: keyof typeof TRANSLATIONS.de, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS.de[key], vars);
+    const item = (data: Record<string, unknown>) => ({ title: 'English title', body: 'English body', data, category: 'friends' });
+    const said = (data: Record<string, unknown>) => notificationText(item(data), de, 'de');
+    expect(noticeKind(item({ kind: 'parental_leave' })).icon).toBe('parental');
+    expect(noticeKind(item({ kind: 'parental_birth' })).icon).toBe('parental');
+    expect(said({ kind: 'parental_leave', state: 'asked', teenName: 'Berfîn', endsAt: '2026-12-02T10:00:00.000Z' })).toEqual({
+      title: de('parental.notice.leave', { name: 'Berfîn' }),
+      body: de('parental.notice.leave.body', { date: '2. Dezember 2026' }),
+    });
+    expect(said({ kind: 'parental_leave', state: 'kept', teenName: 'Berfîn' })).toEqual({ title: de('parental.notice.kept', { name: 'Berfîn' }), body: '' });
+    expect(said({ kind: 'parental_birth', to: 'teen', parentName: 'Rojîn', birthYear: '2011', birthMonth: '4' })).toEqual({
+      title: de('parental.notice.birth', { name: 'Rojîn', month: 'April 2011' }),
+      body: de('parental.notice.birth.body'),
+    });
+    expect(said({ kind: 'parental_birth', to: 'parent', parentName: 'Rojîn', teenName: 'Berfîn', birthYear: '2011', birthMonth: '4' }).title).toBe(
+      de('parental.notice.birthFor', { parent: 'Rojîn', teen: 'Berfîn', month: 'April 2011' }),
+    );
+    // The teen whose own request ran its days is told which parent it was, not that the parent stopped.
+    expect(said({ kind: 'parental_ended', by: 'teen', parentName: 'Rojîn' }).title).toBe(de('parental.notice.endedLeft', { name: 'Rojîn' }));
   });
 
   it('wears the parental glyph, and is worded for whoever reads it', () => {

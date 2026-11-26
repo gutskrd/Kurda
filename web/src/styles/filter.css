@@ -242,9 +242,9 @@
   cursor: pointer;
 }
 .ffilter-period.is-on {
-  border-color: var(--primary);
-  background: var(--primary);
-  color: var(--primary-ink);
+  border-color: var(--picked-fill);
+  background: var(--picked-fill);
+  color: var(--picked-ink);
   font-weight: 600;
 }
 /* a chip with a count after its word (the stories' categories) */

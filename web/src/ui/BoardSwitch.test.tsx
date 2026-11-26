@@ -17,7 +17,7 @@ function readable(el: Element): string {
 }
 
 describe('BoardSwitch', () => {
-  it('offers XP, Zêr and Gewher as one choice of three, with the chosen one checked', async () => {
+  it('offers XP and Zêr as one choice of two, with the chosen one checked', async () => {
     const onChange = vi.fn();
     render(
       <I18nProvider>
@@ -26,23 +26,43 @@ describe('BoardSwitch', () => {
     );
     const group = screen.getByRole('group', { name: en['rankings.rankBy'] });
     const radios = within(group).getAllByRole('radio');
-    expect(radios.map((r) => readable(r.closest('label')!))).toEqual([en['rankings.board.xp'], 'Zêr', en['rankings.board.gewher']]);
+    expect(radios.map((r) => readable(r.closest('label')!))).toEqual([en['rankings.board.xp'], 'Zêr']);
     expect(within(group).getByRole('radio', { name: 'Zêr' })).toBeChecked();
-    // The coin and the gem are drawn beside their names.
-    expect(group.querySelectorAll('svg').length).toBeGreaterThanOrEqual(3);
+    // The bolt and the coin are drawn beside their names.
+    expect(group.querySelectorAll('svg').length).toBeGreaterThanOrEqual(2);
 
-    await userEvent.click(within(group).getByRole('radio', { name: en['rankings.board.gewher'] }));
-    expect(onChange).toHaveBeenCalledWith('gewher');
+    await userEvent.click(within(group).getByRole('radio', { name: en['rankings.board.xp'] }));
+    expect(onChange).toHaveBeenCalledWith('xp');
     // Choosing the current board changes nothing.
     onChange.mockClear();
     await userEvent.click(within(group).getByRole('radio', { name: 'Zêr' }));
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('draws one chosen ground for the switch, kept from screen readers, which follows the choice', () => {
+    const { rerender } = render(
+      <I18nProvider>
+        <BoardSwitch value="xp" onChange={() => undefined} />
+      </I18nProvider>,
+    );
+    const group = screen.getByRole('group', { name: en['rankings.rankBy'] });
+    const capsules = group.querySelectorAll('.seg-capsule');
+    expect(capsules).toHaveLength(1);
+    expect(capsules[0]).toHaveAttribute('aria-hidden', 'true');
+    rerender(
+      <I18nProvider>
+        <BoardSwitch value="zer" onChange={() => undefined} />
+      </I18nProvider>,
+    );
+    // The same element, moved rather than drawn again, so it can slide.
+    expect(group.querySelector('.seg-capsule')).toBe(capsules[0]);
+    expect(within(group).getByRole('radio', { name: 'Zêr' })).toBeChecked();
+  });
+
   it('knows what can be ranked by, and the board behind each choice', () => {
     expect(isRankKind('xp')).toBe(true);
     expect(isRankKind('zer')).toBe(true);
-    expect(isRankKind('gewher')).toBe(true);
+    expect(isRankKind('gewher')).toBe(false);
     expect(isRankKind('weekly_xp')).toBe(false);
     expect(isRankKind(null)).toBe(false);
     expect(boardFor('xp', 'week')).toBe('weekly_xp');
@@ -71,7 +91,7 @@ describe('a leaderboard row', () => {
         <MemoryRouter>
           <RankList label="board">
             <RankRow rank={1} name="dilan" href="/app/users/p1" avatarUrl={null} score={<BoardAmount type="zer" amount={12400} />} />
-            <RankRow rank={2} name="azad" avatarUrl={null} score={<BoardAmount type="gewher" amount={75} />} />
+            <RankRow rank={2} name="azad" avatarUrl={null} score={<BoardAmount type="zer" amount={75} />} />
             <RankRow rank={3} name="rojin" avatarUrl={null} score={<BoardAmount type="weekly_xp" amount={420} />} />
             <RankRow rank={4} name="baran" avatarUrl={null} score={<BoardAmount type="all_time_xp" amount={12000} />} />
           </RankList>
@@ -79,7 +99,7 @@ describe('a leaderboard row', () => {
       </I18nProvider>,
     );
     const rows = screen.getAllByRole('listitem');
-    expect(rows.map(readable)).toEqual(['1dilan12,400Zêr', `2azad75${en['rankings.board.gewher']}`, '3rojin420 XP', '4baran12,000 XP']);
+    expect(rows.map(readable)).toEqual(['1dilan12,400Zêr', '2azad75Zêr', '3rojin420 XP', '4baran12,000 XP']);
     expect(screen.getByRole('link', { name: 'dilan' })).toHaveAttribute('href', '/app/users/p1');
     // A face for every row, the silhouette where there is no picture.
     expect(container.querySelectorAll('.rank-face')).toHaveLength(4);

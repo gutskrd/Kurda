@@ -16,10 +16,12 @@ export interface Streak {
   /** The missed day the last freeze covered, 'YYYY-MM-DD', or null; absent on older responses. */
   freezeUsedOn?: string | null;
   /**
-   * The ended streak that can still be restored: its length, the current cost and when the offer ends. Null when
-   * there is none; absent on older responses.
+   * The ended streak that can still be won back: its length, today's sessions toward it and when the offer ends. Null
+   * when there is none; absent on older responses.
    */
   repair?: StreakRepairOffer | null;
+  /** The ended run's restore, when one brought it back: how long it was and on which day ('YYYY-MM-DD'). */
+  restored?: { days: number; on: string } | null;
 }
 
 /** What the server pays a freeze for, when it does not say (older responses). */

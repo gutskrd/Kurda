@@ -18,7 +18,7 @@ describe.skipIf(!DATABASE_URL)('iap (integration)', () => {
   let iap: IapService;
   let wallet: WalletService;
   const suffix = Date.now().toString(36);
-  const product = `gems_100_${suffix}`;
+  const product = `zer_100_${suffix}`;
   let userId = '';
   const txn = (n: string): string => JSON.stringify({ transactionId: `txn_${n}_${suffix}`, environment: 'production' });
 
@@ -43,7 +43,7 @@ describe.skipIf(!DATABASE_URL)('iap (integration)', () => {
       remoteAddress: '10.72.0.1',
     });
     userId = res.json().user.id;
-    await iap.createPack({ platform: 'apple', productId: product, gems: 100 });
+    await iap.createPack({ platform: 'apple', productId: product, zer: 100 });
   });
 
   afterAll(async () => {
@@ -56,15 +56,15 @@ describe.skipIf(!DATABASE_URL)('iap (integration)', () => {
     } finally {
       client.release();
     }
-    await pool.query(`DELETE FROM gem_packs WHERE product_id = $1`, [product]);
+    await pool.query(`DELETE FROM zer_packs WHERE product_id = $1`, [product]);
     await pool.end();
     await app.close();
   });
 
-  it('validates a receipt and grants the pack Gems', async () => {
+  it('validates a receipt and grants the pack’s Zêr', async () => {
     const r = await iap.redeem(userId, 'apple', txn('a'), product);
-    expect(r).toMatchObject({ granted: true, duplicate: false, gems: 100, balance: 100 });
-    expect((await wallet.balances(userId)).gems).toBe(100);
+    expect(r).toMatchObject({ granted: true, duplicate: false, zer: 100, balance: 100 });
+    expect((await wallet.balances(userId)).zer).toBe(100);
   });
 
   it('rejects an unknown product and an invalid receipt', async () => {
@@ -79,34 +79,34 @@ describe.skipIf(!DATABASE_URL)('iap (integration)', () => {
     expect(first.duplicate).toBe(false);
     expect(again.duplicate).toBe(true);
     // charged once: 100 (test a) + 100 (this txn) = 200, not 300
-    expect((await wallet.balances(userId)).gems).toBe(200);
+    expect((await wallet.balances(userId)).zer).toBe(200);
   });
 
-  it('refund claws back the Gems and is idempotent', async () => {
+  it('refund claws back the Zêr and is idempotent', async () => {
     const t = txn('refund');
     await iap.redeem(userId, 'apple', t, product); // +100 → 300
     const transactionId = JSON.parse(t).transactionId as string;
 
     const clawed = await iap.refund('apple', transactionId);
     expect(clawed).toEqual({ found: true, clawedBack: 100 });
-    expect((await wallet.balances(userId)).gems).toBe(200);
+    expect((await wallet.balances(userId)).zer).toBe(200);
 
     // second webhook delivery is a no-op
     expect(await iap.refund('apple', transactionId)).toEqual({ found: true, clawedBack: 0 });
-    expect((await wallet.balances(userId)).gems).toBe(200);
+    expect((await wallet.balances(userId)).zer).toBe(200);
   });
 
   it('a refund of a purchase that was held takes nothing: it never paid anything out', async () => {
     const t = txn('heldrefund');
     await iap.redeem(userId, 'apple', t, product);
     const transactionId = JSON.parse(t).transactionId as string;
-    // as the fraud rules leave it: the receipt held, its Gems never credited
+    // as the fraud rules leave it: the receipt held, its Zêr never credited
     await pool.query(`UPDATE iap_receipts SET status = 'held' WHERE platform = 'apple' AND transaction_id = $1`, [transactionId]);
-    const before = (await wallet.balances(userId)).gems;
+    const before = (await wallet.balances(userId)).zer;
 
     expect(await iap.refund('apple', transactionId)).toEqual({ found: true, clawedBack: 0 });
-    // the Gems the buyer holds from other purchases are theirs
-    expect((await wallet.balances(userId)).gems).toBe(before);
+    // the Zêr the buyer holds from other purchases are theirs
+    expect((await wallet.balances(userId)).zer).toBe(before);
     const row = await pool.query<{ status: string }>(`SELECT status FROM iap_receipts WHERE platform = 'apple' AND transaction_id = $1`, [transactionId]);
     expect(row.rows[0]?.status).toBe('refunded');
   });
@@ -129,11 +129,11 @@ describe.skipIf(!DATABASE_URL)('iap (integration)', () => {
     const uid = reg.json().user.id as string;
     const t = JSON.stringify({ transactionId: `txn_spend_${suffix}`, environment: 'production' });
     await iap.redeem(uid, 'apple', t, product); // +100
-    await wallet.debit({ userId: uid, currency: 'gems', amount: 70, reason: 'shop_purchase' }); // 30 left
+    await wallet.debit({ userId: uid, currency: 'zer', amount: 70, reason: 'shop_purchase' }); // 30 left
 
     const clawed = await iap.refund('apple', `txn_spend_${suffix}`);
     expect(clawed.clawedBack).toBe(30); // only what was left
-    expect((await wallet.balances(uid)).gems).toBe(0);
+    expect((await wallet.balances(uid)).zer).toBe(0);
   });
 
   it('the refund webhook is guarded by the shared secret', async () => {

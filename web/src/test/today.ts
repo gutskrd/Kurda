@@ -30,7 +30,7 @@ export function todayView({
       ...days[i],
     })),
     streak: { current: 0, longest: 0, freezes: 0, lastActiveOn: null, daysLearned: 0, freezeProgress: 0, sessionsPerFreeze: 5, maxFreezes: 1, repair: null, ...streak },
-    daily: { canClaim: false, claimableDay: 1, reward: 10, schedule: [10, 15, 20, 25, 30, 40, 100], alreadyClaimedToday: false, learnedToday: false, cycleDay: 0, plusGems: 0, ...daily },
+    daily: { canClaim: false, claimableDay: 1, reward: 10, schedule: [10, 15, 20, 25, 30, 40, 100], alreadyClaimedToday: false, learnedToday: false, cycleDay: 0, member: true, ...daily },
     badge,
   };
 }

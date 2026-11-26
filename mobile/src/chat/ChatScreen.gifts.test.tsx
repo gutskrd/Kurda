@@ -32,6 +32,7 @@ const gift: GiftCard = {
   assetUrl: null,
   tier: 'common',
   recipients: [{ name: null, avatarUrl: null, isMe: true, opened: false }],
+  from: { userId: 'u2', username: 'rojda', displayName: null, avatarUrl: null },
   myGiftId: 'g1',
   myOpened: false,
   equippable: 'background',
@@ -75,7 +76,7 @@ describe('ChatScreen', () => {
     expect(screen.getByText('Werin!')).toBeTruthy();
     fireEvent.click(await screen.findByRole('button', { name: 'Join: Pêşbaziya Peyvan' }));
     expect(navigate).toHaveBeenCalledWith('WordleBattle', { id: 'abc12345' });
-    expect(screen.getByText('A gift for you')).toBeTruthy();
+    expect(screen.getByText('Gift from rojda')).toBeTruthy();
   });
 
   it('keeps what was typed when a send is refused, and says why', async () => {
@@ -94,12 +95,12 @@ describe('ChatScreen', () => {
   it('opens the gift picker for this friend, and unwraps a gift it was asked to', async () => {
     testAuth.client = fakeClient({
       'GET /chat/u2/messages': ok({ messages: [msg({ id: 'm3', kind: 'gift', body: null, gift })] }),
-      'GET /gifts/catalog?to=u2': ok({ items: [], balance: { zer: 0, gems: 0 } }),
+      'GET /gifts/catalog?to=u2': ok({ items: [], balance: { zer: 0 }, freeGifts: 0, hold: null }),
       'POST /gifts/g1/open': ok({ card: { ...gift, myOpened: true }, equippable: 'background' }),
     });
     renderWithProviders(<ChatScreen userId="u2" username="rojda" openGift="g1" onExit={() => undefined} />);
     // From the banner: the unwrap starts as soon as the thread is here.
-    expect(await screen.findByText('From rojda')).toBeTruthy();
+    expect(await screen.findByText('Gift from rojda')).toBeTruthy();
     // Test animations end as they start, so the moment has played and the gift shows with its buttons (skipping
     // part-way is tested in gifts/gifts.test.tsx).
     fireEvent.click(await screen.findByRole('button', { name: 'Close' }));

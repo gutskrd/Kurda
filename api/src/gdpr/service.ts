@@ -16,11 +16,13 @@ import { eraseRanks, exportRanks } from '../ranks/gdpr.js';
 import { exportPosts } from './posts-export.js';
 import { exportProgress } from './progress-export.js';
 import { eraseParental, exportParental } from '../parental/gdpr.js';
+import { childrenOf, deleteChildRows, exportFamily, leaveFamilyOnErase } from '../family/gdpr.js';
 import { requestQuarantine, runQuarantine } from '../moderation/quarantine.js';
 import { userHash } from '../moderation/pseudonym.js';
 import type { AppleTokens } from '../auth/apple-tokens.js';
 import { GUEST_IDLE_DAYS } from '../auth/guest.js';
 import { UNCONFIRMED_SIGNUP, UNCONFIRMED_SIGNUP_DAYS, forgetOldSends } from '../auth/pending-signups.js';
+import { exportGifts } from '../gifts/gdpr.js';
 
 export const DELETION_GRACE_DAYS = 14;
 
@@ -253,14 +255,45 @@ export class GdprService {
     });
   }
 
+  /**
+   * Deletes a child's profile now and for good, as their parent asks or as an unused one lapses (family/): everything
+   * in it, learning included, with no anonymous row left. One transaction, then the files.
+   */
+  async deleteChildProfile(childId: string): Promise<boolean> {
+    const client = await this.pool.connect();
+    let files: string[] = [];
+    let deleted = false;
+    try {
+      await client.query('BEGIN');
+      const found = await client.query(`SELECT 1 FROM child_profiles WHERE user_id = $1 FOR UPDATE`, [childId]);
+      if (found.rowCount) {
+        files = await eraseChildProfile(client, childId);
+        deleted = true;
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+    await this.deleteFiles(files);
+    await runQuarantine(this.pool, this.deps.storage, { log: this.deps.log });
+    if (deleted) this.deps.log?.info({ userId: childId, files: files.length }, 'child profile deleted with everything in it');
+    return deleted;
+  }
+
   /** `eraseAccountData` and the anonymizing in one transaction, then the files. */
   private async eraseAndAnonymize(userId: string): Promise<number> {
     const client = await this.pool.connect();
-    let files: string[] = [];
+    const files: string[] = [];
     try {
       await client.query('BEGIN');
+      // A parent's child profiles go with the parent's account, whole, and the parent leaves their family.
+      for (const childId of await childrenOf(client, userId)) files.push(...(await eraseChildProfile(client, childId)));
+      await leaveFamilyOnErase(client, userId);
       // the purge reads keys and ownerships the anonymizing would clear
-      files = await eraseAccountData(client, userId);
+      files.push(...(await eraseAccountData(client, userId)));
       await this.anonymize(userId, client);
       await client.query('COMMIT');
     } catch (err) {
@@ -404,9 +437,9 @@ export class GdprService {
   /** Gathers everything stored about the user into one document, birth month and year included. */
   async buildExport(userId: string): Promise<Record<string, unknown>> {
     const user = await this.pool.query(
-      `SELECT id, email, username, display_name, bio, locale, timezone, roles,
+      `SELECT id, kind, email, username, display_name, bio, locale, timezone, roles,
               email_verified_at, phone_verified_at, phone_masked,
-              birth_year, birth_month,
+              selected_avatar_key, birth_year, birth_month,
               created_at, updated_at, deletion_requested_at
        FROM users WHERE id = $1`,
       [userId],
@@ -537,10 +570,14 @@ export class GdprService {
       letterWidget: { prefs: widgetPrefs.rows[0] ?? null, phones: widgets.rows },
       supportEmails: support.rows,
       pictureChecks: { profilePhotoWaiting: waitingPhoto.rows[0]?.waiting ?? false, pictures: pictureChecks.rows },
+      // the gifts they gave and were given, with the other person by name (gifts/gdpr.ts)
+      gifts: await exportGifts(this.pool, userId),
       // XP, leagues, streaks, badges, the story shelf and the saved words (gdpr/progress-export.ts)
       progress: await exportProgress(this.pool, userId),
       // their parents or teens by name, their controls and their minutes (parental/gdpr.ts)
       parentalControls: await exportParental(this.pool, userId),
+      // their family, the child profiles they made with each consent, and a child's own consent record (family/gdpr.ts)
+      family: await exportFamily(this.pool, userId),
     };
   }
 
@@ -665,6 +702,16 @@ export async function eraseSupportMail(executor: Pick<pg.Pool, 'query'>, userId:
 }
 
 /**
+ * Deletes a child's profile in the caller's transaction: everything the account holds, then the account itself and
+ * every row that names it (family/gdpr.ts `deleteChildRows`). Returns the files to delete after the commit.
+ */
+export async function eraseChildProfile(executor: Pick<pg.Pool, 'query'>, childId: string): Promise<string[]> {
+  const files = await eraseAccountData(executor, childId);
+  await deleteChildRows(executor, childId);
+  return files;
+}
+
+/**
  * Deletes everything a closing account holds beyond its own fields, in the caller's transaction, and returns the
  * storage keys nobody else uses, already marked as orphans, to delete after the commit. A file a report holds as
  * evidence is marked too but not returned: it is quarantined into private storage, since nothing may show it now,
@@ -776,6 +823,19 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`DELETE FROM letter_widget_tokens WHERE user_id = $1`);
   await q(`DELETE FROM letter_widget_prefs WHERE user_id = $1`);
   await q(`DELETE FROM group_messages WHERE sender_id = $1`);
+  // What the automatic checks flagged in their words goes with them, as a picture of theirs waiting for a person does:
+  // an open case closes saying why, every one of their text-flag cases forgets the words it kept, and the flags go.
+  // The cases and their decisions stay as moderation records.
+  await q(
+    `UPDATE moderation_cases SET status = 'no_violation', resolution = 'no_violation', resolved_at = now(), claimed_by = NULL,
+            lease_until = NULL, resolution_note = 'the account was closed, and what was flagged went with it', updated_at = now()
+      WHERE source = 'text_flag' AND subject_user_id = $1 AND status IN ('open','in_review','escalated')`,
+  );
+  await q(
+    `UPDATE moderation_cases SET evidence = jsonb_build_object('pruned', true), removed_content = NULL, updated_at = now()
+      WHERE source = 'text_flag' AND subject_user_id = $1 AND NOT (evidence ? 'pruned')`,
+  );
+  await q(`DELETE FROM moderation_flags WHERE author_id = $1`);
   // A group gift for them alone goes; one to several friends stays for the others, no longer listing a closed account
   // (gifts/cards.ts).
   await q(
@@ -794,6 +854,12 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   // Gift rows stay: given ones belong to the recipient, received ones stay with the anonymised row like its other
   // history. Only the link back to this account goes, so they read as from a former member.
   await q(`UPDATE gifts SET from_user_id = NULL WHERE from_user_id = $1`);
+  // The gift bag and what landed in it, and their own limit on gifts: nothing in a bag outlives the account.
+  await q(`DELETE FROM gift_bag WHERE user_id = $1`);
+  // what landed in a bag is append-only; this transaction's own flag lets an erase take it
+  await executor.query(`SELECT set_config('kurda.gift_bag_erase', 'on', true)`);
+  await q(`DELETE FROM gift_bag_grants WHERE user_id = $1`);
+  await q(`DELETE FROM gift_spend_limits WHERE user_id = $1`);
 
   // groups: hand on the ones they own, then leave them all
   const owned = await executor.query<{ group_id: string }>(

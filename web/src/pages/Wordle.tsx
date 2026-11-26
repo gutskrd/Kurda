@@ -128,12 +128,13 @@ function guessError(err: ApiError, t: (key: MessageKey) => string): string {
 /**
  * Solo Peyvok, scored by the server with the answer withheld until the end. Played alone it earns no XP, said once. The
  * result names the word, found or not, with its meaning from the word's own card and Save to vocabulary
- * (components/WordAnswer.tsx). A quiet Share sends the grid of squares, the score and the site's address
- * (share/winText.ts), which gives nothing of the word away.
+ * (components/WordAnswer.tsx). A quiet Share sends a line telling how it went, the grid of fruit and the game's address
+ * (share/winText.ts), which give nothing of the word away.
  */
 export function Wordle(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
+  const locale = useLocale();
   // The way it was last played on this device, so the same questions are not asked before every game.
   const [mode, setMode] = useState<Mode>(() => readChoice().mode);
   const [difficulty, setDifficulty] = useState<Difficulty>(() => readChoice().difficulty);
@@ -317,7 +318,7 @@ export function Wordle(): React.JSX.Element {
               ) : (
                 <p className="muted">{t('games.wordle.comeBackTomorrow')}</p>
               )}
-              <ShareWin text={wordGameShare(game, { practice: t('games.wordle.practice'), difficulty: t(DIFFICULTY_KEY[game.difficulty]) })} />
+              <ShareWin text={wordGameShare(t, locale, game)} />
               {shownStats && <WordleStatsRow stats={shownStats} />}
             </div>
           )}

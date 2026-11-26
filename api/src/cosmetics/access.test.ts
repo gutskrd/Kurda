@@ -5,6 +5,7 @@ import {
   isPremiumActive,
   hasAccess,
   cosmeticAssetUrl,
+  giftOnOffer,
   isBuiltInArtKey,
   isUploadedArtKey,
   resolveAvatarUrl,
@@ -310,6 +311,22 @@ describe('art keys', () => {
     expect(isBuiltInArtKey('icon', 'icons/../index.html')).toBe(false);
     expect(isBuiltInArtKey('icon', UPLOADED_ICON)).toBe(false);
   });
+  it('accept a gift’s drawn picture as a square one, and nothing that leaves its folder', () => {
+    expect(isBuiltInArtKey('icon', 'gifts/made-01-cay.png')).toBe(true);
+    expect(isBuiltInArtKey('background', 'gifts/made-01-cay.png')).toBe(false);
+    expect(isBuiltInArtKey('icon', 'gifts/../index.html')).toBe(false);
+    expect(isBuiltInArtKey('icon', 'gifts/made-01-cay.svg')).toBe(false);
+  });
+  it('show a gift with its drawn picture, and none for one the catalogue does not draw', () => {
+    const none = () => null;
+    expect(cosmeticAssetUrl('gift', null, none, 'gift-cay')).toBe('/cosmetics/gifts/made-01-cay.png');
+    expect(cosmeticAssetUrl('gift', null, none, 'gift-lale')).toBe('/cosmetics/gifts/made-11-lale.png');
+    expect(cosmeticAssetUrl('gift', null, none, 'gift-nisan')).toBeNull();
+    expect(cosmeticAssetUrl('gift', null, none)).toBeNull();
+    // a stored key that is neither a gift picture nor an upload is never served for a gift
+    expect(cosmeticAssetUrl('gift', 'backgrounds/made-20-newroz.webp', none, 'gift-cay')).toBeNull();
+    expect(cosmeticAssetUrl('sticker', 'icons/made-10-kevok.png', none)).toBe('/cosmetics/icons/made-10-kevok.png');
+  });
 });
 
 describe('levelInfo', () => {
@@ -321,5 +338,28 @@ describe('levelInfo', () => {
     expect(mid.progress).toBeGreaterThan(0);
     expect(mid.progress).toBeLessThan(1);
     expect(levelInfo(-5).xp).toBe(0);
+  });
+});
+
+describe('giftOnOffer', () => {
+  const upload = `cosmetic/icon/${'a'.repeat(64)}.webp`;
+  it('offers a gift only once its picture is drawn, built in or uploaded as an icon', () => {
+    expect(giftOnOffer({ sku: 'gift-cay', category: 'gift', assetKey: null })).toBe(true);
+    // one an admin added, which the catalogue draws nothing for
+    expect(giftOnOffer({ sku: 'gift-nisan', category: 'gift', assetKey: null })).toBe(false);
+    expect(giftOnOffer({ sku: 'gift-nisan', category: 'gift', assetKey: upload })).toBe(true);
+    expect(giftOnOffer({ sku: 'gift-nisan', category: 'gift', assetKey: `cosmetic/background/${'a'.repeat(64)}.webp` })).toBe(false);
+  });
+
+  it('offers the Newroz fire in March only, every year, by the UTC calendar', () => {
+    const pet = { sku: 'gift-pet', category: 'gift', assetKey: upload };
+    expect(giftOnOffer(pet, new Date('2031-03-01T00:00:00Z'))).toBe(true);
+    expect(giftOnOffer(pet, new Date('2027-03-31T23:59:59Z'))).toBe(true);
+    expect(giftOnOffer(pet, new Date('2027-04-01T00:00:00Z'))).toBe(false);
+    expect(giftOnOffer(pet, new Date('2027-02-28T23:59:59Z'))).toBe(false);
+  });
+
+  it('leaves anything that is not a gift to its own rules', () => {
+    expect(giftOnOffer({ sku: 'icon-zozan', category: 'icon', assetKey: null })).toBe(true);
   });
 });

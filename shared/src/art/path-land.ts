@@ -1,13 +1,19 @@
 /**
- * The lesson path's drawings in the painted valley style (valley.ts): the colours of each unit's land for its banner and
- * landmark, the stops as a base and a face a press pushes down (`pathStopSvg`; the app sets a skill's glyph), and the
- * signpost while the next unit is being made (`pathSignpostSvg`). Chapter landmarks are in path-landmark.ts.
+ * The lesson path's drawings in the painted valley style (valley.ts): the colours of each unit's land for its landmark,
+ * each unit's own vivid colour (`PATH_STOP_TONES`), the stops as tiles with a base and a face a press pushes down
+ * (`pathStopSvg`; the app sets a skill's glyph), each unit's milestone (`pathMilestoneSvg`), its painted sandûq in parts
+ * that open (`pathChestSvg`), and the signpost while the next unit is being made (`pathSignpostSvg`). Chapter landmarks
+ * are in path-landmark.ts.
  */
 import type { UnitTone } from '../lesson-path.js';
+import { SUN_RAYS, sealSuns, sunPath } from '../lesson-rounds.js';
 import type { PathGround } from '../path-world.js';
 import { roadLight } from './light.js';
-import { CANVAS, mix, n, n2, prefixFor } from './svg.js';
-import { VALLEY, dusk, ellipsePath, fill, stroke, warm } from './valley.js';
+import { CANVAS, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
+import { kilimAlong } from './paint.js';
+import { fireColours } from './fire-colours.js';
+import { SHAPE_ROOT, SMALL_SHAPES, mapPath } from './fire-shapes.js';
+import { VALLEY, dusk, ellipsePath, fill, smoothPath, stroke, warm } from './valley.js';
 
 // ───────────────────────────────────────────────────────────── the lands
 
@@ -57,13 +63,15 @@ export function pathGroundView(ground: PathGround, dark = false): { far: string;
 // ───────────────────────────────────────────────────────────── the stops
 
 /**
- * A stop's picture: `box` points square with the stop's centre at (`cx`, `cy`). The token's face is `rx` × `ry`,
- * standing `side` above the road (`raised` for the current skill); `press` is how far the face sinks under a finger.
+ * A stop's picture: `box` points square with the face's middle at (`cx`, `cy`). The face is a round tile `rx` × `ry`, a
+ * thick disc seen a little from above the road as wide as a finished stop's wax seal, standing `side` high on its darker
+ * side (`raised` for the stop to do now, and `stone` for a shut one, which lies lower); `press` is how far the face sinks
+ * under a finger.
  */
-export const PATH_STOP_ART = { box: 112, cx: 56, cy: 58, rx: 36, ry: 31, side: 10, raised: 13, press: 6 } as const;
+export const PATH_STOP_ART = { box: 112, cx: 56, cy: 58, rx: 36, ry: 30, side: 13, raised: 17, stone: 8, press: 6 } as const;
 
-/** The app's violet, the main button's colour, which the current stop wears as the road's one way forward. */
-const NOW = { light: { face: '#862be2', side: '#5b179f', ring: '#c7a2f5' }, dark: { face: '#bf9bfe', side: '#8559d8', ring: '#e6d7ff' } } as const;
+/** How round a tile is: 0.55 draws its outline as an ellipse, a disc seen a little from above; nearer 1, a squarer tile. */
+const TILE_ROUND = 0.5523;
 
 /** What a stop looks like, by what it is and how it stands. */
 export const PATH_STOP_LOOKS = [
@@ -84,70 +92,104 @@ export const PATH_STOP_LOOKS = [
 ] as const;
 export type PathStopLook = (typeof PATH_STOP_LOOKS)[number];
 
+/** A unit's colours: its `fill` and darker `lip`, `ink` written on the fill, and `text`, the colour as words on the page. */
+export interface UnitColours {
+  fill: string;
+  lip: string;
+  ink: string;
+  text: string;
+}
+
 /**
- * The units' colours: the `fill` and `lip` the apps paint a unit's banner with (mobile coursemap/path.ts, web
- * learn/path.css), also used for the current stop's token, deep by day and light by evening.
+ * Each unit's own vivid colour, part of the road's art: its banner, the stop to do now and the bubble over it. Bright
+ * with deep ink on the slate night, deep with white ink by day (saffron keeps a deep ink, since a yellow dark enough for
+ * white words is brown). The apps read these (mobile coursemap/path.ts, web learn/path.css, tested against them).
  */
-export const PATH_STOP_TONES: Record<'light' | 'dark', Record<UnitTone, { fill: string; lip: string }>> = {
+export const PATH_STOP_TONES: Record<'light' | 'dark', Record<UnitTone, UnitColours>> = {
   light: {
-    meadow: { fill: '#058644', lip: '#006531' },
-    river: { fill: '#0073df', lip: '#0157ac' },
-    clay: { fill: '#c45001', lip: '#973c00' },
-    dusk: { fill: '#6363eb', lip: '#4a47c0' },
-    pine: { fill: '#008282', lip: '#006262' },
-    rose: { fill: '#cd3688', lip: '#a51a6a' },
-    saffron: { fill: '#c37902', lip: '#8f5d04' },
+    meadow: { fill: '#118226', lip: '#036819', ink: '#ffffff', text: '#1e7729' },
+    dusk: { fill: '#864ad2', lip: '#623e96', ink: '#ffffff', text: '#714ca6' },
+    pine: { fill: '#007e6f', lip: '#006257', ink: '#ffffff', text: '#007066' },
+    river: { fill: '#0073bd', lip: '#005b9a', ink: '#ffffff', text: '#006aaa' },
+    rose: { fill: '#b2417f', lip: '#8a2b60', ink: '#ffffff', text: '#9b3b6e' },
+    clay: { fill: '#b55000', lip: '#8d3800', ink: '#ffffff', text: '#9d4700' },
+    pomegranate: { fill: '#bd4049', lip: '#932a33', ink: '#ffffff', text: '#a43a41' },
+    saffron: { fill: '#c37902', lip: '#8f5d04', ink: '#241600', text: '#885703' },
   },
   dark: {
-    meadow: { fill: '#78d694', lip: '#459b61' },
-    river: { fill: '#91c1ff', lip: '#5188cd' },
-    clay: { fill: '#ffa47a', lip: '#c16d45' },
-    dusk: { fill: '#aeb8fe', lip: '#767ecd' },
-    pine: { fill: '#57d4d4', lip: '#009a9a' },
-    rose: { fill: '#fd9ac6', lip: '#bc668e' },
-    saffron: { fill: '#eeb154', lip: '#b07a20' },
+    meadow: { fill: '#72d577', lip: '#479c4d', ink: '#0b290e', text: '#72d577' },
+    dusk: { fill: '#caa3ff', lip: '#9470cd', ink: '#261a3a', text: '#caa3ff' },
+    pine: { fill: '#00dac8', lip: '#00a091', ink: '#002a25', text: '#00dac8' },
+    river: { fill: '#3fc6ff', lip: '#0a8fd1', ink: '#00243b', text: '#3fc6ff' },
+    rose: { fill: '#ff8cc9', lip: '#c35f92', ink: '#361426', text: '#ff8cc9' },
+    clay: { fill: '#ff9c49', lip: '#c56c21', ink: '#371801', text: '#ff9c49' },
+    pomegranate: { fill: '#ff8c8f', lip: '#cd5f62', ink: '#391415', text: '#ff8c8f' },
+    saffron: { fill: '#e6b22d', lip: '#ac7d00', ink: '#2f1e00', text: '#e6b22d' },
   },
 };
 
-/** A token's colours: face, side, the ring inside its rim, and its highlight. */
+/**
+ * What is not open yet: a quiet slate disc lying low on the road, its padlock in a lighter grey, and the line still
+ * ahead. The apps read these too.
+ */
+export const PATH_REST: Record<'light' | 'dark', { fill: string; lip: string; ink: string; line: string }> = {
+  light: { fill: '#dce3e7', lip: '#c2cdd3', ink: '#5f717a', line: 'rgba(23,36,43,0.16)' },
+  dark: { fill: '#2e3c43', lip: '#222d33', ink: '#8a9ba3', line: 'rgba(238,243,245,0.16)' },
+};
+
+/**
+ * Finished gold, the same in every chapter: its face, side and the light along its edge, and the ink a number or a mark
+ * is written in on it. The apps read these for what they draw on gold.
+ */
+export const PATH_GOLD: Record<'light' | 'dark', { face: string; side: string; light: string; ink: string }> = {
+  light: { face: VALLEY.gold, side: VALLEY.goldDark, light: VALLEY.goldLight, ink: '#4a2c0c' },
+  dark: { face: '#e1a33c', side: '#b07421', light: '#f0cf8f', ink: '#3f2508' },
+};
+
+/** A tile's colours: face, side, and the light along its upper edge (none on a flat shut stone). */
 interface Token {
   face: string;
   side: string;
-  ring: string;
-  glint: string;
+  light: string | null;
 }
 
 /** Every look's colours, by day and by evening. */
-function tokenOf(look: PathStopLook, t: { fill: string; lip: string }, dark: boolean): Token {
-  // A smooth river stone: pale by day, moonlit blue by night.
-  const stone: Token = dark
-    ? { face: '#4b5370', side: '#2f3550', ring: '#5b6484', glint: '#8a95bb' }
-    : { face: '#ece8e1', side: '#c6beb0', ring: '#f7f5f1', glint: '#ffffff' };
-  const cream: Token = dark
-    ? { face: '#efe4cc', side: t.lip, ring: t.fill, glint: '#fff8ea' }
-    : { face: VALLEY.cream, side: t.lip, ring: t.fill, glint: '#ffffff' };
-  const gold: Token = { face: warm(VALLEY.gold, dark), side: warm(VALLEY.goldDark, dark), ring: warm(VALLEY.goldLight, dark), glint: '#fff6dc' };
+function tokenOf(look: PathStopLook, t: UnitColours, dark: boolean): Token {
+  const rest = PATH_REST[dark ? 'dark' : 'light'];
+  const slate: Token = { face: rest.fill, side: rest.lip, light: null };
+  const unit: Token = { face: t.fill, side: t.lip, light: mix(t.fill, '#ffffff', dark ? 0.42 : 0.3) };
+  const g = PATH_GOLD[dark ? 'dark' : 'light'];
+  const gold: Token = { face: g.face, side: g.side, light: g.light };
   switch (look) {
-    case 'done':
-      return gold;
-    case 'strong':
-      return { face: warm('#f2b632', dark), side: warm('#a8691a', dark), ring: '#fff1c2', glint: '#ffffff' };
-    case 'refresh':
-      return { face: mix(gold.face, stone.face, 0.5), side: mix(gold.side, stone.side, 0.5), ring: mix(gold.ring, stone.ring, 0.5), glint: stone.glint };
-    case 'current':
-      return { ...NOW[dark ? 'dark' : 'light'], glint: '#ffffff' };
-    case 'available':
-      return cream;
-    case 'review':
-      return { ...cream, side: stone.side, ring: mix(t.fill, cream.face, 0.4) };
-    case 'guide':
-      return { ...cream, ring: mix(t.fill, cream.face, 0.55) };
     // A chapter's story, open once every topic is done, is the chapter's prize, so it is gold.
     case 'story':
       return gold;
+    case 'strong':
+      return { face: warm('#f2b632', dark), side: warm('#a8691a', dark), light: warm('#ffe39a', dark) };
+    // A finished topic's tile, seen only as it melts into its wax seal (`pathWaxSvg`), faded a little when a refresh would help.
+    case 'refresh':
+      return { face: mix(t.fill, slate.face, 0.35), side: mix(t.lip, slate.side, 0.35), light: mix(unit.light!, slate.face, 0.35) };
+    case 'done':
+    case 'current':
+    case 'available':
+    case 'review':
+    case 'guide':
+    case 'jump':
+      return unit;
     default:
-      return stone;
+      return slate;
   }
+}
+
+/** A tile's outline seen from above, from its top middle round clockwise: round, or with `k` nearer 1 a rounded square. */
+export function tilePath(cx: number, cy: number, rx: number, ry: number, k: number = TILE_ROUND): string {
+  const [l, r, t, b] = [cx - rx, cx + rx, cy - ry, cy + ry];
+  return (
+    `M${n(cx)} ${n(t)}C${n(cx + k * rx)} ${n(t)} ${n(r)} ${n(cy - k * ry)} ${n(r)} ${n(cy)}` +
+    `C${n(r)} ${n(cy + k * ry)} ${n(cx + k * rx)} ${n(b)} ${n(cx)} ${n(b)}` +
+    `C${n(cx - k * rx)} ${n(b)} ${n(l)} ${n(cy + k * ry)} ${n(l)} ${n(cy)}` +
+    `C${n(l)} ${n(cy - k * ry)} ${n(cx - k * rx)} ${n(t)} ${n(cx)} ${n(t)}Z`
+  );
 }
 
 export interface PathStopOptions {
@@ -162,8 +204,11 @@ export interface PathStopOptions {
 }
 
 /**
- * One stop, base or face: a round token raised off the road. A skill's face has only its colour, ring and highlight,
- * and the app sets its glyph; the guide's book, story scroll, jump gate and chapter saddlebag are part of the face.
+ * One stop, base or face. An open stop is a thick round tile in its unit's colour, a disc seen a little from above the
+ * road on its darker side, with one arc of light along its upper left rim; the app sets its glyph. A finished one is the
+ * same tile until the app melts it into its round wax seal (`pathWaxSvg`), as wide as it. A shut one is a quiet slate
+ * disc lying low. The guide's book, story scroll and jump gate are part of the face; a unit's chest (`chest`,
+ * `chestOpen`) is its painted sandûq standing on the road instead.
  */
 export function pathStopSvg(opts: PathStopOptions): string {
   const { look, tone, part, dark = false } = opts;
@@ -175,42 +220,468 @@ export function pathStopSvg(opts: PathStopOptions): string {
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
   const { box: B, cx, cy, rx, ry } = PATH_STOP_ART;
   const prefix = prefixFor(opts.idPrefix, 'stop', look, tone, part, dark);
-  const bag = look === 'chest' || look === 'chestOpen';
-  const side = look === 'current' ? PATH_STOP_ART.raised : bag || look === 'jump' ? 5 : PATH_STOP_ART.side;
-  const k = tokenOf(look, t, dark);
-  const shade = dark ? '#05060c' : '#3a2a12';
+  const shade = dark ? '#05080a' : '#17242b';
 
-  if (part === 'base') {
-    let body = '';
-    // The current stop sits in a soft pool of its violet, so the eye finds it.
-    if (look === 'current') {
-      const glow = NOW[dark ? 'dark' : 'light'].face;
-      body += `<path d="${ellipsePath(cx, cy + 4, rx + 16, ry + 13)}" fill="${glow}" fill-opacity="${dark ? 0.2 : 0.14}"/>`;
-      body += `<path d="${ellipsePath(cx, cy + 4, rx + 9, ry + 7)}" fill="${glow}" fill-opacity="${dark ? 0.24 : 0.18}"/>`;
-    }
-    // Its shade on the road, then its side: the face extended down by `side`.
-    body += `<path d="${ellipsePath(cx + 4, cy + side + ry * 0.55, rx * 0.98, ry * 0.4)}" fill="${shade}" fill-opacity="${dark ? 0.32 : 0.16}"/>`;
-    body += fill(`M${n(cx - rx)} ${n(cy)}L${n(cx - rx)} ${n(cy + side)}A${n(rx)} ${n(ry)} 0 0 0 ${n(cx + rx)} ${n(cy + side)}L${n(cx + rx)} ${n(cy)}Z${ellipsePath(cx, cy + side, rx, ry)}`, k.side);
-    if (look === 'strong') body += stroke(`M${n(cx - rx - 2)} ${n(cy + side)}A${n(rx + 2)} ${n(ry + 2)} 0 0 0 ${n(cx + rx + 2)} ${n(cy + side)}`, warm('#f2b632', dark), 3);
+  if (look === 'chest' || look === 'chestOpen') {
+    const body = part === 'base' ? `<path d="${ellipsePath(cx + 4, cy + 26, 36, 7)}" fill="${shade}" fill-opacity="${dark ? 0.4 : 0.14}"/>` : sanduq(cx, cy, look === 'chestOpen', dark, 'whole');
     return wrap(prefix, size, B, body);
   }
 
-  // The face: its colour, the ring inside its rim, and one highlight where the light falls on its upper left.
+  const k = tokenOf(look, t, dark);
+  const stone = look === 'locked' || look === 'guideLocked' || look === 'storyLocked';
+  const side = stone ? PATH_STOP_ART.stone : look === 'current' ? PATH_STOP_ART.raised : look === 'jump' ? 9 : PATH_STOP_ART.side;
+  // A shut stop's slate is a touch smaller and sits a little lower than a tile.
+  const outline = (y: number): string => (stone ? tilePath(cx, y + 2, rx - 1, ry - 3) : tilePath(cx, y, rx, ry));
+
+  if (part === 'base') {
+    // Its shade on the road, falling to the lower right, then its side: the face swept down by `side`.
+    let body = `<path d="${ellipsePath(cx + 5, cy + side + ry * 0.5, rx * 0.98, ry * 0.42)}" fill="${shade}" fill-opacity="${dark ? 0.38 : 0.13}"/>`;
+    if (stone) body += fill([side / 3, (2 * side) / 3, side].map((dy) => outline(cy + dy)).join(''), k.side);
+    else body += fill(`${tilePath(cx, cy + side, rx, ry)}M${n(cx - rx)} ${n(cy)}H${n(cx + rx)}V${n(cy + side)}H${n(cx - rx)}Z`, k.side);
+    if (look === 'strong') body += stroke(`M${n(cx - rx - 2)} ${n(cy + 2)}V${n(cy + side)}`, warm('#ffd96a', dark), 2.4) + stroke(`M${n(cx + rx + 2)} ${n(cy + 2)}V${n(cy + side)}`, warm('#ffd96a', dark), 2.4);
+    return wrap(prefix, size, B, body);
+  }
+
+  // The face: its colour, and one line of light along its upper left edge, cut by laying the face over the light a
+  // little down and right, inside the face's own outline.
+  const face = outline(cy);
+  let defs = '';
   let body = '';
-  if (look === 'strong') body += fill(ellipsePath(cx, cy, rx + 3, ry + 3), warm('#ffd96a', dark));
-  body += fill(ellipsePath(cx, cy, rx, ry), k.face);
-  body += `<path d="${ellipsePath(cx, cy, rx - 6, ry - 5.5)}" fill="none" stroke="${k.ring}" stroke-width="2.6"/>`;
-  body += `<path d="M${n(cx - rx * 0.78)} ${n(cy - ry * 0.12)}C${n(cx - rx * 0.78)} ${n(cy - ry * 0.7)} ${n(cx - rx * 0.3)} ${n(cy - ry * 0.92)} ${n(cx + rx * 0.08)} ${n(cy - ry * 0.86)}C${n(cx - rx * 0.32)} ${n(cy - ry * 0.7)} ${n(cx - rx * 0.6)} ${n(cy - ry * 0.46)} ${n(cx - rx * 0.78)} ${n(cy - ry * 0.12)}Z" fill="${k.glint}" fill-opacity="${dark ? 0.3 : 0.55}"/>`;
-  if (look === 'guide' || look === 'guideLocked') body += book(cx, cy - 2, look === 'guide' ? t : { fill: '#bdb09a', lip: '#9c8f78' }, dark);
+  if (look === 'strong') body += fill(tilePath(cx, cy, rx + 3, ry + 3), warm('#ffd96a', dark));
+  if (k.light) {
+    const clip = `${prefix}f`;
+    defs += `<clipPath id="${clip}"><path d="${face}"/></clipPath>`;
+    body += fill(face, k.light) + `<g clip-path="url(#${clip})">${fill(tilePath(cx + 2.6, cy + 3, rx, ry), k.face)}</g>`;
+  } else {
+    body += fill(face, k.face);
+  }
+  if (look === 'guide' || look === 'guideLocked') body += book(cx, cy - 2, look === 'guide' ? t : { fill: PATH_REST[scheme].ink, lip: PATH_REST[scheme].lip }, dark);
   if (look === 'story') body += scroll(cx, cy - 2, dark, false);
   if (look === 'storyLocked') body += scroll(cx, cy - 2, dark, true);
   if (look === 'jump') body += gate(cx, cy + 2, dark);
-  if (bag) body += saddlebag(cx, cy + 1, look === 'chestOpen', dark);
-  return wrap(prefix, size, B, body);
+  return wrap(prefix, size, B, (defs ? `<defs>${defs}</defs>` : '') + body);
+}
+
+/**
+ * The round wax seal a finished topic becomes, in its tile's place on the tile's canvas: its middle (`cx`, `cy`), its
+ * radius (`r`, half the tile's width) and how far its lip stands below its face (`depth`). The drop of wax that makes it
+ * lands on its middle.
+ */
+export const PATH_SEAL = { cx: 56, cy: 61, r: 36, depth: 2.6 } as const;
+
+/**
+ * A seal's wax: its face; the light along its upper left lip and the shade along its lower right and under it; the field
+ * pressed into it, and the wall round the field, in shade where the lip overhangs it and lit across from there; and the
+ * gloss on its lip.
+ */
+export interface PathWaxColours {
+  face: string;
+  light: string;
+  shade: string;
+  field: string;
+  wallShade: string;
+  wallLight: string;
+  gloss: string;
+}
+
+/** Deep red sealing wax, and gold for a topic with all three rounds, by day and by evening. */
+export const PATH_WAX: Record<'red' | 'gold', Record<'light' | 'dark', PathWaxColours>> = {
+  red: {
+    light: { face: '#8c2c25', light: '#ab463c', shade: '#5a160f', field: '#73211b', wallShade: '#4a110b', wallLight: '#b9574b', gloss: '#f6d4cc' },
+    dark: { face: '#8a2b24', light: '#a8443a', shade: '#55140d', field: '#701f19', wallShade: '#46100a', wallLight: '#b65448', gloss: '#f4d0c8' },
+  },
+  gold: {
+    light: { face: '#d8952a', light: '#f0bd5c', shade: '#8a5313', field: '#bf7f1f', wallShade: '#6c3e0b', wallLight: '#f6cd78', gloss: '#fff6dc' },
+    dark: { face: '#e0a236', light: '#f6c867', shade: '#94591a', field: '#c88a27', wallShade: '#76450f', wallLight: '#f9d483', gloss: '#fffae8' },
+  },
+};
+
+/** A seal's wax by day or evening: deep red, or gold once its topic has all three rounds. */
+export function pathWaxColours(dark: boolean, gold = false): PathWaxColours {
+  return PATH_WAX[gold ? 'gold' : 'red'][dark ? 'dark' : 'light'];
+}
+
+export interface PathWaxOptions {
+  /** The stop it is on: its seal's own slightly uneven edge. */
+  seed?: string;
+  /** Gold wax, for a topic with all three rounds. */
+  gold?: boolean;
+  /** Matte and dulled, where a refresh would help. */
+  worn?: boolean;
+  /** The suns pressed into it, one for each full round (shared `sealSuns`): 1 to 3. */
+  suns?: number;
+  /**
+   * The whole seal; or, for its moment, the poured disc alone, the seal's pressed face alone, the drop of wax that falls
+   * onto the tile first, or the droplets it throws out as it lands; or, as a third sun turns it gold, the band of flame
+   * that crosses it (standing on its middle), the embers rising off the flame, and the puff where it goes out (at its
+   * top).
+   */
+  part?: 'whole' | 'pour' | 'seal' | 'blob' | 'splash' | 'fire' | 'embers' | 'puff';
+  dark?: boolean;
+  /** Display size in points; the drawing is `PATH_STOP_ART.box` square, laid as the tile is. */
+  size?: number;
+  idPrefix?: string;
+}
+
+/** How many rays a sun reaching `reach` points keeps crisp: the Kurdish sun's twenty-one, or fewer and broader when small. */
+export function sunRays(reach: number): number {
+  return reach >= 13 ? SUN_RAYS : reach >= 8 ? 15 : 11;
+}
+
+/**
+ * A finished topic's round wax seal, in its tile's place (`PATH_SEAL`): a poured disc, its edge a little uneven and
+ * different on every stop, its thick lip lit along its upper left with a gloss or two and shaded lower right, standing
+ * on its own soft shadow. Pressed into it, a raised rim round a sunken field ringed by a fine line, and in the field the
+ * Kurdish sun, one for each full round (shared `sealSuns`): its round middle and pointed rays raised, lit above and
+ * shaded below. Deep red, or gold; matte and dulled toward slate, its gloss gone, where a refresh would help.
+ */
+export function pathWaxSvg(opts: PathWaxOptions = {}): string {
+  const { dark = false, gold = false, worn = false } = opts;
+  const part = opts.part ?? 'whole';
+  if (!['whole', 'pour', 'seal', 'blob', 'splash', 'fire', 'embers', 'puff'].includes(part)) throw new RangeError(`art: no wax part ${String(part)}`);
+  const size = opts.size ?? PATH_STOP_ART.box;
+  if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
+  const B = PATH_STOP_ART.box;
+  const { cx, cy, r, depth } = PATH_SEAL;
+  const prefix = prefixFor(opts.idPrefix, 'wax', opts.seed, gold, worn, part, opts.suns, dark);
+  const own = pathWaxColours(dark, gold);
+  const dull = (hex: string): string => mix(hex, PATH_REST[dark ? 'dark' : 'light'].lip, 0.3);
+  const wax: PathWaxColours = worn
+    ? {
+        ...own,
+        face: dull(own.face),
+        light: dull(mix(own.light, own.face, 0.6)),
+        shade: dull(own.shade),
+        field: dull(own.field),
+        wallShade: dull(own.wallShade),
+        wallLight: dull(mix(own.wallLight, own.face, 0.5)),
+      }
+    : own;
+  let defs = '';
+  const clip = (d: string): string => {
+    const id = `${prefix}${defs.length}`;
+    defs += `<clipPath id="${id}"><path d="${d}"/></clipPath>`;
+    return id;
+  };
+  // A form's light along its upper left and its shade along its lower right: what of it a copy moved the other way does
+  // not cover, inside its own outline.
+  const steps = (d: string, at: (dx: number, dy: number) => string, k: number, light: string, shade: string): string =>
+    `<g clip-path="url(#${clip(d)})"><path d="${d}${at(k, k * 1.15)}" fill="${light}" fill-rule="evenodd"/>` +
+    `<path d="${d}${at(-k, -k * 1.15)}" fill="${shade}" fill-rule="evenodd"/></g>`;
+  const circle = (x: number, y: number, radius: number): string => ellipsePath(x, y, radius, radius);
+  const wrapIt = (body: string): string =>
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(size)}" viewBox="0 0 ${B} ${B}" ` +
+    `aria-hidden="true" focusable="false" id="${prefix}">` +
+    `${defs ? `<defs>${defs}</defs>` : ''}${body}</svg>`;
+
+  if (part === 'fire' || part === 'embers' || part === 'puff') {
+    // Hevalo's own fire (fire-shapes.ts, fire-colours.ts): its small flame's deep orange body, gold drop and pale heart.
+    const flame = fireColours({ stage: 'campfire', scheme: dark ? 'dark' : 'light' }).tongues;
+    if (part === 'embers') return wrapIt(fill(ellipsePath(cx - 11, cy - 13, 1.3, 1.3), flame.core[0]) + fill(ellipsePath(cx + 13, cy - 17, 1, 1), flame.outer[1]));
+    if (part === 'puff') {
+      // A soft puff of warm smoke where the flames go out over the seal's top.
+      const puff = [ellipsePath(cx - 6, cy - r - 2, 6, 5), ellipsePath(cx + 5, cy - r - 4, 7, 6), ellipsePath(cx, cy - r - 8, 5, 4.5)].join('');
+      return wrapIt(`<path d="${puff}" fill="${dark ? '#f2e6d8' : '#ffffff'}" fill-opacity="${dark ? 0.45 : 0.8}"/>`);
+    }
+    // A row of tongues across the seal standing on its middle, of a few heights, every other one turned the other way so
+    // that they lick unevenly.
+    const tall = [10, 14, 11, 16, 12, 15, 10];
+    let tongues = '';
+    tall.forEach((h, i) => {
+      const x = cx - r + 6 + (i * (2 * r - 12)) / (tall.length - 1);
+      const k = h / 123;
+      const turn = i % 2 === 0 ? 1 : -1;
+      const at = (d: string): string => mapPath(d, (px, py) => [x + (px - SHAPE_ROOT[0]) * k * turn, cy + 1 + (py - SHAPE_ROOT[1]) * k]);
+      tongues += fill(at(SMALL_SHAPES.outer), flame.outer[0]) + fill(at(SMALL_SHAPES.core), flame.core[0]) + fill(at(SMALL_SHAPES.heart), flame.heart[0]);
+    });
+    return wrapIt(tongues);
+  }
+  if (part === 'splash') {
+    // A few droplets thrown up and out round where the drop lands, the larger low and to the sides.
+    const drops = ([[-168, 15, 2.3], [-128, 17, 1.5], [-92, 19, 1.2], [-52, 16, 1.8], [-14, 14, 2.4]] as const)
+      .map(([deg, k, rr]) => ellipsePath(cx + Math.cos((deg * Math.PI) / 180) * k, cy + Math.sin((deg * Math.PI) / 180) * k * 0.7, rr, rr * 0.9))
+      .join('');
+    return wrapIt(`<path d="${drops}" fill="${wax.face}" stroke="${wax.shade}" stroke-width="0.8"/>`);
+  }
+  if (part === 'blob') {
+    // A big drop, round below and drawn up to a point above as it falls, drawn from its foot on the seal's middle.
+    const at = (dx: number, dy: number) => (ox: number, oy: number): string => `${n(cx + dx + ox)} ${n(cy + dy + oy)}`;
+    const drop = (dx = 0, dy = 0): string => {
+      const p = at(dx, dy);
+      return (
+        `M${p(0, -34)}C${p(5, -26)} ${p(13, -20)} ${p(13, -12)}C${p(13, -4)} ${p(7, 0)} ${p(0, 0)}` +
+        `C${p(-7, 0)} ${p(-13, -4)} ${p(-13, -12)}C${p(-13, -20)} ${p(-5, -26)} ${p(0, -34)}Z`
+      );
+    };
+    return wrapIt(fill(drop(), wax.face) + steps(drop(), (dx, dy) => drop(dx, dy), 2.2, wax.light, wax.shade));
+  }
+
+  let body = '';
+  if (part !== 'seal') {
+    // The poured disc: round, its edge swelling and settling a little differently on every stop.
+    const rand = seeded(`seal|${opts.seed ?? ''}`);
+    const [p2, p3, p5] = [rand(), rand(), rand()].map((v) => v * Math.PI * 2) as [number, number, number];
+    const edge = (dx = 0, dy = 0): string =>
+      smoothPath(
+        Array.from({ length: 48 }, (_, i): Pt => {
+          const a = (i / 48) * Math.PI * 2;
+          const k = 1 + 0.026 * Math.sin(2 * a + p2) + 0.018 * Math.sin(3 * a + p3) + 0.008 * Math.sin(5 * a + p5);
+          return [cx + dx + Math.cos(a) * r * k, cy + dy + Math.sin(a) * r * k];
+        }),
+        true,
+      );
+    const outline = edge();
+    // Its soft shadow on the ground, and its lip's depth under its lower right.
+    const shadow = dark ? '#05080a' : '#17242b';
+    body += `<path d="${edge(2, depth + 2.5)}" fill="${shadow}" fill-opacity="${dark ? 0.42 : 0.16}"/>`;
+    body += fill(edge(1, depth), wax.shade);
+    // The lip: lit along its upper left, shaded along its lower right.
+    body += fill(outline, wax.face) + steps(outline, edge, 2.6, wax.light, wax.shade);
+    // Glossy: a long streak along the top of the lip and a shorter one down its left, both on its lit side.
+    if (!worn) {
+      const arc = (radius: number, from: number, to: number): string => {
+        const [a0, a1] = [(from * Math.PI) / 180, (to * Math.PI) / 180];
+        const pt = (a: number): string => `${n(cx + Math.cos(a) * radius)} ${n(cy + Math.sin(a) * radius)}`;
+        return `M${pt(a0)}A${n(radius)} ${n(radius)} 0 0 1 ${pt(a1)}`;
+      };
+      body += stroke(arc(r * 0.9, 232, 280), wax.gloss, 1.3) + stroke(arc(r * 0.83, 188, 226), wax.gloss, 1.1);
+    }
+  }
+  if (part !== 'pour') {
+    // Pressed into it: the rim's inner wall round the sunken field, in the lip's shade at its upper left and lit across
+    // at its lower right; the field, shaded under the lip; and the fine line ringing it.
+    const [wall, field, ring] = [r * 0.745, r * 0.655, r * 0.615];
+    const recess = circle(cx, cy, wall);
+    body += fill(recess, wax.wallLight) + `<g clip-path="url(#${clip(recess)})">${fill(circle(cx - 1, cy - 1.15, wall), wax.wallShade)}</g>`;
+    const sunk = circle(cx, cy, field);
+    const under = `<path d="${sunk}${circle(cx + 1.5, cy + 1.7, field)}" fill="${mix(wax.field, wax.wallShade, 0.45)}" fill-rule="evenodd"/>`;
+    body += fill(sunk, wax.field) + `<g clip-path="url(#${clip(sunk)})">${under}</g>`;
+    body += stroke(circle(cx - 0.3, cy - 0.35, ring), wax.wallShade, 0.8) + stroke(circle(cx + 0.3, cy + 0.35, ring), wax.wallLight, 0.8);
+    // The suns, raised: each lit along its upper left and shaded along its lower right, its rays kept crisp at the size
+    // it is shown.
+    const suns = sealSuns(opts.suns ?? 1).map((s) => ({ x: cx + s.x * r, y: cy + s.y * r, reach: s.r * r }));
+    // One count of rays for all of a seal's suns, as many as its smallest keeps crisp.
+    const rays = sunRays((Math.min(...suns.map((s) => s.reach)) * size) / B);
+    const sun = (dx: number, dy: number): string => suns.map((s) => sunPath(s.x + dx, s.y + dy, s.reach, rays)).join('');
+    const k = Math.min(0.85, Math.max(0.45, suns[0]!.reach / 22));
+    body += `<path d="${sun(k, k * 1.15)}" fill="${wax.wallShade}"/><path d="${sun(-k * 0.8, -k * 0.95)}" fill="${wax.wallLight}"/>`;
+    body += fill(sun(0, 0), mix(wax.face, wax.light, 0.3));
+  }
+  return wrapIt(body);
+}
+
+/**
+ * Where the stamp stands over a stop's 72-point button as it presses (`x`, `y`, its canvas `w` × `h`): its block and die
+ * as wide as the seal, the die's foot across the seal a little below its middle.
+ */
+export const PATH_STAMP_TOOL = { w: 78, h: 87, x: -3, y: -44 } as const;
+
+/**
+ * The stamp itself, for the moment a finished topic is sealed: the icons' own stamp (the Stamp glyph's silhouette, on its
+ * 256 grid), made as a stationer's wax-seal stamp, lit from the upper left as the seal is. A teardrop handle of turned
+ * walnut, ringed near its top and where it narrows, lit down its left side and shaded down its right, its knob polished;
+ * a brass ferrule where it meets the block; a block of warm brass, its bevelled top edge catching the light over a lit top
+ * and a shaded front with an engraved line and a rivet at each side; and under it, on a short neck, the round brass die.
+ * All of it seen from the side at eye level, so the die shows only its edge, a thin plate with a bright rim along its top
+ * and its underside dark; the suns it presses are seen only in the wax. Drawn larger than the road shows it (`size` over
+ * 120), its handle shows its grain and its block a woven kilim band; at the road's size they are left out, so nothing
+ * small goes muddy. On its own `PATH_STAMP_TOOL` canvas, the die along the bottom.
+ */
+export function pathStampToolSvg(opts: { dark?: boolean; size?: number; idPrefix?: string } = {}): string {
+  const { dark = false } = opts;
+  const { w: W, h: H } = PATH_STAMP_TOOL;
+  const size = opts.size ?? W;
+  if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
+  const fine = size > 120;
+  const id = prefixFor(opts.idPrefix, 'stamp-tool', dark, fine);
+  const c = (hex: string): string => dusk(hex, dark, 0.12);
+  const wood = { face: c('#5e3720'), light: c('#8d5d3a'), shade: c('#3a1f0e'), ring: c('#2c170a'), grain: c('#4f2d18'), sheen: c('#c08a5e') };
+  const brass = { face: c('#d9a441'), light: c('#f6d58a'), shade: c('#a06d1e'), deep: c('#6f4610'), edge: c('#fff1c9') };
+  // The glyph's own outlines: the handle (moved by `dx`, `dy`) and the block.
+  const handleAt = (dx = 0, dy = 0): string =>
+    `M${n(88.72 + dx)} ${n(54.71 + dy)}A32 32 0 0 1 ${n(120 + dx)} ${n(16 + dy)}H${n(136 + dx)}A32 32 0 0 1 ${n(167.28 + dx)} ${n(54.71 + dy)}` +
+    `L${n(151.57 + dx)} ${n(128 + dy)}H${n(104.43 + dx)}Z`;
+  const handle = handleAt();
+  const block = 'M46 128H210A14 14 0 0 1 224 142V184A14 14 0 0 1 210 198H46A14 14 0 0 1 32 184V142A14 14 0 0 1 46 128Z';
+  let defs = `<clipPath id="${id}h"><path d="${handle}"/></clipPath><clipPath id="${id}b"><path d="${block}"/></clipPath>`;
+  // Straight across the handle at height `y`, as a turned ring is seen from the side.
+  const across = (y: number): string => `M80 ${n(y)}H176`;
+
+  // The handle: walnut, a soft light down its left side, where a copy of it moved right does not reach, and a shade down
+  // its right, where one moved left does not; its turned rings, each a groove in shade over a lit lip; its knob's polish.
+  const strip = (dx: number, dy: number, colour: string): string => `<path d="${handle}${handleAt(dx, dy)}" fill="${colour}" fill-rule="evenodd"/>`;
+  let wood2 = strip(10, 3, wood.light) + strip(-10, 0, wood.shade);
+  if (fine) {
+    // A few strokes of grain running with the taper.
+    const grain = [[-6, 0.8], [11, 0.75]].map(([x, k]) => `M${n(128 + x! - 2)} 50C${n(128 + x! * 1.1)} 66 ${n(128 + x! * k!)} 84 ${n(128 + x! * 0.6)} 96`).join('');
+    wood2 += `<path d="${grain}" fill="none" stroke="${wood.grain}" stroke-width="1.3" stroke-linecap="round"/>`;
+  }
+  // Two fine rings just under the knob, where the taper starts, and one where it narrows to the ferrule.
+  const rings = fine ? [63, 69, 101] : [65, 101];
+  wood2 += rings.map((y) => stroke(across(y), wood.ring, fine ? 1.5 : 2.8) + stroke(across(y + (fine ? 1.8 : 2.8)), wood.light, fine ? 0.9 : 1.5)).join('');
+  wood2 += `<path d="${ellipsePath(0, 0, 6.5, 11)}" transform="translate(109 33) rotate(28)" fill="${wood.sheen}"/>`;
+  let body = fill(handle, wood.face) + `<g clip-path="url(#${id}h)">${wood2}</g>`;
+
+  // The ferrule: a short brass cylinder, lit at its left, shaded at its right, a bright edge along its top and foot.
+  const ferrule = 'M100 109H156V128H100Z';
+  defs += `<clipPath id="${id}f"><path d="${ferrule}"/></clipPath>`;
+  const turned =
+    fill('M100 109H112V128H100Z', brass.light) + fill('M144 109H156V128H144Z', brass.shade) + fill('M98 109H158V112H98Z M98 125H158V128H98Z', brass.edge);
+  body += fill(ferrule, brass.face) + `<g clip-path="url(#${id}f)">${turned}</g>`;
+
+  // The block: its shaded front, its lit top, the bevel along its top edge catching the light, an engraved line along its
+  // front (in a woven band, larger), and a rivet at each side.
+  let brass2 = fill('M24 128H232V152H24Z', brass.face) + fill('M24 128H232V135H24Z', brass.light) + fill('M24 135H232V137.5H24Z', brass.edge);
+  brass2 += fill('M24 186H232V198H24Z', brass.deep);
+  const engrave = (y: number): string => fill(`M44 ${y}H212V${y + 2.2}H44Z`, brass.deep) + fill(`M44 ${y + 2.2}H212V${y + 3.6}H44Z`, brass.light);
+  if (fine) {
+    const lozenges = Array.from({ length: 12 }, (_, i) => {
+      const x = 56 + i * 13.1;
+      return `M${n(x)} 168.5L${n(x + 4.5)} 173L${n(x)} 177.5L${n(x - 4.5)} 173Z`;
+    }).join('');
+    brass2 += engrave(162) + fill(lozenges, brass.deep) + engrave(181);
+  } else brass2 += engrave(170);
+  for (const x of [43, 213]) {
+    brass2 += fill(ellipsePath(x, 173, 5.2, 5.2), brass.deep) + fill(ellipsePath(x - 0.6, 172.4, 3.8, 3.8), brass.face);
+    brass2 += fill(ellipsePath(x - 1.6, 171.4, 1.6, 1.6), brass.edge);
+  }
+  body += fill(block, brass.shade) + `<g clip-path="url(#${id}b)">${brass2}</g>`;
+
+  // The short neck the die hangs from, and the die seen edge on: a thin brass plate, lit at its left end and shaded at its
+  // right, a bright rim along its top and its underside dark.
+  body += fill('M70 196H186V214H70Z', brass.deep) + fill('M70 196H84V214H70Z', brass.shade);
+  const die = 'M41 214H215A3 3 0 0 1 218 217V229A3 3 0 0 1 215 232H41A3 3 0 0 1 38 229V217A3 3 0 0 1 41 214Z';
+  defs += `<clipPath id="${id}d"><path d="${die}"/></clipPath>`;
+  const edge = fill('M30 214H226V229H30Z', brass.face) + fill('M30 214H50V229H30Z', brass.light) + fill('M206 214H226V229H206Z', brass.shade);
+  body += fill(die, brass.deep) + `<g clip-path="url(#${id}d)">${edge}${fill('M30 214H226V216.6H30Z', brass.edge)}</g>`;
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2((size * H) / W)}" viewBox="24 8 208 232" ` +
+    `aria-hidden="true" focusable="false" id="${id}">` +
+    `<defs>${defs}</defs>${body}</svg>`
+  );
+}
+
+// ───────────────────────────────────────────────────────────── the milestone
+
+/**
+ * A unit's last stop, its milestone: a pomegranate seal standing on a carved stone drum, in a box `w` × `h` laid over the
+ * stop's button from (`x`, `y`) in the button's points, the seal's middle at (`cx`, `cy`) in the box, where the app writes
+ * the unit's number. It stands lower than a tile, so its crown keeps clear of the stop before it.
+ */
+export const PATH_MILESTONE_ART = { w: 112, h: 136, x: -20, y: -16, cx: 56, cy: 58, r: 33 } as const;
+
+export interface PathMilestoneOptions {
+  /** Won: its chapter is done, and the seal is gold; otherwise it is slate, waiting. */
+  won: boolean;
+  /** The base (its shade and the drum it stands on), or the seal a press pushes down. */
+  part: 'base' | 'face';
+  dark?: boolean;
+  /** Display width in points; the drawing is `PATH_MILESTONE_ART.w` wide and keeps its shape. */
+  size?: number;
+  idPrefix?: string;
+}
+
+/**
+ * The milestone: a round seal with a pomegranate's crown, thick enough to stand, on a short drum of cut stone, the
+ * chapter's own great stamp. Slate until its chapter is done, then gold. The app writes the chapter's number on it.
+ */
+export function pathMilestoneSvg(opts: PathMilestoneOptions): string {
+  const { won, part, dark = false } = opts;
+  const { w: W, h: H, cx, cy, r } = PATH_MILESTONE_ART;
+  const size = opts.size ?? W;
+  if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
+  const prefix = prefixFor(opts.idPrefix, 'milestone', won, part, dark);
+  const shade = dark ? '#05080a' : '#17242b';
+  const rest = PATH_REST[dark ? 'dark' : 'light'];
+  const g = PATH_GOLD[dark ? 'dark' : 'light'];
+  const k: Token = won ? { face: g.face, side: g.side, light: g.light } : { face: rest.fill, side: rest.lip, light: null };
+  const stoneC = dark ? { top: '#6d6a62', face: '#57544d', side: '#413f3a' } : { top: '#e8e0cd', face: '#cdbf9f', side: '#a8987a' };
+  // The seal's outline: its round body, a short neck and the pomegranate's three-pointed crown.
+  const crown = (dx: number, dy: number): string => {
+    const p = (x: number, y: number): string => `${n(cx + dx + x)} ${n(cy + dy + y)}`;
+    return `M${p(-11, -r + 4)}L${p(-17, -r - 9)}Q${p(-16, -r - 13)} ${p(-12, -r - 11.5)}L${p(-6, -r - 6.5)}L${p(-2.4, -r - 14.5)}Q${p(0, -r - 18)} ${p(2.4, -r - 14.5)}L${p(6, -r - 6.5)}L${p(12, -r - 11.5)}Q${p(16, -r - 13)} ${p(17, -r - 9)}L${p(11, -r + 4)}Z`;
+  };
+  const seal = (dx: number, dy: number): string => ellipsePath(cx + dx, cy + dy, r, r) + crown(dx, dy);
+  const drum = { top: cy + r - 1, rx: 33, ry: 8, h: 21 };
+
+  if (part === 'base') {
+    let body = `<path d="${ellipsePath(cx + 6, drum.top + drum.h + 5, 40, 8)}" fill="${shade}" fill-opacity="${dark ? 0.4 : 0.14}"/>`;
+    // The drum: its front lit, its foot a step darker, its top the lightest, as cut stone in the road's light.
+    body += fill(`M${n(cx - drum.rx)} ${n(drum.top)}V${n(drum.top + drum.h)}A${drum.rx} ${drum.ry} 0 0 0 ${n(cx + drum.rx)} ${n(drum.top + drum.h)}V${n(drum.top)}Z`, stoneC.face);
+    body += fill(`M${n(cx - drum.rx)} ${n(drum.top + drum.h - 5)}V${n(drum.top + drum.h)}A${drum.rx} ${drum.ry} 0 0 0 ${n(cx + drum.rx)} ${n(drum.top + drum.h)}V${n(drum.top + drum.h - 5)}A${drum.rx} ${drum.ry} 0 0 1 ${n(cx - drum.rx)} ${n(drum.top + drum.h - 5)}Z`, stoneC.side);
+    body += fill(ellipsePath(cx, drum.top, drum.rx, drum.ry), stoneC.top);
+    // A cut line round the drum's shoulder, where the light leaves its top.
+    body += stroke(`M${n(cx - drum.rx + 1)} ${n(drum.top + 3.5)}A${drum.rx - 1} ${drum.ry} 0 0 0 ${n(cx + drum.rx - 1)} ${n(drum.top + 3.5)}`, stoneC.side, 1.2);
+    // The seal's thickness, standing on the drum: the same round a little down and right, in its side colour.
+    body += fill(seal(3.5, 4.5), k.side);
+    return wrapBox(prefix, size, W, H, body);
+  }
+
+  const face = seal(0, 0);
+  let defs = '';
+  let body = '';
+  if (k.light) {
+    const clip = `${prefix}f`;
+    defs += `<clipPath id="${clip}"><path d="${face}"/></clipPath>`;
+    body += fill(face, k.light) + `<g clip-path="url(#${clip})">${fill(seal(2.6, 3), k.face)}</g>`;
+  } else {
+    body += fill(face, k.face);
+  }
+  // A seal's rim, cut a step darker just inside its edge, with a row of seeds round the crown's foot.
+  body += stroke(ellipsePath(cx, cy, r - 5.5, r - 5.5), k.side, 2.2);
+  body += fill(ellipsePath(cx - 5, cy - r + 1.5, 1.6, 1.6) + ellipsePath(cx, cy - r + 0.5, 1.6, 1.6) + ellipsePath(cx + 5, cy - r + 1.5, 1.6, 1.6), k.side);
+  return wrapBox(prefix, size, W, H, (defs ? `<defs>${defs}</defs>` : '') + body);
+}
+
+// ───────────────────────────────────────────────────────────── the sandûq
+
+/** The sandûq's parts, for an app that opens it: its body, its shut lid, and the open lid with the gold heaped inside. */
+export const PATH_CHEST_PARTS = ['whole', 'body', 'lid', 'open'] as const;
+export type PathChestPart = (typeof PATH_CHEST_PARTS)[number];
+
+/** Where the lid turns, on the chest's 112-point canvas: its back edge, which a lifting lid pivots on. */
+export const PATH_CHEST_HINGE = { x: 36, y: 47 } as const;
+
+export interface PathChestOptions {
+  /** Thrown open on its gold, once its unit is done. */
+  open?: boolean;
+  /** One part alone, laid over the others by an app that moves them; the whole chest by default. */
+  part?: PathChestPart;
+  dark?: boolean;
+  /** Display size in points; the drawing is `PATH_STOP_ART.box` square. */
+  size?: number;
+  idPrefix?: string;
+}
+
+/** A unit's painted sandûq on its own, with its shadow, for beside the road: shut while the unit is ahead, open on gold once it is done. */
+export function pathChestSvg(opts: PathChestOptions = {}): string {
+  const { open = false, dark = false } = opts;
+  const part = opts.part ?? 'whole';
+  if (!(PATH_CHEST_PARTS as readonly string[]).includes(part)) throw new RangeError(`art: no chest part ${String(part)}`);
+  const size = opts.size ?? PATH_STOP_ART.box;
+  if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
+  const { box: B, cx, cy } = PATH_STOP_ART;
+  const shade = dark ? '#05080a' : '#17242b';
+  const ground = part === 'whole' || part === 'body' ? `<path d="${ellipsePath(cx + 5, cy + 27, 38, 7)}" fill="${shade}" fill-opacity="${dark ? 0.4 : 0.14}"/>` : '';
+  return wrap(prefixFor(opts.idPrefix, 'chest', open, part, dark), size, B, ground + sanduq(cx, cy, open, dark, part));
+}
+
+/** A gold coin from the sandûq, on its own 24-point square, for the apps to toss out of it as it opens. */
+export function pathCoinSvg(opts: { dark?: boolean; size?: number; idPrefix?: string } = {}): string {
+  const { dark = false } = opts;
+  const size = opts.size ?? 24;
+  if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
+  const g = PATH_GOLD[dark ? 'dark' : 'light'];
+  const body = fill(ellipsePath(12.8, 12.8, 9, 9), g.side) + fill(ellipsePath(12, 12, 9, 9), g.face) + stroke(ellipsePath(12, 12, 5.6, 5.6), g.side, 1.4) + fill(sparkle(8.4, 8, 2.6), g.light);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(size)}" viewBox="0 0 24 24" aria-hidden="true" focusable="false" id="${prefixFor(opts.idPrefix, 'coin', dark)}">${body}</svg>`;
 }
 
 function wrap(prefix: string, size: number, box: number, body: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(size)}" viewBox="0 0 ${box} ${box}" aria-hidden="true" focusable="false" id="${prefix}">${body}</svg>`;
+}
+
+function wrapBox(prefix: string, size: number, w: number, h: number, body: string): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2((size * h) / w)}" viewBox="0 0 ${w} ${h}" aria-hidden="true" focusable="false" id="${prefix}">${body}</svg>`;
 }
 
 /** An open book on the token, its cover in the unit's colour, with two lined pages. */
@@ -267,27 +738,124 @@ function gate(x: number, y: number, dark: boolean): string {
 }
 
 /**
- * The chapter's gift: a heybe, the woven saddlebag a guest's gifts come home in, with madder pockets, a row of indigo
- * lozenges and a tied flap; open, the flap is thrown back on gold and sweets.
+ * A unit's prize: a sandûq, the painted wooden dowry chest, seen from a little above and to the side so it stands
+ * solid: its front lit, its end in shade, its barrel lid lit along the crown. A strap of kilim with a madder ground, cream
+ * lozenges and indigo eyes wraps it over the lid and down the front, brass caps its corners and its hasp. Open, the lid
+ * is thrown back on its hinge, lined in madder, over gold heaped in its mouth. `part` draws one piece alone.
  */
-function saddlebag(x: number, y: number, open: boolean, dark: boolean): string {
+function sanduq(x: number, y: number, open: boolean, dark: boolean, part: PathChestPart): string {
   const c = (hex: string): string => dusk(hex, dark, 0.2);
-  let out = fill(`M${n(x - 27)} ${n(y - 12)}h54v27a7 7 0 0 1 -7 7h-40a7 7 0 0 1 -7 -7Z`, c('#8f3a2c'));
-  out += fill(`M${n(x - 27)} ${n(y - 12)}h54v23a7 7 0 0 1 -7 7h-40a7 7 0 0 1 -7 -7Z`, c('#b6493a'));
-  out += stroke(`M${n(x - 27)} ${n(y - 3)}h54M${n(x - 27)} ${n(y + 9)}h54`, c('#f1d9a8'), 2);
-  let lozenges = '';
-  for (let i = 0; i < 5; i++) lozenges += `M${n(x - 20 + i * 10)} ${n(y + 3)}l4.5 -4.5l4.5 4.5l-4.5 4.5Z`;
-  out += fill(lozenges, c(VALLEY.indigo));
-  out += stroke(`M${n(x)} ${n(y - 12)}v24`, c('#7a2f24'), 2);
-  if (open) {
-    out += fill(`M${n(x - 27)} ${n(y - 12)}q27 -20 54 0q-27 -9 -54 0Z`, c('#7a2f24'));
-    out += fill(ellipsePath(x - 8, y - 14, 5, 2.4) + ellipsePath(x + 6, y - 15, 4.4, 2.2) + ellipsePath(x - 1, y - 17, 4, 2), warm('#f6c445', dark));
-    out += fill(ellipsePath(x + 14, y - 13, 3, 2.4), warm('#ffffff', dark));
-  } else {
-    out += stroke(`M${n(x - 27)} ${n(y - 12)}q27 -15 54 0`, c('#7a2f24'), 3);
-    out += fill(ellipsePath(x, y - 17, 3.2, 3.2), c('#e9c060'));
+  const wood = { face: c('#b86f35'), light: c('#d18a4b'), end: c('#8c4f22'), seam: c('#5e3318'), inside: c('#4a2812') };
+  const brass = warm('#e2b24a', dark);
+  const brassShade = warm('#b07f1e', dark);
+  const madder = c('#b8323a');
+  const madderDeep = c('#8e2129');
+  const cream = c('#f3e1b5');
+  const indigo = c(VALLEY.indigo);
+  // The chest's corners in the drawing: front face from `l` to `r`, lid seam at `seam`, foot at `foot`; its end recedes `d` up and right.
+  const l = x - 29;
+  const r = x + 25;
+  const seam = y - 4;
+  const foot = y + 24;
+  const d = { x: 10, y: -7 };
+  const g = PATH_GOLD[dark ? 'dark' : 'light'];
+  const draws = { body: part === 'whole' || part === 'body', lid: part === 'lid' || (part === 'whole' && !open), open: part === 'open' || (part === 'whole' && open) };
+  let out = '';
+
+  if (draws.open) {
+    // The lid thrown back on its hinge along the back edge, its lining toward us, the strap running on over it.
+    const hl = l + d.x;
+    const hr = r + d.x;
+    const hy = seam + d.y;
+    out += fill(`M${n(hl)} ${n(hy)}L${n(hl - 3)} ${n(hy - 24)}Q${n((hl + hr) / 2)} ${n(hy - 31)} ${n(hr + 3)} ${n(hy - 24)}L${n(hr)} ${n(hy)}Z`, wood.end);
+    out += fill(`M${n(hl + 4)} ${n(hy - 1)}L${n(hl + 2)} ${n(hy - 20)}Q${n((hl + hr) / 2)} ${n(hy - 26)} ${n(hr - 2)} ${n(hy - 20)}L${n(hr - 4)} ${n(hy - 1)}Z`, madderDeep);
+    out += kilimAlong([0.25, 0.5, 0.75].map((s) => ({ p: [hl + 4 + (hr - hl - 8) * s, hy - 12] as Pt, angle: 0 })), 6, cream, indigo);
+    // The mouth: the inside of the chest, and the gold heaped in it, catching the light.
+    out += fill(`M${n(l)} ${n(seam)}L${n(l + d.x)} ${n(seam + d.y)}H${n(r + d.x)}L${n(r)} ${n(seam)}Z`, wood.inside);
+    out += fill(ellipsePath(x - 12, seam - 4, 10, 4.4) + ellipsePath(x + 4, seam - 6, 12, 5.4) + ellipsePath(x + 19, seam - 3.6, 8, 3.6), g.face);
+    out += fill(ellipsePath(x + 2, seam - 8.6, 4.6, 1.9) + ellipsePath(x - 14, seam - 6.2, 3.4, 1.5) + ellipsePath(x + 18, seam - 5.4, 2.6, 1.1), g.light);
+    out += fill(sparkle(x - 19, seam - 22, 4.2) + sparkle(x + 25, seam - 30, 3.2) + sparkle(x + 6, seam - 34, 2.6), warm('#fff6dc', dark));
+  }
+
+  if (draws.body) {
+    // Its end, receding, in shade; then its lit front with a plank seam, and two feet.
+    out += fill(`M${n(r)} ${n(seam)}L${n(r + d.x)} ${n(seam + d.y)}V${n(foot + d.y)}L${n(r)} ${n(foot)}Z`, wood.end);
+    out += fill(`M${n(l)} ${n(seam)}H${n(r)}V${n(foot - 3)}Q${n(r)} ${n(foot)} ${n(r - 3)} ${n(foot)}H${n(l + 3)}Q${n(l)} ${n(foot)} ${n(l)} ${n(foot - 3)}Z`, wood.face);
+    out += stroke(`M${n(l + 2)} ${n(y + 10)}H${n(r - 2)}`, wood.seam, 1.2);
+    out += fill(`M${n(l + 2)} ${n(foot)}h7v4h-7ZM${n(r - 9)} ${n(foot)}h7v4h-7Z`, wood.seam);
+    // The strap down the front, and brass at the foot's corners and along the end's edge.
+    out += strap(x - 4, seam, foot, madder, cream, indigo, open ? [y + 4, y + 16] : [y + 4, y + 16]);
+    out += fill(`M${n(l)} ${n(foot - 8)}h8v8h-5q-3 0 -3 -3ZM${n(r)} ${n(foot - 8)}h-8v8h5q3 0 3 -3Z`, brass);
+    out += fill(`M${n(r)} ${n(foot - 8)}L${n(r + d.x)} ${n(foot - 8 + d.y)}V${n(foot + d.y)}L${n(r)} ${n(foot)}Z`, brassShade);
+    out += stroke(`M${n(l)} ${n(seam)}H${n(r)}L${n(r + d.x)} ${n(seam + d.y)}`, wood.seam, 1.6);
+  }
+
+  if (draws.lid) {
+    // The barrel lid lying along the chest: its near curve rising from the seam to the crown, lit along the crown, and its
+    // end an arch in shade on the end's plane; the strap runs over it to the hasp.
+    const rise = 13;
+    const crown = { y: seam + d.y / 2 - rise, l: l + d.x / 2, r: r + d.x / 2 };
+    out += fill(`M${n(r)} ${n(seam)}Q${n(r)} ${n(seam - rise)} ${n(crown.r)} ${n(crown.y)}Q${n(r + d.x)} ${n(seam + d.y - rise * 0.8)} ${n(r + d.x)} ${n(seam + d.y)}Z`, wood.end);
+    out += fill(`M${n(l)} ${n(seam)}Q${n(l)} ${n(seam - rise)} ${n(crown.l)} ${n(crown.y)}H${n(crown.r)}Q${n(r)} ${n(seam - rise)} ${n(r)} ${n(seam)}Z`, wood.face);
+    out += fill(`M${n(l + 1.2)} ${n(seam - 8)}Q${n(l + 1.6)} ${n(crown.y + 1)} ${n(crown.l + 1)} ${n(crown.y + 0.6)}H${n(crown.r - 1.2)}Q${n(r - 2)} ${n(crown.y + 2)} ${n(r - 0.8)} ${n(seam - 8)}Q${n(x)} ${n(seam - 11)} ${n(l + 1.2)} ${n(seam - 8)}Z`, wood.light);
+    const sx = x - 4;
+    out += fill(`M${n(sx - 6)} ${n(seam)}Q${n(sx - 6)} ${n(seam - rise)} ${n(sx - 6 + d.x / 2)} ${n(crown.y)}H${n(sx + 6 + d.x / 2)}Q${n(sx + 6)} ${n(seam - rise)} ${n(sx + 6)} ${n(seam)}Z`, madder);
+    out += stroke(`M${n(sx - 4.6)} ${n(seam - 1)}Q${n(sx - 4.6)} ${n(seam - rise + 1)} ${n(sx - 4.6 + d.x / 2)} ${n(crown.y + 1)}M${n(sx + 4.6)} ${n(seam - 1)}Q${n(sx + 4.6)} ${n(seam - rise + 1)} ${n(sx + 4.6 + d.x / 2)} ${n(crown.y + 1)}`, cream, 1);
+    out += kilimAlong([{ p: [sx + 2.2, seam - 9.5] as Pt, angle: 0 }], 6.4, cream, indigo);
+    // The hasp, brass, hanging over the seam with its keyhole.
+    out += fill(`M${n(sx - 6)} ${n(seam - 4)}h12v10a2.5 2.5 0 0 1 -2.5 2.5h-7a2.5 2.5 0 0 1 -2.5 -2.5Z`, brass);
+    out += fill(`${ellipsePath(sx, seam + 1.6, 1.7, 1.7)}M${n(sx - 0.8)} ${n(seam + 1.8)}h1.6v3.4h-1.6Z`, wood.seam);
   }
   return out;
+}
+
+/** The kilim strap down the sandûq from `top` to `foot`: madder with cream edges and a lozenge at each of `marks`. */
+function strap(x: number, top: number, foot: number, madder: string, cream: string, indigo: string, marks: readonly number[]): string {
+  return (
+    fill(`M${n(x - 6)} ${n(top)}h12V${n(foot)}h-12Z`, madder) +
+    stroke(`M${n(x - 4.6)} ${n(top + 1)}V${n(foot - 1)}M${n(x + 4.6)} ${n(top + 1)}V${n(foot - 1)}`, cream, 1) +
+    kilimAlong(marks.map((my) => ({ p: [x, my] as Pt, angle: 0 })), 6.4, cream, indigo)
+  );
+}
+
+/** A four-pointed glint. */
+function sparkle(x: number, y: number, r: number): string {
+  const k = r * 0.28;
+  return `M${n(x)} ${n(y - r)}Q${n(x + k)} ${n(y - k)} ${n(x + r)} ${n(y)}Q${n(x + k)} ${n(y + k)} ${n(x)} ${n(y + r)}Q${n(x - k)} ${n(y + k)} ${n(x - r)} ${n(y)}Q${n(x - k)} ${n(y - k)} ${n(x)} ${n(y - r)}Z`;
+}
+
+// ───────────────────────────────────────────────────────────── the kilim trim
+
+export interface PathKilimOptions {
+  /** Width and height in points; the band repeats its motif along the width. */
+  width: number;
+  height: number;
+  /** The motif's colour and its lozenges' eyes, from the unit's own colours. */
+  ink: string;
+  eye: string;
+  idPrefix?: string;
+}
+
+/**
+ * The kilim trim along a unit's banner: a woven band of lozenges with eyes, beads between them and a sawtooth along each
+ * edge, as on a Kurdish kilim's border, in the unit's own colours so it reads as woven into the banner. Decorative.
+ */
+export function pathKilimSvg(opts: PathKilimOptions): string {
+  const { width: w, height: h, ink, eye } = opts;
+  if (!(w > 0) || !(h > 0) || !Number.isFinite(w) || !Number.isFinite(h)) throw new RangeError(`art: kilim needs a positive size, got ${String(w)} × ${String(h)}`);
+  const mid = h / 2;
+  const step = h * 1.6;
+  const count = Math.max(1, Math.floor(w / step));
+  const gap = w / count;
+  const marks = Array.from({ length: count }, (_, i) => ({ p: [gap * (i + 0.5), mid] as [number, number], angle: 0 }));
+  // The sawtooth along both edges, a tooth for each half step.
+  const tooth = gap / 2;
+  let teeth = '';
+  for (let x = 0; x < w - 0.5; x += tooth) {
+    teeth += `M${n(x)} 0L${n(x + tooth / 2)} ${n(h * 0.16)}L${n(x + tooth)} 0ZM${n(x)} ${n(h)}L${n(x + tooth / 2)} ${n(h * 0.84)}L${n(x + tooth)} ${n(h)}Z`;
+  }
+  const body = `<path d="${teeth}" fill="${ink}"/>${kilimAlong(marks, h * 0.56, ink, eye)}`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(w)}" height="${n2(h)}" viewBox="0 0 ${n2(w)} ${n2(h)}" aria-hidden="true" focusable="false" id="${prefixFor(opts.idPrefix, 'kilim', w, h)}">${body}</svg>`;
 }
 
 // ───────────────────────────────────────────────────────────── the signpost

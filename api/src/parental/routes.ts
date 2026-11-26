@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { isParentalBedtime, isParentalDailyLimit, PARENTAL_SWITCHES, type ParentalControls } from '@kurda/shared';
 import { requireAccount, requireAuth } from '../plugins/auth.js';
 import type { RateLimitOptions } from '../ratelimit/plugin.js';
@@ -40,8 +41,8 @@ const CODE_LIMITS: RateLimitOptions[] = [
 ];
 
 const codeBody = z.object({ code: z.string().min(1).max(32) });
-const teenParam = z.object({ teenId: z.uuid() });
-const parentParam = z.object({ parentId: z.uuid() });
+const teenParam = z.object({ teenId: lowerUuid() });
+const parentParam = z.object({ parentId: lowerUuid() });
 const usageBody = z.object({ timeZone: z.string().min(1).max(64) });
 const noBody = z.object({}).nullish();
 

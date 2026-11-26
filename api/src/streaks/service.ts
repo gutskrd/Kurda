@@ -1,12 +1,28 @@
 import type pg from 'pg';
-import { monthStart, repairLastDay, repairOpen, repairPrice, repairStanding, type RecentDay, type RepairRefusal, type StreakRepairOffer } from '@kurda/shared';
-import { isPremiumActive } from '../cosmetics/access.js';
-import { assertEconomyNotHeld, isEconomyHeld } from '../economy/standing.js';
+import {
+  STREAK_MILESTONE_REPEAT_DAYS,
+  STREAK_WIN_BACK_SESSIONS,
+  freeRestoreAvailable,
+  memberPay,
+  monthStart,
+  repairLastDay,
+  repairOpen,
+  repairStanding,
+  streakMilestonesBetween,
+  winsBack,
+  type RecentDay,
+  type RepairRefusal,
+  type StreakRepairOffer,
+} from '@kurda/shared';
+import { isPremiumActive, premiumUntilSql } from '../cosmetics/access.js';
 import { AppError } from '../plugins/errors.js';
 import { WalletService } from '../wallet/service.js';
+import { earnReason, earnWithin } from '../earn/service.js';
+import { grantBagGiftWithin } from '../gifts/bag.js';
 import {
   answeredTodaySql,
   countsAsLearningSql,
+  dayDiff,
   EMPTY_TALLY,
   grantFreeze,
   localDate,
@@ -42,22 +58,22 @@ export interface StreakSummary {
   sessionsPerFreeze: number;
   /** The missed day the last freeze covered ('YYYY-MM-DD' in the user's zone), or null, so an app can say once the streak was kept. */
   freezeUsedOn: string | null;
-  /** The ended streak that can still be restored: its length, the cost now and when the offer ends; null when there is none. */
+  /** The ended streak that can still be won back: its length, today's sessions toward it, and when the offer ends; null when there is none. */
   repair: StreakRepairOffer | null;
+  /** The ended run's restore, when one brought it back: how long it was and on which of the learner's days, so an app can say once that it is back. */
+  restored: { days: number; on: string } | null;
+  /** A streak milestone this activity just reached and paid, for the moment that says so. */
+  milestone?: { days: number; zer: number } | null;
 }
 
-/** What POST /me/streak/repair answers with. */
+/** What POST /me/streak/repair answers with: a Hevalo+ member's free restore. */
 export interface RepairResult {
   restored: true;
-  /** This run was already restored (a second tap, a retry), so nothing was charged or changed again. */
+  /** This run was already restored (a second tap, a retry, or won back meanwhile), so nothing was used or changed again. */
   duplicate: boolean;
   /** The length of the run brought back. */
   days: number;
-  /** what it cost: 0 for a Hevalo+ member's free one */
-  costGems: number;
   free: boolean;
-  /** the gem balance afterwards */
-  gems: number;
   streak: StreakSummary;
 }
 
@@ -68,8 +84,11 @@ const REFUSALS: Record<Exclude<RepairRefusal, 'restored'>, { code: string; messa
   expired: { code: 'RESTORE_EXPIRED', message: 'the days in which that streak could be restored have passed' },
 };
 
-/** The ledger's reason for the gems a restore costs. */
-export const STREAK_REPAIR_REASON = 'streak_repair';
+/** The ledger's reason for a streak milestone's Zêr. */
+export const STREAK_MILESTONE_REASON = earnReason('streak_milestone');
+
+/** What counts toward winning a streak back: a lesson or practice session, not a game's round. */
+export type ActivityKind = 'session' | 'game';
 
 /** The streak as a finished session reports it: the summary plus today and recent learning days, for the results' week row. */
 export interface SessionStreak extends StreakSummary {
@@ -92,12 +111,17 @@ interface StreakRow {
   ended_streak: number;
   ended_last_active_on: string | null;
   ended_restored_on: string | null;
+  sessions_on: string | null;
+  sessions_today: number;
 }
 
-/** A learner's row as the service uses it: the run, the tally, and whether they are a Hevalo+ member. */
+/** A learner's row as the service uses it: the run, the tally, today's sessions, and whether they are a Hevalo+ member. */
 interface Loaded {
   state: StreakState;
   tally: LearningTally;
+  /** lessons and practice sessions finished on `sessionsOn`, toward winning an ended run back */
+  sessionsOn: string | null;
+  sessionsToday: number;
   premiumUntil: Date | null;
 }
 
@@ -134,6 +158,7 @@ function rowToTally(row: StreakRow | undefined): LearningTally {
 }
 
 function toSummary(s: StreakState, t: LearningTally, plus: boolean, repair: StreakRepairOffer | null): StreakSummary {
+  const restoredOn = s.ended?.restoredOn ?? null;
   return {
     current: s.currentStreak,
     longest: s.longestStreak,
@@ -145,6 +170,7 @@ function toSummary(s: StreakState, t: LearningTally, plus: boolean, repair: Stre
     sessionsPerFreeze: SESSIONS_PER_FREEZE,
     freezeUsedOn: s.freezeUsedOn ?? null,
     repair,
+    restored: restoredOn && s.ended ? { days: s.ended.days, on: restoredOn } : null,
   };
 }
 
@@ -179,9 +205,10 @@ function runValues(s: StreakState): unknown[] {
  * Daily streaks. Days are the user's local calendar dates, and a stored freeze covers a single missed day. State is
  * settled lazily on read and on activity, so no scheduled job is needed. Beside the run it keeps a `LearningTally`:
  * days learned, the last of them, and sessions toward the next freeze (one per five). It also keeps the run that last
- * ended and restores it (`repair`) for gems, or monthly for free for a Hevalo+ member, by the shared streak-repair
- * rules with every date decided here. Every write reads the row under its lock first, so a paid restore cannot be
- * overwritten by a lesson or read that began earlier.
+ * ended, which the third lesson or practice session of a day within the offer wins back, and which a Hevalo+ member may
+ * restore free once a month (`repair`), by the shared streak-repair rules with every date decided here. Reaching a
+ * streak milestone pays Zêr in the same transaction. Every write reads the row under its lock first, so a restore cannot
+ * be overwritten by a lesson or read that began earlier.
  */
 export class StreakService {
   constructor(
@@ -217,12 +244,113 @@ export class StreakService {
               s.days_learned, s.last_learned_on::text AS last_learned_on, s.freeze_progress,
               s.freeze_used_on::text AS freeze_used_on, s.freeze_used_days,
               s.ended_streak, s.ended_last_active_on::text AS ended_last_active_on, s.ended_restored_on::text AS ended_restored_on,
-              u.premium_until
+              s.sessions_on::text AS sessions_on, s.sessions_today,
+              ${premiumUntilSql('u')} AS premium_until
          FROM users u LEFT JOIN user_streaks s ON s.user_id = u.id
         WHERE u.id = $1`,
       [userId],
     );
-    return { state: rowToState(res.rows[0]), tally: rowToTally(res.rows[0]), premiumUntil: res.rows[0]?.premium_until ?? null };
+    const row = res.rows[0];
+    return {
+      state: rowToState(row),
+      tally: rowToTally(row),
+      sessionsOn: row?.sessions_on ?? null,
+      sessionsToday: row?.sessions_today ?? 0,
+      premiumUntil: row?.premium_until ?? null,
+    };
+  }
+
+  /** Today's lessons and practice sessions toward winning a run back, from what the row holds. */
+  private sessionsOn(loaded: Pick<Loaded, 'sessionsOn' | 'sessionsToday'>, today: string): number {
+    return loaded.sessionsOn === today ? loaded.sessionsToday : 0;
+  }
+
+  /**
+   * Pays the streak milestones a run passed growing from `before` to `after` days, in the caller's transaction. Each
+   * pays only when it last paid at least STREAK_MILESTONE_REPEAT_DAYS before today, so only a new streak two months on
+   * reaches it again; its row is written first, so a retry pays nothing. Only a member is paid, and nothing is kept for
+   * anyone else, so a milestone first reached as a member still pays. Everyone, members too, gets a small gift in their
+   * gift bag for each milestone reached (gifts/bag.ts), under the same repeat rule, so a streak won back does not give
+   * its milestones again; the bag is filled after the Zêr, the one lock order. Returns the largest paid now, if any.
+   */
+  private async payMilestones(
+    tx: Executor,
+    userId: string,
+    before: number,
+    after: number,
+    today: string,
+    plus: boolean,
+    now: Date,
+  ): Promise<{ days: number; zer: number } | null> {
+    const paid = await this.payMilestoneZer(tx, userId, before, after, today, plus, now);
+    for (const m of streakMilestonesBetween(before, after)) {
+      // The last time this milestone filled the bag, from the day in its ref ('<days>:<day>'): within the repeat window
+      // a streak won back or rebuilt gives nothing more.
+      const last = await tx.query<{ last: string | null }>(
+        `SELECT max(split_part(ref, ':', 2)) AS last FROM gift_bag_grants WHERE user_id = $1 AND source = 'streak' AND split_part(ref, ':', 1) = $2`,
+        [userId, String(m.days)],
+      );
+      const lastOn = last.rows[0]?.last ?? null;
+      if (lastOn && dayDiff(lastOn, today) < STREAK_MILESTONE_REPEAT_DAYS) continue;
+      // a transaction is always open here (`within`), so the bag's lock holds until the milestone's own write
+      await grantBagGiftWithin(tx as pg.PoolClient, { userId, source: 'streak', ref: `${m.days}:${today}` });
+    }
+    return paid;
+  }
+
+  /** The Zêr side of `payMilestones`, a member's only. */
+  private async payMilestoneZer(
+    tx: Executor,
+    userId: string,
+    before: number,
+    after: number,
+    today: string,
+    plus: boolean,
+    now: Date,
+  ): Promise<{ days: number; zer: number } | null> {
+    let paid: { days: number; zer: number } | null = null;
+    if (!plus) return paid;
+    for (const m of streakMilestonesBetween(before, after)) {
+      const last = await tx.query<{ last: string | null }>(`SELECT max(paid_on)::text AS last FROM streak_milestones WHERE user_id = $1 AND days = $2`, [
+        userId,
+        m.days,
+      ]);
+      const lastOn = last.rows[0]?.last ?? null;
+      if (lastOn && dayDiff(lastOn, today) < STREAK_MILESTONE_REPEAT_DAYS) continue;
+      const claimed = await tx.query(
+        `INSERT INTO streak_milestones (user_id, days, paid_on, zer) VALUES ($1, $2, $3::date, 0) ON CONFLICT DO NOTHING`,
+        [userId, m.days, today],
+      );
+      if ((claimed.rowCount ?? 0) === 0) continue;
+      const result = await earnWithin(tx as pg.PoolClient, this.wallet, {
+        userId,
+        amount: memberPay(m.zer, plus),
+        reason: STREAK_MILESTONE_REASON,
+        refId: String(m.days),
+        idempotencyKey: `streak-milestone:${userId}:${m.days}:${today}`,
+        now,
+      });
+      await tx.query(`UPDATE streak_milestones SET zer = $4 WHERE user_id = $1 AND days = $2 AND paid_on = $3::date`, [userId, m.days, today, result.granted]);
+      if (result.granted > 0) paid = { days: m.days, zer: result.granted };
+    }
+    return paid;
+  }
+
+  /** Records a restore of the ended run in the caller's transaction: true when it was recorded now, false when it was before. */
+  private async recordRestore(
+    tx: Executor,
+    userId: string,
+    run: { days: number; lastActiveOn: string },
+    today: string,
+    how: 'won_back' | 'free',
+  ): Promise<boolean> {
+    const recorded = await tx.query(
+      `INSERT INTO streak_repairs (user_id, ended_last_active_on, days, cost, free, won_back, repaired_on)
+       VALUES ($1, $2, $3, 0, $4, $5, $6)
+       ON CONFLICT (user_id, ended_last_active_on) DO NOTHING`,
+      [userId, run.lastActiveOn, run.days, how === 'free', how === 'won_back', today],
+    );
+    return (recorded.rowCount ?? 0) > 0;
   }
 
   private async save(executor: Executor, userId: string, s: StreakState): Promise<void> {
@@ -261,41 +389,73 @@ export class StreakService {
   }
 
   /**
-   * The offer to restore the ended run, or null, also null for an account paused from rewards. The price and free
-   * monthly restore are read only when there is an offer, so a live streak costs nothing extra to show.
+   * The offer to win the ended run back, or null. A member's free monthly restore is read only when there is an offer,
+   * so a live streak costs nothing extra to show.
    */
-  private async offer(executor: Executor, userId: string, state: StreakState, plus: boolean, today: string, timeZone: string): Promise<StreakRepairOffer | null> {
+  private async offer(
+    executor: Executor,
+    userId: string,
+    state: StreakState,
+    plus: boolean,
+    sessionsToday: number,
+    today: string,
+    timeZone: string,
+  ): Promise<StreakRepairOffer | null> {
     const ended = state.ended;
     if (!ended || !repairOpen(ended, today)) return null;
-    if (await isEconomyHeld(executor, userId)) return null;
-    const price = repairPrice({ plus, freeRepairsThisMonth: await this.freeRepairsThisMonth(executor, userId, today) });
+    const free = plus && freeRestoreAvailable({ plus, freeRepairsThisMonth: await this.freeRepairsThisMonth(executor, userId, today) });
     // the offer ends as the day after its last one begins, for the learner
     const until = startOfLocalDay(shiftDate(repairLastDay(ended), 1), timeZone);
-    return { days: ended.days, costGems: price.costGems, free: price.free, until: until.toISOString() };
+    return { days: ended.days, free, sessionsToday, sessionsNeeded: STREAK_WIN_BACK_SESSIONS, until: until.toISOString() };
   }
 
-  private async summary(executor: Executor, userId: string, loaded: Loaded, state: StreakState, tally: LearningTally, now: Date, timeZone: string): Promise<StreakSummary> {
+  private async summary(
+    executor: Executor,
+    userId: string,
+    loaded: Loaded,
+    state: StreakState,
+    tally: LearningTally,
+    now: Date,
+    timeZone: string,
+    sessionsToday?: number,
+  ): Promise<StreakSummary> {
     const plus = isPremiumActive(loaded.premiumUntil, now);
-    return toSummary(state, tally, plus, await this.offer(executor, userId, state, plus, localDate(now, timeZone), timeZone));
+    const today = localDate(now, timeZone);
+    return toSummary(state, tally, plus, await this.offer(executor, userId, state, plus, sessionsToday ?? this.sessionsOn(loaded, today), today, timeZone));
   }
 
   /**
    * Records a finished lesson or practice session: counts today's streak at most once per local day, adds the day to
-   * days learned, and moves the next freeze closer (`recordSession`). Runs in the caller's transaction when given an
-   * executor; callers do this only on the transition to completed and only for a learning session (`countsAsLearning`).
+   * days learned, and moves the next freeze closer (`recordSession`). A lesson or practice session (`kind` 'session', not
+   * a game's round) also counts toward winning back an ended run, which the day's third does while the offer is open.
+   * A milestone the streak reaches is paid. Runs in the caller's transaction when given an executor; callers do this only
+   * on the transition to completed and only for a learning session (`countsAsLearning`).
    */
   async recordActivity(
     userId: string,
     timeZone: string,
     now: Date = new Date(),
     executor: Executor = this.pool,
+    kind: ActivityKind = 'session',
   ): Promise<StreakSummary> {
     const today = localDate(now, timeZone);
     return this.within(executor, async (tx) => {
       const before = await this.load(tx, userId, { lock: true });
-      const { streak, tally } = recordSession(before.state, before.tally, today, maxFreezesFor(isPremiumActive(before.premiumUntil, now)));
+      const plus = isPremiumActive(before.premiumUntil, now);
+      const recorded = recordSession(before.state, before.tally, today, maxFreezesFor(plus));
+      let streak = recorded.streak;
+      const tally = recorded.tally;
+      const sessions = this.sessionsOn(before, today) + (kind === 'session' ? 1 : 0);
+      const run = streak.ended ?? null;
+      const open = run !== null && repairStanding(run, today) === 'open';
+      const wonBack = kind === 'session' && winsBack(sessions) && open && (await this.recordRestore(tx, userId, run, today, 'won_back'));
+      if (wonBack) streak = restore(streak, today);
       await this.saveWithTally(tx, userId, streak, tally);
-      return this.summary(tx, userId, before, streak, tally, now, timeZone);
+      await tx.query(`UPDATE user_streaks SET sessions_on = $2::date, sessions_today = $3 WHERE user_id = $1`, [userId, today, sessions]);
+      // a run won back reached its own milestones before it ended, so only those past its length are new
+      const from = Math.max(settle(before.state, today).currentStreak, wonBack ? run.days : 0);
+      const milestone = await this.payMilestones(tx, userId, from, streak.currentStreak, today, plus, now);
+      return { ...(await this.summary(tx, userId, before, streak, tally, now, timeZone, sessions)), milestone };
     });
   }
 
@@ -314,7 +474,9 @@ export class StreakService {
       const before = await this.load(tx, userId, { lock: true });
       const { state } = record(before.state, today);
       await this.save(tx, userId, state);
-      return this.summary(tx, userId, before, state, before.tally, now, timeZone);
+      const plus = isPremiumActive(before.premiumUntil, now);
+      const milestone = await this.payMilestones(tx, userId, settle(before.state, today).currentStreak, state.currentStreak, today, plus, now);
+      return { ...(await this.summary(tx, userId, before, state, before.tally, now, timeZone)), milestone };
     });
   }
 
@@ -343,18 +505,16 @@ export class StreakService {
   }
 
   /**
-   * Restores the ended run (POST /me/streak/repair). The server decides which run, whether it can still be restored on
-   * the learner's day, and the cost: the gem price, or nothing for a Hevalo+ member's one free restore a month. One
-   * transaction under the row lock writes the restore record (one per ended run), charges gems under a key naming the
-   * run, and restores it, so concurrent requests restore and charge once, and a repeat while the offer would be open is
-   * answered like the first with `duplicate`. Refused with NOTHING_TO_RESTORE, STREAK_TOO_SHORT or RESTORE_EXPIRED
-   * (409), INSUFFICIENT_FUNDS (402) or REWARDS_PAUSED (403).
+   * A Hevalo+ member's free restore of the ended run (POST /me/streak/repair); anyone else wins it back by learning. The
+   * server decides which run, and whether it can still be restored on the learner's day. One transaction under the row
+   * lock writes the restore record (one per ended run) and restores it, so concurrent requests restore once, and a repeat
+   * while the offer would be open, or a run won back meanwhile, is answered like the first with `duplicate`. Refused with
+   * NOTHING_TO_RESTORE, STREAK_TOO_SHORT or RESTORE_EXPIRED (409), and WIN_IT_BACK (409) without a free restore to use.
    */
   async repair(userId: string, timeZone: string, now: Date = new Date()): Promise<RepairResult> {
-    await assertEconomyNotHeld(this.pool, userId, 'rewards');
     const today = localDate(now, timeZone);
     const client = await this.pool.connect();
-    let result: Omit<RepairResult, 'gems' | 'streak'>;
+    let result: Omit<RepairResult, 'streak'>;
     let loaded: Loaded;
     let state: StreakState;
     try {
@@ -369,43 +529,26 @@ export class StreakService {
         throw new AppError(REFUSALS[standing].code, 409, REFUSALS[standing].message);
       }
       const run = ended!;
-      const price = repairPrice({
-        plus: isPremiumActive(loaded.premiumUntil, now),
-        freeRepairsThisMonth: await this.freeRepairsThisMonth(client, userId, today),
-      });
-      // The record first: one row per ended run, so a run restored before is found here rather than paid for again.
-      const recorded =
-        standing === 'open'
-          ? await client.query(
-              `INSERT INTO streak_repairs (user_id, ended_last_active_on, days, cost_gems, free, repaired_on)
-               VALUES ($1, $2, $3, $4, $5, $6)
-               ON CONFLICT (user_id, ended_last_active_on) DO NOTHING`,
-              [userId, run.lastActiveOn, run.days, price.costGems, price.free, today],
-            )
-          : { rowCount: 0 };
-      if ((recorded.rowCount ?? 0) > 0) {
-        if (!price.free) {
-          await this.wallet.debitWithin(client, {
-            userId,
-            currency: 'gems',
-            amount: price.costGems,
-            reason: STREAK_REPAIR_REASON,
-            refId: run.lastActiveOn,
-            idempotencyKey: `streak-repair:${userId}:${run.lastActiveOn}`,
-          });
-        }
-        result = { restored: true, duplicate: false, days: run.days, costGems: price.costGems, free: price.free };
+      const plus = isPremiumActive(loaded.premiumUntil, now);
+      if (standing === 'open' && !freeRestoreAvailable({ plus, freeRepairsThisMonth: await this.freeRepairsThisMonth(client, userId, today) })) {
+        throw new AppError('WIN_IT_BACK', 409, `finish ${STREAK_WIN_BACK_SESSIONS} lessons or practice sessions today to win this streak back`);
+      }
+      // The record first: one row per ended run, so a run restored before is found here rather than restored again.
+      if (standing === 'open' && (await this.recordRestore(client, userId, run, today, 'free'))) {
+        result = { restored: true, duplicate: false, days: run.days, free: true };
       } else {
-        const first = await client.query<{ days: number; cost_gems: number; free: boolean }>(
-          `SELECT days, cost_gems, free FROM streak_repairs WHERE user_id = $1 AND ended_last_active_on = $2`,
+        const first = await client.query<{ days: number; free: boolean }>(
+          `SELECT days, free FROM streak_repairs WHERE user_id = $1 AND ended_last_active_on = $2`,
           [userId, run.lastActiveOn],
         );
         const was = first.rows[0];
-        result = { restored: true, duplicate: true, days: was?.days ?? run.days, costGems: was?.cost_gems ?? 0, free: was?.free ?? false };
+        result = { restored: true, duplicate: true, days: was?.days ?? run.days, free: was?.free ?? false };
       }
-      // A run recorded as restored whose row says otherwise is corrected here too, without another charge.
+      // A run recorded as restored whose row says otherwise is corrected here too, without using another restore.
       state = standing === 'open' ? restore(settled, today) : settled;
-      if (standing === 'open' || moved(loaded.state, settled)) await this.save(client, userId, state);
+      if (state !== settled || moved(loaded.state, settled)) await this.save(client, userId, state);
+      // as when one is won back, only the milestones past the run's own length are new
+      if (state !== settled) await this.payMilestones(client, userId, Math.max(settled.currentStreak, run.days), state.currentStreak, today, plus, now);
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
@@ -413,11 +556,7 @@ export class StreakService {
     } finally {
       client.release();
     }
-    const [balances, streak] = await Promise.all([
-      this.wallet.balances(userId),
-      this.summary(this.pool, userId, loaded, state, loaded.tally, now, timeZone),
-    ]);
-    return { ...result, gems: balances.gems, streak };
+    return { ...result, streak: await this.summary(this.pool, userId, loaded, state, loaded.tally, now, timeZone) };
   }
 
   /**

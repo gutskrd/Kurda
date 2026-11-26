@@ -133,6 +133,29 @@ export function usePressScale(enabled = true): {
   return { scale: live ? value : 1, onPressIn, onPressOut };
 }
 
+/**
+ * A chunky button pushed down into its lip: `sink` runs 0 to `depth` points as the finger lands and springs back up with
+ * a little bounce as it lifts. Under Reduce Motion it does not move; the caller dims it instead.
+ */
+export function usePressSink(depth: number, enabled = true): { sink: Animated.Value | number; onPressIn: () => void; onPressOut: () => void } {
+  const reduce = useReducedMotion();
+  const value = useRef(new Animated.Value(0)).current;
+  const live = enabled && !reduce;
+  const onPressIn = useCallback(() => {
+    if (!live) return;
+    value.stopAnimation();
+    timing(value, depth, SINK_MS).start();
+  }, [live, value, depth]);
+  const onPressOut = useCallback(() => {
+    if (!live) return;
+    springTo(value, 0, 'bouncy').start();
+  }, [live, value]);
+  return { sink: live ? value : 0, onPressIn, onPressOut };
+}
+
+/** How quickly a button sinks into its lip: at once, so the press is felt under the finger. */
+const SINK_MS = 60;
+
 /** A wrong answer's short shake (about 300 ms, three diminishing swings); `run()` plays it, and under Reduce Motion the colour says it alone. */
 export function useShake(): { translateX: Animated.Value; run: () => void } {
   const reduce = useReducedMotion();

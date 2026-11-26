@@ -31,7 +31,7 @@ const self = (over: Record<string, unknown> = {}) => ({
   displayName: 'Ada',
   avatarUrl: null,
   level: { level: 58, progress: 0.42, xp: 1240, currentLevelXp: 1000, nextLevelXp: 1600 },
-  balances: { zer: 13880, gems: 90 },
+  balances: { zer: 13880 },
   ...over,
 });
 
@@ -74,6 +74,15 @@ const show = () =>
     </RailProvider>,
     ['/app'],
   );
+
+/** The docked conversation, once its code has loaded (it loads apart from the rail). */
+async function docked(container: HTMLElement): Promise<HTMLElement> {
+  return waitFor(() => {
+    const chat = container.querySelector<HTMLElement>('.rail-chat');
+    expect(chat).not.toBeNull();
+    return chat!;
+  });
+}
 
 describe('SocialRail', () => {
   it('shows nothing at all to a signed-out visitor', async () => {
@@ -230,9 +239,8 @@ describe('SocialRail', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
 
     // It docks in place rather than navigating.
-    const chat = container.querySelector('.rail-chat');
-    expect(chat).not.toBeNull();
-    expect(within(chat as HTMLElement).getByRole('button', { name: 'Close the chat with zana' })).toBeInTheDocument();
+    const chat = await docked(container);
+    expect(within(chat).getByRole('button', { name: 'Close the chat with zana' })).toBeInTheDocument();
   });
 
   it('docks a group the same way it docks a person', async () => {
@@ -246,9 +254,8 @@ describe('SocialRail', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Message Amedspor' }));
 
-    const dock = container.querySelector('.rail-chat');
-    expect(dock).not.toBeNull();
-    expect(within(dock as HTMLElement).getByRole('button', { name: /Close the chat with/ })).toBeInTheDocument();
+    const dock = await docked(container);
+    expect(within(dock).getByRole('button', { name: /Close the chat with/ })).toBeInTheDocument();
   });
 
   /**
@@ -285,7 +292,11 @@ describe('SocialRail', () => {
 
     await screen.findByText('zana');
     await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
+    await docked(container);
     await userEvent.click(screen.getByRole('button', { name: 'Message Amedspor' }));
+    // The group's conversation takes the person's place once its code is in.
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Close the chat with zana' })).toBeNull());
+    await docked(container);
 
     // Both anchor to the same edge, so two would overlap.
     expect(container.querySelectorAll('.rail-chat')).toHaveLength(1);
@@ -299,7 +310,7 @@ describe('SocialRail', () => {
     await screen.findByText('zana');
     await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
     // Anchored to the rail's full width at first.
-    expect(container.querySelector('.rail-chat')).not.toHaveClass('is-tight');
+    expect(await docked(container)).not.toHaveClass('is-tight');
 
     await userEvent.click(screen.getByRole('button', { name: /Collapse the social panel/ }));
 
@@ -327,7 +338,7 @@ describe('SocialRail', () => {
     await screen.findByText('zana');
     await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
 
-    expect(container.querySelector('.rail-chat')).not.toBeNull();
+    await docked(container);
     // An empty thread opens on who it is with and a first hello to send.
     expect(await screen.findByText('This is the start of your conversation with zana.')).toBeInTheDocument();
   });
@@ -339,7 +350,7 @@ describe('SocialRail', () => {
 
     await screen.findByText('zana');
     await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Close the chat with zana' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Close the chat with zana' }));
 
     expect(container.querySelector('.rail-chat')).toBeNull();
   });

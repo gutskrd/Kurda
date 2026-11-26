@@ -722,7 +722,8 @@ button.quests-card:active {
 }
 /* The words under the chest, shut ("Tap to open") or open ("+40 Zêr"), take the same space: the taller of the two. */
 .chest-hint,
-.chest-reward {
+.chest-reward,
+.chest-members {
   min-height: 3.4rem;
   align-content: center;
 }
@@ -809,6 +810,17 @@ button.quests-card:active {
   text-shadow:
     0 3px 0 rgba(0, 0, 0, 0.18),
     0 0 26px rgba(255, 226, 120, 0.6);
+}
+/* For someone who does not earn Zêr: one quiet line where the reward would land. */
+.chest-members {
+  display: grid;
+  max-width: 34ch;
+  margin: 0;
+  color: #ffffff;
+  font-size: var(--text);
+  font-weight: 700;
+  text-align: center;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
 }
 .chest-coin {
   display: grid;

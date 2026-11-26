@@ -10,7 +10,7 @@ import type { AdminTotpService } from './totp-service.js';
  * silently when someone forgets it.
  *
  * A route is staff surface when its guard requires a role: `requireRoles` and `requireAdmin` mark themselves, the route
- * table is read once at boot, and staff routes anywhere in the app are covered (the shop, gem pack and tournament
+ * table is read once at boot, and staff routes anywhere in the app are covered (the shop, Zêr pack and tournament
  * writes live outside /admin). The /admin prefix is honoured on top, so nothing reaching the panel another way falls
  * through.
  *

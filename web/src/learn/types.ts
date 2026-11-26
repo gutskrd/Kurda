@@ -2,7 +2,7 @@
  * What the learning endpoints send (api/src/coursemap/service.ts, content/sessions.ts, practice/service.ts); session
  * play shapes come from @kurda/shared, as on the phone.
  */
-import type { DeliveredExercise, GradeResult, QuestStep, RecentDay, RecordedAnswer, Verdict } from '@kurda/shared';
+import type { DeliveredExercise, GradeResult, LessonKind, QuestStep, RecentDay, RecordedAnswer, Verdict } from '@kurda/shared';
 
 /** GET /courses. */
 export interface CourseSummary {
@@ -23,6 +23,8 @@ export interface LessonNode {
   completed: boolean;
   /** Times finished, replays included (absent from an older server). */
   times?: number;
+  /** What the lesson is: new words, a conversation, or practice (absent from an older server). */
+  kind?: LessonKind;
 }
 
 export interface SkillNode {

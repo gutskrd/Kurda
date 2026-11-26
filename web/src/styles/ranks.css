@@ -892,7 +892,8 @@
 /*
  * Rankings: what it ranks by, then for XP this week or all time, your league as one card, and the board. The two
  * switches are real radios stretched over their segments (ui/BoardSwitch), so the arrow keys work and the whole
- * segment is the target. Nothing moves.
+ * segment is the target. Each draws its chosen ground as an element of its own, which slides to the option chosen, as
+ * the phone's capsule does (lib/motion.ts useSlidingCapsule).
  */
 .rankings-page {
   padding-top: 4px;
@@ -975,6 +976,34 @@
   .rank-by-btn {
     min-height: 44px;
   }
+}
+/*
+ * The chosen ground: one per switch, placed under the chosen option and slid to the next (lib/motion.ts
+ * useSlidingCapsule). It sits under the words, so the option itself is clear while it is chosen.
+ */
+.rank-by,
+.rank-span {
+  position: relative;
+  isolation: isolate;
+}
+.rank-by .rank-by-btn.is-active,
+.rank-span .rank-span-btn.is-on {
+  background: transparent;
+  box-shadow: none;
+}
+.seg-capsule {
+  position: absolute;
+  z-index: -1;
+  border-radius: var(--r-pill);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+.rank-by .seg-capsule {
+  background: var(--chosen-fill);
+}
+.rank-span .seg-capsule {
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-control);
 }
 /* This week or all time: the same radios a size down, the chosen one raised on the track rather than filled. */
 .rank-span {
@@ -1100,7 +1129,7 @@ a.league-card-mini:focus-visible {
 .league-card-mini-go {
   color: var(--ink-3);
 }
-/* a Zêr or Gewher amount on a board: the currency's picture, then the number */
+/* a Zêr amount on a board: the coin, then the number */
 .rank-amount {
   display: inline-flex;
   align-items: center;

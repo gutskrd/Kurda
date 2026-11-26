@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { ACCENT } from '@kurda/shared';
 import { escapeHtml } from './escape';
 import { HAWAR, SORANI, alphabetOf, compareKeys } from './ferheng-alphabet';
 import { BAR_KEYS } from './ferheng-chrome';
@@ -559,6 +560,15 @@ describe('what the dictionary copies from the app', () => {
       if (theirs !== undefined && theirs !== value) wrong.push(`${name}: ${value} ≠ ${theirs}`);
     }
     expect(wrong).toEqual([]);
+  });
+
+  // The pages are dark, so they carry the one accent as the app draws it by night.
+  it('wears the one accent, as the app does by night', () => {
+    const mine = tokensOf(STYLE);
+    const night = ACCENT.dark;
+    expect([mine.get('--accent'), mine.get('--accent-lip'), mine.get('--accent-ink'), mine.get('--accent-text')]).toEqual(
+      [night.fill, night.lip, night.ink, night.text].map((c) => c.toLowerCase()),
+    );
   });
 
   /** The bar is not a column of text, so it does not take the content column's cap. */

@@ -53,13 +53,18 @@ function open({ index = 0, chats = [] as number[], groups = [] as number[], requ
 }
 
 describe('the tab bar', () => {
-  it('shows the four tabs in order, each an icon alone and named for a screen reader', async () => {
+  it('shows the four tabs in order, each a glyph over its name, named once for a screen reader', async () => {
     open();
     const bar = await screen.findByRole('tablist');
     const tabs = within(bar).getAllByRole('tab');
     expect(tabs.map((t) => t.getAttribute('aria-label'))).toEqual(['Home', 'Learn', 'Messages', 'Profile']);
-    // No word is drawn under a glyph.
-    for (const word of ['Home', 'Learn', 'Messages', 'Profile']) expect(within(bar).queryByText(word)).toBeNull();
+    // Each name is drawn under its glyph, at rest and chosen, and hidden from screen readers, which hear the tab's name.
+    tabs.forEach((tab, i) => {
+      const word = ['Home', 'Learn', 'Messages', 'Profile'][i]!;
+      const drawn = within(tab).getAllByText(word);
+      expect(drawn.length).toBeGreaterThan(0);
+      for (const label of drawn) expect(label.closest('[aria-hidden="true"]')).not.toBeNull();
+    });
   });
 
   /* Search opens from the magnifier at the top of every tab, so the bar holds only the four places. */

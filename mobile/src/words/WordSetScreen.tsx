@@ -221,7 +221,7 @@ function WordTile({
   const said = t('words.tileLabel', { word: wordIn(word, dialect), meaning: meaning.text });
   const label = today ? t('words.tileLabel', { word: said, meaning: glossIn(RELATIVE_DAYS.today, locale) }) : said;
   const arabic = dialect === 'ckb';
-  // The tick sits where the script's line starts, in the violet for "on" (green is for a right answer).
+  // The tick sits where the script's line starts, in the ink for "on" (green is for a right answer).
   const tick = seen ? <Icon name="check" size={12} color={colors.primary} style={[styles.corner, arabic ? styles.right : styles.left]} /> : null;
   const press = { onPress, accessibilityRole: 'button' as const, accessibilityLabel: label };
 

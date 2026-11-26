@@ -1,11 +1,12 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 
-export type Currency = 'zer' | 'gems';
+/** Zêr is the only currency; the ledger keeps the retired Gewher's history (migration 1751000830000), nothing writes it. */
+export type Currency = 'zer';
 
 export class InsufficientFundsError extends AppError {
-  constructor(currency: Currency) {
-    super('INSUFFICIENT_FUNDS', 402, `not enough ${currency === 'zer' ? 'Zêr' : 'Gems'}`);
+  constructor() {
+    super('INSUFFICIENT_FUNDS', 402, 'not enough Zêr');
   }
 }
 
@@ -30,7 +31,6 @@ export interface OperationResult {
 
 export interface Balances {
   zer: number;
-  gems: number;
 }
 
 /** The most one ledger row may move, the dearest shop price; the database holds the same bound (migration 1751000214000). */
@@ -136,7 +136,7 @@ export class WalletService {
         const seen = await client.query(`SELECT 1 FROM wallet_ledger WHERE idempotency_key = $1`, [op.idempotencyKey]);
         if ((seen.rowCount ?? 0) > 0) return { balance: current, duplicate: true };
       }
-      throw new InsufficientFundsError(op.currency);
+      throw new InsufficientFundsError();
     }
     // The ledger row and balance in one statement: the balance moves only when the row was inserted (a used key inserts
     // nothing; no key never conflicts).
@@ -158,13 +158,11 @@ export class WalletService {
   }
 
   async balances(userId: string): Promise<Balances> {
-    const rows = await this.pool.query<{ currency: Currency; balance: number }>(
-      `SELECT currency, balance FROM wallet_balances WHERE user_id = $1`,
+    const rows = await this.pool.query<{ balance: number }>(
+      `SELECT balance FROM wallet_balances WHERE user_id = $1 AND currency = 'zer'`,
       [userId],
     );
-    const result: Balances = { zer: 0, gems: 0 };
-    for (const row of rows.rows) result[row.currency] = row.balance;
-    return result;
+    return { zer: rows.rows[0]?.balance ?? 0 };
   }
 
   async history(userId: string, limit = 50) {
@@ -176,7 +174,7 @@ export class WalletService {
       created_at: Date;
     }>(
       `SELECT currency, amount, reason, ref_id, created_at
-       FROM wallet_ledger WHERE user_id = $1
+       FROM wallet_ledger WHERE user_id = $1 AND currency = 'zer'
        ORDER BY created_at DESC LIMIT $2`,
       [userId, Math.min(limit, 200)],
     );

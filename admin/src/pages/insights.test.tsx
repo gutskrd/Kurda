@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The pages that show numbers and settings — Analytics, Economy, Gem rules,
+ * The pages that show numbers and settings — Analytics, Economy, Earn rules,
  * My security, the dictionary import: what each shows, what it says when it
  * cannot load (never zeros or "nothing here"), and what it asks before acting.
  */
@@ -16,7 +16,7 @@ import { renderUi } from '../test/render';
 import { Analytics, Bars } from './Analytics';
 import { DictionaryImport } from './DictionaryImport';
 import { Economy } from './Economy';
-import { GemRules } from './GemRules';
+import { EarnRules } from './EarnRules';
 import { Security } from './Security';
 
 afterEach(() => {
@@ -157,8 +157,7 @@ describe('Analytics', () => {
 });
 
 describe('Economy', () => {
-  it('shows what is in circulation and whether it is drifting, for each currency', async () => {
-    const user = userEvent.setup();
+  it('shows the Zêr in circulation and whether it is drifting', async () => {
     const { calls } = fakeApi(
       on('GET', /^\/admin\/economy\/supply/, json({ points: [{ day: '2026-10-12', faucet: 900, sink: 300, net: 600, supply: 12000 }] })),
       on('GET', /^\/admin\/economy\/drift/, json({ currency: 'zer', windowDays: 7, faucet: 900, sink: 300, ratio: 3, target: 1, drifting: true })),
@@ -166,8 +165,9 @@ describe('Economy', () => {
     renderUi(<Economy />);
     expect(await screen.findByText('Drifting')).toBeInTheDocument();
     expect((screen.getAllByText('Zêr in circulation')[0]!.closest('.stat') as HTMLElement).textContent).toContain('12,000');
-    await user.click(screen.getByRole('tab', { name: 'Gems' }));
-    await waitFor(() => expect(calls.some((c) => c.path === '/admin/economy/supply?currency=gems&days=30')).toBe(true));
+    expect(calls.some((c) => c.path === '/admin/economy/supply?currency=zer&days=30')).toBe(true);
+    // One currency: nothing to switch between.
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
   it('checks every balance against its ledger when asked, and lists any that differ', async () => {
@@ -183,7 +183,7 @@ describe('Economy', () => {
                 checkedAt: '2026-11-05T00:00:00.000Z',
                 checked: 40,
                 mismatched: 1,
-                mismatches: [{ userId: '11111111-2222-3333-4444-555555555555', currency: 'gems', balance: 105, ledgerSum: 100 }],
+                mismatches: [{ userId: '11111111-2222-3333-4444-555555555555', currency: 'zer', balance: 105, ledgerSum: 100 }],
               }
             : { checkedAt: '2026-11-05T00:00:00.000Z', checked: 40, mismatched: 0, mismatches: [] },
         ),
@@ -214,35 +214,48 @@ describe('Economy', () => {
   });
 });
 
-describe('Gem rules', () => {
-  const rule = { key: 'lesson_complete', amount: 5, dailyCap: 50, cooldownSeconds: 0, active: true };
+describe('Earn rules', () => {
+  const rule = { key: 'league_promotion', amount: 50, dailyCap: 50, cooldownSeconds: 0, active: true };
 
   it('asks before a change that applies to everyone, and sends what was typed', async () => {
     const user = userEvent.setup();
-    const { calls } = fakeApi(on('GET', '/admin/gem-rules', json({ rules: [rule] })), on('PUT', '/admin/gem-rules/lesson_complete', json({ ok: true })));
-    renderUi(<GemRules />);
+    const { calls } = fakeApi(on('GET', '/admin/earn-rules', json({ rules: [rule] })), on('PUT', '/admin/earn-rules/league_promotion', json({ ok: true })));
+    renderUi(<EarnRules />);
     await user.click(await screen.findByRole('button', { name: 'Edit' }));
-    const amount = screen.getByLabelText(/^gems each time/i);
+    const amount = screen.getByLabelText(/^zêr each time/i);
     await user.clear(amount);
     await user.type(amount, '8');
     await user.clear(screen.getByLabelText(/^most a day/i));
     await user.click(screen.getByRole('button', { name: 'Save' }));
-    const dialog = await screen.findByRole('alertdialog', { name: 'Change what lesson_complete pays?' });
-    expect(dialog).toHaveTextContent('8 Gems, no daily limit');
+    const dialog = await screen.findByRole('alertdialog', { name: 'Change what league_promotion pays?' });
+    expect(dialog).toHaveTextContent('8 Zêr, no daily limit');
     await user.click(within(dialog).getByRole('button', { name: 'Save the rule' }));
-    await waitFor(() => expect(writes(calls, '/admin/gem-rules/lesson_complete')[0]?.body).toEqual({ amount: 8, dailyCap: null, cooldownSeconds: 0, active: true }));
-    expect(await screen.findByText('Saved the rule for lesson_complete.')).toBeInTheDocument();
+    await waitFor(() => expect(writes(calls, '/admin/earn-rules/league_promotion')[0]?.body).toEqual({ amount: 8, dailyCap: null, cooldownSeconds: 0, active: true }));
+    expect(await screen.findByText('Saved the rule for league_promotion.')).toBeInTheDocument();
+  });
+
+  it('says a raise waits in Approvals for a second admin', async () => {
+    const user = userEvent.setup();
+    fakeApi(on('GET', '/admin/earn-rules', json({ rules: [rule] })), on('PUT', '/admin/earn-rules/league_promotion', json({ status: 'pending', id: 'c-1' }, 202)));
+    renderUi(<EarnRules />);
+    await user.click(await screen.findByRole('button', { name: 'Edit' }));
+    const amount = screen.getByLabelText(/^zêr each time/i);
+    await user.clear(amount);
+    await user.type(amount, '80');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Save the rule' }));
+    expect(await screen.findByText('The change to league_promotion pays more, so it waits in Approvals for a second admin.')).toBeInTheDocument();
   });
 
   it('refuses an amount out of range before asking', async () => {
     const user = userEvent.setup();
-    const { calls } = fakeApi(on('GET', '/admin/gem-rules', json({ rules: [rule] })));
-    renderUi(<GemRules />);
+    const { calls } = fakeApi(on('GET', '/admin/earn-rules', json({ rules: [rule] })));
+    renderUi(<EarnRules />);
     await user.click(await screen.findByRole('button', { name: 'Edit' }));
-    await user.clear(screen.getByLabelText(/^gems each time/i));
-    await user.type(screen.getByLabelText(/^gems each time/i), '0');
+    await user.clear(screen.getByLabelText(/^zêr each time/i));
+    await user.type(screen.getByLabelText(/^zêr each time/i), '0');
     await user.click(screen.getByRole('button', { name: 'Save' }));
-    expect(screen.getByText('Gems is a whole number from 1 to 100,000.')).toBeInTheDocument();
+    expect(screen.getByText('Zêr is a whole number from 1 to 100,000.')).toBeInTheDocument();
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(calls.filter((c) => c.method === 'PUT')).toHaveLength(0);
   });

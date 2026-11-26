@@ -225,9 +225,9 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
       const joinable = item.data.kind === 'play_invite' && actor && isPlayGame(item.data.game);
       const text = joinable
         ? { title: t('play.banner.invited', { name: actor.name, game: t(GAME_NAME_KEY[item.data.game as keyof typeof GAME_NAME_KEY]) }), body: '' }
-        : item.data.kind === 'gift' && actor
-          ? // A gift from somebody the app can name says who it is from.
-            { title: t('gift.banner.body', { name: actor.name }), body: notificationText(item, t, locale).body }
+        : item.data.kind === 'gift'
+          ? // A gift says who it is from, or that a member sent it when the server no longer names them to this reader.
+            { title: actor ? t('gift.banner.body', { name: actor.name }) : t('gift.fromMember'), body: notificationText(item, t, locale).body }
           : notificationText(item, t, locale);
       const time = noticeWhen(item.createdAt, section.key, t, locale);
       // Join only while there is a game to join, Open only on a gift not yet opened.

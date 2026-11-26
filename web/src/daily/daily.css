@@ -6,11 +6,11 @@
   --daily-gold-ink: #3a2400;
   /* The chart's two weeks: this one in gold, last one in grey; both 3:1 or more on the sheet. */
   --chart-now: #e8b739;
-  --chart-then: #6f6c84;
+  --chart-then: #857a6f;
 }
 :root[data-theme='light'] .daily-sheet {
   --chart-now: #b98300;
-  --chart-then: #8f8da3;
+  --chart-then: #958b80;
 }
 .daily {
   display: grid;
@@ -270,7 +270,6 @@
   background: var(--gold);
   color: var(--daily-gold-ink, #3a2400);
 }
-.daily-zer-plus,
 .daily-zer-problem {
   grid-area: note;
   display: flex;
@@ -282,6 +281,12 @@
 }
 .daily-zer-problem {
   color: var(--danger);
+}
+.daily-plus-pitch {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text);
+  text-align: center;
 }
 
 /* ---- a row that opens something: the insights, the latest badge --------------------------------------------------- */
@@ -376,16 +381,27 @@
 .streak-repair .btn {
   gap: 6px;
 }
-.streak-repair-short {
-  display: grid;
-  gap: 2px;
-}
-.streak-repair-gems {
+.streak-repair-progress {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin: 0;
-  font-weight: 700;
+  color: var(--ink-3);
+  font-size: var(--text);
+}
+.streak-repair-marks {
+  display: inline-flex;
+  gap: 6px;
+}
+.streak-repair-mark {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--ink-3);
+  border-radius: var(--r-pill);
+}
+.streak-repair-mark.is-done {
+  border-color: var(--ink);
+  background: var(--ink);
 }
 .streak-repair-hint {
   margin: 0;

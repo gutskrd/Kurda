@@ -1,7 +1,8 @@
 import type pg from 'pg';
-import { TODAY_DAYS, addDays, firstDayOfWeek, type TodayBadge, type TodayDay, type TodayWeek } from '@kurda/shared';
-import { isPremiumActive } from '../cosmetics/access.js';
+import { TODAY_DAYS, addDays, firstDayOfWeek, membersBoxMonth, type TodayBadge, type TodayDay, type TodayWeek } from '@kurda/shared';
+import { isPremiumActive, memberZerUntilSql } from '../cosmetics/access.js';
 import { dailyRewardView, type DailyRewardView } from '../rewards/daily-cycle.js';
+import { MembersBoxService } from '../plus/members-box.js';
 import { StreakService, type StreakSummary } from './service.js';
 import { answeredTodaySql, countsAsLearningSql, localDate, safeTimeZone } from './streak-logic.js';
 
@@ -19,6 +20,8 @@ interface AccountRow {
   badge_key: string | null;
   badge_tier: number | null;
   badge_at: Date | null;
+  /** this month's members' box has been given */
+  boxed: boolean;
 }
 
 interface DayRow {
@@ -31,21 +34,24 @@ interface DayRow {
 }
 
 /**
- * The daily view in three statements after the session read: the account with its Zêr cycle and latest badge, the
- * streak as GET /me settles it, and the fourteen days. Days are the learner's calendar days, bounded by their local
- * midnights, so every count is credited to the day it happened where they live. The days count what the streak counts:
- * lessons worked through (`countsAsLearning`), practice that paid XP and learning games, with the XP as the daily goal
- * sums it.
+ * The daily view in three statements after the session read: the account with its Zêr cycle, latest badge and whether
+ * this month's members' box was given, the streak as GET /me settles it, and the fourteen days. It is the first thing the
+ * apps read on a visit, so a member's box for a new month is given here (plus/members-box.ts), once a month. Days are
+ * the learner's calendar days, bounded by their local midnights, so every count is credited to the day it happened
+ * where they live. The days count what the streak counts: lessons worked through (`countsAsLearning`), practice that
+ * paid XP and learning games, with the XP as the daily goal sums it.
  */
 export class TodayService {
   constructor(
     private readonly pool: pg.Pool,
     private readonly streaks: StreakService = new StreakService(pool),
+    private readonly boxes: MembersBoxService = new MembersBoxService(pool),
   ) {}
 
   async view(userId: string, startsOn: number, now: Date = new Date()): Promise<TodayView> {
     const account = await this.pool.query<AccountRow>(
-      `SELECT u.timezone, u.premium_until, d.cycle_day, d.last_claim_on, b.badge_key, b.tier AS badge_tier, b.at AS badge_at
+      `SELECT u.timezone, ${memberZerUntilSql('u')} AS premium_until, d.cycle_day, d.last_claim_on, b.badge_key, b.tier AS badge_tier, b.at AS badge_at,
+              EXISTS (SELECT 1 FROM members_boxes mb WHERE mb.user_id = u.id AND mb.month = $2::date) AS boxed
          FROM users u
          LEFT JOIN daily_rewards d ON d.user_id = u.id
          LEFT JOIN LATERAL (
@@ -56,9 +62,11 @@ export class TodayService {
             LIMIT 1
          ) b ON true
         WHERE u.id = $1`,
-      [userId],
+      [userId, `${membersBoxMonth(now)}-01`],
     );
     const row = account.rows[0];
+    const member = isPremiumActive(row?.premium_until ?? null, now);
+    if (member && !row?.boxed) await this.boxes.ensure(userId, now);
     const tz = safeTimeZone(row?.timezone);
     const today = localDate(now, tz);
     const first = addDays(firstDayOfWeek(today, startsOn), -7);
@@ -75,7 +83,7 @@ export class TodayService {
         { cycleDay: row?.cycle_day ?? 0, lastClaimOn: row?.last_claim_on ?? null },
         today,
         lastLearnedOn === today,
-        isPremiumActive(row?.premium_until ?? null, now),
+        member,
       ),
     };
   }

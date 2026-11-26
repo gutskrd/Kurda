@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth } from '../plugins/auth.js';
 import { RhymeService } from './rhyme-service.js';
 import { RHYME_MIN_PROMPTS } from './rhyme-words.js';
@@ -48,7 +49,7 @@ export function registerRhymeRoutes(
   app.post(
     '/rhyme/training/:id/guesses',
     {
-      schema: { params: z.object({ id: z.uuid() }), body: guessBody },
+      schema: { params: z.object({ id: lowerUuid() }), body: guessBody },
       config: { rateLimit: { max: 60, windowMs: 60_000 } },
       preHandler: requireAuth,
     },
@@ -67,7 +68,7 @@ export function registerRhymeRoutes(
   app.post(
     '/rhyme/training/:id/end',
     {
-      schema: { params: z.object({ id: z.uuid() }) },
+      schema: { params: z.object({ id: lowerUuid() }) },
       config: { skipValidation: true },
       preHandler: requireAuth,
     },

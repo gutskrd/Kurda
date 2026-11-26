@@ -1,0 +1,464 @@
+/*
+ * The badge row beside a profile's handle and the collection sheet it opens (profile/BadgeRow.tsx, CollectionSheet.tsx):
+ * neutral surfaces, hairline borders and the shared corners, in both themes and both directions.
+ */
+
+/* ---- the badge row: a chip holding small pictures and "+N" ---- */
+/* Taller than a plain chip, so the pictures inside are big enough to tell apart at a glance; a box with the app's usual
+ * corners rather than a round chip, so it sits with the cards and fields around it. */
+.bdg-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  border-radius: var(--r-md);
+  max-width: 100%;
+  padding-inline: 8px 14px;
+  font-variant-numeric: tabular-nums;
+}
+.bdg-pill-art {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.bdg-pill-icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  line-height: 0;
+}
+.bdg-pill-more {
+  color: var(--ink-2);
+}
+.bdg-pill.is-quiet {
+  padding: 0 14px;
+  color: var(--ink-3);
+}
+.bdg-pill.is-quiet svg {
+  flex: none;
+}
+.bdg-pill:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/*
+ * ---- the sheet: a solid panel, so the button pinned at its foot sits on the same colour, and one height on every tab,
+ * so switching tabs never moves it; what is left over is calm space ----
+ */
+.sheet-panel.coll-sheet {
+  display: flex;
+  flex-direction: column;
+  height: min(760px, calc(100dvh - 48px));
+  background: var(--surface-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+@media (max-width: 640px) {
+  .sheet-panel.coll-sheet {
+    height: 92dvh;
+  }
+}
+.coll {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  gap: 16px;
+}
+.coll-title {
+  margin: 0;
+  padding-inline-end: 44px;
+  font-size: var(--text-title);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.coll-tabs .seg {
+  display: flex;
+  width: 100%;
+}
+.coll-tabs .seg-btn {
+  flex: 1 1 0;
+  text-align: center;
+}
+.coll-body {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: 22px;
+}
+.coll-section {
+  display: grid;
+  gap: 10px;
+}
+.coll-heading {
+  margin: 0;
+  font-size: var(--text);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.coll-muted,
+.coll-empty {
+  margin: 0;
+  color: var(--ink-3);
+}
+.coll-none {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+}
+.coll-foot {
+  position: sticky;
+  bottom: calc(-20px - env(safe-area-inset-bottom));
+  margin-top: auto;
+  padding-block: 12px calc(20px + env(safe-area-inset-bottom));
+  margin-bottom: calc(-20px - env(safe-area-inset-bottom));
+  background: var(--surface-solid);
+}
+@media (min-width: 641px) {
+  .coll-foot {
+    bottom: -24px;
+    padding-block: 12px 24px;
+    margin-bottom: -24px;
+  }
+}
+
+/* ---- the grids: square tiles, four across a phone and five on a wider screen ---- */
+.coll-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 641px) {
+  .coll-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+.coll-grid > li {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.coll-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  overflow: hidden;
+}
+button.coll-tile {
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+button.coll-tile:hover {
+  background: var(--surface-3);
+}
+.coll-tile:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.coll-tile.is-item img,
+.coll-tile.is-item video {
+  width: 68%;
+  height: 68%;
+  object-fit: contain;
+}
+.coll-tile.is-item > svg {
+  color: var(--ink-3);
+}
+/* a tile whose foot holds the giver's face and the count: the picture smaller and lifted, so they sit beside it */
+.coll-tile.has-foot img,
+.coll-tile.has-foot video {
+  width: 56%;
+  height: 56%;
+  margin-bottom: 12px;
+}
+.coll-tile.has-foot > svg {
+  margin-bottom: 12px;
+}
+/* what is still to earn is dimmed and lifted a little, with how far along it is as a line across its foot */
+.coll-tile.is-locked .art {
+  margin-bottom: 8px;
+  opacity: 0.6;
+}
+.coll-bar {
+  position: absolute;
+  inset-inline: 16%;
+  bottom: 10px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--border-strong);
+}
+.coll-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ink-2);
+}
+.coll-bar.is-wide {
+  position: static;
+  width: 96px;
+}
+/* the icon worn now: ringed in ink and named under its tile */
+.coll-tile.is-on {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.coll-worn {
+  overflow: hidden;
+  color: var(--ink-2);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* who gave the worn icon, under its name: two short lines at most in a tile's width */
+.coll-worn-from {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  color: var(--ink-3);
+  text-align: center;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+/* how many of one gift, at the tile's far foot */
+.coll-count {
+  position: absolute;
+  bottom: 5px;
+  inset-inline-end: 5px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-solid);
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- the league and the tree, side by side over the badges ---- */
+.coll-cards {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 8px;
+}
+@media (max-width: 340px) {
+  .coll-cards {
+    grid-auto-flow: row;
+  }
+}
+.coll-card {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 8px;
+  min-height: 64px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+}
+:is(a, button).coll-card {
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+:is(a, button).coll-card:hover {
+  background: var(--surface-3);
+  text-decoration: none;
+}
+.coll-card:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.coll-card-art {
+  line-height: 0;
+}
+.coll-card-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.coll-card-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.coll-card-line {
+  color: var(--ink-3);
+}
+
+/* ---- a step in place of the tabs: the way back, then one badge, tree or gift ---- */
+.coll-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  margin: -8px 0 -8px -6px;
+  padding: 0 10px 0 4px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.coll-back:hover {
+  background: var(--surface-2);
+}
+.coll-back:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.coll-back-icon {
+  transform: scaleX(-1);
+}
+[dir='rtl'] .coll-back {
+  margin: -8px -6px -8px 0;
+  padding: 0 4px 0 10px;
+}
+[dir='rtl'] .coll-back-icon {
+  transform: none;
+}
+.coll-detail {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.coll-detail-art {
+  line-height: 0;
+}
+.coll-detail-name {
+  margin: 0;
+  font-size: var(--text-title);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.coll-detail-desc {
+  max-width: 36ch;
+  margin: 0;
+}
+.coll-facts {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-2);
+}
+.coll-facts > li {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.coll-facts svg {
+  flex: none;
+  color: var(--ink-3);
+}
+.coll-gift-art {
+  width: 96px;
+}
+.coll-people-list {
+  display: grid;
+  justify-self: stretch;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: start;
+}
+.coll-people-list > li + li {
+  border-top: 1px solid var(--separator);
+}
+.coll-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  color: inherit;
+  text-decoration: none;
+}
+a.coll-person:hover {
+  text-decoration: none;
+}
+a.coll-person:hover .coll-person-name {
+  text-decoration: underline;
+}
+a.coll-person:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+.coll-person .friend-avatar,
+.coll-person-gift {
+  flex: none;
+  width: 36px;
+  height: 36px;
+}
+.coll-person-gift {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink-3);
+}
+.coll-person-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.coll-person-when {
+  flex: none;
+  color: var(--ink-3);
+}
+/* the newest giver's face at the tile's near foot, opposite the count */
+.coll-giver {
+  position: absolute;
+  bottom: 5px;
+  inset-inline-start: 5px;
+  line-height: 0;
+}
+.coll-giver .friend-avatar {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--surface-solid);
+}
+.coll-customise {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button.coll-tile,
+  :is(a, button).coll-card {
+    transition: none;
+  }
+}

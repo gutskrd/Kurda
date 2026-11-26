@@ -1,11 +1,11 @@
 import type pg from 'pg';
 
 /**
- * A learner's progress for their data export: XP and what counted, league tier and weeks, streaks and repairs,
- * badges, old achievements, the rated games behind ranked badges, archived league seasons, shelved stories and
- * reading progress, saved words, learning-game rounds and ladders, riddles, and the village's levels. Stories and
- * words are named by what the learner saw (slug, title, headword, dialect), not row ids. Only their own rows;
- * ratings and Game Ranks seasons are the export's `gameRanks` (ranks/gdpr.ts).
+ * A learner's progress for their data export: XP and what counted, league tier and weeks, streaks, repairs and
+ * milestones, their Zêr and its ledger, members' boxes, the gift bag and their gift limit, badges, old achievements, the rated games behind ranked badges,
+ * archived league seasons, shelved stories and reading progress, saved words, learning-game rounds and ladders, riddles,
+ * and the village's levels. Stories and words are named by what the learner saw (slug, title, headword, dialect), not
+ * row ids. Only their own rows; ratings and Game Ranks seasons are the export's `gameRanks` (ranks/gdpr.ts).
  */
 type Executor = Pick<pg.Pool, 'query'>;
 
@@ -18,7 +18,7 @@ export async function exportProgress(db: Executor, userId: string): Promise<Reco
     league: (await q(`SELECT tier, peak_tier, season_key, updated_at FROM user_league WHERE user_id = $1`))[0] ?? null,
     // Each week as they raced it: tier, place, XP and result, not who else was there.
     leagueWeeks: await q(
-      `SELECT week_key, mode, tier, tier_after, outcome, rank, group_size, weekly_xp, goal_xp, goal_met, trophy, gems
+      `SELECT week_key, mode, tier, tier_after, outcome, rank, group_size, weekly_xp, goal_xp, goal_met, trophy, zer
          FROM league_weeks WHERE user_id = $1 ORDER BY week_key`,
     ),
     leagueMemberships: await q(
@@ -32,10 +32,30 @@ export async function exportProgress(db: Executor, userId: string): Promise<Reco
              FROM user_streaks WHERE user_id = $1`,
         )
       )[0] ?? null,
-    // Each streak restored after it ended: which, how long, the cost and when.
+    // Each streak restored after it ended: which, how long, how (a free restore or won back by learning) and when.
     streakRepairs: await q(
-      `SELECT ended_last_active_on, days, cost_gems, free, repaired_on, created_at FROM streak_repairs WHERE user_id = $1 ORDER BY created_at`,
+      `SELECT ended_last_active_on, days, cost, free, won_back, repaired_on, created_at FROM streak_repairs WHERE user_id = $1 ORDER BY created_at`,
     ),
+    // The streak milestones that paid, and what.
+    streakMilestones: await q(`SELECT days, paid_on, zer FROM streak_milestones WHERE user_id = $1 ORDER BY paid_on, days`),
+    // Their Zêr, and every movement of it, the retired Gewher's history included.
+    wallet: {
+      balance: (await q(`SELECT balance FROM wallet_balances WHERE user_id = $1 AND currency = 'zer'`))[0]?.balance ?? 0,
+      ledger: await q(`SELECT currency, amount, reason, created_at FROM wallet_ledger WHERE user_id = $1 ORDER BY created_at`),
+    },
+    // The bundles they bought: what each cost, what its new parts were worth, and every part as it was settled.
+    bundles: await q(`SELECT bundle_id, price, worth, parts, created_at FROM bundle_purchases WHERE user_id = $1 ORDER BY created_at`),
+    // A Hevalo+ member's monthly boxes: what each held, and the free gifts left.
+    membersBoxes: await q(
+      `SELECT to_char(month, 'YYYY-MM') AS month, zer, free_gifts, free_gifts_left, item_sku, granted_at FROM members_boxes WHERE user_id = $1 ORDER BY month`,
+    ),
+    // The gift bag: what it holds, every gift that landed in it and why, and their own limit on spending on gifts.
+    giftBag: {
+      items: await q(`SELECT sku, count, updated_at FROM gift_bag WHERE user_id = $1 ORDER BY sku`),
+      landed: await q(`SELECT sku, source, ref, quantity, granted_on, created_at FROM gift_bag_grants WHERE user_id = $1 ORDER BY created_at`),
+      spendingLimit:
+        (await q(`SELECT period, zer, pending_period, pending_zer, pending_from, updated_at FROM gift_spend_limits WHERE user_id = $1`))[0] ?? null,
+    },
     badges: await q(
       `SELECT badge_key, tier, progress, earned_at, tier_earned_at FROM user_badges WHERE user_id = $1 ORDER BY badge_key`,
     ),
@@ -50,7 +70,7 @@ export async function exportProgress(db: Executor, userId: string): Promise<Reco
     ),
     // The quarterly league archive the retired season job wrote; the history stays theirs.
     leagueSeasons: await q(
-      `SELECT season_key, peak_tier, final_rating, reward_gems, created_at FROM seasons WHERE user_id = $1 ORDER BY season_key`,
+      `SELECT season_key, peak_tier, final_rating, reward_zer, created_at FROM seasons WHERE user_id = $1 ORDER BY season_key`,
     ),
     storyBookmarks: await q(
       `SELECT s.slug, s.title, b.created_at FROM story_bookmarks b JOIN stories s ON s.id = b.story_id WHERE b.user_id = $1 ORDER BY b.created_at`,

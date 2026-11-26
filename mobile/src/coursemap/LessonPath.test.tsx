@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Animated } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -18,6 +18,7 @@ import { LessonPath, PinnedUnit, type UnitPlace } from './LessonPath';
 import { TONES } from './path';
 import { UnitRailSheet } from './PathWorld';
 import type { CourseMap, SkillNode } from './types';
+import { ICON_PATHS } from '../theme/icon-paths';
 
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => navigation.navigate.mockReset());
@@ -89,7 +90,7 @@ function client() {
 const button = (name: string) => screen.getByRole('button', { name });
 
 describe('the lesson path', () => {
-  it('draws every skill as a stop that says what it is, its round once it has a star, with review and each unit’s end', () => {
+  it('draws every skill as a stop that says what it is, its round once it has a sun, with review and each unit’s end', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={3} onFocus={() => undefined} />);
     // A course without levels is one unnamed section, and its first unit opens under its heading.
@@ -119,6 +120,47 @@ describe('the lesson path', () => {
     await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
     expect(button('Continue: Family')).toBeTruthy();
     expect(screen.queryByTestId('lp-callout-bobbing')).toBeNull();
+  });
+
+  it('speaks the course’s own dialect in the bubble over the stop to do now, whatever the reader’s language', () => {
+    client();
+    renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
+    expect(within(button('Continue: Family')).getByText('Berdewam bike!')).toBeTruthy();
+    cleanup();
+    renderWithProviders(<LessonPath map={MAP} dialect="sorani" due={0} onFocus={() => undefined} />);
+    expect(within(button('Continue: Family')).getByText('بەردەوام بە!')).toBeTruthy();
+  });
+
+  it('stands a little scene and a painted chest beside each unit’s road, out of the screen reader’s way', () => {
+    client();
+    renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
+    // Unit 1 has room for a chest beside its second stop, and Hevalo eats his apple beside its third, there being no
+    // fourth; he is not by the stop to do now there, so he is not drawn twice.
+    const scene = screen.getByTestId('lp-scene-apple');
+    expect(scene.getAttribute('aria-hidden')).toBe('true');
+    expect(screen.getAllByTestId('lp-chest').length).toBeGreaterThan(0);
+    for (const chest of screen.getAllByTestId('lp-chest')) expect(chest.getAttribute('aria-hidden')).toBe('true');
+    // A tap on him is his own moment, not a stop's card.
+    fireEvent.click(screen.getByTestId('lp-scene-apple-tap'));
+    expect(screen.queryByTestId('lp-card-go')).toBeNull();
+  });
+
+  it('sets its chapter’s vignette in the banner, numbers each milestone, and shows what the lesson up next is', () => {
+    client();
+    const talk: CourseMap = {
+      ...MAP,
+      units: MAP.units.map((u, i) => (i === 1 ? { ...u, skills: u.skills.map((sk, k) => (k === 0 ? { ...sk, lessons: (sk.lessons ?? []).map((l) => ({ ...l, kind: 'talk' as const })) } : sk)) } : u)),
+    };
+    renderWithProviders(<LessonPath map={talk} due={0} onFocus={() => undefined} />);
+    // The first chapter's banner: Hamo's blue gate, Hevalo peeking round it, out of the screen reader's way.
+    expect(screen.getByTestId('lp-chapter-art-door').getAttribute('aria-hidden')).toBe('true');
+    // Each chapter ends at its milestone, its number on its seal.
+    const [first, second] = screen.getAllByTestId('lp-node-trophy');
+    expect(within(first!).getByText('1')).toBeTruthy();
+    expect(within(second!).getByText('2')).toBeTruthy();
+    // The stop to do now wears the glyph of a conversation.
+    const now = button('Family, you are here, 1 of 3 lessons done');
+    expect(now.innerHTML).toContain(ICON_PATHS['lesson-talk'][0]);
   });
 
   it('starts the next lesson in one tap from the bubble over the current skill', () => {
@@ -318,7 +360,8 @@ describe('the lesson path', () => {
       expect(screen.getByRole('heading', { name: 'Chapter 2, Family & Food' })).toBeTruthy();
       expect(screen.queryByText('Basics')).toBeNull();
       cleanup();
-      return fades.mock.calls.map(([, config]) => config);
+      // The vignette's own gentle loop is decorative, not part of the turn.
+      return fades.mock.calls.map(([, config]) => config).filter((config) => config.isInteraction !== false);
     };
 
     patchReactNativeWeb({ reduceMotion: false });
@@ -397,7 +440,7 @@ describe('the path’s sections', () => {
     replayed.units[0]!.skills[0] = { ...replayed.units[0]!.skills[0]!, lessons: [lesson('a1', 'Lesson a1', true, 2), lesson('a2', 'Lesson a2', true, 1)] };
     view.rerender(<LessonPath map={replayed} due={0} onFocus={() => undefined} />);
     expect(button('Topic a, done, and strong, round 2 of 3, 1 of 2 lessons')).toBeTruthy();
-    expect(screen.getByTestId('lp-ring-gold')).toBeTruthy();
+    expect(screen.getByTestId('lp-bar')).toBeTruthy();
     // The learner's own section stays folded, to go back to.
     expect(screen.getByTestId('lp-section-2')).toBeTruthy();
     cleanup();
@@ -418,33 +461,40 @@ describe('the path’s sections', () => {
   });
 });
 
-describe('a topic’s ring and stars', () => {
-  it('rings the topic to do now with a piece for each lesson, and stands a star on a finished one’s coin for each round', () => {
+describe('a topic’s bar and wax seal', () => {
+  it('puts a bar over the topic to do now with a piece for each lesson, and makes a finished one a wax seal, a sun for each round', async () => {
     client();
     renderWithProviders(<LessonPath map={levelled()} due={0} onFocus={() => undefined} />);
-    // Only d, the topic to do now, wears its ring; c has three rounds on its coin instead.
-    expect(screen.getAllByTestId('lp-ring')).toHaveLength(1);
-    expect(screen.getByTestId('lp-stars-3')).toBeTruthy();
-    expect(button('Topic c, done, and strong, all 3 rounds done')).toBeTruthy();
-    // Its card shows its stars and that all three rounds are played.
-    fireEvent.click(button('Topic c, done, and strong, all 3 rounds done'));
-    expect(screen.getByTestId('lp-card-stars-3')).toBeTruthy();
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    // Only d, the topic to do now, wears its bar, its first piece filled; c, finished, is a wax seal instead, gold with
+    // its three suns.
+    expect(screen.getAllByTestId('lp-bar')).toHaveLength(1);
+    expect(screen.getAllByTestId('lp-bar-filled')).toHaveLength(1);
+    expect(screen.getAllByTestId(/^lp-wax/).length).toBeGreaterThan(0);
+    const c = button('Topic c, done, and strong, all 3 rounds done');
+    expect(within(c).getByTestId('lp-wax-3-gold')).toBeTruthy();
+    // Its card shows its three suns, that all three rounds are played, and its seal with one, two and three suns.
+    fireEvent.click(c);
+    expect(screen.getByTestId('lp-card-suns-3')).toBeTruthy();
     expect(screen.getByText('All 3 rounds done')).toBeTruthy();
+    expect(screen.getByTestId('lp-wax-legend')).toBeTruthy();
   });
 
-  it('says the round a gold topic is in, and plays it again from the lesson finished fewest times', () => {
+  it('says the round a finished topic is in, and plays it again from the lesson finished fewest times', async () => {
     client();
     renderWithProviders(<LessonPath map={levelled()} due={0} onFocus={() => undefined} />);
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
     fireEvent.click(button('Section 1, Starter, First words and short sentences, Section complete, One chapter'));
-    // Both its topics have their first star.
-    expect(screen.getAllByTestId('lp-stars-1')).toHaveLength(2);
+    // Both its topics are wax seals with their first sun, and neither wears a bar.
+    expect(screen.getAllByTestId('lp-wax-1')).toHaveLength(2);
+    expect(screen.queryByTestId('lp-bar')).toBeNull();
     fireEvent.click(button('Topic b, done, and strong, round 2 of 3, 1 of 2 lessons'));
     expect(screen.getByText('Round 2 of 3 · 1 of 2 lessons')).toBeTruthy();
     fireEvent.click(button('Practise again, +3–5 XP, played again'));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'b2', courseId: 'c2' });
   });
 
-  it('fills the ring and drops the star in on coming back from a lesson that made a round whole', async () => {
+  it('fills the bar, turns the stop into its wax seal with its first sun on coming back from a lesson that made a round whole', async () => {
     client();
     patchReactNativeWeb({ reduceMotion: false });
     const before = levelled('c-return');
@@ -454,12 +504,37 @@ describe('a topic’s ring and stars', () => {
     after.units[2]!.skills[0] = { ...after.units[2]!.skills[0]!, state: 'unlocked' };
     const view = renderWithProviders(<LessonPath map={before} due={0} onFocus={() => undefined} />);
     await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
-    expect(screen.queryByTestId('lp-ring-gold')).toBeNull();
+    expect(screen.queryByTestId('lp-wax-pressing')).toBeNull();
     view.rerender(<LessonPath map={after} due={0} onFocus={() => undefined} />);
-    expect(screen.getByTestId('lp-ring-gold')).toBeTruthy();
-    expect(screen.getByTestId('lp-star-earned')).toBeTruthy();
+    // Its bar fills and goes gold, and it is sealed, once, kept on the phone for next time.
+    expect(screen.getAllByTestId('lp-bar-gold').length).toBeGreaterThan(0);
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    const d = screen.getByRole('button', { name: /^Topic d, (?!you)/ });
+    // Its first sun pressed into the seal.
+    expect(within(d).getByTestId('lp-wax-1')).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem('hevalo_stamped_v1:c-return') ?? '[]')).toContain('s:d');
     // The chapter's story is won with it.
     expect(button('Hamo’s story: Malbat')).toBeTruthy();
+    cleanup();
+    patchReactNativeWeb({ reduceMotion: true });
+  });
+
+  it('presses a sealed topic’s new sun into its seal on coming back from the lesson that made its next round whole', async () => {
+    client();
+    patchReactNativeWeb({ reduceMotion: false });
+    const before = levelled('c-again');
+    const after = levelled('c-again');
+    // Topic c had two rounds, sealed on this phone; its third round is completed since.
+    before.units[1]!.skills[0] = { ...before.units[1]!.skills[0]!, lessons: [lesson('c1', 'Lesson c1', true, 3), lesson('c2', 'Lesson c2', true, 2)] };
+    localStorage.setItem('hevalo_stamped_v1:c-again', JSON.stringify(['s:a', 's:b', 's:c']));
+    const view = renderWithProviders(<LessonPath map={before} due={0} onFocus={() => undefined} />);
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    const c = () => screen.getByRole('button', { name: /^Topic c, / });
+    expect(within(c()).getByTestId('lp-wax-2')).toBeTruthy();
+    view.rerender(<LessonPath map={after} due={0} onFocus={() => undefined} />);
+    // The stamp comes back and presses the third sun in, and fire gilds its wax.
+    await waitFor(() => expect(within(c()).getByTestId('lp-wax-3-gold')).toBeTruthy(), { timeout: 4000 });
+    expect(within(c()).getByTestId('lp-wax-fire')).toBeTruthy();
     cleanup();
     patchReactNativeWeb({ reduceMotion: true });
   });

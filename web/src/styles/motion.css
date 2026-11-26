@@ -239,28 +239,44 @@
   transform: translateX(calc((1 - var(--p, 0)) * 100%));
 }
 /*
- * Other moving bars (rank climb, profile level, game meters, letters and words opened) slide the same way on the same
- * token rather than animating width; their tracks clip the unearned part.
+ * Other moving bars (rank climb, profile level, game meters, letters and words opened, a story read, riddles solved, a
+ * race run, a picture uploading) slide the same way on the same token rather than animating width; their tracks clip
+ * the unearned part.
  */
 .rank-progress-fill,
 .pcard-level-fill,
 .player-meter > span,
-.ab-progress-track > span {
+.ab-progress-track > span,
+.story-card-progress > span,
+.lore-solved-bar > span,
+.race-progress-fill,
+.cmp-tile-progress > span {
   width: 100%;
   transform: translateX(calc((var(--p, 0) - 1) * 100%));
 }
 [dir='rtl'] .rank-progress-fill,
 [dir='rtl'] .pcard-level-fill,
 [dir='rtl'] .player-meter > span,
-[dir='rtl'] .ab-progress-track > span {
+[dir='rtl'] .ab-progress-track > span,
+[dir='rtl'] .story-card-progress > span,
+[dir='rtl'] .lore-solved-bar > span,
+[dir='rtl'] .race-progress-fill,
+[dir='rtl'] .cmp-tile-progress > span {
   transform: translateX(calc((1 - var(--p, 0)) * 100%));
 }
 /* a rank's bar only moves where a result moves it (ranks/RankResult.tsx); on its card it is simply where it stands */
 .rank-progress-fill.is-animated,
 .pcard-level-fill,
 .player-meter > span,
-.ab-progress-track > span {
+.ab-progress-track > span,
+.story-card-progress > span,
+.lore-solved-bar > span {
   transition: transform var(--dur-progress) var(--ease-out);
+}
+/* a race and an upload follow their value closely, so their fills keep up rather than ease */
+.race-progress-fill,
+.cmp-tile-progress > span {
+  transition: transform var(--dur-fast) linear;
 }
 /* and a light runs along the fill, once, the way it moved */
 @keyframes sheen {
@@ -669,6 +685,10 @@
 .is-changing-page:has(.modal-overlay, .sheet-overlay) :is(.nav, .places-bar) {
   view-transition-name: none;
 }
+/* Learn's chosen group: its ground slides from the group left to the one chosen while the page beneath cross-fades. */
+.is-changing-page .learn-head .switch-capsule {
+  view-transition-name: learn-switch;
+}
 ::view-transition-group(*),
 ::view-transition-old(*),
 ::view-transition-new(*) {
@@ -711,6 +731,29 @@
   animation-duration: var(--dur);
 }
 
+/* ---- a message arriving ----------------------------------------------------------- */
+/*
+ * A message sent or received while the thread is open rises from the composer's edge and grows from its sender's
+ * corner (chat/MessageList.tsx), as on the phone (mobile/src/chat/MessageRow.tsx); the thread as it opens just appears.
+ */
+@keyframes bubble-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+.bubble.is-arriving {
+  transform-origin: 0 100%;
+  animation: bubble-arrive var(--dur) var(--ease-out) both;
+}
+.bubble.mine.is-arriving,
+[dir='rtl'] .bubble.is-arriving {
+  transform-origin: 100% 100%;
+}
+[dir='rtl'] .bubble.mine.is-arriving {
+  transform-origin: 0 100%;
+}
+
 /* ---- a like ------------------------------------------------------------------ */
 /* the heart pops (feed.css) with six small sparks thrown a few pixels out, once per like (FeedCard) */
 .fcard-like {
@@ -744,6 +787,57 @@
     opacity: 0;
     transform: scale(1.1);
   }
+}
+
+/* ---- a count ticking ---------------------------------------------------------------- */
+/*
+ * A count that changes under a tap (components/TickCount.tsx): the old number leaves through the top of its line and
+ * the new one rises in from the bottom, the other way round for fewer, as on the phone. Both share one grid cell, and
+ * the line clips them, so nothing beside the number moves.
+ */
+.tick {
+  display: inline-grid;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+.tick > * {
+  grid-area: 1 / 1;
+}
+@keyframes tick-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+@keyframes tick-out-up {
+  to {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+@keyframes tick-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+@keyframes tick-out-down {
+  to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+.tick.is-up > .tick-now {
+  animation: tick-in-up var(--dur) var(--ease-out) both;
+}
+.tick.is-up > .tick-was {
+  animation: tick-out-up var(--dur) var(--ease-out) both;
+}
+.tick.is-down > .tick-now {
+  animation: tick-in-down var(--dur) var(--ease-out) both;
+}
+.tick.is-down > .tick-was {
+  animation: tick-out-down var(--dur) var(--ease-out) both;
 }
 
 /* ---- the day's reward, claimed -------------------------------------------------- */
@@ -857,14 +951,17 @@
   pointer-events: none;
   animation: like-burst var(--dur-slow) var(--ease-out) both;
 }
-/* the toast rises in, stays, and fades by itself */
-@keyframes note-in {
+/*
+ * the toast rises in, stays, and fades by itself; named for the ticket, since the notification rows' own `note-in`
+ * (shell.css, loaded later) would otherwise replace it and drop the toast's centring while it rises
+ */
+@keyframes ticket-note-in {
   from {
     opacity: 0;
     transform: translate(-50%, 14px) scale(0.96);
   }
 }
-@keyframes note-out {
+@keyframes ticket-note-out {
   to {
     opacity: 0;
     transform: translate(-50%, 6px);
@@ -872,8 +969,8 @@
 }
 .code-ticket-note {
   animation:
-    note-in var(--dur-slow) var(--ease-spring) both,
-    note-out var(--dur) var(--ease-out) 2500ms forwards;
+    ticket-note-in var(--dur-slow) var(--ease-spring) both,
+    ticket-note-out var(--dur) var(--ease-out) 2500ms forwards;
 }
 
 /* ---- tickets ------------------------------------------------------------------ */

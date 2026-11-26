@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   badgeDef,
@@ -27,7 +27,7 @@ import type { StreakSummary } from '../lib/types';
 import { badgeNamed, badgeTierNamed } from '../ranks/names';
 import { DailyZer } from './DailyZer';
 import { Insights } from './Insights';
-import { RepairOffer, Restored } from './Repair';
+import { RepairOffer, Restored, takeWonBack } from './Repair';
 import type { Today, TodayView } from './today';
 import { WeekRow, thisWeek } from './WeekRow';
 import './daily.css';
@@ -35,8 +35,9 @@ import './daily.css';
 /**
  * The daily view, one sheet for the streak and the daily Zêr, opened from the home card, Learn's "Today" and the profile:
  * the fire with the streak under it, this week's days, today's Zêr, the week's stats, what the insights say, the latest
- * badge, and quietly the freezes, a restore while one is offered, the longest streak and the fire's stages. The insights
- * open as a second step in the same sheet. `onStreak` hands a restored streak to the opener.
+ * badge, and quietly the freezes, the way to win an ended streak back while it can be, the longest streak and the fire's
+ * stages. A streak won back by today's learning is greeted once. The insights open as a second step in the same sheet.
+ * `onStreak` hands a restored streak to the opener.
  */
 export function DailySheet({
   open,
@@ -62,7 +63,11 @@ function DailyBody({ today, onStreak }: { today: Today; onStreak?: (streak: Stre
   const t = useT();
   const [step, setStep] = useState<'view' | 'insights'>('view');
   const [restored, setRestored] = useState<StreakSummary | null>(null);
+  const [wonBack, setWonBack] = useState(false);
   const view = today.view;
+  useEffect(() => {
+    if (view && !wonBack && takeWonBack(view.streak, view.today)) setWonBack(true);
+  }, [view, wonBack]);
   if (!view) {
     return today.error ? <ErrorState message={today.error} onRetry={today.reload} /> : <DailySkeleton />;
   }
@@ -84,18 +89,21 @@ function DailyBody({ today, onStreak }: { today: Today; onStreak?: (streak: Stre
   const offer = restored ? null : (view.streak.repair ?? null);
   return (
     <div className="daily">
-      {restored ? <Restored streak={restored} /> : <DailyHead days={streak.current} />}
+      {restored ? <Restored streak={restored} /> : wonBack ? <Restored streak={streak} wonBack /> : <DailyHead days={streak.current} />}
       <WeekRow week={thisWeek(view.days, view.today, view.weekStart)} />
       {offer && (
         <RepairOffer
           offer={offer}
           onRestored={(next) => {
+            // greeted here, so a later look today does not greet it again as won back
+            takeWonBack(next, view.today);
             setRestored(next);
             today.change({ streak: next });
             onStreak?.(next);
           }}
         />
       )}
+      {/* everyone claims the day: a member for Zêr and a gift for the bag, anyone else for the gift */}
       <DailyZer daily={view.daily} onClaimed={(daily) => today.change({ daily })} />
       <WeekStatsCard view={view} />
       {insights.length > 0 && (

@@ -17,12 +17,26 @@ import { TagsCard } from '../tags/TagsCard';
 import { ErrorState } from '../components/states';
 import { ProfileEditSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
-import { ArrowIcon, LockIcon, PersonGlyph } from '../components/icons';
+import { ArrowIcon, EyeIcon, LockIcon, PersonGlyph } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 import { SendError } from '../reports/SendError';
 import { HeldBanner } from '../reports/HeldNotice';
+import { SettingsRow } from '../settings/SettingsList';
+import { settingsPath } from '../settings/catalogue';
 
-/** Edit Profile (/app/profile/edit): all profile customisation, equipping what you own and editing your details; buying is in the Shop. */
+/** Who can open a profile, in the words Settings says it in. */
+const VISIBILITY_LABEL: Record<MeProfile['profileVisibility'], MessageKey> = {
+  everyone: 'settings.visibility.everyone',
+  members: 'settings.visibility.members',
+  friends: 'settings.visibility.friends',
+  nobody: 'settings.visibility.nobody',
+};
+
+/**
+ * Edit Profile (/app/profile/edit): who can open your profile first, as Settings' own row, then all profile
+ * customisation, equipping what you own and editing your details; buying is in the Shop.
+ */
 export function ProfileEdit(): React.JSX.Element {
   const t = useT();
   const { client, refreshUser } = useAuth();
@@ -91,6 +105,7 @@ export function ProfileEdit(): React.JSX.Element {
       <HeldBanner />
       {/* The one-time notice about refreshed backgrounds and icons. */}
       <RefreshedNoticeLoader />
+      <VisibilityRow visibility={me.profileVisibility} />
       <ProfilePhotoPicker me={me} onChanged={changed} />
       <ProfileDetailsForm me={me} onSaved={changed} />
       <AvatarPicker me={me} onChanged={changed} />
@@ -103,6 +118,19 @@ export function ProfileEdit(): React.JSX.Element {
         <Link to="/app/settings" className="btn btn-secondary">{t('edit.accountSettings')}</Link>
       </div>
     </div>
+  );
+}
+
+/** Who can open your profile, one press from the setting that changes it. */
+function VisibilityRow({ visibility }: { visibility: MeProfile['profileVisibility'] }): React.JSX.Element {
+  const t = useT();
+  const who = VISIBILITY_LABEL[visibility];
+  return (
+    <section className="card edit-visibility">
+      <ul className="settings-rows">
+        <SettingsRow icon={<EyeIcon size={22} />} title={t('settings.privacy.title')} value={who ? t(who) : undefined} to={settingsPath('visibility')} />
+      </ul>
+    </section>
   );
 }
 

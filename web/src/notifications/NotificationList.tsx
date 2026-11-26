@@ -187,9 +187,12 @@ export function NotificationList({
       const invite = incoming?.find((i) => i.id === n.data?.inviteId);
       return invite ? { name: invite.from.name, avatarUrl: invite.from.avatarUrl } : null;
     }
-    if ((kind === 'gift' || kind === 'letter') && typeof n.data?.fromUserId === 'string') {
+    if ((kind === 'gift' || kind === 'post_gift' || kind === 'letter') && typeof n.data?.fromUserId === 'string') {
       const who = people.find((p) => p.userId === n.data?.fromUserId);
-      return who ? { name: who.displayName || who.username, avatarUrl: who.avatarUrl } : null;
+      if (who) return { name: who.displayName || who.username, avatarUrl: who.avatarUrl };
+      // A gift names its sender in its data, as the server lets this reader see them.
+      const named = n.data?.fromName;
+      return kind !== 'letter' && typeof named === 'string' && named ? { name: named, avatarUrl: null } : null;
     }
     return null;
   };
@@ -236,8 +239,13 @@ export function NotificationList({
                 progressNotification(n, t) ??
                 groupNotification(n, t, locale) ??
                 parentalNotification(n, t, locale);
-              // A gift from somebody the app can name says who it is from.
-              const title = n.data?.kind === 'gift' && actor ? t('gift.fromLabel', { name: actor.name }) : (view?.title ?? n.title);
+              // A gift says who it is from, or that a member sent it when the server no longer names them here.
+              const title =
+                n.data?.kind === 'gift'
+                  ? actor
+                    ? t('gift.fromLabel', { name: actor.name })
+                    : t('gift.fromMember')
+                  : (view?.title ?? n.title);
               const when = noteWhen(n.createdAt, group.key, t, shortDate);
               return (
                 <NoteRow
@@ -452,7 +460,7 @@ export function NotePicture({ picture }: { picture: NoticePicture }): React.JSX.
       {svg ? (
         <span className="note-picture-art" dangerouslySetInnerHTML={{ __html: svg }} />
       ) : picture.kind === 'gift' ? (
-        <GiftBox tier="rare" size={34} />
+        <GiftBox tier="rare" size={42} />
       ) : (
         <Fire size={32} level={NOTE_FIRE} still />
       )}

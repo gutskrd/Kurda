@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { lowerUuid } from '../http/ids.js';
 import { requireAuth } from '../plugins/auth.js';
 import { WordleService } from './wordle-service.js';
 import type { StreakService } from '../streaks/service.js';
@@ -61,7 +62,7 @@ export function registerWordleRoutes(
   app.post(
     '/wordle/games/:id/guesses',
     {
-      schema: { params: z.object({ id: z.uuid() }), body: guessBody },
+      schema: { params: z.object({ id: lowerUuid() }), body: guessBody },
       config: { rateLimit: { max: 30, windowMs: 60_000 } },
       preHandler: requireAuth,
     },
@@ -91,7 +92,7 @@ export function registerWordleRoutes(
   app.post(
     '/wordle/games/:id/save',
     {
-      schema: { params: z.object({ id: z.uuid() }) },
+      schema: { params: z.object({ id: lowerUuid() }) },
       config: { skipValidation: true, rateLimit: { max: 30, windowMs: 60_000 } },
       preHandler: requireAuth,
     },

@@ -498,6 +498,46 @@ describe('the road’s check, on an example unit', () => {
     expect(foreign.text).toContain('u01s1l2 #10 payload.new: “ji” is marked new but is not one of u01s1l2’s new words');
   });
 
+  it('lets a saying the plan gives a lesson bring its glossed word in that line alone, and asks that it be said', () => {
+    const LION: NonNullable<RoadPlan['units'][number]['skills'][number]['lessons'][number]['sayings']> = [
+      { ku: 'Ez şêr im!', en: 'I am a lion!', words: [{ ku: 'şêr', en: 'lion' }] },
+    ];
+    const quoted = (doc: Unit): void => {
+      const l = lessonOf(doc, 0);
+      l.exercises.push({ position: 13, ...mc('meaning', 'Ez şêr im!', ['I am a lion!', 'I am well!', 'You are a lion!'], 0, 'hamo', [['şêr', 'lion']]) });
+    };
+    const withSaying = (p: RoadPlan): void => {
+      p.units[0]!.skills[0]!.lessons[0]!.sayings = structuredClone(LION);
+    };
+    expect(check(quoted, withSaying).text).toEqual([]);
+    // without the saying in the plan, its word is one the road never taught
+    expect(check(quoted).text).toEqual([
+      'u01s1l1 #13 payload.say: unknown word “şêr”',
+      'u01s1l1 #13 payload.prompt: unknown word “şêr”',
+      'u01s1l1 #13 payload.new: “şêr” is marked new but is not one of u01s1l1’s new words',
+    ]);
+    // the gloss holds for the saying only, not for another line with the same word
+    const elsewhere = check((doc) => {
+      quoted(doc);
+      lessonOf(doc, 1).exercises.push({ position: 13, ...listen(['Tu şêr î!'], 'hamo') });
+    }, withSaying);
+    expect(elsewhere.text).toContain('u01s1l2 #13 payload.accepted[0]: unknown word “şêr”');
+    expect(check(() => {}, withSaying).text).toContain('u01s1l1: saying “Ez şêr im!” is not said in the lesson');
+  });
+
+  it('holds a saying in the plan to its Kurdish, its meaning and one or two of its own words', () => {
+    const problems = (sayings: unknown): string[] => {
+      const p = structuredClone(PLAN);
+      p.units[0]!.skills[0]!.lessons[0]!.sayings = sayings as RoadPlan['units'][number]['skills'][number]['lessons'][number]['sayings'];
+      // the example plan is one unit of a road, so only what it says of sayings is in question here
+      return checkRoadPlan(p).map(formatProblem).filter((t) => t.includes('saying'));
+    };
+    expect(problems([{ ku: 'Ez şêr im!', en: 'I am a lion!', words: [{ ku: 'şêr', en: 'lion' }] }])).toEqual([]);
+    expect(problems([{ ku: 'Ez şêr im!', en: 'I am a lion!', words: [] }])).toHaveLength(1);
+    expect(problems([{ ku: 'Ez şêr im!', en: 'I am a lion!', words: [{ ku: 'gur', en: 'wolf' }] }])).toEqual([expect.stringContaining('it does not say “gur”')]);
+    expect(problems([{ ku: 'Ez şêr im!', en: 'I am a lion!', words: [{ ku: 'Şêr', en: 'lion' }] }])).toEqual([expect.stringContaining('lower-case Hawar word')]);
+  });
+
   it('shows a picture item the picture of its own word', () => {
     const { text } = check((doc) => {
       lessonOf(doc, 0).exercises[10] = { position: 11, ...mc('picture', 'silav', ['apple', 'bread', 'tea'], 0, 'hamo') };

@@ -2,10 +2,10 @@
  * Conversations in lessons: two or three characters talking, then a question about what was said. Each part is one
  * character, or the learner's own part, whose lines are theirs to read and say and are never recorded.
  *
- * Each part is recorded by whoever plays it, so a line's recording is keyed by its conversation and part as well as its
- * words: "Silav!" from both people is two recordings, and a new take never replaces another conversation's line. A plain
- * text's recording (`lessonAudioKey`) is shared by every exercise; a line's belongs to its conversation. Shared by the API,
- * the admin and both players.
+ * A line plays the take filed under its conversation and part (`conversationLineKey`) when there is one, else the take
+ * of its words (`lessonAudioKey`) when its part's character said it. The studio files a character's new lines by their
+ * words, so a sentence is recorded once however many scenes say it; an uncast part's lines stay filed under their
+ * scene. Shared by the API, the admin and both players.
  */
 import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey } from './lesson-audio.js';
 import { CHARACTER_NAMES } from './characters/types.js';

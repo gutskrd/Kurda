@@ -160,6 +160,7 @@ function EventBlock({
         </h2>
         <p className="event-ends">{endsText(event.endsAt, t, locale)}</p>
       </header>
+      {event.zerForMembers && <p className="event-members">{t('events.membersZer')}</p>}
       <ul className="event-quests">
         {sortEventQuests(event.quests).map((quest) => (
           <QuestRow key={quest.id} quest={quest} busy={claiming === quest.id} fresh={claimed === quest.id} disabled={claiming !== null} onClaim={() => onClaim(quest)} />
@@ -197,7 +198,7 @@ function QuestRow({
           <p className="event-quest-reward">
             <span className="sr-only">{t('events.reward')}</span>
             {parts.map((p) => (
-              <BoardAmount key={p.currency} type={p.currency === 'zer' ? 'zer' : 'gewher'} amount={p.amount} />
+              <BoardAmount key={p.currency} type="zer" amount={p.amount} />
             ))}
           </p>
         )}

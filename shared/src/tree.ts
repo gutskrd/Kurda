@@ -36,31 +36,40 @@ export const TREE_KINDS: Readonly<Record<TreeSpecies, TreeKind>> = {
   hinar: { species: 'hinar', starter: true, price: 0 },
   behiv: { species: 'behiv', starter: true, price: 0 },
   bi: { species: 'bi', starter: true, price: 0 },
-  tu: { species: 'tu', starter: false, price: 800 },
-  spindar: { species: 'spindar', starter: false, price: 800 },
-  kaj: { species: 'kaj', starter: false, price: 1000 },
-  payiz: { species: 'payiz', starter: false, price: 1400 },
-  miraz: { species: 'miraz', starter: false, price: 1800 },
-  sev: { species: 'sev', starter: false, price: 2200 },
+  tu: { species: 'tu', starter: false, price: 400 },
+  spindar: { species: 'spindar', starter: false, price: 400 },
+  kaj: { species: 'kaj', starter: false, price: 500 },
+  payiz: { species: 'payiz', starter: false, price: 700 },
+  miraz: { species: 'miraz', starter: false, price: 900 },
+  sev: { species: 'sev', starter: false, price: 1100 },
 };
 
-/** Waterings needed to reach each stage: the seed comes up at once and the last stages take weeks, so a tree is soon worth seeing and slow to finish. */
-export const TREE_GROWTH: readonly [number, number, number, number, number, number, number] = [0, 1, 3, 7, 14, 24, 38];
+/**
+ * Water is counted in drops, and a finished lesson or practice earns two: little enough that a tree asks for steady
+ * learning, and still enough that every lesson moves it on.
+ */
+export const TREE_WATER_PER_LESSON = 2;
 
-/** A full-grown tree bears every this many waterings; what a harvest pays in Zêr. */
-export const TREE_HARVEST_EVERY = 10;
-export const TREE_HARVEST_ZER = 25;
+/**
+ * Drops poured to reach each stage. The seed comes up on its planting water and the sprout grows on after two lessons, so
+ * the first days bring a win; each stage after takes longer than the last, about 63 lessons to the great tree.
+ */
+export const TREE_GROWTH: readonly [number, number, number, number, number, number, number] = [0, 2, 6, 18, 40, 76, 128];
 
-/** Water a new tree is planted with: enough to bring its seed up. */
-export const TREE_FIRST_WATER = 1;
+/** A full-grown tree bears every this many drops, ten lessons' worth, so it keeps paying for steady learning; what a harvest pays in Zêr. */
+export const TREE_HARVEST_EVERY = 20;
+export const TREE_HARVEST_ZER = 15;
 
-/** The most water poured in one go: more than learning gives anyone, and a bound on what a request can ask. */
-export const TREE_POUR_MOST = 50;
+/** Water a new tree is planted with: a lesson's worth, which brings its seed up. */
+export const TREE_FIRST_WATER = TREE_WATER_PER_LESSON;
+
+/** The most drops poured in one go: more than learning gives anyone, and a bound on what a request can ask. */
+export const TREE_POUR_MOST = 150;
 
 /** Days without water after which a tree is thirsty, wilting or withered. */
 export const TREE_DRY_DAYS = { thirsty: 2, wilting: 4, withered: 7 } as const;
 
-/** The stage a tree watered `waterings` times has reached. */
+/** The stage a tree given `waterings` drops has reached. */
 export function treeStage(waterings: number): TreeStage {
   let stage = 0;
   for (let i = 1; i < TREE_STAGES; i++) if (waterings >= (TREE_GROWTH[i] as number)) stage = i;
@@ -90,9 +99,9 @@ export interface TreeRecord {
   plantedOn: string;
   /** the learner's own calendar day it last had water; the planting day until then */
   lastWateredOn: string;
-  /** times it has been watered */
+  /** drops it has been given */
   waterings: number;
-  /** water held and not yet poured */
+  /** drops held and not yet poured */
   water: number;
   /** times it has borne, full grown */
   harvests: number;
@@ -106,7 +115,7 @@ export interface TreeView extends TreeRecord {
   dryDays: number;
   /** days it has stood */
   age: number;
-  /** Progress to what comes next: waterings done and needed toward the next stage, or, full grown, toward the next harvest. */
+  /** Progress to what comes next: drops given and needed toward the next stage, or, full grown, toward the next harvest. */
   toward: { done: number; of: number; next: 'stage' | 'harvest' };
 }
 
@@ -140,8 +149,8 @@ export interface TreeWatering {
 }
 
 /**
- * Pours `count` of the water held onto a tree on `today`. It grows by what it is given, a full-grown tree bears each time
- * its waterings since full growth pass another `TREE_HARVEST_EVERY`, and it is fresh again: water is never refused to a
+ * Pours `count` of the drops held onto a tree on `today`. It grows by what it is given, a full-grown tree bears each time
+ * its drops since full growth pass another `TREE_HARVEST_EVERY`, and it is fresh again: water is never refused to a
  * neglected tree.
  */
 export function waterTree(tree: TreeRecord, count: number, today: string): TreeWatering {

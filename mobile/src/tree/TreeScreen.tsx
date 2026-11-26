@@ -753,7 +753,7 @@ function Chooser({ data, season, side, busy, failed, onPlant }: { data: MyTree; 
                 if (!on) haptic('select');
                 setPicked(k.species);
               }}
-              // The chosen seed is ringed in violet like every choice, not in its tree's colour, which read as
+              // The chosen seed is ringed in the ink like every choice, not in its tree's colour, which read as
               // right or wrong answers.
               style={[styles.seed, { backgroundColor: colors.surface, borderColor: on ? colors.primary : 'transparent' }]}
               testID={`tree-seed-${k.species}`}
@@ -841,7 +841,8 @@ function KindRow({
 /**
  * The nursery: every kind. A free or owned kind can be planted, after a confirmation, because planting replaces
  * the current tree; others can be bought with Zêr, which plants nothing by itself. The confirmation is the
- * sheet's second step, so nothing opens over anything. An unaffordable kind says how much is missing.
+ * sheet's second step, so nothing opens over anything. An unaffordable kind says how much is missing. A child's
+ * profile buys nothing, so its nursery holds only the kinds it may plant, and no Zêr.
  */
 function Nursery({
   data,
@@ -861,9 +862,11 @@ function Nursery({
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
+  const { isChild } = useAuth();
   const [asking, setAsking] = useState<{ kind: TreeKindOffer; what: 'buy' | 'plant' } | null>(null);
   const number = (n: number): string => formatNumber(n, locale);
   const standing = data.tree?.species ?? null;
+  const kinds = isChild ? data.kinds.filter((k) => k.starter || k.owned) : data.kinds;
 
   if (asking) {
     const asked = treeNamed(t, asking.kind.species);
@@ -902,11 +905,13 @@ function Nursery({
   return (
     <Sheet title={t('tree.nursery.title')} onClose={onClose}>
       <Text style={[styles.sub, { color: colors.textSecondary }]}>{t('tree.nursery.sub')}</Text>
-      <View style={[styles.zer, { flexDirection: dir.row }]} accessible accessibilityLabel={`${number(data.zer)} Zêr`}>
-        <Icon name="coin" size={18} />
-        <Text style={[styles.zerText, { color: colors.textPrimary }]}>{number(data.zer)} Zêr</Text>
-      </View>
-      {data.kinds.map((k) => {
+      {isChild ? null : (
+        <View style={[styles.zer, { flexDirection: dir.row }]} accessible accessibilityLabel={`${number(data.zer)} Zêr`}>
+          <Icon name="coin" size={18} />
+          <Text style={[styles.zerText, { color: colors.textPrimary }]}>{number(data.zer)} Zêr</Text>
+        </View>
+      )}
+      {kinds.map((k) => {
         const here = k.species === standing;
         return (
           <KindRow

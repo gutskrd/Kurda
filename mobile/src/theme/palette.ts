@@ -1,23 +1,39 @@
 /**
- * The light and dark palettes. One accent, the icon's violet, is worn by the main button alone (`accent`); the page is
- * a faintly violet white with deep indigo ink, and everything pressable, chosen or earned is drawn in that ink, so the
- * eye goes to the one violet thing. Green and red mean right and wrong but are never the only signal.
+ * The light and dark palettes: the slate page and the one accent from `@kurda/shared` (themes.ts), so both apps wear
+ * the same. Most of a screen is the page; the accent fills the main buttons and progress bars and marks a switch that
+ * is on, links and the stop to do now. What is chosen (a tab, a chip, a segment) is shown in the ink, never a colour.
+ * Gold is what is earned, and words and glyphs are the page's slate ink (`primary`). Green and red mean right and wrong but are never the only signal.
  *
- * By night the page is the indigo taken almost to black, never a neutral grey, with the violet lifted so it does not
- * glare. Components read the active `Palette` from ThemeProvider, and `palette.contrast.test.ts` holds every
- * text-on-surface pair to WCAG AA.
+ * Components read the active `Palette` from ThemeProvider, and `palette.contrast.test.ts` holds every text-on-surface
+ * pair to WCAG AA.
  */
+import { ACCENT, ANSWER, PAGE, REWARD_GOLD } from '@kurda/shared';
 import type { ColorScheme } from './appearance';
 
 export interface Palette {
   scheme: ColorScheme;
 
   /*
-   * `accent` is the violet, the main button's fill and nothing else's. `primary` is the ink for what is pressable or
-   * chosen (a glyph, a link, a chosen chip, a switch), the same as `textPrimary`, with `textOnPrimary` written on it.
+   * `accent` is the one accent's fill (a main button, a progress bar, a switch that is on), with `textOnAccent` written
+   * on it and `accentLip` the darker edge a main button stands on; `accentText` is the accent as words and marks on the
+   * page (a link, the tab you are on) and `accentSoft` its faint tint. `primary` is the ink for what is pressable (a
+   * glyph), the same as `textPrimary`, with `textOnPrimary` written on it.
    */
   primary: string;
   accent: string;
+  textOnAccent: string;
+  accentLip: string;
+  accentText: string;
+  accentSoft: string;
+  /** A chosen chip or segment: a faint ground of the ink with its word and edge in the ink, in both schemes. */
+  chosenFill: string;
+  chosenInk: string;
+  chosenEdge: string;
+  /** The one picked among a row of small choices drawn as pills of their own (a year, a month, a filter): the ink filled, the page's colour on it. */
+  pickedFill: string;
+  pickedInk: string;
+  /** A line of light along a card's top edge; none, since cards are flat steps of the slate. */
+  cardRim: string;
   gold: string;
   danger: string;
   success: string;
@@ -56,12 +72,18 @@ export interface Palette {
 
   /** The border of buttons and tiles. */
   clayBorder: string;
+  /**
+   * A chunky button that means nothing in particular: a flat slate fill on its darker lip. An outlined button's edge
+   * and the lip it stands on are `btnEdge`, the third step of the slate.
+   */
+  neutralFill: string;
+  neutralLip: string;
+  btnEdge: string;
   softShadow: string; // Outer drop-shadow colour.
 
   controlTrack: string; // Inactive segmented control track.
   /**
-   * A switch's track and knob, on and off. On is violet, like everything chosen, not green, which here means a right
-   * answer. Each track clears 3:1 on every surface and each knob 3:1 on its track (WCAG 1.4.11), and the knob's side
+   * A switch's track and knob, on and off. On is the accent; a right answer has its own green. Each track clears 3:1 on every surface and each knob 3:1 on its track (WCAG 1.4.11), and the knob's side
    * also shows the state. The knob has its own colour on every platform, since iOS's white knob vanished on a white
    * dark-mode track.
    */
@@ -88,8 +110,8 @@ export interface Palette {
   surfaceRaised: string;
 
   /**
-   * A conversation's two voices, matching the website's `--bubble-*`: your words white on the violet, the other side's
-   * in the page's ink on a quiet neutral. All four are solid, since a bubble's tail is a second shape beside it and two
+   * A conversation's two voices, matching the website's `--bubble-*`: your words on the accent, the other side's in
+   * the page's ink on a step off the page. All four are solid, since a bubble's tail is a second shape beside it and two
    * translucent shapes would show their overlap.
    */
   bubbleMine: string;
@@ -98,15 +120,21 @@ export interface Palette {
   bubbleTheirsInk: string;
 
   /**
-   * The fill of what floats over the page (the tab bar, the back button, the pill of top actions) where the system has
-   * no Liquid Glass to draw: solid, since nothing blurs behind it and translucency would show the page beneath as a ghost.
+   * The fill of what floats over the page (the tab bar, the back button, the pill of top actions) where no glass can be
+   * drawn: a solid neutral grey, cool rather than warm, since nothing blurs behind it and translucency would show the
+   * page beneath as a ghost.
    */
   barFill: string;
   /** The line of light round that floating shape's edge, on its upper side and on the rest (LiquidGlass.tsx). */
   glassRim: string;
   glassRimFar: string;
-  /** The breath of tint on clear glass that bends the page, so the words on it stay readable. */
+  /** The neutral grey of the glass that blurs the page behind it, where it is drawn by the app rather than the system. */
   glassTint: string;
+  /** A sheet or menu floating over the page: the floating chrome's neutral grey rather than the page's slate. */
+  panel: string;
+  /** The chosen tab's glyph and name, and the darker capsule of glass inset behind it, drawn faint (TabBar.tsx `CAPSULE_FILL`). */
+  tabChosen: string;
+  tabCapsule: string;
   /** A control's disc where it stands on a drawing (a chapter's banner): the page's colour, mostly opaque. */
   onArt: string;
 
@@ -128,130 +156,153 @@ export interface Palette {
   savedEdge: string;
 }
 
+const DAY = ACCENT.light;
+const NIGHT = ACCENT.dark;
+
 export const LIGHT: Palette = {
   scheme: 'light',
-  // The ink for what is pressable or chosen; the icon's violet, deep enough for white (6.1:1), on the main button alone.
-  primary: '#14112E',
-  accent: '#862BE2',
-  gold: '#14112E',
-  danger: '#C0392B',
+  primary: PAGE.light.ink,
+  accent: DAY.fill,
+  textOnAccent: DAY.ink,
+  accentLip: DAY.lip,
+  accentText: DAY.text,
+  accentSoft: 'rgba(0,134,59,0.08)',
+  chosenFill: 'rgba(23,36,43,0.06)',
+  chosenInk: PAGE.light.ink,
+  chosenEdge: PAGE.light.ink,
+  pickedFill: PAGE.light.ink,
+  pickedInk: PAGE.light.page,
+  cardRim: 'transparent',
+  gold: REWARD_GOLD.light.gold,
+  danger: ANSWER.light.wrong.text,
   like: '#E0263F',
   saved: '#F5B400',
   savedEdge: '#A87600',
-  success: '#2E7D32',
-  successFill: '#DCF7E1',
-  dangerFill: '#FEE9E6',
+  success: ANSWER.light.right.text,
+  successFill: '#E6EFE1',
+  dangerFill: '#FAE8E6',
 
-  // A deep indigo rather than black: 16.8:1 on the page, and it sits better beside the violet.
-  textPrimary: '#14112E',
-  // 6.3:1 on the page, 6.9:1 on a card and 5.5:1 on the other side's chat bubble.
-  textSecondary: '#595870',
-  textOnPrimary: '#FFFFFF',
-  // 6.8:1 on the gold.
-  textOnGold: '#FFFFFF',
+  textPrimary: PAGE.light.ink,
+  textSecondary: PAGE.light.inkSoft,
+  textOnPrimary: '#F7F9FA',
+  textOnGold: REWARD_GOLD.light.onGold,
 
-  // White with a breath of violet, so white cards lift off it without an edge.
-  background: '#F6F4FD',
-  gradient: ['#FAF9FE', '#F6F4FD', '#F1EEFA'],
+  // A soft clean white, with light grey surfaces stepped down from it.
+  background: PAGE.light.page,
+  gradient: ['#F9FBFB', PAGE.light.page, '#F2F5F7'],
 
-  // Nothing is blurred behind it, so this is the whole surface; nearly white, a card reads as a card without a shadow.
-  glassFill: 'rgba(255,255,255,0.88)',
-  glassBorder: 'rgba(255,255,255,0.45)',
+  // Nothing is blurred behind it, so this is the whole surface: a near-white card without a shadow.
+  glassFill: 'rgba(253,254,254,0.9)',
+  glassBorder: 'rgba(253,254,254,0.5)',
 
-  scrim: 'rgba(16,12,36,0.45)',
-  textOnScrim: '#FFFFFF',
-  separator: 'rgba(20,17,46,0.07)',
+  scrim: 'rgba(10,18,22,0.48)',
+  textOnScrim: '#F7F9FA',
+  separator: 'rgba(23,36,43,0.08)',
 
+  clayBorder: 'rgba(253,254,254,0.8)',
+  neutralFill: PAGE.light.raised,
+  neutralLip: '#C9D4D9',
+  btnEdge: PAGE.light.high,
+  // A shadow in the slate's own blue-grey.
+  softShadow: '#17242B',
 
-  clayBorder: 'rgba(255,255,255,0.8)',
-  // A shadow leaning toward the ink rather than grey, so raised things stay clean.
-  softShadow: '#2E284A',
+  controlTrack: 'rgba(23,36,43,0.06)',
+  switchOn: DAY.fill,
+  switchOnThumb: DAY.ink,
+  switchOff: '#71838B',
+  switchOffThumb: '#FDFEFE',
+  selectedFill: '#FDFEFE',
+  locked: '#DCE3E7',
+  lockedMark: '#9AABB3',
 
-  controlTrack: 'rgba(20,17,46,0.05)',
-  // On is the violet, as everything chosen is; the knob's side says it too.
-  switchOn: '#14112E',
-  switchOnThumb: '#FFFFFF',
-  switchOff: '#7F7E91',
-  switchOffThumb: '#FFFFFF',
-  selectedFill: '#FFFFFF',
-  locked: '#DFDEEA',
-  lockedMark: '#A4A2B2',
-
-  surface: '#FFFFFF',
-  surfaceRaised: '#FFFFFF',
-  // White on the violet is 6.1:1; the neutral is a step under the page, and 14.6:1 under its ink.
-  bubbleMine: '#14112E',
-  bubbleMineInk: '#FFFFFF',
-  bubbleTheirs: '#E7E4F1',
-  bubbleTheirsInk: '#14112E',
-  barFill: '#FFFFFF',
+  surface: PAGE.light.surface,
+  surfaceRaised: PAGE.light.raised,
+  bubbleMine: DAY.fill,
+  bubbleMineInk: DAY.ink,
+  bubbleTheirs: PAGE.light.raised,
+  bubbleTheirsInk: PAGE.light.ink,
+  barFill: '#FDFEFE',
   glassRim: 'rgba(255,255,255,0.9)',
-  glassRimFar: 'rgba(20,17,46,0.07)',
-  glassTint: 'rgba(255,255,255,0.22)',
-  onArt: 'rgba(255,255,255,0.78)',
-  goldText: '#14112E',
+  glassRimFar: 'rgba(23,36,43,0.09)',
+  glassTint: 'rgba(250,251,252,0.74)',
+  panel: '#FDFEFE',
+  tabChosen: DAY.text,
+  tabCapsule: PAGE.light.ink,
+  onArt: 'rgba(253,254,254,0.78)',
+  goldText: REWARD_GOLD.light.goldText,
   notice: '#FF3B30',
 };
 
 export const DARK: Palette = {
   scheme: 'dark',
-  // The night's ink; the violet lifted for the night, with the day's ink written on it (8.1:1), on the main button alone.
-  primary: '#F3F1FB',
-  accent: '#BF9BFE',
-  gold: '#F3F1FB',
-  danger: '#FF9C90',
+  primary: PAGE.dark.ink,
+  accent: NIGHT.fill,
+  textOnAccent: NIGHT.ink,
+  accentLip: NIGHT.lip,
+  accentText: NIGHT.text,
+  accentSoft: 'rgba(50,212,107,0.14)',
+  chosenFill: 'rgba(238,243,245,0.1)',
+  chosenInk: PAGE.dark.ink,
+  chosenEdge: PAGE.dark.ink,
+  pickedFill: PAGE.dark.ink,
+  pickedInk: PAGE.dark.page,
+  cardRim: 'transparent',
+  gold: REWARD_GOLD.dark.gold,
+  danger: ANSWER.dark.wrong.text,
   like: '#FF5A6A',
   saved: '#FFC83D',
   savedEdge: '#FFC83D',
-  success: '#86E2A4',
-  successFill: 'rgba(87,185,107,0.18)',
-  dangerFill: 'rgba(255,120,105,0.16)',
+  success: ANSWER.dark.right.text,
+  successFill: ANSWER.dark.right.soft,
+  dangerFill: ANSWER.dark.wrong.soft,
 
-  textPrimary: '#F3F1FB',
-  // 8.5:1 on the page and 6.7:1 on the raised surface.
-  textSecondary: '#ADABC0',
-  textOnPrimary: '#14112E',
-  // 8.3:1 on the evening's paler gold.
-  textOnGold: '#14112E',
+  textPrimary: PAGE.dark.ink,
+  textSecondary: PAGE.dark.inkSoft,
+  // Words on the night's light ink, as on a chosen pill or an ink button.
+  textOnPrimary: '#131C20',
+  textOnGold: REWARD_GOLD.dark.onGold,
 
-  // The ink taken almost to black: a night with a colour, where a neutral grey reads as a screen switched off.
-  background: '#100E1D',
-  gradient: ['#141121', '#100E1D', '#161325'],
+  // The cool slate night; never pure black, which reads as a screen switched off.
+  background: PAGE.dark.page,
+  gradient: ['#152024', PAGE.dark.page, '#141E22'],
 
-  glassFill: 'rgba(255,255,255,0.07)',
-  glassBorder: 'rgba(255,255,255,0.14)',
+  glassFill: 'rgba(156,190,204,0.06)',
+  glassBorder: 'rgba(238,243,245,0.12)',
 
-  scrim: 'rgba(4,2,12,0.62)',
-  textOnScrim: '#FFFFFF',
-  separator: 'rgba(255,255,255,0.08)',
+  scrim: 'rgba(5,9,11,0.62)',
+  textOnScrim: '#F7F9FA',
+  separator: 'rgba(238,243,245,0.08)',
 
+  clayBorder: 'rgba(238,243,245,0.10)',
+  neutralFill: PAGE.dark.high,
+  neutralLip: '#222D33',
+  btnEdge: PAGE.dark.high,
+  softShadow: '#05080A',
 
-  clayBorder: 'rgba(255,255,255,0.10)',
-  softShadow: '#000000',
+  controlTrack: 'rgba(156,190,204,0.1)',
+  switchOn: NIGHT.fill,
+  switchOnThumb: NIGHT.ink,
+  switchOff: '#6B7E87',
+  switchOffThumb: '#EEF3F5',
+  selectedFill: 'rgba(156,190,204,0.2)',
+  locked: '#2E3C43',
+  lockedMark: '#52656E',
 
-  controlTrack: 'rgba(255,255,255,0.11)',
-  switchOn: '#F3F1FB',
-  switchOnThumb: '#14112E',
-  switchOff: '#716E85',
-  switchOffThumb: '#FFFFFF',
-  selectedFill: 'rgba(255,255,255,0.16)',
-  locked: '#2D2B3E',
-  lockedMark: '#55526A',
-
-  surface: '#1B192B',
-  surfaceRaised: '#27243A',
-  // By night your words are on a deeper violet so white reads on it (6.7:1); the neutral is a step over the raised
-  // surface, 11.9:1 under its ink.
-  bubbleMine: '#F3F1FB',
-  bubbleMineInk: '#14112E',
-  bubbleTheirs: '#302C46',
-  bubbleTheirsInk: '#F3F1FB',
-  barFill: '#27243A',
-  glassRim: 'rgba(255,255,255,0.3)',
+  surface: PAGE.dark.surface,
+  surfaceRaised: PAGE.dark.raised,
+  bubbleMine: NIGHT.fill,
+  bubbleMineInk: NIGHT.ink,
+  bubbleTheirs: '#253238',
+  bubbleTheirsInk: PAGE.dark.ink,
+  barFill: '#24272B',
+  glassRim: 'rgba(255,255,255,0.14)',
   glassRimFar: 'rgba(255,255,255,0.1)',
-  glassTint: 'rgba(30,27,46,0.3)',
-  onArt: 'rgba(16,14,29,0.6)',
-  goldText: '#F3F1FB',
+  glassTint: 'rgba(42,45,49,0.62)',
+  panel: '#23272B',
+  tabChosen: NIGHT.text,
+  tabCapsule: '#000000',
+  onArt: 'rgba(19,28,32,0.6)',
+  goldText: REWARD_GOLD.dark.goldText,
   notice: '#FF453A',
 };
 

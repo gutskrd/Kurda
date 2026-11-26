@@ -2,7 +2,7 @@
  * The parental-controls endpoints and their shapes (api `/me/parental`, `/me/usage`), so every screen asks the same
  * way and reads the same fields. Each call returns the client's result; nothing here throws.
  */
-import type { ParentalControls, SupervisionState } from '@kurda/shared';
+import type { BirthMonth, ParentalControls, SupervisionState } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 
@@ -19,6 +19,8 @@ export interface ConnectedParent extends PersonRef {
   since: string;
   /** The parent connected longest, the only one who may loosen a control again. */
   first?: boolean;
+  /** When the teen's request to stop this parent's supervision ends the link (ISO 8601); null or absent while none is pending. */
+  leaveEndsAt?: string | null;
 }
 
 /** A teen on their parent's list, with today's two numbers. */
@@ -26,6 +28,8 @@ export interface WatchedTeen {
   teen: PersonRef;
   since: string;
   today: { minutes: number; lessons: number };
+  /** When the teen's request to stop supervision ends the link; null or absent while none is pending. */
+  leaveEndsAt?: string | null;
 }
 
 /** Why the account can be neither a parent nor a supervised teen right now. */
@@ -60,6 +64,12 @@ export interface TeenDetail {
   canLoosen?: boolean;
   /** The teen's own IANA time zone, where their day and bedtime are counted. */
   timeZone?: string;
+  /** When the teen's request to stop supervision ends the link; null or absent while none is pending. */
+  leaveEndsAt?: string | null;
+  /** The birth month on the teen's account. */
+  birthMonth?: BirthMonth | null;
+  /** True only for the first parent, until the birth month has been corrected once. */
+  birthCorrectable?: boolean;
 }
 
 /** A parent's fresh code, shown until it is used or a newer one is made. */
@@ -92,8 +102,21 @@ export const changeControls = (client: ApiClient, teenId: string, patch: Partial
 export const stopSupervising = (client: ApiClient, teenId: string): Promise<ApiResult<{ ended: true }>> =>
   client.delete(`/me/parental/teens/${encodeURIComponent(teenId)}`);
 
-export const disconnectParent = (client: ApiClient, parentId: string): Promise<ApiResult<{ ended: true }>> =>
-  client.delete(`/me/parental/parents/${encodeURIComponent(parentId)}`);
+const leavePath = (parentId: string): string => `/me/parental/parents/${encodeURIComponent(parentId)}/leave`;
+
+/** A teen asks to stop one parent's supervision: the parent is told now, and the link ends `PARENTAL_LEAVE_DAYS` later. */
+export const askToLeave = (client: ApiClient, parentId: string): Promise<ApiResult<{ endsAt?: string }>> => client.post<{ endsAt?: string }>(leavePath(parentId));
+
+/** The teen takes the request back, and the parent is told they stay connected. */
+export const stayConnected = (client: ApiClient, parentId: string): Promise<ApiResult<unknown>> => client.delete(leavePath(parentId));
+
+/** The first parent's one correction of a teen's birth month, which must keep the teen 13 to 17. */
+export const correctBirthMonth = (
+  client: ApiClient,
+  teenId: string,
+  birth: BirthMonth,
+): Promise<ApiResult<{ birthMonth?: BirthMonth; birthCorrectable?: boolean }>> =>
+  client.put(`/me/parental/teens/${encodeURIComponent(teenId)}/birth-month`, { birthYear: birth.year, birthMonth: birth.month });
 
 /** A minute of the app in front of a supervised teen; anyone else is answered with nothing (204), and stops beating. */
 export const usageBeat = (client: ApiClient, timeZone: string): Promise<ApiResult<SupervisionState | undefined>> =>

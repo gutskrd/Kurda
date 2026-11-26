@@ -875,7 +875,7 @@ export function LetterWindow({
     return () => clearTimeout(done);
   }, [scene.song]);
 
-  // The landscape's drift, the clouds, the casements, the plant and the light.
+  // The landscape's drift, the clouds, the shutters, the plant and the light.
   const drift = useSwing(alive, 16000, 0.5);
   const clouds = useSwing(alive, 46000, 0.5);
   const stir = useSwing(alive, 7000);
@@ -886,7 +886,7 @@ export function LetterWindow({
   const drifting = {
     transform: [...deep(LETTER_WINDOW_DEPTH.clouds).transform, { translateX: clouds.interpolate({ inputRange: [0, 1], outputRange: [-0.07 * size, 0.07 * size] }) }],
   };
-  const casement = (left: boolean) => ({
+  const shutter = (left: boolean) => ({
     transformOrigin: left ? '20% 50%' : '80% 50%',
     transform: [{ scaleX: stir.interpolate({ inputRange: [0, 1], outputRange: left ? [1, 0.92] : [0.92, 1] }) }],
   });
@@ -912,8 +912,8 @@ export function LetterWindow({
       {ownFlight.phase === 'flight' ? <FlightCopy life={own} flight={ownFlight} spot={ownSpot} facingLeft={ownBack} size={size} inside={false} /> : null}
       {visitorFlight.phase === 'flight' ? <FlightCopy life={visitor} flight={visitorFlight} spot="visitor" facingLeft={visitorBack} size={size} inside={false} /> : null}
       <Layer part="room" sky={sky} size={size} id={id} />
-      <Layer part="left" sky={sky} size={size} id={id} style={casement(true)} />
-      <Layer part="right" sky={sky} size={size} id={id} style={casement(false)} />
+      <Layer part="left" sky={sky} size={size} id={id} style={shutter(true)} />
+      <Layer part="right" sky={sky} size={size} id={id} style={shutter(false)} />
       <Layer part="plant" sky={sky} size={size} id={id} style={plant} />
       {/* The light lies on the sill, so a pigeon standing there is always over it. */}
       <Layer part="light" sky={sky} size={size} id={id} style={light} />

@@ -1,79 +1,50 @@
 /**
- * The phone's side of the lesson path: unit colours, screen-reader labels, stop rings, which course opens first,
+ * The phone's side of the lesson path: unit colours, screen-reader labels, topic bars, which course opens first,
  * and scroll positions. The path's structure itself is shared `lessonPath`, which the website uses too.
  */
-import { TOPIC_STARS, lessonPath, levelHintKey, levelNameKey, levelOfCefr, type PathStop, type PathStopLook, type SkillStop, type UnitTone } from '@kurda/shared';
+import {
+  PATH_REST,
+  PATH_STOP_TONES,
+  TOPIC_STARS,
+  lessonPath,
+  levelHintKey,
+  levelNameKey,
+  levelOfCefr,
+  type PathStop,
+  type PathStopLook,
+  type SkillStop,
+  type UnitColours,
+  type UnitTone,
+} from '@kurda/shared';
 import type { ColorScheme } from '../theme/appearance';
 import type { TranslationKey } from '../i18n/translations';
 import { STATE_LABEL, type CourseEntry } from './node';
 import type { SkillNode } from './types';
 
 /** A unit's colours: `fill` and its darker `lip`, `ink` on the fill, and `text` for the colour on the page. */
-export interface ToneColors {
-  fill: string;
-  lip: string;
-  ink: string;
-  text: string;
-}
+export type ToneColors = UnitColours;
 
 /**
- * Must match the website's path.css. Saffron stays gold with dark-brown ink, since a yellow dark enough for
- * white text is brown. `path.test.ts` holds every pair to 4.5:1 contrast.
+ * Each unit's own vivid colour (shared `PATH_STOP_TONES`, which the website's path.css matches): its banner, the stop to
+ * do now, the bubble over it, its finished lessons, the rail and the jump sheet. `path.test.ts` holds every pair to
+ * 4.5:1 contrast.
  */
-export const TONES: Record<ColorScheme, Record<UnitTone, ToneColors>> = {
-  dark: {
-    meadow: { fill: '#78d694', lip: '#459b61', ink: '#011c0a', text: '#92dfa7' },
-    river: { fill: '#91c1ff', lip: '#5188cd', ink: '#05162c', text: '#a8ceff' },
-    clay: { fill: '#ffa47a', lip: '#c16d45', ink: '#280d02', text: '#ffb798' },
-    dusk: { fill: '#aeb8fe', lip: '#767ecd', ink: '#11132c', text: '#bec6ff' },
-    pine: { fill: '#57d4d4', lip: '#009a9a', ink: '#001b1b', text: '#65e1e1' },
-    rose: { fill: '#fd9ac6', lip: '#bc668e', ink: '#260b18', text: '#ffafd1' },
-    saffron: { fill: '#eeb154', lip: '#b07a20', ink: '#221200', text: '#f5c076' },
-  },
-  light: {
-    meadow: { fill: '#058644', lip: '#006531', ink: '#ffffff', text: '#00783b' },
-    river: { fill: '#0073df', lip: '#0157ac', ink: '#ffffff', text: '#0161bd' },
-    clay: { fill: '#c45001', lip: '#973c00', ink: '#ffffff', text: '#a24102' },
-    dusk: { fill: '#6363eb', lip: '#4a47c0', ink: '#ffffff', text: '#504bd1' },
-    pine: { fill: '#008282', lip: '#006262', ink: '#ffffff', text: '#067272' },
-    rose: { fill: '#cd3688', lip: '#a51a6a', ink: '#ffffff', text: '#af0f6f' },
-    saffron: { fill: '#c37902', lip: '#8f5d04', ink: '#241600', text: '#885703' },
-  },
-};
+export const TONES: Record<ColorScheme, Record<UnitTone, ToneColors>> = PATH_STOP_TONES;
 
-/**
- * What a unit wears on the path itself (its banner, finished lessons, the rail and the jump sheet): the page's ink, as
- * what is chosen or earned is everywhere, so the main button stays the one coloured thing. Its drawn stops keep their
- * unit's colours (`TONES`). Must match path.css's `lp-tone-*` rules.
- */
-export const UNIT_INK: Record<ColorScheme, ToneColors> = {
-  dark: { fill: '#f3f1fb', lip: '#a9a6bb', ink: '#14112e', text: '#f3f1fb' },
-  light: { fill: '#14112e', lip: '#050410', ink: '#ffffff', text: '#14112e' },
-};
+/** Locked stops and the line still ahead, in each scheme: flat slate (shared `PATH_REST`). */
+export const REST: Record<ColorScheme, { fill: string; lip: string; ink: string; line: string }> = PATH_REST;
 
-/** Locked stops and the line still ahead, in each scheme. */
-export const REST: Record<ColorScheme, { fill: string; lip: string; ink: string; line: string }> = {
-  dark: { fill: '#2b283c', lip: '#1a1828', ink: '#9e9cb0', line: 'rgba(255,255,255,0.2)' },
-  light: { fill: '#e3e1ec', lip: '#cac8d7', ink: '#716e85', line: 'rgba(20,17,46,0.18)' },
-};
-
-/** The glyph colour on an open stop's cream face and on a locked stop's stone. */
+/** The glyph colour on an open stop's face, in its unit's ink, and on a locked stop's slate. */
 export const FACE_INK: Record<ColorScheme, { paper: (tone: ToneColors) => string; stone: string }> = {
-  light: { paper: (tone) => tone.text, stone: '#857861' },
-  dark: { paper: () => '#3d2a1f', stone: '#d6d2dc' },
+  light: { paper: (tone) => tone.ink, stone: PATH_REST.light.ink },
+  dark: { paper: (tone) => tone.ink, stone: PATH_REST.dark.ink },
 };
 
 /**
- * The unfilled track of a topic ring, and the edge under every piece so the ring reads on any ground. Filled
- * pieces use the palette's `primary`, and a whole ring its `gold`.
+ * The unfilled track of a topic's bar, and of the rounds still to play in its card (as the website's path.css). Filled
+ * pieces use the unit's colour, and a full bar gold.
  */
-export const RING: Record<ColorScheme, { track: string; edge: string }> = {
-  light: { track: '#fffaf0', edge: 'rgba(36, 24, 70, 0.32)' },
-  dark: { track: '#2b283c', edge: 'rgba(6, 4, 16, 0.6)' },
-};
-
-/** A star on a finished topic's gold coin, edged so it stands off the gold. */
-export const STAR = { fill: '#fffaf0', edge: '#a8691a' } as const;
+export const TRACK: Record<ColorScheme, string> = { light: '#d6dfe3', dark: '#2e3c43' };
 
 /** Blends two #rrggbb colours, `t` of the way from `a` to `b`. */
 export function mix(a: string, b: string, t: number): string {
@@ -130,22 +101,22 @@ export function stopLabel(stop: PathStop<SkillNode>, unit: { number: number; tit
   return { words: { key: 'coursemap.path.label', params: { title, done: stop.lessonsDone, total: stop.lessonsTotal } }, state };
 }
 
-/** A skill's ring: `of` pieces (one per lesson), `filled` of them, and `whole` once all rounds are played. Null for stops without a ring. */
-export function ringOf(stop: PathStop<SkillNode>): { of: number; filled: number; whole: boolean } | null {
+/** A skill's bar: `of` pieces (one per lesson), `filled` of them, and `whole` once all rounds are played. Null for stops without one. */
+export function barOf(stop: PathStop<SkillNode>): { of: number; filled: number; whole: boolean } | null {
   if (stop.kind !== 'skill' || stop.lessonsTotal === 0) return null;
-  return ringAt(stop, { rounds: stop.rounds, pieces: stop.pieces });
+  return barAt(stop, { rounds: stop.rounds, pieces: stop.pieces });
 }
 
-/** A skill's ring at a given point in its rounds, e.g. before a lesson. */
-export function ringAt(stop: Pick<SkillStop<SkillNode>, 'lessonsTotal'>, at: { rounds: number; pieces: number }): { of: number; filled: number; whole: boolean } {
+/** A skill's bar at a given point in its rounds, e.g. before a lesson. */
+export function barAt(stop: Pick<SkillStop<SkillNode>, 'lessonsTotal'>, at: { rounds: number; pieces: number }): { of: number; filled: number; whole: boolean } {
   const whole = at.rounds >= TOPIC_STARS;
   return { of: stop.lessonsTotal, filled: whole ? stop.lessonsTotal : Math.min(at.pieces, stop.lessonsTotal), whole };
 }
 
 /**
- * How a stop is drawn (shared `pathStopSvg`). A finished skill is a gold coin whatever its review strength, and
- * fades only when a refresh would help. A chapter's story is a scroll on stone until the chapter is done; a unit
- * without a story ends at its chest. With `jump`, the stop is drawn as the gate a jump goes through.
+ * How a stop is drawn (shared `pathStopSvg`). A finished skill's tile, until it melts into its wax seal (WaxSeal), is faded
+ * a little when a refresh would help. A unit's last stop, its story or its trophy, is drawn as its milestone, and this look
+ * says only whether it is won. With `jump`, the stop is drawn as the gate a jump goes through.
  */
 export function stopLook(stop: PathStop<SkillNode>, jump = false): PathStopLook {
   if (jump) return 'jump';

@@ -16,6 +16,19 @@ describe('lessonAudioKey', () => {
     expect(lessonAudioKey('"Ez baş im".')).toBe(key);
   });
 
+  it('files a sentence by what is said, not how it is written: inner punctuation and a speaker’s name label are not said', () => {
+    const key = lessonAudioKey('Ez tî me.');
+    expect(lessonAudioKey('Hamo: Ez tî me.')).toBe(key);
+    expect(lessonAudioKey('Xezo:Ez tî me!')).toBe(key);
+    expect(lessonAudioKey('Mîrza sêvan difiroşe, û gelek diaxive!')).toBe(lessonAudioKey('Mîrza sêvan difiroşe û gelek diaxive.'));
+    expect(lessonAudioKey('Yek, didu, sisê… gelek in!')).toBe('yek didu sisê gelek in');
+    expect(lessonAudioKey('Wî got: “Were!”')).toBe('wî got were');
+    expect(lessonAudioKey('سڵاو، چۆنی؟')).toBe('سڵاو چۆنی');
+    // a name that is the whole line, or a name said to someone, is said
+    expect(lessonAudioKey('Hamo!')).toBe('hamo');
+    expect(lessonAudioKey('Hevalo, were!')).toBe('hevalo were');
+  });
+
   it('keeps Kurmanji diacritics: sêv and sev are different words', () => {
     expect(lessonAudioKey('Sêv')).toBe('sêv');
     expect(lessonAudioKey('Sêv')).not.toBe(lessonAudioKey('Sev'));
@@ -71,8 +84,8 @@ describe('lessonAudioKey', () => {
     expect(lessonAudioKey('“”')).toBe('');
   });
 
-  it('leaves punctuation inside a sentence alone', () => {
-    expect(lessonAudioKey('Silav, tu çawa yî?')).toBe('silav, tu çawa yî');
+  it('reads punctuation inside a sentence as a word break', () => {
+    expect(lessonAudioKey('Silav, tu çawa yî?')).toBe('silav tu çawa yî');
   });
 });
 

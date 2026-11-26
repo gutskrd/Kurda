@@ -7,6 +7,7 @@ import { arrivalHeld } from './auth/arrival';
 import { MarketingLayout } from './layouts/MarketingLayout';
 import { AppLayout } from './layouts/AppLayout';
 import { FocusLayout } from './layouts/FocusLayout';
+import { PLUS_PAGE_OPEN } from './plus/open';
 import { AuthLayout } from './layouts/AuthLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppGate } from './components/AppGate';
@@ -22,6 +23,7 @@ import { NotFound } from './pages/NotFound';
  * bundler.
  */
 const LibraryPostPage = lazy(() => import('./pages/LibraryPostPage').then((m) => ({ default: m.LibraryPostPage })));
+const PlusPage = lazy(() => import('./plus/PlusPage').then((m) => ({ default: m.PlusPage })));
 const Saved = lazy(() => import('./pages/Saved').then((m) => ({ default: m.Saved })));
 const DimenPost = lazy(() => import('./pages/DimenPost').then((m) => ({ default: m.DimenPost })));
 const Games = lazy(() => import('./pages/Games').then((m) => ({ default: m.Games })));
@@ -55,6 +57,7 @@ const Register = lazy(() => import('./pages/Register').then((m) => ({ default: m
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then((m) => ({ default: m.ForgotPassword })));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail').then((m) => ({ default: m.VerifyEmail })));
 const ResetPassword = lazy(() => import('./pages/ResetPassword').then((m) => ({ default: m.ResetPassword })));
+const FamilyChildLink = lazy(() => import('./pages/FamilyChildLink').then((m) => ({ default: m.FamilyChildLink })));
 const Learn = lazy(() => import('./pages/Learn').then((m) => ({ default: m.Learn })));
 const CourseMap = lazy(() => import('./pages/CourseMap').then((m) => ({ default: m.CourseMap })));
 const Lesson = lazy(() => import('./pages/Lesson').then((m) => ({ default: m.Lesson })));
@@ -101,6 +104,7 @@ import { StandingWarnings } from './reports/StandingWarnings';
 // Parental controls: the usage beat for a supervised teen, and the pause screen while Hevalo rests.
 import { PauseGate, SupervisionProvider } from './parental/Supervision';
 import { GiftArrivals } from './gifts/GiftArrivals';
+import { BagNews } from './gifts/BagNews';
 import { BadgeCelebrations } from './badges/BadgeCelebrations';
 import { ProfileModalProvider } from './profile/ProfileModal';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
@@ -207,6 +211,8 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         {/* Where the emailed reset link lands (token in the query). */}
         <Route path="/reset-password" element={<ResetPassword />} />
+        {/* Where the links in a parent's emails about a child's profile land: delete it, or keep an unused one. */}
+        <Route path="/family/child" element={<FamilyChildLink />} />
         {/* Signed in but unverified: the only page reachable until confirmed. */}
         <Route
           path="/verify-email"
@@ -237,6 +243,8 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="learn/review/:sessionId" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
         {/* A test that jumps ahead to a later chapter, from the offer on the path (learn/JumpTest.tsx). */}
         <Route path="learn/jump/:courseId/:unitId" element={<RequireAccount what="gate.what.course"><JumpTest /></RequireAccount>} />
+        {/* Hevalo+, alone on the screen with its own ✕; only while it is on sale, or to look at in development (plus/PlusPage.tsx). */}
+        {PLUS_PAGE_OPEN ? <Route path="plus" element={<PlusPage />} /> : null}
       </Route>
 
       {/* The app, open to read; pages about you or reaching others ask for an account themselves. */}
@@ -385,6 +393,7 @@ export function App(): React.JSX.Element {
         <StandingWarnings />
         {/* "Rojda sent you a gift — Open", anywhere in the app. */}
         <GiftArrivals />
+        <BagNews />
         {/* A badge earned, celebrated wherever you are, after a game's own result. */}
         <BadgeCelebrations />
         {/* Hevalo's and Xezo's reaction lines, captioned wherever they are said. */}

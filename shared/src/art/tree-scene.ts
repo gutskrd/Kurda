@@ -44,12 +44,16 @@ export interface Sky {
   cloud: readonly [string, string];
 }
 
-/** Each sky's colours; the profile horizon (`horizon.ts`) is painted from the same ones. */
+/**
+ * Each sky's colours; the profile horizon (`horizon.ts`) is painted from the same ones. They keep to the app's warm
+ * palette: an amber morning over sandstone ridges, a clear day, a terracotta dusk under a teal-slate sky, and a deep
+ * teal night.
+ */
 export const SKIES: Record<TreeSky, Sky> = {
-  dawn: { air: ['#86bdea', '#f4cbbd', '#ffe9cc'], glow: ['#fff6dc', 0.7], orb: [25, 82, 10, '#fff4c8', '#ffd58a'], ridges: ['#d3c0d6', '#b5a4c9', '#978cb8'], cloud: ['#fff5ec', '#f4c6bd'] },
+  dawn: { air: ['#9cc8d8', '#f6d0a6', '#ffecc6'], glow: ['#fff3d6', 0.7], orb: [25, 82, 10, '#fff1c4', '#ffcf7a'], ridges: ['#dcc6aa', '#c2a78a', '#a1876d'], cloud: ['#fff6ea', '#f2cdae'] },
   day: { air: ['#52aeee', '#a3daf8', '#e2f5ff'], glow: ['#ffffff', 0.62], orb: [95, 41, 8, '#fff8d2', '#fff0a2'], ridges: ['#bcdbf0', '#98c4e5', '#7aadd8'], cloud: ['#ffffff', '#d2eafa'] },
-  dusk: { air: ['#3b3d84', '#c75d8e', '#ffb47c'], glow: ['#ffe2c0', 0.5], orb: [96, 85, 11, '#ffdca6', '#ff9c68'], ridges: ['#94608f', '#704a84', '#523a75'], cloud: ['#ffc7ad', '#c56d98'] },
-  night: { air: ['#0b1130', '#1a2656', '#33407e'], glow: ['#b8c6ff', 0.3], orb: [94, 42, 7, '#f6f2da', '#a6b4ff'], ridges: ['#2c3b74', '#232f62', '#1a2450'], cloud: ['#41528f', '#2d3a74'] },
+  dusk: { air: ['#2c4652', '#d6795a', '#ffbe7d'], glow: ['#ffe2c0', 0.5], orb: [96, 85, 11, '#ffdca6', '#ff9c68'], ridges: ['#9c6150', '#7b4a40', '#5a3834'], cloud: ['#ffc8a6', '#c97559'] },
+  night: { air: ['#0a1c21', '#123136', '#1e484c'], glow: ['#bfe3d8', 0.28], orb: [94, 42, 7, '#f6f0d8', '#9fd3c6'], ridges: ['#1f3f43', '#173337', '#10272b'], cloud: ['#2c5356', '#1d3e42'] },
 };
 
 /** What the colours fade toward round a tree gone without water: the dust of a dry day. */
