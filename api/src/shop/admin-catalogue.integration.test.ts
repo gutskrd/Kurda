@@ -418,7 +418,7 @@ describe.skipIf(!DATABASE_URL)('shop art and catalogue editing (integration)', (
     it('deletes one nobody has, and lets go of its art', async () => {
       const { sku: gone, key } = await addArtItem('Unloved', 'icon');
       const usage = await call(admin, 'GET', `/admin/shop/items/${gone}/usage`);
-      expect(usage.json()).toEqual({ sku: gone, owners: 0, equipped: 0, gifts: 0, refunds: 0, builtIn: false, outcome: 'delete' });
+      expect(usage.json()).toEqual({ sku: gone, owners: 0, equipped: 0, gifts: 0, refunds: 0, bundles: 0, builtIn: false, outcome: 'delete' });
       const res = await call(admin, 'DELETE', `/shop/items/${gone}`);
       expect(res.statusCode).toBe(200);
       expect(res.json()).toMatchObject({ sku: gone, outcome: 'deleted', owners: 0, artReleased: true });

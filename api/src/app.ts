@@ -32,6 +32,8 @@ import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
 import { registerShopRoutes } from './shop/routes.js';
 import { registerShopAdminRoutes } from './shop/admin-routes.js';
+import { BundleService } from './shop/bundles.js';
+import { registerBundleRoutes } from './shop/bundle-routes.js';
 import { ArtOverrideService } from './art/overrides.js';
 import { registerArtRoutes } from './art/routes.js';
 import { RefreshedNotices } from './shop/refreshed.js';
@@ -933,6 +935,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     });
     // the admin's art uploads, partial edits, and delete-or-retire
     registerShopAdminRoutes(app, shop, config);
+    // themed sets sold for less than their parts, gifts for the bag included
+    registerBundleRoutes(app, new BundleService(app.db, shopWallet, (k) => (app.storage ? app.storage.publicUrl(k) : null)));
     // Pictures put in place of the built-in art: badges, emblems, frames, default avatars, event banners.
     registerArtRoutes(app, new ArtOverrideService(app.db, (key) => (app.storage ? app.storage.publicUrl(key) : null)));
     // taking Hevalo offline for a while, and the status the apps ask while it is

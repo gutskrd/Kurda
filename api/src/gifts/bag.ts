@@ -4,6 +4,7 @@
  * only way out of a bag is a gift (`takeFromBagWithin`, under the gift rules). A child's profile, a guest, or an account the
  * economy does not pay, is given nothing. Each moment gives once (`gift_bag_grants`), at most `BAG_GIFTS_PER_DAY` a UTC
  * day and `BAG_MAX_EACH` of one kind, decided under a lock on the bag so two moments at once cannot both pass the cap.
+ * A bundle's gifts (shop/bundles.ts) are bought, not earned, so they land beside these and never count toward the day.
  *
  * Locks are taken in one order everywhere, the person's Zêr row first and their bag after, so a moment that pays Zêr
  * and fills the bag can never wait on one that does it the other way round (`grantBagGiftWithin` takes both itself).
@@ -75,7 +76,7 @@ async function grant1(client: pg.PoolClient, { userId, source, ref, seen = false
 
   const state = await client.query<{ given: boolean; today: number }>(
     `SELECT EXISTS (SELECT 1 FROM gift_bag_grants WHERE user_id = $1 AND source = $2 AND ref = $3) AS given,
-            (SELECT count(*)::int FROM gift_bag_grants WHERE user_id = $1 AND granted_on = ${UTC_TODAY}) AS today`,
+            (SELECT count(*)::int FROM gift_bag_grants WHERE user_id = $1 AND granted_on = ${UTC_TODAY} AND source <> 'bundle') AS today`,
     [userId, source, ref],
   );
   const { given, today } = state.rows[0]!;
