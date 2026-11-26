@@ -5,12 +5,13 @@
  * middle finger reaching out to the left under the stamp; and the ring finger curled below it. Flat colour in the skin
  * of the hand holding the phone (hand-paint.ts), one shade step on the far side of each finger and under the stamp's
  * edge, the gaps between the digits in the antlers' brown with a deeper accent where they are deepest, and a few warm
- * brown lines that swell in the creases and thin away to nothing. Only the roots of the thumb and the index finger,
- * where they become the palm, leave the frame, at its foot.
+ * brown lines that swell in the creases and thin away to nothing. The thumb, the index finger and the ring finger
+ * leave the frame at its foot.
  *
  * Two layers on one frame: `back` (the fingers behind the stamp) and `front` (the thumb), so an app can lay the stamp
- * (`HAND_STAMP_CARD`) between them. A turn is drawn as whole poses of the hand, passed between by smooth curves:
- * `handStampShapesAt` gives every shape's path at any moment of it, and `handStampFlip` the stamp's transforms.
+ * (`HAND_STAMP_CARD`) between them. A turn is the reference's, frame for frame: each frame's pose is the skeleton
+ * measured on it, and the poses are passed between by curves through every one of them. `handStampShapesAt` gives
+ * every shape's path at any moment of it, and `handStampFlip` the stamp's transforms.
  */
 import { Drawing, n, prefixFor, type Pt } from './svg.js';
 import { SKIN, smooth } from './hand-paint.js';
@@ -22,7 +23,7 @@ export const HAND_STAMP_VIEW = { w: 312, h: 236 } as const;
  * Where the stamp is held at rest: a box `w` by `h` centred on (`cx`, `cy`), turned `turn` degrees. The thumb covers
  * only its foot: the top `clear` units of it, where its picture goes, are never covered.
  */
-export const HAND_STAMP_CARD = { cx: 130.4, cy: 90.1, w: 100, h: 128, turn: 9, clear: 100 } as const;
+export const HAND_STAMP_CARD = { cx: 131.44, cy: 104.59, w: 100, h: 128, turn: 4.2, clear: 100 } as const;
 
 /**
  * The hand's own colours beside the skin: the gaps in the dark brown of Hevalo's antlers and their deepest part a step
@@ -30,10 +31,13 @@ export const HAND_STAMP_CARD = { cx: 130.4, cy: 90.1, w: 100, h: 128, turn: 9, c
  */
 const INK = { gap: '#4f3029', deep: '#47241f', line: '#8d5236', nail: '#eecbb0', nailEdge: '#f8e6d8' } as const;
 
-/** The hand is laid out on a grid three times the frame's size; this places a point of that grid on the frame. */
+/**
+ * The hand is laid out on a grid three times the frame's size, which is the reference's own picture: its foot is the
+ * frame's foot. This places a point of that grid on the frame.
+ */
 const K = 0.33;
-const at = ([x, y]: Pt): Pt => [(x - 250) * K, (y - 30) * K];
-
+const TOP = 720 - HAND_STAMP_VIEW.h / K;
+const at = ([x, y]: Pt): Pt => [(x - 250) * K, (y - TOP) * K];
 /** A smooth curve through `points`, sampled `count` times along its length (Catmull-Rom). */
 function sampled(points: readonly Pt[], count: number): Pt[] {
   const m = points.length;
@@ -89,69 +93,75 @@ interface Build {
 const THUMB: Build = { a: [92, 86, 74, 66, 63, 62, 57], b: [66, 66, 66, 63, 60, 60, 55], tip: 1.12 };
 const INDEX: Build = { a: [40, 46, 56, 58, 55, 53, 51, 48, 45], b: [66, 64, 62, 60, 56, 53, 51, 48, 44], tip: 1.15 };
 const REACHING: Build = { a: [42, 40, 38, 37, 35], b: [44, 42, 41, 42, 39], tip: 1.15 };
-const CURLED: Build = { a: [29, 27, 26, 25], b: [30, 29, 28, 27], tip: 1.1 };
+const CURLED: Build = { a: [29, 28, 27, 26, 25], b: [30, 30, 29, 28, 27], tip: 1.1 };
 
+/** How far a tip's round runs past the point it rounds about: the half-width there times the tip's share. */
+const reach = (b: Build): number => ((b.a.at(-1)! + b.b.at(-1)!) / 2) * b.tip;
 /**
- * The bones, on the grid: the thumb's from its joint to its tip and back to its root, and how far its root bone turns
- * from in line with its tip toward a point below the frame; the index finger's from its tip joint to its tip and from its middle joint back to its knuckle and root; the
- * middle finger's from its joint to its tip. How far each tip's round runs past the point it rounds about, to find
- * that point from a tip's outermost point.
+ * The bones the reference never shows, on the grid: the thumb's root bone and the index finger's knuckle and root, all
+ * below the frame, and how far the middle and ring fingers run on under what covers them.
  */
-const BONES = { thumb: { tip: 163, root: 300, round: 63, bend: 0.2 }, index: { tip: 125, knuckle: 150, root: 260 }, reaching: { tip: 85, round: 43 } } as const;
-const THUMB_ROOT: Pt = [736, 900];
-const CURLED_REST: readonly Pt[] = [[702, 688], [630, 690], [580, 692], [552, 694]];
+const HIDDEN = { thumbRoot: 300, indexKnuckle: 150, indexRoot: 260, middleUnder: 60, ringUnder: 70, ringOn: 60 } as const;
 
 /* ---- the turn ----------------------------------------------------------------------------------------------------- */
 
 /**
- * One turn of the reference, frame by frame, 80 ms apart, as measured from it on the grid (which lies over the
- * reference's own frame). Angles are in degrees, clockwise from pointing right as on the screen, each the way a
- * segment points toward its tip. For each frame:
- * - `thumb`: the middle its tip rounds about, and the middle of the thumb across its joint;
- * - `index`: the middle of the crease at its middle joint and at its tip joint (both on its inner side), and the way
- *   its tip segment and its root segment point;
- * - `reaching`: the middle finger's outermost point, the way its tip points and the way its root points, and how far
- *   its root runs under the thumb: as the reference shows it, and where the reference hides it (behind the stamp or
- *   the thumb), placed between the frames either side, under what hides it;
- * - `ring`: how far the ring finger has slid from where it rests (down out of the frame, as the reference's goes, while the
- *   middle finger takes its place at the stamp's turn);
- * - `card`: the stamp's lean from rest and its turn about its upright, and its middle;
- * - `web`: how far the hand has opened between the index finger and the thumb, 0 to 1, as far down as the background
- *   shows between them.
- * The index finger stays on the stamp's back except while the stamp is held a third turned, when the stamp turns off
- * it and it waits, curled, a finger's width from the stamp's edge; the middle finger then holds the stamp's far edge.
+ * One half of the reference's loop, frame by frame, 80 ms apart, as measured on it (the grid is its picture). Its other
+ * half shows the same hand turning the stamp back. For each frame:
+ * - `thumb`: its middle where it leaves the frame's foot, its joint (between its two creases), and its tip's outermost
+ *   point on its centre line;
+ * - `index`: its middle where it leaves the frame's foot, its middle joint and its tip joint (each the middle of the
+ *   finger across its crease), and its tip: where it shows, its outermost point; where the thumb or the stamp hides it,
+ *   along the way its visible edge runs, as long as the frames that show it measure;
+ * - `middle`: where it goes under the thumb, its tip joint (no crease shows, so by its distance from the tip), and its
+ *   tip; hidden behind the stamp in frame 3, it lies between frames 2 and 4;
+ * - `ring`: three points of its upper edge, root to tip, the frame's foot cutting off the rest; below the frame in
+ *   frames 10 to 13, it lies between frames 9 and 14;
+ * - `card`: the stamp's lean and its turn about its upright, in degrees, and its middle;
+ * - `web`: how far the background shows down between the index finger and the thumb, 0 to 1.
+ * The little finger never shows, behind the ring finger and below the frame, so it is not drawn.
  */
 interface Frame {
-  thumb: readonly [number, number, number, number];
-  index: readonly [number, number, number, number, number, number];
-  reaching: readonly [number, number, number, number, number];
-  ring: readonly [number, number];
+  thumb: readonly [Pt, Pt, Pt];
+  index: readonly [Pt, Pt, Pt, Pt];
+  middle: readonly [Pt, Pt, Pt];
+  ring: readonly [Pt, Pt, Pt];
   card: readonly [number, number, number, number];
   web: number;
 }
 const TRACK: readonly Frame[] = [
-  { thumb: [690, 493, 720, 670], index: [908, 653, 825, 571, -150.1, -100.7], reaching: [462, 590, 165, 165, 100], ring: [0, 0], card: [0, 0, 645.1, 302.9], web: 0 },
-  { thumb: [694, 492, 712, 670], index: [920, 652, 835, 563, -151.4, -94.8], reaching: [459, 587, 163.8, 163.8, 100], ring: [-4, 0], card: [-1.2, 0, 641, 297.4], web: 0 },
-  { thumb: [687, 487, 705, 670], index: [928, 650, 850, 550, -153.7, -93.1], reaching: [443, 505, 191.7, 191.7, 100], ring: [-20, 4], card: [-5.2, 0, 624.4, 288.4], web: 0 },
-  { thumb: [680, 484, 689, 672], index: [945, 645, 866, 541, -155.4, -92.2], reaching: [445, 454, 220.8, 195, 150], ring: [-40, 0], card: [-12.3, 0, 596.7, 280.6], web: 0.3 },
-  { thumb: [666, 470, 668, 665], index: [994, 637, 911, 543, -152.1, -79.3], reaching: [448, 403, 249.8, 200, 200], ring: [-45, 0], card: [-15.8, 30, 571.8, 287.9], web: 1 },
-  { thumb: [666, 473, 675, 668], index: [1027, 636, 942, 531, -160.1, -72.2], reaching: [448, 398, 256.3, 200, 200], ring: [-40, 5], card: [-16.2, 33, 570.3, 296.7], web: 1 },
-  { thumb: [673, 479, 678, 670], index: [1040, 635, 956, 526, -165.5, -70.3], reaching: [448, 398, 256.3, 200, 200], ring: [-32, 8], card: [-16, 34, 568, 303.1], web: 1 },
-  { thumb: [687, 506, 714, 650], index: [919, 612, 826, 499, -150.8, -98.6], reaching: [455, 409, 255, 200, 200], ring: [-10, 12], card: [-14.2, 32, 578.4, 298.6], web: 0.5 },
-  { thumb: [705, 505, 792, 658], index: [896, 614, 803, 492, -137.2, -104.5], reaching: [505, 366, 236.3, 226, 250], ring: [-30, 60], card: [-59.4, 84, 547, 312], web: 0 },
-  { thumb: [620, 400, 680, 660], index: [890, 620, 805, 493, -132.6, -104.3], reaching: [502, 503, 205.6, 200, 100], ring: [-30, 60], card: [-53.4, 92, 589, 287], web: 0 },
-  { thumb: [623, 464, 645, 655], index: [875, 627, 787, 526, -146.5, -109.8], reaching: [500, 640, 175, 175, 70], ring: [-20, 90], card: [-64.1, 130, 555, 406], web: 0.4 },
-  { thumb: [648, 481, 675, 670], index: [852, 643, 755, 533, -141.4, -104.7], reaching: [490, 680, 151.4, 151.4, 70], ring: [-10, 90], card: [-61.9, 148, 536, 435], web: 0.3 },
-  { thumb: [659, 489, 685, 669], index: [879, 654, 759, 556, -143.4, -95.5], reaching: [492, 680, 142.5, 142.5, 70], ring: [0, 80], card: [-45.2, 154, 574, 419], web: 0 },
-  { thumb: [680, 493, 703, 663], index: [890, 644, 799, 557, -145.1, -95.4], reaching: [494, 680, 133.5, 133.5, 90], ring: [10, 50], card: [-16.3, 157, 642.8, 344.7], web: 0 },
-  { thumb: [687, 492, 710, 662], index: [900, 658, 812, 574, -149.7, -95.6], reaching: [476, 623, 153.4, 153.4, 100], ring: [12, 12], card: [-5, 166, 640.3, 328.2], web: 0 },
-  { thumb: [698, 489, 714, 662], index: [906, 657, 818, 576, -149.8, -96.8], reaching: [466, 609, 159.4, 159.4, 100], ring: [8, 7], card: [-3.1, 174, 641.4, 319.8], web: 0 },
-  { thumb: [701, 493, 712, 660], index: [908, 656, 822, 573, -149.5, -95], reaching: [466, 601, 160.5, 160.5, 100], ring: [4, 4], card: [1.2, 178, 641.7, 316.9], web: 0 },
+  { thumb: [[728, 719], [725, 671.6], [688.6, 431.2]], index: [[956.5, 719], [937.2, 637.9], [848, 549.4], [667.1, 458.9]], middle: [[623.6, 575.7], [590.5, 579], [463.7, 605.5]], ring: [[600, 681], [550, 688], [500, 708]], card: [4.2, 0, 648.1, 321.2], web: 0 },
+  { thumb: [[722.5, 719], [722.6, 671.7], [688.4, 427.2]], index: [[962, 719], [948, 642.7], [852.3, 546.3], [670.8, 457]], middle: [[613.7, 568.5], [588, 570.5], [461.3, 596.8]], ring: [[590, 676], [530, 689], [480, 708]], card: [3.8, 0, 643.8, 315.5], web: 0.1 },
+  { thumb: [[717.5, 719], [716.4, 672.5], [685.1, 425.2]], index: [[968, 719], [959, 643.2], [864.3, 533.3], [680, 450]], middle: [[590.5, 518], [578.6, 517.4], [450.4, 531.5]], ring: [[590, 677], [520, 686], [450, 708]], card: [2.5, 0, 626.6, 305.2], web: 0.4 },
+  { thumb: [[703, 719], [697.1, 673.8], [681.7, 422]], index: [[979.5, 719], [976.2, 633.6], [884.7, 524.4], [708, 426]], middle: [[575.5, 529.2], [554.7, 514.1], [436.9, 485.2]], ring: [[560, 675], [480, 673], [400, 702]], card: [-0.1, 0, 598.4, 297.3], web: 0.9 },
+  { thumb: [[675, 719], [669.7, 660], [656.4, 409]], index: [[1013.5, 719], [1030.6, 629.8], [949.3, 524.5], [769.1, 449.7]], middle: [[560.4, 540.4], [530.8, 510.8], [423.5, 439]], ring: [[530, 681], [460, 678], [390, 703]], card: [-7.6, 19.1, 574.3, 306.5], web: 1 },
+  { thumb: [[682, 719], [676.9, 664.5], [647.7, 412.1]], index: [[1021.5, 719], [1053.2, 635.5], [981.8, 515.4], [785.3, 442.8]], middle: [[560.3, 545.4], [529.5, 512], [435.2, 422.7]], ring: [[550, 688], [470, 683], [400, 704]], card: [-7.1, 19.1, 572.8, 314.4], web: 1 },
+  { thumb: [[691.5, 719], [691, 670.5], [656.6, 416.2]], index: [[1026.5, 719], [1060.7, 634.7], [989.2, 508.5], [797.1, 438.5]], middle: [[565.3, 545.4], [544.6, 522.9], [459.7, 424.6]], ring: [[560, 697], [480, 686], [410, 706]], card: [-7.1, 17.5, 570.1, 320.8], web: 1 },
+  { thumb: [[730, 719], [729.2, 668], [693.5, 441.1]], index: [[983.5, 719], [957.9, 599], [859.4, 468.9], [688.2, 361.4]], middle: [[580.4, 540.3], [549.3, 511.7], [453.4, 423.9]], ring: [[600, 698], [520, 696], [440, 709]], card: [-10.9, 11, 590.2, 318.2], web: 1 },
+  { thumb: [[781, 719], [774, 664.5], [654.7, 494.6]], index: [[969, 719], [927.8, 600.6], [830.7, 469], [700.8, 318.2]], middle: [[626.9, 521.8], [591.5, 471.1], [514.6, 366.3]], ring: [[600, 709], [540, 701], [470, 711]], card: [-49.8, 77.3, 566.1, 325.4], web: 0.4 },
+  { thumb: [[693, 719], [693.7, 670.1], [621.1, 425.1]], index: [[960, 719], [920.2, 612], [833.5, 476.9], [712, 312.2]], middle: [[608.3, 429.8], [608.3, 429.8], [531.5, 351.2]], ring: [[525, 702], [480, 702], [430, 712]], card: [-45, 90, 588.5, 308.1], web: 0.1 },
+  { thumb: [[673, 719], [657, 655.1], [616.7, 400.3]], index: [[954, 719], [900.6, 611.5], [812, 503.1], [682.8, 349.2]], middle: [[612, 602], [548, 618], [500.5, 646.7]], ring: [[541, 724], [500, 724.6], [452, 735]], card: [-65.8, 124.6, 562.3, 395.8], web: 0.2 },
+  { thumb: [[694.5, 719], [684.9, 671.8], [645.3, 418.2]], index: [[929.5, 719], [875.1, 625.8], [767.8, 513], [619.3, 375.6]], middle: [[590.5, 654.8], [590.2, 654.9], [487.3, 694]], ring: [[557, 724], [520, 725.2], [474, 736]], card: [-55.1, 180, 547.6, 437.7], web: 0 },
+  { thumb: [[699, 719], [695.3, 669.2], [667.9, 425.1]], index: [[916.5, 719], [897, 645.9], [759, 556], [597.5, 434.3]], middle: [[605.4, 654.7], [605.4, 654.7], [538.4, 706.4]], ring: [[573, 724], [540, 725.8], [496, 737]], card: [-36.8, 169.9, 586.1, 426.9], web: 0.1 },
+  { thumb: [[718.5, 719], [708.7, 661.9], [675.2, 429.2]], index: [[925, 719], [907.2, 636.9], [781.6, 556.4], [621.9, 432.2]], middle: [[606.8, 628.3], [606.8, 628.3], [493.1, 668.2]], ring: [[589, 724], [560, 726.4], [518, 738]], card: [-9.9, 168.5, 648.8, 364.3], web: 0.2 },
+  { thumb: [[725.5, 719], [715.6, 662], [684.2, 428.2]], index: [[944, 719], [928.1, 645.6], [844, 553.3], [665.8, 457.6]], middle: [[620.7, 603], [600.7, 606], [479.3, 647.6]], ring: [[605, 699], [580, 702], [540, 714]], card: [-2.9, 180, 646.2, 343.2], web: 0 },
+  { thumb: [[726, 719], [716.1, 662], [689.5, 426.1]], index: [[949.5, 719], [934.7, 646], [845.2, 553.5], [668.4, 455.3]], middle: [[618, 586], [592.5, 590.8], [467.9, 626.6]], ring: [[605, 698], [560, 697], [510, 713]], card: [0.1, 180, 646.1, 330.2], web: 0 },
+  { thumb: [[727.5, 719], [717, 660], [689.9, 431.1]], index: [[953, 719], [935.9, 642.8], [844.9, 551.7], [666.3, 456.8]], middle: [[620.9, 578.7], [592.6, 583.3], [467.4, 616.7]], ring: [[605, 700], [550, 695], [500, 712]], card: [2.4, 180, 647.5, 327], web: 0 },
+  { thumb: [[727.5, 719], [717.8, 660.2], [691, 432.1]], index: [[954.5, 719], [937.3, 640], [846.7, 551.6], [665.8, 461.1]], middle: [[621.7, 577.3], [592.2, 581], [466.3, 611.5]], ring: [[605, 698], [550, 692], [500, 710]], card: [3.2, 180, 648.3, 324.3], web: 0 },
+  { thumb: [[728, 719], [720.5, 662], [690.8, 434.1]], index: [[956.5, 719], [936.8, 638], [847.7, 550.9], [669.9, 454.5]], middle: [[623.6, 575], [593.8, 578.2], [467.3, 605.8]], ring: [[605, 695], [550, 690], [500, 708]], card: [4.2, 180, 648.3, 321.9], web: 0 },
+  { thumb: [[728, 719], [720.5, 662], [690.8, 434.1]], index: [[956.5, 719], [936.8, 638], [847.7, 550.9], [669.9, 454.5]], middle: [[623.6, 575], [593.8, 578.2], [467.3, 605.8]], ring: [[605, 695], [550, 690], [500, 708]], card: [4.2, 180, 648.3, 321.8], web: 0 },
+  { thumb: [[728, 719], [720.5, 662], [690.8, 434.1]], index: [[956.5, 719], [936.8, 638], [847.7, 550.9], [669.9, 454.5]], middle: [[623.6, 575], [593.8, 578.2], [467.3, 605.8]], ring: [[605, 695], [550, 690], [500, 708]], card: [4.2, 180, 648.3, 321.8], web: 0 },
+  { thumb: [[728, 719], [720.5, 662], [690.8, 434.1]], index: [[956.5, 719], [936.8, 638], [847.7, 550.9], [669.9, 454.5]], middle: [[623.6, 575], [593.8, 578.2], [467.3, 605.8]], ring: [[605, 695], [550, 690], [500, 708]], card: [4.2, 180, 648.3, 321.8], web: 0 },
 ];
 const FLIP_FRAME_MS = 80;
+/**
+ * A turn starts and ends at the hand's resting pose, the reference's last frame, and runs through the rest of its
+ * frames in order, so turns played back to back are the reference's loop.
+ */
+const ORDER = [TRACK.length - 1, ...TRACK.map((_, i) => i)];
 
 /** How long one turn takes, and how far through it the stamp is edge-on and shows its other face. */
-export const HAND_STAMP_FLIP = { ms: TRACK.length * FLIP_FRAME_MS, edgeOn: 9 / TRACK.length } as const;
+export const HAND_STAMP_FLIP = { ms: (ORDER.length - 1) * FLIP_FRAME_MS, edgeOn: 10 / (ORDER.length - 1) } as const;
 
 /** The wrist, on the grid, toward which the web sags as it opens. */
 const WRIST: Pt = [780, 800];
@@ -165,13 +175,12 @@ interface Posed {
 }
 type DigitName = 'thumb' | 'index' | 'reaching' | 'curled';
 
-const toward = (deg: number): Pt => [Math.cos((deg * Math.PI) / 180), Math.sin((deg * Math.PI) / 180)];
-const heading = ([x, y]: Pt): number => (Math.atan2(y, x) * 180) / Math.PI;
 const step = ([x, y]: Pt, [dx, dy]: Pt, k: number): Pt => [x + dx * k, y + dy * k];
 const unit = ([x, y]: Pt): Pt => {
   const l = Math.hypot(x, y) || 1;
   return [x / l, y / l];
 };
+const from = (p: Pt, q: Pt): Pt => unit([q[0] - p[0], q[1] - p[1]]);
 /** A centre line along a digit's bones: its joints from root to tip, each bone cut into so many equal steps. */
 function along(joints: readonly Pt[], cuts: readonly number[]): Pt[] {
   const out: Pt[] = [joints[0]!];
@@ -185,60 +194,56 @@ function along(joints: readonly Pt[], cuts: readonly number[]): Pt[] {
 /** A digit as the turn's track places it: its build, along its joints from root to tip, each bone cut into so many steps. */
 const placed = (b: Build, joints: readonly Pt[], cuts: readonly number[]): Posed => ({ centre: along(joints, cuts), a: b.a, b: b.b, tip: b.tip });
 
-/**
- * The thumb in a frame of the track: its tip's middle as measured, its tip bone pointing the way the reference's does,
- * and its root bone between in line with it and toward a point below the frame, so it swings with its tip from the
- * wrist rather than bending sideways at its joint, which seen from the nail a thumb barely does.
- */
+/** The thumb: its joint as measured, its tip rounded about a point inside the measured tip, its root bone on below the frame. */
 function thumbIn(f: Frame): Posed {
-  const [ex, ey, jx, jy] = f.thumb;
-  const way = heading([ex - jx, ey - jy]);
-  const joint = step([ex, ey], toward(way), -BONES.thumb.tip);
-  const below = heading([joint[0] - THUMB_ROOT[0], joint[1] - THUMB_ROOT[1]]);
-  const root = step(joint, toward(way + BONES.thumb.bend * (below - way)), -BONES.thumb.root);
-  return placed(THUMB, [root, joint, [ex, ey]], [3, 3]);
+  const [base, joint, tip] = f.thumb;
+  const middle = step(tip, from(joint, tip), -reach(THUMB));
+  return placed(THUMB, [step(joint, from(joint, base), HIDDEN.thumbRoot), joint, middle], [3, 3]);
 }
 
-/** The index finger in a frame of the track: its joints lie halfway into it from their creases, toward its back. */
+/** The index finger: its two joints as measured, its tip rounded inside the measured tip, its knuckle and root below the frame. */
 function indexIn(f: Frame): Posed {
-  const [mx, my, dx, dy, tipWay, rootWay] = f.index;
-  const middleWay = heading([dx - mx, dy - my]);
-  const middle = step([mx, my], toward((middleWay + rootWay) / 2 + 90), 35);
-  const last = step([dx, dy], toward((middleWay + tipWay) / 2 + 90), 30);
-  const joints = [step(middle, toward(rootWay), -BONES.index.root), step(middle, toward(rootWay), -BONES.index.knuckle), middle, last, step(last, toward(tipWay), BONES.index.tip)];
+  const [base, middle, last, tip] = f.index;
+  const down = from(middle, base);
+  const joints = [step(middle, down, HIDDEN.indexRoot), step(middle, down, HIDDEN.indexKnuckle), middle, last, step(tip, from(last, tip), -reach(INDEX))];
   return placed(INDEX, joints, [1, 2, 3, 2]);
 }
 
-/** The middle finger in a frame of the track, its root under the thumb. */
-function reachingIn(f: Frame): Posed {
-  const [rx, ry, way, rootWay, rootLength] = f.reaching;
-  const tip = step([rx, ry], toward(way), -BONES.reaching.round);
-  const joint = step(tip, toward(way), -BONES.reaching.tip);
-  return placed(REACHING, [step(joint, toward(rootWay), -rootLength), joint, tip], [2, 2]);
+/** The middle finger: its joint and tip as measured, its root on under the thumb past where it goes under. */
+function middleIn(f: Frame): Posed {
+  const [under, joint, tip] = f.middle;
+  const shown = Math.hypot(under[0] - joint[0], under[1] - joint[1]);
+  const out = shown > 15 ? from(joint, under) : from(tip, joint);
+  const root = step(under, out, HIDDEN.middleUnder + Math.max(0, 15 - shown));
+  return placed(REACHING, [root, joint, step(tip, from(joint, tip), -reach(REACHING))], [2, 2]);
 }
 
-/** The poses, one per frame of the track and the rest it starts and ends at. */
+/** The ring finger: its centre a half-width in from its measured upper edge, on under the thumb at its root and below the frame at its tip. */
+function ringIn(f: Frame): Posed {
+  const edge = f.ring;
+  const centre = edge.map((p, i): Pt => {
+    const d = from(edge[Math.max(0, i - 1)]!, edge[Math.min(edge.length - 1, i + 1)]!);
+    return step(p, [-d[1], d[0]], -CURLED.a[i + 1]!);
+  });
+  const root = step(centre[0]!, from(centre[1]!, centre[0]!), HIDDEN.ringUnder);
+  const tip = step(centre[2]!, from(centre[1]!, centre[2]!), HIDDEN.ringOn);
+  return { centre: [root, ...centre, tip], a: CURLED.a, b: CURLED.b, tip: CURLED.tip };
+}
+
+/** The poses, one per frame of a turn, from rest to rest. */
 interface Pose {
   digits: Record<DigitName, Posed>;
   web: number;
 }
-const POSES: readonly Pose[] = (() => {
-  return [...TRACK, TRACK[0]!].map((f) => {
-    const thumb = thumbIn(f);
-    const curled = f.ring;
-    return {
-      digits: {
-        thumb,
-        index: indexIn(f),
-        reaching: reachingIn(f),
-        curled: { centre: CURLED_REST.map(([x, y]) => [x + curled[0], y + curled[1]] as Pt), a: CURLED.a, b: CURLED.b, tip: CURLED.tip },
-      },
-      web: f.web,
-    };
-  });
-})();
-/** The stamp's track, ending where it began but turned over, its other face showing. */
-const CARD_TRACK = [...TRACK.map((f) => f.card), [TRACK[0]!.card[0], 180, TRACK[0]!.card[2], TRACK[0]!.card[3]] as const];
+const POSES: readonly Pose[] = ORDER.map((i) => {
+  const f = TRACK[i]!;
+  return { digits: { thumb: thumbIn(f), index: indexIn(f), reaching: middleIn(f), curled: ringIn(f) }, web: f.web };
+});
+/** The stamp through a turn: its lean from rest, its turn, its middle; it ends where it began but turned over. */
+const CARD_TRACK: readonly (readonly [number, number, number, number])[] = ORDER.map((i, k) => {
+  const [lean, turn, x, y] = TRACK[i]!.card;
+  return [lean - TRACK.at(-1)!.card[0], k === 0 ? 0 : turn, x, y] as const;
+});
 
 
 /** The direction along a posed digit at a point of its centre line, from its neighbours. */
@@ -387,7 +392,6 @@ const LINES: readonly { name: string; on: ReturnType<typeof held>; width: number
   { name: 'index-nail', on: held('index', [[693, 471], [696, 458], [705, 448], [718, 443]]), width: 1.1, opacity: 0.8, ink: INK.nail, layer: 'back' },
   { name: 'reaching-joint', on: held('reaching', [[592, 536], [588, 552], [590, 570]]), width: 1.1, opacity: 0.85, layer: 'back' },
   { name: 'reaching-joint-2', on: held('reaching', [[606, 540], [603, 553], [605, 566]]), width: 0.7, opacity: 0.6, layer: 'back' },
-  { name: 'curled-joint', on: held('curled', [[578, 676], [574, 692], [578, 708]]), width: 0.8, opacity: 0.6, layer: 'back' },
 ];
 
 /** How far from `p` along `n` the line first meets the polyline `line`, or a long way if it never does. */
@@ -495,6 +499,12 @@ function shapesIn(p: Pose): Record<string, Pt[]> {
     'check:index': [1, 3, 6, 8].map((i) => ds.index.centre[i]!),
     'check:reaching': [0, 2, 4].map((i) => ds.reaching.centre[i]!),
     'check:index-outline': [...I.a, ...I.cap, ...I.b.slice().reverse()],
+    // and each digit's tip, its outermost point on its centre line, and the ring finger's centre line
+    'check:tips': (['thumb', 'index', 'reaching'] as const).map((d) => {
+      const m = ds[d].centre.length;
+      return step(ds[d].centre[m - 1]!, alongAt(ds[d], m - 1), ((ds[d].a[m - 1]! + ds[d].b[m - 1]!) / 2) * ds[d].tip);
+    }),
+    'check:ring': ds.curled.centre.slice(),
     ...Object.fromEntries(LINES.map((l) => [l.name, ride(l.on, ds)])),
   };
 }
@@ -506,44 +516,45 @@ const KEYS: Record<string, Pt[][]> = (() => {
 })();
 
 /**
- * Smooth curves through the poses: for each point's each coordinate, a natural cubic spline through its place in
- * every pose, so its path, speed and acceleration all run on unbroken from pose to pose (C2). `bends` holds each
- * curve's second derivative at each pose.
+ * Curves through the poses that pass through every one of them and never swing past it: for each point's each
+ * coordinate, a monotone cubic through its place in every pose (its slope at a pose the harmonic mean of the steps
+ * either side, and nil where it turns back), so a finger eases into a pose it reverses at and runs on through one it
+ * passes, with nothing drifting from the measured poses between them. The turn's ends meet as the loop's do: the slope
+ * at either end is taken across the seam, the stamp's turn carried on by half a turn.
  */
-function splineBends(values: readonly number[]): number[] {
+function slopes(values: readonly number[], seam = 0): number[] {
   const m = values.length;
-  const bend = new Array<number>(m).fill(0);
-  const c = new Array<number>(m).fill(0);
-  const d = new Array<number>(m).fill(0);
-  for (let i = 1; i < m - 1; i++) {
-    const rhs = 6 * (values[i + 1]! - 2 * values[i]! + values[i - 1]!);
-    const den = 4 - (i > 1 ? c[i - 1]! : 0);
-    c[i] = 1 / den;
-    d[i] = (rhs - (i > 1 ? d[i - 1]! : 0)) / den;
-  }
-  for (let i = m - 2; i >= 1; i--) bend[i] = d[i]! - c[i]! * bend[i + 1]!;
-  return bend;
+  const before = values[m - 2]! - seam;
+  const after = values[1]! + seam;
+  const steps = values.map((v, i) => (i + 1 < m ? values[i + 1]! - v : after - v));
+  return values.map((v, i) => {
+    const [l, r] = [i > 0 ? v - values[i - 1]! : v - before, steps[i]!];
+    return l * r <= 0 ? 0 : (2 * l * r) / (l + r);
+  });
 }
-const onSpline = (values: readonly number[], bends: readonly number[], t: number): number => {
+const onCurve = (values: readonly number[], slope: readonly number[], t: number): number => {
   const i = Math.max(0, Math.min(values.length - 2, Math.floor(t)));
   const u = t - i;
-  const w = 1 - u;
-  return w * values[i]! + u * values[i + 1]! + ((w * w * w - w) * bends[i]! + (u * u * u - u) * bends[i + 1]!) / 6;
+  const [u2, u3] = [u * u, u * u * u];
+  return (2 * u3 - 3 * u2 + 1) * values[i]! + (u3 - 2 * u2 + u) * slope[i]! + (-2 * u3 + 3 * u2) * values[i + 1]! + (u3 - u2) * slope[i + 1]!;
 };
-const SPLINES: Record<string, { xs: number[][]; ys: number[][]; bx: number[][]; by: number[][] }> = Object.fromEntries(
+const CURVES: Record<string, { xs: number[][]; ys: number[][]; sx: number[][]; sy: number[][] }> = Object.fromEntries(
   Object.entries(KEYS).map(([name, poses]) => {
     const xs = poses[0]!.map((_, k) => poses.map((pts) => pts[k]![0]));
     const ys = poses[0]!.map((_, k) => poses.map((pts) => pts[k]![1]));
-    return [name, { xs, ys, bx: xs.map(splineBends), by: ys.map(splineBends) }];
+    return [name, { xs, ys, sx: xs.map((v) => slopes(v)), sy: ys.map((v) => slopes(v)) }];
   }),
 );
-const CARD_BENDS = [0, 1, 2, 3].map((c) => splineBends(CARD_TRACK.map((q) => q[c]!)));
+const CARD_SLOPES = [0, 1, 2, 3].map((c) => slopes(CARD_TRACK.map((q) => q[c]!), c === 1 ? 180 : 0));
+
+/** How far through the poses `ms` into a turn falls. */
+const poseAt = (ms: number): number => (Math.max(0, Math.min(HAND_STAMP_FLIP.ms, ms)) / HAND_STAMP_FLIP.ms) * (POSES.length - 1);
 
 /** Every shape's points at `ms` into a turn, on the frame. */
 function pointsAt(ms: number): Record<string, Pt[]> {
-  const t = (Math.max(0, Math.min(HAND_STAMP_FLIP.ms, ms)) / HAND_STAMP_FLIP.ms) * (POSES.length - 1);
+  const t = poseAt(ms);
   return Object.fromEntries(
-    Object.entries(SPLINES).map(([name, s]) => [name, s.xs.map((x, k) => [onSpline(x, s.bx[k]!, t), onSpline(s.ys[k]!, s.by[k]!, t)] as Pt)]),
+    Object.entries(CURVES).map(([name, c]) => [name, c.xs.map((x, k) => [onCurve(x, c.sx[k]!, t), onCurve(c.ys[k]!, c.sy[k]!, t)] as Pt)]),
   );
 }
 
@@ -612,11 +623,25 @@ export function handStampShapesAt(ms: number): Record<string, string> {
 
 /**
  * For checking the drawing, `ms` into a turn, on the frame: each digit's joints from root to tip (the thumb's, the
- * index finger's from its knuckle, the middle finger's), the index finger's whole outline, and the thumb's pad.
+ * index finger's from its knuckle, the middle finger's), each one's outermost tip, the ring finger's centre line, the
+ * index finger's whole outline, and the thumb's pad.
  */
-export function handStampBonesAt(ms: number): { joints: Record<'thumb' | 'index' | 'reaching', Pt[]>; index: Pt[]; pad: Pt } {
+export function handStampBonesAt(ms: number): {
+  joints: Record<'thumb' | 'index' | 'reaching', Pt[]>;
+  tips: Record<'thumb' | 'index' | 'reaching', Pt>;
+  ring: Pt[];
+  index: Pt[];
+  pad: Pt;
+} {
   const pts = pointsAt(ms);
-  return { joints: { thumb: pts['check:thumb']!, index: pts['check:index']!, reaching: pts['check:reaching']! }, index: pts['check:index-outline']!, pad: pts.pad![0]! };
+  const [thumb, index, reaching] = pts['check:tips']!;
+  return {
+    joints: { thumb: pts['check:thumb']!, index: pts['check:index']!, reaching: pts['check:reaching']! },
+    tips: { thumb: thumb!, index: index!, reaching: reaching! },
+    ring: pts['check:ring']!,
+    index: pts['check:index-outline']!,
+    pad: pts.pad![0]!,
+  };
 }
 
 /** Every shape's points `ms` into a turn, on the frame, for checking the drawing. */
@@ -626,8 +651,8 @@ export function handStampPointsAt(ms: number): Record<string, Pt[]> {
 
 /** The stamp `ms` into a turn: its middle on the frame, its lean and its turn about its upright, as the reference moves it. */
 export function handStampCardAt(ms: number): { cx: number; cy: number; lean: number; turn: number } {
-  const t = (Math.max(0, Math.min(HAND_STAMP_FLIP.ms, ms)) / HAND_STAMP_FLIP.ms) * (POSES.length - 1);
-  const [lean, flip, x, y] = [0, 1, 2, 3].map((k) => onSpline(CARD_TRACK.map((q) => q[k]!), CARD_BENDS[k]!, t));
+  const t = poseAt(ms);
+  const [lean, flip, x, y] = [0, 1, 2, 3].map((k) => onCurve(CARD_TRACK.map((q) => q[k]!), CARD_SLOPES[k]!, t));
   const [cx, cy] = at([x!, y!]);
   return { cx, cy, lean: HAND_STAMP_CARD.turn + lean!, turn: flip! };
 }
