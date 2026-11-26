@@ -1008,12 +1008,11 @@ function seamOf(seed: Kind['seed']): readonly Pt[] {
 }
 
 /**
- * A kind's seed lying on its side in the earth, as in the owner's reference: glossy, tip to the upper left, split along
- * its back, with its own marks (an acorn's cup, an almond's pits, a cone's scales, a pomegranate pip's wet shine). The
- * split is `shut`; `cracked`, with green light and a green tip showing; or `open` for the shoot, which `drawSprout` draws
- * over the opening before `seedLip` covers the shoot's foot. `f` places it and `k` is half its length on the canvas.
+ * A kind's seed, as in the owner's reference: glossy, split along its back, with its own marks (an acorn's cup, an
+ * almond's pits, a cone's scales, a pomegranate pip's wet shine). The split is `shut`, or `cracked` with green light and
+ * the shoot's green tip showing. `f` places it and `k` is half its length on the canvas.
  */
-function drawSeedBody(dr: Drawing, kind: Kind, f: Frame, k: number, split: 'shut' | 'cracked' | 'open'): string {
+function drawSeedBody(dr: Drawing, kind: Kind, f: Frame, k: number, split: 'shut' | 'cracked'): string {
   const tones = seedTones(kind.seedColour);
   const [shade, base, light] = tones;
   let out = glossy(dr, through(f, SEED_SHAPES[kind.seed]), tones, k);
@@ -1068,31 +1067,14 @@ function drawSeedBody(dr: Drawing, kind: Kind, f: Frame, k: number, split: 'shut
     // The seam it will part at, barely visible.
     return out + path(limb(through(f, seam), [k * 0.02, k * 0.05, k * 0.05, k * 0.02]), shade, ' opacity="0.7"');
   }
-  if (split === 'cracked') {
-    // The crack: dark where the shell has parted, green light inside, and the shoot's tip showing at its widest.
-    const crack = seam.map(([x, y], i) => [x + (i % 2 === 0 ? -0.05 : 0.04), y] as Pt);
-    out += path(limb(through(f, crack), [k * 0.05, k * 0.15, k * 0.13, k * 0.04]), dark);
-    out += path(limb(through(f, crack), [k * 0.02, k * 0.07, k * 0.06, k * 0.015]), '#e6ff8f');
-    const at = f(0.7, -0.2);
-    const out1 = f(1.4, -0.4);
-    const up = (Math.atan2(out1[1] - at[1], out1[0] - at[0]) * 180) / Math.PI;
-    return out + path(leafAt(at, up - 18, k * 0.34, k * 0.13), '#8fd24e') + path(leafAt(at, up + 22, k * 0.28, k * 0.12), '#d6f77e');
-  }
-  // Open: the shell parted along its back, the gap's dark and the seed's pale inside, its edge lifted past the outline.
-  const lip = seam.map(([x, y], i) => [x + 0.16 * Math.sin((i / (seam.length - 1)) * Math.PI), y] as Pt);
-  const inner = seam.map(([x, y], i) => [x - 0.2 * Math.sin((i / (seam.length - 1)) * Math.PI), y] as Pt);
-  const gap = closed(through(f, [...lip, ...[...inner].reverse()]));
-  const flesh = closed(through(f, [...seam.map(([x, y], i) => [x + 0.04 * Math.sin((i / (seam.length - 1)) * Math.PI), y] as Pt), ...inner.map(([x, y], i) => [x + 0.07 * Math.sin((i / (seam.length - 1)) * Math.PI), y] as Pt).reverse()]));
-  return out + path(gap, dark) + path(flesh, '#f2f0b8');
-}
-
-/** The split shell's edge over the shoot's foot, so the shoot is seen to come out of the seed and not stand on it. */
-function seedLip(kind: Kind, f: Frame, k: number): string {
-  const seam = seamOf(kind.seed);
-  const [, base, light] = seedTones(kind.seedColour);
-  const lip = seam.map(([x, y], i) => [x + 0.16 * Math.sin((i / (seam.length - 1)) * Math.PI), y] as Pt);
-  const rim = through(f, lip);
-  return path(limb(rim, [k * 0.04, k * 0.12, k * 0.12, k * 0.04]), base) + path(limb(beside(rim, [k * 0.02, k * 0.04, k * 0.04, k * 0.02]), [k * 0.02, k * 0.05, k * 0.05, k * 0.02]), light);
+  // The crack: dark where the shell has parted, green light inside, and the shoot's tip showing at its widest.
+  const crack = seam.map(([x, y], i) => [x + (i % 2 === 0 ? -0.05 : 0.04), y] as Pt);
+  out += path(limb(through(f, crack), [k * 0.05, k * 0.15, k * 0.13, k * 0.04]), dark);
+  out += path(limb(through(f, crack), [k * 0.02, k * 0.07, k * 0.06, k * 0.015]), '#e6ff8f');
+  const at = f(0.7, -0.2);
+  const out1 = f(1.4, -0.4);
+  const up = (Math.atan2(out1[1] - at[1], out1[0] - at[0]) * 180) / Math.PI;
+  return out + path(leafAt(at, up - 18, k * 0.34, k * 0.13), '#8fd24e') + path(leafAt(at, up + 22, k * 0.28, k * 0.12), '#d6f77e');
 }
 
 /** A heap of turned earth the seed was set in, lit on its upper left, with a crumb or two beside it. */
@@ -1161,71 +1143,164 @@ function drawFlecks(points: readonly (readonly [number, number, number, number])
 /** The width of the round a young plant stands on at each young stage: wider each time, never wider than the young tree's after it. */
 const YOUNG_GROUND = [20, 21, 22] as const;
 
-/** Where the seed lies, the same for seed and sprout so the sprout rises out of it: centre, turn (tip to the upper left) and half-length. */
-const SEED_AT = { x: MID - 1, y: GROUND - 9, turn: -64, k: 13.5 } as const;
+/**
+ * Where the seed lies, half in the earth with its back (where it splits) upward and its tip to the left: centre, turn
+ * and half-length. The sprout's split coat lies at the same place.
+ */
+const SEED_AT = { x: MID - 0.5, y: GROUND - 6, turn: -72, k: 12 } as const;
 const seedFrame = (): Frame => frame(SEED_AT.x, SEED_AT.y, SEED_AT.turn, SEED_AT.k);
+/** How high the earth comes up over what lies in it: about the seed's middle. */
+const EARTH_UP = GROUND - 3.6;
 
-/** The seed's bed on the ground layer: a little heap of turned earth behind it and the dark hollow it is set in. */
-function seedBed(soil: readonly [string, string, string], rand: Rand): string {
-  return drawMound(MID, 17, 4.6, soil, rand) + ellipse(MID - 1, GROUND - 2.6, 14, 3.4, tint(soil[0], -0.12));
+type Soil = readonly [string, string, string];
+
+/** The seed's bed on the ground layer: a little heap of turned earth and the hollow pressed into it. */
+function seedBed(soil: Soil, rand: Rand): string {
+  return drawMound(MID, 17, 4.6, soil, rand) + ellipse(SEED_AT.x, GROUND - 3.4, 13.5, 3.6, tint(soil[0], -0.12));
+}
+
+/** The soft dark where something rests on the earth: the soil's shade, and a closer, darker step right under it. */
+function contactShadow(x: number, y: number, rx: number, ry: number, soil: Soil): string {
+  return ellipse(x, y, rx, ry, soil[0], ' opacity="0.55"') + ellipse(x + rx * 0.06, y + ry * 0.12, rx * 0.6, ry * 0.6, tint(soil[0], -0.32), ' opacity="0.6"');
 }
 
 /**
- * The earth drawn up over the seed's lower side, so it lies in the ground rather than on it. It is the front layer:
- * it stays still with the ground, and a seed dropped in falls behind it.
+ * The earth over what lies in it: a crumbly lip drawn up to `top` across the middle and down to the ground at the
+ * sides, with one light step on its upper left and one shade step low on its right, and loose crumbs on and beside it.
+ * It is the front layer, so it stays still with the ground and what lies in it is seen to be in the earth, not on it.
+ * With `shoot`, the earth is cracked open round a stem coming up through it there.
  */
-function seedLipOfEarth(soil: readonly [string, string, string]): string {
-  const [x, y, w] = [MID - 1, GROUND - 0.2, 16];
-  let out = path(`M${n(x - w)} ${n(y + 2.6)}C${n(x - w * 0.7)} ${n(y - 1.6)} ${n(x - w * 0.3)} ${n(y - 0.8)} ${n(x)} ${n(y - 1.3)}C${n(x + w * 0.34)} ${n(y - 0.8)} ${n(x + w * 0.74)} ${n(y - 2)} ${n(x + w)} ${n(y + 2.6)}C${n(x + w * 0.5)} ${n(y + 5.6)} ${n(x - w * 0.5)} ${n(y + 5.6)} ${n(x - w)} ${n(y + 2.6)}Z`, soil[1]);
-  out += ellipse(x - w * 0.46, y - 0.2, w * 0.26, 0.9, soil[2], ' opacity="0.8"') + ellipse(x + w * 0.4, y + 0.1, w * 0.2, 0.8, soil[2], ' opacity="0.6"') + ellipse(x + w * 0.16, y + 2.6, w * 0.5, 1.4, soil[0], ' opacity="0.5"');
-  for (const [dx, dy, r] of [[-10.6, 2.4, 1.1], [9.6, 2.6, 1.2], [-3.2, 3.6, 0.9], [4.2, 2, 0.8]] as const) out += ellipse(x + dx, y + dy, r * 1.25, r * 0.85, soil[0]);
+function earthLip(soil: Soil, top: number, w: number, shoot?: number): string {
+  const x = SEED_AT.x;
+  const g = GROUND;
+  let out = path(
+    `M${n(x - w)} ${n(g + 2.8)}C${n(x - w * 0.88)} ${n(g - 0.6)} ${n(x - w * 0.62)} ${n(top + 1.2)} ${n(x - w * 0.36)} ${n(top + 0.5)}` +
+      `C${n(x - w * 0.2)} ${n(top - 0.1)} ${n(x - w * 0.06)} ${n(top + 0.7)} ${n(x + w * 0.1)} ${n(top + 0.2)}` +
+      `C${n(x + w * 0.28)} ${n(top - 0.3)} ${n(x + w * 0.52)} ${n(top + 0.9)} ${n(x + w * 0.72)} ${n(top + 2)}` +
+      `C${n(x + w * 0.9)} ${n(g - 0.8)} ${n(x + w)} ${n(g + 1)} ${n(x + w)} ${n(g + 2.8)}` +
+      `C${n(x + w * 0.5)} ${n(g + 5.8)} ${n(x - w * 0.5)} ${n(g + 5.8)} ${n(x - w)} ${n(g + 2.8)}Z`,
+    soil[1],
+  );
+  out += path(
+    `M${n(x - w * 0.84)} ${n(g + 0.4)}C${n(x - w * 0.66)} ${n(top + 2)} ${n(x - w * 0.36)} ${n(top + 1.1)} ${n(x - w * 0.1)} ${n(top + 1.2)}` +
+      `C${n(x - w * 0.34)} ${n(top + 2.6)} ${n(x - w * 0.62)} ${n(g - 0.9)} ${n(x - w * 0.84)} ${n(g + 0.4)}Z`,
+    soil[2],
+    ' opacity="0.85"',
+  );
+  out += ellipse(x + w * 0.48, g + 3.4, w * 0.44, 1.5, soil[0], ' opacity="0.55"');
+  if (shoot !== undefined) {
+    const crack = tint(soil[0], -0.35);
+    out += path(limb([[shoot - 0.8, top + 1], [shoot - 2.8, top + 2.4], [shoot - 4.4, top + 2.9]], [0.55, 0.4, 0.12]), crack);
+    out += path(limb([[shoot + 0.9, top + 1], [shoot + 2.6, top + 2], [shoot + 4.6, top + 2.3]], [0.55, 0.36, 0.12]), crack);
+  }
+  // Loose crumbs of broken earth, each an uneven lump lit on its top: one on the lip and two on the ground beside it.
+  for (const [dx, y, r, turn] of [[-w * 0.42, top + 2.4, 1.2, 20], [-w * 1.08, g + 2, 1.1, -30], [w * 1.1, g + 2.2, 1.3, 50]] as const) {
+    out += crumb(x + dx, y, r, turn, soil);
+  }
   return out;
 }
 
+/** A crumb of earth: an uneven lump, with its top caught by the light. */
+function crumb(cx: number, cy: number, r: number, turn: number, soil: Soil): string {
+  const lump: Pt[] = [[-1.2, 0.3], [-0.9, -0.5], [-0.2, -0.85], [0.7, -0.6], [1.15, 0.05], [0.8, 0.6], [-0.3, 0.7]];
+  const f = frame(cx, cy, turn, r);
+  const top: Pt[] = [[-0.95, -0.2], [-0.6, -0.6], [0, -0.78], [0.6, -0.5], [0.2, -0.3], [-0.5, -0.1]];
+  return path(closed(through(f, lump)), soil[0]) + path(closed(through(f, top)), soil[2], ' opacity="0.85"');
+}
+
 /**
- * The seed: the kind's own, in its hollow with earth drawn up over its lower side, and while watered cracked along its
- * back with green light showing and a soft glow round it. It lies exactly where the sprout will rise.
+ * Half of the seed's coat after the shoot has split it, lying where the seed was: a cupped shell seen at a slant, its
+ * rim the kind's own outline, its outside lit from the upper left with the kind's marks, its cut edge pale, and its
+ * pale inside with the rim's shade across the upper left of it. Its colour fades with the earth as the tree goes without
+ * water. It is placed by its rim's centre and turn, `len` half its length and `depth` how far its shell bulges below.
+ */
+function coatHalf(dr: Drawing, kind: Kind, cx: number, cy: number, deg: number, len: number, depth: number, dry: number): string {
+  const colour = mix(kind.seedColour, '#9b8a73', dry * 0.6);
+  const tones = seedTones(colour);
+  const [shade, base, light] = tones;
+  const f = frame(cx, cy, deg, 1);
+  // The rim: the seed's outline laid on its side and seen from above at a slant.
+  const wide = len * 0.44;
+  const rim: Pt[] = SEED_SHAPES[kind.seed].map(([x, y]) => [y * len, (x / 0.76) * wide] as Pt);
+  const bulge = (x: number): number => depth * Math.sqrt(Math.max(0, 1 - (x / len) ** 2));
+  const shell: Pt[] = rim.map(([x, y]) => (y > 0 ? [x, y + bulge(x)] : [x, y]) as Pt);
+  let out = glossy(dr, through(f, shell), tones, len * 0.5, false);
+  const dot = (x: number, y: number, r: number, fill: string, more = ''): string => {
+    const [px, py] = f(x * len, wide + y * depth);
+    return ellipse(px, py, r * len, r * len * 0.8, fill, more);
+  };
+  if (kind.seed === 'almond') {
+    for (const [x, y] of [[-0.5, 0.3], [-0.1, 0.55], [0.32, 0.4], [0.62, 0.15]] as const) out += dot(x, y, 0.05, shade, ' opacity="0.55"');
+  } else if (kind.seed === 'cone') {
+    let scales = '';
+    for (const [x, y] of [[-0.5, 0.25], [-0.12, 0.5], [0.26, 0.48], [0.6, 0.2]] as const) {
+      const [px, py] = f(x * len, wide + y * depth);
+      scales += leafAt([px, py], deg + 90, len * 0.26, len * 0.14);
+    }
+    out += path(scales, shade, ' opacity="0.7"');
+  } else if (kind.seed === 'drop') {
+    out += dot(-0.3, 0.32, 0.12, tint(base, 0.45), ' opacity="0.45"');
+  } else if (kind.seed !== 'acorn') {
+    for (const [x, y] of [[-0.36, 0.42], [0.3, 0.5]] as const) out += dot(x, y, 0.045, shade, ' opacity="0.45"');
+  }
+  // The cut edge round the rim, pale, then the inside, and the rim's shade across its upper left.
+  const inner: Pt[] = rim.map(([x, y]) => [x * 0.86, y * 0.7 - wide * 0.04] as Pt);
+  const inside = mix(colour, '#f6ecd0', 0.7);
+  out += path(closed(through(f, rim)) + closed(through(f, inner)), mix(base, light, 0.55), EVENODD);
+  out += path(closed(through(f, inner)), inside);
+  const cast: Pt[] = inner.map(([x, y]) => [x + len * 0.1, y + wide * 0.3] as Pt);
+  const clip = dr.clip(closed(through(f, inner)));
+  return out + `<g clip-path="url(#${clip})">${path(without(closed(through(f, cast))), mix(inside, shade, 0.4), EVENODD)}</g>`;
+}
+
+/** An acorn's cup, come off as the nut split, lying on its side on the earth by the coat. */
+function fallenCup(dr: Drawing, kind: Kind, dry: number): string {
+  const base = tint(mix(kind.seedColour, '#9b8a73', dry * 0.6), -0.42);
+  return glossy(dr, through(frame(MID - 14.6, GROUND + 1.2, -100, 4.6), ACORN_CUP), [tint(base, -0.35), base, tint(base, 0.32)], 3, false);
+}
+
+/**
+ * The seed: the kind's own, half in the earth in its hollow, with the earth drawn up over its lower half and its
+ * shade under it. While watered it has cracked along its top, the shoot's green tip showing. It lies exactly where
+ * the sprout's split coat will.
  */
 function drawSeed(drs: Drawings, kind: Kind, health: TreeHealth, rand: Rand): Layers {
   const soil = soilOf(health);
   const alive = health === 'fresh';
   let ground = drawIsland(drs.ground, kind, health, YOUNG_GROUND[0], 15, rand, 5, 2, 18);
-  ground += seedBed(soil, rand);
-  if (alive) {
-    // The light of what is inside, about the crack.
-    const glow = drs.ground.id('h');
-    drs.ground.def(radialBox(glow, [[0, '#f4ffa6', 0.62], [0.5, '#e8f9a0', 0.22], [1, '#e8f9a0', 0]]));
-    ground += ellipse(SEED_AT.x + 3, SEED_AT.y - 5, 24, 20, `url(#${glow})`);
-  }
+  ground += seedBed(soil, rand) + contactShadow(SEED_AT.x + 1, GROUND - 3.6, 13, 3.4, soil);
   const plant = drawSeedBody(drs.plant, kind, seedFrame(), SEED_AT.k, alive ? 'cracked' : 'shut');
-  return { ground, plant, crown: '', front: seedLipOfEarth(soil), swing: '' };
+  return { ground, plant, crown: '', front: earthLip(soil, EARTH_UP, 13), swing: '' };
 }
 
 /** A young shoot's green, the same for every kind; the kind's own colour arrives with its first real leaves. */
 const SHOOT: Ramp = ['#1d6b3a', '#2a8a3e', '#3fae45', '#62c94a', '#9fe05a', '#dcf79a'];
 
 /**
- * The sprout, traced from the owner's reference: the seed split open where it lay, a pale S-shaped stem with light up
- * its middle, two broad first leaves (one large, one small) and the newest leaf still curled between them, with small
- * leaves drifting by its foot. Without water the stem bows and the leaves hang; withered, it lies over brown.
+ * The sprout, traced from the owner's reference: the seed's coat split in two where it lay, one half lying open in the
+ * earth behind the stem and the other leaning open in front, both with their feet under the earth; a pale S-shaped
+ * stem with light up its middle, coming up out of the earth between them, which is cracked round its foot; two broad
+ * first leaves (one large, one small) and the newest leaf still curled between them, with small leaves drifting by its
+ * foot. Without water the stem bows and the leaves hang; withered, it lies over brown.
  */
 function drawSprout(drs: Drawings, kind: Kind, health: TreeHealth, rand: Rand): Layers {
   const s = STATE[health];
   const soil = soilOf(health);
   const green = fared(SHOOT, health);
   const alive = health === 'fresh';
+  const dry = Math.min(1, s.dry + s.dead);
   let ground = drawIsland(drs.ground, kind, health, YOUNG_GROUND[1], 15, rand, 5, 1, 50);
-  ground += seedBed(soil, rand);
-  const f = seedFrame();
-  const k = SEED_AT.k;
-  const seam = seamOf(kind.seed);
-  const mouth = f(seam[1]![0] + 0.04, (seam[1]![1] + seam[2]![1]) / 2);
-  // The stem: out of the split and up in an S, bowing further the longer it goes without water.
+  ground += seedBed(soil, rand) + contactShadow(SEED_AT.x + 0.5, GROUND - 3.4, 14, 3.4, soil);
+  if (kind.seed === 'acorn') ground += fallenCup(drs.ground, kind, dry);
+  // The coat's back half, lying open on its back where the seed lay, its split edge up toward the stem.
+  ground += coatHalf(drs.ground, kind, MID - 6.4, GROUND - 4.8, -8, 10, 5, dry);
+  // The stem: up out of the earth in an S, bowing further the longer it goes without water.
+  const foot: Pt = [MID + 0.4, GROUND - 1.2];
   const bow = s.droop;
-  const rise: Pt[] = [[0, 0], [3.2, -5.6], [3.2, -12], [-0.6, -18.4], [-3, -24.2], [-1.8, -30], [0.8, -34.2], [3.6, -35.6], [5.4, -34], [4.8, -31.8]];
+  const rise: Pt[] = [[0, 0], [-1.4, -7], [-1.2, -15], [1.8, -23], [2.6, -31], [0.6, -38.6], [1.6, -44.6], [4.8, -47], [7, -45.2], [6.4, -42.2]];
   const stem: Pt[] = rise.map(([dx, dy], i) => {
     const t = Math.min(1, i / 6);
-    return [mouth[0] + dx + bow * t * t * 2.6, mouth[1] + dy + bow * t * t * 3.4] as Pt;
+    return [foot[0] + dx + bow * t * t * 2.6, foot[1] + dy + bow * t * t * 3.4] as Pt;
   });
   const widths = [4.4, 4.2, 3.8, 3.3, 2.9, 2.4, 2, 1.7, 1.4, 1];
   const pale = mix(green[4], '#f4ffb0', 0.42);
@@ -1234,9 +1309,8 @@ function drawSprout(drs: Drawings, kind: Kind, health: TreeHealth, rand: Rand): 
   const leaves: Greens = [green[2], green[3], green[5]];
   const node = stem[4] as Pt;
   const tip = stem[7] as Pt;
-  let plant = drawSeedBody(drs.plant, kind, f, k, 'open');
   // The small leaf, behind the stem, to the left.
-  plant += drawBlade([node[0] - 0.6, node[1] + 0.8], 200 + hang, 16, 6.6, 0.14 + s.droop * 0.04, [green[2], green[3], green[4]]);
+  let plant = drawBlade([node[0] - 0.6, node[1] + 0.8], 200 + hang, 16, 6.6, 0.14 + s.droop * 0.04, [green[2], green[3], green[4]]);
   // The stem: its body, the shade down its right side, and the light up its middle.
   plant += path(limb(stem, widths), pale);
   plant += path(limb(beside(stem, widths.map((w) => -w * 0.26)), widths.map((w) => w * 0.42)), shadeOf, ' opacity="0.75"');
@@ -1246,11 +1320,11 @@ function drawSprout(drs: Drawings, kind: Kind, health: TreeHealth, rand: Rand): 
   plant += path(curl.whole, green[3]) + path(curl.lit, green[4]) + path(curl.rim, green[5]);
   // The large leaf, in front, to the right, hanging a little from where it leaves the stem.
   plant += drawBlade([node[0] + 0.6, node[1] + 0.4], -12 + hang, 23.5, 9.4, 0.18 + s.droop * 0.05, leaves);
-  // The shell's lip over the stem's foot, and the earth over the seed's lower side.
-  plant += seedLip(kind, f, k);
-  if (alive) ground += drawFlecks([[MID - 19, GROUND - 9, -150, 3.6], [MID + 17, GROUND - 13, -24, 3.2], [MID - 13, GROUND - 19, -112, 2.4], [MID + 21, GROUND - 5, 18, 2.6]], [green[4], green[3], green[5]]);
+  if (alive) ground += drawFlecks([[MID - 19, GROUND - 9, -150, 3.6], [MID + 18, GROUND - 13, -24, 3.2], [MID - 13, GROUND - 19, -112, 2.4], [MID + 21, GROUND - 5, 18, 2.6]], [green[4], green[3], green[5]]);
   if (s.fallen > 0) ground += drawFallen([green[3], green[4]], Math.round(s.fallen * 0.3), YOUNG_GROUND[1], GROUND - 30, rand);
-  return { ground, plant, crown: '', front: seedLipOfEarth(soil), swing: '' };
+  // In front: the coat's other half leaning open beside the stem, then the earth over both halves' feet and the stem's.
+  const front = coatHalf(drs.front, kind, MID + 8.6, GROUND - 8, -58, 9, 4.6, dry) + earthLip(soil, EARTH_UP, 14, foot[0]);
+  return { ground, plant, crown: '', front, swing: '' };
 }
 
 /** How a kind's sapling carries its leaves: where up the stem, which way, their size, and how far they hang. */

@@ -27,7 +27,7 @@ vi.mock('../realtime/useUserEvents', () => ({
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { AccessibilityInfo, Animated } from 'react-native';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
-import { GIFT_UNWRAP_MS, type GiftCard, type GiftCatalogItem, type GiftChatRef, type GiftUserEvent } from '@kurda/shared';
+import { GIFT_BOX_COLOURS, GIFT_BOX_EXIT_MS, GIFT_BOX_SHUT, GIFT_UNWRAP_MS, type GiftCard, type GiftCatalogItem, type GiftChatRef, type GiftUserEvent } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -35,6 +35,7 @@ import { GiftBubble } from './GiftBubble';
 import { GiftPickerSheet } from './GiftPickerSheet';
 import { GiftUnwrap } from './GiftUnwrap';
 import { GiftArrivals } from './GiftArrivals';
+import { GiftBox } from './art';
 import { useOpenChat } from './events';
 
 patchReactNativeWeb();
@@ -165,6 +166,43 @@ const shelfOf = (
 const SENT = ok({ batchId: 'b9', sent: ['u2'], skipped: [], balance: { zer: 700 }, freeGifts: 0, message: null });
 const dmSheet = (onSent = vi.fn(), onClose = vi.fn()) =>
   renderWithProviders(<GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={onClose} onSent={onSent} />);
+
+describe('GiftBox', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('draws the shut box in its parts, the same drawing as the website, each tier in its own wrapping', () => {
+    renderWithProviders(
+      <>
+        <GiftBox size={64} tier="common" testID="kraft" />
+        <GiftBox size={64} tier="rare" testID="teal" />
+      </>,
+    );
+    for (const part of GIFT_BOX_SHUT) expect(screen.getByTestId(`teal-${part}`)).toBeTruthy();
+    // the open box's light and the sparks are not drawn on a box standing still
+    expect(screen.queryByTestId('teal-light')).toBeNull();
+    expect(screen.queryByTestId('teal-sparks')).toBeNull();
+    const body = (id: string): string => screen.getByTestId(`${id}-body`).querySelector('svg')!.getAttribute('data-markup')!;
+    expect(body('teal')).toContain(GIFT_BOX_COLOURS.teal.face);
+    expect(body('kraft')).toContain(GIFT_BOX_COLOURS.kraft.face);
+  });
+
+  it('hops while it waits and plays the unwrap, and stands still under Reduce Motion', async () => {
+    const { unmount } = renderWithProviders(
+      <>
+        <GiftBox size={64} tier="grand" motion="idle" seed="b1" testID="waiting" />
+        <GiftBox size={140} tier="grand" motion="unwrap" testID="opening" />
+      </>,
+    );
+    expect(screen.getByTestId('waiting-idle')).toBeTruthy();
+    expect(screen.getByTestId('opening-unwrap')).toBeTruthy();
+    expect(screen.getByTestId('opening-light')).toBeTruthy();
+    unmount();
+    vi.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    renderWithProviders(<GiftBox size={140} tier="grand" motion="unwrap" testID="still" />);
+    await waitFor(() => expect(screen.queryByTestId('still-unwrap')).toBeNull());
+    expect(screen.getByTestId('still-body')).toBeTruthy();
+  });
+});
 
 describe('GiftPickerSheet', () => {
   it('opens on the bag with its counts, then the gifts by shelf, each named in Kurmancî with its meaning and its worth', async () => {
@@ -536,6 +574,28 @@ describe('GiftUnwrap', () => {
       });
       expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
       expect(screen.getByText('Newroz fire')).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('unwraps the box in its tier’s time, and lets the open box give way as the gift springs out', () => {
+    vi.useFakeTimers();
+    try {
+      testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true, tier: 'grand' }), equippable: null }) });
+      renderWithProviders(
+        <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1', tier: 'grand' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
+      );
+      expect(screen.getByTestId('gift-box-unwrap')).toBeTruthy();
+      act(() => {
+        vi.advanceTimersByTime(GIFT_UNWRAP_MS.grand);
+      });
+      expect(screen.getByText('Newroz fire')).toBeTruthy();
+      expect(screen.getByTestId('gift-box-exit')).toBeTruthy();
+      act(() => {
+        vi.advanceTimersByTime(GIFT_BOX_EXIT_MS);
+      });
+      expect(screen.queryByTestId('gift-box')).toBeNull();
     } finally {
       vi.useRealTimers();
     }

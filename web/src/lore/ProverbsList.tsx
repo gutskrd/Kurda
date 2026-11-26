@@ -13,6 +13,7 @@ import { dialectName } from '../learn/map';
 import { PROVERB_ROUND, inReaderLanguage, inVariety, proverbPath, useLoreDialect } from './api';
 import { THEME_KEY, TRADITION_TAG_KEY } from './labels';
 import { ShelfSwitch, Translated, VarietySwitch } from './LoreParts';
+import { useArrival } from '../lib/motion';
 import './lore.css';
 
 type Load = { state: 'loading' } | { state: 'ready'; list: ProverbList } | { state: 'error'; message: string };
@@ -72,6 +73,8 @@ function Proverbs(): React.JSX.Element {
   const list = load.state === 'ready' ? load.list : null;
   const today = list?.today ? (list.proverbs.find((p) => p.slug === list.today) ?? null) : null;
   const shown = (list?.proverbs ?? []).filter((p) => !theme || p.themes.includes(theme));
+  // The first screenful rises in once, as the phone's does (styles/motion.css).
+  const arriving = useArrival(shown.length > 0, 'proverbs');
 
   return (
     <>
@@ -112,7 +115,7 @@ function Proverbs(): React.JSX.Element {
             {shown.length === 0 ? (
               <p className="lore-none">{t('lore.proverbs.noneInTheme')}</p>
             ) : (
-              <ul className="lore-list">
+              <ul className={arriving ? 'lore-list rise-in' : 'lore-list'}>
                 {shown.map((p) => (
                   <li key={p.slug}>
                     <ProverbRow proverb={p} />

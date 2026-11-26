@@ -1,4 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
+import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useEnter } from '../theme/animate';
+import { duration } from '../theme/motion';
 import { Pressable } from '../theme/Pressable';
 import type { ChatMessage } from '../gifts/api';
 import { useI18n } from '../i18n/I18nContext';
@@ -41,6 +44,7 @@ export function MessageRow({
   onReport,
   onRetry,
   onDiscard,
+  arriving = false,
 }: {
   message: RowMessage;
   mine: boolean;
@@ -57,6 +61,8 @@ export function MessageRow({
   /** For one of yours that was not sent: send it again, or take it back out. */
   onRetry?: () => void;
   onDiscard?: () => void;
+  /** Sent or received while the thread is open (chat/arrivals.ts): it rises in from the composer's edge. */
+  arriving?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -75,9 +81,17 @@ export function MessageRow({
   const options = { words: card || deleted ? null : message.body, onReport: report };
   const time = place.timed && !message.pending ? timeLabel(message.createdAt, locale) : '';
   const content = <MessageContent message={message} mine={mine} senderName={senderName} onOpenGift={onOpenGift} onReport={report} />;
+  // Rises 8 points and grows from its sender's corner, once, as it first appears; under Reduce Motion it is simply there.
+  const reduce = useReducedMotion();
+  const enter = useEnter(arriving && !reduce, 0, duration.base);
+  const rise = {
+    opacity: enter,
+    transformOrigin: side === 'right' ? 'right bottom' : 'left bottom',
+    transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }, { scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) }],
+  };
 
   return (
-    <View style={place.first ? styles.newRun : styles.sameRun}>
+    <Animated.View style={[place.first ? styles.newRun : styles.sameRun, rise]}>
       {place.day ? <DayPill label={place.day} /> : null}
       <Pressable
         onLongPress={() => openMessageOptions(t, options)}
@@ -133,7 +147,7 @@ export function MessageRow({
           {receipt ? `${time} · ${receipt}` : time}
         </Text>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 

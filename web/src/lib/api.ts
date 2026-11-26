@@ -15,6 +15,7 @@ import {
 import { restrictionOf, restrictionText, suspensionOf } from '../reports/restriction';
 import { limitErrorText } from './limits';
 import { deviceId } from './deviceId';
+import { takeEarlyAnswer } from './earlyAnswers';
 import { durationInWords } from './timeWords';
 import { usernameRefusalText } from './usernameText';
 import { rejectionText } from '../pictures/words';
@@ -198,15 +199,20 @@ export class ApiClient {
       const withAuth = tokens && !headers.authorization ? { ...headers, authorization: `Bearer ${tokens.accessToken}` } : headers;
       let res: Response;
       try {
-        res = await this.timedFetch(
-          `${this.baseUrl}${path}`,
-          {
-            method,
-            headers: withAuth,
-            body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-          },
-          options.signal,
-        );
+        // A plain GET may already have been asked while the session was being checked (lib/earlyAnswers.ts).
+        const early = method === 'GET' && !options.headers && !options.signal ? takeEarlyAnswer(path, tokens?.accessToken) : null;
+        // Awaited only when there is one, so a request with none starts in the same turn, as it always has.
+        res =
+          (early && (await early)) ??
+          (await this.timedFetch(
+            `${this.baseUrl}${path}`,
+            {
+              method,
+              headers: withAuth,
+              body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+            },
+            options.signal,
+          ));
       } catch {
         return { ok: false, error: { kind: 'network', message: 'network request failed' } satisfies ApiError };
       }
@@ -516,6 +522,17 @@ export function describeError(error: ApiError, t: Translate, locale?: string): s
     default:
       return error.message || t('error.generic');
   }
+}
+
+const NO_SESSION: TokenStorage = { get: () => null, set: () => undefined, clear: () => undefined };
+let anonymous: ApiClient | null = null;
+
+/**
+ * A client that never sends the session, for reads that are the same for everyone, so the browser may keep the answer
+ * (http/cache-policy.ts on the server) and no token refresh can start beside the session's own.
+ */
+export function publicClient(): ApiClient {
+  return (anonymous ??= new ApiClient(API_URL, NO_SESSION, () => undefined));
 }
 
 /** Build a client bound to browser storage. `onLogout` re-renders the app. */

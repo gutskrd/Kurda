@@ -83,7 +83,6 @@
 .race-progress-fill {
   height: 100%;
   background: var(--accent);
-  transition: width 0.1s linear;
 }
 .race-title {
   max-width: 40%;
@@ -494,7 +493,7 @@
   height: 44px;
 }
 .kb-guide-select option {
-  color: #2b2621;
+  color: #17242b;
 }
 .kb-guide-steps {
   margin: 0;

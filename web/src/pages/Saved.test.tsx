@@ -117,7 +117,8 @@ describe('Saved', () => {
     savedFetch([]);
     renderApp(<Saved />, ['/app/saved']);
 
-    expect(await screen.findByText(/Nothing saved yet/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Community' })).toHaveAttribute('href', '/app/civak');
+    expect(await screen.findByRole('heading', { name: 'Nothing saved yet' })).toBeInTheDocument();
+    expect(screen.getByText('Tap the bookmark on any post to keep it here.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Browse posts' })).toHaveAttribute('href', '/app/civak');
   });
 });

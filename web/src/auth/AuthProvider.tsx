@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApiClient, createApiClient, describeError } from '../lib/api';
 import { persistTokens } from '../lib/tokenStorage';
-import { forgetAnswers } from '../lib/apiMemory';
+import { forgetAnswers, remember } from '../lib/apiMemory';
 import { forgetDrafts } from '../letters/drafts';
 import { thisDeviceName } from '../lib/deviceName';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
@@ -111,6 +111,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       const me = await client.get<{ user: SessionUser }>('/me');
       if (cancelled) return;
       if (me.ok) {
+        // Kept as the account's own answer, so a screen asking for /me straight after draws at once (lib/apiMemory.ts).
+        if (me.data.user?.id) remember(me.data.user.id, '/me', me.data);
         setUser(me.data.user);
         setStatus('signedIn');
       } else if (!offline.current) {

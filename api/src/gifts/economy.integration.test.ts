@@ -357,15 +357,22 @@ describe.skipIf(!DATABASE_URL)('the gift economy (integration)', () => {
       expect((await gift(teen, adultPal, PISIK)).statusCode).toBe(200);
     });
 
-    it('spends at most 2,000 Zêr a calendar month on gifts, gifts from the bag apart', async () => {
+    it('spends at most 2,000 Zêr a calendar month on gifts, a gift from the bag counted at what it costs in the shop', async () => {
       await spentBefore(teen, teenPal, MINOR_GIFT_MONTHLY_ZER - 150 - 100);
       // 150 sent above and 1,750 before: 100 left
       const over = await gift(teen, teenPal, PISIK);
       expect(over.json()).toMatchObject({ code: 'GIFT_SPEND_LIMIT', details: { left: 100, by: 'minor_month' } });
       expect((await gift(teen, teenPal, GUL)).statusCode).toBe(200);
-      await pool.query(`INSERT INTO gift_bag (user_id, sku, count) VALUES ($1, $2, 1)`, [teen.id, CAY]);
+      await pool.query(`INSERT INTO gift_bag (user_id, sku, count) VALUES ($1, $2, 1), ($1, $3, 1)`, [teen.id, CAY, GUL]);
       expect((await gift(teen, teenPal, CAY, { fromBag: true })).json().sent).toEqual([teenPal.id]);
-      expect((await call('GET', '/me/gift-limit', teen)).json()).toMatchObject({ minor: true, spent: MINOR_GIFT_MONTHLY_ZER - 75, limit: null });
+      // the tea from the bag is a Zêr of the month too: 74 left, which the sheet says
+      expect((await call('GET', '/me/gift-limit', teen)).json()).toMatchObject({ minor: true, spent: MINOR_GIFT_MONTHLY_ZER - 74, limit: null });
+      expect((await call('GET', `/gifts/catalog?to=${teenPal.id}`, teen)).json().limits).toMatchObject({ left: 74 });
+      // and a bag's gift dearer than what is left waits for next month, the bag untouched
+      await spentBefore(teen, teenPal, 74 - 20);
+      const bagOver = await gift(teen, adultPal, GUL, { fromBag: true });
+      expect(bagOver.json()).toMatchObject({ code: 'GIFT_SPEND_LIMIT', details: { left: 20, by: 'minor_month' } });
+      expect((await pool.query(`SELECT count FROM gift_bag WHERE user_id = $1 AND sku = $2`, [teen.id, GUL])).rows).toEqual([{ count: 1 }]);
     });
 
     it('cannot set a limit of their own, since theirs are fixed', async () => {

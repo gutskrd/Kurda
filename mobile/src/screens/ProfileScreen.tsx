@@ -412,6 +412,7 @@ function AccountProfile() {
             name={me?.displayName ?? user?.displayName ?? user?.username ?? ''}
             level={me?.level}
             premium={me?.premium}
+            tag={me?.tag}
             handle={handleLine}
             handleAside={
               progress ? (

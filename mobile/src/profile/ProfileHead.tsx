@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { SEASON_FRAME_INNER } from '@kurda/shared';
+import { SEASON_FRAME_INNER, type ProfileWordTag } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { useDirection } from '../reports/direction';
@@ -10,6 +10,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { CosmeticBackground, PremiumPill } from './cosmetic-parts';
 import { Horizon } from './Horizon';
+import { TagPill } from './TagPill';
 import type { LevelInfo, ProfileBackground } from './types';
 
 /** The face on a full profile; a frame is drawn round it, so the face keeps its size inside one. */
@@ -79,6 +80,7 @@ export function ProfileHead({
   name,
   level,
   premium,
+  tag,
   handle,
   handleAside,
   children,
@@ -98,6 +100,8 @@ export function ProfileHead({
   name: string;
   level?: Pick<LevelInfo, 'level' | 'xp' | 'nextLevelXp' | 'progress'> | null;
   premium?: boolean;
+  /** The word tag worn by the name. */
+  tag?: ProfileWordTag | null;
   /** The handle, and the year joined where it is known. */
   handle: string;
   /** After the handle on its line, wrapping under it where the line is short: the badge row. */
@@ -130,6 +134,7 @@ export function ProfileHead({
             {name}
           </Text>
           {level ? <LevelBadge level={level} /> : null}
+          {tag ? <TagPill tag={tag} /> : null}
           {premium ? <PremiumPill /> : null}
         </View>
         <View style={[styles.handleRow, { flexDirection: dir.row }]}>

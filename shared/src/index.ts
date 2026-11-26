@@ -619,6 +619,10 @@ export * from './games/index.js';
 /** Shop items by kind: the categories, search, filters and orders the shop, the inventory and the gift picker share. */
 export * from './shop-items.js';
 export * from './shop-descriptions.js';
+/** The price ladder and the rarity each step is shown as, word tags worn by the name, and bundles sold for less than their parts. */
+export * from './shop-prices.js';
+export * from './shop-tags.js';
+export * from './shop-bundles.js';
 export * from './chat-cards.js';
 /** Unread chat counts for the badges, a group's capped, and how a badge writes one. */
 export * from './chat-unread.js';
@@ -1011,12 +1015,41 @@ export {
 export * from './themes.js';
 /** The Hevalo+ page's picture: the sky, the deer with his crown, and gold sparkles, as three layers. */
 export { PLUS_HERO_VIEW, plusHeroFigure, plusHeroSky, plusHeroSparkles } from './art/plus-hero.js';
+/** A hand holding a phone, for the front page's word about the phone apps: the hand, sleeve and phone, and the finger pads over its edge. */
+export { HAND_PHONE_SCREEN, HAND_PHONE_VIEW, handPhoneSvg, type HandPhoneOptions } from './art/hand-phone.js';
+/** A hand holding up a game's stamp and turning it over, for the front page's games moment: its layers and the turn's frames. */
+export { HAND_STAMP_CARD, HAND_STAMP_FLIP, HAND_STAMP_VIEW, handStampCardAt, handStampFlip, handStampPointsAt, handStampShapesAt, handStampSvg, type HandStampOptions } from './art/hand-stamp.js';
 /** The nine hues drawings are coloured in, each in the same four steps, light and dark. */
 export { HUES, HUE_NAMES, hueSteps, isHueName, type HueName, type HueScheme, type HueSteps } from './hues.js';
 /** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
 export * from './art/fire.js';
+/** Hevalo's mark, the owner's deer looking back, and its loop as the apps' loader: he curls into a ball and spins back out. */
+export {
+  DEER_BREATH_LOW,
+  DEER_BREATH_MS,
+  DEER_LOOP_MS,
+  DEER_LOOP_TURNS,
+  DEER_MARK_FULL_FROM,
+  DEER_MARK_VIEW,
+  deerBreathAt,
+  deerCurlKeyframes,
+  deerCurlOutline,
+  deerCurlPath,
+  deerEyesOpen,
+  deerFormKey,
+  deerFormOutline,
+  deerFormPath,
+  deerLoopAt,
+  deerLoopTrack,
+  deerMarkPath,
+  deerMarkTracedPath,
+  type DeerLoopPose,
+} from './art/deer-mark.js';
 /** A drawing bent through a map of the plane, as his head turned in the round is drawn. */
 export { mapMarkup, mapPath, type PlaneMap } from './art/warp.js';
+/** The wrapped gift box, and how it waits, opens and gives way, drawn and played the same by both apps. */
+export * from './art/gift-box.js';
+export * from './art/gift-box-motion.js';
 /** How big the fire burns: its stages from cold logs to the Newroz fire, by the streak's days or a run of right answers. */
 export {
   COLD_FIRE,

@@ -43,6 +43,8 @@ export async function exportProgress(db: Executor, userId: string): Promise<Reco
       balance: (await q(`SELECT balance FROM wallet_balances WHERE user_id = $1 AND currency = 'zer'`))[0]?.balance ?? 0,
       ledger: await q(`SELECT currency, amount, reason, created_at FROM wallet_ledger WHERE user_id = $1 ORDER BY created_at`),
     },
+    // The bundles they bought: what each cost, what its new parts were worth, and every part as it was settled.
+    bundles: await q(`SELECT bundle_id, price, worth, parts, created_at FROM bundle_purchases WHERE user_id = $1 ORDER BY created_at`),
     // A Hevalo+ member's monthly boxes: what each held, and the free gifts left.
     membersBoxes: await q(
       `SELECT to_char(month, 'YYYY-MM') AS month, zer, free_gifts, free_gifts_left, item_sku, granted_at FROM members_boxes WHERE user_id = $1 ORDER BY month`,
@@ -50,7 +52,7 @@ export async function exportProgress(db: Executor, userId: string): Promise<Reco
     // The gift bag: what it holds, every gift that landed in it and why, and their own limit on spending on gifts.
     giftBag: {
       items: await q(`SELECT sku, count, updated_at FROM gift_bag WHERE user_id = $1 ORDER BY sku`),
-      landed: await q(`SELECT sku, source, ref, granted_on, created_at FROM gift_bag_grants WHERE user_id = $1 ORDER BY created_at`),
+      landed: await q(`SELECT sku, source, ref, quantity, granted_on, created_at FROM gift_bag_grants WHERE user_id = $1 ORDER BY created_at`),
       spendingLimit:
         (await q(`SELECT period, zer, pending_period, pending_zer, pending_from, updated_at FROM gift_spend_limits WHERE user_id = $1`))[0] ?? null,
     },

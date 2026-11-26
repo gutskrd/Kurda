@@ -23,6 +23,7 @@ import { MessageField } from '../chat/SendButton';
 import { useI18n } from '../i18n/I18nContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { RUN_FACE } from '../chat/Bubble';
+import { useArrivals } from '../chat/arrivals';
 import { MessageRow } from '../chat/MessageRow';
 import { JumpToLatest, useAwayFromLatest, useUnseenBelow } from '../chat/ThreadParts';
 import { TypingBubble } from '../chat/TypingBubble';
@@ -140,6 +141,8 @@ export function GroupThreadScreen({
   );
   // Newest first, for the inverted list; once per change to the thread, not per keystroke.
   const newestFirst = useMemo<Message[]>(() => [...thread].reverse(), [thread]);
+  // Messages sent or received while the thread is open rise in (chat/arrivals.ts).
+  const isArriving = useArrivals(newestFirst, me, keyOf);
   // Where each message sits: its day, its place in its run, whether it shows the time.
   const places = useMemo(
     () => placeMessages(thread, new Date(), { locale, today: t('chat.day.today'), yesterday: t('chat.day.yesterday'), earlier: t('chat.day.earlier') }),
@@ -637,6 +640,7 @@ export function GroupThreadScreen({
                   onReport={() => setReporting({ target: { type: 'group_message', messageId: item.id }, senderId: item.senderId, sender: item.username })}
                   onRetry={() => void retry(item.id)}
                   onDiscard={() => cancel(item.id)}
+                  arriving={isArriving(keyOf(item.id))}
                 />
               )}
             />

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { PAIRING_CODE_LENGTH, normalizePairingCode } from '@kurda/shared';
+import { PAIRING_CODE_LENGTH, formatPairingCode, normalizePairingCode } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
@@ -13,8 +13,9 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { FormError } from './parts';
 
 /**
- * "My parent gave me a code": a child's own phone signing in with the six digits their parent's phone shows. Nothing
- * else is asked: no name, address or password. A wrong or old code says to ask for a new one.
+ * "My parent gave me a code": a child's own phone signing in with the eight digits their parent's phone shows, shown in
+ * two groups of four as on that phone; a pasted code's space or hyphen is ignored. Nothing else is asked: no name,
+ * address or password. A wrong or old code says to ask for a new one.
  */
 export function ChildCodeScreen({ onBack }: { onBack: () => void }): React.JSX.Element {
   const { childSignIn } = useAuth();
@@ -42,14 +43,15 @@ export function ChildCodeScreen({ onBack }: { onBack: () => void }): React.JSX.E
     <AuthScreenShell title={t('child.code.title')} subtitle={t('child.code.lead')} onBack={onBack} hero="link">
       <View style={styles.body}>
         <TextInput
-          value={typed}
+          value={formatPairingCode(typed)}
           onChangeText={(text) => setTyped(text.replace(/\D/g, '').slice(0, PAIRING_CODE_LENGTH))}
           onSubmitEditing={() => void go()}
           keyboardType="number-pad"
           textContentType="oneTimeCode"
           autoComplete="one-time-code"
           autoFocus
-          maxLength={PAIRING_CODE_LENGTH}
+          // room for a pasted code with its space or hyphen, which the digits are read out of
+          maxLength={PAIRING_CODE_LENGTH * 2}
           accessibilityLabel={t('child.code.label')}
           testID="child-code-input"
           style={[styles.field, { color: colors.textPrimary, backgroundColor: colors.glassFill, borderColor: error ? colors.danger : 'transparent' }]}

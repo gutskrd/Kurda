@@ -210,6 +210,18 @@ describe('the sender’s moment on the phone', () => {
     expect(screen.getByText('Gift sent to Rojda')).toBeTruthy();
     expect(screen.getByTestId('gift-rays')).toBeTruthy();
     expect(screen.queryAllByTestId('gift-sparkle')).toHaveLength(0);
+    // then it is wrapped in its box, tied and sent off
+    expect(screen.getByTestId('gift-send-box-send')).toBeTruthy();
+  });
+
+  it('simply shows the gift under Reduce Motion, with no box flying', async () => {
+    vi.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    renderWithProviders(
+      <GiftSendAnimation tier="common" item={{ sku: 'gift-cay', assetUrl: '/cosmetics/gifts/made-01-cay.png' }} announce="Gift sent to Rojda" onDone={() => undefined} />,
+    );
+    await waitFor(() => expect(screen.queryByTestId('gift-send-box')).toBeNull());
+    expect(screen.getByText('Gift sent to Rojda')).toBeTruthy();
+    vi.restoreAllMocks();
   });
 });
 

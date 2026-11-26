@@ -29,11 +29,16 @@ type Executor = Pick<pg.Pool, 'query'>;
 /** The start of this calendar month in UTC, as the monthly limit under 18 counts. */
 const MONTH_START = `(date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')`;
 
-/** Zêr paid for gifts since `since` (SQL); gifts from a bag or a members' box cost no Zêr and are not counted. */
-async function spentSince(db: Executor, userId: string, since: string): Promise<number> {
+/**
+ * What gifts since `since` (SQL) count against a limit: the Zêr paid for them, and for the monthly limit under 18 the
+ * gifts given from the bag too, at their price in the shop, since a bag can be filled with bought gifts (shop bundles).
+ * A members' box's free gifts are never counted.
+ */
+async function spentSince(db: Executor, userId: string, since: string, opts: { bag?: boolean } = {}): Promise<number> {
   const res = await db.query<{ zer: string }>(
-    `SELECT COALESCE(sum(price), 0)::text AS zer FROM gifts WHERE from_user_id = $1 AND paid_with = 'zer' AND created_at >= ${since}`,
-    [userId],
+    `SELECT COALESCE(sum(price), 0)::text AS zer FROM gifts
+      WHERE from_user_id = $1 AND paid_with = ANY($2::text[]) AND created_at >= ${since}`,
+    [userId, opts.bag ? ['zer', 'bag'] : ['zer']],
   );
   return Number(res.rows[0]?.zer ?? 0);
 }
@@ -95,7 +100,7 @@ export async function sendBounds(db: Executor, fromId: string, toIds: readonly s
   const toMinor = to.some((id) => young.has(id));
   const maxPrice = minor ? MINOR_GIFT_MAX_PRICE : toMinor ? TO_MINOR_GIFT_MAX_PRICE : null;
   if (minor) {
-    const left = Math.max(0, MINOR_GIFT_MONTHLY_ZER - (await spentSince(db, fromId, MONTH_START)));
+    const left = Math.max(0, MINOR_GIFT_MONTHLY_ZER - (await spentSince(db, fromId, MONTH_START, { bag: true })));
     return { maxPrice, left, confirmFrom: BIG_GIFT_CONFIRM_ZER, minor, leftBy: 'minor_month' };
   }
   const { limit } = await readLimit(db, fromId, now, false);
@@ -106,16 +111,25 @@ export async function sendBounds(db: Executor, fromId: string, toIds: readonly s
 
 /**
  * Inside a send's transaction, after the sender's gift lock: refuses a gift dearer than these recipients may be given,
- * and Zêr beyond what is left to spend. `total` is what this send pays in Zêr (0 from a bag or a free gift).
+ * and more than is left to spend. `total` is what this send pays in Zêr (0 from a bag or a free gift); `fromBag` is
+ * what the gifts it takes from the bag cost in the shop, which counts under 18 as Zêr does.
  */
-export async function assertWithinBounds(client: pg.PoolClient, fromId: string, toIds: readonly string[], price: number, total: number): Promise<SendBounds> {
+export async function assertWithinBounds(
+  client: pg.PoolClient,
+  fromId: string,
+  toIds: readonly string[],
+  price: number,
+  total: number,
+  fromBag = 0,
+): Promise<SendBounds> {
   // the limit row too, so a change to it waits for this send or this send for it
   await client.query(`SELECT 1 FROM gift_spend_limits WHERE user_id = $1 FOR UPDATE`, [fromId]);
   const bounds = await sendBounds(client, fromId, toIds);
   if (bounds.maxPrice != null && price > bounds.maxPrice) {
     throw new AppError('GIFT_OVER_LIMIT', 409, `a gift here can be at most ${bounds.maxPrice} Zêr`, { maxPrice: bounds.maxPrice });
   }
-  if (total > 0 && bounds.left != null && total > bounds.left) {
+  const counted = total + (bounds.minor ? fromBag : 0);
+  if (counted > 0 && bounds.left != null && counted > bounds.left) {
     throw new AppError('GIFT_SPEND_LIMIT', 409, 'that is more than is left to spend on gifts', { left: bounds.left, by: bounds.leftBy });
   }
   return bounds;
@@ -182,7 +196,7 @@ function view(eff: Effective, spent: number, minor: boolean): GiftSpendLimitView
 export async function giftLimitView(db: Executor, userId: string, now: Date = new Date()): Promise<GiftSpendLimitView> {
   const minor = (await notAdults(db, [userId])).has(userId);
   const eff = minor ? { limit: null, pending: null } : await readLimit(db, userId, now, false);
-  const spent = await spentSince(db, userId, minor ? MONTH_START : windowStart(eff.limit?.period ?? 'month'));
+  const spent = await spentSince(db, userId, minor ? MONTH_START : windowStart(eff.limit?.period ?? 'month'), { bag: minor });
   return view(eff, spent, minor);
 }
 

@@ -1,17 +1,17 @@
 /**
  * Frames for the dark hours (see frames.mjs): a black ring grown over with
  * thorns, thorns of bright metal, a ring plaited of thorn branches, a ring of
- * smoke, and the light that stands round the moon when it covers the sun.
+ * smoke, and the sun's corona round the moon when it covers the sun.
  *
  * Black on a dark page is nothing, so each of these carries its own light: a
  * pale edge to every thorn, a line of red, the glint on metal.
  */
-import { crescent, softly, within } from './brush.mjs';
+import { crescent, within } from './brush.mjs';
 import { strand } from './frames-garden.mjs';
 import { sparkle } from './frames-light.mjs';
 import { blade, linear, radial, spline, tube } from './icons.mjs';
 import { n, pt } from './kit.mjs';
-import { C, P, RI, ring, round } from './ring.mjs';
+import { C, P, RI, polar, ring, round } from './ring.mjs';
 import { Still } from './still.mjs';
 
 const rad = (deg) => (deg * Math.PI) / 180;
@@ -189,28 +189,75 @@ export const DARK = [
     key: 'rojgirtin',
     ku: 'Rojgirtin',
     en: 'Eclipse',
-    // the sun with the moon in front of it: a thin black rim round the face, and the light breaking out past it
-    // in flares, white at their roots and blue beyond, each with the colours a lens splits it into along its
-    // edges; the dark of the sky about it, so that it is light on any page
+    // the moment the moon covers the sun, the face being the moon: round it the sun's corona, a wavy band of light, gold
+    // at its edge, pale gold within and pearl next to the moon; out of it the streamers reach as thin washes of light,
+    // longest to either side, with fine short plumes at the poles; a thin white rim hugs the moon's edge, and low on the
+    // left the last of the sun breaks through as a diamond ring, a bead of light with smaller beads trailing it
     still(rnd) {
       const s = new Still(rnd);
-      const flares = [];
-      for (let i = 0; i < 19; i++) {
-        const a = i * (360 / 19) + (rnd() - 0.5) * 12;
-        flares.push([a, 26 + rnd() ** 1.6 * 62, 10 + rnd() * 12, (rnd() - 0.5) * 12]);
+      const RIM = RI + 3;
+      const phase = [rnd() * 6, rnd() * 6, rnd() * 6];
+      // the band swells toward the sun's equator and ripples gently all the way round
+      const wave = (a) => {
+        const t = rad(a);
+        return 5 * Math.cos(t) ** 2 + 3 * Math.sin(5 * t + phase[0]) + 2 * Math.sin(9 * t + phase[1]) + 1.4 * Math.sin(15 * t + phase[2]);
+      };
+      const band = (depth, swell) => {
+        const edge = [];
+        for (let a = 0; a < 360; a += 2) edge.push([a, RIM + depth + wave(a) * swell]);
+        return `${polar(edge)} M${C - RIM + 2} ${C} A${RIM - 2} ${RIM - 2} 0 1 1 ${C + RIM - 2} ${C} A${RIM - 2} ${RIM - 2} 0 1 1 ${C - RIM + 2} ${C} Z`;
+      };
+      // [angle, length, width, bend]: helmet streamers, each a rounded dome standing on the band and drawn out into one
+      // long fine ray, longest along the sun's equator; fine plumes at the poles
+      const streamers = [
+        [-6, 78, 44, -0.08], [19, 54, 38, 0.1], [62, 26, 30, 0.06], [-58, 24, 30, -0.06],
+        [166, 66, 42, -0.1], [194, 86, 48, 0.08], [230, 34, 32, 0.1], [-120, 36, 32, -0.08],
+      ].map(([a, len, wide, bend]) => [a + (rnd() - 0.5) * 2, len + rnd() * 4, wide, bend]);
+      const dome = ([a, len, wide], grow = 1, widen = 1) =>
+        blade(P(a, RIM - 2), P(a, RIM + (22 + len * 0.24) * grow), wide * 1.2 * widen, { at: 0.4, point: 0.45 });
+      const tail = ([a, len, wide, bend], grow = 1, widen = 1) =>
+        blade(P(a, RIM + 12), P(a + bend * 14, RIM + 12 + len * grow), Math.max(6, wide * 0.22) * widen, { at: 0.12, point: 1, bend });
+      const plumes = [];
+      for (const pole of [-90, 90]) {
+        for (let i = -3; i <= 3; i++) plumes.push([pole + i * 6 + (rnd() - 0.5) * 2, 16 + (3 - Math.abs(i)) * 4 + rnd() * 5, 18, i * 0.08]);
       }
-      const draw = (colour, opacity, shift, grow, widen) => flares.map(([a, len, wide, skew]) => `<path d="${blade(P(a + shift, 176), P(a + shift + skew, 178 + len * grow), wide * widen, { at: 0.26, point: 0.92 })}" fill="${colour}" fill-opacity="${opacity}"/>`).join('');
-      s.paint((cv) => cv.add(`<path d="${ring(246)}" fill="${radial(cv, [[0.7, '#05070f', 0.6], [0.84, '#070b1a', 0.38], [1, '#0a1026', 0]], C, C, 246)}"/>`));
-      s.glow((cv) => cv.add(draw('#6a9cff', 1, 0, 1, 1)), { blur: 9, strength: 0.9, halo: 0.5 });
-      s.paint((cv) => cv.add(draw('#ff8a3a', 0.45, 1.4, 0.96, 1) + draw('#4a7cff', 0.55, -1.4, 1, 1)), { blur: 5 });
-      s.paint((cv) => cv.add(draw('#dce8ff', 0.95, 0, 0.94, 0.8)), { blur: 2.6 });
-      s.paint((cv) => cv.add(draw('#ffffff', 1, 0, 0.7, 0.5)), { blur: 1.2 });
+      const corona = (grow, widen) => [...streamers.map((st) => dome(st, grow, widen)), ...streamers.map((st) => tail(st, grow, widen)), ...plumes.map((pl) => tail(pl, grow, widen))];
+      // low on the left, where an icon worn on the face's shoulder never covers it, whichever way the page reads
+      const ringAt = 128;
+      const bead = P(ringAt, RIM - 1);
+
+      // the streamers are light rather than things: soft-edged, with no line round them, gold at their edge and near
+      // white within, so they glow on a dark page and still show their gold on a pale one
+      s.paint((cv) => cv.add(corona(1, 1).map((d) => `<path d="${d}" fill="#e8bd62"/>`).join('')), { blur: 2 });
+      s.paint((cv) => cv.add(corona(0.8, 0.6).map((d) => `<path d="${d}" fill="#fcefc8"/>`).join('')), { blur: 1.6 });
+      // the band, solid and drawn round, so the frame is one clear ring at any size: its gold edge, the pale gold body,
+      // the pearl within, and the dark line of the moon's own edge
       s.paint((cv) => {
-        const rim = ring(180, RI);
-        cv.add(`<path d="${rim}" fill="#05060c"/>`);
-        cv.add(`<path d="${round(179)}" fill="none" stroke="#bcd0ff" stroke-width="1.6" stroke-opacity="0.9" filter="${softly(cv, 0.6)}" clip-path="${within(cv, ring(184, RI))}"/>`);
-      });
-      return s.done({ finish: { paint: 0, grain: 0.012, contrast: 0.05, saturation: 1.04 } });
+        cv.add(`<path d="${band(13, 1)}" fill="#d29e45" fill-rule="evenodd"/>`);
+        cv.add(`<path d="${band(9.5, 0.75)}" fill="#f5dc96" fill-rule="evenodd"/>`);
+        cv.add(`<path d="${band(5, 0.3)}" fill="#fff4d8" fill-rule="evenodd"/>`);
+        cv.add(`<path d="${band(13, 1)}" fill="none" stroke="#2a1712" stroke-width="1.8" stroke-opacity="0.75"/>`);
+      }, { blur: 0.6 });
+      // the one highlight: the white rim on the moon's edge
+      s.paint((cv) => {
+        cv.add(`<path d="${ring(RIM + 2, RI)}" fill="#ffffff"/>`);
+        cv.add(`<path d="${round(RI)}" fill="none" stroke="#2a1712" stroke-width="2" stroke-opacity="0.8"/>`);
+      }, { blur: 0.4 });
+      // the diamond ring: the last bead of the sun with its points of light, edged in gold so it shows on a pale page,
+      // and the small beads trailing it along the rim
+      s.paint((cv) => {
+        cv.add(`<circle cx="${n(bead[0])}" cy="${n(bead[1])}" r="20" fill="#e8bd62"/>`);
+        cv.add(`<path d="${sparkle(bead, ringAt + 45, 64, 40)}" fill="#e8bd62" stroke="#2a1712" stroke-width="1.4" stroke-opacity="0.5" stroke-linejoin="round"/>`);
+        cv.add(`<circle cx="${n(bead[0])}" cy="${n(bead[1])}" r="16" fill="#fff8e6"/>`);
+        cv.add(`<path d="${sparkle(bead, ringAt + 45, 56, 32)}" fill="#fffdf5"/>`);
+        cv.add(`<path d="${sparkle(bead, ringAt, 28, 20)}" fill="#fffdf5"/>`);
+        cv.add(`<circle cx="${n(bead[0])}" cy="${n(bead[1])}" r="9" fill="#ffffff"/>`);
+        for (const [a, r] of [[ringAt + 15, 4.6], [ringAt + 23, 3.6], [ringAt + 30, 2.8], [ringAt + 36, 2.1]]) {
+          const [x, y] = P(a, RIM + 2.5);
+          cv.add(`<circle cx="${n(x)}" cy="${n(y)}" r="${n(r + 1.4)}" fill="#d29e45"/><circle cx="${n(x)}" cy="${n(y)}" r="${r}" fill="#ffffff"/>`);
+        }
+      }, { blur: 0.4 });
+      return s.done({ finish: { paint: 0.3, grain: 0.008, contrast: 0.04, saturation: 1 } });
     },
   },
 ];

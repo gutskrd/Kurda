@@ -7,6 +7,10 @@ import { startArtOverrides } from './art/overrides';
 import { installPressFeedback } from './lib/press';
 import { watchOpeners } from './lib/opener';
 import { unlockOnFirstTap } from './lib/sound';
+import { preloadParts, whenPageSettles } from './lib/lazyPart';
+import { warmLinksOnIntent, warmPlaces, warmRoute } from './lib/routeWarmup';
+import { createTokenStorage } from './lib/tokenStorage';
+import { startEarlyAnswers } from './lib/earlyAnswers';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/ui.css';
@@ -38,7 +42,7 @@ import './styles/ranks.css';
 import './styles/motion.css';
 // The shell's newer parts: the top bar and its menu, the bell, the five places' pages.
 import './styles/shell.css';
-// Liquid glass on the floating chrome, after the shell's own fills (glass/lens.ts).
+// Glass on the floating chrome, after the shell's own fills.
 import './styles/glass.css';
 // Each control's touch reach, after every control's own rules (lib/reach.ts).
 import './styles/reach.css';
@@ -65,6 +69,27 @@ watchOpeners();
 unlockOnFirstTap();
 // In development, `?show-reach` tints each control's touch area (styles/reach.css).
 if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('show-reach')) document.documentElement.classList.add('show-reach');
+
+/*
+ * The page's own code is fetched alongside the session check and the catalogue rather than after them; a link's page as
+ * it is reached for; and once the page has settled, the parts behind its buttons and, for an account, the other places.
+ */
+const session = (() => {
+  try {
+    return createTokenStorage().get();
+  } catch {
+    // Storage the browser has blocked holds no session to start with.
+    return null;
+  }
+})();
+// A signed-in page's first questions are asked now, with the session check, instead of after it (lib/earlyAnswers.ts).
+startEarlyAnswers(window.location.pathname, session?.accessToken);
+warmRoute(window.location.pathname);
+warmLinksOnIntent();
+whenPageSettles(() => {
+  preloadParts();
+  if (session) warmPlaces();
+});
 
 /*
  * Only one catalogue ships in the entry chunk, so the reader's is fetched before the first render; rendering first would

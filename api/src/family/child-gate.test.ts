@@ -7,7 +7,7 @@ import type { FastifyRequest, RouteOptions } from 'fastify';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { CHILD_ROUTES, childMayUse, fromBrowser } from './child-gate.js';
+import { CHILD_ROUTES, RESTING_ROUTES, childMayUse, fromBrowser } from './child-gate.js';
 
 /** The parts of Hevalo a child never reaches, by where their routes live. */
 const NEVER_FOR_A_CHILD: Array<[RegExp, string]> = [
@@ -125,6 +125,13 @@ describe('the child gate', () => {
     expect(MONEY_ROUTES.filter((r) => !routes.has(r))).toEqual([]);
     expect(MONEY_ROUTES.filter((r) => childMayUse(r.split(' ')[0]!, r.split(' ')[1]))).toEqual([]);
     expect(MONEY_ROUTES.filter((r) => !NEVER_FOR_A_CHILD.some(([pattern]) => pattern.test(r.split(' ')[1]!)))).toEqual([]);
+  });
+
+  it('rests only routes a child may use, never what the resting screen reads or the way back to the parent', () => {
+    expect([...RESTING_ROUTES].filter((r) => !CHILD_ROUTES.has(r))).toEqual([]);
+    for (const open of ['GET /me', 'GET /me/today', 'POST /me/usage', 'GET /me/family', 'POST /auth/child/return', 'POST /sessions/:id/answers', 'POST /sessions/:id/complete']) {
+      expect(RESTING_ROUTES.has(open), open).toBe(false);
+    }
   });
 
   it('refuses a child any route it does not list', () => {

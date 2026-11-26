@@ -513,6 +513,13 @@ input[type='password']::-ms-clear {
   color: var(--ink-3);
   background: var(--surface);
 }
+/* Hevalo over the words, the same size as on the phone; the empty slot holds his place while he loads */
+.state-art {
+  display: block;
+  width: 120px;
+  height: 132px;
+  margin: 0 auto var(--space-3);
+}
 .state-title {
   font-family: var(--font-sans);
   font-size: var(--text);
@@ -525,6 +532,7 @@ input[type='password']::-ms-clear {
   font-size: var(--text);
 }
 
+/* The plain ring, kept for small waits inside a control (a button, a player); pages and sections wait with the deer. */
 .spinner {
   width: 22px;
   height: 22px;
@@ -544,6 +552,17 @@ input[type='password']::-ms-clear {
   from {
     opacity: 0;
   }
+}
+/* The deer loader (components/DeerLoader.tsx) in the ink; it turns about its middle, on its own layer. */
+.deer-loader {
+  display: block;
+  color: var(--ink);
+  overflow: visible;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+.deer-loader path {
+  fill: currentColor;
 }
 @keyframes spin {
   to {

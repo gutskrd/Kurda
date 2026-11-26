@@ -390,11 +390,11 @@
   overscroll-behavior: contain;
   padding: 32px 30px 28px;
   border-radius: var(--r-xl);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--glass-edge);
   background: var(--panel-glass);
   -webkit-backdrop-filter: blur(30px) saturate(1.3);
   backdrop-filter: blur(30px) saturate(1.3);
-  box-shadow: var(--glass-rim), var(--shadow-lg);
+  box-shadow: inset 0 1px 0 var(--glass-shine), var(--shadow);
   outline: none;
 }
 /* Less side padding on a phone, since it comes straight out of the photo editor's picture and controls. */
@@ -1007,6 +1007,21 @@ button.feature {
 .shop-thumb-frame {
   max-width: 112px;
 }
+/* a word tag is shown as the pill it is worn as, on the tile's own ground */
+.shop-thumb-tag {
+  max-width: none;
+  aspect-ratio: auto;
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+}
+.shop-tag-art {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
 .shop-thumb img,
 .shop-thumb video {
   width: 100%;
@@ -1220,7 +1235,7 @@ button.feature {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* how many are unread: in the colour of a message, which is what is waiting */
+/* how many are unread: in the ink, as on the phone, since a count is not one of the accent's places */
 .chat-unread {
   flex: none;
   min-width: 21px;
@@ -1229,8 +1244,8 @@ button.feature {
   display: inline-grid;
   place-items: center;
   border-radius: var(--r-pill);
-  background: var(--bubble-mine);
-  color: var(--bubble-mine-ink);
+  background: var(--primary);
+  color: var(--primary-ink);
   font-size: var(--text);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -3084,6 +3099,14 @@ button.mkp-fact {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: none; }
 }
+/* dismissed or timed out, it sinks back the way it came while it fades (chat/MessagesProvider.tsx) */
+.msg-toast.is-leaving {
+  pointer-events: none;
+  animation: msg-toast-out var(--dur) var(--ease-out) forwards;
+}
+@keyframes msg-toast-out {
+  to { opacity: 0; transform: translateY(6px); }
+}
 @media (prefers-reduced-motion: reduce) {
   .msg-toast { animation: none; }
 }
@@ -3146,6 +3169,12 @@ button.mkp-fact {
   }
   .msg-toast {
     animation: msg-toast-in-top var(--dur) var(--ease-out);
+  }
+  .msg-toast.is-leaving {
+    animation: msg-toast-out-top var(--dur) var(--ease-out) forwards;
+  }
+  @keyframes msg-toast-out-top {
+    to { opacity: 0; transform: translateY(-6px); }
   }
   @keyframes msg-toast-in-top {
     from { opacity: 0; transform: translateY(-6px); }

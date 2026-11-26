@@ -360,6 +360,27 @@ describe('the pause', () => {
     expect(client.calls.filter((c) => c.path === '/me/usage')).toHaveLength(1);
   });
 
+  it('shows a child’s profile the resting screen when the server says Hevalo is resting, though the phone’s numbers said not yet', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-24T16:00:00Z'));
+    const nearly: SupervisionState = { controls: { ...OPEN_CONTROLS, dailyLimitMinutes: 30 }, minutesToday: 28, timeZone: 'UTC', paused: null, resumesAt: null };
+    const used: SupervisionState = { ...nearly, minutesToday: 30, paused: 'limit', resumesAt: '2026-11-25T00:00:00.000Z' };
+    let beats = 0;
+    testAuth.client = fakeClient({ 'POST /me/usage': () => ok(++beats === 1 ? nearly : used) });
+    testAuth.user = { ...ME, kind: 'child', supervision: nearly } as typeof ME;
+    renderWithProviders(
+      <SupervisionProvider>
+        <PauseHost onOpenControls={() => undefined} />
+      </SupervisionProvider>,
+    );
+    await waitFor(() => expect(beats).toBe(1));
+    expect(screen.queryByTestId('parental-pause')).toBeNull();
+    // what the API client does on 403 PARENTAL_PAUSED from a lesson, a game or a story (api/client.ts `onParental`)
+    await act(async () => noteParentalRefusal());
+    const pause = await screen.findByTestId('parental-pause');
+    expect(within(pause).getByText('Time for a break')).toBeTruthy();
+  });
+
   it('says how much of the day was used, and when Hevalo opens again', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-11-24T16:00:00Z'));

@@ -1,4 +1,4 @@
-import type { LeagueTier, ProfileBadge, ProfileLeague, ShowcaseBadge } from '@kurda/shared';
+import type { LeagueTier, ProfileBadge, ProfileLeague, ProfileWordTag, ShowcaseBadge } from '@kurda/shared';
 import type { MediaStorage } from '../media/storage.js';
 import { cosmeticArtUrl, resolveCosmetics, levelInfo, type LevelInfo, type ResolvedBackground, type ResolvedIcon } from '../cosmetics/access.js';
 import type { PublicProfile } from './service.js';
@@ -38,6 +38,8 @@ export interface PublicProfileDto {
   frameSku?: string | null;
   /** A shop frame's picture to lay round the avatar; null for a season frame, which the apps draw. */
   frameUrl?: string | null;
+  /** The word tag worn by the name, while it is owned; null for none. */
+  tag?: ProfileWordTag | null;
   achievements?: number;
   badges?: ShowcaseBadge[];
   /** Every badge earned, newest first, for the profile's badge row; held back where the three are. */
@@ -90,6 +92,7 @@ export function toPublicProfileDto(
     league: profile.league,
     frameSku: profile.frameSku ?? null,
     frameUrl: profile.frameAssetKey ? cosmeticArtUrl(profile.frameAssetKey, publicUrl) : null,
+    tag: profile.tag ?? null,
     achievements: profile.achievements,
     badges: profile.badges,
     earnedBadges: profile.earnedBadges,

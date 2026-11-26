@@ -124,25 +124,30 @@ import { PaintBrushBroad } from '@phosphor-icons/react/dist/icons/PaintBrushBroa
 import { Pen } from '@phosphor-icons/react/dist/icons/Pen';
 import { Highlighter } from '@phosphor-icons/react/dist/icons/Highlighter';
 import { Swatches } from '@phosphor-icons/react/dist/icons/Swatches';
+// The phone platforms, on the front page's download buttons.
+import { AppleLogo } from '@phosphor-icons/react/dist/icons/AppleLogo';
+import { AndroidLogo } from '@phosphor-icons/react/dist/icons/AndroidLogo';
 // What a lesson on the road is: new words, a conversation, or practice.
 import { ChatsCircle } from '@phosphor-icons/react/dist/icons/ChatsCircle';
 import { Stamp } from '@phosphor-icons/react/dist/icons/Stamp';
 import { Barbell } from '@phosphor-icons/react/dist/icons/Barbell';
-import type { Icon, IconWeight } from '@phosphor-icons/react';
+import type { Icon } from '@phosphor-icons/react';
 import { useMemo } from 'react';
 import { HEVALO_GLYPHS, coinSvg, type CurrencyOptions, type HevaloGlyph } from '@kurda/shared';
+import type { IconWeightUsed } from '../lib/iconWeights';
 
 /** `regular` is closest to the 1.7px strokes of the earlier hand-drawn set. */
-export const ICON_WEIGHT: IconWeight = 'regular';
+export const ICON_WEIGHT: IconWeightUsed = 'regular';
 
 interface P {
   size?: number;
   className?: string;
-  weight?: IconWeight;
+  /** Only the weights the build keeps (lib/iconWeights.ts). */
+  weight?: IconWeightUsed;
 }
 
 /** Name an icon for what it means here, so the glyph can change in one place. */
-function named(Glyph: Icon, fallbackSize: number, defaultWeight: IconWeight = ICON_WEIGHT) {
+function named(Glyph: Icon, fallbackSize: number, defaultWeight: IconWeightUsed = ICON_WEIGHT) {
   return function NamedIcon({ size = fallbackSize, className, weight = defaultWeight }: P): React.JSX.Element {
     return <Glyph size={size} className={className} weight={weight} aria-hidden />;
   };
@@ -356,6 +361,9 @@ export const BrushIcon = named(PaintBrushBroad, 18);
 export const MarkerIcon = named(Highlighter, 18);
 export const PaperIcon = named(Swatches, 18);
 
+/* The two phone platforms, solid as their own marks are, for the buttons that say the apps are coming (landing/AppSoon). */
+export const IosIcon = named(AppleLogo, 20, 'fill');
+export const AndroidIcon = named(AndroidLogo, 20, 'fill');
 /* What the lesson the road's stop to do now opens is, on its face: letters for new words, a conversation, a workout. */
 export const WordsIcon = named(TextAa, 34, 'fill');
 export const TalkIcon = named(ChatsCircle, 34, 'fill');

@@ -3,7 +3,8 @@ import type { MessageKey } from '../i18n/en';
 /**
  * The FAQ. Each answer matches what the code does: nothing costs money (api/src/shop), Rhyming Words works in Soranî
  * (pages/Rhyme.tsx), demotion needs a large enough group (MIN_FOR_DEMOTION), and the research answer matches
- * teaching/principles.ts. When one of those changes, change its answer. The front page shows the first six.
+ * teaching/principles.ts. When one of those changes, change its answer. The front page shows a short list
+ * (`HOME_FAQ`), the research question among them, so the front page still leads to How Hevalo teaches.
  */
 export interface FaqEntry {
   /** Stable, for anchors such as /faq#faq-free. */
@@ -35,5 +36,6 @@ export const FAQ: ReadonlyArray<FaqEntry> = [
   },
 ];
 
-/** The questions somebody deciding whether to start asks first. */
-export const HOME_FAQ = FAQ.slice(0, 6);
+/** The questions somebody deciding whether to start asks first, and how the lessons are made. */
+const HOME_IDS = ['what', 'free', 'kurdish', 'account', 'app', 'research'];
+export const HOME_FAQ = HOME_IDS.map((id) => FAQ.find((e) => e.id === id)!);

@@ -95,6 +95,15 @@ describe.skipIf(!DATABASE_URL)('the members’ box (integration)', () => {
     expect(await boxes.ensure(lapsed.id)).toBe(false);
   });
 
+  it('gives no box to a member the economy does not pay, such as one held for payment fraud', async () => {
+    const held = await member();
+    await pool.query(`INSERT INTO account_holds (user_id, reason) VALUES ($1, 'RECEIPT_REUSE')`, [held.id]);
+    const now = new Date('2026-07-03T10:00:00Z');
+    expect(await boxes.ensure(held.id, now)).toBe(false);
+    expect(await boxes.view(held.id, now)).toEqual({ box: null, freeGifts: 0 });
+    expect(await ledger(held)).toEqual([]);
+  });
+
   it('is given by the daily view on a member’s first visit of the month, and read at GET /me/members-box', async () => {
     const res = await app.inject({
       method: 'POST',

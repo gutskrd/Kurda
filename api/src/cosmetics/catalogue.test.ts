@@ -1,14 +1,15 @@
 /**
  * The cosmetic catalogue against the shipped files. Every asset key in api/content/cosmetics.json must name a file
  * the web app serves, every file in the shop's folders must belong to a row, the made pieces must be the ones
- * scripts/generate-cosmetic-art.mjs draws, every withdrawn item must point at one of them, and every description must
- * have its words in each interface language (shared shop-descriptions.ts).
+ * scripts/generate-cosmetic-art.mjs draws, every withdrawn item must point at one of them, every price must be a step
+ * of the ladder (shared shop-prices.ts), the bundles must be matching sets that save, and every description must have
+ * its words in each interface language (shared shop-descriptions.ts).
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { hasShopDescription } from '@kurda/shared';
+import { GIFTS, PRICE_LADDER, WORDED_BUNDLES, bundleQuote, giftSku, hasShopDescription, itemRarity } from '@kurda/shared';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const COSMETICS = join(ROOT, 'web', 'public', 'cosmetics');
@@ -29,6 +30,8 @@ interface Manifest {
   icons: Row[];
   backgrounds: Row[];
   frames: Row[];
+  tags: Omit<Row, 'assetKey'>[];
+  bundles: { id: string; name: string; price: number; displayOrder: number; parts: string[]; gifts: { sku: string; count: number }[] }[];
 }
 interface Piece {
   key?: string;
@@ -60,6 +63,12 @@ interface Renames {
 interface FramesMigration {
   FRAMES: [string, string, string, string, number, number][];
 }
+/** The migration that moved prices down the ladder and put word tags and bundles on sale. */
+interface OffersMigration {
+  REPRICE: [string, number, number][];
+  TAGS: [string, string, string, number, number][];
+  BUNDLES: [string, string, number, number, string[], [string, number][]][];
+}
 
 const manifest = JSON.parse(readFileSync(join(ROOT, 'api', 'content', 'cosmetics.json'), 'utf8')) as Manifest;
 const rows = (): (Row & { category: 'background' | 'icon' })[] => [
@@ -75,6 +84,9 @@ describe('the cosmetic catalogue', () => {
   let migration: Migration;
   let renames: Renames[];
   let framesOnSale: FramesMigration;
+  let offers: OffersMigration;
+  /** A price as the ladder migration left it: moved when it was still at the price it shipped at. */
+  const laddered = (sku: string, price: number): number => offers.REPRICE.find(([s, from]) => s === sku && from === price)?.[2] ?? price;
 
   beforeAll(async () => {
     gen = (await import(pathToFileURL(join(ROOT, 'scripts', 'generate-cosmetic-art.mjs')).href)) as Generator;
@@ -86,6 +98,7 @@ describe('the cosmetic catalogue', () => {
       (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000743000_tea-glass-is-piyan.js')).href)) as Renames,
     ];
     framesOnSale = (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000431000_frames-to-buy.js')).href)) as FramesMigration;
+    offers = (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000890000_fairer-prices-and-bundles.js')).href)) as OffersMigration;
   });
 
   it('names a file that exists for every asset key', () => {
@@ -98,17 +111,19 @@ describe('the cosmetic catalogue', () => {
     const selling = manifest.frames.map((r) => ({ sku: r.sku, file: `web/public/cosmetics/${r.assetKey}`, ku: r.name, en: r.description }));
     expect(selling).toEqual(drawn);
     expect(files('frames').sort()).toEqual(manifest.frames.map((r) => r.assetKey).sort());
+    const steps = Object.values(PRICE_LADDER.frame);
     for (const r of manifest.frames) {
-      // dearer than an icon, and bought outright: a frame shows only while it is owned
-      expect(r.price, r.sku).toBeGreaterThanOrEqual(600);
-      expect(r.price, r.sku).toBeLessThanOrEqual(1000);
+      // on the frames' own steps of the ladder, and bought outright: a frame shows only while it is owned
+      expect(steps, r.sku).toContain(r.price);
       expect(r.premiumOnly, r.sku).toBe(false);
     }
   });
 
-  it('is the list of frames migration 1751000431000 puts on sale, at the prices Zêr at 100 to the euro halved', () => {
+  it('is the list of frames migration 1751000431000 puts on sale, at the prices Zêr at 100 to the euro halved, then laddered', () => {
     const fromManifest = manifest.frames.map((r) => [r.sku, r.name, r.description ?? '', r.assetKey, r.price, r.displayOrder]);
-    expect(framesOnSale.FRAMES.map(([sku, name, description, assetKey, price, order]) => [sku, name, description, assetKey, price / 2, order])).toEqual(fromManifest);
+    expect(
+      framesOnSale.FRAMES.map(([sku, name, description, assetKey, price, order]) => [sku, name, description, assetKey, laddered(sku, price / 2), order]),
+    ).toEqual(fromManifest);
   });
 
   it('has a row for every background and icon on disk', () => {
@@ -139,14 +154,12 @@ describe('the cosmetic catalogue', () => {
         expect(r.type).toBe('image');
         if (r.price === 0) expect(r.premiumOnly).toBe(false);
         else {
-          expect(r.price).toBeGreaterThanOrEqual(200);
-          expect(r.price).toBeLessThanOrEqual(300);
+          expect(Object.values(PRICE_LADDER.background), r.sku).toContain(r.price);
           expect(r.premiumOnly).toBe(true);
         }
       } else {
         expect(r.sku.startsWith('icon-made-')).toBe(true);
-        expect(r.price).toBeGreaterThanOrEqual(300);
-        expect(r.price).toBeLessThanOrEqual(450);
+        expect(Object.values(PRICE_LADDER.icon), r.sku).toContain(r.price);
         expect(r.premiumOnly).toBe(true);
       }
     }
@@ -169,11 +182,11 @@ describe('the cosmetic catalogue', () => {
     }
   });
 
-  it('is the catalogue migration 1751000161000 applies, under the names later migrations gave its pieces and at half its prices', () => {
+  it('is the catalogue migration 1751000161000 applies, under the names later migrations gave its pieces, at half its prices, laddered', () => {
     const fromManifest = made().map((r): MadeRow => [r.sku, r.category, r.name, r.description ?? '', r.assetKey, r.price, r.premiumOnly, r.displayOrder]);
     const renamed = (row: MadeRow): MadeRow =>
       renames.flatMap((m) => m.RENAMED).reduce<MadeRow>((acc, r) => (acc[4] === r.assetKey && acc[2] === r.from[0] && acc[3] === r.from[1] ? [acc[0], acc[1], r.to[0], r.to[1], acc[4], acc[5], acc[6], acc[7]] : acc), row);
-    const halved = (row: MadeRow): MadeRow => [row[0], row[1], row[2], row[3], row[4], row[5] / 2, row[6], row[7]];
+    const halved = (row: MadeRow): MadeRow => [row[0], row[1], row[2], row[3], row[4], laddered(row[0], row[5] / 2), row[6], row[7]];
     expect(migration.MADE.map(renamed).map(halved).sort()).toEqual(fromManifest.sort());
     const madeByAsset = new Map(made().map((r) => [r.assetKey, r.sku]));
     const fromRetired = Object.fromEntries(retired().map((r) => [r.sku, madeByAsset.get(r.assetKey)]));
@@ -196,8 +209,71 @@ describe('the cosmetic catalogue', () => {
     expect(migration.replacementFor('streak-freeze', null)).toBeNull();
   });
 
+  it('moves every price down to a step of its kind’s ladder, and the retired items with the rest', () => {
+    const kinds = new Map<string, keyof typeof PRICE_LADDER>([
+      ...manifest.backgrounds.map((r) => [r.sku, 'background'] as const),
+      ...manifest.icons.map((r) => [r.sku, 'icon'] as const),
+      ...manifest.frames.map((r) => [r.sku, 'frame'] as const),
+    ]);
+    for (const [sku, from, to] of offers.REPRICE) {
+      expect(Object.values(PRICE_LADDER[kinds.get(sku)!]), sku).toContain(to);
+      expect(to, sku).toBeLessThan(from);
+    }
+    const shipped = [...manifest.backgrounds, ...manifest.icons, ...manifest.frames].filter((r) => r.price > 0);
+    expect(offers.REPRICE.map(([sku]) => sku).sort()).toEqual(shipped.map((r) => r.sku).sort());
+  });
+
+  it('sells the word tags migration 1751000890000 puts on sale, each on the tags’ ladder', () => {
+    expect(offers.TAGS).toEqual(manifest.tags.map((r) => [r.sku, r.name, r.description, r.price, r.displayOrder]));
+    for (const r of manifest.tags) {
+      expect(r.sku.startsWith('tag-'), r.sku).toBe(true);
+      expect(Object.values(PRICE_LADDER.tag), r.sku).toContain(r.price);
+      expect(r.premiumOnly, r.sku).toBe(false);
+    }
+  });
+
+  it('sells the bundles migration 1751000890000 puts on sale, each a matching set for a third to a half less than its parts', () => {
+    expect(offers.BUNDLES).toEqual(manifest.bundles.map((b) => [b.id, b.name, b.price, b.displayOrder, b.parts, b.gifts.map((g) => [g.sku, g.count])]));
+    const items = new Map(
+      [
+        ...manifest.backgrounds.map((r) => ({ ...r, category: 'background' })),
+        ...manifest.icons.map((r) => ({ ...r, category: 'icon' })),
+        ...manifest.frames.map((r) => ({ ...r, category: 'frame' })),
+        ...manifest.tags.map((r) => ({ ...r, category: 'tag' })),
+      ].map((r) => [r.sku, r]),
+    );
+    const gifts = new Map(GIFTS.map((g) => [giftSku(g.id), g]));
+    const prices: number[] = [];
+    for (const b of manifest.bundles) {
+      const parts = b.parts.map((sku) => items.get(sku)!);
+      // one background, one frame, one icon and one tag, every one on sale
+      expect(parts.map((p) => p?.category), b.id).toEqual(['background', 'frame', 'icon', 'tag']);
+      expect(parts.every((p) => p.active !== false && p.price > 0), b.id).toBe(true);
+      // a few small gifts for the bag
+      for (const g of b.gifts) {
+        expect(gifts.get(g.sku)?.price, g.sku).toBeLessThanOrEqual(50);
+        expect(g.count).toBeGreaterThanOrEqual(1);
+      }
+      const quote = bundleQuote(b.price, [
+        ...parts.map((p) => ({ price: p.price, quantity: 1, gift: false, owned: false })),
+        ...b.gifts.map((g) => ({ price: gifts.get(g.sku)!.price, quantity: g.count, gift: true, owned: false })),
+      ]);
+      expect(quote.savingPercent, b.id).toBeGreaterThanOrEqual(35);
+      expect(quote.savingPercent, b.id).toBeLessThanOrEqual(50);
+      expect(quote.price, b.id).toBe(b.price);
+      prices.push(b.price);
+    }
+    expect(manifest.bundles.length).toBeGreaterThanOrEqual(5);
+    expect(manifest.bundles.length).toBeLessThanOrEqual(7);
+    // the cheapest is an easy yes: under a month of Hevalo+
+    expect(Math.min(...prices)).toBeLessThan(399);
+    // every bundle has its words in every language (shared shop-bundles.ts), and its showpiece frame a rarity of its own
+    expect([...WORDED_BUNDLES].sort()).toEqual(manifest.bundles.map((b) => b.id).sort());
+    expect(itemRarity({ category: 'frame', price: items.get('frame-made-rojgirtin')!.price })).toBe('masterwork');
+  });
+
   it('describes every item it ships in every interface language', () => {
-    const items = [...manifest.backgrounds, ...manifest.icons, ...manifest.frames];
+    const items = [...manifest.backgrounds, ...manifest.icons, ...manifest.frames, ...manifest.tags];
     expect(items.filter((r) => r.description && !hasShopDescription(r.description)).map((r) => `${r.sku}: ${r.description}`)).toEqual([]);
   });
 

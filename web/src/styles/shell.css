@@ -418,7 +418,7 @@
 .note-row {
   position: relative;
   overflow: hidden;
-  animation: note-in 340ms var(--ease-out) both;
+  animation: note-in var(--dur-slow) var(--ease-out) both;
   animation-delay: calc(var(--i, 0) * 22ms);
 }
 .note-slide {
@@ -1208,6 +1208,19 @@
   background: var(--chosen-fill);
   color: var(--chosen-ink);
 }
+/* Learn's switch draws its chosen ground as an element of its own, which can travel between pages (styles/motion.css). */
+.switch-btn:has(.switch-capsule) {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+}
+.switch-capsule {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--chosen-fill);
+}
 /* what sits inside a chosen one takes its ink: a mark coloured for the page would be lost on it */
 .rank-by-btn.is-active .rank-by-xp {
   border-color: currentColor;
@@ -1655,21 +1668,24 @@
   border-radius: var(--r-pill);
 }
 /* the friend requests waiting on you, above the conversations */
+/* a door on the raised surface, as on the phone: what waits is said in heavier words and the count, never in a colour */
 .chat-requests {
   display: flex;
   align-items: center;
   gap: 11px;
   padding: 10px 12px;
-  border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--border));
+  border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  background: var(--gold-soft);
+  background: var(--surface);
   color: var(--ink);
   text-decoration: none;
 }
-/* letters: a door like the requests row, quiet until a letter waits to be answered */
-.chat-letters:not(.is-waiting) {
-  border-color: var(--border);
-  background: var(--surface);
+.chat-requests .chat-convo-name {
+  font-weight: 700;
+}
+/* letters: a door like the requests row, its name heavier only while a letter waits to be answered */
+.chat-letters:not(.is-waiting) .chat-convo-name {
+  font-weight: 600;
 }
 .chat-letters + .chat-convo,
 .chat-requests + .chat-letters {
@@ -1684,7 +1700,7 @@
   height: 48px;
   border-radius: 50%;
   background: var(--surface-2);
-  color: var(--gold-ink);
+  color: var(--ink);
 }
 .chat-convo-when {
   flex: none;
@@ -1801,7 +1817,7 @@
 :root {
   /* the bar of places: its height, and how far above the window's bottom edge it floats — just over the
      home indicator on a phone that has one, and a small margin up from the edge on one that has none */
-  --places-h: 60px;
+  --places-h: 62px;
   --places-lift: max(env(safe-area-inset-bottom, 0px) - 8px, 12px);
 }
 
@@ -1949,11 +1965,29 @@
   display: flex;
 }
 /*
- * The capsule behind the current place, by its two ends (`--at` of `--places`), appearing without a slide once a place
- * is chosen. Moving on, the end in front leads on a spring that runs a little past the place and the one behind
- * follows on a softer one (PlacesBar.tsx), so it stretches toward the place and settles round it, lifting larger and
- * lighter on the way. Its track stops at the bar's ends, so running past an end place squeezes it against the wall.
+ * The capsule behind the current place: a darker glass inset in the bar, by its two ends (`--cap-start` and `--cap-end`,
+ * in places along the row, from `--at`), drawn as two round ends and the span between them so the ends stay round
+ * however far it stretches. Moving on, the end in front leads on a spring that runs a little past the place and the one
+ * behind follows on a softer one (PlacesBar.tsx), so it stretches toward the place and settles round it, lifting larger
+ * and lighter on the way; only transforms move. The pieces are solid under one shared opacity, so where they overlap
+ * the shade does not double. Its track stops at the bar's ends, so running past an end place squeezes it against the
+ * wall; in right-to-left languages the track is mirrored.
  */
+@property --cap-start {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --cap-end {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+@property --cap-lift {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
 .places-track {
   position: absolute;
   inset-block: -4px;
@@ -1962,17 +1996,19 @@
   overflow: hidden;
   pointer-events: none;
 }
+[dir='rtl'] .places-track {
+  transform: scaleX(-1);
+}
 .places-capsule {
+  --cap-start: var(--at);
+  --cap-end: calc(var(--at) + 1);
   position: absolute;
   inset-block: 4px;
-  inset-inline-start: calc(100% * var(--at) / var(--places));
-  inset-inline-end: calc(100% * (var(--places) - var(--at) - 1) / var(--places));
-  border-radius: var(--r-pill);
-  /* a wash of the colour the chosen place is drawn in, so capsule and glyph are one thing */
-  background: var(--capsule);
+  inset-inline: 0;
+  opacity: var(--tab-capsule-fill);
   transition:
-    inset-inline-start var(--follow-ms) var(--follow-ease),
-    inset-inline-end var(--follow-ms) var(--follow-ease);
+    --cap-start var(--follow-ms) var(--follow-ease),
+    --cap-end var(--follow-ms) var(--follow-ease);
 }
 .places-row.is-leading-end .places-capsule {
   transition-duration: var(--follow-ms), var(--lead-ms);
@@ -1981,6 +2017,31 @@
 .places-row.is-leading-start .places-capsule {
   transition-duration: var(--lead-ms), var(--follow-ms);
   transition-timing-function: var(--lead-ease), var(--follow-ease);
+}
+.places-cap,
+.places-span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--tab-capsule);
+}
+.places-cap {
+  width: calc(var(--row-h) * 1px);
+  border-radius: var(--r-pill);
+}
+.places-cap.is-start {
+  transform: translateX(calc(var(--cap-start) * var(--slot) * 1px)) scale(var(--cap-lift));
+}
+.places-cap.is-end {
+  transform: translateX(calc((var(--cap-end) * var(--slot) - var(--row-h)) * 1px)) scale(var(--cap-lift));
+}
+/* from one end's centre to the other's: `--slot` wide as drawn, scaled about its middle to the length between them */
+.places-span {
+  width: calc(var(--slot) * 1px);
+  transform: translateX(calc(((var(--cap-start) + var(--cap-end)) * 0.5 - 0.5) * var(--slot) * 1px))
+    scaleX(max(0, calc(((var(--cap-end) - var(--cap-start)) * var(--slot) - var(--row-h)) / var(--slot))))
+    scaleY(var(--cap-lift));
 }
 /* the same lift under two names, so each move starts it again */
 .places-row.is-lift-a .places-capsule {
@@ -1991,35 +2052,36 @@
 }
 @keyframes places-lift-a {
   33% {
-    scale: var(--lift-scale);
-    opacity: var(--lift-fill);
+    --cap-lift: var(--lift-scale);
+    opacity: calc(var(--tab-capsule-fill) * var(--lift-fill));
   }
 }
 @keyframes places-lift-b {
   33% {
-    scale: var(--lift-scale);
-    opacity: var(--lift-fill);
+    --cap-lift: var(--lift-scale);
+    opacity: calc(var(--tab-capsule-fill) * var(--lift-fill));
   }
 }
-/* a place: its whole share of the bar is the target, its glyph alone in the middle */
+/* a place: its whole share of the bar is the target, its filled glyph over its name in the middle */
 .places-link {
+  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 1px;
   border-radius: var(--r-pill);
-  color: var(--ink-3);
+  color: var(--ink);
+  text-decoration: none;
   transition:
-    color var(--dur-fast) var(--ease-out),
+    color var(--dur) var(--ease-out),
     transform var(--dur) var(--ease-spring);
 }
-.places-link:hover {
-  color: var(--ink);
-}
-/* the one you are on: drawn in the ink, its glyph solid, over the capsule of the same */
+/* the one you are on: its glyph and name in `--tab-chosen`, over the capsule */
 .places-link.active {
-  color: var(--ink);
+  color: var(--tab-chosen);
 }
 .places-link:focus-visible {
   outline: 2px solid var(--focus);
@@ -2030,45 +2092,53 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-}
-/* the list's glyphs are drawn for the top bar; alone here, they have the room to be larger */
-.places-glyph > svg {
-  width: 26px;
-  height: 26px;
-}
-/* your picture, a little larger than the glyphs as a face reads smaller than an outline, and ringed in the ink when
-   it is the place you are on; the level ring stays on the top bar */
-.places-glyph .nav-avatar {
-  width: 36px;
-  height: 36px;
-}
-.places-glyph .nav-avatar .friend-avatar {
   width: 28px;
   height: 28px;
+}
+.places-glyph > svg {
+  width: 24px;
+  height: 24px;
+}
+/* the place's name, small under its glyph: one of the two sizes shrunk to fit a bar that cannot grow */
+.places-name {
+  --places-name-fit: 0.6875;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: calc(var(--text) * var(--places-name-fit, 1));
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* your picture, ringed in the chosen colour when it is the place you are on; the level ring stays on the top bar */
+.places-glyph .nav-avatar {
+  width: 28px;
+  height: 28px;
+}
+.places-glyph .nav-avatar .friend-avatar {
+  width: 24px;
+  height: 24px;
 }
 .places-glyph .nav-avatar .level-ring {
   display: none;
 }
 .places-glyph .nav-avatar.is-active .friend-avatar {
-  box-shadow:
-    0 0 0 2px var(--surface-solid),
-    0 0 0 4px var(--primary);
+  box-shadow: 0 0 0 2px var(--tab-chosen);
 }
 /* something new waiting: a red dot at the glyph's foot on the trailing side, ringed in the bar's own fill */
 .places-glyph .nav-dot {
   top: auto;
-  bottom: 4px;
-  inset-inline-end: 3px;
+  bottom: 1px;
+  inset-inline-end: 0;
   width: 9px;
   height: 9px;
   background: var(--notice);
-  box-shadow: 0 0 0 1.5px var(--surface-solid);
+  box-shadow: 0 0 0 1.5px var(--glass-fill-still);
 }
 .places-glyph .nav-avatar ~ .nav-dot {
-  bottom: 2px;
-  inset-inline-end: 2px;
+  bottom: 0;
+  inset-inline-end: 0;
 }
 /* a shape gives under the finger as a button does, and springs back when let go */
 .nav-back:active,
@@ -2157,16 +2227,16 @@
 :root[data-theme='light'] .pc-banner {
   background:
     radial-gradient(120% 160% at 15% 0%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 62%),
-    linear-gradient(180deg, #eaeae7, #dddcd8);
+    linear-gradient(180deg, #e9eef0, #dce3e7);
 }
 :root[data-theme='light'] .level-ring-track {
-  stroke: #e0e0dc;
+  stroke: #dce3e7;
 }
 :root[data-theme='light'] .rail-dot {
   border-color: var(--surface-solid);
 }
 :root[data-theme='light'] .rail-dot.is-offline {
-  background: rgba(43, 38, 33, 0.28);
+  background: rgba(23, 36, 43, 0.28);
 }
 @media (min-width: 1180px) {
   :root[data-theme='light'] .app-main:has(.mkp-has-bg) ~ .social-rail {

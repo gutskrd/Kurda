@@ -12,11 +12,11 @@ export const SYSTEM_GLASS = Platform.OS === 'ios' && isLiquidGlassAvailable() &&
 export const BENDING_GLASS = SYSTEM_GLASS || (ANDROID_LENS && AndroidGlass !== null);
 
 /**
- * Liquid glass for what floats over the page (the tab bar, the back button, the pill of top actions), never for the page
- * itself, and never blurred. On iOS 26 it is the system's clear glass, which bends the page at its rim, lights its edge
- * and answers a touch. On Android 13 and later it is Hevalo's own (modules/hevalo-glass), which bends, tints and
- * lights the page the same way the website does. Elsewhere the shape keeps the bar's solid fill and its lift, with a
- * line of light round its edge.
+ * Glass for what floats over the page (the tab bar, the back button, the pill of top actions), never for the page itself:
+ * a neutral grey that the page passes under blurred. On iOS 26 it is the system's regular glass, which also lights its
+ * edge and answers a touch. On Android 13 and later it is Hevalo's own (modules/hevalo-glass), which blurs, tints and
+ * lights the page as the website does. Elsewhere the shape keeps the bar's solid neutral fill and its lift, with a line
+ * of light round its edge.
  *
  * `GlassFill` goes first inside the shape and fills it; `useGlassShape` is the shape's own style to go with it.
  */
@@ -34,10 +34,9 @@ export function GlassFill({
   if (SYSTEM_GLASS) {
     return (
       <GlassView
-        glassEffectStyle="clear"
+        // The system's regular glass, which blurs the page passing under it, as its own tab bars do: no tint of ours.
+        glassEffectStyle="regular"
         colorScheme={scheme}
-        // A breath of tint, as the system's own bars keep words readable on clear glass.
-        tintColor={colors.glassTint}
         isInteractive={interactive}
         pointerEvents={interactive ? 'auto' : 'none'}
         style={[StyleSheet.absoluteFill, { borderRadius: radius }]}

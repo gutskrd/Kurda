@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { FeedItem } from '../lib/types';
-import { ErrorState } from '../components/states';
+import { EmptyState, ErrorState } from '../components/states';
+import { LinkButton } from '../components/Button';
 import { FeedSkeleton } from '../components/skeletons';
 import { FeedCard } from '../feed/FeedCard';
 import { useT } from '../i18n/I18nProvider';
-import { BookmarkIcon } from '../components/icons';
 import { useArrival } from '../lib/motion';
 
 const PAGE = 20;
@@ -62,14 +61,15 @@ export function Saved(): React.JSX.Element {
       {items === null ? (
         <FeedSkeleton count={3} label="saved.loading" />
       ) : items.length === 0 ? (
-        <div className="saved-empty">
-          <BookmarkIcon size={30} />
-          <p className="muted">
-            {t('saved.emptyLead')}{' '}
-            <Link to="/app/civak" className="link">{t('saved.emptyLink')}</Link>{' '}
-            {t('saved.emptyTail')}
-          </p>
-        </div>
+        <EmptyState
+          title={t('saved.empty')}
+          message={t('saved.empty.body')}
+          action={
+            <LinkButton to="/app/civak" className="state-action">
+              {t('saved.empty.browse')}
+            </LinkButton>
+          }
+        />
       ) : (
         <>
           {/* The first screenful rises in once as the list arrives (styles/motion.css). */}

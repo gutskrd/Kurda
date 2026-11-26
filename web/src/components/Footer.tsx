@@ -4,11 +4,12 @@ import { Brand } from './Brand';
 import { ZagrosianCredit } from './ZagrosianCredit';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { publishedDictionary } from '../layouts/navLinks';
+import { AppSoonButton } from '../landing/AppSoon';
 
 /**
- * The foot of the public pages. Store links stay plain text until the apps are published. The bottom bar shows the
- * registered business and its KvK number on every public page, as Dutch law requires, and links to the full details on
- * the About page.
+ * The foot of the public pages. Until the apps are published, their entries open the card that says they are coming
+ * (landing/AppSoon), as the front page's download buttons do. The bottom bar shows the registered business and its KvK
+ * number on every public page, as Dutch law requires, and links to the full details on the About page.
  */
 export function Footer(): React.JSX.Element {
   const t = useT();
@@ -21,7 +22,7 @@ export function Footer(): React.JSX.Element {
           <div className="footer-about">
             <Brand />
             <p className="muted" style={{ marginTop: 12, fontSize: 'var(--text)' }}>
-              {t('footer.tagline')}
+              {t('footer.story')}
             </p>
             {/* Kurmancî in every language on purpose: it is the app's own motto line. */}
             <p className="kurdish" lang="ku" style={{ marginTop: 10 }}>
@@ -57,8 +58,12 @@ export function Footer(): React.JSX.Element {
 
           <div className="footer-col">
             <h2 className="footer-heading">{t('footer.app')}</h2>
-            <span className="footer-soon">{t('footer.iosSoon')}</span>
-            <span className="footer-soon">{t('footer.androidSoon')}</span>
+            <AppSoonButton platform="ios" look="line">
+              {t('footer.iosSoon')}
+            </AppSoonButton>
+            <AppSoonButton platform="android" look="line">
+              {t('footer.androidSoon')}
+            </AppSoonButton>
           </div>
         </div>
 

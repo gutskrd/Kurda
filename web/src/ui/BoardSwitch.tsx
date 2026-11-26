@@ -1,4 +1,5 @@
-import { useId } from 'react';
+import { useId, useRef } from 'react';
+import { useSlidingCapsule } from '../lib/motion';
 import { CoinIcon, XpIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -47,16 +48,22 @@ function KindIcon({ kind, size }: { kind: RankKind; size: number }): React.JSX.E
 }
 
 /**
- * What the page ranks by: a segmented control over real radios, so arrow keys and screen readers work. It is segmented
+ * What the page ranks by: a segmented control over real radios, so arrow keys and screen readers work, whose chosen
+ * ground slides to the option chosen as on the phone. It is segmented
  * rather than chips because the chips below already filter who is compared.
  */
 export function BoardSwitch({ value, onChange }: { value: RankKind; onChange: (next: RankKind) => void }): React.JSX.Element {
   const t = useT();
   // One radio group per switch on the page.
   const name = `rank-by${useId()}`;
+  const box = useRef<HTMLFieldSetElement>(null);
+  const capsule = useRef<HTMLSpanElement>(null);
+  useSlidingCapsule(box, capsule, '.is-active', value);
   return (
-    <fieldset className="seg rank-by">
+    <fieldset ref={box} className="seg rank-by">
       <legend className="sr-only">{t('rankings.rankBy')}</legend>
+      {/* The chosen ground, one for the switch, which slides to the option chosen (lib/motion.ts useSlidingCapsule). */}
+      <span ref={capsule} className="seg-capsule" aria-hidden="true" />
       {RANK_KINDS.map((k) => (
         <label key={k.key} className={`seg-btn rank-by-btn${k.key === value ? ' is-active' : ''}`}>
           <input type="radio" name={name} value={k.key} checked={k.key === value} onChange={() => onChange(k.key)} />
@@ -77,9 +84,13 @@ const SPANS: ReadonlyArray<{ key: XpSpan; labelKey: MessageKey }> = [
 export function SpanSwitch({ value, onChange }: { value: XpSpan; onChange: (next: XpSpan) => void }): React.JSX.Element {
   const t = useT();
   const name = `rank-span${useId()}`;
+  const box = useRef<HTMLFieldSetElement>(null);
+  const capsule = useRef<HTMLSpanElement>(null);
+  useSlidingCapsule(box, capsule, '.is-on', value);
   return (
-    <fieldset className="seg rank-span">
+    <fieldset ref={box} className="seg rank-span">
       <legend className="sr-only">{t('rankings.span')}</legend>
+      <span ref={capsule} className="seg-capsule" aria-hidden="true" />
       {SPANS.map((s) => (
         <label key={s.key} className={`seg-btn rank-span-btn${s.key === value ? ' is-on' : ''}`}>
           <input type="radio" name={name} value={s.key} checked={s.key === value} onChange={() => onChange(s.key)} />

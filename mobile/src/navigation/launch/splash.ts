@@ -30,6 +30,8 @@ export const LAUNCH = {
   pictureMs: 260,
   /** The name and the line under it rise. */
   wordsMs: 280,
+  /** The loader comes in under them, for a launch that is taking a while. */
+  loaderMs: 600,
   /** One pass of the light across the page, there and back. */
   washMs: 7000,
 } as const;

@@ -1,19 +1,13 @@
 /**
  * How a child is signed in, on the phone alone: on the parent's own phone by a profile switch, which puts the
- * parent's session away until the family PIN brings it back; or on the child's own phone with a six-digit code the
+ * parent's session away until the family PIN brings it back; or on the child's own phone with an eight-digit code the
  * parent shows, used once within minutes. Every child session is bound to the phone that opened it (auth/service.ts
  * `refresh` refuses it anywhere else) and keeps no address, network or name of the device; the parent sees each phone
  * and can sign it out.
  */
 import { randomInt } from 'node:crypto';
 import type pg from 'pg';
-import {
-  normalizePairingCode,
-  PAIRING_CODE_LENGTH,
-  PAIRING_CODE_TTL_MINUTES,
-  PIN_LOCK_MINUTES,
-  PIN_TRIES,
-} from '@kurda/shared';
+import { normalizePairingCode, PAIRING_CODE_LENGTH, PAIRING_CODE_TTL_MINUTES, PIN_TRIES, pinLockMinutes } from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 import { AppError } from '../plugins/errors.js';
 import { inTransaction, type Executor } from '../moderation/tx.js';
@@ -23,6 +17,8 @@ import { issueTokenPair, type IssuedTokens } from '../auth/tokens.js';
 import type { UserRow } from '../users/repository.js';
 import { mayBeParent, parentalAccount } from '../parental/service.js';
 import { notAdult, notFound } from './common.js';
+import { pinLockedNotice } from './notices.js';
+import { tellParental } from '../parental/notices.js';
 
 /** What a child's sign-in, or a return to the parent, hands the phone: whose session it is, and its tokens. */
 export interface SignedIn {
@@ -68,26 +64,31 @@ export class ChildSessions {
   }
 
   /**
-   * Compares a PIN with the parent's, counting the run of wrong ones: PIN_TRIES in a row lock it for PIN_LOCK_MINUTES.
-   * The count is kept whatever the answer, so it is decided in its own transaction and said after.
+   * Compares a PIN with the parent's, counting the run of wrong ones: each PIN_TRIES in a row lock it, for longer each
+   * time (shared `PIN_LOCK_STEPS`), and the parent is told when the first lock of an hour or more begins. The right PIN
+   * forgets the runs. The count is kept whatever the answer, so it is decided in its own transaction and said after.
    */
   private async checkPin(parentId: string, pin: string, now: Date): Promise<PinCheck> {
     return inTransaction(this.pool, async (client) => {
-      const r = await client.query<{ pin_hash: string; failed_tries: number; locked_until: Date | null }>(
-        `SELECT pin_hash, failed_tries, locked_until FROM family_pins WHERE parent_id = $1 FOR UPDATE`,
+      const r = await client.query<{ pin_hash: string; failed_tries: number; locked_until: Date | null; locks: number }>(
+        `SELECT pin_hash, failed_tries, locked_until, locks FROM family_pins WHERE parent_id = $1 FOR UPDATE`,
         [parentId],
       );
       const row = r.rows[0];
       if (!row) return { ok: false, error: pinRequired() };
       if (row.locked_until && row.locked_until > now) return { ok: false, error: pinLocked(row.locked_until, now) };
       if (await verifyPassword(row.pin_hash, pin)) {
-        await client.query(`UPDATE family_pins SET failed_tries = 0, locked_until = NULL WHERE parent_id = $1`, [parentId]);
+        await client.query(`UPDATE family_pins SET failed_tries = 0, locked_until = NULL, locks = 0 WHERE parent_id = $1`, [parentId]);
         return { ok: true };
       }
       const tries = row.failed_tries + 1;
       if (tries >= PIN_TRIES) {
-        const until = new Date(now.getTime() + PIN_LOCK_MINUTES * 60_000);
-        await client.query(`UPDATE family_pins SET failed_tries = 0, locked_until = $2 WHERE parent_id = $1`, [parentId, until]);
+        const locks = row.locks + 1;
+        const minutes = pinLockMinutes(locks);
+        const until = new Date(now.getTime() + minutes * 60_000);
+        await client.query(`UPDATE family_pins SET failed_tries = 0, locked_until = $2, locks = $3 WHERE parent_id = $1`, [parentId, until, locks]);
+        // the first long lock of a run says someone kept trying; the parent hears it then, not at every day after
+        if (minutes >= 60 && pinLockMinutes(locks - 1) < 60) await tellParental(client, [{ userId: parentId, notification: pinLockedNotice(minutes, until) }]);
         return { ok: false, error: pinLocked(until, now) };
       }
       await client.query(`UPDATE family_pins SET failed_tries = $2 WHERE parent_id = $1`, [parentId, tries]);
@@ -119,7 +120,7 @@ export class ChildSessions {
     const hash = await hashPassword(pin);
     await this.pool.query(
       `INSERT INTO family_pins (parent_id, pin_hash, updated_at) VALUES ($1, $2, $3)
-       ON CONFLICT (parent_id) DO UPDATE SET pin_hash = EXCLUDED.pin_hash, failed_tries = 0, locked_until = NULL, updated_at = EXCLUDED.updated_at`,
+       ON CONFLICT (parent_id) DO UPDATE SET pin_hash = EXCLUDED.pin_hash, failed_tries = 0, locked_until = NULL, locks = 0, updated_at = EXCLUDED.updated_at`,
       [parentId, hash, now],
     );
     return { pinSet: true };
@@ -176,8 +177,7 @@ export class ChildSessions {
       const pin = await client.query(`SELECT 1 FROM family_pins WHERE parent_id = $1`, [parentId]);
       if (!pin.rowCount) throw pinRequired();
       const child = await this.user(client, childId);
-      const tokens = await issueTokenPair(this.config, client, child, { deviceId });
-      await client.query(`UPDATE refresh_tokens SET return_to = $2 WHERE family_id = $1`, [tokens.familyId, parentId]);
+      const tokens = await issueTokenPair(this.config, client, child, { deviceId, returnTo: parentId });
       if (parentFamily) await client.query(`UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND family_id::text = $2 AND revoked_at IS NULL`, [parentId, parentFamily]);
       return { user: toPublicUser(child), tokens };
     });

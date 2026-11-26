@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "main": "src/index.ts",
+  "sideEffects": [
+    "*.css"
+  ],
   "scripts": {
     "lint": "eslint src && node scripts/generate-badge-glyphs.mjs --check",
     "typecheck": "tsc --noEmit",

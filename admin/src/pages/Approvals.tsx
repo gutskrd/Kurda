@@ -5,7 +5,7 @@ import { Badge, Button, PageHeader, Section, Table, Time, UserLink, errorLine, u
 
 interface PendingChange {
   id: string;
-  target: 'shop_item' | 'event';
+  target: 'shop_item' | 'event' | 'earn_rule' | 'plus_grant' | 'shop_bundle';
   payload: Record<string, unknown>;
   sensitive: boolean;
   proposerId: string | null;
@@ -19,9 +19,43 @@ function day(v: unknown): string {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+/** What each kind of change is called on the list. */
+const KIND: Record<PendingChange['target'], string> = { shop_item: 'Shop item', event: 'Event', earn_rule: 'Earn rule', plus_grant: 'Own Hevalo+', shop_bundle: 'Bundle' };
+
+/** An earn rule as it would pay: "80 Zêr each time, at most 200 a day, 60 s between". */
+function rulePays(p: Record<string, unknown>): string {
+  const cap = p.dailyCap === null || p.dailyCap === undefined ? 'no daily limit' : `at most ${Number(p.dailyCap).toLocaleString()} a day`;
+  const wait = Number(p.cooldownSeconds) > 0 ? `${Number(p.cooldownSeconds).toLocaleString()} s between` : 'no wait';
+  return `${Number(p.amount).toLocaleString()} Zêr each time, ${cap}, ${wait}`;
+}
+
 /** What a change would do, in a line or two a second admin can judge. */
 function Change({ c }: { c: PendingChange }): React.JSX.Element {
   const p = c.payload;
+  if (c.target === 'shop_bundle') {
+    return (
+      <>
+        <strong>{s(p.id)}</strong>
+        <span className="cell-sub">{Number(p.price).toLocaleString()} Zêr for the bundle</span>
+      </>
+    );
+  }
+  if (c.target === 'earn_rule') {
+    return (
+      <>
+        <strong>{s(p.key)}</strong>
+        <span className="cell-sub">{rulePays(p)}</span>
+      </>
+    );
+  }
+  if (c.target === 'plus_grant') {
+    return (
+      <>
+        <strong>{`Hevalo+ for ${Number(p.days).toLocaleString()} ${Number(p.days) === 1 ? 'day' : 'days'}, for their own account`}</strong>
+        <span className="cell-sub">Reason: {s(p.reason)}</span>
+      </>
+    );
+  }
   if (c.target === 'shop_item') {
     return (
       <>
@@ -46,8 +80,9 @@ function Change({ c }: { c: PendingChange }): React.JSX.Element {
 }
 
 /**
- * Approvals: shop and event changes waiting for a second admin (an item at 1,000 or more, an event that grants
- * anything), made on the Shop and Live events pages. The server refuses approving your own, so the button says so.
+ * Approvals: changes waiting for a second admin (a shop item at 500 or more, an event that grants anything, an earn rule
+ * that pays more, Hevalo+ for an admin's own account), made on the Shop, Live events, Earn rules and people's pages. The
+ * server refuses approving your own, so the button says so.
  */
 export function Approvals(): React.JSX.Element {
   const { me } = useAuth();
@@ -57,11 +92,17 @@ export function Approvals(): React.JSX.Element {
   const [busy, setBusy] = useState<string | null>(null);
 
   async function approve(c: PendingChange): Promise<void> {
-    const yes = await dialogs.confirm({
-      title: c.target === 'shop_item' ? `Apply the change to “${s(c.payload.name)}”?` : `Schedule “${s(c.payload.name)}”?`,
-      body: c.target === 'shop_item' ? 'It takes effect in the shop at once.' : 'The event goes live in its window, with its rewards.',
-      confirmLabel: 'Approve',
-    });
+    const asked: Record<PendingChange['target'], { title: string; body: string }> = {
+      shop_item: { title: `Apply the change to “${s(c.payload.name)}”?`, body: 'It takes effect in the shop at once.' },
+      event: { title: `Schedule “${s(c.payload.name)}”?`, body: 'The event goes live in its window, with its rewards.' },
+      earn_rule: { title: `Let ${s(c.payload.key)} pay more?`, body: `${rulePays(c.payload)}, for everyone, from the next Zêr earned that way.` },
+      plus_grant: { title: 'Give the admin who asked Hevalo+ for their own account?', body: 'Membership pays Zêr, so it is never given to oneself alone.' },
+      shop_bundle: {
+        title: `Sell the bundle “${s(c.payload.id)}” for ${Number(c.payload.price).toLocaleString()} Zêr?`,
+        body: 'It takes effect in the shop at once.',
+      },
+    };
+    const yes = await dialogs.confirm({ ...asked[c.target], confirmLabel: 'Approve' });
     if (!yes) return;
     setBusy(c.id);
     try {
@@ -80,7 +121,7 @@ export function Approvals(): React.JSX.Element {
   /** Your own change: taken back, kept on record as withdrawn (the reject route, with that reason). */
   async function withdraw(c: PendingChange): Promise<void> {
     const yes = await dialogs.confirm({
-      title: `Withdraw your change to “${s(c.payload.name)}”?`,
+      title: `Withdraw your change to “${s(c.payload.name ?? c.payload.key ?? c.payload.id ?? 'Hevalo+')}”?`,
       body: 'Nothing is changed, and it leaves this list. You can propose it again.',
       confirmLabel: 'Withdraw',
     });
@@ -120,7 +161,7 @@ export function Approvals(): React.JSX.Element {
 
   const columns: Column<PendingChange>[] = [
     { key: 'change', header: 'Change', card: 'title', cell: (c) => <Change c={c} /> },
-    { key: 'kind', header: 'Kind', cell: (c) => <Badge tone="info">{c.target === 'shop_item' ? 'Shop item' : 'Event'}</Badge> },
+    { key: 'kind', header: 'Kind', cell: (c) => <Badge tone="info">{KIND[c.target] ?? c.target}</Badge> },
     { key: 'by', header: 'Proposed by', cell: (c) => (c.proposerId ? <UserLink user={{ id: c.proposerId, username: c.proposerId === me?.id ? me.username : null }} /> : '—') },
     { key: 'when', header: 'Waiting since', sort: (a, b) => a.createdAt.localeCompare(b.createdAt), cell: (c) => <Time value={c.createdAt} /> },
   ];
@@ -129,7 +170,10 @@ export function Approvals(): React.JSX.Element {
     <div>
       <PageHeader
         title="Approvals"
-        subtitle="Shop items priced at 1,000 or more, and events that give rewards, wait here for a second admin. Nobody can approve their own."
+        subtitle={
+          'Shop items and bundles priced at 500 or more, events that give rewards, earn rules that pay more and an admin’s ' +
+          'Hevalo+ for their own account wait here for a second admin. Nobody can approve their own.'
+        }
         actions={
           <Button icon="refresh" onClick={() => void list.reload()} disabled={list.loading}>
             Refresh

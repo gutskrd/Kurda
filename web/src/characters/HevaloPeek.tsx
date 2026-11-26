@@ -22,6 +22,7 @@ export function HevaloPeek({
   resting = false,
   flip = false,
   pop = true,
+  still = false,
   className,
 }: {
   /** The picture's height in pixels; its width follows. */
@@ -31,12 +32,14 @@ export function HevaloPeek({
   flip?: boolean;
   /** He rises through the tear as it appears; false, he is already there. */
   pop?: boolean;
+  /** Drawn without blinks, glances or breath, for a picture that only decorates (an empty page), as on the phone. */
+  still?: boolean;
   className?: string;
 }): React.JSX.Element {
   const id = `hp${useId().replace(/[^A-Za-z0-9]/g, '')}`;
   // Under Reduce Motion at mount he is simply there; the stylesheet keeps him still if it is turned on later.
-  const [still] = useState(prefersReducedMotion);
-  const rising = pop && !still;
+  const [calm] = useState(prefersReducedMotion);
+  const rising = pop && !calm && !still;
   const root = useRef<HTMLSpanElement>(null);
   usePeekMotion(root, true, flip);
   const art = useMemo(() => ({ light: peekArt({ idPrefix: `${id}l` }), dark: peekArt({ dark: true, idPrefix: `${id}d` }) }), [id]);
@@ -102,6 +105,7 @@ export function HevaloPeek({
             mirrored={flip}
             reaction={reaction ?? (resting ? null : glad)}
             resting={resting}
+            still={still}
             turnable
           />
         </span>

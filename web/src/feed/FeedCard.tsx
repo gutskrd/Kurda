@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { failureText, useOptimistic, useOptimisticSend } from '../lib/optimistic';
 import { Avatar } from '../components/Avatar';
+import { TickCount } from '../components/TickCount';
 import { BookmarkIcon, CommentIcon, HeartIcon, RepostIcon } from '../components/icons';
 import { useProfileModal } from '../profile/ProfileModal';
 import { SharePost } from './SharePost';
@@ -278,7 +279,7 @@ export function PostActions({
   const commentInner = (
     <>
       <CommentIcon size={20} />
-      {item.commentCount > 0 && <span className="fcard-count">{count(item.commentCount)}</span>}
+      {item.commentCount > 0 && <TickCount value={item.commentCount} format={count} className="fcard-count" />}
     </>
   );
 
@@ -296,7 +297,7 @@ export function PostActions({
         <HeartIcon size={20} weight={e.liked ? 'fill' : 'regular'} />
         {/* A fresh element per like, so the sparks play once per press, only around a filled heart (styles/motion.css). */}
         {justOn?.kind === 'like' && e.liked && <span key={justOn.n} className="fcard-burst" aria-hidden="true" />}
-        {e.likes > 0 && <span className="fcard-count">{count(e.likes)}</span>}
+        {e.likes > 0 && <TickCount value={e.likes} format={count} className="fcard-count" />}
       </button>
 
       {onComment ? (
@@ -321,7 +322,7 @@ export function PostActions({
           onClick={() => toggle('repost')}
         >
           <RepostIcon size={20} weight={e.reposted ? 'bold' : 'regular'} />
-          {e.reposts > 0 && <span className="fcard-count">{count(e.reposts)}</span>}
+          {e.reposts > 0 && <TickCount value={e.reposts} format={count} className="fcard-count" />}
         </button>
       )}
 

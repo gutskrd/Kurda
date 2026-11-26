@@ -1958,21 +1958,22 @@ describe('the learner’s tree', () => {
     expect(treeSvg({ species: 'behiv', stage: 6, title: 'x' })).toContain('#fff4f7');
   });
 
-  it('starts as the kind’s own seed, cracked and lit from inside, and the seed is what moves when it is watered', () => {
+  it('starts as the kind’s own seed, half in the earth and cracked along its top, and the seed is what moves when it is watered', () => {
     const seeds = new Set(TREE_SPECIES.map((species) => treeSvg({ species, stage: 0, title: 'A seed', idPrefix: 's' })));
     expect(seeds.size).toBe(TREE_SPECIES.length);
-    const alive = treeSvg({ species: 'beru', stage: 0, title: 'x' });
-    // the light it stands in, and the green light in its crack
-    expect(alive).toContain('radialGradient');
-    expect(alive).toContain('#e6ff8f');
-    const asleep = treeSvg({ species: 'beru', stage: 0, health: 'withered', title: 'x' });
-    expect(asleep).not.toContain('radialGradient');
-    expect(asleep).not.toContain('#e6ff8f');
+    // the green light in its crack while it is watered, and none once it has gone without
+    expect(treeSvg({ species: 'beru', stage: 0, title: 'x' })).toContain('#e6ff8f');
+    expect(treeSvg({ species: 'beru', stage: 0, health: 'withered', title: 'x' })).not.toContain('#e6ff8f');
+    // no glow round it: it lies in its own shade in the earth, which is drawn up over it in front
+    expect(treeSvg({ species: 'beru', stage: 0, title: 'x' })).not.toContain('radialGradient');
+    expect(treeSvg({ species: 'beru', stage: 0, part: 'front', title: 'x' })).toContain('<path');
     // the seed is the plant's layer, not the ground's: an acorn's own brown is in the one and not the other
     expect(treeSvg({ species: 'beru', stage: 0, part: 'plant', title: 'x' })).toContain('#b9803a');
     expect(treeSvg({ species: 'beru', stage: 0, part: 'ground', title: 'x' })).not.toContain('#b9803a');
-    // the sprout still has its seed at its foot
-    expect(treeSvg({ species: 'beru', stage: 1, title: 'x' })).toContain('#b9803a');
+    // the sprout's split coat lies at its foot, still on the ground: in the ground and front layers, not the plant's
+    expect(treeSvg({ species: 'beru', stage: 1, part: 'ground', title: 'x' })).toContain('#b9803a');
+    expect(treeSvg({ species: 'beru', stage: 1, part: 'front', title: 'x' })).toContain('#b9803a');
+    expect(treeSvg({ species: 'beru', stage: 1, part: 'plant', title: 'x' })).not.toContain('#b9803a');
     expect(treeSvg({ species: 'beru', stage: 2, title: 'x' })).not.toContain('#b9803a');
   });
 

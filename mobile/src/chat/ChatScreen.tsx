@@ -26,6 +26,7 @@ import { useChatSocket } from './useChatSocket';
 import { useI18n } from '../i18n/I18nContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { DmWelcome } from './DmWelcome';
+import { useArrivals } from './arrivals';
 import { MessageRow, type RowMessage } from './MessageRow';
 import { JumpToLatest, useAwayFromLatest, useUnseenBelow } from './ThreadParts';
 import { TypingBubble } from './TypingBubble';
@@ -126,6 +127,8 @@ export function ChatScreen({
   );
   // Newest first, for the inverted list below — once per change to the thread, not per keystroke.
   const newestFirst = useMemo<ShownMessage[]>(() => [...thread].reverse(), [thread]);
+  // Messages sent or received while the thread is open rise in (chat/arrivals.ts).
+  const isArriving = useArrivals(newestFirst, me, keyOf);
   // Where each message sits: its day, its place in its run, whether it says the time.
   const places = useMemo(
     () => placeMessages(thread, new Date(), { locale, today: t('chat.day.today'), yesterday: t('chat.day.yesterday'), earlier: t('chat.day.earlier') }),
@@ -404,6 +407,7 @@ export function ChatScreen({
                     onReport={mine ? undefined : () => setReporting(item.id)}
                     onRetry={() => void retry(item.id)}
                     onDiscard={() => cancel(item.id)}
+                    arriving={isArriving(keyOf(item.id))}
                   />
                 );
               }}

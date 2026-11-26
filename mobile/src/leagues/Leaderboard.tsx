@@ -16,7 +16,8 @@ import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { formatCompact, formatNumber } from '../i18n/format';
-import { heldDim } from '../theme/MotionParts';
+import { Rise, heldDim } from '../theme/MotionParts';
+import { useListEntrance } from '../theme/animate';
 import { useDirection } from '../reports/direction';
 
 /**
@@ -295,6 +296,8 @@ function BoardList({
   const { user } = useAuth();
   const myId = user?.id ?? null;
   const mine = entries.findIndex((e) => e.userId === myId);
+  // The first screenful rises in once as the board first arrives, as on the website (theme/animate.ts).
+  const enter = useListEntrance(entries.length > 0);
   const [meAt, setMeAt] = useState<MeAt>(mine >= 0 ? 'shown' : 'absent');
   useEffect(() => setMeAt(mine >= 0 ? 'shown' : 'absent'), [mine]);
   // The rows on screen say where yours is; kept in a ref, since the list reads its handler once.
@@ -327,7 +330,11 @@ function BoardList({
         contentContainerStyle={styles.list}
         onViewableItemsChanged={onViewable}
         ListHeaderComponent={top}
-        renderItem={({ item }) => <BoardRow entry={item} type={type} self={item.userId === myId} depth={board?.depth} />}
+        renderItem={({ item, index }) => (
+          <Rise delay={enter(index)}>
+            <BoardRow entry={item} type={type} self={item.userId === myId} depth={board?.depth} />
+          </Rise>
+        )}
         ListEmptyComponent={
           !board ? (
             <AsyncBoundary loading={!error} error={error} onRetry={onRetry} skeleton={<RowsSkeleton />}>

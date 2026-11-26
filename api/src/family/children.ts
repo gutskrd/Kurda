@@ -107,6 +107,7 @@ const ageRefused = (birth: BirthMonth, now: Date): AppError =>
     max: MIN_SIGNUP_AGE - 1,
   });
 const avatarInvalid = (): AppError => new AppError('CHILD_AVATAR_INVALID', 422, 'choose one of the avatars Hevalo offers');
+const linkInvalid = (): AppError => new AppError('FAMILY_LINK_INVALID', 404, 'this link doesn’t work any more: open Hevalo on your phone, then Settings, then Family');
 /** The confirming email could not be queued, so no profile was kept: consent needs it sent. */
 const emailUnavailable = (): AppError => new AppError('FAMILY_EMAIL_UNAVAILABLE', 503, 'the confirmation email cannot be sent right now, so no profile was made: try again soon');
 
@@ -360,12 +361,27 @@ export class ChildService {
   }
 
   /**
-   * What a link in a parent's email does (notices.ts): delete the profile, or keep one that was going for being
-   * unused. A link for a profile already gone says so; any other token is refused.
+   * What a link in a parent's email is about, for the page it opens to show before anything is done: what it does and
+   * the child's name, or no child for a profile already gone. Changes nothing, so a mail program or a link scanner
+   * opening it is harmless.
+   */
+  async linkPreview(token: string, now: Date = new Date()): Promise<{ action: 'remove' | 'keep'; child: { name: string } | null }> {
+    const link = readChildLink(this.deps.config.JWT_SECRET, token, now);
+    if (!link) throw linkInvalid();
+    const r = await this.pool.query<{ name: string }>(
+      `SELECT u.display_name AS name FROM child_profiles cp JOIN users u ON u.id = cp.user_id WHERE cp.user_id = $1`,
+      [link.childId],
+    );
+    return { action: link.action, child: r.rows[0] ? { name: r.rows[0].name } : null };
+  }
+
+  /**
+   * What a link in a parent's email does (notices.ts), once the parent confirms it on its page: delete the profile, or
+   * keep one that was going for being unused. A link for a profile already gone says so; any other token is refused.
    */
   async byLink(token: string, now: Date = new Date()): Promise<{ done: 'removed' | 'kept' | 'gone' }> {
     const link = readChildLink(this.deps.config.JWT_SECRET, token, now);
-    if (!link) throw new AppError('FAMILY_LINK_INVALID', 404, 'this link doesn’t work any more: open Hevalo on your phone, then Settings, then Family');
+    if (!link) throw linkInvalid();
     if (link.action === 'remove') return { done: (await this.deps.gdpr.deleteChildProfile(link.childId)) ? 'removed' : 'gone' };
     const kept = await this.pool.query(`UPDATE child_profiles SET kept_at = $2, idle_warned_at = NULL WHERE user_id = $1`, [link.childId, now]);
     return { done: kept.rowCount ? 'kept' : 'gone' };

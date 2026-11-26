@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { AppConfig } from '../config/env.js';
 import { AppError } from '../plugins/errors.js';
+import { assertNotPaused } from '../parental/supervision.js';
 
 /**
  * What a child profile may do, decided for every request in one place: a child's session reaches only the routes
@@ -107,6 +108,7 @@ export const CHILD_ROUTES: ReadonlySet<string> = new Set([
   'PUT /me/cosmetics/background',
   'PUT /me/cosmetics/icon',
   'PUT /me/cosmetics/frame',
+  'PUT /me/cosmetics/tag',
   'PUT /me/cosmetics/icon/visibility',
   // games played alone or passed round one phone
   'GET /games/availability',
@@ -134,6 +136,42 @@ export const CHILD_ROUTES: ReadonlySet<string> = new Set([
   'POST /race',
   'POST /race/:id/finish',
   'GET /race/best',
+]);
+
+/**
+ * What a child's session may not begin while Hevalo rests for them, at their parent's bedtime or once the day's
+ * minutes are used (403 PARENTAL_PAUSED, which the apps answer with their resting screen): a lesson, practice, a
+ * placement or jump test, a game, a riddle or proverb, and reading a story on. A lesson or practice already under way
+ * is finished, as the phone's resting screen waits for it; everything the resting screen reads stays open.
+ */
+export const RESTING_ROUTES: ReadonlySet<string> = new Set([
+  'GET /lessons/:id/session',
+  'POST /courses/:courseId/jump',
+  'POST /courses/:courseId/placement',
+  'POST /practice/session',
+  'PUT /stories/:id/progress',
+  'POST /riddles/:slug/guess',
+  'POST /riddles/:slug/hint',
+  'POST /riddles/:slug/reveal',
+  'POST /proverbs/rounds',
+  'POST /proverbs/rounds/:id/answers',
+  'POST /proverbs/rounds/:id/finish',
+  'POST /games/solo/sessions',
+  'POST /games/solo/sessions/:id/answers',
+  'POST /games/solo/sessions/:id/begin',
+  'POST /games/solo/sessions/:id/finish',
+  'POST /games/solo/sessions/:id/hints',
+  'POST /games/who-am-i/couch/deal',
+  'POST /games/impostor/couch/deck',
+  'POST /wordle/daily',
+  'POST /wordle/practice',
+  'POST /wordle/games/:id/guesses',
+  'POST /wordle/games/:id/save',
+  'POST /rhyme/training',
+  'POST /rhyme/training/:id/guesses',
+  'POST /rhyme/training/:id/end',
+  'POST /race',
+  'POST /race/:id/finish',
 ]);
 
 /** 403 CHILD_PROFILE: a part of Hevalo a child profile does not have. */
@@ -167,12 +205,17 @@ export function fromBrowser(req: FastifyRequest, config: Pick<AppConfig, 'NODE_E
 /**
  * The gate, as one deny-by-default hook before every route, like the activation gate: a request without a child's
  * session costs one comparison. It runs before the body is read, so a child hears the same refusal whatever they send.
+ * A route that begins learning also asks whether Hevalo is resting for the child now (`RESTING_ROUTES`), so a bedtime
+ * or a day's limit holds whatever the phone does.
  */
 export function installChildGate(app: FastifyInstance, config: Pick<AppConfig, 'NODE_ENV'>): void {
   app.addHook('preValidation', async (req: FastifyRequest, reply: FastifyReply) => {
     if (req.user?.child !== true) return;
     const refusal = fromBrowser(req, config) ? childPhoneOnly() : childMayUse(req.method, req.routeOptions.url) ? null : childRefused();
-    if (!refusal) return;
-    await reply.code(refusal.statusCode).send({ code: refusal.code, message: refusal.message, requestId: req.id });
+    if (refusal) {
+      await reply.code(refusal.statusCode).send({ code: refusal.code, message: refusal.message, requestId: req.id });
+      return;
+    }
+    if (RESTING_ROUTES.has(`${req.method} ${req.routeOptions.url}`) && app.hasDecorator('db')) await assertNotPaused(app.db, req.user.id);
   });
 }

@@ -1,8 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { giftSenderName, type GiftCard } from '@kurda/shared';
 import { assetUrl } from '../api/env';
-import { useMotionAlive } from '../a11y/useMotionAlive';
 import type { Translate } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
@@ -14,7 +12,7 @@ import { useReportAction } from '../reports/reportAction';
 import { GiftBox } from './art';
 
 /**
- * A gift in the chat. To you, unopened: a wrapped present that breathes a little (still under Reduce Motion) and "Tap
+ * A gift in the chat. To you, unopened: a wrapped present that hops now and then (still under Reduce Motion) and "Tap
  * to open"; opened: what it was and from whom. To the sender: what they gave and whether it was opened ("Opened ✓", or
  * how many recipients have in a group). To everyone else in a group: the wrapped present and whom it is for. The price
  * is never shown. A grand gift, once opened, stays on show for everyone in the chat, its picture large.
@@ -70,7 +68,7 @@ export function GiftBubble({
       ]}
       testID={showpiece ? 'gift-showpiece' : undefined}
     >
-      <View style={showpiece ? styles.artLarge : styles.art}>{wrapped ? <Breathing card={card} /> : <ItemThumb card={card} large={showpiece} />}</View>
+      <View style={showpiece ? styles.artLarge : styles.art}>{wrapped ? <WrappedBox card={card} /> : <ItemThumb card={card} large={showpiece} />}</View>
       <View style={styles.text}>
         <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
           {title}
@@ -127,29 +125,9 @@ function recipientsLine(card: GiftCard, t: Translate): string {
     : t('gift.bubble.for', { names: shown });
 }
 
-/** The wrapped present, rising and settling slowly: a waiting gift is the one moving thing in a thread. */
-function Breathing({ card }: { card: GiftCard }): React.JSX.Element {
-  const { colors } = useTheme();
-  const alive = useMotionAlive();
-  const lift = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (!alive || card.myGiftId === null) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(lift, { toValue: 1, duration: 1100, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(lift, { toValue: 0, duration: 1100, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [alive, lift, card.myGiftId]);
-  const translateY = lift.interpolate({ inputRange: [0, 1], outputRange: [0, -3] });
-  const rotate = lift.interpolate({ inputRange: [0, 1], outputRange: ['-2deg', '2deg'] });
-  return (
-    <Animated.View style={{ transform: [{ translateY }, { rotate }] }}>
-      <GiftBox size={64} tier={card.tier} gold={colors.gold} />
-    </Animated.View>
-  );
+/** The wrapped present: to its recipient it hops now and then, a waiting gift being the one moving thing in a thread. */
+function WrappedBox({ card }: { card: GiftCard }): React.JSX.Element {
+  return <GiftBox size={64} tier={card.tier} motion={card.myGiftId !== null ? 'idle' : 'still'} seed={card.batchId} testID="gift-box" />;
 }
 
 function ItemThumb({ card, large = false }: { card: GiftCard; large?: boolean }): React.JSX.Element {

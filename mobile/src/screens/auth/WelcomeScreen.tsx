@@ -107,7 +107,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
         </Pressable>
       </Rise>
 
-      {/* A child's own phone, signed in with the six digits their parent's phone shows (family/ChildCodeScreen). */}
+      {/* A child's own phone, signed in with the eight digits their parent's phone shows (family/ChildCodeScreen). */}
       <Rise delay={row(4)}>
         <Pressable onPress={() => navigation.navigate('ChildCode')} style={({ pressed }) => [styles.link, pressed && heldDim]} accessibilityRole="button" testID="welcome-child-code">
           <Text style={[styles.linkText, { color: colors.textSecondary }]}>{t('child.code.entry')}</Text>

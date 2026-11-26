@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireRoles } from '../plugins/auth.js';
 import type { EarnService } from './service.js';
+import type { ConfigService } from '../admin/config-service.js';
 
 const ruleBody = z.object({
   amount: z.number().int().min(1).max(100_000),
@@ -10,8 +11,12 @@ const ruleBody = z.object({
   active: z.boolean(),
 });
 
-/** The staff-tunable earning rules (a league promotion, a tournament win), admin only. */
-export function registerEarnRoutes(app: FastifyInstance, earn: EarnService): void {
+/**
+ * The staff-tunable earning rules (a league promotion, a tournament win), admin only. A change that pays more waits in
+ * Approvals for a second admin (`ConfigService.proposeEarnRule`); one that pays the same or less applies at once. Both
+ * are on the audit trail.
+ */
+export function registerEarnRoutes(app: FastifyInstance, earn: EarnService, approvals: Pick<ConfigService, 'proposeEarnRule'>): void {
   app.get('/admin/earn-rules', { preHandler: requireRoles('admin') }, async () => ({
     rules: await earn.rules(),
   }));
@@ -22,10 +27,11 @@ export function registerEarnRoutes(app: FastifyInstance, earn: EarnService): voi
       schema: { params: z.object({ key: z.string().min(1).max(60) }), body: ruleBody },
       preHandler: requireRoles('admin'),
     },
-    async (req) => {
+    async (req, reply) => {
       const { key } = req.params as { key: string };
       const body = req.body as z.infer<typeof ruleBody>;
-      await earn.upsertRule({ key, ...body });
+      const change = await approvals.proposeEarnRule(req.user!.id, { key, ...body });
+      if (change.status === 'pending') return reply.code(202).send({ status: 'pending', id: change.id });
       return { ok: true };
     },
   );

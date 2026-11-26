@@ -62,6 +62,17 @@ export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: Cosmeti
     },
   );
 
+  /** Wear a word tag you own by your name (or none). */
+  app.put(
+    '/me/cosmetics/tag',
+    { schema: { body: skuBody }, config: { rateLimit }, preHandler: requireAccount },
+    async (req) => {
+      const { sku } = req.body as { sku: string | null };
+      await cosmetics.equipTag(req.user!.id, sku);
+      return { tagSku: sku };
+    },
+  );
+
   /** Show/hide the equipped premium icon (keeps the selection). */
   app.put(
     '/me/cosmetics/icon/visibility',

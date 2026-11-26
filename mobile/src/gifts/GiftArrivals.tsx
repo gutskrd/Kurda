@@ -78,7 +78,7 @@ function GiftBanner({
         accessibilityRole="summary"
         accessibilityLiveRegion="polite"
       >
-        <GiftBox size={40} tier={event.card.tier} gold={colors.gold} />
+        <GiftBox size={44} tier={event.card.tier} motion="idle" seed={event.giftId} />
         <Text style={[styles.text, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
           {text}
         </Text>

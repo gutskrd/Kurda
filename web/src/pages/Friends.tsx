@@ -17,6 +17,7 @@ import { RequestTicket } from '../social/FriendTickets';
 import { railEdits } from '../social/useSocialRail';
 import { failureText, useOptimisticSend } from '../lib/optimistic';
 import { useUnfriend } from '../social/unfriend';
+import { useArrival } from '../lib/motion';
 
 function Row({ user, actions, meta }: { user: UserSummary; actions?: React.ReactNode; meta?: string }): React.JSX.Element {
   const { openProfile } = useProfileModal();
@@ -108,6 +109,8 @@ export function Friends(): React.JSX.Element {
 
   const outgoing = (sent.data?.requests ?? []).filter((u) => !withdrawn.has(u.userId));
   const yours = (friends.data?.friends ?? []).filter((u) => !goneHere.has(u.userId));
+  // Your friends rise in once as the list first arrives, as the phone's lists do (styles/motion.css).
+  const arriving = useArrival(yours.length > 0, 'friends');
 
   return (
     <div className="container container-narrow">
@@ -185,7 +188,7 @@ export function Friends(): React.JSX.Element {
         ) : yours.length === 0 ? (
           <EmptyState title={t('friends.noneTitle')} message={t('friends.noneBody')} />
         ) : (
-          <div className="post-list">
+          <div className={arriving ? 'post-list rise-in' : 'post-list'}>
             {yours.map((u) => (
               <Row
                 key={u.userId}

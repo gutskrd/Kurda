@@ -41,7 +41,7 @@ export interface ItemUsage {
   sku: string;
   /** people who own it */
   owners: number;
-  /** people wearing it as their background, icon or frame */
+  /** people wearing it as their background, icon, frame or tag */
   equipped: number;
   /** gifts of it, opened or not */
   gifts: number;
@@ -49,6 +49,8 @@ export interface ItemUsage {
   refunds: number;
   /** part of the art set the shop ships with */
   builtIn: boolean;
+  /** bundles it is part of, which keep it (shop/bundles.ts) */
+  bundles: number;
   /** what deleting it would do */
   outcome: 'delete' | 'retire';
 }
@@ -61,12 +63,13 @@ export interface RemoveResult extends Omit<ItemUsage, 'outcome'> {
   artReleased: boolean;
 }
 
-/** The SKUs of the backgrounds, icons and frames the shop ships with. */
+/** The SKUs of the backgrounds, icons, frames and word tags the shop ships with. */
 function loadBuiltInSkus(): ReadonlySet<string> {
   try {
     const p = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'content', 'cosmetics.json');
-    const manifest = JSON.parse(readFileSync(p, 'utf8')) as { icons?: { sku: string }[]; backgrounds?: { sku: string }[]; frames?: { sku: string }[] };
-    return new Set([...[...(manifest.icons ?? []), ...(manifest.backgrounds ?? []), ...(manifest.frames ?? [])].map((i) => i.sku), ...GIFTS.map((g) => giftSku(g.id))]);
+    const manifest = JSON.parse(readFileSync(p, 'utf8')) as Partial<Record<'icons' | 'backgrounds' | 'frames' | 'tags', { sku: string }[]>>;
+    const shipped = [...(manifest.icons ?? []), ...(manifest.backgrounds ?? []), ...(manifest.frames ?? []), ...(manifest.tags ?? [])];
+    return new Set([...shipped.map((i) => i.sku), ...GIFTS.map((g) => giftSku(g.id))]);
   } catch {
     return new Set(GIFTS.map((g) => giftSku(g.id)));
   }
@@ -200,18 +203,20 @@ export class CatalogueEditor {
   }
 
   private async count(executor: Pick<pg.Pool, 'query'>, sku: string): Promise<ItemUsage> {
-    const res = await executor.query<{ owners: number; equipped: number; gifts: number; refunds: number }>(
+    const res = await executor.query<{ owners: number; equipped: number; gifts: number; refunds: number; bundles: number }>(
       `SELECT (SELECT count(*)::int FROM user_entitlements WHERE sku = $1) AS owners,
               (SELECT count(*)::int FROM users
-                WHERE equipped_background_sku = $1 OR equipped_icon_sku = $1 OR equipped_frame_sku = $1) AS equipped,
+                WHERE equipped_background_sku = $1 OR equipped_icon_sku = $1 OR equipped_frame_sku = $1
+                   OR equipped_tag_sku = $1) AS equipped,
               (SELECT count(*)::int FROM gifts WHERE sku = $1) AS gifts,
               (SELECT count(*)::int FROM cosmetic_refreshes WHERE sku = $1)
-                + (SELECT count(*)::int FROM cosmetic_replacements WHERE sku = $1) AS refunds`,
+                + (SELECT count(*)::int FROM cosmetic_replacements WHERE sku = $1) AS refunds,
+              (SELECT count(*)::int FROM shop_bundle_parts WHERE sku = $1) AS bundles`,
       [sku],
     );
     const r = res.rows[0]!;
     const builtIn = BUILT_IN.has(sku);
-    const kept = r.owners > 0 || r.equipped > 0 || r.gifts > 0 || r.refunds > 0 || builtIn;
+    const kept = r.owners > 0 || r.equipped > 0 || r.gifts > 0 || r.refunds > 0 || r.bundles > 0 || builtIn;
     return { sku, ...r, builtIn, outcome: kept ? 'retire' : 'delete' };
   }
 
@@ -260,8 +265,9 @@ export class CatalogueEditor {
         `UPDATE users u
             SET equipped_background_sku = NULLIF(u.equipped_background_sku, $1),
                 equipped_icon_sku = NULLIF(u.equipped_icon_sku, $1),
-                equipped_frame_sku = NULLIF(u.equipped_frame_sku, $1)
-          WHERE (u.equipped_background_sku = $1 OR u.equipped_icon_sku = $1 OR u.equipped_frame_sku = $1)
+                equipped_frame_sku = NULLIF(u.equipped_frame_sku, $1),
+                equipped_tag_sku = NULLIF(u.equipped_tag_sku, $1)
+          WHERE (u.equipped_background_sku = $1 OR u.equipped_icon_sku = $1 OR u.equipped_frame_sku = $1 OR u.equipped_tag_sku = $1)
             AND NOT EXISTS (SELECT 1 FROM user_entitlements e WHERE e.user_id = u.id AND e.sku = $1)`,
         [sku],
       );

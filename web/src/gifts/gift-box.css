@@ -1,0 +1,24 @@
+/*
+ * The wrapped gift (GiftBox.tsx): its parts are stacked pictures over one square frame, moved by the browser's
+ * animations through transform and opacity only. A part may move past the frame (the lid flying off, the light rising),
+ * so nothing clips it.
+ */
+.gift-box {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  line-height: 0;
+  vertical-align: middle;
+}
+.gift-box-group {
+  position: absolute;
+  inset: 0;
+}
+.gift-box-part {
+  position: absolute;
+  display: block;
+}
+.gift-box-part > svg {
+  display: block;
+  overflow: visible;
+}
