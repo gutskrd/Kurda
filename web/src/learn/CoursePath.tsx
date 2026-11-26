@@ -62,9 +62,9 @@ const lessonHref = (lessonId: string, courseId: string): string =>
   `/app/learn/lesson/${lessonId}?course=${encodeURIComponent(courseId)}`;
 
 /**
- * The glyph on a stop, so its kind shows by shape as well as colour. The stop to do now shows what its lesson is: word
- * cards, a conversation, or practice (a star from a server too old to say). A finished topic's tile carries Hevalo's
- * hoofprint in its drawing and its stars (`RoundStars`); the milestone carries its chapter's number instead.
+ * The glyph on a stop, so its kind shows by shape as well as colour. The stop to do now shows what its lesson is:
+ * letters for new words, a conversation, or practice (a star from a server too old to say). A finished topic's tile
+ * carries Hevalo's hoofprint in its drawing and its stars (`RoundStars`); the milestone carries its chapter's number.
  */
 function Glyph({ stop }: { stop: Stop }): React.JSX.Element | null {
   if (stop.kind === 'review') return <RepostIcon size={28} weight="bold" />;

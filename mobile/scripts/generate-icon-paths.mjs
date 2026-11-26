@@ -184,7 +184,7 @@ const MAP = {
   widget: { glyph: 'SquaresFour', note: 'the letter widget on the home screen: the squares a phone shows for its widgets' },
 
   // --- What the road's stop to do now opens, on its face ---
-  'lesson-words': { glyph: 'Cards', weight: 'fill', note: 'web WordsIcon — a lesson of new words, as word cards' },
+  'lesson-words': { glyph: 'TextAa', weight: 'fill', note: 'web WordsIcon — a lesson bringing in new words; not Review’s cards' },
   'lesson-talk': { glyph: 'ChatsCircle', weight: 'fill', note: 'web TalkIcon — a lesson with a conversation to take part in' },
   'lesson-practice': { glyph: 'Barbell', weight: 'fill', note: 'web PracticeIcon — a lesson going over words already met' },
 };

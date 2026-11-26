@@ -314,7 +314,7 @@ export function SkillNodeView({
 
 /**
  * The glyph on a stop's face: a skill's number or padlock, or review's arrows. The stop to do now shows what its
- * lesson is (word cards, a conversation, practice; a star from a server too old to say), in its unit's ink. A finished
+ * lesson is (letters for new words, a conversation, practice; a star from a server too old to say), in its unit's ink. A finished
  * tile carries Hevalo's hoofprint in its drawing and its stars; the drawn stops carry their own.
  */
 function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_INK)['dark'], onNow: string): { icon?: IconName; number?: number; colour: string } | null {
