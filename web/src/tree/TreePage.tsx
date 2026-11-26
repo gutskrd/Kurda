@@ -422,8 +422,10 @@ function Stage({
               <WateringCan size={160} fluid />
             </span>
             {DROPS.map((d, i) => (
-              <i key={i} className="tree-pour-drop" style={{ '--wait': `${d.wait}ms`, '--aside': `${d.aside}%`, width: `${d.size}%` } as React.CSSProperties}>
-                <WaterDrop size={18} fluid />
+              <i key={i} className="tree-pour-drop" style={{ '--wait': `${d.wait}ms`, '--aside': `${d.aside}%` } as React.CSSProperties}>
+                <span className="tree-pour-drop-art" style={{ width: `${d.size}%` }}>
+                  <WaterDrop size={18} fluid />
+                </span>
               </i>
             ))}
             <span className="tree-pour-ring" />

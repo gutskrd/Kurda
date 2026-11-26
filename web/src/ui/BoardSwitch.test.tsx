@@ -39,6 +39,26 @@ describe('BoardSwitch', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('draws one chosen ground for the switch, kept from screen readers, which follows the choice', () => {
+    const { rerender } = render(
+      <I18nProvider>
+        <BoardSwitch value="xp" onChange={() => undefined} />
+      </I18nProvider>,
+    );
+    const group = screen.getByRole('group', { name: en['rankings.rankBy'] });
+    const capsules = group.querySelectorAll('.seg-capsule');
+    expect(capsules).toHaveLength(1);
+    expect(capsules[0]).toHaveAttribute('aria-hidden', 'true');
+    rerender(
+      <I18nProvider>
+        <BoardSwitch value="zer" onChange={() => undefined} />
+      </I18nProvider>,
+    );
+    // The same element, moved rather than drawn again, so it can slide.
+    expect(group.querySelector('.seg-capsule')).toBe(capsules[0]);
+    expect(within(group).getByRole('radio', { name: 'Zêr' })).toBeChecked();
+  });
+
   it('knows what can be ranked by, and the board behind each choice', () => {
     expect(isRankKind('xp')).toBe(true);
     expect(isRankKind('zer')).toBe(true);

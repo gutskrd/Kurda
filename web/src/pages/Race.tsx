@@ -360,7 +360,7 @@ export function Race(): React.JSX.Element {
               aria-valuemax={100}
               aria-valuenow={Math.round(progress * 100)}
             >
-              <div className="race-progress-fill" style={{ width: `${progress * 100}%` }} />
+              <div className="race-progress-fill" style={{ '--p': progress } as React.CSSProperties} />
             </div>
             <span className="muted race-title" lang={sorani ? 'ckb' : 'ku'} dir={sorani ? 'rtl' : 'ltr'}>
               {game.text.title}

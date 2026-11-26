@@ -7,9 +7,10 @@ import { useAvatarSrc } from '../art/overrides';
  * A leaderboard: one card of quiet rows reading place, person, score, with the reader's own row picked out. Every
  * board in the app and the front page's picture of one are built from these.
  */
-export function RankList({ children, label }: { children: ReactNode; label?: string }): React.JSX.Element {
+export function RankList({ children, label, arriving = false }: { children: ReactNode; label?: string; arriving?: boolean }): React.JSX.Element {
   return (
-    <ol className="rank-list" aria-label={label}>
+    // While `arriving` (lib/motion.ts useArrival) the first screenful of rows rises in, as on the phone.
+    <ol className={arriving ? 'rank-list rise-in' : 'rank-list'} aria-label={label}>
       {children}
     </ol>
   );

@@ -11,7 +11,7 @@ import type { MessageKey } from '../i18n/en';
 import { ReviewEntry } from '../learn/ReviewEntry';
 import { useLessonExercises, type WebExercise } from '../learn/practiceTools';
 import type { PracticeDue } from '../learn/types';
-import { prefersReducedMotion } from '../lib/motion';
+import { prefersReducedMotion, useArrival } from '../lib/motion';
 import { useApiGet } from '../lib/useApi';
 import { KIND_HUES, KIND_MODE, kindRows, practiceHref, type KindKey, type KindRow, type Line } from './hub';
 import { askMicrophone, useMicBlocked, type MicAnswer } from './microphone';
@@ -51,6 +51,8 @@ export function PracticeHub(): React.JSX.Element {
   const blocked = useMicBlocked();
   const [mic, setMic] = useState<MicAnswer | 'asking' | null>(null);
   const [picking, setPicking] = useState(false);
+  // The ways to practise rise in once as they first arrive, as on the phone (styles/motion.css).
+  const arriving = useArrival(!!hub.data, 'practice');
   const note = useRef<HTMLDivElement>(null);
 
   const speak = async (): Promise<void> => {
@@ -88,7 +90,7 @@ export function PracticeHub(): React.JSX.Element {
         ) : !hub.data ? (
           <KindsSkeleton />
         ) : (
-          <ul className="list">
+          <ul className={arriving ? 'list rise-in' : 'list'}>
             {kindRows(hub.data).map((row) => (
               <KindItem
                 key={row.key}

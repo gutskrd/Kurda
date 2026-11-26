@@ -513,6 +513,13 @@ input[type='password']::-ms-clear {
   color: var(--ink-3);
   background: var(--surface);
 }
+/* Hevalo over the words, the same size as on the phone; the empty slot holds his place while he loads */
+.state-art {
+  display: block;
+  width: 120px;
+  height: 132px;
+  margin: 0 auto var(--space-3);
+}
 .state-title {
   font-family: var(--font-sans);
   font-size: var(--text);

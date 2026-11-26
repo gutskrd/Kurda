@@ -36,6 +36,7 @@ import { MODE_KEY, SetupSheet } from './SetupSheet';
 import { StoryCard } from './StoryCard';
 import { JoinCodeForm } from '../play/JoinCode';
 import { ShelfSwitch, VarietySwitch } from '../lore/LoreParts';
+import { useArrival } from '../lib/motion';
 
 /** How many stories a filtered page brings, and how many more each "More" adds. */
 export const PAGE = 24;
@@ -290,6 +291,8 @@ function Library(): React.JSX.Element {
 
   // With no story of this variety published, the page says only that, under the switch to the other variety.
   const nothingYet = !active && library !== null && library.total === 0;
+  // The shelves rise in once as the library first arrives, as the phone's rows do (styles/motion.css).
+  const arriving = useArrival(!!library && library.total > 0, 'stories-library');
   const variety = (
     <div className="story-variety">
       <VarietySwitch value={GAME_SPELLING[dialect]} onChange={chooseVariety} />
@@ -335,7 +338,7 @@ function Library(): React.JSX.Element {
       ) : library.total === 0 ? (
         <EmptyState title={t('stories.library.empty')} />
       ) : (
-        <>
+        <div className={arriving ? 'list-arrival rise-in' : 'list-arrival'}>
           {games.length > 0 && <UnfinishedGames games={games} />}
           <Shelf id="continue" title={t('stories.library.continue')} stories={library.continue} names={names} onBookmarked={bookmarked} />
           <Shelf id="featured" title={t('stories.library.featured')} stories={library.featured} names={names} onBookmarked={bookmarked} />
@@ -351,7 +354,7 @@ function Library(): React.JSX.Element {
           <Shelf id="recent" title={t('stories.library.recent')} stories={library.recent} names={names} onBookmarked={bookmarked} />
           <Categories categories={library.categories} onPick={(slug) => choose({ ...NO_FILTERS, category: slug })} />
           <Shelf id="bookmarks" title={t('stories.library.bookmarks')} stories={library.bookmarks} names={names} onBookmarked={bookmarked} />
-        </>
+        </div>
       )}
 
       {signedIn && <PlayRow dialect={dialect} />}
@@ -428,6 +431,7 @@ function Results({
 }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
+  const arriving = useArrival(!!results.items && results.items.length > 0, 'stories-results');
   if (results.error) return <ErrorState title={t('stories.loadFailed')} message={results.error} onRetry={results.reload} />;
   if (!results.items) return <StoryListSkeleton label="stories.loading" count={6} />;
   if (results.items.length === 0) {
@@ -449,7 +453,7 @@ function Results({
       <h2 id="story-results-title" className="story-section-title story-results-title">
         {t('stories.library.found', { count: results.total.toLocaleString(locale) })}
       </h2>
-      <ul className="story-grid">
+      <ul className={arriving ? 'story-grid rise-in' : 'story-grid'}>
         {results.items.map((s) => (
           <li key={s.id}>
             <StoryCard story={s} category={s.category ? (names.get(s.category) ?? null) : null} onBookmarked={onBookmarked} />

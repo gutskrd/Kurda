@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
@@ -7,7 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../theme/Icon';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from '../theme/ThemeProvider';
-import { radii } from '../theme/tokens';
+import { fitted, radii, typography } from '../theme/tokens';
+import { duration } from '../theme/motion';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { useUnread } from '../messages/unread';
@@ -21,26 +22,31 @@ import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { useAuth } from '../auth/AuthContext';
 import { GlassFill, useGlassShape } from '../theme/LiquidGlass';
 
-/** The glyphs, and your picture a little larger, as a face reads smaller than an outline at the same size. */
-const GLYPH = 26;
-const AVATAR = 28;
-/** The ring round your picture on its tab: a line with a hairline of air inside it. */
+/** The glyphs, and your picture, as large as a glyph within its ring. */
+const GLYPH = 24;
+const AVATAR = 22;
+/** The ring round your picture on its tab, in the chosen colour. */
 const RING = 2;
-const RING_GAP = 2;
+const RING_GAP = 0;
 /** The bar's padding around the tabs, which is the air round the capsule behind the chosen tab. */
 const PAD = 5;
+/** A tab's name under its glyph: the interface's text size shrunk to fit a bar that cannot grow, as on the website. */
+const LABEL_FIT = 0.6875;
+/** How much of the capsule's colour shows: a darker glass inset in the bar, by night and by day. */
+const CAPSULE_FILL = { dark: 0.34, light: 0.07 } as const;
 
 /**
- * The tab bar: four places in one rounded bar of glass floating over the page's foot (LiquidGlass.tsx), each an icon
- * alone, its name said to a screen reader (screens leave room with `useTabBarInset`). The chosen tab has a solid glyph,
- * or a ring round your picture, and a capsule that stretches as it slides to it, so colour is never the only sign.
- * Something new waiting (unread messages and requests, a gift to unwrap) is a small red dot at the glyph's foot, said
- * in words to a screen reader; tapping the current tab scrolls it to the top (`useScrollToTop`).
+ * The tab bar: four places in one pill of neutral glass floating over the page's foot (LiquidGlass.tsx), each a filled
+ * glyph with its name under it (screens leave room with `useTabBarInset`). The chosen tab wears the chosen colour on its
+ * glyph and name, cross-fading as it changes, or a ring round your picture, over a darker capsule of glass that
+ * stretches as it slides to it, so colour is never the only sign. Something new waiting (unread messages and requests, a
+ * gift to unwrap) is a small red dot at the glyph's foot, said in words to a screen reader; tapping the current tab
+ * scrolls it to the top (`useScrollToTop`).
  *
  * While the page scrolls down the bar shrinks out of the way and comes back as it scrolls up (tabBarScroll.ts); under
- * Reduce Motion it stays its size and the capsule moves without sliding. It is last in the tree with a z-index and an
- * Android elevation above anything a screen raises, and is hidden while the keyboard is up, since on Android the window
- * shrinks and the bar would ride up over the list.
+ * Reduce Motion it stays its size, the capsule moves without sliding and the colour changes at once. It is last in the
+ * tree with a z-index and an Android elevation above anything a screen raises, and is hidden while the keyboard is up,
+ * since on Android the window shrinks and the bar would ride up over the list.
  */
 export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Element | null {
   const { colors, scheme } = useTheme();
@@ -121,13 +127,14 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
             setRow((had) => (had.width === width && had.height === height ? had : { width, height }));
           }}
         >
-          {slot > 0 && row.height > 0 ? <Capsule start={start} end={end} lift={lift} width={row.width} slot={slot} height={row.height} ink={colors.primary} fill={TAB_CAPSULE.fill[scheme]} /> : null}
+          {slot > 0 && row.height > 0 ? (
+            <Capsule start={start} end={end} lift={lift} width={row.width} slot={slot} height={row.height} ink={colors.tabCapsule} fill={CAPSULE_FILL[scheme]} />
+          ) : null}
           {state.routes.map((route, i) => {
             const tab = TABS.find((x) => x.name === route.name);
             const name = (tab?.name ?? route.name) as TabName;
             const full = tab ? t(tab.labelKey) : route.name;
             const focused = state.index === i;
-            const ink = focused ? colors.primary : colors.textSecondary;
             const unread = name === 'Messages' && messages > 0;
             const gift = name === 'Profile' && counts.gifts > 0;
             // A screen reader gets the name and what is waiting.
@@ -152,14 +159,18 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
                 onPress={onPress}
                 onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
               >
-                {name === 'Profile' && user ? (
-                  // Your own face on your own tab, from the session already loaded so it costs no request.
-                  <View style={[styles.ring, { borderColor: focused ? colors.primary : 'transparent' }]}>
-                    <Avatar name={user.username} size={AVATAR} photoUrl={ownAvatarUrl(user)} />
-                  </View>
-                ) : (
-                  <Icon name={(focused ? tab?.activeIcon : tab?.icon) ?? 'home'} size={GLYPH} color={ink} />
-                )}
+                <TabFace focused={focused} label={full} reduce={reduceMotion} rest={colors.textPrimary} chosen={colors.tabChosen}>
+                  {(color) =>
+                    name === 'Profile' && user ? (
+                      // Your own face on your own tab, from the session already loaded so it costs no request.
+                      <View style={[styles.ring, { borderColor: color === colors.tabChosen ? color : 'transparent' }]}>
+                        <Avatar name={user.username} size={AVATAR} photoUrl={ownAvatarUrl(user)} />
+                      </View>
+                    ) : (
+                      <Icon name={tab?.activeIcon ?? tab?.icon ?? 'home'} size={GLYPH} color={color} />
+                    )
+                  }
+                </TabFace>
                 {unread || gift ? (
                   <View
                     style={[
@@ -177,6 +188,52 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
           })}
         </View>
       </Animated.View>
+    </View>
+  );
+}
+
+/**
+ * A tab's glyph over its name, drawn twice, at rest and chosen, the chosen one fading in over the other as the tab is
+ * chosen and out as it is left, so the colour cross-fades on the native driver; at once under Reduce Motion.
+ */
+function TabFace({
+  focused,
+  label,
+  reduce,
+  rest,
+  chosen,
+  children,
+}: {
+  focused: boolean;
+  label: string;
+  reduce: boolean;
+  rest: string;
+  chosen: string;
+  children: (color: string) => React.ReactNode;
+}): React.JSX.Element {
+  const shown = useRef(new Animated.Value(focused ? 1 : 0)).current;
+  useEffect(() => {
+    if (reduce) {
+      shown.setValue(focused ? 1 : 0);
+      return;
+    }
+    const run = timing(shown, focused ? 1 : 0, duration.base);
+    run.start();
+    return () => run.stop();
+  }, [focused, reduce, shown]);
+  const face = (color: string) => (
+    <>
+      <View style={styles.glyph}>{children(color)}</View>
+      <Text style={[styles.label, { color }]} numberOfLines={1}>
+        {label}
+      </Text>
+    </>
+  );
+  return (
+    // Drawn, not said: the tab's own name says it once.
+    <View style={styles.face} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+      <Animated.View style={[styles.layer, { opacity: Animated.subtract(1, shown) }]}>{face(rest)}</Animated.View>
+      <Animated.View style={[styles.layer, styles.over, { opacity: shown }]}>{face(chosen)}</Animated.View>
     </View>
   );
 }
@@ -277,7 +334,7 @@ function TabButton({
       testID={`tab-${name}`}
       style={styles.item}
     >
-      <Animated.View style={[styles.glyph, { transform: [{ scale: press.scale }] }]}>{children}</Animated.View>
+      <Animated.View style={[styles.press, { transform: [{ scale: press.scale }] }]}>{children}</Animated.View>
     </Pressable>
   );
 }
@@ -293,8 +350,15 @@ const styles = StyleSheet.create({
   // The capsule's pieces, from the row's left edge, as tall as the row.
   piece: { position: 'absolute', left: 0, top: 0 },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
+  // The pressed part: the glyph and its name together, with the dot over them.
+  press: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
+  // A tab's two faces, at rest and chosen, one over the other.
+  face: { alignSelf: 'stretch', alignItems: 'center' },
+  layer: { alignItems: 'center', gap: 1 },
+  over: { position: 'absolute', top: 0, left: 0, right: 0 },
   // One box for every glyph and for your picture in its ring, so the ring coming and going moves nothing.
   glyph: { width: FACE, height: FACE, alignItems: 'center', justifyContent: 'center' },
+  label: { fontSize: fitted(typography.sizes.text, LABEL_FIT), lineHeight: 13, fontWeight: typography.weights.semibold, letterSpacing: 0.1 },
   ring: {
     width: FACE,
     height: FACE,
@@ -304,8 +368,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   // At the glyph's foot on the trailing side, as phones put it, ringed in the bar's own fill so it sits on the glyph.
-  dot: { position: 'absolute', bottom: 3, right: 2, width: 10, height: 10, borderRadius: radii.pill, borderWidth: 1.5 },
+  dot: { position: 'absolute', top: FACE - 10, left: '50%', marginLeft: GLYPH / 2 - 7, width: 10, height: 10, borderRadius: radii.pill, borderWidth: 1.5 },
   // On your picture, at the edge of its ring.
-  dotOnFace: { bottom: 1, right: 1 },
-  dotMirrored: { right: undefined, left: 2 },
+  dotOnFace: { top: FACE - 9 },
+  dotMirrored: { marginLeft: -GLYPH / 2 - 3 },
 });

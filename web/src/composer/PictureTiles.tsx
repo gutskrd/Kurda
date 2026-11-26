@@ -77,7 +77,7 @@ export function PictureTiles({
               {p.status === 'uploading' && (
                 <span className="cmp-tile-progress" role="progressbar" aria-label={t('composer.uploadingN', { n })}
                   aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(p.progress * 100)}>
-                  <span style={{ width: `${Math.max(4, Math.round(p.progress * 100))}%` }} />
+                  <span style={{ '--p': Math.max(0.04, p.progress) } as React.CSSProperties} />
                 </span>
               )}
 

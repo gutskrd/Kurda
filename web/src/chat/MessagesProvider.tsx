@@ -21,6 +21,7 @@ import type { Translate } from '../i18n/I18nProvider';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
 import { onParentalRefusal } from '../lib/api';
 import { onNotice } from '../lib/notice';
+import { LEAVE_MS, playsMotion } from '../lib/motion';
 
 /**
  * App-wide unread counts and arrival banners. Direct messages arrive on the reader's `user:<id>` room; this also
@@ -235,11 +236,20 @@ function MessageToasts(): React.JSX.Element | null {
   const { toasts, dismissToast } = useMessages();
   const t = useT();
   const navigate = useNavigate();
-  if (toasts.length === 0) return null;
+  const shown = useLeavingToasts(toasts);
+  if (shown.length === 0) return null;
   return (
     <div className="msg-toasts" role="region" aria-label={t('chat.newMessages')}>
-      {toasts.map((toast) => {
+      {shown.map(({ toast, leaving }) => {
         const to = toast.to;
+        // A banner on its way out is only a picture: hidden from assistive technology and out of the tab order.
+        if (leaving) {
+          return (
+            <div key={toast.id} className="msg-toast is-leaving" aria-hidden="true" inert>
+              <p className="msg-toast-open msg-toast-notice">{toast.title}</p>
+            </div>
+          );
+        }
         return (
           <div key={toast.id} className="msg-toast" role="status">
             {to === null ? (
@@ -267,4 +277,27 @@ function MessageToasts(): React.JSX.Element | null {
       })}
     </div>
   );
+}
+
+
+/**
+ * The banners to draw: those showing, and for `LEAVE_MS` after each is dismissed or times out, that one in its old place
+ * as it leaves (styles/pages.css), so none vanishes in a frame. Under Reduce Motion they go at once.
+ */
+function useLeavingToasts(toasts: readonly MessageToast[]): Array<{ toast: MessageToast; leaving: boolean }> {
+  const [gone, setGone] = useState<Array<{ toast: MessageToast; at: number }>>([]);
+  const before = useRef(toasts);
+  useEffect(() => {
+    const was = before.current;
+    before.current = toasts;
+    if (!playsMotion()) return;
+    const left = was.flatMap((toast, at) => (toasts.some((x) => x.id === toast.id) ? [] : [{ toast, at }]));
+    if (left.length === 0) return;
+    setGone((g) => [...g.filter((x) => !left.some((l) => l.toast.id === x.toast.id)), ...left]);
+    // Not cleared when the list changes again meanwhile: each banner that left is let go after its own exit.
+    window.setTimeout(() => setGone((g) => g.filter((x) => !left.includes(x))), LEAVE_MS);
+  }, [toasts]);
+  const out = toasts.map((toast) => ({ toast, leaving: false }));
+  for (const { toast, at } of gone) if (!toasts.some((x) => x.id === toast.id)) out.splice(Math.min(at, out.length), 0, { toast, leaving: true });
+  return out;
 }
