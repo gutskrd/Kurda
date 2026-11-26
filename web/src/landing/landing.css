@@ -140,6 +140,8 @@
 }
 .fp-store:focus-visible,
 .fp-hevalo-hit:focus-visible,
+.fp-flip-hit:focus-visible,
+.fp-flip-step:focus-visible,
 .fp-chip-button:focus-visible,
 .fp-answer:focus-visible,
 .fp-seg:focus-visible,
@@ -158,7 +160,8 @@
   color: var(--ink-3);
   text-align: center;
 }
-.fp-login-link {
+.fp-login-link,
+.fp-flip-all {
   color: var(--accent-text);
   font-weight: 700;
   text-decoration: underline;
@@ -569,17 +572,199 @@
 /* ---- scenes that play themselves ------------------------------------------- */
 .fp-stories-grid {
   display: grid;
+  grid-template-areas: 'head' 'player' 'games';
+}
+.fp-stories-grid > .fp-head {
+  grid-area: head;
 }
 @media (min-width: 1000px) {
+  /* the games moment sits under the words, beside the player, so on a wide screen it takes no length of its own */
   .fp-stories-grid {
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-areas: 'head player' 'games player';
     align-items: center;
-    gap: 56px;
+    column-gap: 56px;
+  }
+  .fp-stories-grid > .fp-head {
+    align-self: end;
   }
 }
 /* the player's place, kept its size before the scenes arrive */
 .fp-player-place {
+  grid-area: player;
   min-height: 580px;
+}
+
+/* ---- the games' stamps ------------------------------------------------------ */
+/* Its place keeps its size before it draws: the stamp's frame is the tallest thing in it. */
+.fp-flip-place {
+  grid-area: games;
+  min-height: calc(300px * var(--fp-flip-scale));
+  margin-top: 36px;
+  --fp-flip-scale: 0.72;
+}
+@media (min-width: 1000px) {
+  .fp-flip-place {
+    align-self: start;
+    margin-top: 0;
+    --fp-flip-scale: 0.8;
+  }
+}
+.fp-flip {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+/* a soft panel the sleeve leaves by its foot, as the phone's does */
+.fp-flip-frame {
+  position: relative;
+  flex: none;
+  width: calc(240px * var(--fp-flip-scale));
+  height: calc(300px * var(--fp-flip-scale));
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  background: var(--surface-2);
+}
+.fp-flip-art {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 300px;
+  transform: scale(var(--fp-flip-scale));
+  transform-origin: 0 0;
+}
+.fp-flip-layer,
+.fp-flip-layer > svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* The stamp turns about its upright middle, seen a little from the front, and swaps its face at the quarter turn. */
+.fp-flip-card {
+  position: absolute;
+  perspective: 640px;
+}
+.fp-flip-turn {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.fp-flip.is-out .fp-flip-turn {
+  animation: fp-flip-out 300ms cubic-bezier(0.55, 0, 0.9, 0.55) forwards;
+}
+.fp-flip.is-in .fp-flip-turn {
+  animation: fp-flip-in 440ms cubic-bezier(0.1, 0.55, 0.3, 1) both;
+}
+/* the thumb eases its hold as the stamp turns, and the fingers behind give a little */
+.fp-flip-art [data-part] {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.fp-flip.is-out [data-part='thumb'] {
+  animation: fp-flip-grip 300ms ease-in-out forwards;
+}
+.fp-flip.is-in [data-part='thumb'] {
+  animation: fp-flip-ungrip 440ms ease-in-out both;
+}
+.fp-flip.is-out [data-part='fingers'] {
+  animation: fp-flip-give 300ms ease-in-out forwards;
+}
+.fp-flip.is-in [data-part='fingers'] {
+  animation: fp-flip-ungive 440ms ease-in-out both;
+}
+.fp-flip-paper {
+  position: absolute;
+  display: block;
+  line-height: 0;
+}
+.fp-flip-paper svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.fp-flip-paper--day,
+:root[data-theme='light'] .fp-flip-paper--night {
+  display: none;
+}
+:root[data-theme='light'] .fp-flip-paper--day {
+  display: block;
+}
+.fp-flip-cover {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 22%;
+  line-height: 0;
+}
+.fp-flip-cover svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.fp-flip-hit {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-xl);
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.fp-flip-words {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  min-width: 0;
+}
+.fp-flip-line {
+  margin: 0;
+  color: var(--ink-3);
+}
+/* room for the longest name and its meaning, so the words beside the stamp keep still as it turns */
+.fp-flip-name {
+  display: grid;
+  align-content: start;
+  min-height: calc(3 * 1.5em);
+  margin: 0;
+  font-weight: 800;
+  line-height: 1.5;
+}
+.fp-flip-meaning {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+.fp-flip-steps {
+  --reach-room-x: 8px;
+  --reach-room-y: 12px;
+  display: flex;
+  gap: 8px;
+}
+.fp-flip-step {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.fp-flip-step.is-back svg,
+[dir='rtl'] .fp-flip-step:not(.is-back) svg {
+  transform: scaleX(-1);
+}
+[dir='rtl'] .fp-flip-step.is-back svg {
+  transform: none;
+}
+.fp-flip-all {
+  margin-top: 4px;
+  font-weight: 600;
 }
 .fp-player {
   display: grid;
@@ -1710,6 +1895,36 @@
     transform: translateX(5px);
   }
 }
+@keyframes fp-flip-out {
+  to {
+    transform: rotateY(90deg);
+  }
+}
+@keyframes fp-flip-in {
+  from {
+    transform: rotateY(-90deg);
+  }
+}
+@keyframes fp-flip-grip {
+  to {
+    transform: translateY(1.5px) rotate(-3deg);
+  }
+}
+@keyframes fp-flip-ungrip {
+  from {
+    transform: translateY(1.5px) rotate(-3deg);
+  }
+}
+@keyframes fp-flip-give {
+  to {
+    transform: translateX(-2px) rotate(2deg);
+  }
+}
+@keyframes fp-flip-ungive {
+  from {
+    transform: translateX(-2px) rotate(2deg);
+  }
+}
 @keyframes fp-phone-float {
   to {
     transform: translateY(-6px) rotate(-0.8deg);
@@ -1725,7 +1940,9 @@
   .fp-hevalo {
     rotate: none;
   }
-  .fp-phone-hold {
+  .fp-phone-hold,
+  .fp-flip-turn,
+  .fp-flip-art [data-part] {
     animation: none;
   }
 }

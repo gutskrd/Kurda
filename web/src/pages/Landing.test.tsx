@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderApp } from '../test/utils';
 import { Landing } from './Landing';
@@ -8,6 +8,7 @@ const show = () => renderApp(<Landing />);
 
 afterEach(() => {
   forgetVisitor();
+  vi.unstubAllGlobals();
 });
 
 describe('the front page', () => {
@@ -127,6 +128,31 @@ describe('the front page', () => {
     expect(paintings).toHaveLength(5);
     for (const p of paintings) expect(p).toHaveAccessibleName(/^The painting for /);
     expect(within(legends).getByRole('link', { name: 'Open the stories' })).toHaveAttribute('href', '/app/learn/stories');
+  });
+
+  it('holds up each game’s stamp in turn, turns to the next on a tap, and leads to the games page', async () => {
+    show();
+    const learn = document.getElementById('learn')!;
+    const stamp = await within(learn).findByRole('button', { name: 'Peyvok. Show the next game' });
+    expect(within(learn).getByRole('link', { name: 'See all the games' })).toHaveAttribute('href', '/app/games');
+    fireEvent.click(stamp);
+    // The stamp turns out to its edge, shows the next game's face there, and turns back in.
+    const turn = learn.querySelector('.fp-flip-turn')!;
+    fireEvent.animationEnd(turn);
+    expect(learn.querySelector('.fp-flip-name')).toHaveTextContent('Peyvên HevserwaRhyming words');
+    fireEvent.animationEnd(turn);
+    expect(within(learn).getByRole('button', { name: 'Peyvên Hevserwa. Show the next game' })).toBeInTheDocument();
+    expect(within(learn).queryByRole('button', { name: 'Show the previous game' })).toBeNull();
+  });
+
+  it('holds one stamp still under Reduce Motion, with a way to the one before and the one after', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(prefers-reduced-motion: reduce)', media: query, addEventListener() {}, removeEventListener() {} }));
+    show();
+    const learn = document.getElementById('learn')!;
+    fireEvent.click(await within(learn).findByRole('button', { name: 'Show the previous game' }));
+    expect(learn.querySelector('.fp-flip-name')).toHaveTextContent('Ez kî me?Who am I?');
+    fireEvent.click(within(learn).getAllByRole('button', { name: /Show the next game$/ }).at(-1)!);
+    expect(learn.querySelector('.fp-flip-name')).toHaveTextContent('Peyvok');
   });
 
   it('shows Hevalo on a phone, says the apps are still coming, and lets either download button say so', async () => {
