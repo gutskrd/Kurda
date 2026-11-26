@@ -975,8 +975,8 @@ button.lp-scard:focus-visible {
  * A finished stop's round wax seal (PathScene.tsx `WaxSeal`, shared `pathWaxSvg`), on its tile's 112-point canvas laid as
  * the tile's drawing is. In its moment the drop, the poured disc, the pressed face and the brass stamp move apart: the
  * drop landing on the seal's middle (56, 61 of the canvas, shared PATH_SEAL) with its droplets thrown out from there, and
- * the disc spreading from it; the stamp, body and die, on its 78 by 87 canvas (shared PATH_STAMP_TOOL) from -3, -44 of
- * the stop. A gold seal's glint and the stamp's shadow are cut to its face, a circle 72 across from 20, 25 of the canvas.
+ * the disc spreading from it; the stamp, seen from the side, on its 78 by 87 canvas (shared PATH_STAMP_TOOL) from -3,
+ * -44 of the stop. A gold seal's glint and the stamp's shadow are cut to its face, a circle 72 across from 20, 25 of the canvas.
  */
 .lp-wax {
   position: absolute;
@@ -996,7 +996,7 @@ button.lp-scard:focus-visible {
 .lp-wax-blob {
   transform-origin: 56px 61px;
 }
-/* The stamp leans about its die's foot; its die opens out from where it hangs (shared PATH_STAMP_TOOL `die`). */
+/* The stamp leans about its die's foot. */
 .lp-wax-tool {
   position: absolute;
   z-index: 1;
@@ -1006,14 +1006,6 @@ button.lp-scard:focus-visible {
   height: 87px;
   line-height: 0;
   transform-origin: 50% 92%;
-}
-.lp-wax-tool-part {
-  position: absolute;
-  inset: 0;
-  display: block;
-}
-.lp-wax-die {
-  transform-origin: 50% 85.34%;
 }
 /* The seal's face, which a gold seal's glint crosses and the stamp's shadow falls on, cut to it. */
 .lp-wax-face {

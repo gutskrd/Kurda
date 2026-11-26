@@ -67,8 +67,7 @@ export function WaxSeal({
       was: again ? wax('seal', again.from) : null,
       blob: pressing ? pathWaxSvg({ part: 'blob', dark }) : null,
       splash: pressing ? pathWaxSvg({ part: 'splash', dark }) : null,
-      tool: moving ? pathStampToolSvg({ dark, suns, part: 'body' }) : null,
-      die: moving ? pathStampToolSvg({ dark, suns, part: 'die' }) : null,
+      tool: moving ? pathStampToolSvg({ dark }) : null,
     };
   }, [stopKey, worn, dark, gold, suns, moving, pressing, again]);
   // The wax warming into gold, once the stamp has lifted from its third sun.
@@ -94,7 +93,7 @@ export function WaxSeal({
   const { blobY, blobShown, splat, splash, splashShown, flow, poured } = PATH_STAMP_MOMENT;
   return (
     <View style={styles.wax} pointerEvents="none" aria-hidden testID={moving ? 'lp-wax-pressing' : `lp-wax-${suns}${gold ? '-gold' : ''}`}>
-      {t && xml.pour && xml.seal && xml.tool && xml.die ? (
+      {t && xml.pour && xml.seal && xml.tool ? (
         <>
           {pressing ? (
             <Animated.View
@@ -146,7 +145,7 @@ export function WaxSeal({
           <View style={styles.face}>
             <Animated.View style={[styles.shadow, { opacity: stampTrack(t, shadow.shown), transform: [{ scale: stampTrack(t, shadow.size) }] }]} />
           </View>
-          {/* The stamp leans about its die's foot, and its die opens out from where it hangs as it lifts. */}
+          {/* The stamp, seen from the side, leans about its die's foot. */}
           <Animated.View
             style={[
               styles.tool,
@@ -154,9 +153,6 @@ export function WaxSeal({
             ]}
           >
             <SvgXml xml={xml.tool} width={PATH_STAMP_TOOL.w} height={PATH_STAMP_TOOL.h} />
-            <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: DIE_ORIGIN, transform: [{ scaleY: stampTrack(t, m.dieOpen) }] }]}>
-              <SvgXml xml={xml.die} width={PATH_STAMP_TOOL.w} height={PATH_STAMP_TOOL.h} />
-            </Animated.View>
           </Animated.View>
         </>
       ) : xml.coat ? (
@@ -215,8 +211,7 @@ const SAMPLES = 40;
 /** Where the drop lands and splashes and the poured disc spreads from: the seal's middle (shared PATH_SEAL), on the tile's canvas. */
 const POUR_ORIGIN = `${(PATH_SEAL.cx / PATH_STOP_ART.box) * 100}% ${(PATH_SEAL.cy / PATH_STOP_ART.box) * 100}%`;
 const BLOB_ORIGIN = POUR_ORIGIN;
-/** Where the die hangs from on the stamp's canvas, which it opens out from; and a lean in degrees as a rotation. */
-const DIE_ORIGIN = `50% ${PATH_STAMP_TOOL.die * 100}%`;
+/** A lean in degrees, as a rotation. */
 const DEGREES = { inputRange: [-90, 90], outputRange: ['-90deg', '90deg'] };
 /** How far a glint's band travels either side of the seal's middle, past its wax. */
 const GLINT_REACH = 52;

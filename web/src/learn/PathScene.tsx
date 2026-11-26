@@ -414,8 +414,7 @@ export function WaxSeal({
   const was = useMarkup(() => (pressed ? wax('seal', from) : ''), [pressed, from, stopKey, worn, dark, prefix]);
   const blob = useMarkup(() => (pressing ? pathWaxSvg({ part: 'blob', dark, idPrefix: `${prefix}b` }) : ''), [pressing, dark, prefix]);
   const splash = useMarkup(() => (pressing ? pathWaxSvg({ part: 'splash', dark, idPrefix: `${prefix}s` }) : ''), [pressing, dark, prefix]);
-  const tool = useMarkup(() => (moving ? pathStampToolSvg({ dark, suns, part: 'body', idPrefix: `${prefix}t` }) : ''), [moving, dark, suns, prefix]);
-  const die = useMarkup(() => (moving ? pathStampToolSvg({ dark, suns, part: 'die', idPrefix: `${prefix}d` }) : ''), [moving, dark, suns, prefix]);
+  const tool = useMarkup(() => (moving ? pathStampToolSvg({ dark, idPrefix: `${prefix}t` }) : ''), [moving, dark, prefix]);
   const refs = {
     pour: useRef<HTMLSpanElement>(null),
     seal: useRef<HTMLSpanElement>(null),
@@ -424,7 +423,6 @@ export function WaxSeal({
     splash: useRef<HTMLSpanElement>(null),
     shadow: useRef<HTMLSpanElement>(null),
     tool: useRef<HTMLSpanElement>(null),
-    die: useRef<HTMLSpanElement>(null),
     gold: useRef<HTMLSpanElement>(null),
   };
   const done = useRef(onStamped);
@@ -453,7 +451,6 @@ export function WaxSeal({
     const shownFrom: Array<readonly [number, number]> = [[0, 0], [m.pressAt, 0], [m.pressAt + 0.01, 1], [1, 1]];
     const runs = [
       el(refs.tool)!.animate(frames([m.toolY, m.tilt, m.toolShown], ([y, r, o]) => ({ transform: `translateY(${y}px) rotate(${r}deg)`, opacity: o })), timing),
-      el(refs.die)?.animate(frames([m.dieOpen], ([k]) => ({ transform: `scaleY(${k})` })), timing),
       el(refs.shadow)!.animate(frames([shadow.size, shadow.shown], ([k, o]) => ({ transform: `scale(${k})`, opacity: o })), timing),
       el(refs.seal)!.animate(frames([shownFrom], ([o]) => ({ opacity: o })), timing),
       el(refs.was)?.animate(frames([shownFrom], ([o]) => ({ opacity: 1 - o! })), timing),
@@ -498,11 +495,7 @@ export function WaxSeal({
           <span className="lp-wax-face">
             <span ref={refs.shadow} className="lp-wax-shadow" />
           </span>
-          {/* The stamp, its die apart so that it opens out as it lifts. */}
-          <span ref={refs.tool} className="lp-wax-tool">
-            <span className="lp-wax-tool-part" dangerouslySetInnerHTML={tool} />
-            <span ref={refs.die} className="lp-wax-tool-part lp-wax-die" dangerouslySetInnerHTML={die} />
-          </span>
+          <span ref={refs.tool} className="lp-wax-tool" dangerouslySetInnerHTML={tool} />
         </>
       ) : (
         <span className="lp-wax-coat" dangerouslySetInnerHTML={coat} />

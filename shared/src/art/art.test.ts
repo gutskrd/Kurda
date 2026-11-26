@@ -83,6 +83,7 @@ import {
   pathStampToolSvg,
   pathStopSvg,
   sunRays,
+  tilePath,
   type PathStopLook,
 } from './path-land.js';
 import { SUN_RAYS } from '../lesson-rounds.js';
@@ -1663,6 +1664,16 @@ describe('the lesson path’s world', () => {
     expect(face('available')).toContain('clip-path');
   });
 
+  it('draws every topic stop as a round tile as wide as the seal it becomes, and a shut one as a low slate disc', () => {
+    const { cx, cy, rx, ry } = PATH_STOP_ART;
+    // an ellipse, its curves' handles at 0.5523 of its radii: a disc seen a little from above
+    for (const look of ['available', 'current', 'done', 'refresh', 'review'] as const) {
+      expect(pathStopSvg({ look, tone: 'clay', part: 'face' }), look).toContain(tilePath(cx, cy, rx, ry, 0.5523));
+    }
+    expect(pathStopSvg({ look: 'locked', tone: 'clay', part: 'face' })).toContain(tilePath(cx, cy + 2, rx - 1, ry - 3, 0.5523));
+    expect(rx).toBe(PATH_SEAL.r);
+  });
+
   it('stands each unit’s milestone on its drum, slate until its chapter is won, then gold', () => {
     const view = `0 0 ${PATH_MILESTONE_ART.w} ${PATH_MILESTONE_ART.h}`;
     for (const dark of [false, true]) {
@@ -1736,17 +1747,19 @@ describe('the lesson path’s world', () => {
     expect(sunsIn(pathWaxSvg({ suns: 1, size: 40 })).rays).toBeLessThan(SUN_RAYS);
     expect(sunRays(4)).toBeGreaterThanOrEqual(9);
     // the stamp is the icons' own: drawn on the Stamp glyph's 256 grid, its block as wide as the seal
-    sound(pathStampToolSvg({ dark: true }), '24 8 208 232');
-    // in two parts, its body and the die that opens out as it lifts; the die carries the suns it presses
-    for (const part of ['body', 'die'] as const) for (const suns of [1, 2, 3]) sound(pathStampToolSvg({ part, suns, idPrefix: 't' }), '24 8 208 232');
-    expect(pathStampToolSvg({ suns: 2 })).not.toBe(pathStampToolSvg({ suns: 3 }));
-    expect(pathStampToolSvg({ part: 'die', suns: 2 })).not.toBe(pathStampToolSvg({ part: 'die', suns: 3 }));
-    expect(PATH_STAMP_TOOL.die).toBeGreaterThan(0.8);
-    expect(PATH_STAMP_TOOL.die).toBeLessThan(1);
+    for (const dark of [false, true]) for (const size of [78, 208]) sound(pathStampToolSvg({ dark, size, idPrefix: 't' }), '24 8 208 232');
+    // seen from the side at eye level throughout: its die only an edge with no sun on it, and nothing drawn as if seen
+    // from above or below, no ring bowed and nothing squashed into an ellipse
+    for (const size of [78, 208]) {
+      const tool = pathStampToolSvg({ size });
+      expect(sunsIn(tool).suns).toBe(0);
+      expect(tool).not.toContain('Q');
+      expect(tool).not.toMatch(/scale\(1 0\./);
+    }
     // drawn large it shows its grain and a woven band on its block; at the road's size those are left out
     const shapes = (svg: string): number => (svg.match(/<path/g) ?? []).length;
     expect(shapes(pathStampToolSvg({ size: 208 }))).toBeGreaterThan(shapes(pathStampToolSvg()));
-    expect(() => pathStampToolSvg({ part: 'pad' as 'die' })).toThrow(RangeError);
+    expect(() => pathStampToolSvg({ size: -1 })).toThrow(RangeError);
     expect(((224 - 32) / 208) * PATH_STAMP_TOOL.w).toBeCloseTo(PATH_SEAL.r * 2, 0);
     expect(PATH_STAMP_TOOL.h / PATH_STAMP_TOOL.w).toBeCloseTo(232 / 208, 1);
     expect(() => pathWaxSvg({ size: 0 })).toThrow(RangeError);

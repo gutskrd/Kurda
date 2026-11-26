@@ -264,7 +264,7 @@ describe('the scenes’ figures through all their motion', () => {
 });
 
 describe('a finished stop’s wax seal', () => {
-  const { pressAt, blobY, blobShown, splat, splash, splashShown, melt, flow, poured, toolY, toolShown, tilt, dieOpen, squash } = PATH_STAMP_MOMENT;
+  const { pressAt, blobY, blobShown, splat, splash, splashShown, melt, flow, poured, toolY, toolShown, tilt, squash } = PATH_STAMP_MOMENT;
   const at = (track: readonly (readonly [number, number])[], t: number): number => sampleKeys(track, t);
   const first = (track: readonly (readonly [number, number])[], v: number): number => track.find(([, x]) => x === v)![0];
 
@@ -301,15 +301,12 @@ describe('a finished stop’s wax seal', () => {
     expect(Math.max(...flow.filter(([t]) => t > pressAt).map(([, v]) => v))).toBeGreaterThan(1);
     // at the press the stamp is down, the sun pressed in under it
     expect(at(toolY, pressAt)).toBe(0);
-    // it comes in leaning, is straight from its draw-up through the press, and rocks a little as it lifts
+    // it comes in leaning, is straight from its draw-up through the press, and rocks a little and settles as it lifts
     expect(at(tilt, 0.3)).toBeLessThan(-2);
     for (const t of [0.44, pressAt, 0.58]) expect(at(tilt, t)).toBe(0);
     expect(Math.max(...tilt.filter(([t]) => t > pressAt).map(([, v]) => v))).toBeGreaterThan(0);
+    expect(Math.max(...tilt.map(([, v]) => Math.abs(v)))).toBeLessThan(10);
     expect(tilt[tilt.length - 1]![1]).toBe(0);
-    // its die edge on as it presses, and open for a beat as it rises, its suns shown
-    expect(at(dieOpen, pressAt)).toBe(1);
-    expect(at(dieOpen, 0.7)).toBe(Math.max(...dieOpen.map(([, v]) => v)));
-    expect(at(toolY, 0.7)).toBeLessThan(-40);
     expect(Math.min(...squash.map(([, v]) => v))).toBeLessThan(1);
     expect(squash[squash.length - 1]![1]).toBe(1);
     expect(flow[flow.length - 1]![1]).toBe(1);
@@ -329,12 +326,11 @@ describe('a finished stop’s wax seal', () => {
   });
 
   it('presses a seal again a round later: in, up, down hard so the seal squashes a little, and away', () => {
-    const { pressAt: at2, toolY: y, toolShown: shown2, tilt: lean, dieOpen: open, squash: sq, ms } = PATH_STAMP_REPRESS;
+    const { pressAt: at2, toolY: y, toolShown: shown2, tilt: lean, squash: sq, ms } = PATH_STAMP_REPRESS;
     expect(at(y, at2)).toBe(0);
     expect(at(lean, at2)).toBe(0);
     expect(at(lean, 0.1)).toBeLessThan(-2);
-    expect(at(open, at2)).toBe(1);
-    expect(Math.max(...open.map(([, v]) => v))).toBeGreaterThan(2);
+    expect(lean[lean.length - 1]![1]).toBe(0);
     expect(Math.min(...sq.map(([, v]) => v))).toBeGreaterThan(Math.min(...squash.map(([, v]) => v)));
     expect(Math.min(...sq.map(([, v]) => v))).toBeLessThan(1);
     expect(shown2[0]![1]).toBe(0);

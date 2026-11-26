@@ -71,8 +71,8 @@ export interface StopStamp {
 }
 
 /**
- * One stop on the lesson path: a thick tile in its unit's colour (shared drawing) whose glyph says what its next lesson
- * is (or its number), a round wax seal in its place once done, a slate stone with a padlock when locked, arrows for
+ * One stop on the lesson path: a thick round tile in its unit's colour (shared drawing) whose glyph says what its next lesson
+ * is (or its number), a round wax seal in its place once done, a low slate disc with a padlock when locked, arrows for
  * review. The topic in hand wears a slim bar over its tile with one piece per lesson (TopicBar). A chapter ends at its
  * milestone, a seal on a stone drum with the chapter's number, and a jumpable unit's first stop is drawn as a gate.
  * Pressed, the face sinks into its base.

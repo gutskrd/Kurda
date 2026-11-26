@@ -61,14 +61,15 @@ export function pathGroundView(ground: PathGround, dark = false): { far: string;
 // ───────────────────────────────────────────────────────────── the stops
 
 /**
- * A stop's picture: `box` points square with the face's middle at (`cx`, `cy`). The face is a tile `rx` × `ry`, a
- * rounded square seen from above the road, standing `side` high on its darker side (`raised` for the stop to do now, and
- * `stone` for a shut one, which lies lower); `press` is how far the face sinks under a finger.
+ * A stop's picture: `box` points square with the face's middle at (`cx`, `cy`). The face is a round tile `rx` × `ry`, a
+ * thick disc seen a little from above the road as wide as a finished stop's wax seal, standing `side` high on its darker
+ * side (`raised` for the stop to do now, and `stone` for a shut one, which lies lower); `press` is how far the face sinks
+ * under a finger.
  */
 export const PATH_STOP_ART = { box: 112, cx: 56, cy: 58, rx: 36, ry: 30, side: 13, raised: 17, stone: 8, press: 6 } as const;
 
-/** How far round a tile's corners are: how far along each side its curve keeps straight, 0.55 for an ellipse, 1 for a square. */
-const TILE_ROUND = 0.8;
+/** How round a tile is: 0.55 draws its outline as an ellipse, a disc seen a little from above; nearer 1, a squarer tile. */
+const TILE_ROUND = 0.5523;
 
 /** What a stop looks like, by what it is and how it stands. */
 export const PATH_STOP_LOOKS = [
@@ -126,7 +127,7 @@ export const PATH_STOP_TONES: Record<'light' | 'dark', Record<UnitTone, UnitColo
 };
 
 /**
- * What is not open yet: a quiet slate stone lying low on the road, its padlock in a lighter grey, and the line still
+ * What is not open yet: a quiet slate disc lying low on the road, its padlock in a lighter grey, and the line still
  * ahead. The apps read these too.
  */
 export const PATH_REST: Record<'light' | 'dark', { fill: string; lip: string; ink: string; line: string }> = {
@@ -178,7 +179,7 @@ function tokenOf(look: PathStopLook, t: UnitColours, dark: boolean): Token {
   }
 }
 
-/** A tile's outline: a rounded square seen from above, from its top middle round clockwise, its corners eased by `k`. */
+/** A tile's outline seen from above, from its top middle round clockwise: round, or with `k` nearer 1 a rounded square. */
 export function tilePath(cx: number, cy: number, rx: number, ry: number, k: number = TILE_ROUND): string {
   const [l, r, t, b] = [cx - rx, cx + rx, cy - ry, cy + ry];
   return (
@@ -187,22 +188,6 @@ export function tilePath(cx: number, cy: number, rx: number, ry: number, k: numb
     `C${n(cx - k * rx)} ${n(b)} ${n(l)} ${n(cy + k * ry)} ${n(l)} ${n(cy)}` +
     `C${n(l)} ${n(cy - k * ry)} ${n(cx - k * rx)} ${n(t)} ${n(cx)} ${n(t)}Z`
   );
-}
-
-/** A slate stone's outline, the same hand-cut stone every time: rounder and a little lopsided, never a tile. */
-function stonePoints(cx: number, cy: number, rx: number, ry: number): Pt[] {
-  const at: ReadonlyArray<readonly [number, number]> = [
-    [-0.06, -1],
-    [0.58, -0.94],
-    [0.97, -0.34],
-    [0.95, 0.42],
-    [0.5, 0.96],
-    [-0.3, 1],
-    [-0.88, 0.58],
-    [-1, -0.16],
-    [-0.66, -0.84],
-  ];
-  return at.map(([x, y]) => [cx + x * rx, cy + y * ry] as const);
 }
 
 export interface PathStopOptions {
@@ -217,11 +202,11 @@ export interface PathStopOptions {
 }
 
 /**
- * One stop, base or face. An open stop is a thick tile in its unit's colour, a rounded square seen from above the road on
- * its darker side, with one line of light along its upper edge; the app sets its glyph. A finished one is the same tile
- * until the app melts it into its round wax seal (`pathWaxSvg`). A shut one is a quiet slate stone lying low, not yet laid as a tile. The
- * guide's book, story scroll and jump gate are part of the face; a unit's chest (`chest`, `chestOpen`) is its painted
- * sandûq standing on the road instead.
+ * One stop, base or face. An open stop is a thick round tile in its unit's colour, a disc seen a little from above the
+ * road on its darker side, with one arc of light along its upper left rim; the app sets its glyph. A finished one is the
+ * same tile until the app melts it into its round wax seal (`pathWaxSvg`), as wide as it. A shut one is a quiet slate
+ * disc lying low. The guide's book, story scroll and jump gate are part of the face; a unit's chest (`chest`,
+ * `chestOpen`) is its painted sandûq standing on the road instead.
  */
 export function pathStopSvg(opts: PathStopOptions): string {
   const { look, tone, part, dark = false } = opts;
@@ -243,7 +228,8 @@ export function pathStopSvg(opts: PathStopOptions): string {
   const k = tokenOf(look, t, dark);
   const stone = look === 'locked' || look === 'guideLocked' || look === 'storyLocked';
   const side = stone ? PATH_STOP_ART.stone : look === 'current' ? PATH_STOP_ART.raised : look === 'jump' ? 9 : PATH_STOP_ART.side;
-  const outline = (y: number): string => (stone ? smoothPath(stonePoints(cx, y + 2, rx - 1, ry - 3), true) : tilePath(cx, y, rx, ry));
+  // A shut stop's slate is a touch smaller and sits a little lower than a tile.
+  const outline = (y: number): string => (stone ? tilePath(cx, y + 2, rx - 1, ry - 3) : tilePath(cx, y, rx, ry));
 
   if (part === 'base') {
     // Its shade on the road, falling to the lower right, then its side: the face swept down by `side`.
@@ -460,31 +446,28 @@ export function pathWaxSvg(opts: PathWaxOptions = {}): string {
 
 /**
  * Where the stamp stands over a stop's 72-point button as it presses (`x`, `y`, its canvas `w` × `h`): its block and die
- * as wide as the seal, the die's foot across the seal a little below its middle. `die` is where the die hangs from, as a
- * share of the canvas's height: it opens out from there as the stamp lifts, showing its face.
+ * as wide as the seal, the die's foot across the seal a little below its middle.
  */
-export const PATH_STAMP_TOOL = { w: 78, h: 87, x: -3, y: -44, die: (206 - 8) / 232 } as const;
+export const PATH_STAMP_TOOL = { w: 78, h: 87, x: -3, y: -44 } as const;
 
 /**
  * The stamp itself, for the moment a finished topic is sealed: the icons' own stamp (the Stamp glyph's silhouette, on its
  * 256 grid), made as a stationer's wax-seal stamp, lit from the upper left as the seal is. A teardrop handle of turned
  * walnut, ringed near its top and where it narrows, lit down its left side and shaded down its right, its knob polished;
  * a brass ferrule where it meets the block; a block of warm brass, its bevelled top edge catching the light over a lit top
- * and a shaded front with an engraved line and a rivet at each side; and under it, seen a little from below, the round
- * brass die, the suns it presses (`suns`, as `sealSuns` lays them) standing in relief on its face, its rim catching the
- * light. Drawn larger than the road shows it (`size` over 120), its handle shows its grain and its block a woven kilim
- * band; at the road's size they are left out, so nothing small goes muddy. On its own `PATH_STAMP_TOOL` canvas, the die
- * along the bottom: the whole stamp, or its body and its die apart, for the die to open out as it lifts.
+ * and a shaded front with an engraved line and a rivet at each side; and under it, on a short neck, the round brass die.
+ * All of it seen from the side at eye level, so the die shows only its edge, a thin plate with a bright rim along its top
+ * and its underside dark; the suns it presses are seen only in the wax. Drawn larger than the road shows it (`size` over
+ * 120), its handle shows its grain and its block a woven kilim band; at the road's size they are left out, so nothing
+ * small goes muddy. On its own `PATH_STAMP_TOOL` canvas, the die along the bottom.
  */
-export function pathStampToolSvg(opts: { dark?: boolean; suns?: number; part?: 'whole' | 'body' | 'die'; size?: number; idPrefix?: string } = {}): string {
+export function pathStampToolSvg(opts: { dark?: boolean; size?: number; idPrefix?: string } = {}): string {
   const { dark = false } = opts;
   const { w: W, h: H } = PATH_STAMP_TOOL;
   const size = opts.size ?? W;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
-  const part = opts.part ?? 'whole';
-  if (!['whole', 'body', 'die'].includes(part)) throw new RangeError(`art: no stamp part ${String(part)}`);
   const fine = size > 120;
-  const id = prefixFor(opts.idPrefix, 'stamp-tool', dark, opts.suns, part, fine);
+  const id = prefixFor(opts.idPrefix, 'stamp-tool', dark, fine);
   const c = (hex: string): string => dusk(hex, dark, 0.12);
   const wood = { face: c('#5e3720'), light: c('#8d5d3a'), shade: c('#3a1f0e'), ring: c('#2c170a'), grain: c('#4f2d18'), sheen: c('#c08a5e') };
   const brass = { face: c('#d9a441'), light: c('#f6d58a'), shade: c('#a06d1e'), deep: c('#6f4610'), edge: c('#fff1c9') };
@@ -495,8 +478,8 @@ export function pathStampToolSvg(opts: { dark?: boolean; suns?: number; part?: '
   const handle = handleAt();
   const block = 'M46 128H210A14 14 0 0 1 224 142V184A14 14 0 0 1 210 198H46A14 14 0 0 1 32 184V142A14 14 0 0 1 46 128Z';
   let defs = `<clipPath id="${id}h"><path d="${handle}"/></clipPath><clipPath id="${id}b"><path d="${block}"/></clipPath>`;
-  // Across the handle at height `y`, bowed a little as a turned ring is seen from just above it.
-  const across = (y: number, bow = 3.5): string => `M80 ${n(y)}Q128 ${n(y + bow * 2)} 176 ${n(y)}`;
+  // Straight across the handle at height `y`, as a turned ring is seen from the side.
+  const across = (y: number): string => `M80 ${n(y)}H176`;
 
   // The handle: walnut, a soft light down its left side, where a copy of it moved right does not reach, and a shade down
   // its right, where one moved left does not; its turned rings, each a groove in shade over a lit lip; its knob's polish.
@@ -538,29 +521,17 @@ export function pathStampToolSvg(opts: { dark?: boolean; suns?: number; part?: '
   }
   body += fill(block, brass.shade) + `<g clip-path="url(#${id}b)">${brass2}</g>`;
 
-  // The short neck the die hangs from.
-  body += fill('M70 196H186V209H70Z', brass.deep) + fill('M70 196H84V209H70Z', brass.shade);
-
-  // The die, from its top (`PATH_STAMP_TOOL.die`): a round brass plate seen a little from below, its rim catching a little
-  // light along its near edge, and on its face the suns standing in relief, lit above and shaded below as the seal's.
-  const [dx, dy, rx, ry] = [128, 220, 92, 14];
-  let die = fill(ellipsePath(dx, dy, rx, ry), brass.shade) + fill(ellipsePath(dx, dy + 1.3, rx - 2, ry - 1.1), brass.light);
-  die += fill(ellipsePath(dx, dy - 0.8, rx - 7, ry - 3.2), brass.deep);
-  const squash = (ry - 3.2) / (rx - 7);
-  const suns = sealSuns(opts.suns ?? 1).map((s) => ({ x: dx + s.x * (rx - 7), y: s.y * (rx - 7), reach: s.r * (rx - 7) }));
-  const rays = sunRays((Math.min(...suns.map((s) => s.reach)) * size) / 208);
-  const sunAt = (ox: number, oy: number): string => suns.map((s) => sunPath(s.x + ox, s.y + oy, s.reach, rays)).join('');
-  die +=
-    `<g transform="translate(0 ${n(dy - 0.8)}) scale(1 ${n2(squash)})"><path d="${sunAt(1.6, 2.4)}" fill="${c('#4a2d08')}"/>` +
-    `<path d="${sunAt(-1.3, -1.9)}" fill="${brass.light}"/><path d="${sunAt(0, 0)}" fill="${brass.face}"/></g>`;
-  if (part === 'die') {
-    body = die;
-    defs = '';
-  } else if (part === 'whole') body += die;
+  // The short neck the die hangs from, and the die seen edge on: a thin brass plate, lit at its left end and shaded at its
+  // right, a bright rim along its top and its underside dark.
+  body += fill('M70 196H186V214H70Z', brass.deep) + fill('M70 196H84V214H70Z', brass.shade);
+  const die = 'M41 214H215A3 3 0 0 1 218 217V229A3 3 0 0 1 215 232H41A3 3 0 0 1 38 229V217A3 3 0 0 1 41 214Z';
+  defs += `<clipPath id="${id}d"><path d="${die}"/></clipPath>`;
+  const edge = fill('M30 214H226V229H30Z', brass.face) + fill('M30 214H50V229H30Z', brass.light) + fill('M206 214H226V229H206Z', brass.shade);
+  body += fill(die, brass.deep) + `<g clip-path="url(#${id}d)">${edge}${fill('M30 214H226V216.6H30Z', brass.edge)}</g>`;
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2((size * H) / W)}" viewBox="24 8 208 232" ` +
     `aria-hidden="true" focusable="false" id="${id}">` +
-    `${defs ? `<defs>${defs}</defs>` : ''}${body}</svg>`
+    `<defs>${defs}</defs>${body}</svg>`
   );
 }
 

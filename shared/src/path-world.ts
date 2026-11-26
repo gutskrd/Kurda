@@ -313,9 +313,9 @@ export const PATH_PIGEON_FLIGHT = {
  * `blob` the falling drop's height over the tile in points, its opacity and `splat` its height as it lands (its width
  * the other way); `splash` the droplets it throws out, their spread and opacity; `melt` the tile melting away (0 as it
  * stands, 1 gone); `flow` the poured disc's size (with its opacity, `poured`); `tool` the stamp's height and opacity,
- * `tilt` its lean in degrees (it comes in leaning, presses straight and rocks a little as it lifts), and `dieOpen` how
- * far its die opens out to show its face (1 as drawn, edge on as it presses, open for a beat as it rises); `squash` the
- * stop's height (1 as drawn). The suns show from `pressAt`, under the stamp, and a phone taps then.
+ * and `tilt` its lean in degrees (it comes in leaning, presses straight, and rocks a little and settles as it lifts);
+ * `squash` the stop's height (1 as drawn), the seal rising a little after the stamp as it leaves. The suns show from
+ * `pressAt`, under the stamp, and are seen in the wax as it lifts away; a phone taps at the press.
  */
 export const PATH_STAMP_MOMENT = {
   ms: PATH_RETURN.stampMs,
@@ -334,12 +334,11 @@ export const PATH_STAMP_MOMENT = {
   toolY: [[0, -50], [0.26, -50], [0.36, -30], [0.44, -40], [0.465, -34], [0.485, -20], [0.5, 0], [0.58, 0], [0.7, -52], [0.78, -46], [1, -46]],
   toolShown: [[0, 0], [0.26, 0], [0.32, 1], [0.82, 1], [0.9, 0], [1, 0]],
   tilt: [[0, -8], [0.26, -8], [0.38, -1.5], [0.44, 0], [0.6, 0], [0.68, 2.2], [0.76, -0.8], [0.84, 0], [1, 0]],
-  dieOpen: [[0, 1.6], [0.3, 1.6], [0.44, 1.15], [0.5, 1], [0.58, 1], [0.66, 2.6], [0.8, 2.6], [0.9, 1.6], [1, 1.6]],
   squash: [[0, 1], [0.5, 1], [0.525, 0.86], [0.6, 1.05], [0.68, 0.98], [0.75, 1]],
 } as const satisfies Record<MomentTrack, readonly (readonly [number, number])[]> & { ms: number; pressAt: number };
 
 /** The tracks of the sealing moment. */
-type MomentTrack = 'blobY' | 'blobShown' | 'splat' | 'splash' | 'splashShown' | 'melt' | 'flow' | 'poured' | 'toolY' | 'toolShown' | 'tilt' | 'dieOpen' | 'squash';
+type MomentTrack = 'blobY' | 'blobShown' | 'splat' | 'splash' | 'splashShown' | 'melt' | 'flow' | 'poured' | 'toolY' | 'toolShown' | 'tilt' | 'squash';
 
 /**
  * A round later, the stamp pressing a seal again, so the new sun is pressed in beside the others: it comes in over the
@@ -352,9 +351,8 @@ export const PATH_STAMP_REPRESS = {
   toolY: [[0, -50], [0.2, -30], [0.32, -40], [0.36, -34], [0.39, -20], [0.42, 0], [0.52, 0], [0.68, -52], [0.78, -46], [1, -46]],
   toolShown: [[0, 0], [0.12, 1], [0.8, 1], [0.92, 0], [1, 0]],
   tilt: [[0, -8], [0.2, -1.5], [0.3, 0], [0.52, 0], [0.6, 2.2], [0.68, -0.8], [0.76, 0], [1, 0]],
-  dieOpen: [[0, 1.6], [0.3, 1.15], [0.42, 1], [0.52, 1], [0.6, 2.6], [0.74, 2.6], [0.84, 1.6], [1, 1.6]],
   squash: [[0, 1], [0.42, 1], [0.45, 0.92], [0.53, 1.03], [0.62, 1]],
-} as const satisfies Record<'toolY' | 'toolShown' | 'tilt' | 'dieOpen' | 'squash', readonly (readonly [number, number])[]> & { ms: number; pressAt: number };
+} as const satisfies Record<'toolY' | 'toolShown' | 'tilt' | 'squash', readonly (readonly [number, number])[]> & { ms: number; pressAt: number };
 
 /**
  * The stamp's shadow on the seal through a moment, from how high the stamp is: faint and wide while it hovers, darker
