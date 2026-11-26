@@ -204,7 +204,7 @@ describe('the front page', () => {
     await waitFor(() => expect(phone.querySelector('.fp-phone-screen .speaking-character')).not.toBeNull());
     expect(phone.querySelector('.fp-phone-hold')).toHaveAttribute('aria-hidden', 'true');
     fireEvent.click(within(phone).getByRole('button', { name: 'Download for Android' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('Hevalo for Android');
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Hevalo for Android');
   });
 
   it('offers the two download buttons twice, in the hero and beside the phone, and nowhere else', () => {
@@ -229,10 +229,11 @@ describe('the front page', () => {
   });
 });
 
-describe('the apps-coming-soon card', () => {
-  it('rises from a download button, names the platform, and offers the web instead', () => {
+describe('the apps-coming-soon card', async () => {
+  it('rises from a download button, names the platform, and offers the web instead', async () => {
     show();
     fireEvent.click(screen.getAllByRole('button', { name: 'Download for iOS' })[0]!);
+    await screen.findByRole('dialog');
     const card = screen.getByRole('dialog', { name: 'Coming very soon' });
     expect(card).toHaveAccessibleDescription(/The phone apps are on their way/);
     expect(within(card).getByText('Hevalo for iPhone and iPad')).toBeInTheDocument();
@@ -241,15 +242,17 @@ describe('the apps-coming-soon card', () => {
     expect(card.querySelector('input:not([type="radio"]), textarea, form')).toBeNull();
   });
 
-  it('says Android when Android was tapped', () => {
+  it('says Android when Android was tapped', async () => {
     show();
     fireEvent.click(screen.getAllByRole('button', { name: 'Download for Android' })[0]!);
+    await screen.findByRole('dialog');
     expect(within(screen.getByRole('dialog')).getByText('Hevalo for Android')).toBeInTheDocument();
   });
 
-  it('opens on the platform tapped, and a labelled switch turns it to the other', () => {
+  it('opens on the platform tapped, and a labelled switch turns it to the other', async () => {
     show();
     fireEvent.click(screen.getAllByRole('button', { name: 'Download for iOS' })[0]!);
+    await screen.findByRole('dialog');
     const card = screen.getByRole('dialog');
     const which = within(card).getByRole('group', { name: 'Which phone' });
     expect(within(which).getByRole('radio', { name: 'iOS' })).toBeChecked();
@@ -259,10 +262,11 @@ describe('the apps-coming-soon card', () => {
     expect(within(card).queryByText('Hevalo for iPhone and iPad')).toBeNull();
   });
 
-  it('closes with Escape, the dim behind it or Close, and gives focus back to the button', () => {
+  it('closes with Escape, the dim behind it or Close, and gives focus back to the button', async () => {
     show();
     const button = screen.getAllByRole('button', { name: 'Download for iOS' })[0]!;
     fireEvent.click(button);
+    await screen.findByRole('dialog');
     expect(within(screen.getByRole('dialog')).getByRole('link', { name: 'Start on the web' })).toHaveFocus();
     act(() => {
       fireEvent.keyDown(window, { key: 'Escape' });
@@ -271,17 +275,20 @@ describe('the apps-coming-soon card', () => {
     expect(button).toHaveFocus();
 
     fireEvent.click(button);
+    await screen.findByRole('dialog');
     fireEvent.click(screen.getByRole('dialog').parentElement!);
     expect(screen.queryByRole('dialog')).toBeNull();
 
     fireEvent.click(button);
+    await screen.findByRole('dialog');
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('keeps Tab inside the card', () => {
+  it('keeps Tab inside the card', async () => {
     show();
     fireEvent.click(screen.getAllByRole('button', { name: 'Download for iOS' })[0]!);
+    await screen.findByRole('dialog');
     const close = within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' });
     close.focus();
     fireEvent.keyDown(window, { key: 'Tab' });
