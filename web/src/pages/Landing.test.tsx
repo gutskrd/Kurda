@@ -121,6 +121,15 @@ describe('the front page', () => {
     expect(within(tree).getByRole('img', { name: /^A pomegranate tree: / })).toBeInTheDocument();
   });
 
+  it('lets Hevalo lean in from the page’s edge to eat an apple after the tree, as on the road, out of the reading order', async () => {
+    show();
+    const tree = document.getElementById('tree')!;
+    const place = tree.nextElementSibling!;
+    expect(place).toHaveClass('fp-apple');
+    await waitFor(() => expect(place.querySelector('.lp-scene-stage .speaking-character')).not.toBeNull());
+    expect(place.querySelector('.fp-apple-edge')).toHaveAttribute('aria-hidden', 'true');
+  });
+
   it('shows the legends on their paintings, each described, and the way to read them', () => {
     show();
     const legends = document.getElementById('legends')!;

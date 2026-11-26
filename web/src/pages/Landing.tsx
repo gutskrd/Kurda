@@ -18,15 +18,16 @@ import '../landing/landing.css';
 /*
  * The front page, told as Hevalo's story for the person arriving: who it is (the hero), who they are learning for, three
  * words learned on the spot, where those words go (scenes that play themselves, and the games' stamps), the Kurdish
- * table the road starts at, the tree every lesson waters, the legends, Hevalo on a phone, the questions, and the same
- * ways in again. Every section has one heading and at most two short sentences, and shows rather than tells. Nothing
- * promises what is not there: no counts, reviews or press, and the phone apps are coming soon.
+ * table the road starts at, the tree every lesson waters and Hevalo eating its apple, the legends, Hevalo on a phone,
+ * the questions, and the same ways in again. Every section has one heading and at most two short sentences, and shows
+ * rather than tells. Nothing promises what is not there: no counts, reviews or press, and the phone apps are coming soon.
  */
 
 const StoryPlayer = lazy(() => import('../landing/Stories').then((m) => ({ default: m.StoryPlayer })));
 const TreeGrowth = lazy(() => import('../landing/TreeGrowth').then((m) => ({ default: m.TreeGrowth })));
 const PhoneArt = lazy(() => import('../landing/PhoneArt').then((m) => ({ default: m.PhoneArt })));
 const GameFlip = lazy(() => import('../landing/GameFlip').then((m) => ({ default: m.GameFlip })));
+const AppleScene = lazy(() => import('../landing/AppleScene').then((m) => ({ default: m.AppleScene })));
 
 /**
  * Sections rise into view once as they arrive. The page arms itself (`fp-armed`, which hides unarrived sections) only
@@ -157,6 +158,11 @@ export function Landing(): React.JSX.Element {
           </div>
         </div>
       </section>
+
+      {/* The road's apple scene, Hevalo leaning in from the page's edge to eat where the tree has grown. */}
+      <Later settled={settled} className="fp-apple">
+        <AppleScene />
+      </Later>
 
       <Legends />
 

@@ -1599,6 +1599,30 @@
   margin-top: 24px;
 }
 
+/* ---- the apple ------------------------------------------------------------- */
+/*
+ * The road's apple scene (AppleScene.tsx, the road's own path.css), its box flush with the page's start edge as it is
+ * with the screen's on the road: cut off there, where Hevalo leans in, and let run on past its foot as far as his body
+ * goes before it leaves by the edge. On a wide screen it tucks up into the foot of the tree's section, under its words;
+ * on a narrower one it stands just after it. Its place keeps its size before it draws.
+ */
+.fp-apple {
+  position: relative;
+  z-index: 1;
+  width: 150px;
+  height: 164px;
+  /* into the quiet foot of the tree's section, below its stage dots */
+  margin-top: -40px;
+}
+.fp-apple-edge {
+  display: block;
+}
+@media (min-width: 1000px) {
+  .fp-apple {
+    margin-top: -164px;
+  }
+}
+
 /* ---- the phone -------------------------------------------------------------- */
 .fp-phone {
   /* the screen's light, a deep teal by night and a warm morning by day, and the little of it that reaches the panel */
