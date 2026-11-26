@@ -65,7 +65,7 @@ export function GiftSendAnimation({
               {uri ? (
                 <Image source={{ uri }} style={styles.art} resizeMode="contain" accessibilityIgnoresInvertColors />
               ) : (
-                <GiftBox size={ART} tier={tier} gold={colors.gold} />
+                <GiftBox size={ART} tier={tier} />
               )}
             </Animated.View>
           </GiftLight>

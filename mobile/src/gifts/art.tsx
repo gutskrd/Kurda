@@ -1,85 +1,185 @@
-import Svg, { Circle, Defs, G, Path, Polygon, Polyline, RadialGradient, Rect, Stop } from 'react-native-svg';
-import type { GiftTier } from '@kurda/shared';
+import { useEffect, useMemo, useRef } from 'react';
+import { Animated, Easing, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import Svg, { Circle, Defs, RadialGradient, Stop, SvgXml } from 'react-native-svg';
+import {
+  GIFT_BOX_EXIT,
+  GIFT_BOX_FOOT,
+  GIFT_BOX_GLINT_PHASES,
+  GIFT_BOX_IDLE,
+  GIFT_BOX_LID_PARTS,
+  GIFT_BOX_REST,
+  GIFT_BOX_SHUT,
+  GIFT_BOX_UNWRAPS,
+  giftBoxDrawing,
+  giftBoxGlint,
+  giftBoxGlintKeys,
+  giftBoxLayerSvg,
+  type GiftBoxDrawing,
+  type GiftBoxKey,
+  type GiftBoxLayer,
+  type GiftBoxPart,
+  type GiftBoxPlay,
+  type GiftBoxTrack,
+  type GiftTier,
+} from '@kurda/shared';
+import { useMotionAlive } from '../a11y/useMotionAlive';
+import { useReducedMotion } from '../a11y/useReducedMotion';
 
 /**
- * The gift's own art, drawn in code: a present wrapped in kilim (the woven diamonds and zigzags of a Kurdish rug, in
- * the app's gold) with a ribbon and bow, and the night sky a grand gift opens on. The paper changes with the tier
- * (cream, pomegranate red, night indigo), so a rare gift looks rarer unopened. These are the colours of the things drawn, so they are constants here; only the gold comes from
- * the palette.
+ * The gift's own art: the wrapped box (shared art/gift-box.ts), drawn and moved as on the website, and the night sky a
+ * grand gift opens on. Each part of the box is its own small picture over the same frame, so parts move on the native
+ * driver with nothing drawn again: `idle` hops now and then with a glint between (only while its screen is in front),
+ * `unwrap` plays the tier's opening and stays open and lit, and `exit` lets the open box give way to the gift. Under
+ * Reduce Motion it stands still. Decorative: the words beside it say what it is.
  */
-const POMEGRANATE = '#B3243B';
-const CREAM = '#F3E3C3';
-const INDIGO = '#24356A';
+export type GiftBoxMotion = 'still' | 'idle' | 'unwrap' | 'exit';
 
-const NIGHT = '#141A3C';
+/** The play behind each motion. */
+function playOf(motion: GiftBoxMotion, tier: GiftTier): GiftBoxPlay | null {
+  if (motion === 'idle') return GIFT_BOX_IDLE;
+  if (motion === 'unwrap') return GIFT_BOX_UNWRAPS[tier];
+  if (motion === 'exit') return GIFT_BOX_EXIT;
+  return null;
+}
 
-const PAPER: Record<GiftTier, { paper: string; motif: string }> = {
-  common: { paper: CREAM, motif: POMEGRANATE },
-  rare: { paper: POMEGRANATE, motif: CREAM },
-  legendary: { paper: INDIGO, motif: '#E0475E' },
-  // the night sky, for the moon, the sun and the galaxy
-  grand: { paper: NIGHT, motif: CREAM },
-};
+/** A seed's share of the idle round, so boxes side by side do not all hop at once (the website's own reckoning). */
+function offsetOf(seed: string): number {
+  let h = 7;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return (h % 1000) / 1000;
+}
 
-/** The kilim band: a row of stepped diamonds between two zigzags. */
-function Kilim({ y, gold, motif }: { y: number; gold: string; motif: string }): React.JSX.Element {
-  const diamonds = [20, 32, 68, 80];
-  const zig = (base: number) =>
-    Array.from({ length: 13 }, (_, i) => `${14 + i * 6},${base + (i % 2 === 0 ? 0 : 3)}`).join(' ');
-  return (
-    <G>
-      <Polyline points={zig(y - 9)} fill="none" stroke={gold} strokeWidth={1.6} />
-      {diamonds.map((x) => (
-        <G key={x}>
-          <Polygon points={`${x},${y - 6} ${x + 6},${y} ${x},${y + 6} ${x - 6},${y}`} fill={gold} />
-          <Polygon points={`${x},${y - 3} ${x + 3},${y} ${x},${y + 3} ${x - 3},${y}`} fill={motif} />
-        </G>
-      ))}
-      <Polyline points={zig(y + 7)} fill="none" stroke={gold} strokeWidth={1.6} />
-    </G>
-  );
+type Motion = Animated.WithAnimatedObject<ViewStyle>;
+
+/** A track as a style on one value running 0 to 1: only what changes along it is interpolated. */
+function styleOf(keys: readonly GiftBoxKey[], value: Animated.Value, unit: number): Motion {
+  const inputRange = keys.map((k) => k.at);
+  const along = (pick: (k: GiftBoxKey) => number): Animated.AnimatedInterpolation<number> | number => {
+    const out = keys.map(pick);
+    return out.every((v) => v === out[0]) ? (out[0] ?? 0) : value.interpolate({ inputRange, outputRange: out, extrapolate: 'clamp' });
+  };
+  const rots = keys.map((k) => k.rot);
+  const rotate = rots.every((v) => v === rots[0]) ? `${rots[0] ?? 0}deg` : value.interpolate({ inputRange, outputRange: rots.map((r) => `${r}deg`), extrapolate: 'clamp' });
+  return {
+    opacity: along((k) => k.o),
+    transform: [{ translateX: along((k) => k.x * unit) }, { translateY: along((k) => k.y * unit) }, { rotate }, { scaleX: along((k) => k.sx) }, { scaleY: along((k) => k.sy) }],
+  } as Motion;
 }
 
 /**
- * A wrapped present, whole or in its two parts. The parts share one viewBox, so a lid and body stacked in one box line
- * up exactly, which lets the unwrap lift the lid off.
+ * The wrapped gift at `size` points square, the box filling most of it. `seed` (the gift's id) sets when in its round
+ * an idle box hops, so a chat of them does not hop together.
  */
 export function GiftBox({
   size,
   tier,
-  gold,
-  part = 'whole',
+  limited,
+  motion = 'still',
+  seed = '',
+  style,
+  testID,
 }: {
   size: number;
   tier: GiftTier;
-  gold: string;
-  part?: 'whole' | 'body' | 'lid';
+  /** a season's gift, with a Newroz flame for its tag; a legendary one is unless told otherwise */
+  limited?: boolean;
+  motion?: GiftBoxMotion;
+  seed?: string;
+  style?: StyleProp<ViewStyle>;
+  testID?: string;
 }): React.JSX.Element {
-  const { paper, motif } = PAPER[tier];
-  const body = part !== 'lid';
-  const lid = part !== 'body';
+  const drawing = useMemo(() => giftBoxDrawing(tier, { size: size > 0 ? size : 64, limited }), [tier, size, limited]);
+  const alive = useMotionAlive();
+  const reduce = useReducedMotion();
+  const wanted = playOf(motion, tier);
+  // A waiting box moves only while its screen is in front; an opening one plays through, unless motion is reduced.
+  const play = wanted && (wanted.loop ? alive : !reduce) ? wanted : null;
+  const progress = useRef(new Animated.Value(0)).current;
+  const unit = size / drawing.view.w;
+
+  useEffect(() => {
+    progress.setValue(0);
+    if (!play) return;
+    const run = Animated.timing(progress, { toValue: 1, duration: play.ms, easing: Easing.linear, useNativeDriver: true, isInteraction: false });
+    const anim = play.loop
+      ? Animated.sequence([Animated.delay(Math.round(600 + offsetOf(seed || tier) * play.ms * 0.4)), Animated.loop(run)])
+      : run;
+    anim.start();
+    return () => anim.stop();
+  }, [play, progress, seed, tier]);
+
+  const moving = useMemo(() => {
+    const out: Partial<Record<GiftBoxTrack, Motion>> = {};
+    if (play) for (const [name, keys] of Object.entries(play.tracks) as [GiftBoxTrack, readonly GiftBoxKey[]][]) out[name] = styleOf(keys, progress, unit);
+    return out;
+  }, [play, progress, unit]);
+  const glints = useMemo(() => {
+    if (!play || play.glints.length === 0) return [];
+    const keys = giftBoxGlintKeys(play);
+    return GIFT_BOX_GLINT_PHASES.map((phase, i) => ({ layer: giftBoxGlint(phase), opacity: progress.interpolate({ inputRange: keys[i]!.map((k) => k.at), outputRange: keys[i]!.map((k) => k.o), extrapolate: 'clamp' }) }));
+  }, [play, progress]);
+
+  const part = (id: GiftBoxPart): React.JSX.Element | null => {
+    if (!play && !GIFT_BOX_SHUT.includes(id)) return null;
+    const track = id as GiftBoxTrack;
+    const rest = GIFT_BOX_REST[track] as (typeof GIFT_BOX_REST)[GiftBoxTrack] | undefined;
+    return (
+      <Part
+        key={id}
+        drawing={drawing}
+        layer={drawing.layers[id]}
+        unit={unit}
+        style={moving[track] ?? (rest && rest.o !== 1 ? { opacity: rest.o } : undefined)}
+        testID={testID ? `${testID}-${id}` : undefined}
+      />
+    );
+  };
+  const origin = ([x, y]: readonly [number, number]): ViewStyle => ({ transformOrigin: `${x * unit}px ${y * unit}px` });
+
   return (
-    <Svg width={size} height={size} viewBox="0 0 100 100">
-      {body ? (
-        <G>
-          <Rect x={14} y={44} width={72} height={48} rx={6} fill={paper} />
-          <Kilim y={68} gold={gold} motif={motif} />
-          <Rect x={45} y={44} width={10} height={48} fill={gold} />
-        </G>
-      ) : null}
-      {lid ? (
-        <G>
-          <Rect x={10} y={32} width={80} height={14} rx={4} fill={paper} />
-          <Polyline points="12,39 18,36 24,39 30,36 36,39 42,36" fill="none" stroke={gold} strokeWidth={1.4} />
-          <Polyline points="58,36 64,39 70,36 76,39 82,36 88,39" fill="none" stroke={gold} strokeWidth={1.4} />
-          <Rect x={45} y={32} width={10} height={14} fill={gold} />
-          {/* The bow: two loops and a knot. */}
-          <Path d="M50 31 C38 14 24 20 30 30 C33 34 42 33 50 31Z" fill={gold} />
-          <Path d="M50 31 C62 14 76 20 70 30 C67 34 58 33 50 31Z" fill={gold} />
-          <Circle cx={50} cy={31} r={4.5} fill={motif} stroke={gold} strokeWidth={2} />
-        </G>
-      ) : null}
-    </Svg>
+    <View
+      style={[{ width: size, height: size }, style]}
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      testID={testID}
+    >
+      {part('shadow')}
+      {part('splash')}
+      <Animated.View style={[StyleSheet.absoluteFill, origin(GIFT_BOX_FOOT), moving.hop]} testID={testID && play ? `${testID}-${motion}` : undefined}>
+        {(['body', 'ribbon', 'lidShade', 'inside', 'light'] as const).map(part)}
+        <Animated.View style={[StyleSheet.absoluteFill, origin(drawing.pivots.lid), moving.lid]}>{GIFT_BOX_LID_PARTS.map(part)}</Animated.View>
+        {glints.map((g, i) => (
+          <Part key={`glint${i}`} drawing={drawing} layer={g.layer} unit={unit} style={{ opacity: g.opacity }} />
+        ))}
+        {part('sparks')}
+      </Animated.View>
+    </View>
+  );
+}
+
+/** One part of the box, in its own box over the frame, turned and scaled about its pivot. */
+function Part({
+  drawing,
+  layer,
+  unit,
+  style,
+  testID,
+}: {
+  drawing: GiftBoxDrawing;
+  layer: GiftBoxLayer;
+  unit: number;
+  style?: Motion;
+  testID?: string;
+}): React.JSX.Element {
+  const xml = useMemo(() => giftBoxLayerSvg(layer), [layer]);
+  const { x, y, w, h } = layer.box;
+  const [px, py] = drawing.pivots[layer.id];
+  const place: ViewStyle = { position: 'absolute', left: x * unit, top: y * unit, width: w * unit, height: h * unit, transformOrigin: `${(px - x) * unit}px ${(py - y) * unit}px` };
+  return (
+    <Animated.View style={[place, style]} pointerEvents="none" testID={testID}>
+      <SvgXml xml={xml} width={w * unit} height={h * unit} />
+    </Animated.View>
   );
 }
 

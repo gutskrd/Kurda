@@ -310,7 +310,7 @@ export function NoticeArt({ picture }: { picture: NoticePicture }): React.JSX.El
       {xml ? (
         <SvgXml xml={xml} width={NOTICE.picture} height={NOTICE.picture} />
       ) : picture.kind === 'gift' ? (
-        <GiftBox size={34} tier="rare" gold={colors.gold} />
+        <GiftBox size={42} tier="rare" />
       ) : (
         <Fire size={32} level={{ stage: 'campfire', growth: 0.5 }} still />
       )}
