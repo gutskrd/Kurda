@@ -229,6 +229,11 @@ export interface SpeakingCharacterProps {
    */
   reaction?: CharacterReaction | null;
   /**
+   * An act to play now (shared `ACTS`, by name), and again each time `at` changes: a scene's beat beside the road, where
+   * the same act comes round again.
+   */
+  cue?: { act: ActName; at: number } | null;
+  /**
    * Asleep where there is nothing to do yet (shared `RESTING`): eyes shut, head dipped, slower breath and drifting
    * "z"s, with no blinks, glances or pointer-following. A click still wakes it for its greeting.
    */
@@ -281,6 +286,7 @@ export function SpeakingCharacter({
   size,
   decorative = false,
   reaction = null,
+  cue = null,
   resting = false,
   gaze = null,
   mirrored = false,
@@ -722,6 +728,13 @@ export function SpeakingCharacter({
     }, reaction ? 120 : 160);
     return () => window.clearTimeout(wait);
   }, [reaction, art, resting, speaker]);
+
+  // A cue plays as given, once for each beat it is given on.
+  const cueAct = cue?.act ?? null;
+  const cueAt = cue?.at ?? null;
+  useEffect(() => {
+    if (cueAct) play.current(cueAct);
+  }, [cueAct, cueAt]);
 
   const name = CHARACTER_NAMES[speaker];
   const style = {

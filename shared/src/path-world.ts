@@ -1,6 +1,6 @@
 /**
- * The land the lesson path runs through: each unit's landscape, the landmark beside its route, and which of the
- * course's people belongs to it. The Kurmanji Road follows a village through one year, so each unit takes the land at
+ * The land the lesson path runs through: each unit's landscape, the landmark beside its route, its little scene, and
+ * which of the course's people belongs to it. The Kurmanji Road follows a village through one year, so each unit takes the land at
  * its place on that road (`pathLand`) and the seasons turn as the learner goes on; a course longer than twelve units
  * starts the year again.
  *
@@ -8,7 +8,8 @@
  * so both apps agree and right-to-left pages mirror them like the stops. The drawings are in art/path-land.ts and
  * art/path-landmark.ts.
  */
-import { PATH_GEOMETRY, PATH_MASCOT, PATH_RETURN } from './lesson-path.js';
+import { PATH_SCENE_IDS, type PathSceneId } from './art/path-scenes.js';
+import { PATH_GEOMETRY, PATH_MASCOT, PATH_RETURN, mascotSpot } from './lesson-path.js';
 
 /** The landmark that stands beside a unit's route. */
 export const PATH_LANDMARKS = [
@@ -118,36 +119,202 @@ export const PATH_START_WORDS: Readonly<Record<'kurmanji' | 'sorani', { start: s
   sorani: { start: 'لێرەوە دەست پێ بکە!', going: 'بەردەوام بە!' },
 };
 
-/** Who peeks out beside a unit's road: the course's people and the pigeon, one to a unit, in turn. */
-export const PATH_PEEKERS = ['xezo', 'pigeon', 'hamo', 'hevalo'] as const;
-export type PathPeeker = (typeof PATH_PEEKERS)[number];
+/**
+ * The little scene beside each chapter's road, chosen from the chapter itself: Hevalo eating an apple over the orchard
+ * wall where apples go missing, Hamo sugaring his tea far too much where there is tea and time, the pigeon trying to land
+ * with a letter where letters come and go, and Xezo chalking Kurmanji's own letters on her slate where there is something
+ * to learn. A course longer than twelve chapters starts them again.
+ */
+export const PATH_SCENE_ORDER: readonly PathSceneId[] = ['apple', 'tea', 'letter', 'slate', 'tea', 'letter', 'slate', 'apple', 'tea', 'apple', 'slate', 'letter'];
 
-/** Who peeks out beside a course's unit, by its place in the course from 0. */
-export function pathPeeker(index: number): PathPeeker {
-  const at = ((Math.floor(index) % PATH_PEEKERS.length) + PATH_PEEKERS.length) % PATH_PEEKERS.length;
-  return PATH_PEEKERS[at]!;
+/** The scene beside a course's unit, by its place in the course from 0. */
+export function pathScene(index: number): PathSceneId {
+  const at = ((Math.floor(index) % PATH_SCENE_ORDER.length) + PATH_SCENE_ORDER.length) % PATH_SCENE_ORDER.length;
+  return PATH_SCENE_ORDER[at]!;
 }
 
 /**
- * Where a unit's playful touches stand, in the stops' logical terms: `peek`, someone peeking in from the page's edge on
- * the open side of the unit's fourth stop (or its second), and `chest`, the unit's painted sandûq on the open side of
- * its second stop. `x` is the middle of each from the path's middle and `y` its middle from the unit's top. Either is
- * left out where Hevalo stands beside the stop to do now (`mascot`, from `mascotSpot`), so nobody stands on him.
+ * Where a unit's playful touches stand, in the stops' logical terms. `scene`: the side its little scene leans in from
+ * (-1 the start of the line, 1 its end), opposite the lean of the unit's fourth stop (or its third, or its second), and
+ * `y`, the scene's middle from the unit's top, level with that stop; the apps stand it against the screen's edge on that
+ * side. `chest`: the unit's painted sandûq on the open side of its second stop, `x` and `y` its middle.
+ *
+ * Both keep clear of the stop to do now (`here`): of Hevalo beside it (`mascotSpot`), and of the bubble and bar over it.
+ * Since Hevalo is there himself, the scene of him eating his apple is left out of his unit.
  */
-export const PATH_SCENERY_SPOT = { peekAcross: 132, chestAcross: 112, clear: 96 } as const;
+export const PATH_SCENERY_SPOT = { chestAcross: 112, sceneClear: 150, chestClear: 96 } as const;
+
+/** How far in from the screen's edge a scene's drawing reaches, and how far above and below its middle. */
+export const PATH_SCENE_REACH = { across: 128, up: 82, down: 82 } as const;
+
+/** The bubble and bar over the stop to do now, from the stop's middle: across each way, and how far up. */
+const BUBBLE = { across: 104, up: 128 } as const;
 
 export function unitScenery(
   stops: readonly { x: number; y: number }[],
-  mascot: { x: number; y: number } | null = null,
-): { peek: { x: number; y: number } | null; chest: { x: number; y: number } | null } {
-  const { peekAcross, chestAcross, clear } = PATH_SCENERY_SPOT;
-  const beside = (stop: { x: number; y: number } | undefined, across: number, side: number): { x: number; y: number } | null =>
-    stop ? { x: (Math.sign(stop.x) === 0 ? side : -Math.sign(stop.x)) * across, y: stop.y } : null;
+  here: { x: number; y: number } | null = null,
+  scene: PathSceneId | null = null,
+  /** The page's width, where the scene's reach from the edge is known; without it, only Hevalo is kept clear of. */
+  width: number | null = null,
+): { scene: { side: -1 | 1; y: number } | null; chest: { x: number; y: number } | null } {
+  const { chestAcross, sceneClear, chestClear } = PATH_SCENERY_SPOT;
+  const sideOf = (stop: { x: number }, otherwise: -1 | 1): -1 | 1 => (Math.sign(stop.x) === 0 ? otherwise : (-Math.sign(stop.x) as -1 | 1));
   // Hevalo's middle, level with the stop he stands by.
-  const him = mascot ? { x: mascot.x, y: mascot.y + PATH_MASCOT.size / 2 } : null;
-  const free = (spot: { x: number; y: number } | null): { x: number; y: number } | null =>
-    spot && him && Math.sign(spot.x) === Math.sign(him.x) && Math.abs(spot.y - him.y) < clear ? null : spot;
-  const peek = free(beside(stops[3] ?? stops[1], peekAcross, -1));
-  const chest = stops.length > 2 ? free(beside(stops[1], chestAcross, 1)) : null;
-  return { peek, chest };
+  const spot = here ? mascotSpot(here) : null;
+  const him = spot ? { x: spot.x, y: spot.y + PATH_MASCOT.size / 2 } : null;
+  const nearHim = (x: number, y: number, clear: number): boolean => !!him && Math.sign(x) === Math.sign(him.x) && Math.abs(y - him.y) < clear;
+
+  let place: { side: -1 | 1; y: number } | null = null;
+  const anchor = stops[3] ?? stops[2] ?? stops[1];
+  if (anchor && !(scene === 'apple' && him)) {
+    const side = sideOf(anchor, -1);
+    place = { side, y: anchor.y };
+    if (nearHim(side, anchor.y, sceneClear)) place = null;
+    // Clear of the bubble over the stop to do now, where the page's width says how far in the scene reaches.
+    if (place && here && width !== null) {
+      const inner = width / 2 - PATH_SCENE_REACH.across;
+      const reaches = side * here.x + BUBBLE.across > inner;
+      const level = here.y - BUBBLE.up < anchor.y + PATH_SCENE_REACH.down && here.y > anchor.y - PATH_SCENE_REACH.up;
+      if (reaches && level) place = null;
+    }
+  }
+  const second = stops[1];
+  const chestSide = second ? sideOf(second, 1) : 1;
+  const chest = stops.length > 2 && second && !nearHim(chestSide, second.y, chestClear) ? { x: chestSide * chestAcross, y: second.y } : null;
+  return { scene: place, chest };
 }
+
+/**
+ * How the scenes move, in ms, shared so both apps play them alike. Each but the pigeon's goes on a beat at a time
+ * (`sceneBeat`): a bite, a sugar cube, a letter, each beat a little longer or shorter than the last (`sceneBeatMs`) so
+ * the scene never ticks like a clock. The pigeon's try at landing is one flight (`PATH_PIGEON_FLIGHT`). The rest are the
+ * small moments inside a beat, and how long a tap's own moment lasts.
+ */
+export const PATH_SCENE_MOTION = {
+  beatMs: { apple: 3400, tea: 3000, slate: 2500 },
+  beats: { apple: 7, tea: 6, slate: 6 },
+  crumbMs: 900,
+  cubeMs: 560,
+  chalkMs: 420,
+  dropMs: 800,
+  growMs: 900,
+  flapMs: 180,
+  tapMs: 1000,
+} as const;
+
+/** How much longer or shorter each beat runs than the scene's own, in turn: no two scenes keep the same time. */
+const BEAT_SWING = [1, 1.3, 0.8, 1.15, 0.9, 1.45, 0.85, 1.1, 0.95] as const;
+
+/** How long a scene's `beat` lasts before the next, varied beat by beat. */
+export function sceneBeatMs(scene: Exclude<PathSceneId, 'letter'>, beat: number): number {
+  const turn = PATH_SCENE_IDS.indexOf(scene) * 2;
+  const k = BEAT_SWING[(((Math.floor(beat) + turn) % BEAT_SWING.length) + BEAT_SWING.length) % BEAT_SWING.length]!;
+  return Math.round(PATH_SCENE_MOTION.beatMs[scene] * k);
+}
+
+/**
+ * Hevalo reaching for his apple on a bite: he draws back a little, stretches his neck in to the apple and bites
+ * (`biteAt`), pulls back with it, overshoots and settles. `stretch` is his height (1 as drawn) and `turn` degrees about the
+ * foot of his neck, which stays past the edge, over `ms`. The bough gives as he tugs: `tug` degrees about its root at
+ * the edge, springing back.
+ */
+export const PATH_APPLE_REACH = {
+  ms: 1500,
+  biteAt: 0.36,
+  stretch: [[0, 1], [0.14, 0.95], [0.32, 1.12], [0.4, 1.1], [0.56, 0.98], [0.72, 1.01], [1, 1]],
+  turn: [[0, 0], [0.14, 2.5], [0.32, -4], [0.4, -3.5], [0.56, 1.2], [0.75, -0.4], [1, 0]],
+  tug: [[0, 0], [0.34, 0], [0.42, 4], [0.52, -2], [0.62, 1.1], [0.74, -0.5], [0.86, 0.2], [1, 0]],
+} as const satisfies Record<'stretch' | 'turn' | 'tug', readonly (readonly [number, number])[]> & { ms: number; biteAt: number };
+
+/** What a character does on a beat, by its act's name in the characters' shared acts. */
+export type SceneAct = 'chew' | 'tongue' | 'preen' | 'chuckle' | 'tuck' | 'wink';
+
+/** A scene at one beat. */
+export interface SceneBeat {
+  /** The apple: bites taken so far, 0 to 4, or 5 once only the core is left. */
+  bites: number;
+  /** The core dropping and a new apple growing on the bough. */
+  growing: boolean;
+  /** Crumbs falling from the bite just taken. */
+  crumbs: boolean;
+  /** A sugar cube hopping from the bowl into the glass. */
+  cube: boolean;
+  /** Letters chalked on the slate so far, 0 to 3, and the slate being wiped for the next ones. */
+  letters: number;
+  wiping: boolean;
+  /** What the character does on this beat. */
+  act: SceneAct | null;
+}
+
+const REST_BEAT: SceneBeat = { bites: 0, growing: false, crumbs: false, cube: false, letters: 0, wiping: false, act: null };
+
+/**
+ * A scene's `beat`, counted from when it came into view, round its cycle. Hevalo takes four bites with a chew after
+ * each, licks his lips at the core, then the core drops as a new apple grows; Hamo drops in four cubes, preening his
+ * moustache at each, and laughs at himself; Xezo chalks ê, ç and ş, tucks her hair back pleased, winks, and wipes the
+ * slate. The pigeon has no beats. Under Reduce Motion the apps stay on beat 0.
+ */
+export function sceneBeat(scene: PathSceneId, beat: number): SceneBeat {
+  if (scene === 'letter') return REST_BEAT;
+  const count = PATH_SCENE_MOTION.beats[scene];
+  const at = ((Math.floor(beat) % count) + count) % count;
+  if (scene === 'apple') {
+    if (at >= 1 && at <= 4) return { ...REST_BEAT, bites: at, crumbs: true, act: 'chew' };
+    if (at === 5) return { ...REST_BEAT, bites: 5, act: 'tongue' };
+    if (at === 6) return { ...REST_BEAT, growing: true };
+    return REST_BEAT;
+  }
+  if (scene === 'tea') {
+    if (at >= 1 && at <= 4) return { ...REST_BEAT, cube: true, act: 'preen' };
+    if (at === 5) return { ...REST_BEAT, act: 'chuckle' };
+    return REST_BEAT;
+  }
+  if (at >= 1 && at <= 3) return { ...REST_BEAT, letters: at, act: at === 3 ? 'tuck' : null };
+  if (at === 4) return { ...REST_BEAT, letters: 3, act: 'wink' };
+  if (at === 5) return { ...REST_BEAT, letters: 3, wiping: true };
+  return REST_BEAT;
+}
+
+/**
+ * The pigeon's try at landing on the twig's tip with its letter, round once in `ms`: it flies in from the screen's edge,
+ * overshoots, comes back and lands, teeters, settles with the letter, then turns round and flies back out by the edge
+ * until its next try, never leaving its scene but by that edge. `x` and `y` are points from its place on the twig (on
+ * the road's start side; the apps mirror `x` on the other), `tilt` degrees, `face` 1 facing in and -1 facing out, and
+ * `shown` its opacity. It is on the twig from `perched[0]` to `perched[1]` of the way round, and flapping otherwise.
+ */
+export const PATH_PIGEON_FLIGHT = {
+  ms: 11000,
+  x: [[0, -150], [0.06, -128], [0.22, -34], [0.3, 8], [0.38, -2], [0.44, 0], [0.86, 0], [0.9, -8], [0.94, -70], [1, -160]],
+  y: [[0, -34], [0.06, -36], [0.22, -30], [0.3, -12], [0.38, -16], [0.44, 0], [0.86, 0], [0.9, -14], [0.94, -30], [1, -38]],
+  face: [[0, 1], [0.88, 1], [0.895, -1], [1, -1]],
+  tilt: [[0, 0], [0.44, 0], [0.48, 16], [0.52, -11], [0.56, 7], [0.6, -3], [0.64, 0], [1, 0]],
+  shown: [[0, 0], [0.06, 1], [0.94, 1], [1, 0]],
+  perched: [0.44, 0.88],
+  /** The twig dipping under the landing and springing back, and again as the pigeon pushes off: degrees about its root. */
+  twig: [[0, 0], [0.44, 0], [0.47, 5], [0.52, -2.4], [0.57, 1.2], [0.62, -0.4], [0.66, 0], [0.88, 0], [0.9, 3.2], [0.94, -1.4], [0.98, 0.4], [1, 0]],
+} as const satisfies {
+  ms: number;
+  x: readonly (readonly [number, number])[];
+  y: readonly (readonly [number, number])[];
+  tilt: readonly (readonly [number, number])[];
+  face: readonly (readonly [number, number])[];
+  shown: readonly (readonly [number, number])[];
+  perched: readonly [number, number];
+  twig: readonly (readonly [number, number])[];
+};
+
+/**
+ * The moment a finished stop is stamped, the first time the learner comes back to the road after finishing it: the
+ * stamp hovers over the tile, draws up a little, presses down, the tile squashes under it as the print appears, and the
+ * stamp lifts away. Each track runs from 0 to 1 of `ms`: `tool` is the stamp's height over the tile in points and its
+ * opacity, `squash` the tile's height (1 as drawn), `print` the print's opacity and size. A phone taps at `pressAt`.
+ */
+export const PATH_STAMP_MOMENT = {
+  ms: PATH_RETURN.stampMs,
+  pressAt: 0.5,
+  toolY: [[0, -46], [0.26, -30], [0.42, -38], [0.5, 0], [0.62, 0], [0.86, -40], [1, -46]],
+  toolShown: [[0, 0], [0.16, 1], [0.78, 1], [1, 0]],
+  squash: [[0, 1], [0.5, 1], [0.54, 0.9], [0.66, 1.03], [0.78, 1]],
+  printShown: [[0, 0], [0.5, 0], [0.53, 1], [1, 1]],
+  printScale: [[0, 1.12], [0.5, 1.12], [0.56, 0.96], [0.7, 1], [1, 1]],
+} as const satisfies Record<'toolY' | 'toolShown' | 'squash' | 'printShown' | 'printScale', readonly (readonly [number, number])[]> & { ms: number; pressAt: number };

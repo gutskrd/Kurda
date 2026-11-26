@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type Ref } from 'react';
 import { AccessibilityInfo, Animated, Easing, Platform, StyleSheet, Text, View, findNodeHandle, type LayoutChangeEvent } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import { Pressable } from '../theme/Pressable';
-import { TOPIC_STARS, lessonStates, lessonXpRange, starPath, type PathStop, type PathUnit } from '@kurda/shared';
+import { TOPIC_STARS, lessonStates, lessonXpRange, type PathStop, type PathUnit } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -18,7 +17,8 @@ import { duration, pressedDim } from '../theme/motion';
 import { heldRow } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { RING, STAR, type ToneColors } from './path';
+import { type ToneColors } from './path';
+import { StarRow } from './TopicBar';
 import type { SkillNode } from './types';
 
 type Stop = PathStop<SkillNode>;
@@ -427,28 +427,14 @@ function PanelCard({
   );
 }
 
-/** A topic's three stars: gold for each round played, the rest the ring's track. Hidden from screen readers, as the line below says it. */
+/** A topic's three stars, gold for each round played. Hidden from screen readers, as the line below says it. */
 function Stars({ rounds }: { rounds: number }): React.JSX.Element {
-  const { colors, scheme } = useTheme();
-  const dir = useDirection();
   return (
-    <View style={[styles.stars, { flexDirection: dir.row }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID={`lp-card-stars-${rounds}`}>
-      {Array.from({ length: TOPIC_STARS }, (_, i) => (
-        <Svg key={i} width={STAR_SIZE} height={STAR_SIZE} viewBox="0 0 24 24">
-          <Path
-            d={starPath(12, 12.6, 10.6)}
-            fill={i < rounds ? colors.gold : RING[scheme].track}
-            stroke={i < rounds ? STAR.edge : RING[scheme].edge}
-            strokeWidth={1.4}
-            strokeLinejoin="round"
-          />
-        </Svg>
-      ))}
+    <View style={styles.stars} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <StarRow rounds={rounds} />
     </View>
   );
 }
-
-const STAR_SIZE = 26;
 
 const styles = StyleSheet.create({
   // Over the road and the closing layer under it; Android orders raised views by elevation, so both carry it.

@@ -188,11 +188,24 @@ export {
   PATH_STOP_LOOKS,
   PATH_REST,
   PATH_STOP_TONES,
+  PATH_GOLD,
+  PATH_MILESTONE_ART,
+  PATH_CHEST_PARTS,
+  PATH_CHEST_HINGE,
   pathChestSvg,
+  pathCoinSvg,
+  pathMilestoneSvg,
   pathKilimSvg,
   pathSignpostSvg,
+  pathStampSvg,
+  pathStampToolSvg,
   pathStopSvg,
+  PATH_STAMP_ART,
+  type PathStampOptions,
+  tilePath,
   type PathChestOptions,
+  type PathChestPart,
+  type PathMilestoneOptions,
   type PathKilimOptions,
   type PathSignpostOptions,
   type UnitColours,
@@ -201,6 +214,37 @@ export {
 } from './path-land.js';
 export { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg, type PathLandmarkOptions, type PathLoop, type PathLoopKind, type PathLoopOptions } from './path-landmark.js';
 export { chapterBannerSvg, type ChapterBannerOptions } from './chapter-banner.js';
+export {
+  CHAPTER_ART,
+  CHAPTER_ART_IDS,
+  CHAPTER_ART_LOOP,
+  CHAPTER_LOOP_KINDS,
+  chapterArtOf,
+  chapterArtSvg,
+  chapterLoopBox,
+  type ChapterArtId,
+  type ChapterArtOptions,
+  type ChapterLoop,
+  type ChapterLoopKind,
+} from './chapter-art.js';
+export {
+  PATH_SCENE_IDS,
+  PATH_SCENE_BOX,
+  PATH_SCENES,
+  PATH_SCENE_SPRITES,
+  PATH_SCENE_SPRITE_BOX,
+  PATH_SLATE_LETTERS,
+  PATH_APPLE_AT,
+  PATH_TEA_AT,
+  pathScenePropSvg,
+  pathSceneSpriteSvg,
+  type PathSceneId,
+  type PathScenePropOptions,
+  type PathSceneSprite,
+  type PathSceneSpriteOptions,
+  type SceneBox,
+  type SceneLayout,
+} from './path-scenes.js';
 export { WORD_PICTURES, WORD_PICTURE_IDS, wordPictureSvg, type WordPictureId, type WordPictureOptions } from './word-pictures.js';
 export { DICTIONARY_CANVAS, DICTIONARY_TILE, dictionarySvg, dictionaryStillSvg, dictionaryTileSvg, dictionaryTiles, type DictionaryArtOptions, type DictionaryTile } from './dictionary.js';
 export { GIFT_ART_IDS, giftArtKey, giftArtSvg, isGiftArtId, type GiftArtId, type GiftArtOptions } from './gift-art.js';

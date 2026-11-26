@@ -1,15 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import { PATH_GEOMETRY, PATH_MASCOT, lessonPath, mascotSpot, type PathSkill } from './lesson-path.js';
+import { PATH_SCENES, PATH_SCENE_BOX, PATH_SCENE_IDS } from './art/path-scenes.js';
+import { characterArt, cropBox, sampleKeys } from './characters/index.js';
 import {
   PATH_LANDMARKS,
   PATH_LANDS,
-  PATH_PEEKERS,
+  PATH_PIGEON_FLIGHT,
+  PATH_SCENE_MOTION,
+  PATH_SCENE_ORDER,
   PATH_SCENERY,
   PATH_SCENERY_SPOT,
+  PATH_SCENE_REACH,
+  PATH_STAMP_MOMENT,
+  PATH_APPLE_REACH,
   PATH_START_WORDS,
   landmarkBox,
   pathLand,
-  pathPeeker,
+  pathScene,
+  sceneBeat,
+  sceneBeatMs,
   unitScenery,
   type PathBox,
 } from './path-world.js';
@@ -86,28 +95,180 @@ describe('the road’s playful touches', () => {
     }
   });
 
-  it('sends someone different to peek beside each of four units in turn, the pigeon among them', () => {
-    expect(PATH_PEEKERS.map((_, i) => pathPeeker(i))).toEqual([...PATH_PEEKERS]);
-    expect(pathPeeker(PATH_PEEKERS.length)).toBe(PATH_PEEKERS[0]);
-    expect(pathPeeker(-1)).toBe(PATH_PEEKERS[PATH_PEEKERS.length - 1]);
-    expect(PATH_PEEKERS).toContain('pigeon');
+  it('gives each of the twelve chapters a scene of its own people, each of the four three times, and starts again after them', () => {
+    expect(PATH_SCENE_ORDER).toHaveLength(12);
+    for (const scene of PATH_SCENE_IDS) expect(PATH_SCENE_ORDER.filter((s) => s === scene), scene).toHaveLength(3);
+    // Hevalo after apples in the first chapter, where they go missing; Xezo at her slate in the chapter of school
+    expect(pathScene(0)).toBe('apple');
+    expect(pathScene(10)).toBe('slate');
+    expect(pathScene(12)).toBe(pathScene(0));
+    expect(pathScene(-1)).toBe(pathScene(11));
   });
 
-  it('stands the peeker and the chest on the open side of a leaning stop, never on the line', () => {
-    const { peek, chest } = unitScenery(stops);
-    // the fourth stop leans to the end, so the peeker is on the start side; the second leans to the start, the chest the other way
-    expect(peek).toEqual({ x: -PATH_SCENERY_SPOT.peekAcross, y: stops[3]!.y });
+  it('leans the scene in from the edge across from a leaning stop, and stands the chest on the open side, never on the line', () => {
+    const { scene, chest } = unitScenery(stops);
+    // the fourth stop leans to the end, so the scene leans in from the start; the second leans to the start, the chest the other way
+    expect(scene).toEqual({ side: -1, y: stops[3]!.y });
     expect(chest).toEqual({ x: PATH_SCENERY_SPOT.chestAcross, y: stops[1]!.y });
-    for (const spot of [peek!, chest!]) {
-      for (const stop of stops) expect(Math.abs(spot.x - stop.x) >= PATH_GEOMETRY.node || Math.abs(spot.y - stop.y) >= PATH_GEOMETRY.node).toBe(true);
+    for (const stop of stops) expect(Math.abs(chest!.x - stop.x) >= PATH_GEOMETRY.node || Math.abs(chest!.y - stop.y) >= PATH_GEOMETRY.node).toBe(true);
+  });
+
+  it('keeps a scene off every stop beside it, from a phone’s narrow screen to a wide page', () => {
+    const { scene } = unitScenery(stops);
+    for (const width of [360, 390, 430, 720]) {
+      const { across, up, down } = PATH_SCENE_REACH;
+      const box: PathBox = { x: scene!.side * (width / 2 - across / 2), y: scene!.y - up, w: across, h: up + down };
+      for (const stop of stops) expect(overlap(box, stopBox(stop)), `${width}`).toBe(false);
     }
   });
 
-  it('leaves out whatever would stand on Hevalo beside the stop to do now', () => {
-    expect(unitScenery(stops, mascotSpot(stops[1]!)).chest).toBeNull();
-    expect(unitScenery(stops, mascotSpot(stops[3]!)).peek).toBeNull();
-    expect(unitScenery(stops, mascotSpot(stops[3]!)).chest).not.toBeNull();
-    // a short unit has room for its peeker but not a chest
-    expect(unitScenery(stops.slice(0, 2))).toEqual({ peek: { x: PATH_SCENERY_SPOT.peekAcross, y: stops[1]!.y }, chest: null });
+  it('leaves out whatever would stand on Hevalo beside the stop to do now, and his apple where he is already', () => {
+    expect(unitScenery(stops, stops[1]!).chest).toBeNull();
+    expect(unitScenery(stops, stops[3]!).scene).toBeNull();
+    expect(unitScenery(stops, stops[3]!).chest).not.toBeNull();
+    expect(unitScenery(stops, stops[1]!, 'apple').scene).toBeNull();
+    expect(unitScenery(stops, stops[1]!, 'tea').scene).not.toBeNull();
+    expect(unitScenery(stops, null, 'apple').scene).not.toBeNull();
+    // a short unit has room for its scene but not a chest; a unit of three keeps them on opposite sides
+    expect(unitScenery(stops.slice(0, 2))).toEqual({ scene: { side: 1, y: stops[1]!.y }, chest: null });
+    const three = unitScenery(stops.slice(0, 3));
+    expect(three.scene!.side).toBe(-Math.sign(three.chest!.x));
+  });
+
+  it('leaves the scene out where the bubble over the stop to do now would reach it on a narrow screen, and keeps it on a wide one', () => {
+    expect(unitScenery(stops, stops[4]!, 'tea', 360).scene).toBeNull();
+    expect(unitScenery(stops, stops[4]!, 'tea', 720).scene).toEqual({ side: -1, y: stops[3]!.y });
+    // with no width known, only Hevalo is kept clear of
+    expect(unitScenery(stops, stops[4]!, 'tea').scene).not.toBeNull();
+  });
+});
+
+describe('the scenes beside the road', () => {
+  it('has Hevalo bite his apple four times, chewing, lick his lips at the core, and grow another', () => {
+    const beats = Array.from({ length: PATH_SCENE_MOTION.beats.apple }, (_, i) => sceneBeat('apple', i));
+    expect(beats.map((b) => b.bites)).toEqual([0, 1, 2, 3, 4, 5, 0]);
+    expect(beats.map((b) => b.act)).toEqual([null, 'chew', 'chew', 'chew', 'chew', 'tongue', null]);
+    expect(beats.filter((b) => b.crumbs)).toHaveLength(4);
+    expect(beats[6]!.growing).toBe(true);
+    expect(sceneBeat('apple', PATH_SCENE_MOTION.beats.apple)).toEqual(beats[0]);
+  });
+
+  it('has Hamo sugar his tea four times over, pleased each time, and laugh at himself', () => {
+    const beats = Array.from({ length: PATH_SCENE_MOTION.beats.tea }, (_, i) => sceneBeat('tea', i));
+    expect(beats.filter((b) => b.cube)).toHaveLength(4);
+    expect(beats.map((b) => b.act)).toEqual([null, 'preen', 'preen', 'preen', 'preen', 'chuckle']);
+  });
+
+  it('has Xezo chalk three letters one by one, then wipe her slate', () => {
+    const beats = Array.from({ length: PATH_SCENE_MOTION.beats.slate }, (_, i) => sceneBeat('slate', i));
+    expect(beats.map((b) => b.letters)).toEqual([0, 1, 2, 3, 3, 3]);
+    expect(beats.map((b) => b.wiping)).toEqual([false, false, false, false, false, true]);
+    expect(sceneBeat('slate', -1)).toEqual(beats[5]);
+  });
+
+  it('flies the pigeon in from the edge to land on its twig, teeter, settle and leave by the edge, all in one flight', () => {
+    for (const track of [PATH_PIGEON_FLIGHT.x, PATH_PIGEON_FLIGHT.y, PATH_PIGEON_FLIGHT.tilt, PATH_PIGEON_FLIGHT.shown]) {
+      expect(track[0]![0]).toBe(0);
+      expect(track[track.length - 1]![0]).toBe(1);
+      for (let i = 1; i < track.length; i++) expect(track[i]![0]).toBeGreaterThan(track[i - 1]![0]);
+    }
+    const [from, to] = PATH_PIGEON_FLIGHT.perched;
+    const at = (track: readonly (readonly [number, number])[], t: number): number => track.find(([k]) => k === t)?.[1] ?? NaN;
+    expect(at(PATH_PIGEON_FLIGHT.x, from)).toBe(0);
+    expect(at(PATH_PIGEON_FLIGHT.y, from)).toBe(0);
+    expect(to).toBeGreaterThan(from);
+    // out of sight before it starts again
+    expect(PATH_PIGEON_FLIGHT.shown[0]![1]).toBe(0);
+    expect(PATH_PIGEON_FLIGHT.shown[PATH_PIGEON_FLIGHT.shown.length - 1]![1]).toBe(0);
+    expect(sceneBeat('letter', 3)).toEqual(sceneBeat('letter', 0));
+    // it faces in on the way in and turns round to fly back out by the edge it came from
+    const face = (t: number): number => PATH_PIGEON_FLIGHT.face.filter(([k]) => k <= t).at(-1)![1];
+    expect(face(0)).toBe(1);
+    expect(face(from)).toBe(1);
+    expect(face(1)).toBe(-1);
+    expect(PATH_PIGEON_FLIGHT.x[0]![1]).toBeLessThan(0);
+    expect(PATH_PIGEON_FLIGHT.x[PATH_PIGEON_FLIGHT.x.length - 1]![1]).toBeLessThan(0);
+  });
+
+  it('times each beat a little differently, never far from the scene’s own beat', () => {
+    const lengths = Array.from({ length: 9 }, (_, i) => sceneBeatMs('apple', i));
+    expect(new Set(lengths).size).toBeGreaterThan(4);
+    for (const ms of lengths) {
+      expect(ms).toBeGreaterThanOrEqual(PATH_SCENE_MOTION.beatMs.apple * 0.75);
+      expect(ms).toBeLessThanOrEqual(PATH_SCENE_MOTION.beatMs.apple * 1.5);
+    }
+    expect(sceneBeatMs('tea', 0)).not.toBe((sceneBeatMs('apple', 0) * PATH_SCENE_MOTION.beatMs.tea) / PATH_SCENE_MOTION.beatMs.apple);
+    expect(sceneBeatMs('slate', -1)).toBeGreaterThan(0);
+  });
+
+  it('has Hevalo reach for his apple and bite it as the bough gives, all back where they started', () => {
+    for (const track of [PATH_APPLE_REACH.turn, PATH_APPLE_REACH.tug]) {
+      expect(track[0]).toEqual([0, 0]);
+      expect(track[track.length - 1]).toEqual([1, 0]);
+    }
+    const { stretch } = PATH_APPLE_REACH;
+    expect(stretch[0]).toEqual([0, 1]);
+    expect(stretch[stretch.length - 1]).toEqual([1, 1]);
+    // he draws back before he stretches in, and the bough is still until his teeth close on the apple
+    expect(stretch[1]![1]).toBeLessThan(1);
+    expect(Math.max(...stretch.map(([, v]) => v))).toBeGreaterThan(1);
+    const tugs = PATH_APPLE_REACH.tug.filter(([, v]) => v !== 0);
+    expect(tugs[0]![0]).toBeGreaterThan(PATH_APPLE_REACH.biteAt);
+  });
+});
+
+describe('the scenes’ figures through all their motion', () => {
+  const times = Array.from({ length: 101 }, (_, i) => i / 100);
+  // A point of the figure's box, from the middle of its foot, as it stands in the scene: stretched, then leant.
+  const placed = (scene: 'apple' | 'tea' | 'slate', u: number, v: number, stretch: number, turn: number): [number, number] => {
+    const { ax, ay, lean } = PATH_SCENES[scene].actor;
+    const a = ((lean + turn) * Math.PI) / 180;
+    const [x, y] = [u, v * stretch];
+    return [ax + x * Math.cos(a) - y * Math.sin(a), ay + x * Math.sin(a) + y * Math.cos(a)];
+  };
+
+  it('keeps each character’s head, the top of its drawing, inside its scene at every moment, never cut by the scene’s top or far side', () => {
+    for (const scene of ['apple', 'tea', 'slate'] as const) {
+      const { who, actor } = PATH_SCENES[scene];
+      const frame = cropBox(characterArt(who as 'hevalo' | 'hamo' | 'xezo'), actor.crop);
+      const w = (actor.h * frame.w) / frame.h;
+      for (const t of times) {
+        // Only Hevalo reaches for his apple; the others lean in as they stand. Room for a nod or a tilt on top: 10 points.
+        const stretch = scene === 'apple' ? sampleKeys(PATH_APPLE_REACH.stretch, t) : 1;
+        const turn = scene === 'apple' ? sampleKeys(PATH_APPLE_REACH.turn, t) : 0;
+        for (const u of [-w / 2, w / 2]) {
+          const [x, y] = placed(scene, u, -actor.h, stretch, turn);
+          expect(y, `${scene} at ${t}`).toBeGreaterThanOrEqual(10);
+          expect(x, `${scene} at ${t}`).toBeLessThanOrEqual(PATH_SCENE_BOX.w - 10);
+        }
+      }
+    }
+  });
+
+  it('keeps the pigeon inside its scene but for the edge it flies in and out by', () => {
+    const { ax, ay, h } = PATH_SCENES.letter.actor;
+    for (const t of times) {
+      const [x, y] = [sampleKeys(PATH_PIGEON_FLIGHT.x, t), sampleKeys(PATH_PIGEON_FLIGHT.y, t)];
+      // its 64-point canvas, its feet at the perch
+      const top = ay - (h * 100) / 120 + y;
+      expect(top, `${t}`).toBeGreaterThanOrEqual(0);
+      expect(top + h, `${t}`).toBeLessThanOrEqual(PATH_SCENE_BOX.h);
+      expect(ax + x + h / 2, `${t}`).toBeLessThanOrEqual(PATH_SCENE_BOX.w);
+    }
+  });
+});
+
+describe('a finished stop’s stamp', () => {
+  it('presses halfway through its moment: the print appears and the tile squashes as it lands, and all ends as it was drawn', () => {
+    const { pressAt, toolY, squash, printShown, toolShown } = PATH_STAMP_MOMENT;
+    const at = (track: readonly (readonly [number, number])[], t: number): number | undefined => track.find(([k]) => k === t)?.[1];
+    expect(at(toolY, pressAt)).toBe(0);
+    expect(at(printShown, pressAt)).toBe(0);
+    expect(printShown[printShown.length - 1]![1]).toBe(1);
+    expect(Math.min(...squash.map(([, v]) => v))).toBeLessThan(1);
+    expect(squash[squash.length - 1]![1]).toBe(1);
+    // the stamp is out of sight before it starts and after it lifts away
+    expect(toolShown[0]![1]).toBe(0);
+    expect(toolShown[toolShown.length - 1]![1]).toBe(0);
   });
 });

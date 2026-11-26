@@ -1,5 +1,5 @@
 /**
- * The phone's side of the lesson path: unit colours, screen-reader labels, stop rings, which course opens first,
+ * The phone's side of the lesson path: unit colours, screen-reader labels, topic bars, which course opens first,
  * and scroll positions. The path's structure itself is shared `lessonPath`, which the website uses too.
  */
 import {
@@ -41,16 +41,10 @@ export const FACE_INK: Record<ColorScheme, { paper: (tone: ToneColors) => string
 };
 
 /**
- * The unfilled track of a topic ring, and the edge under every piece so the ring reads on any ground. Filled
- * pieces use the unit's colour on the stop to do now, and a whole ring its `gold`.
+ * The unfilled track of a topic's bar, and of the rounds still to play in its card (as the website's path.css). Filled
+ * pieces use the unit's colour, and a full bar gold.
  */
-export const RING: Record<ColorScheme, { track: string; edge: string }> = {
-  light: { track: '#d6dfe3', edge: 'rgba(23, 36, 43, 0.28)' },
-  dark: { track: '#2e3c43', edge: 'rgba(5, 8, 10, 0.6)' },
-};
-
-/** A star on a finished topic's gold coin, edged so it stands off the gold. */
-export const STAR = { fill: '#fffaf0', edge: '#a8691a' } as const;
+export const TRACK: Record<ColorScheme, string> = { light: '#d6dfe3', dark: '#2e3c43' };
 
 /** Blends two #rrggbb colours, `t` of the way from `a` to `b`. */
 export function mix(a: string, b: string, t: number): string {
@@ -107,22 +101,22 @@ export function stopLabel(stop: PathStop<SkillNode>, unit: { number: number; tit
   return { words: { key: 'coursemap.path.label', params: { title, done: stop.lessonsDone, total: stop.lessonsTotal } }, state };
 }
 
-/** A skill's ring: `of` pieces (one per lesson), `filled` of them, and `whole` once all rounds are played. Null for stops without a ring. */
-export function ringOf(stop: PathStop<SkillNode>): { of: number; filled: number; whole: boolean } | null {
+/** A skill's bar: `of` pieces (one per lesson), `filled` of them, and `whole` once all rounds are played. Null for stops without one. */
+export function barOf(stop: PathStop<SkillNode>): { of: number; filled: number; whole: boolean } | null {
   if (stop.kind !== 'skill' || stop.lessonsTotal === 0) return null;
-  return ringAt(stop, { rounds: stop.rounds, pieces: stop.pieces });
+  return barAt(stop, { rounds: stop.rounds, pieces: stop.pieces });
 }
 
-/** A skill's ring at a given point in its rounds, e.g. before a lesson. */
-export function ringAt(stop: Pick<SkillStop<SkillNode>, 'lessonsTotal'>, at: { rounds: number; pieces: number }): { of: number; filled: number; whole: boolean } {
+/** A skill's bar at a given point in its rounds, e.g. before a lesson. */
+export function barAt(stop: Pick<SkillStop<SkillNode>, 'lessonsTotal'>, at: { rounds: number; pieces: number }): { of: number; filled: number; whole: boolean } {
   const whole = at.rounds >= TOPIC_STARS;
   return { of: stop.lessonsTotal, filled: whole ? stop.lessonsTotal : Math.min(at.pieces, stop.lessonsTotal), whole };
 }
 
 /**
- * How a stop is drawn (shared `pathStopSvg`). A finished skill is a gold coin whatever its review strength, and
- * fades only when a refresh would help. A chapter's story is a scroll on stone until the chapter is done; a unit
- * without a story ends at its chest. With `jump`, the stop is drawn as the gate a jump goes through.
+ * How a stop is drawn (shared `pathStopSvg`). A finished skill keeps its unit's tile, stamped with Hevalo's hoofprint
+ * (TileStamp), and fades a little when a refresh would help. A unit's last stop, its story or its trophy, is drawn as its milestone, and
+ * this look says only whether it is won. With `jump`, the stop is drawn as the gate a jump goes through.
  */
 export function stopLook(stop: PathStop<SkillNode>, jump = false): PathStopLook {
   if (jump) return 'jump';

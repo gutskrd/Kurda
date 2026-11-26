@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import type { InitialEntry } from 'react-router-dom';
@@ -12,6 +12,7 @@ import { Lesson } from './Lesson';
 import { Review } from './Review';
 import { NextLesson } from './NextLesson';
 import { onNotice } from '../lib/notice';
+import { TalkIcon } from '../components/icons';
 
 /* The learning routes as a learner moves through them (Learn, a course map, a lesson, a review, the next lesson after sign-up), against a scripted API. */
 
@@ -364,16 +365,53 @@ describe('a course map', () => {
     expect(bubble).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
     expect(within(bubble).getByText('Berdewam bike!')).toHaveAttribute('lang', 'ku');
 
-    // The unit wears its own colour, on its banner and round its stops, and someone peeks in beside its road.
+    // The unit wears its own colour, on its banner and round its stops, its banner has its chapter's vignette, and its
+    // sandûq stands beside its road; Hevalo, standing by the stop to do now, is not drawn again eating his apple.
     expect(unit).toHaveClass('lp-tone-meadow');
     expect(pin).toHaveClass('lp-tone-meadow');
     expect(pin.querySelector('.lp-pin-colour')).not.toBeNull();
-    expect(unit.querySelector('.lp-peek')).not.toBeNull();
-    expect(unit.querySelector('.lp-peek')).toHaveAttribute('aria-hidden', 'true');
+    expect(pin.querySelector('.lp-pin-art')).toHaveAttribute('aria-hidden', 'true');
+    expect(pin.querySelector('.lp-pin-art')).toHaveAttribute('data-art', 'door');
+    expect(unit.querySelector('.lp-chest')).toHaveAttribute('aria-hidden', 'true');
+    expect(unit.querySelector('.lp-scene')).toBeNull();
 
     // The courses, to move between them.
     expect(screen.getByRole('navigation', { name: 'Your courses' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Newroz' })).toHaveAttribute('href', '/app/learn/course/c2');
+  });
+
+  it('sets a scene leaning in beside a chapter’s road, stamps its finished topics, numbers its milestone, and shows what the lesson up next is', async () => {
+    const twice = skill({ skillId: 'hi', title: 'Hello', state: 'completed', lessons: [lesson('h1', true)], rounds: 2, pieces: 0 });
+    const road: Map = {
+      course: { id: 'c1', title: 'Kurmanji for Beginners' },
+      units: [
+        { unitId: 'u1', title: 'Hello', skills: [twice, { ...twice, skillId: 'hi2', title: 'Tea', lessons: [lesson('h2', true)] }, { ...twice, skillId: 'hi3', title: 'Bread', lessons: [lesson('h3', true)] }] },
+        { unitId: 'u2', title: 'Family', skills: [skill({ skillId: 'fam', title: 'Family', state: 'unlocked', lessons: [{ ...lesson('f1'), kind: 'talk' }] })] },
+      ],
+    };
+    serve({ 'GET /courses/c1/map': road, 'GET /courses': courses, 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+
+    const first = await screen.findByRole('region', { name: 'Chapter 1, Hello' });
+    // Hevalo leans in from the edge to eat his apple in the first chapter, for the eye only.
+    const scene = first.querySelector('.lp-scene');
+    expect(scene).toHaveAttribute('data-scene', 'apple');
+    expect(scene).toHaveAttribute('aria-hidden', 'true');
+    expect(scene!.className).toMatch(/\bis-(start|end)\b/);
+    // Its finished topics, seen here for the first time, are simply stamped, with no moment for each, and wear their two stars.
+    const hello = within(first).getByRole('button', { name: /^Hello, Done/ });
+    expect(hello).toHaveClass('is-stamped');
+    expect(hello).not.toHaveClass('is-stamping');
+    expect(hello.querySelector('.lp-stamp')).not.toBeNull();
+    expect(within(hello).getByTestId('lp-stars-2')).toBeInTheDocument();
+    // The milestone ending the chapter bears its number, and its trophy is won.
+    expect(within(first).getByRole('button', { name: 'Chapter 1 trophy, earned' })).toHaveClass('is-milestone');
+    expect(first.querySelector('.lp-milestone-num')).toHaveTextContent('1');
+    expect(first.querySelector('.lp-milestone-num')).toHaveClass('is-won');
+    // The stop to do now wears the glyph of what its lesson is, here a conversation, and no star.
+    const now = screen.getByRole('button', { name: /^Family, You are here/ });
+    const talk = render(<TalkIcon size={34} />).container.querySelector('svg')!.innerHTML;
+    expect(now.querySelector('.lp-node-glyph svg')!.innerHTML).toBe(talk);
   });
 
   it('ends a chapter with Hamo’s story, shut until the chapter is done, and names the chapter on its way', async () => {
@@ -608,17 +646,20 @@ describe('a course map', () => {
     expect(within(screen.getByRole('dialog', { name: 'Jump to Chapter 4?' })).getByRole('link', { name: 'Start the test' })).toHaveAttribute('href', '/app/learn/jump/c1/r4');
   });
 
-  it('rings the topic to do now with a piece for each lesson, stands a star on a coin for each round, and says the round in its card', async () => {
+  it('puts a bar over the topic to do now with a piece for each lesson, stamps a finished one with a star for each round, and says the round in its card', async () => {
     serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
     routes('/app/learn/course/c1');
 
-    // Topic c has all three rounds: three stars on its coin, and no ring, which is for the topic to do now.
+    // Topic c has all three rounds: stamped, three stars on its tile, and no bar, which is for the topic to do now.
     const c = await screen.findByRole('button', { name: 'Topic c, Done — strong, all 3 rounds done' });
-    expect(within(c).queryByTestId('lp-ring')).not.toBeInTheDocument();
-    expect(within(c).getAllByTestId('lp-stars-3')).toHaveLength(1);
-    // Topic d, the one to do now: a piece filled of two, and no stars yet.
+    expect(within(c).queryByTestId('lp-bar')).not.toBeInTheDocument();
+    expect(c).toHaveClass('is-stamped');
+    expect(within(c).getByTestId('lp-stars-3')).toBeInTheDocument();
+    // Topic d, the one to do now: a piece filled of two, and no stamp yet.
     const d = screen.getByRole('button', { name: /^Topic d/ });
-    expect(d.querySelectorAll('.lp-ring-piece.is-filled')).toHaveLength(1);
+    expect(within(d).getByTestId('lp-bar').querySelectorAll('.lp-bar-piece')).toHaveLength(2);
+    expect(d.querySelectorAll('.lp-bar-ink.is-filled')).toHaveLength(1);
+    expect(d.querySelector('.lp-stamp')).toBeNull();
     expect(within(d).queryByTestId(/lp-stars/)).not.toBeInTheDocument();
 
     await userEvent.click(c);
@@ -650,7 +691,7 @@ describe('a course map', () => {
     expect(screen.queryByRole('button', { name: /trophy/ })).not.toBeInTheDocument();
   });
 
-  it('fills the ring, turns the stop gold and drops its star in on coming back from the lesson that finished its round', async () => {
+  it('fills the bar, stamps the stop once, starts its next round and lights its star on coming back from the lesson that finished its round', async () => {
     // As the path was drawn before the lesson: Topic d current, one lesson of two done.
     sessionStorage.setItem(
       'hevalo:path:c1',
@@ -659,22 +700,29 @@ describe('a course map', () => {
     const after = sections();
     after.units[1]!.skills[1] = { ...after.units[1]!.skills[1]!, state: 'completed', lessons: [{ ...lesson('d1', true, 'Lesson d1'), times: 1 }, { ...lesson('d2', true, 'Lesson d2'), times: 1 }] };
     after.units[2]!.skills[0] = { ...after.units[2]!.skills[0]!, state: 'unlocked' };
+    // The stops stamped on this device so far: all those finished before the lesson.
+    localStorage.setItem('hevalo:stamped:c1', JSON.stringify(['s:a', 's:b', 's:c']));
     serve({ 'GET /courses/c1/map': after, 'GET /practice/due': { due: 0, available: 0 } });
     routes('/app/learn/course/c1');
 
     const d = await screen.findByRole('button', { name: /^Topic d/ });
-    // First as it was: one piece filled, no star.
-    expect(d.querySelectorAll('.lp-ring-piece.is-filled')).toHaveLength(1);
-    // Then the ring whole and gold as the stop turns gold, and its star dropping in.
-    await waitFor(() => expect(within(d).getByTestId('lp-ring')).toHaveClass('is-whole'), { timeout: 3000 });
+    // First as it was: one piece filled, not stamped.
+    expect(d.querySelectorAll('.lp-bar-ink.is-filled')).toHaveLength(1);
+    expect(d).not.toHaveClass('is-stamped');
+    // Then the bar full and gold as the stop is stamped.
+    await waitFor(() => expect(within(d).getByTestId('lp-bar')).toHaveClass('is-whole'), { timeout: 3000 });
+    await waitFor(() => expect(d).toHaveClass('is-stamped'), { timeout: 3000 });
+    expect(d.querySelector('.lp-stamp')).not.toBeNull();
+    // And the next round begins once the print is down: the bar empty again, and the stamp kept for next time.
+    await waitFor(() => expect(within(d).getByTestId('lp-bar')).not.toHaveClass('is-whole'), { timeout: 3000 });
+    expect(d.querySelectorAll('.lp-bar-ink.is-filled')).toHaveLength(0);
+    expect(JSON.parse(localStorage.getItem('hevalo:stamped:c1')!)).toContain('s:d');
+    // Once the stamp has settled, its first star lights in.
     await waitFor(() => expect(d.querySelector('.lp-star.is-earned')).not.toBeNull(), { timeout: 3000 });
-    // And the next round begins as the star lands: the ring empty again, the star kept.
-    await waitFor(() => expect(within(d).getByTestId('lp-ring')).not.toHaveClass('is-whole'), { timeout: 3000 });
-    expect(d.querySelectorAll('.lp-ring-piece.is-filled')).toHaveLength(0);
     expect(within(d).getByTestId('lp-stars-1')).toBeInTheDocument();
   });
 
-  it('comes back to the section a lesson was played in, a finished one too, with its ring moving on', async () => {
+  it('comes back to the section a lesson was played in, a finished one too, with its bar moving on', async () => {
     // As the path was drawn before: the learner in the second section, the first finished.
     sessionStorage.setItem(
       'hevalo:path:c1',
@@ -686,7 +734,7 @@ describe('a course map', () => {
     serve({ 'GET /courses/c1/map': replayed, 'GET /practice/due': { due: 0, available: 0 } });
     routes('/app/learn/course/c1');
     const a = await screen.findByRole('button', { name: 'Topic a, Done — strong, round 2 of 3, 1 of 2 lessons' });
-    await waitFor(() => expect(a.querySelectorAll('.lp-ring-piece.is-filled')).toHaveLength(1), { timeout: 3000 });
+    await waitFor(() => expect(a.querySelectorAll('.lp-bar-ink.is-filled')).toHaveLength(1), { timeout: 3000 });
     // The learner's own section waits folded, to go back to.
     expect(screen.getByTestId('lp-section-2')).toHaveAccessibleName(/^Section 2, Beginner, .*You are here/);
   });

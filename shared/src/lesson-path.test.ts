@@ -9,6 +9,7 @@ import {
   jumpPassed,
   jumpPlan,
   lean,
+  lessonKind,
   lessonPath,
   lessonStates,
   mascotSpot,
@@ -46,6 +47,23 @@ const map = (...units: PathSkill[][]) => ({ units: units.map((skills, i) => ({ u
 
 const skills = (path: ReturnType<typeof lessonPath>) =>
   path.units.flatMap((u) => u.stops.map((p) => p.stop)).filter((s): s is SkillStop<PathSkill> => s.kind === 'skill');
+
+describe('what a lesson is', () => {
+  it('reads a lesson with a conversation as a talk, one bringing in words as words, and the rest as practice', () => {
+    expect(lessonKind({ talk: true, fresh: 4 })).toBe('talk');
+    expect(lessonKind({ talk: false, fresh: 4 })).toBe('words');
+    expect(lessonKind({ talk: false, fresh: 0 })).toBe('practice');
+  });
+
+  it('shows on the stop to do now what its next lesson is, and nothing from a server too old to say', () => {
+    const kinds = skill('a', 'unlocked', 1, 3);
+    kinds.lessons = kinds.lessons!.map((l, i) => ({ ...l, kind: (['words', 'talk', 'practice'] as const)[i] }));
+    const [now] = skills(lessonPath(map([kinds])));
+    expect(now).toMatchObject({ state: 'current', launch: 'a-2', launchKind: 'talk' });
+    expect(skills(lessonPath(map([skill('b', 'unlocked')])))[0]!.launchKind).toBeNull();
+    expect(skills(lessonPath(map([skill('c', 'locked')])))[0]!.launchKind).toBeNull();
+  });
+});
 
 describe('lessonStates', () => {
   it('marks what is done, the one lesson up next, and closes the rest', () => {
@@ -459,11 +477,14 @@ describe('coming back to the path', () => {
     expect(pathChanges(pathSnapshot(lessonPath(before)), lessonPath(grown))).toBeNull();
   });
 
-  it('fills the ring before the stop turns gold, drops a star in after, and lands it before the bubble moves on', () => {
-    const { settleMs, ringMs, finishAtMs, starAtMs, starMs, bubbleAtMs } = PATH_RETURN;
+  it('fills the bar before the stop is stamped, and lets the stamp lift before the next stop opens and the bubble moves on', () => {
+    const { settleMs, ringMs, finishAtMs, stampMs, nextAtMs, openAtMs, bubbleAtMs, starAtMs } = PATH_RETURN;
     expect(settleMs + ringMs).toBeLessThanOrEqual(finishAtMs);
-    expect(starAtMs).toBeGreaterThan(finishAtMs);
-    expect(starAtMs + starMs).toBeLessThanOrEqual(bubbleAtMs);
+    expect(nextAtMs).toBeGreaterThan(finishAtMs + stampMs / 2);
+    expect(openAtMs).toBeGreaterThanOrEqual(finishAtMs + stampMs * 0.8);
+    expect(bubbleAtMs).toBeGreaterThan(openAtMs);
+    // a round's new star lights once the stamp has settled
+    expect(starAtMs).toBeGreaterThanOrEqual(finishAtMs + stampMs);
   });
 });
 

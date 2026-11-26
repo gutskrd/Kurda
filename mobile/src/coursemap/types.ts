@@ -1,4 +1,5 @@
 /** Course-map contract, mirroring the server. */
+import type { LessonKind } from '@kurda/shared';
 
 export type SkillState = 'locked' | 'unlocked' | 'completed' | 'gold' | 'decayed';
 
@@ -11,6 +12,8 @@ interface LessonNode {
   completed: boolean;
   /** Times finished, replays included; absent on older responses. */
   times?: number;
+  /** What the lesson is: new words, a conversation, or practice; absent on older responses. */
+  kind?: LessonKind;
 }
 
 export interface SkillNode {

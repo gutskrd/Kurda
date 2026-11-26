@@ -4,6 +4,7 @@ import {
   PATH_GEOMETRY,
   PATH_RETURN,
   PATH_START_WORDS,
+  PATH_STAMP_MOMENT,
   TOPIC_STARS,
   isSoraniDialect,
   lessonPath,
@@ -28,7 +29,7 @@ import { useApiGet, type ApiState } from '../lib/useApi';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { LinkButton } from '../components/Button';
 import { Sheet } from '../components/Sheet';
-import { ArrowIcon, BookIcon, CheckIcon, LockIcon, RepostIcon, StarIcon } from '../components/icons';
+import { ArrowIcon, BookIcon, CheckIcon, LockIcon, PracticeIcon, RepostIcon, StarIcon, TalkIcon, WordsIcon } from '../components/icons';
 import { ErrorState } from '../components/states';
 import { CourseMapSkeleton } from '../components/skeletons';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -36,9 +37,10 @@ import type { MessageKey } from '../i18n/en';
 import { GrammarNote } from './GrammarNote';
 import { JumpSheet } from './JumpSheet';
 import { courseProgress, lessonStates } from './map';
-import { RoundStars, StarRow, TopicRing } from './PathRing';
+import { RoundStars, StarRow, TopicBar } from './PathRing';
+import { TileStamp } from './PathScene';
 import { SectionCard, UnitDivider, UnitPin, levelWords, useUnitAtTop } from './PathSections';
-import { StopArt, UnitLandmark, UnitRail, UnitScenery, UpcomingUnit, useUnitsOnScreen, useWidth, type RailSection } from './PathWorld';
+import { MilestoneArt, StopArt, UnitLandmark, UnitRail, UnitScenery, UpcomingUnit, useUnitsOnScreen, useWidth, type RailSection } from './PathWorld';
 import { useDarkPage } from '../theme/useDarkPage';
 import { preloadLesson } from './preloadLesson';
 import type { CourseMap as Map, CourseSummary, PracticeDue, SkillNode } from './types';
@@ -61,43 +63,52 @@ const lessonHref = (lessonId: string, courseId: string): string =>
   `/app/learn/lesson/${lessonId}?course=${encodeURIComponent(courseId)}`;
 
 /**
- * The glyph on a stop, so its kind shows by shape as well as colour. A finished topic's coin shows its stars instead
- * (`RoundStars`; a check on a map too old to count them); the story, the chest and the learner's own stop carry none.
+ * The glyph on a stop, so its kind shows by shape as well as colour. A topic's tile shows what its next lesson is:
+ * letters for new words, a conversation, or practice (its number, or on the stop to do now a star, from a server too old
+ * to say); stamped once finished, the glyph steps back under Hevalo's print (path.css). The milestone carries its
+ * chapter's number.
  */
 function Glyph({ stop }: { stop: Stop }): React.JSX.Element | null {
   if (stop.kind === 'review') return <RepostIcon size={28} weight="bold" />;
   if (stop.kind === 'trophy' || stop.kind === 'story') return null;
-  // The stop to do now wears a star, as the road's main button.
-  if (stop.state === 'current') return <StarIcon size={34} weight="fill" />;
   if (stop.state === 'locked') return <LockIcon size={26} weight="bold" />;
-  if (stop.state === 'done') {
-    const refresh = stop.finish === 'refresh' && (
-      // Still done, with a small sign that a review would help.
-      <span className="lp-node-badge">
-        <RepostIcon size={14} weight="bold" />
-      </span>
+  const kind =
+    stop.launchKind === 'words' ? (
+      <WordsIcon size={32} />
+    ) : stop.launchKind === 'talk' ? (
+      <TalkIcon size={32} />
+    ) : stop.launchKind === 'practice' ? (
+      <PracticeIcon size={32} />
+    ) : stop.state === 'current' ? (
+      <StarIcon size={32} weight="fill" />
+    ) : stop.state === 'done' ? null : (
+      <span className="lp-node-num">{stop.number}</span>
     );
+  // Still done, with a small sign that a review would help.
+  if (stop.state === 'done' && stop.finish === 'refresh') {
     return (
       <>
-        {stop.rounds > 0 ? null : <CheckIcon size={32} weight="bold" />}
-        {refresh}
+        {kind}
+        <span className="lp-node-badge">
+          <RepostIcon size={14} weight="bold" />
+        </span>
       </>
     );
   }
-  return <span className="lp-node-num">{stop.number}</span>;
+  return kind;
 }
 
 function stopClass(stop: Stop): string {
   if (stop.kind === 'review') return 'is-review';
-  if (stop.kind === 'trophy') return `is-trophy${stop.earned ? ' is-earned' : ''}`;
-  if (stop.kind === 'story') return `is-story${stop.open ? ' is-won' : ' is-closed'}`;
+  if (stop.kind === 'trophy') return `is-milestone is-trophy${stop.earned ? ' is-earned' : ''}`;
+  if (stop.kind === 'story') return `is-milestone is-story${stop.open ? ' is-won' : ' is-closed'}`;
   return `is-${stop.state}${stop.finish ? ` is-${stop.finish}` : ''}`;
 }
 
 /**
- * How a stop is drawn (shared `pathStopSvg`): a finished skill is a gold coin whatever its review strength, faded only
- * when a refresh would help; review is an open stop; a chapter's story is a scroll tied on stone until the chapter is
- * done, then open on gold; a unit without a story ends at its chest.
+ * How a stop is drawn (shared `pathStopSvg`): a finished skill is its unit's tile as before, stamped (`TileStamp`), and
+ * faded a little when a refresh would help; review is an open stop. A unit's last stop, its story or its trophy, is drawn as its
+ * milestone (`MilestoneArt`), and this look says only whether it is won.
  */
 function stopLook(stop: Stop): PathStopLook {
   if (stop.kind === 'review') return 'review';
@@ -429,6 +440,35 @@ function writeSnapshot(courseId: string, snapshot: PathSnapshot): void {
   }
 }
 
+/*
+ * The finished stops already stamped on this device, per course, kept across visits so each is stamped once, the first
+ * time the learner is back on the road after finishing it. The first visit counts everything finished so far as stamped.
+ */
+const stampsKey = (courseId: string): string => `hevalo:stamped:${courseId}`;
+
+function readStamps(courseId: string): Set<string> | null {
+  try {
+    const raw = localStorage.getItem(stampsKey(courseId));
+    const value: unknown = raw ? JSON.parse(raw) : null;
+    return Array.isArray(value) ? new Set(value.filter((k): k is string => typeof k === 'string')) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStamps(courseId: string, keys: ReadonlySet<string>): void {
+  try {
+    localStorage.setItem(stampsKey(courseId), JSON.stringify([...keys]));
+  } catch {
+    // Storage blocked: a stop may be stamped again on a later visit, which does no harm.
+  }
+}
+
+/** Every finished topic on the road, by key. */
+function finishedKeys(path: Path<SkillNode>): string[] {
+  return path.units.flatMap((u) => u.stops.filter((p) => p.stop.kind === 'skill' && p.stop.state === 'done').map((p) => p.stop.key));
+}
+
 interface PathReturn {
   changes: PathChanges;
   prev: PathSnapshot;
@@ -437,21 +477,22 @@ interface PathReturn {
 }
 
 /**
- * The moments of a return (`PATH_RETURN`, counted from the draw as on the phone): the ring fills, a finished stop pops
- * gold, a star drops in, an opened stop loses its lock, a whole ring starts its next round, and the bubble moves on.
+ * The moments of a return (`PATH_RETURN`, counted from the draw as on the phone): the bar fills, a finished stop is
+ * stamped, a full bar starts its next round, an opened stop loses its lock, the bubble moves on, and a round's new star
+ * lights once the stamp has settled.
  */
-const STEP = { fill: 1, finish: 2, star: 3, open: 4, next: 5, bubble: 6 } as const;
+const STEP = { fill: 1, finish: 2, next: 3, open: 4, bubble: 5, star: 6 } as const;
 
 /** Where the return has got to (`STEP`), from 0 (drawn as it was) to `STEP.bubble`; null once over or with nothing to show. */
 function useReturnStep(ret: PathReturn | null): number | null {
   const [at, setAt] = useState<{ ret: PathReturn | null; step: number | null }>({ ret: null, step: null });
   useEffect(() => {
     if (!ret) return;
-    const { settleMs, finishAtMs, starAtMs, starMs, openAtMs, bubbleAtMs, bubbleMs, popMs } = PATH_RETURN;
-    const marks = [settleMs, finishAtMs, starAtMs, openAtMs, starAtMs + starMs, bubbleAtMs];
+    const { settleMs, finishAtMs, nextAtMs, openAtMs, bubbleAtMs, bubbleMs, popMs, starAtMs, starMs } = PATH_RETURN;
+    const marks = [settleMs, finishAtMs, nextAtMs, openAtMs, bubbleAtMs, starAtMs];
     // In order, each a moment after the last.
     const timers = marks.map((ms, i) => window.setTimeout(() => setAt({ ret, step: i + 1 }), ms));
-    timers.push(window.setTimeout(() => setAt({ ret, step: null }), bubbleAtMs + Math.max(bubbleMs, popMs, 400)));
+    timers.push(window.setTimeout(() => setAt({ ret, step: null }), Math.max(bubbleAtMs + Math.max(bubbleMs, popMs, 400), starAtMs + starMs + 40)));
     return () => timers.forEach((id) => window.clearTimeout(id));
   }, [ret]);
   if (!ret) return null;
@@ -477,6 +518,9 @@ const MASCOT_SIZE = 104;
 
 /** Units whose stops have already risen in this tab, by course; each rises once. */
 const RISEN = new Set<string>();
+
+/** A stamp waits this long on a plain visit, so the tile is seen as it was before it is stamped. */
+const STAMP_SETTLE_MS = 450;
 
 /** The section a stop is in, from 0; null for no stop. */
 function sectionOf(path: Path<SkillNode>, key: string | null): number | null {
@@ -590,6 +634,23 @@ export function CoursePath({
     }
     if (more) setRisen(new Set(RISEN));
   }, [screen.seen, reduceMotion, courseId]);
+
+  // The stops stamped on this device; read once the road is drawn, and on a first visit every finished stop so far.
+  const [stamped, setStamped] = useState<ReadonlySet<string> | null>(null);
+  if (path && stamped === null) setStamped(readStamps(courseId) ?? new Set(finishedKeys(path)));
+  useEffect(() => {
+    if (!path || !stamped) return;
+    // Under reduced motion there is no moment to wait for: what is finished is stamped as it is drawn.
+    const next = reduceMotion ? new Set([...stamped, ...finishedKeys(path)]) : stamped;
+    if (next.size !== stamped.size) setStamped(next);
+    writeStamps(courseId, next);
+  }, [path, stamped, reduceMotion, courseId]);
+  // Stops stamped in their moment on this visit, whose newest star lights in as the stamp settles.
+  const [fresh, setFresh] = useState<ReadonlySet<string>>(() => new Set());
+  const stampDone = useCallback((key: string) => {
+    setStamped((had) => (had && !had.has(key) ? new Set([...had, key]) : had));
+    setFresh((had) => new Set([...had, key]));
+  }, []);
 
   const nodeOf = useCallback((key: string | null): HTMLElement | null => {
     if (!key || !pathRef.current) return null;
@@ -733,20 +794,39 @@ export function CoursePath({
     if (step! < STEP.open && ret.changes.opened.includes(stop.key)) return { ...stop, state: 'locked', finish: null };
     return stop;
   };
-  /** A topic's ring and stars at this moment of a return, or as they are otherwise. */
-  const ringNow = (stop: SkillStop<SkillNode>): { filled: number; whole: boolean; from?: number; stars: number; earned: boolean } => {
+  /** A topic's bar at this moment of a return, or as it is otherwise. */
+  const barNow = (stop: SkillStop<SkillNode>): { filled: number; whole: boolean; from?: number } => {
     const of = stop.lessonsTotal;
-    const now = { filled: stop.rounds >= TOPIC_STARS ? of : stop.pieces, whole: stop.rounds >= TOPIC_STARS, stars: stop.rounds, earned: false };
+    const now = { filled: stop.pieces, whole: false };
     const change = playing ? ret.changes.ring.find((r) => r.key === stop.key) : undefined;
     if (!change) return now;
-    const before = change.from.rounds >= TOPIC_STARS ? of : change.from.pieces;
-    const roundDone = change.to.rounds > change.from.rounds;
-    if (step! < STEP.fill) return { filled: before, whole: false, stars: change.from.rounds, earned: false };
-    if (!roundDone) return { ...now, from: before };
-    // The round made whole: full and gold as the stop turns, its star dropping in, then the next round.
-    if (step! < STEP.next) return { filled: of, whole: step! >= STEP.finish, from: before, stars: step! >= STEP.star ? change.to.rounds : change.from.rounds, earned: step! >= STEP.star };
-    return { ...now, earned: true };
+    const before = change.from.rounds < TOPIC_STARS ? change.from.pieces : of;
+    if (step! < STEP.fill) return { filled: before, whole: false };
+    // A round made whole: the bar full and gold as the stop is stamped, then its next round.
+    if (change.to.rounds > change.from.rounds && step! < STEP.next) return { filled: of, whole: step! >= STEP.finish, from: before };
+    return { ...now, from: before };
   };
+  /** A finished topic's stars at this moment: a round won on the return lights its star once the stamp has settled. */
+  const starsNow = (stop: SkillStop<SkillNode>): { rounds: number; earned: boolean } => {
+    const change = playing ? ret.changes.ring.find((r) => r.key === stop.key) : undefined;
+    if (change && change.to.rounds > change.from.rounds) {
+      return step! < STEP.star ? { rounds: change.from.rounds, earned: false } : { rounds: stop.rounds, earned: true };
+    }
+    return { rounds: stop.rounds, earned: fresh.has(stop.key) };
+  };
+  // The next finished stop to stamp, one at a time down the road, once its unit is in view; under reduced motion none
+  // is played, and each is simply stamped.
+  const stampNext = (() => {
+    if (reduceMotion || !stamped) return null;
+    for (const unit of openUnits) {
+      if (screen.seen && !screen.seen.has(unit.unitId)) continue;
+      for (const { stop } of unit.stops) {
+        const drawn = drawnAs(stop);
+        if (drawn.kind === 'skill' && drawn.state === 'done' && !stamped.has(drawn.key)) return drawn.key;
+      }
+    }
+    return null;
+  })();
   const cheer = playing && step! >= STEP.bubble && (ret.changes.finished.length > 0 || ret.changes.opened.length > 0);
   // The unit in the pinned heading: the one at the top of the window, in the open section.
   const pinUnit = openUnits.find((u) => u.unitId === atTop) ?? openUnits[0]!;
@@ -842,7 +922,7 @@ export function CoursePath({
                           {spot && here && (
                             <PathMascot x={spot.x} y={spot.y} flip={sign * spot.x > sign * here.x} cheer={cheer} onPress={() => current && setOpenKey(current)} />
                           )}
-                          <UnitScenery unit={unit} dark={dark} near={near} mascot={spot} />
+                          <UnitScenery unit={unit} dark={dark} near={near} here={here ?? null} width={width} rtl={rtl} reduce={reduceMotion} />
                           {unit.stops.map(({ stop: real, x, y }, k) => {
                             const stop = drawnAs(real);
                             const isOpen = openKey === stop.key;
@@ -855,9 +935,15 @@ export function CoursePath({
                             const wobbling = wonNow && step! >= STEP.finish && !(step! >= STEP.open);
                             const unlocking = wonNow && step! >= STEP.open;
                             const look = wonNow && step! < STEP.open ? (real.kind === 'story' ? 'storyLocked' : 'chest') : stopLook(stop);
+                            // The milestone, the unit's last stop, stays slate until the moment its chapter is won.
+                            const milestone = real.kind === 'story' || real.kind === 'trophy';
                             // On a return the bubble waits for its moment, then arrives at the new stop.
                             const bubble = isCurrent && (!playing || step! >= STEP.bubble);
-                            const ring = stop.kind === 'skill' && stop.lessonsTotal > 0 ? ringNow(stop) : null;
+                            const bar = stop.kind === 'skill' && stop.lessonsTotal > 0 ? barNow(stop) : null;
+                            // A finished topic is stamped: already, or now in its moment; until then it is its tile as before.
+                            const stamping = stampNext === stop.key;
+                            const isStamped = stop.kind === 'skill' && stop.state === 'done' && (reduceMotion || (stamped?.has(stop.key) ?? true));
+                            const stars = stop.kind === 'skill' && isStamped && !stamping ? starsNow(stop) : null;
                             // A later chapter that can be tested into: its first stop offers the test rather than its card.
                             const jumpHere = unit.jumpKey === stop.key;
                             return (
@@ -886,32 +972,46 @@ export function CoursePath({
                                 )}
                                 <button
                                   type="button"
-                                  className={`lp-node ${stopClass(stop)}${finishing ? ' is-finishing' : ''}${opening ? ' is-opening' : ''}${wobbling ? ' is-wobbling' : ''}${unlocking ? ' is-unlocking' : ''}${near ? ' is-drawn' : ''}`}
+                                  className={`lp-node ${stopClass(stop)}${isStamped ? ' is-stamped' : ''}${stamping ? ' is-stamping' : ''}${finishing ? ' is-finishing' : ''}${opening ? ' is-opening' : ''}${wobbling ? ' is-wobbling' : ''}${unlocking ? ' is-unlocking' : ''}${near ? ' is-drawn' : ''}`}
                                   data-stop={stop.key}
+                                  style={stamping ? ({ '--stamp-press': `${(playing ? 0 : STAMP_SETTLE_MS) + PATH_STAMP_MOMENT.ms * PATH_STAMP_MOMENT.pressAt}ms` } as React.CSSProperties) : undefined}
                                   aria-label={jumpHere ? t('coursemap.jump.label', { n: unit.number.toLocaleString(locale) }) : stopLabel(stop, unit)}
                                   aria-haspopup={jumpHere ? 'dialog' : undefined}
                                   aria-expanded={jumpHere ? undefined : isOpen}
                                   aria-controls={isOpen ? popId : undefined}
                                   onClick={() => (jumpHere ? setJumpTo(unit) : setOpenKey(isOpen ? null : stop.key))}
                                 >
-                                  {/* The ring is the topic in hand: the one to do now, or one a return is filling. */}
-                                  {ring && near && stop.kind === 'skill' && (isCurrent || (playing && ret.changes.ring.some((r) => r.key === stop.key))) && (
-                                    <TopicRing of={stop.lessonsTotal} filled={ring.filled} whole={ring.whole} from={ring.from} />
+                                  {/* The bar is the topic in hand: the one to do now, or one a return is filling. */}
+                                  {bar && near && stop.kind === 'skill' && (isCurrent || (playing && ret.changes.ring.some((r) => r.key === stop.key))) && (
+                                    <TopicBar of={stop.lessonsTotal} filled={bar.filled} whole={bar.whole} from={bar.from} />
                                   )}
                                   <span className="lp-node-face">
-                                    <StopArt look={look} tone={unit.tone} dark={dark} near={near} />
-                                    {/* Now and then a glint sweeps the stop to do now, and a few sparks wink round it. */}
-                                    {isCurrent && near && (
-                                      <span className="lp-shine" aria-hidden="true">
-                                        <span className="lp-spark" />
-                                        <span className="lp-spark" />
-                                        <span className="lp-spark" />
-                                      </span>
+                                    {milestone ? (
+                                      <>
+                                        <MilestoneArt won={won && !(wonNow && step! < STEP.open)} dark={dark} near={near} />
+                                        <span className={`lp-milestone-num${won && !(wonNow && step! < STEP.open) ? ' is-won' : ''}`} aria-hidden="true">
+                                          {new Intl.NumberFormat(locale).format(unit.number)}
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <StopArt look={look} tone={unit.tone} dark={dark} near={near} />
                                     )}
-                                    {ring && stop.kind === 'skill' && stop.state === 'done' && <RoundStars rounds={ring.stars} earned={ring.earned} />}
+                                    {/* Now and then a glint sweeps the stop to do now. */}
+                                    {isCurrent && near && <span className="lp-shine" aria-hidden="true" />}
                                     <span className="lp-node-glyph">
                                       <Glyph stop={stop} />
                                     </span>
+                                    {near && stop.kind === 'skill' && stop.state === 'done' && (isStamped || stamping) && (
+                                      <TileStamp
+                                        stopKey={stop.key}
+                                        dark={dark}
+                                        worn={stop.finish === 'refresh'}
+                                        pressing={stamping && !isStamped}
+                                        delay={playing ? 0 : STAMP_SETTLE_MS}
+                                        onStamped={stampDone}
+                                      />
+                                    )}
+                                    {near && stars && <RoundStars rounds={stars.rounds} earned={stars.earned} />}
                                   </span>
                                 </button>
                                 {isOpen && (

@@ -127,6 +127,9 @@ import { Swatches } from '@phosphor-icons/react/dist/icons/Swatches';
 // The phone platforms, on the front page's download buttons.
 import { AppleLogo } from '@phosphor-icons/react/dist/icons/AppleLogo';
 import { AndroidLogo } from '@phosphor-icons/react/dist/icons/AndroidLogo';
+// What a lesson on the road is: new words, a conversation, or practice.
+import { ChatsCircle } from '@phosphor-icons/react/dist/icons/ChatsCircle';
+import { Barbell } from '@phosphor-icons/react/dist/icons/Barbell';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 import { useMemo } from 'react';
 import { HEVALO_GLYPHS, coinSvg, type CurrencyOptions, type HevaloGlyph } from '@kurda/shared';
@@ -358,6 +361,10 @@ export const PaperIcon = named(Swatches, 18);
 /* The two phone platforms, solid as their own marks are, for the buttons that say the apps are coming (landing/AppSoon). */
 export const IosIcon = named(AppleLogo, 20, 'fill');
 export const AndroidIcon = named(AndroidLogo, 20, 'fill');
+/* What the lesson the road's stop to do now opens is, on its face: letters for new words, a conversation, a workout. */
+export const WordsIcon = named(TextAa, 34, 'fill');
+export const TalkIcon = named(ChatsCircle, 34, 'fill');
+export const PracticeIcon = named(Barbell, 34, 'fill');
 
 /** Show or hide a password: one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {
