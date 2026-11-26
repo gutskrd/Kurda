@@ -12,6 +12,7 @@ import {
   localeDir,
   mascotSpot,
   pathChanges,
+  stopPrints,
   pathLand,
   pathSnapshot,
   type LessonPath as Path,
@@ -37,7 +38,7 @@ import type { MessageKey } from '../i18n/en';
 import { GrammarNote } from './GrammarNote';
 import { JumpSheet } from './JumpSheet';
 import { courseProgress, lessonStates } from './map';
-import { RoundPrints, TopicBar } from './PathRing';
+import { RoundStars, StarRow, TopicBar } from './PathRing';
 import { TileStamp } from './PathScene';
 import { SectionCard, UnitDivider, UnitPin, levelWords, useUnitAtTop } from './PathSections';
 import { MilestoneArt, StopArt, UnitLandmark, UnitRail, UnitScenery, UpcomingUnit, useUnitsOnScreen, useWidth, type RailSection } from './PathWorld';
@@ -258,7 +259,7 @@ function StopCard({
           {skill.title}
         </h3>
         {where && <p className="lp-pop-line">{where}</p>}
-        {stop.rounds > 0 && <RoundPrints rounds={stop.rounds} />}
+        {stop.rounds > 0 && <StarRow rounds={stop.rounds} />}
         <LinkButton to={action.to} state={{ title: skill.title, from: home }} block className="lp-pop-start">
           <span>{action.label}</span>
           {xp && <span className="lp-pop-start-xp">{t(action.again ? 'coursemap.xp.again' : 'coursemap.xp.first', { min: number(xp.min), max: number(xp.max) })}</span>}
@@ -308,7 +309,7 @@ function StopCard({
       )}
       {stop.lessonsTotal > 0 && stop.state !== 'locked' && (
         <div className="lp-pop-progress">
-          {stop.rounds > 0 && <RoundPrints rounds={stop.rounds} />}
+          {stop.rounds > 0 && <StarRow rounds={stop.rounds} />}
           {stop.rounds < TOPIC_STARS && (
             <div className="lp-bar" aria-hidden="true">
               <span style={{ width: `${share}%` }} />
@@ -478,20 +479,21 @@ interface PathReturn {
 
 /**
  * The moments of a return (`PATH_RETURN`, counted from the draw as on the phone): the bar fills, a finished stop is
- * stamped, a full bar starts its next round, an opened stop loses its lock, and the bubble moves on.
+ * stamped, a full bar starts its next round, an opened stop loses its lock, the bubble moves on, and a round's new star
+ * lights once the stamp has settled.
  */
-const STEP = { fill: 1, finish: 2, next: 3, open: 4, bubble: 5 } as const;
+const STEP = { fill: 1, finish: 2, next: 3, open: 4, bubble: 5, star: 6 } as const;
 
 /** Where the return has got to (`STEP`), from 0 (drawn as it was) to `STEP.bubble`; null once over or with nothing to show. */
 function useReturnStep(ret: PathReturn | null): number | null {
   const [at, setAt] = useState<{ ret: PathReturn | null; step: number | null }>({ ret: null, step: null });
   useEffect(() => {
     if (!ret) return;
-    const { settleMs, finishAtMs, nextAtMs, openAtMs, bubbleAtMs, bubbleMs, popMs } = PATH_RETURN;
-    const marks = [settleMs, finishAtMs, nextAtMs, openAtMs, bubbleAtMs];
+    const { settleMs, finishAtMs, nextAtMs, openAtMs, bubbleAtMs, bubbleMs, popMs, starAtMs, starMs } = PATH_RETURN;
+    const marks = [settleMs, finishAtMs, nextAtMs, openAtMs, bubbleAtMs, starAtMs];
     // In order, each a moment after the last.
     const timers = marks.map((ms, i) => window.setTimeout(() => setAt({ ret, step: i + 1 }), ms));
-    timers.push(window.setTimeout(() => setAt({ ret, step: null }), bubbleAtMs + Math.max(bubbleMs, popMs, 400)));
+    timers.push(window.setTimeout(() => setAt({ ret, step: null }), Math.max(bubbleAtMs + Math.max(bubbleMs, popMs, 400), starAtMs + starMs + 40)));
     return () => timers.forEach((id) => window.clearTimeout(id));
   }, [ret]);
   if (!ret) return null;
@@ -644,7 +646,12 @@ export function CoursePath({
     if (next.size !== stamped.size) setStamped(next);
     writeStamps(courseId, next);
   }, [path, stamped, reduceMotion, courseId]);
-  const stampDone = useCallback((key: string) => setStamped((had) => (had && !had.has(key) ? new Set([...had, key]) : had)), []);
+  // Stops stamped in their moment on this visit, whose newest star lights in as the stamp settles.
+  const [fresh, setFresh] = useState<ReadonlySet<string>>(() => new Set());
+  const stampDone = useCallback((key: string) => {
+    setStamped((had) => (had && !had.has(key) ? new Set([...had, key]) : had));
+    setFresh((had) => new Set([...had, key]));
+  }, []);
 
   const nodeOf = useCallback((key: string | null): HTMLElement | null => {
     if (!key || !pathRef.current) return null;
@@ -800,6 +807,14 @@ export function CoursePath({
     if (change.to.rounds > change.from.rounds && step! < STEP.next) return { filled: of, whole: step! >= STEP.finish, from: before };
     return { ...now, from: before };
   };
+  /** A finished topic's stars at this moment: a round won on the return lights its star once the stamp has settled. */
+  const starsNow = (stop: SkillStop<SkillNode>): { rounds: number; earned: boolean } => {
+    const change = playing ? ret.changes.ring.find((r) => r.key === stop.key) : undefined;
+    if (change && change.to.rounds > change.from.rounds) {
+      return step! < STEP.star ? { rounds: change.from.rounds, earned: false } : { rounds: stop.rounds, earned: true };
+    }
+    return { rounds: stop.rounds, earned: fresh.has(stop.key) };
+  };
   // The next finished stop to stamp, one at a time down the road, once its unit is in view; under reduced motion none
   // is played, and each is simply stamped.
   const stampNext = (() => {
@@ -929,6 +944,9 @@ export function CoursePath({
                             // A finished topic is stamped: already, or now in its moment; until then it is its tile as before.
                             const stamping = stampNext === stop.key;
                             const isStamped = stop.kind === 'skill' && stop.state === 'done' && (reduceMotion || (stamped?.has(stop.key) ?? true));
+                            // Hevalo's prints on its seal walk on toward the next stop, mirrored with the line.
+                            const prints = stopPrints(unit.stops, k, rtl ? -1 : 1);
+                            const stars = stop.kind === 'skill' && isStamped && !stamping ? starsNow(stop) : null;
                             // A later chapter that can be tested into: its first stop offers the test rather than its card.
                             const jumpHere = unit.jumpKey === stop.key;
                             return (
@@ -991,11 +1009,14 @@ export function CoursePath({
                                         stopKey={stop.key}
                                         dark={dark}
                                         worn={stop.finish === 'refresh'}
+                                        heading={prints.heading}
+                                        rest={prints.rest}
                                         pressing={stamping && !isStamped}
                                         delay={playing ? 0 : STAMP_SETTLE_MS}
                                         onStamped={stampDone}
                                       />
                                     )}
+                                    {near && stars && <RoundStars rounds={stars.rounds} earned={stars.earned} />}
                                   </span>
                                 </button>
                                 {isOpen && (

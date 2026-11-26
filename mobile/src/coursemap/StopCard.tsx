@@ -18,7 +18,7 @@ import { heldRow } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { type ToneColors } from './path';
-import { RoundPrints } from './TopicBar';
+import { StarRow } from './TopicBar';
 import type { SkillNode } from './types';
 
 type Stop = PathStop<SkillNode>;
@@ -168,7 +168,7 @@ function GoCard({ stop, tone, titleRef, actions }: { stop: Extract<Stop, { kind:
         {skill.title}
       </Text>
       {where ? <Text style={[styles.goLine, dir.text, { color: ink }]}>{where}</Text> : null}
-      {stop.rounds > 0 ? <Prints rounds={stop.rounds} /> : null}
+      {stop.rounds > 0 ? <Stars rounds={stop.rounds} /> : null}
       {action ? <StartButton label={action.label} xp={xpOf(stop, t, locale)} tone={tone} onPress={action.go} /> : null}
       {skill.hasGrammar ? <Tips skill={skill} colour={ink} onTips={actions.onTips} /> : null}
     </>
@@ -395,7 +395,7 @@ function PanelCard({
       ) : null}
       {stop.lessonsTotal > 0 && stop.state !== 'locked' ? (
         <View style={styles.progress}>
-          {stop.rounds > 0 ? <Prints rounds={stop.rounds} /> : null}
+          {stop.rounds > 0 ? <Stars rounds={stop.rounds} /> : null}
           {stop.rounds < TOPIC_STARS ? (
             // Progress, not a reward, so the ink like the ring's pieces.
             <View style={[styles.bar, { backgroundColor: colors.controlTrack }]}>
@@ -427,12 +427,11 @@ function PanelCard({
   );
 }
 
-/** A topic's rounds as Hevalo's prints, gold for each round played. Hidden from screen readers, as the line below says it. */
-function Prints({ rounds }: { rounds: number }): React.JSX.Element {
-  const dir = useDirection();
+/** A topic's three stars, gold for each round played. Hidden from screen readers, as the line below says it. */
+function Stars({ rounds }: { rounds: number }): React.JSX.Element {
   return (
-    <View style={[styles.stars, { flexDirection: dir.row }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <RoundPrints rounds={rounds} />
+    <View style={styles.stars} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <StarRow rounds={rounds} />
     </View>
   );
 }

@@ -478,11 +478,13 @@ describe('coming back to the path', () => {
   });
 
   it('fills the bar before the stop is stamped, and lets the stamp lift before the next stop opens and the bubble moves on', () => {
-    const { settleMs, ringMs, finishAtMs, stampMs, nextAtMs, openAtMs, bubbleAtMs } = PATH_RETURN;
+    const { settleMs, ringMs, finishAtMs, stampMs, nextAtMs, openAtMs, bubbleAtMs, starAtMs } = PATH_RETURN;
     expect(settleMs + ringMs).toBeLessThanOrEqual(finishAtMs);
     expect(nextAtMs).toBeGreaterThan(finishAtMs + stampMs / 2);
     expect(openAtMs).toBeGreaterThanOrEqual(finishAtMs + stampMs * 0.8);
     expect(bubbleAtMs).toBeGreaterThan(openAtMs);
+    // a round's new star lights once the stamp has settled
+    expect(starAtMs).toBeGreaterThanOrEqual(finishAtMs + stampMs);
   });
 });
 

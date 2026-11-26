@@ -300,13 +300,18 @@ export const PATH_PIGEON_FLIGHT = {
   twig: readonly (readonly [number, number])[];
 };
 
-/** A finished stop's stamp turned its own way: a few degrees either side, the same for the same stop every time. */
-export function stampTilt(key: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 16777619) >>> 0;
-  const t = (h % 1000) / 1000;
-  // Never quite straight: from 3 to 13 degrees one way or the other.
-  return Math.round((t < 0.5 ? -1 : 1) * (3 + (t < 0.5 ? t : t - 0.5) * 20) * 10) / 10;
+/**
+ * Hevalo's prints on a finished stop's seal: `heading`, the way they point, in degrees clockwise from straight up, from
+ * this stop toward the next one on the road (straight on down after the last), as the stops are laid out across the
+ * screen (`sign` -1 where the line runs right to left); and `rest`, whether he stands there on all four, as he does at
+ * the chapter's last topic, the road's pause before its milestone.
+ */
+export function stopPrints(stops: readonly { stop: { kind: string }; x: number; y: number }[], k: number, sign: 1 | -1 = 1): { heading: number; rest: boolean } {
+  const here = stops[k];
+  const next = stops[k + 1];
+  if (!here || !next) return { heading: 180, rest: false };
+  const heading = ((Math.atan2(sign * (next.x - here.x), -(next.y - here.y)) * 180) / Math.PI + 360) % 360;
+  return { heading: Math.round(heading * 10) / 10, rest: next.stop.kind === 'story' || next.stop.kind === 'trophy' };
 }
 
 /**

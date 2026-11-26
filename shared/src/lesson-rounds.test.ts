@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { PATH_BAR, TOPIC_STARS, barPieces, nextInRound, topicRounds } from './lesson-rounds.js';
+import { PATH_BAR, TOPIC_STARS, barPieces, nextInRound, roundStars, starPath, topicRounds } from './lesson-rounds.js';
+import { PATH_STAMP_ART } from './art/path-land.js';
 
 describe('a topic’s rounds', () => {
   it('fills a piece of the first round for each lesson finished once', () => {
@@ -68,6 +69,35 @@ describe('the bar over a topic’s stop', () => {
 
   it('sits above the tile, clear of it', () => {
     expect(PATH_BAR.y + h).toBeLessThan(0);
+  });
+});
+
+describe('a topic’s stars', () => {
+  it('lights one star for each full round, none before the first and no more than three', () => {
+    expect(roundStars(0)).toEqual([]);
+    expect([1, 2, 3, 7].map((r) => roundStars(r).length)).toEqual([1, 2, 3, 3]);
+    expect(TOPIC_STARS).toBe(3);
+  });
+
+  it('stands them along the tile’s near edge, on its face and clear of the seal above them', () => {
+    // the seal's foot, in the stop's points (its canvas laid from 8, 2)
+    const sealFoot = 2 + PATH_STAMP_ART.cy + PATH_STAMP_ART.r;
+    for (const rounds of [1, 2, 3]) {
+      const stars = roundStars(rounds);
+      for (const s of stars) {
+        // on the tile's face (72 by 60, round its middle at 36, 30)
+        expect(((s.x - 36) / 34) ** 2 + ((s.y + s.r - 30) / 30) ** 2, `${rounds}`).toBeLessThan(1);
+        expect(s.y - s.r, `${rounds}`).toBeGreaterThan(sealFoot);
+      }
+      for (let i = 1; i < stars.length; i++) expect(stars[i]!.x - stars[i - 1]!.x).toBeGreaterThan(stars[i]!.r + stars[i - 1]!.r - 4);
+    }
+  });
+
+  it('draws a star as ten corners, point up', () => {
+    const d = starPath(36, 30, 10);
+    expect(d.match(/[ML]/g)).toHaveLength(10);
+    expect(d.startsWith('M36 20')).toBe(true);
+    expect(d.endsWith('Z')).toBe(true);
   });
 });
 

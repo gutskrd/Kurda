@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import Svg, { Defs, Ellipse, RadialGradient, Stop as GradientStop } from 'react-native-svg';
@@ -28,7 +28,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { FACE_INK, REST, barAt, barOf, stopLook, type ToneColors } from './path';
 import { MilestoneArt, STOP_FACE, StopArt } from './PathWorld';
 import { TileStamp, stampTrack } from './TileStamp';
-import { TopicBar } from './TopicBar';
+import { RoundStars, TopicBar } from './TopicBar';
 import type { SkillNode } from './types';
 
 const { node: NODE } = PATH_GEOMETRY;
@@ -59,12 +59,15 @@ const PULSE_AT_MS = 700;
 
 /**
  * How a finished topic's stamp shows: `pressing` plays its moment once after `delay` (shared `PATH_STAMP_MOMENT`), a
- * light tap felt as it lands, then `onStamped`; otherwise it is simply there.
+ * light tap felt as it lands, then `onStamped`; otherwise it is simply there. Hevalo's prints in it point `heading`
+ * degrees clockwise from up, toward the next stop, four together where he `rest`s (shared `stopPrints`).
  */
 export interface StopStamp {
   pressing: boolean;
   delay: number;
   onStamped: () => void;
+  heading: number;
+  rest: boolean;
 }
 
 /**
@@ -202,13 +205,17 @@ export function SkillNodeView({
   const stamped = useRef(stamp?.onStamped);
   stamped.current = stamp?.onStamped;
   const pressDelay = stamp?.delay ?? 0;
+  // Stamped in its moment just now: its newest star lights in as the stamp settles.
+  const [fresh, setFresh] = useState(false);
   useEffect(() => {
     if (!pressing) return;
     moment.setValue(0);
     const { ms, pressAt } = PATH_STAMP_MOMENT;
     const run = Animated.timing(moment, { toValue: 1, duration: ms, delay: pressDelay, easing: Easing.linear, useNativeDriver: true, isInteraction: false });
     run.start(({ finished }) => {
-      if (finished) stamped.current?.();
+      if (!finished) return;
+      setFresh(true);
+      stamped.current?.();
     });
     const knock = setTimeout(() => haptic('tap'), pressDelay + ms * pressAt);
     return () => {
@@ -356,7 +363,13 @@ export function SkillNodeView({
                 ) : null}
               </Animated.View>
             ) : null}
-            {stamp && near && stop.kind === 'skill' ? <TileStamp stopKey={stop.key} dark={scheme === 'dark'} worn={stop.finish === 'refresh'} moment={pressing ? moment : null} /> : null}
+            {stamp && near && stop.kind === 'skill' ? (
+              <TileStamp stopKey={stop.key} dark={scheme === 'dark'} worn={stop.finish === 'refresh'} heading={stamp.heading} rest={stamp.rest} moment={pressing ? moment : null} />
+            ) : null}
+            {/* Its stars, once stamped: a round won on the return lights its new one once the stamp has settled. */}
+            {stamp && !pressing && near && stop.kind === 'skill' && stop.rounds > 0 ? (
+              <RoundStars rounds={stop.rounds} earned={roundDone || fresh} delay={fresh ? 0 : PATH_RETURN.starAtMs} />
+            ) : null}
             {stop.kind === 'skill' && stop.finish === 'refresh' ? (
               <View style={[styles.badge, { backgroundColor: colors.background, borderColor: tone.fill }]} pointerEvents="none">
                 <Icon name="review" size={14} color={tone.text} />

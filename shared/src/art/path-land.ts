@@ -275,26 +275,42 @@ export function pathStopSvg(opts: PathStopOptions): string {
 }
 
 /**
- * Hevalo's hoofprint as path data, toes forward up the road: the two halves of a deer's slot with the dewclaws behind,
- * about 32 points tall at `s` 1, centred on (`x`, `y`). The apps draw it small for a topic's rounds in its card.
+ * Hevalo's hoofprint as path data: the two halves of a deer's slot with the dewclaws behind, about 32 points tall at `s`
+ * 1, centred on (`x`, `y`), its toes pointing `turn` degrees clockwise from straight up.
  */
-export function hoofprintPath(x: number, y: number, s = 1): string {
-  const half = (m: 1 | -1): string => {
-    const p = (u: number, v: number): string => `${n(x + m * u * s)} ${n(y + v * s)}`;
-    return `M${p(1.5, -13.5)}C${p(7.4, -10.6)} ${p(10.6, -1.4)} ${p(10.2, 5.6)}C${p(9.9, 10.4)} ${p(4.9, 12.2)} ${p(2.2, 9.4)}C${p(0.5, 3.6)} ${p(0.2, -5.6)} ${p(1.5, -13.5)}Z`;
-  };
-  const claw = (m: 1 | -1): string => `M${n(x + m * 4.4 * s)} ${n(y + 15 * s)}c${n(m * 1.6 * s)} ${n(-0.6 * s)} ${n(m * 3 * s)} ${n(0.4 * s)} ${n(m * 2.6 * s)} ${n(1.8 * s)}c${n(m * -0.5 * s)} ${n(1.2 * s)} ${n(m * -2.4 * s)} ${n(1 * s)} ${n(m * -2.6 * s)} ${n(-1.8 * s)}Z`;
+export function hoofprintPath(x: number, y: number, s = 1, turn = 0): string {
+  const a = (turn * Math.PI) / 180;
+  const [cos, sin] = [Math.cos(a), Math.sin(a)];
+  const at = (u: number, v: number): string => `${n(x + (u * cos - v * sin) * s)} ${n(y + (u * sin + v * cos) * s)}`;
+  const half = (m: 1 | -1): string =>
+    `M${at(m * 1.5, -13.5)}C${at(m * 7.4, -10.6)} ${at(m * 10.6, -1.4)} ${at(m * 10.2, 5.6)}C${at(m * 9.9, 10.4)} ${at(m * 4.9, 12.2)} ${at(m * 2.2, 9.4)}C${at(m * 0.5, 3.6)} ${at(m * 0.2, -5.6)} ${at(m * 1.5, -13.5)}Z`;
+  const claw = (m: 1 | -1): string => `M${at(m * 4.4, 15)}C${at(m * 6, 14.4)} ${at(m * 7.4, 15.4)} ${at(m * 7, 16.8)}C${at(m * 6.5, 18)} ${at(m * 4.6, 17.8)} ${at(m * 4.4, 15)}Z`;
   return half(1) + half(-1) + claw(1) + claw(-1);
 }
 
-/** The stamp's canvas, and how far round its rim the press wavers, so no two stamps are cut alike. */
-export const PATH_STAMP_ART = { box: 56, r: 22, rim: 3.4 } as const;
+/**
+ * The stamp's canvas, the seal's middle on it and its radius, and its rim's width: in the upper part of the tile's face,
+ * leaving room for the topic's stars along the near edge (shared `roundStars`). The apps lay the canvas over the stop
+ * from (8, 2) of its 72-point button.
+ */
+export const PATH_STAMP_ART = { box: 56, cx: 28, cy: 23, r: 17.5, rim: 3 } as const;
+
+/**
+ * Where Hevalo's prints stand in the seal, in the print's own frame (forward is up), and how big each is: a step of two,
+ * one hoof ahead of the other along the way he walks, or four standing together where he rests.
+ */
+const PRINTS: Record<2 | 4, { s: number; at: ReadonlyArray<readonly [number, number]> }> = {
+  2: { s: 0.4, at: [[-2.6, 5.4], [2.6, -5.4]] },
+  4: { s: 0.3, at: [[-4.2, -4.8], [4.2, -4.8], [-4.6, 5.6], [4.6, 5.6]] },
+};
 
 export interface PathStampOptions {
   /** Each stamp's own press: the rim's unevenness, from the stop it is on. */
   seed?: string;
-  /** A tiny mark round the rim, the stamp's own for a kind of lesson; plain by default. */
-  motif?: 'words' | 'talk' | 'practice' | null;
+  /** Which way Hevalo's prints point, in degrees clockwise from straight up: toward the next stop (shared `stopPrints`). */
+  heading?: number;
+  /** His prints in the seal: a step of two, four standing together where he rests, or none. */
+  prints?: 0 | 2 | 4;
   /** Worn, where a refresh would help: the foil a little rubbed. */
   worn?: boolean;
   dark?: boolean;
@@ -303,34 +319,38 @@ export interface PathStampOptions {
 }
 
 /**
- * Hevalo's stamp on a finished tile: his hoofprint in a round seal, struck in gold foil and pressed into the tile, so a
- * shadow lies along the inside of its upper left edges. The rim is pressed by hand: a little thicker here, thinner
- * there, never quite round. The apps lay it over the tile's face, turned a little each its own way (`stampTilt`).
+ * Hevalo's stamp on a finished tile: a round seal with his prints in it, walking on toward the next stop, struck in gold
+ * foil and pressed into the tile, so a shadow lies along the inside of its upper left edges. The rim is pressed by hand:
+ * a little thicker here, thinner there, never quite round.
  */
 export function pathStampSvg(opts: PathStampOptions = {}): string {
-  const { dark = false } = opts;
-  const { box: B, r, rim } = PATH_STAMP_ART;
+  const { dark = false, heading = 180 } = opts;
+  const { box: B, cx, cy, r, rim } = PATH_STAMP_ART;
   const size = opts.size ?? B;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
-  const prefix = prefixFor(opts.idPrefix, 'stamp', opts.seed, opts.motif ?? '', opts.worn, dark);
+  const count = opts.prints ?? 2;
+  const prefix = prefixFor(opts.idPrefix, 'stamp', opts.seed, heading, count, opts.worn, dark);
   const g = PATH_GOLD[dark ? 'dark' : 'light'];
   const foil = opts.worn ? mix(g.face, '#9aa6ac', 0.35) : g.face;
   const shade = opts.worn ? mix(g.side, '#6f7a80', 0.35) : g.side;
   const rand = seeded(`stamp|${opts.seed ?? ''}`);
-  const c = B / 2;
   // The rim: an outer and an inner edge, each wavering a little round the circle, as a hand presses unevenly.
   const ring = (radius: number, wobble: number): string => {
     const pts: Pt[] = [];
     for (let i = 0; i < 28; i++) {
       const a = (i / 28) * Math.PI * 2;
       const k = radius + (rand() - 0.5) * wobble;
-      pts.push([c + Math.cos(a) * k, c + Math.sin(a) * k]);
+      pts.push([cx + Math.cos(a) * k, cy + Math.sin(a) * k]);
     }
     return smoothPath(pts, true);
   };
-  let marks = ring(r, 0.9) + reverse(ring(r - rim, 1.4));
-  marks += hoofprintPath(c, c - 1.2, 0.88);
-  if (opts.motif) marks += rimMotif(opts.motif, c, r - rim - 3.6);
+  let marks = ring(r, 0.8) + reverse(ring(r - rim, 1.2));
+  // His prints, each turned with the way he walks, set out in his own frame turned the same way.
+  if (count) {
+    const { s, at } = PRINTS[count];
+    const a = (heading * Math.PI) / 180;
+    for (const [u, v] of at) marks += hoofprintPath(cx + u * Math.cos(a) - v * Math.sin(a), cy + u * Math.sin(a) + v * Math.cos(a), s, heading);
+  }
   const clip = `${prefix}m`;
   // Pressed in: the foil's own shade along the inside of its upper left edges, a faint dark edge round it for any tile.
   const body =
@@ -355,19 +375,6 @@ function reverse(d: string): string {
     out += `C${n(c2[0])} ${n(c2[1])} ${n(c1[0])} ${n(c1[1])} ${n(to[0])} ${n(to[1])}`;
   }
   return `${out}Z`;
-}
-
-/** Six tiny marks round the inside of a stamp's rim, one kind of lesson's own: little lines for words, bubbles for a talk, bars for practice. */
-function rimMotif(kind: 'words' | 'talk' | 'practice', c: number, r: number): string {
-  let out = '';
-  for (let i = 0; i < 6; i++) {
-    const a = ((i + 0.5) / 6) * Math.PI * 2 + Math.PI / 2;
-    const [x, y] = [c + Math.cos(a) * r, c + Math.sin(a) * r];
-    if (kind === 'talk') out += ellipsePath(x, y, 1.3, 1.1);
-    else if (kind === 'words') out += `M${n(x - 1.6)} ${n(y - 0.6)}h3.2v1.2h-3.2Z`;
-    else out += `M${n(x - 0.6)} ${n(y - 1.6)}h1.2v3.2h-1.2Z`;
-  }
-  return out;
 }
 
 /**

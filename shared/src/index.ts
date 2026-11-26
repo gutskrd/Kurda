@@ -252,7 +252,7 @@ export {
   unitTone,
 } from './lesson-path.js';
 /** A topic's rounds: the ring round its stop and the stars under it, from how often each lesson was finished. */
-export { PATH_BAR, TOPIC_STARS, barPieces, nextInRound, topicRounds, type TopicRounds } from './lesson-rounds.js';
+export { PATH_BAR, TOPIC_STARS, barPieces, nextInRound, roundStars, starPath, topicRounds, type TopicRounds } from './lesson-rounds.js';
 /** The land the lesson path runs through: each unit's landscape, its landmark and the person who belongs to it. */
 export {
   PATH_GROUNDS,
@@ -273,7 +273,7 @@ export {
   pathScene,
   sceneBeat,
   sceneBeatMs,
-  stampTilt,
+  stopPrints,
   unitScenery,
   type PathBox,
   type SceneAct,

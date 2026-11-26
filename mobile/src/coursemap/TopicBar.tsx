@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { PATH_BAR, PATH_RETURN, TOPIC_STARS, barPieces, hoofprintPath } from '@kurda/shared';
+import { PATH_BAR, PATH_RETURN, TOPIC_STARS, barPieces, roundStars, starPath } from '@kurda/shared';
 import { useDirection } from '../reports/direction';
 import { timing } from '../theme/animate';
 import { useTheme } from '../theme/ThemeProvider';
@@ -107,15 +107,70 @@ export function TopicBar({
   );
 }
 
-/** A topic's rounds in its card: Hevalo's print in gold for each round played, the rest the bar's quiet track. */
-export function RoundPrints({ rounds }: { rounds: number }): React.JSX.Element {
+/** A star's edge, a little darker than the gold, so it reads on any unit's colour (as the website's path.css). */
+const STAR_EDGE = 'rgba(58, 35, 6, 0.45)';
+
+/**
+ * A finished topic's stars along its tile's near edge, one for each full round. `earned` lights the newest in with a
+ * short pop after `delay`: once the stamp has settled (`PATH_RETURN.starAtMs` on a return).
+ */
+export function RoundStars({ rounds, earned = false, delay = 0 }: { rounds: number; earned?: boolean; delay?: number }): React.JSX.Element | null {
+  const { colors } = useTheme();
+  const stars = roundStars(rounds);
+  const pop = useRef(new Animated.Value(earned ? 0 : 1)).current;
+  useEffect(() => {
+    if (!earned) {
+      pop.setValue(1);
+      return;
+    }
+    pop.setValue(0);
+    const run = timing(pop, 1, PATH_RETURN.starMs, { delay });
+    run.start();
+    return () => run.stop();
+  }, [earned, delay, pop]);
+  if (stars.length === 0) return null;
+  const last = stars[stars.length - 1]!;
+  const before = earned ? stars.slice(0, -1) : stars;
+  const one = (s: { x: number; y: number; r: number }, key: number) => (
+    <Path key={key} d={starPath(s.x, s.y, s.r)} fill={colors.gold} stroke={STAR_EDGE} strokeWidth={1.4} strokeLinejoin="round" />
+  );
+  // The newest star is drawn in its own box so it grows from its middle.
+  const size = last.r * 4;
+  return (
+    <View style={styles.stars} pointerEvents="none" aria-hidden testID={`lp-stars-${stars.length}`}>
+      <Svg width={72} height={72} viewBox="0 0 72 72">
+        {before.map(one)}
+      </Svg>
+      {earned ? (
+        <Animated.View
+          style={[
+            styles.newest,
+            { left: last.x - size / 2, top: last.y - size / 2, width: size, height: size },
+            {
+              opacity: pop.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1] }),
+              transform: [{ scale: pop.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1.8, 0.9, 1] }) }],
+            },
+          ]}
+          testID="lp-star-earned"
+        >
+          <Svg width={size} height={size} viewBox={`${last.x - size / 2} ${last.y - size / 2} ${size} ${size}`}>
+            {one(last, 0)}
+          </Svg>
+        </Animated.View>
+      ) : null}
+    </View>
+  );
+}
+
+/** A topic's three stars in its card: gold for each round played, the bar's quiet track for the rest. */
+export function StarRow({ rounds }: { rounds: number }): React.JSX.Element {
   const { scheme, colors } = useTheme();
   const dir = useDirection();
   return (
-    <View style={[styles.prints, { flexDirection: dir.row }]} aria-hidden testID={`lp-card-rounds-${rounds}`}>
+    <View style={[styles.row, { flexDirection: dir.row }]} aria-hidden testID={`lp-card-stars-${rounds}`}>
       {Array.from({ length: TOPIC_STARS }, (_, i) => (
-        <Svg key={i} width={22} height={24} viewBox="0 0 22 24">
-          <Path d={hoofprintPath(11, 12, 0.62)} fill={i < rounds ? colors.gold : TRACK[scheme]} />
+        <Svg key={i} width={26} height={26} viewBox="0 0 24 24">
+          <Path d={starPath(12, 12.6, 10.6)} fill={i < rounds ? colors.gold : TRACK[scheme]} stroke={i < rounds ? STAR_EDGE : 'transparent'} strokeWidth={1.2} strokeLinejoin="round" />
         </Svg>
       ))}
     </View>
@@ -126,5 +181,7 @@ const styles = StyleSheet.create({
   // Over the stop's 72-point button, a touch wider than it, its top `PATH_BAR.y` above it.
   bar: { position: 'absolute', left: PATH_BAR.x, top: PATH_BAR.y, width: PATH_BAR.w, height: PATH_BAR.h },
   piece: { position: 'absolute', top: 0, overflow: 'hidden' },
-  prints: { gap: 6 },
+  stars: { position: 'absolute', left: 0, top: 0, width: 72, height: 72 },
+  newest: { position: 'absolute' },
+  row: { gap: 4 },
 });

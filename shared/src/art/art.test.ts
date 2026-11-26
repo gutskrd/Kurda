@@ -1683,10 +1683,16 @@ describe('the lesson path’s world', () => {
     expect(pathStampSvg({ seed: 's:a' })).toBe(pathStampSvg({ seed: 's:a' }));
     expect(pathStampSvg({ seed: 's:a' })).not.toBe(pathStampSvg({ seed: 's:b' }));
     expect(pathStampSvg({ seed: 's:a', worn: true })).not.toContain(PATH_GOLD.light.face);
-    // Hevalo's print in the middle, and the rim's little marks only when asked for
-    expect(pathStampSvg({ seed: 's:a' })).toContain(hoofprintPath(PATH_STAMP_ART.box / 2, PATH_STAMP_ART.box / 2 - 1.2, 0.88));
-    for (const motif of ['words', 'talk', 'practice'] as const) expect(pathStampSvg({ seed: 's:a', motif }).length).toBeGreaterThan(pathStampSvg({ seed: 's:a' }).length);
-    sound(pathStampToolSvg({ dark: true, size: 72 }), '0 0 40 56');
+    // Hevalo's prints in it: a step of two, four standing together, or none, each a cloven print of four parts
+    const parts = (svg: string): number => (/<clipPath[^>]*><path d="([^"]*)"/.exec(svg)?.[1]?.match(/Z/g) ?? []).length;
+    const rim = parts(pathStampSvg({ seed: 's:a', prints: 0 }));
+    expect(parts(pathStampSvg({ seed: 's:a' })) - rim).toBe(8);
+    expect(parts(pathStampSvg({ seed: 's:a', prints: 4 })) - rim).toBe(16);
+    // they walk the way they are told, toes first: turned, the same prints move round the seal's middle
+    expect(pathStampSvg({ seed: 's:a', heading: 150 })).not.toBe(pathStampSvg({ seed: 's:a', heading: 210 }));
+    expect(hoofprintPath(10, 10, 1, 180)).toBe(hoofprintPath(10, 10, 1, -180));
+    expect(hoofprintPath(10, 10, 1, 180).startsWith('M8.5 23.5')).toBe(true);
+    sound(pathStampToolSvg({ dark: true, size: 58 }), '0 0 40 56');
     expect(() => pathStampSvg({ size: 0 })).toThrow(RangeError);
   });
 

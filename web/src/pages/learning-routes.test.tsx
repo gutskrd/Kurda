@@ -398,11 +398,12 @@ describe('a course map', () => {
     expect(scene).toHaveAttribute('data-scene', 'apple');
     expect(scene).toHaveAttribute('aria-hidden', 'true');
     expect(scene!.className).toMatch(/\bis-(start|end)\b/);
-    // Its finished topics, seen here for the first time, are simply stamped, with no moment for each.
+    // Its finished topics, seen here for the first time, are simply stamped, with no moment for each, and wear their two stars.
     const hello = within(first).getByRole('button', { name: /^Hello, Done/ });
     expect(hello).toHaveClass('is-stamped');
     expect(hello).not.toHaveClass('is-stamping');
     expect(hello.querySelector('.lp-stamp')).not.toBeNull();
+    expect(within(hello).getByTestId('lp-stars-2')).toBeInTheDocument();
     // The milestone ending the chapter bears its number, and its trophy is won.
     expect(within(first).getByRole('button', { name: 'Chapter 1 trophy, earned' })).toHaveClass('is-milestone');
     expect(first.querySelector('.lp-milestone-num')).toHaveTextContent('1');
@@ -645,23 +646,25 @@ describe('a course map', () => {
     expect(within(screen.getByRole('dialog', { name: 'Jump to Chapter 4?' })).getByRole('link', { name: 'Start the test' })).toHaveAttribute('href', '/app/learn/jump/c1/r4');
   });
 
-  it('puts a bar over the topic to do now with a piece for each lesson, stamps a finished one, and shows its rounds in its card', async () => {
+  it('puts a bar over the topic to do now with a piece for each lesson, stamps a finished one with a star for each round, and says the round in its card', async () => {
     serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
     routes('/app/learn/course/c1');
 
-    // Topic c has all three rounds: stamped, and no bar, which is for the topic to do now.
+    // Topic c has all three rounds: stamped, three stars on its tile, and no bar, which is for the topic to do now.
     const c = await screen.findByRole('button', { name: 'Topic c, Done — strong, all 3 rounds done' });
     expect(within(c).queryByTestId('lp-bar')).not.toBeInTheDocument();
     expect(c).toHaveClass('is-stamped');
+    expect(within(c).getByTestId('lp-stars-3')).toBeInTheDocument();
     // Topic d, the one to do now: a piece filled of two, and no stamp yet.
     const d = screen.getByRole('button', { name: /^Topic d/ });
     expect(within(d).getByTestId('lp-bar').querySelectorAll('.lp-bar-piece')).toHaveLength(2);
     expect(d.querySelectorAll('.lp-bar-ink.is-filled')).toHaveLength(1);
     expect(d.querySelector('.lp-stamp')).toBeNull();
+    expect(within(d).queryByTestId(/lp-stars/)).not.toBeInTheDocument();
 
     await userEvent.click(c);
     const card = screen.getByRole('group', { name: 'Topic c' });
-    expect(within(card).getByTestId('lp-card-rounds-3')).toBeInTheDocument();
+    expect(within(card).getByTestId('lp-card-stars-3')).toBeInTheDocument();
     expect(within(card).getByText('All 3 rounds done')).toBeInTheDocument();
   });
 
@@ -688,7 +691,7 @@ describe('a course map', () => {
     expect(screen.queryByRole('button', { name: /trophy/ })).not.toBeInTheDocument();
   });
 
-  it('fills the bar, stamps the stop once and starts its next round on coming back from the lesson that finished its round', async () => {
+  it('fills the bar, stamps the stop once, starts its next round and lights its star on coming back from the lesson that finished its round', async () => {
     // As the path was drawn before the lesson: Topic d current, one lesson of two done.
     sessionStorage.setItem(
       'hevalo:path:c1',
@@ -714,6 +717,9 @@ describe('a course map', () => {
     await waitFor(() => expect(within(d).getByTestId('lp-bar')).not.toHaveClass('is-whole'), { timeout: 3000 });
     expect(d.querySelectorAll('.lp-bar-ink.is-filled')).toHaveLength(0);
     expect(JSON.parse(localStorage.getItem('hevalo:stamped:c1')!)).toContain('s:d');
+    // Once the stamp has settled, its first star lights in.
+    await waitFor(() => expect(d.querySelector('.lp-star.is-earned')).not.toBeNull(), { timeout: 3000 });
+    expect(within(d).getByTestId('lp-stars-1')).toBeInTheDocument();
   });
 
   it('comes back to the section a lesson was played in, a finished one too, with its bar moving on', async () => {

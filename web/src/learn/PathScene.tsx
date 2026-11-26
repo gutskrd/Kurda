@@ -28,7 +28,6 @@ import {
   sampleKeys,
   sceneBeat,
   sceneBeatMs,
-  stampTilt,
   type ActName,
   type PathSceneId,
   type PathSceneSprite,
@@ -358,8 +357,8 @@ export function PathChest({ open, dark, size, played }: { open: boolean; dark: b
 }
 
 /**
- * Hevalo's stamp on a finished stop's tile (shared `pathStampSvg`), turned its own way (`stampTilt`), rubbed a little
- * where a refresh would help. `pressing` plays its moment once (shared `PATH_STAMP_MOMENT`) after `delay`: the brass
+ * Hevalo's stamp on a finished stop's tile (shared `pathStampSvg`): his prints in a seal, walking toward the next stop
+ * (`heading`), four together where he rests, and rubbed a little where a refresh would help. `pressing` plays its moment once (shared `PATH_STAMP_MOMENT`) after `delay`: the brass
  * stamp hovers in, draws up, presses down as the tile squashes under it and the print appears, and lifts away; then
  * `onStamped` is told. Decorative.
  */
@@ -367,6 +366,8 @@ export function TileStamp({
   stopKey,
   dark,
   worn,
+  heading,
+  rest,
   pressing,
   delay,
   onStamped,
@@ -374,12 +375,18 @@ export function TileStamp({
   stopKey: string;
   dark: boolean;
   worn: boolean;
+  /** Where his prints point, in degrees clockwise from up, and whether he stands on all four (shared `stopPrints`). */
+  heading: number;
+  rest: boolean;
   pressing: boolean;
   delay: number;
   onStamped: (key: string) => void;
 }): React.JSX.Element {
   const prefix = `lpst${useId().replace(/[^A-Za-z0-9]/g, '')}`;
-  const print = useMarkup(() => pathStampSvg({ seed: stopKey, dark, worn, idPrefix: `${prefix}p` }), [stopKey, dark, worn, prefix]);
+  const print = useMarkup(
+    () => pathStampSvg({ seed: stopKey, dark, worn, heading, prints: rest ? 4 : 2, idPrefix: `${prefix}p` }),
+    [stopKey, dark, worn, heading, rest, prefix],
+  );
   const tool = useMarkup(() => pathStampToolSvg({ dark, size: STAMP_TOOL_W, idPrefix: `${prefix}t` }), [dark, prefix]);
   const printRef = useRef<HTMLSpanElement>(null);
   const toolRef = useRef<HTMLSpanElement>(null);
@@ -412,14 +419,12 @@ export function TileStamp({
   }, [pressing, delay, stopKey]);
   return (
     <span className={`lp-stamp${pressing ? ' is-pressing' : ''}`} aria-hidden="true">
-      <span className="lp-stamp-turn" style={{ rotate: `${stampTilt(stopKey)}deg` }}>
-        <span ref={printRef} className="lp-stamp-print" dangerouslySetInnerHTML={print} />
-      </span>
+      <span ref={printRef} className="lp-stamp-print" dangerouslySetInnerHTML={print} />
       {pressing && <span ref={toolRef} className="lp-stamp-tool" dangerouslySetInnerHTML={tool} />}
     </span>
   );
 }
 
-/** The stamp's width over a tile, its face as wide as the print, and the moments its motion is sampled at. */
-const STAMP_TOOL_W = 72;
+/** The stamp's width over a tile, its face as wide as the seal, and the moments its motion is sampled at. */
+const STAMP_TOOL_W = 58;
 const STAMP_FRAMES = Array.from({ length: 41 }, (_, i) => i / 40);

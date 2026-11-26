@@ -1,9 +1,9 @@
-import { PATH_BAR, TOPIC_STARS, barPieces, hoofprintPath } from '@kurda/shared';
+import { PATH_BAR, TOPIC_STARS, barPieces, roundStars, starPath } from '@kurda/shared';
 
 /**
- * A topic's progress over its stop and its rounds in its card, by the same rule and shapes as the phone (@kurda/shared
- * lesson-rounds.ts): a slim bar just above the tile with one rounded piece per lesson, in its unit's colour once finished
- * in the current round, and gold once full. During a return (learn/CoursePath.tsx, `PATH_RETURN`) the new pieces fill
+ * A topic's progress over its stop, its stars on its tile and its rounds in its card, by the same rule and shapes as the
+ * phone (@kurda/shared lesson-rounds.ts): a slim bar just above the tile with one piece per lesson, in its unit's colour
+ * once finished in the current round, and gold once full; and a gold star for each full round, up to three. During a return (learn/CoursePath.tsx, `PATH_RETURN`) the new pieces fill
  * one after another from `from`; path.css runs the fill and holds it still under reduced motion. Decorative; the stop's
  * words say it all.
  */
@@ -43,13 +43,31 @@ export function TopicBar({
   );
 }
 
-/** A topic's rounds in its card: Hevalo's print in gold for each round played, the rest the bar's quiet track. */
-export function RoundPrints({ rounds }: { rounds: number }): React.JSX.Element {
+/** A finished topic's stars along its tile's near edge, one for each full round; `earned` lights the newest in. */
+export function RoundStars({ rounds, earned = false }: { rounds: number; earned?: boolean }): React.JSX.Element | null {
+  const stars = roundStars(rounds);
+  if (stars.length === 0) return null;
   return (
-    <span className="lp-print-row" aria-hidden="true" data-testid={`lp-card-rounds-${rounds}`}>
+    <svg className="lp-stars" width={72} height={72} viewBox="0 0 72 72" aria-hidden="true" focusable="false" data-testid={`lp-stars-${stars.length}`}>
+      {stars.map((s, i) => (
+        <path
+          key={i}
+          className={`lp-star${earned && i === stars.length - 1 ? ' is-earned' : ''}`}
+          d={starPath(s.x, s.y, s.r)}
+          style={{ transformOrigin: `${s.x}px ${s.y}px` }}
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** A topic's three stars in its card: gold for each round played, the bar's quiet track for the rest. */
+export function StarRow({ rounds }: { rounds: number }): React.JSX.Element {
+  return (
+    <span className="lp-star-row" aria-hidden="true" data-testid={`lp-card-stars-${rounds}`}>
       {Array.from({ length: TOPIC_STARS }, (_, i) => (
-        <svg key={i} width={22} height={24} viewBox="0 0 22 24" focusable="false">
-          <path className={i < rounds ? 'is-won' : undefined} d={hoofprintPath(11, 12, 0.62)} />
+        <svg key={i} width={24} height={24} viewBox="0 0 24 24" focusable="false">
+          <path className={i < rounds ? 'is-won' : undefined} d={starPath(12, 12.6, 10.6)} />
         </svg>
       ))}
     </span>

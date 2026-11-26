@@ -18,7 +18,7 @@ import {
   pathScene,
   sceneBeat,
   sceneBeatMs,
-  stampTilt,
+  stopPrints,
   unitScenery,
   type PathBox,
 } from './path-world.js';
@@ -211,14 +211,26 @@ describe('the scenes beside the road', () => {
 });
 
 describe('a finished stop’s stamp', () => {
-  it('turns each stamp a few degrees its own way, the same every time for the same stop', () => {
-    const tilts = ['s:a', 's:b', 's:c', 's:d', 's:e', 's:f'].map(stampTilt);
-    expect(stampTilt('s:a')).toBe(tilts[0]);
-    for (const t of tilts) {
-      expect(Math.abs(t)).toBeGreaterThanOrEqual(3);
-      expect(Math.abs(t)).toBeLessThanOrEqual(13);
-    }
-    expect(new Set(tilts.map(Math.sign)).size).toBe(2);
+  it('points Hevalo’s prints from each finished stop toward the next one on the road, mirrored right to left', () => {
+    const road = [0, -1, 0, 1, 0].map((lean, i) => ({ stop: { kind: 'skill' }, x: lean * PATH_GEOMETRY.sway, y: PATH_GEOMETRY.pad + i * PATH_GEOMETRY.step }));
+    const along = (k: number, sign: 1 | -1 = 1): number => stopPrints(road, k, sign).heading;
+    // the road runs down the screen, so the prints point down, leaning the way the next stop leans
+    const slant = (Math.atan2(PATH_GEOMETRY.sway, PATH_GEOMETRY.step) * 180) / Math.PI;
+    expect(along(0)).toBeCloseTo(180 + slant, 0);
+    expect(along(1)).toBeCloseTo(180 - slant, 0);
+    expect(along(2)).toBeCloseTo(180 - slant, 0);
+    expect(along(3)).toBeCloseTo(180 + slant, 0);
+    // a right-to-left line leans the other way
+    expect(along(0, -1)).toBeCloseTo(180 - slant, 0);
+    // after the last stop, straight on down
+    expect(along(4)).toBe(180);
+  });
+
+  it('stands Hevalo on all four at the chapter’s last topic, the pause before its milestone, and nowhere else', () => {
+    const road = ['skill', 'skill', 'review', 'skill', 'story'].map((kind, i) => ({ stop: { kind }, x: 0, y: i * 100 }));
+    expect(road.map((_, k) => stopPrints(road, k).rest)).toEqual([false, false, false, true, false]);
+    const trophy = [{ stop: { kind: 'skill' }, x: 0, y: 0 }, { stop: { kind: 'trophy' }, x: 0, y: 100 }];
+    expect(stopPrints(trophy, 0).rest).toBe(true);
   });
 
   it('presses halfway through its moment: the print appears and the tile squashes as it lands, and all ends as it was drawn', () => {

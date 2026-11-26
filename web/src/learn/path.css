@@ -957,9 +957,9 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * Hevalo's stamp on a finished tile (PathScene.tsx `TileStamp`, shared PATH_STAMP_ART: a 56-point print centred on the
- * tile's face at 36, 30 of the stop), turned its own way; the brass stamp over it only in its moment, its face as wide
- * as the print and landing level with the print's middle.
+ * Hevalo's stamp on a finished tile (PathScene.tsx `TileStamp`, shared PATH_STAMP_ART: a 56-point canvas laid from 8, 2
+ * of the stop, the seal's middle at 28, 23 of it); the brass stamp over it only in its moment, its face as wide as the
+ * seal and landing level with the seal's middle.
  */
 .lp-stamp {
   position: absolute;
@@ -969,20 +969,20 @@ button.lp-scard:focus-visible {
   height: 56px;
   pointer-events: none;
 }
-.lp-stamp-turn,
 .lp-stamp-print {
   position: absolute;
   inset: 0;
   display: block;
   line-height: 0;
+  transform-origin: 28px 23px;
 }
 .lp-stamp-tool {
   position: absolute;
   z-index: 1;
-  left: -8px;
-  top: -56px;
-  width: 72px;
-  height: 101px;
+  left: -1px;
+  top: -45px;
+  width: 58px;
+  height: 81px;
   line-height: 0;
 }
 .lp-node.is-stamping .lp-node-face {
@@ -992,16 +992,51 @@ button.lp-scard:focus-visible {
   z-index: 6;
 }
 
-/* A topic card's rounds: Hevalo's print in gold for each round played, the track's colour for the rest. */
-.lp-print-row {
-  display: inline-flex;
-  gap: 6px;
+/*
+ * A finished topic's stars along its tile's near edge (PathRing.tsx `RoundStars`, shared `roundStars`): gold, as the
+ * seal is, edged a little darker so they read on any unit's colour. The newest lights in with a short pop once the
+ * stamp has settled (shared PATH_RETURN `starAtMs`).
+ */
+.lp-stars {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
 }
-.lp-print-row path {
-  fill: var(--lp-track);
-}
-.lp-print-row path.is-won {
+.lp-star {
   fill: var(--gold);
+  stroke: rgb(58 35 6 / 0.45);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lp-star.is-earned {
+    animation: lp-star-in 280ms var(--ease-out) both;
+  }
+}
+@keyframes lp-star-in {
+  from {
+    opacity: 0;
+    scale: 1.8;
+  }
+  70% {
+    opacity: 1;
+    scale: 0.9;
+  }
+}
+/* A topic card's three stars: gold for each round played, the bar's quiet track for the rest. */
+.lp-star-row {
+  display: inline-flex;
+  gap: 4px;
+}
+.lp-star-row path {
+  fill: var(--lp-track);
+  stroke-linejoin: round;
+}
+.lp-star-row path.is-won {
+  fill: var(--gold);
+  stroke: rgb(58 35 6 / 0.35);
+  stroke-width: 1.2;
 }
 
 /*
