@@ -4,10 +4,10 @@
  *
  *   node scripts/generate-brand-marks.mjs
  *
- * The deer is the cut-out drawing the apps already show as their mascot (mobile/assets/mascot-deer.png), kept in
- * scripts/brand with its soft edge coloured from the drawing beside it, so no halo shows on green. He sits on the
- * apps' two accent greens (shared/src/themes.ts), his neck ending at the bottom edge exactly as it is drawn.
- * `hevalo-without-pupils.png` is the same drawing for the admin mark, whose pupils the page draws to follow the pointer.
+ * The deer is Hevalo's portrait in scripts/brand/hevalo.png, cut from its white page with his edges unmixed from the
+ * white, so no halo shows on green. His neck runs down out of every frame as it is drawn. He sits on the apps' two
+ * accent greens (shared/src/themes.ts). `hevalo-without-pupils.png` is the same drawing for the admin mark, whose
+ * pupils the page draws to follow the pointer.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -28,12 +28,12 @@ const [BRIGHT, DEEP] = (() => {
 })();
 
 /**
- * How big the deer is, as his width ear to ear over the canvas, and where his neck ends, as a share of its height.
- * The icon ends him at its bottom edge. The Android layer keeps ears and antlers inside the 66dp circle every
- * launcher shows and ends him just under it, so every mask cuts the neck rather than shows its end.
+ * How big the deer is, as his width ear to ear over the canvas, and where his antlers start, as a share of its height.
+ * The Android layer keeps ears and antlers inside the 66dp circle every launcher shows; its masks cut his neck.
+ * The admin mark's eyes (admin/src/brand/mark.css) are measured at ICON.
  */
-const ICON = { span: 0.9, bottom: 1 };
-const ANDROID = { span: 0.56, bottom: 0.87 };
+const ICON = { span: 0.86, top: 0.08 };
+const ANDROID = { span: 0.575, top: 0.275 };
 
 /** How a shipped PNG is encoded: a palette costs nothing visible on painted art and saves most of the bytes. */
 const PNG = { palette: true, quality: 95, effort: 10, compressionLevel: 9 };
@@ -64,17 +64,20 @@ function field(width, height) {
   );
 }
 
-/** The deer on a transparent canvas, his width a share of it, his neck ending at `bottom`; what falls below is cut. */
-async function placed(source, width, height, span, bottom) {
+/**
+ * The deer on a transparent canvas, his width a share of the shorter side, his antlers starting at `top`. His neck has
+ * to run past the bottom edge (or, for a layer a launcher masks, past `reach`), so it never shows where it ends.
+ */
+async function placed(source, width, height, span, top, reach = 1) {
   const meta = await sharp(source).metadata();
   const w = Math.round(span * Math.min(width, height));
   const h = Math.round((meta.height * w) / meta.width);
-  // two pixels past the edge, so the neck runs out of the frame rather than stopping on it
-  const top = Math.round(bottom * height) - h + (bottom >= 1 ? 2 : 0);
+  const y = Math.round(top * height);
+  if (y + h < reach * height) throw new Error(`the neck would end inside a ${width}x${height} frame`);
   const scaled = await sharp(source).resize(w, h, { kernel: 'lanczos3' }).toBuffer();
-  const shown = await sharp(scaled).extract({ left: 0, top: 0, width: w, height: Math.min(h, height - top) }).toBuffer();
+  const shown = await sharp(scaled).extract({ left: 0, top: 0, width: w, height: Math.min(h, height - y) }).toBuffer();
   return sharp({ create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
-    .composite([{ input: shown, left: Math.round((width - w) / 2), top }])
+    .composite([{ input: shown, left: Math.round((width - w) / 2), top: y }])
     .png()
     .toBuffer();
 }
@@ -82,7 +85,7 @@ async function placed(source, width, height, span, bottom) {
 /** The icon's art: the deer on the green, square. */
 async function iconArt(size, source = deer) {
   return sharp(field(size, size))
-    .composite([{ input: await placed(source, size, size, ICON.span, ICON.bottom) }])
+    .composite([{ input: await placed(source, size, size, ICON.span, ICON.top) }])
     .png()
     .toBuffer();
 }
@@ -128,12 +131,12 @@ await write('mobile/assets/favicon.png', await square(icon, 48));
   await write('mobile/assets/splash-icon.png', splash);
 }
 // an adaptive icon is masked to whatever shape the launcher likes: the green is its own layer, the deer the other
-const foreground = await placed(deer, 512, 512, ANDROID.span, ANDROID.bottom);
+const foreground = await placed(deer, 512, 512, ANDROID.span, ANDROID.top, 0.86);
 await write('mobile/assets/android-icon-foreground.png', await sharp(foreground).png(PNG).toBuffer());
 await write('mobile/assets/android-icon-background.png', await sharp(field(512, 512)).png(PNG).toBuffer());
 {
   // themed icons tint one shape: everything drawn becomes one colour, everything else stays clear
-  const { data, info } = await sharp(await placed(deer, 432, 432, ANDROID.span, ANDROID.bottom)).raw().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(await placed(deer, 432, 432, ANDROID.span, ANDROID.top, 0.86)).raw().toBuffer({ resolveWithObject: true });
   for (let i = 0; i < data.length; i += 4) data[i] = data[i + 1] = data[i + 2] = 0;
   await write('mobile/assets/android-icon-monochrome.png', await sharp(data, { raw: info }).png(PNG).toBuffer());
 }
@@ -147,7 +150,7 @@ await write('web/public/apple-touch-icon.png', await square(icon, 180));
 {
   // a link's preview: the deer rising from the bottom of the green, nothing else
   const card = await sharp(field(1200, 630))
-    .composite([{ input: await placed(deer, 1200, 630, 0.8, 1) }])
+    .composite([{ input: await placed(deer, 1200, 630, 0.86, 0.08) }])
     .flatten({ background: DEEP })
     .png(PNG)
     .toBuffer();
