@@ -1154,7 +1154,8 @@
 }
 .fp-table-host .speaking-character {
   display: block;
-  height: clamp(196px, 26vh, 260px);
+  /* on a narrow phone a little smaller, so his shoulders stay on the screen as he leans into a phrase */
+  height: clamp(160px, min(26vh, 48vw), 260px);
   width: auto;
 }
 .fp-table-bubble {
