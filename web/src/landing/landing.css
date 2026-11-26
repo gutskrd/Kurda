@@ -1412,6 +1412,103 @@
   margin-top: 24px;
 }
 
+/* ---- the phone -------------------------------------------------------------- */
+.fp-phone {
+  /* the screen's light, a deep teal by night and a warm morning by day, and the little of it that reaches the panel */
+  --fp-phone-glass: radial-gradient(120% 70% at 50% 64%, #2c5953 0%, #17302d 56%, #0e1a19 100%);
+  --fp-phone-spill: rgba(64, 140, 128, 0.16);
+}
+:root[data-theme='light'] .fp-phone {
+  --fp-phone-glass: radial-gradient(120% 70% at 50% 64%, #fde7b8 0%, #f6cf8a 60%, #e9b46a 100%);
+  --fp-phone-spill: rgba(242, 182, 50, 0.16);
+}
+.fp-phone-grid {
+  display: grid;
+  grid-template-areas: 'head' 'art' 'buttons';
+  justify-items: center;
+  text-align: center;
+}
+.fp-phone-head {
+  grid-area: head;
+}
+.fp-phone-head :is(.fp-h2, .fp-lead) {
+  margin-inline: auto;
+}
+.fp-phone-panel {
+  grid-area: art;
+  position: relative;
+  width: min(100%, 420px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  background:
+    radial-gradient(56% 52% at 40% 40%, var(--fp-phone-spill), transparent 74%),
+    var(--surface-2);
+}
+/* the hand rests and rises a little, as a held thing does, and the sleeve leaves the panel at its foot */
+.fp-phone-hold {
+  position: absolute;
+  inset: 0;
+  transform-origin: 70% 100%;
+  animation: fp-phone-float 6.5s ease-in-out infinite alternate;
+}
+.fp-phone-layer,
+.fp-phone-layer > svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* the sleeve runs on past the drawing's frame, so as the hand rises its cut edge stays below the panel's foot */
+.fp-phone-layer > svg {
+  overflow: visible;
+}
+.fp-phone-screen {
+  position: absolute;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--fp-phone-glass);
+}
+.fp-phone-screen .speaking-character {
+  display: block;
+  width: 88%;
+  height: auto;
+}
+/* only the glass bounds him: as he glances and drifts his antlers and ears may pass his own frame, never the glass */
+.fp-phone-screen .speaking-character > svg {
+  overflow: visible;
+}
+.fp-phone-buttons {
+  grid-area: buttons;
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  max-width: 380px;
+  margin-top: 28px;
+}
+@media (min-width: 900px) {
+  .fp-phone-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: 1fr auto auto 1fr;
+    grid-template-areas: 'art .' 'art head' 'art buttons' 'art .';
+    column-gap: 56px;
+    justify-items: start;
+    text-align: start;
+  }
+  .fp-phone-panel {
+    justify-self: end;
+  }
+  .fp .fp-phone-head {
+    margin-bottom: 0;
+  }
+  .fp-phone-head :is(.fp-h2, .fp-lead) {
+    margin-inline: 0;
+  }
+}
+
 /* ---- questions -------------------------------------------------------------- */
 .fp-faq-wrap {
   max-width: 720px;
@@ -1612,6 +1709,11 @@
     transform: translateX(5px);
   }
 }
+@keyframes fp-phone-float {
+  to {
+    transform: translateY(-6px) rotate(-0.8deg);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .fp-pill-text,
@@ -1621,5 +1723,8 @@
   }
   .fp-hevalo {
     rotate: none;
+  }
+  .fp-phone-hold {
+    animation: none;
   }
 }

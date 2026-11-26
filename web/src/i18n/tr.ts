@@ -3505,6 +3505,8 @@ export const tr: Catalogue = {
   'landing.legends.dimdim': 'Dimdim Kalesi',
   'landing.legends.painting': '{name} için yapılmış tablo',
   'landing.legends.cta': 'Hikâyeleri aç',
+  'landing.phone.title': 'Hevalo cebinde.',
+  'landing.phone.lead': 'Telefon uygulamaları çok yakında. Bugün tarayıcında başla; hesabın seninle gelir.',
   'landing.soon.ios': 'iPhone ve iPad için Hevalo',
   'landing.soon.android': 'Android için Hevalo',
   'landing.soon.title': 'Çok yakında',

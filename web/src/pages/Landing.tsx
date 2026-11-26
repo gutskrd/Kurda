@@ -11,18 +11,21 @@ import { Table } from '../landing/Table';
 import { Legends } from '../landing/Legends';
 import { Closing } from '../landing/Closing';
 import { useNear } from '../landing/parts';
+import { AppSoonButton } from '../landing/AppSoon';
+import { AndroidIcon, IosIcon } from '../components/icons';
 import '../landing/landing.css';
 
 /*
  * The front page, told as Hevalo's story for the person arriving: who it is (the hero), who they are learning for, three
  * words learned on the spot, where those words go (scenes that play themselves), the Kurdish table the road starts at,
- * the tree every lesson waters, the legends, the questions, and the same ways in again. Every section has one heading
+ * the tree every lesson waters, the legends, Hevalo on a phone, the questions, and the same ways in again. Every section has one heading
  * and at most two short sentences, and shows rather than tells. Nothing promises what is not there: no counts, reviews
  * or press, and the phone apps are coming soon.
  */
 
 const StoryPlayer = lazy(() => import('../landing/Stories').then((m) => ({ default: m.StoryPlayer })));
 const TreeGrowth = lazy(() => import('../landing/TreeGrowth').then((m) => ({ default: m.TreeGrowth })));
+const PhoneArt = lazy(() => import('../landing/PhoneArt').then((m) => ({ default: m.PhoneArt })));
 
 /**
  * Sections rise into view once as they arrive. The page arms itself (`fp-armed`, which hides unarrived sections) only
@@ -152,6 +155,30 @@ export function Landing(): React.JSX.Element {
       </section>
 
       <Legends />
+
+      <section id="phone" className="fp-section fp-phone" aria-labelledby="fp-phone-title">
+        <div className="fp-wrap fp-phone-grid">
+          <header className="fp-head fp-phone-head fp-reveal">
+            <h2 id="fp-phone-title" className="fp-h2">
+              {t('landing.phone.title')}
+            </h2>
+            <p className="fp-lead">{t('landing.phone.lead')}</p>
+          </header>
+          <Later settled={settled} className="fp-phone-panel fp-reveal">
+            <PhoneArt />
+          </Later>
+          <div className="fp-phone-buttons fp-reveal">
+            <AppSoonButton platform="ios" look="store">
+              <IosIcon size={20} />
+              {t('landing.hero.ios')}
+            </AppSoonButton>
+            <AppSoonButton platform="android" look="store">
+              <AndroidIcon size={20} />
+              {t('landing.hero.android')}
+            </AppSoonButton>
+          </div>
+        </div>
+      </section>
 
       <section id="faq" className="fp-section fp-faq" aria-labelledby="fp-faq-title">
         <div className="fp-wrap fp-faq-wrap">

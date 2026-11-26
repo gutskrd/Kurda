@@ -3613,6 +3613,8 @@ export const en = {
   'landing.legends.dimdim': 'The fortress of Dimdim',
   'landing.legends.painting': 'The painting for {name}',
   'landing.legends.cta': 'Open the stories',
+  'landing.phone.title': 'Hevalo, in your pocket.',
+  'landing.phone.lead': 'The phone apps are coming soon. Start in your browser today; your account comes with you.',
   'landing.soon.ios': 'Hevalo for iPhone and iPad',
   'landing.soon.android': 'Hevalo for Android',
   'landing.soon.title': 'Coming very soon',

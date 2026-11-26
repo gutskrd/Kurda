@@ -3509,6 +3509,8 @@ export const nl: Catalogue = {
   'landing.legends.dimdim': 'Het fort van Dimdim',
   'landing.legends.painting': 'Het schilderij bij {name}',
   'landing.legends.cta': 'Naar de verhalen',
+  'landing.phone.title': 'Hevalo op zak.',
+  'landing.phone.lead': 'De apps voor je telefoon komen binnenkort. Begin vandaag in je browser; je account gaat met je mee.',
   'landing.soon.ios': 'Hevalo voor iPhone en iPad',
   'landing.soon.android': 'Hevalo voor Android',
   'landing.soon.title': 'Komt heel binnenkort',

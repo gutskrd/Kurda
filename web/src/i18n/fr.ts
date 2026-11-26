@@ -3509,6 +3509,8 @@ export const fr: Catalogue = {
   'landing.legends.dimdim': 'La forteresse de Dimdim',
   'landing.legends.painting': 'La peinture de {name}',
   'landing.legends.cta': 'Ouvrir les histoires',
+  'landing.phone.title': 'Hevalo, dans ta poche.',
+  'landing.phone.lead': 'Les applis pour téléphone arrivent bientôt. Commence dès aujourd’hui dans ton navigateur : ton compte te suivra.',
   'landing.soon.ios': 'Hevalo pour iPhone et iPad',
   'landing.soon.android': 'Hevalo pour Android',
   'landing.soon.title': 'Très bientôt',

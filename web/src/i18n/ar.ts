@@ -3501,6 +3501,8 @@ export const ar: Catalogue = {
   'landing.legends.dimdim': 'قلعة دمدم',
   'landing.legends.painting': 'اللوحة المرسومة لحكاية {name}',
   'landing.legends.cta': 'افتح الحكايات',
+  'landing.phone.title': 'Hevalo في جيبك.',
+  'landing.phone.lead': 'تطبيقات الهاتف قادمة قريبًا. ابدأ اليوم في متصفحك، وحسابك ينتقل معك.',
   'landing.soon.ios': 'Hevalo لأجهزة iPhone وiPad',
   'landing.soon.android': 'Hevalo لأجهزة Android',
   'landing.soon.title': 'قريبًا جدًا',

@@ -3514,6 +3514,8 @@ export const ku: Catalogue = {
   'landing.legends.dimdim': 'Kela Dimdimê',
   'landing.legends.painting': 'Wêneyê ji bo {name}',
   'landing.legends.cta': 'Çîrokan veke',
+  'landing.phone.title': 'Hevalo, di bêrîka te de.',
+  'landing.phone.lead': 'Sepanên telefonê di rê de ne. Îro di geroka xwe de dest pê bike; hesabê te jî bi te re tê.',
   'landing.soon.ios': 'Hevalo ji bo iPhone û iPad',
   'landing.soon.android': 'Hevalo ji bo Android',
   'landing.soon.title': 'Pir nêzîk',

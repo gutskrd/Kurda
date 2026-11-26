@@ -3515,6 +3515,8 @@ export const ckb: Catalogue = {
   'landing.legends.dimdim': 'قەڵای دمدم',
   'landing.legends.painting': 'تابلۆکەی {name}',
   'landing.legends.cta': 'چیرۆکەکان بکەرەوە',
+  'landing.phone.title': 'Hevalo لە گیرفانتدا.',
+  'landing.phone.lead': 'ئەپەکانی مۆبایل بەم زووانە دێن. ئەمڕۆ لە وێبگەڕەکەتدا دەست پێبکە؛ هەژمارەکەت لەگەڵت دێت.',
   'landing.soon.ios': 'Hevalo بۆ iPhone و iPad',
   'landing.soon.android': 'Hevalo بۆ Android',
   'landing.soon.title': 'زۆر بەم زووانە',

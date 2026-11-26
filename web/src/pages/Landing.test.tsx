@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { act, fireEvent, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderApp } from '../test/utils';
 import { Landing } from './Landing';
 import { forgetVisitor } from '../landing/visitor';
@@ -127,6 +127,17 @@ describe('the front page', () => {
     expect(paintings).toHaveLength(5);
     for (const p of paintings) expect(p).toHaveAccessibleName(/^The painting for /);
     expect(within(legends).getByRole('link', { name: 'Open the stories' })).toHaveAttribute('href', '/app/learn/stories');
+  });
+
+  it('shows Hevalo on a phone, says the apps are still coming, and lets either download button say so', async () => {
+    show();
+    const phone = document.getElementById('phone')!;
+    expect(within(phone).getByRole('heading', { level: 2, name: 'Hevalo, in your pocket.' })).toBeInTheDocument();
+    expect(phone).toHaveTextContent('The phone apps are coming soon.');
+    await waitFor(() => expect(phone.querySelector('.fp-phone-screen .speaking-character')).not.toBeNull());
+    expect(phone.querySelector('.fp-phone-hold')).toHaveAttribute('aria-hidden', 'true');
+    fireEvent.click(within(phone).getByRole('button', { name: 'Download for Android' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Hevalo for Android');
   });
 
   it('ends as it starts: Hevalo and the same ways in', () => {
