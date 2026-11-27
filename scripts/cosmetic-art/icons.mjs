@@ -514,17 +514,20 @@ export const ICONS = [
     key: 'ask',
     ku: 'Ask',
     en: 'Deer',
-    // a fawn sitting up and looking at us, drawn soft, as with a pastel on rough paper, and no line round it: a
-    // big round head, a pale face that comes up in two curves round the eyes, two dots for eyes and a small red
-    // nose, round ears, a pair of short brown antlers and a tuft between them; a small body with a pale front,
-    // its forefeet together before it and its hind feet out at either side, dark at the hoof, a stub of a tail
+    // a fawn standing and looking at us, drawn in crayon and inked round in a dark line: a big round head with large
+    // ears out at its sides, short pale antlers with a tuft between them and a darker blaze down the brow, two dots
+    // for eyes over a pale muzzle with a black nose and a small smile; a small body turned to our right with a pale
+    // chest and pale spots along its back, a stub of a tail, and four short legs dark at the hoof
     still(rnd) {
-      const s = new Still(rnd).place([0, -4], 1.02);
-      const TAN = '#e39a58';
-      const DEEP = '#cf8442';
-      const CREAM = '#fbe9bf';
-      const HOOF = '#a9683a';
-      const box = [60, 40, 452, 492];
+      const s = new Still(rnd).place([0, 6], 1);
+      const COAT = '#c07a4c';
+      const SHADE = '#9c5634';
+      const BLAZE = '#984428';
+      const CREAM = '#f4d4ae';
+      const ANTLER = '#e8bd8e';
+      const HOOF = '#4a2e24';
+      const INK = '#23150f';
+      const box = [40, 40, 472, 492];
       // (a round shape, its radius a little uneven, as a hand draws one)
       const blob = ([cx, cy], rx, ry, turn = 0, wobble = 0.03) => {
         const out = [];
@@ -537,62 +540,83 @@ export const ICONS = [
         }
         return spline(out);
       };
-      // the pastel's edge: everything drawn through it is frayed a little, the way the stick drags on the paper
-      const frayed = (cv, tear = 6.5) => {
+      // the crayon's edge: everything drawn through it frays a little, the way the wax drags on the paper
+      const frayed = (cv, tear = 4) => {
         const f = cv.id('fray');
-        cv.def(`<filter id="${f}" x="-60%" y="-60%" width="220%" height="220%"><feTurbulence type="fractalNoise" baseFrequency="0.26" numOctaves="2" seed="${Math.floor(rnd() * 1000)}" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="${tear}" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation="0.9"/></filter>`);
+        cv.def(`<filter id="${f}" x="-40%" y="-40%" width="180%" height="180%"><feTurbulence type="fractalNoise" baseFrequency="0.3" numOctaves="2" seed="${Math.floor(rnd() * 1000)}" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="${tear}" xChannelSelector="R" yChannelSelector="G"/></filter>`);
         return `url(#${f})`;
       };
-      // a mass of colour laid in with the pastel: the shape, frayed, and the grain of the paper showing in it
-      const mass = (cv, d, fill, { light = '#fff3d8', dark = DEEP, grain = 150 } = {}) => {
-        cv.add(`<path d="${d}" fill="${fill}" filter="${frayed(cv)}"/>`);
-        specks(cv, rnd, d, box, { count: grain * 3, colours: [light], size: [0.8, 2.4], opacity: [0.08, 0.24] });
-        specks(cv, rnd, d, box, { count: grain * 2, colours: [dark], size: [0.8, 2.2], opacity: [0.06, 0.18] });
+      // colour laid in with the crayon, the grain of the paper showing through it, and a darker stroke here and there
+      const mass = (cv, d, fill, { light = '#ffe6c8', dark = SHADE, grain = 150, tear = 3 } = {}) => {
+        cv.add(`<path d="${d}" fill="${fill}" filter="${frayed(cv, tear)}"/>`);
+        specks(cv, rnd, d, box, { count: grain * 3, colours: [light], size: [0.8, 2.2], opacity: [0.08, 0.22] });
+        specks(cv, rnd, d, box, { count: grain * 2, colours: [dark], size: [0.8, 2], opacity: [0.06, 0.16] });
       };
-      const head = blob([256, 214], 134, 112, 0, 0.025);
-      const body = blob([256, 392], 84, 78, 0, 0.03);
-      // its face: pale, coming up in a curve round each eye and dipping between them
-      const face = spline([[256, 196], [224, 174], [182, 186], [158, 230], [172, 278], [212, 302], [256, 307], [300, 302], [340, 278], [354, 230], [330, 186], [288, 174]]);
+      // the ink line round a part, a little uneven as a pen's is
+      const ink = (cv, d, width = 7) =>
+        cv.add(`<path d="${d}" fill="none" stroke="${INK}" stroke-width="${width}" stroke-linejoin="round" stroke-linecap="round" filter="${frayed(cv, 2)}"/>`);
+      const part = (cv, d, fill, opts = {}) => {
+        mass(cv, d, fill, opts);
+        ink(cv, d, opts.line ?? 7);
+      };
+      // a leg from its top in the body down to its hoof, a little narrower at the foot
+      const leg = (x, top, foot, w) =>
+        spline([[x - w / 2, top], [x + w / 2, top], [x + w / 2 - 2, (top + foot) / 2], [x + w / 2 - 4, foot - 4], [x, foot + 1], [x - w / 2 + 4, foot - 4], [x - w / 2 + 2, (top + foot) / 2]]);
+      const hoof = (x, foot, w) => spline([[x - w / 2 + 2, foot - 15], [x + w / 2 - 2, foot - 15], [x + w / 2 - 3, foot - 4], [x, foot + 1], [x - w / 2 + 3, foot - 4]]);
+      const legPart = (cv, x, top, foot, w, coat) => {
+        mass(cv, leg(x, top, foot, w), coat, { grain: 40 });
+        mass(cv, hoof(x, foot, w), HOOF, { grain: 12, light: '#8a6050', dark: '#2a1a14' });
+        ink(cv, leg(x, top, foot, w), 6.5);
+      };
+      const mirror = (pts) => pts.map(([x, y]) => [512 - x, y]);
+      const head = spline([[256, 104], [318, 112], [362, 146], [376, 202], [360, 258], [316, 294], [256, 304], [196, 294], [152, 258], [136, 202], [150, 146], [194, 112]]);
+      const ear = [[182, 150], [160, 122], [120, 104], [86, 112], [80, 146], [100, 178], [140, 192], [170, 186]];
+      const earIn = [[166, 156], [148, 134], [118, 122], [98, 128], [96, 152], [112, 172], [140, 180], [160, 176]];
+      const body = spline([[214, 300], [270, 296], [338, 292], [394, 302], [428, 330], [434, 368], [420, 400], [384, 414], [304, 418], [238, 410], [212, 384], [204, 342]]);
       s.paint((cv) => {
-        // behind it: its tail, its hind feet, its antlers and its ears
-        mass(cv, blob([342, 402], 26, 17, -42), TAN, { grain: 30 });
-        mass(cv, blob([354, 392], 12, 8, -42), CREAM, { grain: 10, dark: '#e8c98a' });
-        for (const side of [-1, 1]) {
-          mass(cv, blob([256 + side * 84, 452], 40, 30, side * 8), TAN, { grain: 50 });
-          mass(cv, blob([256 + side * 90, 468], 34, 19, side * 6), HOOF, { grain: 30, light: '#d9a26a', dark: '#7a4622' });
-          // an antler: a short beam and one tine, both blunt
-          const antler = `M${256 + side * 60} 130 Q${256 + side * 60} 100 ${256 + side * 70} 76 M${256 + side * 62} 104 Q${256 + side * 80} 98 ${256 + side * 98} 82`;
-          cv.add(`<path d="${antler}" fill="none" stroke="#a5683a" stroke-width="23" stroke-linecap="round" stroke-linejoin="round" filter="${frayed(cv, 5)}"/>`);
-          cv.add(`<path d="M${256 + side * 57} 122 Q${256 + side * 58} 104 ${256 + side * 64} 90" fill="none" stroke="#c28a56" stroke-width="6" stroke-linecap="round" stroke-opacity="0.6" filter="${softly(cv, 2)}"/>`);
-          mass(cv, blob([256 + side * 132, 150], 50, 44, side * 28), TAN, { grain: 60 });
-          mass(cv, blob([256 + side * 134, 154], 30, 26, side * 28), CREAM, { grain: 24, dark: '#e8c98a' });
+        // behind it all: its legs, coming out from under the body, the far two in shade; then the tail and the body, its
+        // chest pale and spots along its back
+        legPart(cv, 246, 372, 470, 32, SHADE);
+        legPart(cv, 400, 366, 462, 32, SHADE);
+        legPart(cv, 284, 380, 482, 35, COAT);
+        legPart(cv, 360, 376, 476, 35, COAT);
+        part(cv, blob([432, 326], 15, 24, 32, 0.05), COAT, { grain: 20 });
+        mass(cv, blob([436, 318], 8, 12, 32, 0.05), CREAM, { grain: 8, dark: '#e2b98c' });
+        mass(cv, body, COAT, { grain: 220 });
+        cv.add(`<ellipse cx="330" cy="404" rx="96" ry="22" fill="${SHADE}" fill-opacity="0.5" filter="${softly(cv, 9)}" clip-path="${within(cv, body)}"/>`);
+        mass(cv, blob([248, 362], 40, 48, -8, 0.05), CREAM, { grain: 50, dark: '#e2b98c' });
+        for (const [x, y, rx] of [[322, 316, 9], [348, 308, 8], [372, 316, 8], [340, 332, 7], [364, 334, 6.5], [390, 328, 6]]) {
+          mass(cv, blob([x, y], rx, rx * 0.66, -12, 0.06), CREAM, { grain: 4, dark: '#e2b98c', tear: 1.5 });
         }
+        ink(cv, body);
       });
       s.paint((cv) => {
-        // its body, pale down the front, and its forefeet together before it
-        mass(cv, body, TAN, { grain: 170 });
-        mass(cv, blob([256, 392], 42, 56, 0, 0.04), CREAM, { grain: 60, dark: '#e8c98a' });
+        // the antlers and the ears go behind the head
         for (const side of [-1, 1]) {
-          mass(cv, blob([256 + side * 30, 446], 28, 36), TAN, { grain: 46 });
-          mass(cv, blob([256 + side * 30, 470], 27, 17), HOOF, { grain: 26, light: '#d9a26a', dark: '#7a4622' });
+          const X = (x) => (side < 0 ? x : 512 - x);
+          const antler = `M${X(222)} 122 Q${X(214)} 94 ${X(206)} 66 M${X(211)} 94 Q${X(196)} 88 ${X(184)} 76 M${X(208)} 78 Q${X(218)} 70 ${X(226)} 58`;
+          cv.add(`<path d="${antler}" fill="none" stroke="${INK}" stroke-width="27" stroke-linecap="round" stroke-linejoin="round" filter="${frayed(cv, 2)}"/>`);
+          cv.add(`<path d="${antler}" fill="none" stroke="${ANTLER}" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" filter="${frayed(cv, 2)}"/>`);
+          const outer = spline(side < 0 ? ear : mirror(ear));
+          part(cv, outer, COAT, { grain: 60 });
+          mass(cv, spline(side < 0 ? earIn : mirror(earIn)), CREAM, { grain: 24, dark: '#e2b98c' });
         }
-        // (the shade its head throws on it)
-        cv.add(`<ellipse cx="256" cy="330" rx="74" ry="20" fill="#b9682c" fill-opacity="0.3" filter="${softly(cv, 8)}" clip-path="${within(cv, body)}"/>`);
+        // the head, a tuft of hair between the antlers, the darker blaze down the brow, its muzzle and face
+        mass(cv, head, COAT, { grain: 320 });
+        cv.add(`<ellipse cx="256" cy="282" rx="96" ry="22" fill="${SHADE}" fill-opacity="0.4" filter="${softly(cv, 10)}" clip-path="${within(cv, head)}"/>`);
+        cv.add(`<path d="M232 110 Q256 104 280 110 Q268 160 262 214 Q256 222 250 214 Q244 160 232 110 Z" fill="${BLAZE}" fill-opacity="0.85" filter="${frayed(cv, 5)}" clip-path="${within(cv, head)}"/>`);
+        specks(cv, rnd, 'M236 112 L276 112 L262 212 L250 212 Z', box, { count: 60, colours: ['#d48a5c'], size: [0.8, 2], opacity: [0.2, 0.45] });
+        ink(cv, head);
+        // the tuft: three soft flicks of hair over the brow
+        cv.add(`<path d="M240 112 Q238 96 250 90 Q248 100 254 108 Q256 92 268 88 Q262 100 266 110 Q272 100 280 100 Q276 108 272 114 Z" fill="${COAT}" stroke="${INK}" stroke-width="5.5" stroke-linejoin="round" stroke-linecap="round" filter="${frayed(cv, 1.5)}"/>`);
+        mass(cv, blob([256, 262], 38, 28, 0, 0.03), CREAM, { grain: 40, dark: '#e2b98c' });
+        cv.add(`<g filter="${frayed(cv, 1.2)}"><ellipse cx="200" cy="222" rx="13.5" ry="14.5" fill="${INK}"/><ellipse cx="312" cy="222" rx="13.5" ry="14.5" fill="${INK}"/>`
+          + `<path d="M244 244 Q256 238 268 244 Q266 254 256 258 Q246 254 244 244 Z" fill="${INK}"/></g>`);
+        cv.add('<ellipse cx="195" cy="216" rx="4" ry="4.4" fill="#ffffff" fill-opacity="0.85"/><ellipse cx="307" cy="216" rx="4" ry="4.4" fill="#ffffff" fill-opacity="0.85"/>');
+        ink(cv, 'M256 258 L256 266 M244 268 Q250 274 256 266 Q262 274 268 268', 4);
+        cv.add(`<ellipse cx="176" cy="262" rx="16" ry="9" fill="#e9876e" fill-opacity="0.35" filter="${softly(cv, 4)}"/><ellipse cx="336" cy="262" rx="16" ry="9" fill="#e9876e" fill-opacity="0.35" filter="${softly(cv, 4)}"/>`);
       });
-      s.paint((cv) => {
-        // its head: the tuft on top first, then the head and the pale of its face
-        mass(cv, blob([246, 108], 20, 16, -20), TAN, { grain: 16 });
-        mass(cv, blob([270, 104], 16, 14, 20), TAN, { grain: 12 });
-        mass(cv, head, TAN, { grain: 300 });
-        cv.add(`<ellipse cx="256" cy="140" rx="84" ry="26" fill="#f4bb7a" fill-opacity="0.6" filter="${softly(cv, 9)}" clip-path="${within(cv, head)}"/>`);
-        cv.add(`<path d="M244 112 Q262 98 274 112 Q262 108 256 122" fill="none" stroke="${DEEP}" stroke-width="5" stroke-linecap="round" stroke-opacity="0.75" filter="${softly(cv, 1.2)}"/>`);
-        mass(cv, face, CREAM, { grain: 150, light: '#fffaf0', dark: '#ecce90' });
-        // its eyes, its nose, and a little pink in its cheeks
-        cv.add(`<g filter="${frayed(cv, 2.2)}"><ellipse cx="214" cy="246" rx="10" ry="11.5" fill="#3a2418"/><ellipse cx="298" cy="246" rx="10" ry="11.5" fill="#3a2418"/><ellipse cx="256" cy="258" rx="16" ry="11" fill="#cb4a30"/></g>`);
-        cv.add('<ellipse cx="251" cy="254.6" rx="5" ry="2.6" fill="#ef8a6a" fill-opacity="0.7"/>');
-        cv.add(`<ellipse cx="186" cy="270" rx="16" ry="9" fill="#f6a08c" fill-opacity="0.4" filter="${softly(cv, 4)}"/><ellipse cx="326" cy="270" rx="16" ry="9" fill="#f6a08c" fill-opacity="0.4" filter="${softly(cv, 4)}"/>`);
-      });
-      return s.done({ finish: { paint: 0, grain: 0.04, contrast: 0.03, saturation: 1 } });
+      return s.done({ finish: { paint: 0, grain: 0.035, contrast: 0.03, saturation: 1 } });
     },
   },
   {
