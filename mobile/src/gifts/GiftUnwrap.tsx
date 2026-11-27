@@ -75,10 +75,10 @@ export function GiftUnwrap({
   onClose: () => void;
   onOpened: (card: GiftCard) => void;
   /**
-   * Send the thank-you into the chat; resolves to null when it went, or to the server's refusal, said here since the
-   * chat's own notice is behind this. Absent for a gift on a post, which has no chat.
+   * Send a one-tap thanks for this gift into the chat; resolves to null when it went, or to the server's refusal, said
+   * here since the chat's own notice is behind this. Absent for a gift on a post, which has no chat.
    */
-  onThanks?: () => Promise<ApiError | null>;
+  onThanks?: (card: GiftCard) => Promise<ApiError | null>;
   /** Open the gift sheet for whoever sent it; left out where nothing can be sent back. */
   onSendBack?: () => void;
 }): React.JSX.Element {
@@ -98,7 +98,8 @@ export function GiftUnwrap({
   const [equippable, setEquippable] = useState<EquippableCategory | null>(card.equippable);
   const [openError, setOpenError] = useState<string | null>(null);
   const [worn, setWorn] = useState(false);
-  const [thanked, setThanked] = useState<'idle' | 'busy' | 'done'>('idle');
+  // a gift thanked for already offers no second thanks
+  const [thanked, setThanked] = useState<'idle' | 'busy' | 'done'>(card.myThanked ? 'done' : 'idle');
   const [actionError, setActionError] = useState<string | null>(null);
   const [thanksError, setThanksError] = useState<ApiError | null>(null);
   const sky = useWindowDimensions();
@@ -186,7 +187,7 @@ export function GiftUnwrap({
     if (!onThanks || thanked !== 'idle') return;
     setThanked('busy');
     setThanksError(null);
-    void onThanks().then((error) => {
+    void onThanks(card).then((error) => {
       setThanked(error ? 'idle' : 'done');
       setThanksError(error);
     });

@@ -57,6 +57,22 @@ const wordleCard = ok({
 });
 
 describe('ChatScreen', () => {
+  it('draws a one-tap thanks as a line with a heart, not as a bubble of words', async () => {
+    testAuth.client = fakeClient({
+      'GET /chat/u2/messages': ok({
+        messages: [
+          msg({ id: 'm3', senderId: 'me', kind: 'gift', body: null, gift }),
+          msg({ id: 'm4', kind: 'thanks', body: 'Spas! 💛', thanks: { batchId: 'b1', name: 'Newroz fire' } }),
+        ],
+      }),
+    });
+    renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
+    expect(await screen.findByText('rojda said thanks for Newroz fire')).toBeTruthy();
+    expect(screen.getByTestId('thanks-line')).toBeTruthy();
+    // its stored stand-in text is never shown as words someone wrote
+    expect(screen.queryByText('Spas! 💛')).toBeNull();
+  });
+
   it('draws each kind: words, a game invite link as a card, a wrapped gift', async () => {
     testAuth.client = fakeClient({
       'GET /chat/u2/messages': ok({

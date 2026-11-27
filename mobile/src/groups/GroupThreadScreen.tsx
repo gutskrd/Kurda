@@ -31,7 +31,7 @@ import { placeMessages } from '../chat/thread';
 import { groupDetail, groupHistory, markGroupRead, sendGroupTyping, sendToGroup, type GroupDetail, type GroupMessage } from './api';
 import { useRoomEvents } from '../realtime/useRoomEvents';
 import { useTypingSignal, useTypingWatch } from '../chat/typing';
-import { giftBatchCard, openGift as openGiftApi, withCard, type ChatMessage } from '../gifts/api';
+import { giftBatchCard, openGift as openGiftApi, sendThanks, withCard, type ChatMessage } from '../gifts/api';
 import { useGiftEvents, useOpenChat } from '../gifts/events';
 import { GiftPickerSheet, skippedText, type GiftFriend } from '../gifts/GiftPickerSheet';
 import { canGiveGifts } from '../gifts/access';
@@ -436,6 +436,17 @@ export function GroupThreadScreen({
     [client, groupId, begin, settle, hold],
   );
 
+  /** A one-tap thanks for a gift: its own line in the room, and the card offers no second one. */
+  const thank = useCallback(
+    async (card: GiftCard): Promise<ApiError | null> => {
+      const res = await sendThanks(client, { groupId }, t('gift.thanksMessage'), card);
+      if (!res.ok) return res.error;
+      setMessages((prev) => appendOnce(withCard(prev, { ...card, myThanked: true }), res.data as Message));
+      return null;
+    },
+    [client, groupId, t],
+  );
+
   /**
    * A message the server would not take: out of the group, the standing card; a limit on the account, what and until
    * when with the way to Account standing (and no more greetings); anything else as usual.
@@ -732,7 +743,7 @@ export function GroupThreadScreen({
           target={unwrapping}
           onClose={() => setUnwrapping(null)}
           onOpened={(card) => setMessages((prev) => withCard(prev, card))}
-          onThanks={() => post(t('gift.thanksMessage'))}
+          onThanks={thank}
           // to whoever sent it, if they are a friend here (the sheet checks), the bag first; a known adult only, as a prompt to spend
           onSendBack={canGiveGifts(user) && isKnownAdult(user) && unwrapping.card.from ? () => openPicker(unwrapping.card.from!.userId) : undefined}
         />

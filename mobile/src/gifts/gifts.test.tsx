@@ -492,7 +492,7 @@ describe('GiftUnwrap', () => {
     });
     testAuth.client = client;
     const onOpened = vi.fn();
-    const onThanks = vi.fn(async () => null);
+    const onThanks = vi.fn(async (_card: GiftCard) => null);
     renderWithProviders(
       <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={onOpened} onThanks={onThanks} />,
     );
@@ -509,7 +509,22 @@ describe('GiftUnwrap', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Say thanks' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Thanks sent' })).toBeTruthy());
+    // the thanks names the gift it answers
     expect(onThanks).toHaveBeenCalledTimes(1);
+    expect(onThanks.mock.calls[0]).toEqual([expect.objectContaining({ batchId: card().batchId })]);
+  });
+
+  it('offers no second thanks for a gift already thanked for', async () => {
+    renderWithProviders(
+      <GiftUnwrap
+        target={{ giftId: 'g1', card: card({ myGiftId: 'g1', myOpened: true, myThanked: true }), fromName: 'Azad' }}
+        onClose={() => undefined}
+        onOpened={() => undefined}
+        onThanks={async () => null}
+      />,
+    );
+    expect(await screen.findByRole('button', { name: 'Thanks sent' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Say thanks' })).toBeNull();
   });
 
   it('wears the gift before the server answers, and takes it off again with the reason when refused', async () => {

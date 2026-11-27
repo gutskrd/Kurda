@@ -116,6 +116,12 @@ export function wearGift(client: ApiClient, category: EquippableCategory, sku: s
   return client.put(`/me/cosmetics/${category}`, { sku });
 }
 
+/** Sends a one-tap thanks for a gift into a direct chat or a group; the server stores its own short text with it. */
+export function sendThanks(client: ApiClient, where: { userId: string } | { groupId: string }, body: string, card: GiftCard): Promise<ApiResult<ChatMessage>> {
+  const url = 'userId' in where ? `/chat/${where.userId}/messages` : `/groups/${where.groupId}/chat`;
+  return client.post<ChatMessage>(url, { body, thanksFor: card.batchId });
+}
+
 /** A message list with one gift card replaced, wherever its batch appears. */
 export function withCard<T extends ChatMessage>(messages: T[], card: GiftCard): T[] {
   return messages.map((m) => (m.kind === 'gift' && m.gift?.batchId === card.batchId ? { ...m, gift: card } : m));

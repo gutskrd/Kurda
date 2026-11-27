@@ -2570,6 +2570,10 @@ export type TranslationKey =
   | 'gift.picker.sendFromBag'
   | 'gift.getZer'
   | 'chat.preview.gift'
+  | 'chat.preview.thanks'
+  | 'gift.thanksLine.mine'
+  | 'gift.thanksLine.theirs'
+  | 'gift.thanksLine.theGift'
   | 'chat.gameCard'
   | 'chat.gameRetired'
   // ---- end mobile-social ----
@@ -6382,6 +6386,10 @@ const en: Catalog = {
   'gift.picker.sendFromBag': 'Send from your bag',
   'gift.getZer': 'Get Zêr',
   'chat.preview.gift': 'Gift',
+  'chat.preview.thanks': 'Said thanks for a gift',
+  'gift.thanksLine.mine': 'You said thanks for {gift}',
+  'gift.thanksLine.theirs': '{name} said thanks for {gift}',
+  'gift.thanksLine.theGift': 'the gift',
   'chat.gameCard': 'A game invite',
   'chat.gameRetired': 'This game is no longer played.',
   // ---- end mobile-social ----
@@ -10613,6 +10621,10 @@ const ku: Catalog = {
   'gift.picker.sendFromBag': 'Ji torbeya xwe bişîne',
   'gift.getZer': 'Zêr bistîne',
   'chat.preview.gift': 'Diyarî',
+  'chat.preview.thanks': 'Ji bo diyariyekê spas kir',
+  'gift.thanksLine.mine': 'Te ji bo {gift} spas kir',
+  'gift.thanksLine.theirs': '{name} ji bo {gift} spas kir',
+  'gift.thanksLine.theGift': 'diyariyê',
   'chat.gameCard': 'Vexwendina lîstikê',
   'chat.gameRetired': 'Ev lîstik êdî nayê lîstin.',
   // ---- end mobile-social ----
@@ -14844,6 +14856,10 @@ const de: Catalog = {
   'gift.picker.sendFromBag': 'Aus dem Beutel senden',
   'gift.getZer': 'Zêr holen',
   'chat.preview.gift': 'Geschenk',
+  'chat.preview.thanks': 'Hat sich für ein Geschenk bedankt',
+  'gift.thanksLine.mine': 'Du hast dich für {gift} bedankt',
+  'gift.thanksLine.theirs': '{name} hat sich für {gift} bedankt',
+  'gift.thanksLine.theGift': 'das Geschenk',
   'chat.gameCard': 'Eine Spieleinladung',
   'chat.gameRetired': 'Dieses Spiel wird nicht mehr gespielt.',
   // ---- end mobile-social ----
@@ -19075,6 +19091,10 @@ const es: Catalog = {
   'gift.picker.sendFromBag': 'Enviar desde tu bolsa',
   'gift.getZer': 'Conseguir Zêr',
   'chat.preview.gift': 'Regalo',
+  'chat.preview.thanks': 'Dio las gracias por un regalo',
+  'gift.thanksLine.mine': 'Diste las gracias por {gift}',
+  'gift.thanksLine.theirs': '{name} dio las gracias por {gift}',
+  'gift.thanksLine.theGift': 'el regalo',
   'chat.gameCard': 'Una invitación a jugar',
   'chat.gameRetired': 'Este juego ya no está disponible.',
   // ---- end mobile-social ----
@@ -23306,6 +23326,10 @@ const tr: Catalog = {
   'gift.picker.sendFromBag': 'Çantandan gönder',
   'gift.getZer': 'Zêr al',
   'chat.preview.gift': 'Hediye',
+  'chat.preview.thanks': 'Hediye için teşekkür etti',
+  'gift.thanksLine.mine': '{gift} için teşekkür ettin',
+  'gift.thanksLine.theirs': '{name}, {gift} için teşekkür etti',
+  'gift.thanksLine.theGift': 'hediye',
   'chat.gameCard': 'Oyun daveti',
   'chat.gameRetired': 'Bu oyun artık oynanmıyor.',
   // ---- end mobile-social ----
@@ -27537,6 +27561,10 @@ const ar: Catalog = {
   'gift.picker.sendFromBag': 'أرسل من حقيبتك',
   'gift.getZer': 'احصل على Zêr',
   'chat.preview.gift': 'هدية',
+  'chat.preview.thanks': 'شكر على هدية',
+  'gift.thanksLine.mine': 'شكرٌ منك على {gift}',
+  'gift.thanksLine.theirs': 'شكرٌ من {name} على {gift}',
+  'gift.thanksLine.theGift': 'الهدية',
   'chat.gameCard': 'دعوة إلى لعبة',
   'chat.gameRetired': 'هذه اللعبة لم تعد متاحة.',
   // ---- end mobile-social ----
@@ -31768,6 +31796,10 @@ const fr: Catalog = {
   'gift.picker.sendFromBag': 'Envoyer depuis ton sac',
   'gift.getZer': 'Obtenir des Zêr',
   'chat.preview.gift': 'Cadeau',
+  'chat.preview.thanks': 'A remercié pour un cadeau',
+  'gift.thanksLine.mine': 'Tu as remercié pour {gift}',
+  'gift.thanksLine.theirs': '{name} a remercié pour {gift}',
+  'gift.thanksLine.theGift': 'le cadeau',
   'chat.gameCard': 'Une invitation à jouer',
   'chat.gameRetired': 'Ce jeu n’existe plus.',
   // ---- end mobile-social ----
@@ -35999,6 +36031,10 @@ const nl: Catalog = {
   'gift.picker.sendFromBag': 'Uit je tas versturen',
   'gift.getZer': 'Zêr halen',
   'chat.preview.gift': 'Cadeau',
+  'chat.preview.thanks': 'Bedankte voor een cadeau',
+  'gift.thanksLine.mine': 'Je bedankte voor {gift}',
+  'gift.thanksLine.theirs': '{name} bedankte voor {gift}',
+  'gift.thanksLine.theGift': 'het cadeau',
   'chat.gameCard': 'Een speluitnodiging',
   'chat.gameRetired': 'Dit spel wordt niet meer gespeeld.',
   // ---- end mobile-social ----
@@ -40231,6 +40267,10 @@ const ckb: Catalog = {
   'gift.picker.sendFromBag': 'لە کیسەکەتەوە بینێرە',
   'gift.getZer': 'Zêr وەربگرە',
   'chat.preview.gift': 'دیاری',
+  'chat.preview.thanks': 'سوپاسی کرد بۆ دیارییەک',
+  'gift.thanksLine.mine': 'سوپاست کرد بۆ {gift}',
+  'gift.thanksLine.theirs': '{name} سوپاسی کرد بۆ {gift}',
+  'gift.thanksLine.theGift': 'دیارییەکە',
   'chat.gameCard': 'بانگهێشتی یاری',
   'chat.gameRetired': 'ئەم یارییە ئیتر ناکرێت.',
   // ---- end mobile-social ----

@@ -32,7 +32,7 @@ import { JumpToLatest, useAwayFromLatest, useUnseenBelow } from './ThreadParts';
 import { TypingBubble } from './TypingBubble';
 import { useTypingSignal, useTypingWatch } from './typing';
 import { placeMessages } from './thread';
-import { giftBatchCard, openGift as openGiftApi, withCard, type ChatMessage } from '../gifts/api';
+import { giftBatchCard, openGift as openGiftApi, sendThanks, withCard, type ChatMessage } from '../gifts/api';
 import { useGiftEvents, useOpenChat } from '../gifts/events';
 import { GiftPickerSheet } from '../gifts/GiftPickerSheet';
 import { canGiveGifts } from '../gifts/access';
@@ -263,6 +263,17 @@ export function ChatScreen({
     [client, userId, begin, settle, hold],
   );
 
+  /** A one-tap thanks for a gift: its own line in the thread, and the card offers no second one. */
+  const thank = useCallback(
+    async (card: GiftCard): Promise<ApiError | null> => {
+      const res = await sendThanks(client, { userId }, t('gift.thanksMessage'), card);
+      if (!res.ok) return res.error;
+      setMessages((prev) => appendOnce(withCard(prev, { ...card, myThanked: true }), res.data));
+      return null;
+    },
+    [client, userId, t],
+  );
+
   // The person, not one message: their profile, a report, or a block.
   const personMenu = useCallback(() => {
     showActions({
@@ -468,7 +479,7 @@ export function ChatScreen({
           target={unwrapping}
           onClose={() => setUnwrapping(null)}
           onOpened={(card: GiftCard) => setMessages((prev) => withCard(prev, card))}
-          onThanks={() => post(t('gift.thanksMessage'))}
+          onThanks={thank}
           // back to the friend this chat is with, the bag first; offered to a known adult only, as a prompt to spend
           onSendBack={canGiveGifts(user) && isKnownAdult(user) ? () => setPicking(true) : undefined}
         />

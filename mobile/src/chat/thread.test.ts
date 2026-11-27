@@ -21,6 +21,13 @@ describe('placing the messages of a thread', () => {
     expect([places.get('d')!.first, places.get('d')!.last]).toEqual([true, true]);
   });
 
+  it('keeps a one-tap thanks out of the runs around it, so the bubbles on either side close their own runs', () => {
+    const places = placeMessages([at('a', 'u1', 20, 10, 0), { ...at('b', 'u1', 20, 10, 1), kind: 'thanks' }, at('c', 'u1', 20, 10, 2)], NOW, WORDS);
+    expect([places.get('a')!.first, places.get('a')!.last]).toEqual([true, true]);
+    expect([places.get('b')!.first, places.get('b')!.last]).toEqual([true, true]);
+    expect([places.get('c')!.first, places.get('c')!.last]).toEqual([true, true]);
+  });
+
   it('starts a new run after five minutes, even for the same sender', () => {
     const places = placeMessages([at('a', 'u1', 20, 10, 0), at('b', 'u1', 20, 10, 6)], NOW, WORDS);
     expect(places.get('a')!.last).toBe(true);
