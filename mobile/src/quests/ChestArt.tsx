@@ -5,18 +5,32 @@ import {
   CHEST_BOX,
   CHEST_FOOT,
   CHEST_HOP,
+  CHEST_HOP_BLOOM,
+  CHEST_HOP_BLOOM_SIZE,
+  CHEST_HOP_LAND,
   CHEST_HOP_LID,
   CHEST_HOP_LIGHT,
+  CHEST_HOP_MS,
+  CHEST_HOP_RAYS,
+  CHEST_HOP_RAYS_REACH,
   CHEST_HOP_SEAM,
   CHEST_HOP_SHADOW,
   CHEST_HOP_SPARKLE,
   CHEST_KNOCK,
   CHEST_KNOCK_LIFT,
   CHEST_KNOCK_MS,
+  CHEST_LID_AJAR,
+  CHEST_LID_AWAY,
+  CHEST_MOTES,
+  CHEST_MOTE_MS,
   CHEST_SMALL,
+  CHEST_TWINKLES,
+  CHEST_TWINKLE_MS,
   chestDrawing,
   chestGlint,
   chestLayerSvg,
+  chestMote,
+  chestTwinkle,
   type ChestBox,
   type ChestDrawing,
   type ChestHopCurve,
@@ -33,10 +47,11 @@ import { useMotionAlive } from '../a11y/useMotionAlive';
  *
  * Each layer is its own picture over the same frame, so parts move without redrawing. Opening is a hop
  * (`motion.hop`, 0 → 1 through the shared `CHEST_HOP`): everything but the shadow crouches with light building at
- * the seam, springs about the chest's foot and lands while the shadow shrinks; the shut lid swings away about its
- * hinge and the open lid lands at the top of the hop, rocking as the chest lands, the inner light blooms and the
- * gold and stars burst on landing. `lid`, `light` and `sparkle` can also be driven separately. The beams over it
- * sway (`rays: 'swaying'`), and `shine` makes a chest waiting to be opened knock now and then (shared
+ * the seam and springs about the chest's foot; the shut lid lifts ajar on its hinge with light pouring out of the
+ * gap, then gives way to the open lid at the top of the hop with a flash of bloom as the shafts shoot up, rocking as
+ * the chest lands and the gold is thrown. `lid`, `light` and `sparkle` can also be driven separately. With
+ * `rays: 'swaying'` the shafts then sway, the bloom breathes, and stars twinkle and motes rise round it; and `shine`
+ * makes a chest waiting to be opened knock now and then (shared
  * `CHEST_KNOCK`: the lid jumps on its hinge, the seam's light flares, the box squats as it lands) with a glint over
  * its lock; both are native-driver loops that run only while the screen is focused and motion is allowed, and
  * under Reduce Motion a waiting chest just glows softly at its seam. `open` draws it standing open. Decorative: its
@@ -64,9 +79,13 @@ const along = (value: AnimatedNumber, curve: ChestHopCurve): Animated.AnimatedIn
 /** The chest's height against its width. */
 export const CHEST_RATIO = CHEST_BOX.h / CHEST_BOX.w;
 
-/** How long the beams take to lean one way and back, and how far they lean. */
-const RAYS_SWAY_MS = 7200;
-const RAYS_SWAY_DEG = 5;
+/** How long the shafts take to lean one way and back, and how far they lean; and how long the bloom takes to breathe out and in. */
+const RAYS_SWAY_MS = 10400;
+const RAYS_SWAY_DEG = 2.5;
+const BLOOM_BREATH_MS = 5600;
+/** How bright the bloom stands once open, and how far it dims as it breathes. */
+const BLOOM_OPEN = 0.78;
+const BLOOM_LOW = 0.6;
 /** Where the glint is drawn on its way over the plate; stepping through them is the pass. */
 const GLINT_PHASES = [0.1, 0.26, 0.42, 0.58, 0.74, 0.9] as const;
 const GLINT_STEP_MS = 80;
@@ -117,19 +136,25 @@ export function ChestArt({
   const waiting = shine && !showOpen;
   const knocking = waiting && alive;
 
-  // The beams lean a little one way and back, as light does through moving air, only while somebody is looking.
+  // The shafts lean a little one way and back, as light does through moving air, and the bloom breathes, only while
+  // somebody is looking.
   const sway = useRef(new Animated.Value(0)).current;
+  const breath = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!swaying) {
       sway.setValue(0);
+      breath.setValue(0);
       return;
     }
-    const lean = (to: number): Animated.CompositeAnimation =>
-      Animated.timing(sway, { toValue: to, duration: RAYS_SWAY_MS / 2, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false });
-    const loop = Animated.loop(Animated.sequence([lean(1), lean(0)]));
-    loop.start();
-    return () => loop.stop();
-  }, [swaying, sway]);
+    const swing = (value: Animated.Value, ms: number): Animated.CompositeAnimation => {
+      const go = (to: number): Animated.CompositeAnimation =>
+        Animated.timing(value, { toValue: to, duration: ms / 2, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false });
+      return Animated.loop(Animated.sequence([go(1), go(0)]));
+    };
+    const loops = [swing(sway, RAYS_SWAY_MS), swing(breath, BLOOM_BREATH_MS)];
+    loops.forEach((l) => l.start());
+    return () => loops.forEach((l) => l.stop());
+  }, [swaying, sway, breath]);
 
   // The knock: one value through the shared loop, which the lid, the seam's light and the box all read.
   const knock = useRef(new Animated.Value(0)).current;
@@ -149,7 +174,7 @@ export function ChestArt({
   const knocked = <T extends number | string>(pick: (f: ChestKnockFrame) => T): Animated.AnimatedInterpolation<T> =>
     knock.interpolate({ inputRange: knockAts, outputRange: CHEST_KNOCK.map(pick) as number[] | string[], extrapolate: 'clamp' }) as Animated.AnimatedInterpolation<T>;
 
-  // The shut lid: up and away about the hinge, gone by the time the open one has landed; or jumping as it knocks.
+  // The shut lid: lifted ajar about the hinge, then swung on and gone as the open one lands; or jumping as it knocks.
   const knockLid: Animated.WithAnimatedObject<ViewStyle> | null = knocking
     ? {
         transform: [
@@ -160,10 +185,22 @@ export function ChestArt({
     : null;
   const lidStyle: Animated.WithAnimatedObject<ViewStyle> | null = lid
     ? {
-        opacity: lid.interpolate({ inputRange: [0, 0.35, 0.6, 1], outputRange: [1, 1, 0, 0], extrapolate: 'clamp' }),
+        opacity: lid.interpolate({ inputRange: [0, 0.35, CHEST_LID_AWAY.at, 1], outputRange: [1, 1, 0, 0], extrapolate: 'clamp' }),
         transform: [
-          { translateY: lid.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, -height * 0.22, -height * 0.22], extrapolate: 'clamp' }) },
-          { rotate: lid.interpolate({ inputRange: [0, 0.6, 1], outputRange: ['0deg', '-34deg', '-34deg'], extrapolate: 'clamp' }) },
+          {
+            translateY: lid.interpolate({
+              inputRange: [0, CHEST_LID_AJAR.at, CHEST_LID_AWAY.at],
+              outputRange: [0, -CHEST_LID_AJAR.rise * unit, -CHEST_LID_AWAY.rise * unit],
+              extrapolate: 'clamp',
+            }),
+          },
+          {
+            rotate: lid.interpolate({
+              inputRange: [0, CHEST_LID_AJAR.at, CHEST_LID_AWAY.at],
+              outputRange: ['0deg', `${CHEST_LID_AJAR.deg}deg`, `${CHEST_LID_AWAY.deg}deg`],
+              extrapolate: 'clamp',
+            }),
+          },
         ],
       }
     : null;
@@ -200,9 +237,18 @@ export function ChestArt({
       }
     : null;
   const shadowStyle: Animated.WithAnimatedObject<ViewStyle> | null = hop ? { transform: [{ scale: along(hop, CHEST_HOP_SHADOW) }] } : null;
+  // The shafts leak out of the gap and shoot up as the lid opens; the bloom flashes and settles, then breathes.
   const raysStyle: Animated.WithAnimatedObject<ViewStyle> = {
-    opacity: light,
-    transform: [{ rotate: sway.interpolate({ inputRange: [0, 1], outputRange: [`${-RAYS_SWAY_DEG}deg`, `${RAYS_SWAY_DEG}deg`] }) }, { scale: reach }],
+    opacity: hop ? along(hop, CHEST_HOP_RAYS) : light,
+    transform: [
+      { rotate: sway.interpolate({ inputRange: [0, 1], outputRange: [`${-RAYS_SWAY_DEG}deg`, `${RAYS_SWAY_DEG}deg`] }) },
+      { scale: hop ? along(hop, CHEST_HOP_RAYS_REACH.map(([at, v]) => [at, v * reach] as const)) : reach },
+    ],
+  };
+  const breathing = breath.interpolate({ inputRange: [0, 1], outputRange: [1, BLOOM_LOW / BLOOM_OPEN] });
+  const bloomStyle: Animated.WithAnimatedObject<ViewStyle> = {
+    opacity: Animated.multiply(hop ? along(hop, CHEST_HOP_BLOOM) : Animated.multiply(light, BLOOM_OPEN), breathing),
+    transform: [{ scale: hop ? along(hop, CHEST_HOP_BLOOM_SIZE) : 1 }],
   };
   // The light at the seam: flaring with the knock, building through the hop's crouch, or a still glow under Reduce Motion.
   const seam: Animated.WithAnimatedObject<ViewStyle> | null = knocking
@@ -218,6 +264,7 @@ export function ChestArt({
     <View style={[{ width: size, height }, style]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID={testID}>
       <Part drawing={drawing} layer={layers.shadow} unit={unit} style={shadowStyle} />
       <Animated.View style={[StyleSheet.absoluteFill, hopStyle]} pointerEvents="none" testID={testID && hop ? `${testID}-hop` : testID && knocking ? `${testID}-knocking` : undefined}>
+        {rays && showOpen ? <Part drawing={drawing} layer={layers.bloom} unit={unit} style={bloomStyle} /> : null}
         {showOpen ? <Part drawing={drawing} layer={layers.lidOpen} unit={unit} style={[openStyle, { transformOrigin: hingeOf(layers.lidOpen) }]} testID={testID ? `${testID}-lid-open` : undefined} /> : null}
         {rays && showOpen ? <Part drawing={drawing} layer={layers.rays} unit={unit} style={raysStyle} testID={testID ? `${testID}-rays${swaying ? '-swaying' : ''}` : undefined} /> : null}
         <Part drawing={drawing} layer={layers.body} unit={unit} />
@@ -228,7 +275,57 @@ export function ChestArt({
         {seam ? <Part drawing={drawing} layer={layers.seam} unit={unit} style={seam} /> : null}
         {sparkleStyle ? <Part drawing={drawing} layer={layers.sparkle} unit={unit} style={sparkleStyle} /> : null}
       </Animated.View>
+      {swaying && showOpen ? <Lights drawing={drawing} unit={unit} startMs={hop ? CHEST_HOP_MS * CHEST_HOP_LAND : 0} /> : null}
     </View>
+  );
+}
+
+/**
+ * The stars and motes round an open chest (shared `CHEST_TWINKLES` and `CHEST_MOTES`), from `startMs` on: each star
+ * flares and fades in turn and each mote drifts up the shafts, every one its own picture on a native-driver loop, as
+ * the web plays them.
+ */
+function Lights({ drawing, unit, startMs }: { drawing: ChestDrawing; unit: number; startMs: number }): React.JSX.Element {
+  const twinkles = useMemo(() => CHEST_TWINKLES.map((_, i) => chestTwinkle(i)), []);
+  const motes = useMemo(() => CHEST_MOTES.map((_, i) => chestMote(i)), []);
+  const values = useRef([...CHEST_TWINKLES, ...CHEST_MOTES].map(() => new Animated.Value(0))).current;
+  useEffect(() => {
+    const runs = values.map((value, i) => {
+      const star = CHEST_TWINKLES[i];
+      const mote = CHEST_MOTES[i - CHEST_TWINKLES.length];
+      const ms = star ? CHEST_TWINKLE_MS : CHEST_MOTE_MS;
+      const delay = (star?.delay ?? mote?.delay ?? 0) * ms;
+      const once = Animated.timing(value, { toValue: 1, duration: ms, easing: star ? Easing.out(Easing.quad) : Easing.linear, useNativeDriver: true, isInteraction: false });
+      return Animated.sequence([Animated.delay(startMs + delay), Animated.loop(once)]);
+    });
+    runs.forEach((run) => run.start());
+    return () => {
+      runs.forEach((run) => run.stop());
+      values.forEach((value) => value.setValue(0));
+    };
+  }, [values, startMs]);
+  return (
+    <>
+      {twinkles.map((layer, i) => {
+        const v = values[i]!;
+        const style: Animated.WithAnimatedObject<ViewStyle> = {
+          opacity: v.interpolate({ inputRange: [0, 0.12, 0.3, 0.52, 1], outputRange: [0, 1, 0.9, 0, 0] }),
+          transform: [
+            { scale: v.interpolate({ inputRange: [0, 0.12, 0.3, 0.52, 1], outputRange: [0.2, 1.1, 0.85, 0.25, 0.25] }) },
+            { rotate: v.interpolate({ inputRange: [0, 0.12, 0.3, 0.52, 1], outputRange: ['0deg', '20deg', '34deg', '45deg', '45deg'] }) },
+          ],
+        };
+        return <Part key={`t${i}`} drawing={drawing} layer={layer} unit={unit} style={style} />;
+      })}
+      {motes.map((layer, i) => {
+        const v = values[CHEST_TWINKLES.length + i]!;
+        const style: Animated.WithAnimatedObject<ViewStyle> = {
+          opacity: v.interpolate({ inputRange: [0, 0.18, 0.7, 1], outputRange: [0, 1, 0.8, 0] }),
+          transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, -CHEST_MOTES[i]!.rise * unit] }) }],
+        };
+        return <Part key={`m${i}`} drawing={drawing} layer={layer} unit={unit} style={style} />;
+      })}
+    </>
   );
 }
 

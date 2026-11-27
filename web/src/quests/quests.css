@@ -6,7 +6,7 @@
 /* ---- A chest ---------------------------------------------------------------------- */
 /*
  * The drawing's layers (shared art/chest.ts) are groups named by part (Chest.tsx), moved in the drawing's units: the
- * lid turns about its hinge (67 53) and the rays sway about the chest's mouth (59 57.5).
+ * lid turns about its hinge (67 53), and the shafts and the bloom grow and sway about the chest's mouth (59 57.5).
  */
 .chest {
   display: block;
@@ -16,15 +16,20 @@
 .chest [data-part='lidOpen'] {
   transform-origin: 67px 53px;
 }
-.chest [data-part='rays'] {
+.chest [data-part='rays'],
+.chest [data-part='bloom'],
+.chest .chest-rays-grow {
   transform-origin: 59px 57.5px;
+}
+.chest [data-part='rays'] {
   transform: scale(var(--chest-reach, 1));
 }
 .chest [data-part='sparkle'] {
   transform-origin: 60px 60px;
 }
 /* The open chest's parts, the glint and the light at the seam show only when called for. */
-.chest :is([data-part='lidOpen'], [data-part='light'], [data-part='rays'], [data-part='sparkle'], [data-part='glint'], [data-part='seam']) {
+.chest :is([data-part='bloom'], [data-part='lidOpen'], [data-part='light'], [data-part='rays'], [data-part='sparkle'], [data-part='glint'], [data-part='seam']),
+.chest :is(.chest-twinkle, .chest-mote) {
   opacity: 0;
 }
 /* Open: the lid thrown back and the light out. */
@@ -34,12 +39,17 @@
 .chest.is-open :is([data-part='lidOpen'], [data-part='light'], [data-part='rays']) {
   opacity: 1;
 }
+/* On the chest screen an open chest also stands in its bloom. */
+.chest-screen .chest.is-open [data-part='bloom'] {
+  opacity: 0.78;
+}
 /*
  * Opened just now, the chest hops. This is the shared CHEST_HOP choreography (art/chest.ts: one second, keyframes at
  * fractions of it), so the phone and the page play the same hop. The `chest-hop` group crouches, springs up about the
- * chest's foot (60 104), lands and settles while the shadow shrinks; the shut lid swings away and the open one lands
- * at the top, the light at the seam builds through the crouch, the light blooms, the rays sway and the gold and stars
- * burst on landing.
+ * chest's foot (60 104), lands and settles while the shadow shrinks. The light at the seam builds through the crouch;
+ * as it springs the lid lifts ajar and light pours out of the gap, then it is thrown open at the top with a flash of
+ * bloom while the shafts shoot up; the gold is thrown on landing, and then the shafts sway, the bloom breathes, stars
+ * twinkle and motes rise through the light.
  */
 .chest.is-popping .chest-hop {
   transform-origin: 60px 104px;
@@ -58,10 +68,68 @@
 .chest.is-popping [data-part='light'] {
   animation: chest-light-in 1000ms linear both;
 }
+.chest.is-popping [data-part='bloom'] {
+  animation:
+    chest-bloom 1000ms linear both,
+    chest-bloom-breathe 2.8s ease-in-out 1000ms infinite alternate;
+}
 .chest.is-popping [data-part='rays'] {
   animation:
-    chest-light-in 1000ms linear both,
-    chest-rays-sway 3.6s ease-in-out 440ms infinite alternate;
+    chest-rays-in 1000ms linear both,
+    chest-rays-sway 5.2s ease-in-out 1000ms infinite alternate;
+}
+.chest.is-popping .chest-rays-grow {
+  animation: chest-rays-reach 1000ms linear both;
+}
+/* The stars flare and fade in turn, and the motes drift up the shafts, from the landing on (shared CHEST_TWINKLES and CHEST_MOTES). */
+.chest.is-popping .chest-twinkle {
+  animation: chest-twinkle 2400ms ease-out calc(600ms + var(--delay, 0ms)) infinite both;
+}
+.chest.is-popping .chest-mote {
+  animation: chest-mote 3000ms linear calc(600ms + var(--delay, 0ms)) infinite both;
+}
+@keyframes chest-twinkle {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(0deg);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(1.1) rotate(20deg);
+  }
+  30% {
+    opacity: 0.9;
+    transform: scale(0.85) rotate(34deg);
+  }
+  52%,
+  100% {
+    opacity: 0;
+    transform: scale(0.25) rotate(45deg);
+  }
+}
+@keyframes chest-mote {
+  0% {
+    opacity: 0;
+    transform: none;
+  }
+  18% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(calc(var(--rise, 40) * -1px));
+  }
+}
+@keyframes chest-bloom-breathe {
+  from {
+    opacity: 0.78;
+  }
+  to {
+    opacity: 0.6;
+  }
 }
 .chest.is-popping [data-part='seam'] {
   animation: chest-hop-seam 1000ms linear both;
@@ -128,42 +196,64 @@
     transform: none;
   }
 }
-/* The lid from 0 (shut) to 1 (open), as on the phone: shut to 30%, open at 50%, past open (1.18) at 62%, back (0.94) at 74%, settled by 86%. */
+/*
+ * The lid as on the phone (shared CHEST_HOP_LID): the shut one lifts ajar on its hinge, swings on and is gone, and the
+ * open one lands from the hinge as it is thrown open, rocking as the chest lands.
+ */
 @keyframes chest-lid-away {
-  0%,
-  30% {
+  0% {
     opacity: 1;
     transform: none;
   }
-  37% {
+  26% {
     opacity: 1;
+    transform: none;
   }
-  42%,
+  32% {
+    opacity: 1;
+    transform: translateY(-4px) rotate(16deg);
+  }
+  40% {
+    opacity: 0.96;
+    transform: translateY(-5.2px) rotate(17.6deg);
+  }
+  43.75% {
+    opacity: 0;
+    transform: translateY(-10px) rotate(24deg);
+  }
   100% {
     opacity: 0;
-    transform: translateY(-20px) rotate(-34deg);
+    transform: translateY(-10px) rotate(24deg);
   }
 }
 @keyframes chest-lid-land {
-  0%,
-  38% {
+  0% {
     opacity: 0;
     transform: rotate(26deg) scale(0.55);
   }
-  43% {
+  40.63% {
+    opacity: 0;
+    transform: rotate(26deg) scale(0.55);
+  }
+  44.53% {
     opacity: 1;
+    transform: rotate(15.17deg) scale(0.738);
   }
   50% {
+    opacity: 1;
     transform: none;
   }
   62% {
+    opacity: 1;
     transform: rotate(-7.8deg) scale(1.135);
   }
   74% {
-    transform: rotate(1.6deg) scale(0.955);
+    opacity: 1;
+    transform: rotate(2.6deg) scale(0.955);
   }
   86% {
-    transform: rotate(-0.5deg) scale(1.015);
+    opacity: 1;
+    transform: rotate(-0.87deg) scale(1.015);
   }
   100% {
     opacity: 1;
@@ -171,13 +261,107 @@
   }
 }
 @keyframes chest-light-in {
-  0%,
-  40% {
+  0% {
     opacity: 0;
   }
-  62%,
+  26% {
+    opacity: 0;
+  }
+  32% {
+    opacity: 0.85;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  56% {
+    opacity: 1;
+  }
   100% {
     opacity: 1;
+  }
+}
+/* The shafts leaking out of the gap and shooting up as the lid opens (shared CHEST_HOP_RAYS and CHEST_HOP_RAYS_REACH). */
+@keyframes chest-rays-in {
+  0% {
+    opacity: 0;
+  }
+  26% {
+    opacity: 0;
+  }
+  32% {
+    opacity: 0.55;
+  }
+  40% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes chest-rays-reach {
+  0% {
+    transform: scale(0.3);
+  }
+  26% {
+    transform: scale(0.3);
+  }
+  40% {
+    transform: scale(0.5);
+  }
+  52% {
+    transform: scale(1.12);
+  }
+  66% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+/* The bloom: a glow at the gap, a flash as the lid opens, then a steady light (shared CHEST_HOP_BLOOM and its size). */
+@keyframes chest-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.45);
+  }
+  26% {
+    opacity: 0;
+    transform: scale(0.45);
+  }
+  34% {
+    opacity: 0.5;
+    transform: scale(0.575);
+  }
+  42% {
+    opacity: 0.55;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.087);
+  }
+  54% {
+    opacity: 1;
+    transform: scale(1.28);
+  }
+  64% {
+    opacity: 1;
+    transform: scale(1.124);
+  }
+  72% {
+    opacity: 0.912;
+    transform: scale(1);
+  }
+  84% {
+    opacity: 0.78;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.78;
+    transform: scale(1);
   }
 }
 @keyframes chest-fade-in {
@@ -188,13 +372,13 @@
     opacity: 1;
   }
 }
-/* The beams lean a little one way and back, as light does through moving air. */
+/* The shafts lean a little one way and back, as light does through moving air. */
 @keyframes chest-rays-sway {
   from {
-    transform: scale(var(--chest-reach, 1)) rotate(-5deg);
+    transform: scale(var(--chest-reach, 1)) rotate(-2.5deg);
   }
   to {
-    transform: scale(var(--chest-reach, 1)) rotate(5deg);
+    transform: scale(var(--chest-reach, 1)) rotate(2.5deg);
   }
 }
 /* The seam's light through the hop (shared CHEST_HOP_SEAM): building through the crouch, gone once the lid is off. */
@@ -205,11 +389,15 @@
   12% {
     opacity: 0.85;
   }
-  24%,
-  32% {
+  24% {
     opacity: 1;
   }
-  40%,
+  40% {
+    opacity: 1;
+  }
+  46% {
+    opacity: 0;
+  }
   100% {
     opacity: 0;
   }
@@ -942,17 +1130,9 @@ button.quests-card:active {
 .chest-opened .celebrate-art-inner {
   animation: none;
 }
-.chest-opened .celebrate-glow {
-  width: 360px;
-  height: 360px;
-  margin: -180px 0 0 -180px;
-  background: radial-gradient(closest-side, rgba(255, 233, 150, 0.75), transparent);
-}
-.chest-opened .celebrate-ring {
-  width: 200px;
-  height: 200px;
-  margin: -100px 0 0 -100px;
-  border-color: #fff1b0;
+/* The chest's own bloom, shafts and stars are the celebration here: no ring, no confetti and no second glow. */
+.chest-opened :is(.celebrate-glow, .celebrate-ring, .celebrate-burst) {
+  display: none;
 }
 .chest-reward {
   display: flex;

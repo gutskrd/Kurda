@@ -26,7 +26,7 @@ import { ClayButton } from '../../theme/glass';
 import { useI18n } from '../../i18n/I18nContext';
 import { formatNumber } from '../../i18n/format';
 import { useCelebrationHold } from '../../badges/BadgeCelebrationHost';
-import { ConfettiBurst, GlowRing, SoftGlow, useCelebration } from '../../theme/CelebrationParts';
+import { ConfettiBurst, GlowRing, useCelebration } from '../../theme/CelebrationParts';
 import { BURST } from '../../theme/celebration';
 import { timing, useCountUp } from '../../theme/animate';
 import { duration, pressedDim } from '../../theme/motion';
@@ -227,7 +227,6 @@ export function LessonResults({
           accessibilityLabel={moment.playing ? t('common.skip') : undefined}
           style={styles.stage}
         >
-          <SoftGlow colour={colors.gold} size={STAGE.height} id="lesson-glow" />
           {plan.travel ? <GlowRing progress={moment.ring} colour={colors.gold} size={STAGE.height * 0.6} /> : null}
           {plan.travel ? <ConfettiBurst progress={moment.burst} count={BURST.lesson} seed={results.correct * 31 + results.total} colours={flecks} reach={130} /> : null}
           <Animated.View style={{ opacity, transform: [{ scale }] }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -289,7 +288,7 @@ export function LessonResults({
 
           {actions.stopHere ? <Text style={[styles.note, { color: colors.textPrimary }]}>{t('lesson.results.goalDoneStop')}</Text> : null}
 
-          {skipped > 0 ? <Text style={[styles.note, { color: colors.textSecondary }]}>{t('lesson.skipped', { count: formatNumber(skipped, locale) })}</Text> : null}
+          {skipped > 0 ? <Text style={[styles.note, { color: colors.textSecondary }]}>{skipped === 1 ? t('lesson.skipped.one') : t('lesson.skipped', { count: formatNumber(skipped, locale) })}</Text> : null}
 
           {mistakes.length > 0 ? (
             <View style={[styles.mistakes, { backgroundColor: colors.controlTrack }]}>

@@ -10,10 +10,12 @@
 .lesson-results .celebrate-inline .celebrate-art {
   min-height: 230px;
 }
+/* Hevalo's window stands clean on the page: no gold halo or gold-tinted shadow behind it, which muddied its wood. */
 .lesson-results .celebrate-inline .celebrate-glow {
-  width: 280px;
-  height: 280px;
-  margin: -140px 0 0 -140px;
+  display: none;
+}
+.lesson-results .celebrate-inline .celebrate-art-inner {
+  filter: drop-shadow(0 12px 22px rgb(0 0 0 / 0.16));
 }
 .lesson-results .celebrate-inline .celebrate-ring {
   width: 150px;

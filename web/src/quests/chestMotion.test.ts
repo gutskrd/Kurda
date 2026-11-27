@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { CHEST_FOOT, CHEST_HOP_SEAM, CHEST_KNOCK, CHEST_KNOCK_LIFT, chestDrawing } from '@kurda/shared';
+import {
+  CHEST_FOOT,
+  CHEST_HOP_BLOOM,
+  CHEST_HOP_BLOOM_SIZE,
+  CHEST_HOP_LIGHT,
+  CHEST_HOP_RAYS,
+  CHEST_HOP_RAYS_REACH,
+  CHEST_HOP_SEAM,
+  CHEST_KNOCK,
+  CHEST_KNOCK_LIFT,
+  CHEST_LID_AJAR,
+  chestDrawing,
+  chestHopAt,
+} from '@kurda/shared';
 
 /*
  * The page plays the chest's knock and seam light from keyframes written into quests.css, so they are checked here
@@ -69,6 +82,25 @@ describe('the chest’s motion on the page', () => {
       expect(frame, `${at}`).toBeDefined();
       expect(number(frame!.body, /opacity:\s*([\d.]+)/)).toBeCloseTo(value, 2);
     }
+  });
+
+  it('opens as the shared hop does: the light in the gap, the shafts leaking then shooting up, and the bloom’s flash', () => {
+    const at = (name: string, share: number): string => {
+      const frame = keyframes(name).find((f) => Math.abs(f.at - share) < 0.001);
+      expect(frame, `${name} at ${share}`).toBeDefined();
+      return frame!.body;
+    };
+    for (const [share, value] of CHEST_HOP_LIGHT) expect(number(at('chest-light-in', share), /opacity:\s*([\d.]+)/)).toBeCloseTo(value, 2);
+    for (const [share, value] of CHEST_HOP_RAYS) expect(number(at('chest-rays-in', share), /opacity:\s*([\d.]+)/)).toBeCloseTo(value, 2);
+    for (const [share, value] of CHEST_HOP_RAYS_REACH) expect(number(at('chest-rays-reach', share), /scale\(([\d.]+)\)/)).toBeCloseTo(value, 3);
+    for (const [share] of [...CHEST_HOP_BLOOM, ...CHEST_HOP_BLOOM_SIZE]) {
+      const body = at('chest-bloom', share);
+      expect(number(body, /opacity:\s*([\d.]+)/)).toBeCloseTo(chestHopAt(CHEST_HOP_BLOOM, share), 2);
+      expect(number(body, /scale\(([\d.]+)\)/)).toBeCloseTo(chestHopAt(CHEST_HOP_BLOOM_SIZE, share), 2);
+    }
+    // the shut lid stands ajar, its front up on the hinge, where the lid's curve reaches the ajar mark
+    const ajar = keyframes('chest-lid-away').find((f) => f.body.includes(`rotate(${CHEST_LID_AJAR.deg}deg)`));
+    expect(ajar?.body).toContain(`translateY(-${CHEST_LID_AJAR.rise}px)`);
   });
 
   it('turns the lid about the drawing’s hinge, sways the beams about its mouth and squats the box on its foot', () => {

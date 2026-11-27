@@ -5,8 +5,9 @@
  * a rare one the road's amber wood in brass with a kilim strap, an epic one pomegranate lacquer in gold with a kilim
  * strap and a garnet. Flat painted planes lit from the upper left, one light and one shade step to a form and no
  * outlines; the only gradients are the soft lights and the ground shadow. It is built as layers with stable ids, back
- * to front, because the renderers animate them (lid, the light at its seam, the light inside, rays, the hasp's glint,
- * sparkles); each layer is self-contained markup on the one 120 × 120 canvas, and `chestSvg` is the whole picture.
+ * to front, because the renderers animate them (lid, the light at its seam, the light inside, its bloom and shafts, the
+ * hasp's glint, the thrown gold, and the stars and motes round an open chest); each layer is self-contained markup on
+ * the one 120 × 120 canvas, and `chestSvg` is the whole picture.
  */
 import type { ChestTier } from '../quests.js';
 import { rad } from './geometry.js';
@@ -16,8 +17,10 @@ import { CANVAS, escapeXml, linearAt, n, n2, prefixFor, radialAt, type Pt } from
 export type { ChestTier } from '../quests.js';
 
 /** The layers, back to front. */
-export const CHEST_LAYERS = ['shadow', 'lidOpen', 'rays', 'body', 'light', 'lock', 'glint', 'lid', 'seam', 'sparkle'] as const;
-export type ChestLayerId = (typeof CHEST_LAYERS)[number];
+export const CHEST_LAYERS = ['shadow', 'bloom', 'lidOpen', 'rays', 'body', 'light', 'lock', 'glint', 'lid', 'seam', 'sparkle'] as const;
+export type ChestPartId = (typeof CHEST_LAYERS)[number];
+/** A layer's id: one of the drawing's parts, or one of the stars and motes drawn on their own (`chestTwinkle`, `chestMote`). */
+export type ChestLayerId = ChestPartId | 'twinkle' | 'mote';
 
 /** A box in the drawing's units. */
 export interface ChestBox {
@@ -44,7 +47,7 @@ export interface ChestDrawing {
   hinge: Pt;
   /** The middle of the chest's mouth, where the light and rays come from and the rays sway about. */
   mouth: Pt;
-  layers: Readonly<Record<ChestLayerId, ChestLayer>>;
+  layers: Readonly<Record<ChestPartId, ChestLayer>>;
 }
 
 export interface ChestOptions {
@@ -262,8 +265,6 @@ function star(x: number, y: number, r: number): string {
   return `M${n(x)} ${n(y - r)}Q${n(x + w)} ${n(y - w)} ${n(x + r)} ${n(y)}Q${n(x + w)} ${n(y + w)} ${n(x)} ${n(y + r)}Q${n(x - w)} ${n(y + w)} ${n(x - r)} ${n(y)}Q${n(x - w)} ${n(y - w)} ${n(x)} ${n(y - r)}Z`;
 }
 
-/** A point `r` from (cx, cy), `deg` degrees clockwise from straight up. */
-const spoke = (cx: number, cy: number, r: number, deg: number): Pt => [cx + r * Math.sin((deg * Math.PI) / 180), cy - r * Math.cos((deg * Math.PI) / 180)];
 const ellipse = (cx: number, cy: number, rx: number, ry: number): string =>
   `M${n(cx - rx)} ${n(cy)}A${n(rx)} ${n(ry)} 0 1 0 ${n(cx + rx)} ${n(cy)}A${n(rx)} ${n(ry)} 0 1 0 ${n(cx - rx)} ${n(cy)}Z`;
 
@@ -529,17 +530,50 @@ function lightLayer(l: Layer, b: Brush): ChestBox {
   return { x: cx - 38, y: cy - 42, w: 76, h: 80 };
 }
 
-/** Soft beams of light fanning up out of the mouth, fading as they go; renderers sway them about the mouth. */
+/**
+ * The bloom of an opening chest: a wide soft light round its mouth, white at the heart and warming to gold as it fades,
+ * the glow the shafts rise out of. Its box is centred on the mouth, so renderers grow it about there.
+ */
+function bloomLayer(l: Layer): ChestBox {
+  const [cx, cy] = MOUTH;
+  const r = BLOOM_R;
+  const glow = l.id('b');
+  l.def(
+    radialAt(
+      glow,
+      [
+        [0, '#ffffff', 0.85],
+        [0.22, LIGHT.core, 0.62],
+        [0.55, LIGHT.glow, 0.2],
+        [1, LIGHT.far, 0],
+      ],
+      cx,
+      cy - 6,
+      r,
+    ),
+  );
+  l.add(`<circle cx="${cx}" cy="${n(cy - 6)}" r="${r}" fill="url(#${glow})"/>`);
+  return { x: cx - r, y: cy - r, w: r * 2, h: r * 2 };
+}
+const BLOOM_R = 58;
+
+/**
+ * The shafts of light rising out of the open chest: each starts at its own place along the mouth and leans out a little
+ * from a point under the chest, so together they fan gently upward rather than burst all round. A shaft is a wide faint
+ * sheath round a bright core, so its edges read soft without a blur, and all of them fade with height. The box is
+ * centred on the mouth, where renderers grow and sway them.
+ */
 function raysLayer(l: Layer): ChestBox {
   const [cx, cy] = MOUTH;
-  const r = 62;
+  const r = RAYS_R;
   const fade = l.id('r');
   l.def(
     radialAt(
       fade,
       [
-        [0, LIGHT.core, 0.5],
-        [0.5, LIGHT.glow, 0.24],
+        [0, LIGHT.core, 1],
+        [0.3, LIGHT.core, 0.7],
+        [0.62, LIGHT.glow, 0.28],
         [1, LIGHT.far, 0],
       ],
       cx,
@@ -547,21 +581,38 @@ function raysLayer(l: Layer): ChestBox {
       r,
     ),
   );
-  const beams: readonly (readonly [number, number, number])[] = [
-    [-50, 0.66, 7],
-    [-26, 0.86, 8],
-    [0, 1, 9],
-    [26, 0.84, 8],
-    [50, 0.64, 7],
-  ];
-  const rays = beams.map(([deg, reach, half]) => {
-    const [ax, ay] = spoke(cx, cy, 4, deg - 90);
-    const [bx, by] = spoke(cx, cy, 4, deg + 90);
-    return `M${n(ax)} ${n(ay)}L${p(spoke(cx, cy, r * reach, deg - half))}Q${p(spoke(cx, cy, r * reach * 1.06, deg))} ${p(spoke(cx, cy, r * reach, deg + half))}L${n(bx)} ${n(by)}Z`;
-  });
-  l.add(`<path d="${rays.join('')}" fill="url(#${fade})"/>`);
+  const focus: Pt = [cx, cy + 120];
+  const veils: string[] = [];
+  const sheaths: string[] = [];
+  const cores: string[] = [];
+  for (const [along, reach, width, strength] of SHAFTS) {
+    const base: Pt = [cx + along * 30, cy + along * -3];
+    const [dx, dy] = [base[0] - focus[0], base[1] - focus[1]];
+    const len = Math.hypot(dx, dy);
+    const [ux, uy] = [dx / len, dy / len];
+    const shaft = (w0: number, w1: number): string => {
+      const far: Pt = [base[0] + ux * r * reach, base[1] + uy * r * reach];
+      const at = (q: Pt, w: number, side: number): Pt => [q[0] - uy * w * side, q[1] + ux * w * side];
+      const tip: Pt = [far[0] + ux * w1 * 0.7, far[1] + uy * w1 * 0.7];
+      return `M${p(at(base, w0, -1))}L${p(at(far, w1, -1))}Q${p(tip)} ${p(at(far, w1, 1))}L${p(at(base, w0, 1))}Z`;
+    };
+    veils.push(`<path d="${shaft(3.4, width)}" fill="url(#${fade})" fill-opacity="${n2(strength * 0.12)}"/>`);
+    sheaths.push(`<path d="${shaft(2.2, width * 0.58)}" fill="url(#${fade})" fill-opacity="${n2(strength * 0.24)}"/>`);
+    cores.push(`<path d="${shaft(1, width * 0.24)}" fill="url(#${fade})" fill-opacity="${n2(strength * 0.62)}"/>`);
+  }
+  l.add(veils.join('') + sheaths.join('') + cores.join(''));
   return { x: cx - r, y: cy - r, w: r * 2, h: r * 2 };
 }
+const RAYS_R = 64;
+/** Each shaft: its place along the mouth (−1 its left end, 1 its right), how far it rises (a share of the reach), how wide it ends and how bright it is. */
+const SHAFTS: readonly (readonly [number, number, number, number])[] = [
+  [-0.86, 0.58, 7, 0.55],
+  [-0.52, 0.86, 10, 0.85],
+  [-0.18, 1, 12, 1],
+  [0.14, 0.74, 7, 0.7],
+  [0.44, 0.94, 11, 0.9],
+  [0.8, 0.62, 7, 0.6],
+];
 
 /** The lock plate on the box under the seam, lit down its left edge, with its keyhole below where the hasp's knob rests. */
 function lockLayer(l: Layer, b: Brush): ChestBox {
@@ -632,15 +683,8 @@ function seamLayer(l: Layer): ChestBox {
   return { x: cx - rx, y: cy - ry, w: rx * 2, h: ry * 2 };
 }
 
-/** The gold and the stars thrown up as the chest opens. */
+/** The gold thrown up as the chest opens. */
 function sparkleLayer(l: Layer): ChestBox {
-  const stars: readonly (readonly [number, number, number])[] = [
-    [20, 30, 7],
-    [102, 18, 9],
-    [112, 64, 5.5],
-    [10, 72, 6],
-    [64, 6, 6],
-  ];
   const coins: readonly (readonly [number, number, number])[] = [
     [36, 14, -20],
     [84, 8, 25],
@@ -651,9 +695,49 @@ function sparkleLayer(l: Layer): ChestBox {
   l.add(fill(coins.map(([x, y]) => ellipse(x, y + 0.8, 4.2, 4.2)).join(''), COIN.shade));
   l.add(fill(coins.map(([x, y]) => ellipse(x, y, 4.2, 4.2)).join(''), COIN.face));
   l.add(fill(coins.map(([x, y]) => ellipse(x - 1, y - 1, 1.8, 1.4)).join(''), COIN.light));
-  l.add(`<path d="${stars.map(([x, y, r]) => star(x, y, r)).join('')}" fill="#ffffff"/>`);
-  l.add(`<path d="${stars.map(([x, y, r]) => star(x, y, r * 0.45)).join('')}" fill="${LIGHT.glow}"/>`);
   return CHEST_VIEW;
+}
+
+/** One star twinkling round the open chest: a white four-pointed star with a warm heart and a faint halo. */
+function twinkleLayer(l: Layer, t: ChestTwinkle): ChestBox {
+  const [x, y] = t.at;
+  const halo = l.id('h');
+  l.def(
+    radialAt(
+      halo,
+      [
+        [0, LIGHT.core, 0.7],
+        [1, LIGHT.glow, 0],
+      ],
+      x,
+      y,
+      t.r * 0.9,
+    ),
+  );
+  l.add(`<circle cx="${n(x)}" cy="${n(y)}" r="${n(t.r * 0.9)}" fill="url(#${halo})"/>`);
+  l.add(`<path d="${star(x, y, t.r)}" fill="#ffffff"/>`);
+  l.add(`<path d="${star(x, y, t.r * 0.42)}" fill="${LIGHT.core}"/>`);
+  return { x: x - t.r, y: y - t.r, w: t.r * 2, h: t.r * 2 };
+}
+
+/** One mote of light rising through the shafts: a soft round speck, brightest in its middle. */
+function moteLayer(l: Layer, m: ChestMote): ChestBox {
+  const glow = l.id('m');
+  l.def(
+    radialAt(
+      glow,
+      [
+        [0, '#ffffff', 1],
+        [0.45, LIGHT.core, 0.75],
+        [1, LIGHT.glow, 0],
+      ],
+      m.x,
+      m.y,
+      m.r,
+    ),
+  );
+  l.add(`<circle cx="${n(m.x)}" cy="${n(m.y)}" r="${n(m.r)}" fill="url(#${glow})"/>`);
+  return { x: m.x - m.r, y: m.y - m.r, w: m.r * 2, h: m.r * 2 };
 }
 
 // ─────────────────────────────────────────────────────────────── the drawing
@@ -686,6 +770,7 @@ export function chestDrawing(tier: ChestTier, opts: ChestOptions = {}): ChestDra
     mouth: MOUTH,
     layers: {
       shadow: layer('shadow', prefix, shadowLayer),
+      bloom: layer('bloom', prefix, bloomLayer),
       lidOpen: layer('lidOpen', prefix, (l) => lidOpenLayer(l, b)),
       rays: layer('rays', prefix, raysLayer),
       body: layer('body', prefix, (l) => bodyLayer(l, b)),
@@ -706,6 +791,61 @@ export function chestGlint(phase: number, opts: { idPrefix?: string } = {}): Che
   return layer('glint', prefix, (l) => glintLayer(l, phase));
 }
 
+/** A star that twinkles round an open chest: where it is, how big, and how far into the twinkle's loop it starts (a share). */
+export interface ChestTwinkle {
+  at: Pt;
+  r: number;
+  delay: number;
+}
+/**
+ * The stars round an open chest, in the drawing's units: about the lid and up the shafts, a few off past the canvas
+ * where the shafts reach. Each flares and fades once a loop (`CHEST_TWINKLE_MS`), at its own moment.
+ */
+export const CHEST_TWINKLES: readonly ChestTwinkle[] = [
+  { at: [10, 30], r: 8, delay: 0 },
+  { at: [108, 16], r: 10, delay: 0.34 },
+  { at: [116, 60], r: 6, delay: 0.62 },
+  { at: [2, 66], r: 6.5, delay: 0.18 },
+  { at: [38, -2], r: 6.5, delay: 0.5 },
+  { at: [88, -12], r: 8, delay: 0.8 },
+  { at: [62, -26], r: 5.5, delay: 0.12 },
+];
+/** One twinkle's loop: a quick flare, a slower fade, and a rest. */
+export const CHEST_TWINKLE_MS = 2400;
+
+/** A mote of light rising out of an open chest: where it starts, how big it is, how far it rises, and when in the loop it starts (a share). */
+export interface ChestMote {
+  x: number;
+  y: number;
+  r: number;
+  rise: number;
+  delay: number;
+}
+/** The motes, starting over the mouth and drifting up the shafts, each once a loop (`CHEST_MOTE_MS`). */
+export const CHEST_MOTES: readonly ChestMote[] = [
+  { x: 36, y: 48, r: 1.6, rise: 44, delay: 0 },
+  { x: 52, y: 46, r: 2.2, rise: 58, delay: 0.42 },
+  { x: 66, y: 45, r: 1.4, rise: 40, delay: 0.2 },
+  { x: 78, y: 44, r: 1.9, rise: 52, delay: 0.66 },
+  { x: 44, y: 47, r: 1.2, rise: 34, delay: 0.82 },
+  { x: 72, y: 46, r: 1.5, rise: 48, delay: 0.3 },
+];
+export const CHEST_MOTE_MS = 3000;
+
+/** The `i`th twinkling star as its own layer, its box round it so renderers can flare it about its middle. */
+export function chestTwinkle(i: number, opts: { idPrefix?: string } = {}): ChestLayer {
+  const t = CHEST_TWINKLES[i];
+  if (!t) throw new RangeError(`art: no chest twinkle ${String(i)}`);
+  return layer('twinkle', prefixFor(opts.idPrefix, 'chesttwinkle', i), (l) => twinkleLayer(l, t));
+}
+
+/** The `i`th rising mote as its own layer, drawn where it starts. */
+export function chestMote(i: number, opts: { idPrefix?: string } = {}): ChestLayer {
+  const m = CHEST_MOTES[i];
+  if (!m) throw new RangeError(`art: no chest mote ${String(i)}`);
+  return layer('mote', prefixFor(opts.idPrefix, 'chestmote', i), (l) => moteLayer(l, m));
+}
+
 /** A layer as a standalone picture with its box as viewBox, for renderers that stack layers themselves. */
 export function chestLayerSvg(l: ChestLayer): string {
   const { x, y, w, h } = l.box;
@@ -713,8 +853,8 @@ export function chestLayerSvg(l: ChestLayer): string {
 }
 
 /** The layers a shut chest shows, and an open one. */
-const SHUT: readonly ChestLayerId[] = ['shadow', 'body', 'lock', 'lid'];
-const OPENED: readonly ChestLayerId[] = ['shadow', 'lidOpen', 'rays', 'body', 'light', 'lock'];
+const SHUT: readonly ChestPartId[] = ['shadow', 'body', 'lock', 'lid'];
+const OPENED: readonly ChestPartId[] = ['shadow', 'lidOpen', 'rays', 'body', 'light', 'lock'];
 
 /**
  * The whole chest in one picture, shut or open, on the 120 × 120 canvas, each layer in a group named by `data-part` so
@@ -779,21 +919,73 @@ export type ChestHopCurve = readonly (readonly [number, number])[];
 
 /** When the chest lands: the impact, the widening ring and the thrown gold. */
 export const CHEST_HOP_LAND = 0.6;
-/** The lid, 0 shut to 1 open as the renderers read it: shut through the crouch, open on the way up, past open on landing, rocking back. */
+/**
+ * The lid, 0 shut to 1 open as the renderers read it: shut through the crouch, lifted ajar on its hinge as the chest
+ * springs (to `CHEST_LID_AJAR`, with the light pouring out of the gap), then thrown open at the top of the hop, past
+ * open on landing and rocking back.
+ */
 export const CHEST_HOP_LID: ChestHopCurve = [
   [0, 0],
-  [0.3, 0],
+  [0.26, 0],
+  [0.32, 0.3],
+  [0.4, 0.36],
   [0.5, 1],
   [0.62, 1.18],
   [0.74, 0.94],
   [0.86, 1.02],
   [1, 1],
 ];
-/** The inner light, 0 to 1, blooming as the lid opens. */
+/** The inner light, 0 to 1: bright in the gap as soon as the lid lifts, full once it is open. */
 export const CHEST_HOP_LIGHT: ChestHopCurve = [
   [0, 0],
-  [0.4, 0],
-  [0.62, 1],
+  [0.26, 0],
+  [0.32, 0.85],
+  [0.4, 0.9],
+  [0.56, 1],
+  [1, 1],
+];
+/**
+ * How the shut lid moves until it gives way to the open one, about its hinge with its front up: lifted ajar at 0.3 on
+ * the lid's curve, swung further and gone by 0.6. Degrees, and units up.
+ */
+export const CHEST_LID_AJAR = { at: 0.3, deg: 16, rise: 4 } as const;
+export const CHEST_LID_AWAY = { at: 0.6, deg: 24, rise: 10 } as const;
+/** The shafts' strength, 0 to 1: leaking out of the gap as the lid lifts, then full as it opens. */
+export const CHEST_HOP_RAYS: ChestHopCurve = [
+  [0, 0],
+  [0.26, 0],
+  [0.32, 0.55],
+  [0.4, 0.6],
+  [0.5, 1],
+  [1, 1],
+];
+/** How far the shafts reach, a share of their full length: short in the gap, shooting up as the lid opens, then settling. */
+export const CHEST_HOP_RAYS_REACH: ChestHopCurve = [
+  [0, 0.3],
+  [0.26, 0.3],
+  [0.4, 0.5],
+  [0.52, 1.12],
+  [0.66, 1],
+  [1, 1],
+];
+/** The bloom's strength, 0 to 1: a glow at the gap, a flash as the lid opens, then a steady light. */
+export const CHEST_HOP_BLOOM: ChestHopCurve = [
+  [0, 0],
+  [0.26, 0],
+  [0.34, 0.5],
+  [0.42, 0.55],
+  [0.5, 1],
+  [0.64, 1],
+  [0.84, 0.78],
+  [1, 0.78],
+];
+/** The bloom's size, 1 its own: small at the gap, swelling past full with the flash, then settling. */
+export const CHEST_HOP_BLOOM_SIZE: ChestHopCurve = [
+  [0, 0.45],
+  [0.26, 0.45],
+  [0.42, 0.7],
+  [0.54, 1.28],
+  [0.72, 1],
   [1, 1],
 ];
 /** The shadow's scale, 1 at rest: smallest at the top of the hop, pressed wide on landing. */
@@ -812,13 +1004,13 @@ export const CHEST_HOP_SPARKLE: ChestHopCurve = [
   [1, 1],
 ];
 
-/** The light along the seam through the hop: brightening through the crouch as if it would burst, gone once the lid is off. */
+/** The light along the seam through the hop: brightening through the crouch as if it would burst, at full in the gap while the lid is ajar, gone once it is thrown open. */
 export const CHEST_HOP_SEAM: ChestHopCurve = [
   [0, 0.35],
   [0.12, 0.85],
   [0.24, 1],
-  [0.32, 1],
-  [0.4, 0],
+  [0.4, 1],
+  [0.46, 0],
   [1, 0],
 ];
 
