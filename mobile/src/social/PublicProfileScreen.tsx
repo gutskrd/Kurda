@@ -19,7 +19,7 @@ import { HeaderButton } from '../navigation/HeaderButton';
 import { showActions } from '../theme/actionSheet';
 import { SITE_ORIGIN } from '../feed/api';
 import { friendActionLabel, isActionable, isUndo, undoAction, type FriendStatus } from './format';
-import { knownTier, leagueName } from '../leagues/format';
+import { knownTier } from '../leagues/format';
 import { Framed, frameTierOf } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
 import { badgesInOrder, countryName, fireLevel, type ProfileBadge, type ProfileLeague, type ProfileWordTag, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
@@ -27,7 +27,7 @@ import { Flag } from '../profile/cosmetic-parts';
 import { Avatar } from '../profile/Avatar';
 import { ActivityGrid, ActivityTabs, ProfileActivitySkeleton, nearEnd, useProfileActivity } from '../profile/ProfileActivity';
 import type { FavoriteRef } from '../profile/types';
-import { ProfileFriends, ProfileFriendsSkeleton } from '../profile/ProfileFriends';
+import { PROFILE_FRIENDS_SHOWN, ProfileFriends, ProfileFriendsSkeleton, type FriendOf } from '../profile/ProfileFriends';
 import { ProfileFacts, type ProfileFact } from '../profile/ProfileFacts';
 import { FACE, FRAMED, ProfileHead, ProfileHeadSkeleton } from '../profile/ProfileHead';
 import { BadgePill, BadgePillSkeleton } from '../profile/BadgeRow';
@@ -111,6 +111,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const dir = useDirection();
   const windowWidth = usePageWidth();
   const [profile, setProfile] = useState<Profile | null>(null);
+  // Who they know, read with the profile so the figures and the line under them arrive together.
+  const [circle, setCircle] = useState<{ friends: FriendOf[]; total: number }>({ friends: [], total: 0 });
   // Gone or hidden from you, or an account that is suspended or banned, which is said as that.
   const [notFound, setNotFound] = useState<false | 'profile' | 'account'>(false);
   const [reporting, setReporting] = useState(false);
@@ -123,7 +125,14 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const blockNow = useBlock();
 
   const load = useCallback(() => {
-    void client.get<Profile>(`/users/${encodeURIComponent(userId)}`).then((res) => {
+    const id = encodeURIComponent(userId);
+    void Promise.all([
+      client.get<Profile>(`/users/${id}`),
+      client.get<{ friends: FriendOf[]; total?: number }>(`/users/${id}/friends?limit=${PROFILE_FRIENDS_SHOWN}`),
+    ]).then(([res, f]) => {
+      // An API that predates paging sends no total; it sent every friend.
+      const friends = f.ok ? (f.data.friends ?? []) : [];
+      setCircle({ friends, total: f.ok ? (f.data.total ?? friends.length) : 0 });
       if (res.ok) {
         setProfile(res.data);
         setError(null);
@@ -304,7 +313,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                       }
                       framed={!!frameTierOf(profile.frameSku) || !!(profile.frameSku && profile.frameUrl)}
                       // The figures as on their own profile and the website, in the reader's own digits.
-                      stats={profile.private ? undefined : <ProfileFacts facts={facts(profile)} head />}
+                      stats={profile.private ? undefined : <ProfileFacts facts={facts(profile, circle.total)} head />}
                       name={shownName}
                       level={profile.private ? null : level}
                       tag={profile.private ? null : profile.tag}
@@ -381,7 +390,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                           <Text style={[styles.dim, dir.text, { color: colors.textSecondary }]}>{t('profile.private')}</Text>
                         </View>
                       ) : null}
-                      {profile.private ? null : <ProfileFriends userId={profile.userId} />}
+                      {profile.private ? null : <ProfileFriends friends={circle.friends} total={circle.total} />}
                     </ProfileHead>
 
                     {profile.private ? null : (
@@ -427,17 +436,14 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   );
 }
 
-/**
- * The profile while it loads, in the shape it arrives in. Its figures include the league, as for anyone taking part,
- * which weekly leagues make most people.
- */
+/** The profile while it loads, in the shape it arrives in: the same three figures as every profile. */
 function PublicProfileSkeleton({ width }: { width: number }): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
   const figures: ProfileFact[] = [
     { key: 'streak', label: t('profile.stat.streak'), value: null },
     { key: 'xp', label: t('profile.stat.xp'), value: null },
-    { key: 'league', label: t('profile.league'), value: null },
+    { key: 'friends', label: t('nav.friends'), value: null },
   ];
   return (
     <View accessibilityLabel={t('common.loading')}>
@@ -470,12 +476,14 @@ const LARGE_BUTTON = 50;
 function Header({ onExit, right }: { onExit: () => void; right?: React.ReactNode }) {
   return <ScreenHeader onBack={onExit} right={right} />;
 }
-/** Their streak, XP, and league while they take part (nothing for somebody never in one); badges are in the row by the handle. */
-function useFacts(): (profile: Profile) => ProfileFact[] {
+/**
+ * Their streak, XP and friends, as every profile shows them, 0 included; their league and badges are in the row by the
+ * handle.
+ */
+function useFacts(): (profile: Profile, friends: number) => ProfileFact[] {
   const { t, locale } = useI18n();
-  return (profile) => {
+  return (profile, friends) => {
     const streak = profile.streak ?? 0;
-    const tier = knownTier(profile.league?.tier ?? profile.tier);
     // Shortened (128450 → 128K) so the figures fit beside the face; a screen reader hears the whole number.
     const short = (n: number): string => formatCompact(n, locale);
     const whole = (n: number): string | undefined => (short(n) === formatNumber(n, locale) ? undefined : formatNumber(n, locale));
@@ -490,7 +498,7 @@ function useFacts(): (profile: Profile) => ProfileFact[] {
         spoken: t(streak === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: formatNumber(streak, locale) }),
       },
       { key: 'xp', label: t('profile.stat.xp'), value: short(xp), whole: whole(xp) },
-      ...(tier ? [{ key: 'league', label: t('profile.league'), value: leagueName(t, tier) }] : []),
+      { key: 'friends', label: t('nav.friends'), value: short(friends), whole: whole(friends) },
     ];
   };
 }

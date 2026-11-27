@@ -69,6 +69,22 @@ describe('who somebody is', () => {
     renderWithProviders(<PublicProfileScreen userId="u2" onExit={() => undefined} />);
   };
 
+  it('shows the same three figures as every profile: Friends says 0 with nobody, and their count with friends', async () => {
+    show({});
+    expect(await screen.findByText('410')).toBeTruthy();
+    expect(screen.getByText('Friends')).toBeTruthy();
+    expect(screen.getByText('0')).toBeTruthy();
+    cleanup();
+    testAuth.client = fakeClient({
+      'GET /users/u2': ok({ userId: 'u2', username: 'baran', displayName: 'Baran Şêx', friendStatus: 'friends', private: false, xp: 410, streak: 3 }),
+      'GET /users/u2/friends?limit=12': ok({ friends: [{ userId: 'u3', username: 'lorin' }], total: 7 }),
+      'GET /users/u2/activity?kind=posts&limit=12': ok({ items: [] }),
+    });
+    renderWithProviders(<PublicProfileScreen userId="u2" onExit={() => undefined} />);
+    expect(await screen.findByText('7')).toBeTruthy();
+    expect(screen.getByText('Friends · 7')).toBeTruthy();
+  });
+
   it('leads with the name they chose, with the handle under it, their country and their own words', async () => {
     show({ bio: 'Ez ji çîrokan hez dikim.', country: 'NL' });
     const name = await screen.findByRole('heading', { name: 'Baran Şêx' });

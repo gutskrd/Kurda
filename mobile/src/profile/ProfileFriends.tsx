@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { Avatar } from './Avatar';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
@@ -15,13 +14,13 @@ import { useDirection } from '../reports/direction';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 
 /** Enough to show who someone knows without turning a profile into a directory. */
-const SHOW = 12;
+export const PROFILE_FRIENDS_SHOWN = 12;
 /** The faces stacked in the line. */
 const FACES = 3;
 const FACE = 28;
 
 /** A friend as `GET /users/:id/friends` returns one: `userId`, not `id`, as the endpoint names it. */
-interface FriendOf {
+export interface FriendOf {
   userId: string;
   username: string;
   displayName?: string | null;
@@ -29,37 +28,18 @@ interface FriendOf {
 }
 
 /**
- * Who this person knows, as one line of stacked faces with the first names that opens the list, as on the website.
- * Privacy is the server's: a profile whose detail you may not see returns no friends. Nothing renders for an empty
- * list, since "0 friends" is worse to publish than silence.
+ * Who this person knows, as one line of stacked faces with the first names that opens the list, as on the website. The
+ * profile reads the list with itself (`PROFILE_FRIENDS_SHOWN` of them and the total); with nobody to show, the line is
+ * left out and the figure beside the face says 0.
  */
-export function ProfileFriends({ userId }: { userId: string }): React.JSX.Element | null {
-  const { client } = useAuth();
+export function ProfileFriends({ friends, total }: { friends: readonly FriendOf[]; total: number }): React.JSX.Element | null {
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
-  const [friends, setFriends] = useState<FriendOf[] | null>(null);
-  const [total, setTotal] = useState(0);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    setFriends(null);
-    // Ask for the twelve the list shows, not every friend; `total` comes back with the page.
-    void client.get<{ friends: FriendOf[]; total?: number }>(`/users/${userId}/friends?limit=${SHOW}`).then((res) => {
-      if (cancelled) return;
-      const list = res.ok ? (res.data.friends ?? []) : [];
-      setFriends(list);
-      // An API that predates paging sends no total; it sent every friend.
-      setTotal(res.ok ? (res.data.total ?? list.length) : 0);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [client, userId]);
-
-  if (!friends || friends.length === 0) return null;
+  if (friends.length === 0) return null;
   const nameOf = (f: FriendOf): string => f.displayName || f.username;
   const count = `${t('nav.friends')} · ${formatCompact(total, locale)}`;
   const names = friends.slice(0, 2).map(nameOf).join(', ');

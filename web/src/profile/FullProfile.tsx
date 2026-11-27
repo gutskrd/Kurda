@@ -29,8 +29,8 @@ export interface FullProfileView {
   levelInfo?: LevelInfo;
   xp: number;
   streakDays: number;
-  /** how many friends they have; left out where it is not known, or not theirs to show */
-  friends?: number | null;
+  /** how many friends they have, 0 for none, so every profile shows the same three figures */
+  friends: number;
   bio?: string | null;
   favPoem?: FavoriteRef | null;
   favStory?: FavoriteRef | null;
@@ -244,7 +244,7 @@ export function FullProfile({
       onOpen: own ? onStreak : undefined,
     },
     { key: 'xp', label: t('profile.stat.xp'), value: short(view.xp), spoken: whole(view.xp) },
-    ...(view.friends != null ? [{ key: 'friends', label: t('nav.friends'), value: short(view.friends), spoken: whole(view.friends), to: own ? '/app/friends' : undefined }] : []),
+    { key: 'friends', label: t('nav.friends'), value: short(view.friends), spoken: whole(view.friends), to: own ? '/app/friends' : undefined },
   ];
 
   const badges = badgesInOrder(showcase?.badges, showcase?.earned);

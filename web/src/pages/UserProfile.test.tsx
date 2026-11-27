@@ -93,8 +93,8 @@ describe('UserProfile (other user, full page)', () => {
     const row = within(card.querySelector<HTMLElement>('.ph-handle')!).getByRole('button', { name: 'Zana K’s collection, Badges: 5' });
     expect(row.querySelectorAll('.bdg-pill-icon')).toHaveLength(3);
     expect(row.querySelector('.bdg-pill-more')).toHaveTextContent('+3');
-    // How many friends they have was not sent, so it is not guessed at.
-    expect(within(card).queryByText('Friends', { selector: '.mkp-fact-label' })).toBeNull();
+    // Every profile shows the same three figures: with no friends to count, Friends says 0.
+    expect(figure('Friends')).toBe('0');
     expect(within(card).getByRole('list').querySelectorAll('a')).toHaveLength(0);
 
     // Here now is said once, by their name; an empty bio is not announced on somebody else's profile.

@@ -95,7 +95,7 @@ export function Profile(): React.JSX.Element {
     levelInfo: me.level,
     xp: me.level?.xp ?? me.xp,
     streakDays: me.streak.current,
-    friends: friendCount,
+    friends: friendCount ?? 0,
     bio: me.bio,
     favPoem: me.favoritePoem ?? null,
     favStory: me.favoriteStory ?? null,
