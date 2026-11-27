@@ -40,14 +40,14 @@ function carried(c: readonly [number, number], p: readonly [number, number], deg
 }
 
 const SEV_FOOT = [60, 98.6] as const;
-const SEV_STALK = [55.8, 31.4] as const;
+const SEV_STALK = [57.7, 31.5] as const;
 const SEV_GLINT = [39, 56.4] as const;
 const rock = (t: number): number => 2.4 * Math.sin(TAU * t);
 
-/** The apple rocks gently where it stands, its leaves fluttering on as it does, and a glint comes and goes on its skin. */
+/** The apple rocks gently where it stands, its leaf fluttering on as it does, and a glint comes and goes on its skin. */
 const sev = giftLoop(4000, {
   apple: { box: [19, 26, 76, 76], origin: SEV_FOOT, motion: (t) => ({ rot: rock(t) }) },
-  leaves: { box: [34, 12, 49, 22], origin: SEV_STALK, motion: (t) => ({ ...carried(SEV_FOOT, SEV_STALK, rock(t)), rot: rock(t) + 3 * Math.sin(TAU * 2 * t + 0.6) }) },
+  leaves: { box: [48, 9, 42, 27], origin: SEV_STALK, motion: (t) => ({ ...carried(SEV_FOOT, SEV_STALK, rock(t)), rot: rock(t) + 3 * Math.sin(TAU * 2 * t + 0.6) }) },
   glint: {
     box: [33, 51, 12, 11],
     origin: SEV_GLINT,

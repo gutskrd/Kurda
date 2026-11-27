@@ -87,9 +87,9 @@ describe('the gifts’ pictures', () => {
   });
 
   it('stays light enough to inline a chat of them', () => {
-    // the gifts are shown as their PNGs, so Kawa's Damascus, the galaxy and the clove apple's cloves may carry more paint,
-    // the traced Şahmaran painting more still
-    const budget: Partial<Record<GiftArtId, number>> = { kadiz: 160, kawa: 160, sahmaran: 300, 'sev-mexek': 80 };
+    // the gifts are shown as their PNGs, so the apples' thin glazes, Kawa's Damascus, the galaxy and the clove apple's
+    // cloves may carry more paint, the traced Şahmaran painting more still
+    const budget: Partial<Record<GiftArtId, number>> = { sev: 96, kadiz: 160, kawa: 160, sahmaran: 300, 'sev-mexek': 160 };
     for (const id of GIFT_ART_IDS) expect(giftArtSvg({ id }).length, id).toBeLessThan((budget[id] ?? 48) * 1024);
   });
 
