@@ -17,10 +17,14 @@ html {
 }
 
 /*
- * No horizontal scrolling. `clip` rather than `hidden`, since `hidden` makes a scroll container and breaks the sticky
- * top navigation.
+ * No horizontal scrolling. The page's root says `hidden`, which goes to the window itself, since a phone's browser
+ * does not always carry `clip` up to it; the body says `clip`, since `hidden` there would make a scroll container and
+ * break the sticky top navigation.
  */
-html,
+html {
+  overflow-x: hidden;
+  max-width: 100%;
+}
 body {
   overflow-x: clip;
   max-width: 100%;
