@@ -205,7 +205,7 @@ describe('the turn of the stamp in the hand', () => {
   it('never folds an outline over itself, at any moment of the turn', () => {
     for (const ms of MOMENTS) {
       const pts = handStampPointsAt(ms);
-      for (const name of ['back', 'thumb', 'palm', 'curled', 'slit', 'band', 'wedge', 'ring', 'nail', 'freeEdge']) {
+      for (const name of ['back', 'thumb', 'palm', 'curled', 'slit', 'band', 'wedge', 'ring', 'cleft', 'nail', 'freeEdge']) {
         const cross = selfCrossing(pts[name]!);
         expect(cross, `${name} at ${ms} ms crosses itself at ${String(cross)}`).toBeNull();
       }

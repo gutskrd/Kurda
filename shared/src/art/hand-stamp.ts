@@ -255,24 +255,27 @@ function ringIn(f: Frame): Posed {
 /**
  * The shadows between the digits, in the reference's charcoal and where it paints them: each is cast by one digit onto
  * the fingers beside it, so it starts at that digit's edge and lies on the fingers out to where the reference's shadow
- * ends. They run right of the thumb, left of it under the stamp and down, and under the middle finger. `GAP_TRACK`
- * holds, for each frame of the reference, how far out from the edge the shadow ends at `GAP_SAMPLES` places spaced
- * evenly along the digit (`evenlyAlong`), on the grid, fitted so each shadow as drawn covers the reference's own; 0 is no
- * shadow there.
+ * ends. They run right of the thumb, left of it under the stamp and down, under the middle finger, and along the middle
+ * finger's inner side, where at the turn the dark between it and the thumb's tip shows below the stamp and slips back
+ * behind it. `GAP_TRACK` holds, for each frame of the reference, how far out from the edge the shadow ends at
+ * `GAP_SAMPLES` places spaced evenly along the digit (`evenlyAlong`), on the grid, fitted so each shadow as drawn covers
+ * the reference's own; 0 is no shadow there.
  */
-const GAP_NAMES = ['slit', 'wedge', 'ring'] as const;
+const GAP_NAMES = ['slit', 'wedge', 'ring', 'cleft'] as const;
 type GapName = (typeof GAP_NAMES)[number];
 const GAP_SAMPLES = 24;
 /**
  * Each shadow's digit and side, and the stretch of it sampled, from its root to `toBack` short of its tip, or past it
  * where negative: the shadow left of the thumb runs on beside its round tip, where the reference shades the finger
  * behind right up to the stamp. A shadow cast by the thumb in front begins under it (`under`), along its middle, so no
- * seam shows at its edge.
+ * seam shows at its edge. One that lies `into` the digit is the dark that shows where the reference's finger is
+ * narrower than ours: it reaches in from the edge, so its far side is the finger's edge as the reference draws it.
  */
-const GAP_EDGES: Record<GapName, { digit: DigitName; side: 1 | -1; from: number; toBack: number; under: boolean }> = {
+const GAP_EDGES: Record<GapName, { digit: DigitName; side: 1 | -1; from: number; toBack: number; under: boolean; into?: true }> = {
   slit: { digit: 'thumb', side: 1, from: 0, toBack: 0, under: true },
   wedge: { digit: 'thumb', side: -1, from: 0, toBack: -1, under: true },
   ring: { digit: 'reaching', side: -1, from: 0, toBack: 2, under: false },
+  cleft: { digit: 'reaching', side: 1, from: 0, toBack: 0, under: false, into: true },
 };
 const GAP_TRACK: Record<GapName, readonly (readonly number[])[]> = {
   slit: [
@@ -335,6 +338,30 @@ const GAP_TRACK: Record<GapName, readonly (readonly number[])[]> = {
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 58, 45],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  ],
+  cleft: [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 79, 72, 66, 60, 54, 47, 41, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -476,6 +503,12 @@ function gapNormals(d: Posed, us: readonly number[], side: 1 | -1): Pt[] {
   });
 }
 
+/** The way a shadow's widths are measured at its sampled places: out from its digit's edge, or in from it (`into`). */
+function gapRays(name: GapName, d: Posed, us: readonly number[]): Pt[] {
+  const { side, into } = GAP_EDGES[name];
+  return gapNormals(d, us, side).map(([x, y]) => (into ? [-x, -y] : [x, y]));
+}
+
 /** How far short of the thumb's tip, along its middle, a shadow's hidden near side stops. */
 const UNDER_SHORT = 0.75;
 
@@ -488,7 +521,7 @@ function gapIn(name: GapName, ds: Record<DigitName, Posed>, measured: readonly n
   const { digit, side, from: first, toBack, under } = GAP_EDGES[name];
   const d = ds[digit];
   const us = evenlyAlong(d, GAP_SAMPLES, first, toBack);
-  const outward = gapNormals(d, us, side);
+  const outward = gapRays(name, d, us);
   const near: Pt[] = [];
   const far: Pt[] = [];
   us.forEach((u, k) => {
@@ -519,7 +552,7 @@ interface Pose {
 }
 const POSES: readonly Pose[] = ORDER.map((i) => {
   const f = TRACK[i]!;
-  const gaps = { slit: stroke(SLIT[i]!), wedge: stroke(GAP_TRACK.wedge[i]!), ring: stroke(GAP_TRACK.ring[i]!) };
+  const gaps = { slit: stroke(SLIT[i]!), wedge: stroke(GAP_TRACK.wedge[i]!), ring: stroke(GAP_TRACK.ring[i]!), cleft: stroke(GAP_TRACK.cleft[i]!) };
   const digits = { thumb: thumbIn(f, WIDTHS.thumb[i]!), index: indexIn(f, WIDTHS.index[i]!), reaching: middleIn(f, WIDTHS.reaching[i]!), curled: ringIn(f) };
   return { digits, web: f.web, gaps, palm: stroke(PALM_TRACK[i]!), slitFrom: stroke(SLIT_FROM[i]!) };
 });
@@ -799,6 +832,7 @@ function shapesIn(p: Pose): Record<string, Pt[]> {
     'check:slit-edge': gapEdge('slit', ds),
     wedge: gapIn('wedge', ds, p.gaps.wedge.map((w) => firm(w, 0))),
     ring: gapIn('ring', ds, p.gaps.ring.map((w) => firm(w, 0))),
+    cleft: gapIn('cleft', ds, p.gaps.cleft.map((w) => firm(w, 0))),
     thumb,
     nail: ride(NAIL, ds),
     freeEdge: ride(FREE_EDGE, ds),
@@ -911,6 +945,7 @@ const PAINT: readonly { name: string; layer: 'back' | 'front'; fill: string; bru
   ...brushed('back'),
   { name: 'wedge', layer: 'back', fill: INK.gap },
   { name: 'ring', layer: 'back', fill: INK.gap },
+  { name: 'cleft', layer: 'back', fill: INK.gap },
   // in front, the palm beside the thumb with the slit's shadow on it, and over both the thumb and its lines
   { name: 'palm', layer: 'front', fill: SKIN.face },
   { name: 'slit', layer: 'front', fill: INK.gap },
