@@ -6,9 +6,9 @@ import { DeerLoader } from './DeerLoader';
 export const LOADING_SIZE = { small: 24, large: 48 } as const;
 
 /**
- * Something is on its way: the deer curling into a ball (DeerLoader), centred in its width, in the ink and always
- * labelled ("Loading…", or `label`). For a waiting page, list or row; a spinner replacing a button label or over a
- * photo is drawn by that surface in its own ink.
+ * Something is on its way: the deer flowing into a spinner and back (DeerLoader), centred in its width, in the ink and
+ * always labelled ("Loading…", or `label`). For a waiting page, list or row; a spinner replacing a button label or
+ * over a photo is drawn by that surface in its own ink.
  */
 export function Loading({
   label,

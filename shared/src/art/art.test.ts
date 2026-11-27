@@ -80,7 +80,8 @@ import {
   PATH_WAX,
   pathWaxSvg,
   pathWaxColours,
-  pathStampToolSvg,
+  pathSealFireSvg,
+  PATH_SEAL_FLAME,
   pathStopSvg,
   sunRays,
   tilePath,
@@ -1701,7 +1702,7 @@ describe('the lesson path’s world', () => {
     };
     for (const dark of [false, true]) {
       const scheme = dark ? 'dark' : 'light';
-      for (const part of ['whole', 'pour', 'seal', 'blob', 'splash', 'fire', 'embers', 'puff'] as const) {
+      for (const part of ['whole', 'pour', 'seal', 'blob', 'splash'] as const) {
         for (const gold of [false, true]) for (const suns of [1, 2, 3]) sound(pathWaxSvg({ seed: 's:a', part, gold, suns, dark, idPrefix: 'w' }), view);
       }
       sound(pathWaxSvg({ seed: 's:a', worn: true, dark }), view);
@@ -1714,9 +1715,13 @@ describe('the lesson path’s world', () => {
       expect(pathWaxSvg({ seed: 's:a', dark })).toContain(red.face);
       expect(pathWaxSvg({ seed: 's:a', gold: true, dark })).toContain(PATH_WAX.gold[scheme].face);
       expect(pathWaxSvg({ seed: 's:a', gold: true, dark })).not.toContain(red.face);
-      // the fire that gilds it is Hevalo's own: its small flame's deep orange body, gold drop and pale heart
+      // the flame that gilds it is painted in Hevalo's fire colours, three flat layers: a deep red-orange shell, a saffron
+      // body and a pale heart, each a step inside the last
       const flame = fireColours({ stage: 'campfire', scheme }).tongues;
-      for (const colour of [flame.outer[0], flame.core[0], flame.heart[0]]) expect(pathWaxSvg({ part: 'fire', dark })).toContain(colour);
+      for (const part of ['shell', 'body', 'heart'] as const) sound(pathSealFireSvg({ part, dark, idPrefix: 'f' }), view);
+      expect(pathSealFireSvg({ part: 'shell', dark })).toContain(flame.outer[0]);
+      expect(pathSealFireSvg({ part: 'body', dark })).toContain(flame.core[0]);
+      expect(pathSealFireSvg({ part: 'heart', dark })).toContain(flame.heart[0]);
       // glossy, a streak or two on its lip; worn, matte and dulled, none of its colours left as they were
       expect(pathWaxSvg({ seed: 's:a', dark })).toContain(red.gloss);
       const worn = pathWaxSvg({ seed: 's:a', worn: true, dark });
@@ -1750,24 +1755,26 @@ describe('the lesson path’s world', () => {
     expect(sunsIn(pathWaxSvg({ suns: 3, size: 448 })).rays).toBe(SUN_RAYS);
     expect(sunsIn(pathWaxSvg({ suns: 1, size: 40 })).rays).toBeLessThan(SUN_RAYS);
     expect(sunRays(4)).toBeGreaterThanOrEqual(9);
-    // the stamp is the icons' own: drawn on the Stamp glyph's 256 grid, its block as wide as the seal
-    for (const dark of [false, true]) for (const size of [78, 208]) sound(pathStampToolSvg({ dark, size, idPrefix: 't' }), '24 8 208 232');
-    // seen from the side at eye level throughout: its die only an edge with no sun on it, and nothing drawn as if seen
-    // from above or below, no ring bowed and nothing squashed into an ellipse
-    for (const size of [78, 208]) {
-      const tool = pathStampToolSvg({ size });
-      expect(sunsIn(tool).suns).toBe(0);
-      expect(tool).not.toContain('Q');
-      expect(tool).not.toMatch(/scale\(1 0\./);
-    }
-    // drawn large it shows its grain and a woven band on its block; at the road's size those are left out
-    const shapes = (svg: string): number => (svg.match(/<path/g) ?? []).length;
-    expect(shapes(pathStampToolSvg({ size: 208 }))).toBeGreaterThan(shapes(pathStampToolSvg()));
-    expect(() => pathStampToolSvg({ size: -1 })).toThrow(RangeError);
+    // the stamp is the icon set's Stamp glyph, its block and pad as wide as the seal: the glyph's 256 square drawn so that
+    // 24 to 232 of it fills the stamp's canvas
+    expect(PATH_STAMP_TOOL.icon.size).toBeCloseTo((256 / 208) * PATH_STAMP_TOOL.w, 3);
+    expect(PATH_STAMP_TOOL.icon.x).toBeCloseTo((-24 / 208) * PATH_STAMP_TOOL.w, 3);
+    expect(PATH_STAMP_TOOL.icon.y).toBeCloseTo((-8 / 208) * PATH_STAMP_TOOL.w, 3);
     expect(((224 - 32) / 208) * PATH_STAMP_TOOL.w).toBeCloseTo(PATH_SEAL.r * 2, 0);
     expect(PATH_STAMP_TOOL.h / PATH_STAMP_TOOL.w).toBeCloseTo(232 / 208, 1);
     expect(() => pathWaxSvg({ size: 0 })).toThrow(RangeError);
     expect(() => pathWaxSvg({ part: 'drip' as 'blob' })).toThrow(RangeError);
+    expect(() => pathSealFireSvg({ part: 'smoke' as 'shell' })).toThrow(RangeError);
+    // one sheet of flame as wide as the seal, rising in licks, the tallest as tall as the flame and the others shorter
+    const tops = (part: 'shell' | 'body' | 'heart'): number => {
+      const points = (/ d="([^"]+)"/.exec(pathSealFireSvg({ part }))?.[1] ?? '').match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+      return Math.min(...points.filter((_, i) => i % 2 === 1));
+    };
+    expect(tops('shell')).toBeLessThan(tops('body'));
+    expect(tops('body')).toBeLessThan(tops('heart'));
+    expect(PATH_SEAL.cy - tops('shell')).toBeCloseTo(PATH_SEAL_FLAME.tall, 0);
+    expect(Math.max(...PATH_SEAL_FLAME.licks)).toBe(1);
+    expect(new Set(PATH_SEAL_FLAME.licks).size).toBe(PATH_SEAL_FLAME.licks.length);
   });
 
   it('builds the sandûq in parts that open: its body, its shut lid, and the open lid over its gold', () => {

@@ -15,7 +15,7 @@ export function StateArt({ puzzled = false }: { puzzled?: boolean }): React.JSX.
   );
 }
 
-/** A page or section waiting on something: the deer curling into a ball, labelled for screen readers ("Loading…" or `label`). */
+/** A page or section waiting on something: the deer flowing into a spinner and back, labelled for screen readers ("Loading…" or `label`). */
 export function Loading({ label }: { label?: string }): React.JSX.Element {
   const t = useT();
   const text = label ?? t('common.loading');

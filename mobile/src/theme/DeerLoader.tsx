@@ -24,10 +24,10 @@ const TRACK = deerLoopTrack();
 const REST = deerLoopAt(0);
 
 /**
- * Hevalo's mark as the loader (shared deer-mark.ts): he curls into a ball, spins as a ring and spins back out, in the
- * ink. The turn runs on the native driver; the shape is drawn exactly for each moment that clock reports, never in
- * steps. A path cannot be animated on the native driver itself, so a busy JavaScript thread may hold the shape a moment
- * but never stops the turn. Under Reduce Motion it only breathes in
+ * Hevalo's mark as the loader (shared deer-mark.ts): the deer flows into a spinning arc and back, in the ink. The turn
+ * runs on the native driver; the shape is drawn exactly for each moment that clock reports, never in steps, and only
+ * when it changes, so the still deer costs nothing. A path cannot be animated on the native driver itself, so a busy
+ * JavaScript thread may hold the shape a moment but never stops the turn. Under Reduce Motion it only breathes in
  * opacity, and nothing moves while its screen is behind another or the app is in the background. To assistive
  * technology it is hidden: the caller says what is loading.
  */

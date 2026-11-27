@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { badgeDef, badgeRow, type BadgeRowItem, type LeagueTier, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
+import { badgeRow, type BadgeRowItem, type LeagueTier, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { BadgeMedal, LeagueEmblem } from '../ranks/art';
@@ -7,21 +7,20 @@ import { useDirection } from '../reports/direction';
 import { Icon } from '../theme/Icon';
 import { Pressable } from '../theme/Pressable';
 import { Skeleton } from '../theme/Skeleton';
-import { heldDim } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { fontScaleCap, radii, spacing, typography } from '../theme/tokens';
 import { TreeArt } from '../tree/TreeArt';
 
-/** The pictures in the row, big enough to tell apart at a glance beside the handle. */
-const ICON = 32;
-/** The pill's drawn height; it answers a fingertip past it (theme/Pressable). */
-const PILL = 44;
+/** The pictures in the row: small, so the row stays lighter than the name, and still easy to tell apart. */
+const ICON = 26;
+/** The row's drawn height; it answers a fingertip past it (theme/Pressable). */
+const PILL = 32;
 
 /** One picture of the row, unnamed: the pill's own name says what it holds. */
 function RowArt({ item }: { item: BadgeRowItem }): React.JSX.Element | null {
   if (item.kind === 'league') return <LeagueEmblem tier={item.tier} size={ICON} label="" />;
   if (item.kind === 'tree') return <TreeArt species={item.tree.species} stage={item.tree.stage} health={item.tree.health} size={ICON} />;
-  return <BadgeMedal badgeKey={item.badge.key} tier={item.badge.tier} tierCount={badgeDef(item.badge.key)?.tiers.length ?? 4} size={ICON} label="" />;
+  return <BadgeMedal badgeKey={item.badge.key} tier={item.badge.tier} tierCount={1} size={ICON} label="" />;
 }
 
 /**
@@ -57,7 +56,8 @@ export function BadgePill({
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${t('profile.badges')}: ${formatNumber(badges.length, locale)}`}
       testID="profile-badge-row"
-      style={({ pressed }) => [styles.pill, { flexDirection: dir.row, backgroundColor: colors.controlTrack }, pressed && heldDim]}
+      // No box of its own: it sits on the handle's line, lighter than the name, with a ground only while held.
+      style={({ pressed }) => [styles.pill, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack }]}
     >
       {shown.length === 0 ? (
         <>
@@ -88,7 +88,7 @@ export function BadgePillSkeleton(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  pill: { alignSelf: 'flex-start', alignItems: 'center', gap: spacing.sm - 2, height: PILL, paddingStart: spacing.sm, paddingEnd: spacing.md - 2, borderRadius: radii.md },
+  pill: { alignSelf: 'flex-start', alignItems: 'center', gap: spacing.xs, height: PILL, paddingStart: spacing.xs, paddingEnd: spacing.sm - 2, borderRadius: radii.pill },
   icon: { width: ICON, height: ICON, alignItems: 'center', justifyContent: 'center' },
   word: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   // "+7" reads the same way round in every direction.

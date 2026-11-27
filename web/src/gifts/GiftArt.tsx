@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { ItemGlyph } from '../shop/ItemGlyph';
 import { ItemPicture } from '../shop/ItemPicture';
+import { GiftLoopArt } from './GiftLoop';
 import { scatter } from './motion';
 import { useSvgId } from './useSvgId';
 
@@ -40,17 +41,22 @@ export function NightSky({ className }: { className?: string }): React.JSX.Eleme
   );
 }
 
-/** The item: its picture when it has one, otherwise its kind's glyph. */
+/**
+ * The item: its picture when it has one, otherwise its kind's glyph. With `loop`, a gift that has a living round plays
+ * it while it is on screen (GiftLoop.tsx); a grid of gifts asks it only of the one picked, so a page never moves many.
+ */
 export function GiftItemArt({
   assetUrl,
   category,
   size = 96,
   className,
+  loop = false,
 }: {
   assetUrl: string | null;
   category: string;
   size?: number;
   className?: string;
+  loop?: boolean;
 }): React.JSX.Element {
   return (
     <span
@@ -58,7 +64,7 @@ export function GiftItemArt({
       style={{ width: size, height: size }}
       aria-hidden="true"
     >
-      {assetUrl ? <ItemPicture src={assetUrl} /> : <ItemGlyph category={category} size={Math.round(size * 0.45)} />}
+      {assetUrl ? loop ? <GiftLoopArt src={assetUrl} /> : <ItemPicture src={assetUrl} /> : <ItemGlyph category={category} size={Math.round(size * 0.45)} />}
     </span>
   );
 }

@@ -13,6 +13,7 @@ import { Pressable, ReachReset } from '../theme/Pressable';
 import { haptic } from '../feedback/haptics';
 import { ITEM_SORTS, itemCategory, type ItemCategory, type ItemSort } from '@kurda/shared';
 import { assetUrl } from '../api/env';
+import { GiftArt } from '../gifts/GiftLoop';
 import { MIN_REACH, MIN_TOUCH_TARGET, reachRoom } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
@@ -331,6 +332,7 @@ export function ItemArt({
   path,
   width,
   style,
+  loop = false,
 }: {
   category: string;
   /** The site path the API sends (`/cosmetics/…`); null when the item has no art. */
@@ -338,6 +340,8 @@ export function ItemArt({
   /** In points; left out, the art fills the width it is given (16:9 or square). */
   width?: number;
   style?: StyleProp<ViewStyle>;
+  /** A gift with a living round plays it (gifts/GiftLoop.tsx); a grid asks it only of the one picked. Needs `width`. */
+  loop?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const kind = itemCategory(category);
@@ -356,7 +360,9 @@ export function ItemArt({
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      {uri ? (
+      {uri && loop && !wide && width !== undefined ? (
+        <GiftArt path={path} size={Math.round(width * 0.86)} onError={() => setBroken(uri)} />
+      ) : uri ? (
         <Image
           source={{ uri }}
           style={wide ? styles.fill : styles.inset}

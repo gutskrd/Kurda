@@ -1823,7 +1823,8 @@
 
 /* The phone top takes the page's own colour, without a line, with shapes resting on it; it stays put as the page scrolls. */
 .nav-phone {
-  border-bottom-color: transparent;
+  /* no edge at all: a transparent one would still paint the fading background's top again in its strip, a dark line */
+  border-bottom: 0;
   background: var(--app-bg);
 }
 .nav-phone .nav-inner {
@@ -1965,29 +1966,11 @@
   display: flex;
 }
 /*
- * The capsule behind the current place: a darker glass inset in the bar, by its two ends (`--cap-start` and `--cap-end`,
- * in places along the row, from `--at`), drawn as two round ends and the span between them so the ends stay round
- * however far it stretches. Moving on, the end in front leads on a spring that runs a little past the place and the one
- * behind follows on a softer one (PlacesBar.tsx), so it stretches toward the place and settles round it, lifting larger
- * and lighter on the way; only transforms move. The pieces are solid under one shared opacity, so where they overlap
- * the shade does not double. Its track stops at the bar's ends, so running past an end place squeezes it against the
- * wall; in right-to-left languages the track is mirrored.
+ * The chosen place's capsule, a darker glass inset in the bar, drawn as two round ends and the span between them so the
+ * ends stay round however far it stretches; under one shared opacity, so where they overlap the shade does not double.
+ * On a change of place it lifts into the lens over the places, glides and settles (lib/selectorLens.ts); only
+ * transforms and opacity move. Its track stops at the bar's ends; in right-to-left languages the track is mirrored.
  */
-@property --cap-start {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 0;
-}
-@property --cap-end {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 1;
-}
-@property --cap-lift {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 1;
-}
 .places-track {
   position: absolute;
   inset-block: -4px;
@@ -1996,27 +1979,21 @@
   overflow: hidden;
   pointer-events: none;
 }
-[dir='rtl'] .places-track {
-  transform: scaleX(-1);
+[dir='rtl'] .places-track,
+[dir='rtl'] .places-lens-layer {
+  scale: -1 1;
+}
+/* the lens's own layer over the places, unclipped, so a lens a little larger than the bar is never cut off */
+.places-lens-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 .places-capsule {
-  --cap-start: var(--at);
-  --cap-end: calc(var(--at) + 1);
   position: absolute;
   inset-block: 4px;
   inset-inline: 0;
   opacity: var(--tab-capsule-fill);
-  transition:
-    --cap-start var(--follow-ms) var(--follow-ease),
-    --cap-end var(--follow-ms) var(--follow-ease);
-}
-.places-row.is-leading-end .places-capsule {
-  transition-duration: var(--follow-ms), var(--lead-ms);
-  transition-timing-function: var(--follow-ease), var(--lead-ease);
-}
-.places-row.is-leading-start .places-capsule {
-  transition-duration: var(--lead-ms), var(--follow-ms);
-  transition-timing-function: var(--lead-ease), var(--follow-ease);
 }
 .places-cap,
 .places-span {
@@ -2027,39 +2004,98 @@
   background: var(--tab-capsule);
 }
 .places-cap {
-  width: calc(var(--row-h) * 1px);
+  aspect-ratio: 1;
   border-radius: var(--r-pill);
 }
-.places-cap.is-start {
-  transform: translateX(calc(var(--cap-start) * var(--slot) * 1px)) scale(var(--cap-lift));
+.places-cap.is-start,
+.places-span {
+  transform-origin: left center;
 }
 .places-cap.is-end {
-  transform: translateX(calc((var(--cap-end) * var(--slot) - var(--row-h)) * 1px)) scale(var(--cap-lift));
+  transform-origin: right center;
 }
-/* from one end's centre to the other's: `--slot` wide as drawn, scaled about its middle to the length between them */
 .places-span {
-  width: calc(var(--slot) * 1px);
-  transform: translateX(calc(((var(--cap-start) + var(--cap-end)) * 0.5 - 0.5) * var(--slot) * 1px))
-    scaleX(max(0, calc(((var(--cap-end) - var(--cap-start)) * var(--slot) - var(--row-h)) / var(--slot))))
-    scaleY(var(--cap-lift));
+  width: calc(100% / var(--places));
 }
-/* the same lift under two names, so each move starts it again */
-.places-row.is-lift-a .places-capsule {
-  animation: places-lift-a var(--lift-ms) var(--ease-out);
+/*
+ * The lens: clear glass over the places while the choice moves. It clips a copy of the places (`.places-lens-copy`, the
+ * row's size) that is moved to show them magnified about its middle, on the bar's own ground so the places beneath
+ * never show through, with the capsule's tint draining from it as it lifts. Where the browser can bend with an SVG
+ * filter (Chromium) its glass bends the copy at the rim and splits red from blue (`--lens-filter`, shared glass-lens.ts);
+ * the glass is spread past the lens while it is down and its content held to the lens's size, so the bend grows in from
+ * the edge as it lifts. Its rim, a hairline edge, a fine specular line lit from above and a faint split of colour, comes
+ * up over it. Only transforms and opacity move. It is not there at rest.
+ */
+.places-lens {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% / var(--places));
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  transform-origin: left center;
+  opacity: 0;
+  pointer-events: none;
 }
-.places-row.is-lift-b .places-capsule {
-  animation: places-lift-b var(--lift-ms) var(--ease-out);
+.places-lens-glass,
+.places-lens-unspread {
+  position: absolute;
+  inset: 0;
 }
-@keyframes places-lift-a {
-  33% {
-    --cap-lift: var(--lift-scale);
-    opacity: calc(var(--tab-capsule-fill) * var(--lift-fill));
+.places-lens-glass {
+  background: var(--surface-solid);
+}
+.places-lens[data-bends] .places-lens-glass {
+  filter: var(--lens-filter);
+}
+.places-lens-tint {
+  position: absolute;
+  inset: 0;
+  background: var(--tab-capsule);
+  opacity: 0;
+}
+.places-lens-copy {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% * var(--places));
+  height: 100%;
+  transform-origin: 0 0;
+}
+/*
+ * In right-to-left languages the lens's layer is mirrored, so the copy runs the other way in it and each place is
+ * mirrored back, which draws it as the row.
+ */
+[dir='rtl'] .places-lens-copy {
+  flex-direction: row-reverse;
+}
+[dir='rtl'] .places-lens-copy > li {
+  scale: -1 1;
+}
+.places-lens-rim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  box-shadow:
+    inset 0 0 0 0.5px var(--lens-edge),
+    inset 0 0 0 1.25px var(--lens-rim),
+    inset 0 2px 1px var(--lens-shine),
+    inset 2px 0 1px var(--lens-warm),
+    inset -2px 0 1px var(--lens-cool);
+}
+/* Asked for less transparency or more contrast, the choice moves as a solid capsule, without a lens. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .places-lens {
+    display: none;
   }
-}
-@keyframes places-lift-b {
-  33% {
-    --cap-lift: var(--lift-scale);
-    opacity: calc(var(--tab-capsule-fill) * var(--lift-fill));
+  .places-capsule {
+    --tab-capsule-fill: 1;
+  }
+  .places-cap,
+  .places-span {
+    background: var(--surface-3);
   }
 }
 /* a place: its whole share of the bar is the target, its filled glyph over its name in the middle */

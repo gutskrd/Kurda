@@ -2,21 +2,17 @@
  * Hevalo's mark: the owner's deer, his back to us and looking back over his shoulder, traced as one shape in a
  * 100-unit square (his head, antlers and ears and the curl of his body, with his eyes and the crescent between chin and
  * body cut out), so it is drawn in a single colour. His antlers are redrawn after Hevalo's own, as in the character rig: a beam
- * sweeping up and outward with three rounded tines, tallest outside. It is also the apps' loader: turning clockwise
- * the whole time, he curls into a ball, the ball opens into a round-capped ring that sweeps like a spinner, closes
- * again, and he spins back out into exactly where he started.
+ * sweeping up and outward with three rounded tines, tallest outside. It is also the apps' loader: the deer stands, flows
+ * into a round-capped arc that spins and breathes like a system spinner, and flows back into him, upright where he began.
  *
- * The curl is a morph between shapes of matched points: the trace cut into 96 segments by length, and a ball whose rim
- * and seam (his crescent, wound into a spiral) are cut at the same shares. In between, detail leaves first: the
- * difference between deer and ball is blurred along the outline more and more as he curls, so the antlers and ears
- * shrink into his head before the body rounds and nothing in between is lumpy. The curl is paced by its fastest point,
- * so no part of him appears or goes all at once. The ring is matched to the ball the same way, its gap at his
- * crescent's mouth. The turn is a transform about the ball's centre, the middle of the square, so each app can run it
- * on its compositor.
+ * The flow is one morph between outlines matched point for point, the trace cut into 96 segments by length and the arc
+ * cut to match: his crescent becomes the arc's inner edge and the rest of him its outer edge. The crescent opens ahead
+ * of the rest, so he reads as a ring early, and his ears and antlers draw into a smooth head, so nothing in between is
+ * lumpy. The turn is a transform about the middle of the square, so each app can run it on its compositor.
  */
 import { n } from './svg.js';
 
-/** The square every frame of the mark is drawn in; the ball turns about its middle. */
+/** The square every frame of the mark is drawn in; the loader turns about its middle. */
 export const DEER_MARK_VIEW = 100;
 
 /**
@@ -231,13 +227,6 @@ function startShares(run: readonly Seg[]): number[] {
   });
 }
 
-/** The farthest any point moves between two matched lists of control points. */
-function farthest(a: ArrayLike<number>, b: ArrayLike<number>): number {
-  let most = 0;
-  for (let i = 0; i < a.length; i += 2) most = Math.max(most, Math.hypot((b[i] as number) - (a[i] as number), (b[i + 1] as number) - (a[i + 1] as number)));
-  return most;
-}
-
 /** A closed loop of segments as flat control points: each segment's start and two handles, its end being the next start. */
 function flatten(loop: readonly Seg[]): Float64Array {
   const out = new Float64Array(loop.length * 6);
@@ -254,203 +243,67 @@ function loopPath(c: ArrayLike<number>): string {
   return `${d}Z`;
 }
 
-/* ---- the ball ------------------------------------------------------------------------------------------------- */
-
-/** The ball he curls into: as wide as his body is, centred in the square. */
-const BALL = { x: 50, y: 50, r: 32 } as const;
-
-/**
- * The seam: his crescent wound into the ball as a spiral slit, from the rim at `from` degrees (clockwise from three
- * o'clock) round to `to`, sinking to `inner` of the radius, its half-width narrowing from `wide` to `narrow` units.
- */
-const SEAM = { from: 25, to: 205, inner: 0.16, wide: 1.9, narrow: 1.2 } as const;
-
-/** How far along a polyline each of its points is. */
-function lengthsAlong(poly: readonly Pt[]): number[] {
-  const out = [0];
-  for (let i = 1; i < poly.length; i++) {
-    const p = poly[i - 1] as Pt;
-    const q = poly[i] as Pt;
-    out.push((out[i - 1] as number) + Math.hypot(q[0] - p[0], q[1] - p[1]));
-  }
-  return out;
-}
-
-const polar = (deg: number, r: number): Pt => [BALL.x + Math.cos((deg * Math.PI) / 180) * r, BALL.y + Math.sin((deg * Math.PI) / 180) * r];
-const angleOf = (p: Pt): number => Math.atan2(p[1] - BALL.y, p[0] - BALL.x);
-const toRim = (p: Pt): Pt => {
-  const a = angleOf(p);
-  return [BALL.x + Math.cos(a) * BALL.r, BALL.y + Math.sin(a) * BALL.r];
-};
-
-/** The seam's two edges from where each crosses the rim to its round tip: the chin's (earlier on the rim) first. */
-function seamEdges(): [Pt[], Pt[]] {
-  const count = 200;
-  const centre: Pt[] = [];
-  const u: number[] = [];
-  for (let i = 0; i < count; i++) {
-    // It starts a little outside the ball so each edge can be cut exactly where it crosses the rim.
-    const v = -0.12 + (1.12 * i) / (count - 1);
-    const wind = v < 0 ? v * 0.6 : Math.pow(v, 1.2);
-    u.push(v);
-    centre.push(polar(SEAM.from + (SEAM.to - SEAM.from) * wind, BALL.r * (SEAM.inner + (1 - SEAM.inner) * (1 - v))));
-  }
-  const along = lengthsAlong(centre);
-  const end = along[count - 1] as number;
-  const a: Pt[] = [];
-  const b: Pt[] = [];
-  for (let i = 0; i < count; i++) {
-    const p = centre[Math.max(0, i - 1)] as Pt;
-    const q = centre[Math.min(count - 1, i + 1)] as Pt;
-    const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
-    const nx = -(q[1] - p[1]) / len;
-    const ny = (q[0] - p[0]) / len;
-    // The half-width narrows inward, then closes in a round cap.
-    const v = Math.min(1, Math.max(0, u[i] as number));
-    let w = SEAM.wide + (SEAM.narrow - SEAM.wide) * v;
-    const intoCap = (along[i] as number) - (end - SEAM.narrow);
-    if (intoCap > 0) w = SEAM.narrow * Math.sqrt(Math.max(0, 1 - (intoCap / SEAM.narrow) ** 2));
-    const c = centre[i] as Pt;
-    a.push([c[0] + nx * w, c[1] + ny * w]);
-    b.push([c[0] - nx * w, c[1] - ny * w]);
-  }
-  const inside = (edge: Pt[]): Pt[] => {
-    const r = edge.map((p) => Math.hypot(p[0] - BALL.x, p[1] - BALL.y));
-    const i = r.findIndex((v) => v < BALL.r);
-    const f = ((r[i - 1] as number) - BALL.r) / ((r[i - 1] as number) - (r[i] as number));
-    return [toRim(mix(edge[i - 1] as Pt, edge[i] as Pt, f)), ...edge.slice(i)];
-  };
-  const [ea, eb] = [inside(a), inside(b)];
-  return angleOf(ea[0] as Pt) < angleOf(eb[0] as Pt) ? [ea, eb] : [eb, ea];
-}
-
-/** The ball as three polylines matching the trace's runs: the seam's chin edge in, its body edge out, then the rim. */
-function ballRuns(): [Pt[], Pt[], Pt[]] {
-  const [chin, body] = seamEdges();
-  const from = angleOf(body[0] as Pt);
-  let to = angleOf(chin[0] as Pt);
-  while (to <= from) to += 2 * Math.PI;
-  const rim: Pt[] = [];
-  for (let i = 0; i < 600; i++) {
-    const a = from + ((to - from) * i) / 599;
-    rim.push([BALL.x + Math.cos(a) * BALL.r, BALL.y + Math.sin(a) * BALL.r]);
-  }
-  const runs = [chin, [...body].reverse(), rim];
-  // Round the seam's lips a little by blurring the whole closed outline, each run keeping its own points.
-  const all = runs.flatMap((run) => run.slice(0, -1));
-  let spacing = 0;
-  for (let i = 0; i < all.length; i++) {
-    const p = all[i] as Pt;
-    const q = all[(i + 1) % all.length] as Pt;
-    spacing += Math.hypot(q[0] - p[0], q[1] - p[1]);
-  }
-  spacing /= all.length;
-  const sigma = 0.9 / spacing;
-  const reach = Math.ceil(3 * sigma);
-  const weights: number[] = [];
-  for (let o = -reach; o <= reach; o++) weights.push(Math.exp(-(o * o) / (2 * sigma * sigma)));
-  const wsum = weights.reduce((x, y) => x + y, 0);
-  const blurred = all.map((_, i) => {
-    let x = 0;
-    let y = 0;
-    for (let o = -reach; o <= reach; o++) {
-      const p = all[(i + o + all.length) % all.length] as Pt;
-      const w = (weights[o + reach] as number) / wsum;
-      x += p[0] * w;
-      y += p[1] * w;
-    }
-    return [x, y] as Pt;
-  });
-  const out: Pt[][] = [];
-  let at = 0;
-  for (const run of runs) {
-    const size = run.length - 1;
-    out.push([...blurred.slice(at, at + size), blurred[(at + size) % blurred.length] as Pt]);
-    at += size;
-  }
-  return out as [Pt[], Pt[], Pt[]];
-}
-
-/** Cubic segments along a polyline, starting at the given shares of its length, their handles along it. */
-function alongPolyline(poly: readonly Pt[], shares: readonly number[]): Seg[] {
-  const along = lengthsAlong(poly);
-  const total = along[along.length - 1] as number;
-  const at = (share: number): Pt => {
-    const s = Math.min(1, Math.max(0, share)) * total;
-    // The first point at or past s, found by halving.
-    let lo = 1;
-    let hi = along.length - 1;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if ((along[mid] as number) < s) lo = mid + 1;
-      else hi = mid;
-    }
-    const i = lo;
-    const span = (along[i] as number) - (along[i - 1] as number);
-    return mix(poly[i - 1] as Pt, poly[i] as Pt, span > 0 ? (s - (along[i - 1] as number)) / span : 0);
-  };
-  const stops = [...shares, 1];
-  const tangent = (share: number): Pt => {
-    const p = at(share - 1e-3);
-    const q = at(share + 1e-3);
-    const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
-    return [(q[0] - p[0]) / len, (q[1] - p[1]) / len];
-  };
-  const out: Seg[] = [];
-  for (let i = 0; i < shares.length; i++) {
-    const s0 = stops[i] as number;
-    const s1 = stops[i + 1] as number;
-    const p = at(s0);
-    const q = at(s1);
-    const t0 = tangent(s0);
-    const t1 = tangent(s1);
-    const h = ((s1 - s0) * total) / 3;
-    out.push([p, [p[0] + t0[0] * h, p[1] + t0[1] * h], [q[0] - t1[0] * h, q[1] - t1[1] * h], q]);
-  }
-  return out;
-}
-
-/* ---- the curl ------------------------------------------------------------------------------------------------- */
+/* ---- the deer, cut to match the spinner ----------------------------------------------------------------------- */
 
 /** How the outline is shared out: the crescent's chin edge, its body edge, and the rest. */
-const SEGMENTS = { chin: 10, body: 8, rim: 78 } as const;
+const SEGMENTS = { chin: 12, body: 8, rim: 76 } as const;
 
 /** The eyes' segments each, so they close as a matched pair of shapes. */
 const EYE_SEGMENTS = 8;
 
+/** The traced rim's segments where the left ear starts and where the right ear ends, at his cheeks. */
+const EARS = { left: 6, right: 35 } as const;
+
 /**
- * Where the keyframes fall along the blur, from the deer (0) to the ball (1). The first after the deer has no antlers
- * or ears left, so between the two they shrink into his head (and grow back out of it) whole, never through the
- * half-blurred shapes where antler and ear merge.
+ * The traced rim's segments that round off either side of his crescent's mouth, which become the arc's round ends: the
+ * lobe of his body below it, up to the start of `lobe`, and his chin above it, from the start of `chin`.
  */
-const CURL_AT = [0, 1 / 8, 2 / 8, 3 / 8, 4 / 8, 5 / 8, 6 / 8, 7 / 8, 1] as const;
+const ROUNDS = { lobe: 2, chin: 38 } as const;
 
-/** How far the deer-to-ball difference is blurred at the end of the curl (in segments), and how that grows and fades. */
-const CURL_BLUR = { segments: 14, grow: 0.4, fade: 0.9 } as const;
+/** How full the smooth head his ears and antlers draw into is: its handles, as a share of the way across each side. */
+const BALD = 0.42;
 
-/** By this much of the curl his eyes have closed; on the way back they open over the same last stretch. */
-const EYES_SHUT_AT = 0.1;
+/**
+ * How much the rim's place on the arc follows its angle about the middle rather than its length, so each part of him
+ * goes to the part of the arc beside it; the rest follows length, so no two points ever land together.
+ */
+const MATCH = 0.75;
 
-interface Shapes {
-  /** The outline at each keyframe, matched point for point. */
-  keys: Float64Array[];
-  /** How far the outline's fastest point has moved by each keyframe, as a share of the whole curl. */
-  reach: number[];
-  /** That whole distance, in units of the square. */
-  length: number;
-  /** Each keyframe's second derivative along the curl, so the outline passes through them on a natural cubic spline. */
-  bends: Float64Array[];
-  /** Where each segment starts along its run (the crescent's chin edge, its body edge, the rest), as shares. */
-  shares: { chin: number[]; body: number[]; rim: number[] };
-  /** His eyes, open. */
-  eyes: Float64Array[];
+/** The cuts either side of one ear and its antler, and the rim's direction at each. */
+interface Side {
+  from: Pt;
+  out: Pt;
+  to: Pt;
+  into: Pt;
 }
 
-/** The traced rim with each antler replaced by its redrawn run; everything outside the cuts is the trace as it was. */
-function rimWithAntlers(small: boolean): Seg[] {
+interface Deer {
+  /** The outline, cut into `SEGMENTS`, as flat control points. */
+  outline: Float64Array;
+  /** The same with each ear and antler laid along a smooth head: what they draw into and grow back out of. */
+  bald: Float64Array;
+  /** His eyes, open. */
+  eyes: Float64Array[];
+  /** How many rim segments become the arc's round ends: his chin the leading end, his body's lobe the trailing. */
+  ends: { lead: number; tail: number };
+  /** Where each rim segment between those lands along the arc's outer edge, as shares of it. */
+  rimShares: number[];
+}
+
+const unit = (p: Pt, q: Pt): Pt => {
+  const l = Math.hypot(q[0] - p[0], q[1] - p[1]);
+  return [(q[0] - p[0]) / l, (q[1] - p[1]) / l];
+};
+
+/**
+ * The traced rim with each antler replaced by its redrawn run (everything outside the cuts is the trace as it was),
+ * and where each ear and antler meet the head.
+ */
+function rimWithAntlers(small: boolean): { rim: Seg[]; sides: Side[] } {
   const rim = runSegments(TRACE.rim);
   const { left, right } = small ? ANTLERS.small : ANTLERS.full;
   const out: Seg[] = [];
+  const cuts: [Seg, Seg][] = [];
   // The next whole segment of the rim to keep, and what is left of the one the last antler ended in.
   let at = 0;
   let carry: Seg | null = null;
@@ -466,209 +319,75 @@ function rimWithAntlers(small: boolean): Seg[] {
     curves[0] = [before[3], first[1], first[2], first[3]];
     curves[curves.length - 1] = [last[0], last[1], last[2], after[0]];
     out.push(before, ...curves);
+    cuts.push([before, after]);
     carry = after;
     at = to[0] + 1;
   }
   if (carry) out.push(carry);
   out.push(...rim.slice(at));
-  return out;
+  const [[, leftAfter], [rightBefore]] = cuts as [[Seg, Seg], [Seg, Seg]];
+  const cheekL = rim[EARS.left] as Seg;
+  const cheekR = rim[EARS.right] as Seg;
+  const sides: Side[] = [
+    { from: cheekL[0], out: unit(cheekL[0], cheekL[1]), to: leftAfter[0], into: unit(leftAfter[0], leftAfter[1]) },
+    { from: rightBefore[3], out: unit(rightBefore[2], rightBefore[3]), to: cheekR[3], into: unit(cheekR[2], cheekR[3]) },
+  ];
+  return { rim: out, sides };
 }
 
-/** The mark's outline as its three runs: the crescent's chin edge, its body edge, and the rest with the new antlers. */
-function markRuns(small: boolean): { chin: Seg[]; body: Seg[]; rim: Seg[] } {
-  return { chin: runSegments(TRACE.upper), body: runSegments(TRACE.lower), rim: rimWithAntlers(small) };
-}
+const deers: { full: Deer | null; small: Deer | null } = { full: null, small: null };
 
-const built: { full: Shapes | null; small: Shapes | null } = { full: null, small: null };
-
-/** Built on first use for each size of mark: the deer and the ball cut to matching points, and the keyframes between. */
-function curlShapes(small = false): Shapes {
-  const cached = built[small ? 'small' : 'full'];
+/** Built on first use for each size of mark: the deer cut to match the arc, his smooth head, and where his rim lands. */
+function deerOf(small: boolean): Deer {
+  const cached = deers[small ? 'small' : 'full'];
   if (cached) return cached;
-  const runs = markRuns(small);
-  const chin = subdivide(runs.chin, SEGMENTS.chin);
-  const body = subdivide(runs.body, SEGMENTS.body);
-  const rim = subdivide(runs.rim, SEGMENTS.rim);
-  const [ballChin, ballBody, ballRim] = ballRuns();
-  const deer = flatten([...chin, ...body, ...rim]);
-  const ball = flatten([
-    ...alongPolyline(ballChin, startShares(chin)),
-    ...alongPolyline(ballBody, startShares(body)),
-    ...alongPolyline(ballRim, startShares(rim)),
-  ]);
-  const count = deer.length / 2;
-  const dx = new Float64Array(count);
-  const dy = new Float64Array(count);
-  for (let i = 0; i < count; i++) {
-    dx[i] = (deer[i * 2] as number) - (ball[i * 2] as number);
-    dy[i] = (deer[i * 2 + 1] as number) - (ball[i * 2 + 1] as number);
+  const chin = subdivide(runSegments(TRACE.upper), SEGMENTS.chin);
+  const body = subdivide(runSegments(TRACE.lower), SEGMENTS.body);
+  const traced = rimWithAntlers(small);
+  const rim = subdivide(traced.rim, SEGMENTS.rim);
+  const bald = [...rim];
+  for (const side of traced.sides) {
+    // Cutting keeps the traced ends exactly, so each side's cuts start segments of the cut rim.
+    const i0 = rim.findIndex((s) => s[0][0] === side.from[0] && s[0][1] === side.from[1]);
+    const i1 = rim.findIndex((s) => s[0][0] === side.to[0] && s[0][1] === side.to[1]);
+    const h = BALD * Math.hypot(side.to[0] - side.from[0], side.to[1] - side.from[1]);
+    const head: Seg = [side.from, [side.from[0] + side.out[0] * h, side.from[1] + side.out[1] * h], [side.to[0] - side.into[0] * h, side.to[1] - side.into[1] * h], side.to];
+    bald.splice(i0, i1 - i0, ...subdivide([head], i1 - i0));
   }
-  const keys = [deer];
-  for (const p of CURL_AT.slice(1, -1)) {
-    // In control points, three to a segment; the blur wraps round the closed outline.
-    const sigma = CURL_BLUR.segments * Math.pow(p, CURL_BLUR.grow) * 3;
-    const keep = 1 - Math.pow(p, CURL_BLUR.fade);
-    const reach = Math.min(Math.ceil(4 * sigma), Math.floor((count - 1) / 2));
-    const weights = new Float64Array(reach * 2 + 1);
-    let wsum = 0;
-    for (let o = -reach; o <= reach; o++) wsum += weights[o + reach] = Math.exp(-(o * o) / (2 * sigma * sigma));
-    for (let o = 0; o < weights.length; o++) weights[o] = (weights[o] as number) / wsum;
-    const out = new Float64Array(deer.length);
-    for (let i = 0; i < count; i++) {
-      let sx = 0;
-      let sy = 0;
-      for (let o = -reach; o <= reach; o++) {
-        let j = i + o;
-        if (j < 0) j += count;
-        else if (j >= count) j -= count;
-        const w = weights[o + reach] as number;
-        sx += (dx[j] as number) * w;
-        sy += (dy[j] as number) * w;
-      }
-      out[i * 2] = (ball[i * 2] as number) + keep * sx;
-      out[i * 2 + 1] = (ball[i * 2 + 1] as number) + keep * sy;
-    }
-    keys.push(out);
-  }
-  keys.push(ball);
-  const eyes = [TRACE.eyeLeft, TRACE.eyeRight].map((run) => flatten(subdivide(runSegments(run), EYE_SEGMENTS)));
-  // The curl is measured by its fastest point, so a small part moving far (an antler) is given its time.
-  const reach = [0];
-  for (let k = 1; k < keys.length; k++) {
-    const a = keys[k - 1] as Float64Array;
-    const b = keys[k] as Float64Array;
-    reach.push((reach[k - 1] as number) + farthest(a, b));
-  }
-  const total = reach[reach.length - 1] as number;
-  const shares = { chin: startShares(chin), body: startShares(body), rim: startShares(rim) };
-  const along = reach.map((r) => r / total);
-  const shapes = { keys, reach: along, length: total, bends: splineBends(along, keys), shares, eyes };
-  built[small ? 'small' : 'full'] = shapes;
-  return shapes;
-}
-
-/**
- * The second derivatives of a cubic spline through `ys` at `xs`, for every coordinate at once: a straight line between
- * keyframes would bend each point's path at every one of them, which the eye reads as judder. At either end the spline
- * leaves along the straight line to the next keyframe, so the antlers grow back at the pace they shrank.
- */
-function splineBends(xs: readonly number[], ys: readonly Float64Array[]): Float64Array[] {
-  const n = xs.length - 1;
-  const size = (ys[0] as Float64Array).length;
-  const h = (i: number): number => (xs[i + 1] as number) - (xs[i] as number);
-  // One row per keyframe: below, on and above the diagonal, and the right-hand side for every coordinate.
-  const rows = xs.map((_, i) => {
-    const d = new Float64Array(size);
-    if (i === 0) return { a: 0, b: 2 * h(0), c: h(0), d };
-    if (i === n) return { a: h(n - 1), b: 2 * h(n - 1), c: 0, d };
-    const [y0, y1, y2] = [ys[i - 1] as Float64Array, ys[i] as Float64Array, ys[i + 1] as Float64Array];
-    for (let j = 0; j < size; j++) d[j] = 6 * (((y2[j] as number) - (y1[j] as number)) / h(i) - ((y1[j] as number) - (y0[j] as number)) / h(i - 1));
-    return { a: h(i - 1), b: 2 * (h(i - 1) + h(i)), c: h(i), d };
+  const traceRim = runSegments(TRACE.rim);
+  const start = (p: Pt): number => bald.findIndex((q) => q[0][0] === p[0] && q[0][1] === p[1]);
+  const ends = { tail: start((traceRim[ROUNDS.lobe] as Seg)[0]), lead: bald.length - start((traceRim[ROUNDS.chin] as Seg)[0]) };
+  const middle = bald.slice(ends.tail, bald.length - ends.lead);
+  const length = startShares(middle);
+  const angleOf = (p: Pt): number => (Math.atan2(p[1] - 50, p[0] - 50) * 180) / Math.PI;
+  let most = -Infinity;
+  const angle = [...middle.map((q) => q[0]), (middle[middle.length - 1] as Seg)[3]].map((p) => {
+    let a = angleOf(p);
+    while (a < most - 180) a += 360;
+    most = Math.max(most, a);
+    return most;
   });
-  const sup: number[] = [];
-  for (let i = 0; i <= n; i++) {
-    const row = rows[i] as (typeof rows)[number];
-    const m = i === 0 ? row.b : row.b - row.a * (sup[i - 1] as number);
-    sup.push(row.c / m);
-    const prev = i > 0 ? (rows[i - 1] as (typeof rows)[number]).d : null;
-    for (let j = 0; j < size; j++) row.d[j] = ((row.d[j] as number) - (prev ? row.a * (prev[j] as number) : 0)) / m;
-  }
-  const bends = xs.map(() => new Float64Array(size));
-  for (let i = n; i >= 0; i--) {
-    const own = bends[i] as Float64Array;
-    const d = (rows[i] as (typeof rows)[number]).d;
-    const next = i < n ? (bends[i + 1] as Float64Array) : null;
-    for (let j = 0; j < size; j++) own[j] = (d[j] as number) - (next ? (sup[i] as number) * (next[j] as number) : 0);
-  }
-  return bends;
+  const first = angle[0] as number;
+  const span = (angle[angle.length - 1] as number) - first;
+  const rimShares = middle.map((_, i) => MATCH * (((angle[i] as number) - first) / span) + (1 - MATCH) * (length[i] as number));
+  const eyes = [TRACE.eyeLeft, TRACE.eyeRight].map((run) => flatten(subdivide(runSegments(run), EYE_SEGMENTS)));
+  const deer = { outline: flatten([...chin, ...body, ...rim]), bald: flatten([...chin, ...body, ...bald]), eyes, ends, rimShares };
+  deers[small ? 'small' : 'full'] = deer;
+  return deer;
 }
 
-/** The outline's control points at `curl` (0 the deer, 1 the ball), on the spline through the keyframes. */
-function outlineAt(curl: number, small: boolean): Float64Array {
-  const { keys, reach, bends } = curlShapes(small);
-  const c = Math.min(1, Math.max(0, curl));
-  let k = 0;
-  while (k < keys.length - 2 && (reach[k + 1] as number) < c) k++;
-  const span = (reach[k + 1] as number) - (reach[k] as number);
-  const b = span > 0 ? (c - (reach[k] as number)) / span : 0;
-  const a = 1 - b;
-  const [ya, yb, ma, mb] = [keys[k], keys[k + 1], bends[k], bends[k + 1]] as [Float64Array, Float64Array, Float64Array, Float64Array];
-  const wa = ((a * a * a - a) * span * span) / 6;
-  const wb = ((b * b * b - b) * span * span) / 6;
-  const out = new Float64Array(ya.length);
-  for (let i = 0; i < out.length; i++) {
-    out[i] = a * (ya[i] as number) + b * (yb[i] as number) + wa * (ma[i] as number) + wb * (mb[i] as number);
-  }
-  return out;
-}
-
-/** An eye closing about its middle line, `shut` 0 open to 1 closed. */
-function eyeAt(eye: Float64Array, shut: number): Float64Array {
-  let mid = 0;
-  for (let i = 1; i < eye.length; i += 2) mid += eye[i] as number;
-  mid /= eye.length / 2;
-  const out = Float64Array.from(eye);
-  for (let i = 1; i < out.length; i += 2) out[i] = mid + ((out[i] as number) - mid) * (1 - shut);
-  return out;
-}
+/* ---- the spinner ---------------------------------------------------------------------------------------------- */
 
 /**
- * The mark, whole, or `small` below `DEER_MARK_FULL_FROM` pixels: no eyes, one tine to each antler. It is written as
- * the first keyframe of the curl, the same curves cut finer, so the loop's first frame and the frames either side of it
- * are drawn alike and nothing flickers at the seam.
+ * The spinner: a round-capped arc on a ring about the middle of the square, `r` to the middle of its `width`. Its gap
+ * faces his crescent's mouth (`mouth` degrees, clockwise from three o'clock); as he becomes it, it reaches `formed`
+ * degrees round between the middles of its ends, and at its shortest `least`. His crescent's tip lands `tip` degrees
+ * round its inner edge, near where it is, so the crescent opens up through his head as a mouth opens.
  */
-export function deerMarkPath({ small = false }: { small?: boolean } = {}): string {
-  const { keys, eyes } = curlShapes(small);
-  const parts = [loopPath(keys[0] as Float64Array)];
-  if (!small) for (const eye of eyes) parts.push(loopPath(eye));
-  return parts.join('');
-}
+const SPIN = { r: 34, width: 10, mouth: 55, formed: 290, least: 80, tip: 128 } as const;
 
-/** The owner's drawing as traced, his first antlers and all, for checks against the picture. */
-export function deerMarkTracedPath(): string {
-  const parts = [loopPath(flatten([...runSegments(TRACE.upper), ...runSegments(TRACE.lower), ...runSegments(TRACE.rim)]))];
-  for (const run of [TRACE.eyeLeft, TRACE.eyeRight]) parts.push(loopPath(flatten(runSegments(run))));
-  return parts.join('');
-}
-
-/**
- * The mark curled `curl` of the way into the ball (0 is exactly `deerMarkPath`, 1 the ball with his crescent wound into
- * a seam), measured by how far its fastest point has gone, so even steps of `curl` are even steps to the eye. His eyes
- * close over the first tenth, as a line, and are gone after it.
- */
-export function deerCurlPath(curl: number, { small = false }: { small?: boolean } = {}): string {
-  if (curl <= 0) return deerMarkPath({ small });
-  const parts = [loopPath(outlineAt(curl, small))];
-  const shut = 1 - deerEyesOpen(curl);
-  if (!small && shut < 1) for (const eye of curlShapes().eyes) parts.push(loopPath(eyeAt(eye, shut)));
-  return parts.join('');
-}
-
-/** The outline at `curl` as a flat list of control points, three points to a segment, for checks. */
-export function deerCurlOutline(curl: number, { small = false }: { small?: boolean } = {}): Float64Array {
-  return outlineAt(curl, small);
-}
-
-/** How open his eyes are at `curl`: 1 open, 0 shut. */
-export function deerEyesOpen(curl: number): number {
-  return 1 - smooth(Math.min(1, Math.max(0, curl) / EYES_SHUT_AT));
-}
-
-/** The keyframes and eyes, for checks: each a flat list of control points, three points to a segment. */
-export function deerCurlKeyframes({ small = false }: { small?: boolean } = {}): { outline: readonly Float64Array[]; eyes: readonly Float64Array[] } {
-  const { keys, eyes } = curlShapes(small);
-  return { outline: keys, eyes };
-}
-
-/* ---- the ring ------------------------------------------------------------------------------------------------ */
-
-/**
- * The spinner the ball opens into: a thick ring with round ends, as wide as the ball, its gap where his crescent's
- * mouth was (`gap` degrees, clockwise from three o'clock). `arc` is how far round it reaches between the middles of its
- * ends: `open` as it forms, `tight` at its shortest. The inner edge splits `split` degrees past the leading end: the
- * crescent's chin edge (the curl's core) shrinks into that end as the hole opens, and its body edge becomes the inside.
- */
-const RING = { width: 13, gap: 25, split: 20, open: 290, tight: 210 } as const;
+/** The middles of the arc's ends as he becomes it: its leading end (clockwise) past his chin, its trailing end by his body. */
+const FORMED = { lead: SPIN.mouth - (360 - SPIN.formed) / 2 + 360, tail: SPIN.mouth + (360 - SPIN.formed) / 2 } as const;
 
 /** A circular arc: centre, radius, and start and end angles in degrees. */
 interface Arc {
@@ -681,7 +400,7 @@ interface Arc {
 
 /**
  * Cubic segments along one circular arc, between the given shares of it, each with the handles that fit a circle
- * exactly. Every segment lies on a single arc, so nothing slides across a join as the ring breathes.
+ * exactly. Every segment lies on a single arc, so nothing slides across a join as the arc breathes.
  */
 function arcSegments(a: Arc, shares: readonly number[]): Seg[] {
   const stops = [...shares, 1];
@@ -707,50 +426,153 @@ function arcSegments(a: Arc, shares: readonly number[]): Seg[] {
 /** `count` even shares of a run, from its start. */
 const evenly = (count: number): number[] => Array.from({ length: count }, (_, i) => i / count);
 
-/** The ring at its fullest, for each size of mark: what the ball opens into and closes from. */
-const fullRings = new Map<boolean, Float64Array>();
-
-/** The ring reaching `arc` degrees round, matched point for point to the ball it opens from. */
-function ringOutline(arc: number, small: boolean): Float64Array {
-  const cached = arc === RING.open ? fullRings.get(small) : undefined;
-  if (cached) return cached;
-  const { shares } = curlShapes(small);
-  const outer = BALL.r;
-  const inner = BALL.r - RING.width;
-  const middle = (outer + inner) / 2;
-  const cap = RING.width / 2;
-  // Its trailing end, and its leading end clockwise from it.
-  const tail = RING.gap + (360 - arc) / 2;
-  const lead = tail + arc;
-  const end = (deg: number): Pt => [BALL.x + Math.cos((deg * Math.PI) / 180) * middle, BALL.y + Math.sin((deg * Math.PI) / 180) * middle];
+/**
+ * The arc between the middles of its ends, `tail` round clockwise to `lead` (degrees), matched point for point to the
+ * deer: his crescent's chin edge is the leading end and the inner edge back to the tip, its body edge the rest of the
+ * inner edge and the trailing end, and his rim the outer edge.
+ */
+function arcOutline(lead: number, tail: number, small: boolean): Float64Array {
+  const outer = SPIN.r + SPIN.width / 2;
+  const inner = SPIN.r - SPIN.width / 2;
+  const cap = SPIN.width / 2;
+  const end = (deg: number): Pt => [50 + Math.cos((deg * Math.PI) / 180) * SPIN.r, 50 + Math.sin((deg * Math.PI) / 180) * SPIN.r];
   const [lx, ly] = end(lead);
   const [tx, ty] = end(tail);
-  // Each run keeps its segment count, split where its round end meets the inner edge.
-  const chin = [
-    ...arcSegments({ x: lx, y: ly, r: cap, from: lead, to: lead + 180 }, evenly(SEGMENTS.chin - 3)),
-    ...arcSegments({ x: BALL.x, y: BALL.y, r: inner, from: lead, to: lead - RING.split }, evenly(3)),
+  // The tip keeps its share of the way round as the arc breathes.
+  const tip = tail + ((lead - tail) * (SPIN.tip - FORMED.tail)) / (FORMED.lead - FORMED.tail);
+  const { ends, rimShares } = deerOf(small);
+  const chin = arcSegments({ x: 50, y: 50, r: inner, from: lead, to: tip }, evenly(SEGMENTS.chin));
+  const body = arcSegments({ x: 50, y: 50, r: inner, from: tip, to: tail }, evenly(SEGMENTS.body));
+  const rim = [
+    ...arcSegments({ x: tx, y: ty, r: cap, from: tail + 180, to: tail + 360 }, evenly(ends.tail)),
+    ...arcSegments({ x: 50, y: 50, r: outer, from: tail, to: lead }, rimShares),
+    ...arcSegments({ x: lx, y: ly, r: cap, from: lead, to: lead + 180 }, evenly(ends.lead)),
   ];
-  const body = [
-    ...arcSegments({ x: BALL.x, y: BALL.y, r: inner, from: lead - RING.split, to: tail }, evenly(SEGMENTS.body - 3)),
-    ...arcSegments({ x: tx, y: ty, r: cap, from: tail + 180, to: tail + 360 }, evenly(3)),
-  ];
-  const rim = arcSegments({ x: BALL.x, y: BALL.y, r: outer, from: tail, to: lead }, shares.rim);
-  const out = flatten([...chin, ...body, ...rim]);
-  if (arc === RING.open) fullRings.set(small, out);
+  return flatten([...chin, ...body, ...rim]);
+}
+
+const formedArcs: { full: Float64Array | null; small: Float64Array | null } = { full: null, small: null };
+
+/** The arc as he becomes it, for each size of mark. */
+function formedArc(small: boolean): Float64Array {
+  const key = small ? 'small' : 'full';
+  return (formedArcs[key] ??= arcOutline(FORMED.lead, FORMED.tail, small));
+}
+
+/* ---- the morph ------------------------------------------------------------------------------------------------ */
+
+/**
+ * The morph's pacing, as shares of it. His ears and antlers have drawn in by `antlers`, blurred along the outline over
+ * up to `tines` segments as they go so the tines merge into the beams first, and his eyes have closed by `eyes`, before
+ * the opening reaches them. His crescent and the arc's round ends run ahead of his rim as 1 − (1 − m)^`ahead`, blended over
+ * `blend` segments where they meet.
+ */
+const MORPH = { antlers: 0.35, tines: 1.5, eyes: 0.2, ahead: 2.2, blend: 2 } as const;
+
+const leads: { full: Float64Array | null; small: Float64Array | null } = { full: null, small: null };
+
+/** How far each control point runs ahead with the crescent: 1 along it and the round ends, 0 round the rim, smooth between. */
+function leadOf(small: boolean): Float64Array {
+  const cached = leads[small ? 'small' : 'full'];
+  if (cached) return cached;
+  const { outline, ends } = deerOf(small);
+  const count = outline.length / 2;
+  const from = (count / 3 - ends.lead) * 3;
+  const to = (SEGMENTS.chin + SEGMENTS.body + ends.tail) * 3;
+  const sigma = MORPH.blend * 3;
+  const reach = Math.ceil(3 * sigma);
+  const lead = new Float64Array(count);
+  for (let i = 0; i < count; i++) {
+    let sum = 0;
+    let wsum = 0;
+    for (let o = -reach; o <= reach; o++) {
+      const j = (((i + o) % count) + count) % count;
+      const w = Math.exp(-(o * o) / (2 * sigma * sigma));
+      if (j < to || j >= from) sum += w;
+      wsum += w;
+    }
+    lead[i] = sum / wsum;
+  }
+  leads[small ? 'small' : 'full'] = lead;
+  return lead;
+}
+
+/** The outline's control points `m` of the way from the deer (0) to the arc as he becomes it (1). */
+function morphOutline(m: number, small: boolean): Float64Array {
+  const { outline, bald } = deerOf(small);
+  const arc = formedArc(small);
+  const count = outline.length / 2;
+  const lead = leadOf(small);
+  const c = Math.min(1, Math.max(0, m));
+  const ahead = 1 - (1 - c) ** MORPH.ahead;
+  const out = new Float64Array(outline.length);
+  for (let i = 0; i < out.length; i++) {
+    const b = bald[i] as number;
+    out[i] = b + ((arc[i] as number) - b) * (c + (ahead - c) * (lead[i >> 1] as number));
+  }
+  const antlers = 1 - smooth(c / MORPH.antlers);
+  if (antlers <= 0) return out;
+  const sigma = MORPH.tines * 3 * (1 - antlers);
+  const reach = Math.ceil(3 * sigma);
+  const weights: number[] = [];
+  for (let o = -reach; o <= reach; o++) weights.push(sigma > 0 ? Math.exp(-(o * o) / (2 * sigma * sigma)) : 1);
+  const wsum = weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < count; i++) {
+    let sx = 0;
+    let sy = 0;
+    for (let o = -reach; o <= reach; o++) {
+      const j = (((i + o) % count) + count) % count;
+      const w = (weights[o + reach] as number) / wsum;
+      sx += ((outline[j * 2] as number) - (bald[j * 2] as number)) * w;
+      sy += ((outline[j * 2 + 1] as number) - (bald[j * 2 + 1] as number)) * w;
+    }
+    out[i * 2] = (out[i * 2] as number) + sx * antlers;
+    out[i * 2 + 1] = (out[i * 2 + 1] as number) + sy * antlers;
+  }
   return out;
+}
+
+/** An eye closing about its middle line, `shut` 0 open to 1 closed. */
+function eyeAt(eye: Float64Array, shut: number): Float64Array {
+  let mid = 0;
+  for (let i = 1; i < eye.length; i += 2) mid += eye[i] as number;
+  mid /= eye.length / 2;
+  const out = Float64Array.from(eye);
+  for (let i = 1; i < out.length; i += 2) out[i] = mid + ((out[i] as number) - mid) * (1 - shut);
+  return out;
+}
+
+/**
+ * The mark, whole, or `small` below `DEER_MARK_FULL_FROM` pixels: no eyes, one tine to each antler. It is written as
+ * the morph's first frame, the same curves cut finer, so the loop's first frame and the frames either side of it are
+ * drawn alike and nothing flickers at the seam.
+ */
+export function deerMarkPath({ small = false }: { small?: boolean } = {}): string {
+  const { outline, eyes } = deerOf(small);
+  const parts = [loopPath(outline)];
+  if (!small) for (const eye of eyes) parts.push(loopPath(eye));
+  return parts.join('');
+}
+
+/** The owner's drawing as traced, his first antlers and all, for checks against the picture. */
+export function deerMarkTracedPath(): string {
+  const parts = [loopPath(flatten([...runSegments(TRACE.upper), ...runSegments(TRACE.lower), ...runSegments(TRACE.rim)]))];
+  for (const run of [TRACE.eyeLeft, TRACE.eyeRight]) parts.push(loopPath(flatten(runSegments(run))));
+  return parts.join('');
+}
+
+/** How open his eyes are `morph` of the way into the spinner: 1 open, 0 shut. */
+export function deerEyesOpen(morph: number): number {
+  return 1 - smooth(Math.min(1, Math.max(0, morph) / MORPH.eyes));
 }
 
 /* ---- the loop ------------------------------------------------------------------------------------------------- */
 
-/**
- * One loop: curl in, open into the spinner, sweep round, close and spin back out. There is no hold: everything slows
- * into the upright deer at the loop's end and gathers again from him, so he passes through the first frame like a
- * breath and the seam cannot be seen.
- */
-export const DEER_LOOP_MS = 3000;
+/** One loop: the deer, the flow out, the spinner, the flow back. */
+export const DEER_LOOP_MS = 2800;
 
 /** Whole clockwise turns in a loop. */
-export const DEER_LOOP_TURNS = 1;
+export const DEER_LOOP_TURNS = 2;
 
 /** The Reduce Motion version's breath, in and out, slower than the loop. */
 export const DEER_BREATH_MS = 2000;
@@ -759,28 +581,23 @@ export const DEER_BREATH_MS = 2000;
 export const DEER_BREATH_LOW = 0.45;
 
 /**
- * When each movement runs, as shares of the loop. Neighbouring movements overlap, so the shape never stands still
- * between them: he is still curling as the ball opens, and the ring is still closing as he starts to unfurl. The ring's
- * reach breathes over its whole life. The turn gathers as he curls, holds, and eases away as he unfurls. He starts to
- * curl at the seam and finishes unfurling at it, so nothing ever stands still.
+ * When each movement runs, as shares of the loop. He stands still about the seam, flows out as the turn gathers and
+ * back as it eases, upright as it stops; the arc breathes in between, overlapping both, so it never stands still while
+ * it spins.
  */
 const BEATS = {
-  curl: [0, 0.26],
-  open: [0.19, 0.34],
-  close: [0.52, 0.66],
-  unfurl: [0.58, 1],
-  reach: [0.19, 0.66],
-  gather: [0, 0.29],
-  ease: [0.58, 1],
+  out: [0.06, 0.32],
+  back: [0.68, 0.94],
+  breathe: [0.23, 0.77],
+  gather: [0.06, 0.4],
+  ease: [0.6, 0.94],
 } as const;
 
-/** The mark's pose at a moment of the loop. Its shape is `curl`, `open` and `arc`; it turns about its middle. */
+/** The mark's pose at a moment of the loop. Its shape is `morph` and `arc`; it turns about its middle. */
 export interface DeerLoopPose {
-  /** How far into the ball he is curled, 0 to 1 (`deerCurlPath`). */
-  curl: number;
-  /** How far the ball has opened into the ring, 0 to 1. */
-  open: number;
-  /** How far round the ring reaches, in degrees between the middles of its ends. */
+  /** How far from the deer (0) into the spinner (1) the outline has flowed. */
+  morph: number;
+  /** How far round the arc reaches, in degrees between the middles of its ends. */
   arc: number;
   /** Degrees turned clockwise, from 0 to `DEER_LOOP_TURNS` whole turns over the loop. */
   turn: number;
@@ -795,12 +612,6 @@ function smooth(x: number): number {
   return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
-/** Smootherstep on a time that runs slower toward its end: as gentle at both ends, with a longer settle. */
-function settle(x: number): number {
-  const t = Math.min(1, Math.max(0, x));
-  return smooth(1 - (1 - t) ** 1.4);
-}
-
 /** A swell from nothing to one and back, as flat as smootherstep at both ends. */
 function swell(x: number): number {
   return x <= 0 || x >= 1 ? 0 : Math.sin(Math.PI * x) ** 4;
@@ -812,8 +623,8 @@ const within = (t: number, [a, b]: readonly [number, number]): number => (t - a)
 const underSmooth = (u: number): number => u ** 6 - 3 * u ** 5 + 2.5 * u ** 4;
 
 /**
- * The turn at `x` of the loop, in degrees: its speed rises along smootherstep as he curls, holds, and falls along it as
- * he unfurls, so the speed, its change and the change in that are all continuous, through the loop's seam too.
+ * The turn at `x` of the loop, in degrees: its speed rises along smootherstep as he flows out, holds, and falls along
+ * it as he flows back, so the speed, its change and the change in that are all continuous, through the seam too.
  */
 function turnAt(x: number): number {
   const [a, b] = BEATS.gather;
@@ -833,36 +644,40 @@ function turnAt(x: number): number {
 export function deerLoopAt(t: number): DeerLoopPose {
   const x = ((t % 1) + 1) % 1;
   return {
-    curl: x < BEATS.unfurl[0] ? smooth(within(x, BEATS.curl)) : 1 - settle(within(x, BEATS.unfurl)),
-    open: x < BEATS.close[0] ? smooth(within(x, BEATS.open)) : 1 - smooth(within(x, BEATS.close)),
-    arc: RING.open - (RING.open - RING.tight) * swell(within(x, BEATS.reach)),
+    morph: x < 0.5 ? smooth(within(x, BEATS.out)) : 1 - smooth(within(x, BEATS.back)),
+    arc: SPIN.formed - (SPIN.formed - SPIN.least) * swell(within(x, BEATS.breathe)),
     turn: turnAt(x),
   };
 }
 
 /** Two poses with the same key have the same shape, so a redraw can be skipped while the shape stands still. */
 export function deerFormKey(pose: DeerLoopPose): string {
-  return pose.open > 0 ? `${pose.curl}:${pose.open}:${pose.arc}` : `${pose.curl}`;
+  return `${pose.morph}:${pose.arc}`;
 }
 
 /**
- * The outline of a pose's shape, as a flat list of control points: the curl, with the ring's opening laid over it, so
- * the two can overlap without either standing still.
+ * The outline of a pose's shape, as a flat list of control points: the morph, with the arc's breathing laid over it,
+ * so the two can overlap without either standing still. Once he is the spinner it is the arc exactly.
  */
 export function deerFormOutline(pose: DeerLoopPose, { small = false }: { small?: boolean } = {}): Float64Array {
-  const outline = outlineAt(pose.curl, small);
-  if (pose.open <= 0) return outline;
-  const keys = curlShapes(small).keys;
-  const ball = keys[keys.length - 1] as Float64Array;
-  const ring = ringOutline(pose.arc, small);
-  for (let i = 0; i < outline.length; i++) outline[i] = (outline[i] as number) + ((ring[i] as number) - (ball[i] as number)) * pose.open;
+  // The arc breathes evenly about its middle; the turn carries both ends on.
+  const half = (SPIN.formed - pose.arc) / 2;
+  const now = half !== 0 ? arcOutline(FORMED.lead - half, FORMED.tail + half, small) : null;
+  if (pose.morph >= 1) return now ?? Float64Array.from(formedArc(small));
+  const outline = morphOutline(pose.morph, small);
+  if (!now) return outline;
+  const formed = formedArc(small);
+  for (let i = 0; i < outline.length; i++) outline[i] = (outline[i] as number) + (now[i] as number) - (formed[i] as number);
   return outline;
 }
 
-/** A pose's shape as a path, exactly at that moment: the deer curling (`deerCurlPath`), the ball opening, or the ring. */
+/** A pose's shape as a path, exactly at that moment: the deer with his eyes while they are open, the morph, or the arc. */
 export function deerFormPath(pose: DeerLoopPose, { small = false }: { small?: boolean } = {}): string {
-  if (pose.open <= 0) return deerCurlPath(pose.curl, { small });
-  return loopPath(deerFormOutline(pose, { small }));
+  if (pose.morph <= 0 && pose.arc === SPIN.formed) return deerMarkPath({ small });
+  const parts = [loopPath(deerFormOutline(pose, { small }))];
+  const shut = 1 - deerEyesOpen(pose.morph);
+  if (!small && shut < 1) for (const eye of deerOf(false).eyes) parts.push(loopPath(eyeAt(eye, shut)));
+  return parts.join('');
 }
 
 /**

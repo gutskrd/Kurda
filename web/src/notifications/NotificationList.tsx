@@ -48,7 +48,6 @@ import { railEdits, type RailNotification } from '../social/useSocialRail';
 import { useOptimisticSend } from '../lib/optimistic';
 import { groupByTime, noteKind, noteWhen, splitAtName, type NoteGroupKey, type NoteKind } from './rows';
 import { useAvatarSrc } from '../art/overrides';
-import { seasonalLogo } from '../brand/season';
 import { Fire } from '../components/Fire';
 import { GiftBox } from '../gifts/GiftArt';
 import { prefersReducedMotion } from '../lib/motion';
@@ -428,7 +427,7 @@ function NoteFace({ kind, actor, tone }: { kind: NoteKind; actor: Actor | null; 
         <span className="note-avatar">{face ? <img src={face} alt="" loading="lazy" /> : <PersonGlyph size={22} />}</span>
       ) : (
         <span className="note-avatar note-hevalo">
-          <img src={seasonalLogo()} alt="" loading="lazy" />
+          <img src="/logo.png" alt="" loading="lazy" />
         </span>
       )}
       <span className={`note-badge${toned}`}>

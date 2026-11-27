@@ -993,20 +993,27 @@ button.lp-scard:focus-visible {
   line-height: 0;
 }
 .lp-wax-pour,
-.lp-wax-blob,
-.lp-wax-fire {
+.lp-wax-blob {
   transform-origin: 56px 61px;
 }
-/* The gilding fire's window onto the gold, its top the flames' front, and the puff where they go out, over the top. */
+/*
+ * The flame that gilds a seal (PathScene.tsx `SealFlame`, shared PATH_WAX_FIRE), on the seal's canvas: the gold through a
+ * window whose top is the flame's foot, and the flame drawn standing on the seal's middle at 56, 61, which it moves,
+ * widens and flickers about.
+ */
 .lp-wax-window {
   position: absolute;
   inset: 0;
   overflow: hidden;
 }
-.lp-wax-puff {
-  transform-origin: 56px 25px;
+.lp-wax-flame,
+.lp-wax-flick {
+  transform-origin: 56px 61px;
 }
-/* The stamp leans about its die's foot. */
+.lp-wax-flame {
+  opacity: 0;
+}
+/* The stamp, the Stamp icon in the page's ink, leans about its pad's foot. */
 .lp-wax-tool {
   position: absolute;
   z-index: 1;
@@ -1015,7 +1022,12 @@ button.lp-scard:focus-visible {
   width: 78px;
   height: 87px;
   line-height: 0;
+  color: var(--ink);
   transform-origin: 50% 92%;
+}
+.lp-wax-glyph {
+  position: absolute;
+  line-height: 0;
 }
 /* The seal's face, which a gold seal's glint crosses and the stamp's shadow falls on, cut to it. */
 .lp-wax-face {

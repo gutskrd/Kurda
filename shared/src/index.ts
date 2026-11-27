@@ -204,6 +204,7 @@ export * from './win-link.js';
 /** What a win's card says, in the sender's language. */
 export * from './win-words.js';
 export * from './tab-bar-scroll.js';
+export * from './selector-lens.js';
 /** The lesson path a course map is drawn as: the current skill, milestones, unit colours and stop places. */
 export {
   PATH_GEOMETRY,
@@ -270,6 +271,7 @@ export {
   stampShadow,
   PATH_WAX_GOLD,
   PATH_WAX_FIRE,
+  flickerAt,
   waxGlintAt,
   PATH_SCENE_ORDER,
   PATH_SCENERY,
@@ -781,7 +783,8 @@ export {
   pathKilimSvg,
   pathWaxSvg,
   pathWaxColours,
-  pathStampToolSvg,
+  pathSealFireSvg,
+  PATH_SEAL_FLAME,
   PATH_SEAL,
   PATH_WAX,
   sunRays,
@@ -971,6 +974,8 @@ export {
   GIFT_ART_IDS,
   giftArtKey,
   giftArtSvg,
+  giftLoopParts,
+  type GiftLoopParts,
   isGiftArtId,
   type GiftArtId,
   type GiftArtOptions,
@@ -1017,12 +1022,12 @@ export { PLUS_HERO_VIEW, plusHeroFigure, plusHeroSky, plusHeroSparkles } from '.
 /** A hand holding a phone, for the front page's word about the phone apps: the hand, sleeve and phone, and the finger pads over its edge. */
 export { HAND_PHONE_SCREEN, HAND_PHONE_VIEW, handPhoneSvg, type HandPhoneOptions } from './art/hand-phone.js';
 /** A hand holding up a game's stamp and turning it over, for the front page's games moment: its layers and the turn's frames. */
-export { HAND_STAMP_CARD, HAND_STAMP_FLIP, HAND_STAMP_VIEW, handStampCardAt, handStampFlip, handStampPointsAt, handStampShapesAt, handStampSvg, type HandStampOptions } from './art/hand-stamp.js';
+export { HAND_STAMP_CARD, HAND_STAMP_FLIP, HAND_STAMP_VIEW, handStampCardAt, handStampFlip, handStampBonesAt, handStampPointsAt, handStampShapesAt, handStampSvg, type HandStampOptions } from './art/hand-stamp.js';
 /** The nine hues drawings are coloured in, each in the same four steps, light and dark. */
 export { HUES, HUE_NAMES, hueSteps, isHueName, type HueName, type HueScheme, type HueSteps } from './hues.js';
 /** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
 export * from './art/fire.js';
-/** Hevalo's mark, the owner's deer looking back, and its loop as the apps' loader: he curls into a ball and spins back out. */
+/** Hevalo's mark, the owner's deer looking back, and its loop as the apps' loader: he flows into a spinner and back. */
 export {
   DEER_BREATH_LOW,
   DEER_BREATH_MS,
@@ -1031,9 +1036,6 @@ export {
   DEER_MARK_FULL_FROM,
   DEER_MARK_VIEW,
   deerBreathAt,
-  deerCurlKeyframes,
-  deerCurlOutline,
-  deerCurlPath,
   deerEyesOpen,
   deerFormKey,
   deerFormOutline,
@@ -1049,6 +1051,9 @@ export { mapMarkup, mapPath, type PlaneMap } from './art/warp.js';
 /** The wrapped gift box, and how it waits, opens and gives way, drawn and played the same by both apps. */
 export * from './art/gift-box.js';
 export * from './art/gift-box-motion.js';
+/** How each gift's picture lives: its round of layered parts and where the apps find their pictures. */
+export * from './art/gift-loop.js';
+export * from './art/gift-loops.js';
 /** How big the fire burns: its stages from cold logs to the Newroz fire, by the streak's days or a run of right answers. */
 export {
   COLD_FIRE,
@@ -1116,7 +1121,7 @@ export * from './pending-signup.js';
 
 /** How a notification is sorted into the list's filters and pictured at the end of its row. */
 export * from './notices.js';
-export { GLASS, bendAt, bendImage, bezelFor, glassField, roundedEdge, shineAt, shineImage, veilAt, veilImage, type GlassField, type GlassShape } from './glass.js';
+export { GLASS, bendAt, bendImage, bezelFor, glassField, lensBendAt, roundedEdge, shineAt, shineImage, veilAt, veilImage, type GlassField, type GlassShape } from './glass.js';
 export * from './counts.js';
 
 /** Parental controls: the options a parent has, the pause they make, and the codes that connect a parent and a teen. */

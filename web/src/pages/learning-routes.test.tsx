@@ -747,9 +747,9 @@ describe('a course map', () => {
       await waitFor(() => expect(c.querySelector('.lp-wax-tool')).not.toBeNull(), { timeout: 3000 });
       expect(c.querySelector('.lp-wax')).toHaveAttribute('data-suns', '3');
       expect(c.querySelector('.lp-wax-gold')).not.toBeNull();
-      // Fire gilds it: the gold seen through a window under the flames, which sweep up over it.
+      // One flame passes up over it, the gold seen under it through a window, its three layers flickering.
       expect(c.querySelector('.lp-wax-window .lp-wax-gold')).not.toBeNull();
-      expect(c.querySelector('.lp-wax-fire')).not.toBeNull();
+      expect(c.querySelectorAll('.lp-wax-flame .lp-wax-flick')).toHaveLength(3);
       // It was sealed before, so it is not sealed again: no drop of wax this time.
       expect(c).not.toHaveClass('is-stamping');
       expect(c.querySelector('.lp-wax-blob')).toBeNull();

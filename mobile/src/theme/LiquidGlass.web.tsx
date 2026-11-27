@@ -1,5 +1,10 @@
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { Animated, StyleSheet, View, type ViewStyle } from 'react-native';
+import { SELECTOR_LENS } from '@kurda/shared';
+import { dropLens, lensSupported, takeLens, type Lens } from '@kurda/shared/src/glass-lens';
+import type { LensLook } from './LiquidGlass';
 import { floating } from './floating';
+import { blend } from './tileTones';
 import { useTheme } from './ThemeProvider';
 import { radii } from './tokens';
 
@@ -36,6 +41,78 @@ export function useGlassShape(lift: 'control' | 'raised'): ViewStyle[] {
   return [floating[lift], { backgroundColor: colors.barFill, shadowColor: colors.softShadow }];
 }
 
+/** The bar's glass where the tabs sit, as one opaque colour: its tint over the page where the browser blurs, else its fill. */
+export function useBarGround(): string {
+  const { colors } = useTheme();
+  return BENDING_GLASS ? blend(colors.glassTint, colors.background) : colors.barFill;
+}
+
+/**
+ * The lens a choice lifts into as it moves (theme/selectorLens.ts): `children`, a copy of the row that the caller moves
+ * so it looks magnified, on `ground`, so the row beneath never shows through, under a lit rim with a faint split of
+ * colour; the caller clips it to the lens's shape. In a browser that can bend with an SVG filter (Chromium) its glass
+ * also bends the copy at the rim and splits red from blue, as the website's lens does (shared glass-lens.ts); the glass
+ * is spread past the lens while it is down (`swell`) and its content held to the lens's size, so at its first frame the
+ * lens looks just as the capsule and the row it covers do and the bend grows in from the edge as it lifts.
+ */
+export function LensGlass({ radius, ground, tint, tintOpacity, up, swell, children }: LensLook & { children: ReactNode }): React.JSX.Element {
+  const { colors } = useTheme();
+  const ref = useRef<View>(null);
+  const bends = lensSupported();
+  useEffect(() => {
+    const el = ref.current as unknown as HTMLElement | null;
+    if (!el || !bends || typeof ResizeObserver === 'undefined') return;
+    let lens: Lens | null = null;
+    let shape = '';
+    const fit = () => {
+      const width = el.offsetWidth;
+      const height = el.offsetHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      const next = `${width}x${height}@${dpr}`;
+      if (next === shape || width < 8 || height < 8) return;
+      shape = next;
+      const was = lens;
+      lens = takeLens({ width, height, radius: Math.min(radius, width / 2, height / 2) }, dpr, true, SELECTOR_LENS.rim);
+      if (was) dropLens(was);
+      el.style.filter = lens.filter ? `url(#${lens.filter})` : '';
+    };
+    const watch = new ResizeObserver(fit);
+    watch.observe(el);
+    fit();
+    return () => {
+      watch.disconnect();
+      if (lens) dropLens(lens);
+    };
+  }, [radius, bends]);
+  const spread = bends ? swell : 1;
+  return (
+    <>
+      <Animated.View ref={ref} pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: ground, transform: [{ scale: spread }] }]}>
+        <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: Animated.divide(1, spread) }] }]}>
+          <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: tint, opacity: tintOpacity }]} />
+          {children}
+        </Animated.View>
+      </Animated.View>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          styles.lens,
+          {
+            borderRadius: radius,
+            borderTopColor: colors.lensShine,
+            borderBottomColor: colors.lensRim,
+            borderLeftColor: colors.lensWarm,
+            borderRightColor: colors.lensCool,
+            opacity: up,
+          },
+        ]}
+      />
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
   clear: { backgroundColor: 'transparent' },
+  lens: { borderWidth: 1.5 },
 });

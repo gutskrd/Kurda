@@ -14,9 +14,12 @@ import {
   PATH_STAMP_MOMENT,
   PATH_STAMP_REPRESS,
   PATH_STAMP_SHADOW,
+  PATH_STAMP_TOOL,
   PATH_REPRESS_SHADOW,
   PATH_WAX_GOLD,
   PATH_WAX_FIRE,
+  flickerAt,
+  pathSealFireSvg,
   PATH_STOP_ART,
   chapterArtOf,
   chapterArtSvg,
@@ -29,7 +32,6 @@ import {
   pathScenePropSvg,
   pathSceneSpriteSvg,
   pathWaxSvg,
-  pathStampToolSvg,
   sampleKeys,
   sceneBeat,
   sceneBeatMs,
@@ -40,6 +42,7 @@ import {
   type SceneBox,
 } from '@kurda/shared';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { StampIcon } from '../components/icons';
 import { useInFront } from '../lib/motion';
 
 /**
@@ -411,18 +414,11 @@ export function WaxSeal({
     pathWaxSvg({ seed: stopKey, gold: golden, worn, suns: count, part, dark, idPrefix: `${prefix}${part}${count}${golden ? 'g' : ''}` });
   const coat = useMarkup(() => (moving ? '' : wax('whole', suns)), [moving, stopKey, worn, suns, dark, prefix]);
   const goldCoat = useMarkup(() => (gold ? wax('whole', suns, true) : ''), [gold, stopKey, worn, suns, dark, prefix]);
-  // The fire that gilds it as its third sun is pressed in: its band of flame, the embers off it and its puff.
-  const fire = useMarkup(
-    () => (warming ? (['fire', 'embers', 'puff'] as const).map((part) => pathWaxSvg({ part, dark, idPrefix: `${prefix}${part}` })).join('|') : ''),
-    [warming, dark, prefix],
-  );
-  const [flame = '', embers = '', puff = ''] = fire.__html.split('|');
   const pour = useMarkup(() => (moving ? wax('pour', suns) : ''), [moving, stopKey, worn, suns, dark, prefix]);
   const seal = useMarkup(() => (moving ? wax('seal', suns) : ''), [moving, stopKey, worn, suns, dark, prefix]);
   const was = useMarkup(() => (pressed ? wax('seal', from) : ''), [pressed, from, stopKey, worn, dark, prefix]);
   const blob = useMarkup(() => (pressing ? pathWaxSvg({ part: 'blob', dark, idPrefix: `${prefix}b` }) : ''), [pressing, dark, prefix]);
   const splash = useMarkup(() => (pressing ? pathWaxSvg({ part: 'splash', dark, idPrefix: `${prefix}s` }) : ''), [pressing, dark, prefix]);
-  const tool = useMarkup(() => (moving ? pathStampToolSvg({ dark, idPrefix: `${prefix}t` }) : ''), [moving, dark, prefix]);
   const refs = {
     pour: useRef<HTMLSpanElement>(null),
     seal: useRef<HTMLSpanElement>(null),
@@ -431,11 +427,6 @@ export function WaxSeal({
     splash: useRef<HTMLSpanElement>(null),
     shadow: useRef<HTMLSpanElement>(null),
     tool: useRef<HTMLSpanElement>(null),
-    gold: useRef<HTMLSpanElement>(null),
-    window: useRef<HTMLSpanElement>(null),
-    flame: useRef<HTMLSpanElement>(null),
-    embers: useRef<HTMLSpanElement>(null),
-    puff: useRef<HTMLSpanElement>(null),
   };
   const done = useRef(onStamped);
   done.current = onStamped;
@@ -481,23 +472,8 @@ export function WaxSeal({
       runs.forEach((r) => r?.cancel());
     };
   }, [moving, pressing, delay, stopKey]);
-  // Once the stamp has lifted from its third sun, fire sweeps up over the seal and the wax turns gold behind it: the gold
-  // shows through a window whose top is the flames' front, moved one way while the gold inside is moved back.
+  // Once the stamp has lifted from its third sun, one flame passes up over the seal and leaves it gold (`SealFlame`).
   const warmAt = (pressed ? delay + PATH_STAMP_REPRESS.ms : 0) + PATH_WAX_GOLD.afterMs;
-  useLayoutEffect(() => {
-    const [win, coat] = [refs.window.current, refs.gold.current];
-    if (!warming || !win || !coat || typeof win.animate !== 'function') return;
-    const { front, rise, wide, lick, shown, embers: up, embersShown, puff: swell, puffShown, ms } = PATH_WAX_FIRE;
-    const timing = { duration: ms, delay: warmAt, fill: 'both' as const };
-    const runs = [
-      win.animate(frames([front], ([y]) => ({ transform: `translateY(${y}px)` })), timing),
-      coat.animate(frames([front], ([y]) => ({ transform: `translateY(${-y!}px)` })), timing),
-      refs.flame.current?.animate(frames([rise, wide, lick, shown], ([y, w, h, o]) => ({ transform: `translateY(${y}px) scale(${w}, ${h})`, opacity: o })), timing),
-      refs.embers.current?.animate(frames([up, embersShown], ([y, o]) => ({ transform: `translateY(${y}px)`, opacity: o })), timing),
-      refs.puff.current?.animate(frames([swell, puffShown], ([k, o]) => ({ transform: `scale(${k})`, opacity: o })), timing),
-    ];
-    return () => runs.forEach((r) => r?.cancel());
-  }, [warming, warmAt]);
   return (
     <span className="lp-wax" aria-hidden="true" data-suns={suns}>
       {moving ? (
@@ -511,20 +487,18 @@ export function WaxSeal({
           <span className="lp-wax-face">
             <span ref={refs.shadow} className="lp-wax-shadow" />
           </span>
-          <span ref={refs.tool} className="lp-wax-tool" dangerouslySetInnerHTML={tool} />
+          {/* The icon set's own Stamp, in the page's ink. */}
+          <span ref={refs.tool} className="lp-wax-tool">
+            <span className="lp-wax-glyph" style={{ left: PATH_STAMP_TOOL.icon.x, top: PATH_STAMP_TOOL.icon.y }}>
+              <StampIcon size={PATH_STAMP_TOOL.icon.size} />
+            </span>
+          </span>
         </>
       ) : (
         <span className="lp-wax-coat" dangerouslySetInnerHTML={coat} />
       )}
       {gold && warming ? (
-        <>
-          <span ref={refs.window} className="lp-wax-window">
-            <span ref={refs.gold} className="lp-wax-coat lp-wax-gold" dangerouslySetInnerHTML={goldCoat} />
-          </span>
-          <span ref={refs.flame} className="lp-wax-coat lp-wax-fire" dangerouslySetInnerHTML={{ __html: flame }} />
-          <span ref={refs.embers} className="lp-wax-coat lp-wax-fire" dangerouslySetInnerHTML={{ __html: embers }} />
-          <span ref={refs.puff} className="lp-wax-coat lp-wax-puff" dangerouslySetInnerHTML={{ __html: puff }} />
-        </>
+        <SealFlame dark={dark} gold={goldCoat} delay={warmAt} />
       ) : (
         gold && <span className="lp-wax-coat lp-wax-gold" dangerouslySetInnerHTML={goldCoat} />
       )}
@@ -532,6 +506,54 @@ export function WaxSeal({
     </span>
   );
 }
+
+/**
+ * One flame passing up over a seal as its third sun is pressed in, leaving it gold (shared `PATH_WAX_FIRE`): the gold
+ * shown through a window whose top is the flame's foot, moved up while the gold in it is moved back down, and over it the
+ * flame's three painted layers, each flickering on its own. Decorative.
+ */
+function SealFlame({ dark, gold, delay }: { dark: boolean; gold: { __html: string }; delay: number }): React.JSX.Element {
+  const prefix = `lpsf${useId().replace(/[^A-Za-z0-9]/g, '')}`;
+  const markup = useMarkup(() => LAYERS.map((part) => pathSealFireSvg({ part, dark, idPrefix: `${prefix}${part}` })).join('|'), [dark, prefix]);
+  const svg = markup.__html.split('|');
+  const refs = { window: useRef<HTMLSpanElement>(null), gold: useRef<HTMLSpanElement>(null), flame: useRef<HTMLSpanElement>(null) };
+  useLayoutEffect(() => {
+    const [win, coat, flame] = [refs.window.current, refs.gold.current, refs.flame.current];
+    if (!win || !coat || !flame || typeof win.animate !== 'function') return;
+    const { ms, front, rise, wide, lick, shown, flicker } = PATH_WAX_FIRE;
+    const timing = { duration: ms, delay, fill: 'both' as const };
+    const runs: Animation[] = [
+      win.animate(frames([front], ([y]) => ({ transform: `translateY(${y}px)` })), timing),
+      coat.animate(frames([front], ([y]) => ({ transform: `translateY(${-y!}px)` })), timing),
+      flame.animate(frames([rise, wide, lick, shown], ([y, w, h, o]) => ({ transform: `translateY(${y}px) scale(${w}, ${h})`, opacity: o })), timing),
+    ];
+    // Each layer flickers with the small flame's own poses, out of step with the others.
+    [...flame.querySelectorAll<HTMLElement>('.lp-wax-flick')].forEach((layer, i) => {
+      const motion = flicker[LAYERS[i]!];
+      const poses = [0, 0.25, 0.5, 0.75, 1].map((at) => {
+        const p = flickerAt(motion, at);
+        return { offset: at, transform: `scale(${p.sx}, ${p.sy}) skewX(${p.skew}deg)` };
+      });
+      runs.push(layer.animate(poses, { duration: motion.periodMs, iterations: Infinity, easing: 'ease-in-out', delay: -motion.phase * motion.periodMs }));
+    });
+    return () => runs.forEach((r) => r.cancel());
+  }, [delay]);
+  return (
+    <>
+      <span ref={refs.window} className="lp-wax-window">
+        <span ref={refs.gold} className="lp-wax-coat lp-wax-gold" dangerouslySetInnerHTML={gold} />
+      </span>
+      <span ref={refs.flame} className="lp-wax-coat lp-wax-flame">
+        {LAYERS.map((part, i) => (
+          <span key={part} className="lp-wax-coat lp-wax-flick" dangerouslySetInnerHTML={{ __html: svg[i] ?? '' }} />
+        ))}
+      </span>
+    </>
+  );
+}
+
+/** The gilding flame's layers, back to front. */
+const LAYERS = ['shell', 'body', 'heart'] as const;
 
 /**
  * A pale band crossing a gold seal now and then (shared `PATH_WAX_GOLD`), each stop at its own time; just after it has

@@ -199,7 +199,8 @@ export {
   pathSignpostSvg,
   pathWaxSvg,
   pathWaxColours,
-  pathStampToolSvg,
+  pathSealFireSvg,
+  PATH_SEAL_FLAME,
   pathStopSvg,
   PATH_SEAL,
   PATH_WAX,
@@ -252,7 +253,7 @@ export {
 } from './path-scenes.js';
 export { WORD_PICTURES, WORD_PICTURE_IDS, wordPictureSvg, type WordPictureId, type WordPictureOptions } from './word-pictures.js';
 export { DICTIONARY_CANVAS, DICTIONARY_TILE, dictionarySvg, dictionaryStillSvg, dictionaryTileSvg, dictionaryTiles, type DictionaryArtOptions, type DictionaryTile } from './dictionary.js';
-export { GIFT_ART_IDS, giftArtKey, giftArtSvg, isGiftArtId, type GiftArtId, type GiftArtOptions } from './gift-art.js';
+export { GIFT_ART_IDS, giftArtKey, giftArtSvg, giftLoopParts, isGiftArtId, type GiftArtId, type GiftArtOptions, type GiftLoopParts } from './gift-art.js';
 export {
   BOOK_APPLE_BITES,
   BOOK_BACKDROP,

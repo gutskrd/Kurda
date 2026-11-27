@@ -9,9 +9,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!-- The tab icon carries its own background, since tab strips are light in some browsers and dark in others. -->
     <link rel="icon" href="/favicon.png" type="image/png" />
-    <link rel="apple-touch-icon" href="/logo.png" />
+    <!-- Square and opaque: a phone rounds it itself, and fills a transparent corner with black. -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <!-- The page's own black, so a phone's browser chrome runs into it rather than framing it. -->
     <meta name="theme-color" content="#131c20" />
+    <!-- The reader's colour scheme before the first paint, since the front page arrives already drawn (public/theme.js). -->
+    <script src="/theme.js"></script>
     <title>Hevalo</title>
     <meta
       name="description"

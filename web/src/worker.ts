@@ -409,6 +409,23 @@ const STATIC_PAGES: ReadonlyArray<StaticPage> = [
       'What research on memory and language learning has found, what Hevalo does about each finding, what it does not claim, and the studies to read.',
     structuredData: teachingArticle,
   },
+  /* The story library: the legends and folk tales, each on a painting of its own. */
+  {
+    path: '/app/learn/stories',
+    title: 'Kurdish stories and legends to read · Hevalo',
+    description:
+      'Kawa the smith, Şahmaran, Mem û Zîn and more: Kurdish legends and folk tales to read in Kurmancî, each on a painting of its own.',
+  },
+  {
+    path: '/app/learn/riddles',
+    title: 'Kurdish riddles · Hevalo',
+    description: 'Metelok: riddles from the Kurdish oral tradition, in Kurmancî, with their answers. Free to read, no account needed.',
+  },
+  {
+    path: '/app/learn/proverbs',
+    title: 'Kurdish proverbs and what they mean · Hevalo',
+    description: 'Gotinên pêşiyan: Kurdish proverbs in Kurmancî and what they mean when people say them. Free to read, no account needed.',
+  },
   {
     path: '/app/alphabet',
     title: 'The Kurdish alphabet: Kurmanji and Sorani letters · Hevalo',
@@ -583,10 +600,34 @@ async function respond(request: Request, env: Env): Promise<Response> {
   // A path that resolved to a real file is left alone, whatever it looks like.
   const type = assets.headers.get('content-type') ?? '';
   if (!type.includes('text/html')) return assets;
-
+  // The dictionary's pages are files of their own, answered as they are.
   const dictionary = dictionaryOf(url.pathname);
   if (dictionary) return ferheng(assets, url, env, dictionary);
+  return pageFor(url, env, url.pathname === '/' ? assets : await withoutFront(assets));
+}
 
+/** How scripts/prerender.ts marks the front page it draws into the shell, so it can be found and taken out again. */
+const FRONT = /<div id="root" data-prerendered="\/"><!--front-->[\s\S]*?<!--\/front--><\/div>/;
+
+/**
+ * The shell arrives with the front page drawn into it (scripts/prerender.ts), and with the front page's titles. Every other
+ * address gets it empty and named plainly, so neither a crawler nor a link preview reads the front page under it; a listed
+ * page's own head replaces the titles again below. A shell without the front page goes out as it came.
+ */
+async function withoutFront(shell: Response): Promise<Response> {
+  const html = await shell.text();
+  if (!FRONT.test(html)) return new Response(html, shell);
+  const plain = html
+    .replace(FRONT, '<div id="root"></div>')
+    .replace(/<title>[^<]*<\/title>/, '<title>Hevalo</title>')
+    .replace(/(<meta (?:property="og:title"|name="twitter:title") content=")[^"]*"/g, '$1Hevalo"');
+  const out = new Response(plain, shell);
+  out.headers.delete('content-length');
+  return out;
+}
+
+/** The page at `url`, its head written for what it is. */
+async function pageFor(url: URL, env: Env, assets: Response): Promise<Response> {
   /* A listed page: its own title, description and address, from a table, so nothing can fail. */
   const page = STATIC_PAGES.find((p) => p.path === url.pathname);
   if (page) {
@@ -648,4 +689,5 @@ export const __test = {
   dictionaryOf,
   notFound,
   SITE_HEADERS,
+  withoutFront,
 };

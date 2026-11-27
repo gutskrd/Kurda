@@ -95,7 +95,7 @@ export function Hero(): React.JSX.Element {
           {t('landing.hero.title')}
         </h1>
         <p className="fp-lead fp-hero-lead">{t('landing.hero.lead')}</p>
-        <JoinButtons />
+        <JoinButtons apps />
       </div>
     </section>
   );

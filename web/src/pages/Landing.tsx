@@ -1,5 +1,7 @@
 import { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { AppSoonButton } from '../landing/AppSoon';
+import { AndroidIcon, IosIcon } from '../components/icons';
 import { warmApi } from '../lib/warmup';
 import { usePageMeta, useT } from '../i18n/I18nProvider';
 import { FaqList } from '../components/FaqList';
@@ -11,8 +13,6 @@ import { Table } from '../landing/Table';
 import { Legends } from '../landing/Legends';
 import { Closing } from '../landing/Closing';
 import { useNear } from '../landing/parts';
-import { AppSoonButton } from '../landing/AppSoon';
-import { AndroidIcon, IosIcon } from '../components/icons';
 import '../landing/landing.css';
 
 /*

@@ -380,13 +380,18 @@ export function AppRoutes(): React.JSX.Element {
  * only the device and browser; `AccountLocale` applies the account's choice once there is one.
  */
 export function App(): React.JSX.Element {
+  return <AppTree Router={CarriedRouter} />;
+}
+
+/** The app inside the router it is given: the browser's own, or a fixed address when a page is rendered ahead (prerender/). */
+export function AppTree({ Router }: { Router: (props: { children: React.ReactNode }) => React.JSX.Element }): React.JSX.Element {
   return (
     <I18nProvider>
     <AuthProvider>
       {/* Inside both: it reads the signed-in account and sets the language. */}
       <AccountLocale />
       <RealtimeProvider>
-      <CarriedRouter>
+      <Router>
         <ProfileModalProvider>
         {/* Inside the router: it reads the URL to know which chat is open. */}
         <MessagesProvider>
@@ -418,7 +423,7 @@ export function App(): React.JSX.Element {
         </MaintenanceGate>
         </MessagesProvider>
         </ProfileModalProvider>
-      </CarriedRouter>
+      </Router>
       </RealtimeProvider>
     </AuthProvider>
     </I18nProvider>

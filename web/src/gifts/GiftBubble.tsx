@@ -115,7 +115,7 @@ export function GiftBubble({
     if (card.tier === 'grand' && anyOpened) {
       return (
         <div className="gift-bubble is-sent is-opened gift-showpiece">
-          <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={132} />
+          <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={132} loop />
           <span className="gift-bubble-text">
             <span className="gift-bubble-title" lang="ku">
               {card.name}
@@ -130,7 +130,7 @@ export function GiftBubble({
       <div className={`gift-bubble is-sent${anyOpened ? ' is-opened' : ''}`}>
         <span className="gift-bubble-art">
           {mine && anyOpened && card.recipients.length === 1 ? (
-            <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={64} />
+            <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={64} loop />
           ) : (
             <GiftBox tier={card.tier} size={64} />
           )}
@@ -158,7 +158,7 @@ export function GiftBubble({
       >
         <span className="gift-bubble-art">
           {shown.myOpened ? (
-            <GiftItemArt assetUrl={shown.assetUrl} category={shown.category} size={card.tier === 'grand' ? 132 : 64} />
+            <GiftItemArt assetUrl={shown.assetUrl} category={shown.category} size={card.tier === 'grand' ? 132 : 64} loop />
           ) : (
             <GiftBox tier={card.tier} size={72} motion="idle" seed={card.batchId} />
           )}

@@ -51,6 +51,14 @@ import './styles/maintenance.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('root element missing');
+/*
+ * The front page arrives already drawn (scripts/prerender.ts), for readers that never run this; the app draws every page
+ * afresh over it. Anywhere else the edge empties it first; should it ever not, it is never shown under another address.
+ */
+if (root.hasAttribute('data-prerendered')) {
+  if (root.getAttribute('data-prerendered') !== window.location.pathname) root.replaceChildren();
+  root.removeAttribute('data-prerendered');
+}
 
 /* The colour scheme is set before anything is drawn, so someone who chose light never sees a dark first frame. */
 applyTheme();

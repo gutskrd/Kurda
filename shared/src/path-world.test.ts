@@ -18,6 +18,7 @@ import {
   PATH_REPRESS_SHADOW,
   PATH_WAX_GOLD,
   PATH_WAX_FIRE,
+  flickerAt,
   waxGlintAt,
   PATH_APPLE_REACH,
   PATH_START_WORDS,
@@ -344,32 +345,47 @@ describe('a finished stop’s wax seal', () => {
     expect(at(PATH_REPRESS_SHADOW.shown, at2 + 0.04)).toBe(Math.max(...PATH_REPRESS_SHADOW.shown.map(([, v]) => v)));
   });
 
-  it('gilds the seal with fire once the third sun is pressed in: lit at its foot, up over it, and out over its top', () => {
-    const { front, rise, wide, shown, lick, embers, embersShown, puffShown, ms, outAt } = PATH_WAX_FIRE;
+  it('passes one flame up over the seal once the third sun is pressed in, the wax gold under it, and lets it settle', () => {
+    const { ms, outAt, front, rise, wide, lick, shown, flicker } = PATH_WAX_FIRE;
     const at = (track: readonly (readonly [number, number])[], t: number): number => sampleKeys(track, t);
-    // the front starts below the seal's foot, so none of it is gold yet, and ends over its top, so all of it is
+    // about a second and a quarter: lit under the seal's foot, so none of it is gold yet, and out past its top, all gold
+    expect(ms).toBeGreaterThanOrEqual(1000);
+    expect(ms).toBeLessThanOrEqual(1500);
     const [top, foot] = [PATH_SEAL.cy - PATH_SEAL.r, PATH_SEAL.cy + PATH_SEAL.r];
     expect(at(front, 0)).toBeGreaterThan(foot);
     expect(at(front, 1)).toBeLessThan(top);
-    // it only ever rises, and crosses the seal in about two thirds of a second
-    for (let i = 1; i < front.length; i++) expect(front[i]![1]).toBeLessThanOrEqual(front[i - 1]![1]);
+    // it only ever rises, gliding: slow to start, quickest over the middle, slow again past the top, never jerking
+    const steps = front.slice(1).map(([, y], i) => front[i]![1] - y);
+    for (const step of steps) expect(step).toBeGreaterThanOrEqual(0);
+    for (let i = 1; i < steps.length; i++) expect(Math.abs(steps[i]! - steps[i - 1]!)).toBeLessThan(0.6);
     const crossed = (y: number): number => front.find(([, v]) => v <= y)![0];
-    const crossing = (crossed(top + 2) - crossed(foot - 2)) * ms;
-    expect(crossing).toBeGreaterThanOrEqual(600);
-    expect(crossing).toBeLessThanOrEqual(800);
-    // the flames stand on the front, never wider than the seal, and are out before it starts and after it ends
-    for (const t of [0.2, 0.5, 0.7]) {
+    const crossing = (crossed(top) - crossed(foot)) * ms;
+    expect(crossing).toBeGreaterThan(600);
+    expect(crossing).toBeLessThan(1000);
+    // the flame stands on the front while it crosses, burning, no wider than the seal there, and always on the wax
+    for (const t of [0.3, 0.5, 0.6]) {
       expect(at(rise, t)).toBeCloseTo(at(front, t) - PATH_SEAL.cy, 1);
       expect(at(wide, t)).toBeLessThanOrEqual(1);
-      expect(at(lick, t)).toBeGreaterThan(0.5);
+      expect(at(lick, t)).toBeGreaterThan(0.7);
+      expect(at(shown, t)).toBe(1);
     }
-    expect(at(shown, 0)).toBe(0);
-    expect(at(shown, 1)).toBe(0);
-    // embers rise off the flames, and a puff is left where they go out
-    expect(at(embers, 0.7)).toBeLessThan(at(rise, 0.7));
-    expect(at(embersShown, 0.6)).toBeGreaterThan(0);
-    expect(Math.max(...puffShown.map(([t, v]) => (t > outAt - 0.06 ? v : 0)))).toBeGreaterThan(0);
-    expect(outAt).toBeLessThan(1);
+    for (const [, y] of rise) {
+      expect(PATH_SEAL.cy + y).toBeGreaterThan(top);
+      expect(PATH_SEAL.cy + y).toBeLessThan(foot);
+    }
+    expect(at(wide, 1)).toBeLessThan(at(wide, 0.75));
+    // it lights from nothing and goes out to nothing, calmly, its licks sinking as it fades after its firm tap
+    expect(lick[0]![1]).toBe(0);
+    expect(shown[0]![1]).toBe(0);
+    expect(lick[lick.length - 1]![1]).toBeLessThan(0.2);
+    expect(shown[shown.length - 1]![1]).toBe(0);
+    expect(at(lick, outAt)).toBeLessThan(at(lick, 0.5));
+    expect(at(shown, outAt)).toBeGreaterThan(0.9);
+    // its three layers flicker with the small flame's own motion, each on its own clock
+    expect(new Set([flicker.shell.periodMs, flicker.body.periodMs, flicker.heart.periodMs]).size).toBe(3);
+    expect(new Set([0, 0.25, 0.5, 0.75].map((t) => flickerAt(flicker.shell, t).sy)).size).toBeGreaterThan(1);
+    // and nothing else: no ring of flame, sparks or flash
+    expect(Object.keys(PATH_WAX_FIRE).sort()).toEqual(['flicker', 'front', 'lick', 'ms', 'outAt', 'rise', 'shown', 'wide']);
   });
 
   it('turns gold once the third sun is pressed in, and glints at each stop’s own time within its round', () => {

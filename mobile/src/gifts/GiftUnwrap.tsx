@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Image, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { AccessibilityInfo, Animated, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable, ReachReset } from '../theme/Pressable';
 import {
   GIFT_BOX_EXIT_MS,
@@ -35,6 +35,7 @@ import { SendErrorNotice } from '../reports/SendError';
 import { openGift, wearGift } from './api';
 import { giftsSeen, refreshGiftBadge } from '../shop/useUnseenGifts';
 import { GiftBox, NightSky } from './art';
+import { GiftArt } from './GiftLoop';
 import { GiftLight } from './GiftLight';
 import { heldDim } from '../theme/MotionParts';
 import { ConfettiBurst, GlowRing, useCelebration } from '../theme/CelebrationParts';
@@ -362,7 +363,7 @@ function Landed({ card, size, look, gold }: { card: GiftCard; size: number; look
       <ConfettiBurst progress={moment.burst} count={moment.plan.travel ? look.burst : 0} seed={giftSeed(card.sku)} colours={[glow, gold]} reach={size} testID="gift-burst" />
       <Animated.View style={{ opacity: moment.art, transform: [{ scale }] }}>
         {uri ? (
-          <Image source={{ uri }} style={{ width: size, height: size }} resizeMode="contain" accessibilityIgnoresInvertColors />
+          <GiftArt path={card.assetUrl} size={size} testID="gift-landed-art" />
         ) : (
           <View style={[styles.itemFallback, { width: size, height: size, backgroundColor: colors.controlTrack }]}>
             <Icon name="gift" size={size * 0.5} color={gold} />
