@@ -1789,21 +1789,26 @@ describe('the lesson path’s world', () => {
     expect(face('done')).toBe(face('current'));
     expect(face('done')).not.toContain(PATH_GOLD.light.face);
     expect(face('refresh')).not.toBe(face('done'));
-    // a shut stone stands lower than a tile on its side, and has no light along its edge
-    const side = (look: PathStopLook): number => Math.max(...[...pathStopSvg({ look, tone: 'clay', part: 'base' }).matchAll(/V(\d+(?:\.\d+)?)/g)].map((m) => Number(m[1])));
-    expect(side('done')).toBeGreaterThan(PATH_STOP_ART.cy);
+    // a shut stone lies flatter than a tile, the stop to do now stands a little prouder, and the stone has no light
+    // along its edge
+    expect(PATH_STOP_ART.stone).toBeLessThan(PATH_STOP_ART.side);
+    expect(PATH_STOP_ART.side).toBeLessThan(PATH_STOP_ART.raised);
     expect(face('locked')).not.toContain('clip-path');
     expect(face('available')).toContain('clip-path');
   });
 
-  it('draws every topic stop as a round tile as wide as the seal it becomes, and a shut one as a low slate disc', () => {
-    const { cx, cy, rx, ry } = PATH_STOP_ART;
-    // an ellipse, its curves' handles at 0.5523 of its radii: a disc seen a little from above
+  it('draws every topic stop from straight above as its seal is, round and in the seal’s own place, its lip to the lower right', () => {
+    const { cx, cy, rx, ry, side, raised } = PATH_STOP_ART;
+    // a circle, its curves' handles at 0.5523 of its radius, exactly where the seal it becomes will lie
+    expect([cx, cy, rx, ry]).toEqual([PATH_SEAL.cx, PATH_SEAL.cy, PATH_SEAL.r, PATH_SEAL.r]);
     for (const look of ['available', 'current', 'done', 'refresh', 'review'] as const) {
       expect(pathStopSvg({ look, tone: 'clay', part: 'face' }), look).toContain(tilePath(cx, cy, rx, ry, 0.5523));
     }
-    expect(pathStopSvg({ look: 'locked', tone: 'clay', part: 'face' })).toContain(tilePath(cx, cy + 2, rx - 1, ry - 3, 0.5523));
-    expect(rx).toBe(PATH_SEAL.r);
+    // its thickness the face moved down and a little right, as the seal's lip is, deeper for the stop to do now
+    expect(pathStopSvg({ look: 'available', tone: 'clay', part: 'base' })).toContain(tilePath(cx + 1, cy + side, rx, ry, 0.5523));
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'base' })).toContain(tilePath(cx + 1, cy + raised, rx, ry, 0.5523));
+    // a shut one a touch smaller, in slate
+    expect(pathStopSvg({ look: 'locked', tone: 'clay', part: 'face' })).toContain(tilePath(cx, cy, rx - 2, ry - 2, 0.5523));
   });
 
   it('stands each unit’s milestone on its drum, slate until its chapter is won, then gold', () => {

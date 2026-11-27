@@ -63,13 +63,16 @@ export function pathGroundView(ground: PathGround, dark = false): { far: string;
 
 /**
  * A stop's picture: `box` points square with the face's middle at (`cx`, `cy`). The face is a round tile `rx` × `ry`, a
- * thick disc seen a little from above the road as wide as a finished stop's wax seal, standing `side` high on its darker
- * side (`raised` for the stop to do now, and `stone` for a shut one, which lies lower); `press` is how far the face sinks
- * under a finger.
+ * disc seen from straight above, as a finished stop's wax seal is and in the seal's own place and size; its thickness
+ * shows as its seal's does, a lip `side` deep under its lower right (`raised` for the stop to do now, and `stone` for a
+ * shut one, which lies flatter), with its shade beyond. `press` is how far the face sinks onto its lip under a finger.
  */
-export const PATH_STOP_ART = { box: 112, cx: 56, cy: 58, rx: 36, ry: 30, side: 13, raised: 17, stone: 8, press: 6 } as const;
+export const PATH_STOP_ART = { box: 112, cx: 56, cy: 61, rx: 36, ry: 36, side: 4, raised: 6, stone: 2, press: 4 } as const;
 
-/** How round a tile is: 0.55 draws its outline as an ellipse, a disc seen a little from above; nearer 1, a squarer tile. */
+/** Where a unit's sandûq stands in its own box beside the road (`pathChestSvg`), its feet on the road. */
+const CHEST = { cx: 56, cy: 58 } as const;
+
+/** How round a tile is: 0.55 draws its outline as a circle (an ellipse where its radii differ); nearer 1, a squarer tile. */
 const TILE_ROUND = 0.5523;
 
 /** What a stop looks like, by what it is and how it stands. */
@@ -203,10 +206,11 @@ export interface PathStopOptions {
 }
 
 /**
- * One stop, base or face. An open stop is a thick round tile in its unit's colour, a disc seen a little from above the
- * road on its darker side, with one arc of light along its upper left rim; the app sets its glyph. A finished one is the
- * same tile until the app melts it into its round wax seal (`pathWaxSvg`), as wide as it. A shut one is a quiet slate
- * disc lying low. The guide's book, story scroll and jump gate are part of the face; a unit's chest (`chest`,
+ * One stop, base or face, seen from straight above as its wax seal is. An open stop is a round tile in its unit's
+ * colour, lit along its upper left rim and shaded along its lower right, its thickness a lip of its darker side under
+ * its lower right and its shade on the road beyond; the app sets its glyph. A finished one is the same tile until the
+ * app melts it into its round wax seal (`pathWaxSvg`), which lies exactly over it. A shut one is a quiet slate disc
+ * lying flatter. The guide's book, story scroll and jump gate are part of the face; a unit's chest (`chest`,
  * `chestOpen`) is its painted sandûq standing on the road instead.
  */
 export function pathStopSvg(opts: PathStopOptions): string {
@@ -228,29 +232,29 @@ export function pathStopSvg(opts: PathStopOptions): string {
 
   const k = tokenOf(look, t, dark);
   const stone = look === 'locked' || look === 'guideLocked' || look === 'storyLocked';
-  const side = stone ? PATH_STOP_ART.stone : look === 'current' ? PATH_STOP_ART.raised : look === 'jump' ? 9 : PATH_STOP_ART.side;
-  // A shut stop's slate is a touch smaller and sits a little lower than a tile.
-  const outline = (y: number): string => (stone ? tilePath(cx, y + 2, rx - 1, ry - 3) : tilePath(cx, y, rx, ry));
+  const side = stone ? PATH_STOP_ART.stone : look === 'current' ? PATH_STOP_ART.raised : PATH_STOP_ART.side;
+  // A shut stop's slate is a touch smaller than a tile.
+  const r = stone ? rx - 2 : rx;
+  const disc = (dx: number, dy: number, grow = 0): string => tilePath(cx + dx, cy + dy, r + grow, (ry * r) / rx + grow);
 
   if (part === 'base') {
-    // Its shade on the road, falling to the lower right, then its side: the face swept down by `side`.
-    let body = `<path d="${ellipsePath(cx + 5, cy + side + ry * 0.5, rx * 0.98, ry * 0.42)}" fill="${shade}" fill-opacity="${dark ? 0.38 : 0.13}"/>`;
-    if (stone) body += fill([side / 3, (2 * side) / 3, side].map((dy) => outline(cy + dy)).join(''), k.side);
-    else body += fill(`${tilePath(cx, cy + side, rx, ry)}M${n(cx - rx)} ${n(cy)}H${n(cx + rx)}V${n(cy + side)}H${n(cx - rx)}Z`, k.side);
-    if (look === 'strong') body += stroke(`M${n(cx - rx - 2)} ${n(cy + 2)}V${n(cy + side)}`, warm('#ffd96a', dark), 2.4) + stroke(`M${n(cx + rx + 2)} ${n(cy + 2)}V${n(cy + side)}`, warm('#ffd96a', dark), 2.4);
+    // Its shade on the road, then its lip, both to the lower right as the seal's are: the face moved down and right.
+    let body = `<path d="${disc(2, side + 2.5)}" fill="${shade}" fill-opacity="${dark ? (stone ? 0.3 : 0.42) : stone ? 0.1 : 0.16}"/>`;
+    body += fill(disc(1, side, look === 'strong' ? 3 : 0), look === 'strong' ? warm('#c98a1c', dark) : k.side);
     return wrap(prefix, size, B, body);
   }
 
-  // The face: its colour, and one line of light along its upper left edge, cut by laying the face over the light a
-  // little down and right, inside the face's own outline.
-  const face = outline(cy);
+  // The face: its colour, lit along its upper left rim and shaded along its lower right, each cut by laying the face
+  // over it a little the other way, inside the face's own outline, as the seal's lip is.
+  const face = disc(0, 0);
   let defs = '';
   let body = '';
-  if (look === 'strong') body += fill(tilePath(cx, cy, rx + 3, ry + 3), warm('#ffd96a', dark));
+  if (look === 'strong') body += fill(disc(0, 0, 3), warm('#ffd96a', dark));
   if (k.light) {
     const clip = `${prefix}f`;
     defs += `<clipPath id="${clip}"><path d="${face}"/></clipPath>`;
-    body += fill(face, k.light) + `<g clip-path="url(#${clip})">${fill(tilePath(cx + 2.6, cy + 3, rx, ry), k.face)}</g>`;
+    const crescent = (dx: number, dy: number, colour: string): string => `<path d="${face}${disc(dx, dy)}" fill="${colour}" fill-rule="evenodd"/>`;
+    body += fill(face, k.face) + `<g clip-path="url(#${clip})">${crescent(2.4, 2.8, k.light)}${crescent(-2.4, -2.8, mix(k.face, k.side, 0.6))}</g>`;
   } else {
     body += fill(face, k.face);
   }
@@ -602,10 +606,10 @@ export function pathChestSvg(opts: PathChestOptions = {}): string {
   if (!(PATH_CHEST_PARTS as readonly string[]).includes(part)) throw new RangeError(`art: no chest part ${String(part)}`);
   const size = opts.size ?? PATH_STOP_ART.box;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
-  const { box: B, cx, cy } = PATH_STOP_ART;
+  const { cx, cy } = CHEST;
   const shade = dark ? '#05080a' : '#17242b';
   const ground = part === 'whole' || part === 'body' ? `<path d="${ellipsePath(cx + 5, cy + 27, 38, 7)}" fill="${shade}" fill-opacity="${dark ? 0.4 : 0.14}"/>` : '';
-  return wrap(prefixFor(opts.idPrefix, 'chest', open, part, dark), size, B, ground + sanduq(cx, cy, open, dark, part));
+  return wrap(prefixFor(opts.idPrefix, 'chest', open, part, dark), size, PATH_STOP_ART.box, ground + sanduq(cx, cy, open, dark, part));
 }
 
 /** A gold coin from the sandûq, on its own 24-point square, for the apps to toss out of it as it opens. */

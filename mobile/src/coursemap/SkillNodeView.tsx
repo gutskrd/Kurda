@@ -35,8 +35,9 @@ import { TopicBar } from './TopicBar';
 import type { SkillNode } from './types';
 
 const { node: NODE } = PATH_GEOMETRY;
-/** How far the face sinks into its base when pressed (shared `PATH_STOP_ART.press`). */
+/** How far a tile's face sinks onto its lip when pressed (shared `PATH_STOP_ART.press`), and a milestone into its drum. */
 const PRESS = PATH_STOP_ART.press;
+const MILESTONE_PRESS = 6;
 
 type Stop = PathStop<SkillNode>;
 
@@ -236,7 +237,7 @@ export function SkillNodeView({
     ) : (
       <StopArt look={l} tone={unitTone} part={part} near />
     );
-  const squish = useSquish();
+  const squish = useSquish(!milestone);
   const tilt = wobble.interpolate({ inputRange: [-1, 1], outputRange: [`${-PATH_MOTION.wobble}deg`, `${PATH_MOTION.wobble}deg`] });
   const lifted = rise ? { opacity: rise, transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [PATH_MOTION.rise, 0] }) }] } : null;
   // Its bar now, and as it was before a lesson that moved it on.
@@ -472,8 +473,8 @@ function testName(stop: Stop): string {
   return stop.state;
 }
 
-/** The stop's face in its 72-point button (shared PATH_STOP_ART: radii 36 by 31 about `STOP_FACE`). */
-const FACE = { left: STOP_FACE.x - 36, top: STOP_FACE.y - 31, width: 72, height: 62 } as const;
+/** The stop's round face in its 72-point button (shared PATH_STOP_ART, about `STOP_FACE`). */
+const FACE = { left: STOP_FACE.x - PATH_STOP_ART.rx, top: STOP_FACE.y - PATH_STOP_ART.ry, width: 2 * PATH_STOP_ART.rx, height: 2 * PATH_STOP_ART.ry } as const;
 /** How often the glint crosses the stop to do now, and how long it takes. */
 const GLINT = { everyMs: 3600, crossMs: 1300, firstMs: 1000 } as const;
 
@@ -539,19 +540,21 @@ function Glow({ fill }: { fill: string }): React.JSX.Element {
 }
 
 /**
- * A stop squished down into its base under a finger, springing back up with a little bounce as it is let go. Under
+ * A stop sunk under a finger, springing back with a little bounce as it is let go: a tile, seen from above, sinks onto
+ * its lip down and to the right where the lip lies; a milestone, standing on its drum, squishes down into it. Under
  * Reduce Motion it simply sinks.
  */
-function useSquish(): { style: object; onPressIn: () => void; onPressOut: () => void } {
+function useSquish(flat: boolean): { style: object; onPressIn: () => void; onPressOut: () => void } {
   const reduce = useReducedMotion();
   const press = useRef(new Animated.Value(0)).current;
+  const to = (value: number): Animated.AnimatedInterpolation<number> => press.interpolate({ inputRange: [0, 1], outputRange: [0, value] });
+  const squish = (wide: number, tall: number): object[] => [
+    { scaleX: press.interpolate({ inputRange: [0, 1], outputRange: [1, reduce ? 1 : wide] }) },
+    { scaleY: press.interpolate({ inputRange: [0, 1], outputRange: [1, reduce ? 1 : tall] }) },
+  ];
   return {
     style: {
-      transform: [
-        { translateY: press.interpolate({ inputRange: [0, 1], outputRange: [0, PRESS] }) },
-        { scaleX: press.interpolate({ inputRange: [0, 1], outputRange: [1, reduce ? 1 : 1.06] }) },
-        { scaleY: press.interpolate({ inputRange: [0, 1], outputRange: [1, reduce ? 1 : 0.92] }) },
-      ],
+      transform: flat ? [{ translateX: to(1) }, { translateY: to(PRESS) }, ...squish(0.98, 0.98)] : [{ translateY: to(MILESTONE_PRESS) }, ...squish(1.06, 0.92)],
     },
     onPressIn: () => {
       press.stopAnimation();
@@ -659,7 +662,7 @@ const styles = StyleSheet.create({
   },
   plainLip: {
     position: 'absolute',
-    left: STOP_FACE.x - PATH_STOP_ART.rx,
+    left: STOP_FACE.x - PATH_STOP_ART.rx + 1,
     top: STOP_FACE.y - PATH_STOP_ART.ry + PATH_STOP_ART.side,
     width: 2 * PATH_STOP_ART.rx,
     height: 2 * PATH_STOP_ART.ry,
@@ -686,9 +689,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   number: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  // Over the round face's upper corner, as on the website.
   badge: {
     position: 'absolute',
-    top: STOP_FACE.y - PATH_STOP_ART.ry - 8,
+    top: STOP_FACE.y - 40,
     end: -6,
     width: 28,
     height: 28,
