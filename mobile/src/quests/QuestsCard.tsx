@@ -12,7 +12,6 @@ import { Skeleton } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { CHEST_RATIO, ChestArt } from './ChestArt';
-import { ChestWobble } from './ChestWobble';
 import type { QuestDay } from '@kurda/shared';
 
 /** The card's height while loading in grey: the chest and its padding. */
@@ -21,7 +20,7 @@ const CARD_HEIGHT = CHEST * CHEST_RATIO + 2 * (spacing.sm + 6) + 16;
 
 /**
  * Today's quests on Home, compact: a chest, "Daily quests" with the count done (or that a chest is ready,
- * today's or an earlier day's, with a dot and an occasional shake, ChestWobble), and a short bar for each of the
+ * today's or an earlier day's, with a dot and an occasional knock, ChestArt's `shine`), and a short bar for each of the
  * three. A tap opens the full list (QuestsScreen), where chests are opened. A ready chest's dot and text are
  * ink like the tab bar's dots; gold stays with the earned bars.
  *
@@ -94,9 +93,7 @@ export function QuestsCard(): React.JSX.Element | null {
       testID="quests-card"
     >
       <View>
-        <ChestWobble active={ready !== null} testID="quests-card-shaking">
-          <ChestArt tier={chest.chest} size={CHEST} open={chest.claimed} shine={ready !== null} />
-        </ChestWobble>
+        <ChestArt tier={chest.chest} size={CHEST} open={chest.claimed} shine={ready !== null} testID="quests-card-chest" />
         {ready ? <View style={[styles.dot, dir.rtl ? styles.dotRtl : null, { backgroundColor: colors.primary, borderColor: colors.surface }]} testID="quests-card-dot" /> : null}
       </View>
       <View style={styles.main}>

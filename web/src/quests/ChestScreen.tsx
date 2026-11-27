@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BURST, CHEST_HOP_LAND, CHEST_HOP_MS, celebrationPlan, type ChestOpening, type ChestTier } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
-import { CloseIcon, CoinIcon, SparkleIcon } from '../components/icons';
+import { CloseIcon, CoinIcon } from '../components/icons';
 import { wrapTab } from '../components/Sheet';
 import { CelebrationArt } from '../ranks/Celebration';
 import { useRail } from '../social/RailProvider';
@@ -168,13 +168,6 @@ export function ChestScreen({
           >
             <span className="chest-float">
               <Chest tier={chest.chest} open={phase === 'gone'} shine={phase === 'closed'} size={208} />
-              <span className="chest-sparkles" aria-hidden="true">
-                {[0, 1, 2, 3].map((i) => (
-                  <span key={i} className={`chest-sparkle s${i}`}>
-                    <SparkleIcon size={i % 2 ? 18 : 26} />
-                  </span>
-                ))}
-              </span>
             </span>
             <span className="chest-hint" aria-hidden="true">
               {phase === 'opening' ? t('quests.opening') : phase === 'gone' ? '' : t('quests.tapToOpen')}

@@ -78,18 +78,18 @@ describe('the quests card on Learn', () => {
     expect(screen.queryByTestId('quests-card')).toBeNull();
   });
 
-  // The chest shakes now and then while one waits to be opened, unless motion is reduced, and sits still otherwise.
-  it('shakes the chest while one can be opened, and not once every chest is open', async () => {
+  // The chest knocks now and then while one waits to be opened, unless motion is reduced, and sits still otherwise.
+  it('knocks the chest while one can be opened, and not once every chest is open', async () => {
     patchReactNativeWeb({ reduceMotion: false });
     try {
       testAuth.client = fakeClient({ 'GET /me/quests': ok(day) });
       renderWithProviders(<QuestsCard />);
-      expect(await screen.findByTestId('quests-card-shaking')).toBeTruthy();
+      expect(await screen.findByTestId('quests-card-chest-knocking')).toBeTruthy();
       cleanup();
       testAuth.client = fakeClient({ 'GET /me/quests': ok({ ...day, quests: day.quests.map((q) => ({ ...q, claimable: false, claimed: q.progress >= q.target })) }) });
       renderWithProviders(<QuestsCard />);
       expect(await screen.findByRole('button', { name: 'Daily quests, 1 of 3 done' })).toBeTruthy();
-      expect(screen.queryByTestId('quests-card-shaking')).toBeNull();
+      expect(screen.queryByTestId('quests-card-chest-knocking')).toBeNull();
     } finally {
       patchReactNativeWeb({ reduceMotion: true });
     }

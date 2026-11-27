@@ -25,9 +25,6 @@ import { CHEST_RATIO, ChestArt } from './ChestArt';
 import { CHEST_NAME, CHEST_TONE, CLAIM_WORDS, claimProblem, type ClaimProblem } from './model';
 import { usePageWidth } from '../theme/pageWidth';
 
-/** How long one bob of the waiting chest takes, up and back, and how far it goes. */
-const BOB_MS = 1800;
-const BOB = 6;
 /** While the server is asked, the chest strains: pressed a little flat, shivering this fast. */
 const STRAIN_MS = 110;
 /**
@@ -39,21 +36,14 @@ const STAGE_RATIO = 1.25;
 const BUTTON_HEIGHT = 50;
 /** When the opening chest lands from its hop (shared CHEST_HOP): the haptic, the ring and the thrown gold start here. */
 const LAND_MS = CHEST_HOP_MS * CHEST_HOP_LAND;
-/** Where the sparkles around the waiting chest sit, from its centre as shares of its size, and when each twinkles. */
-const SPARKLES = [
-  { x: -0.62, y: -0.42, size: 22, delay: 0 },
-  { x: 0.6, y: -0.18, size: 16, delay: 500 },
-  { x: 0.5, y: 0.5, size: 20, delay: 1000 },
-  { x: -0.7, y: 0.3, size: 12, delay: 1400 },
-];
 /** How far the open chest's rays reach relative to the drawing's own: across most of the screen. */
 const RAYS_REACH = 2.4;
 
 /**
- * A quest's chest on its own screen, in the colour of what it holds: its name, the chest bobbing with a few
- * sparkles and a glint on its lock, and "Tap to open". A tap asks the server to open it while the chest strains;
- * then it hops open, rays turn, gold is thrown, and the contents rise as a tile with a count while the Zêr
- * balance counts up, with one haptic and sound on landing.
+ * A quest's chest on its own screen, in the colour of what it holds: its name, the chest standing in a soft light
+ * and knocking now and then with light at its seam (ChestArt's `shine`), and "Tap to open". A tap asks the server
+ * to open it while the chest strains; then it hops open, the beams sway, gold is thrown, and the contents rise as a
+ * tile with a count while the Zêr balance counts up, with one haptic and sound on landing.
  *
  * Problems are said plainly with a way on: offline, the chest stays shut and waits on Learn; already opened,
  * nothing is lost. Nothing to buy or watch: one chest, its contents, and Continue.
@@ -118,10 +108,9 @@ export function ChestScreen({
               style={[styles.stage, { width: size * 1.6, height: size * STAGE_RATIO }]}
             >
               <SoftGlow colour="#FFFFFF" size={size * 1.25} id="chest-glow" />
-              <Sparkles size={size} />
-              <Bobbing straining={busy}>
+              <Straining straining={busy}>
                 <ChestArt tier={tier} size={size} shine={!busy} testID="chest-art" />
-              </Bobbing>
+              </Straining>
             </Pressable>
             <View style={styles.words}>
               {problem ? null : <Text style={[styles.tap, { color: tone.ink, opacity: busy ? 0.6 : 1 }]}>{t('quests.chest.tap')}</Text>}
@@ -223,7 +212,7 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
         >
           <SoftGlow colour={colors.gold} size={size * 1.4} id="chest-open-glow" />
           {plan.travel ? <GlowRing progress={moment.ring} colour="#FFFFFF" size={size * 0.9} /> : null}
-          <ChestArt tier={tier} size={size} open={!plan.travel} motion={motion} rays={plan.travel ? 'turning' : 'still'} reach={RAYS_REACH} testID="chest-art" />
+          <ChestArt tier={tier} size={size} open={!plan.travel} motion={motion} rays={plan.travel ? 'swaying' : 'still'} reach={RAYS_REACH} testID="chest-art" />
           {plan.travel ? (
             // The gold comes out of the open top, in front of the chest.
             <View style={[StyleSheet.absoluteFill, { transform: [{ translateY: -size * 0.12 }] }]} pointerEvents="none">
@@ -255,88 +244,39 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
 }
 
 /**
- * The waiting chest bobs gently. While the server is asked it strains instead (squashed on its foot and
- * shivering), which is the crouch the hop springs from. Still under Reduce Motion and when the screen is not
- * focused.
+ * While the server is asked, the chest strains (squatting on its foot and shivering), which is the crouch the hop
+ * springs from. A waiting chest stands on the ground and knocks (ChestArt). Still under Reduce Motion and when the
+ * screen is not focused.
  */
-function Bobbing({ straining, children }: { straining: boolean; children: React.ReactNode }): React.JSX.Element {
+function Straining({ straining, children }: { straining: boolean; children: React.ReactNode }): React.JSX.Element {
   const alive = useMotionAlive();
-  const bob = useRef(new Animated.Value(0)).current;
   const press = useRef(new Animated.Value(0)).current;
   const shiver = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    if (!alive) {
-      bob.setValue(0);
+    if (!alive || !straining) {
       press.setValue(0);
       shiver.setValue(0);
       return;
     }
     const step = (value: Animated.Value, to: number, duration: number): Animated.CompositeAnimation =>
       Animated.timing(value, { toValue: to, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false });
-    const run = straining
-      ? Animated.parallel([
-          step(press, 1, STRAIN_MS),
-          Animated.loop(Animated.sequence([step(shiver, 1, STRAIN_MS), step(shiver, -1, STRAIN_MS * 2), step(shiver, 0, STRAIN_MS)])),
-        ])
-      : Animated.loop(Animated.sequence([step(bob, 1, BOB_MS / 2), step(bob, 0, BOB_MS / 2)]));
-    if (straining) bob.setValue(0);
-    else {
-      press.setValue(0);
-      shiver.setValue(0);
-    }
+    const run = Animated.parallel([
+      step(press, 1, STRAIN_MS),
+      Animated.loop(Animated.sequence([step(shiver, 1, STRAIN_MS), step(shiver, -1, STRAIN_MS * 2), step(shiver, 0, STRAIN_MS)])),
+    ]);
     run.start();
     return () => run.stop();
-  }, [alive, straining, bob, press, shiver]);
-  const translateY = bob.interpolate({ inputRange: [0, 1], outputRange: [BOB / 2, -BOB / 2] });
+  }, [alive, straining, press, shiver]);
   // The strain squashes the chest about its foot (the shadow is drawn below it), tilting it a little each way.
   const scaleX = press.interpolate({ inputRange: [0, 1], outputRange: [1, 1.04] });
-  const scaleY = press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.94] });
-  const rotate = shiver.interpolate({ inputRange: [-1, 1], outputRange: ['-3deg', '3deg'] });
-  return <Animated.View style={{ transformOrigin: '50% 88%', transform: [{ translateY }, { scaleX }, { scaleY }, { rotate }] }}>{children}</Animated.View>;
-}
-
-/** A few white sparkles around the waiting chest, each twinkling in turn; static under Reduce Motion. */
-function Sparkles({ size }: { size: number }): React.JSX.Element {
-  return (
-    <View style={[StyleSheet.absoluteFill, styles.centre]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      {SPARKLES.map((s, i) => (
-        <Twinkle key={i} delay={s.delay} x={s.x * size} y={s.y * size}>
-          <Icon name="sparkle" size={s.size} color="#FFFFFF" />
-        </Twinkle>
-      ))}
-    </View>
-  );
-}
-
-function Twinkle({ delay, x, y, children }: { delay: number; x: number; y: number; children: React.ReactNode }): React.JSX.Element {
-  const reduce = useReducedMotion();
-  const alive = useMotionAlive();
-  const glint = useRef(new Animated.Value(reduce ? 1 : 0.25)).current;
-  useEffect(() => {
-    if (!alive) {
-      glint.setValue(0.8);
-      return;
-    }
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.delay(delay),
-        Animated.timing(glint, { toValue: 1, duration: 500, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
-        Animated.timing(glint, { toValue: 0.25, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
-        Animated.delay(1800 - delay),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [alive, delay, glint]);
-  const scale = glint.interpolate({ inputRange: [0.25, 1], outputRange: [0.8, 1.1] });
-  return <Animated.View style={[styles.sparkle, { opacity: glint, transform: [{ translateX: x }, { translateY: y }, { scale }] }]}>{children}</Animated.View>;
+  const scaleY = press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.95] });
+  const rotate = shiver.interpolate({ inputRange: [-1, 1], outputRange: ['-1.5deg', '1.5deg'] });
+  return <Animated.View style={{ transformOrigin: '50% 92%', transform: [{ scaleX }, { scaleY }, { rotate }] }}>{children}</Animated.View>;
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   middle: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg, gap: spacing.md },
-  centre: { alignItems: 'center', justifyContent: 'center' },
-  sparkle: { position: 'absolute' },
   name: { ...display(typography.sizes.title), textAlign: 'center' },
   stage: { alignItems: 'center', justifyContent: 'center' },
   // The tile sits over the open lid, its foot a little above the chest's top.

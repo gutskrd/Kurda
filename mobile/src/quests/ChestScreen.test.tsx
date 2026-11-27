@@ -25,22 +25,22 @@ afterEach(cleanup);
 const opening = ok({ questId: 'q:streak', tier: 'rare', currency: 'zer', amount: 40, balance: 1292, earnsZer: true });
 
 describe('the chest screen', () => {
-  it('waits shut with its lid on and its lock glinting, then swings open on a tap: the rays turn and the count rises out of it', async () => {
+  it('waits shut with its lid on and its lock glinting, then swings open on a tap: the beams sway and the count rises out of it', async () => {
     testAuth.client = fakeClient({ 'POST /me/quests/q%3Astreak/claim': opening });
     renderWithProviders(<ChestScreen questId="q:streak" tier="rare" onDone={() => undefined} />);
     expect(screen.getByRole('heading', { name: 'Rare chest' })).toBeTruthy();
     expect(screen.getByTestId('chest-art-lid')).toBeTruthy();
     expect(screen.queryByTestId('chest-art-lid-open')).toBeNull();
-    expect(screen.queryByTestId('chest-art-rays-turning')).toBeNull();
+    expect(screen.queryByTestId('chest-art-rays-swaying')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open the chest' }));
     expect(await screen.findByRole('heading', { name: '+40 Zêr' })).toBeTruthy();
     expect(screen.getByText('× 40')).toBeTruthy();
     expect(screen.getByLabelText('You have 1,292 Zêr')).toBeTruthy();
-    // The shut lid is still there on its way out, the open one has landed, and the rays are going round.
+    // The shut lid is still there on its way out, the open one has landed, and the beams are swaying.
     expect(screen.getByTestId('chest-art-lid')).toBeTruthy();
     expect(screen.getByTestId('chest-art-lid-open')).toBeTruthy();
-    expect(screen.getByTestId('chest-art-rays-turning')).toBeTruthy();
+    expect(screen.getByTestId('chest-art-rays-swaying')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Continue' })).toBeTruthy();
   });
 
@@ -63,7 +63,7 @@ describe('the chest screen', () => {
       await waitFor(() => expect(screen.queryByTestId('chest-art-lid')).toBeNull());
       expect(screen.getByTestId('chest-art-lid-open')).toBeTruthy();
       expect(screen.getByTestId('chest-art-rays')).toBeTruthy();
-      expect(screen.queryByTestId('chest-art-rays-turning')).toBeNull();
+      expect(screen.queryByTestId('chest-art-rays-swaying')).toBeNull();
     } finally {
       patchReactNativeWeb();
     }

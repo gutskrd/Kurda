@@ -6,7 +6,7 @@
 /* ---- A chest ---------------------------------------------------------------------- */
 /*
  * The drawing's layers (shared art/chest.ts) are groups named by part (Chest.tsx), moved in the drawing's units: the
- * lid turns about its hinge (66 54) and the rays about the chest's mouth (61 54).
+ * lid turns about its hinge (67 53) and the rays sway about the chest's mouth (59 57.5).
  */
 .chest {
   display: block;
@@ -14,17 +14,17 @@
 }
 .chest [data-part='lid'],
 .chest [data-part='lidOpen'] {
-  transform-origin: 66px 54px;
+  transform-origin: 67px 53px;
 }
 .chest [data-part='rays'] {
-  transform-origin: 61px 54px;
+  transform-origin: 59px 57.5px;
   transform: scale(var(--chest-reach, 1));
 }
 .chest [data-part='sparkle'] {
   transform-origin: 60px 60px;
 }
-/* The open chest's parts and the glint show only when called for. */
-.chest :is([data-part='lidOpen'], [data-part='light'], [data-part='rays'], [data-part='sparkle'], [data-part='glint']) {
+/* The open chest's parts, the glint and the light at the seam show only when called for. */
+.chest :is([data-part='lidOpen'], [data-part='light'], [data-part='rays'], [data-part='sparkle'], [data-part='glint'], [data-part='seam']) {
   opacity: 0;
 }
 /* Open: the lid thrown back and the light out. */
@@ -38,7 +38,8 @@
  * Opened just now, the chest hops. This is the shared CHEST_HOP choreography (art/chest.ts: one second, keyframes at
  * fractions of it), so the phone and the page play the same hop. The `chest-hop` group crouches, springs up about the
  * chest's foot (60 104), lands and settles while the shadow shrinks; the shut lid swings away and the open one lands
- * at the top, the light blooms, the rays turn and the stars burst on landing.
+ * at the top, the light at the seam builds through the crouch, the light blooms, the rays sway and the gold and stars
+ * burst on landing.
  */
 .chest.is-popping .chest-hop {
   transform-origin: 60px 104px;
@@ -60,7 +61,10 @@
 .chest.is-popping [data-part='rays'] {
   animation:
     chest-light-in 1000ms linear both,
-    chest-rays-turn 16s linear 440ms infinite;
+    chest-rays-sway 3.6s ease-in-out 440ms infinite alternate;
+}
+.chest.is-popping [data-part='seam'] {
+  animation: chest-hop-seam 1000ms linear both;
 }
 .chest.is-popping [data-part='sparkle'] {
   animation: chest-sparkle 1000ms linear both;
@@ -184,12 +188,30 @@
     opacity: 1;
   }
 }
-@keyframes chest-rays-turn {
+/* The beams lean a little one way and back, as light does through moving air. */
+@keyframes chest-rays-sway {
   from {
-    transform: scale(var(--chest-reach, 1)) rotate(0deg);
+    transform: scale(var(--chest-reach, 1)) rotate(-5deg);
   }
   to {
-    transform: scale(var(--chest-reach, 1)) rotate(360deg);
+    transform: scale(var(--chest-reach, 1)) rotate(5deg);
+  }
+}
+/* The seam's light through the hop (shared CHEST_HOP_SEAM): building through the crouch, gone once the lid is off. */
+@keyframes chest-hop-seam {
+  0% {
+    opacity: 0.35;
+  }
+  12% {
+    opacity: 0.85;
+  }
+  24%,
+  32% {
+    opacity: 1;
+  }
+  40%,
+  100% {
+    opacity: 0;
   }
 }
 @keyframes chest-sparkle {
@@ -225,6 +247,174 @@
   16%,
   to {
     transform: translate(75px, 69px) rotate(24deg);
+  }
+}
+/*
+ * A chest waiting to be opened knocks now and then, as if something inside wanted out (shared CHEST_KNOCK, 3.6 seconds a
+ * loop, keyframes at the same shares): the lid jumps on its hinge and drops back twice, the light at the seam flares
+ * as it lifts, and the box squats on each landing, about its foot.
+ */
+.chest.is-shining [data-part='seam'],
+.quest-row.is-claimable .chest [data-part='seam'] {
+  animation: chest-knock-seam 3600ms linear var(--knock-delay, 0ms) infinite both;
+}
+.chest.is-shining [data-part='lid'],
+.quest-row.is-claimable .chest [data-part='lid'] {
+  animation: chest-knock-lid 3600ms linear var(--knock-delay, 0ms) infinite;
+}
+.chest.is-shining .chest-hop,
+.quest-row.is-claimable .chest .chest-hop {
+  transform-origin: 60px 104px;
+  animation: chest-knock-body 3600ms linear var(--knock-delay, 0ms) infinite;
+}
+@keyframes chest-knock-lid {
+  0% {
+    transform: none;
+  }
+  1.2% {
+    transform: translateY(-1.24px) rotate(3.72deg);
+  }
+  2.4% {
+    transform: translateY(-1.86px) rotate(5.58deg);
+  }
+  3.2% {
+    transform: translateY(-2px) rotate(6deg);
+  }
+  4.4% {
+    transform: translateY(-1.56px) rotate(4.68deg);
+  }
+  5.6% {
+    transform: translateY(-0.56px) rotate(1.68deg);
+  }
+  6.2% {
+    transform: none;
+  }
+  7.4% {
+    transform: translateY(-0.8px) rotate(2.4deg);
+  }
+  8.4% {
+    transform: translateY(-1.12px) rotate(3.36deg);
+  }
+  9.4% {
+    transform: translateY(-0.8px) rotate(2.4deg);
+  }
+  10.6% {
+    transform: translateY(-0.1px) rotate(0.3deg);
+  }
+  11% {
+    transform: none;
+  }
+  12.2% {
+    transform: translateY(-0.2px) rotate(0.6deg);
+  }
+  13.4% {
+    transform: none;
+  }
+  40% {
+    transform: none;
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes chest-knock-seam {
+  0% {
+    opacity: 0.35;
+  }
+  1.2% {
+    opacity: 0.8;
+  }
+  2.4% {
+    opacity: 1;
+  }
+  3.2% {
+    opacity: 1;
+  }
+  4.4% {
+    opacity: 0.95;
+  }
+  5.6% {
+    opacity: 0.85;
+  }
+  6.2% {
+    opacity: 0.7;
+  }
+  7.4% {
+    opacity: 0.85;
+  }
+  8.4% {
+    opacity: 0.95;
+  }
+  9.4% {
+    opacity: 0.9;
+  }
+  10.6% {
+    opacity: 0.8;
+  }
+  11% {
+    opacity: 0.75;
+  }
+  12.2% {
+    opacity: 0.7;
+  }
+  13.4% {
+    opacity: 0.65;
+  }
+  40% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0.35;
+  }
+}
+@keyframes chest-knock-body {
+  0% {
+    transform: none;
+  }
+  1.2% {
+    transform: scale(0.995, 1.008);
+  }
+  2.4% {
+    transform: scale(0.993, 1.012);
+  }
+  3.2% {
+    transform: scale(0.993, 1.012);
+  }
+  4.4% {
+    transform: scale(0.996, 1.006);
+  }
+  5.6% {
+    transform: none;
+  }
+  6.2% {
+    transform: scale(1.022, 0.972);
+  }
+  7.4% {
+    transform: scale(1.004, 0.996);
+  }
+  8.4% {
+    transform: scale(0.997, 1.004);
+  }
+  9.4% {
+    transform: scale(0.998, 1.002);
+  }
+  10.6% {
+    transform: none;
+  }
+  11% {
+    transform: scale(1.014, 0.982);
+  }
+  12.2% {
+    transform: scale(1.002, 0.998);
+  }
+  13.4% {
+    transform: none;
+  }
+  40% {
+    transform: none;
+  }
+  100% {
+    transform: none;
   }
 }
 
@@ -395,17 +585,9 @@
     transform: translateX(340%);
   }
 }
-/* A chest waiting to be opened nudges twice once its quest shows as done. */
+/* A chest waiting to be opened starts knocking once its quest shows as done. */
 .quest-row.is-claimable .chest {
-  animation: chest-nudge 700ms ease-in-out calc(var(--fill-delay, 0ms) + var(--fill-ms, 0ms) + 300ms) 2;
-}
-@keyframes chest-nudge {
-  25% {
-    transform: rotate(-7deg);
-  }
-  75% {
-    transform: rotate(7deg);
-  }
+  --knock-delay: calc(var(--fill-delay, 0ms) + var(--fill-ms, 0ms) + 300ms);
 }
 .quests-month {
   margin: 0;
@@ -655,69 +837,44 @@ button.quests-card:active {
 .chest-float {
   position: relative;
   line-height: 0;
-  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.22));
-  animation: chest-bob 2.4s ease-in-out infinite;
 }
-/* While the server is asked, the chest squashes slightly and shivers: the crouch its hop springs from. */
-.is-opening .chest-float {
-  transform-origin: 50% 88%;
-  animation: chest-strain 440ms ease-in-out infinite;
+/* The chest stands on the ground in a soft pool of its tier's light, which breathes with the knock's loop. */
+.chest-float::before {
+  content: '';
+  position: absolute;
+  inset: -18% -22% -6%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 244, 214, 0.42), rgba(255, 244, 214, 0) 100%);
+  animation: chest-aura 3600ms ease-in-out infinite;
+  pointer-events: none;
 }
-@keyframes chest-bob {
-  50% {
-    transform: translateY(-12px);
+.chest-float > .chest {
+  position: relative;
+}
+@keyframes chest-aura {
+  0%,
+  100% {
+    opacity: 0.75;
   }
+  8% {
+    opacity: 1;
+  }
+}
+/* While the server is asked, the chest squats and shivers on its foot: the crouch its hop springs from. */
+.is-opening .chest-float > .chest {
+  transform-origin: 50% 92%;
+  animation: chest-strain 440ms ease-in-out infinite;
 }
 @keyframes chest-strain {
   0%,
   100% {
-    transform: scale(1.04, 0.94);
+    transform: scale(1.04, 0.95);
   }
   25% {
-    transform: scale(1.04, 0.94) rotate(-3deg);
+    transform: scale(1.04, 0.95) rotate(-1.5deg);
   }
   75% {
-    transform: scale(1.04, 0.94) rotate(3deg);
-  }
-}
-.chest-sparkles {
-  position: absolute;
-  inset: -30px;
-  pointer-events: none;
-}
-.chest-sparkle {
-  position: absolute;
-  color: rgba(255, 255, 255, 0.85);
-  animation: sparkle-twinkle 1.8s ease-in-out infinite;
-}
-.chest-sparkle.s0 {
-  top: 6%;
-  left: 14%;
-}
-.chest-sparkle.s1 {
-  top: 34%;
-  right: 0;
-  animation-delay: 600ms;
-}
-.chest-sparkle.s2 {
-  bottom: 4%;
-  right: 12%;
-  animation-delay: 1200ms;
-}
-.chest-sparkle.s3 {
-  top: 52%;
-  left: -2%;
-  animation-delay: 900ms;
-}
-@keyframes sparkle-twinkle {
-  0%,
-  100% {
-    opacity: 0.25;
-    transform: scale(0.7);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.1);
+    transform: scale(1.04, 0.95) rotate(1.5deg);
   }
 }
 /* The words under the chest, shut ("Tap to open") or open ("+40 Zêr"), take the same space: the taller of the two. */
@@ -863,17 +1020,25 @@ button.quests-card:active {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* No bobbing, twinkling or nudging. */
-  .chest-float,
-  .chest-sparkle,
-  .quest-row.is-claimable .chest {
+  /* No knocking: a waiting chest stands still with its seam softly lit. */
+  .chest.is-shining :is([data-part='lid'], .chest-hop),
+  .quest-row.is-claimable .chest :is([data-part='lid'], .chest-hop) {
+    animation: none;
+  }
+  .chest.is-shining [data-part='seam'],
+  .quest-row.is-claimable .chest [data-part='seam'] {
+    animation: none;
+    opacity: 0.5;
+  }
+  .chest-float::before,
+  .is-opening .chest-float > .chest {
     animation: none;
   }
   .chest-opened :is(.celebrate-ring, .celebrate-burst) {
     display: none;
   }
-  /* Opened, it stands open and the gold fades in, with no lid swing, turning rays or stars; the glint stays put. */
-  .chest.is-popping :is([data-part='lid'], [data-part='lidOpen'], [data-part='rays'], [data-part='sparkle']),
+  /* Opened, it stands open and the gold fades in, with no lid swing, swaying rays, seam light or stars; the glint stays put. */
+  .chest.is-popping :is([data-part='lid'], [data-part='lidOpen'], [data-part='rays'], [data-part='sparkle'], [data-part='seam']),
   .chest.is-shining [data-part='glint'] g[clip-path] > g,
   .quest-row.is-claimable .chest [data-part='glint'] g[clip-path] > g {
     animation: none;

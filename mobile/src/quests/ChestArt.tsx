@@ -7,8 +7,12 @@ import {
   CHEST_HOP,
   CHEST_HOP_LID,
   CHEST_HOP_LIGHT,
+  CHEST_HOP_SEAM,
   CHEST_HOP_SHADOW,
   CHEST_HOP_SPARKLE,
+  CHEST_KNOCK,
+  CHEST_KNOCK_LIFT,
+  CHEST_KNOCK_MS,
   CHEST_SMALL,
   chestDrawing,
   chestGlint,
@@ -16,23 +20,27 @@ import {
   type ChestBox,
   type ChestDrawing,
   type ChestHopCurve,
+  type ChestKnockFrame,
   type ChestLayer,
   type ChestTier,
 } from '@kurda/shared';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 
 /**
- * A quest's chest, drawn as on the web (shared `art/chest.ts`): amber wood in iron, in gold, or pomegranate
- * lacquer in gold, in three-quarter view, at any size. `size` is the shut chest's width; the height follows.
+ * A quest's chest, drawn as on the web (shared `art/chest.ts`): a sandûq of plain oak in iron, amber wood in brass
+ * with a kilim strap, or pomegranate lacquer in gold with a garnet, in three-quarter view, at any size. `size` is
+ * the shut chest's width; the height follows.
  *
  * Each layer is its own picture over the same frame, so parts move without redrawing. Opening is a hop
- * (`motion.hop`, 0 → 1 through the shared `CHEST_HOP`): everything but the shadow crouches, springs about the
- * chest's foot and lands while the shadow shrinks; the shut lid swings away about its hinge and the open lid
- * lands at the top of the hop, rocking as the chest lands, the inner light blooms and the stars burst on landing.
- * `lid`, `light` and `sparkle` can also be driven separately. The rays behind turn slowly (`rays: 'turning'`, a
- * native-driver loop that runs only while the screen is focused and motion is allowed), and `shine` passes a
- * glint over the lock plate now and then on an openable chest. `open` draws it standing open with the gold taken.
- * Decorative: its container says what it is.
+ * (`motion.hop`, 0 → 1 through the shared `CHEST_HOP`): everything but the shadow crouches with light building at
+ * the seam, springs about the chest's foot and lands while the shadow shrinks; the shut lid swings away about its
+ * hinge and the open lid lands at the top of the hop, rocking as the chest lands, the inner light blooms and the
+ * gold and stars burst on landing. `lid`, `light` and `sparkle` can also be driven separately. The beams over it
+ * sway (`rays: 'swaying'`), and `shine` makes a chest waiting to be opened knock now and then (shared
+ * `CHEST_KNOCK`: the lid jumps on its hinge, the seam's light flares, the box squats as it lands) with a glint over
+ * its lock; both are native-driver loops that run only while the screen is focused and motion is allowed, and
+ * under Reduce Motion a waiting chest just glows softly at its seam. `open` draws it standing open. Decorative: its
+ * container says what it is.
  */
 
 /** How the chest's moving parts stand, each 0 → 1; an omitted part stands as drawn, or follows the hop when there is one. */
@@ -56,8 +64,9 @@ const along = (value: AnimatedNumber, curve: ChestHopCurve): Animated.AnimatedIn
 /** The chest's height against its width. */
 export const CHEST_RATIO = CHEST_BOX.h / CHEST_BOX.w;
 
-/** How long the rays take to go once round. */
-const RAYS_TURN_MS = 16000;
+/** How long the beams take to lean one way and back, and how far they lean. */
+const RAYS_SWAY_MS = 7200;
+const RAYS_SWAY_DEG = 5;
 /** Where the glint is drawn on its way over the plate; stepping through them is the pass. */
 const GLINT_PHASES = [0.1, 0.26, 0.42, 0.58, 0.74, 0.9] as const;
 const GLINT_STEP_MS = 80;
@@ -82,11 +91,11 @@ export function ChestArt({
   open?: boolean;
   /** The parts moving, for a chest being opened. */
   motion?: ChestMotion;
-  /** The fan of rays behind it: turning, or standing still; left out, there are none. */
-  rays?: 'turning' | 'still';
+  /** The beams out of it: swaying, or standing still; left out, there are none. */
+  rays?: 'swaying' | 'still';
   /** How far the rays reach, as a multiple of the drawing's own. */
   reach?: number;
-  /** A glint over the lock plate now and then, for a chest waiting to be opened. */
+  /** A chest waiting to be opened: it knocks now and then, with light at its seam and a glint over its lock. */
   shine?: boolean;
   style?: StyleProp<ViewStyle>;
   testID?: string;
@@ -104,21 +113,51 @@ export function ChestArt({
   const opening = lid !== undefined;
   const showOpen = open || opening;
   const light = motion?.light ?? (hop ? along(hop, CHEST_HOP_LIGHT) : open ? 1 : 0);
-  const turning = rays === 'turning' && alive;
+  const swaying = rays === 'swaying' && alive;
+  const waiting = shine && !showOpen;
+  const knocking = waiting && alive;
 
-  // The rays' turn, once round and round again, only while somebody is looking.
-  const turn = useRef(new Animated.Value(0)).current;
+  // The beams lean a little one way and back, as light does through moving air, only while somebody is looking.
+  const sway = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    if (!turning) {
-      turn.setValue(0);
+    if (!swaying) {
+      sway.setValue(0);
       return;
     }
-    const loop = Animated.loop(Animated.timing(turn, { toValue: 1, duration: RAYS_TURN_MS, easing: Easing.linear, useNativeDriver: true, isInteraction: false }));
+    const lean = (to: number): Animated.CompositeAnimation =>
+      Animated.timing(sway, { toValue: to, duration: RAYS_SWAY_MS / 2, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false });
+    const loop = Animated.loop(Animated.sequence([lean(1), lean(0)]));
     loop.start();
     return () => loop.stop();
-  }, [turning, turn]);
+  }, [swaying, sway]);
 
-  // The shut lid: up and away about the hinge, gone by the time the open one has landed.
+  // The knock: one value through the shared loop, which the lid, the seam's light and the box all read.
+  const knock = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!knocking) {
+      knock.setValue(0);
+      return;
+    }
+    const loop = Animated.loop(Animated.timing(knock, { toValue: 1, duration: CHEST_KNOCK_MS, easing: Easing.linear, useNativeDriver: true, isInteraction: false }));
+    loop.start();
+    return () => {
+      loop.stop();
+      knock.setValue(0);
+    };
+  }, [knocking, knock]);
+  const knockAts = CHEST_KNOCK.map((f) => f.at);
+  const knocked = <T extends number | string>(pick: (f: ChestKnockFrame) => T): Animated.AnimatedInterpolation<T> =>
+    knock.interpolate({ inputRange: knockAts, outputRange: CHEST_KNOCK.map(pick) as number[] | string[], extrapolate: 'clamp' }) as Animated.AnimatedInterpolation<T>;
+
+  // The shut lid: up and away about the hinge, gone by the time the open one has landed; or jumping as it knocks.
+  const knockLid: Animated.WithAnimatedObject<ViewStyle> | null = knocking
+    ? {
+        transform: [
+          { translateY: knocked((f) => -f.lid * CHEST_KNOCK_LIFT.rise * unit) },
+          { rotate: knocked((f) => `${f.lid * CHEST_KNOCK_LIFT.deg}deg`) },
+        ],
+      }
+    : null;
   const lidStyle: Animated.WithAnimatedObject<ViewStyle> | null = lid
     ? {
         opacity: lid.interpolate({ inputRange: [0, 0.35, 0.6, 1], outputRange: [1, 1, 0, 0], extrapolate: 'clamp' }),
@@ -146,9 +185,12 @@ export function ChestArt({
     : null;
   // The hop: the body crouches, springs and lands about its foot; the shadow stays on the ground and shrinks under it.
   const ats = CHEST_HOP.map((f) => f.at);
-  const hopStyle: Animated.WithAnimatedObject<ViewStyle> | null = hop
+  const foot = `${(CHEST_FOOT[0] - drawing.box.x) * unit}px ${(CHEST_FOOT[1] - drawing.box.y) * unit}px`;
+  const hopStyle: Animated.WithAnimatedObject<ViewStyle> | null = knocking
+    ? { transformOrigin: foot, transform: [{ scaleX: knocked((f) => f.wide) }, { scaleY: knocked((f) => f.tall) }] }
+    : hop
     ? {
-        transformOrigin: `${(CHEST_FOOT[0] - drawing.box.x) * unit}px ${(CHEST_FOOT[1] - drawing.box.y) * unit}px`,
+        transformOrigin: foot,
         transform: [
           { translateY: hop.interpolate({ inputRange: ats, outputRange: CHEST_HOP.map((f) => -f.rise * height), extrapolate: 'clamp' }) },
           { scaleX: hop.interpolate({ inputRange: ats, outputRange: CHEST_HOP.map((f) => f.wide), extrapolate: 'clamp' }) },
@@ -160,21 +202,30 @@ export function ChestArt({
   const shadowStyle: Animated.WithAnimatedObject<ViewStyle> | null = hop ? { transform: [{ scale: along(hop, CHEST_HOP_SHADOW) }] } : null;
   const raysStyle: Animated.WithAnimatedObject<ViewStyle> = {
     opacity: light,
-    transform: [{ rotate: turn.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }, { scale: reach }],
+    transform: [{ rotate: sway.interpolate({ inputRange: [0, 1], outputRange: [`${-RAYS_SWAY_DEG}deg`, `${RAYS_SWAY_DEG}deg`] }) }, { scale: reach }],
   };
+  // The light at the seam: flaring with the knock, building through the hop's crouch, or a still glow under Reduce Motion.
+  const seam: Animated.WithAnimatedObject<ViewStyle> | null = knocking
+    ? { opacity: knocked((f) => f.seam) }
+    : hop
+      ? { opacity: along(hop, CHEST_HOP_SEAM) }
+      : waiting
+        ? { opacity: 0.5 }
+        : null;
   const hingeOf = (layer: ChestLayer): string => `${(drawing.hinge[0] - layer.box.x) * unit}px ${(drawing.hinge[1] - layer.box.y) * unit}px`;
 
   return (
     <View style={[{ width: size, height }, style]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID={testID}>
       <Part drawing={drawing} layer={layers.shadow} unit={unit} style={shadowStyle} />
-      <Animated.View style={[StyleSheet.absoluteFill, hopStyle]} pointerEvents="none" testID={testID && hop ? `${testID}-hop` : undefined}>
+      <Animated.View style={[StyleSheet.absoluteFill, hopStyle]} pointerEvents="none" testID={testID && hop ? `${testID}-hop` : testID && knocking ? `${testID}-knocking` : undefined}>
         {showOpen ? <Part drawing={drawing} layer={layers.lidOpen} unit={unit} style={[openStyle, { transformOrigin: hingeOf(layers.lidOpen) }]} testID={testID ? `${testID}-lid-open` : undefined} /> : null}
-        {rays && showOpen ? <Part drawing={drawing} layer={layers.rays} unit={unit} style={raysStyle} testID={testID ? `${testID}-rays${turning ? '-turning' : ''}` : undefined} /> : null}
+        {rays && showOpen ? <Part drawing={drawing} layer={layers.rays} unit={unit} style={raysStyle} testID={testID ? `${testID}-rays${swaying ? '-swaying' : ''}` : undefined} /> : null}
         <Part drawing={drawing} layer={layers.body} unit={unit} />
         {showOpen ? <Part drawing={drawing} layer={layers.light} unit={unit} style={{ opacity: light }} /> : null}
         <Part drawing={drawing} layer={layers.lock} unit={unit} />
         {shine && !showOpen ? <Glint drawing={drawing} unit={unit} /> : null}
-        {!open ? <Part drawing={drawing} layer={layers.lid} unit={unit} style={[lidStyle, { transformOrigin: hingeOf(layers.lid) }]} testID={testID ? `${testID}-lid` : undefined} /> : null}
+        {!open ? <Part drawing={drawing} layer={layers.lid} unit={unit} style={[lidStyle ?? knockLid, { transformOrigin: hingeOf(layers.lid) }]} testID={testID ? `${testID}-lid` : undefined} /> : null}
+        {seam ? <Part drawing={drawing} layer={layers.seam} unit={unit} style={seam} /> : null}
         {sparkleStyle ? <Part drawing={drawing} layer={layers.sparkle} unit={unit} style={sparkleStyle} /> : null}
       </Animated.View>
     </View>

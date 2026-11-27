@@ -12,7 +12,6 @@ import { duration } from '../theme/motion';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { ChestArt } from './ChestArt';
-import { ChestWobble } from './ChestWobble';
 import { QUEST_WORDS } from './model';
 
 /** When the first bar starts to fill, and how far behind it each one after starts. */
@@ -31,7 +30,7 @@ const CHEST = 46;
  * With `play`, each bar moves in turn from where the session found it to where it left it, the count climbing; a
  * quest just finished lifts, gains a gold edge and throws sparks from its chest. With `arrive`, bars fill from
  * empty in turn as the list opens (first view today). Under Reduce Motion bars are static. A finished quest has
- * the gold edge; an openable chest shakes now and then (ChestWobble) and glints; an opened chest shows open.
+ * the gold edge; an openable chest knocks now and then with light at its seam (ChestArt's `shine`); an opened chest shows open.
  */
 export function QuestRows({ rows, play = false, arrive = false }: { rows: readonly QuestRow[]; play?: boolean; arrive?: boolean }): React.JSX.Element {
   // Whether the list is arriving is fixed at mount, so a bar mid-fill is not reset by a changed prop.
@@ -135,9 +134,7 @@ function Row({ row, play, arrive, delayMs }: { row: QuestRow; play: boolean; arr
         </View>
         <View style={[styles.chest, dir.rtl ? styles.chestRtl : null]}>
           {fresh ? <ConfettiBurst progress={sparks} count={8} seed={row.target * 13 + row.to} colours={[colors.gold, '#FFE16A', '#FFBD1F']} reach={44} /> : null}
-          <ChestWobble active={row.claimable} testID="quest-chest-shaking">
-            <ChestArt tier={row.chest} size={CHEST} open={row.claimed} shine={row.claimable} />
-          </ChestWobble>
+          <ChestArt tier={row.chest} size={CHEST} open={row.claimed} shine={row.claimable} testID="quest-chest" />
         </View>
       </View>
     </Animated.View>
