@@ -97,7 +97,10 @@ input[type='range'] {
   border-radius: var(--r-xs);
 }
 
-/* Parked above the top edge rather than to the side, which would widen right-to-left pages. */
+/*
+ * Parked above the top edge rather than to the side, which would widen right-to-left pages, and clipped to nothing
+ * there, since a phone's bounce at the top of a page pulls the area above it into view.
+ */
 .skip-link {
   position: absolute;
   inset-inline-start: 0;
@@ -108,9 +111,11 @@ input[type='range'] {
   padding: 10px 16px;
   border-end-end-radius: var(--r-sm);
   transform: translateY(-110%);
+  clip-path: inset(50%);
 }
 .skip-link:focus {
   transform: none;
+  clip-path: none;
 }
 
 /* ---- layout helpers ---------------------------------------------------- */
