@@ -235,7 +235,9 @@ describe('the cosmetic catalogue', () => {
       expect(Object.values(PRICE_LADDER[kinds.get(sku)!]), sku).toContain(to);
       expect(to, sku).toBeLessThan(from);
     }
-    const shipped = [...manifest.backgrounds, ...manifest.icons, ...manifest.frames].filter((r) => r.price > 0);
+    // the animal icons went on sale after it, already on the ladder
+    const later = new Set(animals.ICONS.map(([sku]) => sku));
+    const shipped = [...manifest.backgrounds, ...manifest.icons, ...manifest.frames].filter((r) => r.price > 0 && !later.has(r.sku));
     expect(offers.REPRICE.map(([sku]) => sku).sort()).toEqual(shipped.map((r) => r.sku).sort());
   });
 
