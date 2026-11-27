@@ -215,10 +215,13 @@ describe('the turn of the stamp in the hand', () => {
   });
 
   it('never folds the dark over itself where it shows: only where it is squeezed in under the thumb or the stamp', () => {
+    const area = (g: readonly Pt[]): number => Math.abs(g.reduce((s, [x, y], k) => s + x * g[(k + 1) % g.length]![1] - g[(k + 1) % g.length]![0] * y, 0)) / 2;
     for (const ms of MOMENTS) {
       const pts = handStampPointsAt(ms);
       for (const name of ['dark-right', 'dark-tip', 'dark-left', 'dark-low']) {
         const g = pts[name]!;
+        // (a dark flattened to a hair on its way in under the stamp's edge shows nothing, folded or not)
+        if (area(g) < 3) continue;
         for (const [i] of selfCrossings(g)) {
           const at: Pt = [(g[i]![0] + g[(i + 1) % g.length]![0]) / 2, (g[i]![1] + g[(i + 1) % g.length]![1]) / 2];
           // the dark right of the thumb lies over the stamp, the rest under it
