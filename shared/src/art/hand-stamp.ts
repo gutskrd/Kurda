@@ -4,7 +4,7 @@
  * toward us; the index finger behind it on the right, long and bent at its joints, running down to its knuckle; the
  * middle finger reaching out to the left under the stamp; and the ring finger curled below it. Flat colour, as the
  * reference paints it: one skin, that of the hand holding the phone (hand-paint.ts), with no shading, the dark between
- * and beside the digits in the reference's charcoal where it shows, and a few warm brown lines that swell in the creases
+ * and beside the digits one deep shade of that skin where it shows, and a few warm brown lines that swell in the creases
  * and thin away to nothing. The thumb, the index finger and the ring finger leave the frame at its foot.
  *
  * Two layers on one frame: `back` (the fingers behind the stamp) and `front` (the thumb), so an app can lay the stamp
@@ -25,10 +25,11 @@ export const HAND_STAMP_VIEW = { w: 312, h: 236 } as const;
 export const HAND_STAMP_CARD = { cx: 131.44, cy: 104.59, w: 100, h: 128, turn: 4.2, clear: 100 } as const;
 
 /**
- * The hand's own colours beside the skin: the dark in the reference's charcoal, the lines a warm brown, and the nail a
- * step paler than the skin with its free edge paler still.
+ * The hand's own colours beside the skin: the dark a deep shade of the skin, as much darker than it as the reference's
+ * charcoal is than the reference's skin (about 2.9 to 1), so on this lighter skin it reads as shade rather than holes;
+ * the lines a warm brown, and the nail a step paler than the skin with its free edge paler still.
  */
-const INK = { dark: '#3b353c', line: '#8d5236', nail: '#eecbb0', nailEdge: '#f8e6d8' } as const;
+const INK = { dark: '#7f584c', line: '#8d5236', nail: '#eecbb0', nailEdge: '#f8e6d8' } as const;
 
 /**
  * The hand is laid out on a grid three times the frame's size, which is the reference's own picture: its foot is the
@@ -253,7 +254,7 @@ function ringIn(f: Frame): Posed {
 }
 
 /**
- * The dark of the hand that shows between and beside the digits, in the reference's charcoal, as the reference paints
+ * The dark of the hand that shows between and beside the digits, in its deep shade (`INK.dark`), as the reference paints
  * it frame by frame: right of the thumb toward the index finger (`right`), beside its tip under the stamp (`tip`), left
  * of it under the stamp (`left`), and low on the left by the ring finger (`low`). `DARKS` holds each one's outline in
  * every frame of the reference, on the grid, as x and y in turn, with the same number of points in the same order

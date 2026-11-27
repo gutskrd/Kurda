@@ -696,12 +696,15 @@
   display: block;
   transform-style: preserve-3d;
 }
-.fp-flip-face {
+/* each face, and the glow behind the hand for each face, shows only while it faces us */
+.fp-flip-face,
+.fp-flip-glow {
   position: absolute;
   inset: 0;
   backface-visibility: hidden;
 }
-.fp-flip-face.is-back {
+.fp-flip-face.is-back,
+.fp-flip-glow.is-back {
   transform: rotateY(180deg);
 }
 .fp-flip-paper {
