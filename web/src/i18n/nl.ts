@@ -1157,6 +1157,8 @@ export const nl: Catalogue = {
   'notify.caring.body': 'Als het zwaar voelt, kun je gratis en vertrouwelijk met iemand praten. Tik om een hulplijn te vinden.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': 'Cadeau',
+  'chat.preview.thanks': 'Bedankte voor een cadeau',
+  'chat.preview.thanksFor': 'Bedankte voor {gift}',
   'chat.preview.game': 'Speluitnodiging',
   'notify.gift.title': 'Je hebt een cadeau',
   'notify.gift.body': 'Open het in je chat.',
@@ -1230,6 +1232,9 @@ export const nl: Catalogue = {
   'gift.wearing': 'Je gebruikt het',
   'gift.sayThanks': 'Bedanken',
   'gift.thanked': 'Bedankje verstuurd',
+  'gift.thanksLine.mine': 'Je bedankte voor {gift}',
+  'gift.thanksLine.theirs': '{name} bedankte voor {gift}',
+  'gift.thanksLine.theGift': 'het cadeau',
   'gift.thanksMessage': 'Spas! Bedankt voor het cadeau 💛',
   'gift.close': 'Sluiten',
   'gift.actionFailed': 'Dat lukte niet. Probeer het opnieuw.',

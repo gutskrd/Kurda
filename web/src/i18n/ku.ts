@@ -1159,6 +1159,8 @@ export const ku: Catalogue = {
   'notify.caring.body': 'Heke tişt dijwar xuya dikin, tu dikarî bi kesekî re bêpere û veşartî biaxivî. Ji bo dîtina hejmareke alîkariyê bitikîne.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': 'Diyarî',
+  'chat.preview.thanks': 'Ji bo diyariyekê spas kir',
+  'chat.preview.thanksFor': 'Ji bo {gift} spas kir',
   'chat.preview.game': 'Vexwendina lîstikê',
   'notify.gift.title': 'Diyariyek ji te re heye',
   'notify.gift.body': 'Di axaftina xwe de veke.',
@@ -1232,6 +1234,9 @@ export const ku: Catalogue = {
   'gift.wearing': 'Li ser te ye',
   'gift.sayThanks': 'Spas bike',
   'gift.thanked': 'Spas hat şandin',
+  'gift.thanksLine.mine': 'Te ji bo {gift} spas kir',
+  'gift.thanksLine.theirs': '{name} ji bo {gift} spas kir',
+  'gift.thanksLine.theGift': 'diyariyê',
   'gift.thanksMessage': 'Spas ji bo diyariyê! 💛',
   'gift.close': 'Bigire',
   'gift.actionFailed': 'Ev nebû. Dîsa biceribîne.',

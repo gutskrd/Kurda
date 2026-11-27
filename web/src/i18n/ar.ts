@@ -1150,6 +1150,8 @@ export const ar: Catalogue = {
   'notify.caring.body': 'إذا كانت الأمور صعبة، يمكنك التحدث إلى شخص ما مجانًا وبسرية. اضغط للعثور على خط مساعدة.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': 'هدية',
+  'chat.preview.thanks': 'شكر على هدية',
+  'chat.preview.thanksFor': 'شكر على {gift}',
   'chat.preview.game': 'دعوة للعب',
   'notify.gift.title': 'لديك هدية',
   'notify.gift.body': 'افتحها في دردشتك.',
@@ -1223,6 +1225,9 @@ export const ar: Catalogue = {
   'gift.wearing': 'أنت تستخدمها',
   'gift.sayThanks': 'قل شكرًا',
   'gift.thanked': 'تم إرسال الشكر',
+  'gift.thanksLine.mine': 'شكرٌ منك على {gift}',
+  'gift.thanksLine.theirs': 'شكرٌ من {name} على {gift}',
+  'gift.thanksLine.theGift': 'الهدية',
   'gift.thanksMessage': 'Spas! شكرًا على الهدية 💛',
   'gift.close': 'إغلاق',
   'gift.actionFailed': 'لم ينجح ذلك. حاول مجددًا.',

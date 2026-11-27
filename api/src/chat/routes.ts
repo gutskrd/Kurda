@@ -48,13 +48,23 @@ export function registerChatRoutes(
   app.post(
     '/chat/:userId/messages',
     {
-      schema: { params: userParam, body: z.object({ body: z.string().min(1).max(MAX_MESSAGE_LEN) }) },
+      // `thanksFor`: a one-tap thanks for a gift in this chat, stored with a fixed text (ChatService.send)
+      schema: { params: userParam, body: z.object({ body: z.string().min(1).max(MAX_MESSAGE_LEN), thanksFor: lowerUuid().optional() }) },
       config: { rateLimit: { max: 60, windowMs: 60_000, per: 'user-or-ip' as const } },
       preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat')],
     },
     async (req, reply) => {
       const { userId } = req.params as { userId: string };
-      const body = (req.body as { body: string }).body;
+      const { body, thanksFor } = req.body as { body: string; thanksFor?: string };
+      if (thanksFor) {
+        // the words are not the sender's, so only the pace is checked
+        if (trust && !(await trust.checkAction(req.user!.id, 'message')).allowed) {
+          return reply.code(429).send({ code: 'TRUST_VELOCITY', message: 'you are messaging too fast — slow down for new accounts' });
+        }
+        const msg = await chat.send(req.user!.id, userId, body, (k) => (app.storage ? app.storage.publicUrl(k) : null), thanksFor);
+        if (trust) await trust.recordAction(req.user!.id, 'message');
+        return msg;
+      }
       if (trust) {
         // Per-trust-level velocity cap: new accounts are throttled tighter.
         const gate = await trust.checkAction(req.user!.id, 'message');

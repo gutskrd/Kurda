@@ -854,6 +854,47 @@
   transform: scale(0.94);
 }
 
+/* A one-tap thanks (gifts/ThanksLine.tsx): a quiet line across the thread with a heart, never a bubble, so nobody takes it
+   for words someone typed. */
+.chat-event {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+  padding-inline: 8px;
+}
+.thanks-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(100%, 440px);
+  margin: 0;
+  padding: 4px 12px 4px 4px;
+  border-radius: var(--r-pill);
+  background: var(--gold-soft);
+  color: var(--ink-2);
+  font-size: var(--text);
+  line-height: 1.35;
+}
+.thanks-line-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-solid);
+  color: var(--gold-ink);
+}
+.thanks-line-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.thanks-line-time {
+  flex: none;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---- the bubble ----------------------------------------------------------- */
 /* a card in a bubble brings its own surface; the bubble's padding and fill step aside */
 .bubble.is-card {

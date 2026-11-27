@@ -1162,6 +1162,8 @@ export const ckb: Catalogue = {
   'notify.caring.body': 'ئەگەر شتەکان قورس دەردەکەون، دەتوانیت بە بێبەرامبەر و نهێنی لەگەڵ کەسێک بدوێیت. بۆ دۆزینەوەی هێڵی یارمەتی دەست لێدە.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': 'دیاری',
+  'chat.preview.thanks': 'سوپاسی کرد بۆ دیارییەک',
+  'chat.preview.thanksFor': 'سوپاسی کرد بۆ {gift}',
   'chat.preview.game': 'بانگهێشتی یاری',
   'notify.gift.title': 'دیارییەکت هەیە',
   'notify.gift.body': 'لە گفتوگۆکەتدا بیکەرەوە.',
@@ -1235,6 +1237,9 @@ export const ckb: Catalogue = {
   'gift.wearing': 'لەبەرتە',
   'gift.sayThanks': 'سوپاس بکە',
   'gift.thanked': 'سوپاس نێردرا',
+  'gift.thanksLine.mine': 'سوپاست کرد بۆ {gift}',
+  'gift.thanksLine.theirs': '{name} سوپاسی کرد بۆ {gift}',
+  'gift.thanksLine.theGift': 'دیارییەکە',
   'gift.thanksMessage': 'سوپاس بۆ دیارییەکە! 💛',
   'gift.close': 'داخستن',
   'gift.actionFailed': 'ئەمە سەرکەوتوو نەبوو. دووبارە هەوڵ بدەرەوە.',

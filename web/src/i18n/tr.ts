@@ -1152,6 +1152,8 @@ export const tr: Catalogue = {
   'notify.caring.body': 'İşler zor geliyorsa biriyle ücretsiz ve gizli konuşabilirsin. Bir yardım hattı bulmak için dokun.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': 'Hediye',
+  'chat.preview.thanks': 'Hediye için teşekkür etti',
+  'chat.preview.thanksFor': '{gift} için teşekkür etti',
   'chat.preview.game': 'Oyun daveti',
   'notify.gift.title': 'Bir hediyen var',
   'notify.gift.body': 'Sohbetinde aç.',
@@ -1225,6 +1227,9 @@ export const tr: Catalogue = {
   'gift.wearing': 'Kullanıyorsun',
   'gift.sayThanks': 'Teşekkür et',
   'gift.thanked': 'Teşekkür gönderildi',
+  'gift.thanksLine.mine': '{gift} için teşekkür ettin',
+  'gift.thanksLine.theirs': '{name}, {gift} için teşekkür etti',
+  'gift.thanksLine.theGift': 'hediye',
   'gift.thanksMessage': 'Spas! Hediye için teşekkürler 💛',
   'gift.close': 'Kapat',
   'gift.actionFailed': 'Olmadı. Tekrar dene.',

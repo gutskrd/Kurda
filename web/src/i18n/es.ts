@@ -1155,6 +1155,8 @@ export const es: Catalogue = {
   'notify.caring.body': 'Si las cosas se hacen difíciles, puedes hablar con alguien, gratis y en privado. Toca para encontrar una línea de ayuda.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': 'Regalo',
+  'chat.preview.thanks': 'Dio las gracias por un regalo',
+  'chat.preview.thanksFor': 'Dio las gracias por {gift}',
   'chat.preview.game': 'Invitación a jugar',
   'notify.gift.title': 'Tienes un regalo',
   'notify.gift.body': 'Ábrelo en tu chat.',
@@ -1228,6 +1230,9 @@ export const es: Catalogue = {
   'gift.wearing': 'Lo estás usando',
   'gift.sayThanks': 'Dar las gracias',
   'gift.thanked': 'Gracias enviadas',
+  'gift.thanksLine.mine': 'Diste las gracias por {gift}',
+  'gift.thanksLine.theirs': '{name} dio las gracias por {gift}',
+  'gift.thanksLine.theGift': 'el regalo',
   'gift.thanksMessage': '¡Spas! Gracias por el regalo 💛',
   'gift.close': 'Cerrar',
   'gift.actionFailed': 'No ha funcionado. Inténtalo de nuevo.',

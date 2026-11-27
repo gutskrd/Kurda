@@ -52,8 +52,8 @@ import { unwrapMs } from './motion';
 export interface GiftActions {
   /** Opens the gift on the server, returning the opened card or null on failure. */
   open(giftId: string): Promise<GiftCard | null>;
-  /** Sends the thanks message into this chat; null when sent, else the refusal, such as a chat mute. */
-  thank(): Promise<ApiError | null>;
+  /** Sends a one-tap thanks for this gift into this chat; null when sent, else the refusal, such as a chat mute. */
+  thank(card: GiftCard): Promise<ApiError | null>;
   /** Wears the gift (a background or icon); null when done. */
   wear(card: GiftCard): Promise<ApiError | null>;
   /** Opens the gift sheet for the sender, the bag first; absent where nothing can be sent back. */
@@ -169,7 +169,8 @@ export function GiftMoment({
   const titleRef = useRef<HTMLHeadingElement>(null);
   const sendShown = useOptimisticSend();
   const [worn, setWorn] = useState(false);
-  const [thanked, setThanked] = useState(false);
+  // a gift thanked for already offers no second thanks
+  const [thanked, setThanked] = useState(card.myThanked === true);
   const [failed, setFailed] = useState<ApiError | null>(null);
   // Escape skips while the box waits and closes once the gift is out, read through a ref so the listener is set up once.
   const escape = useRef(onSkip);
@@ -224,7 +225,7 @@ export function GiftMoment({
     shown(true);
     await sendShown(
       async () => {
-        const refused = kind === 'wear' ? await actions.wear(card) : await actions.thank();
+        const refused = kind === 'wear' ? await actions.wear(card) : await actions.thank(card);
         return refused ? { ok: false as const, error: refused } : { ok: true as const, data: null };
       },
       { undo: () => shown(false) },

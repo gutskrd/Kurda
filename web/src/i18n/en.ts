@@ -1221,6 +1221,8 @@ export const en = {
   'notify.caring.body': 'If things feel hard, you can talk to someone, free and in private. Tap to find a helpline.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': 'Gift',
+  'chat.preview.thanks': 'Said thanks for a gift',
+  'chat.preview.thanksFor': 'Said thanks for {gift}',
   'chat.preview.game': 'Game invite',
   'notify.gift.title': 'You have a gift',
   'notify.gift.body': 'Open it in your chat.',
@@ -1294,6 +1296,9 @@ export const en = {
   'gift.wearing': 'You’re wearing it',
   'gift.sayThanks': 'Say thanks',
   'gift.thanked': 'Thanks sent',
+  'gift.thanksLine.mine': 'You said thanks for {gift}',
+  'gift.thanksLine.theirs': '{name} said thanks for {gift}',
+  'gift.thanksLine.theGift': 'the gift',
   'gift.thanksMessage': 'Spas! Thank you for the gift 💛',
   'gift.close': 'Close',
   'gift.actionFailed': 'That didn’t work. Try again.',

@@ -37,6 +37,7 @@ export function MessageList<T extends ChatMessage>({
   renderStatus,
   onOpenProfile,
   renderBody,
+  renderEvent,
   onReport,
   onRetry,
   onDiscard,
@@ -52,6 +53,8 @@ export function MessageList<T extends ChatMessage>({
   onOpenProfile?: (userId: string, username: string) => void;
   /** Renders a gift or game card, or returns undefined for plain text; supplied by the thread, which owns card actions. */
   renderBody?: (m: T) => ReactNode | undefined;
+  /** Draws an event, such as a one-tap thanks, as a line across the thread; supplied by the thread, which knows the gift. */
+  renderEvent?: (m: T) => ReactNode;
   /** report someone else's message, from its options (held, right-clicked, or by keyboard) */
   onReport?: (m: T) => void;
   /** send a message that did not go once more */
@@ -79,6 +82,15 @@ export function MessageList<T extends ChatMessage>({
           </div>
 
           {section.runs.map((run, at) => {
+            // something done with one tap, not written: a quiet line across the thread, never a bubble
+            if (run.event) {
+              const m = run.messages[0]!;
+              return (
+                <div key={m.id} className={`chat-event${fresh.has(m.id) ? ' is-arriving' : ''}`} title={timeLabel(m.createdAt, locale) || undefined}>
+                  {renderEvent?.(m) ?? <MessageBody body={m.body ?? ''} />}
+                </div>
+              );
+            }
             const mine = run.senderId === myId;
             const first = run.messages[0]!;
             const last = run.messages[run.messages.length - 1]!;

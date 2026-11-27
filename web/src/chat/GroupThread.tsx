@@ -207,8 +207,8 @@ function Group({ groupId, className, onClose, openInfo = false, addFriends = fal
     }, [client, groupId, user?.id]),
     setMessages,
     sendText: useCallback(
-      async (body: string) => {
-        const res = await client.post<GroupMessage>(`/groups/${groupId}/chat`, { body });
+      async (body: string, thanksFor?: string) => {
+        const res = await client.post<GroupMessage>(`/groups/${groupId}/chat`, thanksFor ? { body, thanksFor } : { body });
         // the reveal that asked says why it did not go, where the reader is looking
         if (!res.ok) {
           if (isOutOfGroup(res.error)) refusedOut();
@@ -505,6 +505,7 @@ function Group({ groupId, className, onClose, openInfo = false, addFriends = fal
                   onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
                   onReport={setReporting}
                   renderBody={(m) => gifts.renderBody(m) ?? gameCardBody(m)}
+                  renderEvent={gifts.renderEvent}
                   onRetry={(m) => outbox.retry(m.id)}
                   // taken back: its words return to the box, unless something else has been typed there since
                   onDiscard={(m) => {

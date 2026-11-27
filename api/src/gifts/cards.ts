@@ -63,6 +63,7 @@ interface CardRow extends SenderRow {
   to_user_id: string;
   price: number;
   opened_at: Date | null;
+  thanked_at: Date | null;
   sku: string;
   name: string;
   category: string;
@@ -114,7 +115,7 @@ async function cardRows(executor: Pick<pg.Pool, 'query'>, batchIds: readonly str
   if (batchIds.length === 0) return [];
   // created_at, then id: the order the recipients were given their gifts in
   const rows = await executor.query<CardRow>(
-    `SELECT g.id, g.batch_id, g.to_user_id, g.price, g.opened_at,
+    `SELECT g.id, g.batch_id, g.to_user_id, g.price, g.opened_at, g.thanked_at,
             i.sku, i.name, i.category, i.asset_key, i.active, i.available_to IS NOT NULL AS limited,
             u.username, u.profile_photo_key, u.selected_avatar_key, u.deleted_at IS NOT NULL AS gone,
             COALESCE($3::boolean OR ${shownToSql('u', '$2::uuid')}, false) AS shown,
@@ -152,6 +153,7 @@ function cardsFrom(rows: readonly CardRow[], viewerId: string | null, publicUrl:
           avatarUrl: shown ? resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl) : null,
           isMe,
           opened: r.opened_at !== null,
+          thanked: r.thanked_at !== null,
         };
       });
     cards.set(batchId, {
@@ -165,6 +167,7 @@ function cardsFrom(rows: readonly CardRow[], viewerId: string | null, publicUrl:
       from: toSender(first, publicUrl),
       myGiftId: mine?.id ?? null,
       myOpened: mine ? mine.opened_at !== null : false,
+      myThanked: mine ? mine.thanked_at !== null : false,
       // Something to wear straight from the unwrap: theirs, wearable and still on sale, since equipping a withdrawn item
       // is refused.
       equippable: mine && isEquippable(first.category) && first.asset_key && first.active ? first.category : null,
@@ -187,10 +190,10 @@ export async function batchChat(executor: Pick<pg.Pool, 'query'>, batchId: strin
     user_hi: string | null;
   }>(
     `SELECT 'dm' AS kind, m.id AS message_id, NULL::uuid AS group_id, m.user_lo, m.user_hi
-       FROM dm_messages m WHERE m.gift_batch_id = $1
+       FROM dm_messages m WHERE m.gift_batch_id = $1 AND m.kind = 'gift'
      UNION ALL
      SELECT 'group', m.id, m.group_id, NULL::uuid, NULL::uuid
-       FROM group_messages m WHERE m.gift_batch_id = $1
+       FROM group_messages m WHERE m.gift_batch_id = $1 AND m.kind = 'gift'
      LIMIT 1`,
     [batchId],
   );

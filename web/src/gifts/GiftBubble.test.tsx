@@ -32,8 +32,8 @@ function actions(opened: GiftCard | null = card({ myOpened: true })): GiftAction
       calls.push(`open:${id}`);
       return opened;
     }),
-    thank: vi.fn(async () => {
-      calls.push('thank');
+    thank: vi.fn(async (c: GiftCard) => {
+      calls.push(`thank:${c.batchId}`);
       return null;
     }),
     wear: vi.fn(async (c: GiftCard) => {
@@ -74,7 +74,7 @@ describe('GiftBubble, to its recipient', () => {
     expect(await screen.findByText('You’re wearing it')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Say thanks' }));
     expect(await screen.findByText('Thanks sent')).toBeInTheDocument();
-    expect(a.calls).toEqual(['open:g1', 'wear:bg-sunset', 'thank']);
+    expect(a.calls).toEqual(['open:g1', 'wear:bg-sunset', `thank:${card().batchId}`]);
 
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     // Focus is back on the gift, not lost at the top of the page.
@@ -138,6 +138,14 @@ describe('GiftBubble, to its recipient', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Skip' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('That gift didn’t open. Try again.');
     expect(screen.getByRole('button', { name: 'Open the gift from rojda' })).toBeInTheDocument();
+  });
+
+  it('offers no second thanks for a gift already thanked for', async () => {
+    const thanked = card({ myOpened: true, myThanked: true });
+    renderApp(<GiftBubble card={thanked} mine={false} senderName="rojda" actions={actions(thanked)} />);
+    await userEvent.click(screen.getByRole('button', { name: 'See Sunset over Amed again' }));
+    expect(await screen.findByText('Thanks sent')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Say thanks' })).toBeNull();
   });
 
   it('says why a thanks did not go, beside the button that sent it', async () => {

@@ -38,6 +38,24 @@ beforeAll(() => {
 const show = (ui: React.ReactNode) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe('MessageList', () => {
+  it('draws a one-tap thanks as a line across the thread, never in a bubble', () => {
+    show(
+      <MessageList
+        messages={[
+          msg('1', 'u2', 'hello', at(10, 0), { username: 'zana' }),
+          msg('2', 'u2', 'Spas! 💛', at(10, 1), { username: 'zana', kind: 'thanks' }),
+        ]}
+        myId="me"
+        renderEvent={(m) => <span>thanks line {m.id}</span>}
+      />,
+    );
+    const line = screen.getByText('thanks line 2');
+    expect(line.closest('.chat-event')).not.toBeNull();
+    expect(line.closest('.bubble')).toBeNull();
+    // its stored stand-in text is not shown as words someone wrote
+    expect(screen.queryByText('Spas! 💛')).toBeNull();
+  });
+
   it('names a group sender once per burst, not once per message, and prints the name', () => {
     show(
       <MessageList

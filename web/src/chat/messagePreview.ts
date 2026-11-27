@@ -1,4 +1,4 @@
-import { isPlayGame, type ChatGameRef, type ChatMessageKind, type GiftCard } from '@kurda/shared';
+import { isPlayGame, type ChatGameRef, type ChatMessageKind, type ChatThanksRef, type GiftCard } from '@kurda/shared';
 import { INVITE_NAME_KEY, hasRetiredInvite, inviteLinkPattern, parseInvite, withoutRetiredInvites } from '../lib/gameInvites';
 import type { Translate } from '../i18n/I18nProvider';
 
@@ -13,6 +13,7 @@ export interface Previewable {
   kind?: ChatMessageKind;
   gift?: GiftCard | null;
   game?: ChatGameRef | null;
+  thanks?: ChatThanksRef | null;
 }
 
 export function messagePreview(message: Previewable | string, t: Translate): string {
@@ -20,6 +21,8 @@ export function messagePreview(message: Previewable | string, t: Translate): str
   // the item is a surprise until its recipient has unwrapped it, so a banner
   // or a list names it only once the reader has opened theirs
   if (m.kind === 'gift') return m.gift?.myOpened ? m.gift.name : t('chat.preview.gift');
+  // a one-tap thanks says what it was, never its stored stand-in text
+  if (m.kind === 'thanks') return m.thanks ? t('chat.preview.thanksFor', { gift: m.thanks.name }) : t('chat.preview.thanks');
   if (m.kind === 'game') {
     // a card for a game that is no longer part of Hevalo is still a game card, with no name to give it
     return m.game && isPlayGame(m.game.game) ? t('games.invite.preview', { game: t(INVITE_NAME_KEY[m.game.game]) }) : t('chat.preview.game');

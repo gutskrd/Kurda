@@ -10,6 +10,7 @@ import { useT } from '../i18n/I18nProvider';
 import { giftsWereOpened } from '../shop/useUnseenGifts';
 import { canGiveGifts } from './access';
 import { GiftBubble } from './GiftBubble';
+import { ThanksLine } from './ThanksLine';
 import { GiftPicker, type GiftPerson, type GiftSent } from './GiftPicker';
 import { GiftSentMoment, type GiftActions } from './GiftMoment';
 import { isKnownAdult } from './nudges';
@@ -37,14 +38,16 @@ export function useChatGifts<M extends ChatMessage>({
   /** Who may be given a gift here: the friend in a DM, or the reader's friends among a group's members. */
   loadPeople: () => Promise<GiftPerson[]>;
   setMessages: Dispatch<SetStateAction<M[] | null>>;
-  /** Sends a text message in this thread (the thanks); null when sent, else the refusal. */
-  sendText: (body: string) => Promise<ApiError | null>;
+  /** Sends a message in this thread, with `thanksFor` a one-tap thanks for that gift batch; null when sent, else the refusal. */
+  sendText: (body: string, thanksFor?: string) => Promise<ApiError | null>;
   /** Scrolls the thread to its end once the sent gift is in it. */
   onSentScroll: () => void;
 }): {
   button: ReactNode;
   overlays: ReactNode;
   renderBody: (m: M) => ReactNode | undefined;
+  /** Draws a one-tap thanks as its line across the thread. */
+  renderEvent: (m: M) => ReactNode;
   /** Applies the reader's own card to a live message's gift, if it came first. */
   adopt: (m: M) => M;
   notice: ReactNode;
@@ -177,7 +180,13 @@ export function useChatGifts<M extends ChatMessage>({
         giftsWereOpened();
         return res.data.card;
       },
-      thank: () => sendText(t('gift.thanksMessage')),
+      // A thanks names the gift it answers, so the thread draws it as a thanks rather than as typed words, and the card
+      // offers no second one.
+      thank: async (card) => {
+        const refused = await sendText(t('gift.thanksMessage'), card.batchId);
+        if (!refused) setCard(card.batchId, { ...card, myThanked: true });
+        return refused;
+      },
       wear: async (card) => {
         if (!card.equippable) return { kind: 'client', message: 'not something to wear' };
         const res = await client.put(`/me/cosmetics/${card.equippable}`, { sku: card.sku });
@@ -235,6 +244,11 @@ export function useChatGifts<M extends ChatMessage>({
     [actions, autoGift, autoOpened, chat.kind, user?.id],
   );
 
+  const renderEvent = useCallback(
+    (m: M): ReactNode => <ThanksLine mine={m.senderId === user?.id} name={m.username} gift={m.thanks?.name ?? null} at={m.createdAt} />,
+    [user?.id],
+  );
+
   // A child's profile never gives gifts (gifts/access.ts).
   const button = canGiveGifts(user) ? (
     <button type="button" className="chat-gift-btn" onClick={openPicker} aria-label={t('gift.button')} title={t('gift.button')}>
@@ -270,7 +284,7 @@ export function useChatGifts<M extends ChatMessage>({
     </div>
   ) : null;
 
-  return { button, overlays, renderBody, adopt, notice };
+  return { button, overlays, renderBody, renderEvent, adopt, notice };
 }
 
 /** Who a gift went to, for the sender's moment: "Sent to Rojda.", or what was sent when the names are not known here. */

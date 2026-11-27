@@ -171,6 +171,8 @@ export interface GiftRecipient {
   avatarUrl: string | null;
   isMe: boolean;
   opened: boolean;
+  /** they said thanks with one tap; absent from an API older than thanks */
+  thanked?: boolean;
 }
 
 /** A gift as it appears in a chat message (kind 'gift'). The price is never on it: a present, not a receipt. */
@@ -187,6 +189,8 @@ export interface GiftCard {
   /** set when this viewer is one of the recipients */
   myGiftId: string | null;
   myOpened: boolean;
+  /** the viewer already said thanks for it, so the apps offer no second thanks */
+  myThanked?: boolean;
   /** what the viewer can put on after unwrapping, if anything */
   equippable: EquippableCategory | null;
 }
