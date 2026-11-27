@@ -94,6 +94,19 @@ const INDEX: Build = { a: [40, 46, 56, 58, 55, 53, 51, 48, 45], b: [66, 64, 62, 
 const REACHING: Build = { a: [42, 40, 38, 37, 35], b: [44, 42, 41, 42, 39], tip: 1.15 };
 const CURLED: Build = { a: [29, 28, 27, 26, 25], b: [30, 30, 29, 28, 27], tip: 1.1 };
 
+/**
+ * How much wider than its build each digit shows in each frame of the reference, on its `a` side and its `b` side:
+ * measured across it wherever it shows, out to its edge, so the fingers stand where the reference's do and its shadows
+ * fall against them. The ring finger, all but hidden below the frame, keeps its build, as does the middle finger curling
+ * under the stamp in frame 10, whose last bone is too short for a broader round.
+ */
+type WidenedDigit = 'thumb' | 'index' | 'reaching';
+const WIDTHS: Record<WidenedDigit, readonly (readonly [number, number])[]> = {
+  thumb: [[1.15, 1.24], [1.14, 1.24], [1.14, 1.27], [1.24, 1.37], [1.27, 1.37], [1.27, 1.30], [1.19, 1.22], [1.19, 1.10], [1.23, 1.10], [1.23, 1.13], [1.16, 1.37], [1.15, 1.37], [1.11, 1.37], [1.11, 1.22], [1.14, 1.22], [1.17, 1.24], [1.20, 1.25], [1.20, 1.35], [1.17, 1.37], [1.17, 1.37], [1.17, 1.37], [1.17, 1.37]],
+  index: [[1.10, 1.17], [1.11, 1.11], [1.11, 1.07], [1.11, 1.07], [1.13, 1.11], [1.14, 1.11], [1.13, 1.13], [1.17, 1.13], [1.18, 1.13], [1.18, 1.08], [1.18, 1.08], [1.18, 1.06], [1.18, 0.94], [1.21, 0.94], [1.21, 1.23], [1.16, 1.23], [1.13, 1.21], [1.13, 1.19], [1.10, 1.17], [1.10, 1.17], [1.10, 1.17], [1.10, 1.17]],
+  reaching: [[1.23, 0.92], [1.20, 0.93], [1.09, 0.95], [1.07, 0.97], [1.05, 0.99], [1.03, 1.01], [1.01, 1.03], [0.99, 1.05], [0.99, 1.07], [1.23, 1.23], [1.0, 1.0], [1.23, 1.10], [1.35, 1.10], [1.35, 1.08], [1.45, 1.08], [1.23, 0.98], [1.23, 0.97], [1.23, 0.95], [1.23, 0.92], [1.23, 0.92], [1.23, 0.92], [1.23, 0.92]],
+};
+
 /** How far a tip's round runs past the point it rounds about: the half-width there times the tip's share. */
 const reach = (b: Build): number => ((b.a.at(-1)! + b.b.at(-1)!) / 2) * b.tip;
 /**
@@ -117,7 +130,8 @@ const HIDDEN = { thumbRoot: 300, indexKnuckle: 150, indexRoot: 260, middleUnder:
  * - `ring`: three points of its upper edge, root to tip, the frame's foot cutting off the rest; below the frame in
  *   frames 10 to 13, it lies between frames 9 and 14;
  * - `card`: the stamp's lean and its turn about its upright, in degrees, and its middle;
- * - `web`: how far the background shows down between the index finger and the thumb, 0 to 1.
+ * - `web`: how far the web behind opens down between the index finger and the thumb, 0 to 1; the palm in front of it
+ *   (`PALM_TRACK`) keeps the hand whole beside the thumb, so only the background the reference shows comes through.
  * The little finger never shows, behind the ring finger and below the frame, so it is not drawn.
  */
 interface Frame {
@@ -129,10 +143,10 @@ interface Frame {
   web: number;
 }
 const TRACK: readonly Frame[] = [
-  { thumb: [[728, 719], [725, 671.6], [688.6, 431.2]], index: [[956.5, 719], [937.2, 637.9], [848, 549.4], [667.1, 458.9]], middle: [[623.6, 575.7], [590.5, 579], [463.7, 605.5]], ring: [[600, 681], [550, 688], [500, 708]], card: [4.2, 0, 648.1, 321.2], web: 0 },
-  { thumb: [[722.5, 719], [722.6, 671.7], [688.4, 427.2]], index: [[962, 719], [948, 642.7], [852.3, 546.3], [670.8, 457]], middle: [[613.7, 568.5], [588, 570.5], [461.3, 596.8]], ring: [[590, 676], [530, 689], [480, 708]], card: [3.8, 0, 643.8, 315.5], web: 0.1 },
-  { thumb: [[717.5, 719], [716.4, 672.5], [685.1, 425.2]], index: [[968, 719], [959, 643.2], [864.3, 533.3], [680, 450]], middle: [[590.5, 518], [578.6, 517.4], [450.4, 531.5]], ring: [[590, 677], [520, 686], [450, 708]], card: [2.5, 0, 626.6, 305.2], web: 0.4 },
-  { thumb: [[703, 719], [697.1, 673.8], [681.7, 422]], index: [[979.5, 719], [976.2, 633.6], [884.7, 524.4], [708, 426]], middle: [[575.5, 529.2], [554.7, 514.1], [436.9, 485.2]], ring: [[560, 675], [480, 673], [400, 702]], card: [-0.1, 0, 598.4, 297.3], web: 0.9 },
+  { thumb: [[728, 719], [725, 671.6], [688.6, 431.2]], index: [[956.5, 719], [937.2, 637.9], [848, 549.4], [667.1, 458.9]], middle: [[623.6, 575.7], [590.5, 579], [463.7, 605.5]], ring: [[600, 681], [550, 688], [500, 708]], card: [4.2, 0, 648.1, 321.2], web: 1 },
+  { thumb: [[722.5, 719], [722.6, 671.7], [688.4, 427.2]], index: [[962, 719], [948, 642.7], [852.3, 546.3], [670.8, 457]], middle: [[613.7, 568.5], [588, 570.5], [461.3, 596.8]], ring: [[590, 676], [530, 689], [480, 708]], card: [3.8, 0, 643.8, 315.5], web: 1 },
+  { thumb: [[717.5, 719], [716.4, 672.5], [685.1, 425.2]], index: [[968, 719], [959, 643.2], [864.3, 533.3], [680, 450]], middle: [[590.5, 518], [578.6, 517.4], [450.4, 531.5]], ring: [[590, 677], [520, 686], [450, 708]], card: [2.5, 0, 626.6, 305.2], web: 1 },
+  { thumb: [[703, 719], [697.1, 673.8], [681.7, 422]], index: [[979.5, 719], [976.2, 633.6], [884.7, 524.4], [708, 426]], middle: [[575.5, 529.2], [554.7, 514.1], [436.9, 485.2]], ring: [[560, 675], [480, 673], [400, 702]], card: [-0.1, 0, 598.4, 297.3], web: 1 },
   { thumb: [[675, 719], [669.7, 660], [656.4, 409]], index: [[1013.5, 719], [1030.6, 629.8], [949.3, 524.5], [769.1, 449.7]], middle: [[560.4, 540.4], [530.8, 510.8], [423.5, 439]], ring: [[530, 681], [460, 678], [390, 703]], card: [-7.6, 19.1, 574.3, 306.5], web: 1 },
   { thumb: [[682, 719], [676.9, 664.5], [647.7, 412.1]], index: [[1021.5, 719], [1053.2, 635.5], [981.8, 515.4], [785.3, 442.8]], middle: [[560.3, 545.4], [529.5, 512], [435.2, 422.7]], ring: [[550, 688], [470, 683], [400, 704]], card: [-7.1, 19.1, 572.8, 314.4], web: 1 },
   { thumb: [[691.5, 719], [691, 670.5], [656.6, 416.2]], index: [[1026.5, 719], [1060.7, 634.7], [989.2, 508.5], [797.1, 438.5]], middle: [[565.3, 545.4], [544.6, 522.9], [459.7, 424.6]], ring: [[560, 697], [480, 686], [410, 706]], card: [-7.1, 17.5, 570.1, 320.8], web: 1 },
@@ -143,14 +157,14 @@ const TRACK: readonly Frame[] = [
   { thumb: [[694.5, 719], [684.9, 671.8], [645.3, 418.2]], index: [[929.5, 719], [875.1, 625.8], [767.8, 513], [619.3, 375.6]], middle: [[590.5, 654.8], [590.2, 654.9], [487.3, 694]], ring: [[557, 724], [520, 725.2], [474, 736]], card: [-55.1, 180, 547.6, 437.7], web: 0 },
   { thumb: [[699, 719], [695.3, 669.2], [667.9, 425.1]], index: [[916.5, 719], [897, 645.9], [759, 556], [597.5, 434.3]], middle: [[605.4, 654.7], [605.4, 654.7], [538.4, 706.4]], ring: [[573, 724], [540, 725.8], [496, 737]], card: [-36.8, 169.9, 586.1, 426.9], web: 0.1 },
   { thumb: [[718.5, 719], [708.7, 661.9], [675.2, 429.2]], index: [[925, 719], [907.2, 636.9], [781.6, 556.4], [621.9, 432.2]], middle: [[606.8, 628.3], [606.8, 628.3], [493.1, 668.2]], ring: [[589, 724], [560, 726.4], [518, 738]], card: [-9.9, 168.5, 648.8, 364.3], web: 0.2 },
-  { thumb: [[725.5, 719], [715.6, 662], [684.2, 428.2]], index: [[944, 719], [928.1, 645.6], [844, 553.3], [665.8, 457.6]], middle: [[620.7, 603], [600.7, 606], [479.3, 647.6]], ring: [[605, 699], [580, 702], [540, 714]], card: [-2.9, 180, 646.2, 343.2], web: 0 },
-  { thumb: [[726, 719], [716.1, 662], [689.5, 426.1]], index: [[949.5, 719], [934.7, 646], [845.2, 553.5], [668.4, 455.3]], middle: [[618, 586], [592.5, 590.8], [467.9, 626.6]], ring: [[605, 698], [560, 697], [510, 713]], card: [0.1, 180, 646.1, 330.2], web: 0 },
-  { thumb: [[727.5, 719], [717, 660], [689.9, 431.1]], index: [[953, 719], [935.9, 642.8], [844.9, 551.7], [666.3, 456.8]], middle: [[620.9, 578.7], [592.6, 583.3], [467.4, 616.7]], ring: [[605, 700], [550, 695], [500, 712]], card: [2.4, 180, 647.5, 327], web: 0 },
-  { thumb: [[727.5, 719], [717.8, 660.2], [691, 432.1]], index: [[954.5, 719], [937.3, 640], [846.7, 551.6], [665.8, 461.1]], middle: [[621.7, 577.3], [592.2, 581], [466.3, 611.5]], ring: [[605, 698], [550, 692], [500, 710]], card: [3.2, 180, 648.3, 324.3], web: 0 },
-  { thumb: [[728, 719], [720.5, 662], [690.8, 434.1]], index: [[956.5, 719], [936.8, 638], [847.7, 550.9], [669.9, 454.5]], middle: [[623.6, 575], [593.8, 578.2], [467.3, 605.8]], ring: [[605, 695], [550, 690], [500, 708]], card: [4.2, 180, 648.3, 321.9], web: 0 },
-  { thumb: [[728, 719], [720.5, 662], [690.8, 434.1]], index: [[956.5, 719], [936.8, 638], [847.7, 550.9], [669.9, 454.5]], middle: [[623.6, 575], [593.8, 578.2], [467.3, 605.8]], ring: [[605, 695], [550, 690], [500, 708]], card: [4.2, 180, 648.3, 321.8], web: 0 },
-  { thumb: [[728, 719], [720.5, 662], [690.8, 434.1]], index: [[956.5, 719], [936.8, 638], [847.7, 550.9], [669.9, 454.5]], middle: [[623.6, 575], [593.8, 578.2], [467.3, 605.8]], ring: [[605, 695], [550, 690], [500, 708]], card: [4.2, 180, 648.3, 321.8], web: 0 },
-  { thumb: [[728, 719], [720.5, 662], [690.8, 434.1]], index: [[956.5, 719], [936.8, 638], [847.7, 550.9], [669.9, 454.5]], middle: [[623.6, 575], [593.8, 578.2], [467.3, 605.8]], ring: [[605, 695], [550, 690], [500, 708]], card: [4.2, 180, 648.3, 321.8], web: 0 },
+  { thumb: [[725.5, 719], [715.6, 662], [684.2, 428.2]], index: [[944, 719], [928.1, 645.6], [844, 553.3], [665.8, 457.6]], middle: [[620.7, 603], [600.7, 606], [479.3, 647.6]], ring: [[605, 699], [580, 702], [540, 714]], card: [-2.9, 180, 646.2, 343.2], web: 1 },
+  { thumb: [[726, 719], [716.1, 662], [689.5, 426.1]], index: [[949.5, 719], [934.7, 646], [845.2, 553.5], [668.4, 455.3]], middle: [[618, 586], [592.5, 590.8], [467.9, 626.6]], ring: [[605, 698], [560, 697], [510, 713]], card: [0.1, 180, 646.1, 330.2], web: 1 },
+  { thumb: [[727.5, 719], [717, 660], [689.9, 431.1]], index: [[953, 719], [935.9, 642.8], [844.9, 551.7], [666.3, 456.8]], middle: [[620.9, 578.7], [592.6, 583.3], [467.4, 616.7]], ring: [[605, 700], [550, 695], [500, 712]], card: [2.4, 180, 647.5, 327], web: 1 },
+  { thumb: [[727.5, 719], [717.8, 660.2], [691, 432.1]], index: [[954.5, 719], [937.3, 640], [846.7, 551.6], [665.8, 461.1]], middle: [[621.7, 577.3], [592.2, 581], [466.3, 611.5]], ring: [[605, 698], [550, 692], [500, 710]], card: [3.2, 180, 648.3, 324.3], web: 1 },
+  { thumb: [[728, 719], [720.5, 662], [690.8, 434.1]], index: [[956.5, 719], [936.8, 638], [847.7, 550.9], [669.9, 454.5]], middle: [[623.6, 575], [593.8, 578.2], [467.3, 605.8]], ring: [[605, 695], [550, 690], [500, 708]], card: [4.2, 180, 648.3, 321.9], web: 1 },
+  { thumb: [[728, 719], [720.5, 662], [690.8, 434.1]], index: [[956.5, 719], [936.8, 638], [847.7, 550.9], [669.9, 454.5]], middle: [[623.6, 575], [593.8, 578.2], [467.3, 605.8]], ring: [[605, 695], [550, 690], [500, 708]], card: [4.2, 180, 648.3, 321.8], web: 1 },
+  { thumb: [[728, 719], [720.5, 662], [690.8, 434.1]], index: [[956.5, 719], [936.8, 638], [847.7, 550.9], [669.9, 454.5]], middle: [[623.6, 575], [593.8, 578.2], [467.3, 605.8]], ring: [[605, 695], [550, 690], [500, 708]], card: [4.2, 180, 648.3, 321.8], web: 1 },
+  { thumb: [[728, 719], [720.5, 662], [690.8, 434.1]], index: [[956.5, 719], [936.8, 638], [847.7, 550.9], [669.9, 454.5]], middle: [[623.6, 575], [593.8, 578.2], [467.3, 605.8]], ring: [[605, 695], [550, 690], [500, 708]], card: [4.2, 180, 648.3, 321.8], web: 1 },
 ];
 const FLIP_FRAME_MS = 80;
 /**
@@ -190,31 +204,39 @@ function along(joints: readonly Pt[], cuts: readonly number[]): Pt[] {
   return out;
 }
 
-/** A digit as the turn's track places it: its build, along its joints from root to tip, each bone cut into so many steps. */
-const placed = (b: Build, joints: readonly Pt[], cuts: readonly number[]): Posed => ({ centre: along(joints, cuts), a: b.a, b: b.b, tip: b.tip });
+/**
+ * A digit as the turn's track places it: its build, as wide on each side as the frame measures it, along its joints
+ * from root to tip, each bone cut into so many steps.
+ */
+const placed = (b: Build, joints: readonly Pt[], cuts: readonly number[], [wa, wb]: readonly [number, number] = [1, 1]): Posed => ({
+  centre: along(joints, cuts),
+  a: b.a.map((x) => x * wa),
+  b: b.b.map((x) => x * wb),
+  tip: b.tip,
+});
 
 /** The thumb: its joint as measured, its tip rounded about a point inside the measured tip, its root bone on below the frame. */
-function thumbIn(f: Frame): Posed {
+function thumbIn(f: Frame, w: readonly [number, number]): Posed {
   const [base, joint, tip] = f.thumb;
-  const middle = step(tip, from(joint, tip), -reach(THUMB));
-  return placed(THUMB, [step(joint, from(joint, base), HIDDEN.thumbRoot), joint, middle], [3, 3]);
+  const middle = step(tip, from(joint, tip), -reach(THUMB) * ((w[0] + w[1]) / 2));
+  return placed(THUMB, [step(joint, from(joint, base), HIDDEN.thumbRoot), joint, middle], [3, 3], w);
 }
 
 /** The index finger: its two joints as measured, its tip rounded inside the measured tip, its knuckle and root below the frame. */
-function indexIn(f: Frame): Posed {
+function indexIn(f: Frame, w: readonly [number, number]): Posed {
   const [base, middle, last, tip] = f.index;
   const down = from(middle, base);
-  const joints = [step(middle, down, HIDDEN.indexRoot), step(middle, down, HIDDEN.indexKnuckle), middle, last, step(tip, from(last, tip), -reach(INDEX))];
-  return placed(INDEX, joints, [1, 2, 3, 2]);
+  const joints = [step(middle, down, HIDDEN.indexRoot), step(middle, down, HIDDEN.indexKnuckle), middle, last, step(tip, from(last, tip), -reach(INDEX) * ((w[0] + w[1]) / 2))];
+  return placed(INDEX, joints, [1, 2, 3, 2], w);
 }
 
 /** The middle finger: its joint and tip as measured, its root on under the thumb past where it goes under. */
-function middleIn(f: Frame): Posed {
+function middleIn(f: Frame, w: readonly [number, number]): Posed {
   const [under, joint, tip] = f.middle;
   const shown = Math.hypot(under[0] - joint[0], under[1] - joint[1]);
   const out = shown > 15 ? from(joint, under) : from(tip, joint);
   const root = step(under, out, HIDDEN.middleUnder + Math.max(0, 15 - shown));
-  return placed(REACHING, [root, joint, step(tip, from(joint, tip), -reach(REACHING))], [2, 2]);
+  return placed(REACHING, [root, joint, step(tip, from(joint, tip), -reach(REACHING) * ((w[0] + w[1]) / 2))], [2, 2], w);
 }
 
 /** The ring finger: its centre a half-width in from its measured upper edge, on under the thumb at its root and below the frame at its tip. */
@@ -240,68 +262,67 @@ const GAP_NAMES = ['slit', 'wedge', 'ring'] as const;
 type GapName = (typeof GAP_NAMES)[number];
 const GAP_SAMPLES = 24;
 /**
- * Each shadow's digit and side, and the stretch of it sampled, from its root to `toBack` short of its tip: the one right
- * of the thumb stops short of the tip, which curls over it as the thumb turns. A shadow cast by the thumb in front
- * begins under it (`under`), along its middle, so no seam shows at its edge.
+ * Each shadow's digit and side, and the stretch of it sampled, from its root to `toBack` short of its tip. A shadow cast
+ * by the thumb in front begins under it (`under`), along its middle, so no seam shows at its edge.
  */
 const GAP_EDGES: Record<GapName, { digit: DigitName; side: 1 | -1; from: number; toBack: number; under: boolean }> = {
-  slit: { digit: 'thumb', side: 1, from: 0, toBack: 0.75, under: true },
+  slit: { digit: 'thumb', side: 1, from: 0, toBack: 0, under: true },
   wedge: { digit: 'thumb', side: -1, from: 0, toBack: 0, under: true },
   ring: { digit: 'reaching', side: -1, from: 0, toBack: 2, under: false },
 };
 const GAP_TRACK: Record<GapName, readonly (readonly number[])[]> = {
   slit: [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 64, 58, 52, 44, 37, 18, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 60, 52, 45, 35, 26, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 66, 66, 57, 46, 38, 27, 14, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 80, 80, 68, 55, 43, 27, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 65, 65, 54, 0, 0, 0, 0],
+    [59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 54, 47, 41, 33, 25, 0, 0, 0, 5, 0],
+    [67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 60, 49, 42, 33, 22, 9, 0, 0, 4, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 56, 56, 46, 36, 25, 12, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 63, 63, 53, 38, 24, 8, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 47, 47, 36, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 56, 49, 43, 35, 25, 0, 0, 0, 0],
-    [41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 34, 13, 12, 0, 0, 0, 0, 0, 0],
-    [126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 119, 112, 108, 102, 96, 89, 85, 76, 69, 0],
-    [122, 122, 122, 122, 122, 122, 122, 122, 122, 122, 122, 122, 122, 122, 117, 113, 108, 101, 79, 43, 0, 0, 0, 0],
-    [63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 59, 57, 51, 40, 28, 15, 0, 0, 0],
-    [53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 48, 43, 37, 30, 24, 17, 0, 0, 0, 0],
-    [40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 35, 29, 23, 16, 0, 0, 0, 0, 0, 0],
-    [56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 51, 46, 42, 36, 31, 27, 0, 0, 0, 0],
-    [62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 57, 53, 50, 44, 39, 32, 0, 0, 0, 0],
-    [64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 60, 58, 54, 49, 42, 35, 0, 0, 0, 0],
-    [67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 64, 61, 57, 51, 44, 37, 17, 0, 0, 0],
-    [69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 67, 63, 58, 53, 48, 39, 20, 0, 0, 0],
-    [69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 67, 63, 58, 53, 48, 39, 20, 0, 0, 0],
-    [69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 67, 63, 58, 53, 48, 39, 20, 0, 0, 0],
-    [69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 67, 63, 58, 53, 48, 39, 20, 0, 0, 0],
+    [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 42, 36, 29, 19, 9, 0, 0, 0, 0, 0],
+    [27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 19, 12, 0, 0, 0, 0, 0, 0, 0, 0],
+    [110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 103, 97, 92, 86, 78, 72, 65, 57, 49, 41, 0],
+    [110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 107, 102, 97, 89, 64, 14, 0, 0, 37, 51, 0],
+    [52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 50, 46, 41, 29, 14, 0, 0, 0, 8, 0],
+    [46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 41, 36, 30, 22, 16, 8, 0, 0, 0, 15, 0],
+    [33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 28, 22, 15, 8, 0, 0, 0, 0, 0, 17, 0],
+    [46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 41, 36, 32, 26, 22, 15, 0, 0, 0, 10, 0],
+    [51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 46, 42, 39, 33, 27, 20, 0, 0, 0, 4, 0],
+    [51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 48, 44, 41, 36, 30, 22, 0, 0, 0, 0, 0],
+    [53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 51, 48, 43, 38, 32, 25, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 51, 51, 48, 42, 37, 29, 7, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 51, 51, 48, 42, 37, 29, 7, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 51, 51, 48, 42, 37, 29, 7, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 51, 51, 48, 42, 37, 29, 7, 0, 0, 0, 0],
   ],
   wedge: [
-    [53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 0, 0, 0, 0, 0, 0, 48, 48, 0],
-    [58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 0, 0, 0, 0, 0, 37, 51, 51, 0],
-    [55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 0, 0, 0, 0, 0, 59, 84, 105, 0],
-    [62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 0, 0, 0, 0, 0, 0, 42, 59, 0],
-    [67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 0, 0, 0, 0, 0, 57, 65, 65, 0, 0],
-    [49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 0, 0, 0, 0, 0, 35, 54, 54, 0, 0],
-    [55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 0, 0, 0, 0, 0, 35, 57, 57, 0, 0],
-    [56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 0, 0, 0, 0, 0, 32, 55, 84, 84, 0],
+    [35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 43, 43, 0, 0, 0, 0, 0, 25, 43, 0],
+    [40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 0, 0, 0, 0, 0, 0, 31, 46, 0],
+    [36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 0, 0, 0, 0, 0, 0, 55, 80, 0],
+    [25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 43, 43, 0, 0, 0, 0, 0, 0, 24, 0],
+    [45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 0, 0, 0, 0, 7, 36, 47, 47, 0],
+    [35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 0, 0, 0, 0, 0, 27, 41, 41, 0],
+    [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 0, 0, 0, 0, 0, 0, 32, 56, 56, 0],
+    [45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 0, 0, 0, 0, 0, 0, 41, 68, 86, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 57, 61, 65, 65, 41, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 39, 55, 68, 68, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 31, 44, 44, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 37, 46, 55, 55, 0, 0, 0],
-    [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 0, 0, 0, 0, 0, 40, 53, 53, 0, 0],
-    [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 0, 0, 0, 0, 33, 47, 47, 0, 0],
-    [51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 0, 0, 0, 0, 0, 39, 52, 52, 0],
-    [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 0, 0, 0, 0, 0, 36, 53, 53, 0],
-    [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 0, 0, 0, 0, 0, 29, 48, 48, 0],
-    [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 0, 0, 0, 0, 0, 29, 48, 48, 0],
-    [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 0, 0, 0, 0, 0, 29, 48, 48, 0],
-    [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 0, 0, 0, 0, 0, 29, 48, 48, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 37, 39, 46, 46, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 38, 52, 52, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 16, 16, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 30, 37, 37, 0, 0, 0],
+    [34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 0, 0, 0, 0, 0, 20, 33, 46, 46, 0],
+    [34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 0, 0, 0, 0, 0, 25, 40, 40, 0],
+    [25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 0, 0, 0, 0, 0, 13, 32, 32, 0],
+    [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 30, 30, 0, 0, 0, 0, 0, 21, 39, 0],
+    [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 30, 30, 0, 0, 0, 0, 0, 14, 33, 0],
+    [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 30, 30, 0, 0, 0, 0, 0, 14, 33, 0],
+    [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 30, 30, 0, 0, 0, 0, 0, 14, 33, 0],
+    [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 30, 30, 0, 0, 0, 0, 0, 14, 33, 0],
   ],
   ring: [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 11, 11, 11, 11, 10, 7, 5],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 13, 13, 13, 13, 12, 9, 7],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -310,7 +331,7 @@ const GAP_TRACK: Record<GapName, readonly (readonly number[])[]> = {
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 27, 27, 25, 23],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -324,6 +345,66 @@ const GAP_TRACK: Record<GapName, readonly (readonly number[])[]> = {
   ],
 };
 
+/**
+ * Where the slit's shadow begins out from the thumb's edge, for each frame at the slit's places, on the grid: low down
+ * the reference shows a band of palm between the thumb and its shadow, painted over the shadow's inner part.
+ */
+const SLIT_FROM: readonly (readonly number[])[] = [
+    [44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 19, 1, 1, 2, 2, 2, 2, -2, -2, -3],
+    [61, 61, 61, 61, 61, 61, 61, 61, 61, 61, 61, 61, 61, 61, 29, 6, 0, 0, 0, -2, -2, -3, -3, -4],
+    [54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 33, 18, 8, -2, -3, -3, -3, -3, -3],
+    [59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 43, 31, 6, -2, -3, -3, -3, -3],
+    [51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 32, 21, 21, 21, 21, 21, 21],
+    [38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38],
+    [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+    [35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 23, 17, 6, 3, 1, 1, 1, 1, 1, 1],
+    [-6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+    [49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 39, 32, 31, 16, 9, 8, 8, 7, 7, 5, 3],
+    [46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 51, 51, 46, 35, 20, 2, 2, 19, 19, 19, 33],
+    [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 2, 2, 2, 2, 2, 0, 0, 0, -4, -4, -5],
+    [13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 4, 4, 4, 3, 2, 0, 0, 0, -4, -4, -5],
+    [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, -4, -4, -3, -2, -2, -2, -2, -1, -1, -1, -3],
+    [27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 8, 0, 0, 0, 1, 1, 1, 1, -3, -3, -4],
+    [35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 21, 8, 3, 3, 3, 2, 2, 2, -5, -5, -6],
+    [39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 23, 9, 1, 1, 1, 1, 1, 1, -5, -5, -5],
+    [46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 29, 14, 1, 1, 1, 2, 2, 2, -4, -4, -4],
+    [37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 18, 2, 2, 1, 1, 1, 1, 1, -2, -2],
+    [37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 18, 2, 2, 1, 1, 1, 1, 1, -2, -2],
+    [37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 18, 2, 2, 1, 1, 1, 1, 1, -2, -2],
+    [37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 18, 2, 2, 1, 1, 1, 1, 1, -2, -2],
+];
+
+/**
+ * The palm beside the thumb, toward the index finger. The reference paints it as one with the thumb, in front of the
+ * fingers, with the slit's shadow lying on it, and shows the background between it and the index finger as the hand
+ * opens. For each frame, how far out from the thumb's edge it reaches at the slit's places, on the grid: to the
+ * background, or a little past the index finger's inner side where that lies against it.
+ */
+const PALM_TRACK: readonly (readonly number[])[] = [
+    [59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 54, 49, 47, 37, 20, 0, 0, 0, 0, 0],
+    [67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 60, 50, 42, 33, 22, 6, 0, 0, 0, 0],
+    [74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 65, 56, 46, 36, 25, 13, 0, 0, 0, 0],
+    [94, 94, 94, 94, 94, 94, 94, 94, 94, 94, 94, 94, 94, 88, 81, 73, 63, 53, 38, 24, 8, 0, 0, 0],
+    [87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 80, 75, 65, 56, 47, 36, 22, 7, 3, 2, 1],
+    [85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 78, 71, 63, 52, 45, 34, 22, 8, 6, 5, 5],
+    [90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 82, 72, 62, 53, 43, 33, 20, 5, 2, 2, 2],
+    [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 42, 36, 29, 19, 9, 0, 0, 0, 0, 0],
+    [26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 19, 12, 9, 8, 8, 8, 6, 5, 4, 4],
+    [109, 109, 109, 109, 109, 109, 109, 109, 109, 109, 109, 109, 109, 103, 96, 91, 85, 80, 76, 71, 66, 49, 41, 30],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 101, 101, 95, 89, 64, 15, 1, 0, 0, 0, 0],
+    [52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 50, 46, 40, 30, 19, 6, 0, 0, 0, 0],
+    [46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 41, 36, 30, 23, 5, 0, 0, 0, 0, 0, 0],
+    [33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 28, 22, 15, 8, 0, 0, 0, 0, 0, 0, 0],
+    [46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 41, 37, 32, 31, 26, 10, 0, 0, 0, 0, 0],
+    [51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 46, 42, 39, 33, 30, 10, 0, 0, 0, 0, 0],
+    [51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 48, 45, 41, 41, 32, 15, 0, 0, 0, 0, 0],
+    [54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 51, 48, 43, 38, 36, 21, 0, 0, 0, 0, 0],
+    [59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 55, 51, 48, 42, 39, 26, 3, 0, 0, 0, 0],
+    [59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 55, 51, 48, 42, 39, 26, 3, 0, 0, 0, 0],
+    [59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 55, 51, 48, 42, 39, 26, 3, 0, 0, 0, 0],
+    [59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 55, 51, 48, 42, 39, 26, 3, 0, 0, 0, 0],
+];
+
 /** `count` places along a digit's centre line, evenly spaced by length, from `first` to `toBack` short of its last point. */
 function evenlyAlong(d: Posed, count: number, first: number, toBack: number): number[] {
   const last = d.centre.length - 1 - toBack;
@@ -336,7 +417,9 @@ function evenlyAlong(d: Posed, count: number, first: number, toBack: number): nu
   const total = lengths[lengths.length - 1]!;
   return Array.from({ length: count }, (_, j) => {
     const want = (total * j) / (count - 1);
-    const k = Math.max(1, lengths.findIndex((l) => l >= want));
+    // (the last place's length can round a hair past the whole: it is the last point)
+    const found = lengths.findIndex((l) => l >= want);
+    const k = found < 0 ? lengths.length - 1 : Math.max(1, found);
     const [l0, l1] = [lengths[k - 1]!, lengths[k]!];
     return fine[k - 1]! + (fine[k]! - fine[k - 1]!) * (l1 > l0 ? (want - l0) / (l1 - l0) : 0);
   });
@@ -386,11 +469,14 @@ interface Pose {
   web: number;
   /** The frame's shadows beside the digits (`GAP_TRACK`). */
   gaps: Record<GapName, readonly number[]>;
+  /** How far the palm beside the thumb reaches (`PALM_TRACK`), and where the slit's shadow on it begins (`SLIT_FROM`). */
+  palm: readonly number[];
+  slitFrom: readonly number[];
 }
 const POSES: readonly Pose[] = ORDER.map((i) => {
   const f = TRACK[i]!;
   const gaps = Object.fromEntries(GAP_NAMES.map((g) => [g, GAP_TRACK[g][i]!])) as Record<GapName, readonly number[]>;
-  return { digits: { thumb: thumbIn(f), index: indexIn(f), reaching: middleIn(f), curled: ringIn(f) }, web: f.web, gaps };
+  return { digits: { thumb: thumbIn(f, WIDTHS.thumb[i]!), index: indexIn(f, WIDTHS.index[i]!), reaching: middleIn(f, WIDTHS.reaching[i]!), curled: ringIn(f) }, web: f.web, gaps, palm: PALM_TRACK[i]!, slitFrom: SLIT_FROM[i]! };
 });
 /** The stamp through a turn: its lean from rest, its turn, its middle; it ends where it began but turned over. */
 const CARD_TRACK: readonly (readonly [number, number, number, number])[] = ORDER.map((i, k) => {
@@ -429,7 +515,7 @@ function onDigit(d: Posed, u: number, v: number): Pt {
 function holdOn(d: Posed, [x, y]: Pt): [number, number] {
   const m = d.centre.length;
   let best: [number, number, number] = [0, 0, Infinity];
-  for (let u = 0; u <= m - 1 + 0.8; u += 0.005) {
+  for (let u = 0; u <= m - 1 + 1.6; u += 0.005) {
     const base = onDigit(d, u, 0);
     const side = onDigit(d, u, 1);
     const [nx, ny] = [side[0] - base[0], side[1] - base[1]];
@@ -475,17 +561,18 @@ function sideAt(d: Posed, u: number, side: 1 | -1, inset = 0): Pt {
 /**
  * The web between the index finger and the thumb, as far along each as it reaches. Held close, the index finger's
  * inner side runs under the thumb's edge and the web is where they cross; held apart, it is where they come nearest,
- * at their tips. As the index finger lifts away (`open`), the web sinks to their roots, so the hand opens between
- * them as a hand does, rather than showing a dark hollow.
+ * at their tips. Where the reference shows background between them (`open`), the web sinks to their roots, and the
+ * palm in front beside the thumb leaves only that background showing.
  */
-function webIn(p: Pose, ds: Record<DigitName, Posed>): { index: number; thumb: number; open: number } {
+function webIn(p: Pose, ds: Record<DigitName, Posed>): { index: number; thumb: number; open: number; shut: number } {
   const steps = (from: number, to: number): number[] => Array.from({ length: 121 }, (_, k) => from + ((to - from) * k) / 120);
-  const [iu, tu] = [steps(2, 8), steps(0, 6)];
+  // the thumb's side on round its tip to its outermost point, where a broad thumb meets the finger as it turns
+  const [iu, tu] = [steps(2, 8), [...steps(0, 6), 6, 6, 6]];
   const ie = iu.map((u) => sideAt(ds.index, u, -1));
-  const te = tu.map((u) => sideAt(ds.thumb, u, 1));
+  const te = [...steps(0, 6).map((u) => sideAt(ds.thumb, u, 1)), ...digitSides(ds.thumb).cap.slice(0, 3)];
   let closed: [number, number] | null = null;
   for (let i = 0; i < 120 && !closed; i++) {
-    for (let j = 0; j < 120; j++) {
+    for (let j = 0; j + 1 < te.length; j++) {
       const [p1, p2, q1, q2] = [ie[i]!, ie[i + 1]!, te[j]!, te[j + 1]!];
       const [rx, ry, sx, sy] = [p2[0] - p1[0], p2[1] - p1[1], q2[0] - q1[0], q2[1] - q1[1]];
       const den = rx * sy - ry * sx;
@@ -494,7 +581,7 @@ function webIn(p: Pose, ds: Record<DigitName, Posed>): { index: number; thumb: n
       const [f, g] = [(qx * sy - qy * sx) / den, (qx * ry - qy * rx) / den];
       if (f >= 0 && f <= 1 && g >= 0 && g <= 1) {
         // just past the crossing on the index finger, under the thumb, and just short of it on the thumb
-        closed = [iu[i]! + f * 0.05 + 0.15, tu[j]! + g * 0.05 - 0.15];
+        closed = [iu[i]! + f * 0.05 + 0.15, tu[j]! + g * (tu[j + 1]! - tu[j]!) - 0.15];
         break;
       }
     }
@@ -511,7 +598,7 @@ function webIn(p: Pose, ds: Record<DigitName, Posed>): { index: number; thumb: n
   const open = p.web;
   const [ci, ct] = closed!;
   // (no higher on the index finger than where its tip begins, so its points along the side never crowd its tip)
-  return { index: Math.min(7.3, ci) + (2.5 - Math.min(7.3, ci)) * open, thumb: ct + (2.3 - ct) * open, open };
+  return { index: Math.min(7.3, ci) + (2.5 - Math.min(7.3, ci)) * open, thumb: ct + (2.3 - ct) * open, open, shut: ct };
 }
 
 /**
@@ -533,8 +620,10 @@ function spurs(q: Pt, ds: Record<DigitName, Posed>): boolean {
   const ax = unit([tip[0] - root[0], tip[1] - root[1]]);
   const along = (q[0] - root[0]) * ax[0] + (q[1] - root[1]) * ax[1];
   const across = (q[0] - root[0]) * -ax[1] + (q[1] - root[1]) * ax[0];
-  const top = (tip[0] - root[0]) * ax[0] + (tip[1] - root[1]) * ax[1] - UNDER_TIP;
-  return across >= -(ds.thumb.a.at(-1)! + ds.thumb.b.at(-1)!) / 2 && along > top;
+  // measured from the tip's outermost point and the thumb as it is built, so a thumb drawn wider holds the same pass
+  const end = tipOf(ds.thumb);
+  const top = (end[0] - root[0]) * ax[0] + (end[1] - root[1]) * ax[1] - reach(THUMB) - UNDER_TIP;
+  return across >= -(THUMB.a.at(-1)! + THUMB.b.at(-1)!) / 2 && along > top;
 }
 /** How far below the thumb's tip, on the grid, the outline's pass under it may reach. */
 const UNDER_TIP = 30;
@@ -559,15 +648,23 @@ const LINES: readonly { name: string; on: ReturnType<typeof held>; width: number
   { name: 'reaching-joint-2', on: held('reaching', [[606, 540], [603, 553], [605, 566]]), width: 0.7, opacity: 0.6, layer: 'back' },
 ];
 
+/** A digit's tip: the outermost point of its round, on its centre line. */
+function tipOf(d: Posed): Pt {
+  const m = d.centre.length;
+  return step(d.centre[m - 1]!, alongAt(d, m - 1), ((d.a[m - 1]! + d.b[m - 1]!) / 2) * d.tip);
+}
+/** How far in from the thumb's tip, on the grid, its pad presses on the stamp. */
+const PAD_IN = 24;
+
 /**
  * Every shape of the hand in a pose, on the grid, each with the same points in the same order in every pose, so the
  * turn can move each point along its own curve from pose to pose:
  * - `back`, the fingers behind the stamp as one outline: up the index finger's outer side, round its tip, a little way
  *   down its inner side, across the palm behind the thumb to the middle finger, out along it and back, out along the
  *   ring finger and back, and round under the frame's foot;
- * - `thumb`, the thumb in front, one outline from its root round its tip;
- * - the shapes on them: the gaps beside the digits (`gapIn`), the nail and its free edge, and the thumb's pad, where
- *   it holds the stamp (a single point, for placing the stamp).
+ * - `thumb`, the thumb in front, one outline from its root round its tip, and `palm`, the palm beside it in front;
+ * - the shapes on them: the gaps beside the digits (`gapIn`), the band of palm over the slit's inner part, the nail and
+ *   its free edge, and the thumb's pad, where it holds the stamp (a single point, for placing the stamp).
  */
 function shapesIn(p: Pose): Record<string, Pt[]> {
   const ds = p.digits;
@@ -587,10 +684,12 @@ function shapesIn(p: Pose): Record<string, Pt[]> {
   const webEdge = [1 / 3, 2 / 3].map((f): Pt => [wa[0] + ex * f - ey * sag * 4 * f * (1 - f), wa[1] + ey * f + ex * sag * 4 * f * (1 - f)]);
   webEdge.push(wb);
   // Under the thumb to the middle finger: through its root and over the wedge, or, where that would spur out past the
-  // thumb's tip, straight across under it.
+  // thumb's tip, straight across under it from the thumb's middle as high as the web shuts, so the way across never
+  // cuts through the middle finger's root however far the web has opened.
   const crotch = ride(CROTCH, ds)[0]!;
   const into = R.a[2]!;
-  const pass = spurs(crotch, ds) || spurs(wedgeTop[1]!, ds) ? [1 / 3, 2 / 3].map((f): Pt => [wb[0] + (into[0] - wb[0]) * f, wb[1] + (into[1] - wb[1]) * f]) : [crotch, wedgeTop[1]!];
+  const shut = onDigit(ds.thumb, web.shut, 0);
+  const pass = spurs(crotch, ds) || spurs(wedgeTop[1]!, ds) ? [shut, [(shut[0] + into[0]) / 2, (shut[1] + into[1]) / 2] as Pt] : [crotch, wedgeTop[1]!];
   const back = [
     ...I.a,
     ...I.cap,
@@ -610,23 +709,24 @@ function shapesIn(p: Pose): Record<string, Pt[]> {
   return {
     back,
     curled,
+    // the palm at the slit's places, out at least as far as the slit's shadow, which lies on it
+    palm: gapIn('slit', ds, p.palm.map((w, k) => Math.max(w, p.gaps.slit[k] ?? 0))),
     slit: gapIn('slit', ds, p.gaps.slit),
+    // and the band of palm between the thumb and the slit's shadow, out to where the shadow begins (never past its end)
+    band: gapIn('slit', ds, p.slitFrom.map((w, k) => Math.min(w, p.gaps.slit[k] ?? 0))),
     wedge: gapIn('wedge', ds, p.gaps.wedge),
     ring: gapIn('ring', ds, p.gaps.ring),
     thumb,
     nail: ride(NAIL, ds),
     freeEdge: ride(FREE_EDGE, ds),
-    pad: [onDigit(ds.thumb, ds.thumb.centre.length - 0.3, 0)],
+    pad: [step(tipOf(ds.thumb), alongAt(ds.thumb, ds.thumb.centre.length - 1), -PAD_IN)],
     // for checking the drawing, not drawn: each digit's joints, root to tip, and the index finger's whole outline
     'check:thumb': [0, 3, 6].map((i) => ds.thumb.centre[i]!),
     'check:index': [1, 3, 6, 8].map((i) => ds.index.centre[i]!),
     'check:reaching': [0, 2, 4].map((i) => ds.reaching.centre[i]!),
     'check:index-outline': [...I.a, ...I.cap, ...I.b.slice().reverse()],
     // and each digit's tip, its outermost point on its centre line, and the ring finger's centre line
-    'check:tips': (['thumb', 'index', 'reaching'] as const).map((d) => {
-      const m = ds[d].centre.length;
-      return step(ds[d].centre[m - 1]!, alongAt(ds[d], m - 1), ((ds[d].a[m - 1]! + ds[d].b[m - 1]!) / 2) * ds[d].tip);
-    }),
+    'check:tips': (['thumb', 'index', 'reaching'] as const).map((d) => tipOf(ds[d])),
     'check:ring': ds.curled.centre.slice(),
     ...Object.fromEntries(LINES.map((l) => [l.name, ride(l.on, ds)])),
   };
@@ -708,9 +808,14 @@ const GAP_SHUT = 0.6;
 
 /** How each shape is painted: in which layer, in what, and whether it is a smooth outline or a brush's ring. */
 const PAINT: readonly { name: string; layer: 'back' | 'front'; fill: string; brush?: { width: number; opacity: number }; straight?: boolean }[] = [
-  { name: 'slit', layer: 'back', fill: INK.gap, straight: true },
+  { name: 'back', layer: 'back', fill: SKIN.face },
   { name: 'wedge', layer: 'back', fill: INK.gap, straight: true },
   { name: 'ring', layer: 'back', fill: INK.gap, straight: true },
+  // in front, the palm beside the thumb with the slit's shadow on it, and over both the thumb
+  { name: 'palm', layer: 'front', fill: SKIN.face, straight: true },
+  { name: 'slit', layer: 'front', fill: INK.gap, straight: true },
+  { name: 'band', layer: 'front', fill: SKIN.face, straight: true },
+  { name: 'thumb', layer: 'front', fill: SKIN.face },
   { name: 'nail', layer: 'front', fill: INK.nail },
   { name: 'freeEdge', layer: 'front', fill: INK.nailEdge },
   ...LINES.map((l) => ({ name: l.name, layer: l.layer, fill: l.ink ?? INK.line, brush: { width: l.width, opacity: l.opacity } })),
@@ -742,18 +847,17 @@ export function handStampSvg(opts: HandStampOptions): string {
   if (opts.part !== 'back' && opts.part !== 'front') throw new RangeError(`art: no hand-stamp part called ${String(opts.part)}`);
   const dr = new Drawing(prefixFor(opts.idPrefix, 'hand-stamp', opts.part));
   const ds = handStampShapesAt(opts.at ?? 0);
-  const outline = opts.part === 'back' ? 'back' : 'thumb';
-  // The outline in the one skin, as the reference paints it, with no shade step at any edge.
+  // The outline in the one skin, as the reference paints it, with no shade step at any edge; in front, the thumb's with
+  // the palm beside it.
+  const outlines = opts.part === 'back' ? ['back'] : ['thumb', 'palm'];
   const clip = dr.id('c');
-  dr.def(`<clipPath id="${clip}"><path data-shape="${outline}" d="${ds[outline]}"/></clipPath>`);
+  dr.def(`<clipPath id="${clip}">${outlines.map((o) => `<path data-shape="${o}" d="${ds[o]}"/>`).join('')}</clipPath>`);
   // Everything painted on the layer stays inside its outline, so a gap drawn between the fingers ends at the hand's edge.
   const paint = PAINT.filter((q) => q.layer === opts.part).map((q) => {
     const opacity = q.brush ? ` opacity="${n(q.brush.opacity)}"` : '';
     return `<path data-shape="${q.name}" d="${ds[q.name]}" fill="${q.fill}"${opacity}/>`;
   });
-  dr.add(
-    `<g clip-path="url(#${clip})"><path data-shape="${outline}" d="${ds[outline]}" fill="${SKIN.face}"/>${paint.join('')}</g>`,
-  );
+  dr.add(`<g clip-path="url(#${clip})">${paint.join('')}</g>`);
   const { defs, body } = dr.parts();
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${HAND_STAMP_VIEW.w} ${HAND_STAMP_VIEW.h}" aria-hidden="true">${defs}${body}</svg>`;
 }
@@ -761,7 +865,7 @@ export function handStampSvg(opts: HandStampOptions): string {
 /** Every shape's path `ms` into a turn, by its `data-shape` name, for redrawing the hand each frame of a turn. */
 export function handStampShapesAt(ms: number): Record<string, string> {
   const pts = pointsAt(ms);
-  return Object.fromEntries(Object.entries(pts).filter(([name]) => PAINT.some((q) => q.name === name) || name === 'back' || name === 'thumb').map(([name, p]) => [name, pathOf(name, p)]));
+  return Object.fromEntries(Object.entries(pts).filter(([name]) => PAINT.some((q) => q.name === name)).map(([name, p]) => [name, pathOf(name, p)]));
 }
 
 /**

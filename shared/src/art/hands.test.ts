@@ -193,7 +193,7 @@ describe('the turn of the stamp in the hand', () => {
   it('never folds an outline over itself, at any moment of the turn', () => {
     for (const ms of MOMENTS) {
       const pts = handStampPointsAt(ms);
-      for (const name of ['back', 'thumb', 'curled', 'slit', 'wedge', 'ring', 'nail', 'freeEdge']) {
+      for (const name of ['back', 'thumb', 'palm', 'curled', 'slit', 'band', 'wedge', 'ring', 'nail', 'freeEdge']) {
         const cross = selfCrossing(pts[name]!);
         expect(cross, `${name} at ${ms} ms crosses itself at ${String(cross)}`).toBeNull();
       }
@@ -219,6 +219,17 @@ describe('the turn of the stamp in the hand', () => {
         for (const p of near) expect(inside(p, pts.thumb!), `${name} at ${ms} ms`).toBe(true);
       }
     }
+  });
+
+  it('keeps the palm beside the thumb as the hand opens, so the shadow there lies on skin', () => {
+    // low down just out from the thumb's index-finger side, in the reference's frames 3 and 5, is palm, not background
+    for (const [ms, p] of [[320, [194.7, 222.8]], [480, [181.5, 209.6]]] as const) expect(inside(p, handStampPointsAt(ms).palm!), `at ${ms} ms`).toBe(true);
+  });
+
+  it('shows the background between the palm and the index finger low down at rest, as the reference does', () => {
+    const pts = handStampPointsAt(0);
+    const pocket: Pt = [202, 218.8];
+    for (const name of ['back', 'palm', 'thumb']) expect(inside(pocket, pts[name]!), name).toBe(false);
   });
 
   // The reference's fastest move, the middle finger letting go of the stamp's edge and curling under it, covers about
