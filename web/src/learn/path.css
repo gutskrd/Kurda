@@ -2024,28 +2024,17 @@ button.lp-scard:focus-visible {
   justify-self: center;
   gap: 6px;
 }
-/* A topic to play now: the card is the road's main button, in its unit's colour, with one button on the page's own
-   ground that says what the lesson pays and that a glint crosses now and then. */
-.lp-pop.is-go {
-  border-color: transparent;
-  background: var(--u-fill);
-  color: var(--u-ink);
-  box-shadow: 0 6px 0 var(--u-lip), var(--shadow);
-}
+/*
+ * A topic to play now: the card on the page's own panel, as every card is, its edge touched with the chapter's colour,
+ * the chapter named in that colour over the topic, and one button in it on a lip of it that says what the lesson pays,
+ * a glint crossing it now and then.
+ */
+.lp-pop.is-go,
 .lp-pop.is-go .lp-pop-arrow {
-  border-color: transparent;
-  background: var(--u-fill);
+  border-color: color-mix(in srgb, var(--u-fill) 35%, var(--border));
 }
 .lp-pop.is-go .lp-pop-title {
-  color: inherit;
   font-weight: 800;
-}
-.lp-pop.is-go .lp-pop-line {
-  color: inherit;
-  opacity: 0.85;
-}
-.lp-pop.is-go .lp-pop-tips {
-  color: inherit;
 }
 .lp-pop.is-go .lp-pop-start {
   position: relative;
@@ -2054,9 +2043,8 @@ button.lp-scard:focus-visible {
   gap: var(--space-2);
   margin-top: var(--space-1);
   border: 0;
-  background: var(--app-bg);
-  /* the unit's colour as words on the page's own ground, by day and by night */
-  color: var(--u-text);
+  background: var(--u-fill);
+  color: var(--u-ink);
   box-shadow: 0 4px 0 var(--u-lip);
   font-weight: 800;
   text-transform: uppercase;
@@ -2070,7 +2058,7 @@ button.lp-scard:focus-visible {
   content: '';
   position: absolute;
   inset: 0 -60%;
-  background: linear-gradient(105deg, transparent 42%, rgb(255 255 255 / 0) 44%, color-mix(in srgb, var(--u-fill) 22%, transparent) 50%, transparent 58%);
+  background: linear-gradient(105deg, transparent 42%, rgb(255 255 255 / 0) 44%, rgb(255 255 255 / 0.3) 50%, transparent 58%);
   translate: -60% 0;
   animation: lp-glint 2.8s ease-in-out 0.6s infinite;
 }
