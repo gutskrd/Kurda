@@ -14,8 +14,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { useCountUp } from '../theme/animate';
-import { ConfettiBurst, GlowRing, SoftGlow, useCelebration } from '../theme/CelebrationParts';
-import { BURST } from '../theme/celebration';
+import { SoftGlow, useCelebration } from '../theme/CelebrationParts';
 import { display } from '../theme/fonts';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -142,8 +141,8 @@ export function ChestScreen({
 
 /**
  * The chest just opened: a one-second hop (shared CHEST_HOP), and on landing the celebration
- * (theme/celebration.ts): haptic and sound, a ring and a burst of gold, a few stars, the inner light, and turning
- * rays. Then the contents rise as a tile with a count ("× 40") and "+N Zêr" lands under it while the corner
+ * (theme/celebration.ts): haptic and sound, the lid lifting ajar with light pouring out of the gap, then thrown open
+ * with a flash of bloom and shafts of light rising, the gold thrown, and stars twinkling and motes rising after. Then the contents rise as a tile with a count ("× 40") and "+N Zêr" lands under it while the corner
  * balance counts up to the server's new total. Badges wait for it. Under Reduce Motion the chest stands open and
  * the gold fades in, rays still. For someone who does not earn Zêr it says, once, that Zêr is a members' perk instead
  * of counting none.
@@ -210,15 +209,8 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
           accessibilityLabel={moment.playing ? t('common.skip') : undefined}
           style={[styles.stage, { width: size * 1.6, height: stageHeight }]}
         >
-          <SoftGlow colour={colors.gold} size={size * 1.4} id="chest-open-glow" />
-          {plan.travel ? <GlowRing progress={moment.ring} colour="#FFFFFF" size={size * 0.9} /> : null}
+          {/* The chest's own bloom, shafts and stars are the celebration: no ring, confetti or second glow. */}
           <ChestArt tier={tier} size={size} open={!plan.travel} motion={motion} rays={plan.travel ? 'swaying' : 'still'} reach={RAYS_REACH} testID="chest-art" />
-          {plan.travel ? (
-            // The gold comes out of the open top, in front of the chest.
-            <View style={[StyleSheet.absoluteFill, { transform: [{ translateY: -size * 0.12 }] }]} pointerEvents="none">
-              <ConfettiBurst progress={moment.burst} count={BURST.badge} seed={opening.amount * 7 + 3} colours={[colors.gold, '#FFE16A', '#FFBD1F', '#FFFFFF']} reach={size * 0.75} />
-            </View>
-          ) : null}
           {opening.earnsZer ? (
             <Animated.View
               style={[styles.tile, { bottom: (stageHeight + chestHeight) / 2 + spacing.sm, backgroundColor: colors.surface, opacity: moment.details, transform: [{ translateY: rise }] }]}

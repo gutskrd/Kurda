@@ -98,10 +98,14 @@ import {
   CHEST_BOX,
   CHEST_FOOT,
   CHEST_HOP,
+  CHEST_HOP_BLOOM,
+  CHEST_HOP_BLOOM_SIZE,
   CHEST_HOP_LAND,
   CHEST_HOP_LID,
   CHEST_HOP_LIGHT,
   CHEST_HOP_MS,
+  CHEST_HOP_RAYS,
+  CHEST_HOP_RAYS_REACH,
   CHEST_HOP_SEAM,
   CHEST_HOP_SHADOW,
   CHEST_HOP_SPARKLE,
@@ -109,12 +113,20 @@ import {
   CHEST_KNOCK_LIFT,
   CHEST_KNOCK_MS,
   CHEST_LAYERS,
+  CHEST_LID_AJAR,
+  CHEST_LID_AWAY,
+  CHEST_MOTES,
+  CHEST_MOTE_MS,
   CHEST_TINTS,
+  CHEST_TWINKLES,
+  CHEST_TWINKLE_MS,
   chestDrawing,
   chestGlint,
   chestHopAt,
   chestLayerSvg,
+  chestMote,
   chestSvg,
+  chestTwinkle,
   type ChestHopCurve,
   type ChestLayerId,
 } from './chest.js';
@@ -1368,7 +1380,7 @@ describe('the chest', () => {
   });
 
   it('is drawn as the layers the apps move, back to front, each standing alone in its own box', () => {
-    expect(CHEST_LAYERS).toEqual(['shadow', 'lidOpen', 'rays', 'body', 'light', 'lock', 'glint', 'lid', 'seam', 'sparkle']);
+    expect(CHEST_LAYERS).toEqual(['shadow', 'bloom', 'lidOpen', 'rays', 'body', 'light', 'lock', 'glint', 'lid', 'seam', 'sparkle']);
     const drawing = chestDrawing('rare');
     expect(Object.keys(drawing.layers)).toEqual([...CHEST_LAYERS]);
     const holder = new Map<string, ChestLayerId>();
@@ -1401,9 +1413,48 @@ describe('the chest', () => {
     expect(within(drawing.hinge, drawing.layers.lid.box)).toBe(true);
     expect(within(drawing.mouth, drawing.layers.light.box)).toBe(true);
     expect(within(drawing.hinge, CHEST_BOX)).toBe(true);
-    const rays = drawing.layers.rays.box;
-    expect([rays.x + rays.w / 2, rays.y + rays.h / 2]).toEqual(drawing.mouth);
+    // the shafts and the bloom grow about the mouth, so their boxes are centred on it
+    for (const part of ['rays', 'bloom'] as const) {
+      const box = drawing.layers[part].box;
+      expect([box.x + box.w / 2, box.y + box.h / 2], part).toEqual(drawing.mouth);
+    }
     expect(drawing.box).toEqual(CHEST_BOX);
+  });
+
+  it('draws each twinkling star and rising mote on its own, centred in its box so it flares about its middle', () => {
+    // a layer carries its own defs: every reference in it points inside it
+    const refsResolve = (svg: string): boolean => {
+      const ids = new Set([...svg.matchAll(/id="([^"]+)"/g)].map((m) => m[1]));
+      return [...svg.matchAll(/url\(#([^)]*)\)/g)].every((m) => ids.has(m[1]));
+    };
+    expect(CHEST_TWINKLES.length).toBeGreaterThanOrEqual(5);
+    expect(CHEST_MOTES.length).toBeGreaterThanOrEqual(4);
+    const holder = new Set<string>();
+    CHEST_TWINKLES.forEach((t, i) => {
+      const layer = chestTwinkle(i);
+      expect(layer.id).toBe('twinkle');
+      expect([layer.box.x + layer.box.w / 2, layer.box.y + layer.box.h / 2]).toEqual([...t.at]);
+      expect(t.delay).toBeGreaterThanOrEqual(0);
+      expect(t.delay).toBeLessThan(1);
+      expect(refsResolve(chestLayerSvg(layer))).toBe(true);
+      for (const [, id] of chestLayerSvg(layer).matchAll(/id="([^"]+)"/g)) {
+        expect(holder.has(id ?? ''), `${id}`).toBe(false);
+        holder.add(id ?? '');
+      }
+    });
+    CHEST_MOTES.forEach((m, i) => {
+      const layer = chestMote(i);
+      expect(layer.id).toBe('mote');
+      expect([layer.box.x + layer.box.w / 2, layer.box.y + layer.box.h / 2]).toEqual([m.x, m.y]);
+      // a mote starts over the mouth and rises into the shafts
+      expect(m.y).toBeLessThan(chestDrawing('rare').mouth[1]);
+      expect(m.rise).toBeGreaterThan(0);
+      expect(refsResolve(chestLayerSvg(layer))).toBe(true);
+    });
+    // two chests on one page keep their stars apart
+    expect(chestLayerSvg(chestTwinkle(0, { idPrefix: 'a' }))).not.toBe(chestLayerSvg(chestTwinkle(0, { idPrefix: 'b' })));
+    expect(() => chestTwinkle(CHEST_TWINKLES.length)).toThrow(RangeError);
+    expect(() => chestMote(-1)).toThrow(RangeError);
   });
 
   it('wears warm colours only: plain oak in iron, the road’s amber in brass with a kilim strap, pomegranate lacquer in gold with a garnet', () => {
@@ -1461,7 +1512,7 @@ describe('the chest’s hop', () => {
     expect(ordered(CHEST_HOP.map((f) => f.at))).toBe(true);
     expect(CHEST_HOP[0]).toEqual({ at: 0, rise: 0, wide: 1, tall: 1, tilt: 0 });
     expect(CHEST_HOP[CHEST_HOP.length - 1]).toEqual({ at: 1, rise: 0, wide: 1, tall: 1, tilt: 0 });
-    for (const curve of [CHEST_HOP_LID, CHEST_HOP_LIGHT, CHEST_HOP_SHADOW, CHEST_HOP_SPARKLE]) {
+    for (const curve of [CHEST_HOP_LID, CHEST_HOP_LIGHT, CHEST_HOP_SHADOW, CHEST_HOP_SPARKLE, CHEST_HOP_RAYS, CHEST_HOP_RAYS_REACH, CHEST_HOP_BLOOM, CHEST_HOP_BLOOM_SIZE]) {
       expect(ordered(shares(curve))).toBe(true);
       expect(curve[0]?.[0]).toBe(0);
       expect(curve[curve.length - 1]?.[0]).toBe(1);
@@ -1506,6 +1557,30 @@ describe('the chest’s hop', () => {
     expect(chestHopAt(CHEST_HOP_SHADOW, CHEST_HOP_LAND)).toBeGreaterThan(1);
     expect(chestHopAt(CHEST_HOP_SHADOW, 0)).toBe(1);
     expect(chestHopAt(CHEST_HOP_SHADOW, 1)).toBe(1);
+  });
+
+  it('lifts the lid ajar with light out of the gap before throwing it open, then flashes the bloom as the shafts shoot up', () => {
+    const top = CHEST_HOP.reduce((best, f) => (f.rise > best.rise ? f : best));
+    // ajar while the chest springs: lifted a little, held, then thrown open by the top of the hop
+    const ajar = CHEST_HOP_LID.filter(([, v]) => v > 0 && v < 0.5);
+    expect(ajar.length).toBeGreaterThanOrEqual(2);
+    expect(ajar.every(([at]) => at < top.at)).toBe(true);
+    expect(CHEST_LID_AJAR.at).toBeLessThan(CHEST_LID_AWAY.at);
+    expect(CHEST_LID_AJAR.deg).toBeLessThan(CHEST_LID_AWAY.deg);
+    // while it is ajar the gap is lit, the shafts leak out short and the bloom glows, all before the lid is open
+    const [ajarAt] = ajar[0] as readonly [number, number];
+    for (const curve of [CHEST_HOP_LIGHT, CHEST_HOP_RAYS, CHEST_HOP_BLOOM, CHEST_HOP_SEAM]) expect(chestHopAt(curve, ajarAt)).toBeGreaterThan(0.3);
+    expect(chestHopAt(CHEST_HOP_RAYS_REACH, ajarAt)).toBeLessThan(0.6);
+    // then the shafts overshoot their reach and the bloom its size as the lid opens, and both settle at full
+    expect(Math.max(...CHEST_HOP_RAYS_REACH.map(([, v]) => v))).toBeGreaterThan(1);
+    expect(Math.max(...CHEST_HOP_BLOOM_SIZE.map(([, v]) => v))).toBeGreaterThan(1);
+    expect(chestHopAt(CHEST_HOP_RAYS_REACH, 1)).toBe(1);
+    expect(chestHopAt(CHEST_HOP_BLOOM_SIZE, 1)).toBe(1);
+    expect(chestHopAt(CHEST_HOP_RAYS, 1)).toBe(1);
+    expect(chestHopAt(CHEST_HOP_BLOOM, 1)).toBeGreaterThan(0.5);
+    expect(chestHopAt(CHEST_HOP_BLOOM, 1)).toBeLessThan(1);
+    expect(CHEST_TWINKLE_MS).toBeGreaterThan(CHEST_HOP_MS);
+    expect(CHEST_MOTE_MS).toBeGreaterThan(CHEST_HOP_MS);
   });
 
   it('reads a curve by straight lines, flat beyond its ends', () => {
