@@ -695,8 +695,12 @@
 ::view-transition-new(places-bar) {
   animation: none;
 }
-/* Learn's chosen group: its ground slides from the group left to the one chosen while the page beneath cross-fades. */
-.is-changing-page .learn-head .switch-capsule {
+/*
+ * Learn's chosen group: its ground slides from the group left to the one chosen while the page beneath cross-fades.
+ * It is named only for a change between two of Learn's groups (lib/viewTransition.tsx `glidesBetween`), so leaving
+ * Learn it fades with its page instead of hanging over the next one.
+ */
+:root[data-glide='learn-switch'] .learn-head .switch-capsule {
   view-transition-name: learn-switch;
 }
 /*

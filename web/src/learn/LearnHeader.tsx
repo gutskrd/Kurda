@@ -1,7 +1,11 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useT } from '../i18n/I18nProvider';
+import { glidesBetween } from '../lib/viewTransition';
 import { LEARN_PATHS, rememberLearnView, type LearnView } from './learnView';
+
+// The chosen ground glides only between Learn's own groups; leaving Learn, it goes with its page.
+glidesBetween('learn-switch', Object.values(LEARN_PATHS));
 
 /**
  * Learn's heading with the Lessons · Stories · Games switch. The switch is links, since each group has its own address,
