@@ -1,10 +1,9 @@
 /**
- * The shop's animal friends: ten small characters, each drawn in a hand of its own as an illustrator would sign it.
- * A rabbit showing its muscles in brush and ink; a fox in a red cape holding up a sword, cut as a lino print; a kitten
- * in a hat and boots striding along, engraved in one red-brown ink; a kitten with a red ribbon in black and red crayon;
- * a pigeon in one blue crayon line; a bear in flat brown with nothing to say; a white bear in black marker; a cow as
- * round as a ball; a plump hen; and a kiwi in a rough black line. Each lives in friends/, one to a file with its own
- * pen, and is cut out with its paper behind it, so it reads over a dark profile picture as over a light one.
+ * The shop's animal friends: ten small characters painted in the deer icon's way, colour laid in with dry-brush shade,
+ * pale flecks and a soft pencil line. A white rabbit pressing a barbell; a fox in a red cloak resting on its sword; a
+ * ginger cat in a hat and boots, paws on its hips; a white kitten with a red bow; a plump blue dove; a sleepy brown bear
+ * sitting; a white bear walking; a cow with a bell; a russet hen; and a kiwi probing the earth. Each lives in friends/,
+ * one to a file, and is transparent outside its figure, so it reads over a dark profile picture as over a light one.
  *
  * The order is the shop's: icons.mjs numbers their files after the other icons in this order.
  */

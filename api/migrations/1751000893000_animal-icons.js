@@ -1,8 +1,7 @@
 /**
- * Ten animal icons go on sale beside the made ones: drawn by the generator as the other icons are
- * (scripts/cosmetic-art/icons-friends.mjs), each in a hand of its own — a rabbit in brush and ink, a fox knight cut
- * as a print, an engraved cat in boots, a crayon kitten with a bow, a dove in one blue line, two bears, a round cow, a
- * hen and a kiwi. Like every made icon they are bought with Zêr and lent to members (`premium_only`).
+ * Ten animal icons go on sale beside the made ones, painted by the generator as the other icons are
+ * (scripts/cosmetic-art/icons-friends.mjs): a rabbit with a barbell, a fox knight, a cat in boots, a kitten with a bow, a
+ * blue dove, two bears, a cow, a hen and a kiwi. Like every made icon they are bought with Zêr and lent to members (`premium_only`).
  *
  * On a row that already exists only the presentation is refreshed (name, description, art, order), so an admin's
  * price and availability stand. Down takes them off whoever wears them, out of what people own and out of the shop;

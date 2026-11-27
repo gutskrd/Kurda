@@ -1,161 +1,161 @@
+import { blob, crayon, painter, strokes, within } from '../brush.mjs';
+import { spline } from '../kit.mjs';
 import { Still } from '../still.mjs';
 
-const PLAIN = { finish: { paint: 0, grain: 0.012, contrast: 0, saturation: 1, warmth: 0 } };
-
-// The shapes are laid out on a 512 frame and brought into the icon by this scale and shift.
-const K = 1.15;
-const SHIFT = [-9.8, -8.6];
-const into = ([x, y]) => [256 + SHIFT[0] + K * (x - 256), 256 + SHIFT[1] + K * (y - 256)];
-// One square of the coarse grid the pen draws on, in icon units: a low-resolution digital pen, its steps left showing.
-const CELL = 2.4;
-// The pen's width, in squares.
-const PEN = 2;
-
-/** The point `f` of the way from p1 to p2 on a Catmull-Rom curve through p0..p3. */
-const cr = (p0, p1, p2, p3, f) =>
-  [0, 1].map((c) => 0.5 * (2 * p1[c] + (p2[c] - p0[c]) * f + (2 * p0[c] - 5 * p1[c] + 4 * p2[c] - p3[c]) * f * f
-    + (3 * p1[c] - p0[c] - 3 * p2[c] + p3[c]) * f * f * f));
-
-/** Points about `step` apart along a smooth curve through `pts` (closed or open), in icon units. */
-function trace(pts, step, closed) {
-  const q = pts.map(into);
-  const m = q.length;
-  const at = (i) => (closed ? q[(i + m) % m] : q[Math.max(0, Math.min(m - 1, i))]);
+/** Points along an oval round `c`, from `a0` to `a1` degrees (0 to the right, 90 straight down), the oval turned by `turn` degrees. */
+function arc([cx, cy], rx, ry, a0, a1, { count = 10, turn = 0 } = {}) {
+  const [c, s] = [Math.cos((turn * Math.PI) / 180), Math.sin((turn * Math.PI) / 180)];
   const out = [];
-  for (let i = 0; i < (closed ? m : m - 1); i++) {
-    const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
-    const k = Math.max(1, Math.ceil(Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) / step));
-    for (let s = 0; s < k; s++) out.push(cr(p0, p1, p2, p3, s / k));
+  for (let i = 0; i <= count; i++) {
+    const t = ((a0 + ((a1 - a0) * i) / count) * Math.PI) / 180;
+    const [x, y] = [Math.cos(t) * rx, Math.sin(t) * ry];
+    out.push([cx + x * c - y * s, cy + x * s + y * c]);
   }
-  if (!closed) out.push(q[m - 1]);
   return out;
-}
-
-/** The hand's slow drift off the intended line: each point pushed sideways by a couple of long, uneven waves. */
-function drift(rnd, line, amount) {
-  const waves = [0, 1, 2].map((i) => [60 + rnd() * 90 / (i + 1), rnd() * 6, amount / (i + 1)]);
-  let s = 0;
-  return line.map((p, i) => {
-    const a = line[Math.max(0, i - 1)];
-    const b = line[Math.min(line.length - 1, i + 1)];
-    const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
-    if (i) s += Math.hypot(p[0] - a[0], p[1] - a[1]);
-    const off = waves.reduce((sum, [len, ph, amp]) => sum + amp * Math.sin((s / len) * Math.PI * 2 + ph), 0);
-    return [p[0] - ((b[1] - a[1]) / l) * off, p[1] + ((b[0] - a[0]) / l) * off];
-  });
-}
-
-/** The squares the pen covers along `line`. */
-function inked(line, cells = new Set()) {
-  for (const [x, y] of line) {
-    const i0 = Math.round(x / CELL - PEN / 2);
-    const j0 = Math.round(y / CELL - PEN / 2);
-    for (let i = i0; i < i0 + PEN; i++) for (let j = j0; j < j0 + PEN; j++) cells.add(`${i},${j}`);
-  }
-  return cells;
-}
-
-/** The squares whose middles lie inside the closed outline `poly`. */
-function filled(poly) {
-  const cells = new Set();
-  const ys = poly.map((p) => p[1]);
-  for (let j = Math.floor(Math.min(...ys) / CELL); j <= Math.ceil(Math.max(...ys) / CELL); j++) {
-    const y = (j + 0.5) * CELL;
-    const xs = [];
-    poly.forEach((a, k) => {
-      const b = poly[(k + 1) % poly.length];
-      if ((a[1] <= y) !== (b[1] <= y)) xs.push(a[0] + ((y - a[1]) / (b[1] - a[1])) * (b[0] - a[0]));
-    });
-    xs.sort((u, v) => u - v);
-    for (let k = 0; k + 1 < xs.length; k += 2) for (let i = Math.ceil(xs[k] / CELL - 0.5); i + 0.5 <= xs[k + 1] / CELL; i++) cells.add(`${i},${j}`);
-  }
-  return cells;
-}
-
-/** A set of squares as one path, each row's neighbours joined into runs. */
-function squares(cells) {
-  const rows = new Map();
-  for (const c of cells) {
-    const [i, j] = c.split(',').map(Number);
-    if (!rows.has(j)) rows.set(j, []);
-    rows.get(j).push(i);
-  }
-  let d = '';
-  for (const [j, list] of rows) {
-    list.sort((u, v) => u - v);
-    for (let k = 0; k < list.length; ) {
-      let e = k;
-      while (e + 1 < list.length && list[e + 1] === list[e] + 1) e++;
-      d += `M${+(list[k] * CELL).toFixed(2)} ${+(j * CELL).toFixed(2)}h${+((e - k + 1) * CELL).toFixed(2)}v${CELL}h${-((e - k + 1) * CELL).toFixed(2)}Z`;
-      k = e + 1;
-    }
-  }
-  return d;
 }
 
 export const piece = {
   key: 'hirc',
   ku: 'Hirç',
   en: 'Bear',
-  // a big brown bear sitting square and looking at us with nothing at all to say, drawn with a coarse digital pen:
-  // one huge pear of flat brown in a thin stepped black line, two little ears, a tan muzzle with a dash for its nose
-  // and one for its mouth, sleepy dashes for eyes, its arms only a line each, the left one's claws ticked in
+  // a chubby brown bear sitting on its bottom with its legs out in front, the pale pads of both feet turned to us, its
+  // paws resting on its round pale belly; eyes half shut and a small contented smile under a dark nose, a pale muzzle
+  // and round ears, painted in rich browns with the shade brushed down its sides and a soft pencil line over it
   still(rnd) {
-    const s = new Still(rnd);
-    const FUR = '#3e342b';
-    const MUZZLE = '#be9d7d';
-    const LINE = '#060505';
-    const body = [
-      [170, 100], [165, 93], [164, 85], [167, 77.5], [174, 73.5], [182, 74.5], [188, 79], [191, 86],
-      [196, 83], [204, 78], [212, 74], [222, 70.5], [234, 68], [248, 67], [262, 67.5], [276, 69], [288, 71.5], [298, 74.5], [305, 78.5], [309, 83],
-      [313, 77], [319, 71], [326, 68.5], [333, 71], [336, 78], [336, 88], [335, 95],
-      [340, 102], [345, 111], [350, 122], [354, 134], [357, 149], [359, 164], [361, 175], [367, 181], [374, 192], [381, 205], [388, 219], [394, 234],
-      [398, 249], [401, 262], [403, 270], [409, 285], [416, 298], [421, 312], [425, 327], [429, 342], [432, 362], [433, 380], [433, 397], [429, 407],
-      [427, 416], [428, 424], [434, 431], [437, 439], [438, 448], [434, 455], [424, 459], [410, 460], [400, 457], [393, 451], [389, 445],
-      [378, 443], [360, 443], [335, 444], [300, 444.5], [260, 445.5], [221, 447], [190, 447.5], [165, 447.5], [146, 446], [138, 445],
-      [130, 449], [118, 453.5], [106, 454.5], [97, 451], [92, 444], [92, 436], [95, 428], [99, 421], [104, 414],
-      [101, 404], [96, 388], [93, 368], [91.5, 347], [92, 325], [92.5, 305], [94, 282], [97.5, 262], [102, 246], [108, 230], [114, 214], [120, 198],
-      [125, 186], [131, 172], [139, 156], [147, 141], [155, 128], [163, 114],
-    ];
-    const muzzle = [[254, 90.5], [250, 94], [247, 100], [244.5, 105], [241.7, 110], [239.6, 115], [237.4, 120], [235, 126], [234.5, 133], [234.5, 140],
-      [235.8, 146], [236.3, 151], [238.5, 154.5], [243, 157.5], [250, 160.5], [257, 161.8], [264, 160.5], [270, 157.5], [274.5, 154.5], [278, 151], [281, 147],
-      [283, 140], [284.6, 130], [283.5, 122], [281, 116], [277, 110.5], [272, 105.5], [266, 100.5], [261, 96], [257.5, 92.5]];
-    const nose = [[248, 114.5], [252, 112.4], [262, 112.2], [270, 112.6], [271.5, 114], [268, 116.6], [259, 118.6], [251, 117.6]];
-    // what the pen drew inside, each a line through its points
-    const lines = [
-      // the base of the right ear, the eyes, the mouth in two goes that do not quite meet
-      [[321, 98], [336, 97.5]],
-      [[220.3, 99.6], [236.2, 99.6]],
-      [[274.3, 99.6], [289.8, 99.6]],
-      [[242, 150.6], [255.5, 150.6]],
-      [[255.5, 147.6], [273.5, 147.6]],
-      // the left arm, its paw curled up, and the claws ticked across its edge
-      [[139.5, 284.8], [144, 295], [148, 304], [152, 314], [157, 321], [163, 327.5], [169.5, 328], [176, 325.5], [182, 322], [188, 316], [191, 309],
-        [192.4, 297], [189, 290], [185, 284], [180, 277], [175, 271.5]],
-      [[163, 328], [164, 335]],
-      [[170, 323.5], [174.5, 335]],
-      [[180.5, 319.5], [187, 329]],
-      [[186, 298.5], [198.5, 303.5]],
-      [[192.4, 312.5], [196.7, 320]],
-      // the right arm, out of the side and hooked back
-      [[402.3, 268], [405, 282], [403.3, 293], [401.5, 305.5], [398, 315], [390.8, 321.6], [382.6, 325], [376.5, 323.4], [369.3, 316], [362, 303.7]],
-      // the shoulder, a few broken strokes inside the edge
-      [[157, 128], [154, 135], [152, 143], [150.5, 151], [150.5, 155.5], [153.5, 154.5]],
-      [[159.5, 157], [157.6, 164], [156.6, 171.5]],
-      [[163.8, 172], [163.8, 184]],
-    ];
-    const edge = drift(rnd, trace(body, 0.8, true), 0.9);
-    const ink = inked(edge);
-    for (const pts of lines) inked(drift(rnd, trace(pts, 0.6, false), 0.35), ink);
-    for (const c of filled(trace(nose, 0.6, true))) ink.add(c);
+    const s = new Still(rnd).place([0, -16], 1.04);
+    const COAT = '#93603c';
+    const SHADE = '#74452a';
+    const DEEP = '#5a321e';
+    const LIT = '#b27c50';
+    const CREAM = '#dcad7c';
+    const PALE = '#eccb9c';
+    const PAD = '#e4bb8e';
+    const INK = '#2a1c16';
+    const mirror = (pts) => pts.map(([x, y]) => [512 - x, y]);
+    const { lay, wash, brush, line } = painter(rnd, INK);
+
+    const headPts = [[256, 80], [310, 86], [350, 106], [374, 140], [382, 182], [374, 222], [350, 254], [306, 274], [256, 280], [206, 274], [162, 254],
+      [138, 222], [130, 182], [138, 140], [162, 106], [202, 86]];
+    const head = spline(headPts);
+    const bodyPts = [[256, 236], [334, 246], [380, 282], [404, 330], [414, 384], [404, 428], [364, 452], [256, 462], [148, 452], [108, 428], [98, 384],
+      [108, 330], [132, 282], [178, 246]];
+    const body = spline(bodyPts);
+    // the arm on our left, from under the cheek down the side and bent in, its paw on the belly; the other is its mirror
+    const armL = [[164, 244], [138, 270], [122, 304], [124, 336], [144, 358], [176, 368], [210, 366], [236, 350], [242, 330], [230, 316], [206, 314],
+      [184, 306], [172, 288], [176, 262]];
+    const belly = blob(rnd, [256, 374], 96, 76, 0, 0.03);
+    // each foot an oval turned out a little, its sole to us: a big pad and four toes in an arc above it
+    const feet = [-1, 1].map((side) => {
+      const c = [256 + side * 126, 426];
+      const turn = side * 24;
+      const [co, si] = [Math.cos((turn * Math.PI) / 180), Math.sin((turn * Math.PI) / 180)];
+      const at = ([u, v]) => [c[0] + u * co - v * si, c[1] + u * si + v * co];
+      return { c, turn, at, d: blob(rnd, c, 50, 58, turn, 0.025) };
+    });
+
     s.paint((cv) => {
-      cv.add(`<g shape-rendering="crispEdges">`);
-      cv.add(`<path d="${squares(filled(edge))}" fill="${FUR}"/>`);
-      cv.add(`<path d="${squares(filled(trace(muzzle, 0.8, true)))}" fill="${MUZZLE}"/>`);
-      cv.add(`<path d="${squares(ink)}" fill="${LINE}"/>`);
+      // the ears behind the head, pale inside
+      for (const side of [-1, 1]) {
+        const X = (pts) => (side < 0 ? pts : mirror(pts));
+        const ear = blob(rnd, X([[166, 100]])[0], 38, 36, 0, 0.04);
+        lay(cv, ear, COAT);
+        cv.add(`<g clip-path="${within(cv, ear)}">`);
+        brush(cv, X([[136, 92], [150, 72], [176, 66]]), 16, LIT, 0.6, 'x');
+        cv.add('</g>');
+        lay(cv, blob(rnd, X([[162, 96]])[0], 21, 19, 0, 0.05), '#c98e60', 2.4);
+        wash(cv, blob(rnd, X([[166, 104]])[0], 12, 10, 0, 0.05), SHADE, 5, 0.5);
+      }
+      // the body, its shade brushed down both sides, the head's shadow under the chin, the round pale belly
+      lay(cv, body, COAT);
+      cv.add(`<g clip-path="${within(cv, body)}">`);
+      for (const side of [-1, 1]) {
+        const X = (pts) => (side < 0 ? pts : mirror(pts));
+        brush(cv, X([[118, 300], [104, 350], [104, 400], [120, 440]]), 34, SHADE, side < 0 ? 0.55 : 0.8, 'y');
+        brush(cv, X([[108, 330], [100, 380], [110, 430]]), 16, DEEP, side < 0 ? 0.35 : 0.55, 'y');
+      }
+      brush(cv, [[140, 264], [200, 282], [256, 288], [312, 282], [372, 264]], 26, SHADE, 0.6, 'x');
+      lay(cv, belly, CREAM, 2.4);
+      cv.add(`<g clip-path="${within(cv, belly)}">`);
+      brush(cv, [[190, 332], [236, 310], [288, 312]], 26, PALE, 0.8, 'x');
+      brush(cv, [[180, 420], [256, 448], [334, 420]], 22, '#c4925f', 0.6, 'x');
+      strokes(cv, rnd, belly, [160, 300, 352, 450], { count: 26, colours: [PALE], flow: () => -80, spread: 26, length: 11, width: 2,
+        opacity: [0.3, 0.6], bend: 0.2 });
+      cv.add('</g>');
+      strokes(cv, rnd, body, [100, 240, 412, 460], { count: 36, colours: [LIT], flow: () => -95, spread: 20, length: 12, width: 2,
+        opacity: [0.25, 0.5], bend: 0.2 });
+      cv.add('</g>');
+      // the feet out in front, darker round their rims, and the pale pads
+      for (const foot of feet) {
+        lay(cv, foot.d, COAT);
+        cv.add(`<g clip-path="${within(cv, foot.d)}">`);
+        brush(cv, arc(foot.c, 46, 54, 20, 160, { count: 8, turn: foot.turn }), 22, SHADE, 0.7, 'x');
+        lay(cv, blob(rnd, foot.at([0, 14]), 28, 24, foot.turn, 0.06), PAD, 2.4);
+        for (const [u, v] of [[-30, -22], [-11, -36], [11, -36], [30, -22]]) lay(cv, blob(rnd, foot.at([u, v]), 9.5, 11, foot.turn, 0.06), PAD, 2.4);
+        brush(cv, [foot.at([-18, 4]), foot.at([0, 0]), foot.at([16, 6])], 10, '#f4d8b0', 0.7, 'x');
+        cv.add('</g>');
+      }
+      // the arms, shaded along their outer edge and lit over the top of each paw
+      for (const side of [-1, 1]) {
+        const X = (pts) => (side < 0 ? pts : mirror(pts));
+        const arm = spline(X(armL));
+        lay(cv, arm, COAT);
+        cv.add(`<g clip-path="${within(cv, arm)}">`);
+        brush(cv, X([[150, 260], [128, 300], [130, 340], [160, 364]]), 26, SHADE, side < 0 ? 0.55 : 0.8, 'y');
+        brush(cv, X([[186, 322], [210, 318], [234, 328]]), 14, LIT, 0.8, 'x');
+        brush(cv, X([[150, 362], [190, 370], [226, 356]]), 14, DEEP, 0.5, 'x');
+        cv.add('</g>');
+      }
+      // the head: lit over its brow, shaded down its cheeks, the pale muzzle and a warm flush under each eye
+      lay(cv, head, COAT);
+      cv.add(`<g clip-path="${within(cv, head)}">`);
+      wash(cv, blob(rnd, [236, 118], 82, 36, -8, 0.05), LIT, 14, 0.7);
+      brush(cv, [[204, 92], [214, 124], [222, 150]], 22, LIT, 0.55, 'y');
+      brush(cv, [[256, 86], [254, 120], [252, 146]], 24, LIT, 0.55, 'y');
+      brush(cv, [[306, 94], [294, 124], [286, 148]], 20, LIT, 0.55, 'y');
+      for (const side of [-1, 1]) {
+        const X = (pts) => (side < 0 ? pts : mirror(pts));
+        brush(cv, X([[144, 160], [136, 204], [152, 244], [190, 270]]), 30, SHADE, side < 0 ? 0.5 : 0.8, 'y');
+        wash(cv, blob(rnd, X([[188, 212]])[0], 17, 10, 0, 0.05), '#b8603e', 6, 0.45);
+      }
+      brush(cv, [[190, 268], [256, 280], [322, 268]], 18, SHADE, 0.6, 'x');
+      lay(cv, blob(rnd, [256, 216], 56, 42, 0, 0.03), CREAM, 2.4);
+      brush(cv, [[222, 196], [250, 186], [280, 192]], 14, PALE, 0.75, 'x');
+      brush(cv, [[220, 246], [256, 256], [292, 246]], 12, '#c4925f', 0.6, 'x');
+      strokes(cv, rnd, head, [140, 84, 372, 170], { count: 26, colours: [PALE], flow: () => -100, spread: 26, length: 11, width: 2,
+        opacity: [0.25, 0.55], bend: 0.2 });
       cv.add('</g>');
     });
-    // flat colour, as a screen lays it, so no grain
-    return s.done({ finish: { ...PLAIN.finish, grain: 0 } });
+    s.paint((cv) => {
+      // the pencil line, open in places: round the ears, the head, the arms and paws, down the sides, round the feet
+      for (const side of [-1, 1]) {
+        const X = (pts) => (side < 0 ? pts : mirror(pts));
+        line(cv, X(arc([166, 100], 38, 36, 100, 330, { count: 14 })), 5.4, { start: 0.4, end: 0.3 });
+        line(cv, X([[140, 134], [131, 176], [136, 216], [156, 248], [190, 270], [228, 279]]), 5.8, { start: 0.4, end: 0.2 });
+        line(cv, X([[206, 314], [230, 316], [244, 332], [238, 352], [214, 366], [180, 369], [150, 361]]), 4.8, { start: 0.3, end: 0.2, peak: 0.5 });
+        line(cv, X([[174, 284], [180, 300], [192, 310]]), 3.8, { start: 0.2, end: 0.3 });
+        line(cv, X([[242, 332], [230, 334]]), 2.6, { start: 0.8, end: 0.2 });
+        line(cv, X([[238, 348], [227, 346]]), 2.6, { start: 0.8, end: 0.2 });
+        line(cv, X([[136, 274], [122, 304], [122, 336], [140, 356]]), 4.6, { start: 0.2, end: 0.4 });
+        line(cv, X([[150, 262], [124, 290], [106, 336], [99, 380], [104, 404]]), 5.8, { start: 0.3, end: 0.3 });
+      }
+      line(cv, [[200, 88], [256, 79], [312, 88]], 5, { start: 0.3, end: 0.3 });
+      line(cv, [[178, 454], [256, 463], [334, 454]], 5.2, { start: 0.3, end: 0.3 });
+      for (const foot of feet) {
+        const side = foot.turn < 0 ? -1 : 1;
+        line(cv, arc(foot.c, 50, 58, side < 0 ? 120 : -120, side < 0 ? 400 : 60, { count: 22, turn: foot.turn }), 5.4, { start: 0.3, end: 0.4, count: 50 });
+      }
+      // the face: the eyes half shut under heavy lids, the nose, and the smile
+      // (each eye's top runs along its lid, which droops toward the outer corner)
+      const eye = (c, side) => spline([...arc(c, 12.5, 9, 0, 180, { count: 6 }), [c[0] - 6, c[1] - 1 - side * 1.5], [c[0] + 6, c[1] - 1 + side * 1.5]]);
+      cv.add(`<g fill="${INK}" filter="${crayon(cv, rnd, { keep: 3.6, tear: 1.2, grain: 1.2 })}">`
+        + `<path d="${eye([198, 173], -1)}"/><path d="${eye([314, 173], 1)}"/>`
+        + `<path d="${spline([[236, 194], [256, 189], [276, 194], [272, 204], [256, 212], [240, 204]])}"/></g>`);
+      line(cv, [[181, 176], [196, 168], [216, 169]], 4.4, { start: 0.5, end: 0.6 });
+      line(cv, [[296, 169], [316, 168], [331, 176]], 4.4, { start: 0.6, end: 0.5 });
+      line(cv, [[256, 210], [256, 222]], 3.2, { start: 0.8, end: 0.6 });
+      line(cv, [[238, 222], [247, 230], [256, 222]], 3.4, { start: 0.4, end: 0.8, peak: 0.6 });
+      line(cv, [[256, 222], [265, 230], [274, 222]], 3.4, { start: 0.8, end: 0.4, peak: 0.4 });
+    });
+    return s.done({ finish: { paint: 0, grain: 0.008, contrast: 0, saturation: 1, warmth: 0 } });
   },
 };

@@ -1,130 +1,207 @@
-import { blob, mark, softly, torn } from '../brush.mjs';
-import { along, n, spline } from '../kit.mjs';
+import { blob, painter, strokes, within } from '../brush.mjs';
+import { n, spline } from '../kit.mjs';
 import { Still } from '../still.mjs';
-
-const PLAIN = { finish: { paint: 0, grain: 0.012, contrast: 0, saturation: 1, warmth: 0 } };
 
 export const piece = {
   key: 'kerosk',
   ku: 'Kêroşka Bihêz',
   en: 'Strong rabbit',
-  // a white rabbit standing square, both fists up beside its head to show its muscles, its head turned a little; a
-  // brush line in ink that runs thick and thin and goes dry where the brush lifts, pale washes where it rounds away
+  // a small white rabbit turned three-quarters to the right, pressing a little red-plated barbell up over its head in
+  // both paws, its ears standing up behind the bar; a hard little frown and a pink cheek, a puff of a tail, its feet set
+  // apart; the white fur painted over with lilac-grey shade and warm cream light, under a soft dark pencil line
   still(rnd) {
-    const s = new Still(rnd).place([0, 0], 1);
-    const INK = '#121a1f';
-    const PAPER = '#fff7f1';
-    const PINK = '#eba792';
-    const N = 60;
-    // A brush line: its body, and where the brush ran dry (`dry`: the share of the line at its start and its end) the
-    // hairs parting into streaks.
-    const brush = (pts, w, { start = 0.35, end = 0.35, peak = 0.4, dry = [0, 0], hairs = 6 } = {}) => {
-      const line = along(pts, N);
-      const a = Math.round(dry[0] * N);
-      const b = N - Math.round(dry[1] * N);
-      const body = line.slice(Math.max(0, a - (a ? 2 : 0)), Math.min(N + 1, b + (b < N ? 3 : 1)));
-      const out = [mark(rnd, body, w, { start: a ? 0.7 : start, end: b < N ? 0.75 : end, peak, tremble: 0.22, count: 36 })];
-      const normal = (i) => {
-        const p = line[Math.max(0, i - 1)];
-        const q = line[Math.min(N, i + 1)];
-        const l = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
-        return [-(q[1] - p[1]) / l, (q[0] - p[0]) / l];
-      };
-      // (each hair runs from the body of the line out to its own end, thinning as it goes)
-      const strand = (from, to, o) => {
-        const p = [];
-        for (let i = from; i !== to + Math.sign(to - from); i += Math.sign(to - from)) {
-          const [nx, ny] = normal(i);
-          p.push([line[i][0] + nx * o, line[i][1] + ny * o]);
-        }
-        if (p.length > 2) out.push(mark(rnd, p, w * (0.2 + rnd() * 0.18), { start: 0.9, end: 0.2, peak: 0.15, tremble: 0.45, count: 10 }));
-      };
-      for (let j = 0; j < hairs; j++) {
-        const o = ((j + 0.5) / hairs - 0.5) * w * 0.8 + (rnd() - 0.5) * w * 0.12;
-        if (b < N) strand(b - 3, Math.min(N, b + Math.max(2, Math.round((N - b) * (0.35 + rnd() * 0.65)))), o);
-        if (a) strand(a + 3, Math.max(0, a - Math.max(2, Math.round(a * (0.35 + rnd() * 0.65)))), o);
-      }
-      return out;
+    const s = new Still(rnd).place([2, -3], 0.96);
+    const FUR = '#f3edee';
+    const CREAM = '#fff6e6';
+    const SHADE = '#c2b4cc';
+    const DEEP = '#9c8fac';
+    const PINK = '#f0a39e';
+    const ROSE = '#e58784';
+    const [PLATE, PLATE_LIT, PLATE_DEEP] = ['#c64f3e', '#e8846c', '#8c332c'];
+    const [STEEL, STEEL_LIT, STEEL_DEEP] = ['#8e97a7', '#dde2ea', '#5f6879'];
+    const INK = '#2a1c16';
+    const { lay, wash, brush, line } = painter(rnd, INK);
+
+    // A limb as a smooth outline round its middle line, `ws` wide at each point; its two edges kept for the line.
+    const limb = (pts, ws) => {
+      const L = [];
+      const R = [];
+      pts.forEach((p, i) => {
+        const [a, b] = [pts[Math.max(0, i - 1)], pts[Math.min(pts.length - 1, i + 1)]];
+        const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+        const [nx, ny] = [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
+        L.push([p[0] + (nx * ws[i]) / 2, p[1] + (ny * ws[i]) / 2]);
+        R.push([p[0] - (nx * ws[i]) / 2, p[1] - (ny * ws[i]) / 2]);
+      });
+      return { d: spline([...L, ...[...R].reverse()]), L, R };
     };
-    // the parts, as filled shapes, before any line
-    const parts = [
-      spline([[236, 132], [231, 108], [235, 84], [243, 61], [256, 43], [271, 35], [280, 42], [283, 62], [282, 92], [278, 124], [275, 146], [250, 150]]),
-      spline([[276, 128], [284, 102], [294, 80], [308, 61], [324, 50], [338, 47], [344, 57], [343, 84], [338, 110], [329, 136], [316, 160], [300, 160]]),
-      spline([[228, 146], [212, 149], [199, 158], [190, 171], [184, 190], [177, 205], [175, 222], [179, 238], [190, 254], [226, 266], [262, 266], [300, 258], [326, 246], [335, 230], [335, 212], [329, 194], [319, 174], [300, 152], [260, 140]]),
-      spline([[150, 238], [146, 226], [149, 217], [157, 211], [157, 203], [147, 200], [134, 202], [121, 213], [111, 234], [105, 256], [107, 272], [118, 282], [132, 295], [147, 306], [160, 307], [172, 298], [186, 290], [188, 262], [180, 244], [166, 237]]),
-      spline([[372, 224], [366, 219], [359, 219], [358, 207], [372, 202], [388, 207], [399, 223], [406, 242], [408, 260], [404, 275], [394, 284], [378, 291], [358, 301], [340, 300], [326, 280], [324, 256], [340, 241], [356, 238], [369, 244]]),
-      spline([[180, 280], [200, 262], [256, 262], [316, 262], [340, 282], [354, 298], [351, 318], [346, 340], [333, 362], [320, 376], [318, 410], [318, 445], [316, 462], [307, 467], [296, 461], [280, 445], [266, 430], [257, 422], [250, 429], [238, 444], [230, 457], [224, 467], [206, 469], [206, 458], [196, 444], [188, 428], [187, 400], [190, 372], [193, 358], [180, 336], [168, 312]]),
-      blob(rnd, [335, 400], 14, 23, 0, 0.03),
-    ];
+    // The bar runs a little uphill into the distance, the far plates smaller than the near ones.
+    const barY = (x) => 125 - ((x - 64) * 14) / 384;
+    const band = (x0, x1, h0, h1) =>
+      `M${n(x0)} ${n(barY(x0) - h0)} L${n(x1)} ${n(barY(x1) - h1)} L${n(x1)} ${n(barY(x1) + h1)} L${n(x0)} ${n(barY(x0) + h0)} Z`;
+    // A plate seen at an angle: its face, and its thickness showing to the right of it.
+    const plate = (cv, cx, rx, ry, depth) => {
+      const cy = barY(cx);
+      lay(cv, blob(rnd, [cx + depth, cy], rx, ry, 0, 0.012), PLATE_DEEP);
+      lay(cv, `M${n(cx)} ${n(cy - ry)} L${n(cx + depth)} ${n(cy - ry)} L${n(cx + depth)} ${n(cy + ry)} L${n(cx)} ${n(cy + ry)} Z`, PLATE_DEEP);
+      const face = blob(rnd, [cx, cy], rx, ry, 0, 0.012);
+      lay(cv, face, PLATE);
+      cv.add(`<g clip-path="${within(cv, face)}">`);
+      brush(cv, [[cx - rx * 0.5, cy - ry * 0.8], [cx - rx * 0.7, cy - ry * 0.2], [cx - rx * 0.5, cy + ry * 0.4]], rx * 0.7, PLATE_LIT, 0.8, 'y');
+      brush(cv, [[cx + rx * 0.6, cy - ry * 0.3], [cx + rx * 0.5, cy + ry * 0.5], [cx, cy + ry * 0.95]], rx * 0.8, PLATE_DEEP, 0.55, 'y');
+      cv.add('</g>');
+      line(cv, [[cx + depth, cy - ry], [cx + depth + rx * 0.85, cy - ry * 0.55], [cx + depth + rx, cy], [cx + depth + rx * 0.85, cy + ry * 0.55],
+        [cx + depth, cy + ry], [cx, cy + ry]], 4.6, { start: 0.4, end: 0.5 });
+      const ring = [];
+      for (let i = 0; i <= 22; i++) {
+        const a = -Math.PI / 2 - (i / 22) * Math.PI * 2;
+        ring.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]);
+      }
+      line(cv, ring.slice(0, 20), 4.8, { start: 0.5, end: 0.3, count: 44 });
+    };
+
+    const earL = spline([[218, 182], [210, 150], [204, 110], [202, 72], [206, 46], [216, 34], [228, 40], [238, 70], [246, 110], [250, 150], [248, 182]]);
+    const earLin = spline([[221, 160], [215, 124], [212, 86], [215, 58], [222, 50], [230, 76], [236, 116], [239, 156]]);
+    const earR = spline([[256, 178], [258, 140], [264, 100], [272, 64], [284, 38], [296, 30], [304, 40], [304, 70], [298, 108], [290, 146], [284, 180]]);
+    const earRin = spline([[267, 158], [271, 118], [279, 82], [288, 54], [296, 46], [297, 72], [292, 106], [284, 142], [278, 162]]);
+    const armFar = limb([[312, 302], [342, 266], [360, 222], [361, 178], [351, 140]], [40, 34, 30, 28, 27]);
+    const armNear = limb([[214, 306], [186, 272], [166, 228], [160, 184], [166, 146]], [46, 40, 35, 32, 31]);
+    const head = spline([[258, 158], [292, 161], [322, 172], [344, 192], [356, 216], [362, 242], [357, 266], [341, 288], [314, 304], [280, 312], [244, 311],
+      [212, 302], [188, 285], [174, 262], [170, 234], [175, 206], [190, 183], [212, 167], [234, 160]]);
+    const body = spline([[210, 290], [306, 292], [332, 314], [346, 350], [350, 394], [340, 430], [316, 454], [278, 464], [236, 462], [204, 450], [182, 426],
+      [174, 390], [178, 350], [192, 314]]);
+    const tail = blob(rnd, [176, 414], 22, 20, 0, 0.08);
+    const footFar = blob(rnd, [308, 466], 34, 12.5, -4, 0.04);
+    const footNear = blob(rnd, [232, 470], 37, 14, 3, 0.04);
+
     s.paint((cv) => {
-      // its shadow on the ground: a wash laid in two passes, darker under its feet
-      cv.add(`<g filter="${torn(cv, rnd, 5, 0.05)}"><path d="${mark(rnd, [[126, 468], [180, 464], [250, 465], [320, 463], [366, 462]], 22, { start: 0.15, end: 0.2, peak: 0.55 })}" fill="#c9b2a6" fill-opacity="0.75"/>`
-        + `<path d="${mark(rnd, [[176, 468], [250, 467], [330, 465]], 13, { start: 0.3, end: 0.3, peak: 0.5 })}" fill="#a98f84" fill-opacity="0.35"/></g>`);
-      for (const d of parts) cv.add(`<path d="${d}" fill="${PAPER}"/>`);
-      // washes: the pink inside its ears and on its cheek, warm grey where it rounds away, pink inside its right arm
-      // (a watercolour stroke dries darker at its rim, where the pigment ran to)
-      const wash = (pts, w, colour, o, soft = 1.6) => {
-        const d = mark(rnd, pts, w, { start: 0.45, end: 0.25, peak: 0.45, tremble: 0.3 });
-        cv.add(`<g filter="${softly(cv, soft * 0.6)}"><path d="${d}" fill="${colour}" fill-opacity="${o}" stroke="${colour}" stroke-opacity="${n(o * 0.6)}" stroke-width="1.6"/></g>`);
-      };
-      cv.add(`<g fill="${PINK}" fill-opacity="0.9" filter="${softly(cv, 1.8)}"><path d="${spline([[246, 54], [256, 68], [263, 98], [263, 126], [256, 142], [245, 138], [240, 110], [240, 78]])}"/>`
-        + `<path d="${spline([[331, 56], [337, 72], [333, 100], [319, 130], [300, 156], [292, 148], [295, 120], [306, 90], [319, 66]])}"/></g>`);
-      cv.add(`<ellipse cx="277" cy="221" rx="19" ry="16.5" fill="#efbfaa" fill-opacity="0.85" filter="${softly(cv, 3)}"/>`);
-      wash([[192, 248], [220, 261], [252, 266], [284, 262]], 13, '#dcc8bc', 0.8, 2.5);
-      wash([[148, 260], [160, 280], [172, 300]], 17, '#c2afa5', 0.8);
-      wash([[122, 258], [134, 272], [146, 284]], 10, '#ddcdc2', 0.6, 2);
-      wash([[174, 298], [188, 320], [204, 346], [220, 372]], 20, '#d0bcae', 0.75, 2);
-      wash([[376, 268], [344, 280], [308, 300]], 14, '#d9c6b9', 0.75, 2);
-      wash([[362, 262], [346, 268], [330, 276]], 8, '#ddcdc2', 0.6, 2);
-      wash([[348, 292], [336, 316], [322, 340], [306, 362]], 26, '#e49a80', 0.75);
-      wash([[318, 320], [304, 344], [288, 370]], 14, '#eab4a2', 0.6, 2);
-      wash([[304, 366], [292, 374], [282, 382]], 10, '#dcc8bc', 0.6, 2);
-      wash([[226, 418], [242, 416], [258, 424]], 16, '#d6c3b7', 0.85, 2);
-      wash([[262, 424], [280, 430], [298, 438]], 9, '#e3d3c8', 0.6, 2);
-      wash([[198, 352], [208, 360], [218, 368]], 8, '#e3d3c8', 0.6, 2);
-      // the line, in one ink
-      const d = [];
-      // ears
-      d.push(...brush([[235, 130], [231, 110], [233, 86], [241, 62], [254, 44], [268, 35], [276, 38], [282, 56], [283, 84], [279, 116], [275, 148]], 9, { peak: 0.2, dry: [0.24, 0.14], hairs: 7 }));
-      d.push(...brush([[277, 122], [285, 98], [296, 76], [310, 58], [326, 49], [338, 48], [343, 58], [343, 82], [339, 108], [330, 135], [318, 158], [311, 171]], 8, { peak: 0.6, dry: [0, 0.16], start: 0.25 }));
-      // the head, open at its brow, a little fuller at the cheek turned toward us
-      d.push(...brush([[228, 145], [212, 149], [199, 158], [190, 171], [184, 192]], 9.5, { peak: 0.75, dry: [0.25, 0] }));
-      d.push(...brush([[186, 190], [177, 204], [175, 220], [178, 236], [186, 250], [193, 256]], 9.5, { start: 0.6, end: 0.3, peak: 0.4 }));
-      d.push(...brush([[316, 170], [324, 183], [331, 198], [335, 214], [335, 232]], 9.5, { start: 0.4, end: 0.2, peak: 0.45 }));
-      // its left fist, curled, and the arm round the elbow and under the muscle to the armpit
-      d.push(...brush([[149, 239], [145, 227], [148, 218], [156, 213], [158, 206], [151, 200], [139, 201]], 9, { start: 0.6, end: 0.5, peak: 0.3 }));
-      d.push(...brush([[141, 201], [128, 207], [117, 222], [109, 241], [105, 259], [107, 271], [113, 278], [125, 285], [135, 297], [147, 305], [158, 307], [167, 302]], 10.5, { start: 0.5, end: 0.3, peak: 0.35 }));
-      d.push(...brush([[137, 254], [145, 244], [156, 238], [167, 238], [175, 241], [181, 247]], 7.5, { start: 0.75, peak: 0.25, dry: [0, 0.25] }));
-      d.push(...brush([[146, 273], [156, 280], [167, 286], [176, 288]], 7, { start: 0.55, end: 0.4, peak: 0.6 }));
-      // its right fist, the bicep's top and the arm round to the armpit
-      d.push(...brush([[375, 217], [368, 220], [360, 220], [357, 212], [363, 204], [373, 202], [385, 205], [395, 217], [403, 231], [407, 247], [408, 264], [404, 276], [395, 283], [381, 290], [365, 297], [353, 302]], 8, { start: 0.5, end: 0.3, peak: 0.45 }));
-      d.push(...brush([[372, 226], [370, 233], [369, 242], [371, 250], [376, 258]], 6, { start: 0.3, end: 0.9, peak: 0.7 }));
-      d.push(...brush([[321, 254], [331, 245], [343, 240], [354, 238], [366, 241]], 8, { peak: 0.7, dry: [0.25, 0], end: 0.6 }));
-      d.push(...brush([[335, 285], [346, 287], [358, 284]], 8, { start: 0.7, end: 0.3, peak: 0.3 }));
-      // the chest: the two lines under it from the armpits, the line down its middle, the cross of its belly
-      d.push(...brush([[173, 284], [179, 296], [188, 309], [200, 319], [214, 325], [231, 327]], 10, { start: 0.6, end: 0.15, peak: 0.35 }));
-      d.push(...brush([[337, 281], [331, 293], [321, 307], [310, 317], [297, 322], [280, 325], [259, 327]], 10, { start: 0.6, end: 0.15, peak: 0.3 }));
-      d.push(...brush([[241, 285], [236, 302], [242, 322]], 6.5, { start: 0.2, end: 0.15, peak: 0.5 }));
-      d.push(blob(rnd, [200, 313], 4.2, 5, 30, 0.05), blob(rnd, [298, 311], 4.6, 5.2, 20, 0.05), blob(rnd, [245, 374], 4.6, 5, 0, 0.05));
-      d.push(...brush([[230, 352], [243, 352], [256, 353]], 6, { start: 0.6, end: 0.4, peak: 0.4 }));
-      d.push(...brush([[242, 337], [243, 350], [243, 364]], 5.5, { start: 0.3, end: 0.6, peak: 0.6 }));
-      // its sides down to its feet, apart, and its tail
-      d.push(...brush([[164, 302], [169, 317], [179, 334], [189, 347], [195, 357], [193, 368], [189, 384], [188, 410], [190, 432], [200, 446], [208, 458], [206, 468]], 9, { start: 0.4, end: 0.7, peak: 0.6 }));
-      d.push(...brush([[204, 469], [215, 469], [225, 465], [233, 452], [241, 439], [249, 429], [257, 420]], 8.5, { start: 0.8, end: 0.35, peak: 0.3 }));
-      d.push(...brush([[257, 420], [266, 428], [278, 440], [290, 451], [301, 462], [310, 467], [320, 464]], 8.5, { start: 0.4, end: 0.6, peak: 0.6 }));
-      d.push(...brush([[244, 434], [252, 435], [259, 434]], 4.5, { start: 0.6, end: 0.3, peak: 0.4 }));
-      d.push(...brush([[354, 297], [351, 312], [348, 332], [343, 347], [332, 362], [323, 370], [318, 378], [318, 396], [319, 423], [318, 444], [316, 461], [311, 467]], 9, { start: 0.45, end: 0.6, peak: 0.55 }));
-      d.push(...brush([[320, 375], [332, 376], [343, 383], [349, 398], [349, 409], [343, 418], [335, 421], [327, 424]], 8.5, { start: 0.5, end: 0.3, peak: 0.45 }));
-      // its face: one eye, the nose and the little mouth under it
-      d.push(blob(rnd, [258, 198], 10.3, 10.8, 0, 0.03));
-      d.push(...brush([[203, 212], [209, 211], [215, 213]], 5.5, { start: 0.95, end: 0.7, peak: 0.2 }));
-      d.push(...brush([[208, 212], [207, 220], [204, 228]], 5.2, { start: 0.6, end: 0.95, peak: 0.7 }));
-      d.push(...brush([[207, 220], [212, 225], [218, 229]], 5, { start: 0.6, end: 0.9, peak: 0.7 }));
-      // (a faint blurred copy under it is the ink creeping into the paper's fibres)
-      const lines = d.map((x) => `<path d="${x}"/>`).join('');
-      cv.add(`<g fill="${INK}" fill-opacity="0.18" filter="${softly(cv, 1.4)}">${lines}</g>`);
-      cv.add(`<g fill="${INK}" filter="${torn(cv, rnd, 2, 0.11)}">${lines}</g>`);
+      // the ears behind everything, pink inside, the far edge of each in lilac
+      for (const [ear, inner, x] of [[earL, earLin, 226], [earR, earRin, 284]]) {
+        lay(cv, ear, FUR);
+        cv.add(`<g clip-path="${within(cv, ear)}">`);
+        brush(cv, [[x + 14, 50], [x + 18, 110], [x + 16, 180]], 16, SHADE, 0.7, 'y');
+        brush(cv, [[x - 18, 60], [x - 20, 120], [x - 16, 170]], 10, CREAM, 0.9, 'y');
+        cv.add('</g>');
+        lay(cv, inner, PINK, 2.4);
+        cv.add(`<g clip-path="${within(cv, inner)}">`);
+        brush(cv, [[x + 4, 70], [x + 6, 120], [x + 8, 160]], 10, ROSE, 0.6, 'y');
+        cv.add('</g>');
+      }
+      line(cv, [[212, 178], [206, 140], [202, 98], [203, 62], [210, 40], [219, 34], [228, 41], [238, 72], [245, 112],
+        [249, 150]], 5.4, { start: 0.3, end: 0.4, count: 44 });
+      line(cv, [[258, 170], [259, 136], [266, 96], [275, 60], [288, 36], [298, 30], [305, 42], [304, 74], [297, 112],
+        [289, 150]], 5.4, { start: 0.3, end: 0.4, count: 44 });
+      // the bar and its plates: the near ones over the bar, then the bar's near end; the far ones, then the bar running
+      // into them and its collar
+      lay(cv, band(66, 444, 5, 4.4), STEEL);
+      brush(cv, [[70, barY(70) - 2], [250, barY(250) - 2], [440, barY(440) - 2]], 4, STEEL_LIT, 0.9, 'x');
+      line(cv, [[150, barY(150) - 5], [330, barY(330) - 4.6]], 3.2, { start: 0.6, end: 0.6 });
+      line(cv, [[150, barY(150) + 5.5], [330, barY(330) + 5]], 3.6, { start: 0.6, end: 0.6 });
+      lay(cv, band(130, 142, 9, 9), STEEL_DEEP);
+      line(cv, [[132, barY(132) - 9], [142, barY(142) - 9], [142, barY(142) + 9]], 3.2, { start: 0.5, end: 0.5 });
+      plate(cv, 106, 17.5, 47, 10);
+      plate(cv, 85, 13, 34, 8);
+      lay(cv, band(66, 86, 5.2, 5.2), STEEL);
+      line(cv, [[86, barY(86) - 5], [68, barY(68) - 5], [65, barY(68)], [68, barY(68) + 5], [86, barY(86) + 5]], 3.4, { start: 0.5, end: 0.5 });
+      plate(cv, 424, 10.5, 28, 7);
+      plate(cv, 399, 15, 41, 9);
+      lay(cv, band(360, 402, 4.5, 4.4), STEEL);
+      lay(cv, band(372, 382, 8, 8), STEEL_DEEP);
+      line(cv, [[372, barY(372) - 8], [382, barY(382) - 8], [382, barY(382) + 8], [372, barY(372) + 8]], 3.2, { start: 0.5, end: 0.5 });
+      // the far arm, in the head's shade, and its paw closed over the bar
+      lay(cv, armFar.d, FUR);
+      cv.add(`<g clip-path="${within(cv, armFar.d)}">`);
+      brush(cv, [[346, 140], [356, 200], [344, 260], [316, 300]], 34, SHADE, 0.75, 'y');
+      strokes(cv, rnd, armFar.d, [320, 130, 380, 300], { count: 12, colours: [DEEP], flow: () => 100, spread: 20, length: 9, width: 1.6, opacity: [0.2, 0.4] });
+      cv.add('</g>');
+      line(cv, armFar.R.slice(1), 5.2, { start: 0.5, end: 0.3 });
+      line(cv, armFar.L.slice(2), 5, { start: 0.3, end: 0.4 });
+      const pawFar = blob(rnd, [349, 120], 17, 15, 10, 0.05);
+      lay(cv, pawFar, FUR);
+      wash(cv, blob(rnd, [356, 125], 10, 8, 0, 0.05), SHADE, 4, 0.8);
+      line(cv, [[336, 129], [333, 117], [340, 107], [354, 105], [364, 113], [365, 125], [358, 134]], 5, { start: 0.4, end: 0.4 });
+      line(cv, [[342, 113], [346, 121]], 2.6, { start: 0.6, end: 0.4 });
+      line(cv, [[351, 111], [355, 120]], 2.6, { start: 0.6, end: 0.4 });
+      // the tail behind, a puff of cream; the far foot; then the body over them
+      lay(cv, tail, FUR);
+      wash(cv, blob(rnd, [170, 408], 12, 10, 0, 0.1), CREAM, 4, 0.9);
+      wash(cv, blob(rnd, [184, 426], 12, 8, 0, 0.1), SHADE, 5, 0.7);
+      strokes(cv, rnd, tail, [152, 392, 200, 438], { count: 14, colours: [DEEP], flow: () => 60, spread: 80, length: 7, width: 1.6, opacity: [0.2, 0.45] });
+      line(cv, [[180, 396], [168, 394], [158, 401], [154, 412], [159, 425], [170, 433]], 4.2, { start: 0.3, end: 0.3, tremble: 0.3 });
+      lay(cv, footFar, FUR);
+      wash(cv, footFar, SHADE, 5, 0.7);
+      line(cv, [[292, 472], [308, 478], [330, 476], [341, 468], [337, 458]], 4.8, { start: 0.4, end: 0.4 });
+      lay(cv, body, FUR);
+      cv.add(`<g clip-path="${within(cv, body)}">`);
+      // the shadow the head throws on the chest, the far side and under the belly in lilac; the belly turned to the light
+      wash(cv, spline([[196, 296], [250, 312], [306, 310], [344, 300], [340, 336], [300, 344], [250, 340], [200, 326]]), SHADE, 9, 0.8);
+      brush(cv, [[334, 330], [346, 376], [336, 424], [312, 454]], 30, SHADE, 0.65, 'y');
+      brush(cv, [[350, 350], [352, 400], [338, 440]], 14, DEEP, 0.35, 'y');
+      brush(cv, [[196, 444], [250, 466], [316, 456]], 20, SHADE, 0.55, 'x');
+      wash(cv, blob(rnd, [278, 390], 34, 46, -8, 0.05), '#fffaf0', 10, 0.95);
+      brush(cv, [[188, 352], [184, 392], [192, 422]], 16, CREAM, 0.9, 'y');
+      // the near haunch, round, with its shade under it
+      brush(cv, [[212, 448], [244, 456], [268, 446]], 18, DEEP, 0.4, 'x');
+      strokes(cv, rnd, body, [176, 320, 348, 462],
+        { count: 30, colours: [DEEP], flow: () => 80, spread: 40, length: 9, width: 1.8, opacity: [0.15, 0.35], bend: 0.2 });
+      strokes(cv, rnd, body, [176, 340, 320, 440],
+        { count: 22, colours: ['#ffffff'], flow: () => 80, spread: 30, length: 10, width: 2.2, opacity: [0.5, 0.8], bend: 0.2 });
+      cv.add('</g>');
+      line(cv, [[184, 332], [176, 362], [174, 394], [182, 426], [202, 448], [226, 460]], 5.6, { start: 0.3, end: 0.4 });
+      line(cv, [[334, 318], [346, 350], [350, 392], [341, 428], [318, 452], [294, 462]], 5.6, { start: 0.3, end: 0.4 });
+      line(cv, [[204, 404], [222, 400], [240, 408], [252, 426], [254, 448]], 4.4, { start: 0.2, end: 0.6, peak: 0.6 });
+      lay(cv, footNear, FUR);
+      cv.add(`<g clip-path="${within(cv, footNear)}">`);
+      brush(cv, [[200, 478], [234, 484], [266, 478]], 12, SHADE, 0.7, 'x');
+      cv.add('</g>');
+      line(cv, [[206, 464], [195, 470], [202, 480], [230, 486], [256, 482], [268, 472], [260, 463]], 5.2, { start: 0.4, end: 0.4 });
+      line(cv, [[256, 474], [261, 480]], 2.6);
+      line(cv, [[246, 476], [250, 483]], 2.6);
+      // the head: cream where the light falls on its crown and near cheek, lilac down its far side, under its chin and
+      // in the shadow of the near arm
+      lay(cv, head, FUR);
+      cv.add(`<g clip-path="${within(cv, head)}">`);
+      brush(cv, [[350, 196], [364, 240], [348, 284], [312, 308]], 30, SHADE, 0.6, 'y');
+      brush(cv, [[204, 302], [256, 314], [314, 304]], 22, SHADE, 0.5, 'x');
+      brush(cv, [[192, 190], [180, 236], [192, 280]], 18, SHADE, 0.45, 'y');
+      brush(cv, [[200, 206], [230, 178], [282, 168], [324, 180]], 34, CREAM, 0.9, 'x');
+      brush(cv, [[206, 244], [214, 272], [232, 292]], 16, CREAM, 0.7, 'y');
+      strokes(cv, rnd, head, [172, 164, 362, 310],
+        { count: 30, colours: [DEEP], flow: () => 20, spread: 50, length: 8, width: 1.6, opacity: [0.12, 0.3], bend: 0.2 });
+      strokes(cv, rnd, head, [190, 166, 330, 250],
+        { count: 18, colours: ['#ffffff'], flow: () => -20, spread: 40, length: 10, width: 2.2, opacity: [0.5, 0.85], bend: 0.2 });
+      cv.add('</g>');
+      wash(cv, blob(rnd, [258, 264], 22, 15, -8, 0.05), PINK, 6, 0.95);
+      wash(cv, blob(rnd, [352, 262], 6, 9, 0, 0.05), PINK, 4, 0.7);
+      line(cv, [[228, 162], [206, 172], [188, 190], [176, 214], [171, 242], [178, 268], [196, 290], [226, 307], [262, 313],
+        [300, 308]], 5.8, { start: 0.3, end: 0.3, count: 44 });
+      line(cv, [[294, 162], [322, 174], [344, 194], [356, 218], [362, 242], [357, 266], [341, 288], [318, 302]], 5.6, { start: 0.3, end: 0.4 });
+      // a hard little frown: the brows drawn down, the eyes dark with a catch of light, the nose and the mouth set
+      line(cv, [[254, 203], [268, 205], [286, 213]], 4.6, { start: 0.5, end: 0.7, peak: 0.6 });
+      line(cv, [[326, 211], [335, 205], [344, 201]], 4, { start: 0.7, end: 0.4, peak: 0.3 });
+      cv.add(`<g fill="${INK}"><path d="${blob(rnd, [274, 229], 9.5, 11.5, 0, 0.03)}"/><path d="${blob(rnd, [336, 227], 6.5, 10.5, 0, 0.03)}"/></g>`);
+      cv.add('<g fill="#fffaf2"><circle cx="271" cy="225" r="3"/><circle cx="334.5" cy="223" r="2.3"/></g>');
+      lay(cv, spline([[319, 246], [334, 244], [330, 253], [325, 256]]), ROSE, 3);
+      line(cv, [[318, 245], [334, 243], [327, 255], [318, 245]], 2.6, { start: 0.6, end: 0.6 });
+      line(cv, [[326, 256], [326, 263]], 2.8);
+      line(cv, [[316, 268], [321, 264], [326, 263], [332, 265], [336, 269]], 3, { start: 0.5, end: 0.5 });
+      // the near arm, up past its cheek, and its paw closed over the bar
+      lay(cv, armNear.d, FUR);
+      cv.add(`<g clip-path="${within(cv, armNear.d)}">`);
+      brush(cv, [[154, 150], [150, 210], [166, 270], [196, 312]], 18, CREAM, 0.95, 'y');
+      brush(cv, [[180, 146], [178, 206], [194, 260], [222, 300]], 18, SHADE, 0.75, 'y');
+      strokes(cv, rnd, armNear.d, [140, 130, 240, 320],
+        { count: 14, colours: [DEEP], flow: () => 75, spread: 20, length: 9, width: 1.6, opacity: [0.15, 0.35] });
+      cv.add('</g>');
+      line(cv, armNear.L.slice(0, 4), 5.8, { start: 0.3, end: 0.4 });
+      line(cv, armNear.R.slice(1, 4), 5.4, { start: 0.4, end: 0.4 });
+      const pawNear = blob(rnd, [167, 125], 19.5, 17, -10, 0.05);
+      lay(cv, pawNear, FUR);
+      wash(cv, blob(rnd, [174, 132], 11, 8, 0, 0.05), SHADE, 4, 0.7);
+      line(cv, [[154, 136], [149, 122], [156, 110], [171, 107], [183, 113], [186, 126], [179, 138]], 5.4, { start: 0.4, end: 0.4 });
+      line(cv, [[160, 114], [163, 123]], 2.8, { start: 0.6, end: 0.4 });
+      line(cv, [[170, 112], [173, 121]], 2.8, { start: 0.6, end: 0.4 });
     });
-    return s.done(PLAIN);
+    return s.done({ finish: { paint: 0, grain: 0.008, contrast: 0, saturation: 1, warmth: 0 } });
   },
 };

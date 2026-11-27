@@ -1,234 +1,216 @@
-import { mark, specks, torn, within } from '../brush.mjs';
-import { n, spline } from '../kit.mjs';
+import { blob, crayon, painter, strokes, within } from '../brush.mjs';
+import { along, spline } from '../kit.mjs';
 import { Still } from '../still.mjs';
 
 export const piece = {
   key: 'pisik-cizme',
   ku: 'Pisîka Bi Çizme',
   en: 'Cat in boots',
-  // a fluffy kitten walking upright to the right in a big dented hat and pointed riding boots, engraved in one
-  // maroon ink on pink paper: its fur cut in short strokes, solid in the shade and thinning to bare paper in the
-  // light, the hat's brim pulled low over its face, the boots stitched, a scatter of dirt underfoot
+  // a ginger tabby standing up on its hind legs, three-quarters on to us, its paws on its hips: a brown wide-brimmed hat
+  // pushed back behind its ears, a red neckerchief round its neck and tall brown boots with turned-down tops; painted
+  // in warm oranges with soft stripes brushed on, a cream muzzle and chest and green eyes, and inked over in a soft
+  // dark pencil line that swells, thins and breaks
   still(rnd) {
-    const s = new Still(rnd).place([-5, -10], 1.1);
-    const INK = '#560d11';
-    const PAPER = '#fae6e2';
-    const wob = (pts, a = 1) => pts.map(([x, y]) => [x + (rnd() - 0.5) * 2 * a, y + (rnd() - 0.5) * 2 * a]);
-    const shape = (pts, a = 1) => spline(wob(pts, a));
-    const smooth = (a, b, v) => {
-      const t = Math.max(0, Math.min(1, (v - a) / (b - a)));
-      return t * t * (3 - 2 * t);
+    const s = new Still(rnd).place([-2, -6], 0.96);
+    const [COAT, SHADE, DEEP, STRIPE, LIGHT, CREAM, PALE] = ['#d8843e', '#b9652d', '#9a4b24', '#a5502a', '#efad66', '#f2d9b4', '#f9ebd3'];
+    const [HAT, HAT_LIT, HAT_DEEP, BAND] = ['#7b4d2e', '#a06a42', '#55311d', '#3d2417'];
+    const [BOOT, BOOT_LIT, BOOT_DEEP, CUFF, CUFF_LIT, SOLE] = ['#74432a', '#a06840', '#4a2918', '#b88250', '#d6a670', '#3b2418'];
+    const [RED, RED_DEEP, RED_LIT] = ['#c43a2c', '#8f2420', '#e2654c'];
+    const INK = '#2a1c16';
+    const { lay, wash, brush, line } = painter(rnd, INK);
+    const clip = (cv, d, draw) => {
+      cv.add(`<g clip-path="${within(cv, d)}">`);
+      draw();
+      cv.add('</g>');
     };
-    const near = (x, y, cx, cy, rx, ry) => smooth(1, 0.3, Math.hypot((x - cx) / rx, (y - cy) / ry));
-    const solid = (cv, d, rough = 2.4) => cv.add(`<path d="${d}" fill="${INK}" filter="${torn(cv, rnd, rough, 0.12)}"/>`);
-    const line = (cv, pts, w, c = INK, o = {}) =>
-      cv.add(`<path d="${mark(rnd, pts, w, { start: 0.3, end: 0.3, peak: 0.5, tremble: 0.5, count: 20, ...o })}" fill="${c}"`
-        + ` filter="${torn(cv, rnd, 1.2, 0.15)}"/>`);
-    // A tuft of fur as an engraver cuts it: blunt where it starts, running out to a point, a little bent.
-    const tuft = ([x, y], deg, l, w) => {
-      const a = (deg * Math.PI) / 180;
-      const [ux, uy] = [Math.cos(a), Math.sin(a)];
-      const b = (rnd() - 0.5) * l * 0.45;
-      return mark(rnd, [[x - (ux * l) / 2, y - (uy * l) / 2], [x - uy * b, y + ux * b], [x + (ux * l) / 2, y + (uy * l) / 2]],
-        w, { start: 0.7, end: 0.05, peak: 0.3, tremble: 0.5, count: 8 });
+    const rot = (pts, deg, [cx, cy]) => {
+      const [c, si] = [Math.cos((deg * Math.PI) / 180), Math.sin((deg * Math.PI) / 180)];
+      return pts.map(([x, y]) => [cx + (x - cx) * c - (y - cy) * si, cy + (x - cx) * si + (y - cy) * c]);
     };
-    // Tufts over the box, kept to `d`, landing where `tone` (0..1) beats a throw, so the shade builds up cut by cut.
-    const fur = (cv, d, [x0, y0, x1, y1], count, flow, tone, o = {}) => {
-      let out = '';
-      for (let i = 0; i < count; i++) {
-        const [x, y] = [x0 + rnd() * (x1 - x0), y0 + rnd() * (y1 - y0)];
-        if (rnd() >= tone(x, y)) continue;
-        const tilt = flow(x, y) + (rnd() - 0.5) * (o.spread ?? 26);
-        out += `<path d="${tuft([x, y], tilt, (o.length ?? 12) * (0.5 + rnd()), (o.width ?? 4.4) * (0.6 + rnd() * 0.8))}"/>`;
-      }
-      cv.add(`<g clip-path="${within(cv, d)}"><g fill="${o.colour ?? INK}" filter="${torn(cv, rnd, 1.4, 0.2)}">${out}</g></g>`);
-    };
-    // Fur standing off an edge: tufts rooted along `pts`, pointing out along `deg`.
-    const fringe = (cv, pts, deg, count, l = 9, w = 3.2) => {
-      let out = '';
-      const path = pts.length > 1 ? pts : [pts[0], pts[0]];
-      for (let i = 0; i < count; i++) {
-        const t = (i + rnd() * 0.8) / count;
-        const k = Math.min(path.length - 2, Math.floor(t * (path.length - 1)));
-        const f = t * (path.length - 1) - k;
-        const [x, y] = [path[k][0] + (path[k + 1][0] - path[k][0]) * f, path[k][1] + (path[k + 1][1] - path[k][1]) * f];
-        const a = ((deg + (rnd() - 0.5) * 40) * Math.PI) / 180;
-        const len = l * (0.5 + rnd());
-        const root = [x + Math.cos(a) * (len / 2 - 2), y + Math.sin(a) * (len / 2 - 2)];
-        out += `<path d="${tuft(root, (a * 180) / Math.PI, len, w * (0.7 + rnd() * 0.6))}"/>`;
-      }
-      cv.add(`<g fill="${INK}" filter="${torn(cv, rnd, 1.4, 0.2)}">${out}</g>`);
+    const oval = ([cx, cy], rx, ry, deg = 0, count = 24) =>
+      rot(Array.from({ length: count }, (_, i) => (i / count) * Math.PI * 2).map((t) => [cx + Math.cos(t) * rx, cy + Math.sin(t) * ry]), deg, [cx, cy]);
+    // A stretch of a closed outline from point `i` to point `j`, running on past its start where it must, to ink.
+    const seg = (P, i, j) => Array.from({ length: ((j - i + P.length) % P.length) + 1 }, (_, k) => P[(i + k) % P.length]);
+    // A limb or a tail along `pts`, `w0` wide where it starts and `w1` where it ends: its outline and its two sides.
+    const tube = (pts, w0, w1) => {
+      const c = along(pts, 20);
+      const [L, R] = [[], []];
+      c.forEach((p, i) => {
+        const [a, b] = [c[Math.max(0, i - 1)], c[Math.min(c.length - 1, i + 1)]];
+        const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+        const w = (w0 + ((w1 - w0) * i) / (c.length - 1)) / 2;
+        L.push([p[0] - ((b[1] - a[1]) / l) * w, p[1] + ((b[0] - a[0]) / l) * w]);
+        R.push([p[0] + ((b[1] - a[1]) / l) * w, p[1] - ((b[0] - a[0]) / l) * w]);
+      });
+      return { d: spline([...L, ...[...R].reverse()]), L, R };
     };
 
-    const brim = shape([[164, 137], [168, 122], [178, 112], [194, 106], [212, 102], [232, 104], [256, 112], [282, 119], [306, 123], [328, 123], [346, 127],
-      [358, 137], [363, 150], [357, 161], [340, 165], [318, 163], [298, 160], [276, 158], [252, 158], [228, 160], [206, 163], [186, 162], [172, 155]], 0.8);
-    const crown = shape([[214, 112], [215, 94], [218, 80], [224, 70], [236, 65], [254, 62], [272, 64], [290, 67], [306, 70], [314, 75], [317, 90], [319, 106],
-      [320, 122], [290, 124], [250, 115]], 0.6);
-    const body = shape([[206, 168], [240, 166], [290, 164], [314, 166], [322, 178], [326, 192], [324, 206], [316, 217], [304, 227], [300, 244], [300, 262],
-      [299, 282], [300, 300], [305, 316], [316, 330], [328, 340], [338, 349], [318, 354], [300, 360], [290, 360], [282, 352], [276, 356], [272, 366],
-      [271, 374], [214, 374], [206, 360], [196, 350], [190, 334], [188, 310], [188, 280], [189, 250], [192, 228], [195, 206], [199, 188]], 0.8);
-    const tail = shape([[196, 311], [180, 317], [162, 317], [148, 310], [137, 299], [129, 289], [123, 282], [117, 283], [114, 291], [117, 300], [123, 310],
-      [131, 322], [143, 335], [158, 345], [175, 351], [192, 355], [208, 357]], 0.8);
-    const paw = shape([[288, 238], [298, 236], [302, 250], [307, 262], [316, 272], [326, 276], [334, 274], [340, 280], [337, 291], [326, 295], [312, 292],
-      [300, 284], [292, 270], [288, 254]], 0.5);
-    const bootL = shape([[215, 369], [228, 367], [240, 371], [252, 373], [262, 370], [270, 373], [268, 386], [265, 400], [262, 412], [265, 422], [273, 431],
-      [283, 437], [292, 442], [298, 447], [293, 452], [278, 454], [258, 455], [241, 454], [239, 457], [226, 457], [214, 456], [213, 438], [213, 410],
-      [214, 388]], 0.5);
-    const bootR = shape([[292, 360], [304, 354], [318, 349], [330, 346], [338, 347], [340, 362], [343, 376], [347, 388], [360, 391], [374, 390], [386, 388],
-      [396, 388], [401, 391], [396, 396], [384, 402], [368, 411], [354, 418], [346, 422], [347, 436], [333, 437], [330, 428], [322, 416], [312, 398],
-      [302, 380], [295, 368]], 0.5);
+    // The hat sits behind the ears, pushed back and tilted, so the whole face shows under it.
+    const HAT_AT = [246, 104];
+    const brim = oval(HAT_AT, 134, 30, -10, 32);
+    const crown = rot([[198, 108], [196, 80], [199, 56], [212, 40], [232, 34], [248, 44], [264, 34], [286, 37], [299, 52], [303, 80], [302, 108], [276, 114],
+      [248, 116], [222, 114]], -10, HAT_AT);
+    const earFar = [[166, 146], [160, 112], [163, 84], [170, 70], [186, 80], [206, 96], [222, 112]];
+    const earNear = [[262, 108], [284, 88], [304, 72], [316, 64], [322, 80], [322, 104], [316, 124]];
+    const head = [[172, 120], [202, 104], [240, 98], [280, 102], [314, 118], [332, 146], [338, 178], [336, 204], [346, 222], [330, 228], [322, 244], [298, 258],
+      [262, 266], [226, 266], [196, 258], [176, 244], [164, 234], [146, 226], [158, 212], [154, 188], [156, 156]];
+    const torso = [[184, 262], [226, 270], [272, 268], [306, 260], [322, 282], [332, 316], [336, 350], [332, 380], [312, 396], [280, 402], [240, 402], [204, 398],
+      [182, 384], [172, 354], [170, 320], [174, 290]];
+    const band = [[180, 246], [214, 258], [256, 262], [296, 256], [318, 246], [322, 262], [306, 280], [270, 290], [232, 292], [200, 286], [180, 270]];
+    const bib = [[192, 278], [228, 286], [262, 282], [244, 302], [226, 328], [212, 302]];
+    const armFar = tube([[192, 282], [160, 296], [138, 316], [142, 336], [164, 346], [184, 352]], 36, 28);
+    const armNear = tube([[304, 280], [336, 292], [360, 314], [356, 336], [336, 346], [318, 352]], 38, 30);
+    const paws = [[186, 352], [316, 352]];
+    const tail = tube([[326, 374], [368, 384], [404, 370], [426, 338], [428, 304], [418, 282], [404, 272]], 28, 14);
+    const TIP = [404, 272];
+    const bootFar = [[186, 396], [226, 396], [228, 430], [230, 462], [234, 472], [232, 484], [196, 486], [164, 486], [150, 482], [152, 472], [166, 466], [184, 460],
+      [186, 430]];
+    const bootNear = [[264, 394], [308, 394], [310, 430], [312, 462], [316, 474], [314, 490], [276, 492], [240, 492], [226, 486], [230, 476], [246, 470], [264, 464],
+      [264, 430]];
+    const cuffFar = [[172, 380], [206, 376], [240, 380], [236, 394], [232, 408], [208, 404], [186, 408], [180, 394]];
+    const cuffNear = [[252, 378], [288, 374], [322, 378], [318, 392], [314, 406], [288, 402], [262, 406], [256, 392]];
+    const D = Object.fromEntries(Object.entries({ brim, crown, head, torso, band, bib }).map(([k, v]) => [k, spline(v)]));
+    const loop = (P) => [...P, P[0], P[1]];
 
+    // Each part is inked as soon as it is painted, so the parts in front of it cover its line as they cover its paint.
     s.paint((cv) => {
-      // dirt kicked along the ground, a dark smear under the boots thinning out to specks
-      solid(cv, shape([[150, 440], [180, 437], [210, 438], [244, 439], [280, 440], [316, 441], [324, 444], [290, 447], [250, 449], [210, 448], [180, 446],
-        [156, 445]], 1.2), 4.5);
-      let dirt = '';
-      for (let i = 0; i < 130; i++) {
-        const x = 110 + rnd() * 302;
-        const y = 443 + (rnd() - 0.45) * (x < 300 ? 16 : 9) + (x > 330 ? -3 : 0) - (x < 170 ? 4 : 0);
-        const r = 0.8 + rnd() * rnd() * 2.6;
-        dirt += `<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(r * (1.2 + rnd()))}" ry="${n(r)}"/>`;
+      // The tail goes first, behind everything, its rings brushed across it.
+      lay(cv, tail.d, COAT);
+      lay(cv, blob(rnd, TIP, 7, 7, 0, 0.05), DEEP);
+      clip(cv, tail.d, () => {
+        for (const [x, y, deg] of [[352, 382, 90], [380, 382, 70], [404, 368, 40], [422, 342, 10]]) {
+          const [c, si] = [Math.cos((deg * Math.PI) / 180) * 18, Math.sin((deg * Math.PI) / 180) * 18];
+          brush(cv, [[x - c, y - si], [x, y], [x + c, y + si]], 8, STRIPE, 0.8, 'x');
+        }
+        brush(cv, [[336, 388], [378, 394], [416, 374]], 12, SHADE, 0.6, 'x');
+        brush(cv, [[428, 304], [418, 282], [402, 272]], 16, DEEP, 0.9, 'y');
+      });
+      line(cv, tail.L, 5, { start: 0.2, end: 0.3 });
+      line(cv, tail.R, 5, { start: 0.2, end: 0.3 });
+      line(cv, oval(TIP, 7, 7, -40, 12).slice(2, 9), 4.4, { start: 0.3, end: 0.3 });
+      // The light comes from the upper left, as on the deer: the brim is lit along its top and dark at its edge, and the
+      // crown is pinched in the middle with a dark band round it.
+      lay(cv, D.brim, HAT, 2.8);
+      clip(cv, D.brim, () => {
+        brush(cv, rot([[120, 104], [180, 88], [246, 84], [312, 88], [372, 102]], -10, HAT_AT), 22, HAT_LIT, 0.7, 'x');
+        brush(cv, rot([[116, 112], [180, 128], [246, 134], [312, 128], [376, 110]], -10, HAT_AT), 16, HAT_DEEP, 0.8, 'x');
+      });
+      line(cv, loop(brim), 5, { start: 0.4, end: 0.4, count: 60 });
+      lay(cv, D.crown, HAT, 2.8);
+      clip(cv, D.crown, () => {
+        brush(cv, rot([[206, 100], [204, 70], [214, 46]], -10, HAT_AT), 20, HAT_LIT, 0.75, 'y');
+        brush(cv, rot([[248, 46], [250, 70], [252, 100]], -10, HAT_AT), 16, HAT_DEEP, 0.55, 'y');
+        brush(cv, rot([[294, 54], [298, 80], [298, 104]], -10, HAT_AT), 16, HAT_DEEP, 0.6, 'y');
+        brush(cv, rot([[192, 100], [248, 106], [306, 98]], -10, HAT_AT), 16, BAND, 0.95, 'x', 2.8);
+      });
+      line(cv, seg(crown, 0, 10), 4.6, { start: 0.3, end: 0.3, count: 40 });
+      // The ears stand in front of the hat, which is what shows it is pushed back.
+      const inners = [[[172, 130], [170, 100], [174, 86], [190, 98], [206, 112]], [[280, 108], [298, 90], [314, 80], [320, 100], [324, 128]]];
+      for (const [ear, inner] of [[earFar, inners[0]], [earNear, inners[1]]]) {
+        lay(cv, spline(ear), COAT);
+        lay(cv, spline(inner), CREAM, 2.4);
+        clip(cv, spline(inner), () => wash(cv, spline(inner.slice(-3)), '#e7a98a', 6, 0.6));
+        line(cv, ear, 5, { start: 0.3, end: 0.3 });
       }
-      for (let i = 0; i < 16; i++) {
-        dirt += `<ellipse cx="${n(140 + rnd() * 250)}" cy="${n(452 + rnd() * 14)}" rx="${n(1.5 + rnd() * 3)}" ry="${n(1 + rnd() * 1.4)}"/>`;
+      // The body is shaded on the side away from the light and under the head, with stripes only on its flanks so the
+      // cream chest stays clear.
+      lay(cv, D.torso, COAT);
+      clip(cv, D.torso, () => {
+        brush(cv, [[330, 290], [336, 336], [326, 390]], 30, SHADE, 0.7, 'y');
+        brush(cv, [[190, 276], [250, 290], [314, 278]], 24, SHADE, 0.6, 'x');
+        brush(cv, [[196, 396], [260, 402], [320, 392]], 16, SHADE, 0.5, 'x');
+        brush(cv, [[178, 296], [176, 330], [184, 366]], 12, LIGHT, 0.55, 'y');
+        for (const [pts, w] of [
+          [[[342, 300], [318, 306], [302, 316]], 9], [[[342, 330], [318, 336], [300, 344]], 9], [[[338, 362], [314, 366], [298, 374]], 8],
+          [[[166, 330], [184, 334], [194, 342]], 8], [[[168, 360], [186, 364], [196, 372]], 8],
+        ]) brush(cv, pts, w, STRIPE, 0.75, 'x');
+      });
+      lay(cv, blob(rnd, [236, 340], 38, 54, -6, 0.05), CREAM, 2.4);
+      strokes(cv, rnd, D.torso, [170, 270, 340, 400], { count: 40, colours: [LIGHT], flow: () => -80, spread: 30, length: 11, width: 2, opacity: [0.3, 0.6] });
+      line(cv, seg(torso, 3, 12), 5.6, { start: 0.3, end: 0.3, count: 40 });
+      line(cv, seg(torso, 12, 15), 5.2, { start: 0.3, end: 0.2 });
+      // The neckerchief's point goes on before its band, so the band's fold lies over it.
+      lay(cv, D.bib, RED, 2.8);
+      clip(cv, D.bib, () => {
+        brush(cv, [[244, 290], [236, 308], [228, 324]], 14, RED_DEEP, 0.6, 'y');
+        brush(cv, [[204, 286], [214, 300], [222, 318]], 8, RED_LIT, 0.55, 'y');
+      });
+      line(cv, seg(bib, 2, 5), 4.4, { start: 0.3, end: 0.3 });
+      lay(cv, D.band, RED, 2.8);
+      clip(cv, D.band, () => {
+        brush(cv, [[182, 258], [240, 270], [318, 256]], 14, RED_DEEP, 0.7, 'x');
+        brush(cv, [[192, 282], [240, 290], [300, 280]], 8, RED_LIT, 0.6, 'x');
+      });
+      line(cv, seg(band, 3, 10), 4.6, { start: 0.3, end: 0.3, count: 36 });
+      // The head comes after the neckerchief so the chin sits over its band; a tabby's stripes go on the brow and cheeks.
+      lay(cv, D.head, COAT);
+      clip(cv, D.head, () => {
+        brush(cv, [[322, 140], [336, 190], [318, 240], [288, 262]], 26, SHADE, 0.6, 'y');
+        brush(cv, [[190, 252], [236, 266], [290, 258]], 16, SHADE, 0.5, 'x');
+        for (const [pts, w] of [
+          [[[214, 106], [218, 124], [220, 144]], 9], [[[236, 100], [236, 124], [234, 150]], 10], [[[258, 104], [254, 124], [248, 144]], 9],
+          [[[152, 194], [168, 196], [180, 202]], 7], [[[152, 214], [168, 214], [180, 218]], 7],
+          [[[340, 186], [318, 190], [298, 198]], 8], [[[344, 210], [322, 212], [304, 218]], 8],
+          [[[176, 168], [168, 162], [160, 156]], 5], [[[290, 166], [304, 160], [318, 156]], 6],
+        ]) brush(cv, pts, w, STRIPE, 0.75, 'y');
+        brush(cv, [[178, 116], [212, 104], [250, 102], [300, 112]], 16, LIGHT, 0.5, 'x');
+        brush(cv, [[166, 140], [158, 176], [166, 206]], 12, LIGHT, 0.5, 'y');
+      });
+      lay(cv, blob(rnd, [228, 228], 30, 22, 0, 0.04), CREAM, 2.4);
+      lay(cv, blob(rnd, [228, 252], 22, 12, 0, 0.04), CREAM, 2.4);
+      strokes(cv, rnd, D.head, [150, 100, 340, 260], { count: 34, colours: [LIGHT, PALE], flow: () => -100, spread: 30, length: 10, width: 1.8,
+        opacity: [0.25, 0.55] });
+      line(cv, seg(head, 0, 9), 5.6, { start: 0.4, end: 0.3, count: 40 });
+      line(cv, seg(head, 9, 14), 5.6, { start: 0.3, end: 0.2 });
+      line(cv, seg(head, 15, 1), 5.4, { start: 0.2, end: 0.4, count: 36 });
+      // The arms go over the body, bent out at the elbows with the paws on the hips, so the pose reads at a glance.
+      for (const [arm, paw, rings] of [[armFar, paws[0], [[154, 298], [138, 320]]], [armNear, paws[1], [[344, 296], [360, 318]]]]) {
+        lay(cv, arm.d, COAT);
+        clip(cv, arm.d, () => {
+          brush(cv, arm.R.slice(4), 12, SHADE, 0.6, 'x');
+          for (const [x, y] of rings) brush(cv, [[x - 12, y - 10], [x, y], [x + 12, y + 10]], 7, STRIPE, 0.7, 'y');
+        });
+        line(cv, arm.L, 5.4, { start: 0.3, end: 0.3 });
+        line(cv, arm.R.slice(5), 4.6, { start: 0.2, end: 0.4 });
+        lay(cv, blob(rnd, paw, 16, 13, 0, 0.06), '#f0c08a', 2.4);
+        line(cv, oval(paw, 16, 13, 0, 16).slice(1, 12), 4.2, { start: 0.3, end: 0.3 });
       }
-      cv.add(`<g fill="${INK}" filter="${torn(cv, rnd, 1.6, 0.2)}">${dirt}</g>`);
-
-      // the paper of the figure, so it reads over any picture
-      for (const d of [tail, body, paw, brim, crown, bootL, bootR]) cv.add(`<path d="${d}" fill="${PAPER}"/>`);
-
-      // the tail sweeping out behind, nearly solid, frayed all along its underside
-      solid(cv, tail, 3);
-      fur(cv, tail, [116, 282, 208, 356], 70, (x) => (x < 140 ? -62 : -18), (x) => 0.1 + 0.25 * smooth(190, 150, x), { colour: PAPER, length: 8, width: 2 });
-      fringe(cv, [[118, 302], [128, 318], [142, 334], [158, 346], [176, 352], [198, 357]], 72, 34, 9, 3.4);
-      fringe(cv, [[120, 282], [132, 294], [146, 308], [162, 315], [182, 316]], -95, 8, 4, 2.4);
-
-      // the body's fur: solid down the back and in the haunch, in tabby bands across the middle, bare paper on the belly
-      const bands = (x, y) => Math.pow(0.5 + 0.5 * Math.cos(((y - (x - 240) * 0.3 + 6 * Math.sin(x / 17)) / 11) * Math.PI * 2), 2);
-      const shade = (x, y) => Math.min(1, Math.max(
-        0.4 * smooth(198, 206, x) * smooth(232, 218, x),
-        (0.03 + 0.5 * bands(x, y)) * smooth(280, 226, x),
-        0.85 * near(x, y, 216, 330, 36, 24),
-        0.6 * near(x, y, 236, 252, 14, 10),
-        0.35 * smooth(8, 0, Math.abs(x - 297)) * smooth(220, 230, y) * smooth(320, 300, y),
-        0.3 * smooth(334, 352, y) * smooth(270, 250, x),
-        0.05 + 0.08 * smooth(290, 330, y) * smooth(250, 270, x),
-      ));
-      solid(cv, shape([[199, 236], [205, 240], [209, 252], [210, 268], [207, 284], [210, 296], [220, 304], [236, 312], [248, 324], [252, 340], [244, 354],
-        [230, 362], [216, 364], [200, 354], [192, 336], [190, 306], [193, 280], [197, 258]], 1.4), 3);
-      fur(cv, body, [188, 224, 304, 372], 1150, (x, y) => 14 + (x - 246) * 0.3 + (y > 336 ? 16 : 0), (x, y) => shade(x, y) * smooth(224, 244, y),
-        { length: 13, width: 3.4, spread: 16 });
-      fur(cv, body, [186, 226, 256, 368],
-        340, (x) => 70 + (x - 200) * 0.8, (x, y) => smooth(224, 200, x) * 0.75 + near(x, y, 220, 334, 40, 26) * 0.5, { colour: PAPER, length: 9, width: 2.6 });
-      fringe(cv, [[200, 186], [196, 206], [193, 228], [190, 252], [188, 280], [188, 308]], 168, 40, 9, 3);
-      // the near arm folded at its side, the far paw held up in front of it
-      line(cv, [[222, 236], [232, 244], [238, 256], [238, 268], [232, 278]], 5, INK, { start: 0.4, end: 0.3 });
-      line(cv, [[291, 236], [293, 250], [297, 264], [303, 276], [312, 285], [323, 290], [332, 289], [336, 283], [336, 276]],
-        8.4, INK, { start: 0.5, end: 0.3, peak: 0.45 });
-      line(cv, [[296, 238], [306, 242], [312, 244]], 5, INK, { start: 0.8, end: 0.1 });
-      fur(cv, paw, [286, 236, 338, 294], 30, (x) => (x < 306 ? 75 : 10), () => 0.6, { colour: PAPER, length: 6, width: 2 });
-      fringe(cv, [[300, 262], [308, 270], [318, 278], [328, 282]], -60, 6, 5, 2.6);
-      for (const [x, y] of [[310, 258], [322, 268], [340, 278]]) cv.add(`<ellipse cx="${x}" cy="${y}" rx="2.4" ry="1.6" fill="${INK}"/>`);
-      // the front of the belly drawn in only by a few broken cuts
-      for (const pts of [[[301, 232], [299, 244]], [[300, 254], [299, 264]], [[298, 294], [300, 304]], [[306, 318], [311, 325]], [[320, 333],
-        [326, 339]]]) line(cv, pts, 3);
-
-      // the head: deep in the brim's shade and down its far side, the face lit, peeking out and looking down
-      const open = (x, y, cx, cy, rx, ry) => smooth(1.15, 0.7, Math.hypot((x - cx) / rx, (y - cy) / ry));
-      const face = (x, y) => Math.max(open(x, y, 284, 195, 19, 10), open(x, y, 314, 208, 15, 24), open(x, y, 308, 177, 13, 15), open(x, y, 262, 174, 14, 5));
-      const headShade = (x, y) => smooth(246, 226, y) * Math.max(0.08, Math.min(1, Math.max(
-        smooth(222, 208, x) * 0.8,
-        (0.05 + 0.6 * (0.5 + 0.5 * Math.cos(((y - (x - 220) * 0.15 - 170) / 8) * Math.PI * 2))) * smooth(186, 176, y) * smooth(296, 266, x),
-        0.5 * near(x, y, 250, 196, 44, 20),
-        0.25 * smooth(214, 224, y) * smooth(250, 220, x),
-      ) - 1.3 * Math.max(face(x, y), open(x, y, 270, 176, 19, 11))));
-      solid(cv, shape([[206, 161], [230, 158], [252, 156], [276, 156], [298, 158], [316, 161], [310, 164], [298, 163], [288, 167], [280, 164], [266, 166],
-        [254, 164], [242, 166], [228, 164], [216, 167], [208, 169]], 0.6), 2.2);
-      solid(cv, shape([[206, 184], [218, 188], [232, 191], [246, 192], [256, 195], [264, 199], [270, 204], [282, 207], [292, 209], [290, 215], [278, 219],
-        [262, 222], [246, 222], [230, 220], [216, 222], [204, 224], [200, 212]], 1.4), 3.4);
-      fur(cv, body, [194, 166, 326, 246], 600, (x, y) => (x > 298 ? 70 : x > 262 && y > 198 ? 150 : 4 + (y - 190) * 0.25),
-        headShade, { length: 12, width: 4.2 });
-      fur(cv, body, [200, 186, 270, 222], 40, (x) => (x < 214 ? 100 : 176), () => 0.5, { colour: PAPER, length: 8, width: 2.2 });
-      for (const pts of [[[214, 174], [232, 174], [250, 177]], [[230, 180], [246, 180], [258, 184]], [[284, 170], [292, 176], [298, 182]], [[290, 166],
-        [298, 170]]]) line(cv, pts, 3.6);
-      fringe(cv, [[318, 184], [323, 196], [320, 208], [312, 219]], 20, 6, 5, 2.4);
-      // its eyes: the near one a dark heavy-lidded almond under a lit brow, the far one in the shade of its brow, lit below
-      solid(cv, shape([[284, 164], [296, 162], [304, 164], [300, 170], [298, 178], [294, 184], [288, 180], [286, 172]], 0.5), 2.4);
-      line(cv, [[248, 177], [258, 172], [268, 169]], 3.6, PAPER, { start: 0.3, end: 0.2 });
-      line(cv, [[260, 183], [270, 187], [282, 188]], 3.4, PAPER, { start: 0.2, end: 0.3 });
-      cv.add(`<g fill="${INK}" filter="${torn(cv, rnd, 1, 0.2)}"><path d="M257 170 Q273 164 283 178 Q285 185 279 184 Q269 181 257 170 Z"/>`
-        + '<path d="M257 170 Q265 182 279 184 Q267 186 260 178 Z"/>'
-        + '<path d="M298 168 Q306 160 315 165 Q321 175 317 187 Q311 193 304 188 Q297 180 298 168 Z"/>'
-        + `<path d="M306 176 Q310 171 314 173 Q317 180 314 186 Q309 188 307 183 Z" fill="${PAPER}"/>`
-        + '<ellipse cx="310" cy="180" rx="2.4" ry="4" transform="rotate(-12 310 180)"/>'
-        + '<path d="M286 186 Q295 183 303 188 Q299 196 295 201 Q290 193 286 186 Z"/></g>');
-      line(cv, [[280, 181], [288, 186]], 2.6);
-      line(cv, [[295, 200], [290, 204], [282, 205]], 2.6);
-      for (const [x, y] of [[275, 197], [280, 198]]) cv.add(`<circle cx="${x}" cy="${y}" r="1.6" fill="${INK}"/>`);
-      // whiskers: light ones cut into the dark cheek, dark ones drawn out over the paper
-      for (const [x, y] of [[250, 212], [254, 218], [261, 222], [269, 224], [277, 223]]) {
-        line(cv, [[284, 203], [(284 + x) / 2, (203 + y) / 2 - 1.5], [x, y]], 1.9, PAPER, { start: 0.9, end: 0.15, peak: 0.1 });
+      // The boots go on last of the body, lit down their fronts and dark at the heel, with a shine on each toe.
+      for (const [boot, cuff, x, sole] of [[bootFar, cuffFar, 200, 478], [bootNear, cuffNear, 280, 484]]) {
+        lay(cv, spline(boot), BOOT, 2.8);
+        clip(cv, spline(boot), () => {
+          brush(cv, [[x - 6, 404], [x - 8, 440], [x - 14, 472]], 12, BOOT_LIT, 0.7, 'y');
+          brush(cv, [[x + 28, 400], [x + 30, 440], [x + 32, 480]], 14, BOOT_DEEP, 0.7, 'y');
+          cv.add(`<path d="M100 ${sole} L360 ${sole} L360 520 L100 520 Z" fill="${SOLE}" filter="${crayon(cv, rnd, { keep: 2.8, tear: 1.5 })}"/>`);
+        });
+        line(cv, seg(boot, 1, 9), 5, { start: 0.3, end: 0.3, count: 40 });
+        line(cv, seg(boot, 9, 12), 4.6, { start: 0.3, end: 0.3 });
+        clip(cv, spline(boot), () => brush(cv, [[x - 40, 476], [x - 26, 470], [x - 12, 470]], 7, CUFF_LIT, 0.8, 'x'));
+        lay(cv, spline(cuff), CUFF, 2.8);
+        clip(cv, spline(cuff), () => {
+          brush(cv, [[x - 30, 382], [x + 4, 380], [x + 40, 384]], 9, CUFF_LIT, 0.8, 'x');
+          brush(cv, [[x - 24, 406], [x + 4, 402], [x + 36, 406]], 8, BOOT, 0.6, 'x');
+        });
+        line(cv, loop(cuff), 4.4, { start: 0.3, end: 0.3, count: 40 });
       }
-      const whiskers = [[[308, 190], [316, 192], [323, 196]], [[306, 197], [316, 205], [324, 215]], [[304, 201], [309, 207], [313, 213]],
-        [[314, 216], [316, 220], [317, 225]]];
-      for (const pts of whiskers) line(cv, pts, 1.8, INK, { start: 0.7, end: 0.2, peak: 0.3 });
-      for (const pts of [[[286, 210], [292, 214]], [[289, 219], [293, 225]], [[291, 230], [295, 236]]]) line(cv, pts, 3.4);
-
-      // the legs going down into the boots, then the boots: nearly solid, their stitching and the light along them left as paper
-      fur(cv, body, [206, 330, 336, 372], 90, (x) => (x < 270 ? 30 : -12), (x, y) => (x < 250 ? 0.35 : 0.08) * smooth(372, 350, y), { length: 11, width: 4 });
-      const legs = [[[268, 328], [271, 342], [272, 356]], [[282, 346], [288, 354]], [[318, 334], [326, 340]], [[330, 342], [336, 346]],
-        [[252, 352], [260, 360]], [[292, 330], [300, 333]], [[308, 338], [313, 344]]];
-      for (const pts of legs) line(cv, pts, 2.6);
-      solid(cv, bootL, 2.2);
-      solid(cv, bootR, 2.2);
-
-      const stitches = [
-        [[[222, 372], [223, 388], [226, 402], [232, 412]], 3], [[[232, 370], [234, 384], [240, 396], [250, 404]], 3.2],
-        [[[244, 372], [250, 380], [260, 382]], 2.6], [[[240, 386], [246, 393], [254, 395]], 2], [[[256, 388], [258, 398], [262, 402]], 2],
-        [[[226, 392], [229, 404]], 2], [[[234, 420], [246, 416], [256, 420], [264, 428], [274, 436], [288, 443]], 3.2],
-        [[[262, 372], [262, 390], [258, 406]], 2.4], [[[248, 428], [256, 432], [262, 440]], 2], [[[236, 430], [242, 438]], 1.8],
-        [[[216, 446], [240, 447], [258, 449], [280, 449], [294, 449]], 2], [[[240, 448], [238, 456]], 2.2], [[[280, 442], [291, 446]], 2.6],
-        [[[216, 372], [216, 420]], 2],
-        [[[286, 354], [294, 368], [302, 384], [310, 398], [320, 410]], 2.6], [[[296, 352], [306, 366], [316, 382], [326, 396]], 2.6],
-        [[[308, 350], [318, 362], [328, 368]], 2.2], [[[300, 378], [306, 390]], 2], [[[318, 388], [326, 398], [332, 402]], 2],
-        [[[316, 404], [326, 410], [336, 418]], 2], [[[346, 393], [360, 396], [376, 394], [388, 392]], 2.4], [[[352, 401], [366, 402], [376, 399]], 1.8],
-        [[[330, 428], [348, 420], [366, 412], [386, 401]], 2], [[[330, 426], [344, 424]], 2.4],
-        [[[244, 384], [252, 380], [257, 386], [252, 392], [246, 389]], 1.8], [[[312, 372], [320, 370], [324, 377], [318, 382], [313, 378]], 1.8],
-      ];
-      for (const [pts, w] of stitches) line(cv, pts, w, PAPER, { start: 0.4, end: 0.3 });
-      line(cv, [[332, 352], [335, 364], [338, 376], [342, 386]], 3, PAPER, { start: 0.2, end: 0.2, peak: 0.4 });
-      fringe(cv, [[216, 370], [240, 372], [266, 373]], 95, 12, 8, 3.4);
-      fringe(cv, [[294, 362], [312, 352], [334, 348]], 105, 10, 8, 3.2);
-
-      // the hat: a wide brim, dark beneath, its top lit in a broad sweep from the crown out to the curled-up tip; a dented crown
-      solid(cv, brim, 2.4);
-      line(cv, [[226, 109], [250, 116], [276, 124], [300, 130], [322, 135], [342, 140], [355, 147], [357, 154]],
-        13, PAPER, { start: 0.12, end: 0.35, peak: 0.72, tremble: 0.35 });
-      line(cv, [[296, 141], [320, 147], [340, 151], [354, 157]], 2.4, INK, { start: 0.2, end: 0.6 });
-      fur(cv, brim, [222, 104, 360, 160], 120, () => 20, (x, y) => 0.6 * smooth(7, 0, Math.abs(y - (109 + (x - 226) * 0.3))), { length: 6, width: 2.2 });
-      fur(cv, brim, [166, 104, 330, 168], 170, (x) => 72 + (x - 200) * 0.3, (x, y) => 0.08 + smooth(160, 112, y) * 0.5, { colour: PAPER, length: 8, width: 2 });
-      solid(cv, shape([[216, 110], [216, 94], [219, 80], [225, 71], [236, 66], [254, 63], [270, 65], [274, 74], [266, 86], [258, 96], [246, 104], [232, 109]],
-        0.6));
-      solid(cv, shape([[290, 68], [306, 71], [314, 77], [316, 88], [306, 80], [294, 76]], 0.5));
-      fur(cv, crown, [214, 62, 272, 112], 110, () => 80, () => 0.55, { colour: PAPER, length: 7, width: 2.2 });
-      line(cv, [[260, 66], [284, 68], [304, 71], [314, 78], [317, 92], [319, 108], [320, 122]], 5, INK, { start: 0.8, end: 0.7, peak: 0.25 });
-      line(cv, [[222, 90], [236, 83], [250, 85], [264, 92]], 4.4, PAPER, { start: 0.2, end: 0.2 });
-      let dots = '';
-      for (let i = 0; i < 20; i++) {
-        const r = 0.8 + rnd() * rnd() * 2.4;
-        dots += `<ellipse cx="${n(268 + rnd() * 40)}" cy="${n(80 + rnd() * 32)}" rx="${n(r * 1.3)}" ry="${n(r)}"/>`;
+      // Green eyes need a dark rim round them to hold their colour against the orange coat.
+      for (const [c, rx, ry] of [[[196, 184], 11, 13.5], [[260, 182], 13.5, 15]]) {
+        cv.add(`<path d="${blob(rnd, c, rx + 3, ry + 3, 0, 0.03)}" fill="${INK}" filter="${crayon(cv, rnd, { keep: 3.6, tear: 1.2, grain: 1.2 })}"/>`);
+        cv.add(`<path d="${blob(rnd, c, rx, ry, 0, 0.03)}" fill="#7aa848"/>`);
+        cv.add(`<path d="${blob(rnd, [c[0], c[1] + ry * 0.35], rx * 0.9, ry * 0.55, 0, 0.03)}" fill="#a8c860" fill-opacity="0.6"/>`);
+        cv.add(`<path d="${blob(rnd, c, rx * 0.42, ry * 0.78, 0, 0.03)}" fill="${INK}"/>`);
+        cv.add(`<circle cx="${c[0] - rx * 0.35}" cy="${c[1] - ry * 0.4}" r="${rx * 0.26}" fill="#fffaf0"/>`);
       }
-      cv.add(`<g fill="${INK}" filter="${torn(cv, rnd, 1.6, 0.2)}">${dots}</g>`);
-      line(cv, [[214, 107], [240, 110], [266, 116], [292, 122], [320, 125]], 5, INK, { start: 0.7, end: 0.8 });
-
-      // the grain of a worn block: pin-holes of paper in the solid ink, stray specks of ink in the light
-      for (const [d, box, count] of [[brim, [164, 102, 364, 168], 260], [bootL, [212, 362, 300, 458], 160], [bootR, [276, 342, 402, 440], 150],
-        [tail, [114, 280, 210, 358], 120], [body, [188, 226, 260, 368], 200]]) {
-        specks(cv, rnd, d, box, { count, colours: [PAPER], size: [0.35, 0.85], opacity: [0.8, 1] });
+      const nose = spline([[216, 208], [228, 207], [238, 209], [232, 217], [227, 221], [221, 217]]);
+      cv.add(`<path d="${nose}" fill="#d9736f" filter="${crayon(cv, rnd, { keep: 3.4, tear: 1, grain: 1.2 })}"/>`);
+      line(cv, [[216, 208], [228, 206], [238, 209]], 2.6, { start: 0.5, end: 0.5 });
+      line(cv, [[227, 221], [227, 229]], 3, { start: 0.8, end: 0.6 });
+      line(cv, [[214, 232], [220, 236], [227, 229]], 3, { start: 0.4, end: 0.8, peak: 0.6 });
+      line(cv, [[227, 229], [234, 236], [240, 232]], 3, { start: 0.8, end: 0.4, peak: 0.4 });
+      for (const whisker of [[[198, 224], [158, 220]], [[198, 232], [162, 238]], [[258, 222], [306, 214]], [[258, 230], [302, 234]]]) {
+        line(cv, whisker, 1.8, { start: 0.8, end: 0.1 });
       }
-      specks(cv, rnd, body, [196, 166, 330, 372], { count: 160, colours: [INK], size: [0.4, 1.1], opacity: [0.9, 1] });
-      specks(cv, rnd, crown, [262, 66, 318, 120], { count: 30, colours: [INK], size: [0.4, 1], opacity: [0.9, 1] });
     });
-    return s.done({ finish: { paint: 0, grain: 0.012, contrast: 0, saturation: 1, warmth: 0 } });
+    return s.done({ finish: { paint: 0, grain: 0.008, contrast: 0, saturation: 1, warmth: 0 } });
   },
 };

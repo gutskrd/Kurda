@@ -1,116 +1,229 @@
-import { mark, torn } from '../brush.mjs';
-import { pt } from '../kit.mjs';
+import { blob, painter, strokes, within } from '../brush.mjs';
+import { spline } from '../kit.mjs';
 import { Still } from '../still.mjs';
-
-const PLAIN = { finish: { paint: 0, grain: 0.01, contrast: 0, saturation: 1, warmth: 0 } };
 
 export const piece = {
   key: 'rovi',
   ku: 'Rovîyê Şûrdar',
   en: 'Fox knight',
-  // a fox standing in a long red cloak with its sword held straight up, cut as a lino print: flat orange, white and
-  // red set into heavy black, the cloak's folds gouged in black, its paw, legs and the ground black
+  // a fox standing proud, turned three-quarters to the left with its chin up, both front paws resting on the pommel of a
+  // sword planted point-down before it; a short red cloak over its shoulders pinned with a small gold clasp, a white
+  // chest and cheeks, dark stockings, and a bushy white-tipped tail curling round behind; painted oranges with deeper
+  // shade and pale flecks, under a soft dark pencil line
   still(rnd) {
-    const s = new Still(rnd).place([-18, -9], 1.155);
-    const INK = '#0c0a09';
-    const FUR = '#e85a1d';
-    const WHITE = '#f8f7ef';
-    const RED = '#da2b22';
-    // A cut block's edges run straight between turns, each turn a little rounded; no point lands quite where it was meant.
-    const knife = (points, r = 3, a = 0.8) => {
-      const p = points.map(([x, y]) => [x + (rnd() - 0.5) * 2 * a, y + (rnd() - 0.5) * 2 * a]);
-      let d = '';
-      p.forEach((c, i) => {
-        const [u, v] = [p[(i - 1 + p.length) % p.length], p[(i + 1) % p.length]];
-        const [lu, lv] = [Math.hypot(u[0] - c[0], u[1] - c[1]) || 1, Math.hypot(v[0] - c[0], v[1] - c[1]) || 1];
-        const [ru, rv] = [Math.min(r, lu / 2) / lu, Math.min(r, lv / 2) / lv];
-        const [a, b] = [[c[0] + (u[0] - c[0]) * ru, c[1] + (u[1] - c[1]) * ru], [c[0] + (v[0] - c[0]) * rv, c[1] + (v[1] - c[1]) * rv]];
-        d += `${i ? ' L' : 'M'}${pt(a)} Q${pt(c)} ${pt(b)}`;
+    const s = new Still(rnd).place([-54, -4], 0.94);
+    const [FUR, FUR_LIT, SHADE, DEEP, FLECK] = ['#dc6a2c', '#ef9452', '#b24c22', '#873618', '#f8c993'];
+    const [WHITE, WHITE_SHADE] = ['#f8f0e4', '#d9c7b6'];
+    const [DARK, DARK_LIT] = ['#4b2b22', '#76493a'];
+    const [CLOAK, CLOAK_LIT, CLOAK_DEEP] = ['#b8302a', '#da564a', '#7f1c22'];
+    const [GOLD, GOLD_LIT, GOLD_DEEP] = ['#d9a43e', '#f6dc8e', '#9a6724'];
+    const [STEEL, STEEL_LIT, STEEL_DEEP] = ['#b5bfcb', '#eef2f6', '#7a8698'];
+    const GRIP = '#5c3527';
+    const INK = '#2a1c16';
+    const { lay, wash, brush, line } = painter(rnd, INK);
+
+    // A limb or a tail as a smooth outline round its middle line, `ws` wide at each point; its two edges kept for the line.
+    const limb = (pts, ws) => {
+      const L = [];
+      const R = [];
+      pts.forEach((p, i) => {
+        const [a, b] = [pts[Math.max(0, i - 1)], pts[Math.min(pts.length - 1, i + 1)]];
+        const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+        const [nx, ny] = [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
+        L.push([p[0] + (nx * ws[i]) / 2, p[1] + (ny * ws[i]) / 2]);
+        R.push([p[0] - (nx * ws[i]) / 2, p[1] - (ny * ws[i]) / 2]);
       });
-      return `${d} Z`;
+      return { d: spline([...L, ...[...R].reverse()]), L, R };
     };
-    const cut = (cv, d, c, rough = 3.2) => cv.add(`<path d="${d}" fill="${c}" filter="${torn(cv, rnd, rough, 0.08)}"/>`);
-    const gouge = (cv, pts, w, c, o = {}) =>
-      cv.add(`<path d="${mark(rnd, pts, w, { start: 0.2, end: 0.3, peak: 0.45, tremble: 0.6, count: 30, ...o })}" fill="${c}"`
-        + ` filter="${torn(cv, rnd, 2.2, 0.1)}"/>`);
+
+    const tail = limb([[296, 404], [336, 434], [388, 448], [434, 432], [457, 398], [458, 356], [442, 322], [420, 304]], [36, 54, 64, 66, 60, 50, 30, 6]);
+    const tip = spline([[396, 332], [414, 300], [440, 284], [476, 296], [488, 340], [470, 354], [458, 344], [448, 358], [436, 346], [424, 354], [414, 340]]);
+    const cloakBack = spline([[204, 226], [250, 214], [296, 214], [324, 230], [344, 262], [362, 302], [376, 342], [386, 376], [366, 382], [346, 374],
+      [326, 386], [304, 378], [286, 390], [262, 382], [236, 390], [212, 380], [190, 388], [172, 380], [168, 340], [174, 294], [186, 254]]);
+    const thighFar = blob(rnd, [216, 390], 23, 36, 6, 0.03);
+    const thighNear = blob(rnd, [284, 388], 27, 42, -6, 0.03);
+    const legFar = limb([[216, 408], [208, 446], [200, 476]], [26, 19, 17]);
+    const legNear = limb([[286, 412], [292, 448], [296, 476]], [28, 21, 19]);
+    const footFar = blob(rnd, [190, 481], 20, 8.5, 0, 0.04);
+    const footNear = blob(rnd, [288, 483], 23, 9.5, 0, 0.04);
+    const torso = spline([[214, 206], [280, 206], [300, 236], [306, 280], [306, 330], [302, 364], [292, 386], [258, 394], [220, 392], [202, 374], [194, 340],
+      [194, 290], [198, 244]]);
+    const bib = spline([[212, 210], [262, 212], [272, 250], [270, 300], [264, 344], [250, 374], [228, 380], [212, 358], [204, 312], [202, 260]]);
+    const cloakNear = spline([[246, 226], [270, 216], [298, 214], [320, 230], [332, 262], [342, 300], [352, 340], [360, 374], [340, 370], [320, 378],
+      [302, 364], [292, 330], [284, 294], [272, 262], [258, 240]]);
+    const cloakFar = spline([[238, 228], [220, 225], [204, 230], [192, 242], [186, 258], [198, 258], [212, 248], [226, 238]]);
+    const armFar = limb([[206, 244], [194, 268], [190, 292], [202, 308], [218, 314]], [28, 25, 22, 19, 17]);
+    const armNear = limb([[282, 254], [294, 278], [293, 298], [274, 310], [250, 314]], [30, 27, 24, 20, 18]);
+    const earFar = spline([[200, 128], [192, 98], [186, 66], [190, 42], [204, 50], [222, 72], [240, 102]]);
+    const earNear = spline([[254, 106], [262, 76], [278, 48], [294, 32], [301, 52], [304, 84], [302, 120]]);
+    const head = spline([[206, 112], [232, 98], [262, 98], [288, 110], [304, 132], [310, 156], [322, 170], [309, 179], [318, 194], [299, 198], [288, 212],
+      [262, 220], [234, 218], [208, 210], [184, 200], [162, 192], [146, 186], [142, 176], [152, 166], [172, 156], [190, 140], [198, 124]]);
+    const cheeks = spline([[148, 184], [176, 180], [202, 186], [228, 190], [256, 186], [282, 176], [304, 166], [322, 170], [309, 179], [318, 194],
+      [299, 198], [288, 212], [262, 220], [234, 218], [208, 210], [184, 200], [162, 193]]);
 
     s.paint((cv) => {
-      // the tail first, half hidden behind the cloak, its tip white
-      cut(cv, knife([[340, 384], [352, 384], [364, 390], [374, 396], [386, 406], [400, 414], [414, 419], [423, 422], [421, 428], [412, 433], [400, 435],
-        [380, 437], [362, 438], [350, 436], [344, 420]], 4), INK, 2.6);
-      cut(cv, knife([[350, 394], [362, 396], [376, 404], [392, 414], [408, 421], [416, 424], [408, 429], [396, 431], [378, 432], [362, 433], [352, 428]],
-        3, 0.5), WHITE, 1.8);
-      cut(cv, knife([[346, 390], [356, 392], [364, 398], [370, 406], [367, 411], [374, 416], [369, 421], [375, 427], [370, 432], [374, 436], [360, 437],
-        [350, 432]], 2, 0.4), FUR, 1.8);
-      // one black block for the cloak hanging behind it, the raised arm and the body; the colours are cut into it
-      cut(cv, knife([[150, 210], [160, 216], [168, 220], [176, 224], [182, 232], [186, 238], [192, 246], [201, 256], [203, 272], [201, 290], [198, 306],
-        [195, 322], [192, 338], [189, 354], [186, 368], [183, 384], [179, 398], [173, 410], [167, 422], [160, 430], [153, 435], [160, 438], [171, 437],
-        [182, 434], [191, 432], [201, 429], [216, 426], [238, 421], [280, 421], [298, 429], [296, 400], [290, 380], [282, 360], [272, 340], [264, 318],
-        [257, 296], [250, 274], [244, 258], [236, 252], [226, 246], [214, 232], [200, 218], [190, 209], [180, 201], [170, 194]], 4), INK);
-      cut(cv, knife([[218, 423], [237, 421], [237, 448], [203, 449], [207, 444], [214, 438]], 3), INK, 3);
-      cut(cv, knife([[279, 420], [297, 427], [301, 434], [306, 441], [313, 448], [279, 449]], 3), INK, 3);
-      cut(cv, knife([[231, 424], [232, 396], [236, 384], [246, 378], [258, 376], [268, 381], [274, 392], [278, 424]], 6), INK, 3);
-      const ground = mark(rnd, [[172, 451], [210, 452], [250, 451], [300, 452], [350, 450], [384, 446]], 8,
-        { start: 0.6, end: 0.4, peak: 0.5, tremble: 0.5, count: 40 });
-      cv.add(`<path d="${ground}" fill="${INK}" filter="${torn(cv, rnd, 4, 0.1)}"/>`);
-      // the orange of the raised arm running down its side to the thigh, its white front up under the chin, the other thigh
-      cut(cv, knife([[190, 226], [194, 223], [201, 231], [207, 236], [217, 244], [223, 250], [226, 258], [226, 290], [227, 304], [226, 320], [226, 350],
-        [230, 360], [234, 370], [235, 382], [233, 394], [231, 405], [229, 416], [223, 408], [216, 400], [214, 384], [214, 368], [217, 352], [218, 336],
-        [219, 320], [222, 304], [220, 288], [221, 272], [218, 264], [209, 256], [199, 244], [192, 236]], 2, 0.5), FUR, 2.4);
-      cut(cv, knife([[226, 250], [233, 240], [244, 236], [252, 240], [250, 250], [246, 262], [252, 274], [257, 290], [264, 306], [269, 322], [273, 338],
-        [272, 352], [270, 366], [268, 378], [256, 375], [242, 378], [234, 384], [231, 370], [228, 350], [227, 324], [226, 296], [226, 268]], 2, 0.5),
-        WHITE, 2.4);
-      cut(cv, knife([[272, 352], [280, 349], [286, 356], [290, 376], [290, 396], [285, 408], [282, 416], [277, 404], [271, 388], [268, 370]], 3, 0.5),
-        FUR, 2.2);
-      // slivers of red left in the back of the cloak
-      gouge(cv, [[200, 328], [198, 350], [194, 368], [190, 384], [186, 400], [180, 412], [174, 424], [170, 431]], 6.5, RED,
-        { start: 0.1, end: 0.6, peak: 0.7 });
-      gouge(cv, [[200, 382], [198, 396], [194, 410], [191, 422], [190, 430]], 6, RED, { start: 0.2, end: 0.6 });
-      gouge(cv, [[184, 401], [190, 399], [197, 400]], 4, RED, { start: 0.6, end: 0.6, peak: 0.5 });
-      // the cloak over its right shoulder, black, with long ridges of red left between the gouged folds, fanning from the shoulder
-      cut(cv, knife([[244, 252], [250, 246], [262, 242], [276, 240], [290, 237], [300, 236], [306, 240], [312, 256], [316, 272], [320, 288], [326, 304],
-        [331, 320], [335, 336], [339, 352], [344, 368], [349, 380], [351, 394], [355, 408], [358, 420], [362, 430], [368, 437], [376, 441], [366, 446],
-        [338, 447], [324, 441], [312, 436], [300, 430], [292, 420], [290, 400], [291, 384], [285, 368], [279, 352], [273, 336], [269, 320], [264, 304],
-        [257, 288], [252, 274], [246, 262]], 3), INK);
-      const ridges = [
-        [[[262, 253], [272, 250], [284, 249], [296, 251]], 5, { start: 0.1, end: 0.5, peak: 0.6 }],
-        [[[280, 260], [292, 262], [304, 268]], 4, { start: 0.1, end: 0.4 }],
-        [[[252, 260], [262, 272], [270, 290], [276, 308], [281, 322], [288, 340], [296, 356], [301, 372], [307, 386], [314, 400], [321, 412], [330, 424],
-          [340, 430], [352, 436], [362, 440]], 11.5, { start: 0.15, end: 0.7, peak: 0.45 }],
-        [[[268, 266], [280, 278], [286, 294], [290, 310], [297, 326], [305, 342], [314, 358], [320, 376], [326, 392], [332, 406], [340, 420]], 11,
-          { start: 0.1, end: 0.3, peak: 0.4 }],
-        [[[292, 272], [302, 284], [308, 300], [314, 316], [320, 332], [323, 348], [326, 362], [330, 374]], 14, { start: 0.2, end: 0.2, peak: 0.35 }],
-        [[[306, 330], [314, 344], [318, 352]], 4, { start: 0.3, end: 0.2 }],
-        [[[326, 384], [332, 398], [338, 410], [344, 424]], 6, { start: 0.2, end: 0.4 }],
-        [[[334, 427], [346, 430], [356, 434]], 5, { start: 0.2, end: 0.6 }],
-      ];
-      for (const [pts, w, o] of ridges) gouge(cv, pts, w, RED, o);
-      // the sword held straight up, its black paw round the grip
-      cut(cv, knife([[157, 178], [157, 150], [157, 120], [157.5, 96], [158, 79], [160, 72], [163, 72], [165, 79], [166.5, 96], [167, 122], [167, 150],
-        [167.5, 178]], 2, 0.5), INK, 2.4);
-      cut(cv, knife([[135, 180], [138, 177], [160, 178.5], [184, 177], [189, 179], [188, 186], [176, 187], [160, 188], [139, 188], [135, 186]], 2, 0.5),
-        INK, 2.4);
-      cut(cv, knife([[159, 186], [168, 186], [168, 226], [160, 226]], 1, 0.3), INK, 2);
-      cut(cv, knife([[150, 198], [155, 193], [164, 192], [171, 195], [176, 203], [172, 212], [168, 219], [158, 219], [150, 212]], 5, 0.6), INK, 2.4);
-      cut(cv, knife([[155, 226], [161, 222], [167, 225], [168, 232], [162, 236], [155, 233]], 3, 0.3), INK, 1.6);
-      // its head, small and tipped over: orange set into black, the ears black round an orange inside, white cheeks
-      cut(cv, knife([[196, 218], [201, 210], [207, 204], [210, 194], [209, 176], [209, 158], [209, 142], [211, 135], [217, 137], [226, 149], [235, 160],
-        [241, 170], [246, 174], [258, 175], [270, 172], [277, 160], [287, 150], [298, 140], [303, 137], [305, 146], [304, 160], [302, 172], [299, 182],
-        [297, 190], [299, 200], [304, 208], [311, 216], [317, 222], [320, 226], [315, 232], [306, 237], [294, 240], [272, 244], [250, 246], [238, 242],
-        [228, 234], [214, 226], [204, 223]], 3), INK, 3);
-      cut(cv, knife([[202, 220], [205, 214], [211, 208], [216, 200], [217, 190], [216, 180], [215, 166], [215, 158], [220, 166], [225, 174], [230, 182],
-        [248, 181], [268, 181], [279, 182], [284, 175], [289, 168], [292, 162], [293, 170], [291, 178], [288, 186], [288, 194], [292, 202], [297, 210],
-        [302, 217], [307, 222], [310, 227], [305, 230], [296, 226], [284, 223], [272, 224], [260, 228], [250, 233], [240, 236], [230, 228], [220, 222],
-        [212, 221]], 2, 0.4), FUR, 2.2);
-      cut(cv, knife([[236, 238], [246, 232], [258, 227], [270, 222], [284, 220], [296, 223], [304, 226], [309, 229], [302, 233], [292, 236], [280, 238],
-        [268, 240], [258, 242], [248, 245], [242, 249], [236, 250], [232, 244]], 3, 0.4), WHITE, 1.8);
-      cut(cv, knife([[205, 221], [216, 220], [227, 221], [229, 230], [230, 240], [229, 246], [222, 238], [214, 230]], 2, 0.3), WHITE, 1.4);
-      cv.add(`<g fill="${INK}" filter="${torn(cv, rnd, 1.6, 0.12)}"><ellipse cx="229.6" cy="206" rx="5.3" ry="5.6"/>`
-        + '<ellipse cx="267.2" cy="206.4" rx="5.1" ry="5.4"/><ellipse cx="241" cy="233" rx="5" ry="4.6"/></g>');
-      gouge(cv, [[228, 222], [229, 232], [230, 242], [234, 249], [240, 251], [248, 250]], 6, INK, { start: 0.8, end: 0.9, peak: 0.5, tremble: 0.3 });
-      // the near edge of the raised arm, cut last across the cheek and down to the chest
-      gouge(cv, [[186, 210], [196, 220], [206, 229], [216, 239], [225, 248], [232, 255]], 10, INK, { start: 1, end: 0.55, peak: 0.2, tremble: 0.3 });
+      // the tail behind it all, deeper along its inside and lit along its outer curve, its white tip in tufts
+      lay(cv, tail.d, FUR);
+      cv.add(`<g clip-path="${within(cv, tail.d)}">`);
+      brush(cv, [[300, 396], [340, 420], [390, 428], [426, 414], [438, 384], [436, 350]], 26, SHADE, 0.7, 'x');
+      brush(cv, [[330, 452], [388, 470], [440, 450], [472, 404], [478, 362]], 22, FUR_LIT, 0.8, 'x');
+      strokes(cv, rnd, tail.d, [296, 300, 490, 482],
+        { count: 40, colours: [FLECK], flow: (x) => (x < 420 ? 10 : -70), spread: 30, length: 12, width: 2.2, opacity: [0.35, 0.7], bend: 0.3 });
+      strokes(cv, rnd, tail.d, [296, 300, 490, 482],
+        { count: 24, colours: [DEEP], flow: (x) => (x < 420 ? 10 : -70), spread: 30, length: 11, width: 2, opacity: [0.25, 0.5], bend: 0.3 });
+      lay(cv, tip, WHITE, 2.4);
+      brush(cv, [[412, 334], [426, 316], [440, 310]], 14, WHITE_SHADE, 0.7, 'x');
+      cv.add('</g>');
+      line(cv, tail.L.slice(1), 5.6, { start: 0.3, end: 0.4, count: 48 });
+      line(cv, [[420, 304], ...tail.R.slice(3).reverse().slice(1)], 5, { start: 0.3, end: 0.4 });
+      line(cv, [[454, 346], [448, 358], [440, 348], [430, 354]], 2.8, { start: 0.5, end: 0.4, peak: 0.5 });
+      // the back of the cloak hanging behind it, flaring a little, folds brushed down it
+      lay(cv, cloakBack, CLOAK);
+      cv.add(`<g clip-path="${within(cv, cloakBack)}">`);
+      brush(cv, [[330, 240], [352, 300], [372, 370]], 22, CLOAK_DEEP, 0.7, 'y');
+      brush(cv, [[178, 270], [174, 330], [178, 384]], 18, CLOAK_DEEP, 0.75, 'y');
+      brush(cv, [[340, 230], [366, 300], [384, 370]], 10, CLOAK_LIT, 0.7, 'y');
+      strokes(cv, rnd, cloakBack, [300, 230, 390, 390],
+        { count: 14, colours: ['#ec8274'], flow: () => 70, spread: 20, length: 14, width: 2, opacity: [0.3, 0.6] });
+      cv.add('</g>');
+      line(cv, [[322, 228], [344, 262], [362, 302], [376, 342], [386, 376], [366, 382], [346, 374], [326, 386],
+        [306, 380]], 5.4, { start: 0.3, end: 0.4, count: 40 });
+      line(cv, [[188, 252], [176, 294], [170, 340], [172, 380], [190, 388], [204, 384]], 5.4, { start: 0.3, end: 0.4 });
+      // the legs: the far thigh and its dark stocking, then the near
+      for (const [thigh, leg, foot, lit] of [[thighFar, legFar, footFar, 0], [thighNear, legNear, footNear, 1]]) {
+        lay(cv, leg.d, DARK);
+        cv.add(`<g clip-path="${within(cv, leg.d)}">`);
+        brush(cv, leg.L, 6, DARK_LIT, 0.8, 'y');
+        cv.add('</g>');
+        lay(cv, foot, DARK);
+        lay(cv, thigh, lit ? FUR : SHADE);
+        line(cv, leg.L, 4.8, { start: 0.4, end: 0.5 });
+        line(cv, leg.R, 4.8, { start: 0.4, end: 0.5 });
+      }
+      line(cv, [[176, 480], [180, 488], [196, 489], [210, 484]], 4.6, { start: 0.4, end: 0.4 });
+      line(cv, [[270, 482], [272, 491], [292, 492], [310, 486]], 4.8, { start: 0.4, end: 0.4 });
+      // the body: orange, its white front, the shade down its near side and under the chin
+      lay(cv, torso, FUR);
+      cv.add(`<g clip-path="${within(cv, torso)}">`);
+      brush(cv, [[296, 240], [304, 300], [298, 370]], 22, SHADE, 0.7, 'y');
+      lay(cv, bib, WHITE, 2.4);
+      brush(cv, [[262, 220], [268, 280], [258, 340], [246, 376]], 14, WHITE_SHADE, 0.6, 'y');
+      wash(cv, spline([[206, 210], [270, 212], [262, 236], [212, 236]]), WHITE_SHADE, 8, 0.8);
+      strokes(cv, rnd, torso, [194, 230, 306, 390], { count: 18, colours: [FLECK], flow: () => 95, spread: 30, length: 10, width: 2, opacity: [0.35, 0.65] });
+      strokes(cv, rnd, bib, [200, 230, 272, 380],
+        { count: 14, colours: [WHITE_SHADE], flow: () => 95, spread: 30, length: 9, width: 1.8, opacity: [0.3, 0.6] });
+      cv.add('</g>');
+      cv.add(`<g clip-path="${within(cv, thighNear)}">`);
+      brush(cv, [[266, 356], [272, 390], [272, 424]], 14, FUR_LIT, 0.6, 'y');
+      brush(cv, [[304, 362], [312, 396], [302, 428]], 16, SHADE, 0.7, 'y');
+      strokes(cv, rnd, thighNear, [256, 346, 312, 430],
+        { count: 10, colours: [FLECK], flow: () => 80, spread: 30, length: 10, width: 2, opacity: [0.35, 0.65] });
+      cv.add('</g>');
+      line(cv, [[198, 290], [196, 340], [200, 366], [194, 384], [194, 410], [204, 424]], 5.2, { start: 0.3, end: 0.4 });
+      line(cv, [[256, 368], [272, 350], [292, 350], [308, 370], [312, 398], [304, 424], [296, 432]], 5.2, { start: 0.4, end: 0.4 });
+      line(cv, [[228, 384], [234, 398], [236, 410]], 4, { start: 0.3, end: 0.6 });
+      // the front legs coming out from under the cloak, the far one in shade
+      for (const arm of [armFar, armNear]) {
+        lay(cv, arm.d, arm === armFar ? SHADE : FUR);
+        cv.add(`<g clip-path="${within(cv, arm.d)}">`);
+        brush(cv, arm.R, 10, arm === armFar ? DEEP : SHADE, 0.6, 'y');
+        brush(cv, arm.L, 7, FUR_LIT, 0.7, 'y');
+        cv.add('</g>');
+        line(cv, arm.L, 4.8, { start: 0.3, end: 0.5 });
+        line(cv, arm.R, 4.8, { start: 0.3, end: 0.5 });
+      }
+      // the cloak over the near shoulder, and a sliver of it over the far one
+      lay(cv, cloakNear, CLOAK);
+      lay(cv, cloakFar, CLOAK);
+      cv.add(`<g clip-path="${within(cv, cloakNear)}">`);
+      brush(cv, [[262, 230], [282, 280], [300, 340], [312, 376]], 18, CLOAK_DEEP, 0.75, 'y');
+      brush(cv, [[300, 222], [322, 280], [340, 340], [352, 376]], 16, CLOAK_LIT, 0.75, 'y');
+      brush(cv, [[318, 260], [332, 320], [344, 372]], 6, CLOAK_DEEP, 0.7, 'y');
+      strokes(cv, rnd, cloakNear, [260, 220, 360, 380],
+        { count: 18, colours: ['#ec8274'], flow: () => 70, spread: 20, length: 14, width: 2, opacity: [0.3, 0.6] });
+      cv.add('</g>');
+      cv.add(`<g clip-path="${within(cv, cloakFar)}">`);
+      brush(cv, [[226, 230], [204, 250], [190, 290]], 14, CLOAK_DEEP, 0.7, 'y');
+      cv.add('</g>');
+      line(cv, [[256, 238], [272, 262], [284, 294], [292, 330], [302, 364], [320, 378], [340, 370], [360, 374], [352, 340], [342, 300], [332, 262],
+        [320, 230]], 5.2, { start: 0.3, end: 0.4, count: 48 });
+      line(cv, [[232, 229], [214, 228], [198, 238], [188, 256], [198, 258], [212, 248], [226, 238]], 4.6, { start: 0.3, end: 0.4 });
+      // the sword planted before it: the blade, the crossguard and the grip; the pommel under its paws
+      const blade = spline([[221, 360], [243, 360], [242, 430], [239, 466], [232, 492], [225, 466], [222, 430]]);
+      lay(cv, blade, STEEL);
+      cv.add(`<g clip-path="${within(cv, blade)}">`);
+      brush(cv, [[226, 364], [226, 430], [230, 482]], 6, STEEL_LIT, 0.95, 'y');
+      brush(cv, [[240, 364], [239, 430], [234, 482]], 6, STEEL_DEEP, 0.8, 'y');
+      cv.add('</g>');
+      line(cv, [[221, 362], [222, 430], [225, 466], [232, 492], [239, 466], [242, 430], [243, 362]], 4.4, { start: 0.4, end: 0.4, count: 40 });
+      line(cv, [[232, 368], [232, 430], [232, 456]], 2.4, { start: 0.5, end: 0.2 });
+      lay(cv, spline([[226, 326], [238, 326], [239, 356], [225, 356]]), GRIP);
+      for (const y of [331, 339, 347]) line(cv, [[226, y], [238, y + 4]], 2, { start: 0.6, end: 0.6 });
+      line(cv, [[225, 328], [225, 356]], 3.4);
+      line(cv, [[239, 328], [239, 356]], 3.4);
+      const guard = spline([[196, 354], [204, 350], [232, 352], [260, 350], [268, 354], [266, 362], [260, 364], [232, 362], [204, 364], [198, 362]]);
+      lay(cv, guard, GOLD);
+      brush(cv, [[202, 354], [232, 355], [262, 354]], 3.5, GOLD_LIT, 0.9, 'x');
+      line(cv, [[198, 350], [204, 349], [232, 351], [260, 349], [268, 353], [266, 363], [260, 365], [232, 363], [204, 365], [196, 362],
+        [196, 354]], 4, { start: 0.4, end: 0.4, count: 36 });
+      lay(cv, blob(rnd, [232, 321], 11, 9, 0, 0.03), GOLD);
+      lay(cv, blob(rnd, [228, 324], 4, 3, 0, 0.05), GOLD_LIT, 3);
+      line(cv, [[221, 320], [224, 329], [240, 329], [243, 320]], 3.6, { start: 0.4, end: 0.4 });
+      // the paws cupped over the pommel, one over the other
+      lay(cv, blob(rnd, [222, 314], 14, 10, -14, 0.04), DARK);
+      line(cv, [[226, 304], [212, 306], [208, 316], [218, 323], [230, 320]], 4.4, { start: 0.4, end: 0.4 });
+      const paw = blob(rnd, [242, 312], 16, 11, 10, 0.04);
+      lay(cv, paw, DARK);
+      brush(cv, [[232, 306], [246, 304], [256, 308]], 5, DARK_LIT, 0.8, 'x');
+      line(cv, [[256, 304], [244, 301], [230, 304], [226, 314], [236, 322], [250, 321], [258, 314]], 4.6, { start: 0.4, end: 0.4 });
+      line(cv, [[238, 314], [240, 320]], 2.2, { start: 0.6, end: 0.4 });
+      line(cv, [[246, 314], [248, 320]], 2.2, { start: 0.6, end: 0.4 });
+      // the ears behind the head, dark at their backs and tips, cream inside; the head tipped back a little, chin up
+      cv.add('<g transform="rotate(5 250 190)">');
+      for (const [ear, inner, tipAt] of [
+        [earFar, spline([[204, 118], [196, 88], [194, 60], [204, 64], [220, 84], [230, 104]]), [190, 44]],
+        [earNear, spline([[264, 104], [270, 80], [284, 56], [294, 46], [296, 70], [296, 108]]), [294, 34]],
+      ]) {
+        lay(cv, ear, FUR);
+        cv.add(`<g clip-path="${within(cv, ear)}">`);
+        lay(cv, blob(rnd, tipAt, 18, 22, 0, 0.05), DARK);
+        cv.add('</g>');
+        lay(cv, inner, WHITE, 2.4);
+        cv.add(`<g clip-path="${within(cv, inner)}">`);
+        brush(cv, [[tipAt[0] + 6, tipAt[1] + 30], [tipAt[0] + 6, tipAt[1] + 70]], 12, WHITE_SHADE, 0.7, 'y');
+        cv.add('</g>');
+      }
+      line(cv, [[200, 126], [192, 98], [186, 66], [190, 42], [204, 50], [222, 72], [238, 100]], 5.2, { start: 0.3, end: 0.4 });
+      line(cv, [[256, 104], [262, 76], [278, 48], [294, 32], [301, 52], [304, 84], [303, 116]], 5.2, { start: 0.3, end: 0.4 });
+      // the head: orange, its crown and muzzle lit, shaded at the back; white cheeks in a ruff
+      lay(cv, head, FUR);
+      cv.add(`<g clip-path="${within(cv, head)}">`);
+      brush(cv, [[160, 168], [190, 144], [220, 112], [262, 104]], 22, FUR_LIT, 0.8, 'x');
+      brush(cv, [[290, 116], [306, 146], [300, 176]], 20, SHADE, 0.7, 'y');
+      strokes(cv, rnd, head, [150, 100, 310, 190],
+        { count: 30, colours: [FLECK], flow: () => -20, spread: 40, length: 10, width: 2, opacity: [0.35, 0.7], bend: 0.3 });
+      lay(cv, cheeks, WHITE, 2.4);
+      brush(cv, [[196, 206], [240, 216], [290, 206]], 12, WHITE_SHADE, 0.6, 'x');
+      cv.add('</g>');
+      line(cv, [[206, 112], [232, 98], [262, 98], [288, 110], [304, 132], [310, 156], [322, 170], [309, 179], [318, 194], [299, 198], [288, 212], [262, 220],
+        [234, 218]], 5.4, { start: 0.3, end: 0.4, count: 48 });
+      line(cv, [[226, 216], [208, 210], [184, 200], [162, 192], [146, 186], [142, 176], [152, 166], [172, 156], [190, 140], [198, 124],
+        [206, 112]], 5.4, { start: 0.4, end: 0.3, count: 40 });
+      // the face: almond eyes under a calm lid, the dark nose, a small proud smile
+      cv.add(`<g fill="${INK}"><path d="${blob(rnd, [236, 146], 8, 6.5, -12, 0.03)}"/><path d="${blob(rnd, [190, 148], 5.5, 6, -12, 0.03)}"/>`
+        + `<path d="${blob(rnd, [148, 178], 7.5, 6.5, 0, 0.03)}"/></g>`);
+      cv.add('<g fill="#fffaf2"><circle cx="234" cy="144" r="2.2"/><circle cx="146" cy="176" r="1.8"/></g>');
+      line(cv, [[226, 141], [237, 137.5], [247, 140]], 3, { start: 0.5, end: 0.6, peak: 0.5 });
+      line(cv, [[154, 186], [166, 194], [180, 196]], 3, { start: 0.6, end: 0.3 });
+      // a tuft in its cheek ruff; the gold clasp pinning the cloak at its throat
+      line(cv, [[300, 178], [308, 184]], 2.6, { start: 0.6, end: 0.3 });
+      cv.add('</g>');
+      const clasp = blob(rnd, [244, 230], 10, 9.5, 0, 0.03);
+      lay(cv, clasp, GOLD);
+      lay(cv, blob(rnd, [241, 227], 4.5, 4, 0, 0.05), GOLD_LIT, 3);
+      wash(cv, blob(rnd, [249, 234], 5, 4, 0, 0.05), GOLD_DEEP, 2, 0.8);
+      line(cv, [[244, 220], [234, 224], [234, 236], [244, 240], [254, 236], [254, 224], [246, 220]], 3.6, { start: 0.4, end: 0.4 });
     });
-    return s.done(PLAIN);
+    return s.done({ finish: { paint: 0, grain: 0.008, contrast: 0, saturation: 1, warmth: 0 } });
   },
 };
