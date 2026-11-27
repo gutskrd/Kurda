@@ -970,18 +970,22 @@ const UNDER_TIP = 30;
 const NAIL = held('thumb', [[660, 470], [672, 456], [700, 452], [728, 456], [740, 470], [742, 512], [732, 536], [700, 542], [668, 536], [658, 512]]);
 const FREE_EDGE = held('thumb', [[662, 470], [674, 457], [700, 453], [726, 457], [738, 470], [726, 476], [700, 474], [674, 476]]);
 
-/** The lines, each held on its digit: where, how wide at its fullest, how strong, and in what ink. */
-const LINES: readonly { name: string; on: ReturnType<typeof held>; width: number; opacity: number; ink?: string; layer: 'back' | 'front' }[] = [
+/**
+ * The lines, each held on its digit: where, how wide at its fullest, how strong, and in what ink. One that runs along a
+ * digit's `edge` keeps to that edge, a little in from it, however the digit's width changes through the turn.
+ */
+const LINES: readonly { name: string; on: ReturnType<typeof held>; width: number; opacity: number; ink?: string; edge?: { side: 1 | -1; inset: number }; layer: 'back' | 'front' }[] = [
   { name: 'nail-rim', on: held('thumb', [[662, 476], [658, 504], [668, 532], [700, 543], [732, 532], [742, 504], [738, 476]]), width: 1.2, opacity: 0.8, layer: 'front' },
   { name: 'cuticle', on: held('thumb', [[668, 552], [700, 560], [732, 552]]), width: 0.8, opacity: 0.5, layer: 'front' },
-  { name: 'thumb-joint', on: held('thumb', [[704, 654], [722, 648], [742, 652]]), width: 1, opacity: 0.7, layer: 'front' },
-  { name: 'thumb-joint-2', on: held('thumb', [[710, 666], [724, 662], [738, 665]]), width: 0.6, opacity: 0.5, layer: 'front' },
-  { name: 'thumb-fold', on: held('thumb', [[782, 650], [790, 690], [794, 730]]), width: 1.3, opacity: 0.75, layer: 'front' },
-  { name: 'thumb-root', on: held('thumb', [[668, 720], [692, 730], [716, 732]]), width: 0.9, opacity: 0.55, layer: 'front' },
-  { name: 'index-joint', on: held('index', [[908, 666], [924, 652], [942, 638]]), width: 1.2, opacity: 0.85, layer: 'back' },
-  { name: 'index-joint-2', on: held('index', [[915, 676], [930, 664], [946, 650]]), width: 0.7, opacity: 0.55, layer: 'back' },
-  { name: 'index-last', on: held('index', [[822, 572], [833, 558], [845, 544]]), width: 0.8, opacity: 0.6, layer: 'back' },
-  { name: 'index-nail', on: held('index', [[693, 471], [696, 458], [705, 448], [718, 443]]), width: 1.1, opacity: 0.8, ink: INK.nail, layer: 'back' },
+  // the two long, nearly level creases across the thumb's knuckle, where the reference draws them
+  { name: 'thumb-joint', on: held('thumb', [[677, 654], [701, 653], [719, 652], [735, 650], [760, 645]]), width: 1, opacity: 0.75, layer: 'front' },
+  { name: 'thumb-joint-2', on: held('thumb', [[693, 673], [715, 675], [727, 674], [745, 672], [762, 669]]), width: 0.8, opacity: 0.6, layer: 'front' },
+  // the thumb's own edge where it lies over the hand, above the dark beside it and below it, just inside the thumb
+  { name: 'thumb-side', on: held('thumb', [[768, 516], [773, 535], [776, 548], [780, 560], [785, 579]]), width: 0.8, opacity: 0.6, edge: { side: 1, inset: 3 }, layer: 'front' },
+  { name: 'thumb-side-low', on: held('thumb', [[799, 655], [804, 674], [807, 687], [810, 700], [815, 719]]), width: 0.8, opacity: 0.6, edge: { side: 1, inset: 3 }, layer: 'front' },
+  // a crease at each of the index finger's joints, and no others: the reference shows none on the other fingers
+  { name: 'index-joint', on: held('index', [[887, 667], [899, 657], [908, 652], [916, 648], [931, 644]]), width: 1.1, opacity: 0.85, layer: 'back' },
+  { name: 'index-last', on: held('index', [[809, 589], [817, 579], [822, 573], [828, 568], [839, 561]]), width: 0.9, opacity: 0.7, layer: 'back' },
 ];
 
 /**
@@ -1068,7 +1072,7 @@ function shapesIn(p: Pose): Record<string, Pt[]> {
     // and each digit's tip, its outermost point on its centre line, and the ring finger's centre line
     'check:tips': (['thumb', 'index', 'reaching'] as const).map((d) => tipOf(ds[d])),
     'check:ring': ds.curled.centre.slice(),
-    ...Object.fromEntries(LINES.map((l) => [l.name, ride(l.on, ds)])),
+    ...Object.fromEntries(LINES.map((l) => [l.name, l.edge ? l.on.at.map(([u]) => sideAt(ds[l.on.digit], u, l.edge!.side, l.edge!.inset)) : ride(l.on, ds)])),
   };
 }
 
