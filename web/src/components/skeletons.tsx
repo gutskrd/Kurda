@@ -468,13 +468,15 @@ export function ShopSkeleton({ count = 10, label }: { count?: number; label?: Me
                   <Skeleton line w="80%" />
                 </span>
               </figcaption>
-              <div className="shop-actions">
+              <div className="shop-foot">
                 <span className="shop-price">
-                  <Skeleton line w={64} />
+                  <Skeleton line w={96} />
                 </span>
                 {/* Buy takes the room the gift button leaves, as on a real tile. */}
-                <Skeleton className="skeleton-btn skeleton-btn-sm" style={{ flex: '1 1 auto', width: 'auto' }} />
-                <Skeleton className="shop-gift-btn" />
+                <div className="shop-actions">
+                  <Skeleton className="skeleton-btn skeleton-btn-sm" style={{ flex: '1 1 0', width: 'auto' }} />
+                  <Skeleton className="shop-gift-btn" />
+                </div>
               </div>
             </figure>
           ))}

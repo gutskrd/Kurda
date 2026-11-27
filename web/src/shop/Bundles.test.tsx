@@ -182,12 +182,13 @@ describe('trying a look on', () => {
     expect(within(preview).getByText('Only you can see this. Nothing changes until you buy it and put it on.')).toBeInTheDocument();
   });
 
-  it('shows a word tag as the pill it is worn as, with its rarity', async () => {
+  it('shows a word tag as the pill it is worn as, marking only the dear steps of the price ladder', async () => {
     vi.stubGlobal('fetch', shopFetch([], { bundles: [], nudges: true }));
     renderApp(<Shop />, ['/app/shop']);
     const tile = (await screen.findAllByText('Heval')).map((el) => el.closest('figure')).find(Boolean)!;
     expect(tile.querySelector('.tag-pill')).not.toBeNull();
-    expect(within(tile).getByText('Classic')).toBeInTheDocument();
+    // a classic tag carries no mark, so the tile’s words stay one line each
+    expect(within(tile).queryByText('Classic')).toBeNull();
     // the showpiece frame is a masterwork
     const eclipse = (await screen.findByText('Rojgirtin')).closest('figure')!;
     expect(within(eclipse).getByText('Masterwork')).toBeInTheDocument();

@@ -99,10 +99,11 @@ describe('Shop', () => {
     renderApp(<Shop />, ['/app/shop']);
     const pricey = (await screen.findByText('Pricey')).closest('figure')!;
 
-    expect(within(pricey).getByRole('button', { name: 'Buy' })).toBeDisabled();
-    // The number you are saving towards, and the gap — 5000 wanted, 1000 held.
+    // The number you are saving towards, and the gap — 5000 wanted, 1000 held — said by the button that cannot be pressed.
     expect(within(pricey).getByText(/5,000 Zêr/)).toBeInTheDocument();
-    expect(within(pricey).getByText(/4,000 more/)).toBeInTheDocument();
+    expect(within(pricey).getByRole('button', { name: '4,000 more' })).toBeDisabled();
+    expect(within(pricey).queryByRole('button', { name: 'Buy' })).toBeNull();
+    expect(within(pricey).queryByRole('button', { name: 'Gift Pricey to a friend' })).toBeNull();
   });
 
   it('files everything on sale under its kind — the Kurdish tag too — with a count on each tab', async () => {
