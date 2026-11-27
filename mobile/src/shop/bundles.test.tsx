@@ -141,10 +141,11 @@ describe('bundles in the phone’s shop', () => {
 });
 
 describe('a word tag in the phone’s shop', () => {
-  it('is shown as the pill it is worn as, with its rarity, and can be tried on', async () => {
+  it('is shown as the pill it is worn as, marked only when dear, and can be tried on', async () => {
     open({ bundles: [], nudges: true });
     const card = await screen.findByRole('button', { name: /^Heval, Friend/ });
-    expect(within(card).getByText('Classic')).toBeTruthy();
+    // A classic tag carries no mark; a masterwork does, on its picture.
+    expect(within(card).queryByText('Classic')).toBeNull();
     expect(within(card).getByLabelText('Heval')).toBeTruthy();
     const eclipse = screen.getByRole('button', { name: /^Rojgirtin, Eclipse/ });
     expect(within(eclipse).getByText('Masterwork')).toBeTruthy();

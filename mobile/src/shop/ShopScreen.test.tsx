@@ -136,15 +136,16 @@ describe('the Shop, by kind', () => {
     expect(card.style.width || getComputedStyle(card).width).toBe('48.5%');
   });
 
-  it('prints Free as a price, not in green, and lets a name and its meaning take a second line', async () => {
+  it('prints Free as a price, not in green, and keeps a name and its meaning to one line each', async () => {
     open();
+    // The card's label still reads them in full, as its sheet shows them.
     const free = await screen.findByRole('button', { name: 'Hevalo, Hevalo violet, Free' });
     const price = within(free).getByText('Free');
     const name = within(free).getByText('Hevalo');
     // In the ink the name is in, as an affordable price is.
     expect(getComputedStyle(price).color).toBe(getComputedStyle(name).color);
-    expect(getComputedStyle(name).whiteSpace).not.toBe('nowrap');
-    expect(getComputedStyle(within(free).getByText('Hevalo violet')).whiteSpace).not.toBe('nowrap');
+    expect(getComputedStyle(name).whiteSpace).toBe('nowrap');
+    expect(getComputedStyle(within(free).getByText('Hevalo violet')).whiteSpace).toBe('nowrap');
   });
 
   it('shows a frame the way it will be worn: round your own picture, in its row and in its sheet', async () => {
