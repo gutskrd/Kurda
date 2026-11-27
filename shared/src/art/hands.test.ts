@@ -292,7 +292,8 @@ describe('the turn of the stamp in the hand', () => {
           const [[px, py], [bx, by]] = [last[name]![k]!, before[name]![k]!];
           const where = (): string => `${name}[${k}] at ${ms} ms`;
           note(worst.step, Math.hypot(x - px, y - py), where);
-          note(worst.change, Math.hypot(x - 2 * px + bx, y - 2 * py + by), where);
+          // (a change of speed is judged where it can be seen: on the frame or just below its foot, where nothing is drawn)
+          if (Math.max(y, py, by) < HAND_STAMP_VIEW.h + 8) note(worst.change, Math.hypot(x - 2 * px + bx, y - 2 * py + by), where);
           if (pts.length > 1) note(worst.spread, gap(pts, k) / (3 * widest[name]!), where);
         });
       }
