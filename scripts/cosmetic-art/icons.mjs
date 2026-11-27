@@ -18,6 +18,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { register } from 'tsx/esm/api';
 import { blob, crayon, crescent, mark, rim, softly, specks, strokes, within } from './brush.mjs';
+import { FRIENDS } from './icons-friends.mjs';
 import { along, n, pt, spline, sunRays } from './kit.mjs';
 import { Still } from './still.mjs';
 
@@ -1297,4 +1298,6 @@ export const ICONS = [
       return s.done({ light: { key: [[0.9, -0.28, -0.36], [1, 0.98, 0.94], 1.6], fill: [[0, 0, 1], [0, 0, 0], 0], ambient: [0, 0, 0] }, finish: { grain: 0.004, saturation: 0.9, warmth: 0 } });
     },
   },
+  // the animal friends, each in a hand of its own (icons-friends.mjs), after the rest so their files keep their numbers
+  ...FRIENDS,
 ];

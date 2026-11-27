@@ -63,6 +63,10 @@ interface Renames {
 interface FramesMigration {
   FRAMES: [string, string, string, string, number, number][];
 }
+/** The migration that put the animal icons on sale: [sku, name, description, assetKey, price, displayOrder]. */
+interface IconsMigration {
+  ICONS: [string, string, string, string, number, number][];
+}
 /** The migration that moved prices down the ladder and put word tags and bundles on sale. */
 interface OffersMigration {
   REPRICE: [string, number, number][];
@@ -85,6 +89,7 @@ describe('the cosmetic catalogue', () => {
   let renames: Renames[];
   let framesOnSale: FramesMigration;
   let offers: OffersMigration;
+  let animals: IconsMigration;
   /** A price as the ladder migration left it: moved when it was still at the price it shipped at. */
   const laddered = (sku: string, price: number): number => offers.REPRICE.find(([s, from]) => s === sku && from === price)?.[2] ?? price;
 
@@ -99,6 +104,7 @@ describe('the cosmetic catalogue', () => {
     ];
     framesOnSale = (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000431000_frames-to-buy.js')).href)) as FramesMigration;
     offers = (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000890000_fairer-prices-and-bundles.js')).href)) as OffersMigration;
+    animals = (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000893000_animal-icons.js')).href)) as IconsMigration;
   });
 
   it('names a file that exists for every asset key', () => {
@@ -183,7 +189,11 @@ describe('the cosmetic catalogue', () => {
   });
 
   it('is the catalogue migration 1751000161000 applies, under the names later migrations gave its pieces, at half its prices, laddered', () => {
-    const fromManifest = made().map((r): MadeRow => [r.sku, r.category, r.name, r.description ?? '', r.assetKey, r.price, r.premiumOnly, r.displayOrder]);
+    // the animal icons came later, with their own migration (checked below)
+    const later = new Set(animals.ICONS.map(([sku]) => sku));
+    const fromManifest = made()
+      .filter((r) => !later.has(r.sku))
+      .map((r): MadeRow => [r.sku, r.category, r.name, r.description ?? '', r.assetKey, r.price, r.premiumOnly, r.displayOrder]);
     const renamed = (row: MadeRow): MadeRow =>
       renames.flatMap((m) => m.RENAMED).reduce<MadeRow>((acc, r) => (acc[4] === r.assetKey && acc[2] === r.from[0] && acc[3] === r.from[1] ? [acc[0], acc[1], r.to[0], r.to[1], acc[4], acc[5], acc[6], acc[7]] : acc), row);
     const halved = (row: MadeRow): MadeRow => [row[0], row[1], row[2], row[3], row[4], laddered(row[0], row[5] / 2), row[6], row[7]];
@@ -191,6 +201,12 @@ describe('the cosmetic catalogue', () => {
     const madeByAsset = new Map(made().map((r) => [r.assetKey, r.sku]));
     const fromRetired = Object.fromEntries(retired().map((r) => [r.sku, madeByAsset.get(r.assetKey)]));
     expect(migration.REPLACED_BY).toEqual(fromRetired);
+  });
+
+  it('is the list of animal icons migration 1751000893000 puts on sale', () => {
+    const later = new Set(animals.ICONS.map(([sku]) => sku));
+    const fromManifest = manifest.icons.filter((r) => later.has(r.sku)).map((r) => [r.sku, r.name, r.description ?? '', r.assetKey, r.price, r.displayOrder]);
+    expect(animals.ICONS).toEqual(fromManifest);
   });
 
   it('matches an item made by hand to the art of the file it pointed at', () => {

@@ -126,6 +126,28 @@ const DESCRIPTIONS: Record<string, Record<Exclude<AppLocale, 'en'>, string>> = {
     ku: 'Heyva nû', ckb: 'مانگی نوێ', de: 'Mondsichel', es: 'Luna creciente',
     fr: 'Croissant de lune', nl: 'Maansikkel', tr: 'Hilal', ar: 'هلال',
   },
+  'Strong rabbit': {
+    ku: 'Kêroşka bihêz', ckb: 'کەروێشکی بەهێز', de: 'Starker Hase', es: 'Conejo forzudo',
+    fr: 'Lapin costaud', nl: 'Sterk konijn', tr: 'Güçlü tavşan', ar: 'أرنب قوي',
+  },
+  'Fox knight': {
+    ku: 'Rovîyê şûrdar', ckb: 'ڕێوی شمشێرباز', de: 'Fuchsritter', es: 'Zorro caballero',
+    fr: 'Renard chevalier', nl: 'Vossenridder', tr: 'Şövalye tilki', ar: 'الثعلب الفارس',
+  },
+  'Cat in boots': {
+    ku: 'Pisîka bi çizme', ckb: 'پشیلەی چەکمەدار', de: 'Katze mit Stiefeln', es: 'Gato con botas',
+    fr: 'Chat botté', nl: 'Kat met laarzen', tr: 'Çizmeli kedi', ar: 'قطة بالجزمة',
+  },
+  'Kitten with a bow': {
+    ku: 'Pisîka bi qurdele', ckb: 'بەچکە پشیلەی قوردێلەدار', de: 'Kätzchen mit Schleife', es: 'Gatito con lazo',
+    fr: 'Chaton au ruban', nl: 'Kitten met strik', tr: 'Fiyonklu yavru kedi', ar: 'قطيطة بشريطة',
+  },
+  'Blue dove': { ku: 'Kevoka şîn', ckb: 'کۆتری شین', de: 'Blaue Taube', es: 'Paloma azul', fr: 'Colombe bleue', nl: 'Blauwe duif', tr: 'Mavi güvercin', ar: 'حمامة زرقاء' },
+  'Bear': { ku: 'Hirç', ckb: 'ورچ', de: 'Bär', es: 'Oso', fr: 'Ours', nl: 'Beer', tr: 'Ayı', ar: 'دب' },
+  'White bear': { ku: 'Hirça spî', ckb: 'ورچی سپی', de: 'Weißer Bär', es: 'Oso blanco', fr: 'Ours blanc', nl: 'Witte beer', tr: 'Beyaz ayı', ar: 'دب أبيض' },
+  'Cow': { ku: 'Çêlek', ckb: 'مانگا', de: 'Kuh', es: 'Vaca', fr: 'Vache', nl: 'Koe', tr: 'İnek', ar: 'بقرة' },
+  'Hen': { ku: 'Mirîşk', ckb: 'مریشک', de: 'Henne', es: 'Gallina', fr: 'Poule', nl: 'Kip', tr: 'Tavuk', ar: 'دجاجة' },
+  'Kiwi': { ku: 'Kîwî', ckb: 'کیوی', de: 'Kiwi', es: 'Kiwi', fr: 'Kiwi', nl: 'Kiwi', tr: 'Kivi', ar: 'طائر الكيوي' },
   'Tulip wreath': {
     ku: 'Xeleka laleyan', ckb: 'ئەڵقەی لالە', de: 'Tulpenkranz', es: 'Corona de tulipanes',
     fr: 'Couronne de tulipes', nl: 'Tulpenkrans', tr: 'Lale çelengi', ar: 'إكليل توليب',
