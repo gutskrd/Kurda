@@ -195,6 +195,48 @@ describe.skipIf(!DATABASE_URL)('the Zêr board (integration)', () => {
     expect(signedOut.me).toBeNull();
   });
 
+  it('shows staff themselves in their own place on their own view, and to nobody else', async () => {
+    for (const service of [new LeaderboardService(pool), boards()]) {
+      const global = await service.board('zer', people.staff!.id);
+      const theirs = await service.board('zer', people.me!.id);
+      expect(theirs.total).toBe(global.total - 1);
+      expect(listed(theirs, people.staff!)).toBe(false);
+      // richer than everyone listed, so first, and everyone after them one place down
+      expect(ours(global).map((e) => [e.userId, e.rank])).toEqual([
+        [people.staff!.id, 1],
+        [people.top!.id, 2],
+        [ours(global)[2]!.userId, 3],
+        [ours(global)[3]!.userId, 3],
+        [people.next!.id, 5],
+        [people.me!.id, 6],
+      ]);
+      expect(global.me).toEqual({ rank: 1, score: BASE + 400 });
+      const country = await service.board('zer', people.staff!.id, { scope: 'country', limit: 100 });
+      expect(country.top[0]!.userId).toBe(people.staff!.id);
+      expect(country.total).toBe((await service.board('zer', people.me!.id, { scope: 'country', limit: 100 })).total + 1);
+    }
+  });
+
+  it('pages a view with the reader added in the middle, every row once and in order', async () => {
+    await hold(people.staff!, 'zer', BASE + 150);
+    try {
+      for (const service of [new LeaderboardService(pool), boards()]) {
+        const whole = await service.board('zer', people.staff!.id, { limit: 6 });
+        const expected = [people.top!.id, 'tie', 'tie', people.staff!.id, people.next!.id, people.me!.id];
+        expect(whole.top.map((e) => (e.userId === people.tieA!.id || e.userId === people.tieB!.id ? 'tie' : e.userId))).toEqual(expected);
+        expect(whole.top.map((e) => e.rank)).toEqual([1, 2, 2, 4, 5, 6]);
+        expect(whole.me).toEqual({ rank: 4, score: BASE + 150 });
+        for (const size of [1, 2, 3, 4]) {
+          const pages: Board['top'] = [];
+          for (let offset = 0; offset < 6; offset += size) pages.push(...(await service.board('zer', people.staff!.id, { limit: size, offset })).top);
+          expect(pages.slice(0, 6).map((e) => [e.userId, e.rank])).toEqual(whole.top.map((e) => [e.userId, e.rank]));
+        }
+      }
+    } finally {
+      await hold(people.staff!, 'zer', BASE + 400);
+    }
+  });
+
   it('reads the caller’s own balance live while the board itself is the one built', async () => {
     const wallet = new WalletService(pool);
     await wallet.credit({ userId: people.me!.id, currency: 'zer', amount: 60, reason: 'test_board', idempotencyKey: `lbz-${suffix}-live` });

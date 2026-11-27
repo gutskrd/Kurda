@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BALANCE_BOARDS, isBalanceBoard, isBoardType, isWeeklyBoard, rankForScore, withRanks } from './rank.js';
+import { BALANCE_BOARDS, isBalanceBoard, isBoardType, isWeeklyBoard, rankForScore, withRanks, withSelf } from './rank.js';
 
 describe('isBoardType', () => {
   it('accepts the known board types, and the frozen rating board is gone', () => {
@@ -57,5 +57,30 @@ describe('withRanks', () => {
     // the board is 500, 300, 300, 300, 100: a page of two from position 2 opens on the tie at 2
     expect(withRanks([row(300, 'c'), row(300, 'd')], 2, 2).map((r) => r.rank)).toEqual([2, 2]);
     expect(withRanks([row(100)], 4).map((r) => r.rank)).toEqual([5]);
+  });
+});
+
+describe('withSelf', () => {
+  const at = (score: number, userId: string) => ({ userId, username: userId, score });
+
+  it('puts a reader the board leaves out in their own place, so nobody else’s place is also theirs', () => {
+    // the owner’s case: 1,165 and 135 listed, the reader holding 859 between them
+    const rows = withSelf([at(1165, 'a'), at(135, 'b')], at(859, 'me'));
+    expect(withRanks(rows).map((r) => [r.userId, r.rank])).toEqual([
+      ['a', 1],
+      ['me', 2],
+      ['b', 3],
+    ]);
+  });
+
+  it('goes ahead of anyone they tie with, sharing the place, and last when below everyone', () => {
+    expect(withSelf([at(9, 'a'), at(5, 'b')], at(5, 'me')).map((r) => r.userId)).toEqual(['a', 'me', 'b']);
+    expect(withSelf([at(9, 'a')], at(2, 'me')).map((r) => r.userId)).toEqual(['a', 'me']);
+    expect(withSelf([], at(2, 'me')).map((r) => r.userId)).toEqual(['me']);
+  });
+
+  it('leaves a board that already lists the reader as it is', () => {
+    const rows = [at(9, 'me'), at(5, 'b')];
+    expect(withSelf(rows, at(7, 'me'))).toBe(rows);
   });
 });

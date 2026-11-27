@@ -59,6 +59,17 @@ export function rankForScore(scoresDesc: number[], myScore: number): number {
 }
 
 /**
+ * A board as its reader sees it. Someone the shared board leaves out (staff on a balance board, a hidden profile, a
+ * minor on a public one, a flagged cheater) is put in their own place on their own view, ahead of anyone they tie
+ * with, so the place they are told is never also another person's.
+ */
+export function withSelf(rows: ScoreRow[], self: ScoreRow): ScoreRow[] {
+  if (rows.some((r) => r.userId === self.userId)) return rows;
+  const at = rows.findIndex((r) => r.score <= self.score);
+  return at === -1 ? [...rows, self] : [...rows.slice(0, at), self, ...rows.slice(at)];
+}
+
+/**
  * Attaches ranks to a descending score list, ties sharing the higher place (1, 2, 2, 4) as in `rankForScore`, so a
  * row's number matches the board's `me`. Balances tie often. `startAt` is the first row's 0-based position on the
  * whole board, so page two continues from 26; `firstRank` is that row's own place when it ties with the previous
