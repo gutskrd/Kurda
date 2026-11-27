@@ -84,19 +84,22 @@ describe('the hand holding up a game’s stamp', () => {
     for (const name of [...shapes(stampBack), ...shapes(stampFront)]) expect(at[name]).toMatch(/^M/);
   });
 
-  it('wears the skin of the hand holding the phone, its shadows in the antlers’ brown and its lines a warm one', () => {
+  it('wears the skin of the hand holding the phone flat, as the reference paints it, its gaps in its charcoal and its lines a warm brown', () => {
     const used = new Set([...colours(stampBack), ...colours(stampFront)]);
-    for (const c of [SKIN.face, SKIN.shade]) expect(used).toContain(c);
-    for (const c of [SKIN.face, SKIN.shade]) expect(colours(back)).toContain(c);
-    // a warm brown for the lines: red over green over blue, darker than the skin's shade
+    expect(used).toContain(SKIN.face);
+    expect(colours(back)).toContain(SKIN.face);
+    // no shade step on any finger: nothing that could read as a shadow along an edge
+    expect(used).not.toContain(SKIN.shade);
+    // the gaps between the digits in the reference's own charcoal, the darkest colour drawn
     const rgb = (c: string): number[] => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
+    expect(colours(stampBack)).toContain('#3b353c');
+    for (const c of used) expect(Math.max(...rgb(c))).toBeGreaterThanOrEqual(60);
+    // a warm brown for the lines: red over green over blue, darker than the skin
     const warm = [...used].filter((c) => {
       const [r, g, b] = rgb(c);
-      return r! > g! && g! > b! && r! < rgb(SKIN.shade)[0]!;
+      return r! > g! && g! > b! && r! < rgb(SKIN.face)[0]!;
     });
     expect(warm.length).toBeGreaterThan(0);
-    // nothing near black: every colour has some light in it
-    for (const c of used) expect(Math.max(...rgb(c))).toBeGreaterThan(64);
   });
 
   it('refuses a part it does not draw', () => {
@@ -190,7 +193,7 @@ describe('the turn of the stamp in the hand', () => {
   it('never folds an outline over itself, at any moment of the turn', () => {
     for (const ms of MOMENTS) {
       const pts = handStampPointsAt(ms);
-      for (const name of ['back', 'thumb', 'curled', 'slit', 'wedge', 'nail', 'freeEdge']) {
+      for (const name of ['back', 'thumb', 'curled', 'slit', 'wedge', 'ring', 'nail', 'freeEdge']) {
         const cross = selfCrossing(pts[name]!);
         expect(cross, `${name} at ${ms} ms crosses itself at ${String(cross)}`).toBeNull();
       }
@@ -201,8 +204,9 @@ describe('the turn of the stamp in the hand', () => {
   // a hundred frame units in one of its frames; nothing of ours goes faster than that or changes speed in a jolt.
   it('moves every point of every shape smoothly: nothing jumps from one moment to the next', () => {
     const gap = (pts: readonly Pt[], k: number): number => Math.hypot(pts[k]![0] - pts[(k + 1) % pts.length]![0], pts[k]![1] - pts[(k + 1) % pts.length]![1]);
-    const rest = handStampPointsAt(0);
-    const widest = Object.fromEntries(Object.entries(rest).map(([name, pts]) => [name, Math.max(...pts.map((_, k) => gap(pts, k)))]));
+    // how far apart a shape's neighbouring points are in the reference's own frames, at their widest (a gap opens from shut)
+    const frames = Array.from({ length: 23 }, (_, k) => handStampPointsAt(k * 80));
+    const widest = Object.fromEntries(Object.keys(frames[0]!).map((name) => [name, Math.max(...frames.flatMap((f) => f[name]!.map((_, k) => gap(f[name]!, k))))]));
     let [before, last] = [handStampPointsAt(0), handStampPointsAt(5)];
     for (const ms of MOMENTS.slice(2)) {
       const now = handStampPointsAt(ms);
@@ -213,7 +217,7 @@ describe('the turn of the stamp in the hand', () => {
           expect(Math.hypot(x - px, y - py), `${name}[${k}] at ${ms} ms`).toBeLessThan(10);
           // and its speed only ever changes gently, so nothing snaps from one moment to the next
           expect(Math.hypot(x - 2 * px + bx, y - 2 * py + by), `${name}[${k}] at ${ms} ms`).toBeLessThan(2.5);
-          // nor does any point pull far from its neighbours (the wedges stretch most, as the middle finger reaches out)
+          // nor does any point pull far from its neighbours between the reference's frames
           if (pts.length > 1) expect(gap(pts, k), `${name}[${k}] at ${ms} ms`).toBeLessThan(3 * widest[name]!);
         });
       }

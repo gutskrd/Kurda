@@ -2,11 +2,10 @@
  * A hand holding up a game's stamp to show it, for the front page's games moment, and how it turns the stamp over to
  * the next. Seen from the front and a little below: the thumb upright in front pinching the stamp's foot, its nail
  * toward us; the index finger behind it on the right, long and bent at its joints, running down to its knuckle; the
- * middle finger reaching out to the left under the stamp; and the ring finger curled below it. Flat colour in the skin
- * of the hand holding the phone (hand-paint.ts), one shade step on the far side of each finger and under the stamp's
- * edge, the gaps between the digits in the antlers' brown with a deeper accent where they are deepest, and a few warm
- * brown lines that swell in the creases and thin away to nothing. The thumb, the index finger and the ring finger
- * leave the frame at its foot.
+ * middle finger reaching out to the left under the stamp; and the ring finger curled below it. Flat colour, as the
+ * reference paints it: one skin, that of the hand holding the phone (hand-paint.ts), with no shading, the gaps between
+ * the digits in the reference's charcoal where its gaps are, and a few warm brown lines that swell in the creases and
+ * thin away to nothing. The thumb, the index finger and the ring finger leave the frame at its foot.
  *
  * Two layers on one frame: `back` (the fingers behind the stamp) and `front` (the thumb), so an app can lay the stamp
  * (`HAND_STAMP_CARD`) between them. A turn is the reference's, frame for frame: each frame's pose is the skeleton
@@ -26,10 +25,10 @@ export const HAND_STAMP_VIEW = { w: 312, h: 236 } as const;
 export const HAND_STAMP_CARD = { cx: 131.44, cy: 104.59, w: 100, h: 128, turn: 4.2, clear: 100 } as const;
 
 /**
- * The hand's own colours beside the skin: the gaps in the dark brown of Hevalo's antlers and their deepest part a step
- * darker, the lines a warm brown, and the nail a step paler than the skin with its free edge paler still.
+ * The hand's own colours beside the skin: the gaps in the reference's charcoal, the lines a warm brown, and the nail a
+ * step paler than the skin with its free edge paler still.
  */
-const INK = { gap: '#4f3029', deep: '#47241f', line: '#8d5236', nail: '#eecbb0', nailEdge: '#f8e6d8' } as const;
+const INK = { gap: '#3b353c', line: '#8d5236', nail: '#eecbb0', nailEdge: '#f8e6d8' } as const;
 
 /**
  * The hand is laid out on a grid three times the frame's size, which is the reference's own picture: its foot is the
@@ -230,14 +229,168 @@ function ringIn(f: Frame): Posed {
   return { centre: [root, ...centre, tip], a: CURLED.a, b: CURLED.b, tip: CURLED.tip };
 }
 
+/**
+ * The gaps between the digits, as dark as the reference paints them and where it paints them. Each runs beside one
+ * digit's edge: right of the thumb toward the index finger, left of it under the stamp and down to the ring finger, and
+ * under the middle finger. `GAP_TRACK` holds, for each frame of the reference, where the gap begins and ends out from
+ * that edge at `GAP_SAMPLES` places spaced evenly along the digit (`evenlyAlong`), on the grid; `0, 0` is no gap there.
+ */
+const GAP_NAMES = ['slit', 'wedge', 'ring'] as const;
+type GapName = (typeof GAP_NAMES)[number];
+const GAP_SAMPLES = 24;
+/** Each gap's digit and side, and the stretch of it sampled: from where it comes into the frame to where its tip rounds off. */
+const GAP_EDGES: Record<GapName, { digit: DigitName; side: 1 | -1; from: number; toBack: number }> = {
+  slit: { digit: 'thumb', side: 1, from: 1.6, toBack: 0 },
+  wedge: { digit: 'thumb', side: -1, from: 1.6, toBack: 0 },
+  ring: { digit: 'reaching', side: -1, from: 0, toBack: 2 },
+};
+const GAP_TRACK: Record<GapName, readonly (readonly number[])[]> = {
+  slit: [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 29, 63, 15, 59, 10, 55, 10, 49, 11, 45, 11, 38, 11, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 16, 5, 20, 3, 23],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 41, 69, 22, 61, 8, 56, 9, 50, 9, 45, 9, 37, 9, 30, 7, 24, 0, 0, 0, 0, 0, 0, 0, 0, 4, 13, 3, 18, 0, 20],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 61, 27, 53, 19, 46, 13, 40, 8, 33, 7, 24, 7, 14, 0, 0, 0, 0, 0, 0, 0, 0, 4, 9, 1, 14],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 39, 59, 14, 48, 13, 39, 12, 27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 42, 58, 38, 48, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 41, 60, 35, 55, 31, 50, 28, 45, 17, 40, 15, 34, 15, 28, 13, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 44, 12, 42, 16, 37, 18, 33, 20, 27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 19, 41, 104, 31, 100, 26, 95, 23, 91, 23, 86, 22, 82, 22, 77, 21, 71, 21, 65, 19, 58, 15, 51, 16, 43, 13, 36],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 44, 99, 34, 79, 23, 54, 0, 0, 0, 0, 0, 0, 0, 0, 28, 45, 8, 13, 9, 24, 7, 17, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 31, 64, 21, 63, 14, 62, 11, 62, 12, 60, 13, 58, 12, 55, 12, 49, 12, 40, 11, 31, 9, 21, 0, 0, 0, 0, 0, 0, 0, 0, 4, 10, 3, 25, 2, 20, -1, 13],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 54, 12, 50, 11, 46, 11, 43, 11, 37, 10, 34, 10, 29, 9, 24, 8, 19, 6, 11, 0, 0, 0, 0, 0, 0, 0, 0, 1, 19, 1, 27, 0, 19, -3, 12],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 43, 10, 40, 1, 36, 2, 32, 4, 29, 5, 24, 5, 19, 5, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 41, 4, 33, 3, 24, 0, 15],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35, 57, 22, 53, 13, 49, 8, 46, 9, 42, 9, 38, 9, 34, 9, 31, 9, 28, 9, 23, 0, 0, 0, 0, 0, 0, 0, 0, 5, 28, 4, 23, 3, 17, 2, 11],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 37, 60, 27, 56, 19, 53, 13, 51, 14, 47, 15, 44, 14, 38, 13, 33, 12, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 21, 2, 12, -1, 7],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 38, 62, 27, 59, 19, 57, 15, 55, 13, 51, 13, 48, 14, 42, 14, 36, 13, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 22, 4, 20, 2, 11],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 43, 65, 31, 63, 23, 60, 13, 57, 14, 54, 13, 49, 15, 44, 14, 38, 13, 31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 19, 4, 21, 2, 13],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 65, 23, 62, 13, 59, 13, 55, 12, 52, 11, 47, 12, 40, 12, 36, 11, 16, 0, 0, 0, 0, 0, 0, 0, 0, 7, 15, 6, 19, 5, 16],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 65, 23, 62, 13, 59, 13, 55, 12, 52, 11, 47, 12, 40, 12, 36, 11, 16, 0, 0, 0, 0, 0, 0, 0, 0, 7, 15, 6, 19, 5, 16],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 65, 23, 62, 13, 59, 13, 55, 12, 52, 11, 47, 12, 40, 12, 36, 11, 16, 0, 0, 0, 0, 0, 0, 0, 0, 7, 15, 6, 19, 5, 16],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 65, 23, 62, 13, 59, 13, 55, 12, 52, 11, 47, 12, 40, 12, 36, 11, 16, 0, 0, 0, 0, 0, 0, 0, 0, 7, 15, 6, 19, 5, 16],
+  ],
+  wedge: [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 54, 25, 58, 25, 62, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 35, 25, 49, 25, 62, 23, 63, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 52, 23, 58, 25, 62, 28, 67, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 29, 41, 29, 51, 29, 61, 28, 73, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 50, 23, 55, 26, 58, 29, 61, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 34, 67, 34, 84, 34, 99, 32, 112, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 61, 21, 67, 36, 72, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 28, 42, 29, 53, 26, 63, 25, 74],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 67, 19, 72, 45, 78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 33, 23, 56, 23, 63, 23, 69, 25, 80, 25, 50, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 51, 18, 59, 38, 67, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 34, 19, 49, 18, 59, 18, 71, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 57, 25, 67, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24, 33, 25, 49, 24, 65, 24, 74, 23, 38, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 47, 18, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 34, 26, 48, 27, 66, 29, 85, 30, 93, 29, 98, 27, 67],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 20, 16, 60, 18, 60, 20, 63, 22, 67, 23, 74, 23, 69, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 43, 17, 53, 19, 62, 32, 72, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 41, 38, 47],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 23, 16, 35, 18, 44, 19, 51, 20, 41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24, 32],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 26, 31, 14, 37, 14, 43, 14, 49, 16, 55, 16, 59, 21, 26, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 21, 18, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24, 30, 24, 40, 24, 47, 25, 56, 24, 64, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 27, 18, 50, 17, 52, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 33, 24, 43, 23, 51, 23, 63, 24, 57, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 51, 20, 54, 20, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 34, 22, 44, 22, 57, 22, 66, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 26, 20, 50, 20, 55, 20, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 32, 22, 43, 23, 55, 22, 65, 23, 49, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 30, 20, 52, 21, 55, 22, 59, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 37, 24, 50, 24, 62, 24, 63, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 30, 20, 52, 21, 55, 22, 59, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 37, 24, 50, 24, 62, 24, 63, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 30, 20, 52, 21, 55, 22, 59, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 37, 24, 50, 24, 62, 24, 63, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 30, 20, 52, 21, 55, 22, 59, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 37, 24, 50, 24, 62, 24, 63, 0, 0],
+  ],
+  ring: [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 11, -6, 11, -6, 11, -6, 11, -6, 10, -6, 11, -6, 7, -6, 5],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 28, -6, 27, -6, 25, -6, 23],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -4, 6, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  ],
+};
+
+/** `count` places along a digit's centre line, evenly spaced by length, from `first` to `toBack` short of its last point. */
+function evenlyAlong(d: Posed, count: number, first: number, toBack: number): number[] {
+  const last = d.centre.length - 1 - toBack;
+  const fine = Array.from({ length: 401 }, (_, k) => first + ((last - first) * k) / 400);
+  const lengths = [0];
+  for (let k = 1; k < fine.length; k++) {
+    const [p, q] = [onDigit(d, fine[k - 1]!, 0), onDigit(d, fine[k]!, 0)];
+    lengths.push(lengths[k - 1]! + Math.hypot(q[0] - p[0], q[1] - p[1]));
+  }
+  const total = lengths[lengths.length - 1]!;
+  return Array.from({ length: count }, (_, j) => {
+    const want = (total * j) / (count - 1);
+    const k = Math.max(1, lengths.findIndex((l) => l >= want));
+    const [l0, l1] = [lengths[k - 1]!, lengths[k]!];
+    return fine[k - 1]! + (fine[k]! - fine[k - 1]!) * (l1 > l0 ? (want - l0) / (l1 - l0) : 0);
+  });
+}
+
+/**
+ * Straight out from a digit's edge at each sampled place, square to the edge as it runs over a few places either side,
+ * so that where the edge curves the gap's far side does not fold back on itself.
+ */
+function gapNormals(d: Posed, us: readonly number[], side: 1 | -1): Pt[] {
+  const edge = us.map((u) => sideAt(d, u, side));
+  return us.map((u, k) => {
+    const [p, q] = [edge[Math.max(0, k - 2)]!, edge[Math.min(edge.length - 1, k + 2)]!];
+    const n = unit([q[1] - p[1], p[0] - q[0]]);
+    const away = [edge[k]![0] - onDigit(d, u, 0)[0], edge[k]![1] - onDigit(d, u, 0)[1]];
+    return n[0] * away[0]! + n[1] * away[1]! >= 0 ? n : ([-n[0], -n[1]] as Pt);
+  });
+}
+
+/**
+ * A gap in a pose: its near side where it begins out from the digit's edge, its far side where it ends. Where the frame
+ * has no gap at a place, both close on the nearest place that has one, so the gap tapers off along the skin rather
+ * than reaching back across it, and it can grow and shrink between frames without folding.
+ */
+function gapIn(name: GapName, ds: Record<DigitName, Posed>, measured: readonly number[]): Pt[] {
+  const { digit, side, from: first, toBack } = GAP_EDGES[name];
+  const d = ds[digit];
+  const us = evenlyAlong(d, GAP_SAMPLES, first, toBack);
+  const pairs = us.map((_, k) => [measured[2 * k] ?? 0, measured[2 * k + 1] ?? 0] as [number, number]);
+  const shown = pairs.map(([, e], k) => (e > 0 ? k : -1)).filter((k) => k >= 0);
+  const near: Pt[] = [];
+  const far: Pt[] = [];
+  const outward = gapNormals(d, us, side);
+  us.forEach((u, k) => {
+    const p = sideAt(d, u, side);
+    const nrm = outward[k]!;
+    let [b, e] = pairs[k]!;
+    if (e <= 0) {
+      const nearest = shown.reduce((best, j) => (best < 0 || Math.abs(j - k) < Math.abs(best - k) ? j : best), -1);
+      b = nearest < 0 ? 0 : pairs[nearest]![0];
+      e = b;
+    }
+    near.push(step(p, nrm, b));
+    far.push(step(p, nrm, e));
+  });
+  return [...near, ...far.reverse()];
+}
+
 /** The poses, one per frame of a turn, from rest to rest. */
 interface Pose {
   digits: Record<DigitName, Posed>;
   web: number;
+  /** The frame's gaps beside the digits (`GAP_TRACK`). */
+  gaps: Record<GapName, readonly number[]>;
 }
 const POSES: readonly Pose[] = ORDER.map((i) => {
   const f = TRACK[i]!;
-  return { digits: { thumb: thumbIn(f), index: indexIn(f), reaching: middleIn(f), curled: ringIn(f) }, web: f.web };
+  const gaps = Object.fromEntries(GAP_NAMES.map((g) => [g, GAP_TRACK[g][i]!])) as Record<GapName, readonly number[]>;
+  return { digits: { thumb: thumbIn(f), index: indexIn(f), reaching: middleIn(f), curled: ringIn(f) }, web: f.web, gaps };
 });
 /** The stamp through a turn: its lean from rest, its turn, its middle; it ends where it began but turned over. */
 const CARD_TRACK: readonly (readonly [number, number, number, number])[] = ORDER.map((i, k) => {
@@ -369,10 +522,6 @@ function webIn(p: Pose, ds: Record<DigitName, Posed>): { index: number; thumb: n
 const BELOW: readonly Pt[] = [[690, 900], [1060, 940]];
 const WEDGE_TOP = held('reaching', [[668, 470], [608, 488]]);
 const CROTCH = held('reaching', [[690, 540]]);
-const WEDGE_DEEP = held('reaching', [[660, 478], [632, 486], [612, 494]]);
-/** Where the wedge and its deepest part close, under the thumb: held on the middle finger like the rest of them, so neither can fold. */
-const WEDGE_SHUT = held('reaching', [[676, 478]]);
-const WEDGE_DEEP_SHUT = held('reaching', [[668, 490]]);
 
 /** The nail: a soft, nearly square shield across the thumb's tip, its free edge pale, set into the skin. */
 const NAIL = held('thumb', [[660, 470], [672, 456], [700, 452], [728, 456], [740, 470], [742, 512], [732, 536], [700, 542], [668, 536], [658, 512]]);
@@ -394,22 +543,6 @@ const LINES: readonly { name: string; on: ReturnType<typeof held>; width: number
   { name: 'reaching-joint-2', on: held('reaching', [[606, 540], [603, 553], [605, 566]]), width: 0.7, opacity: 0.6, layer: 'back' },
 ];
 
-/** How far from `p` along `n` the line first meets the polyline `line`, or a long way if it never does. */
-function reachOf(p: Pt, n: Pt, line: readonly Pt[]): number {
-  let best = 400;
-  for (let i = 0; i < line.length - 1; i++) {
-    const [a, b] = [line[i]!, line[i + 1]!];
-    const [sx, sy] = [b[0] - a[0], b[1] - a[1]];
-    const den = n[0] * sy - n[1] * sx;
-    if (!den) continue;
-    const [qx, qy] = [a[0] - p[0], a[1] - p[1]];
-    const t = (qx * sy - qy * sx) / den;
-    const g = (qx * n[1] - qy * n[0]) / den;
-    if (g >= 0 && g <= 1 && t > -200 && t < best) best = t;
-  }
-  return best;
-}
-
 /**
  * Every shape of the hand in a pose, on the grid, each with the same points in the same order in every pose, so the
  * turn can move each point along its own curve from pose to pose:
@@ -417,8 +550,8 @@ function reachOf(p: Pt, n: Pt, line: readonly Pt[]): number {
  *   down its inner side, across the palm behind the thumb to the middle finger, out along it and back, out along the
  *   ring finger and back, and round under the frame's foot;
  * - `thumb`, the thumb in front, one outline from its root round its tip;
- * - the shapes on them: the ring finger's shade, the gaps and their deepest parts, the nail and its free edge, and the
- *   thumb's pad, where it holds the stamp (a single point, for placing the stamp).
+ * - the shapes on them: the gaps beside the digits (`gapIn`), the nail and its free edge, and the thumb's pad, where
+ *   it holds the stamp (a single point, for placing the stamp).
  */
 function shapesIn(p: Pose): Record<string, Pt[]> {
   const ds = p.digits;
@@ -454,42 +587,12 @@ function shapesIn(p: Pose): Record<string, Pt[]> {
   ];
   const thumb = [...T.a, ...T.cap, ...T.b.slice().reverse()];
   const curled = [...C.a, ...C.cap, ...C.b.slice().reverse()];
-  // The gap between the index finger and the thumb: down the finger's inner side from a little above the web (the web's
-  // own edge clips it) to the frame's foot, then back up across the gap, each point straight out from its point on the
-  // finger as far as the thumb's edge and a little under it, or barely off the finger where the thumb lies over it, so
-  // the gap closes up rather than folding over itself.
-  const inner = [0, 1, 2, 3, 4, 5, 6, 7].map((k) => web.index + 0.4 - (web.index + 0.4 - 1.2) * (k / 7));
-  // (the thumb's edge drawn on past its root and its tip, so the line across meets it wherever the thumb lies)
-  const edge = [step(T.a[0]!, unit([T.a[0]![0] - T.a[1]![0], T.a[0]![1] - T.a[1]![1]]), 400), ...T.a, ...T.cap.slice(0, 2)];
-  const [e1, e2] = [edge[edge.length - 2]!, edge[edge.length - 1]!];
-  edge.push(step(e2, unit([e2[0] - e1[0], e2[1] - e1[1]]), 400));
-  // (all straight out the same way, from the middle of that stretch of the finger, so none can cross another)
-  const [side, middle] = [sideAt(ds.index, inner[4]!, -1), onDigit(ds.index, inner[4]!, 0)];
-  const way = unit([side[0] - middle[0], side[1] - middle[1]]);
-  const across = inner.map((u) => {
-    const p = sideAt(ds.index, u, -1);
-    return { p, d: Math.min(160, reachOf(p, way, edge)) };
-  });
-  const out = (k: number, by: number): Pt => step(across[k]!.p, way, Math.max(2, across[k]!.d + by));
-  const slit = [...across.map((q) => q.p), ...[7, 6, 5, 4, 3, 2, 1, 0].map((k) => out(k, 40))];
-  // and its deepest part, a strip along the thumb's edge low in the gap, from under the thumb to a little way out from
-  // it, never past the index finger
-  const finger = [step(I.b[0]!, unit([I.b[0]![0] - I.b[1]![0], I.b[0]![1] - I.b[1]![1]]), 400), ...I.b];
-  const low = [1.8, 2.2, 2.6, 3, 3.4].map((u) => {
-    const p = sideAt(ds.thumb, u, 1);
-    const n = unit([p[0] - onDigit(ds.thumb, u, 0)[0], p[1] - onDigit(ds.thumb, u, 0)[1]]);
-    return { p, n, d: reachOf(p, n, finger) };
-  });
-  const slitDeep = [...low.map((q, k) => step(q.p, q.n, Math.max(1, Math.min(18 - 3 * k, q.d - 2)))), ...low.slice().reverse().map((q) => step(q.p, q.n, -24))];
-  const wedge = [...wedgeTop, R.a[2]!, R.a[1]!, R.a[0]!, ...ride(WEDGE_SHUT, ds)];
-  const wedgeDeep = [...ride(WEDGE_DEEP, ds), onDigit(ds.reaching, 1.2, ds.reaching.a[1]! + 6), ...ride(WEDGE_DEEP_SHUT, ds)];
   return {
     back,
     curled,
-    slit,
-    slitDeep,
-    wedge,
-    wedgeDeep,
+    slit: gapIn('slit', ds, p.gaps.slit),
+    wedge: gapIn('wedge', ds, p.gaps.wedge),
+    ring: gapIn('ring', ds, p.gaps.ring),
     thumb,
     nail: ride(NAIL, ds),
     freeEdge: ride(FREE_EDGE, ds),
@@ -553,33 +656,53 @@ const poseAt = (ms: number): number => (Math.max(0, Math.min(HAND_STAMP_FLIP.ms,
 /** Every shape's points at `ms` into a turn, on the frame. */
 function pointsAt(ms: number): Record<string, Pt[]> {
   const t = poseAt(ms);
-  return Object.fromEntries(
+  const pts: Record<string, Pt[]> = Object.fromEntries(
     Object.entries(CURVES).map(([name, c]) => [name, c.xs.map((x, k) => [onCurve(x, c.sx[k]!, t), onCurve(c.ys[k]!, c.sy[k]!, t)] as Pt)]),
   );
+  // Where a gap is all but shut between frames, or one of its sides has passed the other, its two sides meet exactly,
+  // so it never shows a hair of dark or turns inside out.
+  for (const name of GAP_NAMES) {
+    const g = pts[name]!;
+    const far = (k: number): Pt => g[2 * GAP_SAMPLES - 1 - k]!;
+    const across = (k: number): number => {
+      const [p, q] = [g[Math.max(0, k - 1)]!, g[Math.min(GAP_SAMPLES - 1, k + 1)]!];
+      const f = far(k);
+      return (q[0] - p[0]) * (f[1] - g[k]![1]) - (q[1] - p[1]) * (f[0] - g[k]![0]);
+    };
+    const widest = Array.from({ length: GAP_SAMPLES }, (_, k) => k).reduce((w, k) => (Math.hypot(far(k)[0] - g[k]![0], far(k)[1] - g[k]![1]) > Math.hypot(far(w)[0] - g[w]![0], far(w)[1] - g[w]![1]) ? k : w), 0);
+    const way = Math.sign(across(widest));
+    for (let k = 0; k < GAP_SAMPLES; k++) {
+      const [a, b] = [g[k]!, far(k)];
+      if (Math.hypot(a[0] - b[0], a[1] - b[1]) >= GAP_SHUT && Math.sign(across(k)) === way) continue;
+      const mid: Pt = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      g[k] = mid;
+      g[2 * GAP_SAMPLES - 1 - k] = mid;
+    }
+  }
+  return pts;
 }
+/** How narrow a gap may get, on the frame, before its sides are taken as meeting. */
+const GAP_SHUT = 0.6;
 
 /** How each shape is painted: in which layer, in what, and whether it is a smooth outline or a brush's ring. */
-const PAINT: readonly { name: string; layer: 'back' | 'front'; fill: string; brush?: { width: number; opacity: number } }[] = [
-  { name: 'curled', layer: 'back', fill: SKIN.shade },
-  { name: 'slit', layer: 'back', fill: INK.gap },
-  { name: 'slitDeep', layer: 'back', fill: INK.deep },
-  { name: 'wedge', layer: 'back', fill: INK.gap },
-  { name: 'wedgeDeep', layer: 'back', fill: INK.deep },
+const PAINT: readonly { name: string; layer: 'back' | 'front'; fill: string; brush?: { width: number; opacity: number }; straight?: boolean }[] = [
+  { name: 'slit', layer: 'back', fill: INK.gap, straight: true },
+  { name: 'wedge', layer: 'back', fill: INK.gap, straight: true },
+  { name: 'ring', layer: 'back', fill: INK.gap, straight: true },
   { name: 'nail', layer: 'front', fill: INK.nail },
   { name: 'freeEdge', layer: 'front', fill: INK.nailEdge },
   ...LINES.map((l) => ({ name: l.name, layer: l.layer, fill: l.ink ?? INK.line, brush: { width: l.width, opacity: l.opacity } })),
 ];
 const BRUSHED = new Map(PAINT.filter((q) => q.brush).map((q) => [q.name, q.brush!]));
+const STRAIGHT = new Set(PAINT.filter((q) => q.straight).map((q) => q.name));
 
-/** A shape's path from its points on the frame: a smooth closed outline, or a brush's ring for a line. */
+/** A shape's path from its points on the frame: a smooth closed outline, a gap's straight-cut edges as the reference cuts them, or a brush's ring for a line. */
 function pathOf(name: string, pts: readonly Pt[]): string {
   const b = BRUSHED.get(name);
-  if (!b) return smooth(pts);
-  return brushRing(pts, b.width);
+  if (b) return brushRing(pts, b.width);
+  if (STRAIGHT.has(name)) return `M${pts.map(([x, y]) => `${n(x)} ${n(y)}`).join('L')}Z`;
+  return smooth(pts);
 }
-
-/** The outlines' shading: the light falls from the upper left, and each outline's face moves toward it this far. */
-const SHADING: Record<'back' | 'thumb', Pt> = { back: [-1.6, -1.9], thumb: [-2.6, -0.6] };
 
 export interface HandStampOptions {
   /** `back`: the fingers behind the stamp; `front`: the thumb over its foot. */
@@ -598,18 +721,16 @@ export function handStampSvg(opts: HandStampOptions): string {
   const dr = new Drawing(prefixFor(opts.idPrefix, 'hand-stamp', opts.part));
   const ds = handStampShapesAt(opts.at ?? 0);
   const outline = opts.part === 'back' ? 'back' : 'thumb';
-  // The outline's face over its one shade step, which shows at the edge away from the light.
+  // The outline in the one skin, as the reference paints it, with no shade step at any edge.
   const clip = dr.id('c');
   dr.def(`<clipPath id="${clip}"><path data-shape="${outline}" d="${ds[outline]}"/></clipPath>`);
-  const [lx, ly] = SHADING[outline];
-  // Everything painted on the layer stays inside its outline, so a gap drawn between the fingers ends at the web.
+  // Everything painted on the layer stays inside its outline, so a gap drawn between the fingers ends at the hand's edge.
   const paint = PAINT.filter((q) => q.layer === opts.part).map((q) => {
     const opacity = q.brush ? ` opacity="${n(q.brush.opacity)}"` : '';
     return `<path data-shape="${q.name}" d="${ds[q.name]}" fill="${q.fill}"${opacity}/>`;
   });
   dr.add(
-    `<g clip-path="url(#${clip})"><path data-shape="${outline}" d="${ds[outline]}" fill="${SKIN.shade}"/>` +
-      `<path data-shape="${outline}" d="${ds[outline]}" fill="${SKIN.face}" transform="translate(${n(lx)} ${n(ly)})"/>${paint.join('')}</g>`,
+    `<g clip-path="url(#${clip})"><path data-shape="${outline}" d="${ds[outline]}" fill="${SKIN.face}"/>${paint.join('')}</g>`,
   );
   const { defs, body } = dr.parts();
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${HAND_STAMP_VIEW.w} ${HAND_STAMP_VIEW.h}" aria-hidden="true">${defs}${body}</svg>`;
