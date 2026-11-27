@@ -629,7 +629,7 @@ function GiftTile({
         ]}
       >
         <View style={[styles.itemArt, styles.itemArtSquare]}>
-          <ItemArt category={item.category} path={item.assetUrl} width={64} />
+          <ItemArt category={item.category} path={item.assetUrl} width={64} loop={selected} />
           {item.tier !== 'common' ? (
             <View style={[styles.tier, dir.row === 'row-reverse' ? styles.tierLeft : styles.tierRight, { backgroundColor: colors.gold }]}>
               <Text style={[styles.tierText, { color: colors.textOnGold }]}>{t(TIER_LABEL[item.tier])}</Text>
@@ -697,7 +697,7 @@ function BigGiftConfirm({
   const dir = useDirection();
   return (
     <SheetScrollView contentContainerStyle={[styles.body, styles.confirm]} testID="gift-confirm">
-      <ItemArt category={item.category} path={item.assetUrl} width={120} />
+      <ItemArt category={item.category} path={item.assetUrl} width={120} loop />
       <Text style={[styles.confirmTitle, { color: colors.textPrimary }]} accessibilityRole="header">
         {t('gift.confirm.title')}
       </Text>

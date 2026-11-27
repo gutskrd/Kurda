@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { giftSenderName, type GiftCard } from '@kurda/shared';
 import { assetUrl } from '../api/env';
 import type { Translate } from '../api/errors';
@@ -10,6 +10,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { useDirection } from '../reports/direction';
 import { useReportAction } from '../reports/reportAction';
 import { GiftBox } from './art';
+import { GiftArt } from './GiftLoop';
 
 /**
  * A gift in the chat. To you, unopened: a wrapped present that hops now and then (still under Reduce Motion) and "Tap
@@ -134,11 +135,7 @@ function ItemThumb({ card, large = false }: { card: GiftCard; large?: boolean })
   const { colors } = useTheme();
   const uri = assetUrl(card.assetUrl);
   return uri ? (
-    <Image
-      source={{ uri }}
-      style={[large ? styles.thumbLarge : styles.thumb, { borderRadius: card.category === 'icon' ? radii.pill : radii.md }]}
-      accessibilityIgnoresInvertColors
-    />
+    <GiftArt path={card.assetUrl} size={large ? 132 : 56} imageStyle={{ borderRadius: card.category === 'icon' ? radii.pill : radii.md }} testID="gift-thumb" />
   ) : (
     <View style={[styles.thumb, styles.thumbFallback, { backgroundColor: colors.controlTrack }]}>
       <Icon name="gift" size={28} color={colors.gold} />
@@ -165,7 +162,6 @@ const styles = StyleSheet.create({
   statusRow: { alignItems: 'center', gap: 4, marginTop: 2 },
   status: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   thumb: { width: 56, height: 56 },
-  thumbLarge: { width: 132, height: 132 },
   artLarge: { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
   showpiece: { alignItems: 'center', paddingHorizontal: spacing.md, paddingBottom: spacing.md },
   thumbFallback: { alignItems: 'center', justifyContent: 'center', borderRadius: radii.md },

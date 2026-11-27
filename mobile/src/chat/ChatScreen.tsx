@@ -45,6 +45,7 @@ import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 import { ChatGameButton } from '../play/ChatGameButton';
 import { appendOnce, mergeLatest, useCatchUp } from '../realtime/catchUp';
 import { restoredDraft, useOutgoing } from './sending';
+import { GiftLoopRow, GiftLoopViewportProvider, useGiftLoopViewport } from '../gifts/loopStage';
 
 const MAX_LEN = 2000;
 /** The face beside the name in the header: big enough to know them by, small enough for a bar. */
@@ -103,6 +104,8 @@ export function ChatScreen({
   // Their picture and presence: the conversation list knows both, the thread's own messages neither.
   const [other, setOther] = useState<{ avatarUrl: string | null; online: boolean } | null>(null);
   const list = useRef<FlatList<ShownMessage>>(null);
+  // Which rows are in view, so only the gifts on screen play their loops.
+  const viewport = useGiftLoopViewport();
   const { away, onScroll } = useAwayFromLatest();
   const { typing, note: noteTyping } = useTypingWatch();
   const signalTyping = useTypingSignal(useCallback(() => void client.post(`/chat/${userId}/typing`), [client, userId]));
@@ -381,39 +384,44 @@ export function ChatScreen({
             <TypingBubble names={typing} face={{ id: userId, name, photoUrl: face }} />
           </ScrollView>
         ) : (
-          <View style={styles.flex}>
-            {/* Newest at the bottom and opening there: an inverted list, as a club's thread is, so new replies land in view. */}
-            <FlatList
-              ref={list}
-              data={newestFirst}
-              inverted
-              keyExtractor={(m) => keyOf(m.id)}
-              contentContainerStyle={styles.list}
-              onScroll={onScroll}
-              scrollEventThrottle={64}
-              // Under the newest message, where theirs is about to land (an inverted list's header is its foot).
-              ListHeaderComponent={<TypingBubble names={typing} face={{ id: userId, name, photoUrl: face }} />}
-              renderItem={({ item }) => {
-                const mine = item.senderId === me;
-                return (
-                  <MessageRow
-                    message={item}
-                    mine={mine}
-                    place={places.get(item.id) ?? LONE}
-                    senderName={item.username || name}
-                    receipt={mine && !item.pending ? t(item.readAt ? 'chat.receipt.read' : item.deliveredAt ? 'chat.receipt.delivered' : 'chat.receipt.sent') : null}
-                    onOpenGift={startUnwrap}
-                    // The controls inside a message (a gift, an invite link) report it too.
-                    onReport={mine ? undefined : () => setReporting(item.id)}
-                    onRetry={() => void retry(item.id)}
-                    onDiscard={() => cancel(item.id)}
-                    arriving={isArriving(keyOf(item.id))}
-                  />
-                );
-              }}
-            />
-            {away ? <JumpToLatest unseen={unseen} onPress={toLatest} /> : null}
-          </View>
+          <GiftLoopViewportProvider viewport={viewport}>
+            <View style={styles.flex}>
+              {/* Newest at the bottom and opening there: an inverted list, as a club's thread is, so new replies land in view. */}
+              <FlatList
+                ref={list}
+                data={newestFirst}
+                inverted
+                keyExtractor={(m) => keyOf(m.id)}
+                viewabilityConfigCallbackPairs={viewport.pairs}
+                contentContainerStyle={styles.list}
+                onScroll={onScroll}
+                scrollEventThrottle={64}
+                // Under the newest message, where theirs is about to land (an inverted list's header is its foot).
+                ListHeaderComponent={<TypingBubble names={typing} face={{ id: userId, name, photoUrl: face }} />}
+                renderItem={({ item }) => {
+                  const mine = item.senderId === me;
+                  return (
+                    <GiftLoopRow id={keyOf(item.id)}>
+                      <MessageRow
+                        message={item}
+                        mine={mine}
+                        place={places.get(item.id) ?? LONE}
+                        senderName={item.username || name}
+                        receipt={mine && !item.pending ? t(item.readAt ? 'chat.receipt.read' : item.deliveredAt ? 'chat.receipt.delivered' : 'chat.receipt.sent') : null}
+                        onOpenGift={startUnwrap}
+                        // The controls inside a message (a gift, an invite link) report it too.
+                        onReport={mine ? undefined : () => setReporting(item.id)}
+                        onRetry={() => void retry(item.id)}
+                        onDiscard={() => cancel(item.id)}
+                        arriving={isArriving(keyOf(item.id))}
+                      />
+                    </GiftLoopRow>
+                  );
+                }}
+              />
+              {away ? <JumpToLatest unseen={unseen} onPress={toLatest} /> : null}
+            </View>
+          </GiftLoopViewportProvider>
         )}
 
         <SendErrorNotice error={sendError} onDismiss={() => setSendError(null)} heldShownBeside />

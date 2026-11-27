@@ -175,6 +175,11 @@ button.coll-tile:hover {
   height: 68%;
   object-fit: contain;
 }
+/* a gift's living picture (gifts/GiftLoop.tsx) takes the room its still would */
+.coll-tile.is-item .gift-loop {
+  width: 68%;
+  height: 68%;
+}
 .coll-tile.is-item > svg {
   color: var(--ink-3);
 }

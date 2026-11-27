@@ -135,8 +135,8 @@ export const radialAt = (id: string, stops: readonly Stop[], cx: number, cy: num
  * drawing the same thing twice on a page pass their own `idPrefix`.
  */
 export class Drawing {
-  private readonly defs: string[] = [];
-  private readonly body: string[] = [];
+  protected readonly defs: string[] = [];
+  protected readonly body: string[] = [];
   private count = 0;
 
   constructor(readonly prefix: string) {}
