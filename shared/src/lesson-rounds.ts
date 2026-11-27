@@ -38,7 +38,7 @@ export function topicRounds(times: readonly number[]): TopicRounds {
  * `gap` between, so the bubble over the stop sits above it. Its two ends are round and its cuts nearly square (`cut`
  * round), so it reads as one bar. Pieces fill from the start of the line, mirrored on right-to-left pages like the path.
  */
-export const PATH_BAR = { x: -2, y: -16, w: 76, h: 6, gap: 3, cut: 1.5 } as const;
+export const PATH_BAR = { x: -2, y: -20, w: 76, h: 6, gap: 3, cut: 1.5 } as const;
 
 /** The bar's pieces from the start: each one's left edge and width, in the stop's points; no lessons, no bar. */
 export function barPieces(of: number): Array<{ x: number; w: number }> {

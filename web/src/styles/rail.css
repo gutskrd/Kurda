@@ -645,16 +645,31 @@
 @media (max-width: 1179px) {
   /* the drawer is either open or gone; folding is a wide-screen idea, so the
      stored preference simply does not apply down here — nothing to undo */
+  /*
+   * Shut, the drawer stays inside the screen, wiped away to its edge, and only what is in it slides: a box pushed past
+   * the edge lets a phone's browser pan the whole page sideways. Open, the wipe reaches past it for the shadow.
+   */
   .social-rail {
     width: min(var(--rail-w), 86vw);
-    transform: translateX(100%);
-    transition: transform var(--dur) var(--ease-emphasis);
+    overflow: hidden;
+    clip-path: inset(0 0 0 100%);
+    transition:
+      clip-path var(--dur) var(--ease-emphasis),
+      visibility 0s linear var(--dur);
     box-shadow: var(--shadow-lg);
     visibility: hidden;
   }
+  .social-rail > * {
+    transform: translateX(100%);
+    transition: transform var(--dur) var(--ease-emphasis);
+  }
   .social-rail.is-open {
-    transform: translateX(0);
+    clip-path: inset(0 0 0 -48px);
+    transition: clip-path var(--dur) var(--ease-emphasis);
     visibility: visible;
+  }
+  .social-rail.is-open > * {
+    transform: none;
   }
   .rail-close {
     display: inline-grid;
@@ -696,6 +711,7 @@
     display: none;
   }
   .social-rail,
+  .social-rail > *,
   .app-main,
   .rail-fold-arrow {
     transition: none;
@@ -906,9 +922,15 @@
 }
 @media (max-width: 1179px) {
   [dir='rtl'] .social-rail {
+    clip-path: inset(0 100% 0 0);
+  }
+  [dir='rtl'] .social-rail > * {
     transform: translateX(-100%);
   }
   [dir='rtl'] .social-rail.is-open {
-    transform: translateX(0);
+    clip-path: inset(0 -48px 0 0);
+  }
+  [dir='rtl'] .social-rail.is-open > * {
+    transform: none;
   }
 }

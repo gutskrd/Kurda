@@ -84,8 +84,9 @@ export function StopCard({
   const cardLeft = left + (width - cardWidth) / 2;
   const arrowLeft = Math.max(ARROW_INSET, Math.min(cardWidth - ARROW_INSET - ARROW, pointAt - (cardLeft - left) - ARROW / 2));
   const go = goesNow(stop);
-  const face = go ? tone.fill : colors.surfaceRaised;
-  const edge = go ? 'transparent' : colors.separator;
+  // Every card on the page's own panel; one that offers a lesson to play has its edge touched with its chapter's colour.
+  const face = colors.surfaceRaised;
+  const edge = go ? `${tone.fill}59` : colors.separator;
   return (
     <Animated.View
       style={[
@@ -96,9 +97,9 @@ export function StopCard({
       onLayout={(e: LayoutChangeEvent) => onSize?.(e.nativeEvent.layout.height)}
       testID={go ? 'lp-card-go' : 'lp-card'}
     >
-      <View style={[styles.card, { backgroundColor: face, borderColor: edge, shadowColor: colors.softShadow }, go ? { borderBottomWidth: 6, borderBottomColor: tone.lip } : null]}>
+      <View style={[styles.card, { backgroundColor: face, borderColor: edge, shadowColor: colors.softShadow }]}>
         {go ? (
-          <GoCard stop={go} tone={tone} titleRef={title} actions={actions} />
+          <GoCard stop={go} unit={unit} tone={tone} titleRef={title} actions={actions} />
         ) : (
           <PanelCard stop={stop} unit={unit} tone={tone} titleRef={title} actions={actions} />
         )}
@@ -109,7 +110,7 @@ export function StopCard({
   );
 }
 
-/** A skill whose card offers a lesson to play now, and so is the road's main button, in its unit's colour; else null. */
+/** A skill whose card offers a lesson to play now, its one button in its unit's colour; else null. */
 function goesNow(stop: Stop): Extract<Stop, { kind: 'skill' }> | null {
   return stop.kind === 'skill' && stop.state !== 'locked' && stop.launch ? stop : null;
 }
@@ -145,14 +146,16 @@ function xpOf(stop: Extract<Stop, { kind: 'skill' }>, t: ReturnType<typeof useI1
   return t(again ? 'coursemap.xp.again' : 'coursemap.xp.first', { min: formatNumber(xp.min, locale), max: formatNumber(xp.max, locale) });
 }
 
-/** A topic to play now: its name, which lesson or round is next, its suns, and the one button. */
+/** A topic to play now: its chapter, its name, which lesson or round is next, its suns, and the one button. */
 function GoCard({
   stop,
+  unit,
   tone,
   titleRef,
   actions,
 }: {
   stop: Extract<Stop, { kind: 'skill' }>;
+  unit: Unit;
   tone: ToneColors;
   titleRef: Ref<Text>;
   actions: StopActions;
@@ -162,8 +165,8 @@ function GoCard({
   const { skill } = stop;
   const lessons = skill.lessons ?? [];
   const at = lessons.findIndex((l) => l.lessonId === stop.launch);
+  const { colors } = useTheme();
   const action = actionOf(stop, t, actions);
-  const ink = tone.ink;
   // A finished topic is played again in rounds, so it says which round; any other says which lesson is next.
   const where =
     stop.state === 'done' && stop.rounds > 0
@@ -175,27 +178,27 @@ function GoCard({
         : null;
   return (
     <>
-      <Text ref={titleRef} style={[styles.goTitle, dir.text, { color: ink }]} accessibilityRole="header">
+      <Text style={[styles.eyebrow, dir.text, { color: tone.text }]}>{`${t('coursemap.path.unit', { n: unit.number })} · ${unit.title}`}</Text>
+      <Text ref={titleRef} style={[styles.goTitle, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
         {skill.title}
       </Text>
-      {where ? <Text style={[styles.goLine, dir.text, { color: ink }]}>{where}</Text> : null}
+      {where ? <Text style={[styles.goLine, dir.text, { color: colors.textSecondary }]}>{where}</Text> : null}
       {stop.rounds > 0 ? <Suns rounds={stop.rounds} /> : null}
       {stop.state === 'done' ? <WaxLegend /> : null}
       {action ? <StartButton label={action.label} xp={xpOf(stop, t, locale)} tone={tone} onPress={action.go} /> : null}
-      {skill.hasGrammar ? <Tips skill={skill} colour={ink} onTips={actions.onTips} /> : null}
+      {skill.hasGrammar ? <Tips skill={skill} colour={colors.textPrimary} onTips={actions.onTips} /> : null}
     </>
   );
 }
 
 /**
- * The card's one button: the lesson's word and what it pays, in the unit's colour on the page's own ground, raised on a
- * lip of the unit's colour it sinks into when pressed. A glint crosses it now and then while the road is alive; under
+ * The card's one button: the lesson's word and what it pays, in the unit's ink on its colour, raised on a lip of the
+ * unit's colour it sinks into when pressed. A glint crosses it now and then while the road is alive; under
  * Reduce Motion it holds still.
  */
 function StartButton({ label, xp, tone, onPress }: { label: string; xp: string | null; tone: ToneColors; onPress: () => void }): React.JSX.Element {
-  const { colors } = useTheme();
   const live = useMotionAlive();
-  const words = tone.text;
+  const words = tone.ink;
   const [width, setWidth] = useState(0);
   const glint = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -223,7 +226,7 @@ function StartButton({ label, xp, tone, onPress }: { label: string; xp: string |
       // The label and what the lesson pays stack, so the longest pair fits a narrow phone.
       style={({ pressed }) => [
         styles.start,
-        { backgroundColor: colors.background, borderBottomColor: tone.lip },
+        { backgroundColor: tone.fill, borderBottomColor: tone.lip },
         pressed ? styles.startPressed : null,
         xp ? styles.startStacked : { flexDirection: 'row' },
       ]}
@@ -233,7 +236,7 @@ function StartButton({ label, xp, tone, onPress }: { label: string; xp: string |
           pointerEvents="none"
           style={[
             styles.glint,
-            { width: width * 0.22, backgroundColor: `${tone.fill}38` },
+            { width: width * 0.22, backgroundColor: 'rgba(255, 255, 255, 0.3)' },
             // Seen only while it crosses, so it never rests at the button's edge.
             { opacity: glint.interpolate({ inputRange: [0, 0.04, 0.96, 1], outputRange: [0, 1, 1, 0] }) },
             { transform: [{ translateX: glint.interpolate({ inputRange: [0, 1], outputRange: [-width * 0.3, width * 1.1] }) }, { skewX: '-20deg' }] },
@@ -494,7 +497,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   goTitle: { ...display(typography.sizes.text) },
-  goLine: { fontSize: typography.sizes.text, opacity: 0.85 },
+  goLine: { fontSize: typography.sizes.text },
   // White on a lip, as the website's; the lip is the shadow it sinks into.
   start: {
     position: 'relative',

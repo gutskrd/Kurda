@@ -267,6 +267,9 @@ function StopCard({
           : null;
     return (
       <>
+        <p className="lp-pop-eyebrow">
+          {t('coursemap.unit', { n: unit.number })} · {unit.title}
+        </p>
         <h3 className="lp-pop-title" id={titleId}>
           {skill.title}
         </h3>

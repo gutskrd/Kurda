@@ -774,19 +774,23 @@ button.lp-scard:focus-visible {
   position: absolute;
   inset: 0;
 }
+/* The shared drawing's box laid so its face's middle (56, 61 of 112) is the button's (36, 30). */
 .lp-art {
   position: absolute;
   inset-inline-start: -20px;
-  top: -28px;
+  top: -31px;
   width: 112px;
   height: 112px;
   line-height: 0;
   pointer-events: none;
 }
 .lp-art-face,
+.lp-wax {
+  transform-origin: 50% 54.5%;
+}
+.lp-art-face,
 .lp-node-glyph,
 .lp-wax {
-  transform-origin: 50% 90%;
   transition:
     translate var(--dur-slow) var(--ease-spring),
     scale var(--dur-slow) var(--ease-spring);
@@ -823,28 +827,36 @@ button.lp-scard:focus-visible {
   scale: 1.06 0.92;
   transition-duration: 60ms;
 }
-/* A press squishes the stop down into its base, and it springs back up when let go. */
+/* A press sinks the stop onto its lip, down and to the right where the lip lies, and it springs back when let go. */
 .lp-node:active .lp-art-face,
 .lp-node:active .lp-node-glyph,
 .lp-node:active .lp-wax {
+  translate: 1px 4px;
+  scale: 0.98;
+  transition-duration: 60ms;
+}
+/* A milestone stands on its drum, seen from the side, so it squishes down into it instead. */
+.lp-art-face.is-milestone {
+  transform-origin: 50% 90%;
+}
+.lp-node:active .lp-art-face.is-milestone {
   translate: 0 7px;
   scale: 1.06 0.92;
-  transition-duration: 60ms;
 }
 /* A unit far from the screen: plain rounds until it comes near. */
 .lp-node:not(.is-drawn) .lp-node-face {
-  inset: 4px 0 12px;
+  inset: -6px 0 6px;
   border-radius: 50%;
   background: var(--lp-rest);
-  box-shadow: 0 6px 0 var(--lp-rest-lip);
+  box-shadow: 1px 2px 0 var(--lp-rest-lip);
 }
 .lp-node:is(.is-current, .is-available, .is-review, .is-done):not(.is-drawn) .lp-node-face {
   background: var(--u-fill);
-  box-shadow: 0 6px 0 var(--u-lip);
+  box-shadow: 1px 4px 0 var(--u-lip);
 }
 .lp-node.is-stamped:not(.is-drawn) .lp-node-face {
   background: var(--lp-wax);
-  box-shadow: 0 3px 0 var(--lp-wax-lip);
+  box-shadow: 1px 3px 0 var(--lp-wax-lip);
 }
 .lp-node-glyph {
   position: absolute;
@@ -861,7 +873,7 @@ button.lp-scard:focus-visible {
 .lp-node:focus-visible .lp-node-face::after {
   content: '';
   position: absolute;
-  inset: -2px -6px 6px;
+  inset: -10px -4px 2px;
   border-radius: 50%;
   outline: 3px solid var(--focus);
   outline-offset: 4px;
@@ -920,7 +932,7 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * A topic's bar just above its tile (learn/PathRing.tsx, shared PATH_BAR: 76 by 6 from -2, -16 of the stop, a touch
+ * A topic's bar just above its tile (learn/PathRing.tsx, shared PATH_BAR: 76 by 6 from -2, -20 of the stop, a touch
  * wider than the tile): a rounded piece per lesson on a quiet track, filled in its unit's colour once finished in the
  * current round, and gold once full. Returning from a lesson the new pieces fill in turn (`--d`, `--t`) from the line's
  * start.
@@ -928,7 +940,7 @@ button.lp-scard:focus-visible {
 .lp-bar-over {
   position: absolute;
   inset-inline-start: -2px;
-  top: -16px;
+  top: -20px;
   width: 76px;
   height: 6px;
   pointer-events: none;
@@ -981,7 +993,7 @@ button.lp-scard:focus-visible {
 .lp-wax {
   position: absolute;
   inset-inline-start: -20px;
-  top: -28px;
+  top: -31px;
   width: 112px;
   height: 112px;
   pointer-events: none;
@@ -1858,15 +1870,15 @@ button.lp-scard:focus-visible {
 
 /* ---- the stop to do now ------------------------------------------------------ */
 
-/* Now and then a glint sweeps its face (shared PATH_STOP_ART: centre 56,58 and radii 36 by 31 in a 112 box). */
+/* Now and then a glint sweeps its face (shared PATH_STOP_ART: centre 56,61 and radius 36 in a 112 box). */
 .lp-shine {
   position: absolute;
   inset-inline-start: -20px;
-  top: -28px;
+  top: -31px;
   width: 112px;
   height: 112px;
   overflow: hidden;
-  clip-path: ellipse(32.1% 27.7% at 50% 51.8%);
+  clip-path: circle(32.1% at 50% 54.5%);
   pointer-events: none;
 }
 .lp-shine::before {
@@ -2012,28 +2024,17 @@ button.lp-scard:focus-visible {
   justify-self: center;
   gap: 6px;
 }
-/* A topic to play now: the card is the road's main button, in its unit's colour, with one button on the page's own
-   ground that says what the lesson pays and that a glint crosses now and then. */
-.lp-pop.is-go {
-  border-color: transparent;
-  background: var(--u-fill);
-  color: var(--u-ink);
-  box-shadow: 0 6px 0 var(--u-lip), var(--shadow);
-}
+/*
+ * A topic to play now: the card on the page's own panel, as every card is, its edge touched with the chapter's colour,
+ * the chapter named in that colour over the topic, and one button in it on a lip of it that says what the lesson pays,
+ * a glint crossing it now and then.
+ */
+.lp-pop.is-go,
 .lp-pop.is-go .lp-pop-arrow {
-  border-color: transparent;
-  background: var(--u-fill);
+  border-color: color-mix(in srgb, var(--u-fill) 35%, var(--border));
 }
 .lp-pop.is-go .lp-pop-title {
-  color: inherit;
   font-weight: 800;
-}
-.lp-pop.is-go .lp-pop-line {
-  color: inherit;
-  opacity: 0.85;
-}
-.lp-pop.is-go .lp-pop-tips {
-  color: inherit;
 }
 .lp-pop.is-go .lp-pop-start {
   position: relative;
@@ -2042,9 +2043,8 @@ button.lp-scard:focus-visible {
   gap: var(--space-2);
   margin-top: var(--space-1);
   border: 0;
-  background: var(--app-bg);
-  /* the unit's colour as words on the page's own ground, by day and by night */
-  color: var(--u-text);
+  background: var(--u-fill);
+  color: var(--u-ink);
   box-shadow: 0 4px 0 var(--u-lip);
   font-weight: 800;
   text-transform: uppercase;
@@ -2058,7 +2058,7 @@ button.lp-scard:focus-visible {
   content: '';
   position: absolute;
   inset: 0 -60%;
-  background: linear-gradient(105deg, transparent 42%, rgb(255 255 255 / 0) 44%, color-mix(in srgb, var(--u-fill) 22%, transparent) 50%, transparent 58%);
+  background: linear-gradient(105deg, transparent 42%, rgb(255 255 255 / 0) 44%, rgb(255 255 255 / 0.3) 50%, transparent 58%);
   translate: -60% 0;
   animation: lp-glint 2.8s ease-in-out 0.6s infinite;
 }

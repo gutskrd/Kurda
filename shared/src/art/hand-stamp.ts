@@ -408,6 +408,31 @@ const PALM_TRACK: readonly (readonly number[])[] = [
     [60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 56, 51, 47, 44, 43, 32, 13, 0, 0, 0, 0],
 ];
 
+/**
+ * The measured widths are softened before use, since the reference is drawn by hand and its shadows wander from frame to
+ * frame: each place is blended with its neighbours along the digit, so a shadow's ends taper rather than stop square,
+ * and with the same place in the frames either side, so a shadow grows and shrinks between frames rather than jumping.
+ */
+const SOFT = { along: 1.3, reach: 3 } as const;
+function soften(row: readonly number[]): number[] {
+  return row.map((_, k) => {
+    let [sum, weight] = [0, 0];
+    for (let j = -SOFT.reach; j <= SOFT.reach; j++) {
+      const w = Math.exp(-(j * j) / (2 * SOFT.along * SOFT.along));
+      sum += w * row[Math.max(0, Math.min(row.length - 1, k + j))]!;
+      weight += w;
+    }
+    return sum / weight;
+  });
+}
+function steady(rows: readonly (readonly number[])[]): number[][] {
+  const m = rows.length;
+  return rows.map((row, i) => soften(row.map((v, k) => (rows[(i + m - 1) % m]![k]! + 2 * v + rows[(i + 1) % m]![k]!) / 4)));
+}
+const GAPS: Record<GapName, number[][]> = { slit: steady(GAP_TRACK.slit), wedge: steady(GAP_TRACK.wedge), ring: steady(GAP_TRACK.ring) };
+const PALM = steady(PALM_TRACK);
+const SLIT_START = steady(SLIT_FROM);
+
 /** `count` places along a digit's centre line, evenly spaced by length, from `first` to `toBack` short of its last point. */
 function evenlyAlong(d: Posed, count: number, first: number, toBack: number): number[] {
   const last = d.centre.length - 1 - toBack;
@@ -478,8 +503,8 @@ interface Pose {
 }
 const POSES: readonly Pose[] = ORDER.map((i) => {
   const f = TRACK[i]!;
-  const gaps = Object.fromEntries(GAP_NAMES.map((g) => [g, GAP_TRACK[g][i]!])) as Record<GapName, readonly number[]>;
-  return { digits: { thumb: thumbIn(f, WIDTHS.thumb[i]!), index: indexIn(f, WIDTHS.index[i]!), reaching: middleIn(f, WIDTHS.reaching[i]!), curled: ringIn(f) }, web: f.web, gaps, palm: PALM_TRACK[i]!, slitFrom: SLIT_FROM[i]! };
+  const gaps = { slit: GAPS.slit[i]!, wedge: GAPS.wedge[i]!, ring: GAPS.ring[i]! };
+  return { digits: { thumb: thumbIn(f, WIDTHS.thumb[i]!), index: indexIn(f, WIDTHS.index[i]!), reaching: middleIn(f, WIDTHS.reaching[i]!), curled: ringIn(f) }, web: f.web, gaps, palm: PALM[i]!, slitFrom: SLIT_START[i]! };
 });
 /** The stamp through a turn: its lean from rest, its turn, its middle; it ends where it began but turned over. */
 const CARD_TRACK: readonly (readonly [number, number, number, number])[] = ORDER.map((i, k) => {
@@ -651,6 +676,17 @@ const LINES: readonly { name: string; on: ReturnType<typeof held>; width: number
   { name: 'reaching-joint-2', on: held('reaching', [[606, 540], [603, 553], [605, 566]]), width: 0.7, opacity: 0.6, layer: 'back' },
 ];
 
+/**
+ * How far out a shadow reaches, on the grid, given how far out what covers it reaches (the palm laid over the slit, or
+ * nothing): one thinner than a hair is drawn just under the cover, so its edge never shows as a dark line, and it eases
+ * out from there as it widens.
+ */
+const HAIR = 2.5;
+function firm(width: number, cover: number): number {
+  const shown = width - cover;
+  return cover + shown - HAIR * Math.pow(Math.max(0, 1 - shown / (3 * HAIR)), 2);
+}
+
 /** A digit's tip: the outermost point of its round, on its centre line. */
 function tipOf(d: Posed): Pt {
   const m = d.centre.length;
@@ -709,16 +745,17 @@ function shapesIn(p: Pose): Record<string, Pt[]> {
   ];
   const thumb = [...T.a, ...T.cap, ...T.b.slice().reverse()];
   const curled = [...C.a, ...C.cap, ...C.b.slice().reverse()];
+  const band = p.slitFrom.map((w, k) => Math.min(w, p.gaps.slit[k] ?? 0));
   return {
     back,
     curled,
     // the palm at the slit's places, out at least as far as the slit's shadow, which lies on it
     palm: gapIn('slit', ds, p.palm.map((w, k) => Math.max(w, p.gaps.slit[k] ?? 0))),
-    slit: gapIn('slit', ds, p.gaps.slit),
+    slit: gapIn('slit', ds, p.gaps.slit.map((w, k) => firm(w, band[k]!))),
     // and the band of palm between the thumb and the slit's shadow, out to where the shadow begins (never past its end)
-    band: gapIn('slit', ds, p.slitFrom.map((w, k) => Math.min(w, p.gaps.slit[k] ?? 0))),
-    wedge: gapIn('wedge', ds, p.gaps.wedge),
-    ring: gapIn('ring', ds, p.gaps.ring),
+    band: gapIn('slit', ds, band),
+    wedge: gapIn('wedge', ds, p.gaps.wedge.map((w) => firm(w, 0))),
+    ring: gapIn('ring', ds, p.gaps.ring.map((w) => firm(w, 0))),
     thumb,
     nail: ride(NAIL, ds),
     freeEdge: ride(FREE_EDGE, ds),
@@ -810,27 +847,25 @@ function pointsAt(ms: number): Record<string, Pt[]> {
 const GAP_SHUT = 0.6;
 
 /** How each shape is painted: in which layer, in what, and whether it is a smooth outline or a brush's ring. */
-const PAINT: readonly { name: string; layer: 'back' | 'front'; fill: string; brush?: { width: number; opacity: number }; straight?: boolean }[] = [
+const PAINT: readonly { name: string; layer: 'back' | 'front'; fill: string; brush?: { width: number; opacity: number } }[] = [
   { name: 'back', layer: 'back', fill: SKIN.face },
-  { name: 'wedge', layer: 'back', fill: INK.gap, straight: true },
-  { name: 'ring', layer: 'back', fill: INK.gap, straight: true },
+  { name: 'wedge', layer: 'back', fill: INK.gap },
+  { name: 'ring', layer: 'back', fill: INK.gap },
   // in front, the palm beside the thumb with the slit's shadow on it, and over both the thumb
-  { name: 'palm', layer: 'front', fill: SKIN.face, straight: true },
-  { name: 'slit', layer: 'front', fill: INK.gap, straight: true },
-  { name: 'band', layer: 'front', fill: SKIN.face, straight: true },
+  { name: 'palm', layer: 'front', fill: SKIN.face },
+  { name: 'slit', layer: 'front', fill: INK.gap },
+  { name: 'band', layer: 'front', fill: SKIN.face },
   { name: 'thumb', layer: 'front', fill: SKIN.face },
   { name: 'nail', layer: 'front', fill: INK.nail },
   { name: 'freeEdge', layer: 'front', fill: INK.nailEdge },
   ...LINES.map((l) => ({ name: l.name, layer: l.layer, fill: l.ink ?? INK.line, brush: { width: l.width, opacity: l.opacity } })),
 ];
 const BRUSHED = new Map(PAINT.filter((q) => q.brush).map((q) => [q.name, q.brush!]));
-const STRAIGHT = new Set(PAINT.filter((q) => q.straight).map((q) => q.name));
 
-/** A shape's path from its points on the frame: a smooth closed outline, a gap's straight-cut edges as the reference cuts them, or a brush's ring for a line. */
+/** A shape's path from its points on the frame: a smooth closed outline, or a brush's ring for a line. */
 function pathOf(name: string, pts: readonly Pt[]): string {
   const b = BRUSHED.get(name);
   if (b) return brushRing(pts, b.width);
-  if (STRAIGHT.has(name)) return `M${pts.map(([x, y]) => `${n(x)} ${n(y)}`).join('L')}Z`;
   return smooth(pts);
 }
 

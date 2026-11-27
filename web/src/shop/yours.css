@@ -270,25 +270,30 @@ label.yours-bird:hover {
   font-size: var(--text);
   font-weight: 600;
 }
-/* The growing one: a small pill in its colour with a leaf dot. */
+/*
+ * The growing one: a leaf dot in its colour before the words, which wrap inside the tile in a longer language rather
+ * than reach past it; the tile's own coloured edge already marks it out.
+ */
 .yours-tree-now {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 9px 3px 7px;
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--tree) 16%, var(--surface));
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
   color: var(--ink);
   font-size: var(--text);
   font-weight: 650;
-  white-space: nowrap;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 .yours-tree-now::before {
   content: '';
-  width: 7px;
-  height: 7px;
+  flex: none;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--tree);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tree) 22%, transparent);
+  transform: translateY(-1px);
 }
 /* The button at the tile's foot, level along the row whether or not a tile shows a meaning. */
 .yours-tree-act {
@@ -304,7 +309,7 @@ label.yours-bird:hover {
   .yours-trees {
     grid-template-columns: none;
     grid-auto-flow: column;
-    grid-auto-columns: 136px;
+    grid-auto-columns: 148px;
     gap: 10px;
     /* 8px padding above and below, taken back by the margins, since a scrolling row clips anything reaching past it. */
     margin-block: -8px;

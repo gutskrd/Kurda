@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import {
   HAND_STAMP_CARD,
   HAND_STAMP_FLIP,
+  HUES,
   gameEmblemHue,
   gameEmblemSvg,
+  handStampCardAt,
   handStampFlip,
   handStampShapesAt,
   handStampSvg,
-  stampLook,
+  stampOutline,
   stampShapeFor,
   stampSvg,
   type GameEmblem,
@@ -50,14 +52,37 @@ const ANIMATES = typeof document !== 'undefined' && typeof document.documentElem
 const BACK = { __html: handStampSvg({ part: 'back', idPrefix: 'fpFlipBack' }) };
 const FRONT = { __html: handStampSvg({ part: 'front', idPrefix: 'fpFlipFront' }) };
 const C = HAND_STAMP_CARD;
-/** The paper of a stamp in the hand by day. */
-const STAMP_DAY_PAPER = '#ffffff';
-/** The cover on the stamp, inset from the perforations as on the games page's stamps, and clear of the thumb. */
-const COVER = { pad: 14, size: Math.min(C.w - 28, C.clear - 16) } as const;
+/** The paper round the print: white by day, a little dimmer by night so it does not glare on the dark page. */
+const STAMP_PAPER = { day: '#ffffff', night: '#e6e4de' } as const;
+/**
+ * The print inside the perforations, in the stamp's own units: a panel in the game's deepest colour, the name across
+ * its top and the cover below it, whose foot the thumb covers as it holds the stamp.
+ */
+const PRINT = { inset: 6.5, cover: { top: 33, left: 11, size: C.w - 22 } } as const;
 
 /** The stamp's moves through a turn, worked out once. */
 const FLIP = handStampFlip().map((transform) => ({ transform }));
 const REST = handStampShapesAt(0);
+
+/**
+ * The light on each face through a turn, from the stamp's angle at each of its steps: a face darkens as it turns
+ * edge-on and a gleam crosses it, left to right over both faces, so it reads as card turning in the light. `face` 0 is
+ * the front, turned `turn` degrees from us; the back faces us at 180.
+ */
+function lightOf(face: 0 | 1): { shade: Keyframe[]; gleam: Keyframe[] } {
+  const turns = FLIP.map((_, k) => handStampCardAt((k * HAND_STAMP_FLIP.ms) / (FLIP.length - 1)).turn);
+  const away = turns.map((turn) => Math.max(0, Math.min(90, face === 0 ? turn : 180 - turn)));
+  return {
+    shade: away.map((a) => ({ opacity: 1 - Math.cos((a * Math.PI) / 180) })),
+    gleam: away.map((a) => {
+      const across = face === 0 ? a / 90 : 1 - a / 90;
+      return { transform: `translateX(${Math.round(-130 + across * 260)}%) skewX(-16deg)`, opacity: Math.sin((a * Math.PI) / 90) };
+    }),
+  };
+}
+const LIGHT = [lightOf(0), lightOf(1)] as const;
+/** The stamp's own outline, for the shade, so it darkens the paper and never the background in its perforations. */
+const OUTLINE = stampOutline(C.w, C.h, stampShapeFor(C.w));
 
 /** Draws the hand as it is `ms` into a turn: every shape of both its layers, by name. */
 function drawHand(shapes: readonly SVGPathElement[], ms: number | null): void {
@@ -69,23 +94,35 @@ function drawHand(shapes: readonly SVGPathElement[], ms: number | null): void {
 }
 
 /**
- * A game's stamp without its words: a paper for each scheme and its still cover. A stamp in the hand is flat card, as in
- * the reference: no glow, so nothing darkens the fingers or spills past them. By day the paper is white, since the
- * pale tint the shelf uses would vanish into the pale panel without its glow.
+ * A game's stamp as a printed postage stamp: perforated paper (one for each scheme, the stylesheet showing one), a panel
+ * in the game's deepest colour with a fine line in its own colour round it, the game's name across the top and its
+ * cover. A stamp in the hand is flat card, as in the reference: no glow, so nothing darkens the fingers or spills past
+ * them. The colours are the drawing's own (`HUES`), as the cover's are.
  */
-function StampFace({ game }: { game: GameEmblem }): React.JSX.Element {
+function StampFace({ game, name }: { game: GameEmblem; name: string }): React.JSX.Element {
   const art = useMemo(() => {
-    const night = stampLook('dark', gameEmblemHue(game));
-    const paper = (fill: string): { __html: string } => ({
-      __html: stampSvg({ width: C.w, height: C.h, paper: fill, glow: night.glow, strength: 0, ...stampShapeFor(C.w) }),
-    });
-    return { day: paper(STAMP_DAY_PAPER), night: paper(night.paper), cover: { __html: gameEmblemSvg({ game, size: COVER.size, idPrefix: `fpFlip${game.replace(/-/g, '')}` }) } };
+    const paper = (fill: string): { __html: string } => ({ __html: stampSvg({ width: C.w, height: C.h, paper: fill, glow: fill, strength: 0, ...stampShapeFor(C.w) }) });
+    return { day: paper(STAMP_PAPER.day), night: paper(STAMP_PAPER.night), cover: { __html: gameEmblemSvg({ game, size: PRINT.cover.size, idPrefix: `fpFlip${game.replace(/-/g, '')}` }) } };
   }, [game]);
+  const ink = HUES.light[gameEmblemHue(game)];
+  const print = { inset: PRINT.inset, '--fp-stamp-ground': ink.deep, '--fp-stamp-line': ink.base } as React.CSSProperties;
+  const { top, left, size } = PRINT.cover;
   return (
     <>
       <span className="fp-flip-paper fp-flip-paper--day" dangerouslySetInnerHTML={art.day} />
       <span className="fp-flip-paper fp-flip-paper--night" dangerouslySetInnerHTML={art.night} />
-      <span className="fp-flip-cover" style={{ top: COVER.pad, left: COVER.pad, width: COVER.size, height: COVER.size }} dangerouslySetInnerHTML={art.cover} />
+      <span className="fp-flip-print" style={print}>
+        <span className="fp-flip-title" dir="auto">
+          {name}
+        </span>
+      </span>
+      <span className="fp-flip-cover" style={{ top, left, width: size, height: size }} dangerouslySetInnerHTML={art.cover} />
+      <svg className="fp-flip-shade" viewBox={`0 0 ${C.w} ${C.h}`} aria-hidden="true">
+        <path d={OUTLINE} />
+      </svg>
+      <span className="fp-flip-glint" style={{ inset: PRINT.inset }}>
+        <span className="fp-flip-gleam" />
+      </span>
     </>
   );
 }
@@ -128,6 +165,12 @@ export function GameFlip(): React.JSX.Element {
     }
     const shapes = Array.from(root.querySelectorAll<SVGPathElement>('path[data-shape]'));
     const turned = card.animate(FLIP, { duration: HAND_STAMP_FLIP.ms, easing: 'linear', fill: 'forwards' });
+    // the light on both faces, on the same clock as the turn
+    const lit = Array.from(card.querySelectorAll('.fp-flip-face')).flatMap((face, f) => {
+      const light = LIGHT[f === 0 ? 0 : 1];
+      const timing = { duration: HAND_STAMP_FLIP.ms, easing: 'linear' };
+      return [face.querySelector('.fp-flip-shade')?.animate(light.shade, timing), face.querySelector('.fp-flip-gleam')?.animate(light.gleam, timing)];
+    });
     let frame = 0;
     const draw = (): void => {
       drawHand(shapes, Number(turned.currentTime ?? 0));
@@ -152,6 +195,7 @@ export function GameFlip(): React.JSX.Element {
       cancelAnimationFrame(frame);
       edge.cancel();
       turned.cancel();
+      for (const a of lit) a?.cancel();
       drawHand(shapes, null);
     };
   }, [turning]);
@@ -182,11 +226,11 @@ export function GameFlip(): React.JSX.Element {
           <span className="fp-flip-card" style={place}>
             <span className="fp-flip-turn" ref={turn} style={{ transform: `rotate(${C.turn}deg)` }}>
               <span className="fp-flip-face">
-                <StampFace game={GAMES[index]!.id} />
+                <StampFace game={GAMES[index]!.id} name={t(GAMES[index]!.name)} />
               </span>
               {!still && (
                 <span className="fp-flip-face is-back">
-                  <StampFace game={next.id} />
+                  <StampFace game={next.id} name={t(next.name)} />
                 </span>
               )}
             </span>
