@@ -60,7 +60,7 @@ import { GAME_NAMES } from '../games/names.js';
 import { LETTERS, letter } from './ink.js';
 import { DICTIONARY_TILE, dictionaryStillSvg, dictionarySvg, dictionaryTileSvg, dictionaryTiles } from './dictionary.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
-import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
+import { PODIUM_ART_BLOCKS, PODIUM_ART_NUMERAL, PODIUM_ART_STAR, TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES, podiumBlockPath } from './ticket.js';
 import { UNIT_TONES } from '../lesson-path.js';
 import {
   PATH_CHEST_PARTS,
@@ -1663,6 +1663,24 @@ describe('the join ticket', () => {
     for (const tile of TICKET_ART_TILES) {
       expect(tile.y - 0).toBeCloseTo(TICKET_ART_BOX.height - (tile.y + tile.height));
     }
+  });
+
+  it('has a podium beside it on the same canvas: second, first and third standing on one line, the first tallest', () => {
+    expect(PODIUM_ART_BLOCKS.map((b) => b.place)).toEqual([2, 1, 3]);
+    const [second, first, third] = PODIUM_ART_BLOCKS;
+    expect(first!.height).toBeGreaterThan(second!.height);
+    expect(second!.height).toBeGreaterThan(third!.height);
+    for (const b of PODIUM_ART_BLOCKS) {
+      // inside the ticket's box, every foot on its bottom edge, with room on its face for its place
+      expect(b.x).toBeGreaterThanOrEqual(0);
+      expect(b.x + b.width).toBeLessThanOrEqual(TICKET_ART_BOX.width);
+      expect(b.y + b.height).toBe(TICKET_ART_BOX.height);
+      expect(b.height).toBeGreaterThan(PODIUM_ART_NUMERAL.height + 4);
+      expect(podiumBlockPath(b)).toMatch(/^M[\d. ]+V[\d. ]+A/);
+    }
+    // the star over the first, clear of its top
+    const ys = PODIUM_ART_STAR.match(/-?\d+(?:\.\d+)?/g)!.map(Number).filter((_, i) => i % 2 === 1);
+    expect(Math.max(...ys)).toBeLessThan(first!.y);
   });
 });
 

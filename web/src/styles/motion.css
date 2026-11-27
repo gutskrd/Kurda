@@ -1338,9 +1338,17 @@
 .join-code-card:hover .join-code-card-art {
   transform: rotate(0deg) scale(1.06);
 }
-.join-code-card:active {
+.join-code-card:active,
+.games-rankings:active {
   transform: scale(var(--press-scale));
   transition-duration: 80ms;
+}
+/* the podium beside it rises a little under the pointer, as the ticket straightens */
+.games-rankings-art {
+  transition: transform var(--dur-slow) var(--ease-spring);
+}
+.games-rankings:hover .games-rankings-art {
+  transform: translateY(-2px) scale(1.04);
 }
 
 /* ---- Peyvok --------------------------------------------------------------------- */
@@ -1452,7 +1460,9 @@
   .code-entry-burst {
     display: none;
   }
-  .join-code-card:active {
+  .join-code-card:active,
+  .games-rankings:active,
+  .games-rankings:hover .games-rankings-art {
     transform: none;
   }
 }
