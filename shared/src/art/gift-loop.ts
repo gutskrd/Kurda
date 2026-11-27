@@ -173,6 +173,12 @@ export function giftLoopSweep(count: number, at: number, ms: number, peak = 1): 
   ]);
 }
 
+/** Light passing over frames `names` (each drawn where the light is at its step), one plan per frame, in turn. */
+export function giftLoopSweepLayers(names: readonly string[], boxes: readonly GiftLoopBox[], at: number, ms: number, peak = 1): Record<string, GiftLoopPlan> {
+  const beats = giftLoopSweep(names.length, at, ms, peak);
+  return Object.fromEntries(names.map((name, i) => [name, { box: boxes[i]!, from: { o: 0 }, beats: beats[i]! }]));
+}
+
 /** Eases 0 to 1 in and out, flat at both ends. */
 export const giftLoopSmooth = (t: number): number => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 

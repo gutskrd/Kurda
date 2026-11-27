@@ -109,7 +109,7 @@ describe('the gifts’ living rounds', () => {
     }
   });
 
-  it('keeps every layer whole in its box, and everything seen inside the frame at every key', async () => {
+  it('keeps every layer whole in its box, and everything seen inside the frame all through its round', async () => {
     const scale = 2;
     for (const id of LOOPING) {
       const parts = giftLoopParts(id, scale);
@@ -119,13 +119,15 @@ describe('the gifts’ living rounds', () => {
         expect([x, y, x + w, y + h].every((v) => Number.isInteger(v) && v >= 0 && v <= 120), what).toBe(true);
         const paint = await paintOf(layer, parts.layers.find((p) => p.name === layer.name)!.svg, scale);
         expect(paint.touches, `${what} is cut by its box`).toBe(false);
-        for (const k of layer.keys) {
+        const shares = [...layer.keys.map((k) => k.at), ...Array.from({ length: 97 }, (_, i) => i / 96)];
+        for (const at of shares) {
+          const k = giftLoopPoseAt(layer.keys, at);
           // Paint too faint to see may brush the edge on its way out.
           if (k.o < 0.05) continue;
           const [a, b, c, d, e, f] = giftLoopMatrix(layer, k);
           for (const [px, py] of paint.hull) {
             const [qx, qy] = [a * px + c * py + e, b * px + d * py + f];
-            expect(qx >= -0.25 && qx <= 120.25 && qy >= -0.25 && qy <= 120.25, `${what} at ${k.at}: (${qx.toFixed(2)}, ${qy.toFixed(2)})`).toBe(true);
+            expect(qx >= -0.25 && qx <= 120.25 && qy >= -0.25 && qy <= 120.25, `${what} at ${at}: (${qx.toFixed(2)}, ${qy.toFixed(2)})`).toBe(true);
           }
         }
       }

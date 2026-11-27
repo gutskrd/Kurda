@@ -4,7 +4,7 @@
  */
 import { type Drawing, type Pt } from './svg.js';
 import { layer } from './gift-canvas.js';
-import { along, band, brush, CHINA, ellipse, FLOOR, floor, form, GOLD, INK, leaf, lerp, outline, paint, polygon, rest, roundish, runs, scaleAbout, shift, side, slab, streaks, sugar, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
+import { along, band, brush, CHINA, ellipse, FLOOR, floor, form, GOLD, INK, leaf, lerp, outline, paint, polygon, rest, roundish, runs, scaleAbout, shift, side, slab, streaks, sugar, touch, tremble, turn, within, type Rnd, type Tone } from './gift-paint.js';
 
 // ───────────────────────────────────────────────────────────────────── çay
 
@@ -391,24 +391,48 @@ export function qehwe(dr: Drawing, rnd: Rnd): void {
   paint(dr, brush(lipNear, 0.9, rnd, { start: 0.6, end: 0.6, peak: 0.5, count: 24 }), GOLD);
   paint(dr, brush(lipFar, 0.55, rnd, { start: 0.6, end: 0.6, peak: 0.5, count: 24 }), '#a98a5e');
 
-  // steam
-  for (const [pts, w] of [
-    [[[55, 49], [52, 41], [56, 33], [52, 25], [54.6, 18]], 2.4],
-    [[[65, 49.6], [68, 42], [64.6, 35.4], [67.6, 29]], 1.8],
-  ] as Array<[Pt[], number]>) {
-    paint(dr, brush(shift(pts, 0.6, 0.2), w, rnd, { start: 0.5, end: 0.05, peak: 0.3 }), '#b9aca3', 0.8);
-    paint(dr, brush(pts, w, rnd, { start: 0.5, end: 0.05, peak: 0.3 }), '#e2d9d1', 0.95);
-  }
+  // steam off the coffee, in wisps that rise and curl (gift-loop-warm.ts)
+  steam(dr, rnd, COFFEE_STEAM);
 }
+
+export const COFFEE_STEAM: Steam = [
+  ['steam1', [[55, 49], [52, 41.4], [56, 33.6], [52.4, 26], [54.6, 19.6]], 2.3],
+  ['steam2', [[65, 49.6], [68, 42.4], [64.8, 35.6], [67.8, 29.4]], 1.8],
+  ['steam3', [[60, 49.4], [62.4, 42], [59, 35], [61.6, 28.4], [60, 23]], 1.9],
+  ['steam4', [[70, 48.6], [68, 43], [70.6, 37.6], [68.6, 33]], 1.4],
+];
 
 // ───────────────────────────────────────────────────────────────────── sêv
 
 const APPLE: Tone = { base: '#b8352a', light: '#d95b41', shade: '#7c2019' };
 const APPLE_LEAF: Tone = { base: '#6a8a3e', light: '#94b35f', shade: '#48682b' };
 
+/** Where the apple rests on the table, which it rocks about (gift-loop-warm.ts), and where its stalk leaves it. */
+export const SEV_FOOT: Pt = [60, 98.6];
+export const SEV_STALK: Pt = [55.8, 31.4];
+/** The glint on its skin, where the window shines on it. */
+export const SEV_GLINT: Pt = [39, 56.4];
+
 export function sev(dr: Drawing, rnd: Rnd): void {
   floor(dr, rnd, 62, 99.5, 33, 6);
   rest(dr, rnd, 60, 98.6, 24, 3.2);
+  layer(dr, 'apple', () => appleBody(dr, rnd));
+  // the leaves, which flutter a little as it rocks, and the glint that comes and goes on its skin
+  layer(dr, 'leaves', () => {
+    dr.add('<g transform="rotate(-8 58 70)">');
+    leaf(dr, rnd, [60.6, 31.6], [42, 22.4], 9, { base: '#55722f', light: '#7e9c4c', shade: '#3c5622' }, { bend: 0.1, teeth: 0.03, rib: '#a9c084' });
+    leaf(dr, rnd, [61.6, 30.4], [89, 21], 14, APPLE_LEAF, { bend: -0.12, teeth: 0.03, rib: '#bfd29a' });
+    dr.add('</g>');
+  });
+  layer(dr, 'glint', () => {
+    const [x, y] = SEV_GLINT;
+    paint(dr, touch(x, y, 8.4, 0.85, 0) + touch(x, y, 8.4, 0.85, 90), '#fff7ec');
+    paint(dr, touch(x, y, 4, 0.55, 45) + touch(x, y, 4, 0.55, -45), '#fff7ec', 0.75);
+    paint(dr, ellipse(x, y, 1.1, 1.1), '#ffffff');
+  });
+}
+
+function appleBody(dr: Drawing, rnd: Rnd): void {
   dr.add('<g transform="rotate(-8 58 70)">');
   const apple = tremble([[58, 41], [66, 37.4], [76, 37.6], [86, 43], [92.4, 53], [94, 65], [91.4, 78], [84.4, 90], [74.4, 97.6], [64, 99.4], [58, 97.6], [52, 99.4], [41.6, 97.6], [31.6, 90], [24.6, 78], [22, 65], [23.6, 53], [30, 43], [40, 37.6], [50, 37.4]], rnd, 0.35);
   const skin = outline(apple);
@@ -447,8 +471,6 @@ export function sev(dr: Drawing, rnd: Rnd): void {
     paint(dr, pores, '#eba27a', 0.6);
   });
   paint(dr, brush([[58.6, 43], [59.4, 35], [62.4, 27.6]], 2.3, rnd, { start: 0.9, end: 0.7, peak: 0.4 }), '#5a3a22');
-  leaf(dr, rnd, [60.6, 31.6], [42, 22.4], 9, { base: '#55722f', light: '#7e9c4c', shade: '#3c5622' }, { bend: 0.1, teeth: 0.03, rib: '#a9c084' });
-  leaf(dr, rnd, [61.6, 30.4], [89, 21], 14, APPLE_LEAF, { bend: -0.12, teeth: 0.03, rib: '#bfd29a' });
   dr.add('</g>');
 }
 
@@ -565,17 +587,31 @@ export function semawer(dr: Drawing, rnd: Rnd): void {
   paint(dr, outline(roundish(X, 17.8, 6.4, 2.2, rnd, { count: 14, tremor: 0.1 })), CHINA.light);
   paint(dr, brush([[X - 6.2, 18.4], [X, 20.4], [X + 6.2, 18.4]], 0.6, rnd, { start: 0.8, end: 0.8, peak: 0.5 }), GOLD);
   paint(dr, ellipse(X, 15.6, 1.8, 1.4), GOLD);
-  for (const [pts, w] of [
-    [[[X + 19, 17.6], [X + 22, 12], [X + 18.6, 7], [X + 21.6, 2.4]], 1.9],
-    [[[X + 1, 14.4], [X - 1.6, 9.6], [X + 1, 5.4]], 1.4],
-  ] as Array<[Pt[], number]>) {
-    paint(dr, brush(shift(pts, 0.5, 0.2), w, rnd, { start: 0.5, end: 0.05, peak: 0.3 }), '#b9aca3', 0.8);
-    paint(dr, brush(pts, w, rnd, { start: 0.5, end: 0.05, peak: 0.3 }), '#e2d9d1', 0.95);
-  }
   // two glasses poured for guests
   teaGlass(dr, rnd, 101, 97.4, 0.052);
   teaGlass(dr, rnd, 86, 101.6, 0.058);
+  // light passing over the brass urn, drawn as frames shown in turn (gift-loop-warm.ts), each cut to the urn
+  SEMAWER_GLINT.forEach((t, i) => {
+    layer(dr, `glint${i + 1}`, () => {
+      within(dr, outline(shell), () => {
+        const x = X - 19 + t * 38;
+        paint(dr, brush([[x - 1.4, 43], [x - 0.6, 64], [x + 0.6, 86]], 3.6, rnd, { start: 0.4, end: 0.4, peak: 0.5, count: 10 }), BRASS.light, 0.55);
+        paint(dr, brush([[x - 1.2, 46], [x - 0.6, 64], [x + 0.2, 82]], 1.2, rnd, { start: 0.3, end: 0.3, peak: 0.5, count: 10 }), '#fff3cf', 0.85);
+      });
+    });
+  });
+  // steam from the spout and the lid, in wisps that rise and curl
+  steam(dr, rnd, SEMAWER_STEAM);
 }
+
+/** Where across the urn, as a share of its width, each frame of the passing light lies. */
+export const SEMAWER_GLINT = [0.12, 0.3, 0.48, 0.66, 0.84];
+
+export const SEMAWER_STEAM: Steam = [
+  ['steam1', [[69, 17.6], [71.8, 13.2], [68.8, 9.6], [71, 6.8]], 1.8],
+  ['steam2', [[51, 14.4], [48.6, 10], [51.2, 6.4]], 1.4],
+  ['steam3', [[71, 17], [68.4, 12.6], [71.2, 9], [69, 6]], 1.5],
+];
 
 // ───────────────────────────────────────────────────────────────────── def
 
@@ -586,6 +622,39 @@ export function def(dr: Drawing, rnd: Rnd): void {
   // the great frame drum stood on its rim and turned a little from us, so the depth of its hoop shows at the right: a
   // walnut hoop inlaid with bone, the goatskin stretched thin enough to glow, a henna star at its heart, a red tassel
   rest(dr, rnd, 62, 101, 36, 3.6);
+  layer(dr, 'drum', () => drumBody(dr, rnd));
+  // what moves with the beat (gift-loop-warm.ts): a ring running out over the skin, the henna star glowing, the tassel
+  for (const name of ['ripple1', 'ripple2'] as const) {
+    layer(dr, name, () => {
+      dr.add('<g transform="rotate(-6 60 58)">');
+      const ring = roundish(57, 57, 20, 23, rnd, { wobble: 0.01, tremor: 0.2, count: 32 });
+      band(dr, ring, scaleAbout(ring, 57, 57, 0.93, 0.94), '#fff3d6');
+      dr.add('</g>');
+    });
+  }
+  layer(dr, 'star', () => {
+    dr.add('<g transform="rotate(-6 60 58)">');
+    const pts: Pt[] = [];
+    for (let i = 0; i < 16; i++) {
+      const a = -Math.PI / 2 + (i / 16) * Math.PI * 2;
+      const rr = i % 2 ? 15 * 0.46 : 15;
+      pts.push([57 + Math.cos(a) * rr * 0.92, 57 + Math.sin(a) * rr * 1.06]);
+    }
+    paint(dr, polygon(tremble(pts, rnd, 0.25)), '#e0763e', 0.75);
+    paint(dr, ellipse(57, 57, 2.6, 2.9), '#ffd98f');
+    dr.add('</g>');
+  });
+  layer(dr, 'tassel', () => {
+    paint(dr, brush([[99, 66], [100.6, 74], [100, 81]], 0.9, rnd, { start: 1, end: 1, peak: 0.5, count: 6 }), '#d9a43e');
+    paint(dr, ellipse(100, 81.6, 1.8, 1.6), '#d9a43e');
+    let tassel = '';
+    for (let i = 0; i < 7; i++) tassel += touch(100 + (i - 3) * 0.6, 88, 10 - Math.abs(i - 3) * 0.6, 0.65, 90 + (i - 3) * 4);
+    paint(dr, tassel, '#b8333a');
+    paint(dr, touch(99.4, 87, 7, 0.5, 92), '#e0605a', 0.8);
+  });
+}
+
+function drumBody(dr: Drawing, rnd: Rnd): void {
   dr.add('<g transform="rotate(-6 60 58)">');
   const hoop = roundish(57, 57, 38.4, 44, rnd, { wobble: 0.006, tremor: 0.2, count: 40 });
   const back = shift(hoop, 6.8, 0.4);
@@ -650,13 +719,6 @@ export function def(dr: Drawing, rnd: Rnd): void {
   paint(dr, star(6.4, -Math.PI / 2), '#a8532e', 0.82);
   paint(dr, ellipse(57, 57, 1.7, 1.9), SKIN.base);
   dr.add('</g>');
-  // and the tassel, hung from the hoop on a gold cord
-  paint(dr, brush([[99, 66], [100.6, 74], [100, 81]], 0.9, rnd, { start: 1, end: 1, peak: 0.5, count: 6 }), '#d9a43e');
-  paint(dr, ellipse(100, 81.6, 1.8, 1.6), '#d9a43e');
-  let tassel = '';
-  for (let i = 0; i < 7; i++) tassel += touch(100 + (i - 3) * 0.6, 88, 10 - Math.abs(i - 3) * 0.6, 0.65, 90 + (i - 3) * 4);
-  paint(dr, tassel, '#b8333a');
-  paint(dr, touch(99.4, 87, 7, 0.5, 92), '#e0605a', 0.8);
 }
 
 // ───────────────────────────────────────────────────────────────────── saz
@@ -728,11 +790,46 @@ export function saz(dr: Drawing, rnd: Rnd): void {
   for (const [a, b] of [[-1.3, -0.9], [0, 0], [1.3, 0.9]] as const) strings += brush([[a, 59], [(a + b) / 2, -12], [b, -84]], 0.32, rnd, { start: 1, end: 1, peak: 0.5, count: 4 });
   paint(dr, strings, '#f6f0e2', 0.9);
   dr.add('</g>');
-  // a red tassel tied at its head, hanging straight down
+  // a red tassel tied at its head, hanging straight down, which sways as the strings ring (gift-loop-warm.ts)
   const [tx, ty] = toCanvas([3.6, -82]);
-  paint(dr, brush([[tx, ty], [tx + 0.6, ty + 3.4], [tx + 0.4, ty + 6]], 0.8, rnd, { start: 1, end: 1, peak: 0.5 }), '#d9a43e');
-  paint(dr, ellipse(tx + 0.4, ty + 6.6, 1.5, 1.3), '#d9a43e');
-  let tassel = '';
-  for (let i = 0; i < 7; i++) tassel += touch(tx + 0.4 + (i - 3) * 0.55, ty + 11.6 + Math.abs(i - 3) * -0.3, 9 - Math.abs(i - 3) * 0.6, 0.55, 90 + (i - 3) * 4);
-  paint(dr, tassel, '#b8333a');
+  layer(dr, 'tassel', () => {
+    paint(dr, brush([[tx, ty], [tx + 0.6, ty + 3.4], [tx + 0.4, ty + 6]], 0.8, rnd, { start: 1, end: 1, peak: 0.5 }), '#d9a43e');
+    paint(dr, ellipse(tx + 0.4, ty + 6.6, 1.5, 1.3), '#d9a43e');
+    let tassel = '';
+    for (let i = 0; i < 7; i++) tassel += touch(tx + 0.4 + (i - 3) * 0.55, ty + 11.6 + Math.abs(i - 3) * -0.3, 9 - Math.abs(i - 3) * 0.6, 0.55, 90 + (i - 3) * 4);
+    paint(dr, tassel, '#b8333a');
+  });
+  // the strings catching the light where they ring, a stretch at a time up the neck
+  SAZ_SHIMMER.forEach(([from, to], i) => {
+    layer(dr, `shimmer${i + 1}`, () => {
+      dr.add(`<g transform="translate(${T.x} ${T.y}) rotate(${T.deg}) scale(${T.s})">`);
+      // each string blurred a little either side as it rings, with its bright core
+      let blur = '';
+      let lit = '';
+      for (const [a, b] of [[-1.3, -0.9], [0, 0], [1.3, 0.9]] as const) {
+        const at = (v: number): Pt => [a + (b - a) * ((59 - v) / 143), v];
+        blur += brush([at(from), at((from + to) / 2), at(to)], 1.6, rnd, { start: 0.1, end: 0.1, peak: 0.5, count: 6 });
+        lit += brush([at(from), at((from + to) / 2), at(to)], 0.75, rnd, { start: 0.15, end: 0.15, peak: 0.5, count: 6 });
+      }
+      paint(dr, blur, '#ffe9a8', 0.5);
+      paint(dr, lit, '#fffbea');
+      dr.add('</g>');
+    });
+  });
+  // two notes rising from the bowl into the air
+  for (const [name, [x, y], k] of SAZ_NOTES) {
+    layer(dr, name, () => {
+      const head = outline(turn(roundish(x, y, 2.3 * k, 1.6 * k, rnd, { count: 12, tremor: 0.08, wobble: 0.02 }), x, y, -22));
+      const stem: Pt[] = [[x + 2 * k, y - 0.6 * k], [x + 2.2 * k, y - 5 * k], [x + 2.3 * k, y - 9 * k]];
+      const flag: Pt[] = [[x + 2.3 * k, y - 9 * k], [x + 4.6 * k, y - 6.6 * k], [x + 5.4 * k, y - 3.6 * k]];
+      const d = head + brush(stem, 0.9 * k, rnd, { start: 1, end: 1, peak: 0.5, count: 6 }) + brush(flag, 1.1 * k, rnd, { start: 1, end: 0.2, peak: 0.2, count: 6 });
+      paint(dr, d, '#c98f2e');
+      paint(dr, touch(x - 0.6 * k, y - 0.5 * k, 1.8 * k, 0.45 * k, -22), '#f6d58e');
+    });
+  }
 }
+
+/** The stretches of string, as heights up the saz from its bridge (59) to its nut (-84), that light in turn. */
+export const SAZ_SHIMMER: ReadonlyArray<readonly [number, number]> = [[48, 22], [28, 0], [6, -24], [-18, -46], [-40, -66]];
+/** The notes as the still shows them: where each sits and its size. */
+export const SAZ_NOTES: ReadonlyArray<readonly [name: string, at: Pt, size: number]> = [['note1', [30, 50], 1], ['note2', [16, 25], 0.8]];
