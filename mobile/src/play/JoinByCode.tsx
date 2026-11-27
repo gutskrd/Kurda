@@ -28,7 +28,7 @@ import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { PressableScale } from '../theme/MotionParts';
 import { LIP, SHINE } from '../theme/Tile';
-import { paperArt } from '../theme/paperArt';
+import { inkArt } from '../theme/inkArt';
 import { tileTone, type TileState } from '../theme/tileTones';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -397,13 +397,13 @@ export function JoinCodeCard({
 
 /**
  * Two tickets, one tucked behind the other, in the outline the website draws too: a stub, a notched tear line and
- * three tiles, cut from the games page's paper (theme/paperArt.ts) with the tiles in ink, the one behind a step
- * deeper. Mirrored for right-to-left readers.
+ * three tiles, cut from the games page's ink (theme/inkArt.ts) with the tiles in the card's colour, the one behind a
+ * step softer. Mirrored for right-to-left readers.
  */
 function TicketMotif({ size }: { size: number }): React.JSX.Element {
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const dir = useDirection();
-  const art = paperArt(colors, scheme === 'dark');
+  const art = inkArt(colors);
   const height = size * 0.8;
   const ticket = (fill: string, stub: string, tiles: boolean): React.JSX.Element => (
     <>
@@ -411,16 +411,15 @@ function TicketMotif({ size }: { size: number }): React.JSX.Element {
       <Path d={TICKET_ART_STUB} fill={stub} />
       <Path d={TICKET_ART_PERFORATION} stroke={art.line} strokeWidth={1.6} strokeDasharray="2.4 2.6" strokeLinecap="round" />
       {tiles
-        ? TICKET_ART_TILES.map((tile) => <Rect key={tile.x} x={tile.x} y={tile.y} width={tile.width} height={tile.height} rx={tile.r} fill={art.ink} />)
+        ? TICKET_ART_TILES.map((tile) => <Rect key={tile.x} x={tile.x} y={tile.y} width={tile.width} height={tile.height} rx={tile.r} fill={art.marks} />)
         : null}
-      {art.edge ? <Path d={TICKET_ART_OUTLINE} fill="none" stroke={art.edge} strokeWidth={1.5} strokeLinejoin="round" /> : null}
     </>
   );
   return (
     <View style={[{ width: size, height }, dir.flip]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Svg width={size} height={height} viewBox="-6 -13 72 57.6">
-        <G transform="translate(4 -3) rotate(9 29 16)">{ticket(art.deep, art.deep, false)}</G>
-        <G transform="translate(-2 4) rotate(-7 29 16)">{ticket(art.paper, art.deep, true)}</G>
+        <G transform="translate(4 -3) rotate(9 29 16)">{ticket(art.stub, art.stub, false)}</G>
+        <G transform="translate(-2 4) rotate(-7 29 16)">{ticket(art.body, art.stub, true)}</G>
       </Svg>
     </View>
   );

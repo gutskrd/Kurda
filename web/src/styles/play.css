@@ -1155,23 +1155,14 @@
   }
 }
 /*
- * The ticket and the rankings' podium (games/PodiumArt.tsx) as slips of paper, like the stamps on the same page: light
- * paper with its marks in ink, the stub a step deeper; by night the paper stays light, by day it is white with a fine
- * edge so it does not melt into the card.
+ * The ticket and the rankings' podium (games/PodiumArt.tsx) as slips cut from the page's ink, with their marks in the
+ * card's colour as if punched through: dark by day and light by night, as the main button is, the stub a step softer.
  */
-.paper-art {
-  --art-paper: color-mix(in srgb, var(--ink) 90%, var(--surface-solid));
-  --art-paper-deep: color-mix(in srgb, var(--ink) 76%, var(--surface-solid));
-  --art-ink: var(--surface-solid);
-  --art-line: color-mix(in srgb, var(--ink) 48%, var(--surface-solid));
-  --art-edge: transparent;
-}
-:root[data-theme='light'] .paper-art {
-  --art-paper: var(--surface-solid);
-  --art-paper-deep: color-mix(in srgb, var(--ink) 8%, var(--surface-solid));
-  --art-ink: var(--ink);
-  --art-line: var(--border-strong);
-  --art-edge: var(--border-strong);
+.ink-art {
+  --art-body: var(--ink);
+  --art-stub: color-mix(in srgb, var(--ink) 78%, var(--surface-solid));
+  --art-marks: var(--surface-solid);
+  --art-line: color-mix(in srgb, var(--ink) 42%, var(--surface-solid));
 }
 .ticket-art {
   display: block;
@@ -1181,10 +1172,10 @@
   scale: -1 1;
 }
 .ticket-art-body {
-  fill: var(--art-paper);
+  fill: var(--art-body);
 }
 .ticket-art-stub {
-  fill: var(--art-paper-deep);
+  fill: var(--art-stub);
 }
 .ticket-art-perf {
   fill: none;
@@ -1194,34 +1185,25 @@
   stroke-linecap: round;
 }
 .ticket-art-tile {
-  fill: var(--art-ink);
-}
-.ticket-art-edge {
-  fill: none;
-  stroke: var(--art-edge);
-  stroke-width: 1.5;
-  stroke-linejoin: round;
+  fill: var(--art-marks);
 }
 .podium-art {
   display: block;
   overflow: visible;
 }
 .podium-art-block {
-  fill: var(--art-paper);
-  stroke: var(--art-edge);
-  stroke-width: 1.5;
-  stroke-linejoin: round;
+  fill: var(--art-body);
 }
 .podium-art-place {
   fill: none;
-  stroke: var(--art-ink);
+  stroke: var(--art-marks);
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-/* the star stands on the card above the paper, so it takes the page's ink */
+/* the star over the first place is cut from the same ink */
 .podium-art-star {
-  fill: var(--ink);
+  fill: var(--art-body);
 }
 .code-sheet-head {
   display: grid;

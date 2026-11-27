@@ -227,13 +227,13 @@ function JoinedBurst(): React.JSX.Element {
 }
 
 /**
- * The ticket on the Games hub's card and atop the sheet, in both apps' shared outline: a slip of paper with its code
- * tiles in ink (styles/play.css `.paper-art`), following the scheme; mirrored on a right-to-left page.
+ * The ticket on the Games hub's card and atop the sheet, in both apps' shared outline: a slip cut from the page's ink
+ * with its code tiles in the card's colour (styles/play.css `.ink-art`); mirrored on a right-to-left page.
  */
 export function TicketArt({ className }: { className?: string }): React.JSX.Element {
   return (
     <svg
-      className={`ticket-art paper-art${className ? ` ${className}` : ''}`}
+      className={`ticket-art ink-art${className ? ` ${className}` : ''}`}
       viewBox={`-3 -6 ${TICKET_ART_BOX.width + 6} ${TICKET_ART_BOX.height + 12}`}
       width="64"
       height="44"
@@ -246,7 +246,6 @@ export function TicketArt({ className }: { className?: string }): React.JSX.Elem
       {TICKET_ART_TILES.map((tile) => (
         <rect key={tile.x} className="ticket-art-tile" x={tile.x} y={tile.y} width={tile.width} height={tile.height} rx={tile.r} />
       ))}
-      <path className="ticket-art-edge" d={TICKET_ART_OUTLINE} />
     </svg>
   );
 }
