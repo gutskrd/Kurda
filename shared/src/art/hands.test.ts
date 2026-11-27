@@ -239,22 +239,31 @@ describe('the turn of the stamp in the hand', () => {
     // how far apart a shape's neighbouring points are in the reference's own frames, at their widest (a gap opens from shut)
     const frames = Array.from({ length: 23 }, (_, k) => handStampPointsAt(k * 80));
     const widest = Object.fromEntries(Object.keys(frames[0]!).map((name) => [name, Math.max(...frames.flatMap((f) => f[name]!.map((_, k) => gap(f[name]!, k))))]));
+    // the worst of each measure over every point at every moment, and where it is, checked once at the end
+    const worst = { step: { v: 0, at: '' }, change: { v: 0, at: '' }, spread: { v: 0, at: '' } };
+    const note = (w: { v: number; at: string }, v: number, at: () => string): void => {
+      if (v > w.v) [w.v, w.at] = [v, at()];
+    };
     let [before, last] = [handStampPointsAt(0), handStampPointsAt(5)];
     for (const ms of MOMENTS.slice(2)) {
       const now = handStampPointsAt(ms);
       for (const [name, pts] of Object.entries(now)) {
         pts.forEach(([x, y], k) => {
           const [[px, py], [bx, by]] = [last[name]![k]!, before[name]![k]!];
-          // the fastest of the turn, the thumb swinging as the stamp passes edge-on, moves a point under five frame units in 5 ms
-          expect(Math.hypot(x - px, y - py), `${name}[${k}] at ${ms} ms`).toBeLessThan(10);
-          // and its speed only ever changes gently, so nothing snaps from one moment to the next
-          expect(Math.hypot(x - 2 * px + bx, y - 2 * py + by), `${name}[${k}] at ${ms} ms`).toBeLessThan(2.5);
-          // nor does any point pull far from its neighbours between the reference's frames
-          if (pts.length > 1) expect(gap(pts, k), `${name}[${k}] at ${ms} ms`).toBeLessThan(3 * widest[name]!);
+          const where = (): string => `${name}[${k}] at ${ms} ms`;
+          note(worst.step, Math.hypot(x - px, y - py), where);
+          note(worst.change, Math.hypot(x - 2 * px + bx, y - 2 * py + by), where);
+          if (pts.length > 1) note(worst.spread, gap(pts, k) / (3 * widest[name]!), where);
         });
       }
       [before, last] = [last, now];
     }
+    // the fastest of the turn, the thumb swinging as the stamp passes edge-on, moves a point under five frame units in 5 ms
+    expect(worst.step.v, worst.step.at).toBeLessThan(10);
+    // and its speed only ever changes gently, so nothing snaps from one moment to the next
+    expect(worst.change.v, worst.change.at).toBeLessThan(2.5);
+    // nor does any point pull far from its neighbours between the reference's frames: under three times their widest
+    expect(worst.spread.v, worst.spread.at).toBeLessThan(1);
   });
 
   it('bends every joint only as the reference’s do: the fingers curl and never bend back, the thumb barely sideways', () => {
