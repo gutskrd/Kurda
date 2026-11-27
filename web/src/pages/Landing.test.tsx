@@ -177,8 +177,9 @@ describe('the front page', () => {
     const learn = document.getElementById('learn')!;
     const stamp = await within(learn).findByRole('button', { name: 'Peyvok. Show the next game' });
     expect(within(learn).getByRole('link', { name: 'See all the games' })).toHaveAttribute('href', '/app/games');
-    // Each stamp has the next game on its back, to come round as it turns.
+    // Each stamp has the next game on its back, to come round as it turns, each printed with its game's name.
     expect(learn.querySelectorAll('.fp-flip-face')).toHaveLength(2);
+    expect([...learn.querySelectorAll('.fp-flip-title')].map((n) => n.textContent)).toEqual(['Peyvok', 'Peyvên Hevserwa']);
     // Where nothing can be animated, a tap moves straight on to the next game.
     fireEvent.click(stamp);
     expect(await within(learn).findByRole('button', { name: 'Peyvên Hevserwa. Show the next game' })).toBeInTheDocument();
