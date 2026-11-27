@@ -25,8 +25,8 @@ import { DARK } from './frames-dark.mjs';
 import { GARDEN } from './frames-garden.mjs';
 import { LIGHTS } from './frames-light.mjs';
 import { MADE } from './frames-made.mjs';
-import { blade, linear, radial, spline } from './icons.mjs';
-import { n, pt } from './kit.mjs';
+import { blade, linear, radial } from './icons.mjs';
+import { n, pt, spline } from './kit.mjs';
 import { BOX, C, INK, P, RI, polar, ring, round, star, tangent } from './ring.mjs';
 import { Still } from './still.mjs';
 

@@ -9,8 +9,8 @@
  * ones forward, and faces out of the ring.
  */
 import { crescent } from './brush.mjs';
-import { blade, linear, radial, spline } from './icons.mjs';
-import { n, pt } from './kit.mjs';
+import { blade, linear, radial } from './icons.mjs';
+import { n, pt, spline } from './kit.mjs';
 import { C, INK, P, ring, round } from './ring.mjs';
 import { Still } from './still.mjs';
 

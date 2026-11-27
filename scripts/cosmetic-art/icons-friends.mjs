@@ -5,100 +5,10 @@
  * a pigeon in one blue crayon line; a bear in flat brown with nothing to say; a cow as round as a ball; and a plump hen.
  * Each is cut out with its paper behind it, so it reads over a dark profile picture as over a light one.
  */
-import { n, pt } from './kit.mjs';
-import { softly, specks, strokes, within } from './brush.mjs';
+import { blob, crayon, mark, softly, strokes, torn, within } from './brush.mjs';
+import { spline } from './kit.mjs';
 import { Still } from './still.mjs';
 
-// ─────────────────────────────────────────────────────────────── a hand's tools
-
-/** A smooth outline through the points (Catmull-Rom as cubic Béziers); open when `closed` is false. */
-function smooth(points, closed = true) {
-  const count = points.length;
-  const at = (i) => (closed ? points[(i + count) % count] : points[Math.max(0, Math.min(count - 1, i))]);
-  let d = `M${pt(points[0])}`;
-  for (let i = 0; i < (closed ? count : count - 1); i++) {
-    const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
-    d += ` C${pt([p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6])} ${pt([p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6])} ${pt(p2)}`;
-  }
-  return closed ? `${d} Z` : d;
-}
-
-/** `count` + 1 points along the smooth curve through `points`. */
-function along(points, count) {
-  const out = [];
-  const m = points.length - 1;
-  for (let k = 0; k <= count; k++) {
-    const t = (k / count) * m;
-    const i = Math.min(m - 1, Math.floor(t));
-    const f = t - i;
-    const [p0, p1, p2, p3] = [points[Math.max(0, i - 1)], points[i], points[i + 1], points[Math.min(m, i + 2)]];
-    const c = (j) => 0.5 * (2 * p1[j] + (p2[j] - p0[j]) * f + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * f * f + (3 * p1[j] - p0[j] - 3 * p2[j] + p3[j]) * f * f * f);
-    out.push([c(0), c(1)]);
-  }
-  return out;
-}
-
-/**
- * A brush or pen mark along `points`, `width` at its fullest: thin where it touches down (`start`) and lifts (`end`),
- * its width trembling a little as a loaded brush's does.
- */
-function mark(rnd, points, width, { start = 0.3, end = 0.2, peak = 0.4, tremble = 0.15, count = 24 } = {}) {
-  const line = along(points, count);
-  const left = [];
-  const right = [];
-  line.forEach((p, i) => {
-    const t = i / count;
-    const a = line[Math.max(0, i - 1)];
-    const b = line[Math.min(count, i + 1)];
-    const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
-    const [nx, ny] = [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
-    const rise = t < peak ? start + (1 - start) * Math.sin(((t / peak) * Math.PI) / 2) : end + (1 - end) * Math.cos((((t - peak) / (1 - peak)) * Math.PI) / 2);
-    const w = (width / 2) * rise * (1 - tremble / 2 + rnd() * tremble);
-    left.push([p[0] + nx * w, p[1] + ny * w]);
-    right.push([p[0] - nx * w, p[1] - ny * w]);
-  });
-  return `M${left.map(pt).join(' L')} L${right.reverse().map(pt).join(' L')} Z`;
-}
-
-/** A round shape, its radius a little uneven, as a hand draws one. */
-function blob(rnd, [cx, cy], rx, ry, turn = 0, wobble = 0.03, count = 24) {
-  const out = [];
-  const [c, s] = [Math.cos((turn * Math.PI) / 180), Math.sin((turn * Math.PI) / 180)];
-  const phase = rnd() * 6;
-  for (let i = 0; i < count; i++) {
-    const t = (i / count) * Math.PI * 2;
-    const k = 1 + wobble * Math.sin(t * 3 + phase) + wobble * 0.6 * Math.sin(t * 5 + phase * 2);
-    const [x, y] = [Math.cos(t) * rx * k, Math.sin(t) * ry * k];
-    out.push([cx + x * c - y * s, cy + x * s + y * c]);
-  }
-  return smooth(out);
-}
-
-/** An edge torn a little, as ink takes on rough paper or a lino gouge leaves it: a filter's url. */
-function torn(cv, rnd, scale = 3, freq = 0.06) {
-  const f = cv.id('torn');
-  cv.def(`<filter id="${f}" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="3" seed="${Math.floor(rnd() * 999)}" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="${scale}" xChannelSelector="R" yChannelSelector="G"/></filter>`);
-  return `url(#${f})`;
-}
-
-/**
- * Crayon on rough paper: the mark's edge dragged a little and the tooth of the paper showing through it, more where
- * the hand pressed lightly (`keep` lower).
- */
-function crayon(cv, rnd, { keep = 1.5, tear = 3, grain = 0.75 } = {}) {
-  const f = cv.id('cray');
-  cv.def(
-    `<filter id="${f}" x="-20%" y="-20%" width="140%" height="140%">`
-      + `<feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="${Math.floor(rnd() * 999)}" result="t"/>`
-      + `<feDisplacementMap in="SourceGraphic" in2="t" scale="${tear}" xChannelSelector="R" yChannelSelector="G" result="d"/>`
-      + `<feTurbulence type="fractalNoise" baseFrequency="${grain}" numOctaves="2" seed="${Math.floor(rnd() * 999)}" result="g"/>`
-      + `<feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 ${n(keep)}" result="m"/>`
-      + `<feComposite in="d" in2="m" operator="in"/></filter>`,
-  );
-  return `url(#${f})`;
-}
-
-const BOX = [24, 24, 488, 488];
 const PLAIN = { finish: { paint: 0, grain: 0.012, contrast: 0, saturation: 1, warmth: 0 } };
 
 // ─────────────────────────────────────────────────────────────── the friends
@@ -119,9 +29,9 @@ export const FRIENDS = [
       const ink = (cv, pts, w, o = {}) => cv.add(`<path d="${mark(rnd, pts, w, o)}" fill="${INK}" filter="${torn(cv, rnd, 2.2, 0.08)}"/>`);
       // the parts, as filled shapes, before any line
       const head = blob(rnd, [258, 196], 66, 58, 0, 0.02);
-      const torso = smooth([[198, 270], [258, 262], [318, 270], [330, 312], [312, 360], [304, 408], [282, 452], [262, 440], [256, 418], [248, 440], [226, 452], [208, 410], [200, 360], [186, 312]]);
-      const armL = smooth([[204, 274], [160, 270], [126, 282], [112, 254], [116, 214], [140, 200], [160, 212], [158, 244], [182, 250], [214, 300]]);
-      const armR = smooth(armL.match(/-?[\d.]+,-?[\d.]+/g).map((p) => p.split(',').map(Number)).map(([x, y]) => [516 - x, y]));
+      const torso = spline([[198, 270], [258, 262], [318, 270], [330, 312], [312, 360], [304, 408], [282, 452], [262, 440], [256, 418], [248, 440], [226, 452], [208, 410], [200, 360], [186, 312]]);
+      const armL = spline([[204, 274], [160, 270], [126, 282], [112, 254], [116, 214], [140, 200], [160, 212], [158, 244], [182, 250], [214, 300]]);
+      const armR = spline(armL.match(/-?[\d.]+,-?[\d.]+/g).map((p) => p.split(',').map(Number)).map(([x, y]) => [516 - x, y]));
       const earL = blob(rnd, [232, 104], 20, 52, -10, 0.03);
       const earR = blob(rnd, [290, 106], 20, 54, 14, 0.03);
       s.paint((cv) => {
@@ -179,17 +89,17 @@ export const FRIENDS = [
       const RED = '#d9302a';
       const line = (cv, d, w = 9) => cv.add(`<path d="${d}" fill="none" stroke="${INK}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round" filter="${torn(cv, rnd, 3.5, 0.09)}"/>`);
       const fill = (cv, d, c) => cv.add(`<path d="${d}" fill="${c}" filter="${torn(cv, rnd, 3, 0.09)}"/>`);
-      const tail = smooth([[386, 404], [434, 410], [470, 430], [482, 452], [440, 458], [396, 452], [372, 434]]);
-      const tailTip = smooth([[440, 422], [470, 430], [482, 452], [446, 458], [430, 444]]);
-      const body = smooth([[262, 236], [312, 232], [330, 300], [334, 380], [330, 440], [276, 448], [232, 440], [228, 380], [236, 300]]);
-      const chest = smooth([[268, 246], [302, 246], [306, 320], [298, 420], [276, 436], [258, 420], [254, 320]]);
-      const cape = smooth([[276, 226], [336, 218], [366, 270], [396, 360], [430, 450], [372, 460], [318, 456], [326, 380], [318, 300], [300, 256]]);
-      const capeBack = smooth([[244, 260], [226, 330], [208, 410], [196, 460], [244, 456], [240, 380], [250, 300]]);
-      const head = smooth([[246, 126], [236, 74], [276, 104], [306, 102], [344, 72], [340, 128], [356, 158], [372, 186], [340, 204], [306, 214], [272, 206], [248, 180], [244, 150]]);
-      const cheek = smooth([[290, 186], [320, 176], [356, 178], [372, 186], [344, 206], [306, 214], [282, 204]]);
-      const earInL = smooth([[252, 118], [246, 90], [270, 108]]);
-      const earInR = smooth([[322, 104], [338, 84], [334, 116]]);
-      const arm = smooth([[244, 262], [222, 234], [206, 212], [218, 200], [236, 220], [262, 248]]);
+      const tail = spline([[386, 404], [434, 410], [470, 430], [482, 452], [440, 458], [396, 452], [372, 434]]);
+      const tailTip = spline([[440, 422], [470, 430], [482, 452], [446, 458], [430, 444]]);
+      const body = spline([[262, 236], [312, 232], [330, 300], [334, 380], [330, 440], [276, 448], [232, 440], [228, 380], [236, 300]]);
+      const chest = spline([[268, 246], [302, 246], [306, 320], [298, 420], [276, 436], [258, 420], [254, 320]]);
+      const cape = spline([[276, 226], [336, 218], [366, 270], [396, 360], [430, 450], [372, 460], [318, 456], [326, 380], [318, 300], [300, 256]]);
+      const capeBack = spline([[244, 260], [226, 330], [208, 410], [196, 460], [244, 456], [240, 380], [250, 300]]);
+      const head = spline([[246, 126], [236, 74], [276, 104], [306, 102], [344, 72], [340, 128], [356, 158], [372, 186], [340, 204], [306, 214], [272, 206], [248, 180], [244, 150]]);
+      const cheek = spline([[290, 186], [320, 176], [356, 178], [372, 186], [344, 206], [306, 214], [282, 204]]);
+      const earInL = spline([[252, 118], [246, 90], [270, 108]]);
+      const earInR = spline([[322, 104], [338, 84], [334, 116]]);
+      const arm = spline([[244, 262], [222, 234], [206, 212], [218, 200], [236, 220], [262, 248]]);
       s.paint((cv) => {
         // the tail behind it, white at the tip, the cloak's back fold behind its legs
         fill(cv, tail, FUR);
@@ -239,15 +149,15 @@ export const FRIENDS = [
       const cut = (cv, d, box, count, flow, o = {}) =>
         strokes(cv, rnd, d, box, { count, colours: [INK], flow, length: o.length ?? 13, width: o.width ?? 2.8, opacity: o.opacity ?? [0.75, 1], spread: o.spread ?? 16, bend: 0.3 });
       const edge = (cv, pts, w = 6, o = {}) => cv.add(`<path d="${mark(rnd, pts, w, { tremble: 0.4, ...o })}" fill="${INK}" filter="${torn(cv, rnd, 2.4, 0.14)}"/>`);
-      const head = smooth([[218, 176], [244, 160], [282, 158], [312, 172], [324, 198], [316, 226], [290, 242], [256, 244], [228, 232], [214, 208]]);
-      const body = smooth([[230, 236], [284, 234], [312, 262], [320, 312], [308, 360], [296, 394], [254, 402], [224, 390], [214, 344], [216, 290]]);
+      const head = spline([[218, 176], [244, 160], [282, 158], [312, 172], [324, 198], [316, 226], [290, 242], [256, 244], [228, 232], [214, 208]]);
+      const body = spline([[230, 236], [284, 234], [312, 262], [320, 312], [308, 360], [296, 394], [254, 402], [224, 390], [214, 344], [216, 290]]);
       const tail = mark(rnd, [[226, 352], [178, 340], [132, 316], [106, 286], [100, 262]], 34, { start: 0.9, end: 0.45, peak: 0.25 });
-      const bootL = smooth([[236, 384], [272, 384], [272, 432], [290, 450], [292, 470], [232, 472], [230, 440]]);
-      const bootR = smooth([[284, 374], [314, 362], [336, 398], [372, 412], [384, 432], [352, 444], [312, 434], [292, 408]]);
+      const bootL = spline([[236, 384], [272, 384], [272, 432], [290, 450], [292, 470], [232, 472], [230, 440]]);
+      const bootR = spline([[284, 374], [314, 362], [336, 398], [372, 412], [384, 432], [352, 444], [312, 434], [292, 408]]);
       const brim = blob(rnd, [262, 166], 104, 19, -6, 0.04, 30);
-      const crown = smooth([[208, 160], [212, 124], [234, 98], [268, 90], [300, 100], [312, 128], [314, 158], [262, 166]]);
+      const crown = spline([[208, 160], [212, 124], [234, 98], [268, 90], [300, 100], [312, 128], [314, 158], [262, 166]]);
       const paw = blob(rnd, [314, 306], 15, 12, 20, 0.08);
-      const ear = smooth([[300, 168], [322, 144], [326, 180]]);
+      const ear = spline([[300, 168], [322, 144], [326, 180]]);
       s.paint((cv) => {
         cut(cv, 'M130 470 L410 470 L410 486 L130 486 Z', [130, 468, 410, 488], 90, () => 0, { length: 9, width: 3.4 });
         // the tail, body and head in pale paper, fur cut over them, thickest on the side away from the light
@@ -297,7 +207,7 @@ export const FRIENDS = [
       const PAPER = '#fbf8f1';
       const k = (cv, pts, w, colour = BLACK, o = {}) =>
         cv.add(`<path d="${mark(rnd, pts, w * 1.5, { tremble: 0.35, ...o })}" fill="${colour}" filter="${crayon(cv, rnd, { keep: 2.3, tear: 3.5, grain: 0.7 })}"/>`);
-      const shape = smooth([[188, 168], [214, 132], [258, 146], [304, 134], [334, 166], [338, 214], [330, 256], [340, 320], [342, 380], [312, 412], [256, 418], [204, 410], [176, 380], [148, 392], [116, 360], [112, 300], [140, 296], [168, 316], [180, 280], [180, 220]]);
+      const shape = spline([[188, 168], [214, 132], [258, 146], [304, 134], [334, 166], [338, 214], [330, 256], [340, 320], [342, 380], [312, 412], [256, 418], [204, 410], [176, 380], [148, 392], [116, 360], [112, 300], [140, 296], [168, 316], [180, 280], [180, 220]]);
       s.paint((cv) => {
         cv.add(`<path d="${shape}" fill="${PAPER}" filter="${softly(cv, 1.5)}"/>`);
         cv.add(`<ellipse cx="250" cy="404" rx="70" ry="12" fill="#5a4a40" fill-opacity="0.12" filter="${softly(cv, 6)}"/>`);
@@ -345,7 +255,7 @@ export const FRIENDS = [
       const PAPER = '#f2eedd';
       const k = (cv, pts, w, o = {}) =>
         cv.add(`<path d="${mark(rnd, pts, w * 1.6, { tremble: 0.3, ...o })}" fill="${BLUE}" filter="${crayon(cv, rnd, { keep: 2.3, tear: 2.5, grain: 0.7 })}"/>`);
-      const ground = smooth([[116, 326], [180, 300], [250, 268], [280, 220], [300, 176], [330, 158], [360, 166], [378, 196], [364, 210], [338, 220], [334, 260], [340, 304], [326, 334], [240, 340], [160, 334]]);
+      const ground = spline([[116, 326], [180, 300], [250, 268], [280, 220], [300, 176], [330, 158], [360, 166], [378, 196], [364, 210], [338, 220], [334, 260], [340, 304], [326, 334], [240, 340], [160, 334]]);
       s.paint((cv) => {
         cv.add(`<path d="${ground}" fill="${PAPER}" filter="${softly(cv, 1.5)}"/>`);
         // back and tail, in one line
@@ -379,8 +289,8 @@ export const FRIENDS = [
       const FUR = '#3d3128';
       const MUZZLE = '#bf9a78';
       const LINE = '#0d0b0a';
-      const body = smooth([[160, 104], [196, 92], [222, 100], [256, 92], [292, 100], [318, 92], [352, 104], [346, 134], [372, 190], [400, 280], [418, 360], [420, 432], [396, 452], [364, 444], [322, 456], [256, 460], [190, 456], [148, 444], [116, 452], [92, 432], [94, 360], [112, 280], [140, 190], [166, 134]]);
-      const muzzle = smooth([[256, 122], [276, 150], [292, 186], [290, 222], [266, 236], [244, 236], [222, 222], [220, 186], [236, 150]]);
+      const body = spline([[160, 104], [196, 92], [222, 100], [256, 92], [292, 100], [318, 92], [352, 104], [346, 134], [372, 190], [400, 280], [418, 360], [420, 432], [396, 452], [364, 444], [322, 456], [256, 460], [190, 456], [148, 444], [116, 452], [92, 432], [94, 360], [112, 280], [140, 190], [166, 134]]);
+      const muzzle = spline([[256, 122], [276, 150], [292, 186], [290, 222], [266, 236], [244, 236], [222, 222], [220, 186], [236, 150]]);
       s.paint((cv) => {
         cv.add(`<path d="${body}" fill="${FUR}"/>`);
         cv.add(`<path d="${body}" fill="none" stroke="${LINE}" stroke-width="6" stroke-linejoin="round" filter="${torn(cv, rnd, 1.5, 0.2)}"/>`);
@@ -414,14 +324,14 @@ export const FRIENDS = [
       const crayoned = (cv, d, colour) => cv.add(`<path d="${d}" fill="${colour}" filter="${crayon(cv, rnd, { keep: 2.4, tear: 2, grain: 0.6 })}"/>`);
       const stroke = (cv, d, w = 6) => cv.add(`<path d="${d}" fill="none" stroke="${LINE}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round" filter="${crayon(cv, rnd, { keep: 2.6, tear: 1.6 })}"/>`);
       const ball = blob(rnd, [246, 236], 178, 172, 0, 0.012, 40);
-      const head = smooth([[302, 300], [348, 290], [372, 308], [376, 352], [384, 392], [364, 420], [316, 424], [292, 400], [290, 346]]);
-      const nose = smooth([[300, 384], [342, 374], [380, 382], [384, 404], [360, 424], [316, 424], [298, 408]]);
+      const head = spline([[302, 300], [348, 290], [372, 308], [376, 352], [384, 392], [364, 420], [316, 424], [292, 400], [290, 346]]);
+      const nose = spline([[300, 384], [342, 374], [380, 382], [384, 404], [360, 424], [316, 424], [298, 408]]);
       s.paint((cv) => {
         // legs under it, dark at the hoof
         for (const x of [170, 220, 274, 324]) {
-          const leg = smooth([[x - 16, 380], [x + 16, 380], [x + 16, 440], [x, 448], [x - 16, 440]]);
+          const leg = spline([[x - 16, 380], [x + 16, 380], [x + 16, 440], [x, 448], [x - 16, 440]]);
           cv.add(`<path d="${leg}" fill="${WHITE}"/>`);
-          crayoned(cv, smooth([[x - 16, 424], [x + 16, 424], [x + 16, 440], [x, 448], [x - 16, 440]]), PATCH);
+          crayoned(cv, spline([[x - 16, 424], [x + 16, 424], [x + 16, 440], [x, 448], [x - 16, 440]]), PATCH);
           stroke(cv, leg, 5);
         }
         // the tail, tufted
@@ -466,7 +376,7 @@ export const FRIENDS = [
       const CREAM = '#f3e0c8';
       const RED = '#dd5a43';
       const line = (cv, d, w = 12) => cv.add(`<path d="${d}" fill="none" stroke="${LINE}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round" filter="${torn(cv, rnd, 1.6, 0.12)}"/>`);
-      const body = smooth([[186, 70], [210, 98], [234, 150], [270, 118], [312, 108], [346, 132], [364, 176], [384, 246], [400, 330], [398, 398], [358, 440], [290, 452], [200, 452], [120, 436], [84, 400], [80, 340], [96, 296], [104, 248], [122, 196], [146, 150], [160, 104]]);
+      const body = spline([[186, 70], [210, 98], [234, 150], [270, 118], [312, 108], [346, 132], [364, 176], [384, 246], [400, 330], [398, 398], [358, 440], [290, 452], [200, 452], [120, 436], [84, 400], [80, 340], [96, 296], [104, 248], [122, 196], [146, 150], [160, 104]]);
       s.paint((cv) => {
         // legs and toes first, under her
         line(cv, 'M210 448 L216 480 M190 486 L240 482 M216 480 L224 494', 7);

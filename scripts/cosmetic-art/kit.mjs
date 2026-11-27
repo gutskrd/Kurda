@@ -155,6 +155,40 @@ export class Canvas {
   }
 }
 
+// ──────────────────────────────────────────────────────────────── curves
+
+/** A smooth closed outline through points (a Catmull-Rom spline, as cubic Béziers); open when `closed` is false. */
+export function spline(points, closed = true) {
+  const count = points.length;
+  const at = (i) => (closed ? points[(i + count) % count] : points[Math.max(0, Math.min(count - 1, i))]);
+  let d = `M${pt(points[0])}`;
+  for (let i = 0; i < (closed ? count : count - 1); i++) {
+    const p0 = at(i - 1);
+    const p1 = at(i);
+    const p2 = at(i + 1);
+    const p3 = at(i + 2);
+    d += ` C${pt([p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6])} ${pt([p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6])} ${pt(p2)}`;
+  }
+  return closed ? `${d} Z` : d;
+}
+
+/** `count` + 1 points along a smooth curve through `points` (Catmull-Rom). */
+export function along(points, count = 24) {
+  const out = [];
+  const m = points.length - 1;
+  for (let k = 0; k <= count; k++) {
+    const t = (k / count) * m;
+    const i = Math.min(m - 1, Math.floor(t));
+    const f = t - i;
+    const p0 = points[Math.max(0, i - 1)];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[Math.min(m, i + 2)];
+    out.push([0, 1].map((c) => 0.5 * (2 * p1[c] + (p2[c] - p0[c]) * f + (2 * p0[c] - 5 * p1[c] + 4 * p2[c] - p3[c]) * f * f + (3 * p1[c] - p0[c] - 3 * p2[c] + p3[c]) * f * f * f)));
+  }
+  return out;
+}
+
 // ─────────────────────────────────────────────────────────────── the sun
 
 /**
