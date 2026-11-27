@@ -7,7 +7,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { giftSku } from '@kurda/shared';
+import { GIFT_DAY_CAPS, giftSku } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { issueAccessToken } from '../auth/tokens.js';
@@ -154,14 +154,16 @@ describe.skipIf(!DATABASE_URL)('the gift rules at their edges (integration)', ()
       expect(sheet.json().limits).toEqual((await call('GET', `/gifts/catalog?to=${teen.id}`, adult)).json().limits);
     });
 
-    it('keep the day’s three gifts to one friend at three', async () => {
+    it('keep the day’s gifts to one friend at its cap', async () => {
+      // a friend under 18, so the narrow cap holds: three a day
+      const cap = GIFT_DAY_CAPS.young.perFriend;
       const adult = await person('capadult');
-      const pal = await person('cappal');
+      const pal = await person('cappal', 16);
       await befriend(adult, pal);
       await fund(adult, 1_000);
-      for (let i = 0; i < 3; i++) expect((await dm(adult, pal.id, CAY)).json().sent).toEqual([pal.id]);
+      for (let i = 0; i < cap; i++) expect((await dm(adult, pal.id, CAY)).json().sent).toEqual([pal.id]);
       for (const mask of [1, 2, 4]) expect((await dm(adult, spelled(pal.id, mask), CAY)).json().sent).toEqual([]);
-      expect(await received(pal)).toHaveLength(3);
+      expect(await received(pal)).toHaveLength(cap);
     });
 
     it('count one person once in a group send, however many ways the id is spelled', async () => {

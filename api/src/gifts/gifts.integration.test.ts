@@ -5,7 +5,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { GIFTS_PER_DAY, GIFTS_PER_FRIEND_PER_DAY, GIFTS_RECEIVED_PER_DAY, MEMBERS_BOX_FREE_GIFTS, drawnGifts, giftArtKey, giftInSeason, giftSku } from '@kurda/shared';
+import { GIFT_DAY_CAPS, MEMBERS_BOX_FREE_GIFTS, drawnGifts, giftArtKey, giftInSeason, giftSku } from '@kurda/shared';
 import { MembersBoxService } from '../plus/members-box.js';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
@@ -793,14 +793,37 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
   });
 
   describe('the daily caps', () => {
-    it(`lets ${GIFTS_PER_FRIEND_PER_DAY} gifts reach one friend in 24 hours, then waits`, async () => {
+    const { adult: ADULT, young: YOUNG } = GIFT_DAY_CAPS;
+    /** Gifts given earlier, straight into the table, so a test starts near a cap without sending each one. */
+    const pastGifts = async (from: Account, to: Account, n: number, hoursAgo = 1): Promise<void> => {
+      for (let i = 0; i < n; i++) {
+        await pool.query(
+          `INSERT INTO gifts (from_user_id, to_user_id, sku, price, currency, created_at)
+           VALUES ($1, $2, $3, 20, 'zer', now() - make_interval(hours => $4) + make_interval(secs => $5))`,
+          [from.id, to.id, POWER, hoursAgo, i],
+        );
+      }
+    };
+    const dayLeft = async (from: Account, to: Account) =>
+      (await call('GET', `/gifts/catalog?to=${to.id}`, from)).json().dayLeft as { userId: string; left: number; moreAt: string | null }[];
+
+    it(`lets ${ADULT.perFriend} gifts reach one adult friend from another in 24 hours, then waits`, async () => {
       const zed = await signUp('zed');
       const ana = await signUp('ana');
       await befriend(zed, ana);
       await fund(zed);
-      for (let i = 0; i < GIFTS_PER_FRIEND_PER_DAY; i++) {
-        expect((await giftDm(zed, ana, POWER)).json().sent).toEqual([ana.id]);
-      }
+      await pastGifts(zed, ana, ADULT.perFriend - 1, 2);
+      // the sheet says what is left before anything is picked
+      expect(await dayLeft(zed, ana)).toEqual([{ userId: ana.id, left: 1, moreAt: null }]);
+      expect((await giftDm(zed, ana, POWER)).json().sent).toEqual([ana.id]);
+      const full = await dayLeft(zed, ana);
+      expect(full).toHaveLength(1);
+      expect(full[0]!.left).toBe(0);
+      // the oldest of the day's gifts to them, two hours old, frees a place in 22 hours
+      const hours = (Date.parse(full[0]!.moreAt!) - Date.now()) / 3_600_000;
+      expect(hours).toBeGreaterThan(21.9);
+      expect(hours).toBeLessThan(22.1);
+
       const before = await zer(zed);
       const over = await giftDm(zed, ana, POWER);
       expect(over.json()).toMatchObject({ sent: [], skipped: [{ userId: ana.id, reason: 'daily_limit' }] });
@@ -818,7 +841,22 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       expect((await giftDm(zed, ana, POWER)).json().sent).toEqual([ana.id]);
     });
 
-    it(`lets one person give ${GIFTS_PER_DAY} gifts in 24 hours, counting each friend`, async () => {
+    it(`keeps a friend under 18 to ${YOUNG.perFriend} gifts a day from anyone, and an adult to ${YOUNG.perFriend} from them`, async () => {
+      const ola = await signUp('capola');
+      const teen = await signUp('capteen', bornYearsAgo(15));
+      await befriend(teen, ola, 25);
+      await fund(ola);
+      await fund(teen);
+      expect(await dayLeft(ola, teen)).toEqual([{ userId: teen.id, left: YOUNG.perFriend, moreAt: null }]);
+      for (let i = 0; i < YOUNG.perFriend; i++) expect((await giftDm(ola, teen, POWER)).json().sent).toEqual([teen.id]);
+      expect((await giftDm(ola, teen, POWER)).json().skipped).toEqual([{ userId: teen.id, reason: 'daily_limit' }]);
+      expect((await dayLeft(ola, teen))[0]!.left).toBe(0);
+      // the other way the young caps hold too
+      for (let i = 0; i < YOUNG.perFriend; i++) expect((await giftDm(teen, ola, POWER)).json().sent).toEqual([ola.id]);
+      expect((await giftDm(teen, ola, POWER)).json().skipped).toEqual([{ userId: ola.id, reason: 'daily_limit' }]);
+    });
+
+    it(`lets one adult give ${ADULT.sent} gifts in 24 hours, counting each friend`, async () => {
       const ben = await signUp('ben');
       await fund(ben);
       const friends: Account[] = [];
@@ -829,18 +867,13 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       }
       // Gifts given earlier today to friends outside this group, up to two short of the cap.
       const others: Account[] = [];
-      for (let i = 0; i < Math.ceil((GIFTS_PER_DAY - 2) / GIFTS_PER_FRIEND_PER_DAY); i++) {
+      for (let i = 0; i < Math.ceil((ADULT.sent - 2) / ADULT.perFriend); i++) {
         const o = await signUp(`beno${i}`);
         await befriend(ben, o);
         others.push(o);
       }
-      for (let i = 0; i < GIFTS_PER_DAY - 2; i++) {
-        await pool.query(
-          `INSERT INTO gifts (from_user_id, to_user_id, sku, price, currency, created_at)
-           VALUES ($1, $2, $3, 20, 'zer', now() - interval '1 hour')`,
-          [ben.id, others[i % others.length]!.id, POWER],
-        );
-      }
+      for (let i = 0; i < ADULT.sent - 2; i++) await pastGifts(ben, others[i % others.length]!, 1);
+      expect((await dayLeft(ben, friends[0]!))[0]!.left).toBe(2);
       const gid = await group('Cap club', ben, friends);
       const res = await giftGroup(ben, gid, friends, POWER);
       expect(res.statusCode).toBe(200);
@@ -852,26 +885,28 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       ]);
     });
 
-    it(`lets one person be given ${GIFTS_RECEIVED_PER_DAY} gifts in 24 hours, from everyone together`, async () => {
+    it(`lets one adult be given ${ADULT.received} gifts in 24 hours, from everyone together, and says no more without saying when`, async () => {
       // a farm of fresh accounts, each well inside its own caps, feeding one main account
       const main = await signUp('farmmain');
       const farm: Account[] = [];
-      for (let i = 0; i < Math.ceil(GIFTS_RECEIVED_PER_DAY / GIFTS_PER_FRIEND_PER_DAY) + 1; i++) {
+      for (let i = 0; i < 3; i++) {
         const f = await signUp(`farm${i}`);
         await befriend(f, main);
         await fund(f);
         farm.push(f);
       }
+      // what others gave earlier today, up to two short of the cap
+      const earlier = await signUp('farmold');
+      await pastGifts(earlier, main, ADULT.received - 2);
       let given = 0;
       for (const f of farm) {
-        for (let i = 0; i < GIFTS_PER_FRIEND_PER_DAY; i++) {
-          const res = await giftDm(f, main, POWER);
-          expect(res.statusCode).toBe(200);
-          given += res.json().sent.length;
-        }
+        const res = await giftDm(f, main, POWER);
+        expect(res.statusCode).toBe(200);
+        given += res.json().sent.length;
       }
-      expect(given).toBe(GIFTS_RECEIVED_PER_DAY);
-      expect((await owns(main, POWER))!.quantity).toBe(GIFTS_RECEIVED_PER_DAY);
+      expect(given).toBe(2);
+      // a sender learns the day is full, but not when others' gifts to them were given
+      expect(await dayLeft(farm[2]!, main)).toEqual([{ userId: main.id, left: 0, moreAt: null }]);
 
       // whoever tries next is told the day is full, and pays nothing
       const late = farm.at(-1)!;
@@ -884,8 +919,10 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
 
     it('holds the count under concurrent senders: never more than the cap reaches one person', async () => {
       const main = await signUp('rushmain');
+      const earlier = await signUp('rushold');
+      await pastGifts(earlier, main, ADULT.received - 4);
       const senders: Account[] = [];
-      for (let i = 0; i < GIFTS_RECEIVED_PER_DAY + 4; i++) {
+      for (let i = 0; i < 8; i++) {
         const f = await signUp(`rush${i}`);
         await befriend(f, main);
         await fund(f);
@@ -894,14 +931,14 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       const answers = await Promise.all(senders.map((f) => giftDm(f, main, POWER)));
       expect(answers.every((a) => a.statusCode === 200)).toBe(true);
       const sent = answers.reduce((n, a) => n + a.json().sent.length, 0);
-      expect(sent).toBe(GIFTS_RECEIVED_PER_DAY);
-      expect((await owns(main, POWER))!.quantity).toBe(GIFTS_RECEIVED_PER_DAY);
+      expect(sent).toBe(4);
+      expect((await owns(main, POWER))!.quantity).toBe(4);
       // only the senders whose gift went were charged
       const charged = await pool.query<{ n: number }>(
         `SELECT count(*)::int n FROM wallet_ledger WHERE user_id = ANY($1::uuid[]) AND reason = 'gift'`,
         [senders.map((f) => f.id)],
       );
-      expect(charged.rows[0]!.n).toBe(GIFTS_RECEIVED_PER_DAY);
+      expect(charged.rows[0]!.n).toBe(4);
     });
   });
 
@@ -1362,7 +1399,14 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
     it('counts toward the day’s limits like any gift', async () => {
       const giver = await signUp('plimit');
       await fund(giver);
-      for (let i = 0; i < GIFTS_PER_FRIEND_PER_DAY; i++) expect((await giftPost(giver, CAY)).json().sent).toEqual([author.id]);
+      // two adults: a day's gifts to them but one, given earlier, then one onto the post, and the cap is reached
+      for (let i = 0; i < GIFT_DAY_CAPS.adult.perFriend - 1; i++) {
+        await pool.query(
+          `INSERT INTO gifts (from_user_id, to_user_id, sku, price, currency, created_at) VALUES ($1, $2, $3, 1, 'zer', now() - interval '1 hour')`,
+          [giver.id, author.id, CAY],
+        );
+      }
+      expect((await giftPost(giver, CAY)).json().sent).toEqual([author.id]);
       expect((await giftPost(giver, CAY)).json().skipped).toEqual([{ userId: author.id, reason: 'daily_limit' }]);
     });
   });

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { useEffect, useState } from 'react';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { BagEntry, GiftCatalogItem, GiftSendLimits } from '@kurda/shared';
+import type { BagEntry, GiftCatalogItem, GiftDayLeft, GiftSendLimits } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
 import { GiftPicker } from './GiftPicker';
 
@@ -41,11 +41,12 @@ interface Stub {
   balance?: number;
   limits?: GiftSendLimits;
   hold?: string | null;
+  dayLeft?: GiftDayLeft[];
   /** answers each POST /gifts in turn; the last one repeats */
   sends?: Array<[number, unknown]>;
 }
 
-function stub({ items = SHELF, bag = [], balance = 30_000, limits = OPEN, hold = null, sends }: Stub = {}): Call[] {
+function stub({ items = SHELF, bag = [], balance = 30_000, limits = OPEN, hold = null, dayLeft = [], sends }: Stub = {}): Call[] {
   const calls: Call[] = [];
   const answers = sends ?? [[200, { batchId: 'b1', sent: ['u-rojda'], skipped: [], balance: { zer: balance - 25 }, freeGifts: 0, message: null }]];
   let n = 0;
@@ -54,7 +55,7 @@ function stub({ items = SHELF, bag = [], balance = 30_000, limits = OPEN, hold =
     vi.fn(async (url: string, init?: RequestInit) => {
       const body = init?.body ? JSON.parse(init.body as string) : null;
       calls.push({ url, method: init?.method ?? 'GET', body });
-      if (url.includes('/gifts/catalog')) return jsonResponse(200, { items, bag, balance: { zer: balance }, freeGifts: 0, hold, limits, nudges: true });
+      if (url.includes('/gifts/catalog')) return jsonResponse(200, { items, bag, balance: { zer: balance }, freeGifts: 0, hold, limits, dayLeft, nudges: true });
       if (url.endsWith('/gifts')) {
         const [status, answer] = answers[Math.min(n++, answers.length - 1)]!;
         return jsonResponse(status, answer);
@@ -91,6 +92,30 @@ describe('the gift sheet', () => {
     expect(within(moon).getByText('≈ €200')).toBeInTheDocument();
     expect(within(moon).getByText('Grand')).toBeInTheDocument();
     expect(screen.getByLabelText('You have 30,000 Zêr')).toBeInTheDocument();
+  });
+
+  it('shows what there is to pay with by the price, and how many gifts are left for a friend today when few are', async () => {
+    stub({ balance: 334, dayLeft: [{ userId: 'u-rojda', left: 2, moreAt: null }] });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    expect(await screen.findByText('You can give rojda 2 more today.')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Çay').closest('button')!);
+    expect(within(screen.getByRole('button', { name: 'Send gift' }).parentElement!).getByText('You have 334 Zêr')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send gift' })).toBeEnabled();
+  });
+
+  it('holds the send once the day is full for a friend, and says from when they can give again', async () => {
+    // later today, so the time alone
+    const at = new Date();
+    at.setHours(23, 59, 0, 0);
+    const calls = stub({ dayLeft: [{ userId: 'u-rojda', left: 0, moreAt: at.toISOString() }] });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    const time = at.toLocaleString('en', { hour: '2-digit', minute: '2-digit' });
+    const line = `That’s all for rojda today. You can give again from ${time}.`;
+    expect(await screen.findByText(line)).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Çay').closest('button')!);
+    expect(screen.getByRole('button', { name: 'Send gift' })).toBeDisabled();
+    expect(screen.getAllByText(line)).toHaveLength(2);
+    expect(sends(calls)).toHaveLength(0);
   });
 
   it('says what fills an empty bag, rather than leaving a blank', async () => {

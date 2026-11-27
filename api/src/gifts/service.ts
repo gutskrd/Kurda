@@ -5,11 +5,11 @@ import {
   FREE_GIFT_MAX_PRICE,
   GIFT_CATEGORY,
   GIFT_MIN_FRIENDSHIP_HOURS,
-  GIFTS_PER_DAY,
-  GIFTS_PER_FRIEND_PER_DAY,
-  GIFTS_RECEIVED_PER_DAY,
   MAX_GIFT_RECIPIENTS,
   giftTierFor,
+  giftsPerFriendCap,
+  giftsReceivedCap,
+  giftsSentCap,
   isLimitedItem,
   type EquippableCategory,
   type GiftCard,
@@ -37,7 +37,8 @@ import { batchChat, giftCards, giftCardsForEach, type BatchChat, type CardViewer
 import { giftHold, postGiftBlocked, visiblePostAuthor, type PostRef } from './posts.js';
 import { freeGiftsLeft, spendFreeGifts } from '../plus/members-box.js';
 import { bagEntries, lockZerRow, takeFromBagWithin } from './bag.js';
-import { assertWithinBounds, confirmToken, confirmTokenValid, sendBounds, type ConfirmSubject } from './safety.js';
+import { giftsLeftToday } from './day-caps.js';
+import { assertWithinBounds, notAdults, confirmToken, confirmTokenValid, sendBounds, type ConfirmSubject } from './safety.js';
 
 export type SkipReason = SendGiftResult['skipped'][number]['reason'];
 
@@ -135,8 +136,9 @@ interface GiftViews {
  * - A day of friendship first when either side is not a known adult, against the "add, gift, groom" pattern. Onto a
  *   post the same holds without the chat's friendship: the author's friends of a day or more, or anyone when both are
  *   known adults.
- * - Daily caps per sender and per pair over the last 24 hours, and per recipient from everyone together
- *   (`GIFTS_RECEIVED_PER_DAY`), so throwaway accounts cannot pour items into one account.
+ * - Daily caps per sender and per pair over the last 24 hours, and per recipient from everyone together, so throwaway
+ *   accounts cannot pour items into one account: wide between two known adults, narrow wherever someone under 18 is
+ *   involved (`GIFT_DAY_CAPS`).
  * - Not from an account paused from moving value (economy/standing.ts): 403 GIFTS_PAUSED.
  * - Never currency: a gift is an item, and purchases are final, so it cannot move currency between accounts.
  * - Not a unique item the recipient owns, decided under `lockEntitlement` so two friends gifting it cannot both win.
@@ -354,6 +356,10 @@ export class GiftService {
         });
       }
 
+      // who is under 18 or of unknown age, which keeps the day's caps narrow
+      const young = await notAdults(client, [fromId, ...candidates]);
+      const senderAdult = !young.has(fromId);
+
       // what each recipient has been given in the last 24 hours, by anyone
       if (candidates.length > 0) {
         const received = await client.query<{ to_user_id: string; n: number }>(
@@ -364,7 +370,7 @@ export class GiftService {
         );
         const receivedBy = new Map(received.rows.map((r) => [r.to_user_id, r.n]));
         candidates = candidates.filter((to) => {
-          if ((receivedBy.get(to) ?? 0) < GIFTS_RECEIVED_PER_DAY) return true;
+          if ((receivedBy.get(to) ?? 0) < giftsReceivedCap(!young.has(to))) return true;
           skip(to, 'daily_limit');
           return false;
         });
@@ -381,7 +387,7 @@ export class GiftService {
       let today = recent.rows.reduce((n, r) => n + r.n, 0);
       candidates = candidates.filter((to) => {
         const theirs = perFriend.get(to) ?? 0;
-        if (today >= GIFTS_PER_DAY || theirs >= GIFTS_PER_FRIEND_PER_DAY) {
+        if (today >= giftsSentCap(senderAdult) || theirs >= giftsPerFriendCap(senderAdult, !young.has(to))) {
           skip(to, 'daily_limit');
           return false;
         }
@@ -838,6 +844,7 @@ export class GiftService {
     // do not, the limits are the sender's own, so nobody learns from them how old someone they cannot give to is.
     const hold = ids.length === 1 ? await giftHold(this.pool, fromId, ids[0]!, onPost, GIFT_MIN_FRIENDSHIP_HOURS) : null;
     const bounds = await sendBounds(this.pool, fromId, hold ? [] : ids, now);
+    const dayLeft = hold ? [] : await giftsLeftToday(this.pool, lowerId(fromId), ids);
 
     return {
       items: items.map((i) => ({
@@ -856,6 +863,7 @@ export class GiftService {
       freeGifts: await freeGiftsLeft(this.pool, fromId),
       hold,
       limits: { maxPrice: bounds.maxPrice, left: bounds.left, confirmFrom: bounds.confirmFrom },
+      dayLeft,
       // only a known adult, never a guest or anyone of unknown age, is ever shown a suggestion to buy
       nudges: await isKnownAdultAccount(this.pool, fromId),
     };

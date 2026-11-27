@@ -77,7 +77,7 @@ async function readLimit(db: Executor, userId: string, now: Date, forUpdate: boo
 }
 
 /** Whether each of these people counts as under 18 for gifts: a minor, or of unknown age. */
-async function notAdults(db: Executor, ids: readonly string[]): Promise<Set<string>> {
+export async function notAdults(db: Executor, ids: readonly string[]): Promise<Set<string>> {
   if (ids.length === 0) return new Set();
   const res = await db.query<{ id: string }>(`SELECT u.id FROM users u WHERE u.id = ANY($1::uuid[]) AND ${notKnownAdultSql('u')}`, [ids]);
   return new Set(res.rows.map((r) => r.id));
