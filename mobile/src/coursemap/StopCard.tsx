@@ -19,7 +19,7 @@ import { heldRow } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { type ToneColors } from './path';
-import { SunRow } from './TopicBar';
+import { AppleRow } from './TopicBar';
 import type { SkillNode } from './types';
 
 type Stop = PathStop<SkillNode>;
@@ -146,7 +146,7 @@ function xpOf(stop: Extract<Stop, { kind: 'skill' }>, t: ReturnType<typeof useI1
   return t(again ? 'coursemap.xp.again' : 'coursemap.xp.first', { min: formatNumber(xp.min, locale), max: formatNumber(xp.max, locale) });
 }
 
-/** A topic to play now: its chapter, its name, which lesson or round is next, its suns, and the one button. */
+/** A topic to play now: its chapter, its name, which lesson or round is next, its apples, and the one button. */
 function GoCard({
   stop,
   unit,
@@ -183,7 +183,7 @@ function GoCard({
         {skill.title}
       </Text>
       {where ? <Text style={[styles.goLine, dir.text, { color: colors.textSecondary }]}>{where}</Text> : null}
-      {stop.rounds > 0 ? <Suns rounds={stop.rounds} /> : null}
+      {stop.rounds > 0 ? <Apples rounds={stop.rounds} /> : null}
       {stop.state === 'done' ? <WaxLegend /> : null}
       {action ? <StartButton label={action.label} xp={xpOf(stop, t, locale)} tone={tone} onPress={action.go} /> : null}
       {skill.hasGrammar ? <Tips skill={skill} colour={colors.textPrimary} onTips={actions.onTips} /> : null}
@@ -252,11 +252,11 @@ function StartButton({ label, xp, tone, onPress }: { label: string; xp: string |
 /** The glint's pause between crossings and its crossing, close to the website's 2.8 s round. */
 const GLINT = { restMs: 1500, crossMs: 1300 } as const;
 
-/** What a topic's seal becomes: a sun pressed in for each full round, and gold with all three. Decorative. */
+/** What a topic's seal becomes: an apple pressed in for each full round, and gold with all three. Decorative. */
 function WaxLegend(): React.JSX.Element {
   const { scheme } = useTheme();
   const dir = useDirection();
-  const tiles = useMemo(() => [1, 2, 3].map((suns) => pathWaxSvg({ seed: 'legend', suns, gold: suns === 3, dark: scheme === 'dark', size: WAX_KEY })), [scheme]);
+  const tiles = useMemo(() => [1, 2, 3].map((apples) => pathWaxSvg({ seed: 'legend', apples, gold: apples === 3, dark: scheme === 'dark', size: WAX_KEY })), [scheme]);
   return (
     <View style={[styles.waxLegend, { flexDirection: dir.row }]} aria-hidden testID="lp-wax-legend">
       {tiles.map((svg, i) => (
@@ -375,7 +375,7 @@ function PanelCard({
   const { skill } = stop;
   const lessons = skill.lessons ?? [];
   const states = lessonStates(skill);
-  // Progress through the current round, or through all lessons before the first sun.
+  // Progress through the current round, or through all lessons before the first apple.
   const share = stop.lessonsTotal > 0 ? (stop.rounds > 0 ? stop.pieces / stop.lessonsTotal : stop.lessonsDone / stop.lessonsTotal) : 0;
   const action = actionOf(stop, t, actions);
   const xp = xpOf(stop, t, locale);
@@ -431,7 +431,7 @@ function PanelCard({
       ) : null}
       {stop.lessonsTotal > 0 && stop.state !== 'locked' ? (
         <View style={styles.progress}>
-          {stop.rounds > 0 ? <Suns rounds={stop.rounds} /> : null}
+          {stop.rounds > 0 ? <Apples rounds={stop.rounds} /> : null}
           {stop.rounds < TOPIC_STARS ? (
             // Progress, not a reward, so the ink like the ring's pieces.
             <View style={[styles.bar, { backgroundColor: colors.controlTrack }]}>
@@ -464,11 +464,11 @@ function PanelCard({
   );
 }
 
-/** A topic's three suns, gold for each round played. Hidden from screen readers, as the line below says it. */
-function Suns({ rounds }: { rounds: number }): React.JSX.Element {
+/** A topic's three apples, gold for each round played. Hidden from screen readers, as the line below says it. */
+function Apples({ rounds }: { rounds: number }): React.JSX.Element {
   return (
-    <View style={styles.suns} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <SunRow rounds={rounds} />
+    <View style={styles.apples} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <AppleRow rounds={rounds} />
     </View>
   );
 }
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   barFill: { height: 8, borderRadius: radii.pill },
   barEnd: { alignSelf: 'flex-end' },
   action: { marginTop: spacing.xs },
-  suns: { gap: 4 },
+  apples: { gap: 4 },
   won: { alignItems: 'center', gap: 4, paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radii.pill },
   wonText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   xp: { alignItems: 'center', gap: 4, paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radii.pill },

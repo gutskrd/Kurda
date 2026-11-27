@@ -210,7 +210,7 @@ export function SkillNodeView({
   const stamped = useRef(stamp?.onStamped);
   stamped.current = stamp?.onStamped;
   const pressDelay = stamp?.delay ?? 0;
-  // Sealed in its moment just now: with three suns, fire gilds its wax.
+  // Sealed in its moment just now: with three apples, fire gilds its wax.
   const [fresh, setFresh] = useState(false);
   useEffect(() => {
     if (!pressing) return;
@@ -244,8 +244,8 @@ export function SkillNodeView({
   const bar = near ? barOf(stop) : null;
   const moved = change?.ring && stop.kind === 'skill' ? change.ring : null;
   const roundDone = !!moved && moved.to.rounds > moved.from.rounds;
-  // A round made whole on a stop already sealed: the stamp comes back as the stop finishes and presses the new sun in,
-  // felt as a light tap; until then it shows the suns it had.
+  // A round made whole on a stop already sealed: the stamp comes back as the stop finishes and presses the new apple in,
+  // felt as a light tap; until then it shows the apples it had.
   const again = useRef(new Animated.Value(0)).current;
   const three = (n: number): number => Math.min(TOPIC_STARS, Math.max(1, n));
   const pressFrom = roundDone && moved && moved.from.rounds >= 1 && !!stamp && !pressing && !reduce ? three(moved.from.rounds) : null;
@@ -264,16 +264,16 @@ export function SkillNodeView({
       clearTimeout(knock);
     };
   }, [pressFrom, again]);
-  const suns = stop.kind === 'skill' ? three(stop.rounds) : 1;
+  const apples = stop.kind === 'skill' ? three(stop.rounds) : 1;
   // Squashed under the stamp in its moment, or a little as it presses again.
   const squashOf = (t: Animated.Value, squash: readonly (readonly [number, number])[]) => ({
     transformOrigin: '50% 85%',
     transform: [{ scaleX: stampTrack(t, squash.map(([at, v]) => [at, 2 - v] as const)) }, { scaleY: stampTrack(t, squash) }],
   });
   const squashed = pressing ? squashOf(moment, PATH_STAMP_MOMENT.squash) : pressFrom !== null && pressingAgain ? squashOf(again, PATH_STAMP_REPRESS.squash) : null;
-  // Its third sun pressed in now: once the stamp has lifted, fire gilds the wax. Under Reduce Motion it is simply gold.
+  // Its third apple pressed in now: once the stamp has lifted, fire gilds the wax. Under Reduce Motion it is simply gold.
   const warmAt =
-    suns < TOPIC_STARS || reduce ? null : fresh ? 0 : pressFrom !== null && pressFrom < TOPIC_STARS ? PATH_RETURN.finishAtMs + PATH_STAMP_REPRESS.ms : null;
+    apples < TOPIC_STARS || reduce ? null : fresh ? 0 : pressFrom !== null && pressFrom < TOPIC_STARS ? PATH_RETURN.finishAtMs + PATH_STAMP_REPRESS.ms : null;
   // Once sealed its tile and glyph are gone, the seal in their place; in the moment they melt under the spreading wax.
   const sealed = !!stamp && !pressing;
   const melt = PATH_STAMP_MOMENT.melt.map(([at, v]) => [at, 1 - v] as const);
@@ -289,7 +289,7 @@ export function SkillNodeView({
   const tile = (drawing: React.JSX.Element): React.JSX.Element | null =>
     sealed ? null : melting ? <Animated.View style={[StyleSheet.absoluteFill, melting]}>{drawing}</Animated.View> : drawing;
   // Drawn plain far off: a seal in its wax, else its tile's colours.
-  const wax = pathWaxColours(scheme === 'dark', suns >= TOPIC_STARS);
+  const wax = pathWaxColours(scheme === 'dark', apples >= TOPIC_STARS);
   const plain = stamp ? { face: wax.face, lip: wax.shade } : plainColour(look, tone, rest);
 
   return (
@@ -412,8 +412,8 @@ export function SkillNodeView({
               <WaxSeal
                 stopKey={stop.key}
                 dark={scheme === 'dark'}
-                suns={suns}
-                gold={!pressing && suns >= TOPIC_STARS}
+                apples={apples}
+                gold={!pressing && apples >= TOPIC_STARS}
                 warmAt={warmAt}
                 worn={stop.finish === 'refresh'}
                 live={live && !reduce}

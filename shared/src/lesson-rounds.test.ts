@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PATH_BAR, SUN_RAYS, TOPIC_STARS, barPieces, nextInRound, sealSuns, sunPath, topicRounds } from './lesson-rounds.js';
+import { PATH_BAR, TOPIC_STARS, applePath, barPieces, nextInRound, sealApples, topicRounds } from './lesson-rounds.js';
 
 describe('a topic’s rounds', () => {
   it('fills a piece of the first round for each lesson finished once', () => {
@@ -71,27 +71,27 @@ describe('the bar over a topic’s stop', () => {
   });
 });
 
-describe('a topic’s suns', () => {
-  it('presses one sun into the seal for each full round, at least one and no more than three', () => {
-    expect([0, 1, 2, 3, 7].map((r) => sealSuns(r).length)).toEqual([1, 1, 2, 3, 3]);
+describe('a topic’s apples', () => {
+  it('presses one apple into the seal for each full round, at least one and no more than three', () => {
+    expect([0, 1, 2, 3, 7].map((r) => sealApples(r).length)).toEqual([1, 1, 2, 3, 3]);
     expect(TOPIC_STARS).toBe(3);
   });
 
   it('lays them in the seal’s field: one large in the middle, two side by side, three of a size in a triangle', () => {
     // inside the fine line ringing the field, at six tenths of the seal's radius
     for (const rounds of [1, 2, 3]) {
-      const suns = sealSuns(rounds);
-      for (const s of suns) expect(Math.hypot(s.x, s.y) + s.r, `${rounds}`).toBeLessThan(0.6);
+      const apples = sealApples(rounds);
+      for (const s of apples) expect(Math.hypot(s.x, s.y) + s.r, `${rounds}`).toBeLessThan(0.6);
       // side by side and apart, the outer ones level and the same size
-      const apart = (i: number): number => Math.hypot(suns[i]!.x - suns[i - 1]!.x, suns[i]!.y - suns[i - 1]!.y);
-      for (let i = 1; i < suns.length; i++) expect(apart(i)).toBeGreaterThan(suns[i]!.r + suns[i - 1]!.r - 0.02);
-      expect(suns[0]!.y).toBe(suns[suns.length - 1]!.y);
-      expect(suns[0]!.r).toBe(suns[suns.length - 1]!.r);
+      const apart = (i: number): number => Math.hypot(apples[i]!.x - apples[i - 1]!.x, apples[i]!.y - apples[i - 1]!.y);
+      for (let i = 1; i < apples.length; i++) expect(apart(i)).toBeGreaterThan(apples[i]!.r + apples[i - 1]!.r - 0.02);
+      expect(apples[0]!.y).toBe(apples[apples.length - 1]!.y);
+      expect(apples[0]!.r).toBe(apples[apples.length - 1]!.r);
     }
-    expect(sealSuns(1)[0]!.r).toBeGreaterThan(sealSuns(2)[0]!.r);
-    expect(sealSuns(2)[0]!.r).toBeGreaterThan(sealSuns(3)[0]!.r);
+    expect(sealApples(1)[0]!.r).toBeGreaterThan(sealApples(2)[0]!.r);
+    expect(sealApples(2)[0]!.r).toBeGreaterThan(sealApples(3)[0]!.r);
     // three alike in an equilateral triangle, one above and two below, centred as a group, as far apart as from the ring
-    const three = sealSuns(3);
+    const three = sealApples(3);
     const [l, m, r] = three;
     expect(new Set(three.map((s) => s.r)).size).toBe(1);
     expect(m!.y).toBeLessThan(l!.y);
@@ -106,15 +106,28 @@ describe('a topic’s suns', () => {
     expect(between).toBeCloseTo(toRing, 2);
   });
 
-  it('draws the Kurdish sun: a round middle and twenty-one pointed rays, the first straight up, or fewer when asked', () => {
-    expect(SUN_RAYS).toBe(21);
-    const d = sunPath(36, 30, 10);
-    // its middle, two arcs, then a three-cornered ray for each
-    expect(d.match(/A/g)).toHaveLength(2);
-    expect(d.match(/M/g)).toHaveLength(1 + SUN_RAYS);
-    expect(d.match(/L/g)).toHaveLength(2 * SUN_RAYS);
-    expect(d).toContain('L36 20L');
-    expect(sunPath(36, 30, 10, 11).match(/M/g)).toHaveLength(12);
+  it('draws the apple as one body, its stem and its leaf, the leaf out to the upper right, all within its reach', () => {
+    const d = applePath(36, 30, 10);
+    expect(d.match(/M/g)).toHaveLength(3);
+    expect(d.match(/Z/g)).toHaveLength(3);
+    const at = (path: string): Array<[number, number]> => {
+      const nums = path.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+      return Array.from({ length: nums.length / 2 }, (_, i) => [nums[2 * i]!, nums[2 * i + 1]!] as [number, number]);
+    };
+    // nothing of it, its curves' handles included, reaches past `r` from its middle, so it stays inside the seal's ring
+    for (const [x, y] of at(d)) expect(Math.hypot(x - 36, y - 30)).toBeLessThan(10 * 1.06);
+    // the body is as wide on the left as on the right, and the highest point is the leaf's tip, right of the middle
+    const [body] = d.split('ZM');
+    const xs = at(body!).map(([x]) => x);
+    expect(36 - Math.min(...xs)).toBeCloseTo(Math.max(...xs) - 36, 1);
+    const top = at(d).reduce((a, b) => (b[1] < a[1] ? b : a));
+    expect(top[0]).toBeGreaterThan(36);
+    // and it scales and moves with what it is given
+    expect(applePath(0, 0, 20)).not.toBe(applePath(0, 0, 10));
+    const [x0, y0] = at(applePath(0, 0, 20))[0]!;
+    const [x1, y1] = at(applePath(0, 0, 10))[0]!;
+    expect(x0).toBeCloseTo(2 * x1, 1);
+    expect(y0).toBeCloseTo(2 * y1, 1);
   });
 });
 

@@ -42,7 +42,7 @@ import type { MessageKey } from '../i18n/en';
 import { GrammarNote } from './GrammarNote';
 import { JumpSheet } from './JumpSheet';
 import { courseProgress, lessonStates } from './map';
-import { SunRow, TopicBar } from './PathRing';
+import { AppleRow, TopicBar } from './PathRing';
 import { WaxLegend, WaxSeal } from './PathScene';
 import { SectionCard, UnitDivider, UnitPin, levelWords, useUnitAtTop } from './PathSections';
 import { MilestoneArt, StopArt, UnitLandmark, UnitRail, UnitScenery, UpcomingUnit, useUnitsOnScreen, useWidth, type RailSection } from './PathWorld';
@@ -137,7 +137,7 @@ function goes(stop: Stop): boolean {
 
 /**
  * The card a tapped stop opens: what it is, progress, one thing to do next, and what it pays. A locked skill says what
- * opens it; a topic with rounds played shows its suns and round; a chapter's story says the chapter is complete.
+ * opens it; a topic with rounds played shows its apples and round; a chapter's story says the chapter is complete.
  */
 function StopCard({
   stop,
@@ -232,7 +232,7 @@ function StopCard({
 
   const { skill } = stop;
   const states = lessonStates(skill);
-  // The round being played: its lessons finished, and once a topic has a sun, those of its next round.
+  // The round being played: its lessons finished, and once a topic has an apple, those of its next round.
   const share = stop.lessonsTotal > 0 ? Math.round(((stop.rounds > 0 ? stop.pieces : stop.lessonsDone) / stop.lessonsTotal) * 100) : 0;
   const action =
     stop.state === 'locked' || !stop.launch
@@ -274,7 +274,7 @@ function StopCard({
           {skill.title}
         </h3>
         {where && <p className="lp-pop-line">{where}</p>}
-        {stop.rounds > 0 && <SunRow rounds={stop.rounds} />}
+        {stop.rounds > 0 && <AppleRow rounds={stop.rounds} />}
         {stop.state === 'done' && <WaxLegend dark={dark} />}
         <LinkButton to={action.to} state={{ title: skill.title, from: home }} block className="lp-pop-start">
           <span>{action.label}</span>
@@ -325,7 +325,7 @@ function StopCard({
       )}
       {stop.lessonsTotal > 0 && stop.state !== 'locked' && (
         <div className="lp-pop-progress">
-          {stop.rounds > 0 && <SunRow rounds={stop.rounds} />}
+          {stop.rounds > 0 && <AppleRow rounds={stop.rounds} />}
           {stop.rounds < TOPIC_STARS && (
             <div className="lp-bar" aria-hidden="true">
               <span style={{ width: `${share}%` }} />
@@ -368,7 +368,7 @@ function StopCard({
   );
 }
 
-/** A stop button's full name, matching what is seen: the round once a topic has a sun ("Greetings, Done, round 2 of 3, 3 of 4 lessons"). */
+/** A stop button's full name, matching what is seen: the round once a topic has an apple ("Greetings, Done, round 2 of 3, 3 of 4 lessons"). */
 function useStopLabel(): (stop: Stop, unit: Unit) => string {
   const t = useT();
   return (stop, unit) => {
@@ -510,7 +510,7 @@ function useReturnStep(ret: PathReturn | null): number | null {
     const marks = [settleMs, finishAtMs, nextAtMs, openAtMs, bubbleAtMs];
     // In order, each a moment after the last.
     const timers = marks.map((ms, i) => window.setTimeout(() => setAt({ ret, step: i + 1 }), ms));
-    // Over once the bubble has moved on and a stop pressed again has been gilded by fire, if its third sun made it so.
+    // Over once the bubble has moved on and a stop pressed again has been gilded by fire, if its third apple made it so.
     const pressed = finishAtMs + PATH_STAMP_REPRESS.ms + PATH_WAX_GOLD.afterMs + PATH_WAX_FIRE.ms;
     timers.push(window.setTimeout(() => setAt({ ret, step: null }), Math.max(bubbleAtMs + Math.max(bubbleMs, popMs, 400), pressed + 40)));
     return () => timers.forEach((id) => window.clearTimeout(id));
@@ -670,7 +670,7 @@ export function CoursePath({
     if (next.size !== stamped.size) setStamped(next);
     writeStamps(courseId, next);
   }, [path, stamped, reduceMotion, courseId]);
-  // Stops sealed in their moment on this visit: fire gilds the wax of one sealed with three suns.
+  // Stops sealed in their moment on this visit: fire gilds the wax of one sealed with three apples.
   const [fresh, setFresh] = useState<ReadonlySet<string>>(() => new Set());
   const stampDone = useCallback((key: string) => {
     setStamped((had) => (had && !had.has(key) ? new Set([...had, key]) : had));
@@ -684,7 +684,7 @@ export function CoursePath({
 
   /*
    * Opening: the current skill in the middle of the screen, or on a return the stop the lesson was played on, so a stop
-   * replayed further back is seen taking its new sun; the page then follows the bubble only if there is a new current
+   * replayed further back is seen taking its new apple; the page then follows the bubble only if there is a new current
    * skill. Learn opens at its top unless returning, with "Back to your lesson" when the stop is below.
    */
   useLayoutEffect(() => {
@@ -846,19 +846,19 @@ export function CoursePath({
     return { ...now, from: before };
   };
   /**
-   * A sealed topic's seal at this moment: the suns pressed in it and whether fire is gilding it. A round made whole
-   * on the return is pressed in by the stamp as the stop finishes, `from` the suns it had before.
+   * A sealed topic's seal at this moment: the apples pressed in it and whether fire is gilding it. A round made whole
+   * on the return is pressed in by the stamp as the stop finishes, `from` the apples it had before.
    */
-  const waxNow = (stop: SkillStop<SkillNode>): { suns: number; from: number | null; warming: boolean } => {
+  const waxNow = (stop: SkillStop<SkillNode>): { apples: number; from: number | null; warming: boolean } => {
     const change = playing ? ret.changes.ring.find((r) => r.key === stop.key) : undefined;
     const three = (n: number): number => Math.min(TOPIC_STARS, n);
     if (change && change.to.rounds > change.from.rounds && change.from.rounds >= 1) {
       const [from, to] = [three(change.from.rounds), three(stop.rounds)];
-      if (step! < STEP.finish) return { suns: from, from: null, warming: false };
-      // The third sun, pressed in now, turns it gold.
-      return { suns: to, from, warming: to === TOPIC_STARS && from !== TOPIC_STARS && !reduceMotion };
+      if (step! < STEP.finish) return { apples: from, from: null, warming: false };
+      // The third apple, pressed in now, turns it gold.
+      return { apples: to, from, warming: to === TOPIC_STARS && from !== TOPIC_STARS && !reduceMotion };
     }
-    return { suns: three(stop.rounds), from: null, warming: fresh.has(stop.key) && stop.rounds >= TOPIC_STARS && !reduceMotion };
+    return { apples: three(stop.rounds), from: null, warming: fresh.has(stop.key) && stop.rounds >= TOPIC_STARS && !reduceMotion };
   };
   // The next finished stop to stamp, one at a time down the road, once its unit is in view; under reduced motion none
   // is played, and each is simply stamped.
@@ -1059,10 +1059,10 @@ export function CoursePath({
                                       <WaxSeal
                                         stopKey={stop.key}
                                         dark={dark}
-                                        suns={wax?.suns ?? Math.min(TOPIC_STARS, stop.rounds)}
+                                        apples={wax?.apples ?? Math.min(TOPIC_STARS, stop.rounds)}
                                         from={wax?.from ?? null}
-                                        // Three suns turn its wax gold.
-                                        gold={(wax?.suns ?? 0) >= TOPIC_STARS}
+                                        // Three apples turn its wax gold.
+                                        gold={(wax?.apples ?? 0) >= TOPIC_STARS}
                                         warming={wax?.warming ?? false}
                                         worn={stop.finish === 'refresh'}
                                         live={!reduceMotion}

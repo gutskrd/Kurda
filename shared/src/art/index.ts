@@ -224,7 +224,6 @@ export {
   pathStopSvg,
   PATH_SEAL,
   PATH_WAX,
-  sunRays,
   PATH_STAMP_TOOL,
   type PathWaxOptions,
   type PathWaxColours,

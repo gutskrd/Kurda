@@ -368,12 +368,12 @@ export function PathChest({ open, dark, size, played }: { open: boolean; dark: b
 }
 
 /**
- * A finished stop's round wax seal (shared `pathWaxSvg`) in its tile's place, a sun pressed in it for each full round:
- * deep red, gold once it has all three suns, and matte and dulled where a refresh would help. `pressing` plays its first
+ * A finished stop's round wax seal (shared `pathWaxSvg`) in its tile's place, an apple pressed in it for each full round:
+ * deep red, gold once it has all three apples, and matte and dulled where a refresh would help. `pressing` plays its first
  * sealing once (shared `PATH_STAMP_MOMENT`) after `delay`: a big drop of red wax falls onto the tile and splashes, the
  * tile melts under it as the wax flows out round, and the brass stamp presses the seal as it squashes and lifts away, its
- * sun pressed in; then `onStamped` is told. With `from`, a round later, the stamp comes back after `delay` and presses
- * again (shared `PATH_STAMP_REPRESS`), the `from` suns giving way to `suns`. With `warming`, once the stamp has lifted a
+ * apple pressed in; then `onStamped` is told. With `from`, a round later, the stamp comes back after `delay` and presses
+ * again (shared `PATH_STAMP_REPRESS`), the `from` apples giving way to `apples`. With `warming`, once the stamp has lifted a
  * band of fire sweeps up over the seal and gilds it (shared `PATH_WAX_FIRE`), then one glint crosses it (shared
  * `PATH_WAX_GOLD`); a gold seal glints again now and then while `live` and on screen.
  * Decorative.
@@ -381,7 +381,7 @@ export function PathChest({ open, dark, size, played }: { open: boolean; dark: b
 export function WaxSeal({
   stopKey,
   dark,
-  suns,
+  apples,
   from = null,
   gold,
   warming,
@@ -393,12 +393,12 @@ export function WaxSeal({
 }: {
   stopKey: string;
   dark: boolean;
-  /** The suns pressed in it, one for each full round. */
-  suns: number;
-  /** A round later: the suns it had, until the stamp presses the new one in. */
+  /** The apples pressed in it, one for each full round. */
+  apples: number;
+  /** A round later: the apples it had, until the stamp presses the new one in. */
   from?: number | null;
   gold: boolean;
-  /** Its third sun has just been pressed in: fire sweeps over it and gilds it. */
+  /** Its third apple has just been pressed in: fire sweeps over it and gilds it. */
   warming: boolean;
   worn: boolean;
   /** Its unit is near the screen and motion is welcome. */
@@ -411,11 +411,11 @@ export function WaxSeal({
   const pressed = from !== null;
   const moving = pressing || pressed;
   const wax = (part: 'whole' | 'pour' | 'seal', count: number, golden = false): string =>
-    pathWaxSvg({ seed: stopKey, gold: golden, worn, suns: count, part, dark, idPrefix: `${prefix}${part}${count}${golden ? 'g' : ''}` });
-  const coat = useMarkup(() => (moving ? '' : wax('whole', suns)), [moving, stopKey, worn, suns, dark, prefix]);
-  const goldCoat = useMarkup(() => (gold ? wax('whole', suns, true) : ''), [gold, stopKey, worn, suns, dark, prefix]);
-  const pour = useMarkup(() => (moving ? wax('pour', suns) : ''), [moving, stopKey, worn, suns, dark, prefix]);
-  const seal = useMarkup(() => (moving ? wax('seal', suns) : ''), [moving, stopKey, worn, suns, dark, prefix]);
+    pathWaxSvg({ seed: stopKey, gold: golden, worn, apples: count, part, dark, idPrefix: `${prefix}${part}${count}${golden ? 'g' : ''}` });
+  const coat = useMarkup(() => (moving ? '' : wax('whole', apples)), [moving, stopKey, worn, apples, dark, prefix]);
+  const goldCoat = useMarkup(() => (gold ? wax('whole', apples, true) : ''), [gold, stopKey, worn, apples, dark, prefix]);
+  const pour = useMarkup(() => (moving ? wax('pour', apples) : ''), [moving, stopKey, worn, apples, dark, prefix]);
+  const seal = useMarkup(() => (moving ? wax('seal', apples) : ''), [moving, stopKey, worn, apples, dark, prefix]);
   const was = useMarkup(() => (pressed ? wax('seal', from) : ''), [pressed, from, stopKey, worn, dark, prefix]);
   const blob = useMarkup(() => (pressing ? pathWaxSvg({ part: 'blob', dark, idPrefix: `${prefix}b` }) : ''), [pressing, dark, prefix]);
   const splash = useMarkup(() => (pressing ? pathWaxSvg({ part: 'splash', dark, idPrefix: `${prefix}s` }) : ''), [pressing, dark, prefix]);
@@ -445,7 +445,7 @@ export function WaxSeal({
       return;
     }
     const timing = { duration: m.ms, delay, fill: 'both' as const };
-    // The suns pressed in show from the press, under the stamp; a round later the ones before give way then.
+    // The apples pressed in show from the press, under the stamp; a round later the ones before give way then.
     const shownFrom: Array<readonly [number, number]> = [[0, 0], [m.pressAt, 0], [m.pressAt + 0.01, 1], [1, 1]];
     const runs = [
       el(refs.tool)!.animate(frames([m.toolY, m.tilt, m.toolShown], ([y, r, o]) => ({ transform: `translateY(${y}px) rotate(${r}deg)`, opacity: o })), timing),
@@ -472,10 +472,10 @@ export function WaxSeal({
       runs.forEach((r) => r?.cancel());
     };
   }, [moving, pressing, delay, stopKey]);
-  // Once the stamp has lifted from its third sun, one flame passes up over the seal and leaves it gold (`SealFlame`).
+  // Once the stamp has lifted from its third apple, one flame passes up over the seal and leaves it gold (`SealFlame`).
   const warmAt = (pressed ? delay + PATH_STAMP_REPRESS.ms : 0) + PATH_WAX_GOLD.afterMs;
   return (
-    <span className="lp-wax" aria-hidden="true" data-suns={suns}>
+    <span className="lp-wax" aria-hidden="true" data-apples={apples}>
       {moving ? (
         <>
           <span ref={refs.pour} className="lp-wax-coat lp-wax-pour" dangerouslySetInnerHTML={pour} />
@@ -508,7 +508,7 @@ export function WaxSeal({
 }
 
 /**
- * One flame passing up over a seal as its third sun is pressed in, leaving it gold (shared `PATH_WAX_FIRE`): the gold
+ * One flame passing up over a seal as its third apple is pressed in, leaving it gold (shared `PATH_WAX_FIRE`): the gold
  * shown through a window whose top is the flame's foot, moved up while the gold in it is moved back down, and over it the
  * flame's three painted layers, each flickering on its own. Decorative.
  */
@@ -585,9 +585,9 @@ function WaxGlint({ stopKey, firstAt }: { stopKey: string; firstAt: number | nul
   );
 }
 
-/** What a topic's seal becomes, for its card: a sun pressed in for each full round, and gold with all three. Decorative. */
+/** What a topic's seal becomes, for its card: an apple pressed in for each full round, and gold with all three. Decorative. */
 export function WaxLegend({ dark }: { dark: boolean }): React.JSX.Element {
-  const seals = useMarkup(() => [1, 2, 3].map((suns) => pathWaxSvg({ seed: 'legend', suns, gold: suns === 3, dark, size: WAX_KEY })).join('|'), [dark]);
+  const seals = useMarkup(() => [1, 2, 3].map((apples) => pathWaxSvg({ seed: 'legend', apples, gold: apples === 3, dark, size: WAX_KEY })).join('|'), [dark]);
   return (
     <span className="lp-wax-legend" aria-hidden="true" data-testid="lp-wax-legend">
       {seals.__html.split('|').map((svg, i) => (
