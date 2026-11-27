@@ -1,10 +1,10 @@
 /**
  * What the living animals and flowers (gift-loop-animals.ts, gift-loop-flowers.ts) move by: parts hung on chains of
- * joints, so a flower turns with the stem it sits on and an ear with the head it grows from, and smooth tracks through a
- * few held values, so a round reads as a gesture rather than a wave.
+ * joints, so a flower turns with the stem it sits on and an ear with the head it grows from; smooth tracks through a few
+ * held values, so a round reads as a gesture rather than a wave; the breeze, a breath, and a petal falling.
  */
 import type { Pt } from './svg.js';
-import type { GiftLoopPose } from './gift-loop.js';
+import { giftLoopSmooth, type GiftLoopPlan, type GiftLoopPose } from './gift-loop.js';
 
 /** A turn of `deg` degrees about a point, as the picture is drawn. */
 export type GiftJoint = readonly [at: Pt, deg: number];
@@ -74,11 +74,12 @@ const TAU = Math.PI * 2;
 
 /**
  * The breeze at share `t` of a round, felt `lag` of a round later downwind: a slow swell with a lighter flutter riding on
- * it, both whole waves of the round so it closes on itself. About -1 to 1.
+ * it, both whole waves of the round so it closes on itself. It is measured from where it stands as the round starts, so
+ * whatever it moves starts as drawn. About -1 to 1.
  */
 export function giftLoopBreeze(t: number, lag = 0, waves: readonly [number, number] = [1, 3]): number {
-  const u = t - lag;
-  return 0.75 * Math.sin(TAU * waves[0] * u) + 0.25 * Math.sin(TAU * waves[1] * u + 1.1);
+  const at = (u: number): number => 0.75 * Math.sin(TAU * waves[0] * u) + 0.3 * Math.sin(TAU * waves[1] * u);
+  return at(t - lag) - at(-lag);
 }
 
 /** A breath at share `t`: drawn in briskly, let out slowly, then a rest; 0 at rest, 1 full. */
@@ -87,4 +88,34 @@ export function giftLoopBreath(t: number): number {
   if (u < 0.38) return ease(u / 0.38);
   if (u < 0.86) return 1 - ease((u - 0.38) / 0.48);
   return 0;
+}
+
+/**
+ * A petal let go at `born` of the round, drifting down `fall` and across `drift` for `life` of it, turning over as it
+ * goes and gone before it lands, then unseen until it lets go again.
+ */
+export function giftLoopPetal(
+  box: GiftLoopPlan['box'],
+  at: Pt,
+  born: number,
+  { life = 0.6, fall = 28, drift = -12, spin = 170, sway = 2, turns = 1.1 } = {},
+): GiftLoopPlan {
+  return {
+    box,
+    origin: at,
+    wrap: born,
+    samples: 160,
+    motion: (t) => {
+      const raw = (((t - born) % 1) + 1) % 1;
+      const u = Math.min(1, raw / life);
+      const seen = u < 0.08 ? giftLoopSmooth(u / 0.08) : u < 0.7 ? 1 : 1 - giftLoopSmooth((u - 0.7) / 0.26);
+      return {
+        x: drift * u + sway * Math.sin(Math.PI * 2 * 1.5 * u),
+        y: fall * Math.pow(u, 1.15),
+        rot: spin * u,
+        sx: 0.3 + 0.7 * Math.abs(Math.cos(Math.PI * 2 * turns * u)),
+        o: raw < life ? seen : 0,
+      };
+    },
+  };
 }

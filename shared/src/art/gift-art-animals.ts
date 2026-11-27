@@ -8,7 +8,7 @@ import { Drawing, n, type Pt } from './svg.js';
 import { characterArt } from '../characters/index.js';
 import { pigeon } from './pigeon.js';
 import { layer } from './gift-canvas.js';
-import { halfPlane, inside, turningPiece } from './gift-cut.js';
+import { halfPlane, inside, paintAll, turningPiece, type PiecePaint } from './gift-cut.js';
 import { along, band, blade, brush, ellipse, floor, form, lerp, outline, paint, polygon, rest, roundish, runs, scaleAbout, shift, side, slab, streaks, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
 
 // ─────────────────────────────────────────────────────────────────── pisîk
@@ -127,7 +127,7 @@ export function pisik(dr: Drawing, rnd: Rnd): void {
     () => within(dr, tailD, () => paint(dr, dark, GINGER.shade)),
   ];
   // the tail cut across between two rings, the root's paint running on under the tip so the tip can curl
-  layer(dr, 'tail', () => inside(dr, [halfPlane(PISIK_TAIL_JOINT, PISIK_TAIL_CUT, 1, 1.4)], () => furred(rings.slice(0, 4).join('')).forEach((p) => p())));
+  layer(dr, 'tail', () => inside(dr, [halfPlane(PISIK_TAIL_JOINT, PISIK_TAIL_CUT, 1, 1.4)], () => paintAll(furred(rings.slice(0, 4).join('')))));
   layer(dr, 'tailTip', () => turningPiece(dr, (reach) => [halfPlane(PISIK_TAIL_JOINT, PISIK_TAIL_CUT, -1, reach)], furred(rings[4]!)));
 }
 
@@ -236,8 +236,8 @@ export function kevok(dr: Drawing, rnd: Rnd): void {
   // petals loosed from the blossoms, to drift down past the branch
   for (const [i, [x, y, deg]] of KEVOK_PETALS.entries()) {
     layer(dr, `petal${i + 1}`, () => {
-      paint(dr, touch(x + 0.35, y + 0.5, 4.2, 2.1, deg), BLOSSOM.shade);
-      paint(dr, touch(x, y, 4.2, 2.1, deg), BLOSSOM.petal);
+      paint(dr, touch(x + 0.45, y + 0.6, 5.4, 2.7, deg), BLOSSOM.shade);
+      paint(dr, touch(x, y, 5.4, 2.7, deg), BLOSSOM.petal);
     });
   }
 }
@@ -312,22 +312,26 @@ export function kew(dr: Drawing, rnd: Rnd): void {
   const crown = outline(roundish(39, 38.6, 7, 3, rnd, { count: 10, rot: 15 }));
   const beak = outline(tremble([[29, 43.6], [22.8, 45.4], [23.6, 47], [28.6, 48.4]], rnd, 0.1));
   /** The bird's plumage as its paints, bottom first: only those that reach its head, its flank or its tail as asked. */
-  const plumage = ({ head = true, flank = true, tail = true } = {}): Array<() => void> => [
+  const plumage = ({ head = true, flank = true, tail = true } = {}): PiecePaint[] => [
     () => paint(dr, skin, KEW.back),
     ...(head || flank ? [() => within(dr, skin, () => paint(dr, breast, KEW.breast))] : []),
     ...(flank || tail ? [() => within(dr, skin, () => paint(dr, belly, KEW.belly))] : []),
-    ...(head || flank ? [() => within(dr, skin, () => paint(dr, sheen, KEW.breastLight, 0.6))] : []),
+    ...(head || flank ? [{ sheer: () => within(dr, skin, () => paint(dr, sheen, KEW.breastLight, 0.6)) }] : []),
     ...(flank ? [() => within(dr, skin, () => bars.forEach(([d, colour]) => paint(dr, d, colour)))] : []),
-    ...(flank || tail ? [() => within(dr, skin, () => paint(dr, wing, '#958776')), () => within(dr, skin, () => paint(dr, edges, KEW.backLight, 0.85))] : []),
+    ...(flank || tail ? [() => within(dr, skin, () => paint(dr, wing, '#958776')), { sheer: () => within(dr, skin, () => paint(dr, edges, KEW.backLight, 0.85)) }] : []),
     ...(tail ? [() => within(dr, skin, () => paint(dr, vent, '#b4683a'))] : []),
     () => side(dr, body, -2.2, -2.6, KEW.shade, { grow: 0.99 }),
     () => side(dr, body, 1.6, 1.8, KEW.backLight, { grow: 0.98 }),
     ...(head || flank
-      ? [() => within(dr, skin, () => paint(dr, throat, KEW.throat)), () => within(dr, skin, () => paint(dr, necklace, '#26201e')), () => within(dr, skin, () => paint(dr, crown, KEW.backLight))]
+      ? [
+          () => within(dr, skin, () => paint(dr, throat, KEW.throat)),
+          () => within(dr, skin, () => paint(dr, necklace, '#26201e')),
+          () => within(dr, skin, () => paint(dr, crown, KEW.backLight)),
+        ]
       : []),
   ];
   // the body stays, its paint running on under the head and the tail; they turn on it
-  layer(dr, 'body', () => inside(dr, [halfPlane(KEW_NECK, KEW_NECK_CUT, -1, 1.6), halfPlane(KEW_RUMP, KEW_RUMP_CUT, -1, 1.6)], () => plumage().forEach((p) => p())));
+  layer(dr, 'body', () => inside(dr, [halfPlane(KEW_NECK, KEW_NECK_CUT, -1, 1.6), halfPlane(KEW_RUMP, KEW_RUMP_CUT, -1, 1.6)], () => paintAll(plumage())));
   layer(dr, 'tail', () => turningPiece(dr, (reach) => [halfPlane(KEW_RUMP, KEW_RUMP_CUT, 1, reach)], plumage({ head: false, flank: false })));
   layer(dr, 'head', () => {
     turningPiece(dr, (reach) => [halfPlane(KEW_NECK, KEW_NECK_CUT, 1, reach)], plumage({ flank: false, tail: false }));
@@ -409,7 +413,8 @@ export function ask(dr: Drawing, rnd: Rnd): void {
   // Hevalo himself, standing in the grass: his own drawing, its head laid apart so his ears and eyes can move
   const deer = characterArt('hevalo', `${dr.prefix}hv`);
   const rig = deer.rig!;
-  const placed = (...parts: string[]): void => dr.add(`<g transform="translate(${n(ASK_DEER_AT[0])} ${n(ASK_DEER_AT[1])}) scale(${ASK_DEER_SCALE})">${flat(parts.join(''))}</g>`);
+  const placed = (...parts: string[]): void =>
+    dr.add(`<g transform="translate(${n(ASK_DEER_AT[0])} ${n(ASK_DEER_AT[1])}) scale(${ASK_DEER_SCALE})">${flat(parts.join(''))}</g>`);
   placed(deer.body, rig.crown);
   // the meadow in front, deep in grass and spring flowers, hiding his hooves
   const meadow = tremble([[8, 102], [16, 92], [32, 88], [50, 91], [66, 89], [84, 90], [102, 88], [112, 96], [110, 108], [86, 113.4], [60, 114.6], [34, 113.4]], rnd, 0.5);
@@ -452,7 +457,8 @@ export function ask(dr: Drawing, rnd: Rnd): void {
       let front = '';
       for (const [k, a] of [-0.5, -0.28, -0.08, 0.12, 0.3, 0.5].entries()) {
         const h = 11 + ((k * 7) % 5) + rnd() * 2;
-        const blade = brush([[x + a * 1.6, y], [x + Math.sin(a) * h * 0.35, y - h * 0.55], [x + Math.sin(a) * h * 0.8, y - h]], 1.3, rnd, { start: 1, end: 0.05, count: 6 });
+        const tip: Pt = [x + Math.sin(a) * h * 0.8, y - h];
+        const blade = brush([[x + a * 1.6, y], [x + Math.sin(a) * h * 0.35, y - h * 0.55], tip], 1.3, rnd, { start: 1, end: 0.05, count: 6 });
         if (k % 2) front += blade;
         else back += blade;
       }
@@ -464,9 +470,10 @@ export function ask(dr: Drawing, rnd: Rnd): void {
     const [x, y] = ASK_POPPY;
     paint(dr, brush([ASK_POPPY_ROOT, [93.6, 90], [x - 0.2, y + 2]], 1, rnd, { start: 1, end: 0.7, peak: 0.5, count: 8 }), MEADOW.shade);
     paint(dr, outline(tremble(blade([93.4, 93], [89, 88.6], 2.2, { point: 0.8, bend: 0.1 }), rnd, 0.1)), MEADOW.shade);
-    paint(dr, outline(roundish(x - 1.9, y - 1.1, 2.5, 2.2, rnd, { count: 9, tremor: 0.15 })) + outline(roundish(x + 1.9, y - 1.1, 2.5, 2.2, rnd, { count: 9, tremor: 0.15 })), POPPY.shade);
+    const cupped = (dx: number, dy: number, r: number): string => outline(roundish(x + dx, y + dy, r, r * 0.88, rnd, { count: 9, tremor: 0.15 }));
+    paint(dr, cupped(-1.9, -1.1, 2.5) + cupped(1.9, -1.1, 2.5), POPPY.shade);
     paint(dr, ellipse(x, y - 1.9, 1.5, 0.75), POPPY.heart);
-    paint(dr, outline(roundish(x - 1.3, y + 0.5, 2.6, 2.3, rnd, { count: 9, tremor: 0.15 })) + outline(roundish(x + 1.4, y + 0.6, 2.6, 2.3, rnd, { count: 9, tremor: 0.15 })), POPPY.base);
+    paint(dr, cupped(-1.3, 0.5, 2.6) + cupped(1.4, 0.6, 2.6), POPPY.base);
     paint(dr, touch(x - 1.6, y + 0.1, 2.6, 0.7, -35), POPPY.light);
   });
   // a butterfly, unseen until it flutters in to the poppy
@@ -482,7 +489,8 @@ export function ask(dr: Drawing, rnd: Rnd): void {
     wings(-1);
     wings(1);
     paint(dr, ellipse(x, y, 0.45, 2.2), WING.tip);
-    paint(dr, brush([[x - 0.2, y - 2], [x - 0.9, y - 3.6], [x - 1.6, y - 4.4]], 0.3, rnd, { start: 1, end: 1, count: 4 }) + brush([[x + 0.2, y - 2], [x + 0.9, y - 3.6], [x + 1.6, y - 4.4]], 0.3, rnd, { start: 1, end: 1, count: 4 }), WING.tip);
+    const feeler = (s: 1 | -1): string => brush([[x + s * 0.2, y - 2], [x + s * 0.9, y - 3.6], [x + s * 1.6, y - 4.4]], 0.3, rnd, { start: 1, end: 1, count: 4 });
+    paint(dr, feeler(-1) + feeler(1), WING.tip);
   });
 }
 
@@ -527,7 +535,9 @@ export function pezkovi(dr: Drawing, rnd: Rnd): void {
   });
   const tufts = PEZKOVI_TUFTS.map(([x, y]) => {
     let d = '';
-    for (const a of [-0.5, -0.15, 0.2, 0.5]) d += brush([[x, y], [x + Math.sin(a) * 2.4, y - 3], [x + Math.sin(a) * 4.4, y - 5.6]], 0.9, rnd, { start: 1, end: 0.05, count: 4 });
+    for (const a of [-0.5, -0.15, 0.2, 0.5]) {
+      d += brush([[x, y], [x + Math.sin(a) * 2.4, y - 3], [x + Math.sin(a) * 4.4, y - 5.6]], 0.9, rnd, { start: 1, end: 0.05, count: 4 });
+    }
     return d;
   });
   // the far legs, in shade
@@ -557,19 +567,24 @@ export function pezkovi(dr: Drawing, rnd: Rnd): void {
   // the dark blaze down the front of its face
   const blaze = brush([[32, 30.6], [26, 37], [21, 43.4]], 2, rnd, { start: 0.6, end: 0.4, peak: 0.5, count: 6 });
   /** The goat's hide as its paints, bottom first; the head's piece needs only those that reach it. */
-  const coated = (head: boolean): Array<() => void> => [
+  const coated = (head: boolean): PiecePaint[] => [
     () => paint(dr, hide, GOAT.base),
     ...(head ? [] : [() => within(dr, hide, () => paint(dr, belly, '#e8dfcc'))]),
     () => within(dr, hide, () => paint(dr, neckLine, '#4a3a2c')),
-    ...(head ? [] : [() => within(dr, hide, () => paint(dr, flankLine, '#4a3a2c')), () => within(dr, hide, () => paint(dr, shoulderLine, '#5c4a38', 0.8))]),
-    () => within(dr, hide, () => paint(dr, coat, GOAT.light, 0.55)),
-    ...(head ? [] : [() => within(dr, hide, () => paint(dr, touch(66, 53.4, 30, 4.4, 2) + touch(85, 54, 8, 4, 70), '#e2d6bc', 0.55)), () => within(dr, hide, () => paint(dr, belt, GOAT.shade, 0.5))]),
+    ...(head ? [] : [() => within(dr, hide, () => paint(dr, flankLine, '#4a3a2c')), { sheer: () => within(dr, hide, () => paint(dr, shoulderLine, '#5c4a38', 0.8)) }]),
+    { sheer: () => within(dr, hide, () => paint(dr, coat, GOAT.light, 0.55)) },
+    ...(head
+      ? []
+      : [
+          { sheer: () => within(dr, hide, () => paint(dr, touch(66, 53.4, 30, 4.4, 2) + touch(85, 54, 8, 4, 70), '#e2d6bc', 0.55)) },
+          { sheer: () => within(dr, hide, () => paint(dr, belt, GOAT.shade, 0.5)) },
+        ]),
     () => side(dr, goat, -2, -2.4, GOAT.shade, { grow: 0.99 }),
     () => side(dr, goat, 1.4, 1.8, GOAT.light, { grow: 0.98 }),
-    () => within(dr, hide, () => paint(dr, blaze, '#5c4a38', 0.75)),
+    { sheer: () => within(dr, hide, () => paint(dr, blaze, '#5c4a38', 0.75)) },
   ];
   // the body stays, running on under the neck, which turns on it at its root
-  inside(dr, [halfPlane(PEZKOVI_NECK, PEZKOVI_NECK_CUT, -1, 1.6)], () => coated(false).forEach((p) => p()));
+  inside(dr, [halfPlane(PEZKOVI_NECK, PEZKOVI_NECK_CUT, -1, 1.6)], () => paintAll(coated(false)));
   // the beard, the ear, the eye
   const beard = outline(tremble([[20.4, 46], [23.6, 47.4], [24.6, 53.6], [22.2, 52], [20.4, 49]], rnd, 0.15));
   const ear = outline(tremble(blade([37, 33], [45.4, 34.6], 3, { point: 0.9, count: 6 }), rnd, 0.1));
@@ -652,17 +667,17 @@ export function hesp(dr: Drawing, rnd: Rnd): void {
   const belly = brush([[50, 70.6], [64, 72.4], [80, 70.4], [90, 66]], 4, rnd, { start: 0.5, end: 0.4, peak: 0.5, count: 10 });
   // the blaze down its face
   const blaze = brush([[29.6, 24.4], [24.4, 33], [19, 43]], 2.4, rnd, { start: 0.6, end: 1, peak: 0.6, count: 8 });
-  const coated = (neck: boolean): Array<() => void> => [
+  const coated = (neck: boolean): PiecePaint[] => [
     () => paint(dr, coat, BAY.base),
-    () => within(dr, coat, () => paint(dr, hair, BAY.light, 0.4)),
-    () => within(dr, coat, () => paint(dr, muscle, BAY.light, 0.5)),
-    () => within(dr, coat, () => paint(dr, touch(46, 50, 7, 2.6, 76) + touch(84.6, 48.6, 8, 2.6, 100), '#d18e58', 0.7)),
-    ...(neck ? [] : [() => within(dr, coat, () => paint(dr, belly, BAY.shade, 0.6))]),
+    { sheer: () => within(dr, coat, () => paint(dr, hair, BAY.light, 0.4)) },
+    { sheer: () => within(dr, coat, () => paint(dr, muscle, BAY.light, 0.5)) },
+    { sheer: () => within(dr, coat, () => paint(dr, touch(46, 50, 7, 2.6, 76) + touch(84.6, 48.6, 8, 2.6, 100), '#d18e58', 0.7)) },
+    ...(neck ? [] : [{ sheer: () => within(dr, coat, () => paint(dr, belly, BAY.shade, 0.6)) }]),
     () => side(dr, horse, -2.4, -2.6, BAY.shade, { grow: 0.99 }),
     () => side(dr, horse, 1.6, 1.8, BAY.light, { grow: 0.98 }),
     () => within(dr, coat, () => paint(dr, blaze, '#f3ead8')),
   ];
-  layer(dr, 'body', () => within(dr, halfPlane(HESP_NECK, HESP_NECK_CUT, -1, 1.6), () => coated(false).forEach((p) => p())));
+  layer(dr, 'body', () => within(dr, halfPlane(HESP_NECK, HESP_NECK_CUT, -1, 1.6), () => paintAll(coated(false))));
   // the eye, the nostril, the mane along its crest and the forelock
   let mane = '';
   for (let i = 0; i < 7; i++) {
@@ -728,9 +743,9 @@ export function hesp(dr: Drawing, rnd: Rnd): void {
   };
   layer(dr, 'legs', () => {
     // the leg above the knee, and the knee itself round, so the shin turns on it as on a joint
-    inside(dr, [halfPlane(HESP_KNEE, [1, 0], 1)], () => legs[0]!.forEach((p) => p()));
+    inside(dr, [halfPlane(HESP_KNEE, [1, 0], 1)], () => paintAll(legs[0]!));
     turningPiece(dr, (reach) => [ellipse(HESP_KNEE[0], HESP_KNEE[1], 3.7 + reach, 3.7 + reach)], legs[0]!);
-    legs[1]!.forEach((p) => p());
+    paintAll(legs[1]!);
     hoof(89.4);
   });
   layer(dr, 'shin', () => {

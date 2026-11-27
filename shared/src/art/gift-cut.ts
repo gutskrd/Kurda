@@ -28,7 +28,22 @@ export function inside(dr: Drawing, clips: readonly string[], draw: () => void):
   clips.reduceRight<() => void>((inner, clip) => () => within(dr, clip, inner), draw)();
 }
 
-/** A piece that turns: `paints` bottom first, the k-th kept inside `cut(k × step)`. */
-export function turningPiece(dr: Drawing, cut: (reach: number) => readonly string[], paints: ReadonlyArray<() => void>, step = 0.12): void {
-  paints.forEach((paint, k) => inside(dr, cut(k * step), paint));
+/**
+ * A paint of a piece, or one laid thinly over the paint before it, which keeps that paint's reach: reaching further, it
+ * would lie over its own copy in the piece beneath and show as a band.
+ */
+export type PiecePaint = (() => void) | { sheer: () => void };
+
+/** A piece that turns: `paints` bottom first, each kept inside `cut(reach)`, the reach growing by `step` with each opaque paint. */
+export function turningPiece(dr: Drawing, cut: (reach: number) => readonly string[], paints: readonly PiecePaint[], step = 0.12): void {
+  let reach = -step;
+  for (const p of paints) {
+    if (typeof p === 'function') reach += step;
+    inside(dr, cut(Math.max(0, reach)), typeof p === 'function' ? p : p.sheer);
+  }
+}
+
+/** Every paint of a piece, where it stays whole. */
+export function paintAll(paints: readonly PiecePaint[]): void {
+  for (const p of paints) (typeof p === 'function' ? p : p.sheer)();
 }

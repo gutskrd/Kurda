@@ -4,8 +4,8 @@
  * same name, back to front; parts that grow from another (an ear, a tail's tip) are hung on its joints.
  */
 import type { Pt } from './svg.js';
-import { giftLoop, giftLoopSmooth, type GiftLoop, type GiftLoopPlan, type GiftLoopPose } from './gift-loop.js';
-import { giftLoopBreath, giftLoopBreeze, giftLoopCarry, giftLoopChain, giftLoopTrack, type GiftJoint } from './gift-loop-joints.js';
+import { giftLoop, type GiftLoop, type GiftLoopPose } from './gift-loop.js';
+import { giftLoopBreath, giftLoopBreeze, giftLoopCarry, giftLoopChain, giftLoopPetal, giftLoopTrack, type GiftJoint } from './gift-loop-joints.js';
 import { turn } from './gift-paint.js';
 import {
   ASK_BUTTERFLY, ASK_DEER_AT, ASK_DEER_SCALE, ASK_POPPY_ROOT, ASK_TUFTS, HESP_KNEE, HESP_NECK, HESP_TAIL_ROOT, HESP_TASSEL, KEVOK_BEAK, KEVOK_NECK, KEVOK_PETALS,
@@ -42,35 +42,12 @@ const pisik = giftLoop(5600, {
 /** Two quick nods, the second smaller: how far forward her head is, 0 to 1. */
 const nod = giftLoopTrack([[0, 0], [0.104, 0], [0.133, 1], [0.18, 0], [0.2, 0], [0.225, 0.7], [0.27, 0], [1, 0]]);
 /** The letter swinging on from each nod, and dying away. */
-const swing = giftLoopTrack([[0, 0], [0.104, 0], [0.135, 3.5], [0.175, -3], [0.2, 1.4], [0.228, 3.6], [0.265, -2.8], [0.3, 1.8], [0.335, -1], [0.37, 0.5], [0.41, 0], [1, 0]]);
+const swing = giftLoopTrack([
+  [0, 0], [0.104, 0], [0.135, 3.5], [0.175, -3], [0.2, 1.4], [0.228, 3.6], [0.265, -2.8], [0.3, 1.8], [0.335, -1], [0.37, 0.5], [0.41, 0], [1, 0],
+]);
 const pigeonBlink = giftLoopTrack([[0, 0], [0.56, 0], [0.572, 1], [0.592, 1], [0.607, 0], [1, 0]]);
 /** Her head thrust forward and bowed about her neck, as a pigeon nods. */
 const nodding = (t: number): Pick<GiftLoopPose, 'x' | 'y' | 'rot'> => giftLoopChain(KEVOK_NECK, [[KEVOK_NECK, 3 * nod(t)]], [1.7 * nod(t), 0.5 * nod(t)]);
-
-/**
- * A petal loosed from its blossom at `born` of the round, drifting down `fall` and across `drift` for `life` of it,
- * turning over as it goes, then gone until it is loosed again.
- */
-function petalFall(box: GiftLoopPlan['box'], at: Pt, born: number, { life = 0.6, fall = 28, drift = -12, spin = 170, sway = 2 } = {}): GiftLoopPlan {
-  return {
-    box,
-    origin: at,
-    wrap: born,
-    samples: 160,
-    motion: (t) => {
-      const raw = (((t - born) % 1) + 1) % 1;
-      const u = Math.min(1, raw / life);
-      const seen = u < 0.08 ? giftLoopSmooth(u / 0.08) : u < 0.7 ? 1 : 1 - giftLoopSmooth((u - 0.7) / 0.26);
-      return {
-        x: drift * u + sway * Math.sin(Math.PI * 2 * 1.5 * u),
-        y: fall * Math.pow(u, 1.15),
-        rot: spin * u,
-        sx: 0.3 + 0.7 * Math.abs(Math.cos(Math.PI * 2.2 * u)),
-        o: raw < life ? seen : 0,
-      };
-    },
-  };
-}
 
 /** The pen pal pigeon: two quick nods that set her letter swinging, a blink, and almond petals drifting down. */
 const kevok = giftLoop(4800, {
@@ -85,8 +62,8 @@ const kevok = giftLoop(4800, {
   },
   bill: { box: [68, 33, 15, 11], origin: KEVOK_NECK, samples: 160, motion: nodding },
   blossoms: { box: [33, 90, 45, 14] },
-  petal1: petalFall([105, 72, 5, 6], [KEVOK_PETALS[0]![0], KEVOK_PETALS[0]![1]], 0.06, { life: 0.55, fall: 30, drift: -14 }),
-  petal2: petalFall([19, 77, 6, 5], [KEVOK_PETALS[1]![0], KEVOK_PETALS[1]![1]], 0.42, { life: 0.55, fall: 26, drift: -9, spin: -150 }),
+  petal1: giftLoopPetal([104, 71, 7, 7], [KEVOK_PETALS[0]![0], KEVOK_PETALS[0]![1]], 0.06, { life: 0.55, fall: 30, drift: -14 }),
+  petal2: giftLoopPetal([18, 77, 8, 6], [KEVOK_PETALS[1]![0], KEVOK_PETALS[1]![1]], 0.42, { life: 0.55, fall: 26, drift: -9, spin: -150 }),
 });
 
 // ───────────────────────────────────────────────────────────────────── kew
@@ -214,7 +191,12 @@ const mountainWind = (t: number, lag: number): number => giftLoopBreeze(t, lag, 
 const pezkovi = giftLoop(5400, {
   hornFar: { box: [31, 4, 47, 30], origin: PEZKOVI_NECK, samples: 108, motion: (t) => giftLoopChain(PEZKOVI_NECK, [neckJoint(t)]) },
   head: { box: [16, 27, 30, 27], origin: PEZKOVI_NECK, samples: 108, motion: (t) => giftLoopChain(PEZKOVI_NECK, [neckJoint(t)]) },
-  beard: { box: [19, 44, 7, 11], origin: PEZKOVI_BEARD, samples: 108, motion: (t) => giftLoopChain(PEZKOVI_BEARD, [neckJoint(t), [PEZKOVI_BEARD, 5 * mountainWind(t, 0.05)]]) },
+  beard: {
+    box: [19, 44, 7, 11],
+    origin: PEZKOVI_BEARD,
+    samples: 108,
+    motion: (t) => giftLoopChain(PEZKOVI_BEARD, [neckJoint(t), [PEZKOVI_BEARD, 5 * mountainWind(t, 0.05)]]),
+  },
   ear: { box: [36, 31, 11, 6], origin: PEZKOVI_EAR, samples: 216, motion: (t) => giftLoopChain(PEZKOVI_EAR, [neckJoint(t), [PEZKOVI_EAR, goatEar(t)]]) },
   hornNear: { box: [28, 3, 47, 30], origin: PEZKOVI_NECK, samples: 108, motion: (t) => giftLoopChain(PEZKOVI_NECK, [neckJoint(t)]) },
   tuftLeft: { box: [16, 92, 8, 9], origin: PEZKOVI_TUFTS[0], samples: 108, motion: (t) => ({ rot: 9 * mountainWind(t, 0) }) },
@@ -224,7 +206,7 @@ const pezkovi = giftLoop(5400, {
 // ───────────────────────────────────────────────────────────────────── hesp
 
 /** A toss of the head, up and down and settling; then a swish of the tail at a fly; then a front hoof lifted and set down. */
-const toss = giftLoopTrack([[0, 0], [0.08, 0], [0.13, 4.2], [0.19, -2], [0.245, 1.1], [0.3, 0], [1, 0]]);
+const toss = giftLoopTrack([[0, 0], [0.08, 0], [0.13, 5.6], [0.19, -2.6], [0.245, 1.3], [0.3, 0], [1, 0]]);
 const tassel = giftLoopTrack([[0, 0], [0.1, 0], [0.14, -12], [0.2, 10], [0.26, -7], [0.32, 4], [0.38, -2], [0.44, 0], [1, 0]]);
 /** The tail's swish, each strand of it following a beat behind the one before, a little further or less far. */
 const swish = giftLoopTrack([[0, 0], [0.32, 0], [0.37, -9], [0.45, 3.5], [0.52, -2], [0.6, 0], [1, 0]]);
