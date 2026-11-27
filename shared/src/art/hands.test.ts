@@ -84,15 +84,27 @@ describe('the hand holding up a game’s stamp', () => {
     for (const name of [...shapes(stampBack), ...shapes(stampFront)]) expect(at[name]).toMatch(/^M/);
   });
 
-  it('wears the skin of the hand holding the phone flat, as the reference paints it, its gaps in its charcoal and its lines a warm brown', () => {
+  it('wears the skin of the hand holding the phone flat, as the reference paints it, its gaps one deep shade of it and its lines a warm brown', () => {
     const used = new Set([...colours(stampBack), ...colours(stampFront)]);
     expect(used).toContain(SKIN.face);
     expect(colours(back)).toContain(SKIN.face);
     // no shade step on any finger: nothing that could read as a shadow along an edge
     expect(used).not.toContain(SKIN.shade);
-    // the gaps between the digits in the reference's own charcoal, the darkest colour drawn
+    // the gaps between the digits one warm shade of the skin, as much darker than the skin as the reference's charcoal is
+    // than its own skin (2.95 to 1), never black
     const rgb = (c: string): number[] => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
-    expect(colours(stampBack)).toContain('#3b353c');
+    const lum = (c: string): number => {
+      const [r, g, b] = rgb(c).map((v) => (v / 255 <= 0.04045 ? v / 255 / 12.92 : ((v / 255 + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+    };
+    const darks = new Set([...`${stampBack}${stampFront}`.matchAll(/data-shape="dark-[a-z]+" d="[^"]*" fill="(#[0-9a-f]{6})"/g)].map((m) => m[1]!));
+    expect(darks.size).toBe(1);
+    const dark = [...darks][0]!;
+    const step = (lum(SKIN.face) + 0.05) / (lum(dark) + 0.05);
+    expect(step).toBeGreaterThan(2.7);
+    expect(step).toBeLessThan(3.2);
+    const [r, g, b] = rgb(dark);
+    expect(r! > g! && g! > b!).toBe(true);
     for (const c of used) expect(Math.max(...rgb(c))).toBeGreaterThanOrEqual(60);
     // a warm brown for the lines: red over green over blue, darker than the skin
     const warm = [...used].filter((c) => {

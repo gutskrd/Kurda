@@ -172,8 +172,12 @@ describe.skipIf(!DATABASE_URL)('minors are on no list a stranger can read (integ
       const country = (await call(stranger, 'GET', '/leaderboards/weekly_xp?scope=country&limit=100')).json();
       expect(mentions(country, minor.id)).toBe(false);
 
+      // only the minor sees themselves, in their own place ahead of the stranger
       const own = (await call(minor, 'GET', '/leaderboards/weekly_xp?limit=100')).json();
-      expect(mentions(own.top, minor.id)).toBe(false);
+      expect((own.top as Array<{ userId: string; rank: number }>).slice(0, 2).map((e) => [e.userId, e.rank])).toEqual([
+        [minor.id, 1],
+        [stranger.id, 2],
+      ]);
       expect(own.me).toMatchObject({ rank: 1, score: 90000000 });
     });
 

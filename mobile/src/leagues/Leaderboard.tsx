@@ -177,7 +177,7 @@ export function Leaderboard({
 }
 
 /**
- * What is ranked, a segmented control announced as one choice of three. It is all in view because switching is the
+ * What is ranked, a segmented control announced as one choice of two. It is all in view because switching is the
  * first thing anyone does here. A long name takes a second line on a narrow phone rather than being cut.
  */
 export function BoardSwitch({ value, onChange }: { value: RankKind; onChange: (next: RankKind) => void }): React.JSX.Element {

@@ -11,6 +11,7 @@ import {
   isWeeklyBoard,
   rankForScore,
   withRanks,
+  withSelf,
   type BoardScope,
   type BoardType,
   type RankedEntry,
@@ -110,7 +111,7 @@ export const COUNTRY_BOARD_TTL_SECONDS = 120;
  * 'everyone' and 'members' profiles, and a friends board leaves out profiles hidden even from friends. Anyone who
  * opted out of the leagues is on no board; an account that never chose (a teen in personal mode) still shows on a
  * friends board. Guests are on no board, having no profile and no friends. Every board keeps the same rules.
- * Whoever is left out still sees their own score and place.
+ * Whoever is left out still sees their own score, and themselves in their place on their own view.
  */
 function listedSql(alias: string, scope: 'public' | 'friends'): string {
   const shown =
@@ -140,7 +141,8 @@ interface FaceRow {
 /**
  * Leaderboards: this week's XP, all the XP ever earned, and the Zêr each person holds now. Redis sorted
  * sets give fast rank lookups for the global boards; Postgres is the source of truth, with a rebuild path and a pure
- * fallback without Redis. Shadow-flagged cheaters are excluded silently, still seeing a plausible own rank. The boards
+ * fallback without Redis. Shadow-flagged cheaters are excluded silently: like anyone a board leaves out, they see
+ * themselves in their own place on their own view of it (withSelf), and nobody else does. The boards
  * with no week take the same paths, scored from `users.xp` or `wallet_balances`, and are cut at BOARD_DEPTH.
  *
  * Friends and country boards come from Postgres, since a sorted set cannot be filtered by friendship or country
@@ -355,29 +357,36 @@ export class LeaderboardService {
     return { ...(await this.fromRows(type, scope, userId, rows, now, limit, offset)), country };
   }
 
-  /** Page a set of already-ranked rows and work out the caller's place in them. */
+  /**
+   * Page a set of already-ranked rows and work out the caller's place in them. A caller the rows leave out but who has
+   * a place is added to their own view (withSelf); the cached rows are left as they are.
+   */
   private async fromRows(
     type: BoardType,
     scope: BoardScope,
     userId: string | null,
-    all: ScoreRow[],
+    listed: ScoreRow[],
     now: Date,
     limit: number,
     offset: number,
   ): Promise<Board> {
+    // a signed-out reader has no place on the board to find
+    const myScore = userId === null ? null : await this.myScore(type, userId, now);
+    const floor = this.floorOf(type, listed);
+    // below the cut of a board that stops at its depth there is no place to give
+    const placed = myScore !== null && !(floor !== null && myScore < floor);
+    let all = listed;
+    if (placed && !listed.some((r) => r.userId === userId)) {
+      const own = await this.ownFace(userId!);
+      if (own) all = withSelf(listed, { userId: userId!, username: own.username, score: myScore! });
+    }
     const scores = all.map((r) => r.score);
     const page = all.slice(offset, offset + limit);
     // a page that opens in the middle of a tie gives its first row the tie's place
     const ranked = withRanks(page, offset, page.length > 0 ? rankForScore(scores, page[0]!.score) : offset + 1);
     const faces = await this.faces(page.map((r) => r.userId), userId !== null);
     const top = ranked.map((e) => ({ ...e, avatarUrl: faces.get(e.userId) ?? null }));
-    // a signed-out reader has no place on the board to find
-    const myScore = userId === null ? null : await this.myScore(type, userId, now);
-    const floor = this.floorOf(type, all);
-    const me =
-      myScore === null
-        ? null
-        : { score: myScore, rank: floor !== null && myScore < floor ? null : rankForScore(scores, myScore) };
+    const me = myScore === null ? null : { score: myScore, rank: placed ? rankForScore(scores, myScore) : null };
     return { type, scope, top, total: all.length, me, ...this.depthOf(type) };
   }
 
@@ -390,14 +399,32 @@ export class LeaderboardService {
   ): Promise<Board> {
     const key = keyFor(type, now);
     await this.ensureFresh(type, now);
+    // The caller's score and, for a board cut at its depth, where it stops, read first: where the caller stands decides
+    // which rows of the set a page of their own view holds.
+    const [myScore, floor] = await Promise.all([
+      userId === null ? null : this.myScore(type, userId, now),
+      userId !== null && !isWeeklyBoard(type) ? this.redis!.get(floorKeyFor(type, now)) : null,
+    ]);
+    // below the cut of a board that stops at its depth there is no place to give
+    const placed = myScore !== null && !(floor !== null && myScore < Number(floor));
 
     // The sorted set is read for up to five minutes after it was built, so each page is rechecked and anyone no longer
     // listable is removed from the set for good, keeping ranks without gaps.
     let ids: string[] = [];
     let scores: number[] = [];
     let names = new Map<string, { username: string; avatarUrl: string }>();
+    // Where a caller the set leaves out stands on their own view (withSelf), 0-based; rows after it move down one.
+    let self: number | null = null;
     for (let attempt = 0; attempt < 5; attempt++) {
-      const flat = await this.redis!.zrevrange(key, offset, offset + limit - 1, 'WITHSCORES');
+      self = null;
+      if (placed) {
+        const [held, higher] = await Promise.all([this.redis!.zscore(key, userId!), this.redis!.zcount(key, `(${myScore}`, '+inf')]);
+        if (held === null) self = higher;
+      }
+      const ownOnPage = self !== null && self >= offset && self < offset + limit;
+      const start = self !== null && self < offset ? offset - 1 : offset;
+      const count = ownOnPage ? limit - 1 : limit;
+      const flat = count > 0 ? await this.redis!.zrevrange(key, start, start + count - 1, 'WITHSCORES') : [];
       ids = [];
       scores = [];
       for (let i = 0; i < flat.length; i += 2) {
@@ -413,23 +440,26 @@ export class LeaderboardService {
       const who = names.get(id);
       return who === undefined ? [] : [{ userId: id, username: who.username, score: scores[i]! }];
     });
+    if (self !== null && self >= offset && self < offset + limit) {
+      const own = await this.ownFace(userId!);
+      if (own) {
+        rows.splice(Math.min(self - offset, rows.length), 0, { userId: userId!, username: own.username, score: myScore! });
+        names.set(userId!, own);
+      }
+    }
     // Read side by side: the place of the page's first row (a page that opens in the middle of a tie gives it the tie's
-    // place), the board's size, the caller's score, and for a board cut at its depth, where it stops.
-    const [above, total, myScore, floor] = await Promise.all([
+    // place), the board's size and the caller's place.
+    const [above, size, higher] = await Promise.all([
       rows.length > 0 ? this.redis!.zcount(key, `(${rows[0]!.score}`, '+inf') : null,
       this.redis!.zcard(key),
-      userId === null ? null : this.myScore(type, userId, now),
-      userId !== null && !isWeeklyBoard(type) ? this.redis!.get(floorKeyFor(type, now)) : null,
+      placed ? this.redis!.zcount(key, `(${myScore}`, '+inf') : null,
     ]);
-    const firstRank = above === null ? offset + 1 : above + 1;
+    // a caller added to their own view above the page's first row moves it down one
+    const lifted = self !== null && rows.length > 0 && myScore! > rows[0]!.score ? 1 : 0;
+    const firstRank = above === null ? offset + 1 : above + 1 + lifted;
     const top = withRanks(rows, offset, firstRank).map((e) => ({ ...e, avatarUrl: names.get(e.userId)?.avatarUrl ?? null }));
-
-    let me: Board['me'] = null;
-    if (myScore !== null) {
-      // below the cut of a board that stops at its depth there is no place to give
-      const below = floor !== null && myScore < Number(floor);
-      me = { score: myScore, rank: below ? null : (await this.redis!.zcount(key, `(${myScore}`, '+inf')) + 1 };
-    }
+    const total = size + (self === null ? 0 : 1);
+    const me = myScore === null ? null : { score: myScore, rank: higher === null ? null : higher + 1 };
     return { type, scope: 'global', top, total, me, ...this.depthOf(type) };
   }
 
@@ -474,6 +504,16 @@ export class LeaderboardService {
     );
     const sum = Number(row.rows[0]?.sum ?? 0);
     return sum > 0 ? sum : null;
+  }
+
+  /** The caller's own name and face, for the row of their own view that the shared board leaves out. */
+  private async ownFace(userId: string): Promise<{ username: string; avatarUrl: string } | null> {
+    const rows = await this.pool.query<FaceRow & { username: string }>(
+      `SELECT id, username, profile_photo_key, selected_avatar_key, profile_visibility FROM users WHERE id = $1`,
+      [userId],
+    );
+    const row = rows.rows[0];
+    return row ? { username: row.username, avatarUrl: this.avatarOf(row, true) } : null;
   }
 
   /**

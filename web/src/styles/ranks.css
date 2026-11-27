@@ -900,7 +900,9 @@
 }
 .rank-by {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* one equal column per option, however many the switch offers */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 4px;
   min-width: 0;
   margin: 0 0 12px;
@@ -931,13 +933,12 @@
   white-space: nowrap;
 }
 /*
- * On a phone each segment takes the room its own label needs rather than an equal third, with tighter padding, and a
- * label that still does not fit wraps rather than being cut. The floor is the longest word, so every label fits at
- * 360px in all nine languages.
+ * On a phone a segment never shrinks below its longest word, with tighter padding, and a label that still does not fit
+ * wraps rather than being cut, so every label fits at 360px in all nine languages.
  */
 @media (max-width: 560px) {
   .rank-by {
-    grid-template-columns: repeat(3, minmax(min-content, auto));
+    grid-auto-columns: minmax(min-content, 1fr);
   }
   .rank-by-btn {
     gap: 4px;

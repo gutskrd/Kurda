@@ -10,6 +10,8 @@ import {
   handStampFlip,
   handStampShapesAt,
   handStampSvg,
+  stampBox,
+  stampLook,
   stampOutline,
   stampShapeFor,
   stampSvg,
@@ -99,8 +101,8 @@ function drawHand(shapes: readonly SVGPathElement[], ms: number | null): void {
 /**
  * A game's stamp as a printed postage stamp: perforated paper (one for each scheme, the stylesheet showing one), a panel
  * in the game's deepest colour with a fine line in its own colour round it, the game's name across the top and its
- * cover. A stamp in the hand is flat card, as in the reference: no glow, so nothing darkens the fingers or spills past
- * them. The colours are the drawing's own (`HUES`), as the cover's are.
+ * cover. Its glow is drawn apart, behind the hand (`StampGlow`). The colours are the drawing's own (`HUES`), as the
+ * cover's are.
  */
 function StampFace({ game, name }: { game: GameEmblem; name: string }): React.JSX.Element {
   const art = useMemo(() => {
@@ -130,6 +132,27 @@ function StampFace({ game, name }: { game: GameEmblem; name: string }): React.JS
   );
 }
 
+/**
+ * A game's stamp's glow in the game's own colour, as the games page's stamp put forward shines, one for each scheme.
+ * It lies behind the whole hand and turns with the stamp, so the fingers cover it and it never lies over one.
+ */
+function StampGlow({ game }: { game: GameEmblem }): React.JSX.Element {
+  const art = useMemo(() => {
+    const glow = (scheme: 'light' | 'dark'): { inset: number; html: { __html: string } } => {
+      const look = stampLook(scheme, gameEmblemHue(game), true);
+      const { inset } = stampBox(C.w, C.h, look.strength, look.reach);
+      return { inset, html: { __html: stampSvg({ width: C.w, height: C.h, paper: 'none', glow: look.glow, strength: look.strength, reach: look.reach, ...stampShapeFor(C.w) }) } };
+    };
+    return { day: glow('light'), night: glow('dark') };
+  }, [game]);
+  return (
+    <>
+      <span className="fp-flip-paper fp-flip-paper--day" style={{ inset: -art.day.inset }} dangerouslySetInnerHTML={art.day.html} />
+      <span className="fp-flip-paper fp-flip-paper--night" style={{ inset: -art.night.inset }} dangerouslySetInnerHTML={art.night.html} />
+    </>
+  );
+}
+
 export function GameFlip(): React.JSX.Element {
   const t = useT();
   const [still] = useState(prefersReducedMotion);
@@ -143,6 +166,7 @@ export function GameFlip(): React.JSX.Element {
   const box = useRef<HTMLDivElement>(null);
   const art = useRef<HTMLDivElement>(null);
   const turn = useRef<HTMLSpanElement>(null);
+  const glowTurn = useRef<HTMLSpanElement>(null);
   const on = useOnScreen(box, 0.3);
   const step = (by: number): void => setIndex((i) => (i + by + GAMES.length) % GAMES.length);
 
@@ -168,6 +192,8 @@ export function GameFlip(): React.JSX.Element {
     }
     const shapes = Array.from(root.querySelectorAll<SVGPathElement>('path[data-shape]'));
     const turned = card.animate(FLIP, { duration: HAND_STAMP_FLIP.ms, easing: 'linear', fill: 'forwards' });
+    // the glow behind the hand turns with the stamp, on the same clock
+    const glowed = glowTurn.current?.animate(FLIP, { duration: HAND_STAMP_FLIP.ms, easing: 'linear', fill: 'forwards' });
     // the light on both faces, on the same clock as the turn
     const lit = Array.from(card.querySelectorAll('.fp-flip-face')).flatMap((face, f) => {
       const light = LIGHT[f === 0 ? 0 : 1];
@@ -198,6 +224,7 @@ export function GameFlip(): React.JSX.Element {
       cancelAnimationFrame(frame);
       edge.cancel();
       turned.cancel();
+      glowed?.cancel();
       for (const a of lit) a?.cancel();
       drawHand(shapes, null);
     };
@@ -224,7 +251,19 @@ export function GameFlip(): React.JSX.Element {
     >
       <div className="fp-flip-frame">
         <div className="fp-flip-art" ref={art} aria-hidden="true">
-          {/* The stamp sits between the hand's two layers, the fingers behind it and the thumb in front. */}
+          {/* The stamp's glow lies behind the whole hand; the stamp sits between its two layers, the fingers behind it and the thumb in front. */}
+          <span className="fp-flip-card" style={place}>
+            <span className="fp-flip-turn" ref={glowTurn} style={{ transform: `rotate(${C.turn}deg)` }}>
+              <span className="fp-flip-glow">
+                <StampGlow game={GAMES[index]!.id} />
+              </span>
+              {!still && (
+                <span className="fp-flip-glow is-back">
+                  <StampGlow game={next.id} />
+                </span>
+              )}
+            </span>
+          </span>
           <span className="fp-flip-layer" dangerouslySetInnerHTML={BACK} />
           <span className="fp-flip-card" style={place}>
             <span className="fp-flip-turn" ref={turn} style={{ transform: `rotate(${C.turn}deg)` }}>

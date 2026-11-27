@@ -107,10 +107,12 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
   });
 
   it('excludes a shadow-flagged cheater silently (they still see a plausible rank)', async () => {
+    // A is on nobody else’s board (above), but is not told: their own view has them first, with B after them
     const board = await boards.board('weekly_xp', ids.a!);
-    // A never appears on the public board…
-    expect(board.top.some((e) => e.userId === ids.a)).toBe(false);
-    // …but is not told: their own rank looks normal (top score → #1)
+    expect(board.top.slice(0, 2).map((e) => [e.userId, e.rank])).toEqual([
+      [ids.a, 1],
+      [ids.b, 2],
+    ]);
     expect(board.me).toMatchObject({ rank: 1, score: 199_999_999 });
   });
 
