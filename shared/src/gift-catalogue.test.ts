@@ -9,6 +9,7 @@ import {
   bagGiftFor,
   drawnGiftArtKey,
   drawnGifts,
+  giftForAdultsOnly,
   giftInSeason,
   giftMeaning,
   giftMeaningLocales,
@@ -21,13 +22,13 @@ import { APP_LOCALE_CODES } from './locales.js';
 import { MINOR_GIFT_MAX_PRICE } from './gift-safety.js';
 
 describe('the gift catalogue', () => {
-  it('holds the thirty-three gifts, cheapest first, from a cent to a thousand euros', () => {
-    expect(GIFTS).toHaveLength(33);
+  it('holds the thirty-four gifts, cheapest first, from a cent to a thousand euros', () => {
+    expect(GIFTS).toHaveLength(34);
     const prices = GIFTS.map((g) => g.price);
     expect([...prices].sort((a, b) => a - b)).toEqual(prices);
     expect(prices[0]).toBe(1);
     expect(prices.at(-1)).toBe(100_000);
-    expect(new Set(GIFTS.map((g) => g.id)).size).toBe(33);
+    expect(new Set(GIFTS.map((g) => g.id)).size).toBe(34);
   });
 
   it('keeps the prices and groups of the spec', () => {
@@ -40,6 +41,16 @@ describe('the gift catalogue', () => {
     expect(GIFT_GROUPS.at(-1)).toBe('legends');
     expect(GIFTS.filter((g) => g.limited).map((g) => g.id)).toEqual(['pet']);
     for (const g of GIFTS) expect(GIFT_GROUPS).toContain(g.group);
+  });
+
+  it('keeps the clove apple, a token of courtship, beside the apple and between adults only', () => {
+    expect(GIFTS.filter((g) => g.adultsOnly).map((g) => g.id)).toEqual(['sev-mexek']);
+    expect(giftOfSku('gift-sev-mexek')).toMatchObject({ name: 'Sêva mêxekî', group: 'warm', price: 100, earnedFree: false });
+    expect(giftForAdultsOnly('gift-sev-mexek')).toBe(true);
+    expect(giftForAdultsOnly('gift-sev')).toBe(false);
+    expect(giftForAdultsOnly('bg-made-bihar')).toBe(false);
+    const warm = giftShelves(GIFTS.map((g) => ({ sku: giftSku(g.id), price: g.price }))).find((s) => s.group === 'warm')!;
+    expect(warm.items.map((i) => i.sku)).toEqual(['gift-cay', 'gift-qehwe', 'gift-sev', 'gift-sev-mexek', 'gift-semawer']);
   });
 
   it('earns only the four smallest gifts free, each small enough for anyone under 18 to give', () => {
@@ -58,7 +69,7 @@ describe('the gift catalogue', () => {
   it('offers each gift once its picture is painted, with the picture it is drawn as', () => {
     for (const g of GIFTS) expect(drawnGiftArtKey(giftSku(g.id)), g.id).toBe(isGiftArtId(g.id) ? giftArtKey(g.id) : null);
     expect(drawnGifts().map((g) => g.id)).toEqual(GIFTS.filter((g) => isGiftArtId(g.id)).map((g) => g.id));
-    // all thirty-three are painted
+    // all thirty-four are painted
     expect(drawnGifts()).toHaveLength(GIFTS.length);
     expect(drawnGiftArtKey('sticker-lale')).toBeNull();
     expect(drawnGiftArtKey('gift-unknown')).toBeNull();

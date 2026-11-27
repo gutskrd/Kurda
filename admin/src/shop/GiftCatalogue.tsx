@@ -2,7 +2,7 @@
  * The gifts (shared gift-catalogue.ts) as cards with their drawn pictures, each with its Kurmancî name and what it
  * means, its shelf, its price with what that is worth, and its sale state. A gift whose picture is not drawn yet is
  * listed and says it is not offered, since the apps offer only drawn gifts; a seasonal one says its months, as the
- * server offers it only then, every year (UTC). Prices change through the item form, where one of 500 Zêr or more goes
+ * server offers it only then, every year (UTC), and a token of courtship that it goes only between adults. Prices change through the item form, where one of 500 Zêr or more goes
  * to Approvals as for any item; gifts are never deleted, since one may wait in a bag.
  */
 import { useMemo } from 'react';
@@ -73,6 +73,7 @@ export function GiftCatalogue({
                   <span>{formatZerValue(item.price, 'en')}</span>
                   {def?.earnedFree && <Badge tone="info">Earned in the bag</Badge>}
                   {def?.months && <Badge tone="info">{seasonText(def.months)}</Badge>}
+                  {def?.adultsOnly && <Badge tone="info">Adults only</Badge>}
                   {!src && <Badge tone="warn">Not offered</Badge>}
                 </div>
               </div>

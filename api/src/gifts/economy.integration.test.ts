@@ -130,9 +130,9 @@ describe.skipIf(!DATABASE_URL)('the gift economy (integration)', () => {
   });
 
   describe('the gifts on sale', () => {
-    it('are the thirty-three gifts at their prices, the Newroz fire for March only, and the stickers retired', async () => {
+    it('are the thirty-four gifts at their prices, the Newroz fire for March only, and the stickers retired', async () => {
       const rows = await pool.query<{ sku: string; name: string; price: number; category: string; available_to: Date | null; active: boolean }>(
-        `SELECT sku, name, price, category, available_to, active FROM shop_items WHERE category = 'gift' ORDER BY display_order`,
+        `SELECT sku, name, price, category, available_to, active FROM shop_items WHERE category = 'gift' ORDER BY price, display_order`,
       );
       expect(rows.rows.map((r) => [r.sku, r.name, r.price])).toEqual(GIFTS.map((g) => [giftSku(g.id), g.name, g.price]));
       expect(rows.rows.every((r) => r.active)).toBe(true);

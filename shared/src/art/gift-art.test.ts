@@ -87,8 +87,9 @@ describe('the gifts’ pictures', () => {
   });
 
   it('stays light enough to inline a chat of them', () => {
-    // the dearest gifts are shown as their PNGs, so Kawa's Damascus and the galaxy may carry more paint, the traced Şahmaran painting more still
-    const budget: Partial<Record<GiftArtId, number>> = { kadiz: 160, kawa: 160, sahmaran: 300 };
+    // the gifts are shown as their PNGs, so Kawa's Damascus, the galaxy and the clove apple's cloves may carry more paint,
+    // the traced Şahmaran painting more still
+    const budget: Partial<Record<GiftArtId, number>> = { kadiz: 160, kawa: 160, sahmaran: 300, 'sev-mexek': 80 };
     for (const id of GIFT_ART_IDS) expect(giftArtSvg({ id }).length, id).toBeLessThan((budget[id] ?? 48) * 1024);
   });
 
@@ -142,7 +143,7 @@ describe('the gifts’ files', () => {
       'def', 'deste-gul', 'sterk', 'kelek', 'saz', 'ask', 'keskesor', 'pezkovi', 'pet', 'hesp', 'kon', 'gemi', 'kosk', 'keleh', 'roj',
     ];
     expect(GIFT_ART_IDS.slice(0, shipped.length)).toEqual(shipped);
-    expect(GIFT_ART_IDS.slice(shipped.length)).toEqual(['kawa', 'sahmaran']);
+    expect(GIFT_ART_IDS.slice(shipped.length)).toEqual(['kawa', 'sahmaran', 'sev-mexek']);
   });
 
   it('ships one square PNG with its transparency for every gift, within the icons’ budget, and nothing else', async () => {

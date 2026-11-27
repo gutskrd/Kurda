@@ -781,6 +781,23 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       expect((await giftDm(kid, wes, POWER)).json().sent).toEqual([wes.id]);
     });
 
+    it('never offers or lets go the clove apple, a token of courtship, where someone is under 18', async () => {
+      const CLOVE = giftSku('sev-mexek');
+      const offered = async (from: Account, to: Account) =>
+        ((await call('GET', `/gifts/catalog?to=${to.id}`, from)).json().items as { sku: string }[]).map((i) => i.sku);
+      expect(await offered(wes, kid)).not.toContain(CLOVE);
+      expect(await offered(kid, wes)).not.toContain(CLOVE);
+      const before = await zer(wes);
+      expect((await giftDm(wes, kid, CLOVE)).json()).toMatchObject({ sent: [], skipped: [{ userId: kid.id, reason: 'not_allowed' }] });
+      expect(await zer(wes)).toBe(before);
+      expect((await giftDm(kid, wes, CLOVE)).json().code).toBe('ITEM_UNAVAILABLE');
+      // between two adults it is on the shelf and goes
+      const una = await signUp('una');
+      await befriend(wes, una, 25);
+      expect(await offered(wes, una)).toContain(CLOVE);
+      expect((await giftDm(wes, una, CLOVE)).json().sent).toEqual([una.id]);
+    });
+
     it('counts an account whose age is not on record as not known to be an adult', async () => {
       const xan = await signUp('xan');
       const yul = await signUp('yul');

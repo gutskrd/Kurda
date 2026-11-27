@@ -6,6 +6,7 @@ import {
   GIFT_CATEGORY,
   GIFT_MIN_FRIENDSHIP_HOURS,
   MAX_GIFT_RECIPIENTS,
+  giftForAdultsOnly,
   giftTierFor,
   giftsPerFriendCap,
   giftsReceivedCap,
@@ -359,6 +360,15 @@ export class GiftService {
       // who is under 18 or of unknown age, which keeps the day's caps narrow
       const young = await notAdults(client, [fromId, ...candidates]);
       const senderAdult = !young.has(fromId);
+
+      // a token of courtship goes only from one known adult to another
+      if (giftForAdultsOnly(item.sku)) {
+        if (!senderAdult) throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
+        candidates = candidates.filter((to) => {
+          if (young.has(to)) skip(to, 'not_allowed');
+          return !young.has(to);
+        });
+      }
 
       // what each recipient has been given in the last 24 hours, by anyone
       if (candidates.length > 0) {
@@ -829,7 +839,14 @@ export class GiftService {
       }
     }
 
-    const live = (await this.deps.shop.liveItems(now)).filter((i) => i.price > 0 && i.category === GIFT_CATEGORY && giftOnOffer(i, now));
+    // One recipient: whether the rules let a gift go yet, so the picker can say so before anything is chosen. When they
+    // do not, the limits are the sender's own, so nobody learns from them how old someone they cannot give to is.
+    const hold = ids.length === 1 ? await giftHold(this.pool, fromId, ids[0]!, onPost, GIFT_MIN_FRIENDSHIP_HOURS) : null;
+    // tokens of courtship only where giver and receivers are all known adults, decided on the same ages as the limits
+    const adults = (await notAdults(this.pool, [lowerId(fromId), ...(hold ? [] : ids)])).size === 0;
+    const live = (await this.deps.shop.liveItems(now)).filter(
+      (i) => i.price > 0 && i.category === GIFT_CATEGORY && giftOnOffer(i, now) && (adults || !giftForAdultsOnly(i.sku)),
+    );
     const items = live
       .map((i) => ({ ...i, assetUrl: cosmeticAssetUrl(i.category, i.assetKey, this.publicUrl, i.sku) }))
       .sort((a, b) => a.price - b.price || a.displayOrder - b.displayOrder);
@@ -840,9 +857,6 @@ export class GiftService {
     );
     const owners = new Map<string, string[]>();
     for (const r of owned.rows) owners.set(r.sku, [...(owners.get(r.sku) ?? []), r.user_id]);
-    // One recipient: whether the rules let a gift go yet, so the picker can say so before anything is chosen. When they
-    // do not, the limits are the sender's own, so nobody learns from them how old someone they cannot give to is.
-    const hold = ids.length === 1 ? await giftHold(this.pool, fromId, ids[0]!, onPost, GIFT_MIN_FRIENDSHIP_HOURS) : null;
     const bounds = await sendBounds(this.pool, fromId, hold ? [] : ids, now);
     const dayLeft = hold ? [] : await giftsLeftToday(this.pool, lowerId(fromId), ids);
 
