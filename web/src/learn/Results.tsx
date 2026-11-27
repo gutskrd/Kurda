@@ -398,7 +398,7 @@ export function Results({
                 )}
               </ul>
             )}
-            {skipped > 0 && <p className="lesson-results-note">{t('lesson.results.skipped', { count: skipped })}</p>}
+            {skipped > 0 && <p className="lesson-results-note">{skipped === 1 ? t('lesson.results.skipped.one') : t('lesson.results.skipped', { count: number(skipped) })}</p>}
 
             {mistakes.length === 0 ? (
               <p className="lesson-results-note">{t('lesson.results.noMistakes')}</p>

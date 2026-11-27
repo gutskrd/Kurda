@@ -350,7 +350,7 @@ describe('listening', () => {
     expect(sent('answers').map((c) => (c.body as { exerciseId: string }).exerciseId)).toEqual(['t']);
     expect(sent('retry')).toHaveLength(0);
     // Not a mistake, and out of the score: the results say so beside it.
-    expect(screen.getByText('Skipped this time: 1. Skipped exercises don’t count towards your score.')).toBeInTheDocument();
+    expect(screen.getByText('You skipped one exercise this time. It doesn’t count towards your score.')).toBeInTheDocument();
     expect(screen.getByText('No mistakes this time.')).toBeInTheDocument();
   });
 
