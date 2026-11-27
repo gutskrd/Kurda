@@ -4,6 +4,7 @@
  * (gift-art-sahmaran.ts) and gone over by hand, its years only a light patina at its edges, in its worn wooden frame.
  */
 import { n2, type Drawing, type Pt } from './svg.js';
+import { layer } from './gift-canvas.js';
 import { SAHMARAN_DABS, SAHMARAN_EDGES, SAHMARAN_FACE_GROUND, SAHMARAN_INKS, SAHMARAN_PATHS, type SahmaranInk } from './gift-art-sahmaran.js';
 import { along, brush, ellipse, floor, FLOOR, lerp, outline, paint, polygon, roundish, runs, streaks, touch, tremble, within, type Rnd, type Tone } from './gift-paint.js';
 
@@ -13,6 +14,8 @@ import { along, brush, ellipse, floor, FLOOR, lerp, outline, paint, polygon, rou
 const BLUED = { deep: '#0c0f15', dark: '#161b25', base: '#1f2632', top: '#2c3442', silver: '#e3e9f0', dim: '#7d8798', edge: '#f7f9fc' };
 const EMBER = ['#b8321e', '#ec7a2c', '#f7b63a', '#fff0c0'];
 const FIRELIGHT = '#ef8a44';
+/** The hammer is drawn square to its own head and laid on the diagonal. */
+const HAMMER = 'translate(69 41) rotate(44) scale(0.98)';
 
 /**
  * The folds of one bar of Damascus steel: a field whose level lines are its silver, shared by every face cut from the
@@ -89,7 +92,7 @@ export function kawa(dr: Drawing, rnd: Rnd): void {
     brush([[92.4, 72], [92.9, 84], [92.6, 98]], 0.4, rnd, { count: 8 }), '#8a8076', 0.9);
 
   // the hammer, drawn square to its own head and laid on the diagonal: its head on the stone, the pommel on the ground
-  dr.add('<g transform="translate(69 41) rotate(44) scale(0.98)">');
+  dr.add(`<g transform="${HAMMER}">`);
   // the head: a block whose long edges are chamfered, so its ends are octagons; `D` is how its depth falls
   const D: Pt = [5.6, -5.6];
   const C = 3.8;
@@ -202,13 +205,32 @@ export function kawa(dr: Drawing, rnd: Rnd): void {
     hot += ellipse(x - r * 0.15, y - r * 0.2, r * 0.75, r * 0.55);
     hearts += ellipse(x - r * 0.2, y - r * 0.3, r * 0.35, r * 0.26);
   }
-  paint(dr, glow, EMBER[1]!, 0.16);
-  paint(dr, coals, EMBER[0]!);
-  paint(dr, hot, EMBER[2]!);
-  paint(dr, hearts, EMBER[3]!);
-  let sparks = '';
-  for (let i = 0; i < 6; i++) sparks += touch(98 + rnd() * 14, 82 + rnd() * 14, 1.3 + rnd(), 0.5, -70 - rnd() * 40);
-  paint(dr, sparks, EMBER[2]!);
+  // the sparks are drawn where they leave the embers, each a layer that rises from there
+  const sparks: string[] = [];
+  for (let i = 0; i < 6; i++) sparks.push(touch(99.4 + i * 1.6 + rnd() * 1.2, 99.6 - rnd() * 0.8, 2 + rnd() * 1.4, 0.75, -70 - rnd() * 40));
+  const heat = brush(glowLine, 0.7, rnd, { start: 0.3, end: 0.9, peak: 0.7, count: 10 });
+  const inHammer = (draw: () => void): void => {
+    dr.add(`<g transform="${HAMMER}">`);
+    draw();
+    dr.add('</g>');
+  };
+
+  // the fire breathing (gift-loop-lore.ts): its light coming and going on the hammer's foot and the stone's flank, the
+  // embers glowing brighter and dimmer, sparks rising off them, and now and then the light running along the hammer's edge
+  layer(dr, 'heat', () => inHammer(() => paint(dr, heat, '#ffb060')));
+  layer(dr, 'flank', () => within(dr, polygon(flank), () => paint(dr, polygon([[93, 79], [102, 75], [102, 102], [92, 102]]), FIRELIGHT, 0.3)));
+  layer(dr, 'glow', () => paint(dr, glow, EMBER[1]!, 0.16));
+  layer(dr, 'coals', () => paint(dr, coals, EMBER[0]!));
+  layer(dr, 'hot', () => {
+    paint(dr, hot, EMBER[2]!);
+    paint(dr, hearts, EMBER[3]!);
+  });
+  sparks.forEach((d, i) => layer(dr, `spark${i + 1}`, () => paint(dr, d, '#f39a30')));
+  layer(dr, 'glint', () => inHammer(() => {
+    const at = P(-HX + 3.6, -HY + C * 0.55, cf * 0.45);
+    paint(dr, ellipse(...at, 2.2, 1.6), '#ffffff', 0.4);
+    paint(dr, touch(...at, 11, 1.1, 0) + touch(...at, 4.6, 0.9, 90), '#ffffff');
+  }));
 }
 
 // ────────────────────────────────────────────────────────────────── şahmaran
@@ -322,15 +344,65 @@ export function sahmaran(dr: Drawing, rnd: Rnd): void {
   paint(dr, polygon([[X0 - 0.7, Y0 - 0.7], [X0 + W + 0.7, Y0 - 0.7], [X0 + W + 0.7, Y0 + H + 0.7], [X0 - 0.7, Y0 + H + 0.7]]), WOOD.shade, 0.55);
   const picture = tremble(runs([[X0, Y0], [X0 + W, Y0], [X0 + W, Y0 + H], [X0, Y0 + H]], 6), rnd, 0.1);
   paint(dr, outline(picture), PAPER);
-  within(dr, outline(picture), () => {
+  const inPicture = (draw: () => void): void => within(dr, outline(picture), () => {
     dr.add(`<g transform="translate(${X0} ${Y0}) scale(${(W / PW).toFixed(7)})">`);
-    agedPaper(dr, rnd);
-    painting(dr, rnd);
-    years(dr, rnd);
-    face(dr, rnd);
+    draw();
     dr.add('</g>');
   });
+  let held: Held | null = null;
+  inPicture(() => {
+    agedPaper(dr, rnd);
+    held = painting(dr, rnd);
+    years(dr, rnd);
+    face(dr, rnd);
+  });
+  living(dr, rnd, held!, inPicture);
 }
+
+/** What the painting holds back from its paint, to be laid in the round's layers: the gold's shift, the tongue, the chains. */
+interface Held {
+  gold: string;
+  tongue: string;
+  chains: ReadonlyArray<{ chain: string; beads: string; rosette: string }>;
+}
+
+/**
+ * What moves in her picture (gift-loop-lore.ts), each a layer that opens the picture's clip and measure for itself: a
+ * gleam crossing the gold of her crown, the serpent's tongue flicking, the beads swaying from the ram's horns, and her
+ * eyelids for a blink.
+ */
+function living(dr: Drawing, rnd: Rnd, held: Held, inPicture: (draw: () => void) => void): void {
+  for (let k = 0; k < CROWN_GLEAM; k++) {
+    const x = 281 + k * 13;
+    layer(dr, `crown${k + 1}`, () => inPicture(() => {
+      dr.add(`<g transform="${held.gold}">`);
+      inInk(dr, 'gold', () => paint(dr, polygon(ats([[x - 7 + 18, 0], [x + 7 + 18, 0], [x + 7 - 18, 104], [x - 7 - 18, 104]])), '#fff4cf', 0.8));
+      dr.add('</g>');
+    }));
+  }
+  layer(dr, 'tongue', () => inPicture(() => paint(dr, held.tongue, '#b8505a')));
+  held.chains.forEach(({ chain, beads, rosette }, i) => layer(dr, `chain${i + 1}`, () => inPicture(() => {
+    paint(dr, chain, '#7a5a26');
+    paint(dr, beads, '#d6a340');
+    paint(dr, rosette, '#c98680');
+  })));
+  for (const [name, edge] of [['lidHalf', 0.5], ['lidShut', -1.9]] as const) layer(dr, name, () => inPicture(() => lids(dr, rnd, edge)));
+}
+
+/** How many steps the gleam takes across her crown. */
+export const CROWN_GLEAM = 5;
+
+/** Runs `draw` with all it paints kept inside one of the painting's inks, holes and all. */
+function inInk(dr: Drawing, name: SahmaranInk, draw: () => void): void {
+  let known = inkClips.get(dr);
+  if (!known) inkClips.set(dr, (known = new Map()));
+  let id = known.get(name);
+  if (!id) known.set(name, (id = dr.clip(SAHMARAN_PATHS[name], true)));
+  dr.add(`<g clip-path="url(#${id})">`);
+  draw();
+  dr.add('</g>');
+}
+const inkClips = new WeakMap<Drawing, Map<SahmaranInk, string>>();
 
 /** The paper: clean cream with a little life in it, and only at its edges and corners the patina of its years. */
 function agedPaper(dr: Drawing, rnd: Rnd): void {
@@ -353,9 +425,11 @@ function agedPaper(dr: Drawing, rnd: Rnd): void {
 }
 
 /** The painting itself: its traced inks, gone over by hand with the brush. */
-function painting(dr: Drawing, rnd: Rnd): void {
+function painting(dr: Drawing, rnd: Rnd): Held {
   const black = SAHMARAN_PATHS.black;
   paintHoles(dr, black, INK.black);
+  // the black's few specks under the serpent's tongue are painted out, as the tongue bares them when it flicks back
+  paint(dr, UNDER_TONGUE.map((i) => ellipse(SAHMARAN_DABS.khaki[i * 5]!, SAHMARAN_DABS.khaki[i * 5 + 1]!, 3.2, 3)).join(''), PAPER);
   // the black laid on in long strokes down the body and the hair, and beading where the brush lifted
   const pools = { d: '' };
   inBlack(dr, () => {
@@ -381,15 +455,18 @@ function painting(dr: Drawing, rnd: Rnd): void {
     paint(dr, brush([at([84, 58]), at([120, 48]), at([160, 42])], 3.4, rnd, { start: 0.2, end: 0.2, count: 10 }), '#5c5244', 0.7);
   });
   // the colours, each laid over the black a hair off true, as a hand fills a drawn shape
+  let gold = '';
   for (const name of SAHMARAN_INKS) {
     if (name === 'black') continue;
     const loose = name !== 'skin' && name !== 'white';
-    if (loose) dr.add(`<g transform="translate(${n1((rnd() - 0.5) * 1.6)} ${n1((rnd() - 0.5) * 1.6)})">`);
+    const shift = loose ? `translate(${n1((rnd() - 0.5) * 1.6)} ${n1((rnd() - 0.5) * 1.6)})` : '';
+    if (name === 'gold') gold = shift;
+    if (loose) dr.add(`<g transform="${shift}">`);
     paintHoles(dr, SAHMARAN_PATHS[name], INK[name]);
     if (loose) dr.add('</g>');
   }
   scales(dr, rnd);
-  touches(dr, rnd);
+  const { tongue, chains } = touches(dr, rnd);
   // the black's edge gone over with the brush, swelling and lifting, and here and there run dry so the paper shows
   let rim = '';
   let dry = '';
@@ -413,7 +490,11 @@ function painting(dr: Drawing, rnd: Rnd): void {
   }
   paint(dr, rim, INK.black);
   inBlack(dr, () => paint(dr, dry, PAPER, 0.55));
+  return { gold, tongue, chains };
 }
+
+/** The khaki dabs of the trace that lie under the serpent's tongue, by their place in the list. */
+const UNDER_TONGUE: readonly number[] = [2, 3, 5];
 
 /** The scales of her body: a dab each, never quite where the drawing put it, most with a lick of light on the upper side. */
 function scales(dr: Drawing, rnd: Rnd): void {
@@ -428,10 +509,14 @@ function scales(dr: Drawing, rnd: Rnd): void {
       const [x, y, l, w, a] = [dabs[i]!, dabs[i + 1]!, dabs[i + 2]!, dabs[i + 3]!, dabs[i + 4]!];
       const cx = x + (rnd() - 0.5) * 1.4;
       const cy = y + (rnd() - 0.5) * 1.4;
-      add(paints[Math.floor(rnd() * paints.length)]!, touch(cx, cy, l * 1.1, w * 1.12, a + (rnd() - 0.5) * 16));
+      const tone = paints[Math.floor(rnd() * paints.length)]!;
+      const dab = touch(cx, cy, l * 1.1, w * 1.12, a + (rnd() - 0.5) * 16);
+      // the few dabs the serpent's tongue lies over are left out, as it would bare them when it flicks back
+      const bare = name === 'khaki' && UNDER_TONGUE.includes(i / 5);
+      if (!bare) add(tone, dab);
       if (name === 'umber' || l < 6) continue;
-      if (rnd() < 0.5) lights += touch(cx - w * 0.22, cy - w * 0.26, l * 0.5, w * 0.3, a - 12);
-      if (rnd() < 0.55) eyes += ellipse(cx + 0.4, cy + 0.4, w * 0.2, w * 0.17);
+      if (rnd() < 0.5 && !bare) lights += touch(cx - w * 0.22, cy - w * 0.26, l * 0.5, w * 0.3, a - 12);
+      if (rnd() < 0.55 && !bare) eyes += ellipse(cx + 0.4, cy + 0.4, w * 0.2, w * 0.17);
     }
   }
   for (const [tone, d] of tones) paint(dr, d, tone);
@@ -440,25 +525,17 @@ function scales(dr: Drawing, rnd: Rnd): void {
 }
 
 /** What the trace cannot carry: her tongue, the chains of beads, her eyes and lips gone over finely, and the painted lights. */
-function touches(dr: Drawing, rnd: Rnd): void {
-  const line = (pts: Measured, w: number, colour: string, opacity = 1, shape = { start: 0.3, end: 0.2, peak: 0.4 }): void =>
-    paint(dr, brush(pts.map(at), w, rnd, { ...shape, count: Math.max(8, pts.length * 4) }), colour, opacity);
-  // the serpent's forked tongue, reaching for her
-  line([[164, 62], [182, 57], [197, 53]], 3, '#b8505a', 1, { start: 1, end: 0.8, peak: 0.4 });
-  line([[196, 53], [210, 46]], 2, '#b8505a');
-  line([[196, 53], [209, 58]], 2, '#b8505a');
-  // the beads hanging from the ram's horns, and the rosettes at their ends
-  let chains = '';
-  let beads = '';
-  let rosettes = '';
-  for (const [x0, y0, x1, y1] of [[240, 90, 240, 116], [256, 96, 255, 134], [366, 95, 366, 114], [350, 100, 348, 134]] as const) {
-    chains += brush([at([x0, y0]), at([x1, y1])], 1.2, rnd, { start: 1, end: 1, count: 4 });
+function touches(dr: Drawing, rnd: Rnd): Pick<Held, 'tongue' | 'chains'> {
+  const stroke = (pts: Measured, w: number, shape = { start: 0.3, end: 0.2, peak: 0.4 }): string => brush(pts.map(at), w, rnd, { ...shape, count: Math.max(8, pts.length * 4) });
+  // the serpent's forked tongue, reaching for her, and the beads hanging from the ram's horns with rosettes at their
+  // ends: both laid later in layers of their own, so they can move
+  const tongue = stroke([[164, 62], [182, 57], [197, 53]], 3, { start: 1, end: 0.8, peak: 0.4 }) + stroke([[196, 53], [210, 46]], 2) + stroke([[196, 53], [209, 58]], 2);
+  const chains = SAHMARAN_CHAINS.map(([x0, y0, x1, y1]) => {
+    const chain = brush([at([x0, y0]), at([x1, y1])], 1.2, rnd, { start: 1, end: 1, count: 4 });
+    let beads = '';
     for (let k = 0.2; k < 1; k += 0.2) beads += ellipse(...at([x0 + (x1 - x0) * k, y0 + (y1 - y0) * k]), 1.7, 1.7);
-    rosettes += outline(roundish(...at([x1, y1 + 4]), 4.2, 4.2, rnd, { count: 8, tremor: 0.5 }));
-  }
-  paint(dr, chains, '#7a5a26');
-  paint(dr, beads, '#d6a340');
-  paint(dr, rosettes, '#c98680');
+    return { chain, beads, rosette: outline(roundish(...at([x1, y1 + 4]), 4.2, 4.2, rnd, { count: 8, tremor: 0.5 })) };
+  });
   // the lights, painted on: a pale gold along the crowns and the cape's gold, a cool green along the ram's horns
   let gold = '';
   for (const pts of [[[52, 34], [70, 24], [84, 12]], [[112, 20], [130, 13], [146, 5]], [[284, 76], [286, 56], [288, 44]], [[324, 76], [325, 58], [327, 44]],
@@ -480,6 +557,63 @@ function touches(dr: Drawing, rnd: Rnd): void {
   const lick = { start: 0.3, end: 0.1, count: 12 };
   paint(dr, brush(ats([[256, 62], [240, 60], [230, 68], [234, 80]]), 2.6, rnd, lick) +
     brush(ats([[352, 66], [368, 63], [380, 72], [378, 86]]), 2.6, rnd, lick), '#d8e08a', 0.85);
+  return { tongue, chains };
+}
+
+/** The bead chains hanging from the ram's horns, top to foot, measured on the photograph. */
+export const SAHMARAN_CHAINS: ReadonlyArray<readonly [number, number, number, number]> = [[240, 90, 240, 116], [256, 96, 255, 134], [366, 95, 366, 114], [350, 100, 348, 134]];
+
+/** Where her face is measured from, in the photograph's pixels: the middle of her face across. */
+const FACE_X = 304.3;
+
+/**
+ * One of her eyes (-1 her right as we see it, 1 her left): its middle, its corners, and the lid lines between them, each
+ * lifted `lift` pixels at its fullest, from `from` to `to` of the way from the inner corner to the outer.
+ */
+function eye(side: -1 | 1): { ex: number; ey: number; outer: Pt; arc: (lift: number | ((t: number) => number), steps?: number, from?: number, to?: number) => Pt[] } {
+  const ex = FACE_X + side * 11.8;
+  const ey = 113.2;
+  const inner: Pt = [ex - side * 7, ey + 0.3];
+  const outer: Pt = [ex + side * 7.5, ey - 0.6];
+  const arc = (lift: number | ((t: number) => number), steps = 12, from = 0, to = 1): Pt[] => {
+    const pts: Pt[] = [];
+    for (let k = 0; k <= steps; k++) {
+      const t = from + ((to - from) * k) / steps;
+      const x = inner[0] + (outer[0] - inner[0]) * t;
+      const y = inner[1] + (outer[1] - inner[1]) * t - (typeof lift === 'number' ? lift : lift(t)) * Math.sin(Math.PI * t ** 0.92);
+      pts.push(at([x, y]));
+    }
+    return pts;
+  };
+  return { ex, ey, outer, arc };
+}
+
+/**
+ * Both her eyelids come down as far as `edge` (a lid line's lift): skin over the eye and its upper kohl and lashes, the
+ * crease's shadow on it, and the kohl and lashes now along the lid's edge, the lashes turned down once the eye is shut.
+ */
+function lids(dr: Drawing, rnd: Rnd, edge: number): void {
+  for (const side of [-1, 1] as const) {
+    const { outer, arc } = eye(side);
+    // the lid reaches up over the lashes toward the outer corner, and stops short of the brow in the middle
+    const top = (t: number): number => {
+      const u = Math.max(0, Math.min(1, (t - 0.5) / 0.45));
+      return 4.3 + 4.5 * u * u * (3 - 2 * u);
+    };
+    paint(dr, outline([...arc(top, 16), ...arc(edge, 16).reverse()]), '#f2e6d6');
+    paint(dr, outline(arc(4.6, 12, 0.08, 0.95)), '#d9b6a4', 0.4);
+    const wing = at([outer[0] + side * 2.4, outer[1] - 1.1 - Math.max(0, edge) * 0.1]);
+    paint(dr, brush([...arc(edge, 12, 0.02, 1), wing], edge > 0 ? 3 : 2.4, rnd, { start: 0.3, end: 0.02, peak: 0.8, count: 24 }), '#120c0c');
+    let lashes = '';
+    const line = arc(edge, 12);
+    const down = edge > 0 ? 0.5 : 1;
+    for (const k of [7, 8, 9, 10, 11]) {
+      const [x, y] = line[k]!;
+      const lean = (k - 6) * 0.22;
+      lashes += brush([[x, y], [x + side * (0.8 + lean), y + down * 1.2], [x + side * (1.5 + lean * 1.4), y + down * 1.8]], 0.6, rnd, { start: 1, end: 0.05, peak: 0.1, count: 5 });
+    }
+    paint(dr, lashes, '#120c0c');
+  }
 }
 
 /**
@@ -490,7 +624,7 @@ function touches(dr: Drawing, rnd: Rnd): void {
  * drops and the heart, laid on as measured there.
  */
 function face(dr: Drawing, rnd: Rnd): void {
-  const CX = 304.3;
+  const CX = FACE_X;
   const TOP = 101;
   const MID = 121.5;
   const CHIN = 145.5;
@@ -559,20 +693,7 @@ function face(dr: Drawing, rnd: Rnd): void {
   // wings out past the corner, a few lashes, large irises (the left violet-brown, the right grey-blue) with dark rims,
   // black pupils and the same catch of light in each, bright whites either side, and a warm shadow in the lid's crease
   for (const side of [-1, 1] as const) {
-    const ex = CX + side * 11.8;
-    const ey = 113.2;
-    const inner: Pt = [ex - side * 7, ey + 0.3];
-    const outer: Pt = [ex + side * 7.5, ey - 0.6];
-    const arc = (lift: number, steps = 12, from = 0, to = 1): Pt[] => {
-      const pts: Pt[] = [];
-      for (let k = 0; k <= steps; k++) {
-        const t = from + ((to - from) * k) / steps;
-        const x = inner[0] + (outer[0] - inner[0]) * t;
-        const y = inner[1] + (outer[1] - inner[1]) * t - lift * Math.sin(Math.PI * t ** 0.92);
-        pts.push(P(x, y));
-      }
-      return pts;
-    };
+    const { ex, ey, outer, arc } = eye(side);
     const upper = arc(3.1);
     const lower = arc(-2.3);
     const almond = [...upper, ...lower.slice(1, -1).reverse()];
