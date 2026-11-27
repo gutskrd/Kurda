@@ -162,3 +162,28 @@ export function dry(cv, rnd, { along = 'x', keep = 1.9, tear = 2.4, streak = 0.4
   );
   return `url(#${f})`;
 }
+
+/**
+ * A painter's hand for one painted picture, in `ink` for its line: `lay` presses a colour in with the paper's tooth
+ * showing; `wash` lays a soft area of shade or light, blended at its edges; `brush` drags a dry-brush stroke along
+ * points, streaked the way it runs ('x' across, 'y' down); `line` draws the pencil line, swelling where the hand presses
+ * and thinning as it lifts, open at its ends.
+ */
+export function painter(rnd, ink) {
+  const boxOf = (d, pad) => {
+    const xy = [...d.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map((m) => [+m[1], +m[2]]);
+    return [Math.min(...xy.map((p) => p[0])) - pad, Math.min(...xy.map((p) => p[1])) - pad, Math.max(...xy.map((p) => p[0])) + pad, Math.max(...xy.map((p) => p[1])) + pad];
+  };
+  return {
+    lay: (cv, d, fill, keep = 2.6) => cv.add(`<path d="${d}" fill="${fill}" filter="${crayon(cv, rnd, { keep, tear: 2.2, grain: 0.9 })}"/>`),
+    wash: (cv, d, colour, soft, opacity) => {
+      const [x0, y0, x1, y1] = boxOf(d, soft * 3);
+      const room = [x0, y0, x1 - x0, y1 - y0];
+      cv.add(`<g opacity="${opacity}" filter="${crayon(cv, rnd, { keep: 1.7, tear: 0, grain: 1.1, room })}"><path d="${d}" fill="${colour}" filter="${softly(cv, soft)}"/></g>`);
+    },
+    brush: (cv, pts, w, colour, opacity, along, keep = 2.5) =>
+      cv.add(`<path d="${mark(rnd, pts, w, { start: 0.4, end: 0.3, peak: 0.4, tremble: 0.18, count: 24 })}" fill="${colour}" fill-opacity="${opacity}" filter="${dry(cv, rnd, { along, keep, streak: 0.3 })}"/>`),
+    line: (cv, pts, w, o = {}) =>
+      cv.add(`<path d="${mark(rnd, pts, w, { start: 0.35, end: 0.25, peak: 0.45, tremble: 0.12, count: 30, ...o })}" fill="${ink}" filter="${crayon(cv, rnd, { keep: 3.4, tear: 1.6, grain: 1.1 })}"/>`),
+  };
+}

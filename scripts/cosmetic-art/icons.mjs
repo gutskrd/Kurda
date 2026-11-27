@@ -17,7 +17,7 @@
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { register } from 'tsx/esm/api';
-import { blob, crayon, crescent, dry, mark, rim, softly, specks, strokes, within } from './brush.mjs';
+import { blob, crayon, crescent, dry, mark, painter, rim, softly, specks, strokes, within } from './brush.mjs';
 import { FRIENDS } from './icons-friends.mjs';
 import { along, n, pt, spline, sunRays } from './kit.mjs';
 import { Still } from './still.mjs';
@@ -500,23 +500,7 @@ export const ICONS = [
       const HOOF = '#4b3226';
       const INK = '#2a1c16';
       const mirror = (pts) => pts.map(([x, y]) => [472 - x, y]);
-      // coloured pencil: the colour pressed in with the paper's tooth showing, then strokes over it where the shade builds
-      const lay = (cv, d, fill, keep = 2.6) => cv.add(`<path d="${d}" fill="${fill}" filter="${crayon(cv, rnd, { keep, tear: 2.2, grain: 0.9 })}"/>`);
-      const boxOf = (d, pad) => {
-        const xy = [...d.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map((m) => [+m[1], +m[2]]);
-        return [Math.min(...xy.map((p) => p[0])) - pad, Math.min(...xy.map((p) => p[1])) - pad, Math.max(...xy.map((p) => p[0])) + pad, Math.max(...xy.map((p) => p[1])) + pad];
-      };
-      // a soft area of shade or light, pressed lightly and blended at its edges, the paper's tooth still showing
-      const wash = (cv, d, colour, soft, opacity) => {
-        const [x0, y0, x1, y1] = boxOf(d, soft * 3);
-        const room = [x0, y0, x1 - x0, y1 - y0];
-        cv.add(`<g opacity="${opacity}" filter="${crayon(cv, rnd, { keep: 1.7, tear: 0, grain: 1.1, room })}"><path d="${d}" fill="${colour}" filter="${softly(cv, soft)}"/></g>`);
-      };
-      // a stroke of paint dragged on with a dry brush, streaked the way the stroke runs and ragged at its edge
-      const brush = (cv, pts, w, colour, opacity, along, keep = 2.5) =>
-        cv.add(`<path d="${mark(rnd, pts, w, { start: 0.4, end: 0.3, peak: 0.4, tremble: 0.18, count: 24 })}" fill="${colour}" fill-opacity="${opacity}" filter="${dry(cv, rnd, { along, keep, streak: 0.3 })}"/>`);
-      // the pencil line, swelling where the hand presses and thinning as it lifts
-      const line = (cv, pts, w, o = {}) => cv.add(`<path d="${mark(rnd, pts, w, { start: 0.35, end: 0.25, peak: 0.45, tremble: 0.12, count: 30, ...o })}" fill="${INK}" filter="${crayon(cv, rnd, { keep: 3.4, tear: 1.6, grain: 1.1 })}"/>`);
+      const { lay, wash, brush, line } = painter(rnd, INK);
 
       const coat = spline([[176, 104], [214, 93], [256, 96], [290, 106], [322, 128], [342, 162], [350, 200], [349, 232], [356, 250], [392, 244], [430, 255], [456, 276], [463, 310], [462, 356], [460, 398], [452, 420], [424, 412], [400, 396], [372, 406], [334, 424], [290, 432], [252, 434], [224, 430], [206, 418], [193, 396], [182, 368], [177, 338], [176, 312], [150, 294], [126, 268], [114, 238], [113, 206], [120, 172], [134, 140], [152, 118]]);
       // a leg from inside the body down to a cloven hoof: narrowing to the ankle, the hoof a little wider than it, flat
