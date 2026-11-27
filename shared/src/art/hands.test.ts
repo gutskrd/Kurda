@@ -248,10 +248,12 @@ describe('the turn of the stamp in the hand', () => {
         if (slit[k]! - least > rewidens.by) rewidens = { by: slit[k]! - least, at: ms };
       }
       // the palm between the thumb and its shadow is either wide enough to read as palm or not there: never a thin
-      // line of skin running inside the shadow, only the last few places where a band of palm tapers away
+      // line of skin running inside the shadow, only the last few places where a band of palm tapers away (counted on
+      // the frame only, since below its foot nothing is drawn)
+      const edge = pts['check:slit-edge']!;
       let run = 0;
       for (let k = 0; k < n; k++) {
-        run = band[k]! > 0.3 && band[k]! < 1.2 && slit[k]! > band[k]! + 0.3 ? run + 1 : 0;
+        run = edge[k]![1] < HAND_STAMP_VIEW.h && band[k]! > 0.3 && band[k]! < 1.2 && slit[k]! > band[k]! + 0.3 ? run + 1 : 0;
         if (run > sliver.run) sliver = { run, at: ms };
       }
     }
