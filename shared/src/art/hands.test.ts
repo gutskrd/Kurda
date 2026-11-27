@@ -200,6 +200,18 @@ describe('the turn of the stamp in the hand', () => {
     }
   });
 
+  it('casts the thumb’s shadows from under the thumb, so they lie on the fingers beside it with no skin between', () => {
+    for (const ms of MOMENTS) {
+      const pts = handStampPointsAt(ms);
+      for (const name of ['slit', 'wedge']) {
+        // the shadow's near side, its first half, runs inside the thumb's outline wherever it is on the frame
+        const near = pts[name]!.slice(0, pts[name]!.length / 2).filter(([, y]) => y < HAND_STAMP_VIEW.h);
+        expect(near.length, `${name} at ${ms} ms`).toBeGreaterThan(0);
+        for (const p of near) expect(inside(p, pts.thumb!), `${name} at ${ms} ms`).toBe(true);
+      }
+    }
+  });
+
   // The reference's fastest move, the middle finger letting go of the stamp's edge and curling under it, covers about
   // a hundred frame units in one of its frames; nothing of ours goes faster than that or changes speed in a jolt.
   it('moves every point of every shape smoothly: nothing jumps from one moment to the next', () => {
