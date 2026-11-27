@@ -144,3 +144,21 @@ export function crayon(cv, rnd, { keep = 1.5, tear = 3, grain = 0.75, room = nul
   );
   return `url(#${f})`;
 }
+
+/**
+ * Paint dragged on with a dry brush: a ragged edge, and the paint broken into streaks that run along the stroke,
+ * `along` 'x' for one drawn across and 'y' for one drawn down; a lower `keep` leaves more paper between the streaks.
+ */
+export function dry(cv, rnd, { along = 'x', keep = 1.9, tear = 2.4, streak = 0.45 } = {}) {
+  const f = cv.id('dry');
+  const freq = along === 'x' ? `0.03 ${n(streak)}` : `${n(streak)} 0.03`;
+  cv.def(
+    `<filter id="${f}" x="-20%" y="-20%" width="140%" height="140%">`
+      + `<feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed="${Math.floor(rnd() * 999)}" result="t"/>`
+      + `<feDisplacementMap in="SourceGraphic" in2="t" scale="${n(tear)}" xChannelSelector="R" yChannelSelector="G" result="d"/>`
+      + `<feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="2" seed="${Math.floor(rnd() * 999)}" result="g"/>`
+      + `<feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3 ${n(keep)}" result="m"/>`
+      + `<feComposite in="d" in2="m" operator="in"/></filter>`,
+  );
+  return `url(#${f})`;
+}

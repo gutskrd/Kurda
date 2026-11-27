@@ -17,7 +17,7 @@
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { register } from 'tsx/esm/api';
-import { blob, crayon, crescent, mark, rim, softly, specks, strokes, within } from './brush.mjs';
+import { blob, crayon, crescent, dry, mark, rim, softly, specks, strokes, within } from './brush.mjs';
 import { FRIENDS } from './icons-friends.mjs';
 import { along, n, pt, spline, sunRays } from './kit.mjs';
 import { Still } from './still.mjs';
@@ -490,7 +490,6 @@ export const ICONS = [
     still(rnd) {
       const s = new Still(rnd).place([-9, -6], 0.9);
       const COAT = '#bf794c';
-      const LIGHT = '#d39566';
       const SHADE = '#a2563a';
       const DEEP = '#8a4630';
       const CREAM = '#e4b689';
@@ -505,17 +504,15 @@ export const ICONS = [
         const xy = [...d.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map((m) => [+m[1], +m[2]]);
         return [Math.min(...xy.map((p) => p[0])) - pad, Math.min(...xy.map((p) => p[1])) - pad, Math.max(...xy.map((p) => p[0])) + pad, Math.max(...xy.map((p) => p[1])) + pad];
       };
-      const pencil = (cv, d, colour, tone, { density = 10, angle = -58, length = 15, width = 2.3, opacity = [0.35, 0.7] } = {}) => {
-        const box = boxOf(d, 8);
-        const count = Math.round((density * (box[2] - box[0]) * (box[3] - box[1])) / 1000);
-        strokes(cv, rnd, d, box, { count, colours: [colour], flow: () => angle, spread: 16, length, width, opacity, bend: 0.12, tone });
-      };
       // a soft area of shade or light, pressed lightly and blended at its edges, the paper's tooth still showing
       const wash = (cv, d, colour, soft, opacity) => {
         const [x0, y0, x1, y1] = boxOf(d, soft * 3);
         const room = [x0, y0, x1 - x0, y1 - y0];
         cv.add(`<g opacity="${opacity}" filter="${crayon(cv, rnd, { keep: 1.7, tear: 0, grain: 1.1, room })}"><path d="${d}" fill="${colour}" filter="${softly(cv, soft)}"/></g>`);
       };
+      // a stroke of paint dragged on with a dry brush, streaked the way the stroke runs and ragged at its edge
+      const brush = (cv, pts, w, colour, opacity, along, keep = 2.5) =>
+        cv.add(`<path d="${mark(rnd, pts, w, { start: 0.4, end: 0.3, peak: 0.4, tremble: 0.18, count: 24 })}" fill="${colour}" fill-opacity="${opacity}" filter="${dry(cv, rnd, { along, keep, streak: 0.3 })}"/>`);
       // the pencil line, swelling where the hand presses and thinning as it lifts
       const line = (cv, pts, w, o = {}) => cv.add(`<path d="${mark(rnd, pts, w, { start: 0.35, end: 0.25, peak: 0.45, tremble: 0.12, count: 30, ...o })}" fill="${INK}" filter="${crayon(cv, rnd, { keep: 3.4, tear: 1.6, grain: 1.1 })}"/>`);
 
@@ -537,12 +534,10 @@ export const ICONS = [
         for (const leg of legs) {
           lay(cv, leg.d, leg.fill);
           wash(cv, leg.d, leg.fill === SHADE ? DEEP : SHADE, 8, 0.25);
-          pencil(cv, leg.d, SHADE, () => 0.6, { density: 9, angle: -80, length: 9, width: 1.7, opacity: [0.14, 0.32] });
           cv.add(`<g clip-path="${within(cv, leg.d)}"><path d="M300 ${leg.foot - 11} L500 ${leg.foot - 10} L500 520 L200 520 L200 ${leg.foot - 11} Z" fill="${HOOF}" filter="${crayon(cv, rnd, { keep: 2.8, tear: 1.5 })}"/></g>`);
         }
         lay(cv, tail, COAT);
         lay(cv, blob(rnd, [473, 318], 7, 15, -20, 0.05), PALE, 2.2);
-        pencil(cv, tail, SHADE, () => 0.6, { density: 9, length: 9, width: 1.7, opacity: [0.14, 0.32] });
         // the antlers, a pale bone colour inked round, and the ears, pale inside and darker at their rims, behind the head
         for (const side of [-1, 1]) {
           const X = (pts) => (side < 0 ? pts : mirror(pts));
@@ -551,51 +546,57 @@ export const ICONS = [
           cv.add(`<path d="${antler}" fill="none" stroke="${INK}" stroke-width="5.4" stroke-linejoin="round" filter="${crayon(cv, rnd, { keep: 3.4, tear: 1.4, grain: 1.1, room: [120, 0, 240, 140] })}"/>`);
           const ear = spline(X(earL));
           lay(cv, ear, '#ad5f3e');
-          pencil(cv, ear, DEEP, () => 0.6, { density: 9, length: 9, width: 1.7, opacity: [0.14, 0.32] });
           const earIn = spline(X(earInL));
           lay(cv, earIn, CREAM, 2.4);
           wash(cv, blob(rnd, X([[118, 140]])[0], 22, 14, 0, 0.04), '#c98a5c', 8, 0.6);
-          pencil(cv, earIn, PALE, () => 0.6, { density: 8, length: 9, width: 1.7, opacity: [0.2, 0.4] });
+          cv.add(`<g clip-path="${within(cv, earIn)}">`);
+          brush(cv, X([[78, 88], [102, 90], [126, 104]]), 18, PALE, 0.7, 'x');
+          cv.add('</g>');
         }
-        // the coat in one piece from the crown to the rump, and the tuft; then its shade and its light: the blaze down
-        // the brow, the crown, the back, the shadow the head throws on the body, under the belly and chin, the far edges
+        // the coat in one piece from the crown to the rump, and the tuft; then its shade brushed over it: the blaze down
+        // the brow, the crown, long strokes along the back, the shadow the head throws on the body, under the belly and
+        // along the far edges
         lay(cv, coat, COAT);
         lay(cv, tuft, COAT);
+        cv.add(`<g clip-path="${within(cv, tuft)}">`);
+        brush(cv, [[188, 104], [232, 94], [280, 106]], 22, SHADE, 0.75, 'x');
+        cv.add('</g>');
         cv.add(`<g clip-path="${within(cv, coat)}">`);
-        wash(cv, spline([[160, 98], [214, 92], [268, 98], [252, 140], [236, 190], [226, 226], [214, 232], [204, 222], [194, 182], [178, 136]]), '#a14e33', 3.5, 0.95);
-        wash(cv, spline([[188, 104], [214, 100], [240, 104], [230, 150], [220, 200], [214, 214], [208, 200], [198, 150]]), DEEP, 5, 0.45);
-        wash(cv, blob(rnd, [230, 108], 84, 26, 0, 0.04), SHADE, 8, 0.55);
-        wash(cv, blob(rnd, [404, 282], 74, 34, 14, 0.06), '#a5553a', 7, 0.95);
-        wash(cv, blob(rnd, [412, 284], 50, 20, 14, 0.06), DEEP, 6, 0.35);
-        wash(cv, blob(rnd, [228, 314], 34, 11, 0, 0.04), SHADE, 6, 0.3);
-        wash(cv, blob(rnd, [458, 352], 16, 70, 0, 0.04), SHADE, 7, 0.35);
-        wash(cv, blob(rnd, [120, 232], 14, 60, 0, 0.04), SHADE, 7, 0.3);
-        wash(cv, mark(rnd, [[214, 436], [300, 440], [380, 412], [452, 418]], 26, { start: 0.6, end: 0.6, tremble: 0 }), SHADE, 7, 0.45);
+        const blaze = spline([[160, 98], [214, 92], [268, 98], [252, 140], [236, 190], [226, 226], [214, 232], [204, 222], [194, 182], [178, 136]]);
+        cv.add(`<path d="${blaze}" fill="#a14e33" fill-opacity="0.9" filter="${dry(cv, rnd, { along: 'y', keep: 2.9, tear: 4, streak: 0.25 })}"/>`);
+        for (const [pts, w] of [
+          [[[180, 98], [194, 136], [206, 180], [212, 220]], 24],
+          [[[248, 98], [236, 136], [224, 180], [216, 220]], 24],
+          [[[214, 94], [214, 150], [215, 200]], 26],
+        ]) brush(cv, pts, w, DEEP, 0.3, 'y');
+        brush(cv, [[140, 124], [190, 104], [250, 102], [312, 124]], 30, SHADE, 0.5, 'x');
+        for (const [pts, w, opacity] of [
+          [[[350, 262], [390, 253], [430, 263], [458, 288]], 28, 0.9],
+          [[[356, 283], [396, 278], [436, 290], [460, 312]], 26, 0.85],
+          [[[366, 301], [404, 303], [442, 315]], 18, 0.7],
+        ]) brush(cv, pts, w, '#a5553a', opacity, 'x');
         cv.add(`<g clip-path="${within(cv, 'M349 196 L349 224 L340 252 L318 276 L296 292 L280 302 L300 460 L490 460 L490 196 Z')}">`);
-        wash(cv, mark(rnd, [[352, 214], [350, 246], [330, 274], [302, 298]], 30, { start: 0.5, end: 0.4, tremble: 0 }), SHADE, 5, 0.6);
+        brush(cv, [[354, 220], [348, 252], [328, 278], [298, 300]], 24, SHADE, 0.6, 'y');
         cv.add('</g>');
-        wash(cv, blob(rnd, [150, 252], 34, 36, 0, 0.04), LIGHT, 9, 0.5);
-        wash(cv, blob(rnd, [326, 224], 20, 30, 0, 0.04), LIGHT, 8, 0.35);
-        wash(cv, blob(rnd, [300, 362], 60, 40, 0, 0.04), LIGHT, 12, 0.22);
+        brush(cv, [[214, 436], [300, 440], [380, 414], [452, 420]], 20, SHADE, 0.45, 'x');
+        brush(cv, [[458, 318], [461, 360], [456, 404]], 16, SHADE, 0.4, 'y');
+        brush(cv, [[122, 176], [116, 228], [128, 272]], 14, SHADE, 0.3, 'y');
         cv.add('</g>');
-        // the grain of the pencil over it all, in both its tones, its strokes thickest where the coat is darkest
-        const blazeAt = (x, y) => Math.hypot((x - 214) / 44, (y - 150) / 70) < 1;
-        const backAt = (x, y) => Math.hypot((x - 404) / 72, (y - 284) / 34) < 1;
-        pencil(cv, coat, SHADE, (x, y) => (blazeAt(x, y) ? 0.8 : backAt(x, y) ? 0.7 : y < 128 ? 0.5 : 0), { density: 14, length: 10, width: 1.9, opacity: [0.25, 0.5] });
-        pencil(cv, coat, SHADE, () => 0.6, { density: 9, length: 9, width: 1.7, opacity: [0.14, 0.32] });
-        pencil(cv, coat, LIGHT, () => 0.6, { density: 6, length: 9, width: 1.7, opacity: [0.14, 0.32] });
-        pencil(cv, tuft, SHADE, () => 0.8, { density: 20, angle: -95, length: 9, width: 1.8, opacity: [0.3, 0.6] });
-        // the pale patches: the muzzle, a patch on the chest, a stripe along the belly, the spots along the back
+        // the pale patches: the muzzle, a patch on the chest, a stripe along the belly
         lay(cv, blob(rnd, [218, 259], 33, 27, 0, 0.03), CREAM, 2.4);
         cv.add(`<g clip-path="${within(cv, coat)}">`);
         lay(cv, blob(rnd, [240, 390], 35, 46, -22, 0.05), CREAM, 2.4);
         lay(cv, mark(rnd, [[318, 422], [346, 412], [374, 401], [400, 390]], 17, { start: 0.4, end: 0.3, peak: 0.5, tremble: 0.1 }), CREAM, 2.2);
-        cv.add('</g>');
-        for (const [x, y, rx, ry, turn] of [[357, 270, 7, 4.4, -14], [391, 262, 6.4, 4.1, -8], [424, 279, 6, 4, -22], [378, 287, 6.4, 3.9, -16], [406, 297, 5.8, 3.7, -18], [441, 303, 5.4, 3.5, -28], [366, 304, 4.6, 3, -10], [418, 260, 4.4, 2.9, -6]]) {
-          lay(cv, blob(rnd, [x, y], rx, ry, turn, 0.08, 14), PALE, 2.1);
+        // the spots, soft dabs of pale paint in rows along the back
+        for (const [x, y, len, turn] of [[356, 270, 16, -12], [390, 262, 14, -8], [424, 279, 13, -22], [378, 288, 15, -14], [406, 297, 13, -18], [442, 304, 12, -30], [364, 306, 10, -10], [418, 258, 10, -6], [338, 282, 10, -10]]) {
+          const [c, si] = [Math.cos((turn * Math.PI) / 180) * (len / 2), Math.sin((turn * Math.PI) / 180) * (len / 2)];
+          brush(cv, [[x - c, y - si], [x, y], [x + c, y + si]], 8.5, '#ebbe92', 0.95, 'x', 2.3);
         }
-        // flecks of a paler pencil in the blaze and along the back
-        pencil(cv, coat, PALE, (x, y) => (blazeAt(x, y) ? 0.7 : backAt(x, y) ? 0.5 : 0.12), { density: 4, angle: -70, length: 7, width: 1.6, opacity: [0.3, 0.7] });
+        // scratches of a paler paint in the blaze and along the back, and a few over the rest of the coat
+        strokes(cv, rnd, coat, [176, 100, 254, 200], { count: 26, colours: [PALE], flow: () => -95, spread: 22, length: 13, width: 2.4, opacity: [0.35, 0.7], bend: 0.2 });
+        strokes(cv, rnd, coat, [340, 250, 462, 318], { count: 30, colours: [PALE], flow: () => -8, spread: 18, length: 14, width: 2.2, opacity: [0.3, 0.6], bend: 0.2 });
+        strokes(cv, rnd, coat, [116, 96, 462, 430], { count: 40, colours: [PALE], flow: () => -70, spread: 30, length: 9, width: 1.8, opacity: [0.2, 0.42], bend: 0.2 });
+        cv.add('</g>');
       });
       s.paint((cv) => {
         // the pencil line over it all, open where the coat runs on: round each ear, down the cheeks, the chest running
