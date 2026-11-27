@@ -1271,13 +1271,26 @@ button.gift-bubble:active {
   font-size: var(--text);
   margin-bottom: 12px;
 }
+/* your Zêr stays in view at the top of the sheet however far the shelves are scrolled, pinned to the panel's own edge */
 .gift-picker-meta {
+  position: sticky;
+  top: -30px;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 12px;
+  margin: 0 -26px 4px;
+  padding: 8px 26px;
+  background: var(--panel-bg);
+}
+@media (max-width: 640px) {
+  .gift-picker-meta {
+    top: -22px;
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
 }
 .gift-balance {
   display: inline-flex;
@@ -1431,6 +1444,12 @@ button.gift-bubble:active {
 .gift-confirm-short {
   font-size: var(--text);
   color: var(--ink-3);
+}
+/* what there is to pay with, under the price */
+.gift-confirm-have {
+  font-size: var(--text);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
 }
 .gift-confirm .btn {
   min-height: 44px;

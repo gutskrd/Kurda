@@ -3,7 +3,8 @@
  * and unwrapped with an animation, or given onto a post, which shows them in a small row. Gifts are items, never
  * currency, and cannot be sold, converted or passed on; no "send one back" nudge to anyone but a known adult (never to
  * someone under 18 or of unknown age, for whom a gift must not become a debt), no gift leaderboards, no asking for
- * gifts; a cap per day; and between anyone not a known adult, only once a friendship is a day old. Shared so the API
+ * gifts; caps per day, narrow wherever someone under 18 is involved; and between anyone not a known adult, only once a
+ * friendship is a day old. Shared so the API
  * and both apps agree on tiers, timings and shapes.
  */
 import type { BagEntry } from './gift-catalogue.js';
@@ -64,15 +65,80 @@ export const GIFT_REDUCED_MOTION_MS = 200;
 /** Friends one gift may go to at once, as a group gift. */
 export const MAX_GIFT_RECIPIENTS = 7;
 
-/** Gifts one person may send a day, counting each recipient, and to any one friend. */
-export const GIFTS_PER_DAY = 10;
-export const GIFTS_PER_FRIEND_PER_DAY = 3;
+/**
+ * A rolling day's caps on gifts, each recipient counted as one gift: what one person may send in all (`sent`) and to any
+ * one friend (`perFriend`), and what one person may be given by everyone together (`received`), so throwaway accounts
+ * cannot pour gifts into one account.
+ */
+export interface GiftDayCaps {
+  sent: number;
+  perFriend: number;
+  received: number;
+}
 
 /**
- * Gifts one person may receive a day from everyone together. The sender caps alone would let ten throwaway accounts feed
- * one main account thirty gifts a day, which is the pattern a present must not become.
+ * The caps by who is involved. Between two known adults they are wide: a gift is an item that cannot be sold or passed
+ * on, and a glass of tea a day is not abuse. Wherever someone under 18 or of unknown age sends or receives, they stay
+ * narrow, so a gift never becomes a stream to or from a child.
  */
-export const GIFTS_RECEIVED_PER_DAY = 10;
+export const GIFT_DAY_CAPS: Readonly<Record<'adult' | 'young', GiftDayCaps>> = {
+  adult: { sent: 50, perFriend: 20, received: 50 },
+  young: { sent: 10, perFriend: 3, received: 10 },
+};
+
+/** A sender's cap on all their gifts in a day, by whether they are a known adult. */
+export function giftsSentCap(senderAdult: boolean): number {
+  return GIFT_DAY_CAPS[senderAdult ? 'adult' : 'young'].sent;
+}
+
+/** A sender's cap on gifts to one friend in a day: wide only when both are known adults. */
+export function giftsPerFriendCap(senderAdult: boolean, recipientAdult: boolean): number {
+  return GIFT_DAY_CAPS[senderAdult && recipientAdult ? 'adult' : 'young'].perFriend;
+}
+
+/** What one person may be given in a day by everyone together, by whether they are a known adult. */
+export function giftsReceivedCap(recipientAdult: boolean): number {
+  return GIFT_DAY_CAPS[recipientAdult ? 'adult' : 'young'].received;
+}
+
+/**
+ * How many more gifts the sender may give one recipient now, by the day's caps, and when the next one frees up if
+ * none: the moment the oldest gift holding a cap turns a day old.
+ */
+export interface GiftDayLeft {
+  userId: string;
+  left: number;
+  /** ISO time the next gift may go, set only when `left` is 0 */
+  moreAt: string | null;
+}
+
+/** How few gifts left for one friend today is worth saying before they run out. */
+export const GIFT_DAY_FEW = 3;
+
+/**
+ * What the gift sheet says about the day's caps before anything is sent, if anything: for one recipient, how many are
+ * left when few are (`few`), or that none are and from when there will be (`none`, no time when it is others' gifts
+ * that filled their day); for several, who can be given nothing more now (`someFull`).
+ */
+export type GiftDayLine =
+  | { kind: 'few'; userId: string; left: number }
+  | { kind: 'none'; userId: string; moreAt: string | null }
+  | { kind: 'someFull'; userIds: string[] };
+
+export function giftDayLine(days: readonly GiftDayLeft[]): GiftDayLine | null {
+  if (days.length === 1) {
+    const day = days[0]!;
+    if (day.left === 0) return { kind: 'none', userId: day.userId, moreAt: day.moreAt };
+    return day.left <= GIFT_DAY_FEW ? { kind: 'few', userId: day.userId, left: day.left } : null;
+  }
+  const full = days.filter((d) => d.left === 0).map((d) => d.userId);
+  return full.length > 0 ? { kind: 'someFull', userIds: full } : null;
+}
+
+/** Whether a send to these recipients can go at all by the day's caps: not when every one of them is full for now. */
+export function giftDayFull(days: readonly GiftDayLeft[], to: readonly string[]): boolean {
+  return to.length > 0 && to.every((id) => days.find((d) => d.userId === id)?.left === 0);
+}
 
 /** Between two people not both known adults, a friendship must be this old before a gift passes, which blocks "add, gift, groom". */
 export const GIFT_MIN_FRIENDSHIP_HOURS = 24;
@@ -162,6 +228,8 @@ export interface GiftCatalog {
   /** for one recipient or a post, why a gift cannot go yet; null when it can */
   hold: GiftHold | null;
   limits: GiftSendLimits;
+  /** for each recipient, in the order asked, how many more gifts may reach them from this sender now */
+  dayLeft: GiftDayLeft[];
   nudges: boolean;
 }
 

@@ -1,5 +1,5 @@
 /**
- * The living rounds of the warm gifts (gift-art-warm.ts): tea and coffee, the apple, the samovar, the drum and the saz.
+ * The living rounds of the warm gifts (gift-art-warm.ts): tea and coffee, the apples, the samovar, the drum and the saz.
  * Each layer named here is painted by the gift's drawing under the same name, back to front.
  */
 import { giftLoop, giftLoopSmooth, giftLoopSweepLayers, giftLoopWisp, type GiftLoop, type GiftLoopPlan } from './gift-loop.js';
@@ -40,14 +40,14 @@ function carried(c: readonly [number, number], p: readonly [number, number], deg
 }
 
 const SEV_FOOT = [60, 98.6] as const;
-const SEV_STALK = [55.8, 31.4] as const;
+const SEV_STALK = [57.7, 31.5] as const;
 const SEV_GLINT = [39, 56.4] as const;
 const rock = (t: number): number => 2.4 * Math.sin(TAU * t);
 
-/** The apple rocks gently where it stands, its leaves fluttering on as it does, and a glint comes and goes on its skin. */
+/** The apple rocks gently where it stands, its leaf fluttering on as it does, and a glint comes and goes on its skin. */
 const sev = giftLoop(4000, {
   apple: { box: [19, 26, 76, 76], origin: SEV_FOOT, motion: (t) => ({ rot: rock(t) }) },
-  leaves: { box: [34, 12, 49, 22], origin: SEV_STALK, motion: (t) => ({ ...carried(SEV_FOOT, SEV_STALK, rock(t)), rot: rock(t) + 3 * Math.sin(TAU * 2 * t + 0.6) }) },
+  leaves: { box: [48, 9, 42, 27], origin: SEV_STALK, motion: (t) => ({ ...carried(SEV_FOOT, SEV_STALK, rock(t)), rot: rock(t) + 3 * Math.sin(TAU * 2 * t + 0.6) }) },
   glint: {
     box: [33, 51, 12, 11],
     origin: SEV_GLINT,
@@ -55,6 +55,23 @@ const sev = giftLoop(4000, {
     motion: (t) => {
       const flare = Math.exp(-Math.pow((t - 0.32) / 0.07, 2));
       return { ...carried(SEV_FOOT, SEV_GLINT, rock(t)), rot: rock(t) + 30 * Math.sin(TAU * (t - 0.32)), sx: 0.4 + 0.7 * flare, sy: 0.4 + 0.7 * flare, o: flare };
+    },
+  },
+});
+
+const SEV_MEXEK_GLINT = [45.8, 57] as const;
+/** A glint's flare about its peak `at`, `width` of the round wide. */
+const peakAt = (t: number, at: number, width: number): number => Math.exp(-Math.pow((t - at) / width, 2));
+
+/** The shine on the clove apple's heart beats twice, as a heart does, then rests. */
+const sevMexek = giftLoop(3200, {
+  glint: {
+    box: [40, 51, 12, 12],
+    origin: SEV_MEXEK_GLINT,
+    samples: 60,
+    motion: (t) => {
+      const beat = peakAt(t, 0.34, 0.045) + 0.75 * peakAt(t, 0.5, 0.045);
+      return { rot: 25 * Math.sin(TAU * (t - 0.42)), sx: 0.4 + 0.7 * beat, sy: 0.4 + 0.7 * beat, o: Math.min(1, beat) };
     },
   },
 });
@@ -144,4 +161,4 @@ const saz = giftLoop(4400, {
   note2: note([13, 16, 9, 12], [16, 25], 0.12, 22, 4),
 });
 
-export const WARM_LOOPS: Readonly<Partial<Record<GiftArtId, GiftLoop>>> = { cay, qehwe, sev, semawer, def, saz };
+export const WARM_LOOPS: Readonly<Partial<Record<GiftArtId, GiftLoop>>> = { cay, qehwe, sev, semawer, def, saz, 'sev-mexek': sevMexek };

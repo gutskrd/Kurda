@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   GIFT_TIERS,
   GIFT_UNWRAP_MS,
-  GIFTS_PER_DAY,
-  GIFTS_PER_FRIEND_PER_DAY,
-  GIFTS_RECEIVED_PER_DAY,
+  GIFT_DAY_CAPS,
+  GIFT_DAY_FEW,
+  giftDayFull,
+  giftDayLine,
+  giftsPerFriendCap,
+  giftsReceivedCap,
+  giftsSentCap,
   GRAND_GIFT_PRICE,
   MAX_GIFT_RECIPIENTS,
   giftLockFor,
@@ -40,16 +44,33 @@ describe('gift tiers', () => {
     expect(Math.max(...times)).toBeLessThanOrEqual(3500);
   });
 
-  it('caps a day’s gifts above what one send can use', () => {
-    expect(GIFTS_PER_DAY).toBeGreaterThanOrEqual(MAX_GIFT_RECIPIENTS);
-    expect(GIFTS_PER_FRIEND_PER_DAY).toBeLessThan(GIFTS_PER_DAY);
+  it('caps a day’s gifts above what one send can use, for anyone', () => {
+    for (const caps of Object.values(GIFT_DAY_CAPS)) {
+      expect(caps.sent).toBeGreaterThanOrEqual(MAX_GIFT_RECIPIENTS);
+      expect(caps.perFriend).toBeLessThan(caps.sent);
+    }
   });
 
   it('caps what one person can be given in a day, whoever sends it', () => {
-    // more than one friend’s share, so a few friends can still all give on a birthday
-    expect(GIFTS_RECEIVED_PER_DAY).toBeGreaterThan(GIFTS_PER_FRIEND_PER_DAY);
-    // and no more than one sender’s whole day, so many senders cannot multiply it
-    expect(GIFTS_RECEIVED_PER_DAY).toBeLessThanOrEqual(GIFTS_PER_DAY);
+    for (const caps of Object.values(GIFT_DAY_CAPS)) {
+      // more than one friend’s share, so a few friends can still all give on a birthday
+      expect(caps.received).toBeGreaterThan(caps.perFriend);
+      // and no more than one sender’s whole day, so many senders cannot multiply it
+      expect(caps.received).toBeLessThanOrEqual(caps.sent);
+    }
+  });
+
+  it('opens the caps only between two known adults, and keeps them narrow wherever a child is involved', () => {
+    const { adult, young } = GIFT_DAY_CAPS;
+    expect(adult.perFriend).toBeGreaterThan(young.perFriend);
+    expect(giftsPerFriendCap(true, true)).toBe(adult.perFriend);
+    expect(giftsPerFriendCap(true, false)).toBe(young.perFriend);
+    expect(giftsPerFriendCap(false, true)).toBe(young.perFriend);
+    expect(giftsPerFriendCap(false, false)).toBe(young.perFriend);
+    expect(giftsSentCap(false)).toBe(young.sent);
+    expect(giftsReceivedCap(false)).toBe(young.received);
+    expect(giftsSentCap(true)).toBe(adult.sent);
+    expect(giftsReceivedCap(true)).toBe(adult.received);
   });
 });
 
@@ -73,5 +94,28 @@ describe('gifts on the shelf', () => {
     expect(needsBigGiftConfirm(1_999, { confirmFrom: 2_000 })).toBe(false);
     expect(needsBigGiftConfirm(2_000, { confirmFrom: 2_000 })).toBe(true);
     expect(needsBigGiftConfirm(5_000, null)).toBe(false);
+  });
+});
+
+describe('the gift sheet’s line on the day’s caps', () => {
+  const day = (userId: string, left: number, moreAt: string | null = null) => ({ userId, left, moreAt });
+
+  it('says how many are left for one friend only when few are, and from when once none are', () => {
+    expect(giftDayLine([day('a', GIFT_DAY_FEW + 1)])).toBeNull();
+    expect(giftDayLine([day('a', GIFT_DAY_FEW)])).toEqual({ kind: 'few', userId: 'a', left: GIFT_DAY_FEW });
+    expect(giftDayLine([day('a', 0, '2026-11-28T09:00:00Z')])).toEqual({ kind: 'none', userId: 'a', moreAt: '2026-11-28T09:00:00Z' });
+    expect(giftDayLine([day('a', 0)])).toEqual({ kind: 'none', userId: 'a', moreAt: null });
+    expect(giftDayLine([])).toBeNull();
+  });
+
+  it('names who in a group can be given nothing more, and holds the send only when that is everyone', () => {
+    const days = [day('a', 0, '2026-11-28T09:00:00Z'), day('b', 5), day('c', 0)];
+    expect(giftDayLine(days)).toEqual({ kind: 'someFull', userIds: ['a', 'c'] });
+    expect(giftDayLine([day('a', 1), day('b', 5)])).toBeNull();
+    expect(giftDayFull(days, ['a', 'c'])).toBe(true);
+    expect(giftDayFull(days, ['a', 'b'])).toBe(false);
+    // nobody known to be full, or nobody to send to, holds nothing
+    expect(giftDayFull([], ['a'])).toBe(false);
+    expect(giftDayFull(days, [])).toBe(false);
   });
 });

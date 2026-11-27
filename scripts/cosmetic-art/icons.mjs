@@ -1,6 +1,7 @@
 /**
  * The shop's icons: Kurdish things painted as they are — a ripe pomegranate,
- * a glass of tea on its saucer, a seal of red wax with the sun of the
+ * a glass of tea on its saucer (the tea gift's own drawing, from the shared
+ * package), a seal of red wax with the sun of the
  * Kurdish flag pressed into it, a saz, a dove carrying a letter — painted by
  * hand rather than modelled: each one's colours laid in, its light and its
  * shadow laid over them as shapes of their own, brushed over and drawn in
@@ -13,9 +14,19 @@
  * the mountain painted from a relief as the backgrounds' mountains are, the
  * rug's weave and the moon given relief and lit; then the painter's pass.
  */
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { register } from 'tsx/esm/api';
 import { crescent, rim, softly, specks, strokes, within } from './brush.mjs';
 import { n, pt, sunRays } from './kit.mjs';
 import { Still } from './still.mjs';
+
+// The shared package is TypeScript, so it is read through the same loader the gift script uses.
+register();
+const { giftArtSvg } = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../shared/src/art/gift-art.ts')).href);
+
+/** The square of the tea gift's picture (in its 120 units) the icon shows: the glass and saucer, with a little room. */
+const TEA_GIFT_FRAME = [5.8, 4.1, 112, 112];
 
 // ─────────────────────────────────────────────────────────────── shapes
 
@@ -642,167 +653,13 @@ export const ICONS = [
     key: 'caydan',
     ku: 'Piyan',
     en: 'Tea glass',
-    // a glass of tea on its saucer, seen from a little above, so the mouth of the glass is an open ring with the
-    // tea lying in it: the glass widest at the lip, drawn in slowly to a waist four tenths of the way down,
-    // swelling as slowly to a belly low on it and then quickly in to a small foot; the tea red, dark where the
-    // round glass turns it away from the light and orange on its surface; thin white lights down the glass; the
-    // saucer broad and white with a scalloped edge, painted round with long coral strokes and gold sprigs
+    // the gift's glass of tea on its saucer (shared/src/art/gift-art-warm.ts), the same picture framed closer, so the
+    // glass is one drawing wherever it is given or worn
     still(rnd) {
       const s = new Still(rnd);
-      const X = 256;
-      const ink = '#2a1712';
-      // the glass: its half-width down its height, the widest line of the lip first, the waist at 230, the
-      // belly at 348 and the foot last — measured, because a tea glass drawn by eye comes out a tumbler
-      const profile = [[85, 140], [107, 135], [120, 128.5], [134, 119.5], [148, 112], [161, 106], [175, 103], [189, 101], [203, 99.5], [216, 98.5], [230, 98], [244, 100], [260, 104], [282, 108.5], [304, 111.5], [326, 114], [348, 115], [369, 112.5], [391, 104], [413, 90], [429, 76], [438, 69]];
-      const halfAt = (y) => {
-        const i = Math.min(profile.length - 1, Math.max(1, profile.findIndex(([py]) => py >= y)));
-        const [ya, wa] = profile[i - 1];
-        const [yb, wb] = profile[i];
-        return wa + ((wb - wa) * (y - ya)) / (yb - ya);
-      };
-      // its outline from `top` to `bottom`, `inset` in from its outside: each side a smooth curve of its own, the
-      // far edge of an ellipse across the top (`lid` high; none is straight across) and the near edge of one
-      // across the bottom (`foot` deep), as a round thing seen from above has
-      const body = (inset, top, bottom, lid, foot) => {
-        const rows = [[top, halfAt(top) - inset], ...profile.filter(([y]) => y > top && y < bottom).map(([y, w]) => [y, w - inset]), [bottom, halfAt(bottom) - inset]];
-        const left = spline(rows.map(([y, w]) => [X - w, y]), false);
-        const right = spline(rows.slice().reverse().map(([y, w]) => [X + w, y]), false);
-        const [yb, wb] = rows.at(-1);
-        const [yt, wt] = rows[0];
-        const across = lid ? `A${n(wt)} ${n(lid)} 0 0 0 ${n(X - wt)} ${n(yt)}` : '';
-        return `${left} A${n(wb)} ${n(foot)} 0 0 0 ${n(X + wb)} ${n(yb)} L${right.slice(1)} ${across} Z`;
-      };
-      const ring = (cx, cy, rx, ry) => `M${n(cx - rx)} ${n(cy)} A${n(rx)} ${n(ry)} 0 0 1 ${n(cx + rx)} ${n(cy)} A${n(rx)} ${n(ry)} 0 0 1 ${n(cx - rx)} ${n(cy)} Z`;
-      const RIM = { y: 85, rx: 140, ry: 61 };
-      const outside = body(0, RIM.y, 438, RIM.ry, 11);
-      const mouth = ring(X, RIM.y, RIM.rx, RIM.ry);
-      // the tea: its surface an ellipse lying in the mouth of the glass, toward its near side, and everything in
-      // the glass under that, down to the foot
-      const LEVEL = 121;
-      const SURFACE = { rx: 111, ry: 25 };
-      const tea = body(5, LEVEL, 428, SURFACE.ry, 9);
-      // the saucer: broad, seen from above, its edge scalloped
-      const S = { x: 256, y: 374, rx: 226, ry: 122 };
-      const onPlate = (u, v) => [S.x + u * S.rx, S.y + v * S.ry];
-      const edge = [];
-      for (let i = 0; i < 120; i++) {
-        const a = (i / 120) * Math.PI * 2;
-        const r = 1 + 0.014 * Math.cos(a * 12 + 0.4);
-        edge.push(onPlate(Math.cos(a) * r, Math.sin(a) * r));
-      }
-      const saucer = spline(edge);
-      // (a shape on the plate, given as points round the plate's own circle, lies down with it)
-      const laid = (points) => spline(points.map(([u, v]) => onPlate(u, v)));
-      s.paint((cv) => {
-        // the thickness of the china at the front, and the plate
-        cv.add(`<path d="${saucer}" fill="#b9b0a4" transform="translate(0 6)"/>`);
-        cv.add(`<path d="${saucer}" fill="${linear(cv, [[0, '#fbf9f4'], [0.55, '#f1ede5'], [1, '#d9d2c6']], 60, 262, 430, 498)}"/>`);
-        // the grey a white plate is painted with: under its far rim, and a turn of it round the well
-        crescent(cv, saucer, [-22, -14], { colour: '#8d8580', opacity: 0.32, soft: 16 });
-        cv.add(`<ellipse cx="${S.x}" cy="${S.y + 26}" rx="${n(S.rx * 0.58)}" ry="${n(S.ry * 0.54)}" fill="none" stroke="#a9a19a" stroke-width="7" stroke-opacity="0.4" filter="${softly(cv, 5)}" clip-path="${within(cv, saucer)}"/>`);
-        // the coral strokes round the rim, long and round-ended, each pointing at the middle; a gold sprig between
-        // each and the next
-        for (let i = 0; i < 8; i++) {
-          const a = (i / 8) * Math.PI * 2 + 0.2;
-          const [ux, uy] = [Math.cos(a), Math.sin(a)];
-          const [vx, vy] = [-uy, ux];
-          const stroke = [];
-          for (let k = 0; k < 20; k++) {
-            const t = (k / 20) * Math.PI * 2;
-            // (a long oval, from half way out nearly to the edge, fuller at its outer end)
-            const along = 0.73 + Math.cos(t) * 0.18;
-            const across = Math.sin(t) * (0.105 + 0.025 * Math.cos(t));
-            stroke.push([ux * along + vx * across, uy * along + vy * across]);
-          }
-          const d = laid(stroke);
-          cv.add(`<path d="${d}" fill="#e2664a" clip-path="${within(cv, saucer)}"/>`);
-          crescent(cv, d, [-3, -3], { colour: '#f4a184', opacity: 0.6, soft: 3 });
-          crescent(cv, d, [3, 3], { colour: '#b9432c', opacity: 0.45, soft: 3 });
-          const b = a + Math.PI / 8;
-          const [gx, gy] = onPlate(Math.cos(b) * 0.79, Math.sin(b) * 0.79);
-          const near = 0.62 + 0.38 * Math.max(0, Math.sin(b));
-          for (const t of [-1, 0, 1]) cv.add(`<ellipse cx="${n(gx + t * 8.5 * near)}" cy="${n(gy - Math.abs(t) * 3)}" rx="${n(6 * near + 1)}" ry="${n(2.7 * near + 0.7)}" transform="rotate(${n(t * 42)} ${n(gx + t * 8.5 * near)} ${n(gy)})" fill="#b08a30"/>`);
-          cv.add(`<circle cx="${n(gx)}" cy="${n(gy + 4.6 * near)}" r="${n(2.4 * near + 0.6)}" fill="#5a3a14"/>`);
-        }
-        // what the glass casts: grey to its right, and before its foot the light that has come through the tea
-        cv.add(`<ellipse cx="${X + 70}" cy="442" rx="84" ry="24" fill="#5a4a48" fill-opacity="0.45" filter="${softly(cv, 7)}" clip-path="${within(cv, saucer)}"/>`);
-        cv.add(`<ellipse cx="${X + 30}" cy="466" rx="48" ry="15" fill="#ea7a2a" fill-opacity="0.8" filter="${softly(cv, 6)}" clip-path="${within(cv, saucer)}"/>`);
-        cv.add(`<ellipse cx="${X}" cy="442" rx="76" ry="13" fill="#241210" fill-opacity="0.5" filter="${softly(cv, 4)}"/>`);
-        strokes(cv, rnd, saucer, [26, 250, 486, 500], { count: 520, colours: ['#fffdf6', '#d9d2c6', '#e9e3d8'], flow: () => 0, length: 14, width: 2.4, opacity: [0.04, 0.13] });
-      });
-      // the glass above the tea, which is clear: its far wall a pale grey with the room's lights lying on it white
-      s.paint((cv) => {
-        cv.add(`<path d="${outside}" fill="${linear(cv, [[0, '#b4b0b6'], [0.4, '#d6d3d6'], [0.75, '#c2bec4'], [1, '#a29ea4']], X - 140, 0, X + 140, 0)}" fill-opacity="0.78"/>`);
-        cv.add(`<g clip-path="${within(cv, mouth)}">`);
-        cv.add(`<path d="M${X - 8} 30 Q${X + 78} 26 ${X + 128} 72 Q${X + 108} 96 ${X + 84} 92 Q${X + 60} 62 ${X + 26} 60 Q${X + 6} 48 ${X - 8} 30 Z" fill="#fff" fill-opacity="0.95" filter="${softly(cv, 1.4)}"/>`);
-        cv.add(`<path d="M${X - 130} 82 Q${X - 116} 48 ${X - 70} 34 Q${X - 92} 62 ${X - 98} 104 Z" fill="#fff" fill-opacity="0.6" filter="${softly(cv, 2)}"/>`);
-        cv.add(`<path d="M${X - 56} 30 Q${X - 30} 52 ${X - 26} 84" fill="none" stroke="#7d7880" stroke-width="16" stroke-opacity="0.35" filter="${softly(cv, 5)}"/>`);
-        cv.add('</g>');
-      });
-      // the tea
-      s.paint((cv) => {
-        cv.add(`<path d="${tea}" fill="${linear(cv, [[0, '#5e1208'], [0.18, '#98230e'], [0.5, '#7c1609'], [0.82, '#9e2810'], [1, '#541006']], X - 124, 0, X + 124, 0)}"/>`);
-        cv.add(`<g clip-path="${within(cv, tea)}">`);
-        // the turns a round glass makes of it: each a soft mass of dark or of light lying across it, curved as the
-        // glass is round and deepest at its middle, `reach` of the way out to either side, moved `off` to one side
-        const turn = (y, depth, colour, opacity, soft, reach = 1, off = 0) => {
-          const w = (halfAt(y) + 6) * reach;
-          const cx = X + off * halfAt(y);
-          const sag = w * 0.36;
-          cv.add(`<path d="M${n(cx - w)} ${n(y)} Q${n(cx)} ${n(y + sag + depth)} ${n(cx + w)} ${n(y)} Q${n(cx)} ${n(y + sag - depth)} ${n(cx - w)} ${n(y)} Z" fill="${colour}" fill-opacity="${opacity}" filter="${softly(cv, soft)}"/>`);
-        };
-        turn(140, 30, '#d8602c', 0.95, 5);
-        turn(150, 26, '#3a0806', 0.6, 7, 0.55, 0.08);
-        turn(196, 52, '#260404', 0.82, 9, 0.9, -0.05);
-        turn(236, 26, '#cc4a1e', 0.6, 8, 0.42, -0.42);
-        turn(286, 46, '#2c0505', 0.8, 9, 0.92, 0.05);
-        turn(330, 40, '#bc2612', 0.9, 9);
-        turn(374, 30, '#c43c12', 0.85, 8);
-        turn(398, 18, '#e8802c', 0.9, 5, 0.78);
-        cv.add('</g>');
-        // the glass turning away at either side, which darkens it there
-        rim(cv, tea, { colour: '#3a0806', width: 9, opacity: 0.45, soft: 5 });
-        strokes(cv, rnd, tea, [X - 126, 120, X + 126, 436], { count: 300, colours: ['#3e0a06', '#7c1c10', '#b83a16', '#d05a1c'], flow: () => 88, length: 34, width: 3.4, opacity: [0.04, 0.11] });
-        // its surface, seen through the mouth of the glass: orange where the light lies on it, brightest along its
-        // far edge, dark toward us where the lip stands over it
-        cv.add(`<g clip-path="${within(cv, mouth)}">`);
-        const top = ring(X, LEVEL, SURFACE.rx, SURFACE.ry);
-        cv.add(`<path d="${top}" fill="${linear(cv, [[0, '#e0661c'], [0.4, '#c44810'], [0.75, '#8c260c'], [1, '#5a1208']], 0, LEVEL - SURFACE.ry, 0, LEVEL + SURFACE.ry)}"/>`);
-        cv.add(`<path d="M${n(X - SURFACE.rx + 10)} ${LEVEL - 6} A${n(SURFACE.rx)} ${SURFACE.ry} 0 0 1 ${n(X + SURFACE.rx - 10)} ${LEVEL - 6}" fill="none" stroke="#f6a04a" stroke-width="2.6" stroke-opacity="0.95" stroke-linecap="round"/>`);
-        cv.add(`<ellipse cx="${X + 26}" cy="${LEVEL + 6}" rx="56" ry="8" fill="#4a0e06" fill-opacity="0.6" filter="${softly(cv, 3.5)}"/>`);
-        cv.add(`<path d="${top}" fill="none" stroke="${ink}" stroke-width="2.4" stroke-opacity="0.75"/>`);
-        cv.add('</g>');
-      });
-      // the glass itself: the dark line round it, the lip, the white lights down it, and its thick foot
-      s.paint((cv) => {
-        // the foot: thick glass, grey, a light lying along it
-        const foot = body(0, 424, 438, 0, 11);
-        cv.add(`<path d="${foot}" fill="${linear(cv, [[0, '#9a948f'], [0.3, '#4a403c'], [0.62, '#cfc8c0'], [1, '#3a302c']], X - 76, 0, X + 76, 0)}" fill-opacity="0.92"/>`);
-        cv.add(`<path d="M${X - 52} 441 Q${X - 6} 451 ${X + 34} 445" fill="none" stroke="#fbf7f0" stroke-width="3.6" stroke-opacity="0.8" stroke-linecap="round" filter="${softly(cv, 1)}"/>`);
-        cv.add(`<path d="M${X - 78} 425 Q${X} 438 ${X + 78} 425" fill="none" stroke="${ink}" stroke-width="2" stroke-opacity="0.6"/>`);
-        // the line round the glass, and the paler turn of the glass inside it
-        cv.add(`<path d="${outside}" fill="none" stroke="#e8e2dc" stroke-width="8" stroke-opacity="0.2" clip-path="${within(cv, outside)}"/>`);
-        cv.add(`<path d="${outside}" fill="none" stroke="${ink}" stroke-width="3.6" stroke-linejoin="round"/>`);
-        // the lip: a dark line along its near side, and the light on it
-        cv.add(`<path d="M${X - RIM.rx} ${RIM.y} A${RIM.rx} ${RIM.ry} 0 0 0 ${X + RIM.rx} ${RIM.y}" fill="none" stroke="${ink}" stroke-width="3.4"/>`);
-        cv.add(`<path d="M${X - 122} 108 A${RIM.rx} ${RIM.ry} 0 0 0 ${X - 36} 142" fill="none" stroke="#fff" stroke-width="3" stroke-opacity="0.9" stroke-linecap="round"/>`);
-        // the white lights down the glass, each keeping its place across it as the glass narrows and swells
-        const light = (at, from, to, width, opacity) => {
-          const points = [];
-          for (let y = from; y <= to; y += 14) points.push([X + at * halfAt(y), y]);
-          cv.add(`<path d="${spline(points, false)}" fill="none" stroke="#fff" stroke-width="${width}" stroke-opacity="${opacity}" stroke-linecap="round" filter="${softly(cv, 0.7)}"/>`);
-        };
-        light(-0.8, 156, 262, 6, 0.75);
-        light(-0.62, 170, 356, 3, 0.7);
-        light(-0.22, 164, 330, 2, 0.65);
-        light(-0.1, 160, 300, 2.6, 0.6);
-        light(0.34, 170, 322, 2, 0.5);
-        light(0.84, 300, 392, 3, 0.4);
-        // two drops of gold where the light comes through at the right
-        cv.add(`<path d="M${X + 52} 330 q4 9 0 20" fill="none" stroke="#f6b83a" stroke-width="3.6" stroke-linecap="round" stroke-opacity="0.9"/>`);
-        cv.add(`<path d="M${X + 80} 384 q3 7 0 14" fill="none" stroke="#f6b83a" stroke-width="3" stroke-linecap="round" stroke-opacity="0.8"/>`);
-      });
-      return s.done({ finish: { paint: 2, grain: 0.012, contrast: 0.08, saturation: 1.04, ink: true } });
+      const gift = giftArtSvg({ id: 'cay', size: s.size, idPrefix: 'icon' });
+      s.paint((cv) => cv.add(gift.replace('viewBox="0 0 120 120"', `viewBox="${TEA_GIFT_FRAME.join(' ')}"`)));
+      return s.done({ finish: { contrast: 0, saturation: 1, warmth: 0, grain: 0 } });
     },
   },
   {

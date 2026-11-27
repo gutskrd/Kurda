@@ -25,9 +25,11 @@ export interface GiftDef {
   limited: boolean;
   /** The months it is sold in, 1–12 in UTC; null for all year. */
   months: readonly number[] | null;
+  /** A token of courtship, offered and given only where giver and receiver are both known adults. */
+  adultsOnly: boolean;
 }
 
-const gift = (id: string, name: string, price: number, group: GiftGroup, extra: Partial<Pick<GiftDef, 'earnedFree' | 'months'>> = {}): GiftDef => ({
+const gift = (id: string, name: string, price: number, group: GiftGroup, extra: Partial<Pick<GiftDef, 'earnedFree' | 'months' | 'adultsOnly'>> = {}): GiftDef => ({
   id,
   name,
   price,
@@ -35,6 +37,7 @@ const gift = (id: string, name: string, price: number, group: GiftGroup, extra: 
   earnedFree: extra.earnedFree ?? false,
   limited: extra.months != null,
   months: extra.months ?? null,
+  adultsOnly: extra.adultsOnly ?? false,
 });
 
 /** Every gift, cheapest first. */
@@ -48,6 +51,8 @@ export const GIFTS: readonly GiftDef[] = [
   gift('nergiz', 'Nêrgiz', 50, 'flowers'),
   gift('kevok', 'Kevok', 50, 'animals'),
   gift('sosin', 'Sosin', 100, 'flowers'),
+  // the apple stuck with cloves that is sent for love, so only ever between two adults
+  gift('sev-mexek', 'Sêva mêxekî', 100, 'warm', { adultsOnly: true }),
   gift('pisik', 'Pisîk', 150, 'animals'),
   gift('kew', 'Kew', 300, 'animals'),
   gift('semawer', 'Semawer', 300, 'warm'),
@@ -97,6 +102,11 @@ export function giftInSeason(sku: string, now: Date = new Date()): boolean {
   return !months || months.includes(now.getUTCMonth() + 1);
 }
 
+/** Whether a gift is a token of courtship, given only between two known adults. */
+export function giftForAdultsOnly(sku: string): boolean {
+  return giftOfSku(sku)?.adultsOnly === true;
+}
+
 /** Whether a shop item is limited: an end date set on it, or a gift sold only in its season. */
 export function isLimitedItem(sku: string, availableTo: Date | string | null | undefined): boolean {
   return availableTo != null || giftOfSku(sku)?.limited === true;
@@ -127,6 +137,11 @@ const MEANINGS: Readonly<Record<string, Readonly<Record<AppLocale, string>>>> = 
   sev: {
     en: 'A red apple', ku: 'Sêveke sor bi pelekî', ckb: 'سێوێکی سوور', de: 'Ein roter Apfel', es: 'Una manzana roja',
     fr: 'Une pomme rouge', nl: 'Een rode appel', tr: 'Kırmızı bir elma', ar: 'تفاحة حمراء',
+  },
+  'sev-mexek': {
+    en: 'A clove apple, a sign of love', ku: 'Sêveke bi mêxekan, nîşana evînê', ckb: 'سێوی مێخەکدار، نیشانەی خۆشەویستی',
+    de: 'Ein Nelkenapfel, ein Zeichen der Liebe', es: 'Una manzana con clavos, señal de amor', fr: 'Une pomme piquée de clous de girofle, signe d’amour',
+    nl: 'Een kruidnagelappel, een teken van liefde', tr: 'Karanfilli elma, sevginin işareti', ar: 'تفاحة بالقرنفل، علامة حب',
   },
   lale: {
     en: 'A tulip', ku: 'Kulîlka lalê', ckb: 'گوڵاڵە', de: 'Eine Tulpe', es: 'Un tulipán', fr: 'Une tulipe', nl: 'Een tulp',
@@ -262,7 +277,7 @@ const MEANINGS: Readonly<Record<string, Readonly<Record<AppLocale, string>>>> = 
  * picture, made bright. One the pictures do not say (a steel hammer) takes its shelf's, as does a gift added later.
  */
 const GLOW: Readonly<Record<string, string>> = {
-  cay: '#ea6b52', qehwe: '#daac62', beybun: '#f5be47', sev: '#e86354', lale: '#ea5f52', gul: '#ec5165', nergiz: '#f5b547',
+  cay: '#ea6b52', qehwe: '#daac62', beybun: '#f5be47', sev: '#e86354', 'sev-mexek': '#e8584c', lale: '#ea5f52', gul: '#ec5165', nergiz: '#f5b547',
   kevok: '#e0845d', sosin: '#8a62da', pisik: '#ef964d', kew: '#daae62', semawer: '#e0b45d', def: '#e1b25b',
   'deste-gul': '#dc6075', sterk: '#6270da', kelek: '#daaa62', saz: '#e3ae59', ask: '#a8da62', keskesor: '#f59047',
   pezkovi: '#daac62', belem: '#62b8da', pet: '#f5b847', hesp: '#e0885d', kon: '#daaa62', mal: '#e4a558',

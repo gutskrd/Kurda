@@ -151,7 +151,14 @@ const SHELF = [CAY, GUL, PISIK, BELEM, HEYV];
 const shelfOf = (
   items: GiftCatalogItem[] = SHELF,
   zer = 30_000,
-  more: { bag?: Array<{ sku: string; name: string; assetUrl: string | null; count: number }>; freeGifts?: number; hold?: 'new_friend' | 'friends_only' | null; limits?: { maxPrice: number | null; left: number | null; confirmFrom: number }; nudges?: boolean } = {},
+  more: {
+    bag?: Array<{ sku: string; name: string; assetUrl: string | null; count: number }>;
+    freeGifts?: number;
+    hold?: 'new_friend' | 'friends_only' | null;
+    limits?: { maxPrice: number | null; left: number | null; confirmFrom: number };
+    dayLeft?: Array<{ userId: string; left: number; moreAt: string | null }>;
+    nudges?: boolean;
+  } = {},
 ) =>
   ok({
     items,
@@ -160,6 +167,7 @@ const shelfOf = (
     freeGifts: more.freeGifts ?? 0,
     hold: more.hold ?? null,
     limits: more.limits ?? { maxPrice: null, left: null, confirmFrom: 2_000 },
+    dayLeft: more.dayLeft ?? [],
     nudges: more.nudges ?? true,
   });
 
@@ -216,6 +224,22 @@ describe('GiftPickerSheet', () => {
     expect(screen.getByRole('radio', { name: 'Gul, A red rose, 25 Zêr, ≈ €0.25' })).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Heyv, The full moon, 20,000 Zêr, ≈ €200/ })).toBeTruthy();
     expect(screen.getByText('Grand')).toBeTruthy();
+  });
+
+  it('says how many gifts are left for a friend today when few are, and holds the send once there are none', async () => {
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 30_000, { dayLeft: [{ userId: 'u2', left: 2, moreAt: null }] }) });
+    const first = dmSheet();
+    expect(await screen.findByText('You can give Rojda 2 more today.')).toBeTruthy();
+    first.unmount();
+
+    const client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 30_000, { dayLeft: [{ userId: 'u2', left: 0, moreAt: null }] }) });
+    testAuth.client = client;
+    dmSheet();
+    expect(await screen.findByText('Rojda can’t be given any more gifts today.')).toBeTruthy();
+    fireEvent.click(await screen.findByRole('radio', { name: /^Gul/ }));
+    expect(screen.getByRole('button', { name: 'Send gift' }).getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    expect(client.calls.some((c) => c.path === '/gifts')).toBe(false);
   });
 
   it('says what fills an empty bag', async () => {

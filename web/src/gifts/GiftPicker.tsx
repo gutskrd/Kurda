@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MAX_GIFT_RECIPIENTS,
+  giftDayFull,
+  giftDayLine,
   giftLockFor,
   giftMeaning,
   giftShelves,
   type BagEntry,
   type GiftCatalog,
+  type GiftDayLeft,
   type GiftCatalogItem,
   type GiftChatRef,
   type GiftConfirmDetails,
@@ -28,7 +31,8 @@ import { ZerValue } from '../shop/ZerValue';
 import { GiftItemArt } from './GiftArt';
 
 /** The shelf as GET /gifts/catalog sends it; an older server leaves out the bag, the hold and the limits. */
-type Shelf = Omit<GiftCatalog, 'bag' | 'hold' | 'freeGifts' | 'limits' | 'nudges'> & Partial<Pick<GiftCatalog, 'bag' | 'hold' | 'freeGifts' | 'limits' | 'nudges'>>;
+type Shelf = Omit<GiftCatalog, 'bag' | 'hold' | 'freeGifts' | 'limits' | 'dayLeft' | 'nudges'> &
+  Partial<Pick<GiftCatalog, 'bag' | 'hold' | 'freeGifts' | 'limits' | 'dayLeft' | 'nudges'>>;
 
 /** Refusals of the shelf that are the gift rules rather than a failure: one calm line, nothing to retry. */
 const RULES: Partial<Record<string, MessageKey>> = {
@@ -219,6 +223,8 @@ function PickerFlow({
   const lockOf = (item: GiftCatalogItem): GiftLock | 'funds' | null =>
     giftLockFor(item, getting(item).length, shelf?.limits) ?? (shelf && cost(item) > shelf.balance.zer ? 'funds' : null);
   const bagCount = (sku: string): number => shelf?.bag?.find((b) => b.sku === sku)?.count ?? 0;
+  // The day's caps: a send to recipients who can all be given nothing more for now is held before it is tried.
+  const dayFull = (item: GiftCatalogItem): boolean => giftDayFull(shelf?.dayLeft ?? [], getting(item));
 
   async function send(confirmToken?: string): Promise<void> {
     if (!picked || busy) return;
@@ -272,6 +278,7 @@ function PickerFlow({
 
   const names = chosen.map((id) => nameOf.get(id) ?? '').filter(Boolean);
   const person = people?.[0]?.name ?? '';
+  const dayNote = dayLeftNote(shelf?.dayLeft ?? [], (id) => nameOf.get(id) ?? person, t, fmt, locale);
   const title = post ? t('gift.post.title', { name: person }) : group ? t('gift.picker.titleGroup') : t('gift.picker.title', { name: person });
   const items = shelf?.items ?? [];
   // The bag's gifts that can be given here, in the order the shelf has them.
@@ -329,6 +336,7 @@ function PickerFlow({
           ) : (
             <div className="gift-shelves">
               {shelf.limits?.left != null && <p className="gift-limit-line">{t('gift.limit.leftLine', { zer: fmt(shelf.limits.left) })}</p>}
+              {dayNote && <p className="gift-limit-line">{dayNote}</p>}
               <section className="gift-shelf-section gift-bag" aria-labelledby="gift-bag-title">
                 <h3 className="gift-shelf-title" id="gift-bag-title">
                   {t('gift.bag.title')}
@@ -393,15 +401,20 @@ function PickerFlow({
                 {picked.fromBag ? (
                   <strong className="gift-confirm-cost">{t('gift.bag.free')}</strong>
                 ) : (
-                  <strong className="gift-confirm-cost">
-                    <CoinIcon size={14} /> {fmt(cost(picked.item))} <ZerValue zer={cost(picked.item)} />
-                  </strong>
+                  <>
+                    <strong className="gift-confirm-cost">
+                      <CoinIcon size={14} /> {fmt(cost(picked.item))} <ZerValue zer={cost(picked.item)} />
+                    </strong>
+                    {/* what there is to pay with, by what it costs, so nobody has to scroll back up to the purse */}
+                    {shelf && <span className="gift-confirm-have">{t('gift.picker.balance', { zer: fmt(shelf.balance.zer) })}</span>}
+                  </>
                 )}
                 {/* Beside the button that spends: a gift, like any purchase, is final. */}
                 <span className="gift-confirm-hidden">{t('shop.giftFinal')}</span>
               </span>
               {!picked.fromBag && lockOf(picked.item) === 'funds' && <span className="gift-confirm-short">{t('gift.error.funds')}</span>}
-              <Button onClick={() => void send()} disabled={busy || (!picked.fromBag && lockOf(picked.item) !== null)}>
+              {dayFull(picked.item) && dayNote && <span className="gift-confirm-short">{dayNote}</span>}
+              <Button onClick={() => void send()} disabled={busy || dayFull(picked.item) || (!picked.fromBag && lockOf(picked.item) !== null)}>
                 {busy ? t('gift.sending') : t('gift.send')}
               </Button>
               {/* The result sits by the send button, not under a shelf that may be scrolled away. */}
@@ -412,6 +425,29 @@ function PickerFlow({
       )}
     </Sheet>
   );
+}
+
+/** When more gifts may go: the time alone today, with the weekday when it is another day. */
+function whenMore(iso: string, locale: string): string {
+  const at = new Date(iso);
+  const today = at.toDateString() === new Date().toDateString();
+  return at.toLocaleString(locale, today ? { hour: '2-digit', minute: '2-digit' } : { weekday: 'long', hour: '2-digit', minute: '2-digit' });
+}
+
+/** The day's caps in one line before anything is sent (shared `giftDayLine`), or null when nothing needs saying. */
+function dayLeftNote(
+  days: readonly GiftDayLeft[],
+  nameOf: (userId: string) => string,
+  t: ReturnType<typeof useT>,
+  fmt: (n: number) => string,
+  locale: string,
+): string | null {
+  const line = giftDayLine(days);
+  if (!line) return null;
+  if (line.kind === 'few') return t('gift.day.few', { name: nameOf(line.userId), count: fmt(line.left) });
+  if (line.kind === 'someFull') return t('gift.day.someFull', { names: line.userIds.map(nameOf).filter(Boolean).join(', ') });
+  if (!line.moreAt) return t('gift.day.noneNoTime', { name: nameOf(line.userId) });
+  return t('gift.day.none', { name: nameOf(line.userId), time: whenMore(line.moreAt, locale) });
 }
 
 /** One kind of gift in the bag: free to give, with how many are left. */

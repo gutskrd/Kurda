@@ -1,6 +1,6 @@
 /**
  * The warm gifts and the music (gift-art.ts): a glass of tea on its saucer, a cup of Kurdish coffee on a kilim, a red
- * apple, a samovar on its tray, a frame drum and a saz.
+ * apple and an apple stuck with cloves for love, a samovar on its tray, a frame drum and a saz.
  */
 import { type Drawing, type Pt } from './svg.js';
 import { layer } from './gift-canvas.js';
@@ -404,73 +404,305 @@ export const COFFEE_STEAM: Steam = [
 
 // ───────────────────────────────────────────────────────────────────── sêv
 
-const APPLE: Tone = { base: '#b8352a', light: '#d95b41', shade: '#7c2019' };
-const APPLE_LEAF: Tone = { base: '#6a8a3e', light: '#94b35f', shade: '#48682b' };
+/** A ripe red apple's paint: its red, brighter where the light falls, the deep wine red it turns to away from it, and gold by the stalk. */
+const APPLE = { base: '#b5101c', lit: '#e92b2b', bright: '#ff5845', deep: '#4c0410', gold: '#e8902e' } as const;
+const APPLE_LEAF: Tone = { base: '#4c8a2c', light: '#8cc652', shade: '#2c5a1a' };
+/** An apple standing upright, broad at the shoulders and narrowing to the lobes it stands on, its stalk's hollow at (58.2, 42.6). */
+const APPLE_SHAPE: readonly Pt[] = [
+  [58, 42.2], [64, 38.6], [72, 36.8], [81, 38.4], [88, 43.5], [92.6, 51], [94, 60], [92.8, 70], [89.6, 80], [85, 89], [79.4, 96],
+  [73, 99.8], [66.6, 99.2], [62, 100.4], [58, 99.4], [54, 100.4], [49.4, 99.2], [43, 99.8], [36.6, 96], [31, 89], [26.4, 80],
+  [23.2, 70], [22, 60], [23.4, 51], [28, 43.5], [35, 38.4], [44, 36.8], [52, 38.6],
+];
+const APPLE_HOLLOW: Pt = [58.2, 42.6];
 
 /** Where the apple rests on the table, which it rocks about (gift-loop-warm.ts), and where its stalk leaves it. */
 export const SEV_FOOT: Pt = [60, 98.6];
-export const SEV_STALK: Pt = [55.8, 31.4];
+export const SEV_STALK: Pt = [57.7, 31.5];
 /** The glint on its skin, where the window shines on it. */
 export const SEV_GLINT: Pt = [39, 56.4];
 
 export function sev(dr: Drawing, rnd: Rnd): void {
-  floor(dr, rnd, 62, 99.5, 33, 6);
-  rest(dr, rnd, 60, 98.6, 24, 3.2);
-  layer(dr, 'apple', () => appleBody(dr, rnd));
-  // the leaves, which flutter a little as it rocks, and the glint that comes and goes on its skin
-  layer(dr, 'leaves', () => {
-    dr.add('<g transform="rotate(-8 58 70)">');
-    leaf(dr, rnd, [60.6, 31.6], [42, 22.4], 9, { base: '#55722f', light: '#7e9c4c', shade: '#3c5622' }, { bend: 0.1, teeth: 0.03, rib: '#a9c084' });
-    leaf(dr, rnd, [61.6, 30.4], [89, 21], 14, APPLE_LEAF, { bend: -0.12, teeth: 0.03, rib: '#bfd29a' });
+  floor(dr, rnd, 62, 100, 33, 6);
+  rest(dr, rnd, 60, 99.2, 24, 3.2);
+  layer(dr, 'apple', () => {
+    dr.add('<g transform="rotate(-4 58 70)">');
+    appleSkin(dr, rnd, tremble(APPLE_SHAPE, rnd, 0.12), [40, 55.1]);
+    appleStalk(dr, rnd, 'stalk');
     dr.add('</g>');
   });
-  layer(dr, 'glint', () => {
-    const [x, y] = SEV_GLINT;
-    paint(dr, touch(x, y, 8.4, 0.85, 0) + touch(x, y, 8.4, 0.85, 90), '#fff7ec');
-    paint(dr, touch(x, y, 4, 0.55, 45) + touch(x, y, 4, 0.55, -45), '#fff7ec', 0.75);
-    paint(dr, ellipse(x, y, 1.1, 1.1), '#ffffff');
+  // the leaf, which flutters a little as it rocks, and the glint that comes and goes on its skin
+  layer(dr, 'leaves', () => {
+    dr.add('<g transform="rotate(-4 58 70)">');
+    leaf(dr, rnd, [60.4, 31.8], [87.6, 21.4], 13, APPLE_LEAF, { bend: -0.12, teeth: 0.02, rib: '#c4dea0' });
+    paint(dr, brush([[66.4, 27.4], [75, 23.6], [83.4, 21.6]], 1.3, rnd, { start: 0.2, end: 0.1, peak: 0.45 }), '#ffffff', 0.4);
+    dr.add('</g>');
   });
+  layer(dr, 'glint', () => sparkle(dr, SEV_GLINT));
 }
 
-function appleBody(dr: Drawing, rnd: Rnd): void {
-  dr.add('<g transform="rotate(-8 58 70)">');
-  const apple = tremble([[58, 41], [66, 37.4], [76, 37.6], [86, 43], [92.4, 53], [94, 65], [91.4, 78], [84.4, 90], [74.4, 97.6], [64, 99.4], [58, 97.6], [52, 99.4], [41.6, 97.6], [31.6, 90], [24.6, 78], [22, 65], [23.6, 53], [30, 43], [40, 37.6], [50, 37.4]], rnd, 0.35);
+/** A star of light where the shine on a skin is brightest. */
+function sparkle(dr: Drawing, [x, y]: Pt): void {
+  paint(dr, touch(x, y, 8.4, 0.85, 0) + touch(x, y, 8.4, 0.85, 90), '#fff7ec');
+  paint(dr, touch(x, y, 4, 0.55, 45) + touch(x, y, 4, 0.55, -45), '#fff7ec', 0.75);
+  paint(dr, ellipse(x, y, 1.1, 1.1), '#ffffff');
+}
+
+/**
+ * Colour laid on in thin coats, each a smaller copy of `pts` drawn toward (cx, cy), from `from` of its size to `to`: as
+ * soft as a blend where they pile up, yet every coat flat.
+ */
+function glaze(dr: Drawing, pts: readonly Pt[], cx: number, cy: number, from: number, to: number, coats: number, colour: string, opacity: number): void {
+  for (let i = 0; i < coats; i++) paint(dr, outline(scaleAbout(pts, cx, cy, from + ((to - from) * i) / (coats - 1))), colour, opacity);
+}
+
+/** A pane of a window as it shines on a round skin: rounded, `w` by `h`, turned `deg`. */
+function pane(cx: number, cy: number, w: number, h: number, deg: number, rnd: Rnd): Pt[] {
+  const [a, b, r] = [w / 2, h / 2, Math.min(w, h) * 0.3];
+  const corners: Pt[] = [[-a + r, -b], [a - r, -b], [a, -b + r], [a, b - r], [a - r, b], [-a + r, b], [-a, b - r], [-a, -b + r]];
+  return tremble(turn(shift(corners, cx, cy), cx, cy, deg), rnd, 0.05);
+}
+
+/**
+ * A ripe red apple's skin, polished: its red brightening in thin coats toward the light at `gleam` and darkening coat on
+ * coat to wine red away from it, gold round the stalk, faint streaks and pale pores; a window shining crisp on it, the
+ * room's light soft on its far cheek and a glare along its shoulder.
+ */
+function appleSkin(dr: Drawing, rnd: Rnd, apple: readonly Pt[], gleam: Pt): void {
   const skin = outline(apple);
+  const [gx, gy] = gleam;
+  const [hx, hy] = APPLE_HOLLOW;
   paint(dr, skin, APPLE.base);
-  // the streaks a red apple's skin runs in, out from its stalk, over the gold where the sun did not reach
   within(dr, skin, () => {
-    let gold = '';
-    for (let i = 0; i < 8; i++) {
-      const t = 0.05 + i * 0.062 + (rnd() - 0.5) * 0.02;
-      gold += brush([[58 + t * 10, 46], [58 + t * 66, 60 + t * 6], [58 + t * 58, 62 + rnd() * 30]], 1.4 + rnd() * 1.4, rnd, { start: 0.1, end: 0.05, peak: 0.55 });
-    }
-    paint(dr, gold, '#d9963c', 0.42);
+    glaze(dr, apple, gx + 9, gy + 11, 0.97, 0.26, 24, APPLE.lit, 0.05);
+    glaze(dr, apple, gx + 5, gy + 6, 0.52, 0.12, 12, APPLE.bright, 0.04);
+    glaze(dr, roundish(hx, hy + 2.5, 13, 6, rnd, { wobble: 0.08 }), hx, hy + 1, 1, 0.3, 8, APPLE.gold, 0.035);
+    // the faint streaks the skin runs in, down from the stalk and round the apple
     let lit = '';
     let dark = '';
     for (let i = 0; i < 13; i++) {
-      const t = i / 12 - 0.5 + (rnd() - 0.5) * 0.04;
-      const reach = 0.55 + rnd() * 0.35;
-      const mark = brush([[58 + t * 10, 42], [58 + t * 64, 58 + Math.abs(t) * 6], [58 + t * 60, 42 + 50 * reach]], 1 + rnd() * 1.6, rnd, { start: 0.2, end: 0.05, peak: 0.3 });
-      if (t < 0.1 && rnd() < 0.8) lit += mark;
+      const phi = -1.35 + (i / 12) * 2.7 + (rnd() - 0.5) * 0.1;
+      const reach = 0.5 + rnd() * 0.35;
+      const at = (t: number): Pt => [hx + Math.sin(phi) * 36 * Math.sin(Math.PI * (0.1 + 0.6 * t)), hy + 2 + t * 55 * (0.75 + 0.25 * Math.cos(phi))];
+      const mark = brush([at(0.05), at(reach * 0.5), at(reach)], 2.6 + rnd() * 1.8, rnd, { start: 0.3, end: 0.05, peak: 0.3 });
+      if (i % 2 === 0) lit += mark;
       else dark += mark;
     }
-    paint(dr, lit, APPLE.light, 0.45);
-    paint(dr, dark, APPLE.shade, 0.25);
+    paint(dr, lit, '#f2463a', 0.12);
+    paint(dr, dark, '#7a0812', 0.12);
   });
-  side(dr, apple, -3.4, -3, APPLE.shade, { grow: 0.99 });
-  side(dr, apple, 3.6, 3.2, APPLE.light, { grow: 0.97 });
-  // the warm light thrown back up into its shaded side from what it stands on, and the shine of the window on its skin
-  side(dr, apple, -1, -0.9, '#a53b2c', { grow: 0.995 });
-  paint(dr, touch(37.6, 57, 9, 2.6, -52) + touch(43.6, 50.4, 3, 1.3, -30), '#fbe6d2', 0.85);
-  paint(dr, ellipse(35.4, 63.6, 0.9, 0.9), '#fbe6d2', 0.7);
-  // the hollow the stalk grows from, and the pale pores over the skin
+  // the round of it turning away: wine red stealing in from the lower right and from below, coat on coat, and its rim
+  for (let k = 1; k <= 18; k++) side(dr, apple, -0.55 * k, -0.43 * k, APPLE.deep, { grow: 1 - 0.003 * k, opacity: 0.052 });
+  for (let k = 1; k <= 9; k++) side(dr, apple, 0, -0.48 * k, APPLE.deep, { opacity: 0.042 });
+  side(dr, apple, 0, 0, APPLE.deep, { grow: 0.975, opacity: 0.3 });
   within(dr, skin, () => {
-    paint(dr, outline(roundish(58.4, 43, 7.4, 3, rnd, { wobble: 0.1 })), APPLE.shade);
     let pores = '';
-    for (let i = 0; i < 26; i++) pores += ellipse(28 + rnd() * 62, 46 + rnd() * 48, 0.32 + rnd() * 0.25, 0.28 + rnd() * 0.2);
-    paint(dr, pores, '#eba27a', 0.6);
+    for (let i = 0; i < 46; i++) {
+      const [x, y] = [26 + rnd() * 64, 46 + rnd() * 50];
+      if (Math.hypot(x - gx, y - gy) > 7) pores += ellipse(x, y, 0.26 + rnd() * 0.16, 0.24 + rnd() * 0.14);
+    }
+    paint(dr, pores, '#f7cf8c', 0.55);
+    // the hollow the stalk grows from, gold deep inside, its near lip catching the light
+    glaze(dr, roundish(hx, hy, 8.4, 3.4, rnd, { wobble: 0.1 }), hx, hy - 0.4, 1, 0.45, 5, '#7a0812', 0.22);
+    paint(dr, outline(roundish(hx + 0.2, hy - 0.4, 4.4, 1.7, rnd, { wobble: 0.1 })), '#9a4a1e', 0.5);
+    paint(dr, outline(roundish(hx + 0.2, hy - 0.8, 2.6, 1, rnd, { wobble: 0.1 })), APPLE.deep, 0.75);
+    paint(dr, brush([[hx - 7, hy + 1.3], [hx, hy + 3.4], [hx + 7, hy + 1.5]], 1, rnd, { start: 0.2, end: 0.2, peak: 0.5 }), '#ff7a5e', 0.6);
+    // the window: a soft sheen round it in thin coats, and its four panes crisp at its heart
+    glaze(dr, roundish(gx + 1, gy + 1, 10, 12.5, rnd, { wobble: 0.05, rot: -30 }), gx, gy, 1, 0.22, 14, '#ffffff', 0.032);
+    for (const [u, v, w, h, o] of [[-1.9, -2.3, 2.2, 3.7, 0.95], [1.1, -2.5, 2.8, 3.9, 0.95], [-1.8, 1.9, 2, 3.4, 0.72], [1.2, 1.8, 2.6, 3.6, 0.72]] as const) {
+      const [px, py] = turn([[gx + u, gy + v]], gx, gy, -24)[0]!;
+      paint(dr, outline(pane(px, py, w, h, -24, rnd)), '#fff8f2', o);
+    }
+    // the room's light, broad and soft on the far cheek, and a glare along the near shoulder
+    glaze(dr, roundish(79, 62, 5.5, 12, rnd, { wobble: 0.06, rot: 10 }), 79.6, 61, 1, 0.2, 12, '#ffffff', 0.022);
+    const shoulder = [24, 25, 26].map((i): Pt => lerp(apple[i]!, [58, 66], 0.05));
+    paint(dr, brush(shoulder, 1.7, rnd, { start: 0.1, end: 0.2, peak: 0.55 }), '#ffffff', 0.45);
+    paint(dr, ellipse(gx + 10.4, gy + 14.6, 0.9, 0.9), '#ffe6dc', 0.7);
   });
-  paint(dr, brush([[58.6, 43], [59.4, 35], [62.4, 27.6]], 2.3, rnd, { start: 0.9, end: 0.7, peak: 0.4 }), '#5a3a22');
+}
+
+/** What grows from the apple's hollow: its own stalk, its cut end pale, or the clove apple's clove pressed in upright. */
+function appleStalk(dr: Drawing, rnd: Rnd, kind: 'stalk' | 'clove'): void {
+  if (kind === 'stalk') {
+    const stalk: Pt[] = [[58.4, 43], [58.9, 36], [60.6, 29.6]];
+    paint(dr, brush(stalk, 2.2, rnd, { start: 1, end: 0.75, peak: 0.3 }), '#4a1c12');
+    paint(dr, brush(shift(stalk, -0.45, 0.1), 0.7, rnd, { start: 0.6, end: 0.5, peak: 0.4 }), '#8a4a2a', 0.85);
+    paint(dr, ellipse(60.7, 29.5, 1.2, 0.7), '#c9a463');
+    return;
+  }
+  const stem: Pt[] = [[58.3, 42.6], [58.5, 38], [58.8, 33.8]];
+  paint(dr, brush(stem, 2.4, rnd, { start: 1, end: 0.8, peak: 0.3 }), '#6a4a26');
+  paint(dr, brush(shift(stem, -0.5, 0), 0.7, rnd, { start: 0.6, end: 0.5 }), '#b08a52', 0.85);
+  paint(dr, ellipse(58.9, 32.4, 2, 1.9), '#8a6a34');
+  paint(dr, ellipse(58.4, 31.8, 0.9, 0.8), '#e6c47c', 0.9);
+}
+
+// ───────────────────────────────────────────────────────────── sêva mêxekî
+
+/** Cloves dried to a dark bronze, by how far each turns from the light: its four sepals, the bud's head and the light on it. */
+const CLOVE = [
+  { sepal: '#8c683f', head: '#a88150', light: '#e6c48c' },
+  { sepal: '#6a4a2e', head: '#7e5c38', light: '#bc9660' },
+  { sepal: '#4a321e', head: '#573d26', light: '#86683f' },
+  { sepal: '#30200f', head: '#3a2816', light: '#5c462c' },
+] as const;
+
+/** Where the light comes from: up and to the left, toward us. */
+const CLOVE_LIGHT = [-0.5, 0.62, 0.6] as const;
+
+/** The heart left bare of cloves, `k` of the drawn size, its middle at (cx, cy). */
+function heart(cx: number, cy: number, k: number): Pt[] {
+  const out: Pt[] = [];
+  for (let i = 0; i < 48; i++) {
+    const t = (i / 48) * Math.PI * 2;
+    out.push([cx + 16 * Math.sin(t) ** 3 * k, cy - (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t) + 2.5) * k]);
+  }
+  return out;
+}
+
+/** Whether (x, y) lies inside the outline `pts`. */
+function inside(pts: readonly Pt[], x: number, y: number): boolean {
+  let hit = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i]!;
+    const [xj, yj] = pts[j]!;
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) hit = !hit;
+  }
+  return hit;
+}
+
+/** How far out the outline `pts` reaches from (cx, cy) toward `a` radians. */
+function reachOf(pts: readonly Pt[], cx: number, cy: number, a: number): number {
+  const [dx, dy] = [Math.cos(a), Math.sin(a)];
+  let best = 0;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [x1, y1] = [pts[j]![0] - cx, pts[j]![1] - cy];
+    const [x2, y2] = [pts[i]![0] - cx, pts[i]![1] - cy];
+    const den = dx * (y2 - y1) - dy * (x2 - x1);
+    if (Math.abs(den) < 1e-9) continue;
+    const t = (x1 * (y2 - y1) - y1 * (x2 - x1)) / den;
+    const u = (x1 * dy - y1 * dx) / den;
+    if (t > 0 && u >= 0 && u <= 1) best = Math.max(best, t);
+  }
+  return best;
+}
+
+interface Clove {
+  at: Pt;
+  /** The way out from the apple's middle, in which a clove near its edge is seen side on. */
+  out: Pt;
+  /** How square on it is seen, 1 facing us. */
+  face: number;
+  turn: number;
+  /** Each sepal's length, as a share of the clove's size: no two cloves dried alike. */
+  sepals: readonly number[];
+  band: 0 | 1 | 2 | 3;
+}
+
+/** A clove pressed in at its place: its four sepals as a star and the round head of its bud, squashed as it turns away. */
+function clovePaths(c: Clove, s: number): { sepal: string; head: string; light: string } {
+  const [x, y] = c.at;
+  const [ox, oy] = c.out;
+  const seen = (r: number, a: number): Pt => {
+    const [lx, ly] = [Math.cos(a) * r, Math.sin(a) * r];
+    const along = lx * ox + ly * oy;
+    return [x + lx + (c.face - 1) * along * ox, y + ly + (c.face - 1) * along * oy];
+  };
+  const star: Pt[] = [];
+  for (let i = 0; i < 4; i++) {
+    star.push(seen(s * c.sepals[i]!, c.turn + (i * Math.PI) / 2));
+    star.push(seen(s * 0.46, c.turn + (i * Math.PI) / 2 + Math.PI / 4));
+  }
+  const r = s * 0.48 * (0.65 + 0.35 * c.face);
+  return { sepal: polygon(star), head: ellipse(x, y, r, r), light: ellipse(x - r * 0.28, y - r * 0.32, r * 0.5, r * 0.42) };
+}
+
+const HEART_AT: Pt = [56.4, 68.6];
+
+/** Where the shine on the heart is brightest, which beats like a heart (gift-loop-warm.ts). */
+export const SEV_MEXEK_GLINT: Pt = [45.8, 57];
+
+/**
+ * The clove apple, as it is given for love: an apple stuck all over with cloves but for a heart left bare, where its red
+ * skin shines through with its pale pores, and a clove pressed in upright where the stalk was. Two loose cloves lie at
+ * its foot.
+ */
+export function sevMexek(dr: Drawing, rnd: Rnd): void {
+  floor(dr, rnd, 61, 101.4, 40, 6.6);
+  rest(dr, rnd, 60, 100, 26, 3.4);
+  looseClove(dr, rnd, [19, 104], -8);
+  looseClove(dr, rnd, [99.6, 104.6], 196);
+  dr.add('<g transform="rotate(5 58 70)">');
+  const apple = tremble(APPLE_SHAPE, rnd, 0.12);
+  const H = heart(HEART_AT[0], HEART_AT[1], 1);
+  appleSkin(dr, rnd, apple, [46, 59.4]);
+  // the heart's pores, small and pale, set about as evenly as an apple sets them
+  within(dr, outline(H), () => {
+    let dots = '';
+    for (let row = 0; row < 10; row++) {
+      for (let col = 0; col < 10; col++) {
+        const [x, y] = [HEART_AT[0] - 16 + col * 3.6 + (row % 2) * 1.8 + (rnd() - 0.5) * 1.2, HEART_AT[1] - 14 + row * 3.4 + (rnd() - 0.5) * 1.2];
+        dots += ellipse(x, y, 0.3, 0.3);
+      }
+    }
+    paint(dr, dots, '#f8e8de', 0.75);
+  });
+  // under the cloves the skin has dried dark; where the cloves crowd the heart they shade its edge
+  band(dr, apple, H, '#2e1d10');
+  dr.add(`<path d="${outline(H)}${outline(scaleAbout(H, HEART_AT[0], HEART_AT[1], 0.94))}" fill="#3a060c" fill-rule="evenodd" fill-opacity="0.45"/>`);
+  const C: Pt = [58, 69];
+  const cloves: Clove[] = [];
+  const place = (x: number, y: number, face: number, nx: number, ny: number, nz: number): void => {
+    const d = Math.hypot(x - C[0], y - C[1]) || 1;
+    const l = nx * CLOVE_LIGHT[0] + ny * CLOVE_LIGHT[1] + nz * CLOVE_LIGHT[2];
+    const sepals = [0, 1, 2, 3].map(() => 0.75 + rnd() * 0.35);
+    cloves.push({ at: [x, y], out: [(x - C[0]) / d, (y - C[1]) / d], face, turn: rnd() * Math.PI, sepals, band: l > 0.55 ? 0 : l > 0.25 ? 1 : l > -0.05 ? 2 : 3 });
+  };
+  // a ring of cloves pressed close round the heart, crowding over its edge; none in the dip between its lobes
+  const edge = along([...H, H[0]!], 34).slice(0, -1);
+  edge.forEach(([x, y], i) => {
+    const [px, py] = edge[(i + edge.length - 1) % edge.length]!;
+    const [nx, ny] = edge[(i + 1) % edge.length]!;
+    const l = Math.hypot(nx - px, ny - py) || 1;
+    const [ox, oy] = [x + ((ny - py) / l) * 2.5, y - ((nx - px) / l) * 2.5];
+    const dip = Math.hypot(ox - H[0]![0], oy - H[0]![1]) < 4.2;
+    if (!dip && H.every(([hx, hy]) => Math.hypot(hx - ox, hy - oy) > 2.1) && !inside(H, ox, oy)) place(ox, oy, 1, (ox - C[0]) / 40, (C[1] - oy) / 40, 0.9);
+  });
+  // the rest pressed in wherever there is room, as a hand presses them, each seen as the round of the apple turns it
+  const clear = scaleAbout(H, HEART_AT[0], HEART_AT[1], 1.18);
+  for (let tries = 0; tries < 9000; tries++) {
+    const [x, y] = [20 + rnd() * 76, 34 + rnd() * 68];
+    if (!inside(apple, x, y) || inside(clear, x, y)) continue;
+    if (Math.hypot(x - APPLE_HOLLOW[0], y - APPLE_HOLLOW[1]) < 3.4 || Math.hypot(x - H[0]![0], y - H[0]![1]) < 4.6) continue;
+    if (cloves.some((c) => Math.hypot(c.at[0] - x, c.at[1] - y) < 2.6)) continue;
+    const dir = Math.atan2(y - C[1], x - C[0]);
+    const rho = Math.min(1, Math.hypot(x - C[0], y - C[1]) / reachOf(apple, C[0], C[1], dir));
+    const Z = Math.sqrt(1 - rho * rho);
+    place(x, y, Math.max(0.3, Z), Math.cos(dir) * rho, -Math.sin(dir) * rho, Z);
+  }
+  // back to front, so a clove nearer the edge never covers one nearer us
+  cloves.sort((p, q) => p.face - q.face);
+  for (const band of [0, 1, 2, 3] as const) {
+    const mine = cloves.filter((c) => c.band === band).map((c) => clovePaths(c, 2.9));
+    const tone = CLOVE[band];
+    paint(dr, mine.map((m) => m.sepal).join(''), tone.sepal);
+    paint(dr, mine.map((m) => m.head).join(''), tone.head);
+    paint(dr, mine.map((m) => m.light).join(''), tone.light, 0.85);
+  }
+  appleStalk(dr, rnd, 'clove');
+  dr.add('</g>');
+  layer(dr, 'glint', () => sparkle(dr, SEV_MEXEK_GLINT));
+}
+
+/** A clove lying on the table, seen from the side: its stem, the sepals cupped round its head, and its shadow. */
+function looseClove(dr: Drawing, rnd: Rnd, [x, y]: Pt, deg: number): void {
+  dr.add(`<g transform="rotate(${deg} ${x} ${y})">`);
+  paint(dr, outline(roundish(x + 4.6, y + 2, 8, 1.4, rnd, { tremor: 0.1 })), FLOOR, 0.2);
+  paint(dr, brush([[x, y], [x + 5.4, y + 0.4], [x + 11, y + 0.2]], 2.2, rnd, { start: 1, end: 0.3, peak: 0.15 }), '#5e4026');
+  paint(dr, brush([[x + 0.8, y - 0.5], [x + 5.6, y - 0.2], [x + 10, y - 0.2]], 0.6, rnd, { start: 0.8, end: 0.3 }), '#a88458', 0.8);
+  paint(dr, touch(x - 1.2, y - 1.5, 4.2, 1.3, -148) + touch(x - 1.2, y + 1.5, 4.2, 1.3, 148), '#6e4e30');
+  paint(dr, touch(x - 1.6, y, 3.6, 1.1, 180), '#86643e');
+  paint(dr, ellipse(x - 2.4, y, 1.9, 1.8), '#3e2614');
+  paint(dr, ellipse(x - 3, y - 0.7, 0.66, 0.56), '#c8a26c', 0.85);
   dr.add('</g>');
 }
 

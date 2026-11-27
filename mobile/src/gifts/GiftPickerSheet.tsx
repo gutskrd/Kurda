@@ -3,8 +3,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Pressable } from '../theme/Pressable';
 import {
-  GIFTS_PER_DAY,
-  GIFTS_PER_FRIEND_PER_DAY,
+  giftDayFull,
+  giftDayLine,
   MAX_GIFT_RECIPIENTS,
   ZER_ON_SALE,
   giftLockFor,
@@ -22,7 +22,7 @@ import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { useI18n } from '../i18n/I18nContext';
-import { formatNumber } from '../i18n/format';
+import { formatExpectedAt, formatNumber } from '../i18n/format';
 import type { TranslationKey } from '../i18n/translations';
 import { useTheme } from '../theme/ThemeProvider';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
@@ -307,6 +307,20 @@ function WhatStep({
     giftLockFor(item, giving(item), catalog?.limits) ?? (catalog && item.price * giving(item) > catalog.balance.zer ? 'funds' : null);
   const bagCount = (sku: string): number => catalog?.bag?.find((b) => b.sku === sku)?.count ?? 0;
 
+  // The day's caps: who these recipients are by name, the one line about them, and a send held when all are full.
+  const nameOf = (id: string): string => recipients.find((r) => r.userId === id)?.name ?? recipients[0]?.name ?? '';
+  const dayLine = giftDayLine(catalog?.dayLeft ?? []);
+  const dayNote = !dayLine
+    ? null
+    : dayLine.kind === 'few'
+      ? t('gift.day.few', { name: nameOf(dayLine.userId), count: formatNumber(dayLine.left, locale) })
+      : dayLine.kind === 'someFull'
+        ? t('gift.day.someFull', { names: dayLine.userIds.map(nameOf).filter(Boolean).join(', ') })
+        : dayLine.moreAt
+          ? t('gift.day.none', { name: nameOf(dayLine.userId), time: formatExpectedAt(dayLine.moreAt, locale) })
+          : t('gift.day.noneNoTime', { name: nameOf(dayLine.userId) });
+  const dayFull = (item: GiftCatalogItem): boolean =>
+    giftDayFull(catalog?.dayLeft ?? [], post ? ids : ids.filter((id) => !owners(item).includes(id)));
   const amount = (n: number): string => formatNumber(n, locale);
   const priceWords = (item: GiftCatalogItem): string => `${amount(item.price)} ${ZER}, ${value(item.price)}`;
   const total = picked ? picked.item.price * giving(picked.item) : 0;
@@ -499,9 +513,12 @@ function WhatStep({
             <ToggleChip label={t('gift.picker.useFree')} value={useFree} onChange={setUseFree} />
           </View>
         ) : null}
-        <Text style={[styles.limits, styles.center, { color: colors.textSecondary }]}>
-          {t('gift.picker.limits', { perDay: GIFTS_PER_DAY, perFriend: GIFTS_PER_FRIEND_PER_DAY })} {t('shop.giftFinal')}
-        </Text>
+        {dayNote ? (
+          <Text style={[styles.note, styles.center, { color: colors.textSecondary }]} testID="gift-day-note">
+            {dayNote}
+          </Text>
+        ) : null}
+        <Text style={[styles.limits, styles.center, { color: colors.textSecondary }]}>{t('shop.giftFinal')}</Text>
         <ClayButton
           label={
             picked
@@ -518,7 +535,7 @@ function WhatStep({
           tone="primary"
           size="large"
           busy={busy}
-          disabled={!picked || (!picked.fromBag && !free && lockOf(picked.item) !== null)}
+          disabled={!picked || dayFull(picked.item) || (!picked.fromBag && !free && lockOf(picked.item) !== null)}
           onPress={() => send()}
         />
       </View>
