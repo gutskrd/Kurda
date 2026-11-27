@@ -15,9 +15,9 @@ describe('a selector on the phone', () => {
   });
 
   it('places the capsule round its tab at rest and keeps a stretched lens within a hair of the bar’s ends', () => {
-    const [rest] = piecesFor([{ phase: 'rest', at: 1, velocity: 0, scale: 1, stretch: 0, tint: 1, lens: 0, squash: 1, lead: 0, magnify: 1 }], 80, 52, 320);
+    const [rest] = piecesFor([{ phase: 'rest', at: 1, velocity: 0, scale: 1, stretch: 0, tint: 1, lens: 0, squash: 1, lead: 0, magnify: 1, swell: 1.7 }], 80, 52, 320);
     expect(rest).toMatchObject({ left: 80, endLeft: 108, lensScale: 1, copyX: -80, copyY: 0, copyScaleX: 1, copyScaleY: 1 });
-    const [edge] = piecesFor([{ phase: 'moving', at: 3, velocity: 0, scale: 1.12, stretch: 0.45, tint: 0, lens: 1, squash: 1, lead: 0, magnify: 1.3 }], 80, 52, 320);
+    const [edge] = piecesFor([{ phase: 'moving', at: 3, velocity: 0, scale: 1.12, stretch: 0.45, tint: 0, lens: 1, squash: 1, lead: 0, magnify: 1.3, swell: 1 }], 80, 52, 320);
     expect(edge!.left + 80 * edge!.lensScale).toBeCloseTo(322, 5);
   });
 

@@ -15,7 +15,21 @@ function parts() {
     }) as HTMLElement['animate'];
     return el;
   };
-  return { played, els: { group: make('group'), start: make('start'), end: make('end'), span: make('span'), lens: make('lens'), copy: make('copy'), tint: make('tint'), rim: make('rim') } };
+  // The lens's inside as the bar draws it: the glass, holding its content to the lens's size, a tint and a copy in it,
+  // and the rim over all.
+  const marked = (name: string, mark: string) => {
+    const el = make(name);
+    el.setAttribute(mark, '');
+    return el;
+  };
+  const lens = make('lens');
+  const glass = marked('glass', 'data-lens-glass');
+  const unspread = marked('unspread', 'data-lens-unspread');
+  unspread.append(marked('tint', 'data-lens-tint'), marked('copy', 'data-lens-copy'));
+  glass.append(unspread);
+  lens.append(glass, marked('rim', 'data-lens-rim'));
+  const copies = [...lens.querySelectorAll<HTMLElement>('[data-lens-copy]')];
+  return { played, copies, els: { group: make('group'), start: make('start'), end: make('end'), span: make('span'), lens } };
 }
 
 function withMotion(reduced: boolean): void {
@@ -34,7 +48,7 @@ describe('a selector on the website', () => {
   });
 
   it('keeps the lens within a hair of the bar’s ends however it stretches', () => {
-    const f = { phase: 'moving' as const, at: 0, velocity: 0, scale: 1.12, stretch: 0.45, tint: 0, lens: 1, squash: 1, lead: 0, magnify: 1.3 };
+    const f = { phase: 'moving' as const, at: 0, velocity: 0, scale: 1.12, stretch: 0.45, tint: 0, lens: 1, squash: 1, lead: 0, magnify: 1.3, swell: 1 };
     expect(selectorStyles(f, box, 1).lens).toMatch(/^translateX\(-2px\)/);
     expect(selectorStyles({ ...f, at: 3 }, box, 1).end).toBe(`translateX(${320 + 2 - 50}px) scale(1.12, 1.12)`);
   });
@@ -45,7 +59,7 @@ describe('a selector on the website', () => {
     const lens = new SelectorLens(els, box);
     lens.place(0);
     lens.moveTo(2);
-    expect(played.map((p) => p.el).sort()).toEqual(['copy', 'end', 'group', 'lens', 'lens', 'rim', 'span', 'start', 'tint']);
+    expect(played.map((p) => p.el).sort()).toEqual(['copy', 'end', 'glass', 'group', 'lens', 'lens', 'rim', 'span', 'start', 'tint', 'unspread']);
     const opacities = (el: string) => played.filter((p) => p.el === el).at(-1)!.frames.map((k) => Number(k.opacity));
     const tint = opacities('group');
     expect(Math.min(...tint)).toBe(0);
@@ -54,6 +68,13 @@ describe('a selector on the website', () => {
     const rim = opacities('rim');
     expect(opacities('lens')).toEqual(rim.map((r) => (r > 0 ? 1 : 0)));
     expect(opacities('tint')).toEqual(tint);
+    // Its glass starts spread past it, so no bend shows at first, lies on the lens while it is up, and its content is
+    // held to the lens's size throughout.
+    const scales = (el: string) => played.find((p) => p.el === el)!.frames.map((k) => Number(/scale\(([\d.]+)\)/.exec(String(k.transform))![1]));
+    const spread = scales('glass');
+    expect(spread[0]).toBeCloseTo(SELECTOR_LENS.rimSwell, 6);
+    expect(Math.min(...spread)).toBeCloseTo(1, 6);
+    scales('unspread').forEach((u, i) => expect(u * spread[i]!).toBeCloseTo(1, 6));
     expect(rim[1]).toBeLessThan(0.5);
     expect(Math.max(...rim)).toBe(1);
     expect(rim.at(-1)).toBe(0);
@@ -61,7 +82,7 @@ describe('a selector on the website', () => {
 
   it('only fades the capsule in at its new place under Reduce Motion', () => {
     withMotion(true);
-    const { played, els } = parts();
+    const { played, els, copies } = parts();
     const lens = new SelectorLens(els, box);
     lens.place(0);
     lens.moveTo(3);
@@ -69,7 +90,8 @@ describe('a selector on the website', () => {
     expect(els.start.style.transform).toBe('translateX(240px) scale(1, 1)');
     expect(els.lens.style.opacity).toBe('0');
     // No lens, so nothing is magnified: the copy lies on the row as it is.
-    expect(els.copy.style.transform).toBe('translate(-240px, 0px) scale(1, 1)');
+    for (const copy of copies) expect(copy.style.transform).toBe('translate(-240px, 0px) scale(1, 1)');
+    expect(els.lens.querySelector<HTMLElement>('[data-lens-glass]')!.style.transform).toBe(`scale(${SELECTOR_LENS.rimSwell})`);
   });
 
   it('moves the copy inside the lens in step with it, showing the row magnified about the lens’s middle', () => {

@@ -390,7 +390,7 @@ export function Segmented<T extends string>({
           style={[styles.segCapsule, styles.segLens, { left: SEG_PAD, width: seg, opacity: lens.shown }, moving]}
           testID="segmented-lens"
         >
-          <LensGlass radius={inner / 2} ground={colors.surface} tint={colors.chosenFill} tintOpacity={lens.tint} up={lens.lens}>
+          <LensGlass radius={inner / 2} ground={colors.surface} tint={colors.chosenFill} tintOpacity={lens.tint} up={lens.lens} swell={lens.swell}>
             <Animated.View style={[styles.segCopy, { width: seg * options.length, height: inner, flexDirection: dir.row, transform: lens.copy }]}>
               <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.controlTrack }]} />
               {options.map((opt) => {

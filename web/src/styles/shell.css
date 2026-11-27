@@ -2019,11 +2019,12 @@
 }
 /*
  * The lens: clear glass over the places while the choice moves. It clips a copy of the places (`.places-lens-copy`, the
- * row's size) that is moved to show them magnified about its middle, on the bar's own ground so the places beneath do
- * not show through, with the capsule's tint draining from it as it lifts. Its rim, a hairline edge, a fine specular line
- * lit from above and a faint split of colour, comes up over the copy as it lifts. Where the browser can bend with an SVG
- * filter (Chromium) the rim also bends the copy, splitting red from blue (`--lens-filter`, shared glass-lens.ts). Only
- * transforms and opacity move. It is not there at rest.
+ * row's size) that is moved to show them magnified about its middle, on the bar's own ground so the places beneath
+ * never show through, with the capsule's tint draining from it as it lifts. Where the browser can bend with an SVG
+ * filter (Chromium) its glass bends the copy at the rim and splits red from blue (`--lens-filter`, shared glass-lens.ts);
+ * the glass is spread past the lens while it is down and its content held to the lens's size, so the bend grows in from
+ * the edge as it lifts. Its rim, a hairline edge, a fine specular line lit from above and a faint split of colour, comes
+ * up over it. Only transforms and opacity move. It is not there at rest.
  */
 .places-lens {
   position: absolute;
@@ -2037,10 +2038,13 @@
   opacity: 0;
   pointer-events: none;
 }
-.places-lens-glass {
+.places-lens-glass,
+.places-lens-unspread {
   position: absolute;
   inset: 0;
-  background: linear-gradient(var(--lens-fill), var(--lens-fill)), var(--surface-solid);
+}
+.places-lens-glass {
+  background: var(--surface-solid);
 }
 .places-lens[data-bends] .places-lens-glass {
   filter: var(--lens-filter);

@@ -48,6 +48,7 @@ export function piecesFor(frames: LensFrame[], slot: number, height: number, wid
       lens: f.lens,
       // The lens is drawn whole the moment it lifts, looking at first just as the capsule and the row it covers do.
       shown: f.lens > 0 ? 1 : 0,
+      swell: f.swell,
       copyX: copy.x,
       copyY: copy.y,
       copyScaleX: copy.sx,
@@ -127,6 +128,7 @@ export function useSelectorLens(place: number, slot: number, height: number, cou
       tint: Animated.multiply(pick((p) => p.tint), fade),
       lens: pick((p) => p.lens),
       shown: pick((p) => p.shown),
+      swell: pick((p) => p.swell),
       copy: [
         { translateX: pick((p) => p.copyX) },
         { translateY: pick((p) => p.copyY) },

@@ -58,20 +58,14 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
     end: useRef<HTMLSpanElement>(null),
     span: useRef<HTMLSpanElement>(null),
     lens: useRef<HTMLSpanElement>(null),
-    copy: useRef<HTMLUListElement>(null),
-    tint: useRef<HTMLSpanElement>(null),
-    rim: useRef<HTMLSpanElement>(null),
   };
   const runner = useRef<SelectorLens | null>(null);
   const placed = useRef<number | null>(null);
   useLayoutEffect(() => {
-    const { group, start, end, span, lens, copy, tint, rim } = parts;
+    const { group, start, end, span, lens } = parts;
     if (!group.current || !start.current || !end.current || !span.current || box.slot <= 0 || at < 0) return;
     const size = { slot: box.slot, height: box.height, width: box.slot * items.length };
-    runner.current ??= new SelectorLens(
-      { group: group.current, start: start.current, end: end.current, span: span.current, lens: lens.current, copy: copy.current, tint: tint.current, rim: rim.current },
-      size,
-    );
+    runner.current ??= new SelectorLens({ group: group.current, start: start.current, end: end.current, span: span.current, lens: lens.current }, size);
     if (placed.current === null || placed.current === at) runner.current.place(at, size);
     else runner.current.moveTo(at);
     placed.current = at;
@@ -156,24 +150,27 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
         </ul>
         {/*
          * The lens: clear glass over the places while the choice moves, showing a copy of them magnified about its middle,
-         * which slides through it as it goes. The copy is only drawn: hidden from screen readers and out of reach.
+         * which slides through it as it goes, on the bar's own ground so the places beneath never show through
+         * (lib/selectorLens.ts `LensInside`). The copy is only drawn: hidden from screen readers and out of reach.
          */}
         {at >= 0 && (
           <span className="places-lens-layer" aria-hidden="true" inert>
             <span ref={parts.lens} className="places-lens">
-              <span className="places-lens-glass">
-                <span ref={parts.tint} className="places-lens-tint" />
-                <ul ref={parts.copy} className="places-list places-lens-copy">
-                  {items.map((l, i) => (
-                    <li key={l.key ?? l.to}>
-                      <span className={`places-link${i === at ? ' active' : ''}`}>
-                        <PlaceFace item={l} active={i === at} />
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+              <span className="places-lens-glass" data-lens-glass="">
+                <span className="places-lens-unspread" data-lens-unspread="">
+                  <span className="places-lens-tint" data-lens-tint="" />
+                  <ul className="places-list places-lens-copy" data-lens-copy="">
+                    {items.map((l, i) => (
+                      <li key={l.key ?? l.to}>
+                        <span className={`places-link${i === at ? ' active' : ''}`}>
+                          <PlaceFace item={l} active={i === at} />
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </span>
               </span>
-              <span ref={parts.rim} className="places-lens-rim" />
+              <span className="places-lens-rim" data-lens-rim="" />
             </span>
           </span>
         )}

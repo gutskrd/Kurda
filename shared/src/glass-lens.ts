@@ -110,16 +110,16 @@ function bendFilter(id: string, href: string, { width, height }: GlassShape, rea
   return node;
 }
 
-/** How a selector's lens bends at its rim: a narrow rim of thin glass, its colours split wider than the bar's. */
+/** How a selector's lens bends at its rim (glass.ts `lensBendAt`), its colours split wider than the bar's. */
 export interface LensOptics {
   bezel: number;
-  thickness: number;
+  reach: number;
   split: number;
 }
 
 /** The lens for a shape, made on first use: the bar's glass, or with `optics` a selector's lens. */
 export function takeLens(shape: GlassShape, dpr: number, bend: boolean, optics?: LensOptics): Lens {
-  const key = `${shape.width}x${shape.height}r${shape.radius}@${dpr}${bend ? '+bend' : ''}${optics ? `+${optics.bezel}/${optics.thickness}/${optics.split}` : ''}`;
+  const key = `${shape.width}x${shape.height}r${shape.radius}@${dpr}${bend ? '+bend' : ''}${optics ? `+${optics.bezel}/${optics.reach}/${optics.split}` : ''}`;
   const have = lenses.get(key);
   if (have) {
     have.uses++;

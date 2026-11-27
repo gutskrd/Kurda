@@ -4,6 +4,7 @@ import { SELECTOR_LENS } from '@kurda/shared';
 import { dropLens, lensSupported, takeLens, type Lens } from '@kurda/shared/src/glass-lens';
 import type { LensLook } from './LiquidGlass';
 import { floating } from './floating';
+import { blend } from './tileTones';
 import { useTheme } from './ThemeProvider';
 import { radii } from './tokens';
 
@@ -40,18 +41,27 @@ export function useGlassShape(lift: 'control' | 'raised'): ViewStyle[] {
   return [floating[lift], { backgroundColor: colors.barFill, shadowColor: colors.softShadow }];
 }
 
+/** The bar's glass where the tabs sit, as one opaque colour: its tint over the page where the browser blurs, else its fill. */
+export function useBarGround(): string {
+  const { colors } = useTheme();
+  return BENDING_GLASS ? blend(colors.glassTint, colors.background) : colors.barFill;
+}
+
 /**
  * The lens a choice lifts into as it moves (theme/selectorLens.ts): `children`, a copy of the row that the caller moves
- * so it looks magnified, on `ground`, under a lit rim with a faint split of colour; the caller clips it to the lens's
- * shape. In a browser that can bend with an SVG filter (Chromium) the rim also bends the copy, splitting red from blue,
- * as the website's lens does (shared glass-lens.ts).
+ * so it looks magnified, on `ground`, so the row beneath never shows through, under a lit rim with a faint split of
+ * colour; the caller clips it to the lens's shape. In a browser that can bend with an SVG filter (Chromium) its glass
+ * also bends the copy at the rim and splits red from blue, as the website's lens does (shared glass-lens.ts); the glass
+ * is spread past the lens while it is down (`swell`) and its content held to the lens's size, so at its first frame the
+ * lens looks just as the capsule and the row it covers do and the bend grows in from the edge as it lifts.
  */
-export function LensGlass({ radius, ground, tint, tintOpacity, up, children }: LensLook & { children: ReactNode }): React.JSX.Element {
+export function LensGlass({ radius, ground, tint, tintOpacity, up, swell, children }: LensLook & { children: ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
   const ref = useRef<View>(null);
+  const bends = lensSupported();
   useEffect(() => {
     const el = ref.current as unknown as HTMLElement | null;
-    if (!el || !lensSupported() || typeof ResizeObserver === 'undefined') return;
+    if (!el || !bends || typeof ResizeObserver === 'undefined') return;
     let lens: Lens | null = null;
     let shape = '';
     const fit = () => {
@@ -73,14 +83,16 @@ export function LensGlass({ radius, ground, tint, tintOpacity, up, children }: L
       watch.disconnect();
       if (lens) dropLens(lens);
     };
-  }, [radius]);
+  }, [radius, bends]);
+  const spread = bends ? swell : 1;
   return (
     <>
-      <View ref={ref} pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: ground }]}>
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.lensFill }]} />
-        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: tint, opacity: tintOpacity }]} />
-        {children}
-      </View>
+      <Animated.View ref={ref} pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: ground, transform: [{ scale: spread }] }]}>
+        <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: Animated.divide(1, spread) }] }]}>
+          <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: tint, opacity: tintOpacity }]} />
+          {children}
+        </Animated.View>
+      </Animated.View>
       <Animated.View
         pointerEvents="none"
         style={[

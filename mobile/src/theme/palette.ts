@@ -135,8 +135,7 @@ export interface Palette {
   /** The chosen tab's glyph and name, and the darker capsule of glass inset behind it, drawn faint (TabBar.tsx `CAPSULE_FILL`). */
   tabChosen: string;
   tabCapsule: string;
-  /** The lens a choice lifts into as it moves: the bar's ground a shade brighter, its rim lit, its edge split. */
-  lensFill: string;
+  /** The lens a choice lifts into as it moves: its rim lit, its edge split. */
   lensRim: string;
   lensShine: string;
   lensWarm: string;
@@ -234,7 +233,6 @@ export const LIGHT: Palette = {
   panel: '#FDFEFE',
   tabChosen: DAY.text,
   tabCapsule: PAGE.light.ink,
-  lensFill: 'rgba(255,255,255,0.34)',
   lensRim: 'rgba(23,36,43,0.14)',
   lensShine: 'rgba(255,255,255,1)',
   lensWarm: 'rgba(255,110,110,0.16)',
@@ -312,7 +310,6 @@ export const DARK: Palette = {
   panel: '#23272B',
   tabChosen: NIGHT.text,
   tabCapsule: '#000000',
-  lensFill: 'rgba(255,255,255,0.04)',
   lensRim: 'rgba(255,255,255,0.24)',
   lensShine: 'rgba(255,255,255,0.5)',
   lensWarm: 'rgba(255,120,120,0.22)',

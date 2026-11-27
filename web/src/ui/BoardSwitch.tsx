@@ -1,5 +1,6 @@
 import { useId, useRef } from 'react';
 import { useSlidingCapsule } from '../lib/motion';
+import { SwitchLens } from './SwitchLens';
 import { CoinIcon, XpIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -58,7 +59,8 @@ export function BoardSwitch({ value, onChange }: { value: RankKind; onChange: (n
   const name = `rank-by${useId()}`;
   const box = useRef<HTMLFieldSetElement>(null);
   const capsule = useRef<HTMLSpanElement>(null);
-  useSlidingCapsule(box, capsule, '.is-active', value);
+  const lens = useRef<HTMLSpanElement>(null);
+  useSlidingCapsule(box, capsule, '.is-active', value, lens);
   return (
     <fieldset ref={box} className="seg rank-by">
       <legend className="sr-only">{t('rankings.rankBy')}</legend>
@@ -71,6 +73,7 @@ export function BoardSwitch({ value, onChange }: { value: RankKind; onChange: (n
           <span className="seg-btn-label">{t(k.labelKey)}</span>
         </label>
       ))}
+      <SwitchLens ref={lens} />
     </fieldset>
   );
 }
@@ -86,7 +89,8 @@ export function SpanSwitch({ value, onChange }: { value: XpSpan; onChange: (next
   const name = `rank-span${useId()}`;
   const box = useRef<HTMLFieldSetElement>(null);
   const capsule = useRef<HTMLSpanElement>(null);
-  useSlidingCapsule(box, capsule, '.is-on', value);
+  const lens = useRef<HTMLSpanElement>(null);
+  useSlidingCapsule(box, capsule, '.is-on', value, lens);
   return (
     <fieldset ref={box} className="seg rank-span">
       <legend className="sr-only">{t('rankings.span')}</legend>
@@ -97,6 +101,7 @@ export function SpanSwitch({ value, onChange }: { value: XpSpan; onChange: (next
           <span className="seg-btn-label">{t(s.labelKey)}</span>
         </label>
       ))}
+      <SwitchLens ref={lens} />
     </fieldset>
   );
 }

@@ -77,6 +77,17 @@ describe('the magnified row inside the lens', () => {
     }
   });
 
+  it('magnifies about the lens’s middle when the lens stands lower in the row than its top', () => {
+    const box = { left: 40, right: 140, slot: 80, height: 32, tall: 0.95, top: 6 };
+    const m = magnifier(box, 1.25);
+    // The lens's own box starts `top` down the row and scales about its own middle.
+    const throughLens = (x: number, y: number) => [box.left + ((box.right - box.left) / box.slot) * x, 6 + 16 + box.tall * (y - 16)];
+    const [px, py] = throughLens(m.x + m.sx * 90, m.y + m.sy * 30);
+    expect(px).toBeCloseTo(90 + 1.25 * (90 - 90), 6);
+    expect(py).toBeCloseTo(22 + 1.25 * (30 - 22), 6);
+    expect(magnifier({ left: 50, right: 130, slot: 80, height: 32, tall: 1, top: 6 }, 1)).toEqual({ x: -50, y: -6, sx: 1, sy: 1 });
+  });
+
   it('shows the row as it is when the lens is the capsule at rest', () => {
     expect(magnifier({ left: 80, right: 160, slot: 80, height: 52, tall: 1 }, 1)).toEqual({ x: -80, y: 0, sx: 1, sy: 1 });
     expect(magnifier({ left: 40, right: 40, slot: 0, height: 52, tall: 1 }, 1.3)).toEqual({ x: -40, y: 0, sx: 1, sy: 1 });
@@ -87,5 +98,14 @@ describe('the magnified row inside the lens', () => {
     expect(lensAt(move, 0).magnify).toBe(1);
     expect(lensAt(move, 150).magnify).toBeCloseTo(SELECTOR_LENS.magnify, 6);
     expect(lensAt(move, 600).magnify).toBe(1);
+  });
+
+  it('spreads its bending glass past it while it is down and lays it on its edge once it is up', () => {
+    const move = planSwitch(0, 2, 0);
+    expect(lensAt(move, 0).swell).toBe(SELECTOR_LENS.rimSwell);
+    expect(lensAt(move, 25).swell).toBeLessThan(SELECTOR_LENS.rimSwell);
+    expect(lensAt(move, 25).swell).toBeGreaterThan(1);
+    expect(lensAt(move, 150).swell).toBe(1);
+    expect(lensAt(move, 600).swell).toBe(SELECTOR_LENS.rimSwell);
   });
 });

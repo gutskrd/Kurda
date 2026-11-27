@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import { Animated, Platform, StyleSheet, View, type ViewStyle } from 'react-native';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { GLASS } from '@kurda/shared';
 import { ANDROID_LENS, AndroidGlass } from '../../modules/hevalo-glass';
+import { blend } from './tileTones';
 import { floating } from './floating';
 import { useTheme } from './ThemeProvider';
 import { radii } from './tokens';
@@ -80,6 +82,20 @@ const styles = StyleSheet.create({
   clear: { backgroundColor: 'transparent' },
 });
 
+/**
+ * The bar's own glass where the tabs sit, as one opaque colour, for a lens to stand on so the tabs beneath never show
+ * through it while it still reads as the bar's glass: Android's glass is its tint over the page, veiled deep in the
+ * middle (GlassShader.kt); elsewhere the bar's own fill, which is the bar itself where nothing is blurred.
+ */
+export function useBarGround(): string {
+  const { colors } = useTheme();
+  if (!SYSTEM_GLASS && ANDROID_LENS && AndroidGlass) {
+    const alpha = Number(/,\s*([\d.]+)\)$/.exec(colors.glassTint)?.[1] ?? 1);
+    return blend(colors.glassTint, colors.background, GLASS.veil.middle / alpha);
+  }
+  return colors.barFill;
+}
+
 /** What a lens is drawn on and with: the colour it floats over, and the capsule's tint draining from it as it lifts. */
 export interface LensLook {
   radius: number;
@@ -88,6 +104,8 @@ export interface LensLook {
   tintOpacity: Animated.AnimatedInterpolation<number> | Animated.Value | number;
   /** How far it is up, 0 to 1, which brings up its rim. */
   up: Animated.AnimatedInterpolation<number> | Animated.Value | number;
+  /** Where its glass bends at the rim, how far that glass is spread past it (shared selector-lens.ts `swell`). */
+  swell: Animated.AnimatedInterpolation<number> | Animated.Value | number;
 }
 
 /**
@@ -101,7 +119,6 @@ export function LensGlass({ radius, ground, tint, tintOpacity, up, children }: L
   return (
     <>
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: ground }]} />
-      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.lensFill }]} />
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tint, opacity: tintOpacity }]} />
       {children}
       {SYSTEM_GLASS ? (

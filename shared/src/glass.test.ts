@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { GLASS, bendAt, bendImage, glassField, shineImage } from './glass.js';
+import { GLASS, bendAt, bendImage, glassField, lensBendAt, shineImage } from './glass.js';
+import { SELECTOR_LENS } from './selector-lens.js';
 
 /** The red and green of the bend image at a point in points: 128 is none, above it looks right or down. */
 function at(field: ReturnType<typeof glassField>, x: number, y: number, dpr = 1): [number, number] {
@@ -47,5 +48,29 @@ describe('glassField', () => {
     expect([disc.width, disc.height]).toEqual([132, 132]);
     const img = bendImage(disc);
     for (let i = 3; i < img.length; i += 4) if (img[i] !== 255) throw new Error(`alpha at ${i}`);
+  });
+});
+
+describe('a selector lens’s rim', () => {
+  const { bezel, reach, split } = SELECTOR_LENS.rim;
+
+  it('bends most at the edge and not at all past the rim', () => {
+    expect(lensBendAt(0, reach)).toBe(reach);
+    expect(lensBendAt(0.5, reach)).toBeLessThan(reach / 2);
+    expect(lensBendAt(1, reach)).toBe(0);
+  });
+
+  it('never folds what lies near its edge back on itself, even in red, which bends furthest', () => {
+    const lens = glassField({ width: 87, height: 52, radius: 26 }, 3, { bezel, reach });
+    // Down the middle from the bottom edge up, where a name sits: each pixel looks further in than the one below it.
+    const x = Math.floor(lens.width / 2);
+    let seen = -Infinity;
+    for (let y = lens.height - 1; y >= lens.height / 2; y--) {
+      const up = -(lens.bend[(y * lens.width + x) * 2 + 1] ?? 0) * (1 + split) * 3;
+      const looks = lens.height - 1 - y + up;
+      expect(looks).toBeGreaterThan(seen);
+      seen = looks;
+    }
+    expect(lens.reach).toBeCloseTo(reach, 0);
   });
 });

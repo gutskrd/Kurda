@@ -198,8 +198,7 @@
   --glass-shine: rgba(255, 255, 255, 0.09);
   --tab-capsule: #000000;
   --tab-capsule-fill: 0.34;
-  /* the lens a choice lifts into as it moves: the bar's ground a shade brighter, its rim lit, its edge split */
-  --lens-fill: rgba(255, 255, 255, 0.04);
+  /* the lens a choice lifts into as it moves: its rim lit, its edge split */
   --lens-rim: rgba(255, 255, 255, 0.24);
   --lens-edge: rgba(0, 0, 0, 0.5);
   --lens-shine: rgba(255, 255, 255, 0.5);
@@ -323,7 +322,6 @@
   --glass-shine: rgba(255, 255, 255, 0.9);
   --tab-capsule: #17242b;
   --tab-capsule-fill: 0.07;
-  --lens-fill: rgba(255, 255, 255, 0.58);
   --lens-rim: rgba(255, 255, 255, 0.9);
   --lens-edge: rgba(23, 36, 43, 0.12);
   --lens-shine: rgba(255, 255, 255, 1);

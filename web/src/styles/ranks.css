@@ -1013,6 +1013,64 @@
     inset 1.5px 0 1px var(--lens-warm),
     inset -1.5px 0 1px var(--lens-cool);
 }
+/*
+ * The lens the chosen ground lifts into as it moves (ui/SwitchLens.tsx, lib/motion.ts useSlidingCapsule), over the
+ * options: a copy of them magnified about its middle on the switch's own ground, so the options beneath never show
+ * through, bent at the rim and split red from blue where the browser can bend with an SVG filter (Chromium), as the bar
+ * of places' lens is (shell.css). The chosen ground's tint drains from it and its rim comes up as it lifts. Only
+ * transforms and opacity move; it is not there at rest, nor for a reader who asked for less transparency or more
+ * contrast.
+ */
+.seg-lens {
+  position: absolute;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  transform-origin: 0 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+.seg-lens-glass,
+.seg-lens-unspread {
+  position: absolute;
+  inset: 0;
+}
+.seg-lens[data-bends] .seg-lens-glass {
+  filter: var(--lens-filter);
+}
+.seg-lens-tint {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+.seg-lens-copy {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+.seg-lens .seg-lens-row {
+  box-sizing: border-box;
+  margin: 0;
+  background: none;
+}
+.seg-lens-rim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  box-shadow:
+    inset 0 0 0 0.5px var(--lens-edge),
+    inset 0 0 0 1.25px var(--lens-rim),
+    inset 0 2px 1px var(--lens-shine),
+    inset 2px 0 1px var(--lens-warm),
+    inset -2px 0 1px var(--lens-cool);
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .seg-lens {
+    display: none;
+  }
+}
 /* This week or all time: the same radios a size down, the chosen one raised on the track rather than filled. */
 .rank-span {
   display: inline-grid;

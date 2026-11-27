@@ -1,10 +1,10 @@
-import { lensAt, magnifier, planSwitch, retarget, type LensFrame, type SelectorMove } from '@kurda/shared';
+import { SELECTOR_LENS, lensAt, magnifier, planSwitch, retarget, type LensFrame, type SelectorMove } from '@kurda/shared';
 import { playsMotion } from './motion';
 
 /**
  * The website's selectors moving as the phone's do (shared selector-lens.ts): a run of the shared motion turned into
- * compositor keyframes for the capsule's pieces, the lens over them and the magnified copy of the row inside the lens,
- * so the move stays smooth however busy the page is. A tap during a move sends it on from where it is.
+ * compositor keyframes for the capsule's pieces, the lens over them and what lies inside the lens, so the move stays
+ * smooth however busy the page is. A tap during a move sends it on from where it is.
  */
 
 /** The selector's size in pixels: one place's width, the row's height and its whole width. */
@@ -14,20 +14,69 @@ export interface SelectorBox {
   width: number;
 }
 
-/**
- * The elements that move: the dark capsule's two round ends and the span between them, their group, and the lens. Inside
- * the lens: the copy of the row it shows magnified (the row's size, placed from its top left corner), the capsule's tint
- * drawn over the lens's ground, and its rim.
- */
+/** The elements that move: the dark capsule's two round ends and the span between them, their group, and the lens. */
 export interface SelectorParts {
   group: HTMLElement;
   start: HTMLElement;
   end: HTMLElement;
   span: HTMLElement;
   lens: HTMLElement | null;
-  copy?: HTMLElement | null;
-  tint?: HTMLElement | null;
-  rim?: HTMLElement | null;
+}
+
+/**
+ * What lies inside a lens, marked in its markup: the glass (`data-lens-glass`), on the ground the lens stands on, opaque
+ * so the row beneath never shows through, and bending at its rim where the browser can; inside it, undoing the glass's
+ * spread (`data-lens-unspread`), the capsule's tint (`data-lens-tint`) and a copy of the row (`data-lens-copy`, the
+ * row's size, placed from its top left corner); and the rim (`data-lens-rim`) over all. The glass is spread past the
+ * lens while it is down (`swell`), so at its first frame the lens looks just as the capsule and the row it covers do,
+ * and the bend grows in from the edge as it lifts.
+ */
+export interface LensInside {
+  glass: HTMLElement | null;
+  unspread: HTMLElement | null;
+  copies: HTMLElement[];
+  tints: HTMLElement[];
+  rim: HTMLElement | null;
+}
+
+export function insideOf(lens: HTMLElement | null): LensInside {
+  const all = (mark: string) => (lens ? [...lens.querySelectorAll<HTMLElement>(`[${mark}]`)] : []);
+  return {
+    glass: all('data-lens-glass')[0] ?? null,
+    unspread: all('data-lens-unspread')[0] ?? null,
+    copies: all('data-lens-copy'),
+    tints: all('data-lens-tint'),
+    rim: all('data-lens-rim')[0] ?? null,
+  };
+}
+
+/** One frame of a lens's inside: where the copy goes, how much tint shows, how far the rim is up and the glass spread. */
+export interface InsideFrame {
+  copy: string;
+  tint: number;
+  rim: number;
+  swell: number;
+}
+
+/** Plays a run of frames on a lens's inside, each a 60th of a second apart over `duration`. */
+export function playInside(inside: LensInside, frames: InsideFrame[], duration: number): Animation[] {
+  const timing = { duration, easing: 'linear', fill: 'forwards' } as const;
+  return [
+    inside.glass?.animate(frames.map((f) => ({ transform: `scale(${f.swell})` })), timing) ?? null,
+    inside.unspread?.animate(frames.map((f) => ({ transform: `scale(${1 / f.swell})` })), timing) ?? null,
+    ...inside.copies.map((el) => el.animate(frames.map((f) => ({ transform: f.copy })), timing)),
+    ...inside.tints.map((el) => el.animate(frames.map((f) => ({ opacity: f.tint })), timing)),
+    inside.rim?.animate(frames.map((f) => ({ opacity: f.rim })), timing) ?? null,
+  ].filter((a): a is Animation => a !== null);
+}
+
+/** Sets a lens's inside to one frame without a move. */
+export function placeInside(inside: LensInside, f: InsideFrame): void {
+  if (inside.glass) inside.glass.style.transform = `scale(${f.swell})`;
+  if (inside.unspread) inside.unspread.style.transform = `scale(${1 / f.swell})`;
+  for (const el of inside.copies) el.style.transform = f.copy;
+  for (const el of inside.tints) el.style.opacity = String(f.tint);
+  if (inside.rim) inside.rim.style.opacity = String(f.rim);
 }
 
 /** How much of the capsule's colour shows at rest (tokens.css `--tab-capsule-fill`), read from the page. */
@@ -53,16 +102,15 @@ export function selectorStyles(f: LensFrame, box: SelectorBox, fill: number) {
     end: `translateX(${right - height}px) scale(${f.scale}, ${tall})`,
     span: `translateX(${left + h / 2}px) scale(${slot > 0 ? along / slot : 0}, ${tall})`,
     lens: `translateX(${left}px) scale(${slot > 0 ? (right - left) / slot : 0}, ${tall})`,
-    copy: `translate(${m.x}px, ${m.y}px) scale(${m.sx}, ${m.sy})`,
     group: fill * f.tint,
     // The lens is drawn whole the moment it lifts: at first it looks just as the capsule and the row it covers do, with
     // their tint inside it, so nothing shows through or doubles while the tint drains and the rim comes up.
     lensOpacity: f.lens > 0 ? 1 : 0,
-    rim: f.lens,
+    inside: { copy: `translate(${m.x}px, ${m.y}px) scale(${m.sx}, ${m.sy})`, tint: fill * f.tint, rim: f.lens, swell: f.swell } satisfies InsideFrame,
   };
 }
 
-const REST = (at: number): LensFrame => ({ phase: 'rest', at, velocity: 0, scale: 1, stretch: 0, tint: 1, lens: 0, squash: 1, lead: 0, magnify: 1 });
+const REST = (at: number): LensFrame => ({ phase: 'rest', at, velocity: 0, scale: 1, stretch: 0, tint: 1, lens: 0, squash: 1, lead: 0, magnify: 1, swell: SELECTOR_LENS.rimSwell });
 
 /** Runs one selector's moves. */
 export class SelectorLens {
@@ -109,18 +157,16 @@ export class SelectorLens {
     }
     const duration = t - now;
     const move = this.move;
-    const run = (el: HTMLElement | null | undefined, key: 'start' | 'end' | 'span' | 'lens' | 'copy') =>
+    const run = (el: HTMLElement | null | undefined, key: 'start' | 'end' | 'span' | 'lens') =>
       el ? el.animate(frames.map((s) => ({ transform: s[key] })), { duration, easing: 'linear', fill: 'forwards' }) : null;
     this.running = [
       run(this.parts.start, 'start'),
       run(this.parts.end, 'end'),
       run(this.parts.span, 'span'),
       run(this.parts.lens, 'lens'),
-      run(this.parts.copy, 'copy'),
       this.parts.group.animate(frames.map((s) => ({ opacity: s.group })), { duration, easing: 'linear', fill: 'forwards' }),
       this.parts.lens?.animate(frames.map((s) => ({ opacity: s.lensOpacity })), { duration, easing: 'linear', fill: 'forwards' }) ?? null,
-      this.parts.tint?.animate(frames.map((s) => ({ opacity: s.group })), { duration, easing: 'linear', fill: 'forwards' }) ?? null,
-      this.parts.rim?.animate(frames.map((s) => ({ opacity: s.rim })), { duration, easing: 'linear', fill: 'forwards' }) ?? null,
+      ...playInside(insideOf(this.parts.lens), frames.map((s) => s.inside), duration),
     ].filter((a): a is Animation => a !== null);
     this.running[0]?.finished.then(
       () => {
@@ -149,8 +195,6 @@ export class SelectorLens {
       this.parts.lens.style.transform = s.lens;
       this.parts.lens.style.opacity = String(s.lensOpacity);
     }
-    if (this.parts.copy) this.parts.copy.style.transform = s.copy;
-    if (this.parts.tint) this.parts.tint.style.opacity = String(s.group);
-    if (this.parts.rim) this.parts.rim.style.opacity = String(s.rim);
+    placeInside(insideOf(this.parts.lens), s.inside);
   }
 }

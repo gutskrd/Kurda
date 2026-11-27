@@ -22,7 +22,7 @@ import { resetTabBar, useTabBarCompact } from './tabBarScroll';
 import { TABS, type TabName } from './tabs';
 import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { useAuth } from '../auth/AuthContext';
-import { GlassFill, LensGlass, useGlassShape } from '../theme/LiquidGlass';
+import { GlassFill, LensGlass, useBarGround, useGlassShape } from '../theme/LiquidGlass';
 
 /** The glyphs, and your picture, as large as a glyph within its ring. */
 const GLYPH = 24;
@@ -65,6 +65,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   const mirrored = dir.row === 'row-reverse';
   const typing = useKeyboardShown();
   const glass = useGlassShape('raised');
+  // The lens stands on the bar's own glass, so the tabs beneath never show through it.
+  const barGround = useBarGround();
 
   // Moving between tabs is a good moment to refresh the badges, and the new page starts with the bar full size.
   useEffect(() => {
@@ -180,7 +182,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
             );
           })}
           {slot > 0 && row.height > 0 && !solid && !reduceMotion ? (
-            <Lens pieces={lens} slot={slot} height={row.height} width={row.width} ground={colors.barFill} tint={colors.tabCapsule} fill={CAPSULE_FILL[scheme]}>
+            <Lens pieces={lens} slot={slot} height={row.height} width={row.width} ground={barGround} tint={colors.tabCapsule} fill={CAPSULE_FILL[scheme]}>
               <View style={[styles.copyRow, { width: row.width, height: row.height, flexDirection: dir.row }]}>
                 {tabs.map((tab) => (
                   <View key={tab.route.key} style={styles.item}>
@@ -306,7 +308,7 @@ function Lens({
       ]}
       testID="tab-lens"
     >
-      <LensGlass radius={height / 2} ground={ground} tint={tint} tintOpacity={Animated.multiply(pieces.tint, fill)} up={pieces.lens}>
+      <LensGlass radius={height / 2} ground={ground} tint={tint} tintOpacity={Animated.multiply(pieces.tint, fill)} up={pieces.lens} swell={pieces.swell}>
         <Animated.View style={[styles.piece, { width, height, transformOrigin: 'left top', transform: pieces.copy }]} testID="tab-lens-copy">
           {children}
         </Animated.View>

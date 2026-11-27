@@ -40,10 +40,16 @@ export const SELECTOR_LENS = {
   /** How much the lens magnifies what it passes over, in its middle (measured: about 1.3 on the glyphs). */
   magnify: 1.28,
   /**
-   * Where the platform can bend at the rim: how far in from the edge it curves and how thick it is, in points, and how
-   * much further red bends than green, and blue less. The middle stays clear; the fringe is wider than the bar's glass.
+   * Where the platform can bend at the rim: how far in from the edge it curves and how far it bends at the edge, in
+   * points, and how much further red bends than green, and blue less. Red's bend stays under half the rim, so the rim
+   * stretches what it shows and never doubles it; the middle stays clear, and the fringe is wider than the bar's glass.
    */
-  rim: { bezel: 14, thickness: 16, split: 0.6 },
+  rim: { bezel: 16, reach: 4.5, split: 0.35 },
+  /**
+   * How far the bending glass is spread past the lens while it is down: its rim lies outside the lens and slides in as
+   * the lens lifts, so the bend grows in from the edge rather than fading in over the plain row and showing it twice.
+   */
+  rimSwell: 1.7,
 } as const;
 
 export type SelectorPhase = 'rest' | 'lifting' | 'moving' | 'settling';
@@ -83,6 +89,8 @@ export interface LensFrame {
   lead: number;
   /** How much it magnifies the row under it, about its own middle: 1 at rest. */
   magnify: number;
+  /** How far its bending glass is spread past it, about its middle: 1 once it is up, `rimSwell` at rest. */
+  swell: number;
 }
 
 /** A move from `from` to `to`, starting now. */
@@ -122,7 +130,7 @@ export function lensAt(move: SelectorMove, now: number): LensFrame {
   const since = now - move.lifted;
   const span = move.to - move.from;
   if (ms >= SELECTOR_LENS.longestMs || span === 0) {
-    return { phase: 'rest', at: move.to, velocity: 0, scale: 1, stretch: 0, tint: 1, lens: 0, squash: 1, lead: 0, magnify: 1 };
+    return { phase: 'rest', at: move.to, velocity: 0, scale: 1, stretch: 0, tint: 1, lens: 0, squash: 1, lead: 0, magnify: 1, swell: SELECTOR_LENS.rimSwell };
   }
   // Rising in place until the hold is over, then gliding from where it stood.
   const gliding = ms - move.hold;
@@ -151,17 +159,21 @@ export function lensAt(move: SelectorMove, now: number): LensFrame {
     squash: 1 - SELECTOR_LENS.squash * pace * up,
     lead: Math.sign(velocity) * SELECTOR_LENS.lead * pace * up,
     magnify: 1 + (SELECTOR_LENS.magnify - 1) * up,
+    swell: 1 + (SELECTOR_LENS.rimSwell - 1) * (1 - up),
   };
 }
 
-/** The lens along a selector, in pixels: its edges, one place's width, the row's height and how tall it is drawn. */
+/**
+ * The lens along a selector, in pixels: its edges, its width and height at rest, and how tall it is drawn against that
+ * height. `top` is where its box stands below the top of the row it copies, nothing when it is as tall as the row.
+ */
 export interface LensBox {
   left: number;
   right: number;
   slot: number;
   height: number;
-  /** Its height against the row's. */
   tall: number;
+  top?: number;
 }
 
 /**
@@ -170,12 +182,12 @@ export interface LensBox {
  * height, moved by `translateX(left) scale((right - left) / slot, tall)` from its left middle, which clips the copy to
  * its shape; the copy undoes that and magnifies, so it is drawn by transforms alone and slides through as the lens moves.
  */
-export function magnifier({ left, right, slot, height, tall }: LensBox, magnify: number): { x: number; y: number; sx: number; sy: number } {
+export function magnifier({ left, right, slot, height, tall, top = 0 }: LensBox, magnify: number): { x: number; y: number; sx: number; sy: number } {
   const wide = slot > 0 ? (right - left) / slot : 0;
-  if (wide <= 0 || tall <= 0) return { x: -left, y: 0, sx: 1, sy: 1 };
+  if (wide <= 0 || tall <= 0) return { x: -left, y: 0 - top, sx: 1, sy: 1 };
   return {
     x: (((left + right) / 2) * (1 - magnify) - left) / wide,
-    y: height / 2 - (magnify * height) / (2 * tall),
+    y: height / 2 - (magnify * (top + height / 2)) / tall,
     sx: magnify / wide,
     sy: magnify / tall,
   };
