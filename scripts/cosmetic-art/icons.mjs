@@ -24,7 +24,9 @@ import { Still } from './still.mjs';
 
 // The shared package is TypeScript, so it is read through the same loader the gift script uses.
 register();
-const { giftArtSvg } = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../shared/src/art/gift-art.ts')).href);
+const shared = (file) => pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../shared/src', file)).href;
+const { giftArtSvg } = await import(shared('art/gift-art.ts'));
+const { ANTLER: HEVALO_ANTLER, ANTLER_LIGHT: HEVALO_ANTLER_LIGHT } = await import(shared('characters/hevalo.ts'));
 
 /** The square of the tea gift's picture (in its 120 units) the icon shows: the glass and saucer, with a little room. */
 const TEA_GIFT_FRAME = [5.8, 4.1, 112, 112];
@@ -483,18 +485,18 @@ export const ICONS = [
     key: 'ask',
     ku: 'Ask',
     en: 'Deer',
-    // a fawn standing three-quarters on to us, drawn in coloured pencil and inked over in a soft dark pencil line that
-    // swells and thins and leaves gaps: big leaf-shaped ears out at its sides, short pale antlers with a tuft between
+    // a fawn standing three-quarters on to us, painted and inked over in a soft dark pencil line that swells and thins
+    // and leaves gaps: big leaf-shaped ears out at its sides, Hevalo's own dark branched antlers with a tuft between
     // them, a darker blaze down its brow, two dots for eyes over a pale muzzle, its head running on into its chest; a
-    // pale patch on the chest, its back darker with pale spots, a flick of a tail, and slim legs dark at the hoof
+    // pale patch on the chest, its back darker with pale spots, a flick of a tail, and slim legs on cloven hooves
     still(rnd) {
-      const s = new Still(rnd).place([-9, -6], 0.9);
+      const s = new Still(rnd).place([-9, 5], 0.9);
       const COAT = '#bf794c';
       const SHADE = '#a2563a';
       const DEEP = '#8a4630';
       const CREAM = '#e4b689';
       const PALE = '#f1d0a6';
-      const ANTLER = '#e0b487';
+      const [ANTLER, ANTLER_LIT, ANTLER_DEEP] = ['#4f3029', '#7a5446', '#3a1c1d'];
       const HOOF = '#4b3226';
       const INK = '#2a1c16';
       const mirror = (pts) => pts.map(([x, y]) => [472 - x, y]);
@@ -517,15 +519,29 @@ export const ICONS = [
       const line = (cv, pts, w, o = {}) => cv.add(`<path d="${mark(rnd, pts, w, { start: 0.35, end: 0.25, peak: 0.45, tremble: 0.12, count: 30, ...o })}" fill="${INK}" filter="${crayon(cv, rnd, { keep: 3.4, tear: 1.6, grain: 1.1 })}"/>`);
 
       const coat = spline([[176, 104], [214, 93], [256, 96], [290, 106], [322, 128], [342, 162], [350, 200], [349, 232], [356, 250], [392, 244], [430, 255], [456, 276], [463, 310], [462, 356], [460, 398], [452, 420], [424, 412], [400, 396], [372, 406], [334, 424], [290, 432], [252, 434], [224, 430], [206, 418], [193, 396], [182, 368], [177, 338], [176, 312], [150, 294], [126, 268], [114, 238], [113, 206], [120, 172], [134, 140], [152, 118]]);
+      // a leg from inside the body down to a cloven hoof: narrowing to the ankle, the hoof a little wider than it, flat
+      // underneath and split in two; `edge` is the outline below the body, for the line
+      const hoofed = (xt, xf, top, foot, wt, wa, fill) => {
+        const ankle = foot - 18;
+        const mid = (top + ankle) / 2;
+        const xm = xt + ((xf - xt) * (mid - top)) / (foot - top);
+        const xa = xt + ((xf - xt) * (ankle - top)) / (foot - top);
+        const left = [[xt - wt / 2, top], [xm - (wt + wa) / 4, mid], [xa - wa / 2, ankle], [xf - wa / 2 - 2.5, foot - 7], [xf - wa / 2 - 1, foot]];
+        const right = [[xt + wt / 2, top], [xm + (wt + wa) / 4, mid], [xa + wa / 2, ankle], [xf + wa / 2 + 2.5, foot - 7], [xf + wa / 2 + 1, foot]];
+        const sole = [[xf - 2.5, foot], [xf, foot - 5], [xf + 2.5, foot]];
+        return { d: spline([...left, ...sole, ...[...right].reverse()]), edge: [...left.slice(1), ...sole, ...right.slice(1).reverse()], xf, foot, fill };
+      };
       const legs = [
-        { d: spline([[204, 396], [246, 404], [247, 440], [245, 470], [242, 490], [230, 498], [214, 497], [207, 486], [205, 450]]), foot: 498, fill: COAT },
-        { d: spline([[279, 410], [327, 408], [325, 446], [320, 476], [316, 498], [302, 505], [289, 501], [285, 476], [281, 446]]), foot: 505, fill: COAT },
-        { d: spline([[364, 396], [404, 392], [401, 430], [398, 458], [396, 474], [384, 479], [372, 476], [369, 452], [366, 424]]), foot: 479, fill: SHADE },
-        { d: spline([[398, 380], [462, 392], [460, 420], [456, 448], [452, 474], [442, 486], [430, 485], [428, 466], [418, 436], [404, 410]]), foot: 486, fill: COAT },
+        hoofed(225, 226, 396, 498, 40, 27, COAT),
+        hoofed(303, 302, 410, 505, 44, 27, COAT),
+        hoofed(384, 385, 396, 479, 34, 23, SHADE),
+        hoofed(430, 441, 384, 486, 58, 25, COAT),
       ];
       const tail = spline([[452, 284], [468, 288], [480, 304], [484, 322], [478, 336], [466, 336], [458, 324]]);
-      // an antler: a broad base with a short tine off each side and the beam rising between them
-      const ANTLER_L = [[160, 106], [158, 92], [151, 84], [146, 74], [146, 63], [151, 57], [157, 60], [161, 68], [166, 73], [168, 62], [168, 44], [170, 30], [176, 22], [182, 27], [184, 40], [184, 55], [186, 63], [189, 55], [193, 49], [198, 51], [199, 59], [196, 70], [192, 82], [190, 96], [190, 108], [175, 112]];
+      // Hevalo's left antler set on the fawn's crown: his outline scaled down round the foot of the antler
+      const onCrown = ([x, y]) => [236 + (x - 255) * 0.68, 104 + (y - 160) * 0.68];
+      const ANTLER_L = HEVALO_ANTLER.map(onCrown);
+      const ANTLER_LIGHT_L = HEVALO_ANTLER_LIGHT.map((stroke) => stroke.map(onCrown));
       const earL = [[54, 65], [78, 61], [104, 65], [128, 76], [150, 98], [146, 130], [134, 158], [112, 161], [90, 152], [70, 132], [57, 100]];
       const earInL = [[68, 77], [92, 74], [116, 84], [134, 102], [137, 128], [125, 146], [104, 146], [85, 132], [72, 108]];
       const tuft = spline([[186, 112], [188, 102], [198, 94], [206, 89], [212, 94], [220, 85], [230, 92], [238, 88], [248, 95], [264, 96], [280, 104], [282, 114]]);
@@ -538,12 +554,17 @@ export const ICONS = [
         }
         lay(cv, tail, COAT);
         lay(cv, blob(rnd, [473, 318], 7, 15, -20, 0.05), PALE, 2.2);
-        // the antlers, a pale bone colour inked round, and the ears, pale inside and darker at their rims, behind the head
+        // the antlers, Hevalo's own in his dark brown, lit along the top of each tine and deeper at the foot, inked round;
+        // then the ears, pale inside and darker at their rims, all behind the head
         for (const side of [-1, 1]) {
           const X = (pts) => (side < 0 ? pts : mirror(pts));
           const antler = spline(X(ANTLER_L));
-          cv.add(`<path d="${antler}" fill="${ANTLER}" filter="${crayon(cv, rnd, { keep: 2.6, tear: 1.2 })}"/>`);
-          cv.add(`<path d="${antler}" fill="none" stroke="${INK}" stroke-width="5.4" stroke-linejoin="round" filter="${crayon(cv, rnd, { keep: 3.4, tear: 1.4, grain: 1.1, room: [120, 0, 240, 140] })}"/>`);
+          lay(cv, antler, ANTLER, 2.8);
+          cv.add(`<g clip-path="${within(cv, antler)}">`);
+          for (const stroke of ANTLER_LIGHT_L) brush(cv, X(stroke), 7, ANTLER_LIT, 0.85, 'y');
+          brush(cv, X([[158, 104], [174, 96], [196, 100]]), 22, ANTLER_DEEP, 0.7, 'x');
+          cv.add('</g>');
+          cv.add(`<path d="${antler}" fill="none" stroke="${INK}" stroke-width="4.6" stroke-linejoin="round" filter="${crayon(cv, rnd, { keep: 3.4, tear: 1.4, grain: 1.1, room: [80, -20, 320, 150] })}"/>`);
           const ear = spline(X(earL));
           lay(cv, ear, '#ad5f3e');
           const earIn = spline(X(earInL));
@@ -609,20 +630,20 @@ export const ICONS = [
         }
         line(cv, [[134, 150], [121, 178], [114, 208], [115, 240], [126, 268], [148, 290], [172, 302], [194, 307]], 6.1, { start: 0.45, end: 0.12 });
         line(cv, [[338, 158], [348, 190], [349, 224], [340, 252], [318, 276], [296, 292], [284, 299]], 5.9, { start: 0.45, end: 0.15 });
-        line(cv, [[178, 306], [176, 338], [181, 370], [192, 398], [205, 416], [206, 450], [207, 484], [212, 496]], 6.1, { start: 0.25, end: 0.6, peak: 0.35 });
-        line(cv, [[210, 494], [222, 500], [236, 498], [243, 489]], 4.6, { start: 0.7, end: 0.6 });
-        line(cv, [[243, 490], [245, 462], [246, 432]], 5.2, { start: 0.8, end: 0.2 });
+        line(cv, [[178, 306], [176, 338], [181, 370], [192, 398], [205, 418]], 6.1, { start: 0.25, end: 0.5, peak: 0.35 });
+        // each leg's outline below the body, round its cloven hoof, and a short split up from the cleft
+        const [fl, fr, bf, bn] = legs;
+        line(cv, [[205, 412], ...fl.edge, [245, 432]], 5.2, { start: 0.5, end: 0.2, peak: 0.3, count: 60 });
         line(cv, [[236, 429], [258, 434], [280, 432]], 4.3, { start: 0.3, end: 0.5 });
-        line(cv, [[281, 428], [282, 460], [286, 488], [290, 501]], 5.2, { start: 0.4, end: 0.7 });
-        line(cv, [[289, 500], [300, 506], [313, 504], [317, 496]], 4.6, { start: 0.7, end: 0.6 });
-        line(cv, [[317, 497], [321, 470], [325, 440], [328, 422], [350, 415], [374, 406], [398, 394]], 5.2, { start: 0.6, end: 0.3, peak: 0.3 });
-        line(cv, [[370, 410], [368, 440], [371, 470], [373, 477], [384, 481], [396, 475], [399, 446], [401, 406]], 4.1, { start: 0.3, end: 0.3, peak: 0.5 });
-        line(cv, [[400, 394], [412, 420], [424, 448], [429, 476], [431, 485], [442, 488], [452, 481], [456, 450], [459, 420], [461, 398], [462, 366], [462, 336], [460, 322]], 5.5, { start: 0.3, end: 0.35, peak: 0.4 });
+        line(cv, [[281, 428], ...fr.edge, [325, 424]], 5.2, { start: 0.4, end: 0.4, peak: 0.4, count: 60 });
+        line(cv, [[325, 424], [350, 415], [374, 406], [398, 394]], 5.2, { start: 0.6, end: 0.3, peak: 0.3 });
+        line(cv, [[367, 410], ...bf.edge, [401, 404]], 4.1, { start: 0.3, end: 0.3, peak: 0.5, count: 60 });
+        line(cv, [[401, 394], ...bn.edge, [459, 400], [461, 380], [462, 350], [460, 322]], 5.5, { start: 0.3, end: 0.35, peak: 0.4, count: 72 });
+        for (const leg of legs) line(cv, [[leg.xf, leg.foot - 4.5], [leg.xf + 0.4, leg.foot - 11]], 2.2, { start: 0.9, end: 0.2 });
         line(cv, [[455, 280], [470, 288], [481, 305], [484, 324], [478, 337], [466, 335], [460, 324]], 5, { start: 0.5, end: 0.3 });
         line(cv, [[350, 253], [372, 246], [400, 245], [430, 256], [452, 274], [458, 284]], 5.5, { start: 0.3, end: 0.5 });
         line(cv, [[186, 103], [198, 94], [206, 89], [212, 94], [220, 85], [230, 92], [238, 88], [248, 95], [264, 96], [282, 105]], 4.1, { start: 0.4, end: 0.4, tremble: 0.2, count: 40 });
-        // the hooves' cleft, and the face: two dark eyes, the nose, a small mouth
-        for (const [x, y] of [[226, 488], [302, 494], [385, 470], [442, 476]]) line(cv, [[x, y - 9], [x + 0.5, y]], 2.4, { start: 0.3, end: 0.8 });
+        // the face: two dark eyes, the nose, a small mouth
         cv.add(`<g fill="${INK}" filter="${crayon(cv, rnd, { keep: 3.6, tear: 1.2, grain: 1.2 })}"><path d="${blob(rnd, [165, 207], 13.5, 16.5, 4, 0.03)}"/><path d="${blob(rnd, [282, 207], 13.5, 16.5, -4, 0.03)}"/>`
           + `<path d="${spline([[199, 243], [214, 239.5], [230, 243], [226, 251], [215, 256.5], [204, 251]])}"/></g>`);
         line(cv, [[215, 255], [215, 263]], 3, { start: 0.8, end: 0.6 });

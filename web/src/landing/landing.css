@@ -781,8 +781,19 @@
 }
 .fp-flip-gleam {
   position: absolute;
-  inset: -10% 30%;
-  background: linear-gradient(90deg, rgb(255 255 255 / 0), rgb(255 255 255 / 0.42) 50%, rgb(255 255 255 / 0));
+  inset: -10% 28%;
+  /* a bright narrow core in soft wings, laid on as light so it brightens the print rather than washing it white */
+  background: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0),
+    rgb(255 255 255 / 0.16) 30%,
+    rgb(255 255 255 / 0.62) 48%,
+    rgb(255 255 255 / 0.7) 50%,
+    rgb(255 255 255 / 0.62) 52%,
+    rgb(255 255 255 / 0.16) 70%,
+    rgb(255 255 255 / 0)
+  );
+  mix-blend-mode: screen;
   opacity: 0;
 }
 .fp-flip-hit {
