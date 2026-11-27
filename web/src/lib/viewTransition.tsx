@@ -143,6 +143,24 @@ export function carriesPages(): boolean {
 /** A path as the router matches it, without a trailing slash. */
 const trimmed = (pathname: string): string => (pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname);
 
+/**
+ * Pages a part glides between under one transition name (styles/motion.css), by that name. The name is put on the root
+ * only for a change between two of them, so a part whose next page has no partner for it never lingers over that page
+ * as a picture of its own.
+ */
+const GLIDES = new Map<string, ReadonlySet<string>>();
+
+/** Lets the part named `name` glide on a change between any two of `paths`. */
+export function glidesBetween(name: string, paths: readonly string[]): void {
+  GLIDES.set(name, new Set(paths.map(trimmed)));
+}
+
+/** The part that glides on a change from one path to the other, if any. */
+function glideFor(from: string, to: string): string | undefined {
+  for (const [name, paths] of GLIDES) if (paths.has(from) && paths.has(to)) return name;
+  return undefined;
+}
+
 /** Whether two addresses are different pages; a change of query or hash (a search typed letter by letter) is not. */
 export function isAnotherPage(from: Pick<Location, 'pathname'>, to: Pick<Location, 'pathname'>): boolean {
   return trimmed(from.pathname) !== trimmed(to.pathname);
@@ -318,6 +336,7 @@ function settle(f: Flight | null = flight): void {
   if (flight !== f) return;
   flight = null;
   document.documentElement.classList.remove(CHANGING);
+  delete document.documentElement.dataset.glide;
 }
 
 /**
@@ -505,6 +524,8 @@ function changePage(from: Location, update: Update, draws: Draws): void {
   };
   flight = f;
   document.documentElement.classList.add(CHANGING);
+  const glide = glideFor(trimmed(from.pathname), f.path);
+  if (glide) document.documentElement.dataset.glide = glide;
   if (plan) wear(f, plan.from, plan.shape);
 
   let late = 0;

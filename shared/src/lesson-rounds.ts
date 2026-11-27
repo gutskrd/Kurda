@@ -1,15 +1,15 @@
 /**
- * A topic's rounds: how many times over its lessons were played, shown as the bar over its stop and the suns pressed
+ * A topic's rounds: how many times over its lessons were played, shown as the bar over its stop and the apples pressed
  * into its wax seal. The bar has one piece per lesson; a piece fills as each lesson is first finished, and once the bar
- * is full the stop becomes a wax seal with its first sun. Replaying fills the next round piece by piece, and each full
- * round is pressed into the seal as another sun, up to three.
+ * is full the stop becomes a wax seal with its first apple. Replaying fills the next round piece by piece, and each full
+ * round is pressed into the seal as another apple, up to three.
  *
  * So rounds are the fewest finishes of any one lesson (at most `TOPIC_STARS`) and pieces are the lessons finished more
  * often than that. The server computes them per topic (api/src/coursemap) and both apps draw from its numbers and from the
  * shapes here (`barPieces`), so a bar is the same everywhere.
  */
 
-/** The most rounds a topic counts, and the most suns its seal can wear. */
+/** The most rounds a topic counts, and the most apples its seal can wear. */
 export const TOPIC_STARS = 3;
 
 export interface TopicRounds {
@@ -52,39 +52,68 @@ export function barPieces(of: number): Array<{ x: number; w: number }> {
 }
 
 /**
- * The suns pressed into a finished topic's seal, one for each full round, in the seal's own terms (its middle at 0, 0 and
- * its radius 1): one large in the middle, two side by side a little smaller, or three of a size in a triangle, one above
- * and two below, the gaps between them the same as to the fine ring round the field. A topic finished before its rounds
- * were counted shows one. `r` is how far a sun's rays reach.
+ * The apples pressed into a finished topic's seal, one for each full round, in the seal's own terms (its middle at 0, 0
+ * and its radius 1): one large in the middle, two side by side a little smaller, or three of a size in a triangle, one
+ * above and two below, the gaps between them the same as to the fine ring round the field. A topic finished before its
+ * rounds were counted shows one. `r` is how far an apple reaches from its middle, its leaf's tip the furthest.
  */
-export function sealSuns(rounds: number): Array<{ x: number; y: number; r: number }> {
-  const suns = Math.max(1, Math.min(TOPIC_STARS, Math.floor(rounds) || 1));
-  if (suns === 1) return [{ x: 0, y: 0, r: 0.53 }];
-  if (suns === 2) return [{ x: -0.3, y: 0, r: 0.285 }, { x: 0.3, y: 0, r: 0.285 }];
+export function sealApples(rounds: number): Array<{ x: number; y: number; r: number }> {
+  const apples = Math.max(1, Math.min(TOPIC_STARS, Math.floor(rounds) || 1));
+  if (apples === 1) return [{ x: 0, y: 0, r: 0.53 }];
+  if (apples === 2) return [{ x: -0.3, y: 0, r: 0.285 }, { x: 0.3, y: 0, r: 0.285 }];
   // Each 0.315 from the middle, so the gaps between them and to the ring at 0.615 are alike.
   return [{ x: -0.2728, y: 0.1575, r: 0.245 }, { x: 0, y: -0.315, r: 0.245 }, { x: 0.2728, y: 0.1575, r: 0.245 }];
 }
 
-/** The Kurdish sun's rays: twenty-one, as on the flag. */
-export const SUN_RAYS = 21;
+/**
+ * The apple, traced from the owner's: its body as it runs round from the dip at its top down its right side, mirrored
+ * for its left, the body 2 across; its stem leaning a little left, slimmer at its foot and round at its top; and its
+ * leaf, a lens from beside the stem out to the upper right, fuller on its upper side. In the apple's own units, its body
+ * centred across and the whole of it centred top to bottom, so it reaches `APPLE.reach` at its leaf's tip.
+ */
+const APPLE = {
+  right: [[0, -0.794], [0.174, -0.819], [0.4, -0.858], [0.666, -0.794], [0.916, -0.529], [1.001, -0.088], [0.839, 0.391], [0.522, 0.746], [0.23, 0.859], [0, 0.831]],
+  stem: { foot: [-0.005, -0.7], top: [-0.04, -1.155], footHalf: 0.03, topHalf: 0.048 },
+  leaf: { base: [0.0765, -0.918], tip: [0.689, -1.3245], upper: 0.21, lower: 0.17 },
+  middle: -0.249,
+  reach: 1.277,
+} as const;
 
 /**
- * A sun as SVG path data: a round middle half as wide as its reach, and `rays` pointed rays round it, evenly spaced, the
- * first pointing straight up, reaching `r` from its middle. Fewer, broader rays keep a small sun crisp.
+ * An apple as SVG path data, its body, stem and leaf, reaching `r` from (`x`, `y`) at its leaf's tip. The body is one
+ * smooth outline through the traced points; drawn filled, the stem joins it where they overlap.
  */
-export function sunPath(x: number, y: number, r: number, rays = SUN_RAYS): string {
-  const round = (v: number): string => String(Math.round(v * 100) / 100);
-  const at = (radius: number, a: number): string => `${round(x + radius * Math.sin(a))} ${round(y - radius * Math.cos(a))}`;
-  const disc = r * 0.5;
-  // Slender rays with clear gaps between, as pressed suns have; fewer rays are a little broader at the foot.
-  const half = (Math.PI / rays) * (rays >= SUN_RAYS ? 0.45 : rays >= 15 ? 0.52 : 0.6);
-  const arc = `A${round(disc)} ${round(disc)} 0 1 0`;
-  const middle = `M${round(x - disc)} ${round(y)}${arc} ${round(x + disc)} ${round(y)}${arc} ${round(x - disc)} ${round(y)}Z`;
-  const spikes = Array.from({ length: rays }, (_, i) => {
-    const a = (i * 2 * Math.PI) / rays;
-    return `M${at(r * 0.57, a - half)}L${at(r, a)}L${at(r * 0.57, a + half)}Z`;
-  });
-  return middle + spikes.join('');
+export function applePath(x: number, y: number, r: number): string {
+  const s = r / APPLE.reach;
+  const f = (v: number): string => String(Math.round(v * 100) / 100);
+  const at = ([px, py]: readonly [number, number]): string => `${f(x + px * s)} ${f(y + (py - APPLE.middle) * s)}`;
+  const right = APPLE.right as readonly (readonly [number, number])[];
+  const ring = [...right, ...right.slice(1, -1).reverse().map(([px, py]) => [-px, py] as const)];
+  const m = ring.length;
+  // Through every point, each bend set by the points either side of it.
+  let body = `M${at(ring[0]!)}`;
+  for (let i = 0; i < m; i++) {
+    const [p0, p1, p2, p3] = [ring[(i + m - 1) % m]!, ring[i]!, ring[(i + 1) % m]!, ring[(i + 2) % m]!];
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6] as const;
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6] as const;
+    body += `C${at(c1)} ${at(c2)} ${at(p2)}`;
+  }
+  const along = (from: readonly number[], to: readonly number[]): { u: [number, number]; n: [number, number]; len: number } => {
+    const len = Math.hypot(to[0]! - from[0]!, to[1]! - from[1]!);
+    const u: [number, number] = [(to[0]! - from[0]!) / len, (to[1]! - from[1]!) / len];
+    return { u, n: [-u[1], u[0]], len };
+  };
+  const { foot, top, footHalf, topHalf } = APPLE.stem;
+  const st = along(foot, top);
+  const side = (p: readonly number[], half: number, k: number): [number, number] => [p[0]! + st.n[0] * half * k, p[1]! + st.n[1] * half * k];
+  const cap: [number, number] = [top[0] + st.u[0] * topHalf * 1.3, top[1] + st.u[1] * topHalf * 1.3];
+  const stem = `M${at(side(foot, footHalf, -1))}L${at(side(top, topHalf, -1))}Q${at(cap)} ${at(side(top, topHalf, 1))}L${at(side(foot, footHalf, 1))}Z`;
+  const { base, tip, upper, lower } = APPLE.leaf;
+  const lf = along(base, tip);
+  // A cubic's control points a third further out than the lens is wide, so its two sides bulge as far as they should.
+  const on = (t: number, h: number): [number, number] => [base[0] + lf.u[0] * lf.len * t - lf.n[0] * h * (4 / 3), base[1] + lf.u[1] * lf.len * t - lf.n[1] * h * (4 / 3)];
+  const leaf = `M${at(base)}C${at(on(0.22, upper))} ${at(on(0.78, upper))} ${at(tip)}C${at(on(0.78, -lower))} ${at(on(0.22, -lower))} ${at(base)}Z`;
+  return `${body}Z${stem}${leaf}`;
 }
 
 /**

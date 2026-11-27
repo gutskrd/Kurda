@@ -342,12 +342,12 @@ export const PATH_PIGEON_FLIGHT = {
  * The moment a finished stop becomes its wax seal, the first time the learner comes back to the road after finishing it:
  * a big drop of red wax falls onto the tile and lands with a splash, the tile melts under it as the wax flows out round
  * into the seal's poured disc, and the brass stamp comes in over it, draws up, presses the seal so it squashes and the wax
- * spreads, and lifts away, overshooting a little, to show the sun pressed in it. Each track runs from 0 to 1 of `ms`:
+ * spreads, and lifts away, overshooting a little, to show the apple pressed in it. Each track runs from 0 to 1 of `ms`:
  * `blob` the falling drop's height over the tile in points, its opacity and `splat` its height as it lands (its width
  * the other way); `splash` the droplets it throws out, their spread and opacity; `melt` the tile melting away (0 as it
  * stands, 1 gone); `flow` the poured disc's size (with its opacity, `poured`); `tool` the stamp's height and opacity,
  * and `tilt` its lean in degrees (it comes in leaning, presses straight, and rocks a little and settles as it lifts);
- * `squash` the stop's height (1 as drawn), the seal rising a little after the stamp as it leaves. The suns show from
+ * `squash` the stop's height (1 as drawn), the seal rising a little after the stamp as it leaves. The apples show from
  * `pressAt`, under the stamp, and are seen in the wax as it lifts away; a phone taps at the press.
  */
 export const PATH_STAMP_MOMENT = {
@@ -374,8 +374,8 @@ export const PATH_STAMP_MOMENT = {
 type MomentTrack = 'blobY' | 'blobShown' | 'splat' | 'splash' | 'splashShown' | 'melt' | 'flow' | 'poured' | 'toolY' | 'toolShown' | 'tilt' | 'squash';
 
 /**
- * A round later, the stamp pressing a seal again, so the new sun is pressed in beside the others: it comes in over the
- * seal, draws up, presses down hard as the seal squashes a little, and lifts away; at `pressAt` the suns pressed in are
+ * A round later, the stamp pressing a seal again, so the new apple is pressed in beside the others: it comes in over the
+ * seal, draws up, presses down hard as the seal squashes a little, and lifts away; at `pressAt` the apples pressed in are
  * the new count. The tracks are as `PATH_STAMP_MOMENT`'s, over `ms`.
  */
 export const PATH_STAMP_REPRESS = {
@@ -407,7 +407,7 @@ export const PATH_STAMP_SHADOW = stampShadow(PATH_STAMP_MOMENT);
 export const PATH_REPRESS_SHADOW = stampShadow(PATH_STAMP_REPRESS);
 
 /**
- * A topic's seal turning gold as its third sun is pressed in: once the stamp has lifted away, `afterMs` after its press
+ * A topic's seal turning gold as its third apple is pressed in: once the stamp has lifted away, `afterMs` after its press
  * ends, one flame passes up over the seal and leaves it gold (`PATH_WAX_FIRE`), and one glint crosses it over `glintMs`.
  * A gold seal in view glints again every `everyMs`, each stop at its own time (`waxGlintAt`): a pale band `band` points
  * wide, leaning `tilt` degrees. Under Reduce Motion it is simply gold, and still.

@@ -7,12 +7,13 @@ import { LinkButton } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { useAuth } from '../auth/AuthProvider';
 import { LearnHeader } from '../learn/LearnHeader';
-import { ChevronIcon, TrophyIcon } from '../components/icons';
+import { ChevronIcon } from '../components/icons';
 import { JoinCodeEntry } from '../play/JoinCode';
 import { ParentalNote, useParentalOff } from '../parental/ParentalNote';
 import { WEB_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
 import { GameArt } from '../games/GameArt';
 import { GameStamp } from '../games/GameStamp';
+import { PodiumArt } from '../games/PodiumArt';
 import { useGrowsFrom } from '../lib/viewTransition';
 import '../games/games-page.css';
 
@@ -341,7 +342,7 @@ export function Games(): React.JSX.Element {
         {gamesOff ? <ParentalNote compact /> : <JoinCodeEntry />}
         {/* XP, the weekly league and Zêr. */}
         <Link to="/app/rankings" className="games-rankings">
-          <TrophyIcon size={20} />
+          <PodiumArt className="games-rankings-art" />
           <span className="games-rankings-text">
             <span className="games-rankings-title">{t('nav.rankings')}</span>
             <span className="games-rankings-sub">{t('learn.rankingsSub')}</span>

@@ -6,7 +6,7 @@
  * are in path-landmark.ts.
  */
 import type { UnitTone } from '../lesson-path.js';
-import { SUN_RAYS, sealSuns, sunPath } from '../lesson-rounds.js';
+import { applePath, sealApples } from '../lesson-rounds.js';
 import type { PathGround } from '../path-world.js';
 import { roadLight } from './light.js';
 import { CANVAS, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
@@ -311,8 +311,8 @@ export interface PathWaxOptions {
   gold?: boolean;
   /** Matte and dulled, where a refresh would help. */
   worn?: boolean;
-  /** The suns pressed into it, one for each full round (shared `sealSuns`): 1 to 3. */
-  suns?: number;
+  /** The apples pressed into it, one for each full round (shared `sealApples`): 1 to 3. */
+  apples?: number;
   /**
    * The whole seal; or, for its moment, the poured disc alone, the seal's pressed face alone, the drop of wax that falls
    * onto the tile first, or the droplets it throws out as it lands.
@@ -324,17 +324,11 @@ export interface PathWaxOptions {
   idPrefix?: string;
 }
 
-/** How many rays a sun reaching `reach` points keeps crisp: the Kurdish sun's twenty-one, or fewer and broader when small. */
-export function sunRays(reach: number): number {
-  return reach >= 13 ? SUN_RAYS : reach >= 8 ? 15 : 11;
-}
-
 /**
  * A finished topic's round wax seal, in its tile's place (`PATH_SEAL`): a poured disc, its edge a little uneven and
  * different on every stop, its thick lip lit along its upper left with a gloss or two and shaded lower right, standing
- * on its own soft shadow. Pressed into it, a raised rim round a sunken field ringed by a fine line, and in the field the
- * Kurdish sun, one for each full round (shared `sealSuns`): its round middle and pointed rays raised, lit above and
- * shaded below. Deep red, or gold; matte and dulled toward slate, its gloss gone, where a refresh would help.
+ * on its own soft shadow. Pressed into it, a raised rim round a sunken field ringed by a fine line, and in the field an
+ * apple for each full round (shared `sealApples`), raised, lit above and shaded below. Deep red, or gold; matte and dulled toward slate, its gloss gone, where a refresh would help.
  */
 export function pathWaxSvg(opts: PathWaxOptions = {}): string {
   const { dark = false, gold = false, worn = false } = opts;
@@ -344,7 +338,7 @@ export function pathWaxSvg(opts: PathWaxOptions = {}): string {
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
   const B = PATH_STOP_ART.box;
   const { cx, cy, r, depth } = PATH_SEAL;
-  const prefix = prefixFor(opts.idPrefix, 'wax', opts.seed, gold, worn, part, opts.suns, dark);
+  const prefix = prefixFor(opts.idPrefix, 'wax', opts.seed, gold, worn, part, opts.apples, dark);
   const own = pathWaxColours(dark, gold);
   const dull = (hex: string): string => mix(hex, PATH_REST[dark ? 'dark' : 'light'].lip, 0.3);
   const wax: PathWaxColours = worn
@@ -436,21 +430,18 @@ export function pathWaxSvg(opts: PathWaxOptions = {}): string {
     const under = `<path d="${sunk}${circle(cx + 1.5, cy + 1.7, field)}" fill="${mix(wax.field, wax.wallShade, 0.45)}" fill-rule="evenodd"/>`;
     body += fill(sunk, wax.field) + `<g clip-path="url(#${clip(sunk)})">${under}</g>`;
     body += stroke(circle(cx - 0.3, cy - 0.35, ring), wax.wallShade, 0.8) + stroke(circle(cx + 0.3, cy + 0.35, ring), wax.wallLight, 0.8);
-    // The suns, raised: each lit along its upper left and shaded along its lower right, its rays kept crisp at the size
-    // it is shown.
-    const suns = sealSuns(opts.suns ?? 1).map((sn) => ({ x: cx + sn.x * r, y: cy + sn.y * r, reach: sn.r * r }));
-    // One count of rays for all of a seal's suns, as many as its smallest keeps crisp.
-    const rays = sunRays((Math.min(...suns.map((sn) => sn.reach)) * size) / B);
-    const sun = (dx: number, dy: number): string => suns.map((sn) => sunPath(sn.x + dx, sn.y + dy, sn.reach, rays)).join('');
-    const k = Math.min(0.85, Math.max(0.45, suns[0]!.reach / 22));
-    body += `<path d="${sun(k, k * 1.15)}" fill="${wax.wallShade}"/><path d="${sun(-k * 0.8, -k * 0.95)}" fill="${wax.wallLight}"/>`;
-    body += fill(sun(0, 0), mix(wax.face, wax.light, 0.3));
+    // The apples, raised: each lit along its upper left and shaded along its lower right.
+    const apples = sealApples(opts.apples ?? 1).map((a) => ({ x: cx + a.x * r, y: cy + a.y * r, reach: a.r * r }));
+    const apple = (dx: number, dy: number): string => apples.map((a) => applePath(a.x + dx, a.y + dy, a.reach)).join('');
+    const k = Math.min(0.85, Math.max(0.45, apples[0]!.reach / 22));
+    body += `<path d="${apple(k, k * 1.15)}" fill="${wax.wallShade}"/><path d="${apple(-k * 0.8, -k * 0.95)}" fill="${wax.wallLight}"/>`;
+    body += fill(apple(0, 0), mix(wax.face, wax.light, 0.3));
   }
   return wrapIt(body);
 }
 
 /**
- * The fire that gilds a seal as its third sun is pressed in, on the seal's canvas (`PATH_SEAL`): one sheet of flame as
+ * The fire that gilds a seal as its third apple is pressed in, on the seal's canvas (`PATH_SEAL`): one sheet of flame as
  * wide as the seal, standing on its middle line, its foot rounded just under it, rising in a few pointed licks of
  * different heights that lean a little the same way, the tallest a little off the middle. It is painted in three flat
  * layers in Hevalo's fire colours (fire-colours.ts), each a step inside the last and drawn apart for the app to flicker

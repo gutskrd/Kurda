@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { CarriedRouter, HOLD_MS, carriesPages, forgetCarried, isAnotherPage, useGrowsFrom, useGrowsInto } from './viewTransition';
+import { CarriedRouter, HOLD_MS, carriesPages, forgetCarried, glidesBetween, isAnotherPage, useGrowsFrom, useGrowsInto } from './viewTransition';
 
 /** A browser that plays motion, or one with reduced motion. */
 function withMotion(reduced = false): void {
@@ -25,6 +25,8 @@ interface Asked {
   before: string[];
   /** Whether the root said a page was changing at that moment. */
   changing: boolean;
+  /** The part the root let glide at that moment, if any. */
+  glide: string | undefined;
   /** Settles when the next page has been drawn. */
   updated: Promise<void>;
   skipped: boolean;
@@ -39,7 +41,8 @@ function withTransitions(): Asked[] {
     let finish = (): void => undefined;
     const finished = new Promise<void>((resolve) => (finish = resolve));
     const changing = document.documentElement.classList.contains('is-changing-page');
-    const one: Asked = { before: wearing(), changing, updated: Promise.resolve(), skipped: false, finish };
+    const glide = document.documentElement.dataset.glide;
+    const one: Asked = { before: wearing(), changing, glide, updated: Promise.resolve(), skipped: false, finish };
     one.updated = Promise.resolve().then(() => update());
     asked.push(one);
     const skipTransition = (): void => {
@@ -202,6 +205,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   delete (document as { startViewTransition?: unknown }).startViewTransition;
   document.documentElement.className = '';
+  delete document.documentElement.dataset.glide;
 });
 
 describe('whether a change of page is carried', () => {
@@ -268,6 +272,21 @@ describe('a change of page', () => {
     expect(document.documentElement).toHaveClass('is-changing-page');
     await act(async () => asked[0]!.finish());
     expect(document.documentElement).not.toHaveClass('is-changing-page');
+  });
+
+  it('lets a part glide between two pages that both have it, and leaves it with its page when the next one has none', async () => {
+    withMotion();
+    glidesBetween('the-switch', ['/', '/slow/']);
+    const asked = withTransitions();
+    render(<App />);
+    fireEvent.click(screen.getByRole('link', { name: 'a page with no head' }));
+    expect(asked[0]!.glide).toBe('the-switch');
+    await settled();
+    await act(async () => asked[0]!.finish());
+    expect(document.documentElement.dataset.glide).toBeUndefined();
+    fireEvent.click(screen.getByRole('link', { name: 'open the bare thing' }));
+    expect(asked[1]!.changing).toBe(true);
+    expect(asked[1]!.glide).toBeUndefined();
   });
 
   it('is not a transition when only what follows the ? changes', async () => {

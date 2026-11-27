@@ -90,7 +90,7 @@ function client() {
 const button = (name: string) => screen.getByRole('button', { name });
 
 describe('the lesson path', () => {
-  it('draws every skill as a stop that says what it is, its round once it has a sun, with review and each unit’s end', () => {
+  it('draws every skill as a stop that says what it is, its round once it has an apple, with review and each unit’s end', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={3} onFocus={() => undefined} />);
     // A course without levels is one unnamed section, and its first unit opens under its heading.
@@ -479,20 +479,20 @@ describe('the path’s sections', () => {
 });
 
 describe('a topic’s bar and wax seal', () => {
-  it('puts a bar over the topic to do now with a piece for each lesson, and makes a finished one a wax seal, a sun for each round', async () => {
+  it('puts a bar over the topic to do now with a piece for each lesson, and makes a finished one a wax seal, an apple for each round', async () => {
     client();
     renderWithProviders(<LessonPath map={levelled()} due={0} onFocus={() => undefined} />);
     await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
     // Only d, the topic to do now, wears its bar, its first piece filled; c, finished, is a wax seal instead, gold with
-    // its three suns.
+    // its three apples.
     expect(screen.getAllByTestId('lp-bar')).toHaveLength(1);
     expect(screen.getAllByTestId('lp-bar-filled')).toHaveLength(1);
     expect(screen.getAllByTestId(/^lp-wax/).length).toBeGreaterThan(0);
     const c = button('Topic c, done, and strong, all 3 rounds done');
     expect(within(c).getByTestId('lp-wax-3-gold')).toBeTruthy();
-    // Its card shows its three suns, that all three rounds are played, and its seal with one, two and three suns.
+    // Its card shows its three apples, that all three rounds are played, and its seal with one, two and three apples.
     fireEvent.click(c);
-    expect(screen.getByTestId('lp-card-suns-3')).toBeTruthy();
+    expect(screen.getByTestId('lp-card-apples-3')).toBeTruthy();
     expect(screen.getByText('All 3 rounds done')).toBeTruthy();
     expect(screen.getByTestId('lp-wax-legend')).toBeTruthy();
   });
@@ -502,7 +502,7 @@ describe('a topic’s bar and wax seal', () => {
     renderWithProviders(<LessonPath map={levelled()} due={0} onFocus={() => undefined} />);
     await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
     fireEvent.click(button('Section 1, Starter, First words and short sentences, Section complete, One chapter'));
-    // Both its topics are wax seals with their first sun, and neither wears a bar.
+    // Both its topics are wax seals with their first apple, and neither wears a bar.
     expect(screen.getAllByTestId('lp-wax-1')).toHaveLength(2);
     expect(screen.queryByTestId('lp-bar')).toBeNull();
     fireEvent.click(button('Topic b, done, and strong, round 2 of 3, 1 of 2 lessons'));
@@ -511,7 +511,7 @@ describe('a topic’s bar and wax seal', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'b2', courseId: 'c2' });
   });
 
-  it('fills the bar, turns the stop into its wax seal with its first sun on coming back from a lesson that made a round whole', async () => {
+  it('fills the bar, turns the stop into its wax seal with its first apple on coming back from a lesson that made a round whole', async () => {
     client();
     patchReactNativeWeb({ reduceMotion: false });
     const before = levelled('c-return');
@@ -527,7 +527,7 @@ describe('a topic’s bar and wax seal', () => {
     expect(screen.getAllByTestId('lp-bar-gold').length).toBeGreaterThan(0);
     await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
     const d = screen.getByRole('button', { name: /^Topic d, (?!you)/ });
-    // Its first sun pressed into the seal.
+    // Its first apple pressed into the seal.
     expect(within(d).getByTestId('lp-wax-1')).toBeTruthy();
     expect(JSON.parse(localStorage.getItem('hevalo_stamped_v1:c-return') ?? '[]')).toContain('s:d');
     // The chapter's story is won with it.
@@ -536,7 +536,7 @@ describe('a topic’s bar and wax seal', () => {
     patchReactNativeWeb({ reduceMotion: true });
   });
 
-  it('presses a sealed topic’s new sun into its seal on coming back from the lesson that made its next round whole', async () => {
+  it('presses a sealed topic’s new apple into its seal on coming back from the lesson that made its next round whole', async () => {
     client();
     patchReactNativeWeb({ reduceMotion: false });
     const before = levelled('c-again');
@@ -549,7 +549,7 @@ describe('a topic’s bar and wax seal', () => {
     const c = () => screen.getByRole('button', { name: /^Topic c, / });
     expect(within(c()).getByTestId('lp-wax-2')).toBeTruthy();
     view.rerender(<LessonPath map={after} due={0} onFocus={() => undefined} />);
-    // The stamp comes back and presses the third sun in, and a flame passes over its wax, leaving it gold.
+    // The stamp comes back and presses the third apple in, and a flame passes over its wax, leaving it gold.
     await waitFor(() => expect(within(c()).getByTestId('lp-wax-3-gold')).toBeTruthy(), { timeout: 4000 });
     expect(within(c()).getByTestId('lp-wax-fire')).toBeTruthy();
     cleanup();

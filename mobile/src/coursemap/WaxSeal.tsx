@@ -23,19 +23,19 @@ import { radii } from '../theme/tokens';
 import { STOP_FACE } from './PathWorld';
 
 /**
- * A finished stop's round wax seal (shared `pathWaxSvg`) in its tile's place, a sun pressed in it for each full round, as
- * on the website: deep red, gold once it has all three suns, and matte and dulled where a refresh would help. With
+ * A finished stop's round wax seal (shared `pathWaxSvg`) in its tile's place, an apple pressed in it for each full round, as
+ * on the website: deep red, gold once it has all three apples, and matte and dulled where a refresh would help. With
  * `moment` running from 0 to 1 (SkillNodeView times it and melts the tile), the first sealing plays (shared
  * `PATH_STAMP_MOMENT`): a big drop of red wax falls onto the tile and splashes, the wax flows out round as the tile melts
- * under it, and the brass stamp presses the seal and lifts away, its sun pressed in. With `again`, a round later, the
- * stamp presses again (shared `PATH_STAMP_REPRESS`), the `from` suns giving way to `suns`. With `warmAt`, that long from
+ * under it, and the brass stamp presses the seal and lifts away, its apple pressed in. With `again`, a round later, the
+ * stamp presses again (shared `PATH_STAMP_REPRESS`), the `from` apples giving way to `apples`. With `warmAt`, that long from
  * now and once the stamp has lifted, a band of fire sweeps up over the seal and gilds it (shared `PATH_WAX_FIRE`), then
  * one glint crosses it (shared `PATH_WAX_GOLD`); a gold seal glints again now and then while `live`. Decorative.
  */
 export function WaxSeal({
   stopKey,
   dark,
-  suns,
+  apples,
   gold,
   warmAt,
   worn,
@@ -45,16 +45,16 @@ export function WaxSeal({
 }: {
   stopKey: string;
   dark: boolean;
-  /** The suns pressed in it, one for each full round. */
-  suns: number;
+  /** The apples pressed in it, one for each full round. */
+  apples: number;
   gold: boolean;
-  /** Its third sun is being pressed in: the stamp lifts and fire gilds the wax this many ms from now. */
+  /** Its third apple is being pressed in: the stamp lifts and fire gilds the wax this many ms from now. */
   warmAt: number | null;
   worn: boolean;
   /** Its unit is in view, the app in front, and motion welcome. */
   live: boolean;
   moment: Animated.Value | null;
-  /** A round later: the stamp pressing again, and the suns it had before. */
+  /** A round later: the stamp pressing again, and the apples it had before. */
   again?: { t: Animated.Value; from: number } | null;
 }): React.JSX.Element {
   const pressing = !!moment;
@@ -62,18 +62,18 @@ export function WaxSeal({
   const moving = pressing || pressed;
   const xml = useMemo(() => {
     const wax = (part: 'whole' | 'pour' | 'seal', count: number, golden = false): string =>
-      pathWaxSvg({ seed: stopKey, gold: golden, worn, suns: count, part, dark });
+      pathWaxSvg({ seed: stopKey, gold: golden, worn, apples: count, part, dark });
     return {
-      coat: moving ? null : wax('whole', suns),
-      gold: gold ? wax('whole', suns, true) : null,
-      pour: moving ? wax('pour', suns) : null,
-      seal: moving ? wax('seal', suns) : null,
+      coat: moving ? null : wax('whole', apples),
+      gold: gold ? wax('whole', apples, true) : null,
+      pour: moving ? wax('pour', apples) : null,
+      seal: moving ? wax('seal', apples) : null,
       was: again ? wax('seal', again.from) : null,
       blob: pressing ? pathWaxSvg({ part: 'blob', dark }) : null,
       splash: pressing ? pathWaxSvg({ part: 'splash', dark }) : null,
     };
-  }, [stopKey, worn, dark, gold, suns, moving, pressing, again]);
-  // Once the stamp has lifted from its third sun, one flame passes up over the seal and leaves it gold (`SealFlame`), felt
+  }, [stopKey, worn, dark, gold, apples, moving, pressing, again]);
+  // Once the stamp has lifted from its third apple, one flame passes up over the seal and leaves it gold (`SealFlame`), felt
   // as a light tap as it lights and a firmer one as it goes out.
   const warm = useRef(new Animated.Value(warmAt === null ? 1 : 0)).current;
   useEffect(() => {
@@ -96,11 +96,11 @@ export function WaxSeal({
   const t = moment ?? again?.t ?? null;
   const m = pressing ? PATH_STAMP_MOMENT : PATH_STAMP_REPRESS;
   const shadow = pressing ? PATH_STAMP_SHADOW : PATH_REPRESS_SHADOW;
-  // The suns pressed in show from the press, under the stamp; a round later the ones before give way then.
+  // The apples pressed in show from the press, under the stamp; a round later the ones before give way then.
   const shownFrom = [[0, 0], [m.pressAt, 0], [m.pressAt + 0.01, 1], [1, 1]] as const;
   const { blobY, blobShown, splat, splash, splashShown, flow, poured } = PATH_STAMP_MOMENT;
   return (
-    <View style={styles.wax} pointerEvents="none" aria-hidden testID={moving ? 'lp-wax-pressing' : `lp-wax-${suns}${gold ? '-gold' : ''}`}>
+    <View style={styles.wax} pointerEvents="none" aria-hidden testID={moving ? 'lp-wax-pressing' : `lp-wax-${apples}${gold ? '-gold' : ''}`}>
       {t && xml.pour && xml.seal ? (
         <>
           {pressing ? (
@@ -183,7 +183,7 @@ function drawn(svg: string): React.JSX.Element {
 }
 
 /**
- * One flame passing up over a seal as its third sun is pressed in, leaving it gold (shared `PATH_WAX_FIRE`), as on the
+ * One flame passing up over a seal as its third apple is pressed in, leaving it gold (shared `PATH_WAX_FIRE`), as on the
  * website: the gold shown through a window whose top is the flame's foot, moved up while the gold in it is moved back
  * down, and over it the flame's three painted layers, each flickering on its own clock. Decorative.
  */

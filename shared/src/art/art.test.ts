@@ -60,7 +60,7 @@ import { GAME_NAMES } from '../games/names.js';
 import { LETTERS, letter } from './ink.js';
 import { DICTIONARY_TILE, dictionaryStillSvg, dictionarySvg, dictionaryTileSvg, dictionaryTiles } from './dictionary.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
-import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
+import { PODIUM_ART_BLOCKS, PODIUM_ART_NUMERAL, PODIUM_ART_STAR, TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES, podiumBlockPath } from './ticket.js';
 import { UNIT_TONES } from '../lesson-path.js';
 import {
   PATH_CHEST_PARTS,
@@ -83,11 +83,9 @@ import {
   pathSealFireSvg,
   PATH_SEAL_FLAME,
   pathStopSvg,
-  sunRays,
   tilePath,
   type PathStopLook,
 } from './path-land.js';
-import { SUN_RAYS } from '../lesson-rounds.js';
 import { fireColours } from './fire-colours.js';
 import { CHAPTER_ART, CHAPTER_ART_IDS, CHAPTER_ART_LOOP, CHAPTER_LOOP_KINDS, chapterArtOf, chapterArtSvg } from './chapter-art.js';
 import { PATH_SCENES, PATH_SCENE_BOX, PATH_SCENE_IDS, PATH_SCENE_SPRITES, PATH_SCENE_SPRITE_BOX, PATH_SLATE_LETTERS, pathScenePropSvg, pathSceneSpriteSvg } from './path-scenes.js';
@@ -1666,6 +1664,24 @@ describe('the join ticket', () => {
       expect(tile.y - 0).toBeCloseTo(TICKET_ART_BOX.height - (tile.y + tile.height));
     }
   });
+
+  it('has a podium beside it on the same canvas: second, first and third standing on one line, the first tallest', () => {
+    expect(PODIUM_ART_BLOCKS.map((b) => b.place)).toEqual([2, 1, 3]);
+    const [second, first, third] = PODIUM_ART_BLOCKS;
+    expect(first!.height).toBeGreaterThan(second!.height);
+    expect(second!.height).toBeGreaterThan(third!.height);
+    for (const b of PODIUM_ART_BLOCKS) {
+      // inside the ticket's box, every foot on its bottom edge, with room on its face for its place
+      expect(b.x).toBeGreaterThanOrEqual(0);
+      expect(b.x + b.width).toBeLessThanOrEqual(TICKET_ART_BOX.width);
+      expect(b.y + b.height).toBe(TICKET_ART_BOX.height);
+      expect(b.height).toBeGreaterThan(PODIUM_ART_NUMERAL.height + 4);
+      expect(podiumBlockPath(b)).toMatch(/^M[\d. ]+V[\d. ]+A/);
+    }
+    // the star over the first, clear of its top
+    const ys = PODIUM_ART_STAR.match(/-?\d+(?:\.\d+)?/g)!.map(Number).filter((_, i) => i % 2 === 1);
+    expect(Math.max(...ys)).toBeLessThan(first!.y);
+  });
 });
 
 /**
@@ -1825,20 +1841,18 @@ describe('the lesson path’s world', () => {
     expect(() => pathMilestoneSvg({ won: true, part: 'face', size: 0 })).toThrow(RangeError);
   });
 
-  it('turns a finished topic into a round seal of deep red wax, a sun pressed in for each round, gold at three', () => {
+  it('turns a finished topic into a round seal of deep red wax, an apple pressed in for each round, gold at three', () => {
     const view = `0 0 ${PATH_STOP_ART.box} ${PATH_STOP_ART.box}`;
-    // the suns pressed in: the raised suns are the paths with a ray's two sides for each of many rays, each sun's round
-    // middle two arcs; the last of them is their face
-    const sunsIn = (svg: string): { suns: number; rays: number } => {
-      const d = [...svg.matchAll(/<path d="([^"]*)"/g)].map((m) => m[1]!).filter((p) => (p.match(/L/g) ?? []).length > 20).at(-1);
-      if (!d) return { suns: 0, rays: 0 };
-      const suns = (d.match(/A/g) ?? []).length / 2;
-      return { suns, rays: ((d.match(/M/g) ?? []).length - suns) / suns };
+    // the apples pressed in: each apple's stem is its one bend drawn as a quadratic, so the last path with any is their
+    // face, holding a stem for each apple
+    const applesIn = (svg: string): number => {
+      const d = [...svg.matchAll(/<path d="([^"]*)"/g)].map((m) => m[1]!).filter((p) => p.includes('Q')).at(-1);
+      return d ? (d.match(/Q/g) ?? []).length : 0;
     };
     for (const dark of [false, true]) {
       const scheme = dark ? 'dark' : 'light';
       for (const part of ['whole', 'pour', 'seal', 'blob', 'splash'] as const) {
-        for (const gold of [false, true]) for (const suns of [1, 2, 3]) sound(pathWaxSvg({ seed: 's:a', part, gold, suns, dark, idPrefix: 'w' }), view);
+        for (const gold of [false, true]) for (const apples of [1, 2, 3]) sound(pathWaxSvg({ seed: 's:a', part, gold, apples, dark, idPrefix: 'w' }), view);
       }
       sound(pathWaxSvg({ seed: 's:a', worn: true, dark }), view);
       // deep red on every chapter, and gold
@@ -1877,19 +1891,14 @@ describe('the lesson path’s world', () => {
         expect(out, seed).toBeLessThan(r * 1.08);
       }
     }
-    // pressed in it, a sun for each round: the pour alone has none, the pressed face alone and the whole seal those
-    for (const suns of [1, 2, 3]) {
-      expect(sunsIn(pathWaxSvg({ part: 'seal', suns })).suns).toBe(suns);
-      expect(sunsIn(pathWaxSvg({ suns })).suns).toBe(suns);
+    // pressed in it, an apple for each round: the pour alone has none, the pressed face alone and the whole seal those,
+    // at any size
+    for (const apples of [1, 2, 3]) {
+      expect(applesIn(pathWaxSvg({ part: 'seal', apples }))).toBe(apples);
+      expect(applesIn(pathWaxSvg({ apples }))).toBe(apples);
+      expect(applesIn(pathWaxSvg({ apples, size: 40 }))).toBe(apples);
     }
-    expect(sunsIn(pathWaxSvg({ part: 'pour' })).suns).toBe(0);
-    // the Kurdish sun's twenty-one rays where there is room for them; fewer, broader ones where small
-    expect(sunsIn(pathWaxSvg({ suns: 1 })).rays).toBe(SUN_RAYS);
-    expect(sunsIn(pathWaxSvg({ suns: 1, size: 224 })).rays).toBe(SUN_RAYS);
-    expect(sunsIn(pathWaxSvg({ suns: 3 })).rays).toBeLessThan(SUN_RAYS);
-    expect(sunsIn(pathWaxSvg({ suns: 3, size: 448 })).rays).toBe(SUN_RAYS);
-    expect(sunsIn(pathWaxSvg({ suns: 1, size: 40 })).rays).toBeLessThan(SUN_RAYS);
-    expect(sunRays(4)).toBeGreaterThanOrEqual(9);
+    expect(applesIn(pathWaxSvg({ part: 'pour' }))).toBe(0);
     // the stamp is the icon set's Stamp glyph, its block and pad as wide as the seal: the glyph's 256 square drawn so that
     // 24 to 232 of it fills the stamp's canvas
     expect(PATH_STAMP_TOOL.icon.size).toBeCloseTo((256 / 208) * PATH_STAMP_TOOL.w, 3);

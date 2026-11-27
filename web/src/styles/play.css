@@ -1154,7 +1154,16 @@
     display: none;
   }
 }
-/* the ticket: flat, in the sun's gold; the stub a stronger tint than the body, the edge drawn last over both */
+/*
+ * The ticket and the rankings' podium (games/PodiumArt.tsx) as slips cut from the page's ink, with their marks in the
+ * card's colour as if punched through: dark by day and light by night, as the main button is, the stub a step softer.
+ */
+.ink-art {
+  --art-body: var(--ink);
+  --art-stub: color-mix(in srgb, var(--ink) 78%, var(--surface-solid));
+  --art-marks: var(--surface-solid);
+  --art-line: color-mix(in srgb, var(--ink) 42%, var(--surface-solid));
+}
 .ticket-art {
   display: block;
   overflow: visible;
@@ -1163,26 +1172,38 @@
   scale: -1 1;
 }
 .ticket-art-body {
-  fill: color-mix(in srgb, var(--gold) 16%, var(--surface-solid));
+  fill: var(--art-body);
 }
 .ticket-art-stub {
-  fill: color-mix(in srgb, var(--gold) 66%, var(--surface-solid));
+  fill: var(--art-stub);
 }
 .ticket-art-perf {
   fill: none;
-  stroke: var(--gold);
+  stroke: var(--art-line);
   stroke-width: 1.5;
   stroke-dasharray: 2.4 2.6;
   stroke-linecap: round;
 }
 .ticket-art-tile {
-  fill: var(--gold);
+  fill: var(--art-marks);
 }
-.ticket-art-edge {
+.podium-art {
+  display: block;
+  overflow: visible;
+}
+.podium-art-block {
+  fill: var(--art-body);
+}
+.podium-art-place {
   fill: none;
-  stroke: var(--gold);
-  stroke-width: 2;
+  stroke: var(--art-marks);
+  stroke-width: 1.8;
+  stroke-linecap: round;
   stroke-linejoin: round;
+}
+/* the star over the first place is cut from the same ink */
+.podium-art-star {
+  fill: var(--art-body);
 }
 .code-sheet-head {
   display: grid;

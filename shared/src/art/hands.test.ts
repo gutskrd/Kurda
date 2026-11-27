@@ -113,16 +113,30 @@ function crosses(p1: Pt, p2: Pt, q1: Pt, q2: Pt): boolean {
   const [d1, d2, d3, d4] = [side(q1, q2, p1), side(q1, q2, p2), side(p1, p2, q1), side(p1, p2, q2)];
   return d1 * d2 < 0 && d3 * d4 < 0;
 }
-/** Whether a closed outline crosses itself. */
-function selfCrossing(pts: readonly Pt[]): [number, number] | null {
+/** Where a closed outline crosses itself, as the pairs of its sides that cross, each side by its first point. */
+function selfCrossings(pts: readonly Pt[]): [number, number][] {
   const m = pts.length;
+  const found: [number, number][] = [];
   for (let i = 0; i < m; i++) {
     for (let j = i + 2; j < m; j++) {
       if (i === 0 && j === m - 1) continue;
-      if (crosses(pts[i]!, pts[(i + 1) % m]!, pts[j]!, pts[(j + 1) % m]!)) return [i, j];
+      if (crosses(pts[i]!, pts[(i + 1) % m]!, pts[j]!, pts[(j + 1) % m]!)) found.push([i, j]);
     }
   }
-  return null;
+  return found;
+}
+/** Whether a closed outline crosses itself. */
+function selfCrossing(pts: readonly Pt[]): [number, number] | null {
+  return selfCrossings(pts)[0] ?? null;
+}
+/** Whether a point lies under the stamp at a moment of the turn, a hair inside its edge (its perspective left out). */
+function underStamp([x, y]: Pt, ms: number): boolean {
+  const s = handStampCardAt(ms);
+  const a = (s.lean * Math.PI) / 180;
+  const [dx, dy] = [x - s.cx, y - s.cy];
+  const [u, v] = [dx * Math.cos(a) + dy * Math.sin(a), -dx * Math.sin(a) + dy * Math.cos(a)];
+  const half = (HAND_STAMP_CARD.w / 2) * Math.abs(Math.cos((s.turn * Math.PI) / 180));
+  return Math.abs(u) < half - 1 && Math.abs(v) < HAND_STAMP_CARD.h / 2 - 1;
 }
 /** Whether a point lies inside a closed outline. */
 function inside([x, y]: Pt, pts: readonly Pt[]): boolean {
@@ -193,9 +207,27 @@ describe('the turn of the stamp in the hand', () => {
   it('never folds an outline over itself, at any moment of the turn', () => {
     for (const ms of MOMENTS) {
       const pts = handStampPointsAt(ms);
-      for (const name of ['back', 'thumb', 'palm', 'curled', 'slit', 'band', 'wedge', 'ring', 'nail', 'freeEdge']) {
+      for (const name of ['back', 'thumb', 'palm', 'curled', 'nail', 'freeEdge']) {
         const cross = selfCrossing(pts[name]!);
         expect(cross, `${name} at ${ms} ms crosses itself at ${String(cross)}`).toBeNull();
+      }
+    }
+  });
+
+  it('never folds the dark over itself where it shows: only where it is squeezed in under the thumb or the stamp', () => {
+    const area = (g: readonly Pt[]): number => Math.abs(g.reduce((s, [x, y], k) => s + x * g[(k + 1) % g.length]![1] - g[(k + 1) % g.length]![0] * y, 0)) / 2;
+    for (const ms of MOMENTS) {
+      const pts = handStampPointsAt(ms);
+      for (const name of ['dark-right', 'dark-tip', 'dark-left', 'dark-low']) {
+        const g = pts[name]!;
+        // (a dark flattened to a hair on its way in under the stamp's edge shows nothing, folded or not)
+        if (area(g) < 3) continue;
+        for (const [i] of selfCrossings(g)) {
+          const at: Pt = [(g[i]![0] + g[(i + 1) % g.length]![0]) / 2, (g[i]![1] + g[(i + 1) % g.length]![1]) / 2];
+          // the dark right of the thumb lies over the stamp, the rest under it
+          const hidden = inside(at, pts.thumb!) || at[1] > HAND_STAMP_VIEW.h || (name !== 'dark-right' && underStamp(at, ms));
+          expect(hidden, `${name} at ${ms} ms crosses itself at ${i}`).toBe(true);
+        }
       }
     }
   });
@@ -209,16 +241,26 @@ describe('the turn of the stamp in the hand', () => {
     expect(inside(between, pts.back!) || inside(between, pts.thumb!)).toBe(true);
   });
 
-  it('casts the thumb’s shadows from under the thumb, so they lie on the fingers beside it with no skin between', () => {
-    for (const ms of MOMENTS) {
+  it('slides the dark right of the thumb in under the thumb where the reference has none, so none of it shows', () => {
+    // the reference's frames 5 and 6 have no dark there: it has gone behind the thumb, and comes out from behind it again
+    for (const ms of [480, 560]) {
       const pts = handStampPointsAt(ms);
-      for (const name of ['slit', 'wedge']) {
-        // the shadow's near side, its first half, runs inside the thumb's outline wherever it is on the frame
-        const near = pts[name]!.slice(0, pts[name]!.length / 2).filter(([, y]) => y < HAND_STAMP_VIEW.h);
-        expect(near.length, `${name} at ${ms} ms`).toBeGreaterThan(0);
-        for (const p of near) expect(inside(p, pts.thumb!), `${name} at ${ms} ms`).toBe(true);
-      }
+      for (const p of pts['dark-right']!) expect(inside(p, pts.thumb!), `at ${ms} ms`).toBe(true);
     }
+  });
+
+  it('draws the dark where the reference has it: right of the thumb at rest, and through the turn below the stamp', () => {
+    // at rest the dark lies between the thumb and the index finger, low on the frame, and outside the thumb
+    const rest = handStampPointsAt(0);
+    const middle = (pts: readonly Pt[]): Pt => [pts.reduce((s, [x]) => s + x, 0) / pts.length, pts.reduce((s, [, y]) => s + y, 0) / pts.length];
+    const right = middle(rest['dark-right']!);
+    expect(inside(right, rest['dark-right']!)).toBe(true);
+    expect(inside(right, rest.thumb!)).toBe(false);
+    expect(right[0]).toBeGreaterThan(middle(rest.thumb!)[0]);
+    // and as the stamp passes edge-on it opens into a long band beside the thumb, longer than the thumb's nail is wide
+    const turn = handStampPointsAt(800)['dark-right']!;
+    const ys = turn.map(([, y]) => y);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(40);
   });
 
   it('keeps the palm beside the thumb as the hand opens, so the shadow there lies on skin', () => {
@@ -240,7 +282,7 @@ describe('the turn of the stamp in the hand', () => {
     const frames = Array.from({ length: 23 }, (_, k) => handStampPointsAt(k * 80));
     const widest = Object.fromEntries(Object.keys(frames[0]!).map((name) => [name, Math.max(...frames.flatMap((f) => f[name]!.map((_, k) => gap(f[name]!, k))))]));
     // the worst of each measure over every point at every moment, and where it is, checked once at the end
-    const worst = { step: { v: 0, at: '' }, change: { v: 0, at: '' }, spread: { v: 0, at: '' } };
+    const worst = { step: { v: 0, at: '' }, darkStep: { v: 0, at: '' }, change: { v: 0, at: '' }, spread: { v: 0, at: '' } };
     const note = (w: { v: number; at: string }, v: number, at: () => string): void => {
       if (v > w.v) [w.v, w.at] = [v, at()];
     };
@@ -251,8 +293,9 @@ describe('the turn of the stamp in the hand', () => {
         pts.forEach(([x, y], k) => {
           const [[px, py], [bx, by]] = [last[name]![k]!, before[name]![k]!];
           const where = (): string => `${name}[${k}] at ${ms} ms`;
-          note(worst.step, Math.hypot(x - px, y - py), where);
-          note(worst.change, Math.hypot(x - 2 * px + bx, y - 2 * py + by), where);
+          note(name.startsWith('dark-') ? worst.darkStep : worst.step, Math.hypot(x - px, y - py), where);
+          // (a change of speed is judged where it can be seen: on the frame or just below its foot, where nothing is drawn)
+          if (Math.max(y, py, by) < HAND_STAMP_VIEW.h + 8) note(worst.change, Math.hypot(x - 2 * px + bx, y - 2 * py + by), where);
           if (pts.length > 1) note(worst.spread, gap(pts, k) / (3 * widest[name]!), where);
         });
       }
@@ -260,6 +303,8 @@ describe('the turn of the stamp in the hand', () => {
     }
     // the fastest of the turn, the thumb swinging as the stamp passes edge-on, moves a point under five frame units in 5 ms
     expect(worst.step.v, worst.step.at).toBeLessThan(10);
+    // the dark beside the thumb is quicker still where the reference opens it along the thumb's whole length in one frame
+    expect(worst.darkStep.v, worst.darkStep.at).toBeLessThan(12);
     // and its speed only ever changes gently, so nothing snaps from one moment to the next
     expect(worst.change.v, worst.change.at).toBeLessThan(2.5);
     // nor does any point pull far from its neighbours between the reference's frames: under three times their widest

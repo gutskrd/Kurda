@@ -123,7 +123,20 @@ export {
   type GamePose,
 } from './games.js';
 export { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailArtOptions, type EmailPicture } from './email.js';
-export { TICKET_ART_BOX, TICKET_ART_OUTLINE, TICKET_ART_PERFORATION, TICKET_ART_STUB, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
+export {
+  PODIUM_ART_BLOCKS,
+  PODIUM_ART_NUMERAL,
+  PODIUM_ART_NUMERALS,
+  PODIUM_ART_RADIUS,
+  PODIUM_ART_STAR,
+  TICKET_ART_BOX,
+  TICKET_ART_OUTLINE,
+  TICKET_ART_PERFORATION,
+  TICKET_ART_STUB,
+  TICKET_ART_TEAR,
+  TICKET_ART_TILES,
+  podiumBlockPath,
+} from './ticket.js';
 export {
   STAMP_GLOW,
   STAMP_GLOW_REACH,
@@ -224,7 +237,6 @@ export {
   pathStopSvg,
   PATH_SEAL,
   PATH_WAX,
-  sunRays,
   PATH_STAMP_TOOL,
   type PathWaxOptions,
   type PathWaxColours,

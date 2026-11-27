@@ -22,6 +22,7 @@ import { Avatar } from '../profile/Avatar';
 import { acceptInvite, listInvites } from '../play/api';
 import { applyInviteEvent, liveInvites } from '../play/invites';
 import { joining } from '../play/joining';
+import { PodiumArt } from '../games/PodiumArt';
 import { JoinCodeCard } from '../play/JoinByCode';
 import { GAME_NAME_KEY } from '../play/labels';
 import { lobbyRoute } from '../play/routes';
@@ -180,23 +181,21 @@ export function GamesView({
       showsVerticalScrollIndicator={false}
       refreshControl={pull}
     >
-      {/* The rankings: small, at the top, for whoever looks for them. */}
+      {/* The rankings, at the top: the same card as "Join with a code" below, its podium in the ticket's place. */}
       <PressableScale
         onPress={() => navigation.navigate('Rankings')}
         accessibilityRole="button"
         accessibilityLabel={`${t('rankings.title')}, ${t('learn.rankingsSub')}`}
         style={[styles.entry, { backgroundColor: colors.surface, flexDirection: dir.row }]}
       >
-        <Icon name="trophy" size={20} color={colors.textPrimary} />
+        <PodiumArt size={60} />
         <View style={styles.entryText}>
-          <Text style={[styles.entryTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+          <Text style={[styles.entryTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
             {t('rankings.title')}
           </Text>
-          <Text style={[styles.entryDetail, dir.text, { color: colors.textSecondary }]} numberOfLines={2}>
-            {t('learn.rankingsSub')}
-          </Text>
+          <Text style={[styles.entryDetail, dir.text, { color: colors.textSecondary }]}>{t('learn.rankingsSub')}</Text>
         </View>
-        <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip} />
+        <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip} />
       </PressableScale>
 
       {shown.length > 0 ? (
@@ -382,18 +381,18 @@ const NARROWEST = 320;
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: layout.gutter, paddingTop: spacing.md, gap: spacing.lg },
+  // As the join card (play/JoinByCode.tsx), so the two read as a pair.
   entry: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    minHeight: MIN_TOUCH_TARGET + 8,
-    paddingHorizontal: spacing.md - 4,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.md,
+    gap: spacing.md - 4,
+    minHeight: MIN_TOUCH_TARGET + 28,
+    paddingHorizontal: layout.gutter,
+    paddingVertical: spacing.md - 4,
+    borderRadius: radii.lg,
   },
-  entryText: { flex: 1, gap: 1 },
+  entryText: { flex: 1, gap: 2 },
   entryTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
-  entryDetail: { fontSize: typography.sizes.text },
+  entryDetail: { fontSize: typography.sizes.text, lineHeight: 22 },
 
   section: { gap: spacing.sm },
   heading: { ...sectionLabel },

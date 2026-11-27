@@ -1510,40 +1510,50 @@
   justify-content: flex-start;
 }
 
-/* the Games half: Rankings, small and first */
+/* Rankings on the games page: the same card as "Join with a code" beside it, its podium in the ticket's place */
 .games-rankings {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
   margin-bottom: var(--space-6);
-  padding: 12px var(--space-4);
+  padding: var(--space-4) var(--space-5);
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-xl);
   background: var(--surface);
   color: var(--ink);
   text-decoration: none;
-  transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease,
+    transform var(--dur) var(--ease-spring);
 }
 .games-rankings:hover {
   border-color: var(--border-strong);
   background: var(--surface-2);
 }
-.games-rankings > svg:first-child {
+.games-rankings:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.games-rankings-art {
   flex: none;
-  color: var(--gold-ink);
 }
 .games-rankings-text {
   flex: 1;
   min-width: 0;
   display: grid;
+  gap: 2px;
 }
 .games-rankings-title {
-  font-weight: 700;
+  font-size: var(--text);
+  font-weight: 600;
+  line-height: 1.2;
 }
 /* a sentence, so it wraps: on one line it lost its end on a phone, and the longer Arabic and Soranî lost more */
 .games-rankings-sub {
   font-size: var(--text);
-  line-height: 1.35;
+  line-height: 1.4;
   color: var(--ink-3);
   text-wrap: pretty;
 }
@@ -1553,6 +1563,12 @@
 }
 [dir='rtl'] .games-rankings-go {
   transform: scaleX(-1);
+}
+@media (max-width: 560px) {
+  .games-rankings {
+    padding: var(--space-4);
+    gap: var(--space-3);
+  }
 }
 
 /* ---- Search ------------------------------------------------------------ */

@@ -28,7 +28,8 @@ import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { PressableScale } from '../theme/MotionParts';
 import { LIP, SHINE } from '../theme/Tile';
-import { lipOf, tileTone, type TileState } from '../theme/tileTones';
+import { inkArt } from '../theme/inkArt';
+import { tileTone, type TileState } from '../theme/tileTones';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { Sheet, useAnnouncer } from '../stories/ui';
@@ -330,7 +331,7 @@ function CodeBoxes({ code, phase, focused, flipped }: { code: string; phase: Pha
 }
 
 /**
- * The entry to the sheet from the Games hub and game setup: a card with two tickets (gold in front, green behind),
+ * The entry to the sheet from the Games hub and game setup: a card with two paper tickets, one tucked behind the other,
  * a line saying what it is for, and the sheet on a tap. A guest is offered an account first, as for every way into
  * a game with people. An invite link's `code` opens the sheet with it filled in; `onCodeShown` clears it.
  */
@@ -396,27 +397,29 @@ export function JoinCodeCard({
 
 /**
  * Two tickets, one tucked behind the other, in the outline the website draws too: a stub, a notched tear line and
- * three tiles, the front in gold and the back in green, as flat cut-outs. Mirrored for right-to-left readers.
+ * three tiles, cut from the games page's ink (theme/inkArt.ts) with the tiles in the card's colour, the one behind a
+ * step softer. Mirrored for right-to-left readers.
  */
 function TicketMotif({ size }: { size: number }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
+  const art = inkArt(colors);
   const height = size * 0.8;
-  const ticket = (fill: string, tiles: boolean): React.JSX.Element => (
+  const ticket = (fill: string, stub: string, tiles: boolean): React.JSX.Element => (
     <>
       <Path d={TICKET_ART_OUTLINE} fill={fill} />
-      <Path d={TICKET_ART_STUB} fill={lipOf(fill, colors)} />
-      <Path d={TICKET_ART_PERFORATION} stroke={colors.surface} strokeWidth={1.6} strokeDasharray="2.4 2.6" strokeLinecap="round" />
+      <Path d={TICKET_ART_STUB} fill={stub} />
+      <Path d={TICKET_ART_PERFORATION} stroke={art.line} strokeWidth={1.6} strokeDasharray="2.4 2.6" strokeLinecap="round" />
       {tiles
-        ? TICKET_ART_TILES.map((tile) => <Rect key={tile.x} x={tile.x} y={tile.y} width={tile.width} height={tile.height} rx={tile.r} fill={colors.surface} />)
+        ? TICKET_ART_TILES.map((tile) => <Rect key={tile.x} x={tile.x} y={tile.y} width={tile.width} height={tile.height} rx={tile.r} fill={art.marks} />)
         : null}
     </>
   );
   return (
     <View style={[{ width: size, height }, dir.flip]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Svg width={size} height={height} viewBox="-6 -13 72 57.6">
-        <G transform="translate(4 -3) rotate(9 29 16)">{ticket(colors.success, false)}</G>
-        <G transform="translate(-2 4) rotate(-7 29 16)">{ticket(colors.gold, true)}</G>
+        <G transform="translate(4 -3) rotate(9 29 16)">{ticket(art.stub, art.stub, false)}</G>
+        <G transform="translate(-2 4) rotate(-7 29 16)">{ticket(art.body, art.stub, true)}</G>
       </Svg>
     </View>
   );

@@ -695,8 +695,12 @@
 ::view-transition-new(places-bar) {
   animation: none;
 }
-/* Learn's chosen group: its ground slides from the group left to the one chosen while the page beneath cross-fades. */
-.is-changing-page .learn-head .switch-capsule {
+/*
+ * Learn's chosen group: its ground slides from the group left to the one chosen while the page beneath cross-fades.
+ * It is named only for a change between two of Learn's groups (lib/viewTransition.tsx `glidesBetween`), so leaving
+ * Learn it fades with its page instead of hanging over the next one.
+ */
+:root[data-glide='learn-switch'] .learn-head .switch-capsule {
   view-transition-name: learn-switch;
 }
 /*
@@ -1338,9 +1342,17 @@
 .join-code-card:hover .join-code-card-art {
   transform: rotate(0deg) scale(1.06);
 }
-.join-code-card:active {
+.join-code-card:active,
+.games-rankings:active {
   transform: scale(var(--press-scale));
   transition-duration: 80ms;
+}
+/* the podium beside it rises a little under the pointer, as the ticket straightens */
+.games-rankings-art {
+  transition: transform var(--dur-slow) var(--ease-spring);
+}
+.games-rankings:hover .games-rankings-art {
+  transform: translateY(-2px) scale(1.04);
 }
 
 /* ---- Peyvok --------------------------------------------------------------------- */
@@ -1452,7 +1464,9 @@
   .code-entry-burst {
     display: none;
   }
-  .join-code-card:active {
+  .join-code-card:active,
+  .games-rankings:active,
+  .games-rankings:hover .games-rankings-art {
     transform: none;
   }
 }

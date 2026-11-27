@@ -109,7 +109,7 @@
   --lp-rest-lip: #222d33;
   --lp-rest-ink: #8a9ba3;
   --lp-line: rgba(238, 243, 245, 0.16);
-  /* The gold rim and trophy: the sun, as everywhere it marks something earned. */
+  /* The gold rim and trophy: gold, as everywhere it marks something earned. */
   --lp-gold-lip: #b88d1f;
   --lp-gold-ink: #3a2a00;
   /* The bar's unfilled track over the stop to do now, and the round still to play in a card (as the phone's coursemap/path.ts). */
@@ -1078,15 +1078,15 @@ button.lp-scard:focus-visible {
   z-index: 6;
 }
 
-/* A topic card's three suns: gold for each round played, the bar's quiet track for the rest. */
-.lp-sun-row {
+/* A topic card's three apples: gold for each round played, the bar's quiet track for the rest. */
+.lp-apple-row {
   display: inline-flex;
   gap: 4px;
 }
-.lp-sun-row path {
+.lp-apple-row path {
   fill: var(--lp-track);
 }
-.lp-sun-row path.is-won {
+.lp-apple-row path.is-won {
   fill: var(--gold);
 }
 
@@ -1971,7 +1971,7 @@ button.lp-scard:focus-visible {
   font-size: var(--text);
   color: var(--ink-3);
 }
-/* A finished topic's card: its seal with one, two and three suns pressed in, the last gold. */
+/* A finished topic's card: its seal with one, two and three apples pressed in, the last gold. */
 .lp-wax-legend {
   display: flex;
   gap: var(--space-2);

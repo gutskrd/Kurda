@@ -66,17 +66,20 @@ const REST = handStampShapesAt(0);
 
 /**
  * The light on each face through a turn, from the stamp's angle at each of its steps: a face darkens as it turns
- * edge-on and a gleam crosses it, left to right over both faces, so it reads as card turning in the light. `face` 0 is
- * the front, turned `turn` degrees from us; the back faces us at 180.
+ * edge-on and a gleam crosses it, left to right over both faces, so it reads as card turning in the light. Within `LIT`
+ * degrees of facing us a face is in full light, so the stamp coming round is bright as it settles and nothing passes
+ * over it once it is up. `face` 0 is the front, turned `turn` degrees from us; the back faces us at 180.
  */
+const LIT = 30;
 function lightOf(face: 0 | 1): { shade: Keyframe[]; gleam: Keyframe[] } {
   const turns = FLIP.map((_, k) => handStampCardAt((k * HAND_STAMP_FLIP.ms) / (FLIP.length - 1)).turn);
-  const away = turns.map((turn) => Math.max(0, Math.min(90, face === 0 ? turn : 180 - turn)));
+  // how far each step has a face from full light toward edge-on, from 0 to 1
+  const off = turns.map((turn) => Math.max(0, Math.min(1, ((face === 0 ? turn : 180 - turn) - LIT) / (90 - LIT))));
   return {
-    shade: away.map((a) => ({ opacity: 1 - Math.cos((a * Math.PI) / 180) })),
-    gleam: away.map((a) => {
-      const across = face === 0 ? a / 90 : 1 - a / 90;
-      return { transform: `translateX(${Math.round(-130 + across * 260)}%) skewX(-16deg)`, opacity: Math.sin((a * Math.PI) / 90) };
+    shade: off.map((o) => ({ opacity: o * o * (3 - 2 * o) })),
+    gleam: off.map((o) => {
+      const across = face === 0 ? o : 1 - o;
+      return { transform: `translateX(${Math.round(-130 + across * 260)}%) skewX(-16deg)`, opacity: Math.sin(Math.PI * o) };
     }),
   };
 }
