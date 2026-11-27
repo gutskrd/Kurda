@@ -693,6 +693,7 @@
 }
 .fp-flip-paper {
   position: absolute;
+  inset: 0;
   display: block;
   line-height: 0;
 }
