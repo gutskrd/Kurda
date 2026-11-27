@@ -7,12 +7,14 @@ import {
   PATH_MOTION,
   PATH_RETURN,
   PATH_START_WORDS,
+  hevaloEats,
   isSoraniDialect,
   lessonPath,
   mascotSpot,
   openingStops,
   pathChanges,
   pathLand,
+  pathScene,
   pathSnapshot,
   type LessonPath as Path,
   type PathChanges,
@@ -659,8 +661,9 @@ export const LessonPath = memo(function LessonPath({
                               />
                             );
                           })}
+                          {/* In his apple's unit he eats it there instead (UnitScenery). */}
                           {unit.stops
-                            .filter((placed) => placed.stop.key === mascotAt)
+                            .filter((placed) => placed.stop.key === mascotAt && !hevaloEats(pathScene(unit.number - 1), placed))
                             .map((placed) => {
                               const spot = mascotSpot(placed);
                               const x = cx(spot.x);

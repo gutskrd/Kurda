@@ -28,6 +28,7 @@ import {
   sceneBeat,
   sceneBeatMs,
   unitScenery,
+  hevaloEats,
   type PathBox,
 } from './path-world.js';
 
@@ -130,17 +131,55 @@ describe('the road’s playful touches', () => {
     }
   });
 
-  it('leaves out whatever would stand on Hevalo beside the stop to do now, and his apple where he is already', () => {
+  it('leaves out whatever would stand on Hevalo beside the stop to do now', () => {
     expect(unitScenery(stops, stops[1]!).chest).toBeNull();
     expect(unitScenery(stops, stops[3]!).scene).toBeNull();
     expect(unitScenery(stops, stops[3]!).chest).not.toBeNull();
-    expect(unitScenery(stops, stops[1]!, 'apple').scene).toBeNull();
     expect(unitScenery(stops, stops[1]!, 'tea').scene).not.toBeNull();
-    expect(unitScenery(stops, null, 'apple').scene).not.toBeNull();
+    expect(unitScenery(stops, stops[1]!, 'tea').eats).toBe(false);
     // a short unit has room for its scene but not a chest; a unit of three keeps them on opposite sides
-    expect(unitScenery(stops.slice(0, 2))).toEqual({ scene: { side: 1, y: stops[1]!.y }, chest: null });
+    expect(unitScenery(stops.slice(0, 2))).toEqual({ scene: { side: 1, y: stops[1]!.y }, chest: null, eats: false });
     const three = unitScenery(stops.slice(0, 3));
     expect(three.scene!.side).toBe(-Math.sign(three.chest!.x));
+  });
+
+  it('has Hevalo eat his apple beside the stop to do now in his apple’s unit, instead of standing there', () => {
+    expect(hevaloEats('apple', stops[1]!)).toBe(true);
+    expect(hevaloEats('apple', null)).toBe(false);
+    expect(hevaloEats('tea', stops[1]!)).toBe(false);
+    // where he is not, his apple stays where the unit's scene stands
+    expect(unitScenery(stops, null, 'apple')).toMatchObject({ scene: { side: -1, y: stops[3]!.y }, eats: false });
+    // across from a leaning stop, where he would stand, and level with it
+    for (const at of [1, 3]) {
+      const { scene, eats } = unitScenery(stops, stops[at]!, 'apple', 390);
+      expect(eats).toBe(true);
+      expect(scene).toEqual({ side: -Math.sign(stops[at]!.x), y: stops[at]!.y });
+      expect(Math.sign(mascotSpot(stops[at]!).x)).toBe(scene!.side);
+    }
+    // beside one in the middle, on the side the next stop leans away from, a little lower to clear the bubble
+    const middle = unitScenery(stops, stops[2]!, 'apple', 390);
+    expect(middle.scene!.side).toBe(-Math.sign(stops[3]!.x));
+    expect(middle.scene!.y).toBeGreaterThan(stops[2]!.y);
+    expect(middle.scene!.y - stops[2]!.y).toBeLessThan(PATH_GEOMETRY.node / 2);
+    // on a wide page the bubble never reaches it, so it stays level
+    expect(unitScenery(stops, stops[2]!, 'apple', 900).scene!.y).toBe(stops[2]!.y);
+  });
+
+  it('keeps Hevalo’s apple off every stop and the chest off his apple, moving the chest a stop down when it must', () => {
+    for (const width of [360, 390, 430, 720]) {
+      for (const at of [0, 1, 2, 3, 4]) {
+        const { scene, chest } = unitScenery(stops, stops[at]!, 'apple', width);
+        // his drawing starts at the bough, a little below the top of its box
+        const { across, up, down } = PATH_SCENE_REACH;
+        const top = PATH_SCENES.apple.back.bough!.y;
+        const box: PathBox = { x: scene!.side * (width / 2 - across / 2), y: scene!.y - up + top, w: across, h: up + down - top };
+        for (const stop of stops) expect(overlap(box, stopBox(stop)), `${width} ${at}`).toBe(false);
+        if (chest) expect(Math.sign(chest.x) !== scene!.side || Math.abs(chest.y - scene!.y) >= PATH_SCENERY_SPOT.sceneClear, `${width} ${at}`).toBe(true);
+      }
+    }
+    // beside the first stop, where the chest would stand by his head, it stands by the third stop instead
+    const first = unitScenery(stops, stops[0]!, 'apple', 390);
+    expect(first.chest).toEqual({ x: PATH_SCENERY_SPOT.chestAcross, y: stops[2]!.y });
   });
 
   it('leaves the scene out where the bubble over the stop to do now would reach it on a narrow screen, and keeps it on a wide one', () => {

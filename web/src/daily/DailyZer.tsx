@@ -13,6 +13,7 @@ import type { ClaimResult, DailyRewardStatus } from '../lib/types';
 import { dailyAction } from './today';
 import { giftMeaning } from '@kurda/shared';
 import { plusPitchAllowed } from '../gifts/nudges';
+import type { LearnState } from '../learn/CoursePath';
 
 /**
  * Today's Zêr inside the daily view: the day's reward with a claim button (POST /rewards/daily/claim, the server sets
@@ -21,12 +22,24 @@ import { plusPitchAllowed } from '../gifts/nudges';
  * gets the Zêr (`hasDailyZer`); everyone gets a small gift for the gift bag with the claim, said with it, and a free
  * account the server knows is an adult hears with its claim that members also earn Zêr here, while Hevalo+ is on sale.
  */
+/** Asks the road to bring the lesson to do now into view (learn/CoursePath.tsx). */
+const TO_LESSON: LearnState = { toLesson: true };
+
 /** Whether this learner has the daily Zêr at all: a Hevalo+ member's, read from an older server as before. */
 export function hasDailyZer(daily: Pick<DailyRewardStatus, 'member'>): boolean {
   return daily.member !== false;
 }
 
-export function DailyZer({ daily, onClaimed }: { daily: DailyRewardStatus; onClaimed: (daily: DailyRewardStatus) => void }): React.JSX.Element {
+export function DailyZer({
+  daily,
+  onClaimed,
+  onLearn,
+}: {
+  daily: DailyRewardStatus;
+  onClaimed: (daily: DailyRewardStatus) => void;
+  /** Closes what holds this view as "Go to Learn" is pressed, since on Learn itself the page does not change. */
+  onLearn?: () => void;
+}): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const { client } = useAuth();
@@ -103,7 +116,7 @@ export function DailyZer({ daily, onClaimed }: { daily: DailyRewardStatus; onCla
             {busy ? t('daily.claiming') : t('daily.claimNow')}
           </Button>
         ) : action === 'learnFirst' ? (
-          <Link to="/app/learn" className="btn btn-secondary btn-sm">
+          <Link to="/app/learn" state={TO_LESSON} className="btn btn-secondary btn-sm" onClick={onLearn}>
             {t('daily.goLearn')}
           </Link>
         ) : (

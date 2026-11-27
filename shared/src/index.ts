@@ -278,6 +278,7 @@ export {
   PATH_SCENERY_SPOT,
   PATH_START_WORDS,
   landmarkBox,
+  hevaloEats,
   pathLand,
   pathScene,
   sceneBeat,

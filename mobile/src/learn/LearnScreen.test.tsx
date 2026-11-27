@@ -232,6 +232,16 @@ describe('Learn', () => {
     expect(screen.queryByTestId('game-stories')).toBeNull();
   });
 
+  it('goes back to the lessons from the daily view’s Go to Learn, closing it', async () => {
+    client(STREAK, undefined, { [TODAY_PATH]: ok(todayView({ streak: STREAK, daily: { canClaim: false, learnedToday: false, claimableDay: 3, reward: 20, cycleDay: 2 } })) });
+    renderWithProviders(<LearnScreen />);
+    fireEvent.click(gamesTab());
+    fireEvent.click(await screen.findByRole('button', { name: 'Streak: 6 days' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Go to Learn' }));
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Go to Learn' })).toBeNull());
+    expect(lessonsTab().getAttribute('aria-selected')).toBe('true');
+  });
+
   it('switches to the games, and remembers the choice on this device', async () => {
     client();
     renderWithProviders(<LearnScreen />);

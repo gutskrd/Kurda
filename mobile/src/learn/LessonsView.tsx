@@ -51,10 +51,13 @@ export function LessonsView({
   scrollRef,
   streak = null,
   onRefresh,
+  toLesson = 0,
 }: {
   scrollRef?: Ref<ScrollView>;
   streak?: Streak | null;
   onRefresh?: () => void;
+  /** Counts asks to bring the lesson to do now back into view, wherever the page was scrolled. */
+  toLesson?: number;
 }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { client } = useAuth();
@@ -198,6 +201,15 @@ export function LessonsView({
     touched.current = false;
     scroller.current?.scrollTo({ y: target, animated: !reduceMotion });
   }, [focusY, focus, viewport, courseId, settle, reduceMotion]);
+
+  const answered = useRef(toLesson);
+  useEffect(() => {
+    if (toLesson === answered.current || focusY === null || viewport === 0) return;
+    answered.current = toLesson;
+    const target = settle(focusY);
+    centredAt.current = { target, since: Date.now() };
+    scroller.current?.scrollTo({ y: target, animated: !reduceMotion });
+  }, [toLesson, focusY, viewport, settle, reduceMotion]);
 
   // Only once the path is on the screen.
   const onPath = courseTop !== null && scrollY + viewport - tabBarInset > courseTop;

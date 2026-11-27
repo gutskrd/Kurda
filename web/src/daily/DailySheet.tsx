@@ -53,13 +53,13 @@ export function DailySheet({
   const t = useT();
   return (
     <Sheet open={open} onClose={onClose} label={t('profile.stat.streak')} className="daily-sheet">
-      {open ? <DailyBody today={today} onStreak={onStreak} /> : null}
+      {open ? <DailyBody today={today} onStreak={onStreak} onLearn={onClose} /> : null}
     </Sheet>
   );
 }
 
 /** The open sheet's contents, mounted only while open so a just-restored state and the step are forgotten on close. */
-function DailyBody({ today, onStreak }: { today: Today; onStreak?: (streak: StreakSummary) => void }): React.JSX.Element {
+function DailyBody({ today, onStreak, onLearn }: { today: Today; onStreak?: (streak: StreakSummary) => void; onLearn: () => void }): React.JSX.Element {
   const t = useT();
   const [step, setStep] = useState<'view' | 'insights'>('view');
   const [restored, setRestored] = useState<StreakSummary | null>(null);
@@ -104,7 +104,7 @@ function DailyBody({ today, onStreak }: { today: Today; onStreak?: (streak: Stre
         />
       )}
       {/* everyone claims the day: a member for Zêr and a gift for the bag, anyone else for the gift */}
-      <DailyZer daily={view.daily} onClaimed={(daily) => today.change({ daily })} />
+      <DailyZer daily={view.daily} onClaimed={(daily) => today.change({ daily })} onLearn={onLearn} />
       <WeekStatsCard view={view} />
       {insights.length > 0 && (
         <button type="button" className="daily-row" onClick={() => setStep('insights')}>

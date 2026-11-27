@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 // The fire as its props: how big it burns and whether it stands still.
 vi.mock('../components/Fire', () => import('../test/fireProbe'));
+import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { addDays, fireLevel } from '@kurda/shared';
@@ -149,6 +151,26 @@ describe('the daily view', () => {
     const sheet = await open();
     expect(within(sheet).getByText('Finish a lesson or a practice session to claim today’s +20 Zêr.')).toBeInTheDocument();
     expect(within(sheet).getByRole('link', { name: 'Go to Learn' })).toHaveAttribute('href', '/app/learn');
+  });
+
+  it('closes on Go to Learn and asks Learn for the lesson to do now, even when Learn is already open', async () => {
+    api(() => fourDayView({ daily: { canClaim: false, learnedToday: false, claimableDay: 3, reward: 20, cycleDay: 2 } }));
+    function OnLearn(): React.JSX.Element {
+      const today = useToday();
+      const [shown, setShown] = useState(true);
+      const location = useLocation();
+      return (
+        <>
+          <p data-testid="at">{`${location.pathname} ${JSON.stringify(location.state)}`}</p>
+          <DailySheet open={shown} today={today} onClose={() => setShown(false)} />
+        </>
+      );
+    }
+    renderApp(<OnLearn />, ['/app/learn']);
+    const sheet = await screen.findByRole('dialog', { name: 'Streak' });
+    await userEvent.click(await within(sheet).findByRole('link', { name: 'Go to Learn' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Streak' })).not.toBeInTheDocument());
+    expect(screen.getByTestId('at')).toHaveTextContent('/app/learn {"toLesson":true}');
   });
 
   it('says tomorrow once today’s Zêr is taken', async () => {

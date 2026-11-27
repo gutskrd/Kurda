@@ -535,7 +535,13 @@ function AccountProfile() {
           <ActivityGrid activity={activity} width={windowWidth} />
         </View>
       </ScrollView>
-      <DailySheet visible={streakOpen} onClose={() => setStreakOpen(false)} today={today} onStreak={setStreak} />
+      <DailySheet
+        visible={streakOpen}
+        onClose={() => setStreakOpen(false)}
+        today={today}
+        onStreak={setStreak}
+        onLearn={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+      />
       {progress && seed ? (
         <CollectionSheet
           visible={collecting}

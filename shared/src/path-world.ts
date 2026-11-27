@@ -10,7 +10,7 @@
  */
 import { FIRE_LOOP_STOPS, FIRE_SMALL, FIRE_SMALL_CALM, calmMotion, fireDrawing, type FireMotion } from './art/fire.js';
 import { PATH_SEAL } from './art/path-land.js';
-import { PATH_SCENE_IDS, type PathSceneId } from './art/path-scenes.js';
+import { PATH_SCENES, PATH_SCENE_IDS, type PathSceneId } from './art/path-scenes.js';
 import { seeded } from './art/svg.js';
 import { sampleKeys } from './characters/life.js';
 import { PATH_GEOMETRY, PATH_MASCOT, PATH_RETURN, mascotSpot } from './lesson-path.js';
@@ -144,15 +144,21 @@ export function pathScene(index: number): PathSceneId {
  * side. `chest`: the unit's painted sandûq on the open side of its second stop, `x` and `y` its middle.
  *
  * Both keep clear of the stop to do now (`here`): of Hevalo beside it (`mascotSpot`), and of the bubble and bar over it.
- * Since Hevalo is there himself, the scene of him eating his apple is left out of his unit.
+ * In a unit whose scene is his apple, Hevalo eats it there instead of standing (`eats`): the scene leans in on his side,
+ * level with the stop, or a little lower where the bubble would reach its bough.
  */
 export const PATH_SCENERY_SPOT = { chestAcross: 112, sceneClear: 150, chestClear: 96 } as const;
+
+/** Whether Hevalo eats his apple beside the stop to do now (`here`) rather than standing there: in a unit whose scene is his apple. */
+export function hevaloEats(scene: PathSceneId | null, here: { x: number; y: number } | null): boolean {
+  return scene === 'apple' && here !== null;
+}
 
 /** How far in from the screen's edge a scene's drawing reaches, and how far above and below its middle. */
 export const PATH_SCENE_REACH = { across: 128, up: 82, down: 82 } as const;
 
-/** The bubble and bar over the stop to do now, from the stop's middle: across each way, and how far up. */
-const BUBBLE = { across: 104, up: 128 } as const;
+/** The bubble and bar over the stop to do now, from the stop's middle: across each way, how far up, and where its foot is. */
+const BUBBLE = { across: 104, up: 128, foot: 64 } as const;
 
 export function unitScenery(
   stops: readonly { x: number; y: number }[],
@@ -160,32 +166,57 @@ export function unitScenery(
   scene: PathSceneId | null = null,
   /** The page's width, where the scene's reach from the edge is known; without it, only Hevalo is kept clear of. */
   width: number | null = null,
-): { scene: { side: -1 | 1; y: number } | null; chest: { x: number; y: number } | null } {
+): { scene: { side: -1 | 1; y: number } | null; chest: { x: number; y: number } | null; eats: boolean } {
   const { chestAcross, sceneClear, chestClear } = PATH_SCENERY_SPOT;
   const sideOf = (stop: { x: number }, otherwise: -1 | 1): -1 | 1 => (Math.sign(stop.x) === 0 ? otherwise : (-Math.sign(stop.x) as -1 | 1));
   // Hevalo's middle, level with the stop he stands by.
   const spot = here ? mascotSpot(here) : null;
   const him = spot ? { x: spot.x, y: spot.y + PATH_MASCOT.size / 2 } : null;
-  const nearHim = (x: number, y: number, clear: number): boolean => !!him && Math.sign(x) === Math.sign(him.x) && Math.abs(y - him.y) < clear;
+  // Whether the bubble over the stop to do now reaches in as far as a scene on `side`, where the page's width says.
+  const bubbleReaches = (side: -1 | 1): boolean => !!here && width !== null && side * here.x + BUBBLE.across > width / 2 - PATH_SCENE_REACH.across;
 
   let place: { side: -1 | 1; y: number } | null = null;
+  const eats = hevaloEats(scene, here);
+  if (eats && here) {
+    // Across from a leaning stop, as he stands; beside one in the middle, on the side the next stop leans away from, so
+    // his head keeps clear of it.
+    const next = stops.find((s) => s.y > here.y);
+    const side = here.x !== 0 ? sideOf(here, 1) : next ? sideOf(next, 1) : 1;
+    // Lowered where the bubble reaches in, until the bough at the top of the drawing clears the bubble's foot.
+    const top = PATH_SCENES.apple.back.bough!.y;
+    const drop = bubbleReaches(side) ? Math.max(0, PATH_SCENE_REACH.up - top - BUBBLE.foot + 8) : 0;
+    place = { side, y: here.y + drop };
+  }
+  // What stands beside the road keeps clear of Hevalo, and where he eats, of all of his scene.
+  const nearHim = (x: number, y: number, clear: number): boolean =>
+    eats ? Math.sign(x) === place!.side && Math.abs(y - place!.y) < sceneClear : !!him && Math.sign(x) === Math.sign(him.x) && Math.abs(y - him.y) < clear;
+
   const anchor = stops[3] ?? stops[2] ?? stops[1];
-  if (anchor && !(scene === 'apple' && him)) {
+  if (anchor && !eats) {
     const side = sideOf(anchor, -1);
     place = { side, y: anchor.y };
     if (nearHim(side, anchor.y, sceneClear)) place = null;
-    // Clear of the bubble over the stop to do now, where the page's width says how far in the scene reaches.
-    if (place && here && width !== null) {
-      const inner = width / 2 - PATH_SCENE_REACH.across;
-      const reaches = side * here.x + BUBBLE.across > inner;
+    // Clear of the bubble over the stop to do now.
+    if (place && here && bubbleReaches(side)) {
       const level = here.y - BUBBLE.up < anchor.y + PATH_SCENE_REACH.down && here.y > anchor.y - PATH_SCENE_REACH.up;
-      if (reaches && level) place = null;
+      if (level) place = null;
     }
   }
+  // The sandûq on the open side of the second stop; where Hevalo eats there, a stop further down on the same side.
   const second = stops[1];
   const chestSide = second ? sideOf(second, 1) : 1;
-  const chest = stops.length > 2 && second && !nearHim(chestSide, second.y, chestClear) ? { x: chestSide * chestAcross, y: second.y } : null;
-  return { scene: place, chest };
+  const onStop = (x: number, y: number): boolean => stops.some((s) => Math.abs(s.x - x) < PATH_GEOMETRY.node && Math.abs(s.y - y) < PATH_GEOMETRY.node);
+  let chest: { x: number; y: number } | null = null;
+  if (stops.length > 2 && second) {
+    for (const by of eats ? [second, stops[2]!] : [second]) {
+      const x = chestSide * chestAcross;
+      if (!nearHim(x, by.y, chestClear) && !onStop(x, by.y)) {
+        chest = { x, y: by.y };
+        break;
+      }
+    }
+  }
+  return { scene: place, chest, eats };
 }
 
 /**
