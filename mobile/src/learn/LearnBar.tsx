@@ -34,9 +34,17 @@ const RING = 24;
  * of loss, and a zero streak shows a cold fire saying a lesson today starts one. Some readers are children.
  *
  * The streak it reads is passed on (`onStreak`) for Learn's own moments; a new `reloadKey` reloads all three
- * (pull to refresh).
+ * (pull to refresh). `onLearn` brings the lesson to do now into view when the daily view's "Go to Learn" is pressed.
  */
-export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onStreak?: (streak: Streak) => void }): React.JSX.Element {
+export function LearnBar({
+  reloadKey = 0,
+  onStreak,
+  onLearn,
+}: {
+  reloadKey?: number;
+  onStreak?: (streak: Streak) => void;
+  onLearn?: () => void;
+}): React.JSX.Element {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
@@ -161,6 +169,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
         visible={open === 'streak'}
         onClose={() => setOpen(null)}
         today={today}
+        onLearn={onLearn}
         // A streak restored in the daily view is the streak everywhere: the bar's fire and Learn's own moments.
         onStreak={(next) => {
           setStreak(next);

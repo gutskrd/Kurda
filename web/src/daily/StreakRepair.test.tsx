@@ -4,7 +4,7 @@ vi.mock('../components/Fire', () => import('../test/fireProbe'));
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { preloadCatalogue } from '../i18n/catalogues';
-import { onLessonSound } from '../lib/sounds';
+import { onLessonSound, resetLessonSounds } from '../lib/sounds';
 import type { StreakSummary } from '../lib/types';
 import { todayView } from '../test/today';
 import { jsonResponse, renderApp } from '../test/utils';
@@ -83,6 +83,8 @@ afterEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
   sessionStorage.clear();
+  // a chime within moments of another is skipped, so one test's chime never swallows the next test's
+  resetLessonSounds();
 });
 
 describe('a streak that can be won back', () => {

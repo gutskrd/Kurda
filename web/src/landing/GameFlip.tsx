@@ -8,7 +8,6 @@ import {
   handStampFlip,
   handStampShapesAt,
   handStampSvg,
-  stampBox,
   stampLook,
   stampShapeFor,
   stampSvg,
@@ -51,6 +50,8 @@ const ANIMATES = typeof document !== 'undefined' && typeof document.documentElem
 const BACK = { __html: handStampSvg({ part: 'back', idPrefix: 'fpFlipBack' }) };
 const FRONT = { __html: handStampSvg({ part: 'front', idPrefix: 'fpFlipFront' }) };
 const C = HAND_STAMP_CARD;
+/** The paper of a stamp in the hand by day. */
+const STAMP_DAY_PAPER = '#ffffff';
 /** The cover on the stamp, inset from the perforations as on the games page's stamps, and clear of the thumb. */
 const COVER = { pad: 14, size: Math.min(C.w - 28, C.clear - 16) } as const;
 
@@ -67,20 +68,23 @@ function drawHand(shapes: readonly SVGPathElement[], ms: number | null): void {
   }
 }
 
-/** A game's stamp without its words: the paper in the game's hue, a paper for each scheme, and its still cover. */
+/**
+ * A game's stamp without its words: a paper for each scheme and its still cover. A stamp in the hand is flat card, as in
+ * the reference: no glow, so nothing darkens the fingers or spills past them. By day the paper is white, since the
+ * pale tint the shelf uses would vanish into the pale panel without its glow.
+ */
 function StampFace({ game }: { game: GameEmblem }): React.JSX.Element {
   const art = useMemo(() => {
-    const paper = (scheme: 'light' | 'dark'): { inset: number; html: { __html: string } } => {
-      const look = stampLook(scheme, gameEmblemHue(game));
-      const { inset } = stampBox(C.w, C.h, look.strength, look.reach);
-      return { inset, html: { __html: stampSvg({ width: C.w, height: C.h, paper: look.paper, glow: look.glow, strength: look.strength, reach: look.reach, ...stampShapeFor(C.w) }) } };
-    };
-    return { day: paper('light'), night: paper('dark'), cover: { __html: gameEmblemSvg({ game, size: COVER.size, idPrefix: `fpFlip${game.replace(/-/g, '')}` }) } };
+    const night = stampLook('dark', gameEmblemHue(game));
+    const paper = (fill: string): { __html: string } => ({
+      __html: stampSvg({ width: C.w, height: C.h, paper: fill, glow: night.glow, strength: 0, ...stampShapeFor(C.w) }),
+    });
+    return { day: paper(STAMP_DAY_PAPER), night: paper(night.paper), cover: { __html: gameEmblemSvg({ game, size: COVER.size, idPrefix: `fpFlip${game.replace(/-/g, '')}` }) } };
   }, [game]);
   return (
     <>
-      <span className="fp-flip-paper fp-flip-paper--day" style={{ inset: -art.day.inset }} dangerouslySetInnerHTML={art.day.html} />
-      <span className="fp-flip-paper fp-flip-paper--night" style={{ inset: -art.night.inset }} dangerouslySetInnerHTML={art.night.html} />
+      <span className="fp-flip-paper fp-flip-paper--day" dangerouslySetInnerHTML={art.day} />
+      <span className="fp-flip-paper fp-flip-paper--night" dangerouslySetInnerHTML={art.night} />
       <span className="fp-flip-cover" style={{ top: COVER.pad, left: COVER.pad, width: COVER.size, height: COVER.size }} dangerouslySetInnerHTML={art.cover} />
     </>
   );

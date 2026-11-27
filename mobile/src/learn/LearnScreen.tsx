@@ -72,11 +72,17 @@ export function LearnScreen({
   const reloadBar = useCallback(() => setBarKey((k) => k + 1), []);
   // Today's Zêr is claimed on Home; the purse here shows it when Learn is next in view.
   useEffect(() => onDailyClaimed(reloadBar), [reloadBar]);
+  // The daily view's "Go to Learn", pressed here: back to the lessons and to the lesson to do now (counted, so each press asks again).
+  const [toLesson, setToLesson] = useState(0);
+  const goLearn = useCallback(() => {
+    setView('lessons');
+    setToLesson((n) => n + 1);
+  }, [setView]);
 
   return (
     <GradientBackground>
       {/* Today's status at the reading edge, where other tabs show their name: the tab bar's book already marks Learn. */}
-      <TabHeader lead={<LearnBar reloadKey={barKey} onStreak={setStreak} />} />
+      <TabHeader lead={<LearnBar reloadKey={barKey} onStreak={setStreak} onLearn={goLearn} />} />
       <View style={styles.head}>
         <Segmented options={VIEWS} value={view} onChange={setView} labelOf={(v) => t(VIEW_LABEL[v])} size="large" />
       </View>
@@ -91,7 +97,7 @@ export function LearnScreen({
           ) : page === 'stories' ? (
             <StoriesView scrollRef={storiesRef} inTab />
           ) : (
-            <LessonsView scrollRef={lessonsRef} streak={streak} onRefresh={reloadBar} />
+            <LessonsView scrollRef={lessonsRef} streak={streak} onRefresh={reloadBar} toLesson={toLesson} />
           )
         }
       />

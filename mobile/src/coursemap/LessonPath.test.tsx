@@ -145,6 +145,23 @@ describe('the lesson path', () => {
     expect(screen.queryByTestId('lp-card-go')).toBeNull();
   });
 
+  it('has Hevalo eat his apple beside the stop to do now in its chapter, rather than stand there', () => {
+    client();
+    const first: CourseMap = {
+      ...MAP,
+      units: [
+        {
+          ...MAP.units[0]!,
+          skills: MAP.units[0]!.skills.map((sk, k) => (k === 1 ? { ...sk, state: 'unlocked' as const, strength: 0, lessons: [lesson('n1', 'Yek heta deh')] } : sk)),
+        },
+      ],
+    };
+    renderWithProviders(<LessonPath map={first} due={0} onFocus={() => undefined} />);
+    expect(button('Start: Numbers')).toBeTruthy();
+    expect(screen.getAllByTestId('lp-scene-apple')).toHaveLength(1);
+    expect(screen.queryByTestId('lp-mascot')).toBeNull();
+  });
+
   it('sets its chapter’s vignette in the banner, numbers each milestone, and shows what the lesson up next is', () => {
     client();
     const talk: CourseMap = {

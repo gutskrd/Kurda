@@ -1868,6 +1868,14 @@
 .nav-pill .nav-search {
   order: 0;
 }
+/*
+ * A backdrop filter makes the pill the box its placed children are laid out in, which shut the open search inside the
+ * pill. Open, the field covers the whole bar anyway, so the pill gives up its blur until it closes.
+ */
+.nav-pill:has(.nav-search.is-open) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
 /* the pill is the shape, so a button in it draws none of its own until it is pointed at or pressed; its glyph is in the page's ink */
 .nav-pill .nav-search-open,
 .nav-pill .nav-bell {

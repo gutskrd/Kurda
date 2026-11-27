@@ -4,8 +4,9 @@ import { CHEST_LAYERS, chestDrawing, type ChestTier } from '@kurda/shared';
 /**
  * A quest's chest, drawn as on the phone (shared `art/chest.ts`), one look per tier; `size` is the shut chest's width.
  * Its layers are groups named by `data-part`, which quests.css animates: `open` shows it open and lit, `popping` plays
- * the shared CHEST_HOP opening, `shine` passes a glint over the lock, and `reach` scales the rays. Under Reduce Motion
- * everything lands where it ends. Decorative; the holder labels it.
+ * the shared CHEST_HOP opening, `shine` makes a waiting chest knock (CHEST_KNOCK) with light at its seam and a glint
+ * over its lock, and `reach` scales the rays. Under Reduce Motion everything lands where it ends. Decorative; the
+ * holder labels it.
  */
 export function Chest({
   tier,

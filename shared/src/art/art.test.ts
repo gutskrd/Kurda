@@ -102,8 +102,12 @@ import {
   CHEST_HOP_LID,
   CHEST_HOP_LIGHT,
   CHEST_HOP_MS,
+  CHEST_HOP_SEAM,
   CHEST_HOP_SHADOW,
   CHEST_HOP_SPARKLE,
+  CHEST_KNOCK,
+  CHEST_KNOCK_LIFT,
+  CHEST_KNOCK_MS,
   CHEST_LAYERS,
   CHEST_TINTS,
   chestDrawing,
@@ -1364,7 +1368,7 @@ describe('the chest', () => {
   });
 
   it('is drawn as the layers the apps move, back to front, each standing alone in its own box', () => {
-    expect(CHEST_LAYERS).toEqual(['shadow', 'lidOpen', 'rays', 'body', 'light', 'lock', 'glint', 'lid', 'sparkle']);
+    expect(CHEST_LAYERS).toEqual(['shadow', 'lidOpen', 'rays', 'body', 'light', 'lock', 'glint', 'lid', 'seam', 'sparkle']);
     const drawing = chestDrawing('rare');
     expect(Object.keys(drawing.layers)).toEqual([...CHEST_LAYERS]);
     const holder = new Map<string, ChestLayerId>();
@@ -1402,10 +1406,15 @@ describe('the chest', () => {
     expect(drawing.box).toEqual(CHEST_BOX);
   });
 
-  it('wears warm colours only: amber wood in iron, amber in gold, and pomegranate lacquer in gold with a garnet', () => {
-    expect(CHEST_TINTS.common.wood).toBe(CHEST_TINTS.rare.wood);
-    expect(CHEST_TINTS.common.metal).not.toBe(CHEST_TINTS.rare.metal);
-    expect(CHEST_TINTS.rare.metal).toBe(CHEST_TINTS.epic.metal);
+  it('wears warm colours only: plain oak in iron, the road’s amber in brass with a kilim strap, pomegranate lacquer in gold with a garnet', () => {
+    // each tier its own wood and its own metal, so they tell apart at a glance
+    expect(new Set(CHESTS.map((tier) => CHEST_TINTS[tier].wood)).size).toBe(3);
+    expect(new Set(CHESTS.map((tier) => CHEST_TINTS[tier].metal)).size).toBe(3);
+    // the rare chest is the lesson road’s sandûq, the same amber wood and brass
+    expect(CHEST_TINTS.rare.wood.face).toBe('#b86f35');
+    expect(CHEST_TINTS.rare.metal.face).toBe('#e2b24a');
+    expect(CHEST_TINTS.common.strap).toBeNull();
+    expect(CHEST_TINTS.rare.strap).not.toBeNull();
     expect(CHEST_TINTS.epic.wood.face).toBe('#a8233a');
     expect(CHEST_TINTS.epic.gem).toBe(true);
     expect(CHEST_TINTS.rare.gem).toBe(false);
@@ -1511,6 +1520,52 @@ describe('the chest’s hop', () => {
     expect(chestHopAt(curve, 0.75)).toBeCloseTo(0.75);
     expect(chestHopAt(curve, 2)).toBe(0.5);
     expect(() => chestHopAt([], 0.5)).toThrow(RangeError);
+  });
+
+  it('lights the seam through the crouch and puts it out once the lid is off', () => {
+    expect(CHEST_HOP_SEAM[0]?.[0]).toBe(0);
+    expect(CHEST_HOP_SEAM[CHEST_HOP_SEAM.length - 1]?.[0]).toBe(1);
+    const lidOff = CHEST_HOP_LID.find(([, v]) => v >= 1)?.[0] ?? 1;
+    expect(chestHopAt(CHEST_HOP_SEAM, 0.2)).toBeGreaterThan(chestHopAt(CHEST_HOP_SEAM, 0));
+    expect(chestHopAt(CHEST_HOP_SEAM, lidOff)).toBe(0);
+  });
+});
+
+describe('the chest’s knock', () => {
+  it('loops seamlessly, frame after frame, from rest back to the same rest', () => {
+    expect(CHEST_KNOCK_MS).toBeGreaterThan(2000);
+    const ats = CHEST_KNOCK.map((f) => f.at);
+    expect(ats[0]).toBe(0);
+    expect(ats[ats.length - 1]).toBe(1);
+    expect(ats.every((at, i) => i === 0 || at > (ats[i - 1] as number))).toBe(true);
+    const [first, last] = [CHEST_KNOCK[0]!, CHEST_KNOCK[CHEST_KNOCK.length - 1]!];
+    expect({ ...first, at: 1 }).toEqual(last);
+    expect(first.lid).toBe(0);
+  });
+
+  it('jumps the lid twice, the second smaller, lands it shut, and rests most of the loop', () => {
+    for (const f of CHEST_KNOCK) {
+      expect(f.lid).toBeGreaterThanOrEqual(0);
+      expect(f.lid).toBeLessThanOrEqual(1);
+      expect(f.seam).toBeGreaterThan(0);
+      expect(f.seam).toBeLessThanOrEqual(1);
+      // a squat keeps the box’s size, pressed rather than shrunk
+      expect(f.wide * f.tall).toBeGreaterThan(0.98);
+      expect(f.wide * f.tall).toBeLessThan(1.02);
+    }
+    const peaks = CHEST_KNOCK.filter((f, i, all) => f.lid > (all[i - 1]?.lid ?? 0) && f.lid >= (all[i + 1]?.lid ?? 0) && f.lid > 0.3);
+    expect(peaks).toHaveLength(2);
+    expect(peaks[1]!.lid).toBeLessThan(peaks[0]!.lid);
+    // each knock lands: the lid back on the box and the box squatting a touch
+    const landings = CHEST_KNOCK.filter((f) => f.lid === 0 && f.tall < 1);
+    expect(landings.length).toBeGreaterThanOrEqual(2);
+    // the seam is brightest while the lid is up
+    const brightest = CHEST_KNOCK.reduce((best, f) => (f.seam > best.seam ? f : best));
+    expect(brightest.lid).toBeGreaterThan(0.5);
+    // it is all over within the first fifth of the loop, so the chest mostly rests
+    expect(CHEST_KNOCK.filter((f) => f.lid > 0).every((f) => f.at < 0.2)).toBe(true);
+    // a small jump: the lid never turns far enough to show its underside
+    expect(CHEST_KNOCK_LIFT.deg).toBeLessThanOrEqual(8);
   });
 
   it('stands on a foot inside the shut chest’s box, under its body', () => {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   PATH_GEOMETRY,
   PATH_RETURN,
@@ -9,6 +9,7 @@ import {
   PATH_WAX_FIRE,
   PATH_WAX_GOLD,
   TOPIC_STARS,
+  hevaloEats,
   isSoraniDialect,
   lessonPath,
   lessonXpRange,
@@ -16,6 +17,7 @@ import {
   mascotSpot,
   pathChanges,
   pathLand,
+  pathScene,
   pathSnapshot,
   type LessonPath as Path,
   type PathChanges,
@@ -544,6 +546,11 @@ function sectionOf(path: Path<SkillNode>, key: string | null): number | null {
   return at >= 0 ? at : null;
 }
 
+/** What a link to Learn may carry: `toLesson` brings the lesson to do now into view. */
+export interface LearnState {
+  toLesson?: boolean;
+}
+
 /**
  * A course's lesson path, on the course page (pages/CourseMap.tsx) and as Learn's home (pages/Learn.tsx), by
  * @kurda/shared's `lessonPath` as on the phone. One section shows at a time, with earlier and later ones as cards, under
@@ -773,6 +780,15 @@ export function CoursePath({
     el?.scrollIntoView?.({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
     el?.focus({ preventScroll: true });
   };
+  // Asked for from elsewhere (the daily view's "Go to Learn"), once per visit, even when Learn was already open.
+  const location = useLocation();
+  const asked = (location.state as LearnState | null)?.toLesson === true ? location.key : null;
+  const answered = useRef<string | null>(null);
+  useEffect(() => {
+    if (!asked || !path || answered.current === asked) return;
+    answered.current = asked;
+    jump();
+  });
 
   if ((loading && !data) || (data && !dueSettled)) return <CourseMapSkeleton header={showHeader} />;
   if (error || !data || !path || !shown) {
@@ -946,7 +962,8 @@ export function CoursePath({
                       {unit.stops.length > 0 && (
                         <ol className={`lp-path${index === 0 ? ' is-first' : ''}`} style={{ height: unit.height }}>
                           <UnitLandmark land={land} width={width} dark={dark} near={near} />
-                          {spot && here && (
+                          {/* In his apple's unit he eats it there instead (UnitScenery). */}
+                          {spot && here && !hevaloEats(pathScene(unit.number - 1), here) && (
                             <PathMascot x={spot.x} y={spot.y} flip={sign * spot.x > sign * here.x} cheer={cheer} onPress={() => current && setOpenKey(current)} />
                           )}
                           <UnitScenery unit={unit} dark={dark} near={near} here={here ?? null} width={width} rtl={rtl} reduce={reduceMotion} />

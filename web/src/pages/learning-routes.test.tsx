@@ -170,15 +170,29 @@ describe('Learn', () => {
       },
     });
     routes('/app/learn');
-    // The path is Learn's home: the course furthest along, its lesson up next one tap away, Hevalo beside it.
+    // The path is Learn's home: the course furthest along, its lesson up next one tap away, and Hevalo beside it, here
+    // in his apple's chapter eating it under the bough rather than standing.
     const path = await screen.findByRole('region', { name: 'Kurmanji for Beginners' });
     expect(await within(path).findByRole('button', { name: 'Greetings, You are here, 1 of 2 lessons done' })).toBeInTheDocument();
-    expect(path.querySelector('.lp-mascot [data-speaker="hevalo"]')).not.toBeNull();
+    expect(path.querySelector('.lp-scene[data-scene="apple"] [data-speaker="hevalo"]')).not.toBeNull();
+    expect(path.querySelector('.lp-mascot')).toBeNull();
     await userEvent.click(within(path).getByRole('link', { name: 'Continue: Greetings' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Greetings' })).toBeInTheDocument();
     expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/lesson/l2?course=c1');
     // And the lesson comes back to Learn, not to the course's own page.
     expect(screen.getByRole('link', { name: 'Leave for now — your answers are saved' })).toHaveAttribute('href', '/app/learn');
+  });
+
+  it('brings the lesson to do now into view when the daily view’s Go to Learn asks for it', async () => {
+    serve({ 'GET /courses': { courses: courses.courses.slice(0, 1) }, 'GET /courses/c1/map': basics, 'GET /practice/due': { due: 0, available: 0 } });
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
+    try {
+      routes({ pathname: '/app/learn', state: { toLesson: true } });
+      const here = await screen.findByRole('button', { name: 'Greetings, You are here, 1 of 2 lessons done' });
+      await waitFor(() => expect(scroll.mock.contexts).toContain(here.closest('[data-stop]') ?? here.querySelector('[data-stop]')));
+    } finally {
+      scroll.mockRestore();
+    }
   });
 
   it('offers a new learner the first lesson of the first course, and moves between courses', async () => {
@@ -367,14 +381,16 @@ describe('a course map', () => {
     expect(within(bubble).getByText('Berdewam bike!')).toHaveAttribute('lang', 'ku');
 
     // The unit wears its own colour, on its banner and round its stops, its banner has its chapter's vignette, and its
-    // sandûq stands beside its road; Hevalo, standing by the stop to do now, is not drawn again eating his apple.
+    // sandûq stands beside its road; Hevalo eats his apple by the stop to do now, the only one of him in the unit.
     expect(unit).toHaveClass('lp-tone-meadow');
     expect(pin).toHaveClass('lp-tone-meadow');
     expect(pin.querySelector('.lp-pin-colour')).not.toBeNull();
     expect(pin.querySelector('.lp-pin-art')).toHaveAttribute('aria-hidden', 'true');
     expect(pin.querySelector('.lp-pin-art')).toHaveAttribute('data-art', 'door');
     expect(unit.querySelector('.lp-chest')).toHaveAttribute('aria-hidden', 'true');
-    expect(unit.querySelector('.lp-scene')).toBeNull();
+    expect(unit.querySelectorAll('.lp-scene')).toHaveLength(1);
+    expect(unit.querySelector('.lp-scene')).toHaveAttribute('data-scene', 'apple');
+    expect(unit.querySelector('.lp-mascot')).toBeNull();
 
     // The courses, to move between them.
     expect(screen.getByRole('navigation', { name: 'Your courses' })).toBeInTheDocument();

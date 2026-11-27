@@ -186,7 +186,7 @@ describe('the quests from Learn', () => {
     expect(await screen.findByText(/^7 of \d+ quests done$/)).toBeTruthy();
     expect(screen.getByLabelText('7 of 87 so far this month')).toBeTruthy();
     await waitFor(() => expect(screen.getAllByText('25 / 40').length).toBeGreaterThan(0));
-    expect(screen.getAllByTestId('quest-chest-shaking')).toHaveLength(2);
+    expect(screen.getAllByTestId('quest-chest-knocking')).toHaveLength(2);
 
     // The first chest opens and the next is offered; that one stays shut (offline), which ends the run and returns to the list.
     fireEvent.click(screen.getByRole('button', { name: 'Open chest' }));
@@ -196,9 +196,9 @@ describe('the quests from Learn', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open the chest' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     expect(await screen.findByLabelText('Keep your streak going: 1 of 1, Chest opened')).toBeTruthy();
-    // Back from the chests the bars are static, and only the chest still waiting shakes.
+    // Back from the chests the bars are static, and only the chest still waiting knocks.
     expect(screen.getAllByText('25 / 40').length).toBeGreaterThan(0);
-    expect(screen.getAllByTestId('quest-chest-shaking')).toHaveLength(1);
+    expect(screen.getAllByTestId('quest-chest-knocking')).toHaveLength(1);
   });
 
   it('say when they did not load and ask again, then list today’s quests with a chest to open and a way out', async () => {
