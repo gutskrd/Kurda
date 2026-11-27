@@ -135,7 +135,7 @@ export interface Palette {
   /** The chosen tab's glyph and name, and the darker capsule of glass inset behind it, drawn faint (TabBar.tsx `CAPSULE_FILL`). */
   tabChosen: string;
   tabCapsule: string;
-  /** The lens a choice lifts into as it moves: clear and a little brighter than the bar, its rim lit, its edge split. */
+  /** The lens a choice lifts into as it moves: the bar's ground a shade brighter, its rim lit, its edge split. */
   lensFill: string;
   lensRim: string;
   lensShine: string;
@@ -235,10 +235,10 @@ export const LIGHT: Palette = {
   tabChosen: DAY.text,
   tabCapsule: PAGE.light.ink,
   lensFill: 'rgba(255,255,255,0.34)',
-  lensRim: 'rgba(255,255,255,0.9)',
+  lensRim: 'rgba(23,36,43,0.14)',
   lensShine: 'rgba(255,255,255,1)',
-  lensWarm: 'rgba(255,110,110,0.3)',
-  lensCool: 'rgba(90,160,255,0.32)',
+  lensWarm: 'rgba(255,110,110,0.16)',
+  lensCool: 'rgba(90,160,255,0.18)',
   onArt: 'rgba(253,254,254,0.78)',
   goldText: REWARD_GOLD.light.goldText,
   notice: '#FF3B30',
@@ -312,11 +312,11 @@ export const DARK: Palette = {
   panel: '#23272B',
   tabChosen: NIGHT.text,
   tabCapsule: '#000000',
-  lensFill: 'rgba(255,255,255,0.13)',
-  lensRim: 'rgba(255,255,255,0.34)',
-  lensShine: 'rgba(255,255,255,0.55)',
-  lensWarm: 'rgba(255,120,120,0.36)',
-  lensCool: 'rgba(110,180,255,0.38)',
+  lensFill: 'rgba(255,255,255,0.04)',
+  lensRim: 'rgba(255,255,255,0.24)',
+  lensShine: 'rgba(255,255,255,0.5)',
+  lensWarm: 'rgba(255,120,120,0.22)',
+  lensCool: 'rgba(110,180,255,0.24)',
   onArt: 'rgba(19,28,32,0.6)',
   goldText: REWARD_GOLD.dark.goldText,
   notice: '#FF453A',

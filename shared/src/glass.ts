@@ -65,15 +65,15 @@ export function roundedEdge(x: number, y: number, { width, height, radius }: Gla
 }
 
 /** The bend at a depth `t` into the bezel (0 at the edge, 1 where the glass turns flat), in points. */
-export function bendAt(t: number, bezel: number): number {
+export function bendAt(t: number, bezel: number, thickness: number = GLASS.thickness): number {
   if (t <= 0 || t >= 1) return 0;
   const s = 1 - t;
   const lift = 1 - s ** 4;
   // The squircle's slope; it stands upright at the edge, where the ray meets the glass side on.
   const slope = lift > 1e-6 ? s ** 3 / lift ** 0.75 : 1e6;
-  const tilt = Math.atan((slope * GLASS.thickness) / bezel);
+  const tilt = Math.atan((slope * thickness) / bezel);
   const turn = tilt - Math.asin(Math.sin(tilt) / GLASS.ior);
-  return (lift ** 0.25 * GLASS.thickness + 2) * Math.tan(turn) * Math.sqrt(s);
+  return (lift ** 0.25 * thickness + 2) * Math.tan(turn) * Math.sqrt(s);
 }
 
 /** How much light a point catches: a fine bright line on the rim, strongest where the edge faces the light. */
@@ -97,11 +97,15 @@ export function bezelFor({ width, height }: Pick<GlassShape, 'width' | 'height'>
   return Math.min(GLASS.bezel, Math.min(width, height) / 2);
 }
 
-/** Bend and light for every device pixel of a shape. */
-export function glassField(shape: GlassShape, dpr = 1): GlassField {
+/**
+ * Bend and light for every device pixel of a shape. A thinner slab with a narrower rim (`optics`, in points) suits a
+ * small lens whose middle must stay clear.
+ */
+export function glassField(shape: GlassShape, dpr = 1, optics?: { bezel: number; thickness: number }): GlassField {
   const W = Math.max(1, Math.round(shape.width * dpr));
   const H = Math.max(1, Math.round(shape.height * dpr));
-  const bezel = bezelFor(shape);
+  const bezel = optics ? Math.min(optics.bezel, bezelFor(shape)) : bezelFor(shape);
+  const thickness = optics?.thickness ?? GLASS.thickness;
   const bend = new Float32Array(W * H * 2);
   const shine = new Float32Array(W * H);
   const veil = new Float32Array(W * H);
@@ -114,7 +118,7 @@ export function glassField(shape: GlassShape, dpr = 1): GlassField {
       shine[i] = shineAt(inside, nx, ny, bezel);
       // A pixel the edge only partly covers takes that part of the tint, so the edge stays smooth.
       veil[i] = veilAt(inside / bezel) * Math.min(inside * dpr, 1);
-      const b = bendAt(inside / bezel, bezel);
+      const b = bendAt(inside / bezel, bezel, thickness);
       bend[i * 2] = -nx * b;
       bend[i * 2 + 1] = -ny * b;
       if (b > reach) reach = b;

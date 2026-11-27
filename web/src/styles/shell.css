@@ -2018,9 +2018,12 @@
   width: calc(100% / var(--places));
 }
 /*
- * The lens: clear glass over the places while the choice moves, brighter than the bar, with a fine specular rim lit from
- * above and a faint split of colour at its edge; where the browser can bend the page (Chromium) it also refracts the
- * glyphs and names it passes over (`--lens-filter`, shared glass-lens.ts). It is not there at rest.
+ * The lens: clear glass over the places while the choice moves. It clips a copy of the places (`.places-lens-copy`, the
+ * row's size) that is moved to show them magnified about its middle, on the bar's own ground so the places beneath do
+ * not show through, with the capsule's tint draining from it as it lifts. Its rim, a hairline edge, a fine specular line
+ * lit from above and a faint split of colour, comes up over the copy as it lifts. Where the browser can bend with an SVG
+ * filter (Chromium) the rim also bends the copy, splitting red from blue (`--lens-filter`, shared glass-lens.ts). Only
+ * transforms and opacity move. It is not there at rest.
  */
 .places-lens {
   position: absolute;
@@ -2028,21 +2031,55 @@
   left: 0;
   width: calc(100% / var(--places));
   height: 100%;
+  overflow: hidden;
   border-radius: var(--r-pill);
   transform-origin: left center;
   opacity: 0;
   pointer-events: none;
-  background: var(--lens-fill);
-  box-shadow:
-    inset 0 0 0 0.75px var(--lens-rim),
-    inset 0 1.5px 1px var(--lens-shine),
-    inset 1.5px 0 1px var(--lens-warm),
-    inset -1.5px 0 1px var(--lens-cool),
-    0 6px 16px var(--lens-shadow);
 }
-.places-lens[data-bends] {
-  -webkit-backdrop-filter: var(--lens-filter);
-  backdrop-filter: var(--lens-filter);
+.places-lens-glass {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(var(--lens-fill), var(--lens-fill)), var(--surface-solid);
+}
+.places-lens[data-bends] .places-lens-glass {
+  filter: var(--lens-filter);
+}
+.places-lens-tint {
+  position: absolute;
+  inset: 0;
+  background: var(--tab-capsule);
+  opacity: 0;
+}
+.places-lens-copy {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% * var(--places));
+  height: 100%;
+  transform-origin: 0 0;
+}
+/*
+ * In right-to-left languages the lens's layer is mirrored, so the copy runs the other way in it and each place is
+ * mirrored back, which draws it as the row.
+ */
+[dir='rtl'] .places-lens-copy {
+  flex-direction: row-reverse;
+}
+[dir='rtl'] .places-lens-copy > li {
+  scale: -1 1;
+}
+.places-lens-rim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  box-shadow:
+    inset 0 0 0 0.5px var(--lens-edge),
+    inset 0 0 0 1.25px var(--lens-rim),
+    inset 0 2px 1px var(--lens-shine),
+    inset 2px 0 1px var(--lens-warm),
+    inset -2px 0 1px var(--lens-cool);
 }
 /* Asked for less transparency or more contrast, the choice moves as a solid capsule, without a lens. */
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {

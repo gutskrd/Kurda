@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { Animated, StyleSheet, View, type ViewStyle } from 'react-native';
+import { SELECTOR_LENS } from '@kurda/shared';
 import { dropLens, lensSupported, takeLens, type Lens } from '@kurda/shared/src/glass-lens';
+import type { LensLook } from './LiquidGlass';
 import { floating } from './floating';
 import { useTheme } from './ThemeProvider';
 import { radii } from './tokens';
@@ -39,11 +41,12 @@ export function useGlassShape(lift: 'control' | 'raised'): ViewStyle[] {
 }
 
 /**
- * The lens a choice lifts into as it moves (theme/selectorLens.ts): clear glass with a lit rim and a faint split of
- * colour at its edge, which in a browser that can bend what lies behind an element (Chromium) also refracts the tabs it
- * passes over, as the website's does (shared glass-lens.ts). Never drawn at rest.
+ * The lens a choice lifts into as it moves (theme/selectorLens.ts): `children`, a copy of the row that the caller moves
+ * so it looks magnified, on `ground`, under a lit rim with a faint split of colour; the caller clips it to the lens's
+ * shape. In a browser that can bend with an SVG filter (Chromium) the rim also bends the copy, splitting red from blue,
+ * as the website's lens does (shared glass-lens.ts).
  */
-export function LensFill({ radius }: { radius: number }): React.JSX.Element {
+export function LensGlass({ radius, ground, tint, tintOpacity, up, children }: LensLook & { children: ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
   const ref = useRef<View>(null);
   useEffect(() => {
@@ -59,9 +62,9 @@ export function LensFill({ radius }: { radius: number }): React.JSX.Element {
       if (next === shape || width < 8 || height < 8) return;
       shape = next;
       const was = lens;
-      lens = takeLens({ width, height, radius: Math.min(radius, width / 2, height / 2) }, dpr, true);
+      lens = takeLens({ width, height, radius: Math.min(radius, width / 2, height / 2) }, dpr, true, SELECTOR_LENS.rim);
       if (was) dropLens(was);
-      el.style.backdropFilter = lens.filter ? `url(#${lens.filter})` : '';
+      el.style.filter = lens.filter ? `url(#${lens.filter})` : '';
     };
     const watch = new ResizeObserver(fit);
     watch.observe(el);
@@ -72,15 +75,28 @@ export function LensFill({ radius }: { radius: number }): React.JSX.Element {
     };
   }, [radius]);
   return (
-    <View
-      ref={ref}
-      pointerEvents="none"
-      style={[
-        StyleSheet.absoluteFill,
-        styles.lens,
-        { borderRadius: radius, backgroundColor: colors.lensFill, borderTopColor: colors.lensShine, borderBottomColor: colors.lensRim, borderLeftColor: colors.lensWarm, borderRightColor: colors.lensCool },
-      ]}
-    />
+    <>
+      <View ref={ref} pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: ground }]}>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.lensFill }]} />
+        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: tint, opacity: tintOpacity }]} />
+        {children}
+      </View>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          styles.lens,
+          {
+            borderRadius: radius,
+            borderTopColor: colors.lensShine,
+            borderBottomColor: colors.lensRim,
+            borderLeftColor: colors.lensWarm,
+            borderRightColor: colors.lensCool,
+            opacity: up,
+          },
+        ]}
+      />
+    </>
   );
 }
 

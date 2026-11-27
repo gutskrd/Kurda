@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing } from 'react-native';
-import { lensAt, planSwitch, retarget, type LensFrame, type SelectorMove } from '@kurda/shared';
+import { lensAt, magnifier, planSwitch, retarget, type LensFrame, type SelectorMove } from '@kurda/shared';
 
 /**
  * The phone's selectors moving as the website's do (shared selector-lens.ts): one run of the shared motion sampled
- * into interpolations of a single progress value, so the capsule's pieces and the lens over them move on the native
- * driver. A tap during a move sends it on from where it is; under Reduce Motion the capsule only fades in at its place.
+ * into interpolations of a single progress value, so the capsule's pieces, the lens over them and the magnified copy of
+ * the row inside the lens move together on the native driver. A tap during a move sends it on from where it is; under Reduce Motion the capsule only fades in at its place.
  */
 
 /** Samples per second of a run: a frame of a 60 Hz screen. */
@@ -24,7 +24,10 @@ export function sampleMove(move: SelectorMove, now: number): { frames: LensFrame
   return { frames, ms: Math.max(t - now, 1) };
 }
 
-/** What the pieces need: positions in points from the left, scales and opacities, for every frame. */
+/**
+ * What the pieces need: positions in points from the left, scales and opacities, for every frame; `copy` places the
+ * row's copy inside the lens, from its top left corner.
+ */
 export function piecesFor(frames: LensFrame[], slot: number, height: number, width: number) {
   return frames.map((f) => {
     const centre = (f.at + f.lead + 0.5) * slot;
@@ -32,6 +35,7 @@ export function piecesFor(frames: LensFrame[], slot: number, height: number, wid
     const h = height * f.scale;
     const left = Math.max(centre - w / 2, -2);
     const right = Math.min(centre + w / 2, width + 2);
+    const copy = magnifier({ left, right, slot, height, tall: f.scale * f.squash }, f.magnify);
     return {
       left,
       endLeft: right - height,
@@ -42,6 +46,12 @@ export function piecesFor(frames: LensFrame[], slot: number, height: number, wid
       scaleY: f.scale * f.squash,
       tint: f.tint,
       lens: f.lens,
+      // The lens is drawn whole the moment it lifts, looking at first just as the capsule and the row it covers do.
+      shown: f.lens > 0 ? 1 : 0,
+      copyX: copy.x,
+      copyY: copy.y,
+      copyScaleX: copy.sx,
+      copyScaleY: copy.sy,
     };
   });
 }
@@ -116,6 +126,13 @@ export function useSelectorLens(place: number, slot: number, height: number, cou
       scaleY: pick((p) => p.scaleY),
       tint: Animated.multiply(pick((p) => p.tint), fade),
       lens: pick((p) => p.lens),
+      shown: pick((p) => p.shown),
+      copy: [
+        { translateX: pick((p) => p.copyX) },
+        { translateY: pick((p) => p.copyY) },
+        { scaleX: pick((p) => p.copyScaleX) },
+        { scaleY: pick((p) => p.copyScaleY) },
+      ],
     };
     // A new set of interpolations per run.
   }, [key, slot, height, width]);

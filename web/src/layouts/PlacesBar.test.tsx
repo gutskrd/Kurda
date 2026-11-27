@@ -9,6 +9,16 @@ import { useNavLinks } from './navLinks';
 import { PlacesBar } from './PlacesBar';
 import { isPlaceRoot } from './roots';
 
+/** The stylesheet, read from disk, since an imported stylesheet arrives empty in tests. */
+interface FileSystem {
+  readFileSync(file: URL, encoding: 'utf8'): string;
+}
+const fileSystem = 'node:fs';
+const { readFileSync } = (await import(/* @vite-ignore */ fileSystem)) as FileSystem;
+// beside this file, wherever the suite is run from
+const here = import.meta.url;
+const shell = readFileSync(new URL('../styles/shell.css', here), 'utf8');
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
@@ -142,6 +152,25 @@ describe('the bar of places', () => {
       // Your picture is your place's glyph, ringed only when it is the place you are on.
       expect(within(other).getByTestId(`${name.toLowerCase()}-${name === 'Profile' ? 'outline' : 'filled'}`)).toBeInTheDocument();
     }
+  });
+
+  it('keeps a copy of the places in the lens to magnify, only drawn: hidden from screen readers and out of reach', async () => {
+    const { container } = show('/app/learn');
+    await screen.findByRole('link', { name: 'Learn' });
+    const layer = container.querySelector<HTMLElement>('.places-lens-layer')!;
+    expect(layer).toHaveAttribute('aria-hidden', 'true');
+    expect(layer).toHaveAttribute('inert');
+    const copy = layer.querySelector('.places-lens .places-lens-copy')!;
+    expect([...copy.querySelectorAll('.places-name')].map((n) => n.textContent)).toEqual(['Home', 'Learn', 'Messages', 'Profile']);
+    expect(copy.querySelector('a, button, [tabindex]')).toBeNull();
+    // Its place is lit as the real one is, and the places a screen reader hears are still the four links.
+    expect(copy.querySelectorAll('.places-link.active')).toHaveLength(1);
+    expect(places()).toHaveLength(4);
+  });
+
+  it('draws no lens, and so no copy, for a reader who asked for less transparency or more contrast', () => {
+    const rule = /@media \(prefers-reduced-transparency: reduce\), \(prefers-contrast: more\) \{([\s\S]*?)\n\}/.exec(shell)![1]!;
+    expect(rule).toMatch(/\.places-lens \{\s*display: none;/);
   });
 
   it('keeps Learn lit on each of its views', async () => {

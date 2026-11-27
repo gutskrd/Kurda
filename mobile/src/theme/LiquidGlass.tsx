@@ -1,4 +1,5 @@
-import { Platform, StyleSheet, View, type ViewStyle } from 'react-native';
+import type { ReactNode } from 'react';
+import { Animated, Platform, StyleSheet, View, type ViewStyle } from 'react-native';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { ANDROID_LENS, AndroidGlass } from '../../modules/hevalo-glass';
 import { floating } from './floating';
@@ -79,25 +80,49 @@ const styles = StyleSheet.create({
   clear: { backgroundColor: 'transparent' },
 });
 
-/**
- * The lens a choice lifts into as it moves (theme/selectorLens.ts): on iOS 26 the system's clear glass, which bends and
- * magnifies the tabs it passes over as the system's own tab bar does; elsewhere clear glass of our own with a lit rim
- * and a faint split of colour at its edge. Never drawn at rest.
- */
-export function LensFill({ radius }: { radius: number }): React.JSX.Element {
-  const { colors, scheme } = useTheme();
-  if (SYSTEM_GLASS) {
-    return <GlassView glassEffectStyle="clear" colorScheme={scheme} pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius }]} />;
-  }
-  return (
-    <View
-      pointerEvents="none"
-      style={[
-        StyleSheet.absoluteFill,
-        styles.lens,
-        { borderRadius: radius, backgroundColor: colors.lensFill, borderTopColor: colors.lensShine, borderBottomColor: colors.lensRim, borderLeftColor: colors.lensWarm, borderRightColor: colors.lensCool },
-      ]}
-    />
-  );
+/** What a lens is drawn on and with: the colour it floats over, and the capsule's tint draining from it as it lifts. */
+export interface LensLook {
+  radius: number;
+  ground: string;
+  tint: string;
+  tintOpacity: Animated.AnimatedInterpolation<number> | Animated.Value | number;
+  /** How far it is up, 0 to 1, which brings up its rim. */
+  up: Animated.AnimatedInterpolation<number> | Animated.Value | number;
 }
 
+/**
+ * The lens a choice lifts into as it moves (theme/selectorLens.ts). It shows `children`, a copy of the row that the
+ * caller moves so it looks magnified, on `ground`, the colour of what the lens floats over, so the row beneath does not
+ * show through; the caller clips it to the lens's shape. Over the copy lies, on iOS 26, the system's clear glass, which
+ * bends and lights its rim as the system's own selectors do; elsewhere our own lit rim with a faint split of colour.
+ */
+export function LensGlass({ radius, ground, tint, tintOpacity, up, children }: LensLook & { children: ReactNode }): React.JSX.Element {
+  const { colors, scheme } = useTheme();
+  return (
+    <>
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: ground }]} />
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.lensFill }]} />
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tint, opacity: tintOpacity }]} />
+      {children}
+      {SYSTEM_GLASS ? (
+        <GlassView glassEffectStyle="clear" colorScheme={scheme} pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius }]} />
+      ) : (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            styles.lens,
+            {
+              borderRadius: radius,
+              borderTopColor: colors.lensShine,
+              borderBottomColor: colors.lensRim,
+              borderLeftColor: colors.lensWarm,
+              borderRightColor: colors.lensCool,
+              opacity: up,
+            },
+          ]}
+        />
+      )}
+    </>
+  );
+}

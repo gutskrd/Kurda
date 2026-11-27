@@ -12,7 +12,7 @@ import { useDirection } from '../reports/direction';
 import { haptic } from '../feedback/haptics';
 import { usePressSink } from './animate';
 import { useSelectorLens } from './selectorLens';
-import { LensFill } from './LiquidGlass';
+import { LensGlass } from './LiquidGlass';
 import { pressedDim } from './motion';
 import { heldRow, heldDim } from './MotionParts';
 import { EmptyState } from './EmptyState';
@@ -267,10 +267,10 @@ const SEG_PAD_V_TALL = 11;
 const SEG_LINE = 18;
 
 /**
- * A segmented control: a track and a capsule that slides to the chosen option. The chosen word is the same size as
- * the others, only heavier, and the slide is the only motion: instant under Reduce Motion, mirrored in right-to-left
- * languages. The capsule is a faint ground of the ink with its word and edge in the ink, as on the website, so the
- * choice reads at a glance in both themes without a colour of its own.
+ * A segmented control: a track and a capsule that slides to the chosen option as a lens magnifying the words it passes
+ * over. The chosen word is the same size as the others, only heavier, and the slide is the only motion: a fade under
+ * Reduce Motion, mirrored in right-to-left languages. The capsule is a faint ground of the ink with its word and edge
+ * in the ink, as on the website, so the choice reads at a glance in both themes without a colour of its own.
  */
 export function Segmented<T extends string>({
   options,
@@ -315,8 +315,8 @@ export function Segmented<T extends string>({
    */
   const reachV = Math.max(SEG_PAD, (MIN_REACH - (padV * 2 + SEG_LINE)) / 2);
 
-  // The choice moves as every selector's does: the capsule lifts into a clear lens over the options, glides and settles
-  // (theme/selectorLens.ts); under Reduce Motion it only fades in at its place.
+  // The choice moves as every selector's does: the capsule lifts into a clear lens over the options, magnifying them as it
+  // glides, and settles (theme/selectorLens.ts); under Reduce Motion it only fades in at its place.
   const inner = Math.max(box.h - SEG_PAD * 2, 0);
   const lens = useSelectorLens(index, seg, inner, options.length, reduceMotion);
   const moving = { transformOrigin: 'left center' as const, transform: [{ translateX: lens.left }, { scaleX: lens.lensScale }, { scaleY: lens.scaleY }] };
@@ -380,8 +380,37 @@ export function Segmented<T extends string>({
         );
       })}
       {seg > 0 && !reduceMotion ? (
-        <Animated.View pointerEvents="none" style={[styles.segCapsule, styles.segLens, { left: SEG_PAD, width: seg, opacity: lens.lens }, moving]}>
-          <LensFill radius={inner / 2} />
+        // The lens, over a copy of the options it shows magnified, only drawn: hidden from screen readers. It stands on a
+        // card's surface with the track's own tint in the copy, so the options beneath do not show through.
+        <Animated.View
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          aria-hidden
+          style={[styles.segCapsule, styles.segLens, { left: SEG_PAD, width: seg, opacity: lens.shown }, moving]}
+          testID="segmented-lens"
+        >
+          <LensGlass radius={inner / 2} ground={colors.surface} tint={colors.chosenFill} tintOpacity={lens.tint} up={lens.lens}>
+            <Animated.View style={[styles.segCopy, { width: seg * options.length, height: inner, flexDirection: dir.row, transform: lens.copy }]}>
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.controlTrack }]} />
+              {options.map((opt) => {
+                const active = opt === value;
+                return (
+                  <View key={opt} style={styles.segCopyItem}>
+                    <Text
+                      style={[styles.segText, { color: active ? colors.chosenInk : colors.textSecondary }, active && styles.segTextActive, wrap && styles.segTextWrap]}
+                      numberOfLines={wrap ? 2 : 1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.8}
+                      maxFontSizeMultiplier={fontScaleCap.fixedBox}
+                    >
+                      {labelOf(opt)}
+                    </Text>
+                  </View>
+                );
+              })}
+            </Animated.View>
+          </LensGlass>
         </Animated.View>
       ) : null}
     </View>
@@ -447,8 +476,11 @@ const styles = StyleSheet.create({
     bottom: SEG_PAD,
     borderRadius: radii.pill,
   },
-  // The lens over the options while the choice moves; it draws its own edge.
-  segLens: { borderWidth: 0 },
+  // The lens over the options while the choice moves; it draws its own edge and clips the copy of the options.
+  segLens: { borderWidth: 0, overflow: 'hidden' },
+  // The copy, the size of the options' row, placed from its top left corner like the row it copies.
+  segCopy: { position: 'absolute', left: 0, top: 0, transformOrigin: 'left top' },
+  segCopyItem: { flex: 1, paddingHorizontal: spacing.xs, alignItems: 'center', justifyContent: 'center' },
   segItem: { flex: 1, paddingVertical: 6, paddingHorizontal: spacing.xs, alignItems: 'center', justifyContent: 'center' },
   segText: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium, lineHeight: SEG_LINE },
   segTextActive: { fontWeight: typography.weights.semibold },

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { TAB_BAR_SCROLL, tabBarScroll } from '@kurda/shared';
+import { SELECTOR_LENS, TAB_BAR_SCROLL, tabBarScroll } from '@kurda/shared';
 import { dropLens, lensSupported, takeLens, type Lens } from '@kurda/shared/src/glass-lens';
 import { SelectorLens } from '../lib/selectorLens';
 import { useAuth } from '../auth/AuthProvider';
@@ -14,11 +14,11 @@ import { useT } from '../i18n/I18nProvider';
  * leaves room for it (shell.css).
  *
  * The current place wears the accent on its glyph and name, cross-fading as it changes, over a darker capsule of glass
- * that springs over to it, stretching and lifting on the way, moved by transform alone. Something new waiting (unread
- * messages, a gift or a request) is a small red dot, said in the link's name. While the page scrolls down the bar
- * shrinks out of the way and comes back on a short scroll up (shared tab-bar-scroll.ts). Pressing the current place
- * scrolls to the top. Visitors see their two places and Sign in. It is mirrored in Arabic and Soranî, drawn only on
- * place roots (`isPlaceRoot`), and comes after the page in the document as the `nav` of places.
+ * that springs over to it as a lens magnifying the places it passes over, moved by transform alone. Something new
+ * waiting (unread messages, a gift or a request) is a small red dot, said in the link's name. While the page scrolls
+ * down the bar shrinks out of the way and comes back on a short scroll up (shared tab-bar-scroll.ts). Pressing the
+ * current place scrolls to the top. Visitors see their two places and Sign in. It is mirrored in Arabic and Soranî,
+ * drawn only on place roots (`isPlaceRoot`), and comes after the page in the document as the `nav` of places.
  */
 export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.Element {
   const t = useT();
@@ -52,14 +52,26 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
 
   // The capsule and the lens over it move by the shared selector motion (lib/selectorLens.ts): placed on the first draw
   // and after a resize, lifted into the lens and glided on each change of place.
-  const parts = { group: useRef<HTMLSpanElement>(null), start: useRef<HTMLSpanElement>(null), end: useRef<HTMLSpanElement>(null), span: useRef<HTMLSpanElement>(null), lens: useRef<HTMLSpanElement>(null) };
+  const parts = {
+    group: useRef<HTMLSpanElement>(null),
+    start: useRef<HTMLSpanElement>(null),
+    end: useRef<HTMLSpanElement>(null),
+    span: useRef<HTMLSpanElement>(null),
+    lens: useRef<HTMLSpanElement>(null),
+    copy: useRef<HTMLUListElement>(null),
+    tint: useRef<HTMLSpanElement>(null),
+    rim: useRef<HTMLSpanElement>(null),
+  };
   const runner = useRef<SelectorLens | null>(null);
   const placed = useRef<number | null>(null);
   useLayoutEffect(() => {
-    const { group, start, end, span, lens } = parts;
+    const { group, start, end, span, lens, copy, tint, rim } = parts;
     if (!group.current || !start.current || !end.current || !span.current || box.slot <= 0 || at < 0) return;
     const size = { slot: box.slot, height: box.height, width: box.slot * items.length };
-    runner.current ??= new SelectorLens({ group: group.current, start: start.current, end: end.current, span: span.current, lens: lens.current }, size);
+    runner.current ??= new SelectorLens(
+      { group: group.current, start: start.current, end: end.current, span: span.current, lens: lens.current, copy: copy.current, tint: tint.current, rim: rim.current },
+      size,
+    );
     if (placed.current === null || placed.current === at) runner.current.place(at, size);
     else runner.current.moveTo(at);
     placed.current = at;
@@ -67,11 +79,12 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
   }, [at, box.slot, box.height, items.length]);
   useEffect(() => () => runner.current?.stop(), []);
 
-  // Where the browser can bend what lies behind an element (Chromium), the lens refracts the places under it.
+  // Where the browser can bend with an SVG filter (Chromium), the lens's rim also bends the magnified places, red split
+  // from blue.
   useEffect(() => {
     const el = parts.lens.current;
     if (!el || box.slot <= 0 || !lensSupported()) return;
-    const made: Lens = takeLens({ width: box.slot, height: box.height, radius: box.height / 2 }, Math.min(window.devicePixelRatio || 1, 3), true);
+    const made: Lens = takeLens({ width: box.slot, height: box.height, radius: box.height / 2 }, Math.min(window.devicePixelRatio || 1, 3), true, SELECTOR_LENS.rim);
     if (made.filter) {
       el.style.setProperty('--lens-filter', `url(#${made.filter})`);
       el.dataset.bends = '';
@@ -119,18 +132,7 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
             const badge = l.badge ?? 0;
             // the place's name, with what is waiting in words: the dot itself is only drawn
             const spoken = badge > 0 ? t('nav.tabUnread', { place: l.label, count: badge }) : l.dot ? t('nav.tabWaiting', { place: l.label }) : l.label;
-            // Every glyph filled, as the reference bars draw them; the name under it, which the link's own name already says.
-            const face = (
-              <>
-                <span className="places-glyph" aria-hidden="true">
-                  {l.key === 'profile' ? (active && l.activeIcon ? l.activeIcon : l.icon) : (l.activeIcon ?? l.icon)}
-                  {badge > 0 || l.dot ? <span className="nav-dot" /> : null}
-                </span>
-                <span className="places-name" aria-hidden="true">
-                  {l.label}
-                </span>
-              </>
-            );
+            const face = <PlaceFace item={l} active={active} />;
             return (
               <li key={l.key ?? l.to}>
                 {l.external ? (
@@ -152,13 +154,46 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
             );
           })}
         </ul>
-        {/* The lens: clear glass over the places while the choice moves, bending what it passes over. */}
+        {/*
+         * The lens: clear glass over the places while the choice moves, showing a copy of them magnified about its middle,
+         * which slides through it as it goes. The copy is only drawn: hidden from screen readers and out of reach.
+         */}
         {at >= 0 && (
-          <span className="places-lens-layer" aria-hidden="true">
-            <span ref={parts.lens} className="places-lens" />
+          <span className="places-lens-layer" aria-hidden="true" inert>
+            <span ref={parts.lens} className="places-lens">
+              <span className="places-lens-glass">
+                <span ref={parts.tint} className="places-lens-tint" />
+                <ul ref={parts.copy} className="places-list places-lens-copy">
+                  {items.map((l, i) => (
+                    <li key={l.key ?? l.to}>
+                      <span className={`places-link${i === at ? ' active' : ''}`}>
+                        <PlaceFace item={l} active={i === at} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </span>
+              <span ref={parts.rim} className="places-lens-rim" />
+            </span>
           </span>
         )}
       </div>
     </nav>
+  );
+}
+
+/** A place's filled glyph, as the reference bars draw them, with its dot, over its name, which the link already says. */
+function PlaceFace({ item, active }: { item: NavItem; active: boolean }): React.JSX.Element {
+  const badge = item.badge ?? 0;
+  return (
+    <>
+      <span className="places-glyph" aria-hidden="true">
+        {item.key === 'profile' ? (active && item.activeIcon ? item.activeIcon : item.icon) : (item.activeIcon ?? item.icon)}
+        {badge > 0 || item.dot ? <span className="nav-dot" /> : null}
+      </span>
+      <span className="places-name" aria-hidden="true">
+        {item.label}
+      </span>
+    </>
   );
 }

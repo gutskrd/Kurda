@@ -22,7 +22,7 @@ import { resetTabBar, useTabBarCompact } from './tabBarScroll';
 import { TABS, type TabName } from './tabs';
 import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { useAuth } from '../auth/AuthContext';
-import { GlassFill, LensFill, useGlassShape } from '../theme/LiquidGlass';
+import { GlassFill, LensGlass, useGlassShape } from '../theme/LiquidGlass';
 
 /** The glyphs, and your picture, as large as a glyph within its ring. */
 const GLYPH = 24;
@@ -39,11 +39,11 @@ const CAPSULE_FILL = { dark: 0.34, light: 0.07 } as const;
 
 /**
  * The tab bar: four places in one pill of neutral glass floating over the page's foot (LiquidGlass.tsx), each a filled
- * glyph with its name under it (screens leave room with `useTabBarInset`). The chosen tab wears the chosen colour on its
- * glyph and name, cross-fading as it changes, or a ring round your picture, over a darker capsule of glass that
- * stretches as it slides to it, so colour is never the only sign. Something new waiting (unread messages and requests, a
- * gift to unwrap) is a small red dot at the glyph's foot, said in words to a screen reader; tapping the current tab
- * scrolls it to the top (`useScrollToTop`).
+ * glyph with its name under it (screens leave room with `useTabBarInset`). The chosen tab wears the chosen colour on
+ * its glyph and name, cross-fading as it changes, or a ring round your picture, over a darker capsule of glass that
+ * slides to it as a lens magnifying the tabs it passes over, so colour is never the only sign. Something new waiting
+ * (unread messages and requests, a gift to unwrap) is a small red dot at the glyph's foot, said in words to a screen
+ * reader; tapping the current tab scrolls it to the top (`useScrollToTop`).
  *
  * While the page scrolls down the bar shrinks out of the way and comes back as it scrolls up (tabBarScroll.ts); under
  * Reduce Motion it stays its size, the capsule moves without sliding and the colour changes at once. It is last in the
@@ -93,6 +93,51 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
 
   if (typing) return null;
 
+  // Each tab's name, what is waiting on it and whether it is chosen, for the tab itself and for its copy in the lens.
+  const tabs = state.routes.map((route, i) => {
+    const tab = TABS.find((x) => x.name === route.name);
+    const name = (tab?.name ?? route.name) as TabName;
+    return {
+      route,
+      name,
+      icon: tab?.activeIcon ?? tab?.icon ?? 'home',
+      full: tab ? t(tab.labelKey) : route.name,
+      focused: state.index === i,
+      unread: name === 'Messages' && messages > 0,
+      gift: name === 'Profile' && counts.gifts > 0,
+      // Counted from the left whichever way the tabs run, as the capsule is.
+      at: mirrored ? state.routes.length - 1 - i : i,
+    };
+  });
+  const face = (tab: (typeof tabs)[number], inLens = false) => (
+    <>
+      <TabFace focused={tab.focused} label={tab.full} reduce={reduceMotion} rest={colors.textPrimary} chosen={colors.tabChosen}>
+        {(color) =>
+          tab.name === 'Profile' && user ? (
+            // Your own face on your own tab, from the session already loaded so it costs no request.
+            <View style={[styles.ring, { borderColor: color === colors.tabChosen ? color : 'transparent' }]}>
+              <Avatar name={user.username} size={AVATAR} photoUrl={ownAvatarUrl(user)} />
+            </View>
+          ) : (
+            <Icon name={tab.icon} size={GLYPH} color={color} />
+          )
+        }
+      </TabFace>
+      {tab.unread || tab.gift ? (
+        <View
+          style={[
+            styles.dot,
+            tab.name === 'Profile' ? styles.dotOnFace : null,
+            mirrored ? styles.dotMirrored : null,
+            { backgroundColor: colors.notice, borderColor: colors.barFill },
+          ]}
+          pointerEvents="none"
+          testID={inLens ? undefined : `tab-${tab.name}-dot`}
+        />
+      ) : null}
+    </>
+  );
+
   return (
     <View pointerEvents="box-none" style={[styles.dock, { bottom: tabBarLift(insets.bottom) }]}>
       <Animated.View style={[styles.bar, ...glass, { transform: [{ scale: size }] }]} testID="tab-bar">
@@ -108,13 +153,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
           {slot > 0 && row.height > 0 ? (
             <Capsule pieces={lens} slot={slot} height={row.height} ink={solid ? colors.surfaceRaised : colors.tabCapsule} fill={solid ? 1 : CAPSULE_FILL[scheme]} />
           ) : null}
-          {state.routes.map((route, i) => {
-            const tab = TABS.find((x) => x.name === route.name);
-            const name = (tab?.name ?? route.name) as TabName;
-            const full = tab ? t(tab.labelKey) : route.name;
-            const focused = state.index === i;
-            const unread = name === 'Messages' && messages > 0;
-            const gift = name === 'Profile' && counts.gifts > 0;
+          {tabs.map((tab) => {
+            const { route, name, full, focused, unread, gift } = tab;
             // A screen reader gets the name and what is waiting.
             const spoken = unread ? t('nav.tabUnread', { tab: full, count: messages }) : gift ? t('nav.tabWaiting', { tab: full }) : full;
             const onPress = () => {
@@ -124,47 +164,32 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
                 navigation.navigate(route.name, route.params);
               }
             };
-            // Counted from the left whichever way the tabs run, as the capsule is.
-            const at = mirrored ? state.routes.length - 1 - i : i;
             return (
               <TabButton
                 key={route.key}
                 name={name}
-                leftmost={at === 0}
-                rightmost={at === state.routes.length - 1}
+                leftmost={tab.at === 0}
+                rightmost={tab.at === state.routes.length - 1}
                 spoken={spoken}
                 focused={focused}
                 onPress={onPress}
                 onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
               >
-                <TabFace focused={focused} label={full} reduce={reduceMotion} rest={colors.textPrimary} chosen={colors.tabChosen}>
-                  {(color) =>
-                    name === 'Profile' && user ? (
-                      // Your own face on your own tab, from the session already loaded so it costs no request.
-                      <View style={[styles.ring, { borderColor: color === colors.tabChosen ? color : 'transparent' }]}>
-                        <Avatar name={user.username} size={AVATAR} photoUrl={ownAvatarUrl(user)} />
-                      </View>
-                    ) : (
-                      <Icon name={tab?.activeIcon ?? tab?.icon ?? 'home'} size={GLYPH} color={color} />
-                    )
-                  }
-                </TabFace>
-                {unread || gift ? (
-                  <View
-                    style={[
-                      styles.dot,
-                      name === 'Profile' ? styles.dotOnFace : null,
-                      mirrored ? styles.dotMirrored : null,
-                      { backgroundColor: colors.notice, borderColor: colors.barFill },
-                    ]}
-                    pointerEvents="none"
-                    testID={`tab-${name}-dot`}
-                  />
-                ) : null}
+                {face(tab)}
               </TabButton>
             );
           })}
-          {slot > 0 && row.height > 0 && !solid ? <Lens pieces={lens} slot={slot} height={row.height} /> : null}
+          {slot > 0 && row.height > 0 && !solid && !reduceMotion ? (
+            <Lens pieces={lens} slot={slot} height={row.height} width={row.width} ground={colors.barFill} tint={colors.tabCapsule} fill={CAPSULE_FILL[scheme]}>
+              <View style={[styles.copyRow, { width: row.width, height: row.height, flexDirection: dir.row }]}>
+                {tabs.map((tab) => (
+                  <View key={tab.route.key} style={styles.item}>
+                    <View style={styles.press}>{face(tab, true)}</View>
+                  </View>
+                ))}
+              </View>
+            </Lens>
+          ) : null}
         </View>
       </Animated.View>
     </View>
@@ -236,18 +261,56 @@ function Capsule({ pieces, slot, height, ink, fill }: { pieces: SelectorPieces; 
   );
 }
 
-/** The lens over the tabs while the choice moves: clear glass, one tab wide at rest, stretched and lifted by the move. */
-function Lens({ pieces, slot, height }: { pieces: SelectorPieces; slot: number; height: number }): React.JSX.Element {
+/**
+ * The lens over the tabs while the choice moves, one tab wide at rest, stretched and lifted by the move. It clips a copy
+ * of the tabs (`children`, the row's size), moved with it to show them magnified about its middle; the copy is only
+ * drawn, hidden from screen readers.
+ */
+function Lens({
+  pieces,
+  slot,
+  height,
+  width,
+  ground,
+  tint,
+  fill,
+  children,
+}: {
+  pieces: SelectorPieces;
+  slot: number;
+  height: number;
+  width: number;
+  ground: string;
+  /** The capsule's colour, and how much of it shows at rest. */
+  tint: string;
+  fill: number;
+  children: React.ReactNode;
+}): React.JSX.Element {
   return (
     <Animated.View
       pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      aria-hidden
       style={[
         styles.piece,
-        { width: slot, height, opacity: pieces.lens, transformOrigin: 'left center', transform: [{ translateX: pieces.left }, { scaleX: pieces.lensScale }, { scaleY: pieces.scaleY }] },
+        styles.lens,
+        {
+          width: slot,
+          height,
+          borderRadius: height / 2,
+          opacity: pieces.shown,
+          transformOrigin: 'left center',
+          transform: [{ translateX: pieces.left }, { scaleX: pieces.lensScale }, { scaleY: pieces.scaleY }],
+        },
       ]}
       testID="tab-lens"
     >
-      <LensFill radius={height / 2} />
+      <LensGlass radius={height / 2} ground={ground} tint={tint} tintOpacity={Animated.multiply(pieces.tint, fill)} up={pieces.lens}>
+        <Animated.View style={[styles.piece, { width, height, transformOrigin: 'left top', transform: pieces.copy }]} testID="tab-lens-copy">
+          {children}
+        </Animated.View>
+      </LensGlass>
     </Animated.View>
   );
 }
@@ -313,6 +376,9 @@ const styles = StyleSheet.create({
   row: { flex: 1, alignItems: 'stretch' },
   // The capsule's pieces, from the row's left edge, as tall as the row.
   piece: { position: 'absolute', left: 0, top: 0 },
+  // The lens clips the copy of the tabs to its own shape.
+  lens: { overflow: 'hidden' },
+  copyRow: { alignItems: 'stretch' },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
   // The pressed part: the glyph and its name together, with the dot over them.
   press: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
