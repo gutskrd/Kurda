@@ -3,35 +3,40 @@
  * neutral surfaces, hairline borders and the shared corners, in both themes and both directions.
  */
 
-/* ---- the badge row: a chip holding small pictures and "+N" ---- */
-/* Taller than a plain chip, so the pictures inside are big enough to tell apart at a glance; a box with the app's usual
- * corners rather than a round chip, so it sits with the cards and fields around it. */
-.bdg-pill {
+/* ---- the badge row: small pictures in a quiet row and "+N", one press that opens the collection ---- */
+/* No box of its own: it sits on the handle's line, lighter than the name, with a ground only while hovered or held. */
+.bdg-pill.chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 44px;
-  border-radius: var(--r-md);
+  gap: 6px;
+  height: 32px;
   max-width: 100%;
-  padding-inline: 8px 14px;
+  padding-inline: 4px 6px;
+  border-color: transparent;
+  border-radius: var(--r-pill);
+  background: transparent;
   font-variant-numeric: tabular-nums;
+}
+.bdg-pill.chip:hover {
+  background: var(--surface-2);
 }
 .bdg-pill-art {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
 }
 .bdg-pill-icon {
   display: inline-grid;
   flex: none;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   line-height: 0;
 }
 .bdg-pill-more {
-  color: var(--ink-2);
+  color: var(--ink-3);
+  font-weight: 600;
 }
 .bdg-pill.is-quiet {
   padding: 0 14px;

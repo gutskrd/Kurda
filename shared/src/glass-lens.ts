@@ -2,8 +2,9 @@
 /**
  * Liquid glass in a browser, for the website and the phone app's web build: each shape's face (its tint, clear on the
  * outer rim and deep where the words are, with the line of light on its edge) in every browser, and the SVG filter
- * that bends the page behind it at the rim, splitting red from blue a touch as real glass does (Chromium, the one
- * engine that draws an SVG filter as a backdrop). The optics are glass.ts's `glassField`. Nothing is blurred.
+ * that bends what it is given at the rim, splitting red from blue as real glass does: the page behind a shape, or the
+ * magnified row inside a selector's lens (Chromium only, the engine that draws a filter as a backdrop and the one it
+ * is checked in). The optics are glass.ts's `glassField`. Nothing is blurred.
  */
 import { GLASS, bendImage, glassField, shineImage, veilImage, type GlassShape } from './glass.js';
 
@@ -82,7 +83,7 @@ const CHANNEL = {
   b: '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0',
 };
 
-function bendFilter(id: string, href: string, { width, height }: GlassShape, reach: number): SVGFilterElement {
+function bendFilter(id: string, href: string, { width, height }: GlassShape, reach: number, split: number): SVGFilterElement {
   const node = svgNode('filter', {
     id,
     x: 0,
@@ -95,7 +96,7 @@ function bendFilter(id: string, href: string, { width, height }: GlassShape, rea
   });
   node.append(svgNode('feImage', { href, x: 0, y: 0, width, height, preserveAspectRatio: 'none', result: 'map' }));
   const scale = 2 * reach;
-  const spread = { r: 1 + GLASS.dispersion, g: 1, b: 1 - GLASS.dispersion };
+  const spread = { r: 1 + split, g: 1, b: 1 - split };
   for (const c of ['r', 'g', 'b'] as const) {
     node.append(
       svgNode('feDisplacementMap', { in: 'SourceGraphic', in2: 'map', scale: (scale * spread[c]).toFixed(2), xChannelSelector: 'R', yChannelSelector: 'G', result: `bent-${c}` }),
@@ -109,15 +110,22 @@ function bendFilter(id: string, href: string, { width, height }: GlassShape, rea
   return node;
 }
 
-/** The lens for a shape, made on first use. */
-export function takeLens(shape: GlassShape, dpr: number, bend: boolean): Lens {
-  const key = `${shape.width}x${shape.height}r${shape.radius}@${dpr}${bend ? '+bend' : ''}`;
+/** How a selector's lens bends at its rim (glass.ts `lensBendAt`), its colours split wider than the bar's. */
+export interface LensOptics {
+  bezel: number;
+  reach: number;
+  split: number;
+}
+
+/** The lens for a shape, made on first use: the bar's glass, or with `optics` a selector's lens. */
+export function takeLens(shape: GlassShape, dpr: number, bend: boolean, optics?: LensOptics): Lens {
+  const key = `${shape.width}x${shape.height}r${shape.radius}@${dpr}${bend ? '+bend' : ''}${optics ? `+${optics.bezel}/${optics.reach}/${optics.split}` : ''}`;
   const have = lenses.get(key);
   if (have) {
     have.uses++;
     return have.lens;
   }
-  const field = glassField(shape, dpr);
+  const field = glassField(shape, dpr, optics);
   const shine = shineImage(field);
   const light = picture([veilImage(field, TINT.light), shine], field.width, field.height);
   const dark = picture([veilImage(field, TINT.dark), shine], field.width, field.height);
@@ -126,7 +134,7 @@ export function takeLens(shape: GlassShape, dpr: number, bend: boolean): Lens {
   const map = bend ? picture([bendImage(field)], field.width, field.height) : null;
   if (map) {
     filter = `hevalo-lens-${++made}`;
-    node = bendFilter(filter, map, shape, field.reach);
+    node = bendFilter(filter, map, shape, field.reach, optics?.split ?? GLASS.dispersion);
     holder().appendChild(node);
   }
   const lens = { filter, light, dark };

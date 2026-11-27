@@ -97,11 +97,21 @@ export function bezelFor({ width, height }: Pick<GlassShape, 'width' | 'height'>
   return Math.min(GLASS.bezel, Math.min(width, height) / 2);
 }
 
-/** Bend and light for every device pixel of a shape. */
-export function glassField(shape: GlassShape, dpr = 1): GlassField {
+/**
+ * The bend at a depth `t` into a lens's rim, which shows words and glyphs right at its edge: it eases off from `reach`
+ * at the edge, and while `reach` stays under half the rim's width it stretches what lies near the edge and never folds
+ * it back, so nothing there is seen twice.
+ */
+export function lensBendAt(t: number, reach: number): number {
+  if (t >= 1) return 0;
+  return reach * (1 - Math.max(t, 0)) ** 2;
+}
+
+/** Bend and light for every device pixel of a shape: the bar's glass, or with `lens` a selector's lens (`lensBendAt`). */
+export function glassField(shape: GlassShape, dpr = 1, lens?: { bezel: number; reach: number }): GlassField {
   const W = Math.max(1, Math.round(shape.width * dpr));
   const H = Math.max(1, Math.round(shape.height * dpr));
-  const bezel = bezelFor(shape);
+  const bezel = lens ? Math.min(lens.bezel, bezelFor(shape)) : bezelFor(shape);
   const bend = new Float32Array(W * H * 2);
   const shine = new Float32Array(W * H);
   const veil = new Float32Array(W * H);
@@ -114,7 +124,7 @@ export function glassField(shape: GlassShape, dpr = 1): GlassField {
       shine[i] = shineAt(inside, nx, ny, bezel);
       // A pixel the edge only partly covers takes that part of the tint, so the edge stays smooth.
       veil[i] = veilAt(inside / bezel) * Math.min(inside * dpr, 1);
-      const b = bendAt(inside / bezel, bezel);
+      const b = lens ? lensBendAt(inside / bezel, lens.reach) : bendAt(inside / bezel, bezel);
       bend[i * 2] = -nx * b;
       bend[i * 2 + 1] = -ny * b;
       if (b > reach) reach = b;

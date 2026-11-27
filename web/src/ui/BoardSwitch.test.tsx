@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -15,6 +15,84 @@ function readable(el: Element): string {
   copy.querySelectorAll('[aria-hidden="true"]').forEach((hidden) => hidden.remove());
   return copy.textContent ?? '';
 }
+
+/** The stylesheet, read from disk, since an imported stylesheet arrives empty in tests. */
+interface FileSystem {
+  readFileSync(file: URL, encoding: 'utf8'): string;
+}
+const fileSystem = 'node:fs';
+const { readFileSync } = (await import(/* @vite-ignore */ fileSystem)) as FileSystem;
+// beside this file, wherever the suite is run from
+const here = import.meta.url;
+const ranks = readFileSync(new URL('../styles/ranks.css', here), 'utf8');
+
+/**
+ * A page where things move: motion is on, each option stands 100 pixels on from the one before it, and every animation
+ * asked for is noted against the element that plays it.
+ */
+function moving(reduced = false): Element[] {
+  vi.stubGlobal('matchMedia', (q: string) => ({ matches: reduced && q.includes('reduced-motion'), addEventListener: () => undefined, removeEventListener: () => undefined }));
+  const place = (el: HTMLElement) => (el.parentElement ? [...el.parentElement.children].indexOf(el) : 0);
+  vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function (this: HTMLElement) {
+    return place(this) * 100;
+  });
+  vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(() => 100);
+  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(() => 40);
+  const played: Element[] = [];
+  HTMLElement.prototype.animate = function (this: HTMLElement) {
+    played.push(this);
+    return { cancel: () => undefined, finished: new Promise(() => undefined) } as unknown as Animation;
+  };
+  return played;
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  delete (HTMLElement.prototype as Partial<HTMLElement>).animate;
+});
+
+describe('the rankings switches’ lens', () => {
+  const show = (value: 'xp' | 'zer') => (
+    <I18nProvider>
+      <BoardSwitch value={value} onChange={() => undefined} />
+    </I18nProvider>
+  );
+
+  it('lifts into a lens holding copies of the options to magnify, hidden from screen readers and out of reach', () => {
+    const played = moving();
+    const { rerender } = render(show('xp'));
+    const group = screen.getByRole('group', { name: en['rankings.rankBy'] });
+    const lens = group.querySelector('.seg-lens')!;
+    expect(lens).toHaveAttribute('aria-hidden', 'true');
+    expect(lens).toHaveAttribute('inert');
+    rerender(show('zer'));
+    expect(played).toContain(lens);
+    // A copy of the switch's options without their radios or names.
+    const copy = lens.querySelector('[data-lens-copy]')!;
+    expect(copy.querySelectorAll('.seg-btn')).toHaveLength(2);
+    expect(copy.textContent).toContain('Zêr');
+    expect(copy.querySelector('input, [id], [name]')).toBeNull();
+    // It moves with the lens, on a ground of its own so the options beneath never show through.
+    for (const el of lens.querySelectorAll('[data-lens-glass], [data-lens-copy], [data-lens-tint], [data-lens-rim]')) expect(played).toContain(el);
+    expect(lens.querySelector<HTMLElement>('[data-lens-glass]')!.style.background).toMatch(/^rgb\(/);
+    expect(within(group).getAllByRole('radio')).toHaveLength(2);
+  });
+
+  it('draws no lens for a reader who asked for less transparency or more contrast', () => {
+    const rule = /@media \(prefers-reduced-transparency: reduce\), \(prefers-contrast: more\) \{\s*\.seg-lens \{\s*display: none;/.exec(ranks);
+    expect(rule).not.toBeNull();
+  });
+
+  it('stays empty and still under Reduce Motion, where the chosen ground is simply placed', () => {
+    const played = moving(true);
+    const { rerender } = render(show('xp'));
+    rerender(show('zer'));
+    const lens = screen.getByRole('group', { name: en['rankings.rankBy'] }).querySelector('.seg-lens')!;
+    expect(played).toEqual([]);
+    for (const copy of lens.querySelectorAll('[data-lens-copy]')) expect(copy.childElementCount).toBe(0);
+  });
+});
 
 describe('BoardSwitch', () => {
   it('offers XP and Zêr as one choice of two, with the chosen one checked', async () => {
