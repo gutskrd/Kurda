@@ -429,7 +429,16 @@ function steady(rows: readonly (readonly number[])[]): number[][] {
   const m = rows.length;
   return rows.map((row, i) => soften(row.map((v, k) => (rows[(i + m - 1) % m]![k]! + 2 * v + rows[(i + 1) % m]![k]!) / 4)));
 }
-const GAPS: Record<GapName, number[][]> = { slit: steady(GAP_TRACK.slit), wedge: steady(GAP_TRACK.wedge), ring: steady(GAP_TRACK.ring) };
+/**
+ * A row of the slit's widths up to where its shadow first ends: a patch the reference shows further up, by the thumb's
+ * tip, would be joined to it by the softening and stand up beside the nail as a dark spike.
+ */
+function oneRun(row: readonly number[]): number[] {
+  const start = row.findIndex((v) => v > 0);
+  const end = start < 0 ? -1 : row.findIndex((v, k) => k > start && v <= 0);
+  return row.map((v, k) => (end >= 0 && k >= end ? 0 : v));
+}
+const GAPS: Record<GapName, number[][]> = { slit: steady(GAP_TRACK.slit.map(oneRun)), wedge: steady(GAP_TRACK.wedge), ring: steady(GAP_TRACK.ring) };
 const PALM = steady(PALM_TRACK);
 const SLIT_START = steady(SLIT_FROM);
 
@@ -687,6 +696,16 @@ function firm(width: number, cover: number): number {
   return cover + shown - HAIR * Math.pow(Math.max(0, 1 - shown / (3 * HAIR)), 2);
 }
 
+/**
+ * How far out the band of palm between the thumb and its shadow is drawn, from how far it was measured: one only a few
+ * hairs wide would show as a sliver of skin inside the shadow, so it closes up, and it opens out as it widens.
+ */
+const SLIVER = { shut: 5, open: 12 } as const;
+function bandOf(width: number): number {
+  const t = Math.max(0, Math.min(1, (width - SLIVER.shut) / (SLIVER.open - SLIVER.shut)));
+  return width * t * t * (3 - 2 * t);
+}
+
 /** A digit's tip: the outermost point of its round, on its centre line. */
 function tipOf(d: Posed): Pt {
   const m = d.centre.length;
@@ -745,7 +764,7 @@ function shapesIn(p: Pose): Record<string, Pt[]> {
   ];
   const thumb = [...T.a, ...T.cap, ...T.b.slice().reverse()];
   const curled = [...C.a, ...C.cap, ...C.b.slice().reverse()];
-  const band = p.slitFrom.map((w, k) => Math.min(w, p.gaps.slit[k] ?? 0));
+  const band = p.slitFrom.map((w, k) => bandOf(Math.min(w, p.gaps.slit[k] ?? 0)));
   return {
     back,
     curled,

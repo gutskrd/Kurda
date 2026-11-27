@@ -133,6 +133,18 @@ function inside([x, y]: Pt, pts: readonly Pt[]): boolean {
   }
   return hit;
 }
+/** How far a point lies outside a closed outline, on the frame, or 0 inside it. */
+function outside(p: Pt, pts: readonly Pt[]): number {
+  if (inside(p, pts)) return 0;
+  return Math.min(
+    ...pts.map((a, i) => {
+      const b = pts[(i + 1) % pts.length]!;
+      const [dx, dy] = [b[0] - a[0], b[1] - a[1]];
+      const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy || 1)));
+      return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+    }),
+  );
+}
 /**
  * The reference's skeleton, fitted frame by frame to its silhouette over one half of its loop (the other half repeats
  * the hand), on the frame: the thumb's base, joint and tip; the index finger's base, middle joint, tip joint and tip;
@@ -219,6 +231,32 @@ describe('the turn of the stamp in the hand', () => {
         for (const p of near) expect(inside(p, pts.thumb!), `${name} at ${ms} ms`).toBe(true);
       }
     }
+  });
+
+  it('narrows the thumb’s shadow toward its tip with no spike or sliver of skin inside it', () => {
+    let [rewidens, sliver] = [{ by: 0, at: 0 }, { run: 0, at: 0 }];
+    for (const ms of MOMENTS) {
+      const pts = handStampPointsAt(ms);
+      const n = pts.slit!.length / 2;
+      // how far out past the thumb's edge the shadow and the palm laid over its inner part reach, place by place up the thumb
+      const reach = (name: string): number[] => Array.from({ length: n }, (_, k) => outside(pts[name]![2 * n - 1 - k]!, pts.thumb!));
+      const [slit, band] = [reach('slit'), reach('band')];
+      // from its widest place on toward the tip the shadow only narrows: it never stands up again beside the nail
+      let least = Math.max(...slit);
+      for (let k = slit.indexOf(least) + 1; k < n; k++) {
+        least = Math.min(least, slit[k]!);
+        if (slit[k]! - least > rewidens.by) rewidens = { by: slit[k]! - least, at: ms };
+      }
+      // the palm between the thumb and its shadow is either wide enough to read as palm or not there: never a thin
+      // line of skin running inside the shadow
+      let run = 0;
+      for (let k = 0; k < n; k++) {
+        run = band[k]! > 0.3 && band[k]! < 1.2 && slit[k]! > band[k]! + 0.3 ? run + 1 : 0;
+        if (run > sliver.run) sliver = { run, at: ms };
+      }
+    }
+    expect(rewidens.by, `widens again at ${rewidens.at} ms`).toBeLessThan(1.5);
+    expect(sliver.run, `a sliver of skin at ${sliver.at} ms`).toBeLessThanOrEqual(3);
   });
 
   it('keeps the palm beside the thumb as the hand opens, so the shadow there lies on skin', () => {
