@@ -12,7 +12,7 @@ import * as shared from '../index.js';
 import { GiftCanvas } from './gift-canvas.js';
 import { GIFT_ART_IDS, giftArtKey, giftArtSvg, giftLoopParts, type GiftArtId } from './gift-art.js';
 import { GIFT_LOOP_REST, GIFT_LOOP_SCALE, giftLoop, giftLoopMatrix, giftLoopPoseAt, type GiftLoopLayer } from './gift-loop.js';
-import { GIFT_LOOPS, giftLoopKey, giftLoopOf, giftLoopPicture } from './gift-loops.js';
+import { GIFT_LOOP_LIMIT, GIFT_LOOPS, giftLoopKey, giftLoopOf, giftLoopPicture, giftLoopStage } from './gift-loops.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const LOOP_DIR = 'web/public/cosmetics/gift-loops';
@@ -202,6 +202,25 @@ describe('where the apps find a gift’s parts', () => {
   it('is what the shared package hands the apps', () => {
     expect(shared.GIFT_LOOPS).toBe(GIFT_LOOPS);
     expect(shared.giftLoopPicture).toBe(giftLoopPicture);
+  });
+});
+
+describe('how many loops play at once', () => {
+  it('plays only the most visible few, the earliest first among equals, and passes a turn on as one leaves or fades from view', () => {
+    const stage = giftLoopStage(GIFT_LOOP_LIMIT);
+    const on: boolean[] = [false, false, false, false, false];
+    const turns = [0.5, 1, 1, 0.25, 1].map((score, i) => stage.join(score, (playing) => (on[i] = playing)));
+    expect(GIFT_LOOP_LIMIT).toBe(3);
+    expect(on).toEqual([false, true, true, false, true]);
+    expect(stage.playing()).toBe(3);
+    turns[1]!.leave();
+    expect(on).toEqual([true, false, true, false, true]);
+    turns[3]!.update(0.9);
+    expect(on).toEqual([false, false, true, true, true]);
+    turns[2]!.leave();
+    turns[2]!.leave();
+    expect(on).toEqual([true, false, false, true, true]);
+    expect(stage.playing()).toBe(3);
   });
 });
 

@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { giftLoopMoves, giftLoopPicture, type GiftLoop, type GiftLoopKey, type GiftLoopLayer, type GiftLoopPicture } from '@kurda/shared';
 import { playsMotion } from '../lib/motion';
+import { useGiftLoopTurn } from './loopStage';
 import './gift-loop.css';
 
 /**
  * A gift's picture alive (shared art/gift-loop.ts): its parts stacked over the still, each played by CSS keyframes on
- * transform and opacity alone, and only while the picture is on screen. The parts take the still's place once all of
- * them have loaded, and since the round starts on the still's own frame the swap cannot be seen. Under Reduce Motion,
- * or for a gift with no round, it is the still. Decorative: the words beside it say what it is.
+ * transform and opacity alone. It plays only while it is on screen and among the few most in view (loopStage.ts);
+ * otherwise it shows the still, and starts again from it, since the round's first frame is the still, so the swap
+ * cannot be seen. Under Reduce Motion, or for a gift with no round, it is the still. Decorative: the words beside it
+ * say what it is.
  */
 export function GiftLoopArt({ src, lazy = true }: { src: string; lazy?: boolean }): React.JSX.Element {
   const picture = useMemo(() => (playsMotion() ? giftLoopPicture(src) : null), [src]);
@@ -22,25 +24,30 @@ export function hasGiftLoop(src: string | null | undefined): boolean {
 
 function Living({ src, picture, lazy }: { src: string; picture: GiftLoopPicture; lazy: boolean }): React.JSX.Element {
   const root = useRef<HTMLSpanElement>(null);
-  const [onScreen, setOnScreen] = useState(false);
+  const [inView, setInView] = useState(0);
   const [seen, setSeen] = useState(false);
   const [loaded, setLoaded] = useState(0);
   const [failed, setFailed] = useState(false);
   const parts = picture.layers.length + (picture.base && picture.base !== src ? 1 : 0);
   const ready = !failed && loaded >= parts;
+  const playing = useGiftLoopTurn(ready && inView > 0, inView);
 
   useEffect(() => {
     const el = root.current;
     if (!el || typeof IntersectionObserver !== 'function') {
-      setOnScreen(true);
+      setInView(1);
       setSeen(true);
       return;
     }
-    const io = new IntersectionObserver(([entry]) => {
-      const visible = entry?.isIntersecting === true;
-      setOnScreen(visible);
-      if (visible) setSeen(true);
-    });
+    // How much of it shows, in quarters, which ranks it against the other gifts in view.
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        const share = entry?.isIntersecting ? Math.max(0.01, Math.round(entry.intersectionRatio * 4) / 4) : 0;
+        setInView(share);
+        if (share > 0) setSeen(true);
+      },
+      { threshold: [0, 0.25, 0.5, 0.75, 1] },
+    );
     io.observe(el);
     return () => io.disconnect();
   }, []);
@@ -50,7 +57,7 @@ function Living({ src, picture, lazy }: { src: string; picture: GiftLoopPicture;
   const css = useMemo(() => loopCss(picture.id, picture.loop), [picture]);
 
   return (
-    <span ref={root} className="gift-loop" data-ready={ready ? 'true' : 'false'} data-playing={ready && onScreen ? 'true' : 'false'}>
+    <span ref={root} className="gift-loop" data-ready={ready ? 'true' : 'false'} data-playing={playing ? 'true' : 'false'}>
       <span className="gift-loop-frame">
         <img className="gift-loop-still" src={src} alt="" loading={lazy ? 'lazy' : undefined} decoding="async" />
         {seen && !failed && (

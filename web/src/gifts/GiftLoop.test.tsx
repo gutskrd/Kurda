@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render } from '@testing-library/react';
-import { GIFT_LOOPS, giftArtKey, giftLoopPicture, type GiftArtId } from '@kurda/shared';
+import { act, fireEvent, render } from '@testing-library/react';
+import { GIFT_LOOP_LIMIT, GIFT_LOOPS, giftArtKey, giftLoopPicture, type GiftArtId } from '@kurda/shared';
 import { GiftItemArt } from './GiftArt';
 import { GiftLoopArt, loopCss } from './GiftLoop';
 
@@ -14,6 +14,29 @@ function motion(reduced: boolean): void {
 }
 
 const LOOPING = Object.keys(GIFT_LOOPS) as GiftArtId[];
+
+/** A page's view of what is on screen, which the test moves by hand. */
+class Sight {
+  static watching: Sight[] = [];
+  el: Element | null = null;
+  constructor(private readonly report: IntersectionObserverCallback) {
+    Sight.watching.push(this);
+  }
+  observe(el: Element): void {
+    this.el = el;
+  }
+  disconnect(): void {}
+  /** Shows `share` of the element (0 for none). */
+  static show(el: Element, share: number): void {
+    const sight = Sight.watching.find((s) => s.el === el)!;
+    act(() => sight.report([{ isIntersecting: share > 0, intersectionRatio: share, target: el } as IntersectionObserverEntry], sight as never));
+  }
+}
+
+/** Every part of every living picture loaded. */
+function loadAll(root: ParentNode): void {
+  for (const part of root.querySelectorAll('img.gift-loop-part')) fireEvent.load(part);
+}
 const stillOf = (id: GiftArtId): string => `/cosmetics/${giftArtKey(id)}`;
 
 describe('a gift’s living picture', () => {
@@ -74,5 +97,45 @@ describe('a gift’s living picture', () => {
         for (const [, , props] of frames) for (const prop of props!.split(';')) expect(['transform', 'opacity'], `${id} ${name}`).toContain(prop.split(':')[0]);
       }
     }
+  });
+
+  it('plays only while on screen, and rests on the still once it leaves view', () => {
+    motion(false);
+    Sight.watching = [];
+    vi.stubGlobal('IntersectionObserver', Sight);
+    const { container } = render(<GiftLoopArt src={stillOf(LOOPING[0]!)} />);
+    const root = container.querySelector('.gift-loop')!;
+    // Never seen: nothing fetched.
+    expect(root.querySelectorAll('img.gift-loop-part')).toHaveLength(0);
+    Sight.show(root, 1);
+    loadAll(root);
+    expect(root).toHaveAttribute('data-playing', 'true');
+    Sight.show(root, 0);
+    expect(root).toHaveAttribute('data-ready', 'true');
+    expect(root).toHaveAttribute('data-playing', 'false');
+    Sight.show(root, 0.5);
+    expect(root).toHaveAttribute('data-playing', 'true');
+  });
+
+  it('plays only the few most in view at once, and hands a turn on as one leaves', () => {
+    motion(false);
+    Sight.watching = [];
+    vi.stubGlobal('IntersectionObserver', Sight);
+    const shares = [0.5, 1, 1, 0.25, 1];
+    const { container } = render(
+      <>
+        {shares.map((_, i) => (
+          <GiftLoopArt key={i} src={stillOf(LOOPING[i % LOOPING.length]!)} />
+        ))}
+      </>,
+    );
+    const roots = [...container.querySelectorAll('.gift-loop')];
+    roots.forEach((root, i) => Sight.show(root, shares[i]!));
+    loadAll(container);
+    const playing = (): number[] => roots.flatMap((root, i) => (root.getAttribute('data-playing') === 'true' ? [i] : []));
+    expect(playing()).toHaveLength(GIFT_LOOP_LIMIT);
+    expect(playing()).toEqual([1, 2, 4]);
+    Sight.show(roots[2]!, 0);
+    expect(playing()).toEqual([0, 1, 4]);
   });
 });

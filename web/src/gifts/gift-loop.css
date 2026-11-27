@@ -1,7 +1,7 @@
 /*
  * A gift's picture alive (GiftLoop.tsx): the still, and over it its parts, each a picture placed on the same square
  * frame and moved by keyframes on transform and opacity only. The frame sits where the still would, so the parts are
- * shown in its place once they have all loaded.
+ * shown in its place while they play.
  */
 .gift-loop {
   position: relative;
@@ -47,25 +47,26 @@
   width: 100%;
   height: 100%;
 }
-/* the parts stay unseen until every one has loaded, then take the still's place */
+/* the parts are shown only while they play, which is once they have all loaded and the picture has a turn */
 .gift-loop-parts {
   opacity: 0;
 }
-.gift-loop[data-ready='true'] .gift-loop-parts {
+.gift-loop[data-playing='true'] .gift-loop-parts {
   opacity: 1;
 }
-.gift-loop[data-ready='true'] .gift-loop-still {
+.gift-loop[data-playing='true'] .gift-loop-still {
   visibility: hidden;
 }
-.gift-loop[data-playing='false'] .gift-loop-part {
-  animation-play-state: paused;
+/* out of view or without a turn it rests on the still, and its round starts again from the first frame */
+.gift-loop:not([data-playing='true']) .gift-loop-part {
+  animation: none !important;
 }
 /* asked for less motion after the parts came in: back to the still */
 @media (prefers-reduced-motion: reduce) {
   .gift-loop .gift-loop-parts {
     display: none;
   }
-  .gift-loop[data-ready='true'] .gift-loop-still {
+  .gift-loop[data-playing='true'] .gift-loop-still {
     visibility: visible;
   }
 }

@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => import('react-native-web'));
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { AccessibilityInfo, Animated } from 'react-native';
-import { GIFT_LOOPS, giftArtKey, giftLoopPicture, type GiftArtId } from '@kurda/shared';
+import { GIFT_LOOP_LIMIT, GIFT_LOOPS, giftArtKey, giftLoopPicture, type GiftArtId } from '@kurda/shared';
 import { GiftArt } from './GiftLoop';
+import { GiftLoopRow, GiftLoopViewport, GiftLoopViewportProvider } from './loopStage';
 
 const LOOPING = Object.keys(GIFT_LOOPS) as GiftArtId[];
 const stillOf = (id: GiftArtId): string => `/cosmetics/${giftArtKey(id)}`;
@@ -73,5 +74,58 @@ describe('a gift’s living picture on the phone', () => {
     render(<GiftArt path={stillOf(LOOPING[0]!)} size={64} testID="calm" />);
     await waitFor(() => expect(screen.queryByTestId('calm-parts')).toBeNull());
     expect(screen.getByTestId('calm-still')).toBeTruthy();
+  });
+
+  it('plays a gift in a list only while its row is in view, and stops on the still when it leaves', async () => {
+    pictures();
+    const loops = vi.spyOn(Animated, 'loop');
+    const viewport = new GiftLoopViewport();
+    const show = (keys: string[]): void =>
+      act(() => {
+        for (const pair of viewport.pairs) pair.onViewableItemsChanged?.({ viewableItems: keys.map((key, index) => ({ key, index, isViewable: true, item: null })), changed: [] });
+      });
+    render(
+      <GiftLoopViewportProvider viewport={viewport}>
+        <GiftLoopRow id="m1">
+          <GiftArt path={stillOf(LOOPING[0]!)} size={64} testID="row" />
+        </GiftLoopRow>
+      </GiftLoopViewportProvider>,
+    );
+    // Never in view: nothing fetched, nothing moving, the still alone.
+    expect(screen.queryByTestId('row-parts')).toBeNull();
+    show(['m1']);
+    await waitFor(() => expect(opacityOf(screen.getByTestId('row-parts'))).not.toBe('0'));
+    const started = loops.mock.calls.length;
+    expect(started).toBeGreaterThan(0);
+    show([]);
+    await waitFor(() => expect(opacityOf(screen.getByTestId('row-parts'))).toBe('0'));
+    expect(opacityOf(screen.getByTestId('row-still'))).not.toBe('0');
+    expect(loops.mock.calls.length).toBe(started);
+    show(['m1']);
+    await waitFor(() => expect(opacityOf(screen.getByTestId('row-parts'))).not.toBe('0'));
+  });
+
+  it('plays only the few gifts most in view at once, the rest on their stills', async () => {
+    pictures();
+    const viewport = new GiftLoopViewport();
+    const keys = ['a', 'b', 'c', 'd', 'e'];
+    render(
+      <GiftLoopViewportProvider viewport={viewport}>
+        {keys.map((key, i) => (
+          <GiftLoopRow key={key} id={key}>
+            <GiftArt path={stillOf(LOOPING[i % LOOPING.length]!)} size={64} testID={`gift-${key}`} />
+          </GiftLoopRow>
+        ))}
+      </GiftLoopViewportProvider>,
+    );
+    act(() => {
+      const items = keys.map((key, index) => ({ key, index, isViewable: true, item: null }));
+      viewport.pairs[0]!.onViewableItemsChanged?.({ viewableItems: items, changed: [] });
+      // Only the last two are seen whole, so they come first.
+      viewport.pairs[1]!.onViewableItemsChanged?.({ viewableItems: items.slice(3), changed: [] });
+    });
+    const playing = (): string[] => keys.filter((key) => opacityOf(screen.getByTestId(`gift-${key}-still`)) === '0');
+    await waitFor(() => expect(playing()).toHaveLength(GIFT_LOOP_LIMIT));
+    expect(playing()).toEqual(['a', 'd', 'e']);
   });
 });

@@ -51,6 +51,7 @@ import { ClearedLine, WelcomeCard } from './Welcome';
 import { StandingCard, type Banned } from './Standing';
 import { AddFriendsSheet } from './AddFriendsSheet';
 import { Loading } from '../theme/Loading';
+import { GiftLoopRow, GiftLoopViewportProvider, useGiftLoopViewport } from '../gifts/loopStage';
 
 const MAX_LEN = 2000;
 
@@ -149,6 +150,8 @@ export function GroupThreadScreen({
     [thread, locale, t],
   );
   const list = useRef<FlatList<Message>>(null);
+  // Which rows are in view, so only the gifts on screen play their loops.
+  const viewport = useGiftLoopViewport();
   const { away, onScroll } = useAwayFromLatest();
   const unseen = useUnseenBelow(messages, away, me);
   const toLatest = useCallback(() => list.current?.scrollToOffset({ offset: 0, animated: !reduce }), [reduce]);
@@ -608,44 +611,49 @@ export function GroupThreadScreen({
             </View>
           </ScrollView>
         ) : (
-          <View style={styles.flex}>
-            <FlatList
-              ref={list}
-              data={newestFirst}
-              inverted
-              keyExtractor={(m) => keyOf(m.id)}
-              contentContainerStyle={styles.list}
-              onScroll={onScroll}
-              scrollEventThrottle={64}
-              onEndReached={loadOlder}
-              onEndReachedThreshold={0.4}
-              // Under the newest message, where theirs is about to land (an inverted list's head is its foot).
-              ListHeaderComponent={<TypingBubble names={typing} named />}
-              // The top of the history: older messages on their way, or above everything held, who cleared the chat.
-              ListFooterComponent={
-                loadingOlder ? (
-                  <Loading style={{ marginVertical: spacing.md }} />
-                ) : view.kind === 'everyone' ? (
-                  <ClearedLine by={view.by} at={view.at} me={user?.username ?? ''} />
-                ) : null
-              }
-              renderItem={({ item }) => (
-                <MessageRow
-                  message={item}
-                  mine={item.senderId === me}
-                  place={places.get(item.id) ?? LONE}
-                  named
-                  senderName={item.username}
-                  onOpenGift={startUnwrap}
-                  onReport={() => setReporting({ target: { type: 'group_message', messageId: item.id }, senderId: item.senderId, sender: item.username })}
-                  onRetry={() => void retry(item.id)}
-                  onDiscard={() => cancel(item.id)}
-                  arriving={isArriving(keyOf(item.id))}
-                />
-              )}
-            />
-            {away ? <JumpToLatest unseen={unseen} onPress={toLatest} /> : null}
-          </View>
+          <GiftLoopViewportProvider viewport={viewport}>
+            <View style={styles.flex}>
+              <FlatList
+                ref={list}
+                data={newestFirst}
+                inverted
+                keyExtractor={(m) => keyOf(m.id)}
+                viewabilityConfigCallbackPairs={viewport.pairs}
+                contentContainerStyle={styles.list}
+                onScroll={onScroll}
+                scrollEventThrottle={64}
+                onEndReached={loadOlder}
+                onEndReachedThreshold={0.4}
+                // Under the newest message, where theirs is about to land (an inverted list's head is its foot).
+                ListHeaderComponent={<TypingBubble names={typing} named />}
+                // The top of the history: older messages on their way, or above everything held, who cleared the chat.
+                ListFooterComponent={
+                  loadingOlder ? (
+                    <Loading style={{ marginVertical: spacing.md }} />
+                  ) : view.kind === 'everyone' ? (
+                    <ClearedLine by={view.by} at={view.at} me={user?.username ?? ''} />
+                  ) : null
+                }
+                renderItem={({ item }) => (
+                  <GiftLoopRow id={keyOf(item.id)}>
+                    <MessageRow
+                      message={item}
+                      mine={item.senderId === me}
+                      place={places.get(item.id) ?? LONE}
+                      named
+                      senderName={item.username}
+                      onOpenGift={startUnwrap}
+                      onReport={() => setReporting({ target: { type: 'group_message', messageId: item.id }, senderId: item.senderId, sender: item.username })}
+                      onRetry={() => void retry(item.id)}
+                      onDiscard={() => cancel(item.id)}
+                      arriving={isArriving(keyOf(item.id))}
+                    />
+                  </GiftLoopRow>
+                )}
+              />
+              {away ? <JumpToLatest unseen={unseen} onPress={toLatest} /> : null}
+            </View>
+          </GiftLoopViewportProvider>
         )}
 
         {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}

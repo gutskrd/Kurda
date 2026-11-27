@@ -50,3 +50,55 @@ export function giftLoopPicture(still: string | null | undefined): GiftLoopPictu
     layers: loop.layers.map((layer) => ({ layer, src: root + giftLoopKey(id, layer.name) })),
   };
 }
+
+// ─────────────────────────────────────────────────────────────── how many play at once
+
+/** How many gift loops a page plays at once: the most visible; the rest show their still. */
+export const GIFT_LOOP_LIMIT = 3;
+
+/** A loop's place on the stage: its standing can change, and it leaves when it no longer wants to play. */
+export interface GiftLoopTurn {
+  update(score: number): void;
+  leave(): void;
+}
+
+/**
+ * The loops that want to play on one page, of which only the `limit` with the highest score do (the most visible), the
+ * earliest to ask first among equals. Each hears through `onTurn` whenever its turn starts or ends.
+ */
+export function giftLoopStage(limit = GIFT_LOOP_LIMIT): { join(score: number, onTurn: (playing: boolean) => void): GiftLoopTurn; playing(): number } {
+  const entries = new Map<number, { score: number; onTurn: (playing: boolean) => void; playing: boolean }>();
+  let next = 0;
+  const settle = (): void => {
+    const ranked = [...entries.entries()].sort(([a, x], [b, y]) => y.score - x.score || a - b);
+    ranked.forEach(([, e], i) => {
+      const playing = i < limit;
+      if (playing === e.playing) return;
+      e.playing = playing;
+      e.onTurn(playing);
+    });
+  };
+  return {
+    join(score, onTurn) {
+      const id = next++;
+      entries.set(id, { score, onTurn, playing: false });
+      settle();
+      return {
+        update(s) {
+          const e = entries.get(id);
+          if (!e || e.score === s) return;
+          e.score = s;
+          settle();
+        },
+        leave() {
+          const e = entries.get(id);
+          if (!e) return;
+          entries.delete(id);
+          if (e.playing) e.onTurn(false);
+          settle();
+        },
+      };
+    },
+    playing: () => [...entries.values()].filter((e) => e.playing).length,
+  };
+}

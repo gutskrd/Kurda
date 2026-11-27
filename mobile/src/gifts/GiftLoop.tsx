@@ -4,13 +4,15 @@ import { giftLoopMoves, giftLoopPicture, type GiftLoopKey, type GiftLoopLayer } 
 import { assetUrl } from '../api/env';
 import { useScreenAwake } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useGiftLoopPlace, useGiftLoopTurn } from './loopStage';
 
 /**
  * A gift's picture, alive when it has a round (shared art/gift-loop.ts) and `play` asks for it: its parts are stacked
  * over the still as separate pictures on the same frame and moved on the native driver, as the gift box is, so nothing
- * is drawn again. The parts take the still's place once all have loaded, and the round starts on the still's own
- * frame, so the swap cannot be seen; the round runs only while its screen is in front. Under Reduce Motion, or for any
- * other picture, it is the still. Decorative: the words beside it say what it is.
+ * is drawn again. It plays only while it is on screen (its list row in view) with its screen in front, and only if it
+ * is among the few most in view (loopStage.tsx); otherwise it stops and shows the still, which is the round's first
+ * frame, so starting and stopping cannot be seen. Under Reduce Motion, or for any other picture, it is the still.
+ * Decorative: the words beside it say what it is.
  */
 export function GiftArt({
   path,
@@ -37,9 +39,15 @@ export function GiftArt({
   const picture = useMemo(() => (play && !reduce ? giftLoopPicture(uri) : null), [uri, play, reduce]);
   const [loaded, setLoaded] = useState(0);
   const [failed, setFailed] = useState(false);
+  const place = useGiftLoopPlace();
+  const onScreen = place > 0;
+  // The parts are fetched only once the gift has been on screen, and kept after.
+  const [seen, setSeen] = useState(onScreen);
+  if (onScreen && !seen) setSeen(true);
   const parts = picture ? picture.layers.length + (picture.base ? 1 : 0) : 0;
-  const live = picture !== null && !failed;
+  const live = picture !== null && !failed && seen;
   const ready = live && loaded >= parts;
+  const playing = useGiftLoopTurn(ready && awake && onScreen, place);
   const unit = size / 120;
 
   // A clock for each length of round among the layers, run only while the parts are in and the screen is in front.
@@ -49,7 +57,7 @@ export function GiftArt({
     setFailed(false);
   }, [picture]);
   useEffect(() => {
-    if (!ready || !awake) return;
+    if (!playing) return;
     const runs = [...clocks].map(([ms, value]) =>
       Animated.loop(Animated.timing(value, { toValue: 1, duration: ms, easing: Easing.linear, useNativeDriver: true, isInteraction: false })),
     );
@@ -59,7 +67,7 @@ export function GiftArt({
       // Stopped on the round's first frame, which is the still.
       clocks.forEach((value) => value.setValue(0));
     };
-  }, [ready, awake, clocks]);
+  }, [playing, clocks]);
 
   if (!uri) return null;
   const onLoad = (): void => setLoaded((n) => n + 1);
@@ -68,14 +76,14 @@ export function GiftArt({
     <View style={[{ width: size, height: size }, style]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID={testID}>
       <Image
         source={{ uri }}
-        style={[StyleSheet.absoluteFill, imageStyle, ready ? styles.hidden : null]}
+        style={[StyleSheet.absoluteFill, imageStyle, playing ? styles.hidden : null]}
         resizeMode="contain"
         onError={onError}
         accessibilityIgnoresInvertColors
         testID={testID ? `${testID}-still` : undefined}
       />
       {live && picture ? (
-        <View style={[StyleSheet.absoluteFill, ready ? null : styles.hidden]} testID={testID ? `${testID}-parts` : undefined}>
+        <View style={[StyleSheet.absoluteFill, playing ? null : styles.hidden]} testID={testID ? `${testID}-parts` : undefined}>
           {picture.base ? <Image source={{ uri: picture.base }} style={StyleSheet.absoluteFill} onLoad={onLoad} onError={onFail} accessibilityIgnoresInvertColors /> : null}
           {picture.layers.map(({ layer, src }) => (
             <Part key={layer.name} layer={layer} src={src} unit={unit} clock={clocks.get(layer.ms)!} onLoad={onLoad} onError={onFail} />
