@@ -138,7 +138,7 @@ const TRACK: readonly Frame[] = [
   { thumb: [[691.5, 719], [691, 670.5], [656.6, 416.2]], index: [[1026.5, 719], [1060.7, 634.7], [989.2, 508.5], [797.1, 438.5]], middle: [[565.3, 545.4], [544.6, 522.9], [459.7, 424.6]], ring: [[560, 697], [480, 686], [410, 706]], card: [-7.1, 17.5, 570.1, 320.8], web: 1 },
   { thumb: [[730, 719], [729.2, 668], [693.5, 441.1]], index: [[983.5, 719], [957.9, 599], [859.4, 468.9], [688.2, 361.4]], middle: [[580.4, 540.3], [549.3, 511.7], [453.4, 423.9]], ring: [[600, 698], [520, 696], [440, 709]], card: [-10.9, 11, 590.2, 318.2], web: 1 },
   { thumb: [[781, 719], [774, 664.5], [654.7, 494.6]], index: [[969, 719], [927.8, 600.6], [830.7, 469], [700.8, 318.2]], middle: [[626.9, 521.8], [591.5, 471.1], [514.6, 366.3]], ring: [[600, 709], [540, 701], [470, 711]], card: [-49.8, 77.3, 566.1, 325.4], web: 0.4 },
-  { thumb: [[693, 719], [693.7, 670.1], [621.1, 425.1]], index: [[960, 719], [920.2, 612], [833.5, 476.9], [712, 312.2]], middle: [[608.3, 429.8], [608.3, 429.8], [531.5, 351.2]], ring: [[525, 702], [480, 702], [430, 712]], card: [-45, 90, 588.5, 308.1], web: 0.1 },
+  { thumb: [[693, 719], [693.7, 670.1], [621.1, 425.1]], index: [[960, 719], [920.2, 612], [833.5, 476.9], [712, 312.2]], middle: [[608.3, 429.8], [608.3, 429.8], [531.5, 351.2]], ring: [[525, 702], [480, 702], [430, 712]], card: [-45, 90, 588.5, 308.1], web: 0 },
   { thumb: [[673, 719], [657, 655.1], [616.7, 400.3]], index: [[954, 719], [900.6, 611.5], [812, 503.1], [682.8, 349.2]], middle: [[612, 602], [548, 618], [500.5, 646.7]], ring: [[541, 724], [500, 724.6], [452, 735]], card: [-65.8, 124.6, 562.3, 395.8], web: 0.2 },
   { thumb: [[694.5, 719], [684.9, 671.8], [645.3, 418.2]], index: [[929.5, 719], [875.1, 625.8], [767.8, 513], [619.3, 375.6]], middle: [[590.5, 654.8], [590.2, 654.9], [487.3, 694]], ring: [[557, 724], [520, 725.2], [474, 736]], card: [-55.1, 180, 547.6, 437.7], web: 0 },
   { thumb: [[699, 719], [695.3, 669.2], [667.9, 425.1]], index: [[916.5, 719], [897, 645.9], [759, 556], [597.5, 434.3]], middle: [[605.4, 654.7], [605.4, 654.7], [538.4, 706.4]], ring: [[573, 724], [540, 725.8], [496, 737]], card: [-36.8, 169.9, 586.1, 426.9], web: 0.1 },
@@ -523,6 +523,22 @@ const BELOW: readonly Pt[] = [[690, 900], [1060, 940]];
 const WEDGE_TOP = held('reaching', [[668, 470], [608, 488]]);
 const CROTCH = held('reaching', [[690, 540]]);
 
+/**
+ * Whether a point of the outline's pass under the thumb would show past the thumb's tip on its index finger's side,
+ * poking out beside the tip as a spur. A point well off to the thumb's other side, where the wedge shows, never does.
+ */
+function spurs(q: Pt, ds: Record<DigitName, Posed>): boolean {
+  const c = ds.thumb.centre;
+  const [root, tip] = [c[1]!, c[c.length - 1]!];
+  const ax = unit([tip[0] - root[0], tip[1] - root[1]]);
+  const along = (q[0] - root[0]) * ax[0] + (q[1] - root[1]) * ax[1];
+  const across = (q[0] - root[0]) * -ax[1] + (q[1] - root[1]) * ax[0];
+  const top = (tip[0] - root[0]) * ax[0] + (tip[1] - root[1]) * ax[1] - UNDER_TIP;
+  return across >= -(ds.thumb.a.at(-1)! + ds.thumb.b.at(-1)!) / 2 && along > top;
+}
+/** How far below the thumb's tip, on the grid, the outline's pass under it may reach. */
+const UNDER_TIP = 30;
+
 /** The nail: a soft, nearly square shield across the thumb's tip, its free edge pale, set into the skin. */
 const NAIL = held('thumb', [[660, 470], [672, 456], [700, 452], [728, 456], [740, 470], [742, 512], [732, 536], [700, 542], [668, 536], [658, 512]]);
 const FREE_EDGE = held('thumb', [[662, 470], [674, 457], [700, 453], [726, 457], [738, 470], [726, 476], [700, 474], [674, 476]]);
@@ -570,13 +586,17 @@ function shapesIn(p: Pose): Record<string, Pt[]> {
   const sag = 0.3 * web.open * toward;
   const webEdge = [1 / 3, 2 / 3].map((f): Pt => [wa[0] + ex * f - ey * sag * 4 * f * (1 - f), wa[1] + ey * f + ex * sag * 4 * f * (1 - f)]);
   webEdge.push(wb);
+  // Under the thumb to the middle finger: through its root and over the wedge, or, where that would spur out past the
+  // thumb's tip, straight across under it.
+  const crotch = ride(CROTCH, ds)[0]!;
+  const into = R.a[2]!;
+  const pass = spurs(crotch, ds) || spurs(wedgeTop[1]!, ds) ? [1 / 3, 2 / 3].map((f): Pt => [wb[0] + (into[0] - wb[0]) * f, wb[1] + (into[1] - wb[1]) * f]) : [crotch, wedgeTop[1]!];
   const back = [
     ...I.a,
     ...I.cap,
     ...[0, 1, 2, 3, 4, 5, 6].map((k) => sideAt(ds.index, 8 + ((web.index - 8) * k) / 6, -1)),
     ...webEdge,
-    ...ride(CROTCH, ds),
-    wedgeTop[1]!,
+    ...pass,
     ...R.a.slice(2),
     ...R.cap,
     ...R.b.slice().reverse(),

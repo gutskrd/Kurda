@@ -200,6 +200,15 @@ describe('the turn of the stamp in the hand', () => {
     }
   });
 
+  it('keeps the hand whole as the stamp goes edge-on: no gap opens between the thumb and the index finger', () => {
+    // at the reference's frame 9 the hand is whole between them, up to where the stamp's edge runs: halfway from the
+    // thumb's tip to the index finger's tip joint is hand, not a hollow
+    const pts = handStampPointsAt(800);
+    const { joints, tips } = handStampBonesAt(800);
+    const between: Pt = [(tips.thumb[0] + joints.index[2]![0]) / 2, (tips.thumb[1] + joints.index[2]![1]) / 2];
+    expect(inside(between, pts.back!) || inside(between, pts.thumb!)).toBe(true);
+  });
+
   it('casts the thumb’s shadows from under the thumb, so they lie on the fingers beside it with no skin between', () => {
     for (const ms of MOMENTS) {
       const pts = handStampPointsAt(ms);
