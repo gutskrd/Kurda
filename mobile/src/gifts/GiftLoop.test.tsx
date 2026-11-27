@@ -50,7 +50,8 @@ describe('a gift’s living picture on the phone', () => {
     await waitFor(() => expect(opacityOf(screen.getByTestId('art-parts'))).not.toBe('0'));
     expect(opacityOf(screen.getByTestId('art-still'))).toBe('0');
     const rounds = new Set(picture.loop.layers.map((l) => l.ms));
-    expect(loops).toHaveBeenCalledTimes(rounds.size);
+    // the clocks start in an effect just after the parts show, so they are waited for in their own right
+    await waitFor(() => expect(loops).toHaveBeenCalledTimes(rounds.size));
     for (const [, config] of timings.mock.calls) expect(config).toMatchObject({ toValue: 1, useNativeDriver: true });
     expect(new Set(timings.mock.calls.map(([, config]) => (config as { duration: number }).duration))).toEqual(rounds);
   });
@@ -95,8 +96,8 @@ describe('a gift’s living picture on the phone', () => {
     expect(screen.queryByTestId('row-parts')).toBeNull();
     show(['m1']);
     await waitFor(() => expect(opacityOf(screen.getByTestId('row-parts'))).not.toBe('0'));
+    await waitFor(() => expect(loops).toHaveBeenCalled());
     const started = loops.mock.calls.length;
-    expect(started).toBeGreaterThan(0);
     show([]);
     await waitFor(() => expect(opacityOf(screen.getByTestId('row-parts'))).toBe('0'));
     expect(opacityOf(screen.getByTestId('row-still'))).not.toBe('0');
