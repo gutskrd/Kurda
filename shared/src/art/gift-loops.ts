@@ -8,8 +8,9 @@ import { GIFT_LOOP_SCALE, type GiftLoop, type GiftLoopLayer } from './gift-loop.
 import type { GiftArtId } from './gift-art.js';
 import { SKY_LOOPS } from './gift-loop-sky.js';
 import { WARM_LOOPS } from './gift-loop-warm.js';
+import { ANIMALS_LOOPS } from './gift-loop-animals.js';
 
-export const GIFT_LOOPS: Readonly<Partial<Record<GiftArtId, GiftLoop>>> = { ...SKY_LOOPS, ...WARM_LOOPS };
+export const GIFT_LOOPS: Readonly<Partial<Record<GiftArtId, GiftLoop>>> = { ...SKY_LOOPS, ...WARM_LOOPS, ...ANIMALS_LOOPS };
 
 export function giftLoopOf(id: string): GiftLoop | null {
   return (GIFT_LOOPS as Readonly<Record<string, GiftLoop | undefined>>)[id] ?? null;
