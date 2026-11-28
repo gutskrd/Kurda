@@ -6,11 +6,11 @@
  * Black on a dark page is nothing, so each of these carries its own light: a
  * pale edge to every thorn, a line of red, the glint on metal.
  */
-import { crescent, within } from './brush.mjs';
+import { crescent } from './brush.mjs';
 import { strand } from './frames-garden.mjs';
 import { sparkle } from './frames-light.mjs';
-import { blade, linear, radial, spline, tube } from './icons.mjs';
-import { n, pt } from './kit.mjs';
+import { blade, linear, radial, tube } from './icons.mjs';
+import { n, pt, spline } from './kit.mjs';
 import { C, P, RI, polar, ring, round } from './ring.mjs';
 import { Still } from './still.mjs';
 

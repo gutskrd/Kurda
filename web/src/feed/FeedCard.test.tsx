@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { jsonResponse, renderApp } from '../test/utils';
 import type { FeedItem } from '../lib/types';
-import { FeedCard, shortCount } from './FeedCard';
+import { FeedCard } from './FeedCard';
 import { onNotice } from '../lib/notice';
 
 afterEach(() => {
@@ -116,19 +116,42 @@ describe('FeedCard', () => {
     renderApp(<FeedCard item={item({ commentCount: 4, engagement: engagement({ likes: 18 }) })} />);
     const row = document.querySelector('.fcard-actions')!;
     const names = [...row.querySelectorAll('.fcard-act')].map((el) => el.getAttribute('aria-label'));
-    expect(names).toEqual(['Sign in to like', '4 comments', 'Sign in to repost', 'Share this post', 'Sign in to save']);
+    expect(names).toEqual(['Sign in to like (18)', '4 comments', 'Sign in to repost', 'Share this post', 'Sign in to save']);
     // An unreposted post shows no repost count; share and save never have one.
     expect(screen.getByRole('button', { name: 'Sign in to repost' }).querySelector('.fcard-count')).toBeNull();
+    // Share, gift and save sit together at the end of the row.
+    expect(row.querySelector('.fcard-actions-end')?.querySelector('.fcard-save')).not.toBeNull();
     expect(screen.getByRole('button', { name: 'Share this post' }).querySelector('.fcard-count')).toBeNull();
     // The comment pill links to the comments; there is no separate line for them.
     expect(screen.getByRole('link', { name: '4 comments' })).toHaveAttribute('href', '/app/library/s1');
     expect(screen.queryByText(/View/)).not.toBeInTheDocument();
   });
 
-  it('keeps a big count short enough for its pill', () => {
-    expect(shortCount(1495, 'en')).toBe('1,495');
-    expect(shortCount(12_345, 'en')).toBe('12.3K');
-    expect(shortCount(2_400_000, 'en')).toBe('2.4M');
+  it.each([
+    [300, '300', '300'],
+    [3400, '3.4K', '3,400'],
+    [5_600_000, '5.6M', '5,600,000'],
+  ])('shows %i likes, comments and reposts short on the pills, and says them whole', (n, shown, said) => {
+    renderApp(<FeedCard item={item({ commentCount: n, engagement: engagement({ likes: n, reposts: n }) })} />);
+    const like = screen.getByRole('button', { name: `Sign in to like (${said})` });
+    const comments = screen.getByRole('link', { name: `${said} comments` });
+    const repost = screen.getByRole('button', { name: `Sign in to repost (${said})` });
+    for (const pill of [like, comments, repost]) expect(pill.querySelector('.fcard-count')?.textContent).toBe(shown);
+  });
+
+  it('says a signed-in reader’s counts whole too', async () => {
+    signIn();
+    serve();
+    renderApp(<FeedCard item={item({ engagement: engagement({ likes: 3400, reposts: 5_600_000, liked: true }) })} />);
+    const like = await screen.findByRole('button', { name: 'Unlike (3,400)' });
+    expect(like.querySelector('.fcard-count')?.textContent).toBe('3.4K');
+    expect(screen.getByRole('button', { name: 'Repost (5,600,000)' }).querySelector('.fcard-count')?.textContent).toBe('5.6M');
+  });
+
+  it('shortens counts in the reader’s language', () => {
+    localStorage.setItem('hevalo_locale', 'de');
+    renderApp(<FeedCard item={item({ engagement: engagement({ likes: 5_600_000 }) })} />);
+    expect(document.querySelector('.fcard-like .fcard-count')?.textContent).toBe('5,6\u00a0Mio.');
   });
 
   it('shows what is yours: a red heart, a green repost, a filled bookmark', async () => {
@@ -152,11 +175,11 @@ describe('FeedCard', () => {
 
   it('shows each count beside its icon', async () => {
     renderApp(<FeedCard item={item({ commentCount: 12, engagement: engagement({ likes: 1234, reposts: 3 }) })} />);
-    const like = screen.getByRole('button', { name: 'Sign in to like' });
+    const like = screen.getByRole('button', { name: 'Sign in to like (1,234)' });
     expect(like.querySelector('svg')).not.toBeNull();
-    expect(like.querySelector('.fcard-count')?.textContent).toBe('1,234');
+    expect(like.querySelector('.fcard-count')?.textContent).toBe('1.2K');
     expect(screen.getByRole('link', { name: '12 comments' }).querySelector('.fcard-count')?.textContent).toBe('12');
-    expect(screen.getByRole('button', { name: 'Sign in to repost' }).querySelector('.fcard-count')?.textContent).toBe('3');
+    expect(screen.getByRole('button', { name: 'Sign in to repost (3)' }).querySelector('.fcard-count')?.textContent).toBe('3');
   });
 
   it('likes, then takes the like back', async () => {

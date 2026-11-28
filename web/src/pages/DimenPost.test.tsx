@@ -70,10 +70,10 @@ describe('DimenPost', () => {
     const { calls } = serve(false);
     show();
 
-    const like = await screen.findByRole('button', { name: 'Sign in to like' });
-    await waitFor(() => expect(like.textContent).toContain('3'));
+    const like = await screen.findByRole('button', { name: 'Sign in to like (3)' });
+    expect(like.textContent).toContain('3');
     expect(calls).toContain('GET /posts/image/i1/engagement');
-    expect(screen.getByRole('button', { name: 'Sign in to repost' }).textContent).toContain('1');
+    expect(screen.getByRole('button', { name: 'Sign in to repost (1)' }).textContent).toContain('1');
     // The words above the picture, read whole, and the comments under the post.
     expect(screen.getByText('Çiyayên welêt').closest('.fcard-body')?.nextElementSibling).toHaveClass('fcard-media');
     expect(screen.getByRole('article')).toHaveClass('is-page');

@@ -26,24 +26,26 @@ export async function giftsLeftToday(db: Executor, fromId: string, toIds: readon
   const senderAdult = !young.has(fromId);
   // Read side by side: the sender's own gifts of the last day, and what each recipient was given by anyone.
   const [mine, theirs] = await Promise.all([
-    db.query<{ to_user_id: string; created_at: Date }>(
-      `SELECT to_user_id, created_at FROM gifts
+    db.query<{ to_user_id: string; created_at: Date; quantity: number }>(
+      `SELECT to_user_id, created_at, quantity FROM gifts
         WHERE from_user_id = $1 AND created_at > now() - interval '24 hours'
         ORDER BY created_at`,
       [fromId],
     ),
     db.query<{ to_user_id: string; n: number }>(
-      `SELECT to_user_id, count(*)::int AS n FROM gifts
+      `SELECT to_user_id, sum(quantity)::int AS n FROM gifts
         WHERE to_user_id = ANY($1::uuid[]) AND created_at > now() - interval '24 hours'
         GROUP BY to_user_id`,
       [toIds],
     ),
   ]);
-  const sent = mine.rows.map((r) => r.created_at);
+  // several of one gift at once are that many gifts, each holding its place until the send turns a day old
+  const times = (rows: typeof mine.rows): Date[] => rows.flatMap((r) => Array.from({ length: r.quantity }, () => r.created_at));
+  const sent = times(mine.rows);
   const received = new Map(theirs.rows.map((r) => [r.to_user_id, r.n]));
   const sentCap = giftsSentCap(senderAdult);
   return toIds.map((to) => {
-    const toThem = mine.rows.filter((r) => r.to_user_id === to).map((r) => r.created_at);
+    const toThem = times(mine.rows.filter((r) => r.to_user_id === to));
     const pairCap = giftsPerFriendCap(senderAdult, !young.has(to));
     const receivedCap = giftsReceivedCap(!young.has(to));
     const left = Math.max(0, Math.min(sentCap - sent.length, pairCap - toThem.length, receivedCap - (received.get(to) ?? 0)));

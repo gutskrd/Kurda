@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   LEAGUE_TIERS,
@@ -26,6 +26,7 @@ import { Button, LinkButton } from '../components/Button';
 import { Avatar } from '../components/Avatar';
 import { ErrorState } from '../components/states';
 import { Skeleton } from '../components/Skeleton';
+import { CountWords, useCountFit, useCountForms } from '../components/Count';
 import { CheckIcon, ChevronIcon, GiftIcon, SparkleIcon } from '../components/icons';
 import { SegmentedChoice } from '../shop/ItemBrowser';
 import { ItemPicture } from '../shop/ItemPicture';
@@ -558,7 +559,10 @@ function GiftGrid({
   giver?: boolean;
 }): React.JSX.Element {
   const t = useT();
-  const locale = useLocale();
+  const { short, whole } = useCountForms();
+  // The counts on the tiles shrink together where one is too long for its tile ("×128 Tsd.").
+  const grid = useRef<HTMLUListElement>(null);
+  useCountFit(grid, '.coll-count', gifts.map((g) => short(g.count)).join('|'));
   return (
     <section className="coll-section" aria-labelledby={id}>
       <h3 id={id} className="coll-heading">
@@ -567,16 +571,15 @@ function GiftGrid({
       {gifts.length === 0 ? (
         <p className="coll-empty">{empty}</p>
       ) : (
-        <ul className="coll-grid">
+        <ul ref={grid} className="coll-grid">
           {gifts.map((g) => {
-            const times = t('collection.times', { count: g.count.toLocaleString(locale) });
             const newest = giver ? g.people[0]?.person : null;
             return (
               <li key={g.sku}>
                 <button
                   type="button"
-                  className={`coll-tile is-item${newest || g.count > 1 ? ' has-foot' : ''}`}
-                  aria-label={g.count > 1 ? `${g.name}, ${times}` : g.name}
+                  className={`coll-tile is-item${g.count > 1 ? ' has-foot' : ''}${newest ? ' has-giver' : ''}`}
+                  aria-label={g.count > 1 ? `${g.name}, ${t('collection.times', { count: whole(g.count) })}` : g.name}
                   onClick={() => onOpen(g)}
                 >
                   {g.assetUrl ? <ItemPicture src={g.assetUrl} /> : <ItemGlyph category={g.category} />}
@@ -587,7 +590,7 @@ function GiftGrid({
                   )}
                   {g.count > 1 && (
                     <span className="coll-count" aria-hidden="true">
-                      {times}
+                      {t('collection.times', { count: short(g.count) })}
                     </span>
                   )}
                 </button>
@@ -607,12 +610,15 @@ function GiftGrid({
 function GiftStep({ gift, side, onPerson }: { gift: CollectionGift; side: 'received' | 'sent'; onPerson: () => void }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
+  const { short, whole } = useCountForms();
   const left = gift.count - gift.people.length;
   return (
     <div className="coll-detail">
       <span className="coll-tile is-item coll-gift-art">{gift.assetUrl ? <GiftLoopArt src={gift.assetUrl} lazy={false} /> : <ItemGlyph category={gift.category} size={40} />}</span>
       <h3 className="coll-detail-name">{gift.name}</h3>
-      <p className="coll-muted">{t('collection.times', { count: gift.count.toLocaleString(locale) })}</p>
+      <p className="coll-muted">
+        <CountWords shown={t('collection.times', { count: short(gift.count) })} said={t('collection.times', { count: whole(gift.count) })} />
+      </p>
       <ul className="coll-people-list">
         {gift.people.map((p, i) => {
           const name = p.person ? (p.person.displayName ?? p.person.username) : null;
@@ -647,7 +653,11 @@ function GiftStep({ gift, side, onPerson }: { gift: CollectionGift; side: 'recei
           );
         })}
       </ul>
-      {left > 0 && <p className="coll-muted">{t('collection.andMore', { count: left.toLocaleString(locale) })}</p>}
+      {left > 0 && (
+        <p className="coll-muted">
+          <CountWords shown={t('collection.andMore', { count: short(left) })} said={t('collection.andMore', { count: whole(left) })} />
+        </p>
+      )}
     </div>
   );
 }

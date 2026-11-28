@@ -163,8 +163,8 @@ function Thread({ otherId, otherName, onSent, onClose, className = '' }: DmThrea
     ),
     setMessages,
     sendText: useCallback(
-      async (body: string) => {
-        const res = await client.post<DmMessage>(`/chat/${otherId}/messages`, { body });
+      async (body: string, thanksFor?: string) => {
+        const res = await client.post<DmMessage>(`/chat/${otherId}/messages`, thanksFor ? { body, thanksFor } : { body });
         // the reveal that asked says why it did not go, where the reader is looking
         if (!res.ok) return res.error;
         setMessages((m) => [...(m ?? []), res.data]);
@@ -314,6 +314,7 @@ function Thread({ otherId, otherName, onSent, onClose, className = '' }: DmThrea
               onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
               onReport={setReporting}
               renderBody={(m) => gifts.renderBody(m) ?? gameCardBody(m)}
+              renderEvent={gifts.renderEvent}
               onRetry={(m) => outbox.retry(m.id)}
               // taken back: its words return to the box, unless something else has been typed there since
               onDiscard={(m) => {

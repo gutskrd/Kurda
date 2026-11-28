@@ -129,6 +129,11 @@ describe('GiftSentNote', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open the chat' }));
     expect(onOpenChat).toHaveBeenCalledTimes(1);
   });
+
+  it('says how many went when several did', () => {
+    renderWithProviders(<GiftSentNote itemName="Gul" quantity={3} to="Şîlan" onOpenChat={() => undefined} onDismiss={() => undefined} />);
+    expect(screen.getByText('3 × Gul · It’s waiting in your chat with Şîlan.')).toBeTruthy();
+  });
 });
 
 describe('useUnseenGifts', () => {

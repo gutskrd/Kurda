@@ -19,6 +19,8 @@
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;
+    /* A scroller clips only what it contains, so its hidden labels must be placed against it, not the page. */
+    position: relative;
     margin-inline: -16px;
     padding: 2px 16px 8px;
     scroll-padding-inline: 16px;

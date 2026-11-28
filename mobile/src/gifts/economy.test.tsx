@@ -110,6 +110,21 @@ describe('a grand gift on the phone', () => {
     );
     expect(screen.getByTestId('gift-showpiece')).toBeTruthy();
     expect(screen.getByText('Heyv')).toBeTruthy();
+    expect(screen.queryByTestId('gift-count')).toBeNull();
+  });
+
+  it('stays on show with how many there were, when several came at once', () => {
+    renderWithProviders(
+      <GiftBubble
+        card={moon({ quantity: 2, myGiftId: null, recipients: [{ name: 'Rojda', avatarUrl: null, isMe: false, opened: true }] })}
+        mine={false}
+        senderName="azad"
+        onOpen={() => undefined}
+      />,
+    );
+    expect(screen.getByTestId('gift-showpiece')).toBeTruthy();
+    expect(screen.getByText('2 × Heyv')).toBeTruthy();
+    expect(screen.getByTestId('gift-count').textContent).toBe('×2');
   });
 });
 

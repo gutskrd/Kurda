@@ -57,6 +57,22 @@ const wordleCard = ok({
 });
 
 describe('ChatScreen', () => {
+  it('draws a one-tap thanks as a line with a heart, not as a bubble of words', async () => {
+    testAuth.client = fakeClient({
+      'GET /chat/u2/messages': ok({
+        messages: [
+          msg({ id: 'm3', senderId: 'me', kind: 'gift', body: null, gift }),
+          msg({ id: 'm4', kind: 'thanks', body: 'Spas! 💛', thanks: { batchId: 'b1', name: 'Newroz fire' } }),
+        ],
+      }),
+    });
+    renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
+    expect(await screen.findByText('rojda said thanks for Newroz fire')).toBeTruthy();
+    expect(screen.getByTestId('thanks-line')).toBeTruthy();
+    // its stored stand-in text is never shown as words someone wrote
+    expect(screen.queryByText('Spas! 💛')).toBeNull();
+  });
+
   it('draws each kind: words, a game invite link as a card, a wrapped gift', async () => {
     testAuth.client = fakeClient({
       'GET /chat/u2/messages': ok({
@@ -77,6 +93,22 @@ describe('ChatScreen', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Join: Pêşbaziya Peyvan' }));
     expect(navigate).toHaveBeenCalledWith('WordleBattle', { id: 'abc12345' });
     expect(screen.getByText('Gift from rojda')).toBeTruthy();
+  });
+
+  it('says how many of a gift went when several did, and one gift by its name alone', async () => {
+    const roses = { ...gift, sku: 'gift-gul', name: 'Gul', category: 'gift', equippable: null, myGiftId: null, recipients: [{ name: 'rojda', avatarUrl: null, isMe: false, opened: false }] };
+    testAuth.client = fakeClient({
+      'GET /chat/u2/messages': ok({
+        messages: [
+          msg({ id: 'm3', senderId: 'me', kind: 'gift', body: null, gift: { ...roses, batchId: 'b3', quantity: 3 } }),
+          msg({ id: 'm4', senderId: 'me', kind: 'gift', body: null, gift: { ...roses, batchId: 'b4' } }),
+        ],
+      }),
+    });
+    renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
+    expect(await screen.findByText('3 × Gul')).toBeTruthy();
+    expect(screen.getByText('Gul')).toBeTruthy();
+    expect(screen.getAllByTestId('gift-count').map((c) => c.textContent)).toEqual(['×3']);
   });
 
   it('keeps what was typed when a send is refused, and says why', async () => {

@@ -710,15 +710,16 @@ function Growth({ tree, tint }: { tree: TreeView; tint: string }): React.JSX.Ele
 }
 
 /**
- * The choice of a first tree: each free kind as its own seed, with the great tree the chosen one will become
- * above them, in the season it will grow in. Nothing is planted until the button is pressed.
+ * The first tree: the great tree the picked kind will become, in the season it will grow in, and below it a seed to pick
+ * for each kind free or already bought when there is more than one. Nothing is planted until the button is pressed.
  */
 function Chooser({ data, season, side, busy, failed, onPlant }: { data: MyTree; season: TreeSeason; side: number; busy: boolean; failed: string | null; onPlant: (species: TreeSpecies) => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
-  const starters = data.kinds.filter((k) => k.starter);
-  const [picked, setPicked] = useState<TreeSpecies>(starters[0]?.species ?? 'beru');
+  const seeds = data.kinds.filter((k) => k.starter || k.owned);
+  const [picked, setPicked] = useState<TreeSpecies>(seeds[0]?.species ?? 'beru');
+  const chosen = treeNamed(t, picked);
   const said = (species: TreeSpecies): string => {
     const named = treeNamed(t, species);
     return named.meaning ? `${named.name} (${named.meaning})` : named.name;
@@ -737,43 +738,51 @@ function Chooser({ data, season, side, busy, failed, onPlant }: { data: MyTree; 
         </View>
         <TreeSeasonAmbient air={treeSeasonAir(picked, TREE_FULL, 'fresh', season)} side={side} />
       </View>
-      <View style={[styles.seeds, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={t('tree.choose.title')}>
-        {starters.map((k) => {
-          const named = treeNamed(t, k.species);
-          const on = k.species === picked;
-          return (
-            <Pressable
-              key={k.species}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: on }}
-              aria-checked={on}
-              accessibilityLabel={said(k.species)}
-              onPress={() => {
-                // A tick for another seed, nothing for the one already picked.
-                if (!on) haptic('select');
-                setPicked(k.species);
-              }}
-              // The chosen seed is ringed in the ink like every choice, not in its tree's colour, which read as
-              // right or wrong answers.
-              style={[styles.seed, { backgroundColor: colors.surface, borderColor: on ? colors.primary : 'transparent' }]}
-              testID={`tree-seed-${k.species}`}
-            >
-              {/* The seed's picture closes in on the seed itself. */}
-              <View style={styles.seedArt}>
-                <TreeArt species={k.species} stage={0} size={132} style={styles.seedPicture} />
-              </View>
-              <Text style={[styles.seedName, { color: colors.textPrimary }]} numberOfLines={1}>
-                {named.name}
-              </Text>
-              {named.meaning ? (
-                <Text style={[styles.seedMeaning, { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                  {named.meaning}
+      {seeds.length > 1 ? (
+        <View style={[styles.seeds, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={t('tree.choose.title')}>
+          {seeds.map((k) => {
+            const named = treeNamed(t, k.species);
+            const on = k.species === picked;
+            return (
+              <Pressable
+                key={k.species}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: on }}
+                aria-checked={on}
+                accessibilityLabel={said(k.species)}
+                onPress={() => {
+                  // A tick for another seed, nothing for the one already picked.
+                  if (!on) haptic('select');
+                  setPicked(k.species);
+                }}
+                // The chosen seed is ringed in the ink like every choice, not in its tree's colour, which read as
+                // right or wrong answers.
+                style={[styles.seed, { backgroundColor: colors.surface, borderColor: on ? colors.primary : 'transparent' }]}
+                testID={`tree-seed-${k.species}`}
+              >
+                {/* The seed's picture closes in on the seed itself. */}
+                <View style={styles.seedArt}>
+                  <TreeArt species={k.species} stage={0} size={132} style={styles.seedPicture} />
+                </View>
+                <Text style={[styles.seedName, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {named.name}
                 </Text>
-              ) : null}
-            </Pressable>
-          );
-        })}
-      </View>
+                {named.meaning ? (
+                  <Text style={[styles.seedMeaning, { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                    {named.meaning}
+                  </Text>
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : (
+        // With no seeds to pick from, the tree is named here so the learner knows what they are planting.
+        <Text style={[styles.sub, { color: colors.textSecondary }]}>
+          <Text style={[styles.chosenName, { color: colors.textPrimary }]}>{chosen.name}</Text>
+          {chosen.meaning ? ` · ${chosen.meaning}` : ''}
+        </Text>
+      )}
       <Text style={[styles.sub, { color: colors.textSecondary }]}>{treeAbout(t, picked)}</Text>
       {failed ? <Failed text={failed} /> : null}
       <ClayButton label={t('tree.choose.plant')} accessibilityLabel={`${t('tree.choose.plant')}: ${said(picked)}`} tone="primary" size="large" busy={busy} onPress={() => onPlant(picked)} testID="tree-plant" />
@@ -944,6 +953,7 @@ const styles = StyleSheet.create({
   head: { gap: 2 },
   lead: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, textAlign: 'center', letterSpacing: -0.4 },
   sub: { fontSize: typography.sizes.text, lineHeight: 21, textAlign: 'center' },
+  chosenName: { fontWeight: typography.weights.bold },
   // Where the tree stands: the scene of the season, its floor at the foot.
   stage: { width: '100%', alignItems: 'center', borderRadius: radii.xl, overflow: 'hidden' },
   // The tree's own square of the scene, its foot on the floor.

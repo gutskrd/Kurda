@@ -276,6 +276,29 @@ describe('NotificationsBell', () => {
     expect(screen.getByText('Open')).toHaveAttribute('aria-hidden', 'true');
   });
 
+  it('says how many gifts came when several of one gift did', async () => {
+    signIn();
+    serve(
+      [
+        {
+          id: 'n1',
+          category: 'friends',
+          title: 'You have a gift',
+          body: 'berfin sent you 3 × Çay.',
+          createdAt: now(),
+          readAt: null,
+          data: { kind: 'gift', giftId: 'g1', chat: 'dm:u-berfin', fromUserId: 'u-berfin', quantity: '3' },
+        },
+      ],
+      [{ userId: 'u-berfin', username: 'berfin', displayName: 'Berfin', avatarUrl: null, online: false }],
+    );
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }));
+    const link = screen.getByRole('link', { name: '3 gifts from Berfin' });
+    expect(within(link).getByText('Berfin').tagName).toBe('STRONG');
+    expect(screen.getByText('Open them in your chat.')).toBeInTheDocument();
+  });
+
   it('holds the rows’ shape while the first answer is on its way', async () => {
     signIn();
     let answer: (r: Response) => void = () => undefined;

@@ -277,6 +277,10 @@
   font-size: var(--text);
   color: var(--ink-3);
 }
+/* how often it was read, short ("3.4K reads") and on one line */
+.post-reads {
+  white-space: nowrap;
+}
 .post h3 {
   font-size: var(--text);
   margin-bottom: 6px;
@@ -958,13 +962,6 @@ button.feature {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
 }
-/* The price takes its own line above the buttons at every width, since a tile is too narrow for both. */
-.shop-grid .shop-price {
-  flex-basis: 100%;
-}
-.shop-grid .shop-actions .btn {
-  flex: 1 1 auto;
-}
 /* Two to a row on a phone, so the item kinds are a short scroll apart. */
 @media (max-width: 640px) {
   .shop-grid {
@@ -972,48 +969,57 @@ button.feature {
     gap: 10px;
   }
   .shop-grid .shop-tile {
-    padding: 8px;
-    gap: 8px;
+    --tile-pad: 8px;
   }
 }
+/* Every tile is built the same way, so a row of them lines up: one picture box, two lines of words, the price, one row of buttons. */
 .shop-tile {
+  --tile-pad: 10px;
+  position: relative;
   margin: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 10px;
+  min-width: 0;
+  padding: var(--tile-pad);
   border: 1px solid var(--border);
   border-radius: var(--r-md, 12px);
   background: var(--surface-2);
 }
+/* One box for every kind, the shape of a background; anything smaller sits whole in its middle. */
 .shop-thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
   width: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 0;
+  padding: 0;
+  border: 0;
   border-radius: var(--r-sm);
   overflow: hidden;
   background: var(--bg);
+  color: inherit;
+  font: inherit;
 }
-.shop-thumb-background {
-  aspect-ratio: 16 / 9;
+.shop-thumb > img,
+.shop-thumb > video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
-.shop-thumb-icon,
-/* a tag, a frame or anything else is a small thing, drawn the size of an icon */
-.shop-thumb-tag,
-.shop-thumb-frame,
-.shop-thumb-other {
-  aspect-ratio: 1;
-  max-width: 96px;
-}
-/* a frame is shown round a face, which needs a little more room than an icon does */
-.shop-thumb-frame {
-  max-width: 112px;
+/* a square picture (an icon, or one uploaded for a tag, a power-up…) is shown whole, never cropped */
+.shop-thumb-icon > img,
+.shop-thumb-tag > img,
+.shop-thumb-frame > img,
+.shop-thumb-other > img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
 }
 /* a word tag is shown as the pill it is worn as, on the tile's own ground */
 .shop-thumb-tag {
-  max-width: none;
-  aspect-ratio: auto;
-  min-height: 72px;
-  display: grid;
-  place-items: center;
   padding: 8px;
 }
 .shop-tag-art {
@@ -1022,61 +1028,108 @@ button.feature {
   min-width: 0;
   max-width: 100%;
 }
-.shop-thumb img,
-.shop-thumb video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+/* a frame round your face is drawn at a fixed size, so it is scaled down to the box */
+.shop-thumb-frame .cosmetic-frame {
+  width: auto;
+  height: 92%;
+  aspect-ratio: 1;
 }
-/* a square picture (an icon, or one uploaded for a tag, a power-up…) is shown whole, never cropped */
-.shop-thumb-icon img,
-.shop-thumb-tag img,
-.shop-thumb-frame img,
-.shop-thumb-other img {
-  object-fit: contain;
+.shop-thumb-frame .cosmetic-frame > * {
+  max-width: 100%;
+  max-height: 100%;
 }
 .shop-thumb-empty {
   display: block;
   width: 100%;
   height: 100%;
 }
-/* the Kurdish name, and under it, quieter, what it is ("Tea glass") */
+/* a picture that can be tried on: the whole box is the button, with an eye in its corner to say so */
+.shop-thumb-try {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.shop-thumb-try:focus-visible {
+  outline: 2px solid var(--focus, var(--accent));
+  outline-offset: 2px;
+}
+.shop-try-mark {
+  position: absolute;
+  inset-block-end: 6px;
+  inset-inline-end: 6px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-solid);
+  color: var(--ink-2);
+  pointer-events: none;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+@media (hover: hover) {
+  .shop-thumb-try:hover .shop-try-mark {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+}
+/* the Kurdish name, and under it, quieter, what it is ("Tea glass") with its rarity at the end; one line each */
 .shop-caption {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+  display: grid;
+  gap: 2px;
   min-width: 0;
 }
-/* a name or a description runs to a second line on a narrow tile rather than being cut short */
 .shop-name,
 .shop-desc {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  min-width: 0;
   overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: var(--text);
-  overflow-wrap: anywhere;
 }
 .shop-name {
-  color: var(--ink-2);
+  color: var(--ink);
+  font-weight: 600;
 }
 .shop-desc {
   color: var(--ink-3);
+  /* the line keeps its height when an item has no description */
+  min-height: 1.5em;
 }
-/* the price and the buttons sit on the tile's floor, level along a row
-   whether or not the tile beside has a line of description */
-.shop-tile > .shop-actions,
+/* a rare or masterwork item's step, on the picture's top corner, on a ground of its own to be read over art */
+.shop-tile > .rarity {
+  position: absolute;
+  inset-block-start: calc(var(--tile-pad) + 6px);
+  inset-inline-start: calc(var(--tile-pad) + 6px);
+  padding: 1px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface-solid);
+  line-height: 1.5;
+  pointer-events: none;
+}
+/* the price and the buttons sit on the tile's floor, level along a row whatever the words above them */
+.shop-tile > .shop-foot,
 .shop-tile > .shop-owned {
   margin-top: auto;
 }
+.shop-foot {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
 .shop-owned {
+  display: grid;
+  place-items: center;
+  min-height: 36px;
   font-size: var(--text);
   font-weight: 600;
   color: var(--gold-ink);
-  text-align: center;
-  padding: 6px 0;
+}
+@media (pointer: coarse) {
+  .shop-owned {
+    min-height: 44px;
+  }
 }
 
 .icon-visibility {
@@ -3408,6 +3461,27 @@ button.mkp-fact {
 .shop-price.is-short {
   color: var(--ink-4);
 }
+/* On a tile the price is one line, its money value giving way first on a narrow phone. */
+.shop-foot .shop-price {
+  flex-wrap: nowrap;
+  min-width: 0;
+  margin: 0;
+  white-space: nowrap;
+}
+.shop-foot .shop-price .zer-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* One row of buttons on every tile: the main one takes the room, the gift a square at its end. */
+.shop-foot .shop-actions {
+  flex-wrap: nowrap;
+}
+.shop-foot .shop-actions .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-inline: 8px;
+}
 /* how much further there is to go, which is the number you actually save against */
 .shop-short {
   padding: 1px 7px;
@@ -3458,10 +3532,6 @@ button.mkp-fact {
   0% { transform: scale(1); }
   40% { transform: scale(1.05); }
   100% { transform: scale(1); }
-}
-.shop-thumb {
-  position: relative;
-  overflow: hidden;
 }
 .shop-shine {
   position: absolute;

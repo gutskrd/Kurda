@@ -51,7 +51,7 @@
  * lays them and brushed over (cosmetic-art/brush.mjs), a dark line drawn
  * round each as round a cut-out; the tea glass is the gift's own drawing
  * (shared gift-art), so it is one glass wherever it appears; and one drawn
- * soft, as with a pastel, a fawn sitting up with no line round it,
+ * in coloured pencil under a soft pencil line, a fawn standing and looking at us,
  * and cut out of the dark, so that each lies over a profile picture with
  * nothing round it but its own light (cosmetic-art/still.mjs).
  * Frames (512×512 PNG, cosmetic-art/frames.mjs): rings to wear round a
@@ -758,7 +758,7 @@ export async function renderAll(outRoot, { only = null, log = () => {} } = {}) {
       const abs = path.join(outRoot, ...dir.split('/'));
       for (const f of fs.readdirSync(abs)) {
         const rel = `${dir}/${f}`;
-        if (written.includes(rel) || rel.startsWith('backgrounds/story-')) continue;
+        if (written.includes(rel) || rel.startsWith('web/public/cosmetics/backgrounds/story-')) continue;
         fs.rmSync(path.join(abs, f), { recursive: true });
         log(`  ${rel.padEnd(64)} removed`);
       }

@@ -7,6 +7,7 @@ import { useAccountGate } from '../auth/AccountGate';
 import { SendButton } from '../chat/SendButton';
 import { MIN_TOUCH_TARGET, decorative, reachSlop } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
+import { formatCompact, formatNumber } from '../i18n/format';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { noticeTime } from '../notifications/inbox';
@@ -221,6 +222,8 @@ function CommentRow({
             hitSlop={MORE_SLOP}
             accessibilityRole="button"
             accessibilityState={{ busy: loading }}
+            // Shown short ("View 3.4K replies"), said whole.
+            accessibilityLabel={!loading && c.replyCount > 1 ? t('comments.showReplies', { count: formatNumber(c.replyCount, locale) }) : undefined}
             testID={`comment-more-${c.id}`}
             style={({ pressed }) => [styles.more, { flexDirection: dir.row, alignSelf: edge }, pressed && heldDim]}
           >
@@ -230,7 +233,7 @@ function CommentRow({
                 ? t('common.loading')
                 : c.replyCount === 1
                   ? t('comments.showOneReply')
-                  : t('comments.showReplies', { count: c.replyCount })}
+                  : t('comments.showReplies', { count: formatCompact(c.replyCount, locale) })}
             </Text>
           </Pressable>
         ) : null}

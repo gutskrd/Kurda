@@ -318,6 +318,7 @@ label.yours-bird:hover {
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scroll-snap-type: x proximity;
+    position: relative;
     scroll-padding-inline: 16px;
     scrollbar-width: none;
   }

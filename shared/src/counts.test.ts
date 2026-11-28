@@ -12,6 +12,25 @@ describe('compactCount', () => {
     expect(compactCount(128_450, 'en')).toBe('128K');
     expect(compactCount(1_240_000, 'en')).toBe('1.2M');
     expect(compactCount(-5000, 'en')).toBe('-5K');
+    // the owner's own examples
+    expect(compactCount(300, 'en')).toBe('300');
+    expect(compactCount(3400, 'en')).toBe('3.4K');
+    expect(compactCount(5_600_000, 'en')).toBe('5.6M');
+  });
+
+  it('shows a count that rounds up to a thousand of one unit in the next', () => {
+    expect(compactCount(999_950, 'en')).toBe('1M');
+    expect(compactCount(999_950, 'de')).toMatch(/^1\sMio\.$/);
+    expect(compactCount(999_950, 'ku')).toBe('1M');
+  });
+
+  it('gives Kurmancî and Soranî the letters every social app shows, in their own digits', () => {
+    expect(compactCount(3400, 'ku')).toBe('3,4K');
+    expect(compactCount(5_600_000, 'ku')).toBe('5,6M');
+    expect(compactCount(1_250_000_000, 'ku')).toBe('1,3B');
+    expect(compactCount(300, 'ckb')).toBe('٣٠٠');
+    expect(compactCount(3400, 'ckb')).toBe('٣٫٤K');
+    expect(compactCount(1_250_000_000, 'ckb')).toBe('١٫٣B');
   });
 
   it('writes the short form in the reader’s language, German with Tsd. where its own short form keeps thousands whole', () => {

@@ -26,10 +26,9 @@ import {
 const tree = (over: Partial<TreeRecord> = {}): TreeRecord => ({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: '2026-11-10', waterings: 10, water: 6, harvests: 0, ...over });
 
 describe('the kinds of tree', () => {
-  it('has a kind for every key, a few of them free to start from and the rest at a price', () => {
+  it('has a kind for every key, the oak alone free and every other kind at a price', () => {
     expect(Object.keys(TREE_KINDS)).toEqual([...TREE_SPECIES]);
-    const starters = TREE_SPECIES.filter((k) => TREE_KINDS[k].starter);
-    expect(starters.length).toBeGreaterThanOrEqual(3);
+    expect(TREE_SPECIES.filter((k) => TREE_KINDS[k].starter)).toEqual(['beru']);
     for (const k of TREE_SPECIES) {
       expect(TREE_KINDS[k].species).toBe(k);
       expect(TREE_KINDS[k].price === 0).toBe(TREE_KINDS[k].starter);

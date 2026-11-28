@@ -16,6 +16,7 @@ import { messageA11y, openMessageOptions } from './messageOptions';
 import { DayPill } from './ThreadParts';
 import { isEmojiOnly, timeLabel, type Place } from './thread';
 import { UnsentNote } from './UnsentNote';
+import { ThanksLine } from '../gifts/ThanksLine';
 
 /** A message as a thread shows it: the server's, or one sent from here that is on its way or was not sent. */
 export type RowMessage = ChatMessage & { pending?: 'sending' | 'failed' };
@@ -28,7 +29,8 @@ export type RowMessage = ChatMessage & { pending?: 'sending' | 'failed' };
  * pause, under the run before it, with whether your own was sent, delivered or read beside it. One of yours the server
  * was not reached for says "Not sent" under it, with Try again and Cancel.
  *
- * A message of only a few emoji is shown large without a bubble, and a card (gift, game) is its own surface. A
+ * A message of only a few emoji is shown large without a bubble, a card (gift, game) is its own surface, and a
+ * one-tap thanks is a line across the thread (gifts/ThanksLine.tsx). A
  * deleted message keeps its place, so removing it does not reshuffle the conversation around whoever was
  * moderated. Held, a message offers Copy and, for someone else's, Report; screen readers find the same among its
  * actions.
@@ -89,6 +91,16 @@ export function MessageRow({
     transformOrigin: side === 'right' ? 'right bottom' : 'left bottom',
     transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }, { scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) }],
   };
+
+  // Something done with one tap, not written: a quiet line across the thread, never a bubble.
+  if (message.kind === 'thanks' && !deleted) {
+    return (
+      <Animated.View style={[styles.newRun, rise]}>
+        {place.day ? <DayPill label={place.day} /> : null}
+        <ThanksLine mine={mine} name={senderName} gift={message.thanks?.name ?? null} at={message.createdAt} />
+      </Animated.View>
+    );
+  }
 
   return (
     <Animated.View style={[place.first ? styles.newRun : styles.sameRun, rise]}>

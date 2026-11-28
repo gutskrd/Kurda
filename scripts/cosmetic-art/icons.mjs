@@ -17,33 +17,21 @@
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { register } from 'tsx/esm/api';
-import { crescent, rim, softly, specks, strokes, within } from './brush.mjs';
-import { n, pt, sunRays } from './kit.mjs';
+import { blob, crayon, crescent, dry, mark, painter, rim, softly, specks, strokes, within } from './brush.mjs';
+import { FRIENDS } from './icons-friends.mjs';
+import { along, n, pt, spline, sunRays } from './kit.mjs';
 import { Still } from './still.mjs';
 
 // The shared package is TypeScript, so it is read through the same loader the gift script uses.
 register();
-const { giftArtSvg } = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../shared/src/art/gift-art.ts')).href);
+const shared = (file) => pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../shared/src', file)).href;
+const { giftArtSvg } = await import(shared('art/gift-art.ts'));
+const { ANTLER: HEVALO_ANTLER, ANTLER_LIGHT: HEVALO_ANTLER_LIGHT } = await import(shared('characters/hevalo.ts'));
 
 /** The square of the tea gift's picture (in its 120 units) the icon shows: the glass and saucer, with a little room. */
 const TEA_GIFT_FRAME = [5.8, 4.1, 112, 112];
 
 // ─────────────────────────────────────────────────────────────── shapes
-
-/** A smooth closed outline through points (a Catmull-Rom spline, as cubic Béziers); open when `closed` is false. */
-export function spline(points, closed = true) {
-  const count = points.length;
-  const at = (i) => (closed ? points[(i + count) % count] : points[Math.max(0, Math.min(count - 1, i))]);
-  let d = `M${pt(points[0])}`;
-  for (let i = 0; i < (closed ? count : count - 1); i++) {
-    const p0 = at(i - 1);
-    const p1 = at(i);
-    const p2 = at(i + 1);
-    const p3 = at(i + 2);
-    d += ` C${pt([p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6])} ${pt([p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6])} ${pt(p2)}`;
-  }
-  return closed ? `${d} Z` : d;
-}
 
 /** Points round (cx, cy) at radius `r`, the radius wandering by `wobble` in a few slow waves, as a hand-made thing's does. */
 function roundish([cx, cy], r, rnd, { wobble = 0.04, count = 40, squash = 1 } = {}) {
@@ -103,23 +91,6 @@ export function blade(base, tip, width, { at = 0.55, bend = 0, point = 0.6, coun
 
 /** A point on a line, `t` of the way from a to b. */
 const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-
-/** `count` + 1 points along a smooth curve through `points` (Catmull-Rom). */
-function along(points, count = 24) {
-  const out = [];
-  const m = points.length - 1;
-  for (let k = 0; k <= count; k++) {
-    const t = (k / count) * m;
-    const i = Math.min(m - 1, Math.floor(t));
-    const f = t - i;
-    const p0 = points[Math.max(0, i - 1)];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = points[Math.min(m, i + 2)];
-    out.push([0, 1].map((c) => 0.5 * (2 * p1[c] + (p2[c] - p0[c]) * f + (2 * p0[c] - 5 * p1[c] + 4 * p2[c] - p3[c]) * f * f + (3 * p1[c] - p0[c] - 3 * p2[c] + p3[c]) * f * f * f)));
-  }
-  return out;
-}
 
 /** A tube along a smooth curve through `points`, `w0` thick at its start and `w1` at its end: a spout, a handle, a log. */
 export function tube(points, w0, w1 = w0, count = 24) {
@@ -514,85 +485,156 @@ export const ICONS = [
     key: 'ask',
     ku: 'Ask',
     en: 'Deer',
-    // a fawn sitting up and looking at us, drawn soft, as with a pastel on rough paper, and no line round it: a
-    // big round head, a pale face that comes up in two curves round the eyes, two dots for eyes and a small red
-    // nose, round ears, a pair of short brown antlers and a tuft between them; a small body with a pale front,
-    // its forefeet together before it and its hind feet out at either side, dark at the hoof, a stub of a tail
+    // a fawn standing three-quarters on to us, painted and inked over in a soft dark pencil line that swells and thins
+    // and leaves gaps: big leaf-shaped ears out at its sides, Hevalo's own dark branched antlers with a tuft between
+    // them, a darker blaze down its brow, two dots for eyes over a pale muzzle, its head running on into its chest; a
+    // pale patch on the chest, its back darker with pale spots, a flick of a tail, and slim legs on cloven hooves
     still(rnd) {
-      const s = new Still(rnd).place([0, -4], 1.02);
-      const TAN = '#e39a58';
-      const DEEP = '#cf8442';
-      const CREAM = '#fbe9bf';
-      const HOOF = '#a9683a';
-      const box = [60, 40, 452, 492];
-      // (a round shape, its radius a little uneven, as a hand draws one)
-      const blob = ([cx, cy], rx, ry, turn = 0, wobble = 0.03) => {
-        const out = [];
-        const [c, si] = [Math.cos((turn * Math.PI) / 180), Math.sin((turn * Math.PI) / 180)];
-        const phase = rnd() * 6;
-        for (let i = 0; i < 26; i++) {
-          const t = (i / 26) * Math.PI * 2;
-          const k = 1 + wobble * Math.sin(t * 3 + phase) + wobble * 0.6 * Math.sin(t * 5 + phase * 2);
-          out.push([cx + Math.cos(t) * rx * k * c - Math.sin(t) * ry * k * si, cy + Math.cos(t) * rx * k * si + Math.sin(t) * ry * k * c]);
-        }
-        return spline(out);
+      const s = new Still(rnd).place([-9, 5], 0.9);
+      const COAT = '#bf794c';
+      const SHADE = '#a2563a';
+      const DEEP = '#8a4630';
+      const CREAM = '#e4b689';
+      const PALE = '#f1d0a6';
+      const [ANTLER, ANTLER_LIT, ANTLER_DEEP] = ['#4f3029', '#7a5446', '#3a1c1d'];
+      const HOOF = '#4b3226';
+      const INK = '#2a1c16';
+      const mirror = (pts) => pts.map(([x, y]) => [472 - x, y]);
+      const { lay, wash, brush, line } = painter(rnd, INK);
+
+      const coat = spline([[176, 104], [214, 93], [256, 96], [290, 106], [322, 128], [342, 162], [350, 200], [349, 232], [356, 250], [392, 244], [430, 255], [456, 276], [463, 310], [462, 356], [460, 398], [452, 420], [424, 412], [400, 396], [372, 406], [334, 424], [290, 432], [252, 434], [224, 430], [206, 418], [193, 396], [182, 368], [177, 338], [176, 312], [150, 294], [126, 268], [114, 238], [113, 206], [120, 172], [134, 140], [152, 118]]);
+      // a leg from inside the body down to a cloven hoof: narrowing to the ankle, the hoof a little wider than it, flat
+      // underneath and split in two; `edge` is the outline below the body, for the line
+      const hoofed = (xt, xf, top, foot, wt, wa, fill) => {
+        const ankle = foot - 18;
+        const mid = (top + ankle) / 2;
+        const xm = xt + ((xf - xt) * (mid - top)) / (foot - top);
+        const xa = xt + ((xf - xt) * (ankle - top)) / (foot - top);
+        const left = [[xt - wt / 2, top], [xm - (wt + wa) / 4, mid], [xa - wa / 2, ankle], [xf - wa / 2 - 2.5, foot - 7], [xf - wa / 2 - 1, foot]];
+        const right = [[xt + wt / 2, top], [xm + (wt + wa) / 4, mid], [xa + wa / 2, ankle], [xf + wa / 2 + 2.5, foot - 7], [xf + wa / 2 + 1, foot]];
+        const sole = [[xf - 2.5, foot], [xf, foot - 5], [xf + 2.5, foot]];
+        return { d: spline([...left, ...sole, ...[...right].reverse()]), edge: [...left.slice(1), ...sole, ...right.slice(1).reverse()], xf, foot, fill };
       };
-      // the pastel's edge: everything drawn through it is frayed a little, the way the stick drags on the paper
-      const frayed = (cv, tear = 6.5) => {
-        const f = cv.id('fray');
-        cv.def(`<filter id="${f}" x="-60%" y="-60%" width="220%" height="220%"><feTurbulence type="fractalNoise" baseFrequency="0.26" numOctaves="2" seed="${Math.floor(rnd() * 1000)}" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="${tear}" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation="0.9"/></filter>`);
-        return `url(#${f})`;
-      };
-      // a mass of colour laid in with the pastel: the shape, frayed, and the grain of the paper showing in it
-      const mass = (cv, d, fill, { light = '#fff3d8', dark = DEEP, grain = 150 } = {}) => {
-        cv.add(`<path d="${d}" fill="${fill}" filter="${frayed(cv)}"/>`);
-        specks(cv, rnd, d, box, { count: grain * 3, colours: [light], size: [0.8, 2.4], opacity: [0.08, 0.24] });
-        specks(cv, rnd, d, box, { count: grain * 2, colours: [dark], size: [0.8, 2.2], opacity: [0.06, 0.18] });
-      };
-      const head = blob([256, 214], 134, 112, 0, 0.025);
-      const body = blob([256, 392], 84, 78, 0, 0.03);
-      // its face: pale, coming up in a curve round each eye and dipping between them
-      const face = spline([[256, 196], [224, 174], [182, 186], [158, 230], [172, 278], [212, 302], [256, 307], [300, 302], [340, 278], [354, 230], [330, 186], [288, 174]]);
+      const legs = [
+        hoofed(225, 226, 396, 498, 40, 27, COAT),
+        hoofed(303, 302, 410, 505, 44, 27, COAT),
+        hoofed(384, 385, 396, 479, 34, 23, SHADE),
+        hoofed(430, 441, 384, 486, 58, 25, COAT),
+      ];
+      const tail = spline([[452, 284], [468, 288], [480, 304], [484, 322], [478, 336], [466, 336], [458, 324]]);
+      // Hevalo's left antler set on the fawn's crown: his outline scaled down round the foot of the antler
+      const onCrown = ([x, y]) => [236 + (x - 255) * 0.68, 104 + (y - 160) * 0.68];
+      const ANTLER_L = HEVALO_ANTLER.map(onCrown);
+      const ANTLER_LIGHT_L = HEVALO_ANTLER_LIGHT.map((stroke) => stroke.map(onCrown));
+      const earL = [[54, 65], [78, 61], [104, 65], [128, 76], [150, 98], [146, 130], [134, 158], [112, 161], [90, 152], [70, 132], [57, 100]];
+      const earInL = [[68, 77], [92, 74], [116, 84], [134, 102], [137, 128], [125, 146], [104, 146], [85, 132], [72, 108]];
+      const tuft = spline([[186, 112], [188, 102], [198, 94], [206, 89], [212, 94], [220, 85], [230, 92], [238, 88], [248, 95], [264, 96], [280, 104], [282, 114]]);
       s.paint((cv) => {
-        // behind it: its tail, its hind feet, its antlers and its ears
-        mass(cv, blob([342, 402], 26, 17, -42), TAN, { grain: 30 });
-        mass(cv, blob([354, 392], 12, 8, -42), CREAM, { grain: 10, dark: '#e8c98a' });
+        // the legs, coming out from under the body, each dark at its hoof; the tail behind the rump, pale beneath
+        for (const leg of legs) {
+          lay(cv, leg.d, leg.fill);
+          wash(cv, leg.d, leg.fill === SHADE ? DEEP : SHADE, 8, 0.25);
+          cv.add(`<g clip-path="${within(cv, leg.d)}"><path d="M300 ${leg.foot - 11} L500 ${leg.foot - 10} L500 520 L200 520 L200 ${leg.foot - 11} Z" fill="${HOOF}" filter="${crayon(cv, rnd, { keep: 2.8, tear: 1.5 })}"/></g>`);
+        }
+        lay(cv, tail, COAT);
+        lay(cv, blob(rnd, [473, 318], 7, 15, -20, 0.05), PALE, 2.2);
+        // the antlers, Hevalo's own in his dark brown, lit along the top of each tine and deeper at the foot, inked round;
+        // then the ears, pale inside and darker at their rims, all behind the head
         for (const side of [-1, 1]) {
-          mass(cv, blob([256 + side * 84, 452], 40, 30, side * 8), TAN, { grain: 50 });
-          mass(cv, blob([256 + side * 90, 468], 34, 19, side * 6), HOOF, { grain: 30, light: '#d9a26a', dark: '#7a4622' });
-          // an antler: a short beam and one tine, both blunt
-          const antler = `M${256 + side * 60} 130 Q${256 + side * 60} 100 ${256 + side * 70} 76 M${256 + side * 62} 104 Q${256 + side * 80} 98 ${256 + side * 98} 82`;
-          cv.add(`<path d="${antler}" fill="none" stroke="#a5683a" stroke-width="23" stroke-linecap="round" stroke-linejoin="round" filter="${frayed(cv, 5)}"/>`);
-          cv.add(`<path d="M${256 + side * 57} 122 Q${256 + side * 58} 104 ${256 + side * 64} 90" fill="none" stroke="#c28a56" stroke-width="6" stroke-linecap="round" stroke-opacity="0.6" filter="${softly(cv, 2)}"/>`);
-          mass(cv, blob([256 + side * 132, 150], 50, 44, side * 28), TAN, { grain: 60 });
-          mass(cv, blob([256 + side * 134, 154], 30, 26, side * 28), CREAM, { grain: 24, dark: '#e8c98a' });
+          const X = (pts) => (side < 0 ? pts : mirror(pts));
+          const antler = spline(X(ANTLER_L));
+          lay(cv, antler, ANTLER, 2.8);
+          cv.add(`<g clip-path="${within(cv, antler)}">`);
+          for (const stroke of ANTLER_LIGHT_L) brush(cv, X(stroke), 7, ANTLER_LIT, 0.85, 'y');
+          brush(cv, X([[158, 104], [174, 96], [196, 100]]), 22, ANTLER_DEEP, 0.7, 'x');
+          cv.add('</g>');
+          cv.add(`<path d="${antler}" fill="none" stroke="${INK}" stroke-width="4.6" stroke-linejoin="round" filter="${crayon(cv, rnd, { keep: 3.4, tear: 1.4, grain: 1.1, room: [80, -20, 320, 150] })}"/>`);
+          const ear = spline(X(earL));
+          lay(cv, ear, '#ad5f3e');
+          const earIn = spline(X(earInL));
+          lay(cv, earIn, CREAM, 2.4);
+          wash(cv, blob(rnd, X([[118, 140]])[0], 22, 14, 0, 0.04), '#c98a5c', 8, 0.6);
+          cv.add(`<g clip-path="${within(cv, earIn)}">`);
+          brush(cv, X([[78, 88], [102, 90], [126, 104]]), 18, PALE, 0.7, 'x');
+          cv.add('</g>');
         }
+        // the coat in one piece from the crown to the rump, and the tuft; then its shade brushed over it: the blaze down
+        // the brow, the crown, long strokes along the back, the shadow the head throws on the body, under the belly and
+        // along the far edges
+        lay(cv, coat, COAT);
+        lay(cv, tuft, COAT);
+        cv.add(`<g clip-path="${within(cv, tuft)}">`);
+        brush(cv, [[188, 104], [232, 94], [280, 106]], 22, SHADE, 0.75, 'x');
+        cv.add('</g>');
+        cv.add(`<g clip-path="${within(cv, coat)}">`);
+        const blaze = spline([[160, 98], [214, 92], [268, 98], [252, 140], [236, 190], [226, 226], [214, 232], [204, 222], [194, 182], [178, 136]]);
+        cv.add(`<path d="${blaze}" fill="#a14e33" fill-opacity="0.9" filter="${dry(cv, rnd, { along: 'y', keep: 2.9, tear: 4, streak: 0.25 })}"/>`);
+        for (const [pts, w] of [
+          [[[180, 98], [194, 136], [206, 180], [212, 220]], 24],
+          [[[248, 98], [236, 136], [224, 180], [216, 220]], 24],
+          [[[214, 94], [214, 150], [215, 200]], 26],
+        ]) brush(cv, pts, w, DEEP, 0.3, 'y');
+        brush(cv, [[140, 124], [190, 104], [250, 102], [312, 124]], 30, SHADE, 0.5, 'x');
+        for (const [pts, w, opacity] of [
+          [[[350, 262], [390, 253], [430, 263], [458, 288]], 28, 0.9],
+          [[[356, 283], [396, 278], [436, 290], [460, 312]], 26, 0.85],
+          [[[366, 301], [404, 303], [442, 315]], 18, 0.7],
+        ]) brush(cv, pts, w, '#a5553a', opacity, 'x');
+        cv.add(`<g clip-path="${within(cv, 'M349 196 L349 224 L340 252 L318 276 L296 292 L280 302 L300 460 L490 460 L490 196 Z')}">`);
+        brush(cv, [[354, 220], [348, 252], [328, 278], [298, 300]], 24, SHADE, 0.6, 'y');
+        cv.add('</g>');
+        brush(cv, [[214, 436], [300, 440], [380, 414], [452, 420]], 20, SHADE, 0.45, 'x');
+        brush(cv, [[458, 318], [461, 360], [456, 404]], 16, SHADE, 0.4, 'y');
+        brush(cv, [[122, 176], [116, 228], [128, 272]], 14, SHADE, 0.3, 'y');
+        cv.add('</g>');
+        // the pale patches: the muzzle, a patch on the chest, a stripe along the belly
+        lay(cv, blob(rnd, [218, 259], 33, 27, 0, 0.03), CREAM, 2.4);
+        cv.add(`<g clip-path="${within(cv, coat)}">`);
+        lay(cv, blob(rnd, [240, 390], 35, 46, -22, 0.05), CREAM, 2.4);
+        lay(cv, mark(rnd, [[318, 422], [346, 412], [374, 401], [400, 390]], 17, { start: 0.4, end: 0.3, peak: 0.5, tremble: 0.1 }), CREAM, 2.2);
+        // the spots, soft dabs of pale paint in rows along the back
+        for (const [x, y, len, turn] of [[356, 270, 16, -12], [390, 262, 14, -8], [424, 279, 13, -22], [378, 288, 15, -14], [406, 297, 13, -18], [442, 304, 12, -30], [364, 306, 10, -10], [418, 258, 10, -6], [338, 282, 10, -10]]) {
+          const [c, si] = [Math.cos((turn * Math.PI) / 180) * (len / 2), Math.sin((turn * Math.PI) / 180) * (len / 2)];
+          brush(cv, [[x - c, y - si], [x, y], [x + c, y + si]], 8.5, '#ebbe92', 0.95, 'x', 2.3);
+        }
+        // scratches of a paler paint in the blaze and along the back, and a few over the rest of the coat
+        strokes(cv, rnd, coat, [176, 100, 254, 200], { count: 26, colours: [PALE], flow: () => -95, spread: 22, length: 13, width: 2.4, opacity: [0.35, 0.7], bend: 0.2 });
+        strokes(cv, rnd, coat, [340, 250, 462, 318], { count: 30, colours: [PALE], flow: () => -8, spread: 18, length: 14, width: 2.2, opacity: [0.3, 0.6], bend: 0.2 });
+        strokes(cv, rnd, coat, [116, 96, 462, 430], { count: 40, colours: [PALE], flow: () => -70, spread: 30, length: 9, width: 1.8, opacity: [0.2, 0.42], bend: 0.2 });
+        cv.add('</g>');
       });
       s.paint((cv) => {
-        // its body, pale down the front, and its forefeet together before it
-        mass(cv, body, TAN, { grain: 170 });
-        mass(cv, blob([256, 392], 42, 56, 0, 0.04), CREAM, { grain: 60, dark: '#e8c98a' });
+        // the pencil line over it all, open where the coat runs on: round each ear, down the cheeks, the chest running
+        // on into the near foreleg, the belly between the legs, the far legs, the rump and tail, the back, the tuft
         for (const side of [-1, 1]) {
-          mass(cv, blob([256 + side * 30, 446], 28, 36), TAN, { grain: 46 });
-          mass(cv, blob([256 + side * 30, 470], 27, 17), HOOF, { grain: 26, light: '#d9a26a', dark: '#7a4622' });
+          const X = (pts) => (side < 0 ? pts : mirror(pts));
+          line(cv, X([[142, 150], [124, 160], [100, 157], [78, 141], [62, 114], [55, 84], [57, 66]]), 5.8, { start: 0.5, end: 0.4 });
+          line(cv, X([[56, 63], [80, 59], [106, 63], [127, 74], [146, 92]]), 5.4, { start: 0.6, end: 0.2 });
+          line(cv, X([[124, 118], [133, 121], [128, 127], [137, 131], [130, 138]]), 3, { start: 0.5, end: 0.3, peak: 0.3, count: 16 });
         }
-        // (the shade its head throws on it)
-        cv.add(`<ellipse cx="256" cy="330" rx="74" ry="20" fill="#b9682c" fill-opacity="0.3" filter="${softly(cv, 8)}" clip-path="${within(cv, body)}"/>`);
+        line(cv, [[134, 150], [121, 178], [114, 208], [115, 240], [126, 268], [148, 290], [172, 302], [194, 307]], 6.1, { start: 0.45, end: 0.12 });
+        line(cv, [[338, 158], [348, 190], [349, 224], [340, 252], [318, 276], [296, 292], [284, 299]], 5.9, { start: 0.45, end: 0.15 });
+        line(cv, [[178, 306], [176, 338], [181, 370], [192, 398], [205, 418]], 6.1, { start: 0.25, end: 0.5, peak: 0.35 });
+        // each leg's outline below the body, round its cloven hoof, and a short split up from the cleft
+        const [fl, fr, bf, bn] = legs;
+        line(cv, [[205, 412], ...fl.edge, [245, 432]], 5.2, { start: 0.5, end: 0.2, peak: 0.3, count: 60 });
+        line(cv, [[236, 429], [258, 434], [280, 432]], 4.3, { start: 0.3, end: 0.5 });
+        line(cv, [[281, 428], ...fr.edge, [325, 424]], 5.2, { start: 0.4, end: 0.4, peak: 0.4, count: 60 });
+        line(cv, [[325, 424], [350, 415], [374, 406], [398, 394]], 5.2, { start: 0.6, end: 0.3, peak: 0.3 });
+        line(cv, [[367, 410], ...bf.edge, [401, 404]], 4.1, { start: 0.3, end: 0.3, peak: 0.5, count: 60 });
+        line(cv, [[401, 394], ...bn.edge, [459, 400], [461, 380], [462, 350], [460, 322]], 5.5, { start: 0.3, end: 0.35, peak: 0.4, count: 72 });
+        for (const leg of legs) line(cv, [[leg.xf, leg.foot - 4.5], [leg.xf + 0.4, leg.foot - 11]], 2.2, { start: 0.9, end: 0.2 });
+        line(cv, [[455, 280], [470, 288], [481, 305], [484, 324], [478, 337], [466, 335], [460, 324]], 5, { start: 0.5, end: 0.3 });
+        line(cv, [[350, 253], [372, 246], [400, 245], [430, 256], [452, 274], [458, 284]], 5.5, { start: 0.3, end: 0.5 });
+        line(cv, [[186, 103], [198, 94], [206, 89], [212, 94], [220, 85], [230, 92], [238, 88], [248, 95], [264, 96], [282, 105]], 4.1, { start: 0.4, end: 0.4, tremble: 0.2, count: 40 });
+        // the face: two dark eyes, the nose, a small mouth
+        cv.add(`<g fill="${INK}" filter="${crayon(cv, rnd, { keep: 3.6, tear: 1.2, grain: 1.2 })}"><path d="${blob(rnd, [165, 207], 13.5, 16.5, 4, 0.03)}"/><path d="${blob(rnd, [282, 207], 13.5, 16.5, -4, 0.03)}"/>`
+          + `<path d="${spline([[199, 243], [214, 239.5], [230, 243], [226, 251], [215, 256.5], [204, 251]])}"/></g>`);
+        line(cv, [[215, 255], [215, 263]], 3, { start: 0.8, end: 0.6 });
+        line(cv, [[203, 264], [209, 268.5], [215, 263]], 3, { start: 0.4, end: 0.8, peak: 0.6 });
+        line(cv, [[215, 263], [221, 268.5], [227, 264]], 3, { start: 0.8, end: 0.4, peak: 0.4 });
       });
-      s.paint((cv) => {
-        // its head: the tuft on top first, then the head and the pale of its face
-        mass(cv, blob([246, 108], 20, 16, -20), TAN, { grain: 16 });
-        mass(cv, blob([270, 104], 16, 14, 20), TAN, { grain: 12 });
-        mass(cv, head, TAN, { grain: 300 });
-        cv.add(`<ellipse cx="256" cy="140" rx="84" ry="26" fill="#f4bb7a" fill-opacity="0.6" filter="${softly(cv, 9)}" clip-path="${within(cv, head)}"/>`);
-        cv.add(`<path d="M244 112 Q262 98 274 112 Q262 108 256 122" fill="none" stroke="${DEEP}" stroke-width="5" stroke-linecap="round" stroke-opacity="0.75" filter="${softly(cv, 1.2)}"/>`);
-        mass(cv, face, CREAM, { grain: 150, light: '#fffaf0', dark: '#ecce90' });
-        // its eyes, its nose, and a little pink in its cheeks
-        cv.add(`<g filter="${frayed(cv, 2.2)}"><ellipse cx="214" cy="246" rx="10" ry="11.5" fill="#3a2418"/><ellipse cx="298" cy="246" rx="10" ry="11.5" fill="#3a2418"/><ellipse cx="256" cy="258" rx="16" ry="11" fill="#cb4a30"/></g>`);
-        cv.add('<ellipse cx="251" cy="254.6" rx="5" ry="2.6" fill="#ef8a6a" fill-opacity="0.7"/>');
-        cv.add(`<ellipse cx="186" cy="270" rx="16" ry="9" fill="#f6a08c" fill-opacity="0.4" filter="${softly(cv, 4)}"/><ellipse cx="326" cy="270" rx="16" ry="9" fill="#f6a08c" fill-opacity="0.4" filter="${softly(cv, 4)}"/>`);
-      });
-      return s.done({ finish: { paint: 0, grain: 0.04, contrast: 0.03, saturation: 1 } });
+      return s.done({ finish: { paint: 0, grain: 0.008, contrast: 0, saturation: 1, warmth: 0 } });
     },
   },
   {
@@ -1262,4 +1304,6 @@ export const ICONS = [
       return s.done({ light: { key: [[0.9, -0.28, -0.36], [1, 0.98, 0.94], 1.6], fill: [[0, 0, 1], [0, 0, 0], 0], ambient: [0, 0, 0] }, finish: { grain: 0.004, saturation: 0.9, warmth: 0 } });
     },
   },
+  // the animal friends, each in a hand of its own (icons-friends.mjs), after the rest so their files keep their numbers
+  ...FRIENDS,
 ];

@@ -16,6 +16,13 @@ export interface Threaded {
   id: string;
   senderId: string;
   createdAt: string;
+  /** a one-tap thanks ('thanks') is a line of its own, never part of a run of bubbles */
+  kind?: string;
+}
+
+/** Whether a message is drawn as an event line rather than as something its sender wrote. */
+export function isEvent(message: { kind?: string }): boolean {
+  return message.kind === 'thanks';
 }
 
 /** Where one message sits. */
@@ -112,7 +119,14 @@ export function placeMessages<T extends Threaded>(messages: readonly T[], now: D
     const run = runs[runs.length - 1];
     const before = index > 0 ? messages[index - 1]! : null;
     const continues =
-      run !== undefined && !newDay && valid && lastAt !== null && before?.senderId === message.senderId && at.getTime() - lastAt <= RUN_GAP_MS;
+      run !== undefined &&
+      !newDay &&
+      valid &&
+      lastAt !== null &&
+      !isEvent(message) &&
+      !(before && isEvent(before)) &&
+      before?.senderId === message.senderId &&
+      at.getTime() - lastAt <= RUN_GAP_MS;
 
     if (continues) run.to = index;
     else runs.push({ from: index, to: index, day });

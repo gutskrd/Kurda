@@ -115,7 +115,20 @@ describe('the gift sheet', () => {
     await userEvent.click(screen.getByText('Çay').closest('button')!);
     expect(screen.getByRole('button', { name: 'Send gift' })).toBeDisabled();
     expect(screen.getAllByText(line)).toHaveLength(2);
+    expect(screen.queryByRole('group', { name: 'How many' })).toBeNull();
     expect(sends(calls)).toHaveLength(0);
+  });
+
+  it.each([
+    [300, '300', '300'],
+    [3400, '3.4K', '3,400'],
+    [5_600_000, '5.6M', '5,600,000'],
+  ])('counts %i of one gift in the bag short, and says it whole', async (count, shown, said) => {
+    stub({ bag: [{ sku: CAY.sku, name: 'Çay', assetUrl: CAY.assetUrl, count }] });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    const bag = await screen.findByRole('list', { name: 'Your bag' });
+    expect(within(bag).getByText(`${shown} in your bag`)).toBeInTheDocument();
+    expect(within(bag).getByRole('button', { name: new RegExp(`${said} in your bag`) })).toBeInTheDocument();
   });
 
   it('says what fills an empty bag, rather than leaving a blank', async () => {
@@ -305,5 +318,163 @@ describe('the gift sheet in a group', () => {
     stub();
     renderApp(<GiftPicker open onClose={() => undefined} chat={group} people={[]} onSent={() => undefined} />);
     expect(screen.getByText(/None of your friends are in this group yet/)).toBeInTheDocument();
+  });
+});
+
+describe('several of one gift at once', () => {
+  const stepper = () => screen.getByRole('group', { name: 'How many' });
+  const more = () => within(stepper()).getByRole('button', { name: 'One more' });
+  const fewer = () => within(stepper()).getByRole('button', { name: 'One fewer' });
+  const count = () => within(stepper()).getByRole('status');
+  const footer = () => screen.getByRole('button', { name: 'Send gift' }).parentElement!;
+  const press = async (button: () => HTMLElement, times: number) => {
+    for (let i = 0; i < times; i++) await userEvent.click(button());
+  };
+
+  it('counts up to what the day’s caps and the Zêr allow, prices the whole send, and sends that many', async () => {
+    const calls = stub({ balance: 230, dayLeft: [{ userId: 'u-rojda', left: 20, moreAt: null }] });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
+    expect(count()).toHaveTextContent('1');
+    expect(count()).toHaveAttribute('aria-live', 'polite');
+    expect(fewer()).toHaveAttribute('aria-disabled', 'true');
+    expect(more()).toHaveAttribute('aria-disabled', 'false');
+
+    await press(more, 2);
+    expect(count()).toHaveTextContent('3');
+    expect(screen.getByText('3 × Gul for rojda')).toBeInTheDocument();
+    expect(within(footer()).getByText('75')).toBeInTheDocument();
+    expect(within(footer()).getByText('≈ €0.75')).toBeInTheDocument();
+    await press(fewer, 1);
+    expect(count()).toHaveTextContent('2');
+
+    // 230 Zêr of 25-Zêr roses is nine; past that the button rests and keeps the keyboard where it is
+    await press(more, 10);
+    expect(count()).toHaveTextContent('9');
+    expect(more()).toHaveAttribute('aria-disabled', 'true');
+    expect(more()).toHaveFocus();
+    expect(within(footer()).getByText('225')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    expect(sends(calls)[0]!.body).toMatchObject({ sku: GUL.sku, quantity: 9, expectedPrice: 25, toUserIds: ['u-rojda'] });
+  });
+
+  it('stops at what the day’s caps leave for the friend, and at what the spending limit leaves', async () => {
+    stub({ dayLeft: [{ userId: 'u-rojda', left: 3, moreAt: null }] });
+    const first = renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Çay/ }));
+    await press(more, 5);
+    expect(count()).toHaveTextContent('3');
+    first.unmount();
+
+    stub({ limits: { maxPrice: null, left: 350, confirmFrom: 2_000 } });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Pisîk/ }));
+    await press(more, 5);
+    expect(count()).toHaveTextContent('2');
+    expect(screen.getByRole('button', { name: 'Send gift' })).toBeEnabled();
+  });
+
+  it('gives each friend in a group that many, priced for them all', async () => {
+    const calls = stub({ balance: 230 });
+    const people = [rojda, { userId: 'u-baran', name: 'baran', avatarUrl: null }];
+    renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'group', groupId: 'g1' }} people={people} onSent={() => undefined} />);
+    await userEvent.click(screen.getByLabelText('Select all'));
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
+    // nine roses' worth of Zêr is four each for two
+    await press(more, 6);
+    expect(count()).toHaveTextContent('4');
+    expect(screen.getByText('4 × Gul for rojda, baran')).toBeInTheDocument();
+    expect(within(footer()).getByText('200')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    expect(sends(calls)[0]!.body).toMatchObject({ quantity: 4, toUserIds: ['u-rojda', 'u-baran'] });
+  });
+
+  it('gives several from the bag, as many as it holds', async () => {
+    const calls = stub({ bag: [{ sku: CAY.sku, name: 'Çay', assetUrl: CAY.assetUrl, count: 2 }] });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    await userEvent.click(within(await screen.findByRole('list', { name: 'Your bag' })).getByRole('button', { name: /Çay/ }));
+    await press(more, 3);
+    expect(count()).toHaveTextContent('2');
+    expect(screen.getByText('2 × Çay for rojda')).toBeInTheDocument();
+    expect(screen.getByText('From your bag, free')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    expect(sends(calls)[0]!.body).toMatchObject({ sku: CAY.sku, fromBag: true, quantity: 2 });
+  });
+
+  it('starts again at one when another gift is picked, and sends one without a number', async () => {
+    const calls = stub();
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
+    await press(more, 2);
+    expect(screen.getByText('3 × Gul for rojda')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Qehwe/ }));
+    expect(count()).toHaveTextContent('1');
+    expect(screen.getByText('Qehwe for rojda')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    expect(sends(calls)[0]!.body!.quantity).toBeUndefined();
+  });
+
+  it('shows no stepper when only one can go: one gift’s worth of Zêr, or something one of a kind', async () => {
+    stub({ balance: 30 });
+    const first = renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
+    expect(screen.getByText('Gul for rojda')).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'How many' })).toBeNull();
+    first.unmount();
+
+    // something a friend here already has is one of a kind, and goes one at a time
+    stub({ items: [{ ...GUL, alreadyOwnedBy: ['u-baran'] }] });
+    const people = [rojda, { userId: 'u-baran', name: 'baran', avatarUrl: null }];
+    renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'group', groupId: 'g1' }} people={people} onSent={() => undefined} />);
+    await userEvent.click(screen.getByLabelText('Select all'));
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
+    expect(screen.getByText('Gul for rojda')).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'How many' })).toBeNull();
+  });
+
+  it('keeps the key and the number on a retry of the same send, and takes a new key for another number', async () => {
+    const calls = stub({
+      sends: [
+        [500, { code: 'INTERNAL', message: 'broken' }],
+        [200, { batchId: 'b1', sent: ['u-rojda'], skipped: [], balance: { zer: 29_925 }, freeGifts: 0, message: null }],
+      ],
+    });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Gul/ }));
+    await press(more, 2);
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    await screen.findByRole('alert');
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    const [failed, retry] = sends(calls);
+    expect(retry!.body).toMatchObject({ quantity: 3, idempotencyKey: failed!.body!.idempotencyKey });
+    expect(failed!.body!.quantity).toBe(3);
+
+    await press(more, 1);
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    const other = sends(calls)[2]!.body!;
+    expect(other.quantity).toBe(4);
+    expect(other.idempotencyKey).not.toBe(failed!.body!.idempotencyKey);
+  });
+
+  it('asks the second look for the whole send, and sends that many with the server’s token', async () => {
+    const calls = stub({
+      sends: [
+        [409, { code: 'GIFT_NEEDS_CONFIRM', message: 'confirm', details: { confirmToken: 'tok-3', total: 6_000, recipients: 1, expiresAt: '2030-01-01T00:00:00Z' } }],
+        [200, { batchId: 'b9', sent: ['u-rojda'], skipped: [], balance: { zer: 24_000 }, freeGifts: 0, message: null }],
+      ],
+    });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: /Belem/ }));
+    await press(more, 2);
+    expect(within(footer()).getByText('6,000')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    const check = await screen.findByRole('region', { name: 'One more look before it goes' });
+    expect(within(check).getByText('6,000 Zêr')).toBeInTheDocument();
+    expect(within(check).getByText(/for rojda/)).toHaveTextContent('3 × Belem · for rojda');
+    await userEvent.click(within(check).getByRole('button', { name: /Send it/ }));
+    const [first, second] = sends(calls);
+    expect(second!.body).toMatchObject({ quantity: 3, confirmToken: 'tok-3', idempotencyKey: first!.body!.idempotencyKey });
   });
 });

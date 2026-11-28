@@ -26,7 +26,10 @@ export function formatNumber(value: number, locale: Locale): string {
   }
 }
 
-/** Large counts shortened for tight spots (5230 → "5.2K", 1_240_000 → "1.2M"), as the website writes them. */
+/**
+ * A count of people or things as every count on a screen is written (300, then "3.4K", "5.6M"), in the reader's
+ * language and as the website writes it. A screen reader is given the whole number (`formatNumber`) beside it.
+ */
 export function formatCompact(value: number, locale: Locale): string {
   return compactCount(value, locale);
 }

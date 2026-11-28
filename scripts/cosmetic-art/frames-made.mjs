@@ -4,8 +4,8 @@
  * sight, and a photograph on its white card, taped up.
  */
 import { crescent } from './brush.mjs';
-import { blade, linear, spline } from './icons.mjs';
-import { n, pt } from './kit.mjs';
+import { blade, linear } from './icons.mjs';
+import { n, pt, spline } from './kit.mjs';
 import { C, P, RI, ring, round } from './ring.mjs';
 import { Still } from './still.mjs';
 

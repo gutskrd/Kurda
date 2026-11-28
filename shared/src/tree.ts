@@ -2,11 +2,12 @@
  * The learner's tree: its kinds, how it grows, and how it fares unwatered, the same on the server and both apps. A
  * finished lesson earns water, and pouring it grows the tree from a seed through seven stages. A tree without water grows
  * thirsty, wilts and withers but is never lost: what it grew stays, and the next water brings it back, so a returning
- * learner revives a tree rather than facing an empty plot. Planting another kind replaces the tree with its seed; a few
- * kinds are free, the others bought once and plantable whenever wanted.
+ * learner revives a tree rather than facing an empty plot. Planting another kind replaces the tree with its seed; the oak
+ * is free to everyone, so anyone can grow a tree from their lessons, and every other kind is bought once and plantable
+ * whenever wanted.
  */
 
-/** The kinds of tree, the ones free to plant first. */
+/** The kinds of tree, the free oak first. */
 export const TREE_SPECIES = ['beru', 'hinar', 'behiv', 'bi', 'tu', 'spindar', 'kaj', 'payiz', 'miraz', 'sev'] as const;
 export type TreeSpecies = (typeof TREE_SPECIES)[number];
 
@@ -23,19 +24,19 @@ export const TREE_FULL: TreeStage = 6;
 export const TREE_HEALTHS = ['fresh', 'thirsty', 'wilting', 'withered'] as const;
 export type TreeHealth = (typeof TREE_HEALTHS)[number];
 
-/** What planting a kind costs: nothing for the starters, a one-time price in Zêr for the others. */
+/** What planting a kind costs: nothing for the oak, a one-time price in Zêr for every other kind. */
 export interface TreeKind {
   species: TreeSpecies;
   starter: boolean;
-  /** in Zêr; 0 for a starter */
+  /** in Zêr; 0 for the free oak */
   price: number;
 }
 
 export const TREE_KINDS: Readonly<Record<TreeSpecies, TreeKind>> = {
   beru: { species: 'beru', starter: true, price: 0 },
-  hinar: { species: 'hinar', starter: true, price: 0 },
-  behiv: { species: 'behiv', starter: true, price: 0 },
-  bi: { species: 'bi', starter: true, price: 0 },
+  hinar: { species: 'hinar', starter: false, price: 300 },
+  behiv: { species: 'behiv', starter: false, price: 250 },
+  bi: { species: 'bi', starter: false, price: 200 },
   tu: { species: 'tu', starter: false, price: 400 },
   spindar: { species: 'spindar', starter: false, price: 400 },
   kaj: { species: 'kaj', starter: false, price: 500 },

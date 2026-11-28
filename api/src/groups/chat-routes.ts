@@ -25,7 +25,8 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
   app.post(
     '/groups/:id/chat',
     {
-      schema: { params: idParam, body: z.object({ body: z.string().min(1).max(MAX_GROUP_MESSAGE_LEN) }) },
+      // `thanksFor`: a one-tap thanks for a gift in this group, stored with a fixed text (GroupChatService.send)
+      schema: { params: idParam, body: z.object({ body: z.string().min(1).max(MAX_GROUP_MESSAGE_LEN), thanksFor: lowerUuid().optional() }) },
       config: { rateLimit: { max: 60, windowMs: 60_000, per: 'user-or-ip' as const } },
       // No requireUnrestricted('chat') here: `send` checks it first (`assertCanPost`) with the same 403 MUTED, and a
       // second check would cost a query per message.
@@ -33,7 +34,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
     },
     async (req, reply) => {
       const userId = req.user!.id;
-      const body = (req.body as { body: string }).body;
+      const { body, thanksFor } = req.body as { body: string; thanksFor?: string };
       if (trust) {
         const gate = await trust.checkAction(userId, 'message');
         if (!gate.allowed) {
@@ -42,13 +43,13 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
         if (!(await takeDaily(app.redis, 'group-chat', userId, GROUP_MESSAGES_PER_DAY, app.log))) {
           throw new AppError('RATE_LIMITED', 429, 'too many messages today; try again tomorrow', { retryAfterSec: secondsToUtcMidnight() });
         }
-        // duplicate/burst spam → auto-mute/suspend before the message lands
-        const spam = await trust.assessContent(userId, body);
-        if (spam.enforced) {
+        // duplicate/burst spam → auto-mute/suspend before the message lands; a thanks has no words of the sender's to judge
+        const spam = thanksFor ? null : await trust.assessContent(userId, body);
+        if (spam?.enforced) {
           return reply.code(403).send({ code: 'AUTO_MODERATED', message: 'your account has been restricted for spam-like activity' });
         }
       }
-      const message = await chat.send(userId, (req.params as { id: string }).id, body, (k) => (app.storage ? app.storage.publicUrl(k) : null));
+      const message = await chat.send(userId, (req.params as { id: string }).id, body, (k) => (app.storage ? app.storage.publicUrl(k) : null), thanksFor);
       if (trust) await trust.recordAction(userId, 'message');
       return message;
     },

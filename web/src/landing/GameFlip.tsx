@@ -66,23 +66,40 @@ const PRINT = { inset: 6.5, cover: { top: 33, left: 11, size: C.w - 22 } } as co
 const FLIP = handStampFlip().map((transform) => ({ transform }));
 const REST = handStampShapesAt(0);
 
+/** How long the gleam takes to cross the stamp once it has come round, and how soon after it faces us it sets off. */
+const SETTLE_GLEAM = { ms: 640, after: 60 } as const;
+
 /**
- * The light on each face through a turn, from the stamp's angle at each of its steps: a face darkens as it turns
- * edge-on and a gleam crosses it, left to right over both faces, so it reads as card turning in the light. Within `LIT`
- * degrees of facing us a face is in full light, so the stamp coming round is bright as it settles and nothing passes
- * over it once it is up. `face` 0 is the front, turned `turn` degrees from us; the back faces us at 180.
+ * The light on each face through a turn, from the stamp's angle at each of its steps: a face darkens smoothly as it
+ * turns away and brightens as it comes round, all the way to facing us, and its glow behind the hand grows and fades
+ * with it, so nothing switches on when the stamp settles. A faint sheen crosses it while it turns, left to right over
+ * both faces; then, once the stamp coming round faces us, one gleam runs across it from corner to corner, as light over
+ * gloss, while it rests in the hand. `face` 0 is the front, turned `turn` degrees from us; the back faces us at 180.
  */
-const LIT = 30;
-function lightOf(face: 0 | 1): { shade: Keyframe[]; gleam: Keyframe[] } {
-  const turns = FLIP.map((_, k) => handStampCardAt((k * HAND_STAMP_FLIP.ms) / (FLIP.length - 1)).turn);
-  // how far each step has a face from full light toward edge-on, from 0 to 1
-  const off = turns.map((turn) => Math.max(0, Math.min(1, ((face === 0 ? turn : 180 - turn) - LIT) / (90 - LIT))));
+function lightOf(face: 0 | 1): { shade: Keyframe[]; gleam: Keyframe[]; glow: Keyframe[] } {
+  const times = FLIP.map((_, k) => (k * HAND_STAMP_FLIP.ms) / (FLIP.length - 1));
+  const turns = times.map((ms) => handStampCardAt(ms).turn);
+  const facing = times[turns.findIndex((turn) => turn >= 175)] ?? HAND_STAMP_FLIP.ms;
+  const from = facing + SETTLE_GLEAM.after;
+  // how far each step has a face from facing us toward edge-on, from 0 to 1, eased so it leaves and arrives softly
+  const off = turns
+    .map((turn) => Math.max(0, Math.min(1, (face === 0 ? turn : 180 - turn) / 90)))
+    .map((o) => o * o * (3 - 2 * o));
+  // Past edge-on a face is turned away, and its shade goes clear: some browsers draw an animated layer's back even in a
+  // face that hides its back, which would lay the turned-away face's full shade over the one now facing us.
+  const away = turns.map((turn) => (face === 0 ? turn > 90 : turn < 90));
   return {
-    shade: off.map((o) => ({ opacity: o * o * (3 - 2 * o) })),
-    gleam: off.map((o) => {
+    shade: off.map((o, k) => ({ opacity: away[k] ? 0 : o })),
+    gleam: off.map((o, k) => {
+      const p = (times[k]! - from) / SETTLE_GLEAM.ms;
+      if (face === 1 && p >= 0 && p <= 1) {
+        const eased = p * p * (3 - 2 * p);
+        return { transform: `translateX(${Math.round(-150 + eased * 300)}%) skewX(-18deg)`, opacity: Math.sin(Math.PI * p) ** 0.6 };
+      }
       const across = face === 0 ? o : 1 - o;
-      return { transform: `translateX(${Math.round(-130 + across * 260)}%) skewX(-16deg)`, opacity: Math.sin(Math.PI * o) };
+      return { transform: `translateX(${Math.round(-130 + across * 260)}%) skewX(-16deg)`, opacity: 0.5 * Math.sin(Math.PI * o) };
     }),
+    glow: off.map((o) => ({ opacity: 1 - o })),
   };
 }
 const LIGHT = [lightOf(0), lightOf(1)] as const;
@@ -194,12 +211,13 @@ export function GameFlip(): React.JSX.Element {
     const turned = card.animate(FLIP, { duration: HAND_STAMP_FLIP.ms, easing: 'linear', fill: 'forwards' });
     // the glow behind the hand turns with the stamp, on the same clock
     const glowed = glowTurn.current?.animate(FLIP, { duration: HAND_STAMP_FLIP.ms, easing: 'linear', fill: 'forwards' });
-    // the light on both faces, on the same clock as the turn
+    // the light on both faces and their glows, on the same clock as the turn
+    const timing = { duration: HAND_STAMP_FLIP.ms, easing: 'linear' };
     const lit = Array.from(card.querySelectorAll('.fp-flip-face')).flatMap((face, f) => {
       const light = LIGHT[f === 0 ? 0 : 1];
-      const timing = { duration: HAND_STAMP_FLIP.ms, easing: 'linear' };
       return [face.querySelector('.fp-flip-shade')?.animate(light.shade, timing), face.querySelector('.fp-flip-gleam')?.animate(light.gleam, timing)];
     });
+    const glows = Array.from(glowTurn.current?.querySelectorAll('.fp-flip-glow') ?? []).map((glow, f) => glow.animate(LIGHT[f === 0 ? 0 : 1].glow, timing));
     let frame = 0;
     const draw = (): void => {
       drawHand(shapes, Number(turned.currentTime ?? 0));
@@ -226,6 +244,7 @@ export function GameFlip(): React.JSX.Element {
       turned.cancel();
       glowed?.cancel();
       for (const a of lit) a?.cancel();
+      for (const a of glows) a.cancel();
       drawHand(shapes, null);
     };
   }, [turning]);

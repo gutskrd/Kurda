@@ -226,6 +226,24 @@ describe('the collection sheet', () => {
     expect(within(sheet).getByText('Gift from a Hevalo member').closest('a')).toBeNull();
   });
 
+  it.each([
+    [300, '×300', '×300'],
+    [3400, '×3.4K', '×3,400'],
+    [5_600_000, '×5.6M', '×5,600,000'],
+  ])('shows %i of one gift short on its tile, and says it whole', async (count, shown, said) => {
+    const cay = { ...collection().received.items[0]!, sku: 'gift-cay', name: 'Çay', count };
+    serve([['/users/u2/collection', collection({ received: { items: [cay], total: 1 } })]]);
+    renderApp(<CollectionSheet open onClose={() => {}} owner={theirs} />);
+    const sheet = screen.getByRole('dialog', { name: 'Hamo’s collection' });
+    await userEvent.click(within(sheet).getByRole('radio', { name: 'Gifts' }));
+    const tile = await within(sheet).findByRole('button', { name: `Çay, ${said}` });
+    expect(tile.querySelector('.coll-count')?.textContent).toBe(shown);
+    // Its own page says it the same way, with the whole number for a screen reader.
+    await userEvent.click(tile);
+    expect(within(sheet).getByText(shown).closest('.coll-muted')).not.toBeNull();
+    expect(within(sheet).getByText(said).closest('.coll-muted')).not.toBeNull();
+  });
+
   it('adds what you sent to your own gifts, with calm words where there is none', async () => {
     serve([['/users/me1/collection', collection({ received: { items: [], total: 0 }, sent: { items: [], total: 0 } })]]);
     renderApp(<CollectionSheet open onClose={() => {}} owner={yours} />);

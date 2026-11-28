@@ -112,6 +112,23 @@ describe('the gift’s moment', () => {
     expect(box()).toBeNull();
   });
 
+  it('says how many when several were given, with the count at the picture’s corner', () => {
+    renderApp(<GiftMoment card={{ ...card, quantity: 3 }} from="Rojda" revealed onSkip={() => undefined} onClose={() => undefined} />);
+    const name = screen.getByText('Heyv');
+    expect(name).toHaveAttribute('lang', 'ku');
+    expect(name.closest('b')).toHaveTextContent('3 × Heyv');
+    const chip = document.querySelector('.gift-moment .gift-count-chip')!;
+    expect(chip).toHaveTextContent('×3');
+    expect(chip.parentElement!.querySelector('.gift-item-art')).not.toBeNull();
+    expect(screen.getByRole('status')).toHaveTextContent('You got 3 × Heyv from Rojda.');
+  });
+
+  it('shows one gift by its name alone, with no count', () => {
+    renderApp(<GiftMoment card={card} from="Rojda" revealed onSkip={() => undefined} onClose={() => undefined} />);
+    expect(screen.getByText('Heyv', { selector: 'b' })).toHaveAttribute('lang', 'ku');
+    expect(document.querySelector('.gift-count-chip')).toBeNull();
+  });
+
   it('keeps the box still under Reduce Motion, and lets the gift simply take its place', () => {
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener() {}, removeEventListener() {} }));
     renderApp(<Stage />);

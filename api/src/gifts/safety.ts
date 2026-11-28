@@ -30,13 +30,13 @@ type Executor = Pick<pg.Pool, 'query'>;
 const MONTH_START = `(date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')`;
 
 /**
- * What gifts since `since` (SQL) count against a limit: the Zêr paid for them, and for the monthly limit under 18 the
+ * What gifts since `since` (SQL) count against a limit: the Zêr paid for them, every one of several sent at once, and for the monthly limit under 18 the
  * gifts given from the bag too, at their price in the shop, since a bag can be filled with bought gifts (shop bundles).
  * A members' box's free gifts are never counted.
  */
 async function spentSince(db: Executor, userId: string, since: string, opts: { bag?: boolean } = {}): Promise<number> {
   const res = await db.query<{ zer: string }>(
-    `SELECT COALESCE(sum(price), 0)::text AS zer FROM gifts
+    `SELECT COALESCE(sum(price * quantity), 0)::text AS zer FROM gifts
       WHERE from_user_id = $1 AND paid_with = ANY($2::text[]) AND created_at >= ${since}`,
     [userId, opts.bag ? ['zer', 'bag'] : ['zer']],
   );
@@ -137,11 +137,13 @@ export async function assertWithinBounds(
 
 // ─────────────────────────────────────────────────────────── the second confirmation
 
-/** What a confirmation is good for: this sender, this gift at this price, these recipients, this place, this request. */
+/** What a confirmation is good for: this sender, this many of this gift at this price, these recipients, this place, this request. */
 export interface ConfirmSubject {
   fromId: string;
   sku: string;
   price: number;
+  /** how many of it each recipient is given */
+  quantity: number;
   recipients: readonly string[];
   /** 'dm:<id>', 'group:<id>', 'post:<type>:<id>' or 'shop' */
   target: string;
@@ -150,7 +152,7 @@ export interface ConfirmSubject {
 
 function confirmBody(subject: ConfirmSubject, expiresMs: number): string {
   const to = [...subject.recipients].sort().join(',');
-  return ['gift-confirm-v1', subject.fromId, subject.sku, subject.price, to, subject.target, subject.idempotencyKey, expiresMs].join('|');
+  return ['gift-confirm-v2', subject.fromId, subject.sku, subject.price, subject.quantity, to, subject.target, subject.idempotencyKey, expiresMs].join('|');
 }
 
 function sign(secret: Buffer, body: string): string {

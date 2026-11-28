@@ -52,7 +52,7 @@ export const GIFTS: readonly GiftDef[] = [
   gift('kevok', 'Kevok', 50, 'animals'),
   gift('sosin', 'Sosin', 100, 'flowers'),
   // the apple stuck with cloves that is sent for love, so only ever between two adults
-  gift('sev-mexek', 'Sêva mêxekî', 100, 'warm', { adultsOnly: true }),
+  gift('sev-mexek', 'Sêva Mêxekrêj', 100, 'warm', { adultsOnly: true }),
   gift('pisik', 'Pisîk', 150, 'animals'),
   gift('kew', 'Kew', 300, 'animals'),
   gift('semawer', 'Semawer', 300, 'warm'),

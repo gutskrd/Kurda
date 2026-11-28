@@ -10,6 +10,7 @@ import {
   GIFT_UNWRAP_MS,
   giftGlow,
   giftMeaning,
+  giftQuantity,
   giftSeed,
   giftSenderName,
   type EquippableCategory,
@@ -37,6 +38,8 @@ import { giftsSeen, refreshGiftBadge } from '../shop/useUnseenGifts';
 import { GiftBox, NightSky } from './art';
 import { GiftArt } from './GiftLoop';
 import { GiftLight } from './GiftLight';
+import { GiftCountChip } from './GiftBubble';
+import { countedAround, countedName } from './quantity';
 import { heldDim } from '../theme/MotionParts';
 import { ConfettiBurst, GlowRing, useCelebration } from '../theme/CelebrationParts';
 
@@ -59,7 +62,8 @@ const ART: Readonly<Record<GiftTier, number>> = { common: 140, rare: 156, legend
  * name and meaning and Say thanks, Send one back (a known adult's only, the parent decides) or Close; a gift on a post,
  * with no chat to thank in, has Close alone (`PostGiftOpen`). The tier sets the
  * strength: a gentle glow and short rays for a common gift, brighter rays and sparkles for a rare one, and a grand one
- * keeps its night sky. Everything moves on the native driver; under Reduce Motion the light is there and still.
+ * keeps its night sky. Several of one gift say how many under it ("3 × Gul") and on it ("×3"). Everything moves on the
+ * native driver; under Reduce Motion the light is there and still.
  *
  * The gift is opened on the server as the moment starts (`POST /gifts/:id/open`); `onOpened` hands back the fresh
  * card for the bubble.
@@ -75,10 +79,10 @@ export function GiftUnwrap({
   onClose: () => void;
   onOpened: (card: GiftCard) => void;
   /**
-   * Send the thank-you into the chat; resolves to null when it went, or to the server's refusal, said here since the
-   * chat's own notice is behind this. Absent for a gift on a post, which has no chat.
+   * Send a one-tap thanks for this gift into the chat; resolves to null when it went, or to the server's refusal, said
+   * here since the chat's own notice is behind this. Absent for a gift on a post, which has no chat.
    */
-  onThanks?: () => Promise<ApiError | null>;
+  onThanks?: (card: GiftCard) => Promise<ApiError | null>;
   /** Open the gift sheet for whoever sent it; left out where nothing can be sent back. */
   onSendBack?: () => void;
 }): React.JSX.Element {
@@ -88,6 +92,9 @@ export function GiftUnwrap({
   const reduce = useReducedMotion();
   const card = target.card;
   const meaning = giftMeaning(card.sku, locale);
+  const quantity = giftQuantity(card);
+  const counted = countedAround(card.name, quantity, t, locale);
+  const said = countedName(card.name, quantity, t, locale);
   const look = GIFT_MOMENT_LOOK[card.tier];
   const art = ART[card.tier];
   const box = Math.round(art * 1.05);
@@ -98,7 +105,8 @@ export function GiftUnwrap({
   const [equippable, setEquippable] = useState<EquippableCategory | null>(card.equippable);
   const [openError, setOpenError] = useState<string | null>(null);
   const [worn, setWorn] = useState(false);
-  const [thanked, setThanked] = useState<'idle' | 'busy' | 'done'>('idle');
+  // a gift thanked for already offers no second thanks
+  const [thanked, setThanked] = useState<'idle' | 'busy' | 'done'>(card.myThanked ? 'done' : 'idle');
   const [actionError, setActionError] = useState<string | null>(null);
   const [thanksError, setThanksError] = useState<ApiError | null>(null);
   const sky = useWindowDimensions();
@@ -162,9 +170,9 @@ export function GiftUnwrap({
       useNativeDriver: true,
     });
     words.start();
-    AccessibilityInfo.announceForAccessibility?.(t('gift.unwrap.announce', { item: card.name, name: target.fromName || t('gift.someone') }));
+    AccessibilityInfo.announceForAccessibility?.(t('gift.unwrap.announce', { item: said, name: target.fromName || t('gift.someone') }));
     return () => words.stop();
-  }, [revealed, details, reduce, t, card.name, target.fromName]);
+  }, [revealed, details, reduce, t, said, target.fromName]);
 
   // Worn at once: it is already yours. A refusal takes it off again and says why.
   const wearing = useIntents<EquippableCategory, boolean>(
@@ -186,7 +194,7 @@ export function GiftUnwrap({
     if (!onThanks || thanked !== 'idle') return;
     setThanked('busy');
     setThanksError(null);
-    void onThanks().then((error) => {
+    void onThanks(card).then((error) => {
       setThanked(error ? 'idle' : 'done');
       setThanksError(error);
     });
@@ -242,8 +250,10 @@ export function GiftUnwrap({
                 aria-hidden={!revealed}
               >
                 <Text style={[styles.line, { color: colors.textSecondary }]}>
-                  <Text style={[styles.name, { color: colors.textPrimary }]} accessibilityLanguage="ku">
-                    {card.name}
+                  <Text style={[styles.name, { color: colors.textPrimary }]}>
+                    {counted.before}
+                    <Text accessibilityLanguage="ku">{card.name}</Text>
+                    {counted.after}
                   </Text>
                   {meaning ? ` · ${meaning}` : ''}
                 </Text>
@@ -369,6 +379,7 @@ function Landed({ card, size, look, gold }: { card: GiftCard; size: number; look
             <Icon name="gift" size={size * 0.5} color={gold} />
           </View>
         )}
+        <GiftCountChip quantity={giftQuantity(card)} />
       </Animated.View>
     </View>
   );

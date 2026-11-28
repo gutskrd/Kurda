@@ -11,13 +11,12 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
 import { Avatar } from '../profile/Avatar';
-import { layout, radii, spacing, typography } from '../theme/tokens';
+import { fontScaleCap, layout, radii, spacing, typography } from '../theme/tokens';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { noticeTime } from '../notifications/inbox';
 import { formatCompact, formatNumber } from '../i18n/format';
-import type { Locale } from '../i18n/translations';
 import { springTo, timing } from '../theme/animate';
 import { useDirection } from '../reports/direction';
 import { setEngagement } from './api';
@@ -133,7 +132,7 @@ export function PostActions({
   onComment: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
   const { user } = useAuth();
   const [sharing, setSharing] = useState(false);
@@ -158,7 +157,13 @@ export function PostActions({
           burst={engage.likes}
           onPress={engage.like}
         />
-        <Action icon="chat" label={t('feed.comments', { count: item.commentCount })} count={count(item.commentCount)} onPress={onComment} />
+        <Action
+          icon="chat"
+          label={t('feed.comments', { count: formatNumber(item.commentCount, locale) })}
+          counted
+          count={count(item.commentCount)}
+          onPress={onComment}
+        />
         {held ? null : (
           <Action
             icon="repost"
@@ -461,8 +466,8 @@ const WIDE = 600;
 const TITLE_SIZE = typography.sizes.text;
 const TITLE_LINE = 25;
 /**
- * A pill's height and a round pill's width: drawn at 36 and reaching 48 up and down; across, the row's 8 gap is
- * shared between neighbours, so 44.
+ * A pill's height, and the width of one without a count: drawn at 36 and reaching 48 up and down; across, the row's
+ * 8 gap is shared between neighbours, so 44.
  */
 const PILL = 36;
 /**
@@ -475,15 +480,16 @@ const ACTIONS_ABOVE = spacing.sm + 4;
 const NAME_LINE = 18;
 
 /**
- * One soft pill under a post: a 20 pt glyph and its count, or a round button of the same height without one.
- * Filled, not framed, and no different when on; the glyph shows that (a red heart, a green repost, a yellow
- * bookmark). The label says what pressing does, never the count, since a screen reader would otherwise announce
- * the number as its name.
+ * One control under a post: a 20 pt glyph with its count, or the glyph alone in a box as wide as it is tall. Unfilled,
+ * so all six and three counts of "5.6M" fit across a 360 pt phone; on is shown by the glyph (a red heart, a green
+ * repost, a yellow bookmark). A count too long for the room left shrinks rather than wrapping or pushing the row off
+ * the screen. The label says what pressing does, with the whole count after it ("Like (3,400)"), never the short one.
  */
 function Action({
   icon,
   label,
   count,
+  counted = false,
   on = false,
   tint,
   edge,
@@ -494,6 +500,8 @@ function Action({
   icon: IconName;
   label: string;
   count?: number;
+  /** The label already says how many ("3,400 comments"), so the count is not said again after it. */
+  counted?: boolean;
   on?: boolean;
   /** The colour while on, when it is not the ink (a red heart, a green repost, a yellow bookmark). */
   tint?: string;
@@ -506,6 +514,8 @@ function Action({
   onPress: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const { locale } = useI18n();
+  const dir = useDirection();
   const colour = tint ?? colors.textPrimary;
   const glyph = <Icon name={icon} size={20} color={colour} edge={edge} />;
   return (
@@ -513,8 +523,8 @@ function Action({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
-      accessibilityLabel={count ? `${label} (${count})` : label}
-      style={({ pressed }) => [styles.pill, count ? styles.pillWide : null, { backgroundColor: colors.controlTrack }, pressed && styles.pressed]}
+      accessibilityLabel={count && !counted ? `${label} (${formatNumber(count, locale)})` : label}
+      style={({ pressed }) => [styles.pill, count ? styles.pillCounted : null, { flexDirection: dir.row }, pressed && styles.pressed]}
     >
       {burst !== undefined ? (
         <HeartBurst fired={burst} color={colors.like} size={20}>
@@ -565,21 +575,32 @@ function TickCount({ value, color }: { value: number; color: string }): React.JS
       {tick.was !== null ? (
         <Animated.Text
           style={[styles.count, styles.tickOld, { color, opacity: fadeOut, transform: [{ translateY: leaving }] }]}
+          numberOfLines={1}
+          maxFontSizeMultiplier={fontScaleCap.fixedBox}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         >
-          {pillCount(tick.was, locale)}
+          {formatCompact(tick.was, locale)}
         </Animated.Text>
       ) : null}
-      <Animated.Text style={[styles.count, { color, opacity: p, transform: [{ translateY: arriving }] }]}>{pillCount(tick.now, locale)}</Animated.Text>
+      <Animated.Text
+        style={[styles.count, { color, opacity: p, transform: [{ translateY: arriving }] }]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={COUNT_FIT}
+        maxFontSizeMultiplier={fontScaleCap.fixedBox}
+      >
+        {formatCompact(tick.now, locale)}
+      </Animated.Text>
     </View>
   );
 }
 
-/** A count in a pill: whole up to 9,999, then short ("12.3K"), so five pills fit across a phone, as on the web. */
-export function pillCount(n: number, locale: Locale): string {
-  return n < 10_000 ? formatNumber(n, locale) : formatCompact(n, locale);
-}
+/**
+ * How far a pill's count may shrink: only three of the longest short forms ("12,3 Tsd.") beside a gift, share and
+ * save on a 360 pt phone need it.
+ */
+const COUNT_FIT = 0.5;
 
 const styles = StyleSheet.create({
   // No box: a hairline across the page under each post, the same room above and below it.
@@ -599,12 +620,14 @@ const styles = StyleSheet.create({
   held: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },
   bloomLayer: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingTop: spacing.xs + 2 },
-  spacer: { flex: 1 },
-  pill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minWidth: PILL, height: PILL, borderRadius: radii.pill },
-  pillWide: { paddingHorizontal: spacing.sm + 4 },
+  // The row's gap either side of it counts once, which leaves room for one more digit when the counts are long.
+  spacer: { flex: 1, marginHorizontal: -spacing.sm / 2 },
+  pill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs, minWidth: PILL, height: PILL },
+  // A pill with a count gives way first when the row is short of room, never below a round pill's width.
+  pillCounted: { flexShrink: 1 },
   pressed: { opacity: pressedDim },
   count: { fontSize: typography.sizes.text, lineHeight: COUNT_LINE, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
-  // The count's window: one line tall, so a number sliding out is gone at its edge.
-  tick: { height: COUNT_LINE, overflow: 'hidden', justifyContent: 'center' },
+  // The count's window: one line tall, so a number sliding out is gone at its edge, and as narrow as the pill allows.
+  tick: { flexShrink: 1, minWidth: 0, height: COUNT_LINE, overflow: 'hidden', justifyContent: 'center' },
   tickOld: { position: 'absolute', left: 0, right: 0 },
 });

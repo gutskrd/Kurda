@@ -13,6 +13,7 @@ import {
   isFiltered,
   isWordTag,
   itemCategory,
+  itemRarity,
   shopItemDescription,
   type BundlePurchaseResult,
   type BundleView,
@@ -597,6 +598,12 @@ function Counted({ value, style }: { value: number; style: StyleProp<TextStyle> 
   );
 }
 
+/** Whether an item sits on a dear step of the price ladder, the only ones a card marks. */
+function notable(item: ShopItem): boolean {
+  const rarity = itemRarity(item);
+  return rarity === 'rare' || rarity === 'masterwork';
+}
+
 /** One item as a card in the grid: its picture, name, meaning and price, as the website's shop shows it. */
 function ShopCard({ item, balances, onPress }: { item: ShopItem; balances: Balances; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -614,6 +621,12 @@ function ShopCard({ item, balances, onPress }: { item: ShopItem; balances: Balan
     >
       {/* Every card's picture takes the same height, so names and prices line up across a row. */}
       <View style={styles.cardArt}>
+        {/* Only the dear steps of the price ladder are marked, on the picture's corner, as on the website. */}
+        {notable(item) ? (
+          <View style={[styles.rarityMark, { backgroundColor: colors.background, borderColor: colors.separator }]}>
+            <RarityText item={item} />
+          </View>
+        ) : null}
         {kind === 'frame' && item.assetUrl ? (
           <FrameArt path={item.assetUrl} width={FRAME_ART} />
         ) : isWordTag(item) ? (
@@ -625,17 +638,14 @@ function ShopCard({ item, balances, onPress }: { item: ShopItem; balances: Balan
         )}
       </View>
       {/* The names are Kurmancî and the meanings English whatever the app language, so they read in their own
-         direction (`free`). No Premium crown, since Premium cannot be had in the app. A long name or meaning takes a
-         second line rather than being cut. */}
-      <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
+         direction (`free`). No Premium crown, since Premium cannot be had in the app. One line each, so every card is
+         built alike; the item's sheet says it in full. */}
+      <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
         {item.name}
       </Text>
-      {item.description ? (
-        <Text style={[styles.itemDesc, dir.free, { color: colors.textSecondary }]} numberOfLines={2}>
-          {item.description}
-        </Text>
-      ) : null}
-      <RarityText item={item} />
+      <Text style={[styles.itemDesc, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
+        {item.description ?? ''}
+      </Text>
       <View style={[styles.priceRow, { flexDirection: dir.row }]}>
         {item.price === 0 ? (
           // A price like any other: green is for a right answer.
@@ -801,7 +811,17 @@ const styles = StyleSheet.create({
   card: { width: '48.5%', gap: 4, borderRadius: radii.md, padding: spacing.sm },
   cardArt: { height: ART_HEIGHT, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs },
   itemName: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
-  itemDesc: { fontSize: typography.sizes.text, lineHeight: 22 },
+  // The line keeps its height when an item has no meaning.
+  itemDesc: { fontSize: typography.sizes.text, lineHeight: 22, minHeight: 22 },
+  rarityMark: {
+    position: 'absolute',
+    top: 4,
+    start: 4,
+    zIndex: 1,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radii.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   stretch: { alignSelf: 'stretch' },
   tagArt: { alignSelf: 'center' },
   // At the card's foot, so the prices of a row line up whatever their meanings' length.

@@ -240,7 +240,7 @@ function FriendRequestsRow(): React.JSX.Element | null {
             .join(', ')}
         </span>
       </span>
-      <span className="chat-unread">{requests.length}</span>
+      <span className="chat-unread">{unreadLabel(requests.length)}</span>
       <ChevronIcon size={16} className="list-row-go flip-rtl" />
     </Link>
   );
@@ -280,7 +280,7 @@ function LettersWay(): React.JSX.Element | null {
         <span className="chat-convo-name">{t('letters.title')}</span>
         <span className="chat-convo-last">{line}</span>
       </span>
-      {unread > 0 && <span className="chat-unread">{unread}</span>}
+      {unread > 0 && <span className="chat-unread">{unreadLabel(unread)}</span>}
       <ChevronIcon size={16} className="list-row-go flip-rtl" />
     </Link>
   );

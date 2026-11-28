@@ -76,6 +76,8 @@ export const REACH_CONTROLS = [
   '.fp-flip-step',
   // the apps-coming-soon card's iOS | Android switch (landing/soon.css)
   '.soon-which-btn',
+  // The gift sheet's fewer and more, 44px each at the ends of the quantity pill (styles/social.css).
+  '.gift-qty-step',
 ] as const;
 
 /** Links on a line of their own, enlarged only under a coarse pointer. */
@@ -116,6 +118,8 @@ export const LARGE_ENOUGH = [
   '.post-plus',
   '.ffilter-btn',
   '.shop-gift-btn',
+  // A shop picture that can be tried on: the whole picture, as wide as its card at 16:9 (styles/pages.css).
+  '.shop-thumb-try',
   // A gift on the gift sheet, at least 150px tall in a grid of 118px columns, and the gift limit's fields, each 44px
   // tall (styles/social.css).
   '.gift-tile',

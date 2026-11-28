@@ -8,12 +8,21 @@ export interface Groupable {
   id: string;
   senderId: string;
   createdAt: string;
+  /** a one-tap thanks ('thanks') is a line of its own rather than part of a run of bubbles */
+  kind?: string;
 }
 
-/** Consecutive messages from one sender, close together in time. */
+/** Consecutive messages from one sender, close together in time; or one event, such as a one-tap thanks, alone. */
 interface Run<T> {
   senderId: string;
   messages: T[];
+  /** a run of one event, drawn as a quiet line across the thread rather than as a bubble */
+  event?: boolean;
+}
+
+/** Whether a message is drawn as an event line rather than as something its sender wrote. */
+export function isEvent(message: { kind?: string }): boolean {
+  return message.kind === 'thanks';
 }
 
 /** All the runs that happened on one calendar day. */
@@ -97,15 +106,18 @@ export function groupMessages<T extends Groupable>(
     }
 
     const run = section.runs[section.runs.length - 1];
+    const event = isEvent(message);
     const continues =
       run !== undefined &&
+      !run.event &&
+      !event &&
       valid &&
       lastAt !== null &&
       run.senderId === message.senderId &&
       at.getTime() - lastAt <= RUN_GAP_MS;
 
     if (continues) run.messages.push(message);
-    else section.runs.push({ senderId: message.senderId, messages: [message] });
+    else section.runs.push({ senderId: message.senderId, messages: [message], ...(event ? { event: true } : {}) });
 
     lastAt = valid ? at.getTime() : null;
   }

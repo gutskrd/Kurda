@@ -188,11 +188,35 @@
 }
 
 /* ---- like, comment, repost … share, save ----------------------------------- */
+/*
+ * Glyphs and their counts without a fill, as in the phone app, so all six fit across a 360px phone at 3.4K each.
+ * `--act-box` is a round button's width (its glyph 20px) and `--act-pad` a counted one's room before its glyph;
+ * the row reaches past the text by that much, so its first glyph and its last line up with the post's text above.
+ */
 .fcard-actions {
+  --act-box: 36px;
+  --act-high: 36px;
+  --act-pad: 8px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  min-height: var(--act-high);
+  margin-inline: calc(-1 * var(--act-pad)) calc((20px - var(--act-box)) / 2);
   padding-top: 2px;
+}
+@media (pointer: coarse) {
+  .fcard-actions {
+    --act-box: 44px;
+    --act-high: 44px;
+  }
+}
+/* a narrow phone draws the row closer */
+@media (max-width: 400px) {
+  .fcard-actions {
+    --act-box: 40px;
+    --act-pad: 4px;
+    gap: 2px;
+  }
 }
 /* the post's gifts, a quiet line above its buttons */
 .fcard-gifts {
@@ -213,9 +237,11 @@
   gap: 2px;
 }
 .fcard-gifts-count {
+  flex: none;
   color: var(--ink);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .fcard-gifts-words {
   overflow: hidden;
@@ -247,25 +273,19 @@
 .post-gifts-words strong {
   color: var(--ink);
 }
-/* a narrow phone keeps the five on one line by drawing them closer */
-@media (max-width: 400px) {
-  .fcard-actions {
-    gap: 6px;
-  }
-}
-/* a soft grey pill: an icon and its count; with no count, a circle */
+/* a glyph and its count, or a glyph alone in a round box; a mouse over it shows the soft fill */
 .fcard-act {
   display: inline-flex;
   flex: none;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-width: 36px;
-  height: 36px;
-  padding: 0 8px;
+  gap: 4px;
+  min-width: var(--act-box);
+  height: var(--act-high);
+  padding: 0;
   border: 0;
   border-radius: var(--r-pill);
-  background: var(--surface-2);
+  background: transparent;
   color: var(--ink);
   font: inherit;
   font-size: var(--text);
@@ -275,10 +295,24 @@
   cursor: pointer;
 }
 .fcard-act:has(.fcard-count) {
-  padding-inline: 11px 14px;
+  padding-inline: var(--act-pad) calc(var(--act-pad) + 2px);
 }
-.fcard-act:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--ink) 12%, transparent);
+.fcard-actions > .fcard-act:first-child {
+  justify-content: flex-start;
+  padding-inline-start: var(--act-pad);
+}
+/*
+ * A count on one line, short by the shared compactCount ("5.6M"); the counts of a row shrink together, never grow,
+ * where the row would otherwise overflow (feed/FeedCard.tsx `useRowFit`).
+ */
+.fcard-count {
+  font-size: calc(var(--text) * var(--count-fit, 1));
+  white-space: nowrap;
+}
+@media (hover: hover) {
+  .fcard-act:hover:not(:disabled) {
+    background: var(--surface-2);
+  }
 }
 .fcard-act:disabled {
   cursor: default;
@@ -290,37 +324,31 @@
   font-size: var(--text);
   line-height: 1.4;
 }
-/* share and save sit at the far end, away from the counts */
-.fcard-share {
+/* share, gift and save sit together at the far end */
+.fcard-actions-end {
+  display: flex;
   margin-inline-start: auto;
 }
-@media (pointer: coarse) {
-  .fcard-act {
-    min-width: 44px;
-    height: 44px;
-    padding: 0 12px;
-  }
-  .fcard-act:has(.fcard-count) {
-    padding-inline: 12px 14px;
-  }
+/* counts too long for one line even shrunk: share, gift and save go under them, at the end */
+.fcard-actions[data-crowded] {
+  flex-wrap: wrap;
+  row-gap: 4px;
 }
-/* the pills while the wall loads (components/skeletons) */
+/* the glyphs while the wall loads (components/skeletons): a glyph and a short count, or a glyph alone */
 .fcard-actions .skeleton.fcard-act-box {
-  width: 64px;
-  height: 36px;
+  width: 52px;
+  height: 20px;
   border-radius: var(--r-pill);
 }
-.fcard-actions .skeleton.fcard-act-box.is-round {
-  width: 36px;
+.fcard-actions > .skeleton.fcard-act-box:first-child {
+  margin-inline-start: var(--act-pad);
 }
-@media (pointer: coarse) {
-  .fcard-actions .skeleton.fcard-act-box {
-    width: 70px;
-    height: 44px;
-  }
-  .fcard-actions .skeleton.fcard-act-box.is-round {
-    width: 44px;
-  }
+.fcard-actions > .skeleton.fcard-act-box + .skeleton.fcard-act-box {
+  margin-inline-start: 18px;
+}
+.fcard-actions .skeleton.fcard-act-box.is-round {
+  width: 20px;
+  margin-inline: calc((var(--act-box) - 20px) / 2);
 }
 .fcard-like.is-on {
   color: var(--like);

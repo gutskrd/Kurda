@@ -1,11 +1,13 @@
 import type pg from 'pg';
-import { GROUP_UNREAD_CAP, stripControlChars, type ChatGameRef, type ChatMessageExtras } from '@kurda/shared';
+import { GROUP_UNREAD_CAP, stripControlChars, THANKS_FALLBACK_BODY, type ChatGameRef, type ChatMessageExtras, type ChatThanksRef } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { assertUnrestricted } from '../moderation/restrictions.js';
 import type { FlaggedMessage } from '../moderation/service.js';
 import { assertParentalAllowed, switchedOffSql } from '../parental/supervision.js';
 import { gameRef, type KindColumns } from '../chat/kinds.js';
 import { giftCards } from '../gifts/cards.js';
+import { claimThanks, thanksRefs } from '../gifts/thanks.js';
+import { inTransaction } from '../moderation/tx.js';
 import type { GroupService } from './service.js';
 import { canManage, canModerateGroup, isRole, type GroupChatCleared, type Role } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
@@ -167,32 +169,46 @@ export class GroupChatService {
     await this.hub.publish(room(groupId), hidden.length > 0 ? { ...event, hiddenFrom: hidden } : event);
   }
 
+  /**
+   * A text message, or with `thanksFor` (a gift batch the sender was given in this group) a one-tap thanks for it, which
+   * is stored with a fixed text rather than the client's and marks the gift thanked (gifts/thanks.ts).
+   */
   async send(
     userId: string,
     groupId: string,
     rawBody: string,
     publicUrl: PublicUrl = () => null,
+    thanksFor?: string,
   ): Promise<GroupMessage> {
     await this.assertCanPost(groupId, userId);
-    const trimmed = stripControlChars(rawBody).trim();
+    const kind = thanksFor ? 'thanks' : 'text';
+    const trimmed = thanksFor ? THANKS_FALLBACK_BODY : stripControlChars(rawBody).trim();
     if (!trimmed || trimmed.length > MAX_GROUP_MESSAGE_LEN) {
       throw new AppError('BAD_MESSAGE', 400, `message must be 1–${MAX_GROUP_MESSAGE_LEN} characters`);
     }
-    // mask profanity on delivery; flagged messages escalate repeat offenders
-    const filtered = this.moderation ? this.moderation.filter(trimmed) : { masked: trimmed, flagged: false };
+    // mask profanity on delivery; flagged messages escalate repeat offenders (a thanks has no words of its own)
+    const filtered = this.moderation && !thanksFor ? this.moderation.filter(trimmed) : { masked: trimmed, flagged: false };
     const body = filtered.masked;
-    const row = await this.pool.query<{
-      id: string; created_at: Date; username: string;
-      profile_photo_key: string | null; selected_avatar_key: string | null;
-    }>(
-      `WITH ins AS (
-         INSERT INTO group_messages (group_id, sender_id, body) VALUES ($1, $2, $3)
-         RETURNING id, sender_id, created_at
-       )
-       SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key
-         FROM ins JOIN users u ON u.id = ins.sender_id`,
-      [groupId, userId, body],
-    );
+    const insert = (executor: Pick<pg.Pool, 'query'>) =>
+      executor.query<{
+        id: string; created_at: Date; username: string;
+        profile_photo_key: string | null; selected_avatar_key: string | null;
+      }>(
+        `WITH ins AS (
+           INSERT INTO group_messages (group_id, sender_id, body, kind, gift_batch_id) VALUES ($1, $2, $3, $4::text, $5::uuid)
+           RETURNING id, sender_id, created_at
+         )
+         SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key
+           FROM ins JOIN users u ON u.id = ins.sender_id`,
+        [groupId, userId, body, kind, thanksFor ?? null],
+      );
+    let thanks: ChatThanksRef | null = null;
+    const row = thanksFor
+      ? await inTransaction(this.pool, async (client) => {
+          thanks = await claimThanks(client, thanksFor, userId, { kind: 'group', groupId });
+          return insert(client);
+        })
+      : await insert(this.pool);
     // a flagged message is counted against its writer, and goes to a moderator with the words that matched
     if (filtered.flagged && this.moderation) {
       const flagged: FlaggedMessage = { targetType: 'group_message', id: row.rows[0]!.id, words: filtered.hits ?? [] };
@@ -206,9 +222,10 @@ export class GroupChatService {
       body,
       createdAt: row.rows[0]!.created_at.toISOString(),
       deleted: false,
-      kind: 'text',
+      kind,
       gift: null,
       game: null,
+      thanks,
     };
     await this.publishFrom(groupId, userId, { type: 'group_msg', groupId, message }).catch(() => undefined);
     return message;
@@ -285,13 +302,17 @@ export class GroupChatService {
         ORDER BY m.created_at DESC LIMIT $2`,
       before ? [groupId, limit, userId, before] : [groupId, limit, userId],
     );
-    // The gifts on this page as this member sees them; the reader is a member, so the roster rule names everyone.
-    const cards = await giftCards(
-      this.pool,
-      rows.rows.flatMap((r) => (r.kind === 'gift' && r.gift_batch_id && !r.deleted_at ? [r.gift_batch_id] : [])),
-      { id: userId, seesEveryone: true },
-      publicUrl,
-    );
+    // The gifts on this page as this member sees them, the reader being a member, so the roster rule names everyone;
+    // and the gifts its thanks answer.
+    const [cards, thanked] = await Promise.all([
+      giftCards(
+        this.pool,
+        rows.rows.flatMap((r) => (r.kind === 'gift' && r.gift_batch_id && !r.deleted_at ? [r.gift_batch_id] : [])),
+        { id: userId, seesEveryone: true },
+        publicUrl,
+      ),
+      thanksRefs(this.pool, rows.rows.flatMap((r) => (r.kind === 'thanks' && r.gift_batch_id && !r.deleted_at ? [r.gift_batch_id] : []))),
+    ]);
     const messages = rows.rows
       .map((r) => {
         const live = r.deleted_at === null;
@@ -306,6 +327,7 @@ export class GroupChatService {
           kind: r.kind,
           gift: live && r.kind === 'gift' && r.gift_batch_id ? cards.get(r.gift_batch_id) ?? null : null,
           game: live ? gameRef(r) : null,
+          thanks: live && r.kind === 'thanks' && r.gift_batch_id ? thanked.get(r.gift_batch_id) ?? null : null,
         };
       })
       .reverse();

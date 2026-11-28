@@ -54,6 +54,17 @@ describe('the gifts on a post', () => {
     expect(within(sheet).getByText('Gift from a Hevalo member')).toBeInTheDocument();
   });
 
+  it.each([
+    [300, '300', '300'],
+    [3400, '3.4K', '3,400'],
+    [5_600_000, '5.6M', '5,600,000'],
+  ])('shows %i gifts and givers short, and says them whole', (n, shown, said) => {
+    renderApp(<PostGiftsRow item={post(gifts({ count: n, senders: n + 1 }))} />);
+    const row = screen.getByRole('button', { name: `Gifts from Hamo and ${said} others, Gifts: ${said}` });
+    expect(row.querySelector('.fcard-gifts-count')?.textContent).toBe(shown);
+    expect(row.querySelector('.fcard-gifts-words')?.textContent).toBe(`Gifts from Hamo and ${shown} others`);
+  });
+
   it('says a Hevalo member when the latest giver may not be named here', () => {
     renderApp(<PostGiftsRow item={post(gifts({ count: 1, senders: 1, from: null }))} />);
     expect(screen.getByText('Gift from a Hevalo member')).toBeInTheDocument();

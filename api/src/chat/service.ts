@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
-import { stripControlChars, type ChatGameRef, type ChatMessageExtras, type ChatMessageKind } from '@kurda/shared';
+import { stripControlChars, THANKS_FALLBACK_BODY, type ChatGameRef, type ChatMessageExtras, type ChatMessageKind, type ChatThanksRef } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { assertUnrestricted } from '../moderation/restrictions.js';
 import { assertParentalAllowed, switchedOffSql } from '../parental/supervision.js';
 import { giftCards } from '../gifts/cards.js';
+import { claimThanks, thanksRefs } from '../gifts/thanks.js';
+import { inTransaction } from '../moderation/tx.js';
 import { gameRef, previewText, type KindColumns } from './kinds.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { FriendService } from '../friends/service.js';
@@ -77,9 +79,14 @@ export class ChatService {
     private readonly badges?: ChatBadges,
   ) {}
 
-  async send(from: string, to: string, rawBody: string, publicUrl: PublicUrl = () => null): Promise<DmMessage> {
+  /**
+   * A text message, or with `thanksFor` (a gift batch the sender was given in this chat) a one-tap thanks for it, which
+   * is stored with a fixed text rather than the client's and marks the gift thanked (gifts/thanks.ts).
+   */
+  async send(from: string, to: string, rawBody: string, publicUrl: PublicUrl = () => null, thanksFor?: string): Promise<DmMessage> {
     if (from === to) throw new AppError('SELF_DM', 400, 'you cannot message yourself');
-    const trimmed = stripControlChars(rawBody).trim();
+    const kind = thanksFor ? 'thanks' : 'text';
+    const trimmed = thanksFor ? THANKS_FALLBACK_BODY : stripControlChars(rawBody).trim();
     if (!trimmed || trimmed.length > MAX_MESSAGE_LEN) {
       throw new AppError('BAD_MESSAGE', 400, `message must be 1–${MAX_MESSAGE_LEN} characters`);
     }
@@ -102,47 +109,58 @@ export class ChatService {
         createdAt: new Date().toISOString(),
         deliveredAt: null,
         readAt: null,
-        kind: 'text',
+        kind,
         gift: null,
         game: null,
+        thanks: null,
       };
     }
     if (status !== 'friends') {
       throw new AppError('NOT_FRIENDS', 403, 'you can only message friends');
     }
 
-    // mask profanity on delivery; flagged messages feed repeat-offender escalation
-    const filtered = this.moderation ? this.moderation.filter(trimmed) : { masked: trimmed, flagged: false };
+    // mask profanity on delivery; flagged messages feed repeat-offender escalation (a thanks has no words of its own)
+    const filtered = this.moderation && !thanksFor ? this.moderation.filter(trimmed) : { masked: trimmed, flagged: false };
     const body = filtered.masked;
 
     const { lo, hi } = canonicalPair(from, to);
     // The sender's name comes back with the insert so the notification can say who wrote, even for a first message
     // from someone not yet in the recipient's conversation list.
-    const row = await this.pool.query<{
-      id: string;
-      created_at: Date;
-      username: string;
-      profile_photo_key: string | null;
-      selected_avatar_key: string | null;
-      to_muted: boolean;
-    }>(
-      // a suspended or banned person cannot be written to: nothing is stored, and the sender is told it isn't available
-      `WITH ins AS (
-         INSERT INTO dm_messages (user_lo, user_hi, sender_id, body)
-         SELECT $1, $2, $3, $4 WHERE EXISTS (SELECT 1 FROM users t WHERE t.id = $5 AND ${availableSql('t')})
-         RETURNING id, created_at, sender_id
-       )
-       SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key, ${switchedOffSql('$5::uuid', 'chat')} AS to_muted
-         FROM ins JOIN users u ON u.id = ins.sender_id`,
-      [lo, hi, from, body, to],
-    );
+    const insert = (executor: Pick<pg.Pool, 'query'>) =>
+      executor.query<{
+        id: string;
+        created_at: Date;
+        username: string;
+        profile_photo_key: string | null;
+        selected_avatar_key: string | null;
+        to_muted: boolean;
+      }>(
+        // a suspended or banned person cannot be written to: nothing is stored, and the sender is told it isn't available
+        `WITH ins AS (
+           INSERT INTO dm_messages (user_lo, user_hi, sender_id, body, kind, gift_batch_id)
+           SELECT $1, $2, $3, $4, $6::text, $7::uuid WHERE EXISTS (SELECT 1 FROM users t WHERE t.id = $5 AND ${availableSql('t')})
+           RETURNING id, created_at, sender_id
+         )
+         SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key, ${switchedOffSql('$5::uuid', 'chat')} AS to_muted
+           FROM ins JOIN users u ON u.id = ins.sender_id`,
+        [lo, hi, from, body, to, kind, thanksFor ?? null],
+      );
+    let thanks: ChatThanksRef | null = null;
+    const row = thanksFor
+      ? await inTransaction(this.pool, async (client) => {
+          thanks = await claimThanks(client, thanksFor, from, { kind: 'dm', userLo: lo, userHi: hi });
+          const inserted = await insert(client);
+          if (!inserted.rows[0]) throw accountUnavailable();
+          return inserted;
+        })
+      : await insert(this.pool);
     if (!row.rows[0]) throw accountUnavailable();
     // a flagged message is counted against its writer, and goes to a moderator with the words that matched
     if (filtered.flagged && this.moderation) {
       const flagged: FlaggedMessage = { targetType: 'dm_message', id: row.rows[0].id, words: filtered.hits ?? [] };
       void this.moderation.recordOffense(from, flagged).catch(() => undefined);
     }
-    if (this.badges) void this.badges.onLetterSent(from, to).catch(() => undefined);
+    if (this.badges && !thanksFor) void this.badges.onLetterSent(from, to).catch(() => undefined);
     const message: DmMessage = {
       id: row.rows[0]!.id,
       senderId: from,
@@ -152,9 +170,10 @@ export class ChatService {
       createdAt: row.rows[0]!.created_at.toISOString(),
       deliveredAt: null,
       readAt: null,
-      kind: 'text',
+      kind,
       gift: null,
       game: null,
+      thanks,
     };
     await this.liveTo(to, row.rows[0]!.to_muted, {
       type: 'dm',
@@ -299,13 +318,16 @@ export class ChatService {
       await this.notifier.notifyUser(other, { type: 'dm_delivered', by: user }).catch(() => undefined);
     }
     const page = result.rows.filter((r): r is typeof r & KindColumns & { id: string } => r.id !== null);
-    // the gifts on this page, as this reader sees them (theirs to open, or not)
-    const cards = await giftCards(
-      this.pool,
-      page.flatMap((r) => (r.kind === 'gift' && r.gift_batch_id ? [r.gift_batch_id] : [])),
-      { id: user, seesEveryone: true },
-      publicUrl,
-    );
+    // the gifts on this page, as this reader sees them (theirs to open, or not), and the gifts its thanks answer
+    const [cards, thanked] = await Promise.all([
+      giftCards(
+        this.pool,
+        page.flatMap((r) => (r.kind === 'gift' && r.gift_batch_id ? [r.gift_batch_id] : [])),
+        { id: user, seesEveryone: true },
+        publicUrl,
+      ),
+      thanksRefs(this.pool, page.flatMap((r) => (r.kind === 'thanks' && r.gift_batch_id ? [r.gift_batch_id] : []))),
+    ]);
     return page
       .map((r) => ({
         id: r.id,
@@ -319,6 +341,7 @@ export class ChatService {
         kind: r.kind,
         gift: r.kind === 'gift' && r.gift_batch_id ? cards.get(r.gift_batch_id) ?? null : null,
         game: gameRef(r),
+        thanks: r.kind === 'thanks' && r.gift_batch_id ? thanked.get(r.gift_batch_id) ?? null : null,
       }))
       .reverse(); // ascending for display
   }

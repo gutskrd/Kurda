@@ -20,12 +20,12 @@ export function gameRef(row: KindColumns): ChatGameRef | null {
  * Conversation-list previews for a gift or a game card. The apps write their own localized line from the kind;
  * these are for older phone builds, which print the preview as it is and cannot show a null.
  */
-export const PREVIEW_FALLBACK: Readonly<Record<Exclude<ChatMessageKind, 'text'>, string>> = {
+export const PREVIEW_FALLBACK: Readonly<Record<Exclude<ChatMessageKind, 'text' | 'thanks'>, string>> = {
   gift: '🎁 Gift',
   game: '🎮 Game invite',
 };
 
-/** The last-message line for a conversation list: the text, or the stand-in for its kind. */
+/** The last-message line for a conversation list: the text (a thanks keeps its stand-in text), or the stand-in for its kind. */
 export function previewText(kind: ChatMessageKind, body: string | null): string {
-  return kind === 'text' ? body ?? '' : PREVIEW_FALLBACK[kind];
+  return kind === 'text' || kind === 'thanks' ? body ?? '' : PREVIEW_FALLBACK[kind];
 }

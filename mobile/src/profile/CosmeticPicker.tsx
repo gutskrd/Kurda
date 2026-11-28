@@ -16,6 +16,7 @@ import { Icon } from '../theme/Icon';
 import { SearchField } from '../theme/SearchField';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import { formatCompact, formatNumber } from '../i18n/format';
 import type { TranslationKey } from '../i18n/translations';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useDirection } from '../reports/direction';
@@ -73,7 +74,7 @@ export function CosmeticPicker({
   const { client, user } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
 
   const [items, setItems] = useState<InventoryItem[] | null>(null);
@@ -302,9 +303,14 @@ export function CosmeticPicker({
                   <View key={item.sku} style={[styles.infoRow, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}>
                     <ItemArt category={item.category} path={item.assetUrl} width={48} />
                     <View style={styles.infoMain}>
-                      <Text style={[styles.infoName, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {/* How many, short ("×3.4K"), and whole for a screen reader. */}
+                      <Text
+                        style={[styles.infoName, dir.text, { color: colors.textPrimary }]}
+                        numberOfLines={1}
+                        accessibilityLabel={item.quantity > 1 ? `${item.name} ${t('collection.times', { count: formatNumber(item.quantity, locale) })}` : undefined}
+                      >
                         {item.name}
-                        {item.quantity > 1 ? ` ×${item.quantity}` : ''}
+                        {item.quantity > 1 ? ` ${t('collection.times', { count: formatCompact(item.quantity, locale) })}` : ''}
                       </Text>
                       {current === 'tag' ? (
                         <Text style={[styles.infoText, dir.text, { color: colors.textSecondary }]}>{t('edit.tagOwned')}</Text>

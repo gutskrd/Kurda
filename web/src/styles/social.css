@@ -854,6 +854,42 @@
   transform: scale(0.94);
 }
 
+/* A one-tap thanks (gifts/ThanksLine.tsx): a quiet line across the thread with a heart, never a bubble, so nobody takes it
+   for words someone typed. */
+.chat-event {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+  padding-inline: 8px;
+}
+.thanks-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(100%, 440px);
+  margin: 0;
+  padding: 4px 12px 4px 4px;
+  border-radius: var(--r-pill);
+  background: var(--gold-soft);
+  color: var(--ink-2);
+  font-size: var(--text);
+  line-height: 1.35;
+}
+.thanks-line-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-solid);
+  color: var(--gold-ink);
+}
+.thanks-line-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 /* ---- the bubble ----------------------------------------------------------- */
 /* a card in a bubble brings its own surface; the bubble's padding and fill step aside */
 .bubble.is-card {
@@ -983,6 +1019,29 @@ button.gift-bubble:active {
 
 
 /* ---- a gift's picture, and what was done with it ----------------------------- */
+/* several of one gift: a small count at the picture's corner, over its edge so the picture stays whole */
+.gift-count {
+  position: relative;
+  display: inline-grid;
+  line-height: 0;
+}
+.gift-count-chip {
+  position: absolute;
+  inset-block-end: -4px;
+  inset-inline-end: -6px;
+  padding: 1px 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface-solid);
+  color: var(--ink);
+  font-size: var(--text);
+  font-weight: 700;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+}
 .gift-item-art {
   display: inline-grid;
   place-items: center;
@@ -1467,6 +1526,46 @@ button.gift-bubble:active {
 .gift-confirm-hidden {
   font-size: var(--text);
   color: var(--ink-3);
+}
+/* how many of the chosen gift each friend is given: a quiet pill by the send button, its ends a full touch target */
+.gift-qty {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+}
+.gift-qty-step {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.gift-qty-step:hover:not([aria-disabled='true']) {
+  background: var(--surface-2);
+}
+/* at one or at the most an end rests, still in the tab order so a keyboard is not thrown out of the pill */
+.gift-qty-step[aria-disabled='true'] {
+  color: var(--ink-4);
+  cursor: default;
+}
+.gift-qty-count {
+  min-width: 2ch;
+  text-align: center;
+  font-size: var(--text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 /* the shelf by kind (shop/ItemBrowser): one titled shelf per kind under All */
 .gift-shelf-section {

@@ -80,12 +80,13 @@ export interface SentGift extends SendGiftResult {
 }
 
 /**
- * Send one item to one or more friends in a chat. `idempotencyKey` is made once per choice (`newGiftKey`), so a retry
- * after a dropped connection replays the send instead of paying twice.
+ * Send one item to one or more friends in a chat, `quantity` of it to each (one when left out). `idempotencyKey` is made
+ * once per choice and count (`newGiftKey`), so a retry after a dropped connection replays the send instead of paying
+ * twice.
  */
 export function sendGift(
   client: ApiClient,
-  input: { sku: string; idempotencyKey: string; expectedPrice: number; useFreeGift?: boolean; fromBag?: boolean; confirmToken?: string } & (
+  input: { sku: string; idempotencyKey: string; expectedPrice: number; quantity?: number; useFreeGift?: boolean; fromBag?: boolean; confirmToken?: string } & (
     | { toUserIds: readonly string[]; chat: GiftChatRef }
     | { post: PostTarget }
   ),
@@ -114,6 +115,12 @@ export function giftBatchCard(client: ApiClient, batchId: string): Promise<ApiRe
 /** Put on what you were given (the cosmetics routes). */
 export function wearGift(client: ApiClient, category: EquippableCategory, sku: string): Promise<ApiResult<unknown>> {
   return client.put(`/me/cosmetics/${category}`, { sku });
+}
+
+/** Sends a one-tap thanks for a gift into a direct chat or a group; the server stores its own short text with it. */
+export function sendThanks(client: ApiClient, where: { userId: string } | { groupId: string }, body: string, card: GiftCard): Promise<ApiResult<ChatMessage>> {
+  const url = 'userId' in where ? `/chat/${where.userId}/messages` : `/groups/${where.groupId}/chat`;
+  return client.post<ChatMessage>(url, { body, thanksFor: card.batchId });
 }
 
 /** A message list with one gift card replaced, wherever its batch appears. */

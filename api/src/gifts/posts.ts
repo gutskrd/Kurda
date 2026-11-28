@@ -65,7 +65,7 @@ export async function postGiftsFor(db: Executor, posts: readonly PostRef[], view
   const [items, givers] = await Promise.all([
     db.query<{ post_type: PostType; post_id: string; sku: string; name: string; category: string; asset_key: string | null; n: number; price: number; limited: boolean }>(
       // a grand gift first, as the post shows it large; then most given first
-      `SELECT g.post_type, g.post_id, g.sku, i.name, i.category, i.asset_key, count(*)::int AS n,
+      `SELECT g.post_type, g.post_id, g.sku, i.name, i.category, i.asset_key, sum(g.quantity)::int AS n,
               max(g.price)::int AS price, i.available_to IS NOT NULL AS limited
          FROM gifts g JOIN shop_items i ON i.sku = g.sku
         WHERE ${ON_POSTS}

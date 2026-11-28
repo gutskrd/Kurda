@@ -134,7 +134,7 @@ export class CollectionService {
     const mine = side === 'to' ? 'g.to_user_id' : 'g.from_user_id';
     const theirs = side === 'to' ? 'g.from_user_id' : 'g.to_user_id';
     const r = await this.pool.query<GiftRow>(
-      `SELECT g.sku, i.name, i.category, i.asset_key, count(*)::int AS n, max(g.created_at) AS last_at, count(*) OVER ()::int AS total
+      `SELECT g.sku, i.name, i.category, i.asset_key, sum(g.quantity)::int AS n, max(g.created_at) AS last_at, count(*) OVER ()::int AS total
          FROM gifts g JOIN shop_items i ON i.sku = g.sku
         WHERE ${mine} = $1
         GROUP BY g.sku, i.name, i.category, i.asset_key

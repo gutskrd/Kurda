@@ -1,22 +1,25 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { giftSenderName, type GiftCard } from '@kurda/shared';
+import { giftQuantity, giftSenderName, type GiftCard } from '@kurda/shared';
 import { assetUrl } from '../api/env';
 import type { Translate } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
+import { formatNumber } from '../i18n/format';
 import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
 import { PressableScale } from '../theme/MotionParts';
-import { radii, spacing, typography } from '../theme/tokens';
+import { fontScaleCap, radii, spacing, typography } from '../theme/tokens';
 import { useDirection } from '../reports/direction';
 import { useReportAction } from '../reports/reportAction';
 import { GiftBox } from './art';
 import { GiftArt } from './GiftLoop';
+import { countedName } from './quantity';
 
 /**
  * A gift in the chat. To you, unopened: a wrapped present that hops now and then (still under Reduce Motion) and "Tap
  * to open"; opened: what it was and from whom. To the sender: what they gave and whether it was opened ("Opened ✓", or
  * how many recipients have in a group). To everyone else in a group: the wrapped present and whom it is for. The price
- * is never shown. A grand gift, once opened, stays on show for everyone in the chat, its picture large.
+ * is never shown. A grand gift, once opened, stays on show for everyone in the chat, its picture large. Several of one
+ * gift say how many ("3 × Gul"), with "×3" on the picture.
  */
 export function GiftBubble({
   card,
@@ -35,9 +38,11 @@ export function GiftBubble({
   onReport?: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
   const report = useReportAction(onReport);
+  const quantity = giftQuantity(card);
+  const name = countedName(card.name, quantity, t, locale);
   const forMe = card.myGiftId !== null;
   const opened = card.recipients.filter((r) => r.opened).length;
   const showpiece = card.tier === 'grand' && (forMe ? card.myOpened : opened > 0);
@@ -55,7 +60,7 @@ export function GiftBubble({
   const sender = (card as { from?: GiftCard['from'] }).from;
   const fromName = sender === undefined ? senderName || null : giftSenderName(sender);
   const fromLine = fromName ? t('gift.from', { name: fromName }) : t('gift.fromMember');
-  const title = forMe ? (card.myOpened ? card.name : fromLine) : mine || showpiece ? card.name : recipientsLine(card, t);
+  const title = forMe ? (card.myOpened ? name : fromLine) : mine || showpiece ? name : recipientsLine(card, t);
   const hint = forMe ? (card.myOpened ? fromLine : t('gift.bubble.tapToOpen')) : mine ? recipientsLine(card, t) : fromLine;
   const label = forMe && !card.myOpened ? t('gift.bubble.openA11y', { name: fromName ?? t('gift.someone') }) : [title, hint, status].filter(Boolean).join('. ');
 
@@ -69,7 +74,10 @@ export function GiftBubble({
       ]}
       testID={showpiece ? 'gift-showpiece' : undefined}
     >
-      <View style={showpiece ? styles.artLarge : styles.art}>{wrapped ? <WrappedBox card={card} /> : <ItemThumb card={card} large={showpiece} />}</View>
+      <View style={showpiece ? styles.artLarge : styles.art}>
+        {wrapped ? <WrappedBox card={card} /> : <ItemThumb card={card} large={showpiece} />}
+        {wrapped ? null : <GiftCountChip quantity={quantity} />}
+      </View>
       <View style={styles.text}>
         <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
           {title}
@@ -143,6 +151,27 @@ function ItemThumb({ card, large = false }: { card: GiftCard; large?: boolean })
   );
 }
 
+/** "×3" at the corner of a gift's picture when several came at once; quiet, so the gift stays the picture. */
+export function GiftCountChip({ quantity }: { quantity: number }): React.JSX.Element | null {
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const dir = useDirection();
+  if (quantity <= 1) return null;
+  return (
+    <View
+      style={[styles.count, dir.row === 'row-reverse' ? styles.countLeft : styles.countRight, { backgroundColor: colors.background, borderColor: colors.separator }]}
+      // The words beside the picture already say how many.
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      testID="gift-count"
+    >
+      <Text style={[styles.countText, { color: colors.textPrimary }]} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
+        {t('gift.countChip', { count: formatNumber(quantity, locale) })}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   bubble: {
     alignItems: 'center',
@@ -165,4 +194,8 @@ const styles = StyleSheet.create({
   artLarge: { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
   showpiece: { alignItems: 'center', paddingHorizontal: spacing.md, paddingBottom: spacing.md },
   thumbFallback: { alignItems: 'center', justifyContent: 'center', borderRadius: radii.md },
+  count: { position: 'absolute', bottom: 0, paddingHorizontal: 6, paddingVertical: 1, borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth },
+  countRight: { right: 0 },
+  countLeft: { left: 0 },
+  countText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
 });

@@ -93,6 +93,18 @@ describe('the gifts on a post', () => {
     expect(screen.getByText('Gifts from Hamo and one other')).toBeTruthy();
   });
 
+  it.each([
+    [300, '300', '300', '299', '299'],
+    [3400, '3.4K', '3,400', '3.4K', '3,399'],
+    [5_600_000, '5.6M', '5,600,000', '5.6M', '5,599,999'],
+  ])('shows %i gifts as %s on one line, and says the whole numbers', (n, shown, whole, othersShown, othersWhole) => {
+    renderWithProviders(<PostGiftsRow item={item()} gifts={gifts({ count: n, senders: n })} />);
+    const count = screen.getByText(shown, { exact: true });
+    expect(getComputedStyle(count).whiteSpace).toBe('nowrap');
+    expect(screen.getByText(`Gifts from Hamo and ${othersShown} others`)).toBeTruthy();
+    expect(screen.getByRole('button', { name: `Gifts from Hamo and ${othersWhole} others, Gifts: ${whole}` })).toBeTruthy();
+  });
+
   it('says a Hevalo member when the latest giver may not be named here', () => {
     renderWithProviders(<PostGiftsRow item={item()} gifts={gifts({ count: 1, senders: 1, from: null })} />);
     expect(screen.getByText('Gift from a Hevalo member')).toBeTruthy();

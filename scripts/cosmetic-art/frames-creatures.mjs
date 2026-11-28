@@ -10,8 +10,8 @@
  * painted as the icons are.
  */
 import { crescent, rim, specks, within } from './brush.mjs';
-import { blade, linear, spline } from './icons.mjs';
-import { n, pt, tint } from './kit.mjs';
+import { blade, linear } from './icons.mjs';
+import { n, pt, spline, tint } from './kit.mjs';
 import { C, P, RI, ring } from './ring.mjs';
 import { Still } from './still.mjs';
 

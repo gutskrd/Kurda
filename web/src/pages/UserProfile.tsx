@@ -135,9 +135,8 @@ export function UserProfile(): React.JSX.Element {
     levelInfo: profile.level,
     xp: profile.level?.xp ?? profile.xp ?? 0,
     streakDays: profile.streak ?? 0,
-    // Their friend count is theirs to show: where the list did not come neither does the number, and "0 friends" is worse
-    // than silence (profile/ProfileFriends).
-    friends: friends && friends.total > 0 ? friends.total : null,
+    // A private profile never reaches here (its own card above), so the count is theirs to show, 0 included.
+    friends: friends?.total ?? 0,
     bio: profile.bio,
     favPoem: profile.favoritePoem ?? null,
     favStory: profile.favoriteStory ?? null,

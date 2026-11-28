@@ -197,6 +197,96 @@
       "displayOrder": 13
     },
     {
+      "sku": "icon-made-kerosk",
+      "name": "Kêroşka Bihêz",
+      "description": "Strong rabbit",
+      "assetKey": "icons/made-15-kerosk.png",
+      "price": 200,
+      "premiumOnly": true,
+      "displayOrder": 14
+    },
+    {
+      "sku": "icon-made-rovi",
+      "name": "Rovîyê Şûrdar",
+      "description": "Fox knight",
+      "assetKey": "icons/made-16-rovi.png",
+      "price": 250,
+      "premiumOnly": true,
+      "displayOrder": 15
+    },
+    {
+      "sku": "icon-made-pisik-cizme",
+      "name": "Pisîka Bi Çizme",
+      "description": "Cat in boots",
+      "assetKey": "icons/made-17-pisik-cizme.png",
+      "price": 250,
+      "premiumOnly": true,
+      "displayOrder": 16
+    },
+    {
+      "sku": "icon-made-pisik-qurdele",
+      "name": "Pisîka Bi Qurdele",
+      "description": "Kitten with a bow",
+      "assetKey": "icons/made-18-pisik-qurdele.png",
+      "price": 200,
+      "premiumOnly": true,
+      "displayOrder": 17
+    },
+    {
+      "sku": "icon-made-werdek",
+      "name": "Werdek",
+      "description": "Duck",
+      "assetKey": "icons/made-19-werdek.png",
+      "price": 150,
+      "premiumOnly": true,
+      "displayOrder": 18
+    },
+    {
+      "sku": "icon-made-hirc",
+      "name": "Hirç",
+      "description": "Bear",
+      "assetKey": "icons/made-20-hirc.png",
+      "price": 200,
+      "premiumOnly": true,
+      "displayOrder": 19
+    },
+    {
+      "sku": "icon-made-hirca-spi",
+      "name": "Hirça Spî",
+      "description": "White bear",
+      "assetKey": "icons/made-21-hirca-spi.png",
+      "price": 150,
+      "premiumOnly": true,
+      "displayOrder": 20
+    },
+    {
+      "sku": "icon-made-celek",
+      "name": "Çêlek",
+      "description": "Cow",
+      "assetKey": "icons/made-22-celek.png",
+      "price": 200,
+      "premiumOnly": true,
+      "displayOrder": 21
+    },
+    {
+      "sku": "icon-made-mirisk",
+      "name": "Mirîşk",
+      "description": "Hen",
+      "assetKey": "icons/made-23-mirisk.png",
+      "price": 200,
+      "premiumOnly": true,
+      "displayOrder": 22
+    },
+    {
+      "sku": "icon-made-kiwi",
+      "name": "Kîwî",
+      "description": "Kiwi",
+      "assetKey": "icons/made-24-kiwi.png",
+      "price": 150,
+      "premiumOnly": true,
+      "displayOrder": 23
+    },
+    {
       "sku": "icon-accessoire-icon-01",
       "name": "Lale",
       "description": "Tulip",

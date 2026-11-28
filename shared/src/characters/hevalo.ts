@@ -247,7 +247,8 @@ function hooves(p: string): string[] {
 
 // ─────────────────────────────────────────────────────────────── the head
 
-const ANTLER: Knot[] = [
+/** His left antler's outline (the right is its mirror); the shop's deer icon wears the same antlers. */
+export const ANTLER: Knot[] = [
   [159.6, 160],
   [158.8, 150],
   [156, 142],
@@ -297,7 +298,7 @@ const ANTLER: Knot[] = [
 ];
 
 /** Light along the upper edge of each tine, as the icon shows it. */
-const ANTLER_LIGHT: readonly (readonly Pt[])[] = [
+export const ANTLER_LIGHT: readonly (readonly Pt[])[] = [
   [
     [74, 60],
     [72.4, 30],

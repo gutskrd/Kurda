@@ -13,28 +13,33 @@ import { GiftSentMoment } from '../gifts/GiftMoment';
 import { GiftPicker, type GiftSent } from '../gifts/GiftPicker';
 import { canGiveGifts } from '../gifts/access';
 import { GiftIcon } from '../components/icons';
-import { useI18n, useT } from '../i18n/I18nProvider';
+import { useCountForms } from '../components/Count';
+import { useT } from '../i18n/I18nProvider';
 import type { FeedItem } from '../lib/types';
 
 export function PostGiftsRow({ item }: { item: Pick<FeedItem, 'targetType' | 'id' | 'gifts'> }): React.JSX.Element | null {
   const t = useT();
-  const { locale } = useI18n();
+  const { short, whole } = useCountForms();
   const [open, setOpen] = useState(false);
   const gifts = item.gifts;
   if (!gifts || gifts.count <= 0) return null;
   const line = postGiftsLine(gifts);
   const name = line.name ?? t('gift.someone');
-  const others = line.others.toLocaleString(locale);
-  const words =
+  // Shown short ("and 1.2K others"), said whole in the button's label.
+  const from = (count: string): string =>
     line.others === 0
       ? t(line.many ? 'post.gifts.fromMany' : 'post.gifts.from', { name })
-      : t(line.others === 1 ? 'post.gifts.fromOther' : 'post.gifts.fromOthers', { name, count: others });
-  const count = gifts.count.toLocaleString(locale);
+      : t(line.others === 1 ? 'post.gifts.fromOther' : 'post.gifts.fromOthers', { name, count });
   const grand = gifts.items.filter((g) => g.tier === 'grand').slice(0, 3);
   const small = gifts.items.filter((g) => g.tier !== 'grand').slice(0, 3);
   return (
     <>
-      <button type="button" className="fcard-gifts" aria-label={`${words}, ${t('post.gifts.count', { count })}`} onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        className="fcard-gifts"
+        aria-label={`${from(whole(line.others))}, ${t('post.gifts.count', { count: whole(gifts.count) })}`}
+        onClick={() => setOpen(true)}
+      >
         {grand.length > 0 && (
           <span className="fcard-gifts-grand" aria-hidden="true">
             {grand.map((g) => (
@@ -48,10 +53,10 @@ export function PostGiftsRow({ item }: { item: Pick<FeedItem, 'targetType' | 'id
           ))}
         </span>
         <span className="fcard-gifts-count" aria-hidden="true">
-          {count}
+          {short(gifts.count)}
         </span>
         <span className="fcard-gifts-words" aria-hidden="true">
-          {words}
+          {from(short(line.others))}
         </span>
       </button>
       {open && <GiftSenders post={item} onClose={() => setOpen(false)} />}

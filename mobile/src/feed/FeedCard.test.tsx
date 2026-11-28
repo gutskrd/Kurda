@@ -17,7 +17,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation } from '../play/testing/navigation';
 import { UnreadProvider } from '../messages/unread';
 import { hideDeleting, onPostDeleted, postDeleted, unhideDeleting, type DeletedPost } from '../composer/postDeleted';
-import { DOUBLE_TAP_MS, FeedCard, pillCount } from './FeedCard';
+import { DOUBLE_TAP_MS, FeedCard } from './FeedCard';
 import { CivakScreen } from './CivakScreen';
 import type { FeedItem } from './types';
 import { watchNotices } from '../testing/notices';
@@ -30,6 +30,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   forgetReach();
+  localStorage.clear();
   vi.restoreAllMocks();
 });
 
@@ -130,9 +131,9 @@ describe('a post in the chain', () => {
     expect(screen.getByRole('button', { name: 'rojda' })).toBeTruthy();
     // What kind of post and how long ago, beside the name.
     expect(screen.getByText(/^Meme · /)).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Like (9224)' })).toBeTruthy();
-    expect(screen.getByText('9,224')).toBeTruthy();
-    expect(screen.getByRole('button', { name: '36 comments (36)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Like (9,224)' })).toBeTruthy();
+    expect(screen.getByText('9.2K')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '36 comments' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Repost (851)' })).toBeTruthy();
     // What is saved is nobody else's business, so the bookmark has no number.
     expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
@@ -144,14 +145,43 @@ describe('a post in the chain', () => {
     expect(screen.getAllByText('Newroz')).toHaveLength(1);
     // The comments pill is the way into them; there is no line of its own for that, nor for the time.
     expect(screen.queryByRole('link', { name: /^View/ })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: '36 comments (36)' }));
+    fireEvent.click(screen.getByRole('button', { name: '36 comments' }));
     expect(navigation.navigate).toHaveBeenCalledWith('MemeDetail', { postId: 'i1' });
   });
 
-  it('keeps a count whole up to 9,999, then says it short', () => {
-    expect(pillCount(9224, 'en')).toBe('9,224');
-    expect(pillCount(12_340, 'en')).toBe('12.3K');
-    expect(pillCount(2_400_000, 'en')).toBe('2.4M');
+  it.each([
+    [300, '300', '300'],
+    [3400, '3.4K', '3,400'],
+    [5_600_000, '5.6M', '5,600,000'],
+  ])('shows %i in every pill as %s, one line each, and says the whole number', (n, shown, whole) => {
+    renderWithProviders(
+      <FeedCard
+        item={item({
+          author: { id: 'u-azad', username: 'azad', displayName: null, avatarUrl: null },
+          commentCount: n,
+          engagement: { liked: false, likes: n, reposted: false, reposts: n, bookmarked: false, bookmarks: n },
+        })}
+      />,
+    );
+    const counts = screen.getAllByText(shown);
+    expect(counts).toHaveLength(3);
+    for (const count of counts) expect(getComputedStyle(count).whiteSpace).toBe('nowrap');
+    expect(screen.getByRole('button', { name: `Like (${whole})` })).toBeTruthy();
+    expect(screen.getByRole('button', { name: `${whole} comments` })).toBeTruthy();
+    expect(screen.getByRole('button', { name: `Repost (${whole})` })).toBeTruthy();
+    // The gift, share and save beside them keep no number.
+    expect(screen.getByRole('button', { name: 'Give a gift' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Share this post' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
+  });
+
+  it('lays each pill out from the right in Soranî, with the count in its own digits', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ckb');
+    renderWithProviders(<FeedCard item={item({ engagement: { liked: false, likes: 3400, reposted: false, reposts: 0, bookmarked: false, bookmarks: 0 } })} />);
+    const count = await screen.findByText('٣٫٤K');
+    const pill = count.closest('[role="button"]') as HTMLElement;
+    expect(getComputedStyle(pill).flexDirection).toBe('row-reverse');
+    expect(pill.getAttribute('aria-label')).toMatch(/\(٣٬٤٠٠\)$/);
   });
 
   it('shows no number where there is none yet', () => {
@@ -283,7 +313,7 @@ describe('a post in the chain', () => {
     expect(reachOf('rojda')).toEqual({ top: 8, bottom: 8, left: 4, right: 4 });
     expect(reachOf('post-author')).toEqual({ top: 15, bottom: 15, left: 0, right: 0 });
     expect(reachOf('Post options')).toEqual({ top: 8, bottom: 8, left: 4, right: 4 });
-    for (const pill of ['Like', '3 comments (3)', 'Repost', 'Share this post', 'Save']) {
+    for (const pill of ['Like', '3 comments', 'Repost', 'Share this post', 'Save']) {
       expect(reachOf(pill)).toEqual({ top: 6, bottom: 6, left: 4, right: 4 });
     }
   });

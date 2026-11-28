@@ -232,8 +232,8 @@ describe('Civak', () => {
     const { posts } = feedFetch([item('library:s1', { engagement: engagement({ likes: 4 }) })]);
     renderApp(<Civak />, ['/app/civak']);
 
-    const like = await screen.findByRole('button', { name: 'Sign in to like' });
-    // The count is still readable; it is the label that says what it is.
+    // The count is still readable, and the label says what it is with the whole count.
+    const like = await screen.findByRole('button', { name: 'Sign in to like (4)' });
     expect(like).toBeDisabled();
     expect(like.textContent).toContain('4');
     await userEvent.click(like);

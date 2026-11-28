@@ -8,6 +8,12 @@ const wordle = 'https://hevalo.app/app/games/peyvok-battle?id=8f3c1a9d-4b2e-4c77
 const rhyme = 'https://hevalo.app/app/games/rhyme-match?id=2ab41c9d-4b2e-4c77-9a01-2de5f6b7c8d9';
 
 describe('messagePreview', () => {
+  it('says a one-tap thanks was said, never its stored stand-in text', () => {
+    expect(messagePreview({ body: 'Spas! 💛', kind: 'thanks', thanks: { batchId: 'b1', name: 'Gul' } }, t)).toBe('Said thanks for Gul');
+    // the conversation list knows only the kind
+    expect(messagePreview({ body: 'Spas! 💛', kind: 'thanks' }, t)).toBe('Said thanks for a gift');
+  });
+
   it('describes a game invite instead of showing its URL', () => {
     // the whole point: a conversation row used to read
     // "https://hevalo.app/app/games/peyvok-battle?id=8f3c…"
@@ -93,6 +99,13 @@ describe('messagePreview for every kind of message', () => {
     expect(messagePreview({ body: null, kind: 'gift', gift }, t)).toBe('Gift');
     expect(messagePreview({ body: null, kind: 'gift', gift: { ...gift, myOpened: true } }, t)).toBe('Newroz fire');
     expect(messagePreview({ body: '🎁 Gift', kind: 'gift' }, translator(ku))).toBe('Diyarî');
+  });
+
+  it('says how many of one gift were given once it is unwrapped, and still nothing before', () => {
+    const gift = { batchId: 'b', sku: 'gift-gul', name: 'Gul', category: 'gift', assetUrl: null, tier: 'common' as const, recipients: [], from: null, myGiftId: 'g1', myOpened: false, equippable: null, quantity: 3 };
+    expect(messagePreview({ body: null, kind: 'gift', gift }, t)).toBe('Gift');
+    expect(messagePreview({ body: null, kind: 'gift', gift: { ...gift, myOpened: true } }, t)).toBe('3 × Gul');
+    expect(messagePreview({ body: null, kind: 'gift', gift: { ...gift, myOpened: true, quantity: 1 } }, t)).toBe('Gul');
   });
 
   it('names a game card by its game, or as an invite when it does not say', () => {

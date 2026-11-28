@@ -32,8 +32,8 @@ function actions(opened: GiftCard | null = card({ myOpened: true })): GiftAction
       calls.push(`open:${id}`);
       return opened;
     }),
-    thank: vi.fn(async () => {
-      calls.push('thank');
+    thank: vi.fn(async (c: GiftCard) => {
+      calls.push(`thank:${c.batchId}`);
       return null;
     }),
     wear: vi.fn(async (c: GiftCard) => {
@@ -74,7 +74,7 @@ describe('GiftBubble, to its recipient', () => {
     expect(await screen.findByText('You’re wearing it')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Say thanks' }));
     expect(await screen.findByText('Thanks sent')).toBeInTheDocument();
-    expect(a.calls).toEqual(['open:g1', 'wear:bg-sunset', 'thank']);
+    expect(a.calls).toEqual(['open:g1', 'wear:bg-sunset', `thank:${card().batchId}`]);
 
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     // Focus is back on the gift, not lost at the top of the page.
@@ -138,6 +138,14 @@ describe('GiftBubble, to its recipient', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Skip' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('That gift didn’t open. Try again.');
     expect(screen.getByRole('button', { name: 'Open the gift from rojda' })).toBeInTheDocument();
+  });
+
+  it('offers no second thanks for a gift already thanked for', async () => {
+    const thanked = card({ myOpened: true, myThanked: true });
+    renderApp(<GiftBubble card={thanked} mine={false} senderName="rojda" actions={actions(thanked)} />);
+    await userEvent.click(screen.getByRole('button', { name: 'See Sunset over Amed again' }));
+    expect(await screen.findByText('Thanks sent')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Say thanks' })).toBeNull();
   });
 
   it('says why a thanks did not go, beside the button that sent it', async () => {
@@ -223,5 +231,61 @@ describe('GiftBubble, to everyone else', () => {
     );
     expect(screen.getByText('dilan')).toBeInTheDocument();
     expect(screen.getByText('Opened')).toBeInTheDocument();
+  });
+});
+
+describe('GiftBubble, with several of one gift', () => {
+  const roses = (over: Partial<GiftCard> = {}): GiftCard =>
+    card({ sku: 'gift-gul', name: 'Gul', category: 'gift', assetUrl: '/cosmetics/gifts/made-03-gul.png', equippable: null, quantity: 3, ...over });
+  const chip = () => document.querySelector('.gift-count-chip');
+
+  it('shows its sender how many they sent, with the count on the picture', () => {
+    const sent = roses({ myGiftId: null, recipients: [{ name: 'baran', avatarUrl: null, isMe: false, opened: false }] });
+    const { rerender } = renderApp(<GiftBubble card={sent} mine senderName="me" actions={actions()} />);
+    expect(screen.getByText('You sent 3 × Gul')).toBeInTheDocument();
+    expect(chip()).toHaveTextContent('×3');
+    expect(chip()).toHaveAttribute('aria-hidden', 'true');
+    rerender(<GiftBubble card={{ ...sent, recipients: [{ ...sent.recipients[0]!, opened: true }] }} mine senderName="me" actions={actions()} />);
+    expect(chip()?.parentElement?.querySelector('.gift-item-art')).not.toBeNull();
+  });
+
+  it('keeps how many a surprise until it is unwrapped, then names them all', async () => {
+    const opened = roses({ myOpened: true });
+    renderApp(<GiftBubble card={roses()} mine={false} senderName="rojda" actions={actions(opened)} />);
+    expect(screen.queryByText(/3 ×/)).toBeNull();
+    expect(chip()).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Open the gift from rojda' }));
+    const moment = screen.getByRole('dialog', { name: 'A gift from rojda' });
+    await userEvent.click(within(moment).getByRole('button', { name: 'Skip' }));
+    expect(await within(moment).findByText('Gul')).toHaveAttribute('lang', 'ku');
+    expect(within(moment).getByText('Gul').closest('b')).toHaveTextContent('3 × Gul');
+    expect(within(moment).getByText('×3')).toBeInTheDocument();
+    expect(within(moment).getByRole('status')).toHaveTextContent('You got 3 × Gul from rojda.');
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    const bubble = screen.getByRole('button', { name: 'See 3 × Gul again' });
+    expect(within(bubble).getByText('3 × Gul')).toBeInTheDocument();
+    expect(within(bubble).getByText('×3')).toBeInTheDocument();
+  });
+
+  it('keeps a grand gift on show with its count', () => {
+    renderApp(
+      <GiftBubble
+        card={roses({ tier: 'grand', name: 'Heyv', sku: 'gift-heyv', myGiftId: null, recipients: [{ name: 'baran', avatarUrl: null, isMe: false, opened: true }] })}
+        mine={false}
+        senderName="rojda"
+        actions={actions()}
+      />,
+    );
+    expect(screen.getByText('Heyv')).toHaveAttribute('lang', 'ku');
+    expect(screen.getByText('Heyv').closest('.gift-bubble-title')).toHaveTextContent('3 × Heyv');
+    expect(chip()).toHaveTextContent('×3');
+  });
+
+  it('names one gift by itself, with no count on its picture', () => {
+    renderApp(<GiftBubble card={roses({ quantity: 1, myOpened: true })} mine={false} senderName="rojda" actions={actions()} />);
+    expect(screen.getByRole('button', { name: 'See Gul again' })).toBeInTheDocument();
+    expect(screen.getByText('Gul', { selector: '.gift-bubble-title' })).toBeInTheDocument();
+    expect(chip()).toBeNull();
+    expect(document.querySelector('.gift-count')).toBeNull();
   });
 });

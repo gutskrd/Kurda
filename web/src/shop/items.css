@@ -11,6 +11,7 @@
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
+  position: relative;
   /* Room for the focus ring, which a scrolling row would clip, and at the end room to scroll the last tab clear of the fade. */
   padding-block: 4px;
   padding-inline: 4px 36px;

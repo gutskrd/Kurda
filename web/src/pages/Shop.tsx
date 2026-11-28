@@ -7,6 +7,7 @@ import {
   groupByCategory,
   isWordTag,
   itemCategory,
+  itemRarity,
   shopItemDescription,
   type BundlePurchaseResult,
   type BundleView,
@@ -634,6 +635,12 @@ function GiftPicker({
   );
 }
 
+/** Whether an item sits on a dear step of the price ladder, the only ones a tile marks. */
+function notable(tile: Tile): boolean {
+  const rarity = itemRarity(tile);
+  return rarity === 'rare' || rarity === 'masterwork';
+}
+
 /** One kind's items (or the chosen kind), as priced tiles. */
 function ShopGrid({
   tiles,
@@ -662,34 +669,52 @@ function ShopGrid({
       {tiles.map((tile) => {
         const kind = itemCategory(tile.category);
         const affordable = canAfford(tile);
-        const held = zer;
+        const short = !affordable && zer !== null ? (tile.price - zer).toLocaleString(locale) : null;
+        const art = (
+          <>
+            <TileArt
+              assetUrl={tile.assetUrl}
+              category={tile.category}
+              tag={isWordTag(tile) ? { label: tile.name, meaning: tile.description } : undefined}
+            />
+            {celebrating === tile.sku && <span className="shop-shine" aria-hidden />}
+          </>
+        );
         return (
           <figure className={`shop-tile shop-tile-${kind}${celebrating === tile.sku ? ' shop-tile-won' : ''}`} key={tile.sku}>
-            <div className={`shop-thumb shop-thumb-${kind}`}>
-              <TileArt
-                assetUrl={tile.assetUrl}
-                category={tile.category}
-                tag={isWordTag(tile) ? { label: tile.name, meaning: tile.description } : undefined}
-              />
-              {celebrating === tile.sku && <span className="shop-shine" aria-hidden />}
-            </div>
-            {/* The name is Kurdish and the line under it says what it is, as on the phone. */}
+            {/* Anything worn is tried on your own profile by tapping its picture, which leaves the tile one row of buttons. */}
+            {canPreview(tile) ? (
+              <button
+                type="button"
+                className={`shop-thumb shop-thumb-${kind} shop-thumb-try`}
+                onClick={() => onPreview(tile)}
+                title={t('shop.previewNamed', { name: tile.name })}
+                aria-label={t('shop.previewNamed', { name: tile.name })}
+              >
+                {art}
+                <span className="shop-try-mark" aria-hidden="true">
+                  <EyeIcon size={15} />
+                </span>
+              </button>
+            ) : (
+              <div className={`shop-thumb shop-thumb-${kind}`}>{art}</div>
+            )}
+            {/* Only the dear steps of the price ladder are marked, on the picture's corner, so the words below stay one line each. */}
+            {notable(tile) && <RarityLabel item={tile} />}
+            {/* Every tile has the same lines: the Kurdish name, then what it is, then the price and the buttons. */}
             <figcaption className="shop-caption">
               <span className="shop-name" title={tile.name}>
                 {tile.name}
               </span>
-              {tile.description && (
-                <span className="shop-desc" title={tile.description}>
-                  {tile.description}
-                </span>
-              )}
-              <RarityLabel item={tile} />
+              <span className="shop-desc" title={tile.description ?? undefined}>
+                {tile.description}
+              </span>
             </figcaption>
             {tile.owned ? (
               <span className="shop-owned">{t('shop.owned')}</span>
             ) : (
-              <div className="shop-actions">
-                {/* The price is on the tile, not only in the button, so an unaffordable item still says what to save for. */}
+              <div className="shop-foot">
+                {/* The price stays on the tile when it cannot be paid, so it still says what to save for. */}
                 <span className={`shop-price${affordable ? '' : ' is-short'}`}>
                   {/* What the Free filter calls it, rather than "0 Zêr", with no coin. */}
                   {tile.price === 0 ? (
@@ -701,40 +726,26 @@ function ShopGrid({
                       <ZerValue zer={tile.price} />
                     </>
                   )}
-                  {!affordable && held !== null && (
-                    <span className="shop-short">
-                      {t('shop.amountMore', { amount: (tile.price - held).toLocaleString(locale) })}
-                    </span>
-                  )}
                 </span>
-                <Button size="sm" disabled={busy !== null || !affordable} onClick={() => onBuy(tile)}>
-                  {tile.price === 0 ? t('edit.getFree') : t('shop.buy')}
-                </Button>
-                {/* Anything worn can be tried on your own profile first. */}
-                {canPreview(tile) && (
-                  <button
-                    type="button"
-                    className="shop-gift-btn"
-                    onClick={() => onPreview(tile)}
-                    title={t('shop.previewNamed', { name: tile.name })}
-                    aria-label={t('shop.previewNamed', { name: tile.name })}
-                  >
-                    <EyeIcon size={17} />
-                  </button>
-                )}
-                {/* Free items cannot be gifted (the API refuses: a notification at no cost). */}
-                {tile.price > 0 && (
-                  <button
-                    type="button"
-                    className="shop-gift-btn"
-                    disabled={busy !== null || !affordable}
-                    onClick={() => onGift(tile)}
-                    title={t('shop.giftTo', { name: tile.name })}
-                    aria-label={t('shop.giftTo', { name: tile.name })}
-                  >
-                    <GiftIcon size={17} />
-                  </button>
-                )}
+                <div className="shop-actions">
+                  {/* Short of it, the button says how far there is to go instead of a Buy that cannot be pressed. */}
+                  <Button size="sm" disabled={busy !== null || !affordable} onClick={() => onBuy(tile)}>
+                    {short !== null ? t('shop.amountMore', { amount: short }) : tile.price === 0 ? t('edit.getFree') : t('shop.buy')}
+                  </Button>
+                  {/* Free items cannot be gifted (the API refuses: a notification at no cost), nor can what you cannot pay for. */}
+                  {tile.price > 0 && affordable && (
+                    <button
+                      type="button"
+                      className="shop-gift-btn"
+                      disabled={busy !== null}
+                      onClick={() => onGift(tile)}
+                      title={t('shop.giftTo', { name: tile.name })}
+                      aria-label={t('shop.giftTo', { name: tile.name })}
+                    >
+                      <GiftIcon size={17} />
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </figure>

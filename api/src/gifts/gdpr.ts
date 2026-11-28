@@ -17,6 +17,7 @@ const person = (username: string | null, displayName: string | null): Person | n
 interface GiftRow {
   sku: string;
   item: string;
+  quantity: number;
   at: Date;
   opened_at: Date | null;
   on_post: boolean;
@@ -26,14 +27,14 @@ interface GiftRow {
 
 export async function exportGifts(db: Executor, userId: string): Promise<{ given: unknown[]; received: unknown[] }> {
   const given = await db.query<GiftRow & { price: number; paid_with: string }>(
-    `SELECT g.sku, i.name AS item, g.price, g.paid_with, g.created_at AS at, g.opened_at, g.post_id IS NOT NULL AS on_post,
+    `SELECT g.sku, i.name AS item, g.price, g.quantity, g.paid_with, g.created_at AS at, g.opened_at, g.post_id IS NOT NULL AS on_post,
             CASE WHEN u.deleted_at IS NULL THEN u.username END AS username, CASE WHEN u.deleted_at IS NULL THEN u.display_name END AS display_name
        FROM gifts g JOIN shop_items i ON i.sku = g.sku JOIN users u ON u.id = g.to_user_id
       WHERE g.from_user_id = $1 ORDER BY g.created_at`,
     [userId],
   );
   const received = await db.query<GiftRow>(
-    `SELECT g.sku, i.name AS item, g.created_at AS at, g.opened_at, g.post_id IS NOT NULL AS on_post,
+    `SELECT g.sku, i.name AS item, g.quantity, g.created_at AS at, g.opened_at, g.post_id IS NOT NULL AS on_post,
             CASE WHEN s.deleted_at IS NULL THEN s.username END AS username, CASE WHEN s.deleted_at IS NULL THEN s.display_name END AS display_name
        FROM gifts g JOIN shop_items i ON i.sku = g.sku LEFT JOIN users s ON s.id = g.from_user_id
       WHERE g.to_user_id = $1 ORDER BY g.created_at`,
@@ -43,7 +44,8 @@ export async function exportGifts(db: Executor, userId: string): Promise<{ given
     given: given.rows.map((r) => ({
       sku: r.sku,
       item: r.item,
-      zer: r.price,
+      quantity: r.quantity,
+      zer: r.price * r.quantity,
       paidWith: r.paid_with,
       to: person(r.username, r.display_name),
       onPost: r.on_post,
@@ -53,6 +55,7 @@ export async function exportGifts(db: Executor, userId: string): Promise<{ given
     received: received.rows.map((r) => ({
       sku: r.sku,
       item: r.item,
+      quantity: r.quantity,
       from: person(r.username, r.display_name),
       onPost: r.on_post,
       receivedAt: r.at,

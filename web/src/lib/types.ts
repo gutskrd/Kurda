@@ -1,7 +1,7 @@
 /** API contract types for the web client, matching the phone's (mobile/src/api/types.ts). */
 import type { AccountHold, FeedImage, SupervisionState, LeagueTier, PendingPicture, PictureRejection, PictureReviewState, ProfileBadge, ProfileLeague, ProfileWordTag, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
 
-import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding, PostGifts } from '@kurda/shared';
+import type { ChatGameRef, ChatMessageKind, ChatThanksRef, GiftCard, GroupStanding, PostGifts } from '@kurda/shared';
 
 /** Every API call returns a result; callers never try/catch fetch. */
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError };
@@ -319,6 +319,8 @@ export interface ChatExtras {
   kind?: ChatMessageKind;
   gift?: GiftCard | null;
   game?: ChatGameRef | null;
+  /** for a one-tap thanks, the gift it answers */
+  thanks?: ChatThanksRef | null;
 }
 
 /** A one-to-one direct message. */

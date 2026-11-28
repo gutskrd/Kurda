@@ -810,6 +810,15 @@
   color: var(--ink-3);
   text-align: center;
 }
+.tree-chosen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  justify-content: center;
+  align-items: baseline;
+  margin: 0;
+  font-size: var(--text);
+}
 .tree-about {
   margin: 0;
   color: var(--ink-3);

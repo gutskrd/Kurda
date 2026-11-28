@@ -471,11 +471,13 @@ describe.skipIf(!DATABASE_URL)('the gift economy (integration)', () => {
 
     it('expires, and is signed with the server’s own key', () => {
       const secret = Buffer.alloc(32, 7);
-      const subject: ConfirmSubject = { fromId: sender.id, sku: BELEM, price: 2_000, recipients: [friend.id], target: `dm:${friend.id}`, idempotencyKey: 'k' };
+      const subject: ConfirmSubject = { fromId: sender.id, sku: BELEM, price: 2_000, quantity: 1, recipients: [friend.id], target: `dm:${friend.id}`, idempotencyKey: 'k' };
       const now = new Date();
       const { token } = confirmToken(secret, subject, now);
       expect(confirmTokenValid(secret, token, subject, now)).toBe(true);
       expect(confirmTokenValid(secret, token, { ...subject, recipients: [sender.id] }, now)).toBe(false);
+      // nor for more of it than was confirmed
+      expect(confirmTokenValid(secret, token, { ...subject, quantity: 2 }, now)).toBe(false);
       expect(confirmTokenValid(Buffer.alloc(32, 8), token, subject, now)).toBe(false);
       expect(confirmTokenValid(secret, token, subject, new Date(now.getTime() + BIG_GIFT_CONFIRM_TTL_MS + 1))).toBe(false);
       expect(confirmTokenValid(secret, undefined, subject, now)).toBe(false);

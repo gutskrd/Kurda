@@ -67,6 +67,9 @@ describe('formatCompact', () => {
   });
 
   it('compacts thousands and millions', () => {
+    expect(formatCompact(300, 'en')).toBe('300');
+    expect(formatCompact(3400, 'en')).toBe('3.4K');
+    expect(formatCompact(5_600_000, 'en')).toBe('5.6M');
     expect(formatCompact(1234, 'en')).toBe('1.2K');
     expect(formatCompact(12000, 'en')).toBe('12K');
     expect(formatCompact(1_500_000, 'en')).toBe('1.5M');

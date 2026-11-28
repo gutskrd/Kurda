@@ -6,8 +6,21 @@
 import type { GiftCard } from './gifts.js';
 import { isMissingRoute, type LobbyCard, type PlayGame } from './play.js';
 
-export const CHAT_MESSAGE_KINDS = ['text', 'gift', 'game'] as const;
+export const CHAT_MESSAGE_KINDS = ['text', 'gift', 'game', 'thanks'] as const;
 export type ChatMessageKind = (typeof CHAT_MESSAGE_KINDS)[number];
+
+/**
+ * The gift a one-tap thanks answers (kind 'thanks'). The apps draw it as a quiet line under the gift rather than a
+ * bubble, so nobody mistakes it for words the person typed; its stored text is a fixed stand-in for older apps.
+ */
+export interface ChatThanksRef {
+  batchId: string;
+  /** the gift's name, as its card shows it */
+  name: string;
+}
+
+/** The text a one-tap thanks is stored with, which an app that does not know the kind shows as it is. */
+export const THANKS_FALLBACK_BODY = 'Spas! 💛';
 
 /** The lobby a game card points at; its state is fetched live. */
 export interface ChatGameRef {
@@ -20,6 +33,8 @@ export interface ChatMessageExtras {
   kind: ChatMessageKind;
   gift: GiftCard | null;
   game: ChatGameRef | null;
+  /** for a one-tap thanks, the gift it answers; absent from an API older than thanks */
+  thanks?: ChatThanksRef | null;
 }
 
 /** The most cards one read asks for (GET /play/cards); more are split into further reads. */

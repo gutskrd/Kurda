@@ -10,6 +10,20 @@ function at(y: number, m: number, d: number, hh: number, mm: number): string {
 }
 
 describe('groupMessages', () => {
+  it('keeps a one-tap thanks out of the bubbles around it, as an event run of its own', () => {
+    const sections = groupMessages(
+      [
+        msg('1', 'a', at(2026, 9, 4, 10, 0)),
+        { ...msg('2', 'a', at(2026, 9, 4, 10, 1)), kind: 'thanks' },
+        msg('3', 'a', at(2026, 9, 4, 10, 2)),
+      ],
+      new Date(2026, 8, 4, 12, 0),
+    );
+    const runs = sections[0]!.runs;
+    expect(runs.map((r) => r.messages.map((m) => m.id))).toEqual([['1'], ['2'], ['3']]);
+    expect(runs.map((r) => r.event === true)).toEqual([false, true, false]);
+  });
+
   it('keeps a burst from one sender in a single run', () => {
     const sections = groupMessages(
       [

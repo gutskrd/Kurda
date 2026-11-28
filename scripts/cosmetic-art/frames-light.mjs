@@ -8,8 +8,8 @@
  * written or cut, something dark to be written on.
  */
 import { crescent, within } from './brush.mjs';
-import { blade, linear, radial, spline } from './icons.mjs';
-import { n, pt } from './kit.mjs';
+import { blade, linear, radial } from './icons.mjs';
+import { n, pt, spline } from './kit.mjs';
 import { C, P, RI, ring, round } from './ring.mjs';
 import { Still } from './still.mjs';
 

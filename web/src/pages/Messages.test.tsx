@@ -603,6 +603,14 @@ describe('Messages', () => {
       expect(row.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
+    it('caps the requests badge at 99+, as every badge is', async () => {
+      const requests = Array.from({ length: 120 }, (_, i) => ({ userId: `r${i}`, username: `kes${i}`, displayName: null }));
+      serve({ '/friends/requests': { requests } });
+      renderApp(<Messages />, ['/app/messages']);
+      const row = await screen.findByRole('link', { name: /Friend requests/ });
+      expect(row.querySelector('.chat-unread')?.textContent).toBe('99+');
+    });
+
     it('offers the next step when there is nobody to talk to yet', async () => {
       serve({ '/chat/conversations': { conversations: [] }, '/me/groups': { groups: [] } });
       renderApp(<Messages />, ['/app/messages']);

@@ -144,8 +144,24 @@ describe('the post’s own row', () => {
     expect(await screen.findByText('3 reads')).toBeTruthy();
     expect(await screen.findByRole('button', { name: 'Like (4)' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Repost (2)' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: '3 comments (3)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '3 comments' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
+  });
+
+  it.each([
+    [300, '300', '300'],
+    [3400, '3.4K', '3,400'],
+    [5_600_000, '5.6M', '5,600,000'],
+  ])('writes %i reads, comments, likes and reposts as %s, and says them whole', async (n, shown, whole) => {
+    open({ 'GET /library/posts/p1': ok({ ...POST, viewCount: n, commentCount: n }), [ENGAGEMENT]: ok({ engagement: { ...counts, likes: n, reposts: n } }) });
+    const reads = await screen.findByText(`${shown} reads`);
+    expect(reads.getAttribute('aria-label')).toBe(`${whole} reads`);
+    expect(getComputedStyle(reads).whiteSpace).toBe('nowrap');
+    expect(screen.getByText(`${shown} comments`).getAttribute('aria-label')).toBe(`${whole} comments`);
+    expect(await screen.findByRole('button', { name: `Like (${whole})` })).toBeTruthy();
+    expect(screen.getByRole('button', { name: `Repost (${whole})` })).toBeTruthy();
+    expect(screen.getByRole('button', { name: `${whole} comments` })).toBeTruthy();
+    expect(screen.getAllByText(shown)).toHaveLength(3);
   });
 
   it('likes at once, before the server answers, and keeps the server’s totals after', async () => {

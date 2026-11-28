@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { localeDir } from '@kurda/shared';
+import { localeDir, unreadLabel } from '@kurda/shared';
 import { BookmarkIcon, GearIcon, MedalIcon, MoreIcon, ShareIcon, ShopIcon, TrophyIcon, UsersIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { useRail } from '../social/RailProvider';
@@ -82,7 +82,7 @@ export function ProfileMenu(): React.JSX.Element {
                 <Link to={item.to} className="user-menu-item" onClick={() => setOpen(false)}>
                   {item.icon}
                   <span className="profile-menu-label">{item.label}</span>
-                  {(item.count ?? 0) > 0 && <span className="chat-unread">{item.count}</span>}
+                  {(item.count ?? 0) > 0 && <span className="chat-unread">{unreadLabel(item.count ?? 0)}</span>}
                 </Link>
               </li>
             ))}

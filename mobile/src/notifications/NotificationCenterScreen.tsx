@@ -15,11 +15,13 @@ import { Chips } from '../theme/Chips';
 import { useListEntrance } from '../theme/animate';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
-import { groupNotices, noticeActor, noticeKind, noticeWhen, resolveDeepLink, type InboxItem, type NoticeFriend, type NoticeGroup } from './inbox.js';
+import { groupNotices, noticeActor, noticeKind, noticeWhen, resolveDeepLink, type InboxItem, type NoticeActor, type NoticeFriend, type NoticeGroup } from './inbox.js';
 import { followDeepLink, notificationText } from './followLink';
 import { NotificationHeading, NotificationListSkeleton, NotificationRow } from './NotificationRow';
 import { useI18n } from '../i18n/I18nContext';
-import type { TranslationKey } from '../i18n/translations';
+import type { Locale, TranslationKey } from '../i18n/translations';
+import type { Translate } from '../api/errors';
+import { noticeGiftCount } from '../gifts/quantity';
 import { EmptyState } from '../theme/EmptyState';
 import { CaringMessageDialog, type CaringMessage } from '../reports/CaringMessage';
 import { useUnread } from '../messages/unread';
@@ -56,6 +58,18 @@ const minus = (set: ReadonlySet<string>, id: string): ReadonlySet<string> => {
  */
 function sentences(parts: ReadonlyArray<string | null>): string {
   return parts.filter((p): p is string => Boolean(p)).reduce((all, part) => (all ? `${all}${/[.!?…؟]$/.test(all) ? ' ' : '. '}${part}` : part), '');
+}
+
+/**
+ * A gift's row says who it is from, and how many when it was several ("3 gifts from Berfin", with where to open them
+ * under that), or that a member sent it when the server no longer names them to this reader. What came stays a surprise.
+ */
+function giftRowText(item: InboxItem, actor: NoticeActor | null, t: Translate, locale: Locale): { title: string; body: string } {
+  if (!actor) return { title: t('gift.fromMember'), body: notificationText(item, t, locale).body };
+  const count = noticeGiftCount(item.data, locale);
+  return count
+    ? { title: t('gift.notice.sent', { name: actor.name, count }), body: t('gift.notice.openMany') }
+    : { title: t('gift.banner.body', { name: actor.name }), body: notificationText(item, t, locale).body };
 }
 
 /**
@@ -226,8 +240,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
       const text = joinable
         ? { title: t('play.banner.invited', { name: actor.name, game: t(GAME_NAME_KEY[item.data.game as keyof typeof GAME_NAME_KEY]) }), body: '' }
         : item.data.kind === 'gift'
-          ? // A gift says who it is from, or that a member sent it when the server no longer names them to this reader.
-            { title: actor ? t('gift.banner.body', { name: actor.name }) : t('gift.fromMember'), body: notificationText(item, t, locale).body }
+          ? giftRowText(item, actor, t, locale)
           : notificationText(item, t, locale);
       const time = noticeWhen(item.createdAt, section.key, t, locale);
       // Join only while there is a game to join, Open only on a gift not yet opened.

@@ -5,6 +5,7 @@ import {
   FREE_GIFT_MAX_PRICE,
   GIFT_CATEGORY,
   GIFT_MIN_FRIENDSHIP_HOURS,
+  MAX_GIFT_QUANTITY,
   MAX_GIFT_RECIPIENTS,
   giftForAdultsOnly,
   giftTierFor,
@@ -48,6 +49,8 @@ export interface SendGiftInput {
   /** the friends it goes to; for a gift onto a post, its author (found by `send`) */
   toIds: readonly string[];
   sku: string;
+  /** How many of it each recipient is given, 1 to `MAX_GIFT_QUANTITY`; one when not said. */
+  quantity?: number;
   /** Where the gift is posted: a direct message or a group's channel. Null from the shop, which posts to the direct message. */
   chat: GiftChatRef | null;
   /** A post the gift is given onto instead of a chat; its author is the one recipient, and no chat message is posted. */
@@ -56,9 +59,9 @@ export interface SendGiftInput {
   idempotencyKey: string;
   /** The price the sender was shown; refused if it has changed. */
   expectedPrice?: number;
-  /** Pay with free gifts from the sender's members' boxes, one a recipient, instead of Zêr. */
+  /** Pay with free gifts from the sender's members' boxes, one a gift, instead of Zêr. */
   useFreeGift?: boolean;
-  /** Give it from the sender's gift bag, one a recipient, instead of paying. */
+  /** Give it from the sender's gift bag, one from it a gift, instead of paying. */
   fromBag?: boolean;
   /** The second confirmation of a big gift, as a GIFT_NEEDS_CONFIRM refusal handed it out for this very send. */
   confirmToken?: string;
@@ -115,6 +118,8 @@ interface Settled {
   replay: boolean;
   batchId: string;
   item: SendGiftOutcome['item'];
+  /** how many of it each recipient was given */
+  quantity: number;
   /** Recipients who have this request's gift, in the order asked, earlier attempts included. */
   sent: string[];
   /** recipients given it by this call, with their gift's id */
@@ -139,10 +144,11 @@ interface GiftViews {
  *   known adults.
  * - Daily caps per sender and per pair over the last 24 hours, and per recipient from everyone together, so throwaway
  *   accounts cannot pour items into one account: wide between two known adults, narrow wherever someone under 18 is
- *   involved (`GIFT_DAY_CAPS`).
+ *   involved (`GIFT_DAY_CAPS`). Several of one gift at once count as that many gifts.
  * - Not from an account paused from moving value (economy/standing.ts): 403 GIFTS_PAUSED.
  * - Never currency: a gift is an item, and purchases are final, so it cannot move currency between accounts.
- * - Not a unique item the recipient owns, decided under `lockEntitlement` so two friends gifting it cannot both win.
+ * - Not a unique item the recipient owns, decided under `lockEntitlement` so two friends gifting it cannot both win, and
+ *   never more than one of it at once.
  * - Never free of cost, or it would be an unlimited free way to put a notification in front of someone; a member's free
  *   gifts from their monthly box are counted out, three a month.
  * - Not while muted from chat, with the same answers as a message (403 MUTED, then CHAT_MUTED).
@@ -171,6 +177,10 @@ export class GiftService {
     // A child's profile never gives a gift, however it is asked for; the child gate keeps them from the routes as well.
     if ((await childrenAmong(this.pool, [input.fromId])).size > 0) throw childRefused();
     if (input.fromBag && input.useFreeGift) throw new AppError('BAD_PAYMENT', 400, 'a gift is paid one way');
+    const quantity = input.quantity ?? 1;
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_GIFT_QUANTITY) {
+      throw new AppError('BAD_QUANTITY', 400, `a gift is 1–${MAX_GIFT_QUANTITY} of one thing`);
+    }
     if (input.post) return this.sendToPost({ ...input, post: input.post }, now);
     const { fromId, chat } = input;
     const toIds = [...new Set(input.toIds)];
@@ -269,6 +279,7 @@ export class GiftService {
     now: Date,
   ): Promise<Settled> {
     const { fromId, sku, chat, idempotencyKey, expectedPrice } = input;
+    const quantity = input.quantity ?? 1;
     const post = input.post ?? null;
     const client = await this.pool.connect();
     try {
@@ -278,15 +289,15 @@ export class GiftService {
       await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`gift-send:${fromId}`]);
 
       // Recognise a retry first, or the owns-it check would report a friend owning the item the first try gave them.
-      const prior = await client.query<{ to_user_id: string; batch_id: string; sku: string }>(
-        `SELECT to_user_id, batch_id, sku FROM gifts
+      const prior = await client.query<{ to_user_id: string; batch_id: string; sku: string; quantity: number }>(
+        `SELECT to_user_id, batch_id, sku, quantity FROM gifts
           WHERE from_user_id = $1 AND idempotency_key = ANY($2::text[])`,
         [fromId, toIds.map((to) => recipientKey(idempotencyKey, to))],
       );
       // A retry must match the item, the one gift it made and the chat; a key alone would let a send in one chat add
       // friends to a gift posted in another.
       const reused = () => new AppError('IDEMPOTENCY_REUSED', 409, 'that request key was already used');
-      if (prior.rows.some((r) => r.sku !== sku)) throw reused();
+      if (prior.rows.some((r) => r.sku !== sku || r.quantity !== quantity)) throw reused();
       if (new Set(prior.rows.map((r) => r.batch_id)).size > 1) throw reused();
       if (prior.rows.length > 0 && !(await sameTarget(client, prior.rows[0]!.batch_id, chat, post, fromId, toIds[0]!))) {
         throw reused();
@@ -301,7 +312,7 @@ export class GiftService {
       // A full replay: the stored result, whatever the catalogue says now.
       if (toIds.every((to) => had.has(to))) {
         await client.query('COMMIT');
-        return { replay: true, batchId, item: summary, sent: toIds, given: [], skipped: [], posted: null };
+        return { replay: true, batchId, item: summary, quantity, sent: toIds, given: [], skipped: [], posted: null };
       }
 
       if (!isPurchasable(item, now)) throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
@@ -310,6 +321,8 @@ export class GiftService {
         throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
       }
       if (item.price <= 0) throw new AppError('NOT_GIFTABLE', 409, 'this item cannot be given as a gift');
+      // there is only ever one of a unique item
+      if (item.is_unique && quantity > 1) throw new AppError('BAD_QUANTITY', 400, 'only one of this can be given');
       if (expectedPrice != null && item.price !== expectedPrice) {
         throw new AppError('PRICE_CHANGED', 409, 'the price changed; please review and try again');
       }
@@ -373,22 +386,22 @@ export class GiftService {
       // what each recipient has been given in the last 24 hours, by anyone
       if (candidates.length > 0) {
         const received = await client.query<{ to_user_id: string; n: number }>(
-          `SELECT to_user_id, count(*)::int AS n FROM gifts
+          `SELECT to_user_id, sum(quantity)::int AS n FROM gifts
             WHERE to_user_id = ANY($1::uuid[]) AND created_at > now() - interval '24 hours'
             GROUP BY to_user_id`,
           [candidates],
         );
         const receivedBy = new Map(received.rows.map((r) => [r.to_user_id, r.n]));
         candidates = candidates.filter((to) => {
-          if ((receivedBy.get(to) ?? 0) < giftsReceivedCap(!young.has(to))) return true;
+          if ((receivedBy.get(to) ?? 0) + quantity <= giftsReceivedCap(!young.has(to))) return true;
           skip(to, 'daily_limit');
           return false;
         });
       }
 
-      // the caps, over the last 24 hours, counting each recipient as one gift
+      // the caps, over the last 24 hours, counting every gift: several at once are that many
       const recent = await client.query<{ to_user_id: string; n: number }>(
-        `SELECT to_user_id, count(*)::int AS n FROM gifts
+        `SELECT to_user_id, sum(quantity)::int AS n FROM gifts
           WHERE from_user_id = $1 AND created_at > now() - interval '24 hours'
           GROUP BY to_user_id`,
         [fromId],
@@ -397,27 +410,30 @@ export class GiftService {
       let today = recent.rows.reduce((n, r) => n + r.n, 0);
       candidates = candidates.filter((to) => {
         const theirs = perFriend.get(to) ?? 0;
-        if (today >= giftsSentCap(senderAdult) || theirs >= giftsPerFriendCap(senderAdult, !young.has(to))) {
+        if (today + quantity > giftsSentCap(senderAdult) || theirs + quantity > giftsPerFriendCap(senderAdult, !young.has(to))) {
           skip(to, 'daily_limit');
           return false;
         }
-        today += 1;
-        perFriend.set(to, theirs + 1);
+        today += quantity;
+        perFriend.set(to, theirs + quantity);
         return true;
       });
 
       // The safeguards, with the sender's Zêr row held: what these recipients may be given, what is left to spend, and
       // for a big send, that its money amount was seen and confirmed for exactly this send.
       const paying = !input.useFreeGift && !input.fromBag;
-      const total = paying ? item.price * candidates.length : 0;
+      // what each recipient's gift costs, and the gifts this send gives in all
+      const each = item.price * quantity;
+      const units = quantity * candidates.length;
+      const total = paying ? each * candidates.length : 0;
       if (candidates.length > 0) {
         // the Zêr row before the bag, the one order every path takes (bag.ts)
         await lockZerRow(client, fromId);
-        await assertWithinBounds(client, fromId, candidates, item.price, total, input.fromBag ? item.price * candidates.length : 0);
+        await assertWithinBounds(client, fromId, candidates, item.price, total, input.fromBag ? each * candidates.length : 0);
         if (paying && total >= BIG_GIFT_CONFIRM_ZER) {
           // never ask someone to confirm what they cannot pay for
           if ((await zerHeld(client, fromId)) < total) throw new InsufficientFundsError();
-          const subject: ConfirmSubject = { fromId, sku, price: item.price, recipients: candidates, target: targetOf(chat, post, toIds), idempotencyKey };
+          const subject: ConfirmSubject = { fromId, sku, price: item.price, quantity, recipients: candidates, target: targetOf(chat, post, toIds), idempotencyKey };
           if (!confirmTokenValid(this.confirmSecret, input.confirmToken, subject)) {
             const confirm = confirmToken(this.confirmSecret, subject);
             throw new AppError('GIFT_NEEDS_CONFIRM', 409, 'a big gift is confirmed once more before it goes', {
@@ -431,11 +447,11 @@ export class GiftService {
       }
 
       // Free gifts cover every recipient or none, so a send never ends up half paid one way and half the other.
-      if (input.useFreeGift && candidates.length > 0 && !(await spendFreeGifts(client, fromId, candidates.length))) {
+      if (input.useFreeGift && candidates.length > 0 && !(await spendFreeGifts(client, fromId, units))) {
         throw new AppError('NO_FREE_GIFTS', 409, 'there are not enough free gifts left for that');
       }
-      // and the bag likewise, one from it a recipient
-      if (input.fromBag && candidates.length > 0 && !(await takeFromBagWithin(client, fromId, sku, candidates.length))) throw bagEmpty();
+      // and the bag likewise, one from it a gift
+      if (input.fromBag && candidates.length > 0 && !(await takeFromBagWithin(client, fromId, sku, units))) throw bagEmpty();
 
       const given: Settled['given'] = [];
       for (const to of candidates) {
@@ -445,7 +461,7 @@ export class GiftService {
           const debit = await this.deps.wallet.debitWithin(client, {
             userId: fromId,
             currency: 'zer',
-            amount: item.price,
+            amount: each,
             reason: 'gift',
             refId: giftId,
             idempotencyKey: `gift:${fromId}:${recipientKey(idempotencyKey, to)}`,
@@ -453,15 +469,15 @@ export class GiftService {
           if (debit.duplicate) throw reused();
         }
         await client.query(
-          `INSERT INTO user_entitlements (user_id, sku, source)
-           VALUES ($1, $2, 'gift')
-           ON CONFLICT (user_id, sku) DO UPDATE SET quantity = user_entitlements.quantity + 1`,
-          [to, sku],
+          `INSERT INTO user_entitlements (user_id, sku, source, quantity)
+           VALUES ($1, $2, 'gift', $3)
+           ON CONFLICT (user_id, sku) DO UPDATE SET quantity = user_entitlements.quantity + EXCLUDED.quantity`,
+          [to, sku, quantity],
         );
         // clock_timestamp, not now(), keeps recipients in the order given, which is the order the card lists them.
         await client.query(
-          `INSERT INTO gifts (id, from_user_id, to_user_id, sku, price, currency, idempotency_key, batch_id, post_type, post_id, paid_with, created_at)
-           VALUES ($1, $2, $3, $4, $5, 'zer', $6, $7, $8, $9, $10, clock_timestamp())`,
+          `INSERT INTO gifts (id, from_user_id, to_user_id, sku, price, currency, idempotency_key, batch_id, post_type, post_id, paid_with, quantity, created_at)
+           VALUES ($1, $2, $3, $4, $5, 'zer', $6, $7, $8, $9, $10, $11, clock_timestamp())`,
           [
             giftId,
             fromId,
@@ -473,6 +489,7 @@ export class GiftService {
             post?.type ?? null,
             post?.id ?? null,
             input.fromBag ? 'bag' : input.useFreeGift ? 'free_gift' : 'zer',
+            quantity,
           ],
         );
         given.push({ toId: to, giftId });
@@ -489,6 +506,7 @@ export class GiftService {
         replay: false,
         batchId,
         item: summary,
+        quantity,
         sent: toIds.filter((to) => sentSet.has(to)),
         given,
         skipped,
@@ -660,6 +678,7 @@ export class GiftService {
       }),
     );
     // English for the notification list; the apps write their own words from `data`
+    const what = settled.quantity > 1 ? `${settled.quantity} × ${settled.item.name}` : settled.item.name;
     await inbox
       ?.recordAll(
         told.map(({ toId, giftId }) => ({
@@ -667,13 +686,14 @@ export class GiftService {
           notification: {
             category: 'friends' as const,
             title: 'You have a gift',
-            body: `${sender.name || 'Someone'} sent you ${settled.item.name}.`,
+            body: `${sender.name || 'Someone'} sent you ${what}.`,
             data: {
               kind: 'gift',
               giftId,
               batchId: settled.batchId,
               chat: where.kind === 'group' ? `group:${where.groupId}` : `dm:${fromId}`,
               sku: settled.item.sku,
+              ...(settled.quantity > 1 ? { quantity: String(settled.quantity) } : {}),
               fromUserId: fromId,
               // a friend or a member of the same group, whose name the recipient sees already
               fromName: sender.name,
@@ -706,7 +726,7 @@ export class GiftService {
           notification: {
             category: 'friends' as const,
             title: 'A gift on your post',
-            body: `${sender.name || 'Someone'} gave your post ${settled.item.name}.`,
+            body: `${sender.name || 'Someone'} gave your post ${settled.quantity > 1 ? `${settled.quantity} × ${settled.item.name}` : settled.item.name}.`,
             data: {
               kind: 'post_gift',
               postType: post.type,
@@ -714,6 +734,7 @@ export class GiftService {
               batchId: settled.batchId,
               giftId,
               sku: settled.item.sku,
+              ...(settled.quantity > 1 ? { quantity: String(settled.quantity) } : {}),
               fromUserId: fromId,
               fromName: sender.name,
             },
