@@ -1,7 +1,7 @@
 /**
  * The shop's animal friends: ten small characters painted in the deer icon's way, colour laid in with dry-brush shade,
  * pale flecks and a soft pencil line. A white rabbit flexing its arms; a fox in a red cloak resting on its sword; a
- * ginger tabby striding in a hat and boots; a fluffy kitten with a red bow; a white duck on the water; a big sleepy
+ * ginger tabby striding in a hat and boots; a fluffy kitten with a red bow; a white duck sitting on its webbed feet; a big sleepy
  * dark bear; a round white bear walking; a round spotted cow; a plump cream hen; and a kiwi with its long beak. Each
  * lives in friends/, one to a file, and is transparent outside its figure, so it reads over a dark profile picture as
  * over a light one.
