@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_GIFT_QUANTITY,
+  giftQuantity,
+  giftQuantityMax,
   GIFT_TIERS,
   GIFT_UNWRAP_MS,
   GIFT_DAY_CAPS,
@@ -117,5 +120,27 @@ describe('the gift sheet’s line on the day’s caps', () => {
     // nobody known to be full, or nobody to send to, holds nothing
     expect(giftDayFull([], ['a'])).toBe(false);
     expect(giftDayFull(days, [])).toBe(false);
+  });
+});
+
+describe('several of one gift at once', () => {
+  it('lets a send hold no more than the day’s caps, what pays for it and the spending limit leave', () => {
+    // nothing narrower than the cap on a single send
+    expect(giftQuantityMax({ price: 1, recipients: 1, dayLeft: [50], units: null })).toBe(MAX_GIFT_QUANTITY);
+    // the friend with the fewest left today decides it for a group
+    expect(giftQuantityMax({ price: 1, recipients: 2, dayLeft: [5, 2], units: null })).toBe(2);
+    // 230 Zêr of 25-Zêr flowers is 9 for one friend, 4 each for two
+    expect(giftQuantityMax({ price: 25, recipients: 1, dayLeft: [20], units: Math.floor(230 / 25) })).toBe(9);
+    expect(giftQuantityMax({ price: 25, recipients: 2, dayLeft: [20, 20], units: Math.floor(230 / 25) })).toBe(4);
+    // what is left under a spending limit
+    expect(giftQuantityMax({ price: 100, recipients: 1, dayLeft: [20], units: null, limits: { left: 350 } })).toBe(3);
+    // never under one: a gift that cannot go at all is held back by its own lines
+    expect(giftQuantityMax({ price: 100, recipients: 1, dayLeft: [0], units: 0 })).toBe(1);
+  });
+
+  it('reads one from a card that says nothing of how many', () => {
+    expect(giftQuantity({})).toBe(1);
+    expect(giftQuantity({ quantity: 1 })).toBe(1);
+    expect(giftQuantity({ quantity: 5 })).toBe(5);
   });
 });

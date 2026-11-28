@@ -5,7 +5,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { GIFT_DAY_CAPS, MEMBERS_BOX_FREE_GIFTS, drawnGifts, giftArtKey, giftInSeason, giftSku } from '@kurda/shared';
+import { GIFT_DAY_CAPS, MAX_GIFT_QUANTITY, MEMBERS_BOX_FREE_GIFTS, drawnGifts, giftArtKey, giftInSeason, giftSku } from '@kurda/shared';
 import { MembersBoxService } from '../plus/members-box.js';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
@@ -1469,6 +1469,106 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       // to another friend, since the day's three to one friend are given
       const none = await freeGift(CAY, pal2);
       expect(none.json().code).toBe('NO_FREE_GIFTS');
+    });
+  });
+  describe('several of one gift at once', () => {
+    const many = (from: Account, to: Account, item: string, quantity: number, idempotencyKey = key()) =>
+      call('POST', '/gifts', from, { sku: item, quantity, toUserIds: [to.id], chat: { kind: 'dm', userId: to.id }, idempotencyKey });
+    const dayLeft = async (from: Account, to: Account) => (await call('GET', `/gifts/catalog?to=${to.id}`, from)).json().dayLeft[0].left as number;
+
+    it('gives a friend that many in one gift, paid once for all of them', async () => {
+      const ava = await signUp('qava');
+      const bo = await signUp('qbo');
+      await befriend(ava, bo);
+      await fund(ava, 1_000);
+      const before = await dayLeft(ava, bo);
+      const res = await many(ava, bo, GUL, 5);
+      expect(res.statusCode, res.body).toBe(200);
+      expect(res.json()).toMatchObject({ sent: [bo.id], skipped: [], balance: { zer: 1_000 - 5 * PRICE[GUL]! } });
+      // one gift row, and the five are theirs
+      const rows = await pool.query(`SELECT quantity, price FROM gifts WHERE from_user_id = $1`, [ava.id]);
+      expect(rows.rows).toEqual([{ quantity: 5, price: PRICE[GUL] }]);
+      expect((await owns(bo, GUL))?.quantity).toBe(5);
+      // the card says how many, for both of them and live to the friend
+      const card = (await call('GET', `/chat/${bo.id}/messages`, ava)).json().messages.find((m: { kind: string }) => m.kind === 'gift').gift;
+      expect(card.quantity).toBe(5);
+      expect((pushedTo(bo.id, 'gift_received')[0]?.card as { quantity?: number } | undefined)?.quantity).toBe(5);
+      // the day's caps count all five
+      expect(await dayLeft(ava, bo)).toBe(before - 5);
+    });
+
+    it('replays the same send, and refuses its key for a different number', async () => {
+      const cy = await signUp('qcy');
+      const di = await signUp('qdi');
+      await befriend(cy, di);
+      await fund(cy, 1_000);
+      const k = key();
+      expect((await many(cy, di, GUL, 3, k)).statusCode).toBe(200);
+      const again = await many(cy, di, GUL, 3, k);
+      expect(again.statusCode).toBe(200);
+      expect(again.json().sent).toEqual([di.id]);
+      expect(await zer(cy)).toBe(1_000 - 3 * PRICE[GUL]!);
+      const other = await many(cy, di, GUL, 4, k);
+      expect(other.statusCode).toBe(409);
+      expect(other.json().code).toBe('IDEMPOTENCY_REUSED');
+      expect(await zer(cy)).toBe(1_000 - 3 * PRICE[GUL]!);
+    });
+
+    it('gives only one of something there is only one of, and never more than the most a send holds', async () => {
+      const ed = await signUp('qed');
+      const fa = await signUp('qfa');
+      await befriend(ed, fa);
+      await fund(ed);
+      const unique = await many(ed, fa, BG, 2);
+      expect(unique.statusCode).toBe(400);
+      expect(unique.json().code).toBe('BAD_QUANTITY');
+      expect((await many(ed, fa, GUL, MAX_GIFT_QUANTITY + 1)).statusCode).toBe(400);
+      expect((await many(ed, fa, GUL, 0)).statusCode).toBe(400);
+      expect(await zer(ed)).toBe(10_000);
+    });
+
+    it('turns away a number that would pass the day’s cap, and lets the rest of the day’s gifts go', async () => {
+      const { adult } = GIFT_DAY_CAPS;
+      const gu = await signUp('qgu');
+      const ha = await signUp('qha');
+      await befriend(gu, ha);
+      await fund(gu);
+      expect((await many(gu, ha, CAY, 5)).json().sent).toEqual([ha.id]);
+      const before = await zer(gu);
+      // five already given: one more than what is left is turned away whole, and costs nothing
+      const over = await many(gu, ha, CAY, adult.perFriend - 5 + 1);
+      expect(over.json()).toMatchObject({ sent: [], skipped: [{ userId: ha.id, reason: 'daily_limit' }] });
+      expect(await zer(gu)).toBe(before);
+      expect((await many(gu, ha, CAY, adult.perFriend - 5)).json().sent).toEqual([ha.id]);
+      expect(await dayLeft(gu, ha)).toBe(0);
+    });
+
+    it('keeps a friend under 18 to their few a day, however many one send asks for', async () => {
+      const { young } = GIFT_DAY_CAPS;
+      const ivy = await signUp('qivy');
+      const teen = await signUp('qteen', bornYearsAgo(15));
+      await befriend(ivy, teen, 25);
+      await fund(ivy);
+      const over = await many(ivy, teen, CAY, young.perFriend + 1);
+      expect(over.json().skipped).toEqual([{ userId: teen.id, reason: 'daily_limit' }]);
+      expect((await many(ivy, teen, CAY, young.perFriend)).json().sent).toEqual([teen.id]);
+      expect(await dayLeft(ivy, teen)).toBe(0);
+    });
+
+    it('gives each friend in a group that many, paid for each of them', async () => {
+      const jo = await signUp('qjo');
+      const ka = await signUp('qka');
+      const li = await signUp('qli');
+      await befriend(jo, ka);
+      await befriend(jo, li);
+      await fund(jo, 1_000);
+      const groupId = await group('Several', jo, [ka, li]);
+      const res = await call('POST', '/gifts', jo, { sku: QEHWE, quantity: 3, toUserIds: [ka.id, li.id], chat: { kind: 'group', groupId }, idempotencyKey: key() });
+      expect(res.statusCode, res.body).toBe(200);
+      expect(res.json().sent).toEqual([ka.id, li.id]);
+      expect(await zer(jo)).toBe(1_000 - 2 * 3 * PRICE[QEHWE]!);
+      expect((await owns(ka, QEHWE))?.quantity).toBe(3);
+      expect((await owns(li, QEHWE))?.quantity).toBe(3);
     });
   });
 });

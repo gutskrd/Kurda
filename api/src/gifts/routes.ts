@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { lowerUuid } from '../http/ids.js';
-import { MAX_GIFT_RECIPIENTS, SPEND_LIMIT_MAX_ZER, SPEND_LIMIT_MIN_ZER, SPEND_LIMIT_PERIODS } from '@kurda/shared';
+import { MAX_GIFT_QUANTITY, MAX_GIFT_RECIPIENTS, SPEND_LIMIT_MAX_ZER, SPEND_LIMIT_MIN_ZER, SPEND_LIMIT_PERIODS } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { requireBirthMonth } from '../users/age.js';
@@ -17,6 +17,8 @@ const postRef = z.object({ type: z.enum(POST_TYPES), id: lowerUuid() });
 const sendBody = z
   .object({
     sku: z.string().min(1).max(80),
+    /** how many of it each recipient is given; one when left out */
+    quantity: z.number().int().min(1).max(MAX_GIFT_QUANTITY).optional(),
     /** the friends in the chat; left out for a gift onto a post, which goes to its author */
     toUserIds: z.array(lowerUuid()).min(1).max(MAX_GIFT_RECIPIENTS).optional(),
     /** the chat the gift is posted in (shared `GiftChatRef`) */
@@ -90,6 +92,7 @@ export function registerGiftRoutes(app: FastifyInstance, gifts: GiftService): vo
         fromId: req.user!.id,
         toIds: body.toUserIds ?? [],
         sku: body.sku,
+        quantity: body.quantity,
         chat: body.chat ?? null,
         post: body.post ?? null,
         idempotencyKey: body.idempotencyKey,

@@ -62,6 +62,7 @@ interface CardRow extends SenderRow {
   batch_id: string;
   to_user_id: string;
   price: number;
+  quantity: number;
   opened_at: Date | null;
   thanked_at: Date | null;
   sku: string;
@@ -115,7 +116,7 @@ async function cardRows(executor: Pick<pg.Pool, 'query'>, batchIds: readonly str
   if (batchIds.length === 0) return [];
   // created_at, then id: the order the recipients were given their gifts in
   const rows = await executor.query<CardRow>(
-    `SELECT g.id, g.batch_id, g.to_user_id, g.price, g.opened_at, g.thanked_at,
+    `SELECT g.id, g.batch_id, g.to_user_id, g.price, g.quantity, g.opened_at, g.thanked_at,
             i.sku, i.name, i.category, i.asset_key, i.active, i.available_to IS NOT NULL AS limited,
             u.username, u.profile_photo_key, u.selected_avatar_key, u.deleted_at IS NOT NULL AS gone,
             COALESCE($3::boolean OR ${shownToSql('u', '$2::uuid')}, false) AS shown,
@@ -171,6 +172,8 @@ function cardsFrom(rows: readonly CardRow[], viewerId: string | null, publicUrl:
       // Something to wear straight from the unwrap: theirs, wearable and still on sale, since equipping a withdrawn item
       // is refused.
       equippable: mine && isEquippable(first.category) && first.asset_key && first.active ? first.category : null,
+      // one send gives every recipient the same number
+      quantity: first.quantity,
     });
   }
   return cards;

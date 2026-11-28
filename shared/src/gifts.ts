@@ -66,9 +66,15 @@ export const GIFT_REDUCED_MOTION_MS = 200;
 export const MAX_GIFT_RECIPIENTS = 7;
 
 /**
- * A rolling day's caps on gifts, each recipient counted as one gift: what one person may send in all (`sent`) and to any
- * one friend (`perFriend`), and what one person may be given by everyone together (`received`), so throwaway accounts
- * cannot pour gifts into one account.
+ * The most of one gift a single send may give each recipient ("5 × Çay"): the widest day's cap to one friend, so the
+ * caps, not this, are what usually stop a send.
+ */
+export const MAX_GIFT_QUANTITY = 20;
+
+/**
+ * A rolling day's caps on gifts, every gift counted (a send of 3 to two friends is 6): what one person may send in all
+ * (`sent`) and to any one friend (`perFriend`), and what one person may be given by everyone together (`received`), so
+ * throwaway accounts cannot pour gifts into one account.
  */
 export interface GiftDayCaps {
   sent: number;
@@ -193,6 +199,13 @@ export interface GiftCard {
   myThanked?: boolean;
   /** what the viewer can put on after unwrapping, if anything */
   equippable: EquippableCategory | null;
+  /** how many of it each recipient was given; absent from an API older than several at once, which means one */
+  quantity?: number;
+}
+
+/** How many of a gift a card holds, one for a card from before several could be sent at once. */
+export function giftQuantity(card: Pick<GiftCard, 'quantity'>): number {
+  return card.quantity && card.quantity > 1 ? card.quantity : 1;
 }
 
 /** An item in the gift picker (GET /gifts/catalog?to=… or ?post=…). Prices are in Zêr. */
@@ -243,6 +256,28 @@ export function giftLockFor(item: Pick<GiftCatalogItem, 'price'>, recipients: nu
   if (limits.maxPrice != null && item.price > limits.maxPrice) return 'over_limit';
   if (limits.left != null && item.price * Math.max(1, recipients) > limits.left) return 'spend_limit';
   return null;
+}
+
+/**
+ * The most of one gift the sheet lets a send hold for each recipient: no more than the day's caps leave for any of them,
+ * than what pays for it covers (`units`: how many the sender's Zêr, bag or free gifts pay for in all, null when not
+ * known), than the spending limit leaves, or than `MAX_GIFT_QUANTITY`. Never under 1: a gift that cannot go at all is
+ * held back by its own lines, not by its count.
+ */
+export function giftQuantityMax(input: {
+  price: number;
+  recipients: number;
+  /** what the day's caps leave for each recipient (`GiftDayLeft.left`) */
+  dayLeft: readonly number[];
+  units: number | null;
+  limits?: Pick<GiftSendLimits, 'left'> | null;
+}): number {
+  const people = Math.max(1, input.recipients);
+  let most = MAX_GIFT_QUANTITY;
+  for (const left of input.dayLeft) most = Math.min(most, left);
+  if (input.units != null) most = Math.min(most, Math.floor(input.units / people));
+  if (input.limits?.left != null && input.price > 0) most = Math.min(most, Math.floor(input.limits.left / (input.price * people)));
+  return Math.max(1, most);
 }
 
 /** Whether a send of `total` Zêr asks a second time, with the money amount, before it goes. */
