@@ -719,6 +719,7 @@ function Chooser({ data, season, side, busy, failed, onPlant }: { data: MyTree; 
   const dir = useDirection();
   const seeds = data.kinds.filter((k) => k.starter || k.owned);
   const [picked, setPicked] = useState<TreeSpecies>(seeds[0]?.species ?? 'beru');
+  const chosen = treeNamed(t, picked);
   const said = (species: TreeSpecies): string => {
     const named = treeNamed(t, species);
     return named.meaning ? `${named.name} (${named.meaning})` : named.name;
@@ -775,7 +776,13 @@ function Chooser({ data, season, side, busy, failed, onPlant }: { data: MyTree; 
             );
           })}
         </View>
-      ) : null}
+      ) : (
+        // With no seeds to pick from, the tree is named here so the learner knows what they are planting.
+        <Text style={[styles.sub, { color: colors.textSecondary }]}>
+          <Text style={[styles.chosenName, { color: colors.textPrimary }]}>{chosen.name}</Text>
+          {chosen.meaning ? ` · ${chosen.meaning}` : ''}
+        </Text>
+      )}
       <Text style={[styles.sub, { color: colors.textSecondary }]}>{treeAbout(t, picked)}</Text>
       {failed ? <Failed text={failed} /> : null}
       <ClayButton label={t('tree.choose.plant')} accessibilityLabel={`${t('tree.choose.plant')}: ${said(picked)}`} tone="primary" size="large" busy={busy} onPress={() => onPlant(picked)} testID="tree-plant" />
@@ -946,6 +953,7 @@ const styles = StyleSheet.create({
   head: { gap: 2 },
   lead: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, textAlign: 'center', letterSpacing: -0.4 },
   sub: { fontSize: typography.sizes.text, lineHeight: 21, textAlign: 'center' },
+  chosenName: { fontWeight: typography.weights.bold },
   // Where the tree stands: the scene of the season, its floor at the foot.
   stage: { width: '100%', alignItems: 'center', borderRadius: radii.xl, overflow: 'hidden' },
   // The tree's own square of the scene, its foot on the floor.

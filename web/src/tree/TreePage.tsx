@@ -498,6 +498,13 @@ function Chooser({ data, season, busy, failed, onPlant }: { data: MyTree; season
           })}
         </fieldset>
       )}
+      {/* With no seeds to pick from, the tree is named here so the learner knows what they are planting. */}
+      {seeds.length <= 1 && (
+        <p className="tree-chosen">
+          <span className="tree-seed-name">{named.name}</span>
+          {named.meaning && <span className="tree-seed-meaning">{named.meaning}</span>}
+        </p>
+      )}
       <p className="tree-about">{treeAbout(t, picked)}</p>
       {failed && (
         <p className="tree-failed" role="alert">
