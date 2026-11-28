@@ -97,9 +97,11 @@ function FeedPostBox({ picture }: { picture: boolean }): React.JSX.Element {
         {times(2, (j) => (
           <Skeleton key={`pill-${j}`} className="fcard-act-box" />
         ))}
-        {times(2, (j) => (
-          <Skeleton key={`round-${j}`} className={j === 0 ? 'fcard-act-box is-round fcard-share' : 'fcard-act-box is-round'} />
-        ))}
+        <span className="fcard-actions-end">
+          {times(2, (j) => (
+            <Skeleton key={`round-${j}`} className="fcard-act-box is-round" />
+          ))}
+        </span>
       </footer>
     </article>
   );

@@ -188,13 +188,14 @@ button.coll-tile:hover {
 .coll-tile.is-item > svg {
   color: var(--ink-3);
 }
-/* a tile whose foot holds the giver's face and the count: the picture smaller and lifted, so they sit beside it */
-.coll-tile.has-foot img,
-.coll-tile.has-foot video {
+/* a tile with the giver's face at its top or the count at its foot: the picture smaller, and lifted above the count */
+.coll-tile:is(.has-foot, .has-giver) img,
+.coll-tile:is(.has-foot, .has-giver) video {
   width: 56%;
   height: 56%;
-  margin-bottom: 12px;
 }
+.coll-tile.has-foot img,
+.coll-tile.has-foot video,
 .coll-tile.has-foot > svg {
   margin-bottom: 12px;
 }
@@ -247,18 +248,25 @@ button.coll-tile:hover {
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
-/* how many of one gift, at the tile's far foot */
+/*
+ * How many of one gift, short ("×3.4K") at the tile's far foot, on one line within the tile; where one is still too
+ * long the grid's counts shrink together (CollectionSheet.tsx `GiftGrid`).
+ */
 .coll-count {
   position: absolute;
   bottom: 5px;
   inset-inline-end: 5px;
+  max-width: calc(100% - 10px);
+  overflow: hidden;
   padding: 0 6px;
   border-radius: var(--r-pill);
   background: var(--surface-solid);
   color: var(--ink);
+  font-size: calc(var(--text) * var(--count-fit, 1));
   font-weight: 600;
   line-height: 1.4;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* ---- the league and the tree, side by side over the badges ---- */
@@ -447,10 +455,10 @@ a.coll-person:focus-visible {
   flex: none;
   color: var(--ink-3);
 }
-/* the newest giver's face at the tile's near foot, opposite the count */
+/* the newest giver's face at the tile's near top corner, leaving the foot's whole width to the count */
 .coll-giver {
   position: absolute;
-  bottom: 5px;
+  top: 5px;
   inset-inline-start: 5px;
   line-height: 0;
 }

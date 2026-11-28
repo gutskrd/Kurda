@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { failureText, useOptimistic, useOptimisticSend } from '../lib/optimistic';
 import { Avatar } from '../components/Avatar';
 import { TickCount } from '../components/TickCount';
+import { useCountForms } from '../components/Count';
 import { BookmarkIcon, CommentIcon, HeartIcon, RepostIcon } from '../components/icons';
 import { useProfileModal } from '../profile/ProfileModal';
 import { SharePost } from './SharePost';
@@ -261,30 +262,33 @@ export function PostActions({
   const { status } = useAuth();
   const t = useT();
   const { locale } = useI18n();
+  const { short, whole } = useCountForms();
   const signedIn = status === 'signedIn';
   const { engagement: e, justOn, refused, toggle } = engage;
-  const count = (n: number): string => shortCount(n, locale);
   // Only a row that cannot act is held; a press in flight does not hold the other two.
   const held = !signedIn || waiting;
   // Nobody else can open a post whose picture is still being checked, so it is not reposted or shared yet.
   const unshared = item.review === 'held';
+  const footer = useRef<HTMLElement>(null);
+  useRowFit(footer, [locale, status, e.likes, item.commentCount, e.reposts, unshared].join('|'));
 
-  /** Labels a button by what it does, not the number it shows, which a screen reader would otherwise announce. */
+  /** Labels a button by what it does and the whole count, since the pill may show it shortened ("3.4K"). */
   const actionLabel = (verb: string, undo: string, n?: number): string => {
     // A signed-out reader is invited to do the thing, never to undo it.
-    if (!signedIn) return t('feed.signInTo', { verb: verb.toLowerCase() });
-    return n ? `${undo} (${n})` : undo;
+    const does = signedIn ? undo : t('feed.signInTo', { verb: verb.toLowerCase() });
+    return n ? `${does} (${whole(n)})` : does;
   };
+  const commentsLabel = t('feed.comments', { count: whole(item.commentCount) });
 
   const commentInner = (
     <>
       <CommentIcon size={20} />
-      {item.commentCount > 0 && <TickCount value={item.commentCount} format={count} className="fcard-count" />}
+      {item.commentCount > 0 && <TickCount value={item.commentCount} format={short} className="fcard-count" />}
     </>
   );
 
   const row = (
-    <footer className="fcard-actions" aria-busy={waiting || undefined}>
+    <footer ref={footer} className="fcard-actions" aria-busy={waiting || undefined}>
       <button
         type="button"
         className={`fcard-act fcard-like${e.liked ? ' is-on' : ''}${justOn?.kind === 'like' ? ' just-on' : ''}`}
@@ -297,15 +301,15 @@ export function PostActions({
         <HeartIcon size={20} weight={e.liked ? 'fill' : 'regular'} />
         {/* A fresh element per like, so the sparks play once per press, only around a filled heart (styles/motion.css). */}
         {justOn?.kind === 'like' && e.liked && <span key={justOn.n} className="fcard-burst" aria-hidden="true" />}
-        {e.likes > 0 && <TickCount value={e.likes} format={count} className="fcard-count" />}
+        {e.likes > 0 && <TickCount value={e.likes} format={short} className="fcard-count" />}
       </button>
 
       {onComment ? (
-        <button type="button" className="fcard-act" aria-label={t('feed.comments', { count: item.commentCount })} onClick={onComment}>
+        <button type="button" className="fcard-act" aria-label={commentsLabel} onClick={onComment}>
           {commentInner}
         </button>
       ) : (
-        <Link to={item.href} className="fcard-act" aria-label={t('feed.comments', { count: item.commentCount })}>
+        <Link to={item.href} className="fcard-act" aria-label={commentsLabel}>
           {commentInner}
         </Link>
       )}
@@ -322,25 +326,28 @@ export function PostActions({
           onClick={() => toggle('repost')}
         >
           <RepostIcon size={20} weight={e.reposted ? 'bold' : 'regular'} />
-          {e.reposts > 0 && <TickCount value={e.reposts} format={count} className="fcard-count" />}
+          {e.reposts > 0 && <TickCount value={e.reposts} format={short} className="fcard-count" />}
         </button>
       )}
 
-      {!unshared && <SharePost item={item} />}
+      {/* Share, gift and save at the far end, kept together when the counts need the row's room. */}
+      <span className="fcard-actions-end">
+        {!unshared && <SharePost item={item} />}
 
-      {signedIn && !unshared && <PostGiftButton item={item} />}
+        {signedIn && !unshared && <PostGiftButton item={item} />}
 
-      <button
-        type="button"
-        className={`fcard-act fcard-save${e.bookmarked ? ' is-on' : ''}${justOn?.kind === 'bookmark' ? ' just-on' : ''}`}
-        disabled={held}
-        aria-pressed={e.bookmarked}
-        aria-label={actionLabel(t('feed.save'), e.bookmarked ? t('feed.removeFromSaved') : t('feed.save'))}
-        title={signedIn ? (e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')) : t('feed.signInToSave')}
-        onClick={() => toggle('bookmark')}
-      >
-        <BookmarkIcon size={20} weight={e.bookmarked ? 'fill' : 'regular'} className={e.bookmarked ? 'saved-mark' : undefined} />
-      </button>
+        <button
+          type="button"
+          className={`fcard-act fcard-save${e.bookmarked ? ' is-on' : ''}${justOn?.kind === 'bookmark' ? ' just-on' : ''}`}
+          disabled={held}
+          aria-pressed={e.bookmarked}
+          aria-label={actionLabel(t('feed.save'), e.bookmarked ? t('feed.removeFromSaved') : t('feed.save'))}
+          title={signedIn ? (e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')) : t('feed.signInToSave')}
+          onClick={() => toggle('bookmark')}
+        >
+          <BookmarkIcon size={20} weight={e.bookmarked ? 'fill' : 'regular'} className={e.bookmarked ? 'saved-mark' : undefined} />
+        </button>
+      </span>
     </footer>
   );
 
@@ -367,14 +374,48 @@ function cardImages(item: FeedItem): FeedImage[] {
   return item.imageUrl ? [{ url: item.imageUrl, alt: item.imageAlt ?? null, width: null, height: null }] : [];
 }
 
-/** A count short enough for a pill: in full up to 9,999, then "12K" or "1.2M", so five pills fit across a phone. */
-export function shortCount(n: number, locale: string): string {
-  if (n < 10_000) return n.toLocaleString(locale);
-  try {
-    return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(n);
-  } catch {
-    return n.toLocaleString(locale);
-  }
+/** The least the counts in a row may shrink to keep it on one line; past it the buttons at its end take a line of their own. */
+const COUNT_FIT_MIN = 0.75;
+
+/**
+ * Keeps the row of actions inside its width in every language at any count: the counts shrink together as far as
+ * COUNT_FIT_MIN (feed.css `--count-fit`), and where that is not enough share, gift and save move under the counts,
+ * which then shrink only as far as their own line needs. `key` changes whenever what the row holds does.
+ */
+function useRowFit(row: React.RefObject<HTMLElement | null>, key: string): void {
+  useLayoutEffect(() => {
+    const el = row.current;
+    if (!el) return;
+    // How far the counts must shrink for the row to fit, read with the counts at full size.
+    const needed = (): number => {
+      const over = el.scrollWidth - el.clientWidth;
+      if (over <= 0) return 1;
+      const counts = [...el.querySelectorAll<HTMLElement>('.fcard-count')].reduce((sum, c) => sum + c.offsetWidth, 0);
+      return counts > 0 ? Math.max(0, (counts - over) / counts) : 0;
+    };
+    let seen = -1;
+    const measure = (): void => {
+      const width = el.clientWidth;
+      if (width === 0 || width === seen) return;
+      seen = width;
+      el.style.removeProperty('--count-fit');
+      delete el.dataset.crowded;
+      let fit = needed();
+      if (fit < COUNT_FIT_MIN) {
+        el.dataset.crowded = '';
+        fit = needed();
+      }
+      if (fit < 1) el.style.setProperty('--count-fit', String(Math.max(COUNT_FIT_MIN, Math.floor(fit * 100) / 100)));
+    };
+    measure();
+    void document.fonts?.ready.then(() => {
+      seen = -1;
+      measure();
+    });
+    const watch = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    watch?.observe(el);
+    return () => watch?.disconnect();
+  }, [row, key]);
 }
 
 /** How long ago, briefly: "5m ago", "3h ago" or "2d ago" within a week, then the date; the full time is the title. */

@@ -100,6 +100,21 @@ describe('Comments', () => {
     await waitFor(() => expect(screen.getByText('1 comment')).toBeInTheDocument());
   });
 
+  it.each([
+    [300, '300', '300'],
+    [3400, '3.4K', '3,400'],
+    [5_600_000, '5.6M', '5,600,000'],
+  ])('heads %i comments and replies short, and says them whole', async (n, shown, said) => {
+    const { fetch } = commentFetch([comment('c1', 'Pir xweş e', { replyCount: n })]);
+    vi.stubGlobal('fetch', fetch);
+    renderApp(<Comments postId="p1" commentCount={n} />);
+    const heading = screen.getByRole('heading', { level: 2 });
+    expect(heading).toHaveTextContent(`${said} comments`);
+    expect(heading.querySelector('[aria-hidden="true"]')?.textContent ?? heading.textContent).toBe(`${shown} comments`);
+    const replies = await screen.findByRole('button', { name: `Show ${said} replies` });
+    expect(replies.querySelector('[aria-hidden="true"]')?.textContent ?? replies.textContent).toBe(`Show ${shown} replies`);
+  });
+
   it('leaves the count alone when the post is rejected', async () => {
     signIn();
     const fetch = vi.fn(async (url: string, init?: RequestInit) => {

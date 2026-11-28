@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { jsonResponse, renderApp } from '../test/utils';
@@ -102,8 +102,8 @@ describe('LibraryPostPage', () => {
   it('carries the wall’s row of actions under the post, with the counts for whoever is reading', async () => {
     serve(post());
     show();
-    const like = await screen.findByRole('button', { name: 'Sign in to like' });
-    await waitFor(() => expect(like.textContent).toContain('5'));
+    const like = await screen.findByRole('button', { name: 'Sign in to like (5)' });
+    expect(like.textContent).toContain('5');
     expect(screen.getByRole('button', { name: 'Share this post' })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Reactions' })).toBeNull();
   });

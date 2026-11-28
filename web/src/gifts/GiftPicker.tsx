@@ -26,6 +26,7 @@ import { Button } from '../components/Button';
 import { Avatar } from '../components/Avatar';
 import { CheckIcon, CoinIcon, GiftIcon, LockIcon, MinusIcon, PlusIcon } from '../components/icons';
 import { Skeleton, SkeletonRegion } from '../components/Skeleton';
+import { CountWords, useCountForms } from '../components/Count';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { SendError } from '../reports/SendError';
@@ -503,7 +504,7 @@ function BagTile({
   onChoose: (on: boolean) => void;
 }): React.JSX.Element {
   const t = useT();
-  const { locale } = useI18n();
+  const { short, whole } = useCountForms();
   return (
     <li>
       <button
@@ -518,7 +519,9 @@ function BagTile({
           {entry.name}
         </span>
         {meaning && <span className="gift-tile-desc">{meaning}</span>}
-        <span className="gift-tile-price">{t('gift.bag.count', { count: entry.count.toLocaleString(locale) })}</span>
+        <span className="gift-tile-price">
+          <CountWords shown={t('gift.bag.count', { count: short(entry.count) })} said={t('gift.bag.count', { count: whole(entry.count) })} />
+        </span>
         {!enough && <span className="gift-tile-owned">{t('gift.bag.notEnough')}</span>}
         {selected && (
           <span className="gift-tile-check" aria-hidden>

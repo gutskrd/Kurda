@@ -1,4 +1,5 @@
 import { useCallback, type CSSProperties, type ReactNode } from 'react';
+import { compactCount } from '@kurda/shared';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { ItemGlyph } from '../shop/ItemGlyph';
 import { ItemPicture } from '../shop/ItemPicture';
@@ -102,8 +103,8 @@ export function GiftName({ name, count, as: Tag = 'span', className }: { name: s
 }
 
 /**
- * A gift's picture with a quiet "×3" at its corner when several of it were given; one gift's picture is left as it is.
- * Decorative: the words beside it say how many.
+ * A gift's picture with a quiet "×3" at its corner when several of it were given, short as every count is ("×1.2K");
+ * one gift's picture is left as it is. Decorative: the words beside it say how many.
  */
 export function GiftCount({ count, children }: { count: number; children: ReactNode }): React.JSX.Element {
   const locale = useLocale();
@@ -112,7 +113,7 @@ export function GiftCount({ count, children }: { count: number; children: ReactN
     <span className="gift-count">
       {children}
       <span className="gift-count-chip" aria-hidden="true">
-        ×{count.toLocaleString(locale)}
+        ×{compactCount(count, locale)}
       </span>
     </span>
   );

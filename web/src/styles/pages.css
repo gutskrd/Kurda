@@ -277,6 +277,10 @@
   font-size: var(--text);
   color: var(--ink-3);
 }
+/* how often it was read, short ("3.4K reads") and on one line */
+.post-reads {
+  white-space: nowrap;
+}
 .post h3 {
   font-size: var(--text);
   margin-bottom: 6px;

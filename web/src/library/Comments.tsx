@@ -6,6 +6,7 @@ import { ConfirmButton } from '../components/ConfirmButton';
 import { ErrorState } from '../components/states';
 import { CommentsSkeleton } from '../components/skeletons';
 import { VoicePlayer } from '../components/VoicePlayer';
+import { CountWords, useCountForms } from '../components/Count';
 import { PostAuthor, type Author } from './PostAuthor';
 import { useT } from '../i18n/I18nProvider';
 import { SendError } from '../reports/SendError';
@@ -151,6 +152,7 @@ export function Comments({
   surface?: CommentSurface;
 }): React.JSX.Element {
   const t = useT();
+  const { short, whole } = useCountForms();
   const { client, status } = useAuth();
   const [comments, setComments] = useState<Comment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -185,7 +187,11 @@ export function Comments({
   return (
     <section className="comments" aria-label={t('comments.title')}>
       <h2 className="section-heading">
-        {count === 1 ? t('comments.countOne') : t('comments.count', { count: count.toLocaleString() })}
+        {count === 1 ? (
+          t('comments.countOne')
+        ) : (
+          <CountWords shown={t('comments.count', { count: short(count) })} said={t('comments.count', { count: whole(count) })} />
+        )}
       </h2>
 
       {status === 'signedIn' ? <CommentForm box={box} placeholder={t('comments.add')} /> : <p className="muted">{t('comments.signInToJoin')}</p>}
@@ -235,6 +241,7 @@ function CommentNode({
   onCountChange: (delta: number) => void;
 }): React.JSX.Element {
   const t = useT();
+  const { short, whole } = useCountForms();
   const { client, user, status } = useAuth();
   // The box at the top already says why a held account cannot answer, so no Reply opens a second notice.
   const held = useAccountHeld();
@@ -349,7 +356,12 @@ function CommentNode({
                 ? t('common.loading')
                 : comment.replyCount === 1
                   ? t('comments.showOneReply')
-                  : t('comments.showReplies', { count: comment.replyCount })}
+                  : (
+                    <CountWords
+                      shown={t('comments.showReplies', { count: short(comment.replyCount) })}
+                      said={t('comments.showReplies', { count: whole(comment.replyCount) })}
+                    />
+                  )}
             </button>
           )}
         </div>

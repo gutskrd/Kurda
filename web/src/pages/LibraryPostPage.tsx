@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
 import { ErrorState } from '../components/states';
 import { PostSkeleton } from '../components/skeletons';
+import { CountWords, useCountForms } from '../components/Count';
 import { PostAuthor } from '../library/PostAuthor';
 import { Comments } from '../library/Comments';
 import { ArrowIcon } from '../components/icons';
@@ -32,6 +33,7 @@ const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, like
  */
 export function LibraryPostPage(): React.JSX.Element {
   const t = useT();
+  const counted = useCountForms();
   const { user, client, status } = useAuth();
   const { id } = useParams<{ id: string }>();
   const [search, setSearch] = useSearchParams();
@@ -107,7 +109,12 @@ export function LibraryPostPage(): React.JSX.Element {
         <div className="post-meta">
           {kindKey && <span className="badge">{t(kindKey)}</span>}
           {post.audioUrl && <span className="badge badge-gold">{t('library.audio')}</span>}
-          <span>{t('library.reads', { count: post.viewCount.toLocaleString() })}</span>
+          <span className="post-reads">
+            <CountWords
+              shown={t('library.reads', { count: counted.short(post.viewCount) })}
+              said={t('library.reads', { count: counted.whole(post.viewCount) })}
+            />
+          </span>
           {mine && (
             <button type="button" className="post-edit" onClick={() => setEditing(true)} aria-haspopup="dialog">
               {t('post.edit')}

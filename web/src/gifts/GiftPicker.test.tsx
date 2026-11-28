@@ -119,6 +119,18 @@ describe('the gift sheet', () => {
     expect(sends(calls)).toHaveLength(0);
   });
 
+  it.each([
+    [300, '300', '300'],
+    [3400, '3.4K', '3,400'],
+    [5_600_000, '5.6M', '5,600,000'],
+  ])('counts %i of one gift in the bag short, and says it whole', async (count, shown, said) => {
+    stub({ bag: [{ sku: CAY.sku, name: 'Çay', assetUrl: CAY.assetUrl, count }] });
+    renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
+    const bag = await screen.findByRole('list', { name: 'Your bag' });
+    expect(within(bag).getByText(`${shown} in your bag`)).toBeInTheDocument();
+    expect(within(bag).getByRole('button', { name: new RegExp(`${said} in your bag`) })).toBeInTheDocument();
+  });
+
   it('says what fills an empty bag, rather than leaving a blank', async () => {
     stub();
     renderApp(<GiftPicker open onClose={() => undefined} chat={dm} people={[rojda]} onSent={() => undefined} />);
