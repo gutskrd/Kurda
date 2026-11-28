@@ -4591,7 +4591,7 @@ export const tr: Catalogue = {
   'tree.sub': 'Her ders su kazandırır. Su ağacını büyütür.',
   'tree.soon': 'Ağaçlar yolda. Yakında yine uğra.',
   'tree.choose.title': 'Ağacını dik',
-  'tree.choose.sub': 'Bir tohum seç. Bitirdiğin her ders su kazandırır, su da onu büyütür.',
+  'tree.choose.sub': 'Bitirdiğin her ders su kazandırır, su da ağacını büyütür.',
   'tree.choose.plant': 'Dik',
   'tree.choose.more': 'Ağacın büyümeye başlayınca fidanlıkta başka türler seni bekliyor.',
   'tree.day': '{count}. gün',

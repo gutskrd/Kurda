@@ -4598,7 +4598,7 @@ export const de: Catalogue = {
   'tree.sub': 'Jede Lektion bringt Wasser. Wasser lässt deinen Baum wachsen.',
   'tree.soon': 'Die Bäume sind unterwegs. Schau bald wieder vorbei.',
   'tree.choose.title': 'Pflanze deinen Baum',
-  'tree.choose.sub': 'Wähle einen Samen. Jede abgeschlossene Lektion bringt Wasser, und Wasser lässt ihn wachsen.',
+  'tree.choose.sub': 'Jede abgeschlossene Lektion bringt Wasser, und Wasser lässt deinen Baum wachsen.',
   'tree.choose.plant': 'Pflanzen',
   'tree.choose.more': 'In der Baumschule warten weitere Arten, sobald deiner wächst.',
   'tree.day': 'Tag {count}',

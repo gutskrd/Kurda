@@ -4594,7 +4594,7 @@ export const es: Catalogue = {
   'tree.sub': 'Cada lección te da agua. El agua hace crecer tu árbol.',
   'tree.soon': 'Los árboles están en camino. Vuelve pronto.',
   'tree.choose.title': 'Planta tu árbol',
-  'tree.choose.sub': 'Elige una semilla. Cada lección que terminas te da agua, y el agua la hace crecer.',
+  'tree.choose.sub': 'Cada lección que terminas te da agua, y el agua hace crecer tu árbol.',
   'tree.choose.plant': 'Plantar',
   'tree.choose.more': 'En el vivero esperan más tipos de árbol, en cuanto el tuyo crezca.',
   'tree.day': 'Día {count}',

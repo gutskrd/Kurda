@@ -56,7 +56,8 @@ interface Moment {
 }
 
 /**
- * The learner's own tree. Before planting, it offers the free starter seeds with the grown tree each will become.
+ * The learner's own tree. Before planting, it offers the free oak's seed, and any kind already bought, with the grown tree
+ * each will become.
  * After, it shows the tree in its seasonal scene, the progress to its next stage, the water earned from lessons with
  * the can to pour it, and the nursery, where another kind can be bought and planted instead.
  *
@@ -452,11 +453,14 @@ function Stage({
   );
 }
 
-/** The choice of a first tree: a seed for each free kind, with the grown tree of the picked one above. The button plants it. */
+/**
+ * The first tree: the grown tree of the picked kind above, a seed to pick for each kind free or already bought when there
+ * is more than one, and the button that plants it.
+ */
 function Chooser({ data, season, busy, failed, onPlant }: { data: MyTree; season: TreeSeason; busy: boolean; failed: string | null; onPlant: (species: TreeSpecies) => void }): React.JSX.Element {
   const t = useT();
-  const starters = data.kinds.filter((k) => k.starter);
-  const [picked, setPicked] = useState<TreeSpecies>(starters[0]?.species ?? 'beru');
+  const seeds = data.kinds.filter((k) => k.starter || k.owned);
+  const [picked, setPicked] = useState<TreeSpecies>(seeds[0]?.species ?? 'beru');
   const named = treeNamed(t, picked);
   return (
     <div className="container tree-page" style={{ '--tree': treeColour(picked) } as React.CSSProperties}>
@@ -476,22 +480,24 @@ function Chooser({ data, season, busy, failed, onPlant }: { data: MyTree; season
           </span>
         </span>
       </section>
-      <fieldset className="tree-seeds">
-        <legend className="sr-only">{t('tree.choose.title')}</legend>
-        {starters.map((k) => {
-          const kind = treeNamed(t, k.species);
-          return (
-            <label key={k.species} className={`tree-seed${k.species === picked ? ' is-picked' : ''}`} style={{ '--tree': treeColour(k.species) } as React.CSSProperties}>
-              <input type="radio" name="tree-seed" className="sr-only" checked={k.species === picked} onChange={() => setPicked(k.species)} />
-              <span className="tree-seed-art" aria-hidden="true">
-                <TreeArt species={k.species} stage={0} size={132} />
-              </span>
-              <span className="tree-seed-name">{kind.name}</span>
-              {kind.meaning && <span className="tree-seed-meaning">{kind.meaning}</span>}
-            </label>
-          );
-        })}
-      </fieldset>
+      {seeds.length > 1 && (
+        <fieldset className="tree-seeds">
+          <legend className="sr-only">{t('tree.choose.title')}</legend>
+          {seeds.map((k) => {
+            const kind = treeNamed(t, k.species);
+            return (
+              <label key={k.species} className={`tree-seed${k.species === picked ? ' is-picked' : ''}`} style={{ '--tree': treeColour(k.species) } as React.CSSProperties}>
+                <input type="radio" name="tree-seed" className="sr-only" checked={k.species === picked} onChange={() => setPicked(k.species)} />
+                <span className="tree-seed-art" aria-hidden="true">
+                  <TreeArt species={k.species} stage={0} size={132} />
+                </span>
+                <span className="tree-seed-name">{kind.name}</span>
+                {kind.meaning && <span className="tree-seed-meaning">{kind.meaning}</span>}
+              </label>
+            );
+          })}
+        </fieldset>
+      )}
       <p className="tree-about">{treeAbout(t, picked)}</p>
       {failed && (
         <p className="tree-failed" role="alert">

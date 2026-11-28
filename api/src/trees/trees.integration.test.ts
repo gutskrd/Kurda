@@ -132,14 +132,14 @@ describe.skipIf(!DATABASE_URL)('the learner’s tree (integration)', () => {
       expect((await call(null, 'GET', '/me/tree')).statusCode).toBe(401);
     });
 
-    it('plants a free kind as a seed, on the learner’s own day, with the water to bring it up', async () => {
+    it('plants the free oak as a seed, on the learner’s own day, with the water to bring it up', async () => {
       // A zone on a different day from UTC for part of every day: the day is the learner's, not the server's.
       const ana = await learner('plant', 'Pacific/Kiritimati');
-      const res = await call(ana, 'POST', '/me/tree/plant', { species: 'hinar' });
+      const res = await call(ana, 'POST', '/me/tree/plant', { species: 'beru' });
       expect(res.statusCode, res.body).toBe(200);
       const day = today('Pacific/Kiritimati');
       expect(res.json().tree).toEqual({
-        species: 'hinar',
+        species: 'beru',
         plantedOn: day,
         lastWateredOn: day,
         waterings: 0,
@@ -152,16 +152,19 @@ describe.skipIf(!DATABASE_URL)('the learner’s tree (integration)', () => {
         toward: { done: 0, of: TREE_GROWTH[1], next: 'stage' },
       });
       expect(res.json().planted).toBe(1);
-      expect(await stored(ana)).toMatchObject({ species: 'hinar', planted_on: day, last_watered_on: day, water: TREE_FIRST_WATER });
+      expect(await stored(ana)).toMatchObject({ species: 'beru', planted_on: day, last_watered_on: day, water: TREE_FIRST_WATER });
       expect((await call(ana, 'GET', '/me/tree')).json().tree).toEqual(res.json().tree);
     });
 
     it('refuses a kind there is not, and one that has to be bought first', async () => {
       const ana = await learner('refuse');
       expect((await call(ana, 'POST', '/me/tree/plant', { species: 'cactus' })).json().code).toBe('TREE_NOT_FOUND');
-      const paid = await call(ana, 'POST', '/me/tree/plant', { species: 'sev' });
-      expect(paid.statusCode).toBe(403);
-      expect(paid.json().code).toBe('TREE_NOT_OWNED');
+      // every kind but the oak is bought first, the pomegranate, almond and willow included
+      for (const species of ['sev', 'hinar', 'behiv', 'bi']) {
+        const paid = await call(ana, 'POST', '/me/tree/plant', { species });
+        expect(paid.statusCode).toBe(403);
+        expect(paid.json().code).toBe('TREE_NOT_OWNED');
+      }
       expect(await stored(ana)).toBeUndefined();
       expect((await call(ana, 'POST', '/me/tree/plant', {})).statusCode).toBe(400);
     });
@@ -171,6 +174,7 @@ describe.skipIf(!DATABASE_URL)('the learner’s tree (integration)', () => {
       await call(ana, 'POST', '/me/tree/plant', { species: 'beru' });
       await make(ana, { waterings: 20, water: 4, harvests: 0 });
       const first = await stored(ana);
+      await pool.query(`INSERT INTO user_tree_kinds (user_id, species) VALUES ($1, 'bi')`, [ana.id]);
       const res = await call(ana, 'POST', '/me/tree/plant', { species: 'bi' });
       expect(res.statusCode, res.body).toBe(200);
       expect(res.json().tree).toMatchObject({ species: 'bi', stage: 0, waterings: 0, water: 4 });
@@ -278,7 +282,7 @@ describe.skipIf(!DATABASE_URL)('the learner’s tree (integration)', () => {
       const ana = await learner('bear');
       await pool.query(`UPDATE users SET premium_until = '2030-01-01T00:00:00Z' WHERE id = $1`, [ana.id]);
       await call(ana, 'POST', '/me/tree/plant', { species: 'tu' }).then((r) => expect(r.statusCode).toBe(403));
-      await call(ana, 'POST', '/me/tree/plant', { species: 'hinar' });
+      await call(ana, 'POST', '/me/tree/plant', { species: 'beru' });
       const full = TREE_GROWTH[TREE_FULL];
       await make(ana, { waterings: full + TREE_HARVEST_EVERY - 1, water: 2 });
       const res = await call(ana, 'POST', '/me/tree/water', {});
@@ -295,7 +299,7 @@ describe.skipIf(!DATABASE_URL)('the learner’s tree (integration)', () => {
 
     it('bears for someone who is not a member too, with no Zêr', async () => {
       const ana = await learner('free');
-      await call(ana, 'POST', '/me/tree/plant', { species: 'hinar' });
+      await call(ana, 'POST', '/me/tree/plant', { species: 'beru' });
       await make(ana, { waterings: TREE_GROWTH[TREE_FULL] + TREE_HARVEST_EVERY - 1, water: 1 });
       const res = await call(ana, 'POST', '/me/tree/water', {});
       expect(res.json()).toMatchObject({ harvests: 1, zer: 0 });
@@ -304,7 +308,7 @@ describe.skipIf(!DATABASE_URL)('the learner’s tree (integration)', () => {
 
     it('still waters and bears for an account the economy does not pay, unpaid', async () => {
       const ana = await learner('held');
-      await call(ana, 'POST', '/me/tree/plant', { species: 'hinar' });
+      await call(ana, 'POST', '/me/tree/plant', { species: 'beru' });
       await make(ana, { waterings: TREE_GROWTH[TREE_FULL] + TREE_HARVEST_EVERY - 1, water: 1 });
       await pool.query(`UPDATE users SET banned_at = now() WHERE id = $1`, [ana.id]);
       const res = await new TreeService(pool, wallet).water(ana.id, 1);
@@ -364,10 +368,10 @@ describe.skipIf(!DATABASE_URL)('the learner’s tree (integration)', () => {
       const none = await call(ben, 'GET', `/users/${ana.id}`);
       expect(none.statusCode, none.body).toBe(200);
       expect(none.json().tree).toBeNull();
-      await call(ana, 'POST', '/me/tree/plant', { species: 'behiv' });
+      await call(ana, 'POST', '/me/tree/plant', { species: 'beru' });
       await make(ana, { waterings: 80, water: 7, dryDays: 5 });
       const seen = await call(ben, 'GET', `/users/${ana.id}`);
-      expect(seen.json().tree).toEqual({ species: 'behiv', stage: 5, health: 'wilting', age: 0, harvests: 0 });
+      expect(seen.json().tree).toEqual({ species: 'beru', stage: 5, health: 'wilting', age: 0, harvests: 0 });
       // signed out, a reader is shown the tree exactly where they are shown the profile
       const out = (await call(null, 'GET', `/users/${ana.id}`)).json();
       expect(out.tree).toEqual(out.private ? null : seen.json().tree);

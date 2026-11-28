@@ -727,8 +727,9 @@ describe('Shop: your bird and your tree', () => {
 
     it('asks before planting another kind, saying the tree that stands will be gone, and keeps it when told to', async () => {
       const calls = signedInShop({
-        'GET /me/tree': ok(mine(growing())),
-        'POST /me/tree/plant': ok(mine(growing({ species: 'beru', waterings: 0, plantedOn: TODAY }))),
+        // The pomegranate was planted while it was free, so it stays theirs to plant again.
+        'GET /me/tree': ok(mine(growing(), { owned: ['hinar'] })),
+        'POST /me/tree/plant': ok(mine(growing({ species: 'beru', waterings: 0, plantedOn: TODAY }), { owned: ['hinar'] })),
       });
       renderApp(<Shop />, ['/app/shop']);
       await userEvent.click(await screen.findByRole('button', { name: 'Plant: Berû (Oak)' }));
@@ -750,8 +751,8 @@ describe('Shop: your bird and your tree', () => {
     it('plants a first tree with no word of one being lost, when none stands yet', async () => {
       signedInShop({ 'GET /me/tree': ok(mine(null)) });
       renderApp(<Shop />, ['/app/shop']);
-      await userEvent.click(await screen.findByRole('button', { name: 'Plant: Bî (Willow)' }));
-      const ask = await screen.findByRole('dialog', { name: 'Plant Bî?' });
+      await userEvent.click(await screen.findByRole('button', { name: 'Plant: Berû (Oak)' }));
+      const ask = await screen.findByRole('dialog', { name: 'Plant Berû?' });
       expect(within(ask).getByText('It starts as a seed under the ground.')).toBeInTheDocument();
       expect(within(ask).getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
     });

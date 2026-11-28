@@ -4597,7 +4597,7 @@ export const nl: Catalogue = {
   'tree.sub': 'Elke les levert water op. Water laat je boom groeien.',
   'tree.soon': 'De bomen komen eraan. Kom snel terug.',
   'tree.choose.title': 'Plant je boom',
-  'tree.choose.sub': 'Kies een zaadje. Elke les die je afmaakt levert water op, en water laat het groeien.',
+  'tree.choose.sub': 'Elke les die je afmaakt levert water op, en water laat je boom groeien.',
   'tree.choose.plant': 'Planten',
   'tree.choose.more': 'In de kwekerij wachten meer soorten, zodra de jouwe groeit.',
   'tree.day': 'Dag {count}',

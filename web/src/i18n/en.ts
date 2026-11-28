@@ -4695,7 +4695,7 @@ export const en = {
   'tree.sub': 'Every lesson earns water. Water makes your tree grow.',
   'tree.soon': 'Trees are on their way. Come back soon.',
   'tree.choose.title': 'Plant your tree',
-  'tree.choose.sub': 'Choose a seed. Every lesson you finish earns water, and water makes it grow.',
+  'tree.choose.sub': 'Every lesson you finish earns water, and water makes your tree grow.',
   'tree.choose.plant': 'Plant',
   'tree.choose.more': 'More kinds wait in the nursery, once yours is growing.',
   'tree.day': 'Day {count}',

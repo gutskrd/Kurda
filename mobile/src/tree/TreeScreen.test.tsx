@@ -38,30 +38,43 @@ const mine = (tree: TreeView | null, over: { owned?: string[]; zer?: number } = 
 const missing = fail({ kind: 'client', status: 404, code: 'NOT_FOUND', message: 'no route' });
 
 describe('the tree’s screen', () => {
-  it('offers the seeds that are free to start from before a tree is planted, shows the tree the picked one will be, and plants it', async () => {
-    const client = fakeClient({ 'GET /me/tree': ok(mine(null)), 'POST /me/tree/plant': ok(mine(view({ species: 'hinar', waterings: 0, water: 1, plantedOn: TODAY }))) });
+  it('offers the free oak before a tree is planted, shows the tree it will be, and plants it', async () => {
+    const client = fakeClient({ 'GET /me/tree': ok(mine(null)), 'POST /me/tree/plant': ok(mine(view({ species: 'beru', waterings: 0, water: 1, plantedOn: TODAY }))) });
     testAuth.client = client;
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByRole('heading', { name: 'Plant your tree' })).toBeTruthy();
-    // The four starters, each a seed to pick; nothing that has to be bought.
-    expect(screen.getAllByRole('radio')).toHaveLength(4);
-    for (const name of ['Berû', 'Hinar', 'Behîv', 'Bî']) expect(screen.getByText(name)).toBeTruthy();
-    expect(screen.queryByText('Dara Şevê')).toBeNull();
-    // The first is picked to begin with, and what stands in the scene is the tree it will be.
-    expect(screen.getByRole('radio', { name: 'Berû (Oak)' }).getAttribute('aria-checked')).toBe('true');
+    // The oak alone is free, so there is nothing to choose between and no kind that has to be bought.
+    expect(screen.queryAllByRole('radio')).toHaveLength(0);
+    expect(screen.queryByText('Hinar')).toBeNull();
     expect(screen.getByRole('img', { name: 'Berû (Oak)' })).toBeTruthy();
     expect(screen.getByText('The oak of the Zagros: slow to grow, and it outlasts everything.')).toBeTruthy();
-    // Picking another changes the tree shown, and plants nothing.
+    expect(client.calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Plant: Berû (Oak)' }));
+    await waitFor(() => expect(client.calls.find((c) => c.path === '/me/tree/plant')?.body).toEqual({ species: 'beru' }));
+    // The seed, with the water to bring it up.
+    expect(await screen.findByRole('heading', { name: 'Berû' })).toBeTruthy();
+    expect(screen.getByText('Oak · Seed · Day 1')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Give it its first water' })).toBeTruthy();
+  });
+
+  it('offers a kind already bought beside the oak, and plants the one picked', async () => {
+    const client = fakeClient({
+      'GET /me/tree': ok(mine(null, { owned: ['hinar'] })),
+      'POST /me/tree/plant': ok(mine(view({ species: 'hinar', waterings: 0, water: 1, plantedOn: TODAY }), { owned: ['hinar'] })),
+    });
+    testAuth.client = client;
+    renderWithProviders(<TreeScreen onExit={() => undefined} />);
+    expect(await screen.findByRole('heading', { name: 'Plant your tree' })).toBeTruthy();
+    expect(screen.getAllByRole('radio')).toHaveLength(2);
+    expect(screen.getByRole('radio', { name: 'Berû (Oak)' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.queryByText('Behîv')).toBeNull();
+    // Picking the other changes the tree shown, and plants nothing.
     fireEvent.click(screen.getByRole('radio', { name: 'Hinar (Pomegranate)' }));
-    expect(screen.getByRole('radio', { name: 'Hinar (Pomegranate)' }).getAttribute('aria-checked')).toBe('true');
     expect(screen.getByRole('img', { name: 'Hinar (Pomegranate)' })).toBeTruthy();
     expect(client.calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'Plant: Hinar (Pomegranate)' }));
     await waitFor(() => expect(client.calls.find((c) => c.path === '/me/tree/plant')?.body).toEqual({ species: 'hinar' }));
-    // The seed, with the water to bring it up.
     expect(await screen.findByRole('heading', { name: 'Hinar' })).toBeTruthy();
-    expect(screen.getByText('Pomegranate · Seed · Day 1')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Give it its first water' })).toBeTruthy();
   });
 
   it('shows the tree with how far it is to its next stage and the water held', async () => {
@@ -178,7 +191,7 @@ describe('the tree’s screen', () => {
   });
 
   describe('the nursery', () => {
-    it('lists every kind: the one that stands, the free ones, and the others at their price', async () => {
+    it('lists every kind: the one that stands, and every other at its price', async () => {
       testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view(), { zer: 900 })) });
       renderWithProviders(<TreeScreen onExit={() => undefined} />);
       fireEvent.click(await screen.findByRole('button', { name: 'Other trees' }));
@@ -187,13 +200,18 @@ describe('the tree’s screen', () => {
       expect(within(screen.getByTestId('tree-kind-beru')).getByText('Growing now')).toBeTruthy();
       // The oak stands: it cannot be planted over itself.
       expect(screen.queryByRole('button', { name: 'Plant: Berû (Oak)' })).toBeNull();
-      expect(screen.getByRole('button', { name: 'Plant: Hinar (Pomegranate)' })).toBeTruthy();
+      // Only the oak is free: the pomegranate is bought like any other kind.
+      expect(screen.getByRole('button', { name: 'Buy: Hinar (Pomegranate)' })).toBeTruthy();
+      expect(screen.queryByText('Free')).toBeNull();
       expect(screen.getByRole('button', { name: 'Buy: Tû (Mulberry)' })).toBeTruthy();
       expect(within(screen.getByTestId('tree-kind-sev')).getByText('1,100')).toBeTruthy();
     });
 
     it('asks before planting another, saying what is lost and what stays, and keeps the tree when told to', async () => {
-      const client = fakeClient({ 'GET /me/tree': ok(mine(view())), 'POST /me/tree/plant': ok(mine(view({ species: 'bi', waterings: 0, plantedOn: TODAY }))) });
+      const client = fakeClient({
+        'GET /me/tree': ok(mine(view(), { owned: ['bi'] })),
+        'POST /me/tree/plant': ok(mine(view({ species: 'bi', waterings: 0, plantedOn: TODAY }), { owned: ['bi'] })),
+      });
       testAuth.client = client;
       renderWithProviders(<TreeScreen onExit={() => undefined} />);
       fireEvent.click(await screen.findByRole('button', { name: 'Other trees' }));
@@ -216,8 +234,8 @@ describe('the tree’s screen', () => {
         renderWithProviders(<TreeScreen onExit={() => undefined} />);
         fireEvent.click(await screen.findByRole('button', { name: 'Other trees' }));
         expect(await screen.findByText('The nursery')).toBeTruthy();
-        expect(screen.getByRole('button', { name: 'Plant: Hinar (Pomegranate)' })).toBeTruthy();
         expect(screen.getByRole('button', { name: 'Plant: Tû (Mulberry)' })).toBeTruthy();
+        expect(screen.queryByTestId('tree-kind-hinar')).toBeNull();
         expect(screen.queryByTestId('tree-kind-sev')).toBeNull();
         expect(screen.queryByRole('button', { name: /^Buy: / })).toBeNull();
         expect(screen.queryByText('900 Zêr')).toBeNull();

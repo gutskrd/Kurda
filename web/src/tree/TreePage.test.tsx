@@ -49,31 +49,40 @@ beforeEach(() => {
 });
 
 describe('TreePage', () => {
-  it('offers the seeds that are free to start from before a tree is planted, shows the tree the picked one will be, and plants it', async () => {
-    const planted = mine(view({ species: 'hinar', waterings: 0, water: 1, plantedOn: TODAY }));
+  it('offers the free oak before a tree is planted, shows the tree it will be, and plants it', async () => {
+    const planted = mine(view({ species: 'beru', waterings: 0, water: 1, plantedOn: TODAY }));
     const calls = server({ 'GET /me/tree': mine(null), 'POST /me/tree/plant': planted });
     renderApp(<TreePage />);
     expect(await screen.findByRole('heading', { name: 'Plant your tree' })).toBeInTheDocument();
-    // The four free starters, each a seed with its Kurdish name and meaning.
-    const seeds = screen.getAllByRole('radio');
-    expect(seeds).toHaveLength(4);
-    for (const name of ['Berû', 'Hinar', 'Behîv', 'Bî']) expect(screen.getByText(name)).toBeInTheDocument();
-    expect(screen.getByText('Pomegranate')).toBeInTheDocument();
-    expect(screen.queryByText('Dara Şevê')).toBeNull();
-    // The first is picked to begin with, and the scene shows the tree it will become.
-    expect(screen.getByRole('radio', { name: /Berû/ })).toBeChecked();
+    // The oak alone is free, so there is nothing to choose between and no kind that has to be bought.
+    expect(screen.queryAllByRole('radio')).toHaveLength(0);
+    expect(screen.queryByText('Hinar')).toBeNull();
     expect(screen.getByRole('region', { name: 'Berû (Oak)' })).toBeInTheDocument();
     expect(screen.getByText('The oak of the Zagros: slow to grow, and it outlasts everything.')).toBeInTheDocument();
-    // Picking another changes the tree shown and plants nothing.
+    expect(calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
+    await userEvent.click(screen.getByRole('button', { name: 'Plant: Berû (Oak)' }));
+    expect(calls.find((c) => c.path === '/me/tree/plant')?.body).toEqual({ species: 'beru' });
+    // The seed, with the water to grow it.
+    expect(await screen.findByRole('heading', { name: 'Berû' })).toBeInTheDocument();
+    expect(screen.getByText('Oak · Seed · Day 1')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Give it its first water' })).toBeEnabled();
+  });
+
+  it('offers a kind already bought beside the oak, and plants the one picked', async () => {
+    const planted = mine(view({ species: 'hinar', waterings: 0, water: 1, plantedOn: TODAY }), { owned: ['hinar'] });
+    const calls = server({ 'GET /me/tree': mine(null, { owned: ['hinar'] }), 'POST /me/tree/plant': planted });
+    renderApp(<TreePage />);
+    expect(await screen.findByRole('heading', { name: 'Plant your tree' })).toBeInTheDocument();
+    expect(screen.getAllByRole('radio')).toHaveLength(2);
+    expect(screen.getByRole('radio', { name: /Berû/ })).toBeChecked();
+    expect(screen.queryByText('Behîv')).toBeNull();
+    // Picking the other changes the tree shown and plants nothing.
     await userEvent.click(screen.getByRole('radio', { name: /Hinar/ }));
     expect(screen.getByRole('region', { name: 'Hinar (Pomegranate)' })).toBeInTheDocument();
     expect(calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
     await userEvent.click(screen.getByRole('button', { name: 'Plant: Hinar (Pomegranate)' }));
     expect(calls.find((c) => c.path === '/me/tree/plant')?.body).toEqual({ species: 'hinar' });
-    // The seed, with the water to grow it.
     expect(await screen.findByRole('heading', { name: 'Hinar' })).toBeInTheDocument();
-    expect(screen.getByText('Pomegranate · Seed · Day 1')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Give it its first water' })).toBeEnabled();
   });
 
   it('shows the tree with how far it is to its next stage and the water held', async () => {
@@ -252,7 +261,7 @@ describe('TreePage', () => {
   });
 
   describe('the nursery', () => {
-    it('lists every kind: the one that stands, the free ones, and the others at their price', async () => {
+    it('lists every kind: the one that stands, and every other at its price', async () => {
       server({ 'GET /me/tree': mine(view(), { zer: 900 }) });
       renderApp(<TreePage />);
       await userEvent.click(await screen.findByRole('button', { name: 'Other trees' }));
@@ -261,13 +270,15 @@ describe('TreePage', () => {
       expect(within(sheet).getByText('Growing now')).toBeInTheDocument();
       // The oak is planted, so it cannot be planted over itself.
       expect(within(sheet).queryByRole('button', { name: 'Plant: Berû (Oak)' })).toBeNull();
-      expect(within(sheet).getByRole('button', { name: 'Plant: Hinar (Pomegranate)' })).toBeInTheDocument();
+      // Only the oak is free: the pomegranate is bought like any other kind.
+      expect(within(sheet).getByRole('button', { name: 'Buy: Hinar (Pomegranate)' })).toBeInTheDocument();
+      expect(within(sheet).queryByText('Free')).toBeNull();
       expect(within(sheet).getByRole('button', { name: 'Buy: Tû (Mulberry)' })).toBeInTheDocument();
       expect(within(sheet).getByText('1,100')).toBeInTheDocument();
     });
 
     it('asks before planting another, saying what is lost and what stays, and keeps the tree when told to', async () => {
-      const calls = server({ 'GET /me/tree': mine(view()), 'POST /me/tree/plant': mine(view({ species: 'bi', waterings: 0, plantedOn: TODAY })) });
+      const calls = server({ 'GET /me/tree': mine(view(), { owned: ['bi'] }), 'POST /me/tree/plant': mine(view({ species: 'bi', waterings: 0, plantedOn: TODAY }), { owned: ['bi'] }) });
       renderApp(<TreePage />);
       await userEvent.click(await screen.findByRole('button', { name: 'Other trees' }));
       await userEvent.click(await screen.findByRole('button', { name: 'Plant: Bî (Willow)' }));

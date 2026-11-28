@@ -4600,7 +4600,7 @@ export const ku: Catalogue = {
   'tree.sub': 'Her waneyek avê dide te. Av dara te mezin dike.',
   'tree.soon': 'Dar di rê de ne. Di demeke nêzîk de vegere.',
   'tree.choose.title': 'Dara xwe biçîne',
-  'tree.choose.sub': 'Tovekî hilbijêre. Her waneya ku tu diqedînî avê dide te, û av wê mezin dike.',
+  'tree.choose.sub': 'Her waneya ku tu diqedînî avê dide te, û av dara te mezin dike.',
   'tree.choose.plant': 'Biçîne',
   'tree.choose.more': 'Gava dara te şîn bû, cureyên din li şitilgehê li benda te ne.',
   'tree.day': 'Roja {count}',
