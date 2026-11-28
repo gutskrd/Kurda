@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Pressable } from '../theme/Pressable';
 import {
   giftDayFull,
   giftDayLine,
+  giftQuantityMax,
+  isGiftOnly,
   MAX_GIFT_RECIPIENTS,
   ZER_ON_SALE,
   giftLockFor,
@@ -37,10 +39,12 @@ import { ZER } from '../shop/format';
 import { ItemArt, ToggleChip } from '../shop/ItemFilters';
 import { ZerValue, useZerValue } from '../shop/value';
 import { giftCatalog, newGiftKey, sendGift, type GiftCatalog, type PostTarget, type SentGift } from './api';
+import { countedName } from './quantity';
 import { Loading } from '../theme/Loading';
 import { pressedDim } from '../theme/motion';
 import type { RootNavigation } from '../navigation/rootStack';
 import { display } from '../theme/fonts';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 
 /** A friend a gift can go to. */
 export interface GiftFriend {
@@ -57,7 +61,8 @@ export interface GiftFriend {
  * what it means in the reader's language, its price and what that is worth, and a lock with the reason where it cannot
  * go (not enough Zêr, or a safeguard for these recipients). "Get Zêr" shows only while Zêr is on sale and never to
  * anyone under 18. A member's free gifts can pay for a small one. A big send stops for one more look with its money
- * amount, sent with the server's token. When the rules do not let a gift go yet, one calm line says why instead. Send
+ * amount, sent with the server's token. When the rules do not let a gift go yet, one calm line says why instead. Where
+ * more than one of a gift can go, a stepper says how many each recipient gets and the Send button says the total. Send
  * closes the sheet on the send animation.
  */
 export function GiftPickerSheet({
@@ -272,6 +277,8 @@ function WhatStep({
   // A rule that keeps this gift from going is one calm line; only a failure to reach the server offers a retry.
   const [loadError, setLoadError] = useState<{ text: string; rule: boolean } | null>(null);
   const [picked, setPicked] = useState<Choice | null>(null);
+  // How many of the chosen gift each recipient gets; back to one with each new choice.
+  const [quantity, setQuantity] = useState(1);
   const [busy, setBusy] = useState(false);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -279,10 +286,7 @@ function WhatStep({
   /** The server asked for the second look at a big gift: what to show, and its token. */
   const [confirming, setConfirming] = useState<GiftConfirmDetails | null>(null);
   const value = useZerValue();
-  // One key per choice, so a retry of the same gift replays it and never pays twice (a fresh key only if the server
-  // says this one already named another request).
   const [keyRound, setKeyRound] = useState(0);
-  const key = useMemo(() => newGiftKey(), [picked?.item.sku, picked?.fromBag, idKey, keyRound]);
 
   const load = useCallback(() => {
     setLoadError(null);
@@ -303,8 +307,11 @@ function WhatStep({
   // On a post the author is the one recipient, whom the server names in `alreadyOwnedBy`.
   const owners = useCallback((item: GiftCatalogItem) => (post ? [] : item.alreadyOwnedBy.filter((id) => ids.includes(id))), [ids, post]);
   const giving = (item: GiftCatalogItem): number => Math.max(1, recipients.length - owners(item).length);
-  const lockOf = (item: GiftCatalogItem): GiftLock | 'funds' | null =>
-    giftLockFor(item, giving(item), catalog?.limits) ?? (catalog && item.price * giving(item) > catalog.balance.zer ? 'funds' : null);
+  // `each`: how many of it every recipient gets, so the send's lock weighs the whole of it.
+  const lockOf = (item: GiftCatalogItem, each = 1): GiftLock | 'funds' | null => {
+    const gifts = giving(item) * each;
+    return giftLockFor(item, gifts, catalog?.limits) ?? (catalog && item.price * gifts > catalog.balance.zer ? 'funds' : null);
+  };
   const bagCount = (sku: string): number => catalog?.bag?.find((b) => b.sku === sku)?.count ?? 0;
 
   // The day's caps: who these recipients are by name, the one line about them, and a send held when all are full.
@@ -323,10 +330,40 @@ function WhatStep({
     giftDayFull(catalog?.dayLeft ?? [], post ? ids : ids.filter((id) => !owners(item).includes(id)));
   const amount = (n: number): string => formatNumber(n, locale);
   const priceWords = (item: GiftCatalogItem): string => `${amount(item.price)} ${ZER}, ${value(item.price)}`;
-  const total = picked ? picked.item.price * giving(picked.item) : 0;
   // A member's free gifts pay for a small gift, one a recipient, only when there are enough for everyone it goes to.
   const canUseFree = picked !== null && !picked.fromBag && picked.item.freeGiftEligible && (catalog?.freeGifts ?? 0) >= giving(picked.item);
   const free = useFree && canUseFree;
+  // The most of the chosen gift each recipient may get: what the day's caps leave each of them, what pays for it (the
+  // Zêr, that bag entry or the free gifts) and the spending limit. Only the gifts come several at once.
+  const getting = picked ? (post ? ids : ids.filter((id) => !owners(picked.item).includes(id))) : [];
+  const most =
+    picked && catalog && isGiftOnly(picked.item.category)
+      ? giftQuantityMax({
+          price: picked.item.price,
+          recipients: giving(picked.item),
+          // a friend whose day is full is skipped by the send, so they do not hold the others to one each
+          dayLeft: (catalog.dayLeft ?? []).filter((d) => getting.includes(d.userId) && d.left > 0).map((d) => d.left),
+          units: picked.fromBag
+            ? bagCount(picked.item.sku)
+            : free
+              ? catalog.freeGifts
+              : picked.item.price > 0
+                ? Math.floor(catalog.balance.zer / picked.item.price)
+                : null,
+          limits: picked.fromBag || free ? null : catalog.limits,
+        })
+      : 1;
+  // Fewer may go now than were chosen (a free gift paying, a reload): the count follows, rather than spring back later.
+  if (quantity > most) setQuantity(most);
+  const count = Math.min(quantity, most);
+  const total = picked ? picked.item.price * giving(picked.item) * count : 0;
+  // One key per choice and count, so a retry of the same send replays it and never pays twice (a fresh key only if the
+  // server says this one already named another request).
+  const key = useMemo(() => newGiftKey(), [picked?.item.sku, picked?.fromBag, idKey, keyRound, count]);
+  const choose = (choice: Choice): void => {
+    if (picked?.item.sku !== choice.item.sku || picked.fromBag !== choice.fromBag) setQuantity(1);
+    setPicked(choice);
+  };
 
   const send = (confirmToken?: string): void => {
     if (!picked || busy) return;
@@ -339,6 +376,7 @@ function WhatStep({
       sku: picked.item.sku,
       idempotencyKey: key,
       expectedPrice: picked.item.price,
+      ...(count > 1 ? { quantity: count } : {}),
       ...(picked.fromBag ? { fromBag: true } : free ? { useFreeGift: true } : {}),
       ...(confirmToken ? { confirmToken } : {}),
     };
@@ -407,6 +445,7 @@ function WhatStep({
     return (
       <BigGiftConfirm
         item={picked.item}
+        quantity={count}
         names={recipients.filter((r) => !owners(picked.item).includes(r.userId)).map((r) => r.name)}
         details={confirming}
         busy={busy}
@@ -465,7 +504,7 @@ function WhatStep({
                         meaning={giftMeaning(entry.sku, locale)}
                         enough={bagCount(entry.sku) >= giving(item)}
                         selected={picked?.fromBag === true && picked.item.sku === entry.sku}
-                        onPress={() => setPicked({ item, fromBag: true })}
+                        onPress={() => choose({ item, fromBag: true })}
                       />
                     );
                   })}
@@ -490,7 +529,7 @@ function WhatStep({
                       selected={picked?.fromBag === false && picked.item.sku === item.sku}
                       priceWords={priceWords(item)}
                       nudges={nudges}
-                      onPress={() => setPicked({ item, fromBag: false })}
+                      onPress={() => choose({ item, fromBag: false })}
                       onGetZer={onClose}
                     />
                   ))}
@@ -507,6 +546,17 @@ function WhatStep({
           <Text style={[styles.note, styles.center, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
             {note}
           </Text>
+        ) : null}
+        {picked && most > 1 ? (
+          <View style={[styles.quantityRow, { flexDirection: dir.row }]}>
+            <Text style={[styles.quantityTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
+              {t('gift.picker.sending', {
+                gift: countedName(picked.item.name, count, t, locale),
+                names: recipients.filter((r) => getting.includes(r.userId)).map((r) => r.name).join(', '),
+              })}
+            </Text>
+            <QuantityStepper value={count} max={most} onChange={setQuantity} />
+          </View>
         ) : null}
         {canUseFree ? (
           <View style={[styles.freeRow, { flexDirection: dir.row }]}>
@@ -526,7 +576,7 @@ function WhatStep({
                 ? t('gift.picker.sendFromBag')
                 : free
                   ? t('gift.picker.sendFree')
-                  : recipients.length > 1
+                  : recipients.length > 1 || count > 1
                     ? `${t('gift.picker.sendTotal', { total: amount(total), currency: ZER })} · ${value(total)}`
                     : t('gift.picker.send')
               : t('gift.picker.pick')
@@ -535,7 +585,7 @@ function WhatStep({
           tone="primary"
           size="large"
           busy={busy}
-          disabled={!picked || dayFull(picked.item) || (!picked.fromBag && !free && lockOf(picked.item) !== null)}
+          disabled={!picked || dayFull(picked.item) || (!picked.fromBag && !free && lockOf(picked.item, count) !== null)}
           onPress={() => send()}
         />
       </View>
@@ -671,6 +721,55 @@ function GiftTile({
   );
 }
 
+/**
+ * How many of the gift each recipient gets: one pill of a step down, the count and a step up, each step named for what
+ * it does since "−" and "+" read aloud say nothing, held at one and at the most this send allows. The count is said as
+ * it changes.
+ */
+function QuantityStepper({ value, max, onChange }: { value: number; max: number; onChange: (n: number) => void }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const said = t('gift.quantity.count', { count: formatNumber(value, locale) });
+  // A live region speaks on Android only; VoiceOver is told in words, after a step rather than as the pill appears.
+  const shown = useRef(said);
+  useEffect(() => {
+    if (shown.current === said) return;
+    shown.current = said;
+    if (Platform.OS !== 'android') AccessibilityInfo.announceForAccessibility?.(said);
+  }, [said]);
+  const step = (by: 1 | -1): void => {
+    haptic('select');
+    onChange(value + by);
+  };
+  return (
+    <View style={[styles.stepper, { backgroundColor: colors.controlTrack }]} testID="gift-quantity">
+      <StepButton glyph="−" label={t('gift.quantity.fewer')} disabled={value <= 1} onPress={() => step(-1)} />
+      <Text style={[styles.stepCount, { color: colors.textPrimary }]} accessibilityLabel={said} accessibilityLiveRegion="polite">
+        {formatNumber(value, locale)}
+      </Text>
+      <StepButton glyph="+" label={t('gift.quantity.more')} disabled={value >= max} onPress={() => step(1)} />
+    </View>
+  );
+}
+
+function StepButton({ glyph, label, disabled, onPress }: { glyph: string; label: string; disabled: boolean; onPress: () => void }): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      // Aria-* as well as the state object: react-native-web reads only these.
+      accessibilityState={{ disabled }}
+      aria-disabled={disabled}
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.stepButton, { opacity: disabled ? 0.45 : pressed ? pressedDim : 1 }]}
+    >
+      <Text style={[styles.stepGlyph, { color: colors.textPrimary }]}>{glyph}</Text>
+    </Pressable>
+  );
+}
+
 /** "Get Zêr", to the shop where Zêr is sold, for a known adult while it is on sale (`ZER_ON_SALE`). */
 function GetZer({ onLeave }: { onLeave: () => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -693,6 +792,7 @@ function GetZer({ onLeave }: { onLeave: () => void }): React.JSX.Element {
  */
 function BigGiftConfirm({
   item,
+  quantity,
   names,
   details,
   busy,
@@ -701,6 +801,8 @@ function BigGiftConfirm({
   onBack,
 }: {
   item: GiftCatalogItem;
+  /** how many each recipient gets */
+  quantity: number;
   names: string[];
   details: GiftConfirmDetails;
   busy: boolean;
@@ -719,7 +821,7 @@ function BigGiftConfirm({
         {t('gift.confirm.title')}
       </Text>
       <Text style={[styles.note, styles.center, { color: colors.textSecondary }]}>
-        {item.name} · {t('gift.confirm.for', { names: names.join(', ') })}
+        {countedName(item.name, quantity, t, locale)} · {t('gift.confirm.for', { names: names.join(', ') })}
       </Text>
       <Text style={[styles.confirmMoney, { color: colors.textPrimary }]}>{value(details.total)}</Text>
       <View style={[styles.priceRow, { flexDirection: dir.row }]}>
@@ -836,6 +938,13 @@ const styles = StyleSheet.create({
   itemArtSquare: { height: 72 },
   selected: { alignItems: 'center', gap: spacing.sm, minHeight: 28 },
   freeRow: { justifyContent: 'center' },
+  quantityRow: { alignItems: 'center', gap: spacing.sm },
+  quantityTitle: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  stepper: { flexDirection: 'row', alignItems: 'center', borderRadius: radii.pill },
+  stepButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  stepGlyph: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  // As wide as two figures, so the pill keeps its size from one to twenty.
+  stepCount: { minWidth: 24, textAlign: 'center', fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   selectedText: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   tier: { position: 'absolute', top: 0, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radii.pill },
   tierRight: { right: 0 },

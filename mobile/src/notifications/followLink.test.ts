@@ -71,6 +71,17 @@ describe('notificationText', () => {
     expect(notificationText({ title: 'Streak', body: 'Keep going', data: {} }, t as never, 'de')).toEqual({ title: 'Streak', body: 'Keep going' });
   });
 
+  it('says how many gifts were given onto a post without naming them, and no count for a giver the reader may not see', () => {
+    const say = (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS.de[key], vars);
+    const given = (data: Record<string, unknown>) =>
+      notificationText({ title: 'A gift on your post', body: 'x', data: { kind: 'post_gift', sku: 'gift-gul', fromName: 'Rojda', ...data } }, say, 'de').title;
+    expect(given({ quantity: '3' })).toBe('Rojda hat deinem Beitrag 3 Geschenke gemacht');
+    expect(given({})).toBe('Rojda hat deinem Beitrag ein Geschenk gemacht');
+    expect(given({ quantity: '3', fromName: undefined })).toBe('Dein Beitrag hat ein Geschenk bekommen');
+    // a shop item given several at once is counted the same way
+    expect(given({ quantity: '3', sku: 'bg_newroz' })).toBe('Rojda hat deinem Beitrag 3 Geschenke gemacht');
+  });
+
   it('says a bird home with an answer as that, and a pen pal’s bird as before', () => {
     const T = '6f9b1c2e-1d2a-4b3c-8d4e-5f6a7b8c9d0e';
     const home = { title: 'Your bird came home', body: 'It brought an answer to your letter.', data: { kind: 'letter', threadId: T, how: 'home' } };

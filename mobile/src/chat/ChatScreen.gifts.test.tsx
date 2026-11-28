@@ -95,6 +95,22 @@ describe('ChatScreen', () => {
     expect(screen.getByText('Gift from rojda')).toBeTruthy();
   });
 
+  it('says how many of a gift went when several did, and one gift by its name alone', async () => {
+    const roses = { ...gift, sku: 'gift-gul', name: 'Gul', category: 'gift', equippable: null, myGiftId: null, recipients: [{ name: 'rojda', avatarUrl: null, isMe: false, opened: false }] };
+    testAuth.client = fakeClient({
+      'GET /chat/u2/messages': ok({
+        messages: [
+          msg({ id: 'm3', senderId: 'me', kind: 'gift', body: null, gift: { ...roses, batchId: 'b3', quantity: 3 } }),
+          msg({ id: 'm4', senderId: 'me', kind: 'gift', body: null, gift: { ...roses, batchId: 'b4' } }),
+        ],
+      }),
+    });
+    renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
+    expect(await screen.findByText('3 × Gul')).toBeTruthy();
+    expect(screen.getByText('Gul')).toBeTruthy();
+    expect(screen.getAllByTestId('gift-count').map((c) => c.textContent)).toEqual(['×3']);
+  });
+
   it('keeps what was typed when a send is refused, and says why', async () => {
     testAuth.client = fakeClient({
       'GET /chat/u2/messages': ok({ messages: [] }),

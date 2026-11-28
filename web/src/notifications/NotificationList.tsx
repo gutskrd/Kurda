@@ -37,7 +37,7 @@ import {
 } from '@kurda/shared';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { socialNotification, type NoteView } from '../reports/notifications';
+import { giftNoticeCount, socialNotification, type NoteView } from '../reports/notifications';
 import { playNotification } from '../play/notifications';
 import { progressNotification } from '../ranks/notifications';
 import { groupNotification } from '../groups/notifications';
@@ -238,12 +238,18 @@ export function NotificationList({
                 progressNotification(n, t) ??
                 groupNotification(n, t, locale) ??
                 parentalNotification(n, t, locale);
-              // A gift says who it is from, or that a member sent it when the server no longer names them here.
+              // A gift says who it is from, or that a member sent it when the server no longer names them here, and how
+              // many when there are several.
+              const gifts = n.data?.kind === 'gift' ? giftNoticeCount(n.data) : 1;
               const title =
                 n.data?.kind === 'gift'
-                  ? actor
-                    ? t('gift.fromLabel', { name: actor.name })
-                    : t('gift.fromMember')
+                  ? gifts > 1
+                    ? actor
+                      ? t('gift.fromLabelMany', { name: actor.name, count: gifts.toLocaleString(locale) })
+                      : t('gift.fromMemberMany', { count: gifts.toLocaleString(locale) })
+                    : actor
+                      ? t('gift.fromLabel', { name: actor.name })
+                      : t('gift.fromMember')
                   : (view?.title ?? n.title);
               const when = noteWhen(n.createdAt, group.key, t, shortDate);
               return (

@@ -14,6 +14,7 @@ import { formatDay } from '../reports/sendErrors';
 import { isGroupNotice, isParentalNotice, type DeepLink, type InboxItem } from './inbox';
 import { pictureReviewOf, pictureReviewText } from '../pictures/review';
 import { isHoldNotice } from '../reports/hold';
+import { noticeGiftCount } from '../gifts/quantity';
 
 /**
  * Where a tapped notification goes, for both the inbox and the notification centre. An invite is accepted on the way
@@ -75,7 +76,12 @@ export function notificationText(item: Pick<InboxItem, 'title' | 'body' | 'data'
   if (item.data.kind === 'gift') return { title: t('play.notification.giftTitle'), body: t('play.notification.giftBody') };
   if (item.data.kind === 'post_gift') {
     const name = typeof item.data.fromName === 'string' && item.data.fromName ? item.data.fromName : null;
-    return { title: name ? t('post.gifts.notice', { name }) : t('post.gifts.noticeSomeone'), body: '' };
+    // Several gifts say how many, never what they are; a giver the reader may not see is left unnamed too.
+    const count = name ? noticeGiftCount(item.data, locale as Locale) : null;
+    return {
+      title: name ? (count ? t('post.gifts.noticeMany', { name, count }) : t('post.gifts.notice', { name })) : t('post.gifts.noticeSomeone'),
+      body: '',
+    };
   }
   // Your own bird home with an answer is said as that, so the tap promises what the window then shows.
   const letter = letterNoticeOf(item.data);

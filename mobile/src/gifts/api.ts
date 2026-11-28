@@ -80,12 +80,13 @@ export interface SentGift extends SendGiftResult {
 }
 
 /**
- * Send one item to one or more friends in a chat. `idempotencyKey` is made once per choice (`newGiftKey`), so a retry
- * after a dropped connection replays the send instead of paying twice.
+ * Send one item to one or more friends in a chat, `quantity` of it to each (one when left out). `idempotencyKey` is made
+ * once per choice and count (`newGiftKey`), so a retry after a dropped connection replays the send instead of paying
+ * twice.
  */
 export function sendGift(
   client: ApiClient,
-  input: { sku: string; idempotencyKey: string; expectedPrice: number; useFreeGift?: boolean; fromBag?: boolean; confirmToken?: string } & (
+  input: { sku: string; idempotencyKey: string; expectedPrice: number; quantity?: number; useFreeGift?: boolean; fromBag?: boolean; confirmToken?: string } & (
     | { toUserIds: readonly string[]; chat: GiftChatRef }
     | { post: PostTarget }
   ),

@@ -9,6 +9,7 @@ import type { RealtimeEventEnvelope } from '../realtime/events';
 import { useT } from '../i18n/I18nProvider';
 import { giftsWereOpened } from '../shop/useUnseenGifts';
 import { canGiveGifts } from './access';
+import { useGiftName } from './GiftArt';
 import { GiftBubble } from './GiftBubble';
 import { ThanksLine } from './ThanksLine';
 import { GiftPicker, type GiftPerson, type GiftSent } from './GiftPicker';
@@ -53,6 +54,7 @@ export function useChatGifts<M extends ChatMessage>({
   notice: ReactNode;
 } {
   const t = useT();
+  const giftName = useGiftName();
   const { client, user } = useAuth();
   const [picking, setPicking] = useState(false);
   const [people, setPeople] = useState<GiftPerson[] | null>(null);
@@ -220,9 +222,9 @@ export function useChatGifts<M extends ChatMessage>({
       setSentMoment(sent);
       // The note is announced once and stays on screen until dismissed.
       setPartial(sent.partialNote);
-      setAnnounce(sent.partialNote ?? t('gift.sentAnnounce', { item: sent.item.name }));
+      setAnnounce(sent.partialNote ?? t('gift.sentAnnounce', { item: giftName(sent.item.name, sent.quantity) }));
     },
-    [setMessages, t],
+    [setMessages, t, giftName],
   );
 
   const renderBody = useCallback(
@@ -262,7 +264,7 @@ export function useChatGifts<M extends ChatMessage>({
       {sentMoment && (
         <GiftSentMoment
           item={sentMoment.item}
-          line={sentLine(sentMoment, people, t)}
+          line={sentLine(sentMoment, people, t, giftName)}
           onDone={() => {
             setSentMoment(null);
             onSentScroll();
@@ -288,7 +290,12 @@ export function useChatGifts<M extends ChatMessage>({
 }
 
 /** Who a gift went to, for the sender's moment: "Sent to Rojda.", or what was sent when the names are not known here. */
-function sentLine(sent: GiftSent, people: readonly GiftPerson[] | null, t: ReturnType<typeof useT>): string {
+function sentLine(
+  sent: GiftSent,
+  people: readonly GiftPerson[] | null,
+  t: ReturnType<typeof useT>,
+  giftName: ReturnType<typeof useGiftName>,
+): string {
   const names = sent.sent.map((id) => people?.find((p) => p.userId === id)?.name).filter((n): n is string => !!n);
-  return names.length > 0 ? t('gift.sentTo', { names: names.join(', ') }) : t('gift.sentAnnounce', { item: sent.item.name });
+  return names.length > 0 ? t('gift.sentTo', { names: names.join(', ') }) : t('gift.sentAnnounce', { item: giftName(sent.item.name, sent.quantity) });
 }

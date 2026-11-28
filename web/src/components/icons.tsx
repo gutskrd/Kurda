@@ -44,6 +44,7 @@ import { List } from '@phosphor-icons/react/dist/icons/List';
 import { Moon } from '@phosphor-icons/react/dist/icons/Moon';
 import { PenNib } from '@phosphor-icons/react/dist/icons/PenNib';
 import { Plus } from '@phosphor-icons/react/dist/icons/Plus';
+import { Minus } from '@phosphor-icons/react/dist/icons/Minus';
 import { SquaresFour } from '@phosphor-icons/react/dist/icons/SquaresFour';
 import { Link as LinkGlyph } from '@phosphor-icons/react/dist/icons/Link';
 import { TextAa } from '@phosphor-icons/react/dist/icons/TextAa';
@@ -260,6 +261,7 @@ export const CalendarIcon = named(CalendarBlank, 22);
 /** Throwing something away, always behind a confirm. */
 export const TrashIcon = named(Trash, 22);
 export const PlusIcon = named(Plus, 22);
+export const MinusIcon = named(Minus, 22);
 
 /* ---- The shell: one glyph per destination ---- */
 export const HomeIcon = named(House, 22);

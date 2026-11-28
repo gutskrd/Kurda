@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { GiftCard, GiftRecipient } from '@kurda/shared';
+import { giftQuantity, type GiftCard, type GiftRecipient } from '@kurda/shared';
 import { Avatar } from '../components/Avatar';
 import { CheckIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
-import { GiftBox, GiftItemArt } from './GiftArt';
+import { GiftBox, GiftCount, GiftItemArt, GiftName, useGiftName } from './GiftArt';
 import { GiftMoment, type GiftActions } from './GiftMoment';
 import { playChime, unwrapMs } from './motion';
 import { haptic } from '../lib/haptics';
@@ -17,7 +17,8 @@ type Phase = 'idle' | 'unwrapping' | 'revealed';
  * Motion, then the gift springs out with Say thanks, Wear it and Close. The sender sees whether it was opened, live. In a
  * group everyone sees who it was for and who opened theirs; the item stays a surprise to anyone who has not. Everyone
  * else sees who it is from ("Gift from Hamo"), or "a Hevalo member" when the server does not name the sender to them.
- * A grand gift, once opened, stays on show in the chat for everyone in it: its picture large, in its glow.
+ * A grand gift, once opened, stays on show in the chat for everyone in it: its picture large, in its glow. Several of
+ * one gift say how many wherever the item is named ("You sent 3 × Gul"), with "×3" on its picture.
  */
 export function GiftBubble({
   card,
@@ -52,6 +53,8 @@ export function GiftBubble({
   const shown = opened ?? card;
   const fromLine = senderName ? t('gift.from', { name: senderName }) : t('gift.fromMember');
   const fromName = senderName || t('gift.someone');
+  const giftName = useGiftName();
+  const count = giftQuantity(card);
 
   const finish = useCallback(async () => {
     if (timer.current !== null) window.clearTimeout(timer.current);
@@ -115,12 +118,12 @@ export function GiftBubble({
     if (card.tier === 'grand' && anyOpened) {
       return (
         <div className="gift-bubble is-sent is-opened gift-showpiece">
-          <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={132} loop />
+          <GiftCount count={count}>
+            <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={132} loop />
+          </GiftCount>
           <span className="gift-bubble-text">
-            <span className="gift-bubble-title" lang="ku">
-              {card.name}
-            </span>
-            <span className="gift-bubble-sub">{mine ? t('gift.youSent', { item: card.name }) : fromLine}</span>
+            <GiftName className="gift-bubble-title" name={card.name} count={count} />
+            <span className="gift-bubble-sub">{mine ? t('gift.youSent', { item: giftName(card.name, count) }) : fromLine}</span>
             <Recipients recipients={card.recipients} named={inGroup} />
           </span>
         </div>
@@ -129,16 +132,19 @@ export function GiftBubble({
     return (
       <div className={`gift-bubble is-sent${anyOpened ? ' is-opened' : ''}`}>
         <span className="gift-bubble-art">
-          {mine && anyOpened && card.recipients.length === 1 ? (
-            <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={64} loop />
-          ) : (
-            <GiftBox tier={card.tier} size={64} />
-          )}
+          {/* Only the sender sees how many, beside the item's name. */}
+          <GiftCount count={mine ? count : 1}>
+            {mine && anyOpened && card.recipients.length === 1 ? (
+              <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={64} loop />
+            ) : (
+              <GiftBox tier={card.tier} size={64} />
+            )}
+          </GiftCount>
         </span>
         <span className="gift-bubble-text">
           <span className="gift-bubble-title">
             {/* Only the sender sees the item's name; to anyone else it is a surprise. */}
-            {mine ? t('gift.youSent', { item: card.name }) : fromLine}
+            {mine ? t('gift.youSent', { item: giftName(card.name, count) }) : fromLine}
           </span>
           <Recipients recipients={card.recipients} named={inGroup} />
         </span>
@@ -147,6 +153,7 @@ export function GiftBubble({
   }
 
   // ---- The recipient's view ----
+  const shownCount = giftQuantity(shown);
   return (
     <>
       <button
@@ -154,17 +161,19 @@ export function GiftBubble({
         type="button"
         className={`gift-bubble is-mine-to-open${shown.myOpened ? ' is-opened' : ' is-wrapped'} gift-bubble-${card.tier}${shown.myOpened && card.tier === 'grand' ? ' gift-showpiece' : ''}`}
         onClick={unwrap}
-        aria-label={shown.myOpened ? t('gift.seeAgain', { item: shown.name }) : t('gift.openFrom', { name: fromName })}
+        aria-label={shown.myOpened ? t('gift.seeAgain', { item: giftName(shown.name, shownCount) }) : t('gift.openFrom', { name: fromName })}
       >
         <span className="gift-bubble-art">
           {shown.myOpened ? (
-            <GiftItemArt assetUrl={shown.assetUrl} category={shown.category} size={card.tier === 'grand' ? 132 : 64} loop />
+            <GiftCount count={shownCount}>
+              <GiftItemArt assetUrl={shown.assetUrl} category={shown.category} size={card.tier === 'grand' ? 132 : 64} loop />
+            </GiftCount>
           ) : (
             <GiftBox tier={card.tier} size={72} motion="idle" seed={card.batchId} />
           )}
         </span>
         <span className="gift-bubble-text">
-          <span className="gift-bubble-title">{shown.myOpened ? shown.name : fromLine}</span>
+          <span className="gift-bubble-title">{shown.myOpened ? giftName(shown.name, shownCount) : fromLine}</span>
           <span className="gift-bubble-sub">{shown.myOpened ? fromLine : t('gift.tapToOpen')}</span>
         </span>
       </button>

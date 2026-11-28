@@ -126,6 +126,29 @@ describe('GiftBubble', () => {
     expect(screen.getByText('1 of 3 opened')).toBeTruthy();
     expect(screen.getByText('For Rojda, a group member and 1 more')).toBeTruthy();
   });
+
+  it('says how many came when several did, in its words and at the corner of its picture', () => {
+    const roses = (over: Partial<GiftCard> = {}) => card({ sku: 'gift-gul', name: 'Gul', category: 'gift', equippable: null, ...over });
+    const { rerender } = renderWithProviders(<GiftBubble card={roses({ quantity: 3 })} mine senderName="me" onOpen={() => undefined} />);
+    expect(screen.getByText('3 × Gul')).toBeTruthy();
+    expect(screen.getByTestId('gift-count').textContent).toBe('×3');
+    expect(screen.getByLabelText('3 × Gul. For Rojda. Not opened yet')).toBeTruthy();
+    // opened by its recipient, it says the same to them
+    rerender(<GiftBubble card={roses({ quantity: 3, myGiftId: 'g1', myOpened: true, from: AZAD, recipients: forMe })} mine={false} senderName="azad" onOpen={() => undefined} />);
+    expect(screen.getByText('3 × Gul')).toBeTruthy();
+    expect(screen.getByTestId('gift-count')).toBeTruthy();
+    // still wrapped, how many stays part of the surprise
+    rerender(<GiftBubble card={roses({ quantity: 3, myGiftId: 'g1', from: AZAD, recipients: forMe })} mine={false} senderName="azad" onOpen={() => undefined} />);
+    expect(screen.queryByText(/3 ×/)).toBeNull();
+    expect(screen.queryByTestId('gift-count')).toBeNull();
+    // one gift, or a card from before several could go, is its name alone
+    rerender(<GiftBubble card={roses({ quantity: 1 })} mine senderName="me" onOpen={() => undefined} />);
+    expect(screen.getByText('Gul')).toBeTruthy();
+    expect(screen.queryByTestId('gift-count')).toBeNull();
+    rerender(<GiftBubble card={roses()} mine senderName="me" onOpen={() => undefined} />);
+    expect(screen.getByText('Gul')).toBeTruthy();
+    expect(screen.queryByTestId('gift-count')).toBeNull();
+  });
 });
 
 /** A gift as the catalogue lists it. */
@@ -465,6 +488,118 @@ describe('GiftPickerSheet', () => {
     renderWithProviders(<GiftPickerSheet visible post={POST} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={() => undefined} />);
     expect(await screen.findByText('Gifts on this post come from Rojda’s friends.')).toBeTruthy();
   });
+
+  it('sends several of a gift, as many as the Zêr covers, with the total on the button and the count in the request', async () => {
+    const client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 100, { dayLeft: [{ userId: 'u2', left: 20, moreAt: null }] }), 'POST /gifts': SENT });
+    testAuth.client = client;
+    const onSent = vi.fn();
+    dmSheet(onSent);
+    fireEvent.click(await screen.findByRole('radio', { name: /^Gul/ }));
+    const stepper = screen.getByTestId('gift-quantity');
+    expect(screen.getByText('Gul for Rojda')).toBeTruthy();
+    expect(within(stepper).getByLabelText('How many: 1')).toBeTruthy();
+    expect(within(stepper).getByRole('button', { name: 'One fewer' }).getAttribute('aria-disabled')).toBe('true');
+    // 100 Zêr pays for four roses, and no more
+    for (let i = 0; i < 4; i += 1) fireEvent.click(within(stepper).getByRole('button', { name: 'One more' }));
+    expect(within(stepper).getByLabelText('How many: 4')).toBeTruthy();
+    expect(within(stepper).getByRole('button', { name: 'One more' }).getAttribute('aria-disabled')).toBe('true');
+    expect(screen.getByText('4 × Gul for Rojda')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Send · 100 Zêr · ≈ €1' }));
+    await waitFor(() => expect(onSent).toHaveBeenCalled());
+    expect(client.calls.find((c) => c.path === '/gifts')?.body).toMatchObject({ sku: GUL.sku, quantity: 4, expectedPrice: 25, toUserIds: ['u2'] });
+  });
+
+  it('holds the count to what the day leaves the friend, and to what is in the bag', async () => {
+    const client = fakeClient({
+      'GET /gifts/catalog?to=u2': shelfOf(SHELF, 30_000, { dayLeft: [{ userId: 'u2', left: 2, moreAt: null }], bag: [{ sku: CAY.sku, name: 'Çay', assetUrl: null, count: 3 }] }),
+      'POST /gifts': SENT,
+    });
+    testAuth.client = client;
+    dmSheet();
+    fireEvent.click(await screen.findByRole('radio', { name: /^Gul/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'One more' }));
+    expect(screen.getByRole('button', { name: 'One more' }).getAttribute('aria-disabled')).toBe('true');
+    expect(screen.getByText('2 × Gul for Rojda')).toBeTruthy();
+    // from the bag, its three glasses would be more than today leaves too
+    fireEvent.click(within(screen.getByTestId('gift-bag')).getByRole('radio', { name: /^Çay/ }));
+    expect(screen.getByText('Çay for Rojda')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'One more' }));
+    expect(screen.getByRole('button', { name: 'One more' }).getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Send from your bag' }));
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/gifts')).toBe(true));
+    expect(client.calls.find((c) => c.path === '/gifts')?.body).toMatchObject({ sku: CAY.sku, fromBag: true, quantity: 2 });
+  });
+
+  it('starts from one again when another gift is picked, and shows no count where only one can go', async () => {
+    const client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 30_000), 'POST /gifts': SENT });
+    testAuth.client = client;
+    dmSheet();
+    fireEvent.click(await screen.findByRole('radio', { name: /^Gul/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'One more' }));
+    fireEvent.click(screen.getByRole('button', { name: 'One more' }));
+    expect(screen.getByText('3 × Gul for Rojda')).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: /^Çay/ }));
+    expect(screen.getByText('Çay for Rojda')).toBeTruthy();
+    expect(screen.getByLabelText('How many: 1')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/gifts')).toBe(true));
+    expect((client.calls.find((c) => c.path === '/gifts')?.body as Record<string, unknown>).quantity).toBeUndefined();
+    cleanup();
+
+    // the moon is all 20,000 Zêr can buy, so it goes alone
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 20_000) });
+    dmSheet();
+    fireEvent.click(await screen.findByRole('radio', { name: /^Heyv/ }));
+    expect(screen.queryByTestId('gift-quantity')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Send gift' })).toBeTruthy();
+  });
+
+  it('lets free gifts pay for no more than there are of them', async () => {
+    const client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 30_000, { freeGifts: 2 }), 'POST /gifts': SENT });
+    testAuth.client = client;
+    dmSheet();
+    fireEvent.click(await screen.findByRole('radio', { name: /^Gul/ }));
+    for (let i = 0; i < 4; i += 1) fireEvent.click(screen.getByRole('button', { name: 'One more' }));
+    expect(screen.getByText('5 × Gul for Rojda')).toBeTruthy();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Use a free gift' }));
+    expect(screen.getByText('2 × Gul for Rojda')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'One more' }).getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Send as a free gift' }));
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/gifts')).toBe(true));
+    expect(client.calls.find((c) => c.path === '/gifts')?.body).toMatchObject({ sku: GUL.sku, useFreeGift: true, quantity: 2 });
+  });
+
+  it('asks a second time for a big send of several, and sends it again with the same count and key', async () => {
+    let sends = 0;
+    const client = fakeClient({
+      'GET /gifts/catalog?to=u2': shelfOf(),
+      'POST /gifts': () => {
+        sends += 1;
+        if (sends === 1) return fail({ kind: 'network', message: 'offline' });
+        if (sends === 2) return fail({ code: 'GIFT_NEEDS_CONFIRM', status: 409, message: 'confirm', details: { confirmToken: 'tok-3', total: 4_000, recipients: 1, expiresAt: '2030-01-01T00:00:00Z' } });
+        return SENT;
+      },
+    });
+    testAuth.client = client;
+    const onSent = vi.fn();
+    dmSheet(onSent);
+    fireEvent.click(await screen.findByRole('radio', { name: /^Belem/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'One more' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send · 4,000 Zêr · ≈ €40' }));
+    // the retry after a dropped connection is the same send
+    await waitFor(() => expect(sends).toBe(1));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send · 4,000 Zêr · ≈ €40' }).getAttribute('aria-disabled')).not.toBe('true'));
+    fireEvent.click(screen.getByRole('button', { name: 'Send · 4,000 Zêr · ≈ €40' }));
+    const check = await screen.findByTestId('gift-confirm');
+    expect(within(check).getByText('2 × Belem · for Rojda')).toBeTruthy();
+    expect(within(check).getByText('≈ €40')).toBeTruthy();
+    fireEvent.click(within(check).getByRole('button', { name: 'Send it' }));
+    await waitFor(() => expect(onSent).toHaveBeenCalled());
+    const bodies = client.calls.filter((c) => c.path === '/gifts').map((c) => c.body as Record<string, unknown>);
+    expect(bodies).toHaveLength(3);
+    for (const body of bodies) expect(body).toMatchObject({ sku: BELEM.sku, quantity: 2, idempotencyKey: bodies[0]!.idempotencyKey });
+    expect(bodies[2]!.confirmToken).toBe('tok-3');
+  });
 });
 
 describe('GiftUnwrap', () => {
@@ -512,6 +647,27 @@ describe('GiftUnwrap', () => {
     // the thanks names the gift it answers
     expect(onThanks).toHaveBeenCalledTimes(1);
     expect(onThanks.mock.calls[0]).toEqual([expect.objectContaining({ batchId: card().batchId })]);
+  });
+
+  it('says how many came under the gift and on it once it is out, and one gift as before', async () => {
+    const roses = card({ sku: 'gift-gul', name: 'Gul', category: 'gift', equippable: null, assetUrl: '/cosmetics/gifts/gul.png', myGiftId: 'g1', quantity: 3 });
+    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: { ...roses, myOpened: true }, equippable: null }) });
+    const announce = vi.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    const { unmount } = renderWithProviders(<GiftUnwrap target={{ giftId: 'g1', card: roses, fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    const name = await screen.findByText('3 ×', { exact: false });
+    expect(name.textContent).toBe('3 × Gul');
+    expect(screen.getByTestId('gift-count').textContent).toBe('×3');
+    expect(announce).toHaveBeenCalledWith('3 × Gul, from Azad');
+    unmount();
+
+    const one = { ...roses, quantity: undefined };
+    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: { ...one, myOpened: true }, equippable: null }) });
+    renderWithProviders(<GiftUnwrap target={{ giftId: 'g1', card: one, fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    expect(await screen.findByText('Gul')).toBeTruthy();
+    expect(screen.queryByText(/3 ×/)).toBeNull();
+    expect(screen.queryByTestId('gift-count')).toBeNull();
   });
 
   it('offers no second thanks for a gift already thanked for', async () => {

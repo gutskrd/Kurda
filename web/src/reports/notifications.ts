@@ -24,6 +24,12 @@ export interface NoteView {
 
 const str = (v: unknown): string | null => (typeof v === 'string' && v.length > 0 ? v : null);
 
+/** How many of one gift a gift notification is for, from `data.quantity` (set only for several); one otherwise. */
+export function giftNoticeCount(data: Record<string, unknown> | null | undefined): number {
+  const n = Number(str(data?.quantity));
+  return Number.isInteger(n) && n > 1 ? n : 1;
+}
+
 /** The chat a gift notification opens (`dm:<userId>` or `group:<groupId>` from `data.chat`), with `gift=<giftId>` to unwrap it. */
 export function giftChatPath(chat: string | null, giftId: string | null, name?: string): string | null {
   if (!chat) return null;
@@ -95,7 +101,13 @@ export function socialNotification(note: InboxNote, t: Translate, locale?: strin
     }
     case 'gift': {
       const to = giftChatPath(str(data.chat), str(data.giftId));
-      return { title: t('notify.gift.title'), body: t('notify.gift.body'), ...(to ? { to } : {}) };
+      // Several of one gift are counted, and the item stays a surprise until it is unwrapped in the chat.
+      const count = giftNoticeCount(data);
+      const words =
+        count > 1
+          ? { title: t('notify.gift.titleMany', { count: count.toLocaleString(locale) }), body: t('notify.gift.bodyMany') }
+          : { title: t('notify.gift.title'), body: t('notify.gift.body') };
+      return { ...words, ...(to ? { to } : {}) };
     }
     case 'post_gift': {
       // Named as the server lets the post's author see the giver, or not at all.
@@ -104,7 +116,17 @@ export function socialNotification(note: InboxNote, t: Translate, locale?: strin
       // to the post, where the author's own gift opens in its light
       const gift = str(data.giftId);
       const to = data.postType === 'library' && id ? `/app/library/${encodeURIComponent(id)}${gift ? `?gift=${encodeURIComponent(gift)}` : ''}` : undefined;
-      return { title: name ? t('post.gifts.notice', { name }) : t('post.gifts.noticeSomeone'), body: null, ...(to ? { to } : {}) };
+      const n = giftNoticeCount(data);
+      const count = n.toLocaleString(locale);
+      const title =
+        n > 1
+          ? name
+            ? t('post.gifts.noticeMany', { name, count })
+            : t('post.gifts.noticeSomeoneMany', { count })
+          : name
+            ? t('post.gifts.notice', { name })
+            : t('post.gifts.noticeSomeone');
+      return { title, body: null, ...(to ? { to } : {}) };
     }
     default:
       return null;

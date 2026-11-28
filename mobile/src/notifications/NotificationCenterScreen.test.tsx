@@ -378,6 +378,15 @@ describe('the notification list’s filters and pictures', () => {
     expect(screen.queryByTestId('notice-from-hevalo')).toBeNull();
     expect(screen.getByTestId('notice-picture-gift')).toBeTruthy();
   });
+
+  it('says how many gifts came when several did, without naming them', async () => {
+    const data = { kind: 'gift', giftId: 'g1', chat: 'dm:u-berfin', fromUserId: 'u-berfin', sku: 'gift-cay', quantity: '3' };
+    serve([notice('n1', { category: 'friends', title: 'You have a gift', body: 'berfin sent you 3 × Çay.', data })], [], {
+      'GET /friends': ok({ total: 1, friends: [{ userId: 'u-berfin', username: 'berfin', displayName: 'Berfin', avatarUrl: null }] }),
+    });
+    renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
+    expect(await screen.findByRole('button', { name: 'Unread. 3 gifts from Berfin. Open them in your chat. just now' })).toBeTruthy();
+  });
 });
 
 describe('a person’s decision on your picture', () => {

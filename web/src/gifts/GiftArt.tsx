@@ -1,4 +1,5 @@
-import type { CSSProperties } from 'react';
+import { useCallback, type CSSProperties, type ReactNode } from 'react';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import { ItemGlyph } from '../shop/ItemGlyph';
 import { ItemPicture } from '../shop/ItemPicture';
 import { GiftLoopArt } from './GiftLoop';
@@ -7,7 +8,8 @@ import { useSvgId } from './useSvgId';
 
 /**
  * The gift moments' pictures: the wrapped box (GiftBox.tsx, drawn in shared art/gift-box.ts), the night sky a grand
- * gift opens on, and the item itself. Decorative (aria-hidden); the surrounding words say what happens.
+ * gift opens on, and the item itself, with its count when several were given and its name said with that count.
+ * The pictures are decorative (aria-hidden); the surrounding words say what happens.
  */
 export { GiftBox, type GiftBoxMotion } from './GiftBox';
 export { useSvgId } from './useSvgId';
@@ -65,6 +67,53 @@ export function GiftItemArt({
       aria-hidden="true"
     >
       {assetUrl ? loop ? <GiftLoopArt src={assetUrl} /> : <ItemPicture src={assetUrl} /> : <ItemGlyph category={category} size={Math.round(size * 0.45)} />}
+    </span>
+  );
+}
+
+/** A gift's name with how many of it there are when there are several ("3 × Gul"), in the reader's language; one is just its name. */
+export function useGiftName(): (name: string, count: number) => string {
+  const t = useT();
+  const locale = useLocale();
+  return useCallback((name: string, count: number) => (count > 1 ? t('gift.quantity.item', { count: count.toLocaleString(locale), name }) : name), [t, locale]);
+}
+
+/**
+ * The same as an element, the Kurmancî name marked as Kurmancî and any count round it left in the reader's language;
+ * one gift is the name alone in a Kurmancî element.
+ */
+export function GiftName({ name, count, as: Tag = 'span', className }: { name: string; count: number; as?: 'span' | 'b'; className?: string }): React.JSX.Element {
+  const label = useGiftName()(name, count);
+  const at = count > 1 ? label.indexOf(name) : -1;
+  if (at < 0) {
+    return (
+      <Tag className={className} lang="ku">
+        {label}
+      </Tag>
+    );
+  }
+  return (
+    <Tag className={className}>
+      {label.slice(0, at)}
+      <span lang="ku">{name}</span>
+      {label.slice(at + name.length)}
+    </Tag>
+  );
+}
+
+/**
+ * A gift's picture with a quiet "×3" at its corner when several of it were given; one gift's picture is left as it is.
+ * Decorative: the words beside it say how many.
+ */
+export function GiftCount({ count, children }: { count: number; children: ReactNode }): React.JSX.Element {
+  const locale = useLocale();
+  if (count <= 1) return <>{children}</>;
+  return (
+    <span className="gift-count">
+      {children}
+      <span className="gift-count-chip" aria-hidden="true">
+        ×{count.toLocaleString(locale)}
+      </span>
     </span>
   );
 }

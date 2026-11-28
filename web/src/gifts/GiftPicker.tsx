@@ -5,7 +5,9 @@ import {
   giftDayLine,
   giftLockFor,
   giftMeaning,
+  giftQuantityMax,
   giftShelves,
+  isGiftOnly,
   type BagEntry,
   type GiftCatalog,
   type GiftDayLeft,
@@ -22,13 +24,13 @@ import type { ApiError, DmMessage, GroupMessage } from '../lib/types';
 import { Sheet } from '../components/Sheet';
 import { Button } from '../components/Button';
 import { Avatar } from '../components/Avatar';
-import { CheckIcon, CoinIcon, GiftIcon, LockIcon } from '../components/icons';
+import { CheckIcon, CoinIcon, GiftIcon, LockIcon, MinusIcon, PlusIcon } from '../components/icons';
 import { Skeleton, SkeletonRegion } from '../components/Skeleton';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { SendError } from '../reports/SendError';
 import { ZerValue } from '../shop/ZerValue';
-import { GiftItemArt } from './GiftArt';
+import { GiftItemArt, GiftName, useGiftName } from './GiftArt';
 
 /** The shelf as GET /gifts/catalog sends it; an older server leaves out the bag, the hold and the limits. */
 type Shelf = Omit<GiftCatalog, 'bag' | 'hold' | 'freeGifts' | 'limits' | 'dayLeft' | 'nudges'> &
@@ -53,6 +55,8 @@ export interface GiftPerson {
 export interface GiftSent extends SendGiftResult {
   message: DmMessage | GroupMessage | null;
   item: GiftCatalogItem;
+  /** how many of it each recipient was given */
+  quantity: number;
   /** When some friends were skipped, who got it and why the others did not ("Sent to rojda. dilan already has it."); else null. */
   partialNote: string | null;
 }
@@ -124,7 +128,9 @@ interface Choice {
  * author; in a group the sender first picks among the members who are friends (with "Select all"). It opens with the
  * gift bag, the small gifts everyone earns, with how many of each; then the gifts by shelf, cheapest first, each with
  * its Kurmancî name and what it means in the reader's language, its price in Zêr with what that is worth in money, and a
- * lock with the reason where it cannot go: not enough Zêr, or the safeguards (gift-safety.ts). The website sells
+ * lock with the reason where it cannot go: not enough Zêr, or the safeguards (gift-safety.ts). Once a gift is chosen, a
+ * stepper by the send button gives each recipient several of it, as many as the day's caps, the Zêr or bag and the
+ * spending limit allow (shared `giftQuantityMax`), and the footer says the whole send and its price. The website sells
  * nothing, so it never offers to buy Zêr. A big send is confirmed once more with its money amount, by the server's own
  * token. Nothing is preselected.
  */
@@ -178,6 +184,8 @@ function PickerFlow({
   const [shelf, setShelf] = useState<Shelf | null>(null);
   const [shelfError, setShelfError] = useState<ApiError | null>(null);
   const [picked, setPicked] = useState<Choice | null>(null);
+  /** How many of the chosen gift each recipient is given; a new choice starts again at one. */
+  const [quantity, setQuantity] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError | string | null>(null);
   const [skippedNote, setSkippedNote] = useState<string | null>(null);
@@ -215,9 +223,6 @@ function PickerFlow({
     if (step === 'what' && chosen.length > 0) void loadShelf();
   }, [step, loadShelf, chosen.length]);
 
-  // A different choice is a different send.
-  useEffect(() => setKey(requestId()), [picked?.item.sku, picked?.fromBag, chosen]);
-
   const getting = (item: GiftCatalogItem): string[] => (post ? chosen : chosen.filter((id) => !item.alreadyOwnedBy.includes(id)));
   const cost = (item: GiftCatalogItem): number => item.price * getting(item).length;
   const lockOf = (item: GiftCatalogItem): GiftLock | 'funds' | null =>
@@ -225,6 +230,33 @@ function PickerFlow({
   const bagCount = (sku: string): number => shelf?.bag?.find((b) => b.sku === sku)?.count ?? 0;
   // The day's caps: a send to recipients who can all be given nothing more for now is held before it is tried.
   const dayFull = (item: GiftCatalogItem): boolean => giftDayFull(shelf?.dayLeft ?? [], getting(item));
+
+  /**
+   * The most of a choice one send may give each recipient. A unique item (one a friend may already own) goes one at a
+   * time, and a send held by the day's caps has no count to choose. A friend whose day is full is skipped whatever the
+   * number, so only the others' caps bound it.
+   */
+  const mostOf = (choice: Choice): number => {
+    const { item } = choice;
+    if (!isGiftOnly(item.category) || item.alreadyOwnedBy.length > 0 || dayFull(item)) return 1;
+    const to = getting(item);
+    const units = choice.fromBag ? bagCount(item.sku) : shelf && item.price > 0 ? Math.floor(shelf.balance.zer / item.price) : null;
+    const dayLeft = (shelf?.dayLeft ?? []).filter((d) => to.includes(d.userId) && d.left > 0).map((d) => d.left);
+    return giftQuantityMax({ price: item.price, recipients: to.length, dayLeft, units, limits: shelf?.limits });
+  };
+  const most = picked ? mostOf(picked) : 1;
+  // A reload or a change of recipients can lower the most; the count follows it down.
+  const count = Math.min(quantity, most);
+  /** What the whole send costs: the price of each, by how many each recipient is given, by the recipients. */
+  const total = picked ? cost(picked.item) * count : 0;
+  /** Why the chosen send cannot go for its price: the safeguards, then the Zêr, each on the whole send. */
+  const sendLock: GiftLock | 'funds' | null = !picked
+    ? null
+    : (giftLockFor(picked.item, getting(picked.item).length, shelf?.limits) ??
+      (shelf?.limits?.left != null && total > shelf.limits.left ? 'spend_limit' : shelf && total > shelf.balance.zer ? 'funds' : null));
+
+  // A different choice, or a different number of it, is a different send.
+  useEffect(() => setKey(requestId()), [picked?.item.sku, picked?.fromBag, chosen, count]);
 
   async function send(confirmToken?: string): Promise<void> {
     if (!picked || busy) return;
@@ -237,6 +269,7 @@ function PickerFlow({
       sku: picked.item.sku,
       idempotencyKey: key,
       expectedPrice: picked.item.price,
+      ...(count > 1 ? { quantity: count } : {}),
       ...(picked.fromBag ? { fromBag: true } : {}),
       ...(confirmToken ? { confirmToken } : {}),
     };
@@ -267,17 +300,19 @@ function PickerFlow({
       res.data.skipped.length > 0
         ? `${t('gift.sentTo', { names: res.data.sent.map((id) => nameOf.get(id) ?? '').filter(Boolean).join(', ') })} ${why}`
         : null;
-    onSent({ ...res.data, item: picked.item, partialNote });
+    onSent({ ...res.data, item: picked.item, quantity: count, partialNote });
   }
 
   const choose = (next: Choice | null): void => {
     setPicked(next);
+    setQuantity(1);
     setError(null);
     setSkippedNote(null);
   };
 
   const names = chosen.map((id) => nameOf.get(id) ?? '').filter(Boolean);
   const person = people?.[0]?.name ?? '';
+  const giftName = useGiftName();
   const dayNote = dayLeftNote(shelf?.dayLeft ?? [], (id) => nameOf.get(id) ?? person, t, fmt, locale);
   const title = post ? t('gift.post.title', { name: person }) : group ? t('gift.picker.titleGroup') : t('gift.picker.title', { name: person });
   const items = shelf?.items ?? [];
@@ -293,6 +328,7 @@ function PickerFlow({
       {step === 'what' && confirming && picked && (
         <BigGiftConfirm
           item={picked.item}
+          count={count}
           names={getting(picked.item).map((id) => nameOf.get(id) ?? '').filter(Boolean)}
           details={confirming}
           busy={busy}
@@ -397,13 +433,13 @@ function PickerFlow({
               {/* The chosen gift beside the send button, as it will go. */}
               <GiftItemArt assetUrl={picked.item.assetUrl} category={picked.item.category} size={44} className="gift-confirm-art" loop />
               <span className="gift-confirm-text">
-                {t('gift.picker.confirm', { item: picked.item.name, names: getting(picked.item).map((id) => nameOf.get(id) ?? '').join(', ') })}
+                {t('gift.picker.confirm', { item: giftName(picked.item.name, count), names: getting(picked.item).map((id) => nameOf.get(id) ?? '').join(', ') })}
                 {picked.fromBag ? (
                   <strong className="gift-confirm-cost">{t('gift.bag.free')}</strong>
                 ) : (
                   <>
                     <strong className="gift-confirm-cost">
-                      <CoinIcon size={14} /> {fmt(cost(picked.item))} <ZerValue zer={cost(picked.item)} />
+                      <CoinIcon size={14} /> {fmt(total)} <ZerValue zer={total} />
                     </strong>
                     {/* what there is to pay with, by what it costs, so nobody has to scroll back up to the purse */}
                     {shelf && <span className="gift-confirm-have">{t('gift.picker.balance', { zer: fmt(shelf.balance.zer) })}</span>}
@@ -412,9 +448,11 @@ function PickerFlow({
                 {/* Beside the button that spends: a gift, like any purchase, is final. */}
                 <span className="gift-confirm-hidden">{t('shop.giftFinal')}</span>
               </span>
-              {!picked.fromBag && lockOf(picked.item) === 'funds' && <span className="gift-confirm-short">{t('gift.error.funds')}</span>}
+              {!picked.fromBag && sendLock === 'funds' && <span className="gift-confirm-short">{t('gift.error.funds')}</span>}
+              {!picked.fromBag && sendLock === 'spend_limit' && <span className="gift-confirm-short">{t('gift.lock.spendLimit')}</span>}
               {dayFull(picked.item) && dayNote && <span className="gift-confirm-short">{dayNote}</span>}
-              <Button onClick={() => void send()} disabled={busy || dayFull(picked.item) || (!picked.fromBag && lockOf(picked.item) !== null)}>
+              {most > 1 && <QuantityStepper value={count} most={most} disabled={busy} onChange={setQuantity} />}
+              <Button onClick={() => void send()} disabled={busy || dayFull(picked.item) || (!picked.fromBag && sendLock !== null)}>
                 {busy ? t('gift.sending') : t('gift.send')}
               </Button>
               {/* The result sits by the send button, not under a shelf that may be scrolled away. */}
@@ -558,11 +596,59 @@ function GiftTile({
 }
 
 /**
+ * How many of the chosen gift each recipient is given: minus, the count and plus in one pill by the send button, from
+ * one to `most`. Each end stays focusable but does nothing, so a keyboard is not thrown out of the pill at a limit, and
+ * the new count is said as it changes.
+ */
+function QuantityStepper({
+  value,
+  most,
+  disabled,
+  onChange,
+}: {
+  value: number;
+  most: number;
+  disabled: boolean;
+  onChange: (next: number) => void;
+}): React.JSX.Element {
+  const t = useT();
+  const { locale } = useI18n();
+  const fewer = disabled || value <= 1;
+  const more = disabled || value >= most;
+  return (
+    <div className="gift-qty" role="group" aria-label={t('gift.quantity.label')}>
+      <button
+        type="button"
+        className="gift-qty-step"
+        aria-label={t('gift.quantity.fewer')}
+        aria-disabled={fewer}
+        onClick={() => !fewer && onChange(value - 1)}
+      >
+        <MinusIcon size={18} />
+      </button>
+      <output className="gift-qty-count" aria-live="polite">
+        {value.toLocaleString(locale)}
+      </output>
+      <button
+        type="button"
+        className="gift-qty-step"
+        aria-label={t('gift.quantity.more')}
+        aria-disabled={more}
+        onClick={() => !more && onChange(value + 1)}
+      >
+        <PlusIcon size={18} />
+      </button>
+    </div>
+  );
+}
+
+/**
  * The second look at a big gift, asked for by the server: the gift, who it is for, and what it costs in Zêr and in
  * money, said large, with "Send it" and a plain "Go back" that changes nothing.
  */
 function BigGiftConfirm({
   item,
+  count,
   names,
   details,
   busy,
@@ -571,6 +657,8 @@ function BigGiftConfirm({
   onBack,
 }: {
   item: GiftCatalogItem;
+  /** how many of it each recipient is given */
+  count: number;
   names: string[];
   details: GiftConfirmDetails;
   busy: boolean;
@@ -589,7 +677,7 @@ function BigGiftConfirm({
         {t('gift.confirm.title')}
       </h3>
       <p className="gift-big-confirm-what">
-        <span lang="ku">{item.name}</span> · {t('gift.confirm.for', { names: names.join(', ') })}
+        <GiftName name={item.name} count={count} /> · {t('gift.confirm.for', { names: names.join(', ') })}
       </p>
       <p className="gift-big-confirm-amount">
         <span className="gift-big-confirm-money">

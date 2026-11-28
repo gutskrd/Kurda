@@ -70,6 +70,21 @@ describe('socialNotification', () => {
     expect(view?.body).toContain(translator(ku)('notify.caring.body'));
   });
 
+  it('counts several of one gift, keeping the item a surprise', () => {
+    expect(socialNotification(note({ kind: 'gift', giftId: 'g1', chat: 'dm:u2', quantity: '3' }), t)).toMatchObject({
+      title: 'You have 3 gifts',
+      body: 'Open them in your chat.',
+      to: '/app/messages?to=u2&gift=g1',
+    });
+    const post = { kind: 'post_gift', postType: 'library', postId: 'p1', quantity: '3' };
+    expect(socialNotification(note({ ...post, fromName: 'Hamo' }), t)?.title).toBe('Hamo gave your post 3 gifts');
+    expect(socialNotification(note(post), t)?.title).toBe('Your post was given 3 gifts');
+    expect(socialNotification(note({ ...post, fromName: 'Hamo' }), translator(ku))?.title).toBe('Hamo 3 diyarî dan şandiya te');
+    // one, or a number that is not one, reads as a single gift
+    expect(socialNotification(note({ ...post, fromName: 'Hamo', quantity: '1' }), t)?.title).toBe('Hamo gave your post a gift');
+    expect(socialNotification(note({ ...post, fromName: 'Hamo', quantity: 'lots' }), t)?.title).toBe('Hamo gave your post a gift');
+  });
+
   it('opens a gift in the chat it is in', () => {
     expect(socialNotification(note({ kind: 'gift', giftId: 'g1', chat: 'dm:u2' }), t)).toMatchObject({
       title: 'You have a gift',

@@ -6,8 +6,9 @@
  * tier sets how strong the light is, and a grand gift keeps its night sky. While the server opens it the wrapped box
  * unwraps in the same light for the tier's unwrap time (shared gift-box-motion.ts): it shakes, the lid and bow pop off,
  * the light bursts out and the rays come up with it, and the open box gives way as the gift springs out. A tap or Skip
- * goes straight to the gift. Everything moves by transform, so nothing is drawn again frame by frame; under Reduce
- * Motion the box and the light stand still and the gift fades in.
+ * goes straight to the gift, with "×3" at its corner and "3 × Gul" below when several were given. Everything moves by
+ * transform, so nothing is drawn again frame by frame; under Reduce Motion the box and the light stand still and the
+ * gift fades in.
  *
  * The sender's own (`GiftSentMoment`) is the same light, smaller and brief, as a gift goes.
  */
@@ -25,6 +26,7 @@ import {
   GIFT_SENT_MS,
   giftGlow,
   giftMeaning,
+  giftQuantity,
   giftSenderName,
   giftRaysPath,
   giftSeed,
@@ -45,7 +47,7 @@ import { useOptimisticSend } from '../lib/optimistic';
 import { SendError } from '../reports/SendError';
 import { CelebrationArt } from '../ranks/Celebration';
 import { giftsWereOpened } from '../shop/useUnseenGifts';
-import { GiftBox, GiftItemArt, NightSky, useSvgId } from './GiftArt';
+import { GiftBox, GiftCount, GiftItemArt, GiftName, NightSky, useGiftName, useSvgId } from './GiftArt';
 import { unwrapMs } from './motion';
 
 /** What a thread lets a gift do: open it, say thanks in the chat, or wear it. */
@@ -162,6 +164,8 @@ export function GiftMoment({
   const still = prefersReducedMotion();
   const meaning = giftMeaning(card.sku, locale);
   const art = ART[card.tier];
+  const count = giftQuantity(card);
+  const giftName = useGiftName();
   const title = from ? t('gift.from', { name: from }) : t('gift.fromMember');
   const restore = useRef<HTMLElement | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -251,7 +255,9 @@ export function GiftMoment({
           {revealed ? (
             <div className="celebrate is-playing gift-moment-art">
               <CelebrationArt flecks={look.burst} seed={giftSeed(card.sku)} reach={art} still={still}>
-                <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={art} loop />
+                <GiftCount count={count}>
+                  <GiftItemArt assetUrl={card.assetUrl} category={card.category} size={art} loop />
+                </GiftCount>
               </CelebrationArt>
             </div>
           ) : null}
@@ -262,11 +268,11 @@ export function GiftMoment({
         {revealed ? (
           <div className="gift-moment-words">
             <p className="gift-moment-name">
-              <b lang="ku">{card.name}</b>
+              <GiftName as="b" name={card.name} count={count} />
               {meaning ? ` · ${meaning}` : ''}
             </p>
             <p className="sr-only" role="status">
-              {t('gift.revealed', { item: card.name, name: from || t('gift.someone') })}
+              {t('gift.revealed', { item: giftName(card.name, count), name: from || t('gift.someone') })}
             </p>
             <div className="gift-moment-actions">
               {!actions ? null : thanked ? (

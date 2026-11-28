@@ -7,24 +7,29 @@ import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useDirection } from '../reports/direction';
+import { countedName } from './quantity';
 
 /**
  * After a gift from the shop: where it went. The API posts it into the chat with that friend, so the shop says so and
- * offers the way there. It arrives growing a little and fading in; only the fade under Reduce Motion.
+ * offers the way there, saying how many when several went ("3 × Gul"). It arrives growing a little and fading in; only
+ * the fade under Reduce Motion.
  */
 export function GiftSentNote({
   itemName,
+  quantity = 1,
   to,
   onOpenChat,
   onDismiss,
 }: {
   itemName: string;
+  /** how many of it went; one when left out */
+  quantity?: number;
   to: string;
   onOpenChat: () => void;
   onDismiss: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
   return (
     <View style={styles.wrap} pointerEvents="box-none">
@@ -38,7 +43,7 @@ export function GiftSentNote({
           <View style={styles.text}>
             <Text style={[styles.title, dir.text, { color: colors.textPrimary }]}>{t('gift.sent', { name: to })}</Text>
             <Text style={[styles.body, dir.text, { color: colors.textSecondary }]}>
-              {itemName} · {t('gift.shop.inChat', { name: to })}
+              {countedName(itemName, quantity, t, locale)} · {t('gift.shop.inChat', { name: to })}
             </Text>
           </View>
           <Pressable

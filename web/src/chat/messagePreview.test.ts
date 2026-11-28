@@ -101,6 +101,13 @@ describe('messagePreview for every kind of message', () => {
     expect(messagePreview({ body: '🎁 Gift', kind: 'gift' }, translator(ku))).toBe('Diyarî');
   });
 
+  it('says how many of one gift were given once it is unwrapped, and still nothing before', () => {
+    const gift = { batchId: 'b', sku: 'gift-gul', name: 'Gul', category: 'gift', assetUrl: null, tier: 'common' as const, recipients: [], from: null, myGiftId: 'g1', myOpened: false, equippable: null, quantity: 3 };
+    expect(messagePreview({ body: null, kind: 'gift', gift }, t)).toBe('Gift');
+    expect(messagePreview({ body: null, kind: 'gift', gift: { ...gift, myOpened: true } }, t)).toBe('3 × Gul');
+    expect(messagePreview({ body: null, kind: 'gift', gift: { ...gift, myOpened: true, quantity: 1 } }, t)).toBe('Gul');
+  });
+
   it('names a game card by its game, or as an invite when it does not say', () => {
     expect(messagePreview({ body: null, kind: 'game', game: { game: 'rhyme-match', lobbyId: 'l1' } }, t)).toBe('Pêşbaziya Serwayan invite');
     expect(messagePreview({ body: null, kind: 'game' }, t)).toBe('Game invite');
