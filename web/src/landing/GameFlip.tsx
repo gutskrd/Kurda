@@ -85,8 +85,11 @@ function lightOf(face: 0 | 1): { shade: Keyframe[]; gleam: Keyframe[]; glow: Key
   const off = turns
     .map((turn) => Math.max(0, Math.min(1, (face === 0 ? turn : 180 - turn) / 90)))
     .map((o) => o * o * (3 - 2 * o));
+  // Past edge-on a face is turned away, and its shade goes clear: some browsers draw an animated layer's back even in a
+  // face that hides its back, which would lay the turned-away face's full shade over the one now facing us.
+  const away = turns.map((turn) => (face === 0 ? turn > 90 : turn < 90));
   return {
-    shade: off.map((o) => ({ opacity: o })),
+    shade: off.map((o, k) => ({ opacity: away[k] ? 0 : o })),
     gleam: off.map((o, k) => {
       const p = (times[k]! - from) / SETTLE_GLEAM.ms;
       if (face === 1 && p >= 0 && p <= 1) {

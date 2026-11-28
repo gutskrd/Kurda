@@ -696,11 +696,15 @@
   display: block;
   transform-style: preserve-3d;
 }
-/* each face, and the glow behind the hand for each face, shows only while it faces us */
+/* each face, and the glow behind the hand for each face, shows only while it faces us; the light animated on a face hides
+   its back as well, since a browser may draw an animated layer apart from the face it sits in */
 .fp-flip-face,
-.fp-flip-glow {
+.fp-flip-glow,
+.fp-flip-shade,
+.fp-flip-gleam {
   position: absolute;
   inset: 0;
+  -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
 .fp-flip-face.is-back,
