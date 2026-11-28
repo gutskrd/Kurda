@@ -889,11 +889,6 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.thanks-line-time {
-  flex: none;
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
-}
 
 /* ---- the bubble ----------------------------------------------------------- */
 /* a card in a bubble brings its own surface; the bubble's padding and fill step aside */

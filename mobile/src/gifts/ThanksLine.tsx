@@ -9,7 +9,8 @@ import { radii, spacing, typography } from '../theme/tokens';
 /**
  * A one-tap thanks for a gift, drawn as a quiet line across the thread with a heart, as on the website, so it never
  * reads as words someone typed: "Rojda said thanks for Gul", or "You said thanks for Gul". A thanks from before the
- * app knew its gift names the gift plainly.
+ * app knew its gift names the gift plainly. Like a bubble, it says its time only to screen readers, so the line stays on
+ * one row.
  */
 export function ThanksLine({ mine, name, gift, at }: { mine: boolean; name: string; gift: string | null; at: string }): React.JSX.Element {
   const { colors } = useTheme();
@@ -25,7 +26,6 @@ export function ThanksLine({ mine, name, gift, at }: { mine: boolean; name: stri
           <Icon name="heart-fill" size={13} color={colors.goldText} />
         </View>
         <Text style={[styles.words, dir.text, { color: colors.textSecondary }]}>{words}</Text>
-        {time ? <Text style={[styles.time, { color: colors.textSecondary }]}>{time}</Text> : null}
       </View>
     </View>
   );
@@ -36,5 +36,4 @@ const styles = StyleSheet.create({
   line: { alignItems: 'center', gap: spacing.sm, maxWidth: '100%', paddingVertical: 4, paddingStart: 4, paddingEnd: spacing.md, borderRadius: radii.pill },
   mark: { width: 24, height: 24, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   words: { flexShrink: 1, fontSize: typography.sizes.text },
-  time: { fontSize: typography.sizes.text, opacity: 0.8, fontVariant: ['tabular-nums'] },
 });
