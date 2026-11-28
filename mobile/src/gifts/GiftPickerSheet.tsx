@@ -24,7 +24,7 @@ import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { useI18n } from '../i18n/I18nContext';
-import { formatExpectedAt, formatNumber } from '../i18n/format';
+import { formatCompact, formatExpectedAt, formatNumber } from '../i18n/format';
 import type { TranslationKey } from '../i18n/translations';
 import { useTheme } from '../theme/ThemeProvider';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
@@ -474,7 +474,13 @@ function WhatStep({
         {catalog.freeGifts > 0 ? (
           <View style={[styles.chip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
             <Icon name="gift" size={14} color={colors.gold} />
-            <Text style={[styles.chipText, { color: colors.textPrimary }]}>{t('gift.picker.freeGifts', { count: amount(catalog.freeGifts) })}</Text>
+            <Text
+              style={[styles.chipText, { color: colors.textPrimary }]}
+              numberOfLines={1}
+              accessibilityLabel={t('gift.picker.freeGifts', { count: amount(catalog.freeGifts) })}
+            >
+              {t('gift.picker.freeGifts', { count: formatCompact(catalog.freeGifts, locale) })}
+            </Text>
           </View>
         ) : null}
       </View>
@@ -610,6 +616,7 @@ function BagTile({
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
+  // Said whole; the tile writes it short ("3.4K in your bag").
   const count = t('gift.bag.count', { count: formatNumber(entry.count, locale) });
   return (
     <Pressable
@@ -632,7 +639,7 @@ function BagTile({
         {entry.name}
       </Text>
       {meaning ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{meaning}</Text> : null}
-      <Text style={[styles.price, dir.text, { color: colors.textPrimary }]}>{count}</Text>
+      <Text style={[styles.price, dir.text, { color: colors.textPrimary }]}>{t('gift.bag.count', { count: formatCompact(entry.count, locale) })}</Text>
       {!enough ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{t('gift.bag.notEnough')}</Text> : null}
     </Pressable>
   );

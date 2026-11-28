@@ -24,7 +24,7 @@ import { ShowcaseChoices } from '../badges/BadgesScreen';
 import { NewChip } from '../badges/NewChip';
 import { badgeLabel, badgeMeaning, badgeName, badgeTextKey, progressText, rarityText, tierLabel } from '../badges/format';
 import { useI18n } from '../i18n/I18nContext';
-import { formatNumber } from '../i18n/format';
+import { formatCompact, formatNumber } from '../i18n/format';
 import { knownTier, leagueMeaning, leagueName } from '../leagues/format';
 import type { RootNavigation } from '../navigation/rootStack';
 import { BadgeMedal, LeagueEmblem } from '../ranks/art';
@@ -66,6 +66,12 @@ type Step = { kind: 'badge'; key: string } | { kind: 'tree' } | { kind: 'customi
 const COLUMNS = 4;
 const COLUMNS_WIDE = 5;
 const GAP = spacing.sm;
+/** How far in from the tile's corners the giver's face and the count sit. */
+const COUNT_INSET = 5;
+/** What the giver's face takes from the count's room at the tile's foot: the face, its ring, both insets and a hair. */
+const COUNT_BESIDE_FACE = COUNT_INSET * 2 + 20 + 4 + 3;
+/** How far a tile's count may shrink to stay inside its foot: only the longest short forms ("×12,3 Tsd.") need it. */
+const COUNT_FIT = 0.5;
 
 /**
  * A profile's collection in one sheet, as on the website (web/src/profile/CollectionSheet.tsx), opened from the badge
@@ -697,10 +703,14 @@ function GiftGrid({
       ) : (
         <Grid>
           {gifts.map((g) => {
-            const times = t('collection.times', { count: formatNumber(g.count, locale) });
             const newest = giver ? g.people[0]?.person : null;
             return (
-              <Tile key={g.sku} size={size} label={g.count > 1 ? `${g.name}, ${times}` : g.name} onPress={() => onOpen(g)}>
+              <Tile
+                key={g.sku}
+                size={size}
+                label={g.count > 1 ? `${g.name}, ${t('collection.times', { count: formatNumber(g.count, locale) })}` : g.name}
+                onPress={() => onOpen(g)}
+              >
                 <ItemArt url={g.assetUrl} size={size} lifted={!!newest || g.count > 1} />
                 {newest ? (
                   <View style={[styles.giver, dir.rtl ? styles.giverRtl : null, { borderColor: colors.background }]}>
@@ -708,9 +718,22 @@ function GiftGrid({
                   </View>
                 ) : null}
                 {g.count > 1 ? (
-                  <View style={[styles.count, dir.rtl ? styles.countRtl : null, { backgroundColor: colors.background }]}>
-                    <Text style={[styles.countText, { color: colors.textPrimary }]} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
-                      {times}
+                  // Short ("×3.4K"), and never wider than the tile's foot beside the giver's face.
+                  <View
+                    style={[
+                      styles.count,
+                      dir.rtl ? styles.countRtl : null,
+                      { maxWidth: size - (newest ? COUNT_BESIDE_FACE : COUNT_INSET * 2), backgroundColor: colors.background },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.countText, { color: colors.textPrimary }]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={COUNT_FIT}
+                      maxFontSizeMultiplier={fontScaleCap.fixedBox}
+                    >
+                      {t('collection.times', { count: formatCompact(g.count, locale) })}
                     </Text>
                   </View>
                 ) : null}
@@ -758,7 +781,9 @@ function GiftStep({ gift, side, onClose }: { gift: CollectionGift; side: 'receiv
       <Text style={[styles.detailName, { color: colors.textPrimary }]} accessibilityRole="header">
         {gift.name}
       </Text>
-      <Text style={[styles.centre, { color: colors.textSecondary }]}>{t('collection.times', { count: formatNumber(gift.count, locale) })}</Text>
+      <Text style={[styles.centre, { color: colors.textSecondary }]} accessibilityLabel={t('collection.times', { count: formatNumber(gift.count, locale) })}>
+        {t('collection.times', { count: formatCompact(gift.count, locale) })}
+      </Text>
       <View style={styles.people}>
         {gift.people.map((p, i) => {
           const name = p.person ? (p.person.displayName ?? p.person.username) : null;
@@ -801,7 +826,11 @@ function GiftStep({ gift, side, onClose }: { gift: CollectionGift; side: 'receiv
           );
         })}
       </View>
-      {left > 0 ? <Text style={[styles.factText, { color: colors.textSecondary }]}>{t('collection.andMore', { count: formatNumber(left, locale) })}</Text> : null}
+      {left > 0 ? (
+        <Text style={[styles.factText, { color: colors.textSecondary }]} accessibilityLabel={t('collection.andMore', { count: formatNumber(left, locale) })}>
+          {t('collection.andMore', { count: formatCompact(left, locale) })}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -847,11 +876,11 @@ const styles = StyleSheet.create({
   barFill: { height: '100%', borderRadius: radii.pill },
   worn: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
   wornFrom: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center' },
-  count: { position: 'absolute', bottom: 5, right: 5, paddingHorizontal: 6, borderRadius: radii.pill },
-  countRtl: { right: undefined, left: 5 },
+  count: { position: 'absolute', bottom: COUNT_INSET, right: COUNT_INSET, paddingHorizontal: spacing.xs, borderRadius: radii.pill },
+  countRtl: { right: undefined, left: COUNT_INSET },
   countText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
-  giver: { position: 'absolute', bottom: 5, left: 5, borderWidth: 2, borderRadius: radii.pill },
-  giverRtl: { left: undefined, right: 5 },
+  giver: { position: 'absolute', bottom: COUNT_INSET, left: COUNT_INSET, borderWidth: 2, borderRadius: radii.pill },
+  giverRtl: { left: undefined, right: COUNT_INSET },
   cards: { gap: GAP, flexWrap: 'wrap' },
   card: { flexGrow: 1, flexBasis: 140, minHeight: 64, gap: spacing.xs + 2, padding: spacing.md - 4, borderRadius: radii.lg },
   cardName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },

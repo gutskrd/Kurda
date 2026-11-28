@@ -10,7 +10,7 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { StyleSheet, type ViewStyle } from 'react-native';
-import { cleanup, waitFor } from '@testing-library/react';
+import { cleanup, screen, waitFor } from '@testing-library/react';
 import { forgetReach, pressablePropsOf, reachOf } from '../testing/reach';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -148,5 +148,17 @@ describe('a comment’s controls', () => {
     show({ top: [comment()], replies: {} });
     await waitFor(() => expect(slop('comment-face-c1')).toEqual({ top: 8, bottom: 8, left: FACE_GAP / 2, right: 8 }));
     expect(slop('comment-reply-c1')).toEqual({ top: 12, bottom: 8, left: 8, right: FACE_GAP / 2 });
+  });
+});
+
+describe('a comment’s replies', () => {
+  it.each([
+    [300, '300', '300'],
+    [3400, '3.4K', '3,400'],
+    [5_600_000, '5.6M', '5,600,000'],
+  ])('offers %i replies as %s, and says how many in full', (n, shown, whole) => {
+    show({ top: [comment({ replyCount: n })], replies: {} });
+    expect(screen.getByText(`View ${shown} replies`)).toBeTruthy();
+    expect(screen.getByRole('button', { name: `View ${whole} replies` })).toBeTruthy();
   });
 });

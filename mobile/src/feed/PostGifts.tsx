@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { giftSenderName, postGiftsLine, type GiftTier, type PostGifts, type PostGiftSender } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { formatNumber } from '../i18n/format';
+import { formatCompact, formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
 import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
@@ -74,17 +74,19 @@ export function PostGiftsRow({ item, gifts }: { item: Pick<FeedItem, 'targetType
   if (gifts.count <= 0) return null;
   const line = postGiftsLine(gifts);
   const name = line.name ?? t('gift.someone');
-  const words =
+  // The numbers are short on the row ("3.4K", "and 1.2K others") and whole for a screen reader.
+  const short = (v: number): string => formatCompact(v, locale);
+  const whole = (v: number): string => formatNumber(v, locale);
+  const givers = (n: (v: number) => string): string =>
     line.others === 0
       ? t(line.many ? 'post.gifts.fromMany' : 'post.gifts.from', { name })
-      : t(line.others === 1 ? 'post.gifts.fromOther' : 'post.gifts.fromOthers', { name, count: formatNumber(line.others, locale) });
-  const count = formatNumber(gifts.count, locale);
+      : t(line.others === 1 ? 'post.gifts.fromOther' : 'post.gifts.fromOthers', { name, count: n(line.others) });
   return (
     <>
       <Pressable
         onPress={() => setOpen(true)}
         accessibilityRole="button"
-        accessibilityLabel={`${words}, ${t('post.gifts.count', { count })}`}
+        accessibilityLabel={`${givers(whole)}, ${t('post.gifts.count', { count: whole(gifts.count) })}`}
         testID="post-gifts"
         style={({ pressed }) => [styles.row, { flexDirection: dir.row, opacity: pressed ? pressedDim : 1 }]}
       >
@@ -106,9 +108,11 @@ export function PostGiftsRow({ item, gifts }: { item: Pick<FeedItem, 'targetType
               <ItemArt key={g.sku} category="sticker" path={g.assetUrl} width={22} />
             ))}
         </View>
-        <Text style={[styles.count, { color: colors.textPrimary }]}>{count}</Text>
+        <Text style={[styles.count, { color: colors.textPrimary }]} numberOfLines={1}>
+          {short(gifts.count)}
+        </Text>
         <Text style={[styles.words, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
-          {words}
+          {givers(short)}
         </Text>
       </Pressable>
       {open ? <PostGiftsSheet post={postTarget(item)} onClose={() => setOpen(false)} /> : null}

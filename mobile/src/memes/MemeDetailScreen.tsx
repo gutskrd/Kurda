@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../i18n/I18nContext';
+import { formatCompact, formatNumber } from '../i18n/format';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -26,7 +27,7 @@ const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, like
 export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   // What is being reported, and whose it is (the Hevalo team's own posts offer no block).
   const [reporting, setReporting] = useState<{ target: ReportTarget; authorId: string | null; name?: string } | null>(null);
 
@@ -96,8 +97,12 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               <FeedCard item={item} standalone onDeleted={onExit} onChanged={(next) => setEngagement(next.engagement)} />
               <View style={styles.comments}>
-                <Text style={[styles.commentsTitle, { color: colors.textSecondary }]}>
-                  {post.commentCount === 1 ? t('composer.commentOne') : t('feed.comments', { count: post.commentCount })}
+                {/* Short ("3.4K comments"), and whole for a screen reader. */}
+                <Text
+                  style={[styles.commentsTitle, { color: colors.textSecondary }]}
+                  accessibilityLabel={post.commentCount === 1 ? undefined : t('feed.comments', { count: formatNumber(post.commentCount, locale) })}
+                >
+                  {post.commentCount === 1 ? t('composer.commentOne') : t('feed.comments', { count: formatCompact(post.commentCount, locale) })}
                 </Text>
                 <CommentList
                   thread={thread}

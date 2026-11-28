@@ -191,6 +191,18 @@ describe('the inventory (Edit profile → Cosmetics)', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Shop');
   });
 
+  it.each([
+    [300, '×300', '×300'],
+    [3400, '×3.4K', '×3,400'],
+    [5_600_000, '×5.6M', '×5,600,000'],
+  ])('says how many of a thing you hold, %i short as %s and whole for a screen reader', async (n, shown, whole) => {
+    open([...BACKGROUNDS, { ...owned('box-zer', 'Sindoq', 'other'), quantity: n }]);
+    fireEvent.click(await screen.findByRole('tab', { name: 'More, 1 item' }));
+    const line = screen.getByText(`Sindoq ${shown}`);
+    expect(line.getAttribute('aria-label')).toBe(`Sindoq ${whole}`);
+    expect(getComputedStyle(line).whiteSpace).toBe('nowrap');
+  });
+
   it('offers a search past eight of a kind, with the Kurdish letters left out', async () => {
     const many = Array.from({ length: 8 }, (_, i) => owned(`bg-${i}`, `Kilîma ${i}`, 'background'));
     open([...BACKGROUNDS, ...many]);

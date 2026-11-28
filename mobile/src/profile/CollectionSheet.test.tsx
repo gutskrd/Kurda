@@ -225,6 +225,26 @@ describe('the collection', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('UserProfile', { userId: 'u3' });
   });
 
+  it.each([
+    [300, '×300', '×300', 'and 298 more', 'and 298 more'],
+    [3400, '×3.4K', '×3,400', 'and 3.4K more', 'and 3,398 more'],
+    [5_600_000, '×5.6M', '×5,600,000', 'and 5.6M more', 'and 5,599,998 more'],
+  ])('writes a gift that came %i times short on its tile and its page, and says it whole', async (n, shown, whole, more, moreWhole) => {
+    const received = collection().received;
+    const many = { ...received, items: [{ ...received.items[0]!, name: 'Çay', count: n }] };
+    testAuth.client = fakeClient({ 'GET /users/u2/collection': ok(collection({ received: many })) });
+    renderWithProviders(<CollectionSheet visible onClose={() => undefined} owner={theirs} />);
+    fireEvent.click(screen.getByRole('radio', { name: 'Gifts' }));
+    const tile = await screen.findByRole('button', { name: `Çay, ${whole}` });
+    const chip = screen.getByText(shown);
+    expect(getComputedStyle(chip).whiteSpace).toBe('nowrap');
+    fireEvent.click(tile);
+    expect(screen.getByText(shown)).toBeTruthy();
+    expect(screen.getByLabelText(whole)).toBeTruthy();
+    expect(screen.getByText(more)).toBeTruthy();
+    expect(screen.getByLabelText(moreWhole)).toBeTruthy();
+  });
+
   it('turns into your own collection, on the same tab, from somebody else’s, and offers it to no guest', async () => {
     testAuth.client = fakeClient({
       'GET /users/u2/collection': ok(collection()),

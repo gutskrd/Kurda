@@ -78,6 +78,17 @@ function open(routes: Parameters<typeof fakeClient>[0] = {}) {
 }
 
 describe('a picture’s comments', () => {
+  it.each([
+    [300, '300', '300'],
+    [3400, '3.4K', '3,400'],
+    [5_600_000, '5.6M', '5,600,000'],
+  ])('are counted short over the thread at %i, and in full for a screen reader', async (n, shown, whole) => {
+    open({ 'GET /images/i1': ok({ ...PICTURE, commentCount: n }) });
+    const heading = await screen.findByText(`${shown} comments`);
+    expect(heading.getAttribute('aria-label')).toBe(`${whole} comments`);
+    expect(screen.getByRole('button', { name: `${whole} comments` })).toBeTruthy();
+  });
+
   it('say who and when in words, and open their replies from the picture’s own thread', async () => {
     open({ 'GET /images/comments/c1/replies?limit=50': ok({ comments: [comment('r1', { parentCommentId: 'c1', depth: 1, body: 'a reply' })] }) });
     expect(await screen.findByRole('button', { name: 'rojda — open profile' })).toBeTruthy();

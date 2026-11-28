@@ -40,7 +40,7 @@ import { useAccountGate } from '../auth/AccountGate';
 import { getEngagement } from '../feed/api';
 import { PostActions, usePostEngagement } from '../feed/FeedCard';
 import type { FeedItem, PostEngagement } from '../feed/types';
-import { formatNumber } from '../i18n/format';
+import { formatCompact, formatNumber } from '../i18n/format';
 import { HeldNote } from '../pictures/PictureReview';
 
 const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false };
@@ -165,8 +165,13 @@ export function LibraryPostScreen({ postId, openGift, onExit }: { postId: string
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               <View style={[styles.reads, { flexDirection: dir.row, alignSelf: edge }]}>
                 <Icon name="eye" size={14} color={colors.textSecondary} />
-                <Text style={[styles.readsText, { color: colors.textSecondary }]}>
-                  {t(post.viewCount === 1 ? 'library.readOne' : 'library.reads', { count: formatNumber(post.viewCount, locale) })}
+                {/* Short ("3.4K reads"), and whole for a screen reader. */}
+                <Text
+                  style={[styles.readsText, { color: colors.textSecondary }]}
+                  numberOfLines={1}
+                  accessibilityLabel={t(post.viewCount === 1 ? 'library.readOne' : 'library.reads', { count: formatNumber(post.viewCount, locale) })}
+                >
+                  {t(post.viewCount === 1 ? 'library.readOne' : 'library.reads', { count: formatCompact(post.viewCount, locale) })}
                 </Text>
               </View>
               {/* A gotin has no title; its pictures come first on its own page, words under them. */}
@@ -232,8 +237,11 @@ export function LibraryPostScreen({ postId, openGift, onExit }: { postId: string
                 </Pressable>
               ) : null}
 
-              <Text style={[styles.commentsTitle, { color: colors.textSecondary }]}>
-                {post.commentCount === 1 ? t('composer.commentOne') : t('feed.comments', { count: post.commentCount })}
+              <Text
+                style={[styles.commentsTitle, { color: colors.textSecondary }]}
+                accessibilityLabel={post.commentCount === 1 ? undefined : t('feed.comments', { count: formatNumber(post.commentCount, locale) })}
+              >
+                {post.commentCount === 1 ? t('composer.commentOne') : t('feed.comments', { count: formatCompact(post.commentCount, locale) })}
               </Text>
               <CommentList
                 thread={thread}

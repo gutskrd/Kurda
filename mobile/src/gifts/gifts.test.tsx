@@ -249,6 +249,20 @@ describe('GiftPickerSheet', () => {
     expect(screen.getByText('Grand')).toBeTruthy();
   });
 
+  it.each([
+    [300, '300', '300'],
+    [3400, '3.4K', '3,400'],
+    [5_600_000, '5.6M', '5,600,000'],
+  ])('writes %i gifts in the bag and free ones as %s, and says them whole', async (n, shown, whole) => {
+    testAuth.client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 30_000, { bag: [{ sku: CAY.sku, name: 'Çay', assetUrl: null, count: n }], freeGifts: n }) });
+    dmSheet();
+    expect(await screen.findByText(`${shown} in your bag`)).toBeTruthy();
+    expect(within(screen.getByTestId('gift-bag')).getByRole('radio', { name: `Çay, A glass of tea, ${whole} in your bag, From your bag, free` })).toBeTruthy();
+    const free = screen.getByText(`${shown} free`);
+    expect(free.getAttribute('aria-label')).toBe(`${whole} free`);
+    expect(getComputedStyle(free).whiteSpace).toBe('nowrap');
+  });
+
   it('says how many gifts are left for a friend today when few are, and holds the send once there are none', async () => {
     testAuth.client = fakeClient({ 'GET /gifts/catalog?to=u2': shelfOf(SHELF, 30_000, { dayLeft: [{ userId: 'u2', left: 2, moreAt: null }] }) });
     const first = dmSheet();
