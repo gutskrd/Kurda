@@ -45,7 +45,7 @@ describe('the gift catalogue', () => {
 
   it('keeps the clove apple, a token of courtship, beside the apple and between adults only', () => {
     expect(GIFTS.filter((g) => g.adultsOnly).map((g) => g.id)).toEqual(['sev-mexek']);
-    expect(giftOfSku('gift-sev-mexek')).toMatchObject({ name: 'Sêva mêxekî', group: 'warm', price: 100, earnedFree: false });
+    expect(giftOfSku('gift-sev-mexek')).toMatchObject({ name: 'Sêva Mêxekrêj', group: 'warm', price: 100, earnedFree: false });
     expect(giftForAdultsOnly('gift-sev-mexek')).toBe(true);
     expect(giftForAdultsOnly('gift-sev')).toBe(false);
     expect(giftForAdultsOnly('bg-made-bihar')).toBe(false);

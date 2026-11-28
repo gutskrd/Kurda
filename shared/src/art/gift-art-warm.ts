@@ -536,7 +536,7 @@ function appleStalk(dr: Drawing, rnd: Rnd, kind: 'stalk' | 'clove'): void {
   paint(dr, ellipse(58.4, 31.8, 0.9, 0.8), '#e6c47c', 0.9);
 }
 
-// ───────────────────────────────────────────────────────────── sêva mêxekî
+// ───────────────────────────────────────────────────────────── sêva mêxekrêj
 
 /** Cloves dried to a dark bronze, by how far each turns from the light: its four sepals, the bud's head and the light on it. */
 const CLOVE = [
