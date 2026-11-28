@@ -6,15 +6,16 @@ export const piece = {
   key: 'pisik-qurdele',
   ku: 'Pisîka Bi Qurdele',
   en: 'Kitten with a bow',
-  // a fluffy white kitten sitting side-on and looking back at us over its shoulder, its tail wrapped round its front
-  // paws: its fur painted white with soft blue-grey shade and warm light, pink in its ears and on its nose, big dark
-  // eyes, a red ribbon tied in a bow at its throat with two short ends, and inked over in a soft dark pencil line
+  // a small fluffy cream kitten sitting square on to us, its big head on a little bell-shaped body, tufts of fur at its
+  // cheeks, chest and tail, its plumed tail curling up at its side: soft toasted marks on its ears and brow, dot eyes
+  // and a pink nose, and a red ribbon tied in a bow at its neck whose long tails trail and curl down beside it; painted
+  // in warm creams with soft taupe shade and inked over in a soft dark pencil line that swells, thins and breaks
   still(rnd) {
-    const s = new Still(rnd).place([-3, -22], 0.96);
-    const [FUR, SHADE, DEEP, WARM, LIGHT] = ['#f6f2ec', '#bfc8d7', '#97a3b8', '#f7e9d4', '#fffbf2'];
-    const [PINK, NOSE] = ['#f1aeb0', '#e1878d'];
-    const [RED, RED_DEEP, RED_LIT] = ['#c42f2f', '#8a1c22', '#e8604f'];
-    const INK = '#2e2222';
+    const s = new Still(rnd).place([12, 0], 1.15);
+    const [FUR, SHADE, DEEP, WARM, LIGHT, MARK] = ['#fbf0e0', '#d8c0b2', '#b6998e', '#f1d9ba', '#fffaf2', '#b08a70'];
+    const [PINK, NOSE] = ['#f2b0ae', '#e0837f'];
+    const [RED, RED_DEEP, RED_LIT] = ['#c8352f', '#8e1f22', '#e8634f'];
+    const INK = '#2a1c16';
     const { lay, wash, brush, line } = painter(rnd, INK);
     const clip = (cv, d, draw) => {
       cv.add(`<g clip-path="${within(cv, d)}">`);
@@ -23,176 +24,194 @@ export const piece = {
     };
     const seg = (P, i, j) => Array.from({ length: ((j - i + P.length) % P.length) + 1 }, (_, k) => P[(i + k) % P.length]);
     const loop = (P) => [...P, P[0], P[1]];
-    // Fur standing off an edge: between `from` and `to` most stretches of the outline get a tuft pushed out from them,
-    // some bigger than others, so the paint and the line both run in soft uneven points. `side` is 1 for an outline drawn
-    // clockwise, -1 for one drawn the other way.
-    const fluffy = (P, amp, side, from = 0, to = P.length) => {
+    // Fur standing off an open edge: each stretch from `from` to `to` gets a tuft that rises gently and drops back
+    // short, so it leans the way the edge runs, as fur lies. `side` 1 pushes it to the left of the way the edge runs.
+    const tufts = (P, amp, side, from = 0, to = P.length - 1) => {
       const out = [];
       P.forEach((a, i) => {
         out.push(a);
-        if (i < from || i >= to || rnd() < 0.25) return;
-        const b = P[(i + 1) % P.length];
-        const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
-        const k = amp * (0.3 + rnd() * 1.2);
-        const t = 0.45 + rnd() * 0.2;
-        out.push([a[0] + (b[0] - a[0]) * t + ((b[1] - a[1]) / l) * k * side, a[1] + (b[1] - a[1]) * t - ((b[0] - a[0]) / l) * k * side]);
+        if (i < from || i >= to) return;
+        const b = P[i + 1];
+        const [dx, dy] = [b[0] - a[0], b[1] - a[1]];
+        const l = Math.hypot(dx, dy) || 1;
+        const [nx, ny] = [(dy / l) * side, (-dx / l) * side];
+        const k = amp * (0.5 + rnd() * 0.9);
+        const at = (t, o) => [a[0] + dx * t + nx * o, a[1] + dy * t + ny * o];
+        out.push(at(0.25, k * 0.3), at(0.58, k), at(0.8, k * 0.25));
       });
       return out;
     };
-    // A tail along `pts`, `w0` wide at its root and `w1` at its tip: its two sides, to outline and to ink.
-    const tube = (pts, w0, w1) => {
-      const c = along(pts, 20);
+    // A tail or a ribbon along `pts`, as wide as `width(t)` at each point along it: its two sides.
+    const tube = (pts, width, count = 20) => {
+      const c = along(pts, count);
       const [L, R] = [[], []];
       c.forEach((p, i) => {
         const [a, b] = [c[Math.max(0, i - 1)], c[Math.min(c.length - 1, i + 1)]];
         const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
-        const w = (w0 + ((w1 - w0) * i) / (c.length - 1)) / 2;
+        const w = width(i / (c.length - 1)) / 2;
         L.push([p[0] - ((b[1] - a[1]) / l) * w, p[1] + ((b[0] - a[0]) / l) * w]);
         R.push([p[0] + ((b[1] - a[1]) / l) * w, p[1] - ((b[0] - a[0]) / l) * w]);
       });
-      return { L, R };
+      return { L, R, c };
+    };
+    // A ribbon's tail: it narrows where it twists and ends cut in a notch.
+    const ribbon = (pts, w, twists) => {
+      const t = tube(pts, (u) => w * (0.45 + 0.55 * Math.abs(Math.cos(u * Math.PI * twists))) * (1 - 0.1 * u));
+      const notch = t.c.at(-3);
+      return { ...t, d: spline([...t.L, notch, ...[...t.R].reverse()]), notch };
     };
 
-    // The body is side-on, facing right, so the haunch can sit round and low behind and the head turn back over it.
-    const back = fluffy([[236, 214], [206, 236], [172, 258], [142, 286], [118, 322], [106, 362]], 7, -1, 0, 5);
-    const rump = fluffy([[106, 362], [108, 402], [120, 432], [142, 450], [176, 458]], 7, -1, 0, 4);
-    const chest = fluffy([[350, 448], [354, 410], [356, 366], [354, 322], [346, 288], [332, 258]], 6, -1, 0, 5);
-    const body = [...back, ...rump.slice(1), [230, 468], [290, 468], [332, 466], ...chest, [300, 238]];
-    const legNear = [[300, 360], [334, 356], [340, 400], [342, 440], [346, 458], [314, 462], [306, 440], [302, 400]];
-    const pawNear = [330, 455];
-    const pawFar = [358, 451];
-    // The tail runs from behind the haunch along the ground and round the front of the paws.
-    const TAIL = [[142, 414], [134, 446], [154, 468], [206, 478], [268, 480], [324, 476], [364, 466], [390, 448], [402, 428]];
-    const tail = tube(TAIL, 24, 22);
-    const tailL = fluffy(tail.L.filter((_, i) => i % 2 === 0), 5, -1, 0, 10);
-    const tailR = fluffy(tail.R.filter((_, i) => i % 2 === 0), 4, 1, 0, 10);
-    const [end, before] = [TAIL.at(-1), TAIL.at(-2)];
-    const toward = Math.atan2(end[1] - before[1], end[0] - before[0]);
-    const tip = [70, 30, -8, -44, -76].map((deg) => toward + (deg * Math.PI) / 180).map((a) => [end[0] + Math.cos(a) * 13, end[1] + Math.sin(a) * 13]);
-    const tailD = spline([...tailL, ...tip, ...[...tailR].reverse()]);
-    const crown = [[204, 160], [214, 140], [236, 112], [270, 98], [306, 98], [340, 110], [364, 132], [376, 162], [376, 192]];
-    const cheekNear = fluffy([[376, 192], [388, 214], [370, 222], [362, 240], [338, 256], [302, 264]], 4, 1, 0, 5);
-    const cheekFar = fluffy([[302, 264], [266, 262], [236, 252], [214, 238], [194, 226], [206, 212], [200, 186], [204, 160]], 4, 1, 0, 7);
-    const head = [...crown.slice(1), ...cheekNear.slice(1), ...cheekFar.slice(1)];
-    const earFar = [[224, 132], [214, 98], [214, 70], [222, 58], [244, 70], [264, 92], [276, 104]];
-    const earNear = [[306, 100], [330, 76], [352, 56], [364, 56], [370, 86], [372, 118], [366, 146]];
-    const band = [[226, 252], [262, 266], [300, 272], [332, 266], [336, 278], [302, 286], [258, 280], [224, 264]];
-    const KNOT = [326, 274];
-    const loopL = [[318, 270], [298, 254], [282, 250], [276, 264], [282, 282], [300, 288], [318, 280]];
-    const loopR = [[334, 270], [352, 252], [370, 248], [378, 262], [372, 282], [354, 290], [334, 280]];
-    const endL = [[320, 282], [312, 300], [304, 318], [294, 322], [300, 310], [290, 312], [306, 286]];
-    const endR = [[332, 282], [342, 302], [352, 318], [362, 316], [356, 306], [366, 304], [342, 284]];
+    // The tail rises at the kitten's side from behind its haunch, a plume whose tip curls back toward the body.
+    const TAIL = [[200, 424], [166, 430], [136, 416], [118, 388], [110, 356], [114, 326], [128, 304], [148, 296]];
+    const tail = tube(TAIL, (u) => 30 + 22 * Math.sin(Math.PI * u) ** 0.7 - 6 * u);
+    const tailIn = tufts(tail.L.filter((_, i) => i % 4 === 0), 6, -1, 2);
+    const tailOut = tufts(tail.R.filter((_, i) => i % 4 === 0), 11, 1);
+    const [tEnd, tBefore] = [20, 19].map((i) => [(tail.L[i][0] + tail.R[i][0]) / 2, (tail.L[i][1] + tail.R[i][1]) / 2]);
+    const toward = Math.atan2(tEnd[1] - tBefore[1], tEnd[0] - tBefore[0]);
+    const tailTip = [[75, 11], [35, 14], [0, 15], [-35, 14], [-75, 11]].map(([deg, r]) => [toward + (deg * Math.PI) / 180, r])
+      .map(([a, r]) => [tEnd[0] + Math.cos(a) * r, tEnd[1] + Math.sin(a) * r]);
+    const tailD = spline([...tailIn, ...tailTip, ...[...tailOut].reverse()]);
+    // A little bell-shaped body under a big head: narrow at the neck, round at the haunches, flat where it sits.
+    const SIDE = [[206, 256], [190, 282], [176, 312], [162, 346], [152, 380], [152, 410], [164, 432], [188, 442]];
+    const sideL = tufts(SIDE, 6, -1, 1, 6);
+    const sideR = tufts(SIDE.map(([x, y]) => [500 - x, y]), 6, 1, 1, 6);
+    const body = [...sideL, [220, 446], [250, 448], [280, 446], ...[...sideR].reverse()];
+    const bibL = tufts([[208, 262], [214, 290], [228, 314], [250, 336]], 7, -1);
+    const bibR = tufts([[292, 262], [286, 290], [272, 314], [250, 336]], 7, 1);
+    const bib = [...bibL, ...[...bibR].reverse().slice(1)];
+    const legs = [[[232, 348], [230, 390], [228, 428]], [[268, 348], [270, 390], [272, 428]]];
+    const haunches = [[[206, 350], [188, 384], [188, 414], [204, 436]], [[294, 350], [312, 384], [312, 414], [296, 436]]];
+    const paws = [[222, 438], [278, 438]];
+    // The head is a kitten's: wide at the cheeks, where the fur stands out in tufts, and round on top.
+    const crown = tufts([[164, 176], [166, 146], [182, 120], [212, 104], [250, 100], [288, 104], [318, 120], [334, 146], [336, 176]], 5, 1, 3, 5);
+    const cheekR = tufts([[336, 176], [352, 200], [350, 226], [332, 248], [300, 262], [272, 268]], 8, 1, 0, 4);
+    const cheekL = tufts([[164, 176], [148, 200], [150, 226], [168, 248], [200, 262], [228, 268]], 8, -1, 0, 4);
+    const head = [...crown, ...cheekR.slice(1), [250, 270], ...[...cheekL].reverse().slice(0, -1)];
+    const earL = [[168, 164], [160, 122], [164, 86], [172, 62], [198, 78], [222, 96], [238, 110]];
+    const earR = earL.map(([x, y]) => [500 - x, y]).reverse();
+    const innerL = [[176, 142], [172, 110], [178, 82], [198, 94], [216, 108]];
+    const innerR = innerL.map(([x, y]) => [500 - x, y]).reverse();
+    // The ribbon: a band round the neck, a bow at the side of the chin, and two long tails trailing down.
+    const band = [[196, 252], [236, 264], [272, 268], [304, 260], [308, 274], [272, 284], [234, 280], [194, 266]];
+    const KNOT = [304, 266];
+    const loopUp = [[302, 260], [318, 242], [340, 226], [364, 220], [380, 230], [374, 250], [350, 264], [318, 270]];
+    const loopDown = [[306, 272], [326, 276], [350, 286], [366, 302], [354, 314], [330, 306], [310, 286]];
+    const tailsOf = [ribbon([[298, 274], [290, 300], [294, 330], [306, 354], [320, 372]], 16, 1), ribbon([[312, 274], [338, 298], [356, 330], [364, 366],
+      [360, 398], [364, 424], [380, 440], [398, 440], [406, 428]], 17, 1.5)];
+    const D = Object.fromEntries(Object.entries({ body, bib, head, band, loopUp, loopDown }).map(([k, v]) => [k, spline(v)]));
 
     // Each part is inked as soon as it is painted, so the parts in front of it cover its line as they cover its paint.
     s.paint((cv) => {
-      // The tail is painted twice: first under the haunch, which hides its root, and again over the paws, which it
-      // wraps in front of.
-      const tailOf = () => {
-        lay(cv, tailD, FUR, 2.8);
-        clip(cv, tailD, () => {
-          brush(cv, tail.L.slice(2), 14, SHADE, 0.75, 'x');
-          brush(cv, tail.R.slice(4, 17), 9, WARM, 0.6, 'x');
-          brush(cv, tail.R.slice(15), 10, LIGHT, 0.9, 'y');
-          strokes(cv, rnd, tailD, [100, 400, 420, 504], { count: 24, colours: [SHADE], flow: () => 10, spread: 30, length: 12, width: 2, opacity: [0.3, 0.6] });
-        });
-        const half = Math.floor(tailL.length / 2);
-        line(cv, tailL.slice(1, half + 1), 6.2, { start: 0.3, end: 0.5, count: 40 });
-        line(cv, tailL.slice(half), 6.2, { start: 0.5, end: 0.4, count: 40 });
-        line(cv, tailR.slice(2), 5.4, { start: 0.2, end: 0.3, count: 60 });
-        line(cv, [tail.L.at(-1), ...tip, tail.R.at(-1)], 5.8, { start: 0.4, end: 0.3 });
-      };
-      tailOf();
-      // White fur takes its form from colour alone: warm where the light falls on the back and haunch, blue-grey under
-      // the head, down the chest and round the haunch, with streaks brushed along the way the fur lies.
-      const B = spline(body);
-      lay(cv, B, FUR, 2.8);
-      clip(cv, B, () => {
-        wash(cv, blob(rnd, [300, 300], 50, 34, 10, 0.05), SHADE, 14, 0.9);
-        wash(cv, spline([[150, 470], [300, 474], [356, 450], [350, 410], [300, 444], [200, 452]]), DEEP, 10, 0.7);
-        brush(cv, [[344, 296], [352, 350], [348, 420]], 22, SHADE, 0.6, 'y');
-        brush(cv, [[120, 360], [124, 410], [150, 452]], 22, SHADE, 0.5, 'y');
-        brush(cv, [[206, 300], [252, 318], [278, 362], [284, 412], [270, 452]], 22, SHADE, 0.7, 'y');
-        brush(cv, [[176, 262], [150, 286], [128, 322]], 18, WARM, 0.6, 'y');
-        brush(cv, [[150, 304], [196, 296], [236, 310]], 22, WARM, 0.55, 'x');
-        brush(cv, [[112, 372], [118, 420], [146, 456], [196, 468]], 20, SHADE, 0.75, 'y');
-        brush(cv, [[136, 332], [134, 372], [146, 410]], 16, LIGHT, 0.9, 'y');
-        for (const [pts, w, c] of [
-          [[[300, 262], [312, 290], [318, 318]], 7, SHADE], [[[320, 266], [330, 294], [334, 326]], 6, SHADE], [[[160, 330], [168, 360], [166, 392]], 7, LIGHT],
-          [[[190, 340], [198, 372], [194, 404]], 6, LIGHT], [[[230, 380], [244, 410], [242, 440]], 7, SHADE], [[[140, 300], [176, 290]], 6, LIGHT],
-        ]) brush(cv, pts, w, c, 0.75, 'y');
-        strokes(cv, rnd, B, [110, 240, 356, 466], { count: 56, colours: [SHADE, SHADE, LIGHT], flow: (x) => (x > 290 ? 95 : 60), spread: 30, length: 13, width: 2.2,
+      // The tail: warm on its lit side, taupe on the other, and toasted at its tip.
+      lay(cv, tailD, FUR, 2.8);
+      clip(cv, tailD, () => {
+        brush(cv, tail.R.slice(2), 18, SHADE, 0.8, 'y');
+        brush(cv, tail.L.slice(6, 18), 12, WARM, 0.7, 'y');
+        wash(cv, blob(rnd, tEnd, 22, 20, 0, 0.05), MARK, 8, 0.65);
+        strokes(cv, rnd, tailD, [76, 270, 210, 450], { count: 22, colours: [SHADE, LIGHT], flow: () => -80, spread: 40, length: 12, width: 2,
           opacity: [0.35, 0.7] });
       });
-      line(cv, back, 6.2, { start: 0.3, end: 0.5, count: 40 });
-      line(cv, rump, 6.4, { start: 0.5, end: 0.3, count: 40 });
-      line(cv, chest.slice(0, 7), 6, { start: 0.3, end: 0.5, count: 30 });
-      line(cv, chest.slice(6), 6, { start: 0.5, end: 0.3, count: 30 });
-      line(cv, [[196, 300], [240, 306], [270, 340], [282, 390], [276, 434]], 5.4, { start: 0.2, end: 0.15, peak: 0.35 });
-      lay(cv, spline(legNear), FUR, 2.8);
-      clip(cv, spline(legNear), () => brush(cv, [[332, 362], [336, 410], [340, 456]], 14, SHADE, 0.6, 'y'));
-      line(cv, seg(legNear, 1, 4), 5.4, { start: 0.3, end: 0.3 });
-      line(cv, seg(legNear, 5, 7), 5, { start: 0.3, end: 0.1 });
-      for (const [c, rx] of [[pawFar, 18], [pawNear, 22]]) {
-        lay(cv, blob(rnd, c, rx, 13, -4, 0.05), FUR, 2.8);
-        const [x, y] = c;
-        clip(cv, blob(rnd, c, rx, 13, -4, 0.05), () => wash(cv, blob(rnd, [x + 8, y + 7], rx, 7, 0, 0.05), SHADE, 4, 0.8));
-        line(cv, [[x - rx, y + 4], [x - rx * 0.7, y - 9], [x, y - 13], [x + rx * 0.8, y - 8], [x + rx, y + 4]], 5, { start: 0.3, end: 0.3 });
-        line(cv, [[x + rx * 0.2, y - 6], [x + rx * 0.25, y + 2]], 2.6, { start: 0.6, end: 0.3 });
+      line(cv, [...tailTip, ...[...tailOut].reverse()], 5, { start: 0.4, end: 0.3, count: 60 });
+      line(cv, [...tailIn.slice(-12), tailTip[0]], 4.6, { start: 0.2, end: 0.4, count: 30 });
+      // The body: taupe down the side away from the light, under the head and between the legs; warm light on the other side.
+      lay(cv, D.body, FUR, 2.8);
+      clip(cv, D.body, () => {
+        brush(cv, [[314, 286], [342, 370], [334, 432]], 28, SHADE, 0.85, 'y');
+        wash(cv, blob(rnd, [326, 420], 22, 30, 0, 0.05), DEEP, 10, 0.45);
+        brush(cv, [[184, 300], [162, 370], [166, 420]], 20, WARM, 0.85, 'y');
+        brush(cv, [[168, 434], [250, 448], [332, 434]], 14, SHADE, 0.7, 'x');
+        wash(cv, spline([[238, 380], [262, 380], [262, 428], [250, 448], [238, 428]]), DEEP, 7, 0.55);
+        wash(cv, spline([[200, 256], [250, 274], [300, 256], [296, 288], [250, 300], [204, 288]]), SHADE, 8, 0.8);
+        for (const h of haunches) brush(cv, h, 12, SHADE, 0.55, 'y');
+        strokes(cv, rnd, D.body, [150, 256, 350, 448], { count: 40, colours: [SHADE, SHADE, LIGHT], flow: (x) => (x < 250 ? 100 : 80), spread: 30, length: 12,
+          width: 2, opacity: [0.35, 0.7] });
+      });
+      line(cv, sideL, 5.2, { start: 0.3, end: 0.5, count: 50 });
+      line(cv, sideR, 5.2, { start: 0.3, end: 0.5, count: 50 });
+      line(cv, [[176, 438], [220, 446], [240, 448]], 5, { start: 0.3, end: 0.2 });
+      line(cv, [[260, 448], [280, 446], [324, 438]], 5, { start: 0.2, end: 0.3 });
+      // The haunches and the front legs between them, down to two little paws.
+      for (const h of haunches) line(cv, h, 4.4, { start: 0.1, end: 0.4, peak: 0.6 });
+      for (const leg of legs) line(cv, leg, 4.6, { start: 0.1, end: 0.5, peak: 0.7 });
+      for (const [x, y] of paws) {
+        const paw = blob(rnd, [x, y], 18, 11, 0, 0.05);
+        lay(cv, paw, FUR, 2.8);
+        clip(cv, paw, () => wash(cv, blob(rnd, [x + 5, y + 6], 16, 6, 0, 0.05), SHADE, 4, 0.8));
+        line(cv, [[x - 18, y + 4], [x - 13, y - 7], [x, y - 11], [x + 13, y - 7], [x + 18, y + 4]], 4.6, { start: 0.3, end: 0.3 });
+        for (const dx of [-5, 5]) line(cv, [[x + dx, y - 1], [x + dx, y + 6]], 2.2, { start: 0.6, end: 0.3 });
       }
-      clip(cv, 'M176 380 L520 380 L520 520 L176 520 Z', tailOf);
-      // The ribbon's band goes on before the head, so the chin sits over it.
-      lay(cv, spline(band), RED, 2.8);
-      clip(cv, spline(band), () => brush(cv, [[226, 266], [270, 280], [334, 276]], 8, RED_DEEP, 0.7, 'x'));
-      line(cv, seg(band, 4, 7), 4.4, { start: 0.3, end: 0.3 });
-      // The head tips toward its shoulder, as a kitten's does when it looks round.
-      cv.add('<g transform="rotate(-7 290 190)">');
-      const inners = [[[228, 124], [222, 92], [224, 72], [244, 84], [262, 104]], [[314, 102], [336, 82], [356, 66], [362, 92], [362, 128]]];
-      for (const [ear, inner] of [[earFar, inners[0]], [earNear, inners[1]]]) {
+      // The chest fluff, light, in a soft point of tufts under the chin.
+      lay(cv, D.bib, LIGHT, 2.4);
+      clip(cv, D.bib, () => brush(cv, [[272, 270], [276, 300], [262, 326]], 12, SHADE, 0.45, 'y'));
+      line(cv, bibL.slice(-6), 3.6, { start: 0.1, end: 0.4, count: 30 });
+      line(cv, bibR.slice(-6), 3.6, { start: 0.1, end: 0.4, count: 30 });
+      // The band goes on before the head, so the chin sits over it.
+      lay(cv, D.band, RED, 2.8);
+      clip(cv, D.band, () => brush(cv, [[196, 264], [250, 278], [310, 272]], 8, RED_DEEP, 0.7, 'x'));
+      line(cv, seg(band, 4, 7), 4, { start: 0.3, end: 0.3 });
+      // The ears, pink inside with pale tufts, and toasted at their tips.
+      for (const [ear, inner, tip] of [[earL, innerL, earL[3]], [earR, innerR, earR[3]]]) {
         lay(cv, spline(ear), FUR, 2.8);
+        clip(cv, spline(ear), () => wash(cv, blob(rnd, tip, 24, 24, 0, 0.05), MARK, 6, 0.85));
         lay(cv, spline(inner), PINK, 2.4);
-        clip(cv, spline(inner), () => wash(cv, spline(inner.slice(1, 4)), '#d98a92', 6, 0.5));
-        line(cv, ear, 6, { start: 0.3, end: 0.3 });
+        clip(cv, spline(inner), () => {
+          wash(cv, spline(inner.slice(1, 4)), '#d98a92', 6, 0.5);
+          const mid = [(inner[0][0] + inner[4][0]) / 2, (inner[0][1] + inner[4][1]) / 2];
+          for (const k of [0, 4]) brush(cv, [inner[k], [mid[0], mid[1] - 22]], 4, LIGHT, 0.9, 'y');
+        });
+        line(cv, ear, 5, { start: 0.3, end: 0.3 });
       }
-      const H = spline(head);
-      lay(cv, H, FUR, 2.8);
-      clip(cv, H, () => {
-        brush(cv, [[368, 150], [380, 196], [360, 240], [330, 258]], 26, SHADE, 0.75, 'y');
-        brush(cv, [[226, 240], [280, 262], [340, 256]], 18, SHADE, 0.7, 'x');
-        wash(cv, blob(rnd, [262, 126], 54, 22, -4, 0.05), WARM, 10, 0.9);
-        brush(cv, [[206, 168], [204, 200], [218, 230]], 14, LIGHT, 0.9, 'y');
-        wash(cv, blob(rnd, [228, 210], 16, 10, 0, 0.05), PINK, 7, 0.45);
-        wash(cv, blob(rnd, [326, 208], 20, 10, 0, 0.05), PINK, 7, 0.45);
-        strokes(cv, rnd, H, [196, 96, 388, 264], { count: 40, colours: [SHADE, WARM], flow: (x) => (x < 280 ? -115 : -65), spread: 30, length: 10, width: 1.8,
+      // The head: taupe under the chin and down the far cheek, warm light over the brow, soft tabby marks on top.
+      lay(cv, D.head, FUR, 2.8);
+      clip(cv, D.head, () => {
+        brush(cv, [[334, 150], [350, 204], [330, 246], [300, 262]], 26, SHADE, 0.85, 'y');
+        brush(cv, [[200, 256], [250, 270], [300, 258]], 14, SHADE, 0.7, 'x');
+        wash(cv, blob(rnd, [226, 128], 46, 20, -10, 0.05), WARM, 10, 0.9);
+        brush(cv, [[166, 164], [156, 204], [172, 238]], 14, LIGHT, 0.9, 'y');
+        for (const [pts, w] of [
+          [[[234, 106], [238, 124]], 6], [[[250, 102], [250, 122]], 6.5], [[[266, 106], [262, 124]], 6],
+          [[[160, 190], [174, 192]], 5], [[[158, 208], [172, 208]], 5], [[[340, 190], [326, 192]], 5], [[[342, 208], [328, 208]], 5],
+        ]) brush(cv, pts, w, MARK, 0.6, 'y');
+        wash(cv, blob(rnd, [198, 220], 16, 9, 0, 0.05), PINK, 6, 0.6);
+        wash(cv, blob(rnd, [302, 220], 16, 9, 0, 0.05), PINK, 6, 0.6);
+        strokes(cv, rnd, D.head, [148, 98, 352, 270], { count: 36, colours: [SHADE, WARM], flow: (x) => (x < 250 ? -115 : -65), spread: 30, length: 10, width: 1.8,
           opacity: [0.3, 0.6] });
       });
-      line(cv, crown, 6.2, { start: 0.4, end: 0.3, count: 40 });
-      line(cv, cheekNear, 6, { start: 0.3, end: 0.4, count: 30 });
-      line(cv, cheekFar, 6, { start: 0.4, end: 0.3, count: 40 });
-      // Big dark eyes with two glints each keep the face a kitten's even at the smallest size.
-      for (const [c, rx, ry] of [[[242, 172], 14, 17.5], [[306, 170], 17, 20]]) {
-        cv.add(`<path d="${blob(rnd, c, rx, ry, 0, 0.03)}" fill="${INK}" filter="${crayon(cv, rnd, { keep: 3.6, tear: 1.2, grain: 1.2 })}"/>`);
-        cv.add(`<path d="${blob(rnd, [c[0] + rx * 0.1, c[1] + ry * 0.35], rx * 0.7, ry * 0.45, 0, 0.03)}" fill="#5a4a5e" fill-opacity="0.7"/>`);
-        cv.add(`<circle cx="${c[0] - rx * 0.32}" cy="${c[1] - ry * 0.36}" r="${rx * 0.34}" fill="#fffaf0"/>`);
-        cv.add(`<circle cx="${c[0] + rx * 0.38}" cy="${c[1] + ry * 0.3}" r="${rx * 0.14}" fill="#fffaf0" fill-opacity="0.85"/>`);
+      line(cv, crown, 5.4, { start: 0.4, end: 0.3, count: 40 });
+      line(cv, cheekR, 5, { start: 0.3, end: 0.4, count: 50 });
+      line(cv, cheekL, 5, { start: 0.3, end: 0.4, count: 50 });
+      // Dot eyes, a little glint in each, and a small pink nose over a soft mouth.
+      for (const [x, y] of [[214, 194], [286, 194]]) {
+        cv.add(`<path d="${blob(rnd, [x, y], 10, 11.5, 0, 0.04)}" fill="${INK}" filter="${crayon(cv, rnd, { keep: 3.6, tear: 1.2, grain: 1.2 })}"/>`);
+        cv.add(`<circle cx="${x - 3.4}" cy="${y - 3.8}" r="3.3" fill="#fffaf0"/>`);
+        cv.add(`<circle cx="${x + 3.8}" cy="${y + 4}" r="1.4" fill="#fffaf0" fill-opacity="0.85"/>`);
       }
-      const nose = spline([[263, 198], [272, 197], [281, 199], [277, 205], [272, 209], [267, 205]]);
+      const nose = spline([[241, 212], [250, 210], [259, 212], [255, 218], [250, 222], [245, 218]]);
       cv.add(`<path d="${nose}" fill="${NOSE}" filter="${crayon(cv, rnd, { keep: 3.4, tear: 1, grain: 1.2 })}"/>`);
-      line(cv, [[272, 209], [272, 215]], 2.8, { start: 0.8, end: 0.6 });
-      line(cv, [[262, 218], [267, 221], [272, 215]], 2.8, { start: 0.4, end: 0.8, peak: 0.6 });
-      line(cv, [[272, 215], [277, 221], [282, 218]], 2.8, { start: 0.8, end: 0.4, peak: 0.4 });
-      cv.add('</g>');
-      // The bow goes on last, over the chin and chest: two loops, a knot and two short ends cut in a notch.
-      for (const part of [endL, endR, loopL, loopR]) {
-        lay(cv, spline(part), RED, 2.8);
-        clip(cv, spline(part), () => {
-          brush(cv, [part[0], part[3]], 9, RED_DEEP, 0.7, 'x');
-          brush(cv, [part[1], part[2]], 6, RED_LIT, 0.7, 'x');
+      line(cv, [[250, 222], [250, 228]], 2.6, { start: 0.8, end: 0.6 });
+      line(cv, [[240, 231], [245, 234], [250, 228]], 2.6, { start: 0.4, end: 0.8, peak: 0.6 });
+      line(cv, [[250, 228], [255, 234], [260, 231]], 2.6, { start: 0.8, end: 0.4, peak: 0.4 });
+      // The bow last, over the chin and chest: its tails first, then its loops and the knot that holds them.
+      for (const r of tailsOf) {
+        lay(cv, r.d, RED, 2.8);
+        clip(cv, r.d, () => {
+          brush(cv, r.R, 7, RED_DEEP, 0.7, 'y');
+          brush(cv, r.L.slice(2, 14), 5, RED_LIT, 0.7, 'y');
         });
-        line(cv, loop(part), 3.8, { start: 0.3, end: 0.3, count: 40 });
+        line(cv, r.L, 3.6, { start: 0.3, end: 0.3, count: 40 });
+        line(cv, [r.L.at(-1), r.notch, r.R.at(-1), ...[...r.R].reverse()], 3.6, { start: 0.3, end: 0.3, count: 40 });
       }
-      lay(cv, blob(rnd, KNOT, 9, 10, 0, 0.05), RED_DEEP, 2.8);
-      line(cv, [[KNOT[0] - 8, KNOT[1] - 8], [KNOT[0] - 9, KNOT[1] + 3], [KNOT[0] - 3, KNOT[1] + 10]], 3.6, { start: 0.3, end: 0.3 });
-      line(cv, [[KNOT[0] + 8, KNOT[1] - 8], [KNOT[0] + 9, KNOT[1] + 3], [KNOT[0] + 3, KNOT[1] + 10]], 3.6, { start: 0.3, end: 0.3 });
+      for (const [P, d] of [[loopUp, D.loopUp], [loopDown, D.loopDown]]) {
+        lay(cv, d, RED, 2.8);
+        clip(cv, d, () => {
+          brush(cv, P.slice(4), 10, RED_DEEP, 0.75, 'x');
+          brush(cv, P.slice(1, 4), 6, RED_LIT, 0.75, 'x');
+        });
+        line(cv, loop(P), 3.6, { start: 0.3, end: 0.3, count: 40 });
+      }
+      lay(cv, blob(rnd, KNOT, 10, 11, 0, 0.05), RED_DEEP, 2.8);
+      line(cv, [[KNOT[0] - 8, KNOT[1] - 9], [KNOT[0] - 10, KNOT[1] + 2], [KNOT[0] - 4, KNOT[1] + 11]], 3.2, { start: 0.3, end: 0.3 });
+      line(cv, [[KNOT[0] + 8, KNOT[1] - 9], [KNOT[0] + 10, KNOT[1] + 2], [KNOT[0] + 4, KNOT[1] + 11]], 3.2, { start: 0.3, end: 0.3 });
     });
     return s.done({ finish: { paint: 0, grain: 0.008, contrast: 0, saturation: 1, warmth: 0 } });
   },

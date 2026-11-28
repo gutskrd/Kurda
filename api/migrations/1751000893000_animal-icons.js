@@ -1,7 +1,7 @@
 /**
  * Ten animal icons go on sale beside the made ones, painted by the generator as the other icons are
- * (scripts/cosmetic-art/icons-friends.mjs): a rabbit with a barbell, a fox knight, a cat in boots, a kitten with a bow, a
- * blue dove, two bears, a cow, a hen and a kiwi. Like every made icon they are bought with Zêr and lent to members (`premium_only`).
+ * (scripts/cosmetic-art/icons-friends.mjs): a strong rabbit, a fox knight, a cat in boots, a kitten with a bow, a duck,
+ * two bears, a cow, a hen and a kiwi. Like every made icon they are bought with Zêr and lent to members (`premium_only`).
  *
  * On a row that already exists only the presentation is refreshed (name, description, art, order), so an admin's
  * price and availability stand. Down takes them off whoever wears them, out of what people own and out of the shop;
@@ -17,7 +17,7 @@ export const ICONS = [
   ['icon-made-rovi', 'Rovîyê Şûrdar', 'Fox knight', 'icons/made-16-rovi.png', 250, 15],
   ['icon-made-pisik-cizme', 'Pisîka Bi Çizme', 'Cat in boots', 'icons/made-17-pisik-cizme.png', 250, 16],
   ['icon-made-pisik-qurdele', 'Pisîka Bi Qurdele', 'Kitten with a bow', 'icons/made-18-pisik-qurdele.png', 200, 17],
-  ['icon-made-kevoka-sin', 'Kevoka Şîn', 'Blue dove', 'icons/made-19-kevoka-sin.png', 150, 18],
+  ['icon-made-werdek', 'Werdek', 'Duck', 'icons/made-19-werdek.png', 150, 18],
   ['icon-made-hirc', 'Hirç', 'Bear', 'icons/made-20-hirc.png', 200, 19],
   ['icon-made-hirca-spi', 'Hirça Spî', 'White bear', 'icons/made-21-hirca-spi.png', 150, 20],
   ['icon-made-celek', 'Çêlek', 'Cow', 'icons/made-22-celek.png', 200, 21],

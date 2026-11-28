@@ -142,7 +142,7 @@ const DESCRIPTIONS: Record<string, Record<Exclude<AppLocale, 'en'>, string>> = {
     ku: 'Pisîka bi qurdele', ckb: 'بەچکە پشیلەی قوردێلەدار', de: 'Kätzchen mit Schleife', es: 'Gatito con lazo',
     fr: 'Chaton au ruban', nl: 'Kitten met strik', tr: 'Fiyonklu yavru kedi', ar: 'قطيطة بشريطة',
   },
-  'Blue dove': { ku: 'Kevoka şîn', ckb: 'کۆتری شین', de: 'Blaue Taube', es: 'Paloma azul', fr: 'Colombe bleue', nl: 'Blauwe duif', tr: 'Mavi güvercin', ar: 'حمامة زرقاء' },
+  'Duck': { ku: 'Werdek', ckb: 'مراوی', de: 'Ente', es: 'Pato', fr: 'Canard', nl: 'Eend', tr: 'Ördek', ar: 'بطة' },
   'Bear': { ku: 'Hirç', ckb: 'ورچ', de: 'Bär', es: 'Oso', fr: 'Ours', nl: 'Beer', tr: 'Ayı', ar: 'دب' },
   'White bear': { ku: 'Hirça spî', ckb: 'ورچی سپی', de: 'Weißer Bär', es: 'Oso blanco', fr: 'Ours blanc', nl: 'Witte beer', tr: 'Beyaz ayı', ar: 'دب أبيض' },
   'Cow': { ku: 'Çêlek', ckb: 'مانگا', de: 'Kuh', es: 'Vaca', fr: 'Vache', nl: 'Koe', tr: 'İnek', ar: 'بقرة' },

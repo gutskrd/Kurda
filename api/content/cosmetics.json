@@ -233,10 +233,10 @@
       "displayOrder": 17
     },
     {
-      "sku": "icon-made-kevoka-sin",
-      "name": "Kevoka Şîn",
-      "description": "Blue dove",
-      "assetKey": "icons/made-19-kevoka-sin.png",
+      "sku": "icon-made-werdek",
+      "name": "Werdek",
+      "description": "Duck",
+      "assetKey": "icons/made-19-werdek.png",
       "price": 150,
       "premiumOnly": true,
       "displayOrder": 18

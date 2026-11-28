@@ -6,165 +6,122 @@ export const piece = {
   key: 'mirisk',
   ku: 'Mirîşk',
   en: 'Hen',
-  // A plump russet hen standing side-on to the left, with a cream breast, a wing of layered feathers and a fan of darker
-  // tail feathers rising behind. She has a red comb and wattle, a yellow beak, a bright amber eye and yellow legs.
+  // A plump round cream hen side-on to the right, her face turned a little toward us: a small head on her round body with
+  // a red comb and wattle, a yellow beak, a buff fan of tail feathers rising behind, a wing curled at her side, tiny legs.
   still(rnd) {
-    const s = new Still(rnd).place([-27, -20], 0.98);
-    const COAT = '#b9653a';
-    const SHADE = '#97492b';
-    const DEEP = '#73331f';
-    const LIGHT = '#d68a52';
-    const GOLD = '#e8ad68';
-    const CREAM = '#f1dcb7';
-    const CREAM_SHADE = '#dcb98c';
-    const [TAIL, TAIL_LIT, TAIL_DEEP] = ['#783722', '#a65c3a', '#4c2316'];
-    const [COMB, COMB_LIT, COMB_DEEP] = ['#d8402e', '#f27b60', '#a62a20'];
+    const s = new Still(rnd).place([-6, -10], 0.96);
+    const CREAM = '#f5e5c8';
+    const LIGHT = '#fdf6e8';
+    const SHADE = '#e2c49d';
+    const DEEP = '#c99d6c';
+    const [BUFF, BUFF_LIT, BUFF_DEEP] = ['#e6bd84', '#f4d6a6', '#c58e55'];
+    const [COMB, COMB_LIT, COMB_DEEP] = ['#da4a34', '#f27e62', '#a8301f'];
     const [BEAK, BEAK_SHADE] = ['#f1b63a', '#c98723'];
     const [LEG, LEG_SHADE] = ['#ecb63e', '#c88b26'];
     const INK = '#2a1c16';
     const { lay, wash, brush, line } = painter(rnd, INK);
-    // Parts whose whole edge shows are drawn round in one pencil stroke.
+    // Small parts whose whole edge shows are drawn round in one pencil stroke.
     const ringed = (cv, d, w, room) => {
       const filter = crayon(cv, rnd, { keep: 3.4, tear: 1.4, grain: 1.1, room });
       cv.add(`<path d="${d}" fill="none" stroke="${INK}" stroke-width="${w}" stroke-linejoin="round" filter="${filter}"/>`);
     };
     const flecks = { spread: 20, length: 12, width: 2, bend: 0.2 };
 
-    const coat = spline([
-      [158, 118], [192, 124], [214, 148], [220, 184], [236, 214], [276, 232], [334, 238], [390, 230], [428, 252], [446, 298], [440, 346], [412, 388],
-      [360, 416], [290, 428], [216, 420], [156, 396], [114, 354], [96, 302], [102, 254], [120, 220], [114, 196], [110, 160], [126, 130],
-    ]);
-    const tail = spline([
-      [366, 252], [366, 196], [376, 146], [394, 110], [412, 100], [424, 112], [440, 100], [458, 106], [464, 126], [478, 130], [488, 146], [484, 168],
-      [492, 184], [486, 208], [466, 240], [446, 280], [430, 300], [400, 290],
-    ]);
-    // The fan is one shape parted by lines from each notch toward the rump, so it reads as feathers, not fingers.
-    const parts = [[[424, 114], [412, 172], [398, 240]], [[464, 128], [440, 190], [416, 250]], [[485, 168], [458, 216], [432, 264]]];
-    const WING = [
-      [206, 290], [224, 258], [268, 240], [330, 240], [384, 254], [420, 280], [440, 312], [416, 316], [420, 336], [390, 334], [388, 354], [358, 348],
-      [350, 364], [318, 356], [276, 356], [238, 340], [212, 318],
+    // Head, body and tail are one round shape, as a fluffed-up hen is; the tail's edge is scalloped into feathers.
+    const COAT = [
+      [212, 36], [236, 46], [256, 76], [272, 112], [282, 138], [289, 151], [297, 136], [314, 118], [340, 104], [370, 99], [398, 109], [418, 132],
+      [428, 160], [438, 196], [452, 240], [464, 290], [470, 344], [464, 396], [440, 434], [392, 458], [320, 468], [240, 466], [170, 452], [116, 426],
+      [80, 390], [62, 346], [56, 318], [64, 298], [80, 290], [68, 278], [60, 256], [66, 236], [80, 226], [98, 220], [88, 206], [88, 182], [100, 164],
+      [114, 158], [132, 154], [126, 138], [130, 114], [144, 96], [156, 90], [172, 86], [168, 68], [180, 50], [196, 40],
     ];
-    const COMB_EDGE = [[130, 128], [123, 106], [134, 91], [150, 98], [156, 82], [174, 78], [182, 94], [196, 88], [208, 100], [205, 122]];
-    const comb = spline([...COMB_EDGE, [190, 134], [150, 136]]);
-    const wattle = spline([[116, 184], [134, 186], [142, 200], [140, 218], [132, 228], [124, 222], [118, 230], [108, 224], [106, 206]]);
-    const beak = spline([[120, 150], [104, 152], [86, 160], [80, 168], [92, 174], [108, 180], [122, 180]]);
+    const coat = spline(COAT);
+    const tailZone = spline([[180, 10], [262, 40], [300, 130], [289, 151], [262, 196], [220, 226], [170, 252], [130, 290], [100, 340], [60, 390], [20, 330]]);
+    const NOTCHES = [[80, 290], [98, 220], [132, 154], [172, 86]];
+    const wing = spline([[290, 236], [250, 246], [212, 266], [184, 294], [178, 322], [194, 340], [226, 350], [266, 352], [304, 340], [326, 314], [324, 278]]);
+    const COMB_EDGE = [[338, 110], [334, 88], [346, 74], [360, 80], [368, 62], [384, 60], [392, 76], [404, 74], [412, 90], [408, 114]];
+    const comb = spline([...COMB_EDGE, [392, 126], [352, 124]]);
+    // She turns her face a little toward us: the beak sits on the face between her eyes, and the far eye peeps past its edge.
+    const wattle = spline([[386, 172], [402, 170], [412, 182], [410, 198], [400, 208], [394, 200], [386, 206], [378, 194], [380, 180]]);
+    const beak = spline([[384, 150], [400, 147], [416, 155], [404, 167], [388, 166]]);
     // Each foot has three toes forward and one back, as a hen stands.
-    const foot = ([x, y], k) => [
-      [[x, y], [x - 18, y + 2], [x - 32 - k, y + 6]],
-      [[x, y], [x - 12, y + 10], [x - 22, y + 18]],
-      [[x, y], [x + 14, y + 2], [x + 22, y]],
+    const foot = ([x, y]) => [
+      [[x, y], [x + 12, y + 1], [x + 22, y + 3]],
+      [[x, y], [x + 8, y + 7], [x + 14, y + 12]],
+      [[x, y], [x - 9, y + 2], [x - 15, y + 2]],
     ];
     const legs = [
-      { shank: [[312, 404], [314, 432], [316, 452]], toes: foot([316, 452], 0), fill: LEG_SHADE },
-      { shank: [[256, 408], [253, 436], [250, 458]], toes: foot([250, 458], 4), fill: LEG },
+      { shank: [[350, 450], [351, 466], [352, 480]], toes: foot([352, 480]), fill: LEG_SHADE },
+      { shank: [[216, 452], [214, 470], [212, 486]], toes: foot([212, 486]), fill: LEG },
     ];
 
     s.paint((cv) => {
       // The pencil goes under each leg and toe a little wider than its paint, so the joins show no seams.
       const stalk = { start: 0.9, end: 0.8, peak: 0.4, tremble: 0.06 };
       for (const { shank, toes, fill } of legs) {
-        for (const p of [shank, ...toes]) line(cv, p, 17, stalk);
-        for (const p of [shank, ...toes]) lay(cv, mark(rnd, p, 10, stalk), fill, 2.9);
-        brush(cv, [[shank[0][0] + 2, shank[0][1] + 20], shank[1], [shank[2][0] + 1, shank[2][1] - 4]], 4, '#f7d47a', 0.8, 'y');
+        for (const p of [shank, ...toes]) line(cv, p, 14, stalk);
+        for (const p of [shank, ...toes]) lay(cv, mark(rnd, p, 8, stalk), fill, 2.9);
       }
-      // The tail is a warm dark brown rather than near-black so it still reads over a dark picture.
-      lay(cv, tail, TAIL, 2.9);
-      cv.add(`<g clip-path="${within(cv, tail)}">`);
-      for (const pts of [
-        [[382, 250], [384, 180], [404, 116]],
-        [[404, 254], [418, 180], [444, 116]],
-        [[420, 266], [444, 200], [478, 148]],
-        [[432, 286], [460, 236], [484, 196]],
-      ]) brush(cv, pts, 16, TAIL_LIT, 0.85, 'y');
-      for (const pts of parts) brush(cv, pts.map(([x, y]) => [x + 6, y + 4]), 12, TAIL_DEEP, 0.8, 'y');
-      strokes(cv, rnd, tail, [366, 104, 488, 300], { ...flecks, count: 24, colours: ['#a8603d'], flow: () => -62, length: 16, opacity: [0.3, 0.6] });
-      cv.add('</g>');
-      ringed(cv, tail, 4.6, [300, 60, 212, 260]);
-      for (const pts of parts) line(cv, pts, 3.6, { start: 0.7, end: 0.1, peak: 0.2 });
       lay(cv, comb, COMB, 2.9);
       cv.add(`<g clip-path="${within(cv, comb)}">`);
-      brush(cv, [[134, 100], [160, 88], [190, 96]], 9, COMB_LIT, 0.85, 'x');
-      brush(cv, [[140, 130], [170, 128], [200, 120]], 10, COMB_DEEP, 0.7, 'x');
+      brush(cv, [[340, 90], [366, 74], [396, 80]], 9, COMB_LIT, 0.85, 'x');
+      brush(cv, [[342, 120], [376, 122], [410, 110]], 12, COMB_DEEP, 0.7, 'x');
       cv.add('</g>');
+      line(cv, [...COMB_EDGE], 4.4, { start: 0.4, end: 0.3, count: 50 });
 
-      // Head and body are one shape, so the shade can be brushed across the join without a seam.
-      lay(cv, coat, COAT);
+      lay(cv, coat, CREAM);
       cv.add(`<g clip-path="${within(cv, coat)}">`);
-      brush(cv, [[150, 404], [240, 430], [330, 426], [420, 380]], 34, SHADE, 0.85, 'x');
-      brush(cv, [[432, 260], [450, 310], [432, 370]], 26, SHADE, 0.7, 'y');
-      brush(cv, [[240, 222], [320, 236], [400, 228]], 14, LIGHT, 0.6, 'x');
-      lay(cv, blob(rnd, [142, 318], 62, 88, -14, 0.05), CREAM, 2.4);
-      wash(cv, blob(rnd, [176, 384], 48, 24, -20, 0.04), CREAM_SHADE, 10, 0.8);
-      brush(cv, [[96, 300], [104, 350], [130, 392]], 16, CREAM_SHADE, 0.6, 'y');
-      // Russet feather tips overlap the cream along its edge, so the breast grows out of the coat instead of sitting on it.
-      for (const [x, y] of [[176, 238], [192, 262], [204, 288], [208, 316], [206, 344], [196, 370], [178, 394], [154, 406], [130, 226]]) {
-        brush(cv, [[x + 22, y - 6], [x + 4, y], [x - 12, y + 8]], 14, COAT, 0.9, 'x', 2.2);
+      // The tail is buff at its feather tips; the body's cream fluff overlaps its foot in short strokes.
+      lay(cv, tailZone, BUFF, 2.7);
+      const lobes = [[[250, 150], [234, 100], [214, 50]], [[200, 180], [170, 140], [140, 110]], [[160, 220], [126, 200], [90, 186]], [[130, 262], [70, 258]]];
+      for (const pts of lobes) brush(cv, pts, 14, BUFF_LIT, 0.75, 'y');
+      for (const [x, y] of NOTCHES) brush(cv, [[x, y], [x + 16, y + 6], [x + 34, y + 10]], 9, BUFF_DEEP, 0.7, 'x');
+      brush(cv, [[284, 146], [266, 186], [240, 212]], 14, BUFF_DEEP, 0.45, 'y');
+      for (const [x, y] of [[262, 206], [240, 222], [216, 236], [192, 250], [168, 264], [148, 282], [130, 302], [114, 324], [100, 346], [86, 370]]) {
+        brush(cv, [[x + 18, y + 16], [x + 2, y + 2], [x - 12, y - 12]], 16, CREAM, 0.95, 'y', 2.4);
       }
-      for (const [x, y] of [[132, 268], [118, 300], [146, 296], [130, 330], [160, 322], [146, 358], [176, 350], [118, 362]]) {
-        lay(cv, mark(rnd, [[x - 10, y - 3], [x, y + 4], [x + 10, y - 3]], 3.4, { start: 0.2, end: 0.2, peak: 0.5, tremble: 0.1 }), '#c99a68', 2.4);
-      }
-      strokes(cv, rnd, coat, [96, 230, 210, 400], { ...flecks, count: 18, colours: ['#fbecd2'], flow: () => -70, length: 10, opacity: [0.4, 0.8] });
-      for (const [x, y] of [[178, 132], [194, 140], [206, 156], [164, 140], [214, 176]]) {
-        brush(cv, [[x, y], [x + 13, y + 38], [x + 20, y + 76]], 9, GOLD, 0.8, 'y', 2.3);
-      }
-      for (const [x, y] of [[186, 150], [200, 166], [172, 160]]) brush(cv, [[x, y], [x + 10, y + 34], [x + 18, y + 62]], 6, SHADE, 0.6, 'y');
-      strokes(cv, rnd, coat, [230, 220, 440, 300], { ...flecks, count: 26, colours: [GOLD], flow: () => 8, length: 14, opacity: [0.3, 0.6] });
-      strokes(cv, rnd, coat, [200, 360, 420, 420], { ...flecks, count: 20, colours: [LIGHT], flow: () => -6, length: 11, opacity: [0.25, 0.5] });
-      wash(cv, blob(rnd, [140, 170], 22, 18, 0, 0.05), COMB, 6, 0.45);
-      cv.add('</g>');
-
-      // The wing is brushed in rows from the long feathers at its tip forward to the small ones at the shoulder, so each
-      // row overlaps the one behind it.
-      const wing = spline(WING);
-      lay(cv, wing, SHADE, 2.8);
-      cv.add(`<g clip-path="${within(cv, wing)}">`);
-      for (const [x, y] of [[300, 342], [330, 340], [360, 334], [388, 322], [414, 304]]) {
-        brush(cv, [[x - 40, y - 14], [x, y], [x + 40, y + 6]], 18, DEEP, 0.85, 'x');
-        brush(cv, [[x - 40, y - 20], [x - 4, y - 8], [x + 30, y - 4]], 6, LIGHT, 0.7, 'x');
-      }
-      for (const [x, y] of [[252, 314], [284, 316], [316, 312], [348, 306], [378, 294], [404, 280]]) {
-        brush(cv, [[x - 30, y - 18], [x, y - 4], [x + 26, y]], 16, COAT, 0.95, 'x');
-        brush(cv, [[x - 28, y - 22], [x - 4, y - 12], [x + 18, y - 8]], 5, GOLD, 0.7, 'x');
-      }
-      for (const [x, y] of [[232, 284], [258, 276], [286, 272], [314, 268], [342, 266], [370, 268]]) {
-        brush(cv, [[x - 20, y - 12], [x, y], [x + 16, y]], 12, LIGHT, 0.85, 'x');
-      }
-      brush(cv, [[230, 252], [300, 244], [380, 256]], 16, COAT, 0.8, 'x');
+      // Light falls from the upper left, so the breast and the round of the belly turn into a warm shade.
+      brush(cv, [[444, 220], [470, 300], [466, 380], [420, 440]], 40, SHADE, 0.85, 'y');
+      brush(cv, [[90, 420], [200, 462], [320, 470], [430, 432]], 36, SHADE, 0.85, 'x');
+      brush(cv, [[110, 440], [220, 470], [340, 474], [440, 440]], 16, DEEP, 0.45, 'x');
+      brush(cv, [[464, 300], [474, 360], [452, 412]], 14, DEEP, 0.4, 'y');
+      brush(cv, [[424, 180], [434, 210], [446, 240]], 18, SHADE, 0.6, 'y');
+      // The wing is no more than a fold: a warmer tone under its curled top edge and a shade beneath its feather tips.
+      wash(cv, wing, '#efd5ab', 8, 0.65);
+      brush(cv, [[196, 300], [236, 266], [290, 248]], 12, LIGHT, 0.5, 'x');
+      brush(cv, [[200, 356], [250, 364], [300, 358], [334, 336]], 14, SHADE, 0.8, 'x');
+      lay(cv, blob(rnd, [354, 176], 13, 8, 0, 0.05), '#f4b49a', 2.2);
+      strokes(cv, rnd, coat, [130, 280, 420, 440], { ...flecks, count: 14, colours: [LIGHT], flow: () => -20, length: 14, opacity: [0.5, 0.9] });
+      strokes(cv, rnd, coat, [400, 230, 470, 440], { ...flecks, count: 10, colours: [DEEP], flow: () => 80, length: 12, opacity: [0.2, 0.4] });
       cv.add('</g>');
 
       lay(cv, wattle, COMB, 2.9);
       cv.add(`<g clip-path="${within(cv, wattle)}">`);
-      brush(cv, [[110, 196], [114, 210], [118, 224]], 6, COMB_LIT, 0.8, 'y');
-      brush(cv, [[138, 196], [136, 212], [130, 228]], 8, COMB_DEEP, 0.7, 'y');
+      brush(cv, [[382, 178], [386, 192], [390, 204]], 6, COMB_LIT, 0.8, 'y');
+      brush(cv, [[410, 182], [408, 196], [400, 208]], 8, COMB_DEEP, 0.7, 'y');
       cv.add('</g>');
       lay(cv, beak, BEAK, 2.9);
       cv.add(`<g clip-path="${within(cv, beak)}">`);
-      brush(cv, [[118, 176], [100, 176], [84, 170]], 8, BEAK_SHADE, 0.8, 'x');
+      brush(cv, [[388, 166], [402, 166], [414, 158]], 7, BEAK_SHADE, 0.8, 'x');
       cv.add('</g>');
     });
 
     s.paint((cv) => {
       // The pencil line goes on last and is left open in places, as a hand-drawn line is.
-      const nape = [[110, 150], [118, 132], [136, 120], [160, 117], [190, 123], [212, 146], [219, 184], [236, 214], [266, 228]];
-      line(cv, nape, 5.8, { start: 0.4, end: 0.2, count: 40 });
-      line(cv, [[300, 236], [340, 238], [390, 230], [424, 250], [442, 286]], 5, { start: 0.2, end: 0.5 });
-      line(cv, [[446, 304], [440, 346], [412, 388], [360, 416], [300, 428]], 5.8, { start: 0.5, end: 0.3, count: 40 });
-      line(cv, [[268, 427], [216, 420], [156, 396], [114, 354], [96, 302], [102, 254], [118, 222]], 6, { start: 0.3, end: 0.4, peak: 0.4, count: 40 });
-      line(cv, [...WING, [214, 320]], 4.8, { start: 0.4, end: 0.3, peak: 0.5, count: 80 });
-      // Thin scallops along two rows of the wing mark where one layer of feathers lies over the next.
-      const scallop = { start: 0.2, end: 0.2, count: 12 };
-      for (const [x, y] of [[248, 316], [280, 320], [312, 316], [344, 310], [374, 298]]) line(cv, [[x - 16, y - 8], [x, y + 2], [x + 16, y - 6]], 2.8, scallop);
-      for (const [x, y] of [[232, 290], [258, 284], [286, 280], [314, 276], [342, 274]]) line(cv, [[x - 12, y - 6], [x, y + 1], [x + 12, y - 5]], 2.4, scallop);
-      line(cv, [...COMB_EDGE, [192, 132]], 4.6, { start: 0.4, end: 0.3, count: 50 });
-      ringed(cv, wattle, 4.2, [80, 160, 90, 90]);
-      ringed(cv, beak, 4.2, [60, 130, 80, 70]);
-      line(cv, [[118, 168], [102, 168], [88, 167]], 2.4, { start: 0.6, end: 0.2 });
-      // An amber ring round the pupil and a speck of light make the eye bright against the russet.
-      cv.add(`<path d="${blob(rnd, [150, 160], 11, 11.5, 0, 0.03)}" fill="#e8a33a"/>`);
-      const pupil = blob(rnd, [149, 160], 7, 7.5, 0, 0.03);
-      cv.add(`<g fill="${INK}" filter="${crayon(cv, rnd, { keep: 3.6, tear: 1.2, grain: 1.2 })}"><path d="${pupil}"/></g>`);
-      ringed(cv, blob(rnd, [150, 160], 11, 11.5, 0, 0.03), 3, [120, 130, 60, 60]);
-      cv.add('<circle cx="146" cy="156" r="2.8" fill="#fffaf0"/>');
+      line(cv, [...COAT.slice(26), ...COAT.slice(0, 6)], 5.6, { start: 0.3, end: 0.2, peak: 0.5, count: 100 });
+      line(cv, COAT.slice(5, 12), 5.8, { start: 0.3, end: 0.2, count: 40 });
+      line(cv, COAT.slice(12, 19), 6, { start: 0.3, end: 0.4, count: 50 });
+      line(cv, COAT.slice(19, 26), 5.8, { start: 0.4, end: 0.2, count: 40 });
+      // The back runs on from the notch behind the head and fades out, so the tail sits behind the body.
+      line(cv, [[289, 151], [280, 176], [266, 198]], 4.6, { start: 0.8, end: 0.1, peak: 0.2 });
+      for (const [x, y] of NOTCHES) line(cv, [[x - 2, y], [x + 8, y + 4], [x + 18, y + 6]], 3.4, { start: 0.9, end: 0.1, peak: 0.2 });
+      // The wing is drawn as a curl along its top and two feather tips beneath, left open toward the shoulder.
+      line(cv, [[292, 234], [250, 244], [212, 264], [184, 292], [178, 320], [192, 338], [212, 340]], 5, { start: 0.15, end: 0.3, peak: 0.6, count: 50 });
+      for (const pts of [[[210, 344], [226, 352], [248, 352]], [[268, 352], [292, 346], [312, 332]]]) line(cv, pts, 4, { start: 0.3, end: 0.3, peak: 0.5 });
+      ringed(cv, wattle, 4, [360, 156, 70, 70]);
+      ringed(cv, beak, 4, [370, 134, 64, 50]);
+      const eyes = [blob(rnd, [358, 146], 10.5, 11.5, 0, 0.03), blob(rnd, [421, 141], 8, 10, 0, 0.03)];
+      cv.add(`<g fill="${INK}" filter="${crayon(cv, rnd, { keep: 3.6, tear: 1.2, grain: 1.2 })}">${eyes.map((d) => `<path d="${d}"/>`).join('')}</g>`);
+      cv.add('<circle cx="354.5" cy="141.5" r="3.2" fill="#fffaf0"/>');
     });
     return s.done({ finish: { paint: 0, grain: 0.008, contrast: 0, saturation: 1, warmth: 0 } });
   },
